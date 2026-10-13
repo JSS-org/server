@@ -53,3 +53,7 @@ application-my.yaml
 /yudao-ui-app/unpackage/
 .DS_Store
 **/.DS_Store
+
+######################################################################
+# Agents
+/.codex/

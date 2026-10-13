@@ -85,6 +85,9 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
+                        <!-- 显式声明 release：仅依赖 <properties> 里的 maven.compiler.source/target 时，
+                             IntelliJ IDEA 会忽略并回退到 Java 5，导致 “目标 5 不受 JDK 25 支持” 的编译错误 -->
+                        <release>${java.version}</release>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.springframework.boot</groupId>

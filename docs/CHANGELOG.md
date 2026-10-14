@@ -431,3 +431,36 @@ Controller 操作权限 → Service → GymDataScope/PermissionApi 的 system �
 ### 未做 / 后续
 
 未改前端、未改数据库、未部署/启动服务。真实服务下载回归可在部署后执行 `script/gym/verify-file-api.sh`；未新增其他业务接口。
+
+## [2026-10-14 20:44 ~ 20:46] 修复门店服务误注入 infra 文件 Mapper 导致启动失败
+
+### 意图
+
+修复用户启动反馈的 `fileMapper` Bean 类型不匹配。问题来自 `@Resource` 优先按字段名查找：门店服务期望 GymFileMapper，却因字段名 fileMapper 命中 infra 的同名 Bean。Mapper 已正常注册，JDK 代理不是问题原因。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/store/GymStoreService.java:30` | 修改 | 注入字段改为 gymFileMapper，并更新两个调用点，匹配实际 Mapper Bean 名称 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 增加 infra 文件包真实 Mapper 扫描，验证两种文件 Mapper 同时存在及门店媒体读写 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 补充修复前复现、修复后回归和验证边界 |
+
+### 结构关系
+
+GymStoreService 继续依赖 gym 文件 Mapper，只修正字段名与 Bean 名称匹配。infra FileMapper 和 GymFileMapper 保持各自 MyBatis JDK 代理，不改全局代理或扫描机制。纯注入修复，不改变架构和数据库。
+
+### 验证证据
+
+- 修复前新增双模块 Mapper 注册后执行 `mvn -q -pl yudao-module-gym -am test -Dtest='GymOrganizationServiceTest#bothFileMappersCoexistAndStoreMediaUsesGymMapper' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`：退出 1，复现用户同款 BeanNotOfRequiredTypeException。
+- 修复后执行相同 Maven 命令，测试选择改为 `-Dtest='Gym*Test'`：退出 0，**44 tests，0 failures，0 errors，0 skipped**，其中组织 18、文件服务 12、类型工具 5、文件控制器 9。实际双 Mapper Spring 上下文初始化和媒体持久化通过。
+- `mvn -q -DskipTests -pl yudao-server -am package`：退出 0。
+- `git diff --check`：退出 0；dashboard 的 `git status --short` 为空。
+
+### 影响面 / 风险
+
+修复后门店服务在 infra/gym 同时加载时注入正确的文件 Mapper。此前组织测试只扫描 gym，未发现名称冲突；本次已将跨模块共存加入回归环境。未更改前端、共享扫描配置、代理类型或数据库，HTTP 契约不变。
+
+### 未做 / 后续
+
+未启动连接业务数据库/Redis 的完整服务，未修改部署环境。用户可重新运行 IDE 应用验证完整启动；本次已生成新版 jar，未自动提交或推送此修复。

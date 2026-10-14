@@ -132,3 +132,24 @@ bash -n script/gym/verify-file-api.sh
 结果：**43 tests，0 failures，0 errors，0 skipped**（原有 34 + 新增 GymFileControllerTest 9）。新测试使用实际 Spring MVC 异常解析、GlobalExceptionHandler 和方法权限代理，文件 Service 为 mock，断言：正常下载二进制及附件头；记录不存在/内容缺失/包装后的内容缺失异常 HTTP 404；跨店及 @PreAuthorize 拒绝 HTTP 403；非法 ID HTTP 400；存储异常 HTTP 500；元数据错误继续 HTTP 200。错误 JSON 保留原业务 code，不生成附件响应头。
 
 `verify-file-api.sh` 新增跨店下载 HTTP 403、不存在文件下载 HTTP 404 及错误码断言；本次仅通过 shell 语法检查，未对运行服务执行此脚本，未运行前端浏览器。安全 Filter 层的未登录/租户拒绝不在本次 MVC 测试覆盖范围。
+
+## 2026-10-14 Mapper 跨模块注入启动回归
+
+在 `GymOrganizationServiceTest` 中补充 infra 文件包的真实 Mapper 扫描，使 `fileMapper`（infra）和 `gymFileMapper`（gym）同时注册为 MyBatis JDK 代理。此前仅扫描 gym，未覆盖 `@Resource` 优先按字段名称查找 Bean 的碰撞。
+
+```bash
+# 修复前，仅新增真实 infra Mapper 扫描和用例，复现用户报告的注入错误：
+mvn -q -pl yudao-module-gym -am test \
+  -Dtest='GymOrganizationServiceTest#bothFileMappersCoexistAndStoreMediaUsesGymMapper' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+# 修复后完整回归：
+mvn -q -pl yudao-module-gym -am test -Dtest='Gym*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -q -DskipTests -pl yudao-server -am package
+```
+
+修复前第一条命令退出 1，得到 `BeanNotOfRequiredTypeException: Bean named 'fileMapper' is expected to be of type GymFileMapper but was actually of type jdk.proxy2.$Proxy...`。将门店服务字段改为 `gymFileMapper` 后，Spring 测试上下文成功初始化；验证两个 Mapper Bean 的实际接口及通过 gym 表保存/读取门店媒体。完整回归 **44 tests，0 failures，0 errors，0 skipped**，主服务打包退出 0。
+
+此证据覆盖真实 MyBatis Mapper 注册和注入，未启动连接业务数据库/Redis 的完整服务。无需启用 CGLib，也没有修改共享 Mapper 扫描配置。

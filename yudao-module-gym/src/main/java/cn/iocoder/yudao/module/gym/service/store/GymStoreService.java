@@ -27,7 +27,7 @@ import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 public class GymStoreService {
     @Resource private GymStoreMapper storeMapper;
     @Resource private GymStoreMediaMapper mediaMapper;
-    @Resource private GymFileMapper fileMapper;
+    @Resource private GymFileMapper gymFileMapper;
     @Resource private DeptService deptService;
     @Resource private GymDataScope scope;
     @Resource private Validator validator;
@@ -100,7 +100,7 @@ public class GymStoreService {
         Set<Long> seen = new HashSet<>(); int covers = 0;
         List<GymStoreMediaDO> rows = new ArrayList<>();
         for (GymStoreMediaReqVO.Item item : req.getItems()) {
-            GymFileDO file = fileMapper.selectById(item.getFileId());
+            GymFileDO file = gymFileMapper.selectById(item.getFileId());
             if (file == null || !id.equals(file.getStoreId()) || !Set.of("image", "video").contains(file.getCategory())
                     || !seen.add(file.getId()) || (Boolean.TRUE.equals(item.getIsCover()) && !"image".equals(file.getCategory()))) {
                 throw exception(STORE_MEDIA_INVALID);
@@ -138,7 +138,7 @@ public class GymStoreService {
         if (detail) {
             for (GymStoreMediaDO row : mediaMapper.selectList(new LambdaQueryWrapper<GymStoreMediaDO>()
                     .eq(GymStoreMediaDO::getStoreId, store.getId()).orderByAsc(GymStoreMediaDO::getSortOrder, GymStoreMediaDO::getId))) {
-                GymFileDO file = fileMapper.selectById(row.getFileId());
+                GymFileDO file = gymFileMapper.selectById(row.getFileId());
                 if (file == null) continue;
                 GymStoreRespVO.Media item = BeanUtils.toBean(row, GymStoreRespVO.Media.class);
                 item.setId(row.getId().toString()); item.setFileId(file.getId().toString());

@@ -43,6 +43,7 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymEmployeeService employees;
     @Resource GymFileMapper files;
     @Resource GymStoreMapper storeMapper;
+    @Resource org.springframework.context.ApplicationContext applicationContext;
     @Resource cn.iocoder.yudao.module.gym.controller.admin.store.GymStoreController storeController;
     @Resource cn.iocoder.yudao.module.gym.controller.admin.employee.GymEmployeeController employeeController;
     @MockitoBean DeptService depts;
@@ -50,6 +51,7 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @MockitoBean PermissionApi permissions;
     @Configuration(proxyBeanMethods = false)
     @org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
+    @org.mybatis.spring.annotation.MapperScan(basePackageClasses = cn.iocoder.yudao.module.infra.dal.mysql.file.FileMapper.class)
     static class Config {
         @Bean(name = "ss") cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService security(PermissionApi api) {
             return new cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkServiceImpl(api);
@@ -76,6 +78,14 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         when(depts.getDept(anyLong())).thenAnswer(i -> { DeptDO d = new DeptDO(); d.setId(i.getArgument(0)); d.setStatus(0); return d; });
     }
     @AfterEach void cleanupContext() { TenantContextHolder.clear(); org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+    @Test void bothFileMappersCoexistAndStoreMediaUsesGymMapper() {
+        assertInstanceOf(cn.iocoder.yudao.module.infra.dal.mysql.file.FileMapper.class, applicationContext.getBean("fileMapper"));
+        assertInstanceOf(GymFileMapper.class, applicationContext.getBean("gymFileMapper"));
+        stores.create(store(101L, "A"));
+        var file = file(101L, "image");
+        stores.saveMedia(101L, media(file.getId(), true));
+        assertEquals(file.getId().toString(), stores.get(101L).getMedia().getFirst().getFileId());
+    }
     void headquarters() {
         DeptDataPermissionRespDTO data = new DeptDataPermissionRespDTO(); data.setAll(true);
         when(permissions.getDeptDataPermission(any())).thenReturn(data);

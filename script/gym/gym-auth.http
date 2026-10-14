@@ -1,0 +1,70 @@
+### ===========================================================================
+### JSS 健身 · 4.1 章前 5 个认证/用户接口（yudao 原生实现）
+### 对应 admin/target/plan/10-backend-mock-api-inventory.md §4.1 前 5 行
+###
+### 用法（IntelliJ IDEA HTTP Client）：
+###   1. 先启动 yudao-server（默认 48080），并执行 script/gym/seed.sh 写入演示账号
+###   2. 依次执行下面的请求；登录响应会自动把 token 写入全局变量 gymToken / gymRefresh
+###   3. 若服务地址或租户不同，改下面的 @host / @tenantId
+###
+### 演示账号：gymadmin / Gym@123456（总部管理员）、gymstore / Gym@123456（门店店长）
+### 注意：yudao 多租户开启时必须携带 tenant-id 请求头，否则返回
+###       {"code":400,"msg":"请求的租户标识未传递，请进行排查"}
+### ===========================================================================
+
+@host = http://127.0.0.1:48080/admin-api
+@tenantId = 1
+@password = Gym@123456
+
+### 1. 登录（总部管理员）—— 返回 accessToken / refreshToken / expiresTime
+POST {{host}}/system/auth/login
+Content-Type: application/json
+tenant-id: {{tenantId}}
+
+{
+  "username": "gymadmin",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("gymToken", response.body.data.accessToken);
+    client.global.set("gymRefresh", response.body.data.refreshToken);
+%}
+
+### 1b. 登录（门店店长）—— 权限码收窄，无仅总部权限
+POST {{host}}/system/auth/login
+Content-Type: application/json
+tenant-id: {{tenantId}}
+
+{
+  "username": "gymstore",
+  "password": "{{password}}"
+}
+
+### 2. 当前用户权限信息 —— permissions 为 gym:* 权限码，roles 为 gym_hq_admin / gym_store_manager
+GET {{host}}/system/auth/get-permission-info
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+
+### 3. 当前用户资料 —— 含 dept（门店/总部 = system_dept）与 roles
+GET {{host}}/system/user/profile/get
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+
+### 4. 刷新令牌 —— 返回新的 accessToken（refreshToken 在有效期内不变）
+POST {{host}}/system/auth/refresh-token?refreshToken={{gymRefresh}}
+tenant-id: {{tenantId}}
+
+> {%
+    client.global.set("gymToken", response.body.data.accessToken);
+%}
+
+### 5. 注销当前会话 —— 之后原 accessToken 立即失效（code=401）
+POST {{host}}/system/auth/logout
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+
+### 6. 反例：登出后再次访问，应返回 {"code":401,"msg":"账号未登录"}
+GET {{host}}/system/auth/get-permission-info
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}

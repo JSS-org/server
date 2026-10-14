@@ -1,0 +1,26 @@
+spring:
+  main:
+    lazy-initialization: true
+    banner-mode: off
+  datasource:
+    url: jdbc:h2:mem:gymtest;MODE=MYSQL;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    druid:
+      initial-size: 1
+  sql:
+    init:
+      schema-locations: classpath:/sql/create_tables.sql
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: AUTO
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+yudao:
+  info:
+    base-package: cn.iocoder.yudao.module.gym
+logging:
+  level:
+    root: WARN

@@ -291,4 +291,12 @@ public class FileServiceImpl implements FileService {
         return fileMapper.selectLatestByConfigIdAndPath(configId, path);
     }
 
+    @Override
+    public FileDO getFileByUrl(String url) {
+        if (StrUtil.isEmpty(url)) {
+            return null;
+        }
+        return fileMapper.selectByUrl(url);
+    }
+
 }

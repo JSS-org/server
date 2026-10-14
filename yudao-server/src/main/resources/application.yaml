@@ -12,8 +12,9 @@ spring:
   servlet:
     # 文件上传相关配置项
     multipart:
-      max-file-size: 16MB # 单个文件大小
-      max-request-size: 32MB # 设置总上传的文件大小
+      # gym 视频素材上限 200MB（见 GymFileCategoryEnum），此处需 >= 该类上限，否则会被 Spring 提前拒绝
+      max-file-size: 200MB # 单个文件大小
+      max-request-size: 210MB # 设置总上传的文件大小
     encoding:
       enabled: true
       charset: UTF-8 # 必须设置 UTF-8，避免 WebFlux 流式返回（AI 场景）会乱码问题

@@ -68,8 +68,8 @@ spring:
           #          url: jdbc:kingbase8://127.0.0.1:54321/test  # 人大金仓 KingbaseES 连接的示例
           #          url: jdbc:postgresql://127.0.0.1:5432/postgres # OpenGauss 连接的示例
           #          url: jdbc:postgresql://127.0.0.1:5866/ruoyi-vue-pro # 瀚高 HighGo 连接的示例
-          username: root
-          password: 12345678
+          username: ${GYM_DB_USERNAME:yudao} # 本机 MySQL 账号；yudao 账号已授权 ruoyi-vue-pro 全库（root 为免密 socket 登录，不适合 JDBC）
+          password: ${GYM_DB_PASSWORD:123456}
           #          username: sa # SQL Server 连接的示例
           #          password: Yudao@2024 # SQL Server 连接的示例
           #          username: SYSDBA # DM 连接的示例
@@ -81,8 +81,8 @@ spring:
         slave: # 模拟从库，可根据自己需要修改
           lazy: true # 开启懒加载，保证启动速度
           url: jdbc:mysql://127.0.0.1:3306/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
-          username: root
-          password: 12345678
+          username: ${GYM_DB_USERNAME:yudao}
+          password: ${GYM_DB_PASSWORD:123456}
 #        tdengine: # IoT 数据库（需要 IoT 物联网再开启噢！）
 #          lazy: true # 开启懒加载，保证启动速度
 #          url: jdbc:TAOS-WS://127.0.0.1:6041/ruoyi_vue_pro?varcharAsString=true&enableAutoReconnect=true # 参见：https://t.zsxq.com/qaX9c，开启 TDengine WebSocket 自动重连

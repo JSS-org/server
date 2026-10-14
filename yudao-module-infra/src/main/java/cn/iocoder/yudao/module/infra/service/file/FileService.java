@@ -95,4 +95,12 @@ public interface FileService {
      */
     FileDO getFileByConfigIdAndPath(Long configId, String path);
 
+    /**
+     * 按访问地址获得文件
+     *
+     * @param url 文件访问地址（{@link #createFile(byte[], String, String, String)} 的返回值）
+     * @return 文件；不存在时返回 null
+     */
+    FileDO getFileByUrl(String url);
+
 }

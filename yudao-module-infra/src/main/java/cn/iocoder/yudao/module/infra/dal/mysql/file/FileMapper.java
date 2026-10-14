@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePageReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
+import cn.hutool.core.collection.CollUtil;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -28,6 +29,18 @@ public interface FileMapper extends BaseMapperX<FileDO> {
                 .eq(FileDO::getConfigId, configId)
                 .eq(FileDO::getPath, path)
                 .orderByAsc(FileDO::getId));
+    }
+
+    /**
+     * 按访问地址查询文件（url 理论上唯一，取最新一条兜底）
+     *
+     * 用途：调用方只持有 {@link cn.iocoder.yudao.module.infra.api.file.FileApi#createFile} 返回的 url 时，
+     * 反查 configId + path，进而读取文件内容。
+     */
+    default FileDO selectByUrl(String url) {
+        return CollUtil.getFirst(selectList(new LambdaQueryWrapperX<FileDO>()
+                .eq(FileDO::getUrl, url)
+                .orderByDesc(FileDO::getId)));
     }
 
 }

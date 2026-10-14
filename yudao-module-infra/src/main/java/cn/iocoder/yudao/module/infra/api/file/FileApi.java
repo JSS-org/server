@@ -52,4 +52,15 @@ public interface FileApi {
     String presignGetUrl(@NotEmpty(message = "URL 不能为空") String url,
                          Integer expirationSeconds);
 
+    /**
+     * 读取文件内容
+     *
+     * 场景：调用方把 {@link #createFile} 返回的 url 落库后，需要在**自己的鉴权接口**里回读内容
+     * （例如 gym 模块的私有文件下载：门店/类别越权校验由调用方负责，不能直接暴露 infra 的公开下载地址）。
+     *
+     * @param url 文件访问地址（{@link #createFile} 的返回值）
+     * @return 文件内容；文件不存在时返回 null
+     */
+    byte[] getFileContentByUrl(String url);
+
 }

@@ -1,0 +1,116 @@
+### ===========================================================================
+### JSS 健身 · gym 私有文件接口（§4.1 第 6~8 行）
+### 实现：yudao-module-gym / controller/admin/file/GymFileController.java
+###
+### 用法（IntelliJ IDEA HTTP Client）：
+###   1. 启动 yudao-server（默认 48080），执行 script/gym/seed.sh（建表 + 权限码 + 演示账号）
+###   2. 先跑第 1 个请求登录拿 token，再依次跑后面的请求
+###   3. 第 2 个请求的文件路径请替换成本机实际存在的图片（建议 png）
+###
+### 权限码：gym:files:upload / gym:files:read（已由 01-gym-permission-seed.sql 注册）
+### 类别与上限：approval/body_report/contract 20MB、image 10MB、video 200MB
+### ===========================================================================
+
+@host = http://127.0.0.1:48080/admin-api
+@tenantId = 1
+@password = Gym@123456
+@sampleImage = /tmp/gym-photo.png
+
+### 1. 登录（总部管理员）
+POST {{host}}/system/auth/login
+Content-Type: application/json
+tenant-id: {{tenantId}}
+
+{
+  "username": "gymadmin",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("gymToken", response.body.data.accessToken);
+%}
+
+### 2. 上传图片（category=image；不传 storeId 则落到上传人所属门店）
+POST {{host}}/gym/files/upload
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="photo.png"
+Content-Type: image/png
+
+< {{sampleImage}}
+--WebAppBoundary
+Content-Disposition: form-data; name="category"
+
+image
+--WebAppBoundary--
+
+> {%
+    client.global.set("gymFileId", response.body.data.id);
+%}
+
+### 2b. 上传合同 PDF（category=contract，只允许 PDF）
+POST {{host}}/gym/files/upload
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="contract.pdf"
+Content-Type: application/pdf
+
+< /tmp/gym-contract.pdf
+--WebAppBoundary
+Content-Disposition: form-data; name="category"
+
+contract
+--WebAppBoundary--
+
+### 3. 文件元数据（响应不含 infra 存储地址）
+GET {{host}}/gym/files/{{gymFileId}}
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+
+### 4. 下载文件内容（鉴权下载，返回二进制）
+GET {{host}}/gym/files/{{gymFileId}}/content
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+
+### 5. 反例：PDF 内容伪装 .png（应返回 code=1070000003 类型不匹配）
+POST {{host}}/gym/files/upload
+Authorization: Bearer {{gymToken}}
+tenant-id: {{tenantId}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="fake.png"
+Content-Type: image/png
+
+< /tmp/gym-contract.pdf
+--WebAppBoundary
+Content-Disposition: form-data; name="category"
+
+image
+--WebAppBoundary--
+
+### 6. 反例：门店账号读取总部门店的文件（应返回 code=1070000007 无权访问）
+# 先用 gymstore/Gym@123456 登录拿 token 替换下面的 {{storeToken}}
+POST {{host}}/system/auth/login
+Content-Type: application/json
+tenant-id: {{tenantId}}
+
+{
+  "username": "gymstore",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("storeToken", response.body.data.accessToken);
+%}
+
+### 6b. 跨门店读取
+GET {{host}}/gym/files/{{gymFileId}}
+Authorization: Bearer {{storeToken}}
+tenant-id: {{tenantId}}

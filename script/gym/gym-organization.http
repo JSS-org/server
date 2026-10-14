@@ -1,0 +1,67 @@
+### 首批真实契约；先执行迁移并启动新版后端，填写自己的 token / deptId
+@base = http://127.0.0.1:48080/admin-api
+@tenant = 1
+@token = REPLACE_WITH_ACCESS_TOKEN
+@storeId = REPLACE_WITH_SYSTEM_DEPT_ID
+@employeeId = REPLACE_WITH_EMPLOYEE_ID
+@fileId = REPLACE_WITH_FILE_ID
+
+### 列表（关联选项每页最多 200 条）
+GET {{base}}/gym/stores?pageNo=1&pageSize=100
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+
+### 创建门店：不传 deptId 则新建部门；可传 parentDeptId 指定总部部门
+POST {{base}}/gym/stores
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+Content-Type: application/json
+
+{"code":"TEST-A","name":"联调门店 A","description":"测试资料","areaSqm":"500.00","features":["私教"],"address":"测试地址","businessHours":{"opens":"06:00","closes":"23:00"},"status":"active"}
+
+### 详情
+GET {{base}}/gym/stores/{{storeId}}
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+
+### 部分更新
+PATCH {{base}}/gym/stores/{{storeId}}
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+Content-Type: application/json
+
+{"description":"更新后的简介"}
+
+### 媒体整体替换（文件须提前上传到同一门店，类别 image/video）
+PUT {{base}}/gym/stores/{{storeId}}/media
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+Content-Type: application/json
+
+{"items":[{"fileId":"{{fileId}}","caption":"环境照片","isCover":true,"sortOrder":0}]}
+
+### 创建员工档案；可选 userId 关联已有账号，须 system:user:update 且账号部门等于主门店
+POST {{base}}/gym/employees
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+Content-Type: application/json
+
+{"employeeNo":"TEST-E001","name":"联调员工","phone":"13800000000","jobTitle":"教练","hiredOn":"2026-10-13","status":"active","storeAssignments":[{"storeId":"{{storeId}}","isPrimary":true,"isManager":false,"joinedOn":"2026-10-13"}]}
+
+### 授权门店员工分页
+GET {{base}}/gym/employees?pageNo=1&pageSize=20&storeId={{storeId}}
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+
+### 员工详情
+GET {{base}}/gym/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+
+### 部分更新
+PATCH {{base}}/gym/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+tenant-id: {{tenant}}
+Content-Type: application/json
+
+{"jobTitle":"门店教练"}

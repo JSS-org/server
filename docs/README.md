@@ -11,6 +11,8 @@
 | [`CHANGELOG.md`](CHANGELOG.md) | **变更流水账**（按时间升序，一次改动一条） | 审查每次改了什么、意图是什么 |
 | [`architecture.md`](architecture.md) | **结构关系**：模块依赖、请求链路、数据模型、权限链 | 想知道「谁调用谁、数据怎么流」时 |
 | [`gym-first-batch-api.md`](gym-first-batch-api.md) | 门店/员工首批 REST 契约、权限、迁移与边界 | 本批联调时 |
+| [`development-seed-import.md`](development-seed-import.md) | 旧种子转换、开发库导入结果及待导入清单 | 查看联调数据时 |
+| [`gym-full-api-progress.md`](gym-full-api-progress.md) | 全量 API 任务状态与未完成范围 | 跟踪当前目标时 |
 | [`testing.md`](testing.md) | 验证手段清单：单测 / 端到端脚本 / 手工复现命令 | 复现验证结论时 |
 
 ## 记录规范（每次改动后必须做）
@@ -51,3 +53,9 @@
 | 认证接口验证 | `bash script/gym/verify-auth-api.sh` |
 | 文件接口验证 | `bash script/gym/verify-file-api.sh` |
 | 接口文档 | <http://127.0.0.1:48080/doc.html>（调试需带 `tenant-id: 1`） |
+
+
+最新增量见CHANGELOG的2026-10-15 SELF改价审批条目：SQL46、本人申请范围、审批人内部账号校验、OpenAPI嵌套模型及376字段审计。298项相关测试和39项SELF HTTP通过；前端SELF发起表单store选项限制单独标记，整体review仍未结束。
+
+
+2026-10-15 18:20交付入口：[gym-full-api-progress.md最终审计](gym-full-api-progress.md)逐项列出35业务页、后端闭环、301测试及review修复。SQL47已获用户明确授权并应用；SELF课程产品入口和黑名单浏览器闭环已验证。现行管理端后端工作完成，第三方按授权暂缓、前端自身及旧外部存储限制仍明示，不能等同全客户端/厂商合同验收。

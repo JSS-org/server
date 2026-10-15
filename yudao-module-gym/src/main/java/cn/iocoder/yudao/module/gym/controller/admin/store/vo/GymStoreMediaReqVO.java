@@ -10,7 +10,8 @@ import java.util.List;
 public class GymStoreMediaReqVO {
     @NotNull @Size(max = 50) private List<@NotNull @Valid Item> items;
     @Data
-    public static class Item {
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymStoreMediaReqVOItem")
+ public static class Item {
         @NotNull @Positive private Long fileId;
         @Size(max = 200) private String caption;
         @NotNull private Boolean isCover;

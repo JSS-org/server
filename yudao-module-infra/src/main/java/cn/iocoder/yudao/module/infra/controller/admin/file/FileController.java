@@ -11,6 +11,8 @@ import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.*;
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
 import cn.iocoder.yudao.module.infra.service.file.FileService;
+import cn.iocoder.yudao.module.infra.service.file.FilePrivatePathPolicy;
+import cn.iocoder.yudao.module.infra.framework.file.core.utils.FilePathUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -43,11 +45,15 @@ public class FileController {
     @Resource
     private FileService fileService;
 
+    @Resource
+    private FilePrivatePathPolicy privatePathPolicy;
+
     @PostMapping("/upload")
     @Operation(summary = "上传文件", description = "模式一：后端上传文件")
     @Parameter(name = "file", description = "文件附件", required = true,
             schema = @Schema(type = "string", format = "binary"))
     public CommonResult<String> uploadFile(@Valid FileUploadReqVO uploadReqVO) throws Exception {
+        privatePathPolicy.validatePublicUploadDirectory(uploadReqVO.getDirectory());
         MultipartFile file = uploadReqVO.getFile();
         byte[] content = IoUtil.readBytes(file.getInputStream());
         return success(fileService.createFile(content, file.getOriginalFilename(),
@@ -115,6 +121,12 @@ public class FileController {
         // https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/807/
         // https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1432/
         path = HttpUtils.decodeUrlPath(path);
+
+        FilePathUtils.validatePath(path);
+        if (privatePathPolicy.isPrivatePath(path)) {
+            response.setStatus(HttpStatus.FORBIDDEN.value());
+            return;
+        }
 
         // 读取内容
         byte[] content = fileService.getFileContent(configId, path);

@@ -18,7 +18,8 @@ public class GymEmployeeRespVO {
     private List<String> storeIds;
     private List<StoreAssignment> storeAssignments;
     @Data
-    public static class StoreAssignment {
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymEmployeeRespVOStoreAssignment")
+ public static class StoreAssignment {
         private String storeId;
         private Boolean isPrimary;
         private Boolean isManager;

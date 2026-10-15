@@ -34,6 +34,10 @@ public enum GymFileCategoryEnum {
     BODY_REPORT("body_report", "体测报告", 20L * 1024 * 1024,
             SetUtils.asSet(GymFileMimeTypeEnum.PDF, GymFileMimeTypeEnum.PNG, GymFileMimeTypeEnum.JPEG)),
 
+    /** 会员训练档案附件：PDF或图片，仍需会员绑定授权读取。 */
+    TRAINING_PLAN("training_plan", "训练计划", 20L * 1024 * 1024,
+            SetUtils.asSet(GymFileMimeTypeEnum.PDF, GymFileMimeTypeEnum.PNG, GymFileMimeTypeEnum.JPEG)),
+
     /** 合同文件：只允许 PDF，避免签章件被替换成图片 */
     CONTRACT("contract", "合同文件", 20L * 1024 * 1024,
             Collections.singleton(GymFileMimeTypeEnum.PDF)),

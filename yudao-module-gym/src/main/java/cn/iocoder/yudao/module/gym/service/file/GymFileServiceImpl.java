@@ -54,7 +54,13 @@ public class GymFileServiceImpl implements GymFileService {
     private GymFileMapper gymFileMapper;
 
     @Resource
+    private cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractTemplateMapper gymContractTemplateMapper;
+
+    @Resource
     private FileApi fileApi;
+
+    @org.springframework.beans.factory.annotation.Value("${gym.file.storage-config-id:#{null}}")
+    private Long storageConfigId;
 
     @Resource
     private AdminUserApi adminUserApi;
@@ -64,6 +70,9 @@ public class GymFileServiceImpl implements GymFileService {
 
     @Resource
     private PermissionApi permissionApi;
+
+    @Resource
+    private GymMemberFileAccess memberFileAccess;
 
     @Override
     public GymFileDO uploadFile(GymFileUploadReqVO uploadReqVO) {
@@ -122,12 +131,14 @@ public class GymFileServiceImpl implements GymFileService {
         }
 
         // 6. 门店：解析 + 存在性 + 数据范围校验
-        Long storeId = resolveAndValidateStoreId(uploadReqVO.getStoreId());
+        Long storeId = resolveAndValidateStoreId(uploadReqVO.getStoreId(), category.getCategory());
 
         // 7. 存储文件（复用 infra 文件服务：本地磁盘 / 数据库 / S3 等按 infra 配置生效）
         //    存储名带唯一前缀：infra 默认路径是「日期/原文件名」，同名文件会落同一路径互相覆盖
-        String url = fileApi.createFile(content, buildStorageName(file.getOriginalFilename(), detected),
-                DIRECTORY_PREFIX + category.getCategory(), detected.getMimeType());
+        String storageName = buildStorageName(file.getOriginalFilename(), detected);
+        String url = storageConfigId == null
+                ? fileApi.createFile(content, storageName, DIRECTORY_PREFIX + category.getCategory(), detected.getMimeType())
+                : fileApi.createFile(content, storageName, DIRECTORY_PREFIX + category.getCategory(), detected.getMimeType(), storageConfigId);
 
         // 8. 落库业务归属（name 仍存原始文件名，展示/下载不受存储名影响）
         GymFileDO gymFile = GymFileDO.builder()
@@ -175,7 +186,8 @@ public class GymFileServiceImpl implements GymFileService {
             throw exception(FILE_NOT_EXISTS);
         }
         // 门店越权校验：非本门店（且不在数据范围内）的文件，一律按无权处理
-        validateStorePermission(SecurityFrameworkUtils.getLoginUserId(), file.getStoreId());
+        Long userId=SecurityFrameworkUtils.getLoginUserId();
+        if (!publishedTemplateAccess(file,userId) && !memberFileAccess.canRead(file)) validateStorePermission(userId, file.getStoreId());
         return file;
     }
 
@@ -195,7 +207,7 @@ public class GymFileServiceImpl implements GymFileService {
      * @param storeId 请求传入的门店编号，允许为空
      * @return 最终归属门店编号
      */
-    private Long resolveAndValidateStoreId(Long storeId) {
+    private Long resolveAndValidateStoreId(Long storeId, String category) {
         Long userId = SecurityFrameworkUtils.getLoginUserId();
         if (storeId == null) {
             AdminUserRespDTO user = adminUserApi.getUser(userId);
@@ -208,7 +220,7 @@ public class GymFileServiceImpl implements GymFileService {
         if (dept == null) {
             throw exception(FILE_STORE_NOT_EXISTS, storeId);
         }
-        validateStorePermission(userId, storeId);
+        if (!memberFileAccess.canUploadReport(storeId, category)) validateStorePermission(userId, storeId);
         return storeId;
     }
 
@@ -222,17 +234,28 @@ public class GymFileServiceImpl implements GymFileService {
      * @param storeId 门店编号，允许为空（为空表示无门店归属的公共文件）
      */
     private void validateStorePermission(Long userId, Long storeId) {
-        if (storeId == null) {
-            return;
-        }
         DeptDataPermissionRespDTO permission = permissionApi.getDeptDataPermission(userId);
-        if (Boolean.TRUE.equals(permission.getAll())) {
+        if (storeId == null) {
+            // An unbound legacy file is not a responsible member's private attachment.
+            if(permission!=null && Boolean.TRUE.equals(permission.getSelf()) && !Boolean.TRUE.equals(permission.getAll())
+                    && (permission.getDeptIds()==null || permission.getDeptIds().isEmpty())) throw exception(FILE_STORE_NO_PERMISSION, storeId);
             return;
         }
-        if (permission.getDeptIds() != null && permission.getDeptIds().contains(storeId)) {
+        if (permission!=null && Boolean.TRUE.equals(permission.getAll())) {
+            return;
+        }
+        if (permission!=null && permission.getDeptIds() != null && permission.getDeptIds().contains(storeId)) {
             return;
         }
         throw exception(FILE_STORE_NO_PERMISSION, storeId);
     }
 
+
+    /** Published blank contract templates are intentionally shared; unrelated PDFs and draft/suspended templates remain store-private. */
+    private boolean publishedTemplateAccess(GymFileDO file,Long userId) {
+        if (!"contract".equals(file.getCategory()) || !"application/pdf".equals(file.getMimeType())) return false;
+        var permission=permissionApi.getDeptDataPermission(userId);
+        if (permission==null || (!Boolean.TRUE.equals(permission.getAll()) && (permission.getDeptIds()==null || permission.getDeptIds().isEmpty()))) return false;
+        return permissionApi.hasAnyPermissions(userId,"gym:contracts:read","gym:contracts:templates") && gymContractTemplateMapper.isPublishedFile(file.getId());
+    }
 }

@@ -21,7 +21,8 @@ public class GymStoreRespVO {
     private GymStoreSaveReqVO.BusinessHours businessHours;
     private List<Media> media;
     @Data
-    public static class Media {
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymStoreRespVOMedia")
+ public static class Media {
         private String id;
         private String fileId;
         private String category;

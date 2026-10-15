@@ -89,6 +89,9 @@ public class FileServiceImpl implements FileService {
     @Resource
     private FileMapper fileMapper;
 
+    @Resource
+    private FilePrivatePathPolicy privatePathPolicy;
+
     @Override
     public PageResult<FileDO> getFilePage(FilePageReqVO pageReqVO) {
         return fileMapper.selectPage(pageReqVO);
@@ -97,6 +100,12 @@ public class FileServiceImpl implements FileService {
     @Override
     @SneakyThrows
     public String createFile(byte[] content, String name, String directory, String type) {
+        return createFile(content, name, directory, type, null);
+    }
+
+    @Override
+    @SneakyThrows
+    public String createFile(byte[] content, String name, String directory, String type, Long configId) {
         // 1.1 处理 name 的合法性，禁止携带目录路径
         name = FilePathUtils.validateFileName(name);
 
@@ -125,8 +134,9 @@ public class FileServiceImpl implements FileService {
         // 2.1 生成上传的 path，需要保证唯一
         String path = generateUploadPath(name, directory);
         // 2.2 上传到文件存储器
-        FileClient client = fileConfigService.getMasterFileClient();
-        Assert.notNull(client, "客户端(master) 不能为空");
+        FileClient client = configId == null ? fileConfigService.getMasterFileClient() : fileConfigService.getFileClient(configId);
+        Assert.notNull(client, "客户端({}) 不能为空", configId == null ? "master" : configId);
+        privatePathPolicy.validateUpload(path, client);
         String url = client.upload(content, path, type);
 
         // 3. 保存到数据库
@@ -182,6 +192,9 @@ public class FileServiceImpl implements FileService {
     public FilePresignedUrlRespVO presignPutUrl(String name, String directory) {
         // 1.1 生成上传的 path，需要保证唯一
         String path = generateUploadPath(name, directory);
+        if (privatePathPolicy.isPrivatePath(path)) {
+            throw exception(FILE_PRIVATE_UPLOAD_REQUIRED);
+        }
         // 1.2 前端直传无法读取文件内容，此处仅校验文件名类型
         validateFileType(name);
 
@@ -203,6 +216,9 @@ public class FileServiceImpl implements FileService {
     public Long createFile(FileCreateReqVO createReqVO) {
         // 1.1 校验参数的合法性
         FilePathUtils.validatePath(createReqVO.getPath());
+        if (privatePathPolicy.isPrivatePath(createReqVO.getPath())) {
+            throw exception(FILE_PRIVATE_UPLOAD_REQUIRED);
+        }
         createReqVO.setName(FilePathUtils.validateFileName(createReqVO.getName()));
         // 1.2 校验原文件名和存储路径的类型，前端直传不校验文件内容
         String type = validateFileType(createReqVO.getName());

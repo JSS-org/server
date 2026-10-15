@@ -172,7 +172,7 @@ WHERE m.deleted = b'0' AND (m.id = @gym_root OR m.parent_id = @gym_root)
       'gym:payroll:templates',
       'gym:blacklists:read', 'gym:blacklists:write',
       'gym:settings:manage',
-      'gym:contracts:manage',
+      'gym:contracts:manage', 'gym:contracts:templates',
       'gym:approvals:templates',
       'gym:content:manage', 'gym:activities:manage', 'gym:franchise:manage',
       'gym:payment:read', 'gym:payment:write',

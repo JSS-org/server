@@ -36,6 +36,12 @@ public interface FileService {
     String createFile(@NotEmpty(message = "文件内容不能为空") byte[] content,
                       String name, String directory, String type);
 
+    /** Explicit backend-selected storage; null retains the existing master-storage behavior. */
+    default String createFile(byte[] content, String name, String directory, String type, Long configId) {
+        if (configId == null) return createFile(content, name, directory, type);
+        throw new UnsupportedOperationException("Explicit file storage is not implemented");
+    }
+
     /**
      * 生成文件预签名地址信息，用于上传
      *

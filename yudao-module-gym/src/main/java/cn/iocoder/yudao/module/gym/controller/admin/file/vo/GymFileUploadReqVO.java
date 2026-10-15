@@ -21,7 +21,7 @@ public class GymFileUploadReqVO {
     private MultipartFile file;
 
     @Schema(description = "文件类别", requiredMode = Schema.RequiredMode.REQUIRED,
-            example = "approval", allowableValues = {"approval", "body_report", "contract", "image", "video"})
+            example = "approval", allowableValues = {"approval", "body_report", "training_plan", "contract", "image", "video"})
     @NotNull(message = "文件类别不能为空")
     private String category;
 

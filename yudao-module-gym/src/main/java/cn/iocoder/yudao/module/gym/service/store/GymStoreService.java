@@ -20,6 +20,9 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
+import cn.iocoder.yudao.module.gym.dal.dataobject.card.*;
+import cn.iocoder.yudao.module.gym.dal.mysql.card.*;
+import cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
@@ -31,6 +34,11 @@ public class GymStoreService {
     @Resource private DeptService deptService;
     @Resource private GymDataScope scope;
     @Resource private Validator validator;
+    @Resource private GymBusinessMutex gymBusinessMutex;
+    @Resource private GymMemberCardMapper gymMemberCardMapper;
+    @Resource private GymMemberMapper gymMemberMapper;
+    @Resource private GymMemberStoreMapper gymMemberStoreMapper;
+    @Resource private GymMemberCardStoreMapper gymMemberCardStoreMapper;
 
     public PageResult<GymStoreRespVO> page(GymPageReqVO req) {
         Set<Long> ids = scope.readableStoreIds();
@@ -54,9 +62,10 @@ public class GymStoreService {
         if (store == null) throw exception(STORE_NOT_EXISTS);
         return store;
     }
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public GymStoreRespVO create(GymStoreSaveReqVO req) {
         scope.requireHeadquarters(); // 新门店改变组织范围，仅全门店管理员可创建/绑定
+        gymBusinessMutex.lockStoreEntitlements();
         defaults(req);
         validate(req);
         if (storeMapper.selectOne(GymStoreDO::getCode, req.getCode()) != null) throw exception(STORE_CODE_DUPLICATE);
@@ -76,10 +85,12 @@ public class GymStoreService {
         GymStoreDO store = toDO(req);
         store.setId(deptId);
         try { storeMapper.insert(store); } catch (DuplicateKeyException e) { throw exception(STORE_CODE_DUPLICATE); }
+        if("active".equals(store.getStatus())) extendGlobalCardMemberships(store.getId());
         return response(store, true);
     }
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public GymStoreRespVO patch(Long id, GymStoreSaveReqVO patch) {
+        scope.check(id); gymBusinessMutex.lockStoreEntitlements();
         GymStoreDO old = requireStore(id, true);
         if (patch.getDeptId() != null || patch.getParentDeptId() != null) throw exception(STORE_DEPT_INVALID);
         GymStoreSaveReqVO merged = BeanUtils.toBean(old, GymStoreSaveReqVO.class);
@@ -92,6 +103,7 @@ public class GymStoreService {
         if (duplicate != null && !duplicate.getId().equals(id)) throw exception(STORE_CODE_DUPLICATE);
         GymStoreDO update = toDO(merged); update.setId(id);
         try { storeMapper.updateById(update); } catch (DuplicateKeyException e) { throw exception(STORE_CODE_DUPLICATE); }
+        if("active".equals(update.getStatus())&&!"active".equals(old.getStatus())) extendGlobalCardMemberships(id);
         return response(update, true);
     }
     @Transactional(rollbackFor = Exception.class)
@@ -147,5 +159,33 @@ public class GymStoreService {
             }
         }
         result.setMedia(media); return result;
+    }
+    private void extendGlobalCardMemberships(Long storeId) {
+        var now=java.time.Instant.now();
+        // The tenant mutex prevents new issuances; READ_COMMITTED gives a fresh enumeration after waiting for it.
+        var eligible=gymMemberCardMapper.selectList(globalCardQuery(now));
+        for(Long memberId:eligible.stream().map(GymMemberCardDO::getMemberId).distinct().sorted().toList()) {
+            // Match booking's member -> card lock order; don't hold a card while waiting for its member.
+            if(gymMemberMapper.selectForUpdate(memberId)==null) continue;
+            var currentCards=gymMemberCardMapper.selectList(globalCardQuery(now)
+                    .eq(GymMemberCardDO::getMemberId,memberId).last("FOR UPDATE"));
+            for(var card:currentCards) {
+                var current=gymMemberStoreMapper.selectList(new LambdaQueryWrapper<GymMemberStoreDO>()
+                        .eq(GymMemberStoreDO::getMemberId,card.getMemberId())
+                        .eq(GymMemberStoreDO::getStoreId,storeId).last("FOR UPDATE"));
+                if(current.isEmpty()) { var link=new GymMemberStoreDO(); link.setMemberId(card.getMemberId()); link.setStoreId(storeId); link.setJoinedAt(now); gymMemberStoreMapper.insert(link); }
+                var rights=gymMemberCardStoreMapper.selectList(new LambdaQueryWrapper<GymMemberCardStoreDO>()
+                        .eq(GymMemberCardStoreDO::getCardId,card.getId())
+                        .eq(GymMemberCardStoreDO::getStoreId,storeId).last("FOR UPDATE"));
+                if(rights.isEmpty()) { var link=new GymMemberCardStoreDO(); link.setCardId(card.getId()); link.setStoreId(storeId); gymMemberCardStoreMapper.insert(link); }
+            }
+        }
+    }
+    private LambdaQueryWrapper<GymMemberCardDO> globalCardQuery(java.time.Instant now) {
+        return new LambdaQueryWrapper<GymMemberCardDO>()
+                .eq(GymMemberCardDO::getAccessScope,"all")
+                .eq(GymMemberCardDO::getStatus,"active")
+                .and(q->q.isNull(GymMemberCardDO::getExpiresAt).or().gt(GymMemberCardDO::getExpiresAt,now))
+                .and(q->q.isNull(GymMemberCardDO::getRemainingUses).or().gt(GymMemberCardDO::getRemainingUses,0));
     }
 }

@@ -35,6 +35,8 @@ public interface ErrorCodeConstants {
     ErrorCode FILE_IS_EMPTY = new ErrorCode(1_001_003_002, "文件为空");
     ErrorCode FILE_PATH_INVALID = new ErrorCode(1_001_003_003, "文件路径不正确");
     ErrorCode FILE_TYPE_NOT_ALLOWED = new ErrorCode(1_001_003_004, "不支持的文件类型");
+    ErrorCode FILE_PRIVATE_STORAGE_REQUIRED = new ErrorCode(1_001_003_005, "私有文件目录须使用数据库存储，请配置专用文件存储");
+    ErrorCode FILE_PRIVATE_UPLOAD_REQUIRED = new ErrorCode(1_001_003_006, "私有文件目录须通过所属业务的后端上传接口写入");
 
     // ========== 代码生成器 1-001-004-000 ==========
     ErrorCode CODEGEN_TABLE_EXISTS = new ErrorCode(1_001_004_002, "表定义已经存在");

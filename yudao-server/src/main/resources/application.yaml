@@ -267,6 +267,8 @@ yudao:
   info:
     version: 1.0.0
     base-package: cn.iocoder.yudao
+  file:
+    private-path-prefixes: gym/ # 禁止公开下载及前端直传；业务接口鉴权后从数据库读取
   web:
     admin-ui:
       url: http://dashboard.yudao.iocoder.cn # Admin 管理后台 UI 的地址

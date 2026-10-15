@@ -25,7 +25,8 @@ public class GymStoreSaveReqVO {
     @NotNull @Valid private BusinessHours businessHours;
     @NotBlank @Pattern(regexp = "active|inactive") private String status;
     @Data
-    public static class BusinessHours {
+    @io.swagger.v3.oas.annotations.media.Schema(name = "GymStoreSaveReqVOBusinessHours")
+ public static class BusinessHours {
         @NotBlank @Pattern(regexp = "(?:[01]\\d|2[0-3]):[0-5]\\d") private String opens;
         @NotBlank @Pattern(regexp = "(?:[01]\\d|2[0-3]):[0-5]\\d") private String closes;
     }

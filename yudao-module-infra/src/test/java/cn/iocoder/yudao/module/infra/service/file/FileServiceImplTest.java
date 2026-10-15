@@ -36,7 +36,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.*;
 
-@Import({FileServiceImpl.class})
+@Import({FileServiceImpl.class, FilePrivatePathPolicy.class})
+@org.springframework.test.context.TestPropertySource(properties="yudao.file.private-path-prefixes=gym/")
 public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Resource
@@ -681,6 +682,44 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         // 断言
         // 格式为：yyyyMMdd/{时间戳+随机数}/test.jpg
         assertTrue(path.matches("\\d{8}/\\d+/test\\.jpg"));
+    }
+
+    @Test
+    void explicitStorageUsesSelectedClientAndPreservesGlobalMaster() throws Exception {
+        byte[] content=ResourceUtil.readBytes("file/erweima.jpg");
+        FileClient selected=mock(cn.iocoder.yudao.module.infra.framework.file.core.client.db.DBFileClient.class);
+        when(fileConfigService.getFileClient(42L)).thenReturn(selected);
+        when(selected.getId()).thenReturn(42L);
+        when(selected.upload(same(content),anyString(),eq("image/jpeg"))).thenReturn("http://selected.local/gym/test.jpg");
+        assertEquals("http://selected.local/gym/test.jpg",fileService.createFile(content,"test.jpg","gym/image","image/jpeg",42L));
+        assertEquals(42L,fileMapper.selectOne(FileDO::getUrl,"http://selected.local/gym/test.jpg").getConfigId());
+        verify(fileConfigService,never()).getMasterFileClient();
+    }
+    @Test
+    void missingExplicitStorageDoesNotFallBackOrPersistFile() {
+        byte[] content=ResourceUtil.readBytes("file/erweima.jpg");
+        assertThrows(IllegalArgumentException.class,()->fileService.createFile(content,"test.jpg","gym/image","image/jpeg",999L));
+        verify(fileConfigService,never()).getMasterFileClient();
+        assertEquals(0L,fileMapper.selectCount());
+    }
+
+    @Test
+    void privateFilesCannotUseExternalStorageOrFallBackToPublicMaster() throws Exception {
+        byte[] content=ResourceUtil.readBytes("file/erweima.jpg");
+        var external=mock(FileClient.class);
+        when(fileConfigService.getFileClient(42L)).thenReturn(external);
+        assertServiceException(()->fileService.createFile(content,"test.jpg","gym/body_report","image/jpeg",42L),FILE_PRIVATE_STORAGE_REQUIRED);
+        verify(external,never()).upload(any(),anyString(),anyString());
+        assertEquals(0L,fileMapper.selectCount());
+        verify(fileConfigService,never()).getMasterFileClient();
+    }
+    @Test
+    void privateNamespacesRejectDirectUploadPresigningAndMetadataRegistration() {
+        assertServiceException(()->fileService.presignPutUrl("test.jpg","gym/body_report"),FILE_PRIVATE_UPLOAD_REQUIRED);
+        var req=new FileCreateReqVO();req.setConfigId(42L);req.setPath("gym/body_report/test.jpg");req.setName("test.jpg");req.setUrl("https://storage.example/test.jpg");
+        assertServiceException(()->fileService.createFile(req),FILE_PRIVATE_UPLOAD_REQUIRED);
+        verifyNoInteractions(fileConfigService);
+        assertEquals(0L,fileMapper.selectCount());
     }
 
 }

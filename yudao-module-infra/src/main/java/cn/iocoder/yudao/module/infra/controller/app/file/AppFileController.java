@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FileCreateReq
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePresignedUrlRespVO;
 import cn.iocoder.yudao.module.infra.controller.app.file.vo.AppFileUploadReqVO;
 import cn.iocoder.yudao.module.infra.service.file.FileService;
+import cn.iocoder.yudao.module.infra.service.file.FilePrivatePathPolicy;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -30,11 +31,15 @@ public class AppFileController {
     @Resource
     private FileService fileService;
 
+    @Resource
+    private FilePrivatePathPolicy privatePathPolicy;
+
     @PostMapping("/upload")
     @Operation(summary = "上传文件")
     @Parameter(name = "file", description = "文件附件", required = true,
             schema = @Schema(type = "string", format = "binary"))
     public CommonResult<String> uploadFile(@Valid AppFileUploadReqVO uploadReqVO) throws Exception {
+        privatePathPolicy.validatePublicUploadDirectory(uploadReqVO.getDirectory());
         MultipartFile file = uploadReqVO.getFile();
         byte[] content = IoUtil.readBytes(file.getInputStream());
         return success(fileService.createFile(content, file.getOriginalFilename(),

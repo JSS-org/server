@@ -37,16 +37,77 @@ def main():
         scripts = sorted((ROOT / 'script/gym/sql').glob('*.sql'))
         for script in scripts:
             sql(script.read_text(), TEST_DB)
+        # Exercise the source-coach backfill with legacy rows; all stay inside this disposable database.
+        sql("INSERT INTO gym_course_product(id,store_id,coach_id,name,kind,session_count,duration_minutes,price,status,tenant_id) VALUES(987654321,101,91,'migration-only','private',2,60,200,'active',1)", TEST_DB)
+        cases = [(1,101,1,'price_change','{\"sourceId\":\"987654321\"}',None),
+                 (2,102,1,'price_change','{\"sourceId\":\"987654321\"}',None),
+                 (3,101,2,'price_change','{\"sourceId\":\"987654321\"}',None),
+                 (4,101,1,'price_change','invalid-json',None),
+                 (5,101,1,'other_configured','{\"sourceId\":\"987654321\"}',None),
+                 (6,101,1,'price_change','{\"sourceId\":\"987654321\"}',999)]
+        for fixture_id, store_id, tenant_id, kind, snapshot, coach_id in cases:
+            coach = 'NULL' if coach_id is None else str(coach_id)
+            sql(f"INSERT INTO gym_approval(id,store_id,template_id,template_snapshot,business_type,title,applicant_user_id,applicant_name,request_key,request_hash,request_snapshot,attachment_ids,status,current_step,submitted_at,tenant_id,source_coach_id) VALUES({fixture_id},{store_id},1,'{{}}','{kind}','migration-only',91,'migration-only','migration-only-{fixture_id}','fixture','{snapshot}','[]','pending',1,NOW(),{tenant_id},{coach})", TEST_DB)
         counts = ' UNION ALL '.join(f'SELECT COUNT(*) FROM `{t}`' for t in tables)
         first = sql(counts, TEST_DB)
         for script in scripts:
             sql(script.read_text(), TEST_DB)
         assert sql(counts, TEST_DB) == first, '重复执行改变记录数'
+        actual = sql("SELECT id,COALESCE(source_coach_id,-1) FROM gym_approval ORDER BY id", TEST_DB)
+        assert actual == '1\t91\n2\t-1\n3\t-1\n4\t-1\n5\t-1\n6\t999', actual
+        sql((ROOT / 'script/gym/sql/46-gym-approval-source-coach.sql').read_text(), TEST_DB)
+        assert sql("SELECT id,COALESCE(source_coach_id,-1) FROM gym_approval ORDER BY id", TEST_DB) == actual, '归属回填重复执行改变数据'
+        assert sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_approval' AND column_name='source_coach_id'", TEST_DB) == '1'
         menu = sql("SELECT path,component,component_name FROM system_menu WHERE type=2 AND path IN ('stores','employees') AND deleted=0 ORDER BY path", TEST_DB)
         assert menu == 'employees\tgym/employees/index\tGymEmployees\nstores\tgym/stores/index\tGymStores', menu
-        assert sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('gym_store','gym_employee','gym_employee_store','gym_store_media')", TEST_DB) == '4'
+        assert sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('gym_store','gym_employee','gym_employee_store','gym_store_media','gym_salary_template','gym_salary_assignment','gym_member','gym_blacklist','gym_measurement','gym_card_template','gym_member_card','gym_member_store','gym_member_card_store','gym_course_product','gym_course_session','gym_course_pack','gym_booking','gym_checkin','gym_lesson_record','gym_business_mutex','gym_approval_template','gym_approval','gym_approval_task','gym_contract_template','gym_contract','gym_contract_event','gym_contract_reminder','gym_financial_event','gym_payroll','gym_payroll_item','gym_sales_setting','gym_payment_account','gym_settlement_rule','gym_settlement','gym_activity','gym_activity_store','gym_activity_registration','gym_franchise_inquiry','gym_device','gym_device_compartment','gym_device_command','gym_equipment','gym_equipment_tutorial','gym_client_setting','gym_qr_code','gym_business_order','gym_order_item','gym_order_payment','gym_order_refund','gym_subscription','gym_subscription_cycle','gym_verification','gym_order_policy','gym_order_refund_review','gym_fulfillment_task','gym_order_item_financial_event','gym_member_coach','gym_training_plan')", TEST_DB) == '58'
         assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('stores','employees') AND rm.deleted=0", TEST_DB) == '4'
-        print('MySQL 迁移验证通过：4 个业务表、2 个页面、4 条页面授权；全部脚本连续执行两次记录数一致。')
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('salary-templates','employee-salary-assignments') AND deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('salary-templates','employee-salary-assignments') AND rm.deleted=0", TEST_DB) == '3'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='members' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='members' AND rm.deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('body-measurements','blacklists') AND deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('body-measurements','blacklists') AND rm.deleted=0", TEST_DB) == '4'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('cards','checkins','course-products','course-sessions','bookings','lesson-records') AND deleted=0", TEST_DB) == '6'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('cards','checkins','course-products','course-sessions','bookings','lesson-records') AND rm.deleted=0", TEST_DB) == '12'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='approval-templates' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='approval-templates' AND rm.deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='approvals' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='approvals' AND rm.deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='contract-templates' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='contract-templates' AND rm.deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='contracts' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='contracts' AND rm.deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='payrolls' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='payrolls' AND rm.deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('home','reports/performance','reports/members') AND deleted=0", TEST_DB) == '3'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('home','reports/performance','reports/members') AND rm.deleted=0", TEST_DB) == '6'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='settings' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='settings' AND rm.deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('payment-accounts','settlement-rules','settlements') AND deleted=0", TEST_DB) == '3'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('payment-accounts','settlement-rules','settlements') AND rm.deleted=0", TEST_DB) == '3'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('activities','franchise-inquiries') AND deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('activities','franchise-inquiries') AND rm.deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('devices','equipment') AND deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('devices','equipment') AND rm.deleted=0", TEST_DB) == '4'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('client-settings','qr-codes') AND deleted=0", TEST_DB) == '2'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('client-settings','qr-codes') AND rm.deleted=0", TEST_DB) == '3'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('self-service-card-orders','subscriptions','verifications') AND deleted=0", TEST_DB) == '3'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('self-service-card-orders','subscriptions','verifications') AND rm.deleted=0", TEST_DB) == '6'
+        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='reports/member-cards' AND deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='reports/member-cards' AND rm.deleted=0", TEST_DB) == '2'
+        # Every current controller permission must have a live menu definition, including class-level guards.
+        controller_root = ROOT / 'yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin'
+        required = set().union(*(set(re.findall(r"gym:[A-Za-z:-]+", p.read_text())) for p in controller_root.rglob('*Controller.java')))
+        actual_permissions = set(sql("SELECT permission FROM system_menu WHERE deleted=0 AND permission LIKE 'gym:%'", TEST_DB).splitlines())
+        assert not required - actual_permissions, '缺少现行接口权限码：' + str(sorted(required - actual_permissions))
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.tenant_id=1 AND r.code='gym_hq_admin' AND m.permission='gym:blacklist:write' AND rm.deleted=0", TEST_DB) == '1'
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code='gym_store_manager' AND m.permission='gym:blacklist:write' AND rm.deleted=0", TEST_DB) == '0'
+        # A customized HQ role with its legacy grant deliberately revoked must not gain the alias.
+        sql("DELETE rm FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission IN ('gym:blacklists:write','gym:blacklist:write')", TEST_DB)
+        sql((ROOT / 'script/gym/sql/47-gym-blacklist-write-permission.sql').read_text(), TEST_DB)
+        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission='gym:blacklist:write' AND rm.deleted=0", TEST_DB) == '0'
+        print('MySQL 迁移验证通过：58 个业务表、35 个页面、61 条页面授权；全部脚本连续执行两次记录数一致。')
     finally:
         sql(f'DROP DATABASE `{TEST_DB}`;')
         print('隔离验证库已清理。')

@@ -464,3 +464,1121 @@ GymStoreService 继续依赖 gym 文件 Mapper，只修正字段名与 Bean 名�
 ### 未做 / 后续
 
 未启动连接业务数据库/Redis 的完整服务，未修改部署环境。用户可重新运行 IDE 应用验证完整启动；本次已生成新版 jar，未自动提交或推送此修复。
+
+## [2026-10-14 21:09 ~ 21:25] 将旧 PostgreSQL 首批种子转换并导入 MySQL 开发库
+
+### 意图
+
+用户提供 `/Users/hh/Documents/GitHub/database/` 种子，要求放入项目开发数据库；确认选择“先导入已实现模块，其他列入待导入清单”。先阅读源模型及种子，再对齐当前 MySQL/system/gym 模型，未把旧 README 的 PostgreSQL/Go 执行流程当成当前项目指令。
+
+### 改了什么
+
+| 路径/目标 | 类型 | 说明 |
+| --- | --- | --- |
+| `script/gym/development/01-legacy-organization.sql` | 新增 | 首批 MySQL 转换种子，事务/自然键幂等/人工同名冲突守卫；不自动挂入常规 seed.sh |
+| `script/gym/verify-legacy-seeds.py` | 新增 | 临时库验证二次导入、实际字段关联及同名冲突回滚 |
+| `docs/development-seed-import.md` | 新增 | 实际 ID 映射、账号/权限、待导入模块与数量、备份及操作证据 |
+| `docs/README.md`、`script/gym/README.md`、`docs/CHANGELOG.md` | 修改 | 导入入口与记录 |
+| `127.0.0.1:3306/ruoyi-vue-pro`，租户 1 | 数据库变更 | 执行既有 03/04 增量迁移与新转换种子；新增 28 行、补建四业务表、转换两个已有业务页面 |
+
+### 结构关系
+
+旧 stores UUID 通过 code 映射为 system_dept / gym_store 的 Long ID；employee_no 映射员工，任职关联转换为 gym_employee_store；旧 admin_accounts 映射 system_users，旧角色按已实现权限子集映射 system_role/menu。账号主部门与员工主门店一致，权限保持 source 授权。源 scrypt 校验后改用 BCrypt，不引入旧登录/RBAC 表。未建立新架构或旧模型影子表。
+
+### 验证证据
+
+- `python3 script/gym/verify-legacy-seeds.py`：退出 0；独立随机 MySQL 库验证 2 门店、2 员工、2 任职、3 账号、2 角色、两轮幂等及同名冲突拒绝/回滚；测试库已删除。
+- 正式导入前 `mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF` 备份此次涉及的已有表到 `/tmp/gym-development-before-seeds-1dtpy3up.sql`（600 权限）。执行 03/04 及转换 SQL，退出 0；转换种子连续执行两次，第二次记录数不变。
+- 新增：system_dept 2、system_users 3、system_role 2、system_role_menu 12、system_user_role 3、gym_store 2、gym_employee 2、gym_employee_store 2，共 28 行。
+- SQL 查询核对 SH001/SH002 → 126/127；E001/E002 → 1/2；hq/store1/store2 → 254/255/256；gym_dev_hq/gym_dev_store → 173/174。两员工主门店与对应账号部门一致。
+- 实际入库的 3 个账号密码使用 Spring Security BCryptPasswordEncoder 验证通过，仅输出匹配数量，不输出哈希。
+- `curl --max-time 5 http://127.0.0.1:48080/v3/api-docs` 未取得运行服务响应，无 HTTP/前端验收证据。
+
+### 影响面 / 风险
+
+数据仅进入本机开发库租户 1，源目录和前端文件未修改。现有用户/密码/业务数据未覆盖。门店角色保持旧种子只读资料权限，总部角色允许首批写入；不授予未实现的工资/会员/支付等权限。开发账号沿用源种子默认密码，属于开发示例。SQL 前置要求已存在总部/根目录/首批权限，不适用于生产初始化或任意租户。
+
+### 未做 / 后续
+
+按用户确认范围未导入会员、课程、合同/审批、设备、工资、营销、支付/分账等未实现模块，详见专门待导入清单。Mock 文件无真实内容，HQ001 缺任职门店，未补造文件/关系。未启动服务、未执行真实登录/浏览器回归，未提交或推送新增导入文件。
+
+## [2026-10-14 21:43 ~ 22:09] 全量 API 任务首轮：薪资闭环及会员基础
+
+### 意图
+
+用户要求实现全部文档 API，仅负责后端，调试后运行前端验证和 review。按现行dashboard 35业务页面的真实请求推进，先解除员工薪资配置编辑阻塞；全量目标仍在进行，详见 gym-full-api-progress.md。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/salary/`、`service/salary/`、`dal/*/salary/` | 新增 | 薪资模板、规则、版本、薪资关联/历史真实持久化与权限 |
+| `GymEmployeeSaveReqVO` / `GymEmployeeService` / `ErrorCodeConstants` | 修改 | 薪资配置结构化并接入员工事务，新增业务错误码 |
+| `yudao-module-gym/.../controller/admin/member/`、`service/member/`、`dal/*/member/` | 新增 | 会员档案基础 CRUD、手机号唯一、会员编号、门店/租户隔离 |
+| `GymBusinessPageReqVO` / `GymDateRange` | 新增 | 业务筛选与上海时区左闭右开日期范围 |
+| `script/gym/sql/05..08` | 新增 | 薪资/会员表与已实现批次菜单增量迁移 |
+| `script/gym/verify-salary-api.py` / `verify-member-api.py` | 新增 | 开发服务HTTP回归；联调资料保留供浏览器复查 |
+| `GymOrganizationServiceTest` / 测试DDL与清理SQL / `verify-migrations.py` | 修改 | 持久化、授权、原子回滚和迁移回归 |
+| `docs/gym-full-api-progress.md` / `architecture.md` / `testing.md` / 本文 | 新增/修改 | 范围、实现状态、结构与验证证据 |
+
+### 结构关系
+
+员工保存事务调用薪资服务，薪资服务只依赖员工/任职Mapper。模板以家族及版本持久化，发布不可变；家族根锁保证版本串行。员工锁及当前锁定读取防止并发重复关联/重叠，跨店自动结束旧配置须额外范围校验。会员基础通过GymDataScope与TenantBaseDO隔离；权益等后续继续扩展。
+
+### 验证证据
+
+- 薪资阶段53单元/集成测试通过；会员基础加3测试后56通过，0 failures/errors。
+- 主服务 Maven 打包退出0；MySQL隔离库二次迁移通过：7业务表、5页面、9条示范角色页面授权，临时库已清理。
+- 运行真实后端，使用用户指定admin验证薪资HTTP37断言；含8请求并发关联与4请求并发模板版本。测试 employeeId=3/templateId=2，资料带联调前缀保留。
+- 前端5666启动；浏览器新增模板、切换admin、发布及刷新持久化通过，截图 `/tmp/gym-salary-admin-verified.png`。前端git status为空。
+- Review发现并修复：规则String→List的通用转换报错、PATCH省略/null混淆、跨店结束旧配置未授权风险、MySQL快照下历史读取重复风险；新增回归及真实并发验证。
+
+### 影响面 / 风险
+
+仅修改后端仓库及本机开发库增量表/菜单，未清库或覆盖旧种子/前端代码。联调测试资料保留可复查；未自动提交/推送。薪资模板是配置，不代表工资计算完成；会员基础HTTP17断言通过；会员基础未接权益筛选/私教/跨店权益，也不能视为会员页完整验收。
+
+### 未做 / 后续
+
+全量目标保持active。继续体测、黑名单、卡权益、私教预约/签课、审批合同、工资报表以及剩余页面/第三方。用户随后明确授权：厂商设备/电子签/支付分账/核销真实接入先跳过并留记号，后续跟进补齐。本轮继续接口及真实未接入状态，不把厂商真实联调作为完成条件。后续继续记录真实HTTP/浏览器证据。
+
+## [2026-10-14 22:10 ~ 22:17] 全量 API 任务继续：体测与黑名单
+
+### 意图
+
+推进会员资料相关的两个业务页面，按现行页面字段实现持久化、授权和体测报告关联。用户已明确授权厂商真实接入先跳过留记号，待后续补齐；其余全量接口目标仍进行。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/member/GymBlacklistController` / `GymMeasurementController`及VO | 新增 | 黑名单与体测REST CRUD、权限码与类型校验 |
+| `service/member/GymMemberRecordsService` / `dal/*/member/GymBlacklist*` / `GymMeasurement*` | 新增 | 实际持久化、全店阻断时间判断、撤销留痕、体测附件归属校验 |
+| `script/gym/sql/09..10` / `verify-migrations.py` | 新增/修改 | 表、菜单和两轮隔离迁移验证 |
+| `GymOrganizationServiceTest` / 测试SQL | 修改 | 新增6个持久化/授权/状态/附件负例测试 |
+| `verify-member-api.py` | 修改 | 扩展真实HTTP体测与黑名单验证，并修复脚本文件名含连字符时的动态模块加载 |
+| `docs/architecture.md` / `testing.md` / `gym-full-api-progress.md` / 本文 | 修改 | 结构、证据与第三方暂缓标记 |
+
+### 结构关系
+
+体测与黑名单Controller使用会员记录Service，复用会员/门店范围以及GymFileMapper验证报告类别与归属。黑名单保留撤销时间及限制标志，提供checkEntry/checkPurchase供后续真实入场/购卡调用；尚未连接这些业务流程，不把CRUD当成已实现实际门禁阻断。
+
+### 验证证据
+
+- 完整Gym回归：62 tests，0 failures/errors/skipped；新增6例实际H2/MyBatis、租户与方法权限测试。
+- 主服务打包退出0，启动正常。会员/体测/黑名单真实HTTP28断言通过，测试memberId=3，测试资料保留。
+- 独立MySQL迁移验证：9表、7页面、13条示范角色页面授权，全部脚本两轮幂等，临时库删除。
+- admin浏览器体测列表与详情展示真实会员、门店、70.5kg及UTC时间；截图 `/tmp/gym-measurement-admin-verified.png`。
+- 本批review：核对范围、租户子查询、字段不可变、结束时间省略/null、撤销幂等、文件类别/门店校验和权限拒绝路径；前端git status为空，git diff --check通过。
+
+### 影响面 / 风险
+
+仅后端及开发库增量表/菜单；未改变前端。测试资料带HTTP前缀并保留，不清库。真实文件上传后关联体测的浏览器路径尚未回归；文件身份和类别已有真实数据库负例覆盖。
+
+### 未做 / 后续
+
+继续卡模板、会员权益、多门店、私教、审批、合同、工资报表及剩余页面。第三方实接按用户授权暂缓，TODO标记在进度文档。全量目标保持active，未声明所有API完成。
+
+## [2026-10-14] 全量API继续：卡权益、私教与审批模板
+
+### 意图
+
+实现现行会员卡与私教页面的业务接口，推进审批开卡真实闭环，只修改后端。
+
+### 改了什么
+
+新增card/course/approval模板DO、Mapper、VO、Service与Controller；成员多门店归属和权益筛选；SQL11–17与菜单；HTTP卡课程/审批模板验证脚本及既有脚本活跃门店选择；真实数据库与并发业务测试；进度、架构、测试记录。
+
+### 结构关系
+
+卡发放受可信业务来源约束；GymBusinessMutex协调新店与全部门店权益。预约预占、取消释放、签到前置与课消通过锁和唯一约束保证事务一致性。审批模板固化有序员工步骤，发布校验有效账号，后续审批状态机将据此执行真实业务。
+
+### 验证证据
+
+完整Gym84测试通过，主服务打包成功；新版真实HTTP卡课程46、会员28、薪资37、审批模板22断言通过。隔离迁移21表/14页面/26页面授权两轮幂等。浏览器admin完成卡创建发布及课程列表加载，截图/tmp/gym-card-admin-verified.png。源码review修正新店锁顺序、版本冻结、产品时间筛选和停用教练绑定校验。前端git status保持为空。
+
+### 影响面 / 风险
+
+开发库增量表菜单及带联调前缀测试数据，不清库、不修改前端。业务菜单数不能证明所有页面已完整验收；审批开卡来源、SELF负责会员范围及实际权益全链路HTTP/浏览器仍待补齐。
+
+### 未做 / 后续
+
+继续审批发起/审核实际开卡与改价、合同、工资报表及剩余配置。设备/电子签/支付分账/核销真实厂商接入按用户授权暂缓并保留TODO。全量目标active，尚未全量交付。
+
+审批模板前端证据：admin在现有页面修改V5草稿名称为“浏览器联调开卡审批-20261014”，保存、发布并刷新后仍显示已发布；截图 `/tmp/gym-approval-template-admin-verified.png`。审批员工为现有店长2账号，未修改账号角色或权限。
+
+## [2026-10-15] 审批记录及开卡/改价真实事务闭环
+
+### 意图
+
+将模板配置推进为真实业务审批，避免只有已通过状态却没有发卡/改价效果。
+
+### 改了什么
+
+新增GymApprovalDO/TaskDO及Mapper、请求/响应VO、Service/Controller；SQL18/19申请/步骤表和审批菜单。模板发布增加审批权限校验。新增5个业务测试及verify-approval-flow-api.py；模板HTTP脚本选择具备既有权限的示范员工，隔离迁移扩展。更新架构/进度/测试说明。
+
+### 结构关系
+
+申请固化模板、业务及账户步骤快照；租户+申请人+提交键唯一防重。最终审核与GymCardService.issue/GymCourseService.applyApprovedPrice同一事务；数据/权限失败回滚步骤。改价不覆盖已经变化的原价；拒绝不发卡。业务来源approval可追溯实际发卡记录。
+
+### 验证证据
+
+89项Gym回归全部通过、构建启动成功；真实HTTP52断言、模板22断言通过，迁移23表/15菜单/28授权两轮幂等。浏览器admin提交开卡、指定gymstore审批，切回admin确认真实期限卡/次数余额，并使用期限卡预约。前端git status与diff --check为空。
+
+### 影响面 / 风险
+
+仅后端和本机开发库业务/菜单增量；保留联调资料，没有修改账号角色。已有store2无审批权限被正确拒绝；新联调员工仅关联已有gymstore权限。租户事务锁目前串行所有申请和审核，后续性能测试可缩小粒度但不能破坏锁顺序。历史错误联调产生的未开卡会员/未使用卡/测试排期保留供复查，不伪造清理成功。
+
+### 未做 / 后续
+
+合同及订单审批来源明确尚未接入；其他人工审核只标记审核完成。继续合同、工资/报表和剩余页面；SELF负责会员及通知仍待补。厂商真实接入按授权暂缓并保留TODO，全量目标active。
+
+## [2026-10-15] 合同模板版本及受控PDF预览
+
+### 意图
+
+推进现行合同模板页面，保持已发布合同原文不可变，并验证真实文件上传/下载。
+
+### 改了什么
+
+新增合同模板DO/Mapper/VO/Service/Controller、SQL20/21；GymFileServiceImpl支持已发布合同模板的受控跨店预览，保留其他文件原范围。增加3个数据库模板测试与1个文件权限测试、verify-contract-template-api.py及隔离迁移计数。01种子增加gym:contracts:templates总部操作排除项。
+
+### 结构关系
+
+总部模板版本绑定受控PDF，发布后不能替换内容或回草稿；版本家族根及源当前锁分配版本。文件读取检查同租户发布引用、合同权限及非空范围，未公开存储URL，也不扩大上传范围。
+
+### 验证证据
+
+Gym93测试通过，构建启动正常；合同模板真实HTTP26断言，包含真实PDF上传下载、4并发版本及共享撤回。隔离两轮迁移24表/16页面/29授权通过。迁移review发现并修复旧种子重跑会给示范门店增加合同模板菜单的问题。
+
+### 影响面 / 风险
+
+仅后端及开发库增量；已发布模板是共享的合同模板原件，实例合同不应复用该共享引用承载会员签署个人资料。前端真实上传发现JSON化FormData导致只传uid，没有文件字节，后端拒绝且没有伪造文件。遵守不改前端要求，保留UPLOAD-JSON-001记录供前端团队修复。
+
+### 未做 / 后续
+
+合同记录、实例文件、签约审批和提醒继续实现。前端上传需请求层改为multipart，不能仅后端恢复丢失字节。厂商电子签继续按用户授权暂缓并留TODO；全量目标active。
+
+## [2026-10-15] 合同实例、签约审批授权与提醒记录
+
+### 意图
+
+将模板连接至真实权益与合同记录，完成现行页面查询、签约审批与提醒接口，保留服务商未接入的真实状态。
+
+### 改了什么
+
+新增合同/事件/提醒DO、Mapper、请求响应VO、GymContractService/Controller、SQL22/23；卡/私教发放hook与签约审批分支。独立实例PDF、快照、授权及failed提醒持久化；verify-contract-flow-api.py与5个真实数据库业务测试。修复长门店编码导致会员号/卡号越界，并防止截断Unicode代理对。返回渠道提示使用人类可读原因，TODO标记留代码和文档。
+
+### 结构关系
+
+发放权益时使用相应类型最新发布模板，独立复制原件，合同来源唯一；FileApi文件创建与业务记录在同一调用链，业务表事务原子。最终签约审批授权与事件同一事务，不生成电子签回执或签署字段。提醒按合同/key幂等，不更改旧失败记录。
+
+### 验证证据
+
+98 Gym测试通过、构建启动成功；合同真实HTTP36断言，包含8并发开卡、8签约、8提醒与实际独立PDF下载。隔离两轮迁移27表/17页面/31授权通过。review核对门店/租户范围、快照屏蔽、文件不可替换、重放与失败事务、编号长度和UTF8合法性。前端仍无源码修改。
+
+### 影响面 / 风险
+
+实例原件是模板PDF副本，业务身份与权益另存快照；没有自动表单填充、签章或外部通知。已配置模板但原件不存在会回滚发卡和审核，防止生成空合同。文件存储的物理对象若在后续数据库写入失败时已创建，仍可能留下未引用对象，清理须按infra存储策略执行；业务表和授权不提交。当前提醒仅保存未配置失败，自动调度和真实渠道仍待接入。
+
+### 未做 / 后续
+
+继续工资/报表、经营与设备/内容/支付配置等剩余页面；SELF负责会员、通知与厂商真实接入按明确进度处理。电子签真实接入用户已授权暂缓，保持未配置状态。UPLOAD-JSON-001及IAB PDF渲染限制记录在进度文档，全量目标active。
+
+
+## [2026-10-15 09:30 ~ 09:54] 门店工资计算、确认冻结与跨店来源
+
+### 意图
+
+实现现有门店工资表页面，按用户确认的“本人全部任职门店业绩汇总至唯一发薪门店”规则计算，并保证失败不覆盖、确认后不重算。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../payroll/ | 新增 | Controller、请求响应、服务、工资及员工明细表映射 |
+| yudao-module-gym/.../finance/ | 新增 | 不可伪造公开流水的内部支付/退款来源事件映射 |
+| yudao-module-gym/.../salary/GymSalaryService.java | 修改 | 已确认工资所用薪资配置不能缩短覆盖期间 |
+| yudao-module-gym/.../employee/GymEmployeeService.java | 修改 | 配置并发采用READ_COMMITTED配合员工锁 |
+| script/gym/sql/24、25 | 新增 | 三表及现有工资页示范菜单，已应用本地运行库 |
+| script/gym/verify-payroll-api.py | 新增 | HTTP并发、回滚、来源、冻结验证 |
+| GymOrganizationServiceTest、测试SQL、verify-migrations.py | 修改 | 真实事务与跨店权限、SQL幂等验证 |
+
+### 结构关系
+
+GymPayrollController→GymPayrollService→Store/Employee/Salary锁及FinancialEvent/LessonRecord来源→Payroll/PayrollItem快照。固定底薪和加扣按整月，销售按实际支付退款净额，消课仅confirmed实际单位；所有员工先算成功再替换原草稿。确认锁员工/配置并重新核对期间，SalaryService配置修改同步保护已确认覆盖期间。
+
+### 验证证据
+
+完整105 Gym测试通过（78组织业务+13文件服务+5文件类型+9文件控制器）。mvn -q -DskipTests -pl yudao-server -am package成功，新jar运行48080。verify-migrations.py隔离库连续两次30表/18页面/33授权通过。verify-payroll-api.py真实HTTP24断言，浏览器admin重算、来源查看、确认后--verify-confirmed补充HTTP10断言通过。fixture storeId131/payrollId1，员工各5050合计10100，已确认。截图/tmp/gym-payroll-source-admin.png及/tmp/gym-payroll-confirmed-admin.png。
+
+### 影响面 / 风险
+
+跨店计算需覆盖全部实际来源店权限；发薪店查看保留汇总并屏蔽无权限跨店来源，本人SELF只见本人项。当前内部finance来源尚无真实业务写入器，待订单/支付接入；发卡标价不计收入。月份内中途入职或配置切换按现有页面整月约束拒绝，不自行按天摊算。没有支付工资转账动作。测试门店停用，防止触发全店卡自动扩店；测试薪资配置至2026-07-01。
+
+### 未做 / 后续
+
+销售/支付实际来源写入、其余报表与配置页面、全项目最终review仍未完成。合同脚本新42断言复验在S3上传处被403阻塞，不能当通过；旧36通过记录仍有效，当前上传不可用已记录。前端代码保持未修改。
+
+
+## [2026-10-15 09:55 ~ 10:05] 业绩、会员汇总与经营看板
+
+### 意图
+
+接入现有home、reports/performance、reports/members三页，按真实支付退款事件、成功签到及授权会员关系统计，避免用权益发放价伪造收入。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/report/ | 新增 | 三个GET接口、分页/日期/分组请求、类型化汇总与看板响应 |
+| yudao-module-gym/.../service/report/GymReportService.java | 新增 | 门店范围、净额/订单去重、会员关系去重、到期提醒、连续日趋势、本人当前待办 |
+| script/gym/sql/26-gym-report-menus.sql | 新增 | 现有三页路由；会员卡报表待订单明细，不提前发布 |
+| script/gym/verify-report-api.py | 新增 | 真实HTTP只读交叉核对与跨店拒绝 |
+| GymOrganizationServiceTest、verify-migrations.py | 修改 | 边界、分组、租户、待办账号绑定、迁移验证 |
+
+### 结构关系
+
+GymReportController→GymReportService→FinancialEvent/Checkin/MemberStore/MemberCardStore/CoursePack及审批表。查询使用只读REPEATABLE_READ保持各指标一致；所有来源在授权门店内过滤，不把SELF升级为门店统计权限。业绩汇总在分页前计算；支付订单按业务订单ID去重，退款只扣净额不增加收款订单数。默认报表查询全部历史，显式起止采用左闭右开北京时间范围，单次有界范围上限366天；看板默认近7天，支持30天，补零日趋势。
+
+### 验证证据
+
+110完整Gym测试通过，包含实际数据库事务、月份边界、部分付款订单去重、单独退款负净额、跨店会员去重、卡和课程到期按人去重、成功/失败入场区分、逐级审批当前本人及账号重绑定。构建成功；隔离迁移30表/21页面/39示范页面授权两次幂等通过，SQL26已应用本地运行库。真实HTTP51断言通过，核对看板/业绩/会员API以及gymstore跨店拒绝。前端admin验证员工汇总、会员表、7/30天切换与图表，截图/tmp/gym-report-performance-admin.png、/tmp/gym-report-members-admin.png、/tmp/gym-dashboard-admin.png。前端源码未改。
+
+### 影响面 / 风险
+
+在册/新增会员跨店看板去重，单店报表每店各计自己的关系；到期人数以当前时点后30天且active权益计算，课程还要求剩余课时。待办只显示本人当前可处理步骤前10项，须同时具有审批读/决定权限及有效员工绑定。当前财务事件尚无实际订单支付写入器，运行库收入为0，不能认定真实收款链路完成；数据库测试中的支付事件仅作测试夹具。当前服务在授权范围加载来源后汇总，极大历史数据量仍需SQL聚合或离线汇总优化。
+
+### 未做 / 后续
+
+会员卡报表需要真实订单项、卡种版本和支付/退款归属，目前不以发卡数量替代售出数量；订单/包月/核销、支付分账、内容设备配置等继续。SELF负责会员访问、第三方厂商未接入和上传阻塞记录保持。全量目标和最终整体review尚未完成。
+
+
+## [2026-10-15 10:06 ~ 10:13] 门店在线售卡、包月及核销条件
+
+### 意图
+
+实现现有settings页面三类GET/PUT接口，落地R32的业务条件配置，为后续订单、自动扣款及核销执行提供真实持久化来源。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/sales/ | 新增 | 三类设置控制器与严格请求VO，使用gym:sales:settings |
+| yudao-module-gym/.../service/sales/GymSalesSettingsService.java | 新增 | 完整替换、店与卡模板校验、串行保存、幂等版本、默认值和字符串关联ID |
+| yudao-module-gym/.../dal/.../sales/ | 新增 | gym_sales_setting单行JSON业务设置映射 |
+| script/gym/sql/27、28 | 新增 | 设置表及已实现settings菜单，已应用本地库 |
+| script/gym/verify-sales-settings-api.py | 新增 | 真实HTTP并发、保留原设置、时间清除及跨店拒绝 |
+| GymOrganizationServiceTest、测试SQL、verify-migrations.py | 修改 | 六项设置真实数据库测试与迁移统计 |
+
+### 结构关系
+
+GymSalesSettingsController→GymSalesSettingsService→门店锁→按ID排序的卡模板锁→gym_sales_setting。tenant/store/kind唯一，每次PUT完整替换该类设置，验证失败不触碰旧内容；相同内容重复保存不增加revision。读取无记录返回明确关闭/空方案默认值而不插入伪配置。在线价和包月价只属设置，不改已发布卡模板快照。
+
+### 验证证据
+
+完整Gym测试116项通过（89组织业务、13文件服务、5类型、9控制器）。构建成功，新jar运行48080；隔离库31表/22页面/41示范页面授权两次迁移幂等通过。真实HTTP38断言，含6并发相同保存、字符串卡ID、重复方案拒绝、依赖/时段/扣款日错误拒绝、旧时段清除、权限边界。fixture store132/template27，停用开发门店保留。admin现有页面将在线售价88.88改89.88，保存成功且刷新保持；包月页显示59.99及授权日规则，自助核销页显示停用、须签到、全天。截图/tmp/gym-sales-settings-admin.png。前端源码未修改。
+
+### 影响面 / 风险
+
+启用方案须适用本店且卡已发布；包月限定28至31天期限卡，固定扣款日1至28，通知/宽限0至30天；停用已失效卡的方案允许保存以便撤下，不可再次启用。审批须依赖签约，核销渠道去重/白名单且启用时非空，每日限定时段不跨午夜。不同管理员的完整PUT按店串行，最后成功保存覆盖前次；当前前端不发送revision条件，尚无浏览器过期编辑冲突检测。业务enabled不等于厂商已配置，未发卡、扣款或核销。
+
+### 未做 / 后续
+
+订单支付/退款回调及财务事件写入、包月授权周期/自动扣款、真实核销执行尚未完成；第三方资料按用户授权留记号。收款分账、内容设备、活动加盟等剩余接口与全量最终review继续。前端上传字节缺失和S3 403仍按原记录跟进。
+
+
+## [2026-10-15 10:14 ~ 10:28] 收款账户、分账规则及结算记录查询
+
+### 意图
+
+实现现有payment-accounts、settlement-rules、settlements页面接口，对齐R35的脱敏账户、渠道绑定前置条件、规则版本与到账记录查询；第三方接入按用户授权保留TODO，不能假造绑定或到账。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/settlement/ | 新增 | 账户CRUD/绑定、规则版本及记录查询控制器和请求/响应VO |
+| yudao-module-gym/.../service/settlement/GymSettlementService.java | 新增 | 账户脱敏/引用管理、未配置绑定、精确比例、版本串行与冻结、范围校验 |
+| yudao-module-gym/.../dal/.../settlement/ | 新增 | 三个真实持久化模型与Mapper |
+| script/gym/sql/29、30 | 新增 | 账户、规则、结算快照表和仅总部示范角色三页菜单 |
+| script/gym/verify-settlement-api.py | 新增 | 真实HTTP46断言，测试资料不产生绑定或划款 |
+| GymOrganizationServiceTest、测试SQL、verify-migrations.py | 修改 | 七项业务数据库测试，迁移幂等和范围验证 |
+
+### 结构关系
+
+账户与规则/记录由GymSettlementService连接。账户归属/商户/渠道/末四位冻结，只保存4位及vault://、secret://、kms://引用；绑定当前返回并保存unconfigured，不直接设bound。门店锁串行分配规则版本，账户ID顺序锁保护启用，READ_COMMITTED避免等待后读旧状态。新版本非回溯生效时关闭旧适用区间，不改比例/周期快照。当前有效规则引用的账户不能直接换凭据；已有结算记录独立读取不可变快照。
+
+### 验证证据
+
+123完整Gym测试通过（96组织业务+13文件服务+5文件类型+9文件控制器）。覆盖精确比例、重复/混合渠道接收者、未绑定拒绝启用、快照冻结、历史重叠拒绝、并发版本与激活、有效凭据引用保护、末四位/引用校验、租户/门店及读写权限。隔离迁移34表/25页面/44示范页面授权两次幂等通过。构建启动成功，SQL29/30已应用；真实HTTP46断言通过，store133及account1/2、rule1-7开发资料保留。
+
+浏览器admin把账户B改名“浏览器联调收款账户-20261015”，保存刷新后保留****1234及unconfigured；规则V7间隔改3保存，刷新后仍3且draft，未绑定启用被拒绝。结算记录页真实空列表，无假到账。截图/tmp/gym-payment-accounts-admin.png、/tmp/gym-settlement-rules-admin.png、/tmp/gym-settlements-admin.png。前端代码未改。
+
+### 影响面 / 风险
+
+仅原总部示范角色增加三页菜单，不给门店旧角色扩权；有自定义管理权限的门店账号仍按门店范围限制，不能读取总部账户。凭据更换使绑定失效，有效规则引用时要求新增账户/版本替代。真实厂商绑定及分账/到账回执生产者未接入，当前不能启用任何未真实绑定的账户，也没有公开创建成功结算接口。规则生效与到期边界按北京时间日期，结束日不含；记录日期过滤dueAt。暂无真实平台到账周期或划付承诺。
+
+### 未做 / 后续
+
+TODO-INTEGRATION-PAYMENT与TODO-INTEGRATION-PROFIT-SHARING保留代码及文档；未来生产者须从可信订单/支付/厂商回执写记录及settledAt，当前未接，不算全交易链路完成。前端交接项 FRONTEND-SETTLEMENT-ERROR-001：点击启用未绑定规则，后端返回1070014007，页面没有观察到业务错误提示，控制台出现事件处理未捕获错误；刷新证明draft保留。依“不改前端”仅记录。订单/包月/核销、设备内容、活动加盟、卡报表与SELF负责会员，以及整体最终review继续。
+
+
+## [2026-10-15 10:29 ~ 10:46] 多店活动、报名和加盟意向
+
+### 意图
+
+落实R16/R34现有活动与加盟管理页面，以及R11意向提交。活动人数从真实报名持久化归集，匿名意向不暴露联系方式，操作按店和总部范围校验。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/marketing/ | 新增 | 活动列表/详情/创建/编辑/状态、报名列表/代报名/取消、总部意向管理 |
+| yudao-module-gym/.../controller/app/marketing/AppGymFranchiseController.java | 新增 | 匿名意向提交，强制幂等键，公开响应只含收件编号和received |
+| yudao-module-gym/.../service/marketing/ | 新增 | 状态/名额/范围/封面校验、咨询幂等与处理审计、按传输来源和租户限流 |
+| yudao-module-gym/.../dal/.../marketing/ | 新增 | 活动、门店关系、报名和咨询四个模型/Mapper |
+| yudao-module-gym/pom.xml | 修改 | 显式依赖protection starter提供公开提交限流 |
+| script/gym/sql/31、32 | 新增 | 四表及仅总部示范角色两页菜单 |
+| script/gym/verify-marketing-api.py | 新增 | HTTP48断言、变更转发IP头的限流复核 |
+| GymOrganizationServiceTest、GymInquiryRateLimiterKeyResolverTest、测试SQL及迁移验证器 | 修改/新增 | 7项业务数据库测试与2项反绕过限流测试 |
+
+### 结构关系
+
+GymMarketingController→GymMarketingService→活动/门店/报名表。活动行锁串行登记、取消、容量及终态变更，同活动同会员唯一，取消不删除记录；二次报名复用原记录并只占一次名额。共享活动编辑须覆盖全部原/新门店，局部门店仅见自身关系和报名计数；报名姓名/门店快照不随会员后续改名而变化。封面只接受活动门店所属受控图片，响应不放宽私有文件权限。
+
+AppGymFranchiseController→租户+TCP来源IP限流→submitInquiry→唯一提交键/内容摘要。每60秒5次，键不包含正文或幂等键，忽略客户端伪造的X-Forwarded-For；代理后的相同传输来源共享该配额。公开只返回id/received，无公开联系方式查询。总部管理端读取和new→contacted→closed处理，记录处理人/时间。
+
+### 验证证据
+
+完整Gym测试132通过（103组织业务+13文件服务+5类型+9控制器+2限流键）。覆盖名额并发、幂等、取消/二次报名、已有报名日程冻结、封面归属、租户/门店/权限，以及匿名回执无PII、并发咨询仅一条、处理审计。隔离迁移38表/27页面/46示范页面授权两轮幂等通过。构建成功，SQL31/32应用本地库。真实HTTP48断言，含6并发相同报名、超额拒绝、活动取消历史保留、匿名提交/重复/冲突及变化正文不能绕过限流。活动2（后更名浏览器活动验证-20261015）保留2条确认报名，咨询4供浏览器复查。
+
+前端admin修改活动名称及名额3→4，保存刷新后详情2/4并显示两条真实报名；加盟咨询4测试状态改已联系，保存成功，未实际联系或通知任何人。截图/tmp/gym-activity-admin.png与/tmp/gym-franchise-admin.png。前端源码未改。
+
+### 影响面 / 风险
+
+活动终态不可重开；已有报名不允许改门店/日程，但可增加容量、修改名称介绍和封面。发布要求门店启用且活动未结束，结束报名不伪造到场；取消保留报名历史并取消确认名额。活动封面仍受已记录的前端上传与S3 403问题影响，本轮不伪造上传成功。匿名入口需要tenant-id和8至128位Idempotency-Key，改变内容复用键拒绝；不发短信、推送或加盟通知。
+
+### 未做 / 后续
+
+活动会员身份直连的客户端页面及通知分发不属于本轮现有后台页面操作，报名核心和有权限代报名接口已具备；未来会员端须绑定登录身份而非信任memberId。真实通知厂商接入按用户授权留记号。剩余设备/器械、客户端展示/二维码、订单/包月/核销记录和会员卡报表、SELF负责会员，以及整体最终review继续。
+
+
+## [2026-10-15 10:47 ~ 11:02] 设备柜格、指令审计及器械教学接口
+
+### 意图
+
+实现现有devices、equipment页面，完成R27/R37的软件配置、权限及失败日志；厂商对接按用户授权留TODO，避免把未发送指令当成开门/开柜成功。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/device/ | 新增 | 设备登记/编辑/查询、柜格PUT、命令POST/GET、器械与教学接口和VO |
+| yudao-module-gym/.../service/device/GymDeviceService.java | 新增 | 设备身份冻结、后台不可改遥测、柜格历史保留、幂等失败指令、媒体归属和权限 |
+| yudao-module-gym/.../dal/.../device/ | 新增 | 五张业务/审计表模型与Mapper |
+| script/gym/sql/33、34 | 新增 | 五表和总部/示范店长的两页菜单，已应用本地运行库 |
+| script/gym/verify-device-api.py | 新增 | 真实HTTP、门店账号正向操作与越权、教学验证范围单列 |
+| GymOrganizationServiceTest、测试SQL、verify-migrations.py | 修改 | 七项数据库测试与幂等迁移计数 |
+
+### 结构关系
+
+GymDeviceController→GymDeviceService→按租户/门店的设备、柜格、命令、器械及教学表。设备行锁串行柜格替换和指令，命令tenant/device/requester/key唯一且摘要必须相同。柜号规范化、移除只取消configured，恢复同号复用原ID；不清除可信占用/预留状态。配置active与真实online分开，后台不能提交online/lastSeenAt，当前没有可信心跳即false/null。教程只引用同店受控image或MP4 video，不放宽私有文件读取。
+
+### 验证证据
+
+139完整Gym测试通过（110组织业务+13文件服务+5类型+9控制器+2限流键）。包含重复UID、遥测伪造拒绝、柜格移除恢复及忙碌保护、6并发同键一条指令、不同内容拒绝、错误目标、停用失败日志、mock也不成功、教学同店/父实体/状态校验及权限分离。隔离迁移43表/29页面/50示范页面授权，两轮幂等通过。构建成功、SQL33/34应用。
+
+真实HTTP最终38断言通过，device4/5、equipment1，fixture /tmp/gym-device-fixture.json。前端admin柜格新增A3保存后在操作选择器可见，连续两次同一指令只保留同一条失败日志，显示“设备厂商接口未配置，未发送远程指令”；器械改名/型号保存刷新保留。截图/tmp/gym-device-command-admin.png、/tmp/gym-equipment-admin.png。前端源码未改。
+
+### 影响面 / 风险
+
+厂商未配置的全部指令仅记录failed，不执行物理动作；provider=mock也不产生成功回执。停用门店/设备/柜格有各自未发送原因。柜格available仅管理配置可用，occupancyState初始unknown，不伪造空闲或占用。设备读/写/远程指令与器械读/写为独立权限，示范门店账号只能操作本店。
+
+真实教学正向上传/引用/预览本轮没有通过：现有媒体全部属于124总部部门，124没有gym_store业务行，不能作为125器械的同店文件；服务正确拒绝。未为测试伪造总部为业务门店，也未改原文件归属。既有文件内容读取仍出现S3Exception/403，新文件上传又受UPLOAD-JSON-001限制。H2中已有同店媒体关联及启停的正向业务测试，不能代替真实上传和预览。
+
+### 未做 / 后续
+
+TODO-INTEGRATION-DEVICE保留，厂商心跳、身份核验、真实开门开柜与回执还未接入。柜格占用来源预留但无公开伪造入口。教学真实上传/预览需有效存储和正确前端上传请求，不能算已完成。展示/二维码、订单/包月/核销记录和会员卡报表、SELF负责会员与全项目最终review继续，整体目标active。
+
+
+## [2026-10-15 11:03 ~ 11:12] gym独立开发存储与真实媒体链路补验
+
+### 意图
+
+解除S3示例账户403对新文件联调的阻塞，补齐合同及器械教学真实文件验证，保持全局默认存储和前端源码不变。展示配置/二维码接口仍是下一步，并未在本条认定完成。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| infra/api/file/FileApi、FileApiImpl | 修改 | 新增显式存储ID重载，原四参数行为保留 |
+| infra/service/file/FileService、FileServiceImpl | 修改 | 完整复用原内容/名称/类型/路径校验，显式选择FileClient；无效目标不回退 |
+| gym/service/file/GymFileServiceImpl、gym/service/contract/GymContractService | 修改 | 可选gym.file.storage-config-id用于上传及独立合同原件，不允许由请求体选择 |
+| script/gym/run-local.sh | 新增 | 本地仅gym默认选现有数据库存储4，环境变量可覆盖；全局master不动 |
+| script/gym/verify-gym-storage-api.py | 新增 | 有效PNG上传、字节读取、权限、教学关联/启停真实验证 |
+| FileServiceImplTest、GymFileServiceImplTest | 修改 | 显式目标/默认隔离、缺失目标不回退及gym私有文件验证保留 |
+
+### 结构关系
+
+Gym上传及合同复制→FileApi可选配置重载→FileService相同校验管线→明确FileClient→infra_file/infra_file_content与gym_file。无配置时仍走既有master逻辑，其他调用方不变。本地启动脚本显式传gym.file.storage-config-id=4，不调用updateFileConfigMaster、不修改配置22，也不自动重试至其他存储。受控文件仍按租户/门店读取，响应无infra URL。
+
+### 验证证据
+
+`mvn -q -pl yudao-module-gym -am test -Dtest='Gym*Test,FileServiceImplTest' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`：140项Gym测试、37项infra文件服务测试全部通过。构建成功，并用run-local.sh启动当前后端。
+
+verify-gym-storage-api.py真实HTTP18断言通过：32x32有效PNG真实multipart上传，file19/store125，134字节下载完全一致；总部及门店受控读取，创建tutorial1并启停成功。只读SQL确认全局master仍22/storage20，新文件config4且blob长度134一致。verify-contract-flow-api.py此前未通过的42断言本次全部通过，contract3/member17，独立原件、签约授权不假签、提醒幂等及日期/ID类型核对均完成。
+
+admin现有器械页看到真实教学记录，经预览按钮进入/gym/file-preview/19，蓝白测试PNG实际渲染。截图/tmp/gym-real-tutorial-preview.png。前端源码无修改。
+
+### 影响面 / 风险
+
+仅显式选择该配置的gym新文件使用数据库内容存储。原S3对象不迁移、不改归属，旧对象403仍存在；生产不配置gym.file.storage-config-id时行为不变，须自行配置真实可用存储。数据库存储是本地联调选择，不作为已修复S3账号的声明。原文件名随机前缀、类型/大小校验、门店/租户权限继续生效，缺失显式存储不静默回退。
+
+### 未做 / 后续
+
+UPLOAD-JSON-001仍未修复：前端上传按钮未携带文件字节，遵守用户不改前端要求留交接。当前真实媒体通过HTTP上传后前端预览，不能当作浏览器上传成功。IAB嵌入PDF渲染仍未确认，不以HTTP原件读取替代渲染证明。展示配置、二维码、交易记录/卡报表、SELF范围以及全量最终review继续，目标active。
+
+
+## [2026-10-15 11:10 ~ 11:35] 展示配置与场景二维码后端及现有前端验证
+
+### 意图
+
+继续R33客户端展示设置、R37小程序/App场景码，保持用户“仅后端、不改前端”的范围。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/content/ | 新增 | 设置GET/PUT与场景码列表/详情/创建、参数校验 |
+| yudao-module-gym/.../service/content/GymContentService.java | 新增 | 独立配置、HTML清洗、同店私有引用、版本/场景幂等 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/content/ | 新增 | 两表模型与mapper |
+| script/gym/sql/35-gym-client-content.sql、36-gym-client-content-menus.sql | 新增 | 两表、两菜单及限定示范角色授权 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、sql/create_tables.sql、clean.sql | 修改 | 10项业务测试及隔离表 |
+| script/gym/verify-migrations.py、verify-content-api.py | 修改/新增 | 两轮迁移与真实内容/二维码HTTP检查 |
+| docs/architecture.md、testing.md、gym-full-api-progress.md、script/gym/README.md | 修改 | 结构、当前验证边界、剩余范围 |
+
+### 结构关系
+
+GymContentController调用GymContentService，通过独立mapper保存客户端配置与二维码结果，复用GymDataScope/GymStoreService/GymFileMapper/GymCourseSessionMapper。HTML校验所有图片及文件预览引用，清洗后保存JSON；门店配置不隐式读取总部草稿。二维码按真实排课和门店验证后持久化结果，未接入外部渠道。
+
+### 验证证据
+
+完整Gym测试150项通过；mvn package构建成功。verify-migrations.py连续两轮45表/31菜单/53授权一致。verify-content-api.py首次43断言通过，含真实排课引用、私有媒体、权限、失败回滚和六并发码记录；另独立MySQL配置六并发补验6断言通过。完整脚本增加配置并发项后44版本尚未重跑。SQL35/36应用，新jar经run-local.sh运行。
+
+浏览器admin保存展示名称/纯文本正文，刷新后仍在；封面file19真实加载。二维码重复提交仍4条failed且创建时间未改，无假图片。截图/tmp/gym-client-settings-admin.png、/tmp/gym-qr-codes-admin.png；前端git status干净。
+
+### 影响面 / 风险
+
+未修改前端，新增业务菜单累计31。配置PUT为完整替换，版本是后端计数而非乐观锁令牌。HTML仅受控私有图片，不接受外部图片URL。FRONTEND-CONTENT-IMAGE-001：私有图片正文回填为空并dirty，纯文本正常；当前未确定具体根因。窄面板封面覆盖表单和二维码未展示failureReason均如实留记录。
+
+### 未做 / 后续
+
+真实小程序码/App跳转配置及厂商生成未接入，保持failed/未配置。继续订单、包月、核销、会员卡报表、真实交易事件写入、SELF范围和最终全量review；全量目标仍active。
+
+补充验证：增加配置并发断言后的verify-content-api.py完整重跑44断言通过，真实排课引用=True；替代上条“44版本尚未重跑”的当时状态。复跑保留HTTP联调配置，浏览器保存刷新证据为复跑前的截图。
+
+
+## [2026-10-15 11:25 ~ 11:40] 自主办卡、包月与核销的持久化记录查询
+
+### 意图
+
+补齐现有三个交易记录页面所需GET接口及真实来源模型，为后续可信交易、协议和验券写入提供结构；不以空态查询代替闭环。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../controller/admin/sales/GymSalesRecordsController.java、vo/Gym*RespVO.java | 新增 | 六个GET接口及脱敏类型响应 |
+| yudao-module-gym/.../service/sales/GymSalesRecordsService.java | 新增 | 来源限制、分页范围、父子校验、时间边界与详情快照 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/sales/Gym{BusinessOrder,OrderItem,OrderPayment,OrderRefund,Subscription,SubscriptionCycle,Verification}* | 新增 | 七表类型和mapper |
+| script/gym/sql/37-gym-sales-records.sql、38-gym-sales-records-menus.sql | 新增 | 七表及三个业务菜单 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、sql/create_tables.sql、clean.sql、enums/ErrorCodeConstants.java | 修改 | 七项数据库测试、清理与领域错误 |
+| script/gym/verify-migrations.py、verify-sales-records-api.py | 修改/新增 | 两轮迁移及真实只读HTTP验证 |
+| docs/architecture.md、testing.md、gym-full-api-progress.md、script/gym/README.md | 修改 | 查询结构、验证范围和未完成链路 |
+
+### 结构关系
+
+Controller统一gym:sales:read，Service复用GymDataScope与门店资料，REPEATABLE_READ聚合订单项/支付/退款。包月周期先鉴权父协议；不暴露渠道身份/券引用/请求键。自主办卡只miniapp/app且card_sale，非目标订单不可通过详情读取。没有成功状态写入API，支付模块当前未启用，不强行启用整个框架。
+
+### 验证证据
+
+157项完整Gym测试通过；mvn package构建通过。verify-migrations.py两轮52表/34菜单/59授权一致；SQL37/38已应用，新jar经run-local.sh运行。verify-sales-records-api.py真实38断言通过；三个资源运行库记录数均0。H2覆盖有数据明细和金额/租户/范围/周期边界，未把H2夹具写进运行库。
+
+现有前端三页均显示暂无记录，截图/tmp/gym-sales-orders-admin.png、/tmp/gym-subscriptions-admin.png、/tmp/gym-verifications-admin.png。前端git status干净。调试修正未扣款周期chargedAt错误NOT NULL约束，以及周期非零点Instant筛选边界。
+
+### 影响面 / 风险
+
+新增三菜单，累计34业务页面入口；仅查询API不代表真实支付/代扣/核销已可用。有数据详情HTTP及前端抽屉尚未验证，审批来源分支亦待实现；不允许空库结果支持更广泛的验收声明。
+
+### 未做 / 后续
+
+交易写入、支付退款验证与权益/财务事件、协议授权和周期执行、验券/核销执行均未完成。继续补齐这些业务、会员卡报表、SELF范围和最终全量review；第三方真实资料仍按用户授权跳过并留TODO-INTEGRATION-COMMERCE。
+
+
+## [2026-10-15 11:35 ~ 11:45] 内部下单和支付退款的财务原子写入
+
+### 意图
+
+补上此前仅有记录读模型、没有可信财务写入器的缺口，为后续订单审批和履约建立来源；真实厂商仍按用户授权留待补齐。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/sales/GymCommerceService.java | 新增 | 服务端报价下单、核验后支付/退款、分笔额度与财务事务 |
+| yudao-module-gym/.../service/sales/payment/ | 新增 | 独立核验端口、未配置失败实现及条件注册配置 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/sales/GymOrderPolicy* | 新增 | 订单报价与合同审批规则快照 |
+| script/gym/sql/39-gym-order-policy.sql | 新增 | 幂等策略表 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/sales/payment/GymPaymentConfigurationTest.java | 修改/新增 | 十项数据库和两项真实配置测试 |
+| yudao-module-gym/.../sql/create_tables.sql、clean.sql、enums/ErrorCodeConstants.java | 修改 | 表、清理与交易领域错误 |
+| script/gym/verify-migrations.py、docs/architecture.md、testing.md、gym-full-api-progress.md、script/gym/README.md | 修改 | 迁移和实际边界证据 |
+
+### 结构关系
+
+内部购买流程调用CommerceService，复用门店/会员/黑名单/卡/报价规则；未增加公开下单或匿名回调。独立Verifier端口从商户凭据核验终态，默认实现失败，适配器存在时配置退让。核验后租户互斥及订单行锁，交易来源唯一；支付退款记录、订单汇总与财务事件同事务。报表/工资继续消费原财务模型，来源sourceType为gym_order_payment/gym_order_refund。
+
+### 验证证据
+
+169项完整Gym测试通过，包含十项新数据库测试和两项配置装配测试。六并发回执仅一条支付及财务事件，错误财务约束使支付/退款记录与汇总全部回滚。付款99.99/退款20净79.99，分笔全退净0，只在H2夹具。MySQL两轮53表/34菜单/59授权一致，SQL39应用，mvn package成功并run-local.sh启动；交易记录HTTP38断言回归通过。运行库五项交易/策略/财务计数均0。
+
+### 影响面 / 风险
+
+没有新增菜单或管理端写权限，前端未改。默认厂商核验器明确未配置；生产真实支付/退款未联调。付款状态与履约状态尚待衔接，不把paid自动解释为已开卡。零元单为pending_fulfillment，不写零值假支付或收入。
+
+### 未做 / 后续
+
+公开认证购买及可信商户回调入口、厂商适配、订单审批与权益/合同履约、退款后的权益处理尚未完成；包月、核销、卡报表、SELF范围、通知调度与最终全量debug/review继续。整体目标active。
+
+
+## [2026-10-15 11:45 ~ 12:00] 订单来源开卡审批与冻结购买快照履约
+
+### 意图
+
+补齐自主办卡页面已有“申请开卡审批”的orders来源；在可信付款事实基础上发放权益，防止重复或退款后发卡。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/approval/GymApprovalService.java | 修改 | orders来源服务器解析及最后一步原子履约 |
+| yudao-module-gym/.../service/sales/GymCommerceService.java | 修改 | 批准/非审批内部履约、冻结策略、按单位幂等和关联卡 |
+| yudao-module-gym/.../service/card/GymCardService.java | 修改 | 复用发卡逻辑，内部购买快照不受模板后续停用影响 |
+| yudao-module-gym/.../service/contract/GymContractService.java | 修改 | 必需合同实例的严格生成入口 |
+| yudao-module-gym/.../service/sales/GymSalesRecordsService.java、controller/admin/sales/vo/GymSalesOrderRespVO.java | 修改 | 详情补充冻结规则、履约时间与关联卡ID |
+| yudao-module-gym/.../enums/ErrorCodeConstants.java、GymOrganizationServiceTest.java | 修改 | 开卡条件错误及7项事务测试 |
+| script/gym/verify-sales-records-api.py、docs/architecture.md、testing.md、gym-full-api-progress.md、script/gym/README.md | 修改 | 新HTTP拒绝边界、结构与实际验证范围 |
+
+### 结构关系
+
+ApprovalService→CommerceService→CardService/ContractService，按原租户业务互斥串行。订单策略和付款状态再次检查；按itemId:unit生成来源，关联卡与fulfilledAt/订单状态在同一事务落地。合同必需却失败使权益/审批一起回滚，先前付款事务独立保留。普通发卡逻辑仍要求已发布模板，购买入口从持久化服务端快照发放。
+
+### 验证证据
+
+176完整Gym测试通过；新增7数据库测试含并发、三单位、退款竞态、合同缺失回滚和模板停用。mvn package通过并run-local.sh启动。交易记录及orders来源拒绝HTTP42断言通过；原合同业务HTTP42断言回归，contract4/member18/file23，资料保留。没有新迁移/菜单，当前53表/34业务菜单/59授权，前端git干净。
+
+### 影响面 / 风险
+
+新订单来源禁止客户端指定会员/卡/价格，普通手动开卡保持原语义。合同要求在本阶段表示必须生成独立unsigned实例，签署渠道仍unconfigured。新订单正向仅H2凭证mock，未生成真实paid订单作UI证据；不能宣称新来源浏览器或真实支付已经通过。
+
+### 未做 / 后续
+
+退款权益规则已向用户异步询问待答；内部非审批履约方法尚无支付后自动任务/重试触发。继续订单自动履约、退款权益、包月审批/授权/周期、核销、卡报表、SELF和自动通知，随后全量debug和最终review。目标active。
+
+
+## [2026-10-15 11:50 ~ 12:05] 按用户确认规则全额停卡与部分退款人工处理
+
+### 意图
+
+落实用户明确答复“全额退款停卡；部分退款人工处理”，不自行猜测比例扣权益规则。原自动履约队列计划保留，先完成新确认规则。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/sales/GymRefundReviewService.java | 新增 | 来源限定停卡、部分退款任务、人工决定与审计 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/sales/GymOrderRefundReview* | 新增 | 按退款笔数保存人工处理任务 |
+| yudao-module-gym/.../controller/admin/sales/vo/GymRefundReview* | 新增 | 人工决定参数及脱敏结果 |
+| yudao-module-gym/.../service/sales/{GymCommerceService,GymSalesRecordsService}.java、GymSalesRecordsController.java、GymSalesOrderRespVO.java | 修改 | 退款同事务停卡/任务、详情与双权限接口 |
+| script/gym/sql/40-gym-refund-reviews.sql | 新增 | 幂等审核任务表 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、sql/create_tables.sql、clean.sql、ErrorCodeConstants.java | 修改 | 五项数据库测试、表与领域错误 |
+| script/gym/verify-migrations.py、verify-sales-records-api.py、docs/architecture.md、testing.md、gym-full-api-progress.md、script/gym/README.md | 修改 | 迁移、HTTP拒绝边界与实现记录 |
+
+### 结构关系
+
+CommerceService.acceptRefund经Verifier校验，退款/财务写入后在同事务调用RefundReviewService。全额停订单关联卡，部分退款创建pending任务。人工决定复用租户互斥与订单行锁，源卡逐个校验member/store/item-unit身份；GET受sales:read，决定还要求approvals:decide。无渠道退款发起或金额修改。
+
+### 验证证据
+
+181完整Gym测试通过，新增5项含部分保留/人工选择、原决定不可覆盖、全额只停本单卡、次数保留、六并发回执与停卡失败全事务回滚。MySQL迁移两轮54表/34页面/59授权一致，SQL40应用，mvn package与run-local.sh启动通过。verify-sales-records-api.py真实45断言通过，仍无交易数据；正向退款权益只在H2夹具。前端git干净。
+
+### 影响面 / 风险
+
+全额退款立即使卡inactive，不删除合同/历史使用，不改其他来源卡。既有预约未自动跨店取消，停卡阻止继续用卡，门店仍通过原取消流程释放预留。人工部分退款可retain或停选中卡，有说明和操作者；现有前端无该按钮，未修改前端，也未宣称浏览器处理通过。
+
+### 未做 / 后续
+
+真实厂商退款仍未配置，正向HTTP/浏览器暂无可信交易可验。继续自动履约队列、包月/核销、卡报表、SELF、通知及最终debug/review。整体目标active。
+
+
+## [2026-10-15 12:00 ~ 12:30] 持久自动履约、租约重试及独立调度线程
+
+### 意图
+
+补齐支付后自动开卡的持久触发和失败恢复，保证合同/权限等后续故障不抹掉已提交付款，重启后仍可追踪处理；避免发卡阻塞原有调度线程。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../dal/{dataobject,mysql}/sales/GymFulfillmentTask* | 新增 | 单订单任务、次数、执行身份、到期租约及安全失败状态 |
+| yudao-module-gym/.../service/sales/GymFulfillment{QueueService,Worker,Scheduler,Timer}.java | 新增 | 原子任务、租约领取/重试、当前权限验证、租户扫描、私有定时驱动 |
+| yudao-module-gym/.../service/sales/{GymCommerceService,GymSalesRecordsService}.java | 修改 | 下单登记/足额激活/退款取消/履约完成及详情状态，人工审批事务暂停 |
+| yudao-module-gym/.../controller/admin/sales/GymSalesRecordsController.java、vo/GymFulfillmentTaskRespVO.java、GymSalesOrderRespVO.java | 修改/新增 | 任务查询、双权限重试、受控状态字段 |
+| script/gym/sql/41-gym-fulfillment-tasks.sql | 新增 | 持久任务及到期/租约索引 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/sales/payment/GymFulfillmentTimerTest.java、sql/create_tables.sql、clean.sql | 修改/新增 | 14业务与2定时器测试、隔离表 |
+| script/gym/verify-migrations.py、verify-sales-records-api.py、docs/architecture.md、testing.md、gym-full-api-progress.md、script/gym/README.md | 修改 | 迁移、HTTP、配置和实测边界 |
+
+### 结构关系
+
+CommerceService→QueueService在同事务持久登记/激活/取消/完成；Timer私有调度器→租户扫描→Worker→CommerceService独立履约事务。Worker验证原发起后台账号的当前租户、状态、sales:read和门店范围，恢复执行前后安全上下文。新事务领取120秒租约，claimToken阻止旧执行器覆盖，原业务锁及单位来源继续防重复发卡。人工审批暂停任务、清租约，旧领取者无法越过审批。
+
+### 验证证据
+
+197完整Gym测试通过，163数据库业务及34其他测试。覆盖六执行器一次领取、双租户、账户撤销、失败修复、八次耗尽/有权重试、付款任务同事务、零元无收入、退款取消、审批暂停/失败回滚和旧租约拒绝。私有定时器组件实际触发且不影响已有TaskScheduler；enabled=false无后台工作。MySQL两轮55表/34菜单/59授权，SQL41应用，构建启动成功，真实交易API48断言回归通过。
+
+日志2026-10-15 12:29:51证明gym-fulfillment-1扫描3租户、候选0，121/122过期正常跳过；未修改租户有效期，运行库无成功交易任务。第一次真实扫描发现默认线程共用与过期WARN，已修正独立线程及状态跳过后重跑。前端git干净。
+
+### 影响面 / 风险
+
+没有新菜单或前端改动，仍34业务菜单。默认每30秒、每租户50候选，8次预算、退避上限1小时；可通过gym.commerce.fulfillment.enabled=false停定时驱动。私有线程不替换/占用默认调度器。正向数据仅H2/组件测试，不宣称真实厂商付款、HTTP正向开卡或新重试按钮浏览器通过。
+
+### 未做 / 后续
+
+真实支付适配器和会员购买认证/回调仍按资料缺失留TODO；当前内部下单使用后台账号身份。人工审批拒绝后仍待人工重新决定，不自动绕过。继续包月、核销、卡报表、SELF、通知及最终全量debug/review，目标active。
+
+
+## [2026-10-15 12:30 ~ 13:05] 会员卡报表及订单项财务分摊
+
+### 意图
+
+接通最后一个业务页面会员卡报表，使销量、实际净收、当前持卡人数、历史课消各按真实来源统计；支付与退款按订单项精确分摊，避免报表把标价或人工开卡当实际收入。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/sales/GymMoneyAllocation.java、GymCommerceService.java | 新增/修改 | 整数分最高平均数累计分摊，支付退款原子记录差额 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/finance/GymOrderItemFinancialEvent* | 新增 | 订单项资金事实及唯一约束 |
+| yudao-module-gym/.../dal/mysql/report/GymCardReport*、service/report/GymReportService.java | 新增/修改 | SQL聚合、历史版本和未归属资金分组 |
+| yudao-module-gym/.../controller/admin/report/GymReportController.java、vo/GymReportRespVO.java | 修改 | GET会员卡报表与字段 |
+| script/gym/sql/{42-gym-item-financial-events,43-gym-card-report-menu}.sql | 新增 | 分摊表、页面与示范角色菜单 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/sales/GymMoneyAllocationTest.java、sql/create_tables.sql、clean.sql | 修改/新增 | 8项业务及4项精确分摊测试 |
+| script/gym/verify-card-report-api.py、verify-migrations.py、docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 新增/修改 | 真实HTTP验证、迁移及证据记录 |
+
+### 结构关系
+
+CommerceService每笔可信财务事件在同事务生成订单项分摊，累计分配前后差保证分笔收退可完全冲回。ReportService经门店权限限定SQL聚合；支付完成时间统计毛销量，实际付款减退款统计净收，当前有效权益统计持卡人数，确认课消统计历史次数。历史已退役模板用订单/卡快照；缺少历史分摊的真实资金单列未归属卡种，避免丢失现金。
+
+### 验证证据
+
+完整Gym测试209项通过，8项新业务测试含真实服务支付/履约/消课/退款链、分笔及零价、隔离、历史快照、事务回滚和分页汇总。4项分摊测试包含100组固定随机权重与独立逐分算法逐点比较。mvn package成功；verify-migrations.py两轮56表/35业务菜单/61示范授权，SQL42/43已应用。verify-card-report-api.py真实51断言、verify-sales-records-api.py回归48断言通过。后者最初两次因缺少脚本环境变量退出，补齐既有测试账号变量后通过，不是接口失败。
+
+浏览器会员卡报表加载14分组，筛选125门店后13分组；持卡与课消数据可见，截图/tmp/gym-card-report-admin.png。当前运行库无真实交易，净收0；持卡分组人数合计8、课消单位2，不代表全局去重8人。前端git保持干净。
+
+### 影响面 / 风险
+
+累计35业务菜单加2系统页面约37，但菜单数不代表全目标完成。销量为足额支付商品数量，退款不抹毛销量；零价只在履约后计销量，不产生付款。人数是报表查询时当前状态，日期仅约束交易/课消。正向支付退款仅H2独立核验端口mock，未宣称真实支付联调通过。
+
+### 未做 / 后续
+
+真实厂商仍按用户授权TODO。SELF负责会员、包月审批/周期、核销执行、自动提醒、全量契约复核与最终review继续；目标active，未改前端。
+
+
+## [2026-10-15 13:05 ~ 13:15] 连续包月来源签约审批
+
+### 意图
+
+接通现有包月页“申请签约审批”向后端发送的sourceType=subscriptions，修复只有普通contracts来源可审批的缺口；本地签约审核不等于平台代扣授权。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/approval/GymApprovalService.java | 修改 | 服务端解析协议、生成合同并补入原件附件，审批关联固定合同 |
+| yudao-module-gym/.../service/contract/GymContractService.java | 修改 | 包月合同来源、白名单条款快照、最终原协议状态及条款复核 |
+| yudao-module-gym/.../service/sales/GymSalesRecordsService.java | 修改 | 更新第三方TODO范围，准确指向已实现的付款写入服务 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java | 修改 | 六项来源、并发、回滚与权限业务测试 |
+| script/gym/verify-sales-records-api.py | 修改 | 包月来源缺失、会员及价格替换HTTP拒绝检查 |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 流程、验证及未接入边界记录 |
+
+### 结构关系
+
+ApprovalService的contract分支→ContractService.subscriptionSigningSource→锁定租户协议及会员门店→从发布的card合同模板复制独立原件。最终审批→approveSubscriptionSigning→统一approveSigning，复核源协议未授权未解约、合同绑定及条款未变；普通contracts来源也执行该校验，不能绕过。协议金额等白名单写入快照，渠道协议ID不暴露。合同、附件元数据和审批共事务。
+
+### 验证证据
+
+完整215项Gym测试通过，新增6项覆盖真实服务生成/审批、不发卡/不扣款/不伪造授权、六并发同键单合同单审批、条款变化/解约/已授权拒绝、跨店租户和失败回滚。构建成功，run-local.sh新后端PID30689运行。交易脚本53项HTTP、原合同完整链42项回归通过；contract5/member19资料保留。包月浏览器页面加载仍真实空态，截图/tmp/gym-subscription-signing-page.png；没有为演示伪造协议记录。前端git干净。
+
+### 影响面 / 风险
+
+无需迁移，仍56表/35业务菜单；现有前端不变。包月申请由后端自动加入生成的原件，客户端仍不能替换会员/价格。审批通过只使合同approvalStatus=approved、status=unsigned、signingStatus=unconfigured，协议授权/扣款/权益不变。公开合同创建接口的来源范围未扩大；该来源由审批内部服务处理。
+
+### 未做 / 后续
+
+真实代扣授权、周期和解约厂商适配仍未接入；包月来源正向只在H2，运行库无协议，不能宣称真实有数据按钮已验证。继续SELF、周期/核销内部逻辑、自动通知、全量审计/debug/review，目标active。
+
+
+## [2026-10-15 15:15 ~ 16:00] 合同未签自动提醒与真实线程调试
+
+### 意图
+
+使合同模板“提前提醒天数”实际触发未签提醒，补齐R14/R33的自动计划；缺少通知厂商资料时仍如实记录未发送。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/contract/GymContractReminder{Worker,Scheduler,Timer}.java | 新增 | 冻结提前窗口、按天持久去重、分租户扫描及私有定时线程 |
+| yudao-module-gym/.../service/contract/GymContractService.java | 修改 | 保留auto:键空间，签署/取消时间拦截最终批准 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/contract/GymContractReminderTimerTest.java | 修改/新增 | 6项业务和2项调度装配测试 |
+| script/gym/verify-automatic-reminders-api.py、verify-contract-flow-api.py | 新增/修改 | 真实自动扫描记录与原人工提醒兼容回归 |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 规则、配置、证据及未接入边界 |
+
+### 结构关系
+
+私有Timer→Scheduler验证租户→游标分页→Worker逐合同独立事务。读取合同冻结templateSnapshot.reminderDays，按北京时间dueAt日期提前N天00:00开始，每天同渠道最多一次，逾期未签继续提醒。合同锁+现有唯一键auto:日期:channel+事务事件防并发/重启重复；人工接口禁止auto:前缀。系统任务不创建登录上下文，requestedBy/actorUserId/creator/updater明确为0，已签/取消时间、停用会员门店拦截。
+
+### 验证证据
+
+223完整Gym测试通过（185数据库业务及38其他测试），新增8项覆盖北京时间临界/冻结模板、次日、六并发、审计失败回滚重试、无登录系统审计、租户/停用/签署/取消、超过100条首批未到期仍扫描后续、私有定时器及停用。构建通过，run-local.sh新版本运行。
+
+真实初次运行暴露无登录线程creator=NULL导致MySQL拒绝，已显式写系统审计0并补无登录测试，重建后真实扫描成功。2026-10-15 15:57:15日志首次尝试5份，后续每5秒均0；新合同6生成后也仅新增1次。只读MySQL确认自动记录共6、6条审计全0、6条failed。verify-automatic-reminders-api.py真实15断言通过，含下一次扫描无新增；verify-contract-flow-api.py原流程42断言回归通过，contract6/member20保留。
+
+前端合同5详情可见automatic_reminder_failed及App未配置未发送原因，截图/tmp/gym-automatic-reminder-admin.png，前端源码git干净。
+
+### 影响面 / 风险
+
+沿用SQL22，无新迁移/菜单，仍56表/35业务页面。默认每5分钟扫描，当前本地QA覆盖为每5秒/初始1秒并开定向DEBUG；无需默认任务池/Quartz。渠道app/miniapp/sms可配置，当前没有真实消息传输，均failed，不冒充送达或签署。人工提醒仍独立幂等，HTTP回归不再误把自动记录计作人工重复。
+
+### 未做 / 后续
+
+真实通知授权、会员设备绑定、渠道适配及送达回执仍TODO，用户已允许资料缺失的厂商后续补齐。继续SELF负责会员、包月周期/核销内部流程、全量契约审计、debug及最终review；目标active。
+
+测试分类勘误：本条上文的185数据库业务/38其他项应为183数据库业务/40其他项，以本次Surefire XML为准；完整总计223项不变。其他项为文件服务14、文件controller9、类型5、限流2、支付配置2、履约定时器2、金额分摊4、合同提醒定时器2。
+
+
+## [2026-10-15 16:00 ~ 16:26] 按门店维护负责会员及SELF业务范围
+
+### 意图
+
+补齐R18/R20的负责会员关系，避免SELF长期退化为全拒绝，又不把某个负责会员的访问权扩成整店数据权限；列表、详情和业务动作统一复核。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| script/gym/sql/44-gym-member-coaches.sql | 新增 | 会员/门店/员工唯一负责关系，可撤销保留审计 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/member/GymMemberCoach* | 新增 | 关系模型及租户、任职、会员门店、员工状态联查 |
+| yudao-module-gym/.../service/member/GymMemberCoachService.java | 新增 | 有权维护、当前SELF身份、统一会员/门店谓词与撤销复核 |
+| yudao-module-gym/.../controller/admin/member/GymMemberController.java、vo/GymMemberCoachesReqVO.java、GymMemberCoachRespVO.java | 修改/新增 | 指定会员门店的负责员工查询与整体替换 |
+| yudao-module-gym/.../service/member/{GymMemberService,GymMemberRecordsService}.java | 修改 | 会员及体测列表/详情范围、负责会员体测写入、报告上传者约束 |
+| yudao-module-gym/.../service/{card/GymCardService,course/GymCourseService,contract/GymContractService}.java | 修改 | 卡包、合同、预约/取消/签到/签课及相关列表汇总的会员范围 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、sql/{create_tables,clean}.sql、ErrorCodeConstants.java | 修改 | 10项业务测试、表、领域错误 |
+| script/gym/{verify-member-coach-api.py,verify-migrations.py}、docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 新增/修改 | 专用SELF账号联调、迁移与边界证据 |
+
+### 结构关系
+
+MemberCoachService以会员+门店+员工建立显式关系，员工必须同店在职且关联有效后台账号；替换由members:write和原有门店范围双重限制，SELF不可自行维护。关系撤销保留active=false与审计。读取按现有部门范围OR当前SELF负责关系构造SQL；SELF需后台类型2身份、有效账号/同租户、员工active、任职仍在、会员仍属该店且门店active。MemberService供卡包、合同、体测、预约/课消统一调用；通用门店/排期管理的权限不扩大。
+
+### 验证证据
+
+233完整Gym测试通过（193数据库业务+40其他），本轮10项覆盖同店他人、共享会员另一店、合同/体测/卡包过滤、上传者校验、撤销/账号/任职/员工状态、后台与会员账号类型区分、同租户与跨租户、并发整体替换、SELF不能自赋负责关系，以及本人负责会员的预约取消、签到、计次卡和私教包课消。MySQL全迁移两轮57表/35业务页/61示范授权一致，SQL44已应用，构建及新进程运行。
+
+用户明确允许创建gymselfqa与专用SELF角色后，verify-member-coach-api.py真实47断言通过：user257、role175(dataScope=5)、employee9、负责member20/store125、contract6、measurement4。撤销同一token立即失去会员/合同/体测读取，恢复后可读；未修改既有账号/角色。既有管理员会员/体测/黑名单HTTP28、卡/私教HTTP46回归通过（最后一轮template38/product8/session8）。前端SELF列表共1条、会员卡2次权益和体测70.5可见，截图/tmp/gym-self-member-list.png、gym-self-member-detail.png、gym-self-measurement.png；浏览器已恢复admin，前端git干净。
+
+### 影响面 / 风险
+
+无新菜单，示范角色权限未扩；独立QA角色及账号由用户明确授权，仅测试范围，资料按用户授权保留。原部门/总部范围与SELF组合按并集处理，负责关系本身不赋予操作权限或整店访问。SQL谓词仅拼服务端Long标识及内部固定列名，不使用客户端SQL。SELF修改体测报告仅可引用同店且本人上传的文件，避免猜他人附件ID。
+
+首次测试编译的scope变量引用已修正。联调期间重新打包覆盖运行Jar引起旧进程核心类加载异常，切换到新构建进程后登录/页面恢复；后续应停止旧进程再打包或使用独立运行包。当前自动提醒已恢复默认5分钟扫描。
+
+### 未做 / 后续
+
+SELF附属文件上传/下载仍未放行，通用课程/排期管理不开放整店；负责会员的通用课程选择及黑名单列表一致性仍需审计。负责关系现由新增后端接口维护，前端未加维护按钮。SELF预约正向在H2验证，真实QA角色仅按用户授权的读取/体测/会员写权限联调，未额外授予预约写入权限。继续文件边界、包月/核销第三方TODO、全量契约debug与最终review，目标active。
+
+
+## [2026-10-15 16:27 ~ 16:48] 负责会员附件读取及黑名单范围一致性
+
+### 意图
+
+补齐R20负责会员合同/体测原件读取，防止只放业务详情而无法下载，也防止通用文件ID或上传者身份绕过会员范围；保持黑名单列表与详情一致。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/file/GymMemberFileAccess.java | 新增 | 实际合同/体测关联、业务权限和当前会员范围双向校验 |
+| yudao-module-gym/.../service/file/GymFileServiceImpl.java | 修改 | 文件读委托、缺失权限和纯SELF无门店历史文件拒绝 |
+| yudao-module-gym/.../service/member/GymMemberRecordsService.java | 修改 | 体测报告保留/重绑规则和黑名单列表会员范围 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/file/GymFileServiceImplTest.java | 修改 | 7项附件/体测/黑名单及权限回归测试 |
+| script/gym/verify-member-coach-api.py、verify-member-file-access-api.py | 修改/新增 | 用户授权的专用角色文件读取及真实下载验证 |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 授权规则、实际证据及剩余边界 |
+
+### 结构关系
+
+FileService.getFile→MemberFileAccess→MemberCoachService实时predicate与合同/体测mapper，元数据/内容共用。仅实际绑定可见且没有不可见会员绑定的附件准许SELF；controller仍需files:read，业务策略额外要求对应read。纯SELF不能借无门店文件或上传者身份放行。体测编辑可保留同会员同店已关联管理员报告，其他会员报告不可重绑；黑名单列表接入统一会员/门店范围，修改仍总部权限。
+
+### 验证证据
+
+完整Gym测试240通过（197数据库业务+43其他），mvn package成功，停旧进程后run-local.sh启动新包。新增7项覆盖当前关联、业务权限撤销、负责人撤销、共享文件、跨租户、报告编辑/重绑、黑名单范围、缺失权限和无门店历史文件。真实存储HTTP18项通过，file28/tutorial2，134字节PNG。
+
+自动审核最初拒绝增加测试角色files:read，用户另行明确答复“允许增加并验证下载”后执行：verify-member-coach-api.py47项通过；verify-member-file-access-api.py24项通过。member20合同6及measurement4报告与管理员原件字节一致；同店其他会员、撤销后原token元数据/内容拒绝；恢复完整原负责员工集合后可读。管理员上传真实测试PDF，QA仅获读取权，未增上传权，资料保留。
+
+### 影响面 / 风险
+
+无迁移或菜单变化，仍57表/35业务页加2系统页。既有总部/门店范围兼容，QA仅修改用户授权的专用角色，文件响应不泄露存储URL。共享到不可见会员的附件对SELF整体拒绝，宁可要求重新分文件。NULL门店历史文件仍保留原宽范围兼容，纯SELF不开放。附件本轮是HTTP字节验证，未宣称浏览器PDF渲染成功；前端源码未改。
+
+### 未做 / 后续
+
+SELF上传、训练计划、课程选择及全量文档契约仍需审计；第三方通知/支付/核销/设备/签署资料缺失按用户授权保留TODO。最终debug/review尚未完成，目标active。
+
+
+## [2026-10-15 16:48 ~ 16:54] 负责会员体测上传例外与前端路由审计
+
+### 意图
+
+补齐R20中已能写体测却无法上传报告的缺口，保留原multipart契约；检查全量现行页面调用是否有真实后端路由。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/file/{GymMemberFileAccess,GymFileServiceImpl}.java | 修改 | 限体测报告的SELF上传策略，真实存储及旧范围兼容 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/file/GymFileServiceImplTest.java | 修改 | 2项上传策略及真实字节/未绑定读取测试 |
+| script/gym/verify-api-coverage.py | 新增 | 只读核对前端调用、关联source和通用编辑器与OpenAPI |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 最新状态、证据和审计边界 |
+
+### 结构关系
+
+FileService.uploadFile解析/验证门店后调用MemberFileAccess.canUploadReport；仅body_report、体测写权限和当前负责店有效时使用SELF例外。controller仍要求files:upload，其他角色仍走原部门/总部权限。上传成功只保存文件，不自动关联或放行读取；体测动作后续按具体会员授权绑定。路由脚本只读相邻前端源码及本地OpenAPI，人工资源表解析动态编辑器，无凭证/业务写入。
+
+### 验证证据
+
+完整Gym测试242项通过（198数据库+44其他，0失败/错误/跳过），构建成功，先停旧Java再package、run-local.sh运行。新增测试覆盖无写权限、其他类别/店、撤销后拒绝、存储原字节、只插入一次及未绑定不可读。新进程上verify-member-file-access-api.py24项再次通过。
+
+verify-api-coverage.py输出147管理端操作、127项方法路径要求、missing=[]。动态root GET/PATCH在报告提示，并由显式通用资源表展开；这是路由覆盖证据，不是业务语义验收。浏览器admin体测4“查看报告”打开file29的http-self-report.pdf、0.6KB、Blob下载链接，截图/tmp/gym-member-report-preview-admin.png，嵌入PDF仍空白。前端git状态干净，git diff --check通过。
+
+### 影响面 / 风险
+
+无SQL/菜单/前端修改，仍57表/35业务页加2系统页。未扩大QA角色files:upload；SELF上传正向仅H2/Mockito，真实QA只验证已授权下载。未关联文件不能预览，须先有业务绑定；现有浏览器上传JSON问题保留，不伪造字节成功。动态路由审计资源表需随前端通用编辑器变化维护。
+
+### 未做 / 后续
+
+训练计划、SELF通用课程选择、字段/语义审计和最终全量review继续；实际厂商接入按用户授权留TODO。顶端进度表已消除早期过时状态，历史记录不覆盖，整体目标active。
+
+
+## [2026-10-15 16:55 ~ 17:12] 训练档案、任职生效与SELF本人授课排期
+
+### 意图
+
+补齐R15/R20/R26中训练档案没有模型和接口的缺口，以及负责会员可以预约却无法使用现有前端选择授课排期的问题。用户明确确认SELF仅选本人授课，门店管理范围独立保留；review同时发现未来任职提前获权边界。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| script/gym/sql/45-gym-training-plans.sql、verify-migrations.py | 新增/修改 | 训练档案表及58表迁移验证 |
+| yudao-module-gym/.../dal/{dataobject,mysql}/member/GymTrainingPlan* | 新增 | 租户审计模型及锁行Mapper |
+| yudao-module-gym/.../controller/admin/member/GymTrainingPlanController.java、vo/GymTrainingPlan{SaveReq,Resp}VO.java | 新增 | 四个REST操作和字段校验/返回 |
+| yudao-module-gym/.../service/member/GymTrainingPlanService.java | 新增 | 会员范围、分页、归档、附件及锁行修改 |
+| yudao-module-gym/.../enums/{file/GymFileCategoryEnum,ErrorCodeConstants}.java、controller/admin/file/vo/GymFileUploadReqVO.java | 修改 | training_plan类别、类型大小及错误码 |
+| yudao-module-gym/.../service/file/GymMemberFileAccess.java | 修改 | 训练附件上传及真实绑定读取授权 |
+| yudao-module-gym/.../service/member/GymMemberCoachService.java、dal/mysql/member/GymMemberCoachMapper.java | 修改 | 本人授课谓词及北京时间入职/任职生效检查 |
+| yudao-module-gym/.../service/course/GymCourseService.java | 修改 | 选项/产品/排期读范围、名称及预约创建再次校验，管理写范围不扩大 |
+| yudao-module-gym/.../GymOrganizationServiceTest.java、service/file/GymFileServiceImplTest.java、sql/{create_tables,clean}.sql | 修改 | 6项新业务回归、类别预期及训练表 |
+| script/gym/verify-training-plan-api.py、verify-self-course-selection-api.py | 新增 | 真实档案附件/门店隔离及SELF选课撤销验证 |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 实际API、结构、证据和剩余验收 |
+
+### 结构关系
+
+训练档案Controller复用档案measurements:read/write；Service→MemberService/MemberCoachService统一范围→训练Mapper，更新锁行，成员/门店不可更换。文本和附件至少一项，显式fileId:null移除、省略保留；active/archived保留审计，无硬删除。training_plan上传为真实PDF/PNG/JPEG，FileAccess按实际计划绑定及read权限、当前负责关系授权，未绑定及含不可见会员共享绑定的文件拒绝。SELF不得重绑其他会员资料。
+
+选课读取使用部门范围OR本人employee+有效负责store；列表/详情/教练选项同一谓词，创建预约再次检查授课员工，猜其他教练ID不能绕过。产品创建和排期修改仍原门店管理范围。负责关系联查额外检查hired_on和joined_on按北京时间已到；关系可提前登记，但生效前不授会员范围。
+
+### 验证证据
+
+完整Gym248项通过（204数据库+44其他，0失败/错误/跳过），新增6项覆盖训练CRUD/归档/清除/身份固定/空内容/附件/租户/SELF/共享/权限，未来任职生效及本人选课/预约不能绕过/管理写拒绝。新增类别导致的旧错误提示断言及controller mock预期已修正，最终完整通过。MySQL全部迁移隔离两轮58表/35业务页/61示范授权通过且临时库已删，SQL45已应用运行库；停旧Java后构建成功，run-local.sh新版本运行。
+
+真实verify-training-plan-api.py30断言通过：plan1/归档2/file30/跨店plan3，管理员PDF真实字节、持久化、门店可读、归档/清除、空计划和合同冒充拒绝、跨店读写拒绝。verify-self-course-selection-api.py首次29断言、修复重复创建排期冲突风险后的复用分支31断言通过；员工9的product9/session9可读，同店product10/session10拒绝，撤销原token立即无权，原集合精确恢复。未改QA角色或增加上传/预约写权限。浏览器SELF课程安排仅1条本人排期，截图/tmp/gym-self-course-selection.png，之后admin登录工作台已确认恢复；前端git干净。
+
+运行OpenAPI151管理端操作，既有前端127项方法路径路由审计missing=[]；新增训练四操作没有现有前端页面，不作为训练页面验收。git diff --check通过。
+
+### 影响面 / 风险
+
+无新菜单或角色授权；训练文件复用档案读写权限及files独立权限，前端不改。SELF读取本人的课程不授整店读写；部门角色仍有其原范围。训练归档不删除附件或审计；数据库新增表无自动破坏性回退。SELF上传及创建预约正向仅H2/Mockito，真实QA未额外授权，不能将读取联调当作写入验证。既有上传JSON问题及嵌入PDF空白限制仍记录，原件HTTP字节正常。
+
+### 未做 / 后续
+
+训练档案及SELF选课原待办已补齐，继续全部现行页面字段/业务语义和完整源码review，包含未跟踪源文件、迁移和定时器；本条不是最终全量review结论。厂商支付/包月/核销/设备/电子签/通知按用户授权留TODO，目标active。
+
+
+## [2026-10-15 17:13 ~ 17:32] review修复私有附件原始存储URL绕过
+
+### 意图
+
+按当前后端交接文档P1第5项核对“直接ID/URL访问也拒绝”。实际匿名请求训练file30的原始infra URL返回200/614字节，业务鉴权可被绕过，不能仅靠隐藏URL防护。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-infra/.../service/file/FilePrivatePathPolicy.java | 新增 | 可配置私有目录及受控DB存储策略 |
+| yudao-module-infra/.../controller/admin/file/FileController.java | 修改 | 解码后校验路径，私有URL直接403且不读存储 |
+| yudao-module-infra/.../service/file/FileServiceImpl.java、enums/ErrorCodeConstants.java | 修改 | 私有上传DB限制、直传/外部URL登记拒绝及领域错误 |
+| yudao-server/src/main/resources/application.yaml | 修改 | gym/私有命名空间，其他infra部署默认兼容 |
+| yudao-module-infra/.../service/file/{FileServiceImplTest,FilePrivatePathPolicyTest}.java、controller/admin/file/FileControllerPrivatePathTest.java | 修改/新增 | 7项存储/公开入口/编码/穿越及公开目录兼容验证 |
+| script/gym/verify-private-file-url-api.py | 新增 | 已知原始URL匿名/管理员403与合法PDF正向，只读DB且不输出URL |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 复现、修复、配置、存量边界及验证记录 |
+
+### 结构关系
+
+公共FileController→FilePrivatePathPolicy按配置直接拒绝私有目录，不看令牌角色，业务文件服务授权后仍经内部FileApi取字节。FileService上传前验证private路径只能DB，防止新数据落入直接公开的S3/静态文件目录；私有前缀禁止前端预签名和外部URL登记。路径先解码再验证安全相对路径。其他公开目录沿用原行为，不修改全局master。
+
+### 验证证据
+
+修复前匿名存储URL200/614字节。修复后Gym248+infra文件44=292相关测试通过，0失败/错误/跳过；infra细分39+2+3，本轮新增7项。构建通过，停旧Java后run-local.sh启动新包。verify-private-file-url-api.py18项通过：合同27/体测29/训练30原始URL匿名及管理员均403，编码路径拒绝，授权业务下载真实PDF及长度正常，私有直传/登记拒绝。无真实支付/通知等外部动作。
+
+verify-member-file-access-api.py24项回归通过，原token撤销后拒绝并恢复原负责集合；verify-gym-storage-api.py18项回归通过，file31/tutorial3，真实134字节PNG。浏览器admin file31图片正常显示及Blob下载，截图/tmp/gym-private-storage-frontend.png；前端git干净。git diff --check通过。
+
+### 影响面 / 风险
+
+无表或菜单变化，仍58表/35业务页加2系统页。配置yudao.file.private-path-prefixes=gym/须保留；私有上传需DB存储，否则明确1001003005，直传/URL登记1001003006。run-local仍显式配置4，master22未改。登录管理员也不能通过公开存储入口下载gym，需正常业务权限。
+
+只读按最新infra记录去重盘点，原12条DB/18条S3，新增测试file31后DB13。历史外部S3地址的权限无法由本地HTTP入口撤销，需要原存储侧处理或原件重新导入；本轮没有迁移或修改桶权限，不宣称存量外部地址已修复。
+
+### 未做 / 后续
+
+继续35页面逐字段/业务语义及全量源码review，包含未跟踪文件。初步字段差异正在逐项核对prepare/嵌套明细/筛选器，不能直接将静态扫描误报判为接口缺失。交易、履约队列和提醒worker本轮审阅未发现新增必须修复的问题，完整review尚未结束；整体目标active。第三方按用户授权保留TODO。
+
+
+## [2026-10-15 17:32 ~ 17:36] 私有目录通用上传入口补充封堵
+
+### 意图
+
+继续审查发现，即使私有存储仅允许DB，未来全局master切DB后通用infra上传仍可能绕过业务上传流程写入gym/。需在admin/app通用入口直接拒绝私有目录，不仅依赖存储类型。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-infra/.../service/file/FilePrivatePathPolicy.java | 修改 | 公共上传目录校验，包含目录恰为gym的情况 |
+| yudao-module-infra/.../controller/{admin/file/FileController,app/file/AppFileController}.java | 修改 | 读取文件和调用存储前拒绝私有目录 |
+| yudao-module-infra/.../controller/admin/file/FileControllerPrivatePathTest.java | 修改 | 新增admin/app通用上传拒绝及公开目录兼容测试 |
+| script/gym/verify-private-file-url-api.py | 修改 | 新增通用上传HTTP负例，不产生记录 |
+| docs/{architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 最新边界和验证数字 |
+
+### 结构关系
+
+两个通用上传Controller→同一FilePrivatePathPolicy.validatePublicUploadDirectory，先校验安全目录并补文件段匹配私有前缀，再拒绝。业务GymFileController→FileService的受控DB上传不经过通用Controller，保留合法上传能力；私有预签名/URL登记与原始公开下载已有防护不变。
+
+### 验证证据
+
+同一完整回归命令通过293项（Gym248+infra文件45，0失败/错误/跳过），infra细分39/2/4，本补充新增1项同时覆盖admin/app。构建成功并停旧Java再启动新包。真实verify-private-file-url-api.py最新19断言通过：原有合同/体测/训练原始URL403、业务PDF正向、直传预签名和登记拒绝，加通用admin multipart上传到gym/contract明确1001003006；App通用入口负例为单测证据，未创建APP会员测试账号。
+
+### 影响面 / 风险
+
+通用接口不能写入保留私有目录，非私有公开目录兼容；业务受控上传仍有此前真实PNG18项证据。无SQL/菜单/前端或角色授权变化。历史18条外部S3地址的权限边界仍按上一条记录处理，不能以此声称撤销外部访问。
+
+### 未做 / 后续
+
+继续其余业务服务及全部页面字段的完整review；本条仅为本轮文件安全修复收尾，目标active。
+
+
+## [2026-10-15 17:37 ~ 18:04] SELF 本人课程改价申请、审批校验及 OpenAPI 模型修复
+
+### 意图
+
+对照 R09 教练申请改价、管理员审核，以及现行审批页面继续 review：纯 SELF 先前不能提交本人课程改价申请；实机发现审批人账号校验又被申请人的部门数据权限过滤。字段审计发现嵌套 Item 模型重名污染 OpenAPI。仅修改后端，保留整店权限边界。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/approval/{GymApprovalService,GymApprovalTemplateService}.java | 修改 | 本人改价例外、本人申请可读、仅发布改价模板、内部审批人有效性不依赖申请人可浏览账号 |
+| yudao-module-gym/.../service/course/GymCourseService.java | 修改 | 改价申请读取/锁定当前本人课程产品，原管理写权限保留 |
+| yudao-module-gym/.../dal/dataobject/approval/GymApprovalDO.java | 修改 | 服务端冻结 sourceCoachId，不接收客户端身份元数据 |
+| script/gym/sql/46-gym-approval-source-coach.sql | 新增 | 幂等字段/索引及同租户同店历史快照回填 |
+| yudao-module-gym/.../controller/admin/**/vo/*VO.java | 修改 | 23个含嵌套类的VO设置父类限定的Schema名称，避免Item/Step/StoreAssignment覆盖 |
+| yudao-module-gym/src/test/**/GymOrganizationServiceTest.java、resources/sql/create_tables.sql | 修改 | 5个本人审批范围/权限/撤销/审批效果/账号过滤及租户回归，H2字段 |
+| script/gym/{authorize-self-price-qa,verify-self-price-approval-api,verify-frontend-fields}.py | 新增 | 明确授权后仅补测试角色read/create；指定QA产品闭环；只读前端字段审计 |
+| script/gym/{verify-migrations,verify-member-coach-api}.py | 修改 | 六类历史回填验证；保留已获用户明确授权的审批读取/发起权限 |
+| docs/{README,architecture,testing,gym-full-api-progress}.md、script/gym/README.md | 修改 | 本轮证据、复现与前端待接标记 |
+
+### 结构关系
+
+纯SELF申请→当前负责关系/本人授课产品→发布的price_change模板→服务端固化sourceCoachId及申请人。列表/详情/同键重放只允许本人且当前负责有效，撤销即拒绝；其他申请人、其他教练、其他审批类型不开放。最终决定仍需原门店范围和指定审批人，不给SELF决定权；审核通过前价格不变。SELF不允许附加文件ID，防止借用整店私有文件。
+
+内部模板指定审批人的账号校验仅在单次getUser调用忽略部门数据过滤，租户过滤保留并显式核对tenantId；随后仍检查账号启用、员工在职、决定权限及审批人门店范围。没有对整个业务方法关闭数据权限。OpenAPI名称元数据修改不改变JSON字段。
+
+### 验证证据
+
+最新完整回归298项：Gym253（209数据库业务+44其他）与infra文件45，0失败/错误/跳过，日志/tmp/gym-review-tests.log；新增测试模拟部门过滤并验证调用后上下文恢复/跨租户拒绝。构建通过，停PID37404后新包run-local.sh运行。SQL46已应用；隔离迁移双轮58表/35业务菜单/61示范页面授权通过，六类回填为91/NULL/NULL/NULL/NULL/999，额外执行SQL46不变。旧审批闭环52项通过。
+
+用户明确授权gym_self_qa增加并保留approvals:read/create；授权脚本只合并两权限及目录祖先，原集合、角色绑定和dataScope不变。SELF改价实机39断言通过：8并发同键一个申请，其他申请人/教练拒绝，直接改价/决定403，原token撤销即时拒绝、精确恢复集合，既有gymstore审核后product9价格149.99。仅标记HTTP-SELF-SELECTION测试产品，资料保留。第一次失败发生在账号过滤校验，未创建SELF申请/未改价，保留其测试模板和管理员负例申请；不把失败轮次记为通过。
+
+浏览器SELF审批列表共1条本人已通过申请，详情真实显示原价200/申请149.99、原因及HTTP审批示范店长；截图/tmp/gym-self-price-approval-frontend.png。发起改价表单模板可读，但门店下拉“暂无数据”，截图/tmp/gym-self-price-store-options-empty.png。已恢复admin登录，前端git无改动。
+
+只读verify-frontend-fields.py当前35菜单：31静态页面309字段名，加4自定义页7组显式契约67嵌套路径，总376项无缺失。工资明细Item曾被订阅Item覆盖，修复后实时OpenAPI验证通过。这是字段名称/路径证据，不代表所有业务语义或浏览器交互通过。git diff --check通过。
+
+### 影响面 / 风险
+
+新增SQL46须部署，历史回填只接受同租户同店有效产品且不覆盖已有sourceCoachId，坏JSON/错店/错租户保持NULL并拒绝SELF。58表/35业务页加2系统页不变。QA无approvals:decide/files:upload新增授权。私有文件旧外部S3对象风险沿用前条记录。
+
+### 未做 / 后续
+
+FRONTEND-SELF-APPROVAL-STORE-001：现行create.vue强制listAll('stores')作为门店选项；纯SELF没有整店资料范围，无法用该表单发起。后端提交/查询/审批闭环已通过，不以放开整店权限规避，按用户要求不修改前端；需前端后续接专用范围选项。SELF附件不开放。完整源码和业务语义review仍进行中；第三方厂商真实联调按用户授权保留TODO，整体目标active。
+
+
+## [2026-10-15 18:04 ~ 18:20] 最终review：教练任职生命周期、黑名单权限及浏览器闭环
+
+### 意图
+
+继续对照现行管理端backend-contract、backend-priorities和35菜单审查实际业务：旧排期在教练停用/调离后仍可被预约，而取消又被在职检查挡住；现行黑名单单数权限码未登记。完成本轮后端API/debug/前端验证/review交付审计，第三方真实接入沿用用户授权暂缓。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| yudao-module-gym/.../service/course/GymCourseService.java | 修改 | 预约先授权再锁教练并检查当前任职；取消仍按教练→排期加锁，允许已离职/调离后释放权益 |
+| yudao-module-gym/src/test/.../GymOrganizationServiceTest.java | 修改 | 新增3项：停用/未来任职/移除关系拒绝新预约，取消分别释放私教包/次数卡且不扣余额 |
+| script/gym/sql/47-gym-blacklist-write-permission.sql | 新增 | 单数现行编辑权限；只给原已持旧编辑码且全范围的示范总部角色补映射 |
+| script/gym/verify-migrations.py | 修改 | 当前全部Controller权限码存在、总部正向/门店负向、旧权撤销后不补发别名 |
+| script/gym/verify-coach-lifecycle-api.py | 新增 | 专用资料HTTP任职/并发取消与预占释放；无角色变更/厂商付款模拟 |
+| script/gym/verify-controller-permissions.py | 新增 | 只读核对方法/类守卫及启用菜单权限；不授角色 |
+| docs/{README,architecture,testing,gym-full-api-progress,backend-contract}.md、script/gym/README.md | 修改 | 本轮审查结论、35页证据映射、复现、授权及待接边界 |
+
+### 结构关系
+
+预约先做会员/排期及授课员工范围授权，再按教练→会员→排期→权益加锁；当前员工在职、入职和该店任职生效均复核，防止旧排期绕过。排期取消只取得教练锁串行化，不要求教练仍可执教；原排期/门店写权限及已签课不可取消规则保留，释放预占与取消预约同事务。
+
+SQL47在现行黑名单页面下登记gym:blacklist:write，保留全部旧菜单。补发只匹配tenant1、gym_hq_admin、data_scope1、启用且已有gym:blacklists:write的角色。店长、SELF、其他角色及撤销旧权的总部角色不自动获得新码。不修改账号绑定或数据范围；新增菜单后重启同一包刷新缓存。
+
+### 验证证据
+
+修复前新增3测试实跑为1失败+2错误：停用教练旧排期仍成功预约；两个取消场景均抛COURSE_COACH_INVALID。修复后完整301项通过：Gym256（212数据库业务+44其他）+infra文件45，0失败/错误/跳过；构建通过，运行包已更新。HTTP生命周期27项通过，employee11/member24/session12/booking5/card12，六并发取消只有一次业务效果，无数据库锁异常，预占归零且余额不扣。资料保留。
+
+SQL47随全部迁移在隔离库双轮幂等通过：58表/35业务页/61页面授权，另验证撤旧权不补别名；临时库清理。第一次应用真实库被自动审批审查拒绝，原因是缺具体持久角色变更授权；用户随后明确“允许修正并保留（推荐）”，才再次应用成功。只读实库结果：gym_hq_admin=1、gym_store_manager=0、gym_self_qa=0条单数编辑授权。
+
+最新运行包审批发卡→预约/取消/重约→并发签课→改价HTTP52通过（approval26/member25/booking6）。前端路由审计151管理端操作、127项方法路径无缺失；2个通用编辑器动态表达式已按14个资源展开核查。字段376项无缺失。权限审计22控制器/150映射方法（文件上传含额外别名，OpenAPI共151）/45权限码，方法或类级守卫及启用菜单均齐；只是声明/登记检查，不替代HTTP数据权限证据。58个映射DO全部继承TenantBaseDO，聚合/关联SQL显式核对租户条件；其余权限/共享档案/合同冻结/薪资/退款及worker事务审查未发现本轮需新增修复的确定问题。
+
+浏览器SELF从本人课程产品“申请改价”入口提交BROWSER-SELF-PRICE-product9-20261015，店长gymstore审核通过，product9从149.99变150。截图/tmp/gym-self-price-browser-submitted.png、/tmp/gym-self-price-browser-approved.png、/tmp/gym-self-price-browser-price.png。勘误：上一条的门店选项限制只影响审批列表通用发起；课程产品入口自动带入storeId且已实证可用，不能泛称SELF所有UI发起均未打通。
+
+浏览器admin权限刷新后黑名单新增按钮出现，对本轮member24创建未来生效记录、修改原因、撤销并刷新重读全部成功，未限制真实会员；截图/tmp/gym-blacklist-permission-browser.png。仍admin登录，前端git无改动。git diff --check及变更Python脚本语法解析通过。
+
+### 影响面 / 风险
+
+课程取消权限未扩大，SELF仍不能管理排期；已离职员工不能再通过旧排期接新预约。SQL47新增权限定义和明确获授权的单角色映射，无表/页面或数据范围变化，保留旧码兼容；正式环境可先登记菜单，再按本环境授权流程分配。脚本在识别当前Java注解布局下进行静态审查，不能声称形式化授权证明。
+
+### 未做 / 后续
+
+本轮现行管理端所需后端API实现、debug、运行前端验证及review已完成；不是R01–R43所有客户端/厂商的合同验收。设备/支付代扣分账/电子签/验券/通知/小程序码真实集成按用户原授权暂缓，必须保留未配置/失败语义。前端UPLOAD-JSON-001、FRONTEND-CONTENT-IMAGE-001、FRONTEND-SETTLEMENT-ERROR-001、通用SELF申请store选择及IAB嵌入PDF限制不改前端，业务HTTP证据与UI限制分别列出。历史18个外部S3对象须原存储处理或重新导入，当前本地403不能撤销外部地址。未清库、未删除测试资料、未提交/重置Git；staged/unstaged/untracked现状保留供用户检视。

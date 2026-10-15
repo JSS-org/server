@@ -28,6 +28,11 @@ public class FileApiImpl implements FileApi {
     }
 
     @Override
+    public String createFile(byte[] content, String name, String directory, String type, Long configId) {
+        return fileService.createFile(content, name, directory, type, configId);
+    }
+
+    @Override
     public String presignGetUrl(String url, Integer expirationSeconds) {
         return fileService.presignGetUrl(url, expirationSeconds);
     }

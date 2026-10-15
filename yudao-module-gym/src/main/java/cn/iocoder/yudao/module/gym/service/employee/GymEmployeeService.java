@@ -17,6 +17,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 import java.util.*;
 import java.util.stream.Collectors;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
@@ -30,6 +31,7 @@ public class GymEmployeeService {
     @Resource private GymDataScope scope;
     @Resource private AdminUserService userService;
     @Resource private Validator validator;
+    @Resource private cn.iocoder.yudao.module.gym.service.salary.GymSalaryService salaries;
 
     public PageResult<GymEmployeeRespVO> page(GymPageReqVO req) {
         Set<Long> ids = scope.readableStoreIds();
@@ -60,7 +62,7 @@ public class GymEmployeeService {
         if (ids != null && assignments.stream().noneMatch(a -> ids.contains(a.getStoreId()))) throw exception(STORE_NO_PERMISSION);
         return response(employee, assignments, ids);
     }
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor=Exception.class,isolation=Isolation.READ_COMMITTED)
     public GymEmployeeRespVO create(GymEmployeeSaveReqVO req) {
         if (req.getStatus() == null) req.setStatus("active");
         validate(req);
@@ -69,9 +71,10 @@ public class GymEmployeeService {
         GymEmployeeDO employee = BeanUtils.toBean(req, GymEmployeeDO.class);
         try { employeeMapper.insert(employee); } catch (DuplicateKeyException e) { throw exception(EMPLOYEE_NO_DUPLICATE); }
         saveAssignments(employee.getId(), req.getStoreAssignments());
+        if (req.getSalaryAssignment() != null) salaries.assign(employee.getId(), req.getSalaryAssignment());
         return response(employee, assignments(employee.getId()), scope.readableStoreIds());
     }
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor=Exception.class,isolation=Isolation.READ_COMMITTED)
     public GymEmployeeRespVO patch(Long id, GymEmployeeSaveReqVO patch) {
         GymEmployeeDO old = requireEmployee(id, true);
         List<GymEmployeeStoreDO> current = assignments(id);
@@ -89,6 +92,7 @@ public class GymEmployeeService {
         try { employeeMapper.updateById(update); } catch (DuplicateKeyException e) { throw exception(EMPLOYEE_NO_DUPLICATE); }
         // 不触碰未提交的任职关系，避免普通资料编辑改变关系行 ID。
         if (patch.getStoreAssignments() != null) saveAssignments(id, merged.getStoreAssignments());
+        if (patch.getSalaryAssignment() != null) salaries.assign(id, patch.getSalaryAssignment());
         return response(update, assignments(id), scope.readableStoreIds());
     }
     private GymEmployeeDO requireEmployee(Long id, boolean lock) {
@@ -97,7 +101,6 @@ public class GymEmployeeService {
         return employee;
     }
     private void validate(GymEmployeeSaveReqVO req) {
-        if (req.getSalaryAssignment() != null) throw exception(EMPLOYEE_SALARY_UNSUPPORTED);
         var violations = validator.validate(req);
         if (!violations.isEmpty()) throw new ConstraintViolationException(violations);
     }

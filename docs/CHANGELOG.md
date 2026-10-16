@@ -1616,3 +1616,40 @@ JDK词法扫描对比Git基线：忽略注释/空白/import后，只有一个CRM
 ### 未做 / 后续
 
 不处理前端或将Python/SQL/文档当作本轮格式化输入。HTTP权限审查重跑时48080连接拒绝，仅记录未执行成功；未为格式化启动服务或变更数据库。后续根目录执行mvn -N spotless:apply/check，含根项目的mvn verify自动检查；单独选择子模块的构建如未含根项目，应另跑根检查。
+
+
+## [2026-10-16 20:01 ~ 20:10] 按 gym.ts 由后端下发业务菜单分类并格式化
+
+### 意图
+
+落实用户提供的 `gym.ts` 菜单分类，只修改后端，页面由现有数据库授权过滤后组织分类，并在完成后运行代码格式化。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-system/src/main/java/cn/iocoder/yudao/module/system/service/auth/AuthMenuTreeCustomizer.java` | 新增 | 可选的认证菜单展示扩展，只处理菜单树 |
+| `yudao-module-system/src/main/java/cn/iocoder/yudao/module/system/controller/admin/auth/AuthController.java` | 修改 | 原授权/禁用过滤完成后调用可选分类扩展 |
+| `yudao-module-system/src/main/java/cn/iocoder/yudao/module/system/controller/admin/auth/vo/AuthPermissionInfoRespVO.java` | 修改 | 返回已有菜单排序字段sort，供客户端正确排列 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/framework/menu/GymAuthMenuTreeCustomizer.java` | 新增 | 15分类定义、只组织已授权页、原地址兼容、排序/隐藏状态、目录ID避碰 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/framework/menu/GymAuthMenuTreeCustomizerTest.java` | 新增 | 7项分类、权限输入边界及地址兼容测试 |
+| `docs/architecture.md`、`docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录调用链、部署验证及前端适配限制 |
+
+### 结构关系
+
+`AuthController → 原角色授权/禁用过滤 → AuthConvert → AuthMenuTreeCustomizer`；gym实现扩展，system无需依赖gym。当前35页组织为首页+12个非空分类；另外3类没有已交付页面，不制造空菜单或无效业务页。数据库菜单与角色授权不变，分类及31个隐藏旧地址兼容入口仅用于响应展示。分类目录与未知系统菜单互不替换。审批记录优先，报表子路径去除已有reports前缀，避免重复注册相同地址。
+
+### 验证证据
+
+- `mvn -B -ntp -N spotless:apply spotless:check`：7,726个Java文件格式检查通过。
+- `mvn -B -ntp -q -pl yudao-server -am package -Dtest='GymAuthMenuTreeCustomizerTest,MenuServiceImplTest,AdminAuthServiceImplTest' -Dsurefire.failIfNoSpecifiedTests=false`（本机Mockito agent参数见testing）：构建及42项测试通过，0失败/错误/跳过。
+- 四账号真实HTTP前后比较：admin/gymadmin/gymstore/gymselfqa 权限码仍为1980/57/39/12，授权组件仍为546/35/26/9，旧gym地址35/35/26/9全部保留，分类分别12/12/9/6。
+- 48080新JAR运行，5666浏览器已验证分类展开、课程产品分类地址及旧地址列表；截图 `/tmp/gym-backend-menu-categories.png`。前端Git状态为空。未更改数据库菜单/角色/授权，不需要迁移。
+
+### 影响面 / 风险
+
+菜单展示由认证接口的后端适配器负责，系统菜单管理仍显示数据库授权树。新增排序字段兼容现有前端；目录ID是响应展示ID，不可用于数据库授权。由于现有前端拼接父子路径，分类页面使用新嵌套地址，旧地址以隐藏入口保留。实际发现首页固定旧地址匹配可见菜单的快捷卡片会减少，旧/新地址会形成不同页签，旧地址不会自动展开新分类；这些是本次分类适配的已知前端限制，不能宣称完整保留所有前端交互。
+
+### 未做 / 后续
+
+严格未改前端源码、前端依赖或前端格式。未新增优惠券/积分/消息等未交付功能，未改变API权限码、角色绑定、数据范围或第三方集成。首页快捷入口、同页双页签与原地址自动映射如需完全一致，须由前端后续支持绝对子路由或别名及基于路由权限判断入口；本次不越过“仅后端”的边界。review已检查授权前后顺序、只处理已授权输入、隐藏状态、不变输入及路由/虚拟ID去重，已将客户端实际限制明确记录。

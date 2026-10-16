@@ -19,6 +19,7 @@ import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.logger.LoginLogTypeEnum;
 import cn.iocoder.yudao.module.system.service.auth.AdminAuthService;
+import cn.iocoder.yudao.module.system.service.auth.AuthMenuTreeCustomizer;
 import cn.iocoder.yudao.module.system.service.permission.MenuService;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
@@ -37,6 +38,7 @@ import jakarta.validation.Valid;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,6 +61,7 @@ public class AuthController {
     @Resource private SocialClientService socialClientService;
 
     @Resource private SecurityProperties securityProperties;
+    @Resource private ObjectProvider<AuthMenuTreeCustomizer> menuTreeCustomizers;
 
     @PostMapping("/login")
     @PermitAll
@@ -119,7 +122,11 @@ public class AuthController {
         menuList = menuService.filterDisableMenus(menuList);
 
         // 2. 拼接结果返回
-        return success(AuthConvert.INSTANCE.convert(user, roles, menuList));
+        AuthPermissionInfoRespVO result = AuthConvert.INSTANCE.convert(user, roles, menuList);
+        menuTreeCustomizers
+                .orderedStream()
+                .forEach(customizer -> result.setMenus(customizer.customize(result.getMenus())));
+        return success(result);
     }
 
     @PostMapping("/register")

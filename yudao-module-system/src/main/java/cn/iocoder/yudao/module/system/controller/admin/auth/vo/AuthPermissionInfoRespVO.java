@@ -92,6 +92,9 @@ public class AuthPermissionInfoRespVO {
         @Schema(description = "菜单图标,仅菜单类型为菜单或者目录时，才需要传", example = "/menu/list")
         private String icon;
 
+        @Schema(description = "显示顺序", example = "0")
+        private Integer sort;
+
         @Schema(
                 description = "是否可见",
                 requiredMode = Schema.RequiredMode.REQUIRED,

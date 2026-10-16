@@ -435,3 +435,33 @@ SELF从本人产品“申请改价”入口已在原前端提交BROWSER-SELF-PRI
 - 使用当前JDK词法扫描器与原Git源码核对，忽略注释、空白和import声明后，唯一差异为CRM类CrmReceivablePlanPageReqVO的三处`final static`规范化成`static final`，已逐项检查等价；其余声明/语句token及字面量值未变。import排序/未使用import清理由引擎处理，不把所有改动笼统称为仅空白。
 - `verify-controller-permissions.py`兼容多行注解参数，离线逐方法比对150个PreAuthorize表达式前后完全一致。运行HTTP核对尝试遇当前48080未启动而连接拒绝，未将其记为本轮HTTP通过，也未为格式化任务自动启动服务。
 - `git diff --check`通过，前端Git状态为空。原有未跟踪`script/gym/__pycache__/`保留。未提交、暂存或重置用户工作区；没有改业务规则。
+
+
+## 2026-10-16 后端菜单分类验证
+
+在 server 根目录运行：
+
+```bash
+mvn -B -ntp -N spotless:apply spotless:check
+mvn -B -ntp -q -pl yudao-server -am package \
+  -Dtest='GymAuthMenuTreeCustomizerTest,MenuServiceImplTest,AdminAuthServiceImplTest' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+```
+
+结果：Spotless检查7,726个Java文件通过，构建通过，42项测试（分类7、既有菜单服务18、认证服务17）全部通过。分类测试覆盖35页的分类与全部旧URL、无重复路由地址/ID/名称、局部角色只组织已授权页面、空目录不返回、显式隐藏及隐藏根目录、审批记录优先、报表前缀、未知菜单/输入不被修改、重复适配稳定和虚拟ID冲突。日志 `/tmp/gym-menu-format.log`、`/tmp/gym-menu-package.log`。
+
+真实HTTP在替换后端前后分别登录并读取 `GET /admin-api/system/auth/get-permission-info`，比较角色、完整权限码集合、非空组件集合及旧gym地址：
+
+| 账号 | 权限码数（前后相同） | 授权组件数（前后相同） | 原gym地址全部保留 | 返回gym分类数 |
+| --- | ---: | ---: | ---: | ---: |
+| admin | 1980 | 546（含系统模块） | 35 | 12 |
+| gymadmin | 57 | 35 | 35 | 12 |
+| gymstore | 39 | 26 | 26 | 9 |
+| gymselfqa | 12 | 9 | 9 | 6 |
+
+SELF没有财务/员工分类；各响应菜单ID无重复。比较数据仅保存本机 `/tmp/gym-menu-auth-before.json` 与 `/tmp/gym-menu-auth-after.json`，不入库、不纳入仓库、不记录令牌。部署运行方式仍为 `bash script/gym/run-local.sh --logging.file.name=/tmp/gym-menu-server.log`，本轮替换了本地IDE旧进程，当前以构建JAR运行48080，gym本地文件存储沿用4。
+
+浏览器刷新现有5666前端，确认显示首页与门店/员工/会员/卡/课程/合同/审批/设备/内容/财务/报表分类；展开课程管理并点击课程产品，加载 `/gym/training/course-products` 及真实列表；直接访问原 `/gym/course-products` 同样加载列表。截图 `/tmp/gym-backend-menu-categories.png`。frontend `git status --short` 始终为空，没有修改或格式化前端代码。
+
+已知前端适配限制必须随交付说明：原地址隐藏兼容入口可以打开页面，但首页用 `getMenuByPath` 查可见菜单的固定旧地址，因而部分快捷卡片被隐藏；同页旧/新地址会出现不同页签。浏览器已确认该现象，不能将本次证据写成“所有前端行为完全保持不变”。

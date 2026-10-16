@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.express.Delive
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryExpressDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -78,5 +79,4 @@ public interface DeliveryExpressService {
      * @return 快递公司列表
      */
     List<DeliveryExpressDO> getDeliveryExpressListByStatus(Integer status);
-
 }

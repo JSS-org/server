@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.iot.dal.dataobject.product;
 
 import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -22,38 +24,45 @@ public class IotProductDO extends TenantBaseDO {
     /**
      * 产品 ID
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 产品名称
      */
     private String name;
+
     /**
      * 产品标识
      */
     private String productKey;
+
     /**
      * 产品密钥，用于一型一密动态注册
      */
     private String productSecret;
+
     /**
      * 是否开启动态注册
      */
     private Boolean registerEnabled;
+
     /**
      * 产品分类编号
      * <p>
      * 关联 {@link IotProductCategoryDO#getId()}
      */
     private Long categoryId;
+
     /**
      * 产品图标
      */
     private String icon;
+
     /**
      * 产品图片
      */
     private String picUrl;
+
     /**
      * 产品描述
      */
@@ -65,29 +74,32 @@ public class IotProductDO extends TenantBaseDO {
      * 枚举 {@link cn.iocoder.yudao.module.iot.enums.product.IotProductStatusEnum}
      */
     private Integer status;
+
     /**
      * 设备类型
      * <p>
      * 枚举 {@link cn.iocoder.yudao.module.iot.enums.product.IotProductDeviceTypeEnum}
      */
     private Integer deviceType;
+
     /**
      * 联网方式
      * <p>
      * 枚举 {@link cn.iocoder.yudao.module.iot.enums.product.IotNetTypeEnum}
      */
     private Integer netType;
+
     /**
      * 协议类型
      * <p>
      * 枚举 {@link cn.iocoder.yudao.module.iot.core.enums.IotProtocolTypeEnum}
      */
     private String protocolType;
+
     /**
      * 序列化类型
      * <p>
      * 枚举 {@link cn.iocoder.yudao.module.iot.core.enums.IotSerializeTypeEnum}
      */
     private String serializeType;
-
 }

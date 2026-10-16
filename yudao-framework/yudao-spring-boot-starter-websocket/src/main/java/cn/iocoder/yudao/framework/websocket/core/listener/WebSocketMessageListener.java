@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.websocket.core.listener;
 
 import cn.iocoder.yudao.framework.websocket.core.message.JsonWebSocketMessage;
+
 import org.springframework.web.socket.WebSocketSession;
 
 /**
@@ -27,5 +28,4 @@ public interface WebSocketMessageListener<T> {
      * @return 消息类型
      */
     String getType();
-
 }

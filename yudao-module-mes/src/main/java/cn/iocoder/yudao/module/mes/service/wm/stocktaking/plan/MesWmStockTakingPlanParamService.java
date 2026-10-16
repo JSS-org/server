@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.param.MesWmStockTakingPlanParamPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.param.MesWmStockTakingPlanParamSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.plan.MesWmStockTakingPlanParamDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -51,7 +52,8 @@ public interface MesWmStockTakingPlanParamService {
      * @param pageReqVO 分页查询条件
      * @return 盘点方案参数分页结果
      */
-    PageResult<MesWmStockTakingPlanParamDO> getStockTakingPlanParamPage(MesWmStockTakingPlanParamPageReqVO pageReqVO);
+    PageResult<MesWmStockTakingPlanParamDO> getStockTakingPlanParamPage(
+            MesWmStockTakingPlanParamPageReqVO pageReqVO);
 
     /**
      * 根据盘点方案编号删除参数
@@ -75,5 +77,4 @@ public interface MesWmStockTakingPlanParamService {
      * @return 盘点方案参数列表
      */
     List<MesWmStockTakingPlanParamDO> getStockTakingPlanParamListByPlanId(Long planId);
-
 }

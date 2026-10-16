@@ -6,7 +6,9 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderExportReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderPageReqVO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -16,27 +18,30 @@ import java.util.List;
 public interface PayOrderMapper extends BaseMapperX<PayOrderDO> {
 
     default PageResult<PayOrderDO> selectPage(PayOrderPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<PayOrderDO>()
-                .eqIfPresent(PayOrderDO::getAppId, reqVO.getAppId())
-                .eqIfPresent(PayOrderDO::getChannelCode, reqVO.getChannelCode())
-                .likeIfPresent(PayOrderDO::getMerchantOrderId, reqVO.getMerchantOrderId())
-                .likeIfPresent(PayOrderDO::getChannelOrderNo, reqVO.getChannelOrderNo())
-                .likeIfPresent(PayOrderDO::getNo, reqVO.getNo())
-                .eqIfPresent(PayOrderDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(PayOrderDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(PayOrderDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<PayOrderDO>()
+                        .eqIfPresent(PayOrderDO::getAppId, reqVO.getAppId())
+                        .eqIfPresent(PayOrderDO::getChannelCode, reqVO.getChannelCode())
+                        .likeIfPresent(PayOrderDO::getMerchantOrderId, reqVO.getMerchantOrderId())
+                        .likeIfPresent(PayOrderDO::getChannelOrderNo, reqVO.getChannelOrderNo())
+                        .likeIfPresent(PayOrderDO::getNo, reqVO.getNo())
+                        .eqIfPresent(PayOrderDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(PayOrderDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(PayOrderDO::getId));
     }
 
     default List<PayOrderDO> selectList(PayOrderExportReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<PayOrderDO>()
-                .eqIfPresent(PayOrderDO::getAppId, reqVO.getAppId())
-                .eqIfPresent(PayOrderDO::getChannelCode, reqVO.getChannelCode())
-                .likeIfPresent(PayOrderDO::getMerchantOrderId, reqVO.getMerchantOrderId())
-                .likeIfPresent(PayOrderDO::getChannelOrderNo, reqVO.getChannelOrderNo())
-                .likeIfPresent(PayOrderDO::getNo, reqVO.getNo())
-                .eqIfPresent(PayOrderDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(PayOrderDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(PayOrderDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<PayOrderDO>()
+                        .eqIfPresent(PayOrderDO::getAppId, reqVO.getAppId())
+                        .eqIfPresent(PayOrderDO::getChannelCode, reqVO.getChannelCode())
+                        .likeIfPresent(PayOrderDO::getMerchantOrderId, reqVO.getMerchantOrderId())
+                        .likeIfPresent(PayOrderDO::getChannelOrderNo, reqVO.getChannelOrderNo())
+                        .likeIfPresent(PayOrderDO::getNo, reqVO.getNo())
+                        .eqIfPresent(PayOrderDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(PayOrderDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(PayOrderDO::getId));
     }
 
     default Long selectCountByAppId(Long appId) {
@@ -44,8 +49,8 @@ public interface PayOrderMapper extends BaseMapperX<PayOrderDO> {
     }
 
     default PayOrderDO selectByAppIdAndMerchantOrderId(Long appId, String merchantOrderId) {
-        return selectOne(PayOrderDO::getAppId, appId,
-                PayOrderDO::getMerchantOrderId, merchantOrderId);
+        return selectOne(
+                PayOrderDO::getAppId, appId, PayOrderDO::getMerchantOrderId, merchantOrderId);
     }
 
     default PayOrderDO selectByNo(String no) {
@@ -53,14 +58,18 @@ public interface PayOrderMapper extends BaseMapperX<PayOrderDO> {
     }
 
     default int updateByIdAndStatus(Long id, Integer status, PayOrderDO update) {
-        return update(update, new LambdaQueryWrapper<PayOrderDO>()
-                .eq(PayOrderDO::getId, id).eq(PayOrderDO::getStatus, status));
+        return update(
+                update,
+                new LambdaQueryWrapper<PayOrderDO>()
+                        .eq(PayOrderDO::getId, id)
+                        .eq(PayOrderDO::getStatus, status));
     }
 
-    default List<PayOrderDO> selectListByStatusAndExpireTimeLt(Integer status, LocalDateTime expireTime) {
-        return selectList(new LambdaQueryWrapper<PayOrderDO>()
-                .eq(PayOrderDO::getStatus, status)
-                .lt(PayOrderDO::getExpireTime, expireTime));
+    default List<PayOrderDO> selectListByStatusAndExpireTimeLt(
+            Integer status, LocalDateTime expireTime) {
+        return selectList(
+                new LambdaQueryWrapper<PayOrderDO>()
+                        .eq(PayOrderDO::getStatus, status)
+                        .lt(PayOrderDO::getExpireTime, expireTime));
     }
-
 }

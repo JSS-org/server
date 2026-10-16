@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.erp.service.stock;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.erp.controller.admin.stock.vo.warehouse.ErpWarehouseSaveReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.stock.vo.warehouse.ErpWarehousePageReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.stock.vo.warehouse.ErpWarehouseSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpWarehouseDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * ERP 仓库 Service 接口
@@ -98,5 +99,4 @@ public interface ErpWarehouseService {
      * @return 仓库分页
      */
     PageResult<ErpWarehouseDO> getWarehousePage(ErpWarehousePageReqVO pageReqVO);
-
 }

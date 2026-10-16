@@ -1,14 +1,17 @@
 package cn.iocoder.yudao.module.hrm.service.salary.employee;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoImportRespVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoUpdateListReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoUpdateListRespVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoUpdateReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoImportRespVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.employee.HrmSalaryEmployeeInfoDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.employee.HrmSalaryEmployeeInfoDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDate;
@@ -16,8 +19,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 员工薪资信息 Service 接口
@@ -83,8 +84,10 @@ public interface HrmSalaryEmployeeInfoService {
      * @param employeeIds 员工编号集合
      * @return 员工编号与薪资信息的映射
      */
-    default Map<Long, HrmSalaryEmployeeInfoDO> getSalaryEmployeeInfoMap(Collection<Long> employeeIds) {
-        return convertMap(getSalaryEmployeeInfoList(employeeIds), HrmSalaryEmployeeInfoDO::getEmployeeId);
+    default Map<Long, HrmSalaryEmployeeInfoDO> getSalaryEmployeeInfoMap(
+            Collection<Long> employeeIds) {
+        return convertMap(
+                getSalaryEmployeeInfoList(employeeIds), HrmSalaryEmployeeInfoDO::getEmployeeId);
     }
 
     // ==================== 内部调用 ====================
@@ -133,5 +136,4 @@ public interface HrmSalaryEmployeeInfoService {
      * @return 薪资项列表
      */
     List<HrmSalaryOptionDO> getSalaryImportOptionList();
-
 }

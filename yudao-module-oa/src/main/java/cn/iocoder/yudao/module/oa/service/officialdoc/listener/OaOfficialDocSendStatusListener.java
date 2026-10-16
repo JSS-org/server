@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.oa.service.officialdoc.OaOfficialDocSendService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OaOfficialDocSendStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private OaOfficialDocSendService officialDocSendService;
+    @Resource private OaOfficialDocSendService officialDocSendService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -25,7 +26,7 @@ public class OaOfficialDocSendStatusListener extends BpmProcessInstanceStatusEve
 
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
-        officialDocSendService.updateOfficialDocSendStatus(Long.parseLong(event.getBusinessKey()), event.getId(), event.getStatus());
+        officialDocSendService.updateOfficialDocSendStatus(
+                Long.parseLong(event.getBusinessKey()), event.getId(), event.getStatus());
     }
-
 }

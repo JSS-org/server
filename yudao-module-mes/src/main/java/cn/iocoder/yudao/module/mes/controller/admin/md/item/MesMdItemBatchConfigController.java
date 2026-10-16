@@ -1,21 +1,24 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.item;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.batchconfig.MesMdItemBatchConfigRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.batchconfig.MesMdItemBatchConfigSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemBatchConfigDO;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemBatchConfigService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - MES 物料批次属性配置")
 @RestController
@@ -23,8 +26,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MesMdItemBatchConfigController {
 
-    @Resource
-    private MesMdItemBatchConfigService itemBatchConfigService;
+    @Resource private MesMdItemBatchConfigService itemBatchConfigService;
 
     @GetMapping("/get-by-item-id")
     @Operation(summary = "根据物料编号获取批次属性配置")
@@ -39,8 +41,8 @@ public class MesMdItemBatchConfigController {
     @PostMapping("/save")
     @Operation(summary = "保存批次属性配置（新增或更新）")
     @PreAuthorize("@ss.hasPermission('mes:md-item:update')")
-    public CommonResult<Long> saveItemBatchConfig(@Valid @RequestBody MesMdItemBatchConfigSaveReqVO saveReqVO) {
+    public CommonResult<Long> saveItemBatchConfig(
+            @Valid @RequestBody MesMdItemBatchConfigSaveReqVO saveReqVO) {
         return success(itemBatchConfigService.saveItemBatchConfig(saveReqVO));
     }
-
 }

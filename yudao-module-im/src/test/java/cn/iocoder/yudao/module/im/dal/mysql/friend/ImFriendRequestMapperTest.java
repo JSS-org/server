@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.im.dal.mysql.friend;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.im.dal.dataobject.friend.ImFriendRequestDO;
 import cn.iocoder.yudao.module.im.enums.friend.ImFriendRequestHandleResultEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link ImFriendRequestMapper} 的单元测试
@@ -17,8 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ImFriendRequestMapperTest extends BaseDbUnitTest {
 
-    @Resource
-    private ImFriendRequestMapper mapper;
+    @Resource private ImFriendRequestMapper mapper;
 
     // ========== selectMyList ==========
 
@@ -49,7 +50,8 @@ public class ImFriendRequestMapperTest extends BaseDbUnitTest {
 
         // 调用：cursor = r3，拉比 r3 更早的下一页
         ImFriendRequestDO cursor = mapper.selectById(r3.getId());
-        List<ImFriendRequestDO> next = mapper.selectMyList(1L, cursor.getUpdateTime(), cursor.getId(), 10);
+        List<ImFriendRequestDO> next =
+                mapper.selectMyList(1L, cursor.getUpdateTime(), cursor.getId(), 10);
 
         // 断言：仅含 r1 / r2，按 id 倒序
         assertEquals(2, next.size());
@@ -73,8 +75,8 @@ public class ImFriendRequestMapperTest extends BaseDbUnitTest {
 
     private static ImFriendRequestDO buildRequest(Long fromUserId, Long toUserId) {
         return new ImFriendRequestDO()
-                .setFromUserId(fromUserId).setToUserId(toUserId)
+                .setFromUserId(fromUserId)
+                .setToUserId(toUserId)
                 .setHandleResult(ImFriendRequestHandleResultEnum.UNHANDLED.getResult());
     }
-
 }

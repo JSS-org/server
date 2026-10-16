@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.wms.service.order.receipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -9,18 +14,15 @@ import cn.iocoder.yudao.module.wms.controller.admin.order.receipt.vo.order.WmsRe
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.receipt.WmsReceiptOrderDetailDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.order.receipt.WmsReceiptOrderDetailMapper;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemSkuService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 入库单明细 Service 实现类
@@ -31,10 +33,8 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsReceiptOrderDetailServiceImpl implements WmsReceiptOrderDetailService {
 
-    @Resource
-    private WmsReceiptOrderDetailMapper receiptOrderDetailMapper;
-    @Resource
-    private WmsItemSkuService itemSkuService;
+    @Resource private WmsReceiptOrderDetailMapper receiptOrderDetailMapper;
+    @Resource private WmsItemSkuService itemSkuService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -51,11 +51,15 @@ public class WmsReceiptOrderDetailServiceImpl implements WmsReceiptOrderDetailSe
     @Transactional(rollbackFor = Exception.class)
     public void updateReceiptOrderDetailList(Long orderId, WmsReceiptOrderSaveReqVO reqVO) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
-        List<WmsReceiptOrderDetailDO> oldList = receiptOrderDetailMapper.selectListByOrderId(orderId);
+        List<WmsReceiptOrderDetailDO> oldList =
+                receiptOrderDetailMapper.selectListByOrderId(orderId);
         List<WmsReceiptOrderDetailDO> list = buildReceiptOrderDetailList(reqVO);
         List<WmsReceiptOrderDetailDO> newList = CollUtil.isEmpty(list) ? ListUtil.of() : list;
-        List<List<WmsReceiptOrderDetailDO>> diffList = diffList(oldList, newList, // id 不同，就认为是不同的记录
-                (oldVal, newVal) -> ObjectUtil.equal(oldVal.getId(), newVal.getId()));
+        List<List<WmsReceiptOrderDetailDO>> diffList =
+                diffList(
+                        oldList,
+                        newList, // id 不同，就认为是不同的记录
+                        (oldVal, newVal) -> ObjectUtil.equal(oldVal.getId(), newVal.getId()));
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(0))) {
@@ -70,7 +74,8 @@ public class WmsReceiptOrderDetailServiceImpl implements WmsReceiptOrderDetailSe
             receiptOrderDetailMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            receiptOrderDetailMapper.deleteByIds(convertList(diffList.get(2), WmsReceiptOrderDetailDO::getId));
+            receiptOrderDetailMapper.deleteByIds(
+                    convertList(diffList.get(2), WmsReceiptOrderDetailDO::getId));
         }
     }
 
@@ -94,7 +99,8 @@ public class WmsReceiptOrderDetailServiceImpl implements WmsReceiptOrderDetailSe
 
     @Override
     public List<WmsReceiptOrderDetailDO> validateReceiptOrderDetailListExists(Long orderId) {
-        List<WmsReceiptOrderDetailDO> details = receiptOrderDetailMapper.selectListByOrderId(orderId);
+        List<WmsReceiptOrderDetailDO> details =
+                receiptOrderDetailMapper.selectListByOrderId(orderId);
         if (CollUtil.isEmpty(details)) {
             throw exception(RECEIPT_ORDER_DETAIL_REQUIRED);
         }
@@ -106,26 +112,31 @@ public class WmsReceiptOrderDetailServiceImpl implements WmsReceiptOrderDetailSe
         return receiptOrderDetailMapper.selectCountBySkuId(skuId);
     }
 
-    private List<WmsReceiptOrderDetailDO> buildReceiptOrderDetailList(WmsReceiptOrderSaveReqVO reqVO) {
+    private List<WmsReceiptOrderDetailDO> buildReceiptOrderDetailList(
+            WmsReceiptOrderSaveReqVO reqVO) {
         if (CollUtil.isEmpty(reqVO.getDetails())) {
             return ListUtil.of();
         }
-        return convertList(reqVO.getDetails(), detail -> {
-            // 校验 SKU 存在
-            itemSkuService.validateItemSkuExists(detail.getSkuId());
-            // 构建对象
-            WmsReceiptOrderDetailDO detailDO = BeanUtils.toBean(detail, WmsReceiptOrderDetailDO.class)
-                    .setWarehouseId(reqVO.getWarehouseId());
-            fillDetailTotalPrice(detailDO);
-            return detailDO;
-        });
+        return convertList(
+                reqVO.getDetails(),
+                detail -> {
+                    // 校验 SKU 存在
+                    itemSkuService.validateItemSkuExists(detail.getSkuId());
+                    // 构建对象
+                    WmsReceiptOrderDetailDO detailDO =
+                            BeanUtils.toBean(detail, WmsReceiptOrderDetailDO.class)
+                                    .setWarehouseId(reqVO.getWarehouseId());
+                    fillDetailTotalPrice(detailDO);
+                    return detailDO;
+                });
     }
 
     private static void fillDetailTotalPrice(WmsReceiptOrderDetailDO detail) {
-        if (detail.getTotalPrice() != null || detail.getQuantity() == null || detail.getPrice() == null) {
+        if (detail.getTotalPrice() != null
+                || detail.getQuantity() == null
+                || detail.getPrice() == null) {
             return;
         }
         detail.setTotalPrice(MoneyUtils.priceMultiply(detail.getPrice(), detail.getQuantity()));
     }
-
 }

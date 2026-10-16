@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.productsales;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.detail.MesWmProductSalesDetailSaveReqVO;
@@ -9,15 +12,14 @@ import cn.iocoder.yudao.module.mes.dal.mysql.wm.productsales.MesWmProductSalesDe
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 销售出库明细 Service 实现类
@@ -28,18 +30,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmProductSalesDetailServiceImpl implements MesWmProductSalesDetailService {
 
-    @Resource
-    private MesWmProductSalesDetailMapper productSalesDetailMapper;
+    @Resource private MesWmProductSalesDetailMapper productSalesDetailMapper;
 
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    @Lazy
-    private MesWmProductSalesLineService productSalesLineService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource private MesMdItemService itemService;
+    @Resource @Lazy private MesWmProductSalesLineService productSalesLineService;
+    @Resource private MesWmMaterialStockService materialStockService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
 
     @Override
     public Long createProductSalesDetail(MesWmProductSalesDetailSaveReqVO createReqVO) {
@@ -47,7 +43,8 @@ public class MesWmProductSalesDetailServiceImpl implements MesWmProductSalesDeta
         validateProductSalesDetailSaveData(createReqVO);
 
         // 插入
-        MesWmProductSalesDetailDO detail = BeanUtils.toBean(createReqVO, MesWmProductSalesDetailDO.class);
+        MesWmProductSalesDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmProductSalesDetailDO.class);
         productSalesDetailMapper.insert(detail);
         return detail.getId();
     }
@@ -60,7 +57,8 @@ public class MesWmProductSalesDetailServiceImpl implements MesWmProductSalesDeta
         validateProductSalesDetailSaveData(updateReqVO);
 
         // 更新
-        MesWmProductSalesDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmProductSalesDetailDO.class);
+        MesWmProductSalesDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmProductSalesDetailDO.class);
         productSalesDetailMapper.updateById(updateObj);
     }
 
@@ -107,7 +105,8 @@ public class MesWmProductSalesDetailServiceImpl implements MesWmProductSalesDeta
 
     private void validateProductSalesDetailSaveData(MesWmProductSalesDetailSaveReqVO reqVO) {
         // 校验父数据（行）存在
-        MesWmProductSalesLineDO line = productSalesLineService.getProductSalesLine(reqVO.getLineId());
+        MesWmProductSalesLineDO line =
+                productSalesLineService.getProductSalesLine(reqVO.getLineId());
         if (line == null) {
             throw exception(WM_PRODUCT_SALES_LINE_NOT_EXISTS);
         }
@@ -124,8 +123,13 @@ public class MesWmProductSalesDetailServiceImpl implements MesWmProductSalesDeta
                 reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
         // 校验库存记录存在且物料一致
         materialStockService.validateSelectedStock(
-                reqVO.getMaterialStockId(), reqVO.getItemId(), reqVO.getBatchId(), reqVO.getBatchCode(),
-                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId(), reqVO.getQuantity());
+                reqVO.getMaterialStockId(),
+                reqVO.getItemId(),
+                reqVO.getBatchId(),
+                reqVO.getBatchCode(),
+                reqVO.getWarehouseId(),
+                reqVO.getLocationId(),
+                reqVO.getAreaId(),
+                reqVO.getQuantity());
     }
-
 }

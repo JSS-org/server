@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.trade.framework.order.core.aop;
 
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+
+import static java.util.Collections.emptyMap;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -8,17 +11,17 @@ import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderLogDO;
 import cn.iocoder.yudao.module.trade.framework.order.core.annotations.TradeOrderLog;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderLogService;
 import cn.iocoder.yudao.module.trade.service.order.bo.TradeOrderLogCreateReqBO;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.Resource;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
-import static java.util.Collections.emptyMap;
 
 /**
  * 交易订单的操作日志的记录 AOP 切面
@@ -37,29 +40,33 @@ public class TradeOrderLogAspect {
      * 目前的使用场景：支付回调时，需要强制设置下用户编号
      */
     private static final ThreadLocal<Long> USER_ID = new ThreadLocal<>();
+
     /**
      * 用户类型
      */
     private static final ThreadLocal<Integer> USER_TYPE = new ThreadLocal<>();
+
     /**
      * 订单编号
      */
     private static final ThreadLocal<Long> ORDER_ID = new ThreadLocal<>();
+
     /**
      * 操作前的状态
      */
     private static final ThreadLocal<Integer> BEFORE_STATUS = new ThreadLocal<>();
+
     /**
      * 操作后的状态
      */
     private static final ThreadLocal<Integer> AFTER_STATUS = new ThreadLocal<>();
+
     /**
      * 拓展参数 Map，用于格式化操作内容
      */
     private static final ThreadLocal<Map<String, Object>> EXTS = new ThreadLocal<>();
 
-    @Resource
-    private TradeOrderLogService orderLogService;
+    @Resource private TradeOrderLogService orderLogService;
 
     @AfterReturning("@annotation(orderLog)")
     public void doAfterReturning(JoinPoint joinPoint, TradeOrderLog orderLog) {
@@ -84,10 +91,15 @@ public class TradeOrderLogAspect {
             String content = StrUtil.format(orderLog.operateType().getContent(), exts);
 
             // 2. 记录日志
-            TradeOrderLogCreateReqBO createBO = new TradeOrderLogCreateReqBO()
-                    .setUserId(userId).setUserType(userType)
-                    .setOrderId(orderId).setBeforeStatus(beforeStatus).setAfterStatus(afterStatus)
-                    .setOperateType(orderLog.operateType().getType()).setContent(content);
+            TradeOrderLogCreateReqBO createBO =
+                    new TradeOrderLogCreateReqBO()
+                            .setUserId(userId)
+                            .setUserType(userType)
+                            .setOrderId(orderId)
+                            .setBeforeStatus(beforeStatus)
+                            .setAfterStatus(afterStatus)
+                            .setOperateType(orderLog.operateType().getType())
+                            .setContent(content);
             orderLogService.createOrderLog(createBO);
         } catch (Exception ex) {
             log.error("[doAfterReturning][orderLog({}) 订单日志错误]", toJsonString(orderLog), ex);
@@ -104,7 +116,8 @@ public class TradeOrderLogAspect {
      * @return 用户类型
      */
     private static Integer getUserType() {
-        return ObjectUtil.defaultIfNull(WebFrameworkUtils.getLoginUserType(), TradeOrderLogDO.USER_TYPE_SYSTEM);
+        return ObjectUtil.defaultIfNull(
+                WebFrameworkUtils.getLoginUserType(), TradeOrderLogDO.USER_TYPE_SYSTEM);
     }
 
     /**
@@ -118,10 +131,12 @@ public class TradeOrderLogAspect {
         if (USER_ID.get() != null) {
             return USER_ID.get();
         }
-        return ObjectUtil.defaultIfNull(WebFrameworkUtils.getLoginUserId(), TradeOrderLogDO.USER_ID_SYSTEM);
+        return ObjectUtil.defaultIfNull(
+                WebFrameworkUtils.getLoginUserId(), TradeOrderLogDO.USER_ID_SYSTEM);
     }
 
-    public static void setOrderInfo(Long id, Integer beforeStatus, Integer afterStatus, Map<String, Object> exts) {
+    public static void setOrderInfo(
+            Long id, Integer beforeStatus, Integer afterStatus, Map<String, Object> exts) {
         ORDER_ID.set(id);
         BEFORE_STATUS.set(beforeStatus);
         AFTER_STATUS.set(afterStatus);
@@ -141,5 +156,4 @@ public class TradeOrderLogAspect {
         AFTER_STATUS.remove();
         EXTS.remove();
     }
-
 }

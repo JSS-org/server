@@ -4,11 +4,14 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.common.util.json.databind.NumberSerializer;
 import cn.iocoder.yudao.framework.common.util.json.databind.TimestampLocalDateTimeDeserializer;
 import cn.iocoder.yudao.framework.common.util.json.databind.TimestampLocalDateTimeSerializer;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
+
 import tools.jackson.databind.JacksonModule;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.ext.javatime.deser.LocalDateDeserializer;
@@ -29,7 +32,8 @@ public class YudaoJacksonAutoConfiguration {
      * 从 Builder 源头定制（关键：使用 *ByType，避免 handledType 要求）
      */
     @Bean
-    public JsonMapperBuilderCustomizer ldtEpochMillisCustomizer(JacksonModule timestampSupportModuleBean) {
+    public JsonMapperBuilderCustomizer ldtEpochMillisCustomizer(
+            JacksonModule timestampSupportModuleBean) {
         return builder -> builder.addModule(timestampSupportModuleBean);
     }
 
@@ -63,5 +67,4 @@ public class YudaoJacksonAutoConfiguration {
         log.debug("[init][初始化 JsonUtils 成功]");
         return new JsonUtils();
     }
-
 }

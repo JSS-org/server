@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.session.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,7 +10,10 @@ import java.time.LocalDateTime;
 @Data
 public class Ai1SessionMessageRespVO {
 
-    @Schema(description = "编号；助手消息的编号同时作为续传的结果流标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "编号；助手消息的编号同时作为续传的结果流标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Long id;
 
     @Schema(description = "会话编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -29,5 +33,4 @@ public class Ai1SessionMessageRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

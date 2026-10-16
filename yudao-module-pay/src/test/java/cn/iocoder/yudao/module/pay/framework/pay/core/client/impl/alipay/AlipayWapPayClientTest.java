@@ -1,27 +1,30 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay;
 
-import cn.hutool.http.Method;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
-import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
-import com.alipay.api.AlipayApiException;
-import com.alipay.api.domain.AlipayTradeWapPayModel;
-import com.alipay.api.request.AlipayTradeWapPayRequest;
-import com.alipay.api.response.AlipayTradeWapPayResponse;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
-import org.mockito.InjectMocks;
-
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
 import static cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum.CLOSED;
 import static cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum.WAITING;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+
+import cn.hutool.http.Method;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
+import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.domain.AlipayTradeWapPayModel;
+import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.alipay.api.response.AlipayTradeWapPayResponse;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.InjectMocks;
 
 /**
  * {@link AlipayWapPayClient} 单元测试
@@ -33,8 +36,7 @@ public class AlipayWapPayClientTest extends AbstractAlipayClientTest {
     /**
      * 支付宝 H5 支付 Client
      */
-    @InjectMocks
-    private AlipayWapPayClient client = new AlipayWapPayClient(randomLongId(), config);
+    @InjectMocks private AlipayWapPayClient client = new AlipayWapPayClient(randomLongId(), config);
 
     @BeforeEach
     public void setUp() {
@@ -47,18 +49,31 @@ public class AlipayWapPayClientTest extends AbstractAlipayClientTest {
         // mock 方法
         String h5Body = randomString();
         Integer price = randomInteger();
-        AlipayTradeWapPayResponse response = randomPojo(AlipayTradeWapPayResponse.class, o -> {
-            o.setSubCode("");
-            o.setBody(h5Body);
-        });
+        AlipayTradeWapPayResponse response =
+                randomPojo(
+                        AlipayTradeWapPayResponse.class,
+                        o -> {
+                            o.setSubCode("");
+                            o.setBody(h5Body);
+                        });
         String notifyUrl = randomURL();
-        when(defaultAlipayClient.pageExecute(argThat((ArgumentMatcher<AlipayTradeWapPayRequest>) request -> {
-            assertInstanceOf(AlipayTradeWapPayModel.class, request.getBizModel());
-            AlipayTradeWapPayModel bizModel = (AlipayTradeWapPayModel) request.getBizModel();
-            assertEquals(String.valueOf(price / 100.0), bizModel.getTotalAmount());
-            assertEquals(notifyUrl, request.getNotifyUrl());
-            return true;
-        }), eq(Method.GET.name()))).thenReturn(response);
+        when(defaultAlipayClient.pageExecute(
+                        argThat(
+                                (ArgumentMatcher<AlipayTradeWapPayRequest>)
+                                        request -> {
+                                            assertInstanceOf(
+                                                    AlipayTradeWapPayModel.class,
+                                                    request.getBizModel());
+                                            AlipayTradeWapPayModel bizModel =
+                                                    (AlipayTradeWapPayModel) request.getBizModel();
+                                            assertEquals(
+                                                    String.valueOf(price / 100.0),
+                                                    bizModel.getTotalAmount());
+                                            assertEquals(notifyUrl, request.getNotifyUrl());
+                                            return true;
+                                        }),
+                        eq(Method.GET.name())))
+                .thenReturn(response);
         // 准备请求参数
         String outTradeNo = randomString();
         PayOrderUnifiedReqDTO reqDTO = buildOrderUnifiedReqDTO(notifyUrl, outTradeNo, price);
@@ -84,14 +99,20 @@ public class AlipayWapPayClientTest extends AbstractAlipayClientTest {
         // mock 方法
         String subCode = randomString();
         String subMsg = randomString();
-        AlipayTradeWapPayResponse response = randomPojo(AlipayTradeWapPayResponse.class, o -> {
-            o.setSubCode(subCode);
-            o.setSubMsg(subMsg);
-        });
-        when(defaultAlipayClient.pageExecute(argThat((ArgumentMatcher<AlipayTradeWapPayRequest>) request -> true),
-                eq(Method.GET.name()))).thenReturn(response);
+        AlipayTradeWapPayResponse response =
+                randomPojo(
+                        AlipayTradeWapPayResponse.class,
+                        o -> {
+                            o.setSubCode(subCode);
+                            o.setSubMsg(subMsg);
+                        });
+        when(defaultAlipayClient.pageExecute(
+                        argThat((ArgumentMatcher<AlipayTradeWapPayRequest>) request -> true),
+                        eq(Method.GET.name())))
+                .thenReturn(response);
         String outTradeNo = randomString();
-        PayOrderUnifiedReqDTO reqDTO = buildOrderUnifiedReqDTO(randomURL(), outTradeNo, randomInteger());
+        PayOrderUnifiedReqDTO reqDTO =
+                buildOrderUnifiedReqDTO(randomURL(), outTradeNo, randomInteger());
 
         // 调用
         PayOrderRespDTO resp = client.unifiedOrder(reqDTO);
@@ -107,5 +128,4 @@ public class AlipayWapPayClientTest extends AbstractAlipayClientTest {
         assertEquals(subCode, resp.getChannelErrorCode());
         assertEquals(subMsg, resp.getChannelErrorMsg());
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.enums.ota;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,12 +15,13 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum IotOtaTaskDeviceScopeEnum implements ArrayValuable<Integer> {
-
     ALL(1), // 全部设备：只包括当前产品下的设备，不包括未来创建的设备
     SELECT(2); // 指定设备
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(IotOtaTaskDeviceScopeEnum::getScope).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(IotOtaTaskDeviceScopeEnum::getScope)
+                    .toArray(Integer[]::new);
 
     /**
      * 范围
@@ -30,5 +32,4 @@ public enum IotOtaTaskDeviceScopeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

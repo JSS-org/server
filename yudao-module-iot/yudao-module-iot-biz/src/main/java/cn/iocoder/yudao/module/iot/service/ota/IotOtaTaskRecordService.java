@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.ota.IotOtaFirmwareDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.ota.IotOtaTaskRecordDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -65,7 +66,8 @@ public interface IotOtaTaskRecordService {
      * @param statuses  记录状态集合
      * @return OTA 升级记录列表
      */
-    List<IotOtaTaskRecordDO> getOtaTaskRecordListByDeviceIdAndStatus(Set<Long> deviceIds, Set<Integer> statuses);
+    List<IotOtaTaskRecordDO> getOtaTaskRecordListByDeviceIdAndStatus(
+            Set<Long> deviceIds, Set<Integer> statuses);
 
     /**
      * 根据记录状态，获取 OTA 升级记录列表
@@ -90,7 +92,8 @@ public interface IotOtaTaskRecordService {
      * @param device   设备信息
      * @return 是否推送成功
      */
-    boolean pushOtaTaskRecord(IotOtaTaskRecordDO record, IotOtaFirmwareDO fireware, IotDeviceDO device);
+    boolean pushOtaTaskRecord(
+            IotOtaTaskRecordDO record, IotOtaFirmwareDO fireware, IotDeviceDO device);
 
     /**
      * 更新 OTA 升级记录进度
@@ -99,5 +102,4 @@ public interface IotOtaTaskRecordService {
      * @param message  设备消息
      */
     void updateOtaRecordProgress(IotDeviceDO device, IotDeviceMessage message);
-
 }

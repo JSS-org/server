@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.send.OaOfficialDocSendPageReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.OaOfficialDocSendDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -24,17 +25,21 @@ public interface OaOfficialDocSendMapper extends BaseMapperX<OaOfficialDocSendDO
     }
 
     default Long selectCountByDocumentNoAndIdNot(String documentNo, Long id) {
-        return selectCount(new LambdaQueryWrapperX<OaOfficialDocSendDO>()
-                .eq(OaOfficialDocSendDO::getDocumentNo, documentNo)
-                .neIfPresent(OaOfficialDocSendDO::getId, id));
+        return selectCount(
+                new LambdaQueryWrapperX<OaOfficialDocSendDO>()
+                        .eq(OaOfficialDocSendDO::getDocumentNo, documentNo)
+                        .neIfPresent(OaOfficialDocSendDO::getId, id));
     }
 
-    default PageResult<OaOfficialDocSendDO> selectPage(Long userId, OaOfficialDocSendPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<OaOfficialDocSendDO>()
-                .eq(OaOfficialDocSendDO::getCreator, userId.toString())
-                .likeIfPresent(OaOfficialDocSendDO::getTitle, reqVO.getTitle())
-                .likeIfPresent(OaOfficialDocSendDO::getDocumentNo, reqVO.getDocumentNo())
-                .eqIfPresent(OaOfficialDocSendDO::getStatus, reqVO.getStatus()).orderByDesc(OaOfficialDocSendDO::getId));
+    default PageResult<OaOfficialDocSendDO> selectPage(
+            Long userId, OaOfficialDocSendPageReqVO reqVO) {
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<OaOfficialDocSendDO>()
+                        .eq(OaOfficialDocSendDO::getCreator, userId.toString())
+                        .likeIfPresent(OaOfficialDocSendDO::getTitle, reqVO.getTitle())
+                        .likeIfPresent(OaOfficialDocSendDO::getDocumentNo, reqVO.getDocumentNo())
+                        .eqIfPresent(OaOfficialDocSendDO::getStatus, reqVO.getStatus())
+                        .orderByDesc(OaOfficialDocSendDO::getId));
     }
-
 }

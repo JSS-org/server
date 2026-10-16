@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.funnel.CrmStat
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.funnel.CrmStatisticsBusinessSummaryByEndStatusRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.funnel.CrmStatisticsBusinessSummaryByStatusRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.funnel.CrmStatisticsFunnelReqVO;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,14 +21,18 @@ public interface CrmStatisticsFunnelMapper {
 
     Long selectCustomerCountByDate(CrmStatisticsFunnelReqVO reqVO);
 
-    Long selectBusinessCountByDateAndEndStatus(@Param("reqVO") CrmStatisticsFunnelReqVO reqVO, @Param("status") Integer status);
+    Long selectBusinessCountByDateAndEndStatus(
+            @Param("reqVO") CrmStatisticsFunnelReqVO reqVO, @Param("status") Integer status);
 
-    List<CrmStatisticsBusinessSummaryByEndStatusRespVO> selectBusinessSummaryListGroupByEndStatus(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessSummaryByEndStatusRespVO> selectBusinessSummaryListGroupByEndStatus(
+            CrmStatisticsFunnelReqVO reqVO);
 
-    List<CrmStatisticsBusinessSummaryByStatusRespVO> selectBusinessSummaryListGroupByStatus(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessSummaryByStatusRespVO> selectBusinessSummaryListGroupByStatus(
+            CrmStatisticsFunnelReqVO reqVO);
 
-    List<CrmStatisticsBusinessSummaryByDateRespVO> selectBusinessSummaryGroupByDate(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessSummaryByDateRespVO> selectBusinessSummaryGroupByDate(
+            CrmStatisticsFunnelReqVO reqVO);
 
-    List<CrmStatisticsBusinessInversionRateSummaryByDateRespVO> selectBusinessInversionRateSummaryByDate(CrmStatisticsFunnelReqVO reqVO);
-
+    List<CrmStatisticsBusinessInversionRateSummaryByDateRespVO>
+            selectBusinessInversionRateSummaryByDate(CrmStatisticsFunnelReqVO reqVO);
 }

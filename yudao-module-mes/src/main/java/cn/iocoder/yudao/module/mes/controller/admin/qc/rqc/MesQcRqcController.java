@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.rqc;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -18,12 +23,15 @@ import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureServic
 import cn.iocoder.yudao.module.mes.service.qc.rqc.MesQcRqcService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -33,26 +41,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-
 @Tag(name = "管理后台 - MES 退货检验单（RQC）")
 @RestController
 @RequestMapping("/mes/qc/rqc")
 @Validated
 public class MesQcRqcController {
 
-    @Resource
-    private MesQcRqcService rqcService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesQcRqcService rqcService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建退货检验单")
@@ -101,15 +100,16 @@ public class MesQcRqcController {
     @PreAuthorize("@ss.hasPermission('mes:qc-rqc:query')")
     public CommonResult<PageResult<MesQcRqcRespVO>> getRqcPage(@Valid MesQcRqcPageReqVO pageReqVO) {
         PageResult<MesQcRqcDO> pageResult = rqcService.getRqcPage(pageReqVO);
-        return success(new PageResult<>(buildRqcRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildRqcRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出退货检验单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:qc-rqc:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportRqcExcel(@Valid MesQcRqcPageReqVO pageReqVO,
-                               HttpServletResponse response) throws IOException {
+    public void exportRqcExcel(@Valid MesQcRqcPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesQcRqcDO> list = rqcService.getRqcPage(pageReqVO).getList();
         List<MesQcRqcRespVO> voList = buildRqcRespVOList(list);
@@ -123,24 +123,36 @@ public class MesQcRqcController {
             return Collections.emptyList();
         }
         // 批量查询物料
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesQcRqcDO::getItemId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesQcRqcDO::getItemId));
         // 批量查询计量单位
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
         // 批量查询检测人员
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesQcRqcDO::getInspectorUserId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesQcRqcDO::getInspectorUserId));
         // 拼装 VO
-        return BeanUtils.toBean(list, MesQcRqcRespVO.class, vo -> {
-            findAndThen(itemMap, vo.getItemId(), item -> {
-                vo.setItemCode(item.getCode()).setItemName(item.getName()).setItemSpecification(item.getSpecification());
-                findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unit -> vo.setUnitName(unit.getName()));
-            });
-            findAndThen(userMap, vo.getInspectorUserId(),
-                    user -> vo.setInspectorNickname(user.getNickname()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesQcRqcRespVO.class,
+                vo -> {
+                    findAndThen(
+                            itemMap,
+                            vo.getItemId(),
+                            item -> {
+                                vo.setItemCode(item.getCode())
+                                        .setItemName(item.getName())
+                                        .setItemSpecification(item.getSpecification());
+                                findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unit -> vo.setUnitName(unit.getName()));
+                            });
+                    findAndThen(
+                            userMap,
+                            vo.getInspectorUserId(),
+                            user -> vo.setInspectorNickname(user.getNickname()));
+                });
     }
-
 }

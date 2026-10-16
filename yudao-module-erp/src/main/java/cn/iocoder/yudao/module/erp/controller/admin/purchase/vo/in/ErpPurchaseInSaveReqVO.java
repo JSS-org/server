@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.in;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -50,7 +52,10 @@ public class ErpPurchaseInSaveReqVO {
         @Schema(description = "入库项编号", example = "11756")
         private Long id;
 
-        @Schema(description = "采购订单项编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11756")
+        @Schema(
+                description = "采购订单项编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "11756")
         @NotNull(message = "采购订单项编号不能为空")
         private Long orderItemId;
 
@@ -62,14 +67,20 @@ public class ErpPurchaseInSaveReqVO {
         @NotNull(message = "产品编号不能为空")
         private Long productId;
 
-        @Schema(description = "产品单位单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
+        @Schema(
+                description = "产品单位单位",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "3113")
         @NotNull(message = "产品单位单位不能为空")
         private Long productUnitId;
 
         @Schema(description = "产品单价", example = "100.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "产品数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "产品数量不能为空")
         @DecimalMin(value = "0", inclusive = false, message = "产品数量必须大于 0")
         private BigDecimal count;
@@ -79,7 +90,5 @@ public class ErpPurchaseInSaveReqVO {
 
         @Schema(description = "备注", example = "随便")
         private String remark;
-
     }
-
 }

@@ -1,14 +1,17 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnsales.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 /**
  * 管理后台 - MES 销售退货相关
@@ -38,5 +41,4 @@ public class MesWmReturnSalesPageReqVO extends PageParam {
     @Schema(description = "退货日期")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] returnDate;
-
 }

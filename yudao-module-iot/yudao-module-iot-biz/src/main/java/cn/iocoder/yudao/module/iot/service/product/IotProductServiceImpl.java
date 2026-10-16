@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.iot.service.product;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.product.IotProductPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.product.IotProductSaveReqVO;
@@ -13,9 +16,13 @@ import cn.iocoder.yudao.module.iot.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.iot.enums.product.IotProductStatusEnum;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
+
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -27,9 +34,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.*;
-
 /**
  * IoT 产品 Service 实现类
  *
@@ -40,13 +44,10 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.*;
 @Validated
 public class IotProductServiceImpl implements IotProductService {
 
-    @Resource
-    private IotProductMapper productMapper;
+    @Resource private IotProductMapper productMapper;
 
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private IotDeviceService deviceService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private IotDevicePropertyService devicePropertyDataService;
 
     @Override
@@ -57,9 +58,10 @@ public class IotProductServiceImpl implements IotProductService {
         }
 
         // 2. 插入
-        IotProductDO product = BeanUtils.toBean(createReqVO, IotProductDO.class)
-                .setStatus(IotProductStatusEnum.UNPUBLISHED.getStatus())
-                .setProductSecret(generateProductSecret());
+        IotProductDO product =
+                BeanUtils.toBean(createReqVO, IotProductDO.class)
+                        .setStatus(IotProductStatusEnum.UNPUBLISHED.getStatus())
+                        .setProductSecret(generateProductSecret());
         productMapper.insert(product);
         return product.getId();
     }
@@ -199,5 +201,4 @@ public class IotProductServiceImpl implements IotProductService {
             throw exception(PRODUCT_NOT_EXISTS);
         }
     }
-
 }

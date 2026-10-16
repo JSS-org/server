@@ -14,9 +14,9 @@ public class GroupMemberSettingUpdateNotification extends BaseGroupNotification 
      * 群免打扰
      */
     private Boolean silent;
+
     /**
      * 群备注
      */
     private String groupRemark;
-
 }

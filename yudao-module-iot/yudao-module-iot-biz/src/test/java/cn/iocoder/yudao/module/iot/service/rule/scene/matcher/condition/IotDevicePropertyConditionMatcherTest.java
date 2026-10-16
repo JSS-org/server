@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.matcher.condition;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotBaseConditionMatcherTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotDevicePropertyConditionMatcher} 的单元测试
@@ -52,11 +54,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         String propertyIdentifier = "temperature";
         Double propertyValue = 25.5;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                String.valueOf(propertyValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        String.valueOf(propertyValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -72,11 +74,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         Integer propertyValue = 75;
         Integer compareValue = 70;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                String.valueOf(compareValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        String.valueOf(compareValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -92,11 +94,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         Double propertyValue = 1010.5;
         Integer compareValue = 1020;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(),
-                String.valueOf(compareValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(),
+                        String.valueOf(compareValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -112,11 +114,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         String propertyValue = "active";
         String compareValue = "inactive";
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.NOT_EQUALS.getOperator(),
-                compareValue
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.NOT_EQUALS.getOperator(),
+                        compareValue);
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -132,11 +134,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         Double propertyValue = 15.0;
         Integer compareValue = 20;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                String.valueOf(compareValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        String.valueOf(compareValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -152,11 +154,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         String conditionIdentifier = "humidity";
         Double propertyValue = 25.5;
         IotDeviceMessage message = createPropertyPostMessage(messageIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                conditionIdentifier,
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                String.valueOf(propertyValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        conditionIdentifier,
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        String.valueOf(propertyValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -245,11 +247,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
     @Test
     public void testMatches_nullMessage_fail() {
         // 准备参数
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                "temperature",
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                "20"
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        "temperature",
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        "20");
 
         // 调用
         boolean result = matcher.matches(null, condition);
@@ -263,11 +265,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         // 准备参数：消息的 params 为 null
         IotDeviceMessage message = new IotDeviceMessage();
         message.setParams(null);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                "temperature",
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                "20"
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        "temperature",
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        "20");
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -281,12 +283,13 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         // 测试使用 properties 结构的消息（真实的属性上报场景）
         String identifier = "temperature";
         Double propertyValue = 25.5;
-        IotDeviceMessage message = createPropertyPostMessageWithProperties(identifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                identifier,
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                "20"
-        );
+        IotDeviceMessage message =
+                createPropertyPostMessageWithProperties(identifier, propertyValue);
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        identifier,
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        "20");
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -300,11 +303,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         // 测试简单值消息（params 直接是属性值）
         Double propertyValue = 25.5;
         IotDeviceMessage message = createSimpleValueMessage(propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                "any", // 对于简单值消息，标识符匹配会被跳过
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                "20"
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        "any", // 对于简单值消息，标识符匹配会被跳过
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        "20");
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -329,11 +332,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         params.put("value", propertyValue);
         message.setParams(params);
 
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                identifier,
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                "20"
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        identifier,
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        "20");
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -348,11 +351,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         String propertyIdentifier = "voltage";
         Double propertyValue = 12.0;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN_OR_EQUALS.getOperator(),
-                String.valueOf(propertyValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN_OR_EQUALS.getOperator(),
+                        String.valueOf(propertyValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -368,11 +371,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         Double propertyValue = 2.5;
         Double compareValue = 3.0;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.LESS_THAN_OR_EQUALS.getOperator(),
-                String.valueOf(compareValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.LESS_THAN_OR_EQUALS.getOperator(),
+                        String.valueOf(compareValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -387,11 +390,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         String propertyIdentifier = "mode";
         String propertyValue = "auto";
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                propertyValue
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        propertyValue);
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -406,11 +409,11 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         String propertyIdentifier = "enabled";
         Boolean propertyValue = true;
         IotDeviceMessage message = createPropertyPostMessage(propertyIdentifier, propertyValue);
-        IotSceneRuleDO.TriggerCondition condition = createValidCondition(
-                propertyIdentifier,
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                String.valueOf(propertyValue)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createValidCondition(
+                        propertyIdentifier,
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        String.valueOf(propertyValue));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -449,7 +452,8 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
     /**
      * 创建使用 properties 结构的消息（模拟真实的属性上报消息）
      */
-    private IotDeviceMessage createPropertyPostMessageWithProperties(String identifier, Object value) {
+    private IotDeviceMessage createPropertyPostMessageWithProperties(
+            String identifier, Object value) {
         IotDeviceMessage message = new IotDeviceMessage();
         message.setDeviceId(randomLongId());
         message.setMethod("thing.property.post"); // 属性上报方法
@@ -480,7 +484,8 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
     /**
      * 创建有效的条件
      */
-    private IotSceneRuleDO.TriggerCondition createValidCondition(String identifier, String operator, String param) {
+    private IotSceneRuleDO.TriggerCondition createValidCondition(
+            String identifier, String operator, String param) {
         IotSceneRuleDO.TriggerCondition condition = new IotSceneRuleDO.TriggerCondition();
         condition.setType(IotSceneRuleConditionTypeEnum.DEVICE_PROPERTY.getType());
         condition.setIdentifier(identifier);
@@ -488,5 +493,4 @@ public class IotDevicePropertyConditionMatcherTest extends IotBaseConditionMatch
         condition.setParam(param);
         return condition;
     }
-
 }

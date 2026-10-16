@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model.vo.model;
 
-import lombok.*;
-import io.swagger.v3.oas.annotations.media.Schema;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.*;
 
 @Schema(description = "管理后台 - API 模型分页 Request VO")
 @Data
@@ -16,5 +18,4 @@ public class AiModelPageReqVO extends PageParam {
 
     @Schema(description = "模型平台", example = "OpenAI")
     private String platform;
-
 }

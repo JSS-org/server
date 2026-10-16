@@ -5,8 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.websocket.core.message.JsonWebSocketMessage;
 import cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -50,7 +52,12 @@ public abstract class AbstractWebSocketMessageSender implements WebSocketMessage
      * @param messageType 消息类型
      * @param messageContent 消息内容
      */
-    public void send(String sessionId, Integer userType, Long userId, String messageType, String messageContent) {
+    public void send(
+            String sessionId,
+            Integer userType,
+            Long userId,
+            String messageType,
+            String messageContent) {
         // 1. 获得 Session 列表
         List<WebSocketSession> sessions = Collections.emptyList();
         if (StrUtil.isNotEmpty(sessionId)) {
@@ -65,8 +72,13 @@ public abstract class AbstractWebSocketMessageSender implements WebSocketMessage
         }
         if (CollUtil.isEmpty(sessions)) {
             if (log.isDebugEnabled()) {
-                log.debug("[send][sessionId({}) userType({}) userId({}) messageType({}) messageContent({}) 未匹配到会话]",
-                        sessionId, userType, userId, messageType, messageContent);
+                log.debug(
+                        "[send][sessionId({}) userType({}) userId({}) messageType({}) messageContent({}) 未匹配到会话]",
+                        sessionId,
+                        userType,
+                        userId,
+                        messageType,
+                        messageContent);
             }
         }
         // 2. 执行发送
@@ -80,27 +92,37 @@ public abstract class AbstractWebSocketMessageSender implements WebSocketMessage
      * @param messageType 消息类型
      * @param messageContent 消息内容
      */
-    public void doSend(Collection<WebSocketSession> sessions, String messageType, String messageContent) {
-        JsonWebSocketMessage message = new JsonWebSocketMessage().setType(messageType).setContent(messageContent);
+    public void doSend(
+            Collection<WebSocketSession> sessions, String messageType, String messageContent) {
+        JsonWebSocketMessage message =
+                new JsonWebSocketMessage().setType(messageType).setContent(messageContent);
         String payload = JsonUtils.toJsonString(message); // 关键，使用 JSON 序列化
-        sessions.forEach(session -> {
-            // 1. 各种校验，保证 Session 可以被发送
-            if (session == null) {
-                log.error("[doSend][session 为空, message({})]", message);
-                return;
-            }
-            if (!session.isOpen()) {
-                log.error("[doSend][session({}) 已关闭, message({})]", session.getId(), message);
-                return;
-            }
-            // 2. 执行发送
-            try {
-                session.sendMessage(new TextMessage(payload));
-                log.info("[doSend][session({}) 发送消息成功，message({})]", session.getId(), message);
-            } catch (IOException ex) {
-                log.error("[doSend][session({}) 发送消息失败，message({})]", session.getId(), message, ex);
-            }
-        });
+        sessions.forEach(
+                session -> {
+                    // 1. 各种校验，保证 Session 可以被发送
+                    if (session == null) {
+                        log.error("[doSend][session 为空, message({})]", message);
+                        return;
+                    }
+                    if (!session.isOpen()) {
+                        log.error(
+                                "[doSend][session({}) 已关闭, message({})]", session.getId(), message);
+                        return;
+                    }
+                    // 2. 执行发送
+                    try {
+                        session.sendMessage(new TextMessage(payload));
+                        log.info(
+                                "[doSend][session({}) 发送消息成功，message({})]",
+                                session.getId(),
+                                message);
+                    } catch (IOException ex) {
+                        log.error(
+                                "[doSend][session({}) 发送消息失败，message({})]",
+                                session.getId(),
+                                message,
+                                ex);
+                    }
+                });
     }
-
 }

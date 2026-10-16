@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.wms.controller.admin.md.merchant.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.wms.enums.md.WmsMerchantTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -24,5 +26,4 @@ public class WmsMerchantListReqVO {
     @Schema(description = "往来企业类型数组", example = "2,3")
     @InEnum(value = WmsMerchantTypeEnum.class, message = "往来企业类型必须是 {value}")
     private List<Integer> types;
-
 }

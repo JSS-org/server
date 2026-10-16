@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.crm.framework.operatelog.core;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +36,7 @@ public class SysBooleanParseFunction implements IParseFunction {
         if (StrUtil.isEmptyIfStr(value)) {
             return "";
         }
-        return DictFrameworkUtils.parseDictDataLabel(DictTypeConstants.BOOLEAN_STRING, value.toString());
+        return DictFrameworkUtils.parseDictDataLabel(
+                DictTypeConstants.BOOLEAN_STRING, value.toString());
     }
-
 }

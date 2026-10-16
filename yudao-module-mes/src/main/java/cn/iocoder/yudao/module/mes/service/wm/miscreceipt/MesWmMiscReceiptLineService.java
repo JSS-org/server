@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.line.MesWmMiscReceiptLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.line.MesWmMiscReceiptLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscreceipt.MesWmMiscReceiptLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -57,7 +58,8 @@ public interface MesWmMiscReceiptLineService {
      * @param pageReqVO 分页参数
      * @return 杂项入库单行分页
      */
-    PageResult<MesWmMiscReceiptLineDO> getMiscReceiptLinePage(MesWmMiscReceiptLinePageReqVO pageReqVO);
+    PageResult<MesWmMiscReceiptLineDO> getMiscReceiptLinePage(
+            MesWmMiscReceiptLinePageReqVO pageReqVO);
 
     /**
      * 删除指定入库单的所有行（级联删除）
@@ -73,5 +75,4 @@ public interface MesWmMiscReceiptLineService {
      * @return 杂项入库单行
      */
     MesWmMiscReceiptLineDO validateMiscReceiptLineExists(Long id);
-
 }

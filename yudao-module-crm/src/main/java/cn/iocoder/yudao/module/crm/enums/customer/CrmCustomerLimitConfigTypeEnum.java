@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.crm.enums.customer;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -27,20 +28,26 @@ public enum CrmCustomerLimitConfigTypeEnum implements ArrayValuable<Integer> {
     CUSTOMER_LOCK_LIMIT(2, "锁定客户数限制"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(CrmCustomerLimitConfigTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(CrmCustomerLimitConfigTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态
      */
     private final Integer type;
+
     /**
      * 状态名
      */
     private final String name;
 
     public static String getNameByType(Integer type) {
-        CrmCustomerLimitConfigTypeEnum typeEnum = CollUtil.findOne(CollUtil.newArrayList(CrmCustomerLimitConfigTypeEnum.values()),
-                item -> ObjUtil.equal(item.type, type));
+        CrmCustomerLimitConfigTypeEnum typeEnum =
+                CollUtil.findOne(
+                        CollUtil.newArrayList(CrmCustomerLimitConfigTypeEnum.values()),
+                        item -> ObjUtil.equal(item.type, type));
         return typeEnum == null ? null : typeEnum.getName();
     }
 
@@ -48,5 +55,4 @@ public enum CrmCustomerLimitConfigTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

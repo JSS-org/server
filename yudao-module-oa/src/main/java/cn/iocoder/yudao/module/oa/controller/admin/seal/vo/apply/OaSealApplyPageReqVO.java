@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.oa.controller.admin.seal.vo.apply;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -32,7 +34,9 @@ public class OaSealApplyPageReqVO extends PageParam {
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] createTime;
 
-    @Schema(description = "预计用印时间范围", example = "[\"2026-09-11 09:00:00\", \"2026-09-11 18:00:00\"]")
+    @Schema(
+            description = "预计用印时间范围",
+            example = "[\"2026-09-11 09:00:00\", \"2026-09-11 18:00:00\"]")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] expectedUseTime;
 

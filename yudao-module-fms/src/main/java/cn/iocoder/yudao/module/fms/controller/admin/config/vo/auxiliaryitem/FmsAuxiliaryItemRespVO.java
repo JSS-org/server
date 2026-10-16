@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -30,7 +32,10 @@ public class FmsAuxiliaryItemRespVO {
     @ExcelProperty("编码")
     private String code;
 
-    @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "上海测试数字科技有限公司")
+    @Schema(
+            description = "名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "上海测试数字科技有限公司")
     @ExcelProperty("名称")
     private String name;
 
@@ -51,5 +56,4 @@ public class FmsAuxiliaryItemRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

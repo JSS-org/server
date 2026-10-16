@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -15,12 +19,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.vendor.MesMdVendorDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalNoticeDO;
 import cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService;
 import cn.iocoder.yudao.module.mes.service.wm.arrivalnotice.MesWmArrivalNoticeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,32 +37,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 到货通知单")
 @RestController
 @RequestMapping("/mes/wm/arrival-notice")
 @Validated
 public class MesWmArrivalNoticeController {
 
-    @Resource
-    private MesWmArrivalNoticeService arrivalNoticeService;
-    @Resource
-    private MesMdVendorService vendorService;
+    @Resource private MesWmArrivalNoticeService arrivalNoticeService;
+    @Resource private MesMdVendorService vendorService;
 
     @PostMapping("/create")
     @Operation(summary = "创建到货通知单")
     @PreAuthorize("@ss.hasPermission('mes:wm-arrival-notice:create')")
-    public CommonResult<Long> createArrivalNotice(@Valid @RequestBody MesWmArrivalNoticeSaveReqVO createReqVO) {
+    public CommonResult<Long> createArrivalNotice(
+            @Valid @RequestBody MesWmArrivalNoticeSaveReqVO createReqVO) {
         return success(arrivalNoticeService.createArrivalNotice(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改到货通知单")
     @PreAuthorize("@ss.hasPermission('mes:wm-arrival-notice:update')")
-    public CommonResult<Boolean> updateArrivalNotice(@Valid @RequestBody MesWmArrivalNoticeSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateArrivalNotice(
+            @Valid @RequestBody MesWmArrivalNoticeSaveReqVO updateReqVO) {
         arrivalNoticeService.updateArrivalNotice(updateReqVO);
         return success(true);
     }
@@ -86,19 +89,27 @@ public class MesWmArrivalNoticeController {
     @PreAuthorize("@ss.hasPermission('mes:wm-arrival-notice:query')")
     public CommonResult<PageResult<MesWmArrivalNoticeRespVO>> getArrivalNoticePage(
             @Valid MesWmArrivalNoticePageReqVO pageReqVO) {
-        PageResult<MesWmArrivalNoticeDO> pageResult = arrivalNoticeService.getArrivalNoticePage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmArrivalNoticeDO> pageResult =
+                arrivalNoticeService.getArrivalNoticePage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出到货通知单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-arrival-notice:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportArrivalNoticeExcel(@Valid MesWmArrivalNoticePageReqVO pageReqVO,
-                                          HttpServletResponse response) throws IOException {
+    public void exportArrivalNoticeExcel(
+            @Valid MesWmArrivalNoticePageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmArrivalNoticeDO> pageResult = arrivalNoticeService.getArrivalNoticePage(pageReqVO);
-        ExcelUtils.write(response, "到货通知单.xls", "数据", MesWmArrivalNoticeRespVO.class,
+        PageResult<MesWmArrivalNoticeDO> pageResult =
+                arrivalNoticeService.getArrivalNoticePage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "到货通知单.xls",
+                "数据",
+                MesWmArrivalNoticeRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -118,13 +129,19 @@ public class MesWmArrivalNoticeController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdVendorDO> vendorMap = vendorService.getVendorMap(
-                convertSet(list, MesWmArrivalNoticeDO::getVendorId));
+        Map<Long, MesMdVendorDO> vendorMap =
+                vendorService.getVendorMap(convertSet(list, MesWmArrivalNoticeDO::getVendorId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmArrivalNoticeRespVO.class, vo -> {
-            MapUtils.findAndThen(vendorMap, vo.getVendorId(), vendor ->
-                    vo.setVendorCode(vendor.getCode()).setVendorName(vendor.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmArrivalNoticeRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            vendorMap,
+                            vo.getVendorId(),
+                            vendor ->
+                                    vo.setVendorCode(vendor.getCode())
+                                            .setVendorName(vendor.getName()));
+                });
     }
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.controller.admin.alert;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,9 +15,11 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.alert.IotAlertConfigDO;
 import cn.iocoder.yudao.module.iot.service.alert.IotAlertConfigService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 
@@ -26,33 +32,29 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-
 @Tag(name = "管理后台 - IoT 告警配置")
 @RestController
 @RequestMapping("/iot/alert-config")
 @Validated
 public class IotAlertConfigController {
 
-    @Resource
-    private IotAlertConfigService alertConfigService;
-    
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private IotAlertConfigService alertConfigService;
+
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建告警配置")
     @PreAuthorize("@ss.hasPermission('iot:alert-config:create')")
-    public CommonResult<Long> createAlertConfig(@Valid @RequestBody IotAlertConfigSaveReqVO createReqVO) {
+    public CommonResult<Long> createAlertConfig(
+            @Valid @RequestBody IotAlertConfigSaveReqVO createReqVO) {
         return success(alertConfigService.createAlertConfig(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新告警配置")
     @PreAuthorize("@ss.hasPermission('iot:alert-config:update')")
-    public CommonResult<Boolean> updateAlertConfig(@Valid @RequestBody IotAlertConfigSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAlertConfig(
+            @Valid @RequestBody IotAlertConfigSaveReqVO updateReqVO) {
         alertConfigService.updateAlertConfig(updateReqVO);
         return success(true);
     }
@@ -78,28 +80,42 @@ public class IotAlertConfigController {
     @GetMapping("/page")
     @Operation(summary = "获得告警配置分页")
     @PreAuthorize("@ss.hasPermission('iot:alert-config:query')")
-    public CommonResult<PageResult<IotAlertConfigRespVO>> getAlertConfigPage(@Valid IotAlertConfigPageReqVO pageReqVO) {
+    public CommonResult<PageResult<IotAlertConfigRespVO>> getAlertConfigPage(
+            @Valid IotAlertConfigPageReqVO pageReqVO) {
         PageResult<IotAlertConfigDO> pageResult = alertConfigService.getAlertConfigPage(pageReqVO);
-        
+
         // 转换返回
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSetByFlatMap(pageResult.getList(), config -> config.getReceiveUserIds().stream()));
-        return success(BeanUtils.toBean(pageResult, IotAlertConfigRespVO.class, vo -> {
-            vo.setReceiveUserNames(vo.getReceiveUserIds().stream()
-                    .map(userMap::get)
-                    .filter(Objects::nonNull)
-                    .map(AdminUserRespDTO::getNickname)
-                    .collect(Collectors.toList()));
-        }));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSetByFlatMap(
+                                pageResult.getList(),
+                                config -> config.getReceiveUserIds().stream()));
+        return success(
+                BeanUtils.toBean(
+                        pageResult,
+                        IotAlertConfigRespVO.class,
+                        vo -> {
+                            vo.setReceiveUserNames(
+                                    vo.getReceiveUserIds().stream()
+                                            .map(userMap::get)
+                                            .filter(Objects::nonNull)
+                                            .map(AdminUserRespDTO::getNickname)
+                                            .collect(Collectors.toList()));
+                        }));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得告警配置简单列表", description = "只包含被开启的告警配置，主要用于前端的下拉选项")
     @PreAuthorize("@ss.hasPermission('iot:alert-config:query')")
     public CommonResult<List<IotAlertConfigRespVO>> getAlertConfigSimpleList() {
-        List<IotAlertConfigDO> list = alertConfigService.getAlertConfigListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, config -> // 只返回 id、name 字段
-                new IotAlertConfigRespVO().setId(config.getId()).setName(config.getName())));
+        List<IotAlertConfigDO> list =
+                alertConfigService.getAlertConfigListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return success(
+                convertList(
+                        list,
+                        config -> // 只返回 id、name 字段
+                        new IotAlertConfigRespVO()
+                                        .setId(config.getId())
+                                        .setName(config.getName())));
     }
-
 }

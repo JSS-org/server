@@ -1,18 +1,5 @@
 package cn.iocoder.yudao.module.member.service.tag;
 
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagCreateReqVO;
-import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagPageReqVO;
-import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagUpdateReqVO;
-import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
-import cn.iocoder.yudao.module.member.dal.mysql.tag.MemberTagMapper;
-import cn.iocoder.yudao.module.member.service.user.MemberUserService;
-import jakarta.annotation.Resource;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
 import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
@@ -21,7 +8,23 @@ import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServic
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.TAG_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagCreateReqVO;
+import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagPageReqVO;
+import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagUpdateReqVO;
+import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
+import cn.iocoder.yudao.module.member.dal.mysql.tag.MemberTagMapper;
+import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 // TODO 芋艿：完全 review 完，在去 review 单测
 /**
@@ -32,14 +35,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(MemberTagServiceImpl.class)
 public class MemberTagServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MemberTagServiceImpl tagService;
+    @Resource private MemberTagServiceImpl tagService;
 
-    @Resource
-    private MemberTagMapper tagMapper;
+    @Resource private MemberTagMapper tagMapper;
 
-    @MockitoBean
-    private MemberUserService memberUserService;
+    @MockitoBean private MemberUserService memberUserService;
 
     @Test
     public void testCreateTag_success() {
@@ -59,11 +59,14 @@ public class MemberTagServiceImplTest extends BaseDbUnitTest {
     public void testUpdateTag_success() {
         // mock 数据
         MemberTagDO dbTag = randomPojo(MemberTagDO.class);
-        tagMapper.insert(dbTag);// @Sql: 先插入出一条存在的数据
+        tagMapper.insert(dbTag); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        MemberTagUpdateReqVO reqVO = randomPojo(MemberTagUpdateReqVO.class, o -> {
-            o.setId(dbTag.getId()); // 设置更新的 ID
-        });
+        MemberTagUpdateReqVO reqVO =
+                randomPojo(
+                        MemberTagUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbTag.getId()); // 设置更新的 ID
+                        });
 
         // 调用
         tagService.updateTag(reqVO);
@@ -85,7 +88,7 @@ public class MemberTagServiceImplTest extends BaseDbUnitTest {
     public void testDeleteTag_success() {
         // mock 数据
         MemberTagDO dbTag = randomPojo(MemberTagDO.class);
-        tagMapper.insert(dbTag);// @Sql: 先插入出一条存在的数据
+        tagMapper.insert(dbTag); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbTag.getId();
 
@@ -107,10 +110,13 @@ public class MemberTagServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetTagPage() {
         // mock 数据
-        MemberTagDO dbTag = randomPojo(MemberTagDO.class, o -> { // 等会查询到
-            o.setName("test");
-            o.setCreateTime(buildTime(2023, 2, 18));
-        });
+        MemberTagDO dbTag =
+                randomPojo(
+                        MemberTagDO.class,
+                        o -> { // 等会查询到
+                            o.setName("test");
+                            o.setCreateTime(buildTime(2023, 2, 18));
+                        });
         tagMapper.insert(dbTag);
         // 测试 name 不匹配
         tagMapper.insert(cloneIgnoreId(dbTag, o -> o.setName("ne")));
@@ -128,5 +134,4 @@ public class MemberTagServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, pageResult.getList().size());
         assertPojoEquals(dbTag, pageResult.getList().get(0));
     }
-
 }

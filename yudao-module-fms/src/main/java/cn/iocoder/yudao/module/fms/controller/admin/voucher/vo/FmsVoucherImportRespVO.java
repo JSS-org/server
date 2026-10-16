@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -36,7 +38,5 @@ public class FmsVoucherImportRespVO {
      *
      * 仅用于生成错误数据文件，不直接返回前端
      */
-    @JsonIgnore
-    private List<FmsVoucherImportExcelVO> errorRows;
-
+    @JsonIgnore private List<FmsVoucherImportExcelVO> errorRows;
 }

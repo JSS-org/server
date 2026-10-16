@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.MAIL_ACCOUNT_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.lang.Pair;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -7,9 +15,11 @@ import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.*;
 import cn.iocoder.yudao.module.oa.dal.mysql.mail.*;
+
 import jakarta.annotation.Resource;
 import jakarta.mail.*;
 import jakarta.mail.internet.MimeMessage;
+
 import org.eclipse.angus.mail.imap.AppendUID;
 import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.eclipse.angus.mail.imap.IMAPStore;
@@ -22,13 +32,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.MAIL_ACCOUNT_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaMailMessageServiceImpl} 的单元测试类
  *
@@ -37,18 +40,13 @@ import static org.mockito.Mockito.*;
 @Import({OaMailMessageServiceImpl.class, OaMailFolderServiceImpl.class})
 public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaMailMessageServiceImpl mailMessageService;
+    @Resource private OaMailMessageServiceImpl mailMessageService;
 
-    @Resource
-    private OaMailMessageMapper mailMessageMapper;
-    @Resource
-    private OaMailFolderMapper mailFolderMapper;
+    @Resource private OaMailMessageMapper mailMessageMapper;
+    @Resource private OaMailFolderMapper mailFolderMapper;
 
-    @MockitoBean
-    private OaMailAccountService mailAccountService;
-    @MockitoBean
-    private OaMailMessageClient mailMessageClient;
+    @MockitoBean private OaMailAccountService mailAccountService;
+    @MockitoBean private OaMailMessageClient mailMessageClient;
 
     @Test
     public void testRestoreMailMessage_failureKeepsIndex() throws Exception {
@@ -64,14 +62,18 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // mock 方法
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
-        when(mailMessageClient.getFolders(store)).thenReturn(Collections.singletonMap("INBOX", "INBOX"));
+        when(mailMessageClient.getFolders(store))
+                .thenReturn(Collections.singletonMap("INBOX", "INBOX"));
         when(store.getFolder("Trash")).thenReturn(folder);
         when(folder.isOpen()).thenReturn(true);
         when(mailMessageClient.getMessage(eq(folder), any())).thenReturn(message);
-        doThrow(new MessagingException("连接中断")).when(mailMessageClient).moveMessage(store, folder, message, "INBOX");
+        doThrow(new MessagingException("连接中断"))
+                .when(mailMessageClient)
+                .moveMessage(store, folder, message, "INBOX");
 
         // 调用，并断言：失败保留本地索引，供同步核实
-        assertThrows(ServiceException.class,
+        assertThrows(
+                ServiceException.class,
                 () -> mailMessageService.restoreMailMessage(index.getId(), 1L));
         assertNotNull(mailMessageMapper.selectById(index.getId()));
         verify(folder).close(false);
@@ -92,7 +94,8 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // mock 方法
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
-        when(mailMessageClient.getFolders(store)).thenReturn(Collections.singletonMap("INBOX", "INBOX"));
+        when(mailMessageClient.getFolders(store))
+                .thenReturn(Collections.singletonMap("INBOX", "INBOX"));
         when(store.getFolder("Trash")).thenReturn(folder);
         when(folder.isOpen()).thenReturn(true);
         when(mailMessageClient.getMessage(eq(folder), any())).thenReturn(message);
@@ -114,9 +117,8 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         OaMailMessageDO message = randomMailMessageDO(folder.getId(), 1L);
         mailMessageMapper.insert(message);
         // mock 方法：账号服务执行本人归属校验
-        when(mailAccountService.validateMailAccount(1L, 2L)).thenThrow(
-                exception(
-                        MAIL_ACCOUNT_NOT_EXISTS));
+        when(mailAccountService.validateMailAccount(1L, 2L))
+                .thenThrow(exception(MAIL_ACCOUNT_NOT_EXISTS));
 
         // 调用，并断言：他人不能连接该邮箱下载附件
         assertServiceException(
@@ -142,12 +144,13 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         when(store.getFolder("INBOX")).thenReturn(remoteFolder);
         when(mailMessageClient.getMessage(eq(remoteFolder), any())).thenReturn(remoteMessage);
         when(mailMessageClient.getAttachment(remoteMessage, "1"))
-                .thenReturn(Pair.of("合同.txt", new byte[]{1, 2}));
+                .thenReturn(Pair.of("合同.txt", new byte[] {1, 2}));
 
         // 调用
-        Pair<String, byte[]> result = mailMessageService.getMailMessageAttachment(message.getId(), "1", 1L);
+        Pair<String, byte[]> result =
+                mailMessageService.getMailMessageAttachment(message.getId(), "1", 1L);
         // 断言
-        assertArrayEquals(new byte[]{1, 2}, result.getValue());
+        assertArrayEquals(new byte[] {1, 2}, result.getValue());
         verify(remoteFolder).open(Folder.READ_ONLY);
         verify(remoteFolder).close();
         verify(store).close();
@@ -168,12 +171,16 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         Folder folder = mock(Folder.class, withSettings().extraInterfaces(UIDFolder.class));
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
-        when(mailMessageClient.getFolders(store)).thenReturn(Collections.singletonMap("INBOX", "INBOX"));
+        when(mailMessageClient.getFolders(store))
+                .thenReturn(Collections.singletonMap("INBOX", "INBOX"));
         when(store.getFolder("INBOX")).thenReturn(folder);
         when(((UIDFolder) folder).getUIDValidity()).thenReturn(100L);
         when(folder.isOpen()).thenReturn(true);
-        when(mailMessageClient.getMessageList(folder)).thenReturn(Arrays.asList(
-                randomMailMessageDO(null, 10L).setId(null).setReadStatus(true), randomMailMessageDO(null, 12L).setId(null)));
+        when(mailMessageClient.getMessageList(folder))
+                .thenReturn(
+                        Arrays.asList(
+                                randomMailMessageDO(null, 10L).setId(null).setReadStatus(true),
+                                randomMailMessageDO(null, 12L).setId(null)));
 
         // 调用
         assertEquals(2, mailMessageService.syncMailMessageList(1L, 1L));
@@ -199,11 +206,14 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         Folder folder = mock(Folder.class, withSettings().extraInterfaces(UIDFolder.class));
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
-        when(mailMessageClient.getFolders(store)).thenReturn(Collections.singletonMap("INBOX", "INBOX"));
+        when(mailMessageClient.getFolders(store))
+                .thenReturn(Collections.singletonMap("INBOX", "INBOX"));
         when(store.getFolder("INBOX")).thenReturn(folder);
         when(((UIDFolder) folder).getUIDValidity()).thenReturn(200L);
-        when(mailMessageClient.getMessageList(folder)).thenReturn(Collections.singletonList(randomMailMessageDO(null, 1L)
-                .setId(null).setUidValidity(200L)));
+        when(mailMessageClient.getMessageList(folder))
+                .thenReturn(
+                        Collections.singletonList(
+                                randomMailMessageDO(null, 1L).setId(null).setUidValidity(200L)));
 
         // 调用
         mailMessageService.syncMailMessageList(1L, 1L);
@@ -218,11 +228,18 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         OaMailFolderDO folder = randomMailFolderDO();
         mailFolderMapper.insert(folder);
-        mailMessageMapper.insert(randomMailMessageDO(folder.getId(), 1L).setSubject("验收邮件").setReadStatus(false));
-        mailMessageMapper.insert(randomMailMessageDO(folder.getId(), 2L).setSubject("验收邮件").setReadStatus(true));
-        mailMessageMapper.insert(randomMailMessageDO(folder.getId(), 3L).setAccountId(2L).setSubject("验收邮件"));
+        mailMessageMapper.insert(
+                randomMailMessageDO(folder.getId(), 1L).setSubject("验收邮件").setReadStatus(false));
+        mailMessageMapper.insert(
+                randomMailMessageDO(folder.getId(), 2L).setSubject("验收邮件").setReadStatus(true));
+        mailMessageMapper.insert(
+                randomMailMessageDO(folder.getId(), 3L).setAccountId(2L).setSubject("验收邮件"));
         // 准备参数
-        OaMailMessagePageReqVO reqVO = new OaMailMessagePageReqVO().setAccountId(1L).setFolderKey("UNREAD").setKeyword("验收");
+        OaMailMessagePageReqVO reqVO =
+                new OaMailMessagePageReqVO()
+                        .setAccountId(1L)
+                        .setFolderKey("UNREAD")
+                        .setKeyword("验收");
 
         // 调用
         PageResult<OaMailMessageDO> page = mailMessageService.getMailMessagePage(reqVO, 1L);
@@ -230,7 +247,9 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         assertEquals(1L, page.getTotal());
         assertFalse(page.getList().get(0).getReadStatus());
         verify(mailAccountService).validateMailAccount(1L, 1L);
-        assertEquals(2L, mailMessageService.getMailMessagePage(reqVO.setFolderKey("INBOX"), 1L).getTotal());
+        assertEquals(
+                2L,
+                mailMessageService.getMailMessagePage(reqVO.setFolderKey("INBOX"), 1L).getTotal());
     }
 
     @Test
@@ -240,8 +259,10 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         mailFolderMapper.insert(inbox);
         OaMailFolderDO custom = randomMailFolderDO().setName("客户/合同").setType("CUSTOM");
         mailFolderMapper.insert(custom);
-        mailFolderMapper.insert(randomMailFolderDO().setName("已移除").setType("CUSTOM").setAvailable(false));
-        mailFolderMapper.insert(randomMailFolderDO().setName("他人目录").setType("CUSTOM").setAccountId(2L));
+        mailFolderMapper.insert(
+                randomMailFolderDO().setName("已移除").setType("CUSTOM").setAvailable(false));
+        mailFolderMapper.insert(
+                randomMailFolderDO().setName("他人目录").setType("CUSTOM").setAccountId(2L));
         mailMessageMapper.insert(randomMailMessageDO(inbox.getId(), 1L));
         mailMessageMapper.insert(randomMailMessageDO(custom.getId(), 2L));
         mailMessageMapper.insert(randomMailMessageDO(custom.getId(), 3L).setReadStatus(true));
@@ -254,10 +275,11 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         assertEquals("UNREAD", folders.get(1).getKey());
         assertEquals("客户/合同", folders.get(2).getName());
         assertEquals(1L, folders.get(2).getUnreadCount());
-        OaMailMessagePageReqVO request = new OaMailMessagePageReqVO()
-                .setAccountId(1L).setFolderKey(folders.get(2).getKey());
+        OaMailMessagePageReqVO request =
+                new OaMailMessagePageReqVO().setAccountId(1L).setFolderKey(folders.get(2).getKey());
         assertEquals(2L, mailMessageService.getMailMessagePage(request, 1L).getTotal());
-        assertEquals(0L, mailMessageService.getMailMessagePage(request.setAccountId(2L), 2L).getTotal());
+        assertEquals(
+                0L, mailMessageService.getMailMessagePage(request.setAccountId(2L), 2L).getTotal());
     }
 
     @Test
@@ -273,15 +295,23 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         OaMailMessageDO detail = new OaMailMessageDO();
         detail.setContent("<p>正文</p>");
         detail.setReplyTos(Arrays.asList("reply@example.com"));
-        detail.setAttachments(Collections.singletonList(new OaMailMessageDO.Attachment()
-                .setPart("1").setName("合同.pdf").setSize(123)));
+        detail.setAttachments(
+                Collections.singletonList(
+                        new OaMailMessageDO.Attachment()
+                                .setPart("1")
+                                .setName("合同.pdf")
+                                .setSize(123)));
         // mock 方法
         when(mailAccountService.validateMailAccount(1L, 1L)).thenReturn(account);
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
         when(store.getFolder("INBOX")).thenReturn(remote);
         when(mailMessageClient.getDetail(any(), any())).thenReturn(detail);
-        when(mailMessageClient.sanitizeHtml(anyString())).thenAnswer(invocation -> new OaMailMessageClientImpl().sanitizeHtml(invocation.getArgument(0)));
+        when(mailMessageClient.sanitizeHtml(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                new OaMailMessageClientImpl()
+                                        .sanitizeHtml(invocation.getArgument(0)));
 
         // 调用：首次远端读取，第二次从数据库读取
         mailMessageService.getMailMessage(index.getId(), 1L);
@@ -292,8 +322,15 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         assertEquals(Collections.singletonList("reply@example.com"), cached.getReplyTos());
         assertEquals("合同.pdf", cached.getAttachments().get(0).getName());
         assertTrue(mailMessageMapper.selectById(index.getId()).getContent().contains("正文"));
-        assertTrue(mailMessageService.getMailMessagePage(new OaMailMessagePageReqVO()
-                .setAccountId(1L).setFolderKey("INBOX"), 1L).getList().get(0).getContent().contains("正文"));
+        assertTrue(
+                mailMessageService
+                        .getMailMessagePage(
+                                new OaMailMessagePageReqVO().setAccountId(1L).setFolderKey("INBOX"),
+                                1L)
+                        .getList()
+                        .get(0)
+                        .getContent()
+                        .contains("正文"));
         mailMessageMapper.updateById(new OaMailMessageDO().setId(index.getId()).setSubject("同步更新"));
         assertTrue(mailMessageMapper.selectById(index.getId()).getContent().contains("正文"));
     }
@@ -309,8 +346,11 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // 调用，并断言
         assertEquals("", mailMessageService.getMailMessage(index.getId(), 1L).getContent());
         verifyNoInteractions(mailMessageClient);
-        when(mailAccountService.validateMailAccount(1L, 2L)).thenThrow(new IllegalArgumentException("无权访问"));
-        assertThrows(IllegalArgumentException.class, () -> mailMessageService.getMailMessage(index.getId(), 2L));
+        when(mailAccountService.validateMailAccount(1L, 2L))
+                .thenThrow(new IllegalArgumentException("无权访问"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> mailMessageService.getMailMessage(index.getId(), 2L));
     }
 
     @Test
@@ -319,10 +359,13 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         OaMailMessageDO index = randomMailMessageDO(1L, 1L);
         mailMessageMapper.insert(index);
         // mock 方法
-        when(mailAccountService.validateMailAccount(1L, 2L)).thenThrow(new IllegalArgumentException("无权访问"));
+        when(mailAccountService.validateMailAccount(1L, 2L))
+                .thenThrow(new IllegalArgumentException("无权访问"));
 
         // 调用，并断言
-        assertThrows(IllegalArgumentException.class, () -> mailMessageService.getMailMessage(index.getId(), 2L));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> mailMessageService.getMailMessage(index.getId(), 2L));
         verifyNoInteractions(mailMessageClient);
     }
 
@@ -362,7 +405,8 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // mock 方法
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.createMessage(account, reqVO, true)).thenReturn(mail);
-        when(mailMessageClient.openStore(account)).thenThrow(new MessagingException("IMAP unavailable"));
+        when(mailMessageClient.openStore(account))
+                .thenThrow(new MessagingException("IMAP unavailable"));
 
         // 调用
         String result = mailMessageService.sendMailMessage(reqVO, 1L);
@@ -374,7 +418,8 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
 
     @ParameterizedTest
     @CsvSource({"主题, Re: 主题", "Re: 主题, Re: 主题", "re: 主题, re: 主题", "RE: 主题, RE: 主题"})
-    public void testGetMailMessageCompose_replyAll(String subject, String expectedSubject) throws Exception {
+    public void testGetMailMessageCompose_replyAll(String subject, String expectedSubject)
+            throws Exception {
         // mock 数据
         OaMailFolderDO localFolder = randomMailFolderDO();
         mailFolderMapper.insert(localFolder);
@@ -388,20 +433,34 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         when(mailMessageClient.openStore(account)).thenReturn(store);
         when(store.getFolder("INBOX")).thenReturn(folder);
         OaMailMessageDO detail = new OaMailMessageDO();
-        detail.setAccountId(1L).setFolderId(localFolder.getId()).setSender("sender@example.com")
+        detail.setAccountId(1L)
+                .setFolderId(localFolder.getId())
+                .setSender("sender@example.com")
                 .setRecipients(Arrays.asList("self@example.com", "other@example.com"))
-                .setCcs(Arrays.asList("other@example.com", "cc@example.com")).setSubject(subject);
+                .setCcs(Arrays.asList("other@example.com", "cc@example.com"))
+                .setSubject(subject);
         detail.setReplyTos(Arrays.asList("reply@example.com"));
-        detail.setContent("<style>body{display:none}</style><p style='background:url(https://tracking.invalid)'>正文</p>");
+        detail.setContent(
+                "<style>body{display:none}</style><p style='background:url(https://tracking.invalid)'>正文</p>");
         when(mailMessageClient.getDetail(eq(folder), any())).thenReturn(detail);
-        when(mailMessageClient.sanitizeHtml(anyString())).thenAnswer(invocation -> new OaMailMessageClientImpl().sanitizeHtml(invocation.getArgument(0)));
-        when(mailMessageClient.parseAddresses(anyList())).thenAnswer(invocation -> new OaMailMessageClientImpl().parseAddresses(invocation.getArgument(0)));
+        when(mailMessageClient.sanitizeHtml(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                new OaMailMessageClientImpl()
+                                        .sanitizeHtml(invocation.getArgument(0)));
+        when(mailMessageClient.parseAddresses(anyList()))
+                .thenAnswer(
+                        invocation ->
+                                new OaMailMessageClientImpl()
+                                        .parseAddresses(invocation.getArgument(0)));
 
         // 调用
-        OaMailMessageSaveReqVO result = mailMessageService.getMailMessageCompose(index.getId(), "replyAll", 1L);
+        OaMailMessageSaveReqVO result =
+                mailMessageService.getMailMessageCompose(index.getId(), "replyAll", 1L);
         // 断言
         assertEquals(expectedSubject, result.getSubject());
-        assertEquals(Arrays.asList("reply@example.com", "other@example.com"), result.getRecipients());
+        assertEquals(
+                Arrays.asList("reply@example.com", "other@example.com"), result.getRecipients());
         assertEquals(Collections.singletonList("cc@example.com"), result.getCcs());
         assertFalse(result.getContent().contains("style"));
         assertFalse(result.getContent().contains("tracking.invalid"));
@@ -417,21 +476,30 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         OaMailAccountDO account = new OaMailAccountDO().setId(1L).setMail("self@example.com");
         Store store = mock(Store.class);
         Folder folder = mock(Folder.class);
-        OaMailMessageDO detail = new OaMailMessageDO().setAccountId(1L).setFolderId(localFolder.getId()).setSubject("草稿")
-                .setContent("<details ontoggle='alert(1)'><summary>详细说明</summary>"
-                        + "<p>折叠正文</p></details><img src='https://example.com/image.png' onerror='alert(1)'>"
-                        + "<a href='https://example.com/article'>原文</a><a href='javascript:alert(1)'>危险链接</a>");
+        OaMailMessageDO detail =
+                new OaMailMessageDO()
+                        .setAccountId(1L)
+                        .setFolderId(localFolder.getId())
+                        .setSubject("草稿")
+                        .setContent(
+                                "<details ontoggle='alert(1)'><summary>详细说明</summary>"
+                                        + "<p>折叠正文</p></details><img src='https://example.com/image.png' onerror='alert(1)'>"
+                                        + "<a href='https://example.com/article'>原文</a><a href='javascript:alert(1)'>危险链接</a>");
         // mock 方法
         when(mailAccountService.validateMailAccount(1L, 1L)).thenReturn(account);
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
         when(store.getFolder("INBOX")).thenReturn(folder);
         when(mailMessageClient.getDetail(eq(folder), any())).thenReturn(detail);
-        when(mailMessageClient.sanitizeHtml(anyString())).thenAnswer(
-                invocation -> new OaMailMessageClientImpl().sanitizeHtml(invocation.getArgument(0)));
+        when(mailMessageClient.sanitizeHtml(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                new OaMailMessageClientImpl()
+                                        .sanitizeHtml(invocation.getArgument(0)));
 
         // 调用
-        OaMailMessageSaveReqVO result = mailMessageService.getMailMessageCompose(index.getId(), "draft", 1L);
+        OaMailMessageSaveReqVO result =
+                mailMessageService.getMailMessageCompose(index.getId(), "draft", 1L);
         // 断言：编辑草稿不把折叠结构降级成普通文本
         assertTrue(result.getContent().contains("<details>"));
         assertTrue(result.getContent().contains("<summary>详细说明</summary>"));
@@ -454,16 +522,17 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // mock 方法
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
-        when(mailMessageClient.getFolders(store)).thenReturn(Collections.singletonMap("DRAFTS", "Drafts"));
+        when(mailMessageClient.getFolders(store))
+                .thenReturn(Collections.singletonMap("DRAFTS", "Drafts"));
         when(store.hasCapability("UIDPLUS")).thenReturn(true);
         when(store.getFolder("Drafts")).thenReturn(folder);
         when(mailMessageClient.createMessage(account, reqVO, false)).thenReturn(message);
-        when(folder.appendUIDMessages(any())).thenReturn(new AppendUID[]{
-                new AppendUID(100L, 20L)});
+        when(folder.appendUIDMessages(any()))
+                .thenReturn(new AppendUID[] {new AppendUID(100L, 20L)});
         when(folder.getUIDValidity()).thenReturn(100L);
         when(folder.isOpen()).thenReturn(true);
-        when(mailMessageClient.getMessageList(folder)).thenReturn(Collections.singletonList(randomMailMessageDO(null, 20L)
-                .setId(null)));
+        when(mailMessageClient.getMessageList(folder))
+                .thenReturn(Collections.singletonList(randomMailMessageDO(null, 20L).setId(null)));
 
         // 调用
         Long id = mailMessageService.saveMailMessageDraft(reqVO, 1L);
@@ -487,7 +556,8 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
         // mock 方法
         when(mailAccountService.lockMailAccount(1L, 1L)).thenReturn(account);
         when(mailMessageClient.openStore(account)).thenReturn(store);
-        when(mailMessageClient.getFolders(store)).thenReturn(Collections.singletonMap("INBOX", "INBOX"));
+        when(mailMessageClient.getFolders(store))
+                .thenReturn(Collections.singletonMap("INBOX", "INBOX"));
         when(store.getFolder("INBOX")).thenReturn(folder);
         when(mailMessageClient.getMessageList(folder)).thenThrow(new MessagingException("连接中断"));
 
@@ -505,10 +575,16 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaMailFolderDO randomMailFolderDO() {
-        return randomPojo(OaMailFolderDO.class, folder -> {
-            folder.setAccountId(1L).setName("INBOX").setType("INBOX").setUidValidity(100L).setAvailable(true);
-            folder.setSyncTime(null);
-        });
+        return randomPojo(
+                OaMailFolderDO.class,
+                folder -> {
+                    folder.setAccountId(1L)
+                            .setName("INBOX")
+                            .setType("INBOX")
+                            .setUidValidity(100L)
+                            .setAvailable(true);
+                    folder.setSyncTime(null);
+                });
     }
 
     /**
@@ -519,10 +595,18 @@ public class OaMailMessageServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaMailMessageDO randomMailMessageDO(Long folderId, Long uid) {
-        return randomPojo(OaMailMessageDO.class, message -> {
-            message.setContent(null).setReplyTos(null).setAttachments(null);
-            message.setAccountId(1L).setFolderId(folderId).setUid(uid).setUidValidity(100L)
-                    .setReadStatus(false).setHasAttach(false).setSize(100).setReceiveTime(LocalDateTime.of(2026, 9, 8, 10, 0));
-        });
+        return randomPojo(
+                OaMailMessageDO.class,
+                message -> {
+                    message.setContent(null).setReplyTos(null).setAttachments(null);
+                    message.setAccountId(1L)
+                            .setFolderId(folderId)
+                            .setUid(uid)
+                            .setUidValidity(100L)
+                            .setReadStatus(false)
+                            .setHasAttach(false)
+                            .setSize(100)
+                            .setReceiveTime(LocalDateTime.of(2026, 9, 8, 10, 0));
+                });
     }
 }

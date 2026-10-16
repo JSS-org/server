@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.crm.controller.admin.permission.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
 import cn.iocoder.yudao.module.crm.enums.permission.CrmPermissionLevelEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,7 +29,10 @@ public class CrmPermissionRespVO {
     @NotNull(message = "CRM 类型不能为空")
     private Integer bizType;
 
-    @Schema(description = "CRM 类型数据编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "CRM 类型数据编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     @NotNull(message = "CRM 类型数据编号不能为空")
     private Long bizId;
 
@@ -41,10 +47,15 @@ public class CrmPermissionRespVO {
     @Schema(description = "部门名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "研发部")
     private String deptName;
 
-    @Schema(description = "岗位名称数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "[BOOS,经理]")
+    @Schema(
+            description = "岗位名称数组",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[BOOS,经理]")
     private Set<String> postNames;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2023-01-01 00:00:00")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2023-01-01 00:00:00")
     private LocalDateTime createTime;
-
 }

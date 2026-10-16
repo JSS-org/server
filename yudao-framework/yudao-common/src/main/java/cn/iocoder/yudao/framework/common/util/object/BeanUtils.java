@@ -48,7 +48,8 @@ public class BeanUtils {
         return toBean(source, targetType, null);
     }
 
-    public static <S, T> PageResult<T> toBean(PageResult<S> source, Class<T> targetType, Consumer<T> peek) {
+    public static <S, T> PageResult<T> toBean(
+            PageResult<S> source, Class<T> targetType, Consumer<T> peek) {
         if (source == null) {
             return null;
         }
@@ -65,5 +66,4 @@ public class BeanUtils {
         }
         BeanUtil.copyProperties(source, target, false);
     }
-
 }

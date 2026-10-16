@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.mes.service.dv.machinery;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.mes.controller.admin.dv.machinery.vo.type.MesDvMachineryTypeListReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.machinery.vo.type.MesDvMachineryTypeSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.machinery.MesDvMachineryTypeDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 设备类型 Service 接口
@@ -81,5 +82,4 @@ public interface MesDvMachineryTypeService {
      * @return 子类型列表
      */
     List<MesDvMachineryTypeDO> getMachineryTypeChildrenList(Long parentId);
-
 }

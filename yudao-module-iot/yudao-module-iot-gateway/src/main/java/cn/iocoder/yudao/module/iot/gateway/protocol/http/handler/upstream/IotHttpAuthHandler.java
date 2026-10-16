@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_AUTH_FAIL;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.BooleanUtil;
@@ -12,11 +16,8 @@ import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
 import cn.iocoder.yudao.module.iot.gateway.protocol.http.IotHttpProtocol;
 import cn.iocoder.yudao.module.iot.gateway.service.auth.IotDeviceTokenService;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
-import io.vertx.ext.web.RoutingContext;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_AUTH_FAIL;
+import io.vertx.ext.web.RoutingContext;
 
 /**
  * IoT 网关 HTTP 协议的【认证】处理器
@@ -63,16 +64,17 @@ public class IotHttpAuthHandler extends IotHttpAbstractHandler {
         // 2.2 生成 Token
         IotDeviceIdentity deviceInfo = deviceTokenService.parseUsername(request.getUsername());
         Assert.notNull(deviceInfo, "设备信息不能为空");
-        String token = deviceTokenService.createToken(deviceInfo.getProductKey(), deviceInfo.getDeviceName());
+        String token =
+                deviceTokenService.createToken(
+                        deviceInfo.getProductKey(), deviceInfo.getDeviceName());
         Assert.notBlank(token, "生成 token 不能为空位");
 
         // 3. 执行上线
         IotDeviceMessage message = IotDeviceMessage.buildStateUpdateOnline();
-        deviceMessageService.sendDeviceMessage(message,
-                deviceInfo.getProductKey(), deviceInfo.getDeviceName(), serverId);
+        deviceMessageService.sendDeviceMessage(
+                message, deviceInfo.getProductKey(), deviceInfo.getDeviceName(), serverId);
 
         // 构建响应数据
         return success(MapUtil.of("token", token));
     }
-
 }

@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message;
 
-import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.module.oa.enums.mail.OaMailFolderKeyEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -41,10 +45,10 @@ public class OaMailMessagePageReqVO extends PageParam {
     @AssertTrue(message = "文件夹标识不正确")
     @JsonIgnore
     public boolean isFolderKeyValid() {
-        if (StrUtil.isBlank(folderKey) || ArrayUtil.contains(OaMailFolderKeyEnum.ARRAYS, folderKey)) {
+        if (StrUtil.isBlank(folderKey)
+                || ArrayUtil.contains(OaMailFolderKeyEnum.ARRAYS, folderKey)) {
             return true; // 空值由 NotBlank 校验
         }
         return folderKey.matches("[1-9][0-9]{0,17}");
     }
-
 }

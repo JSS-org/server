@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.biz.system.permission.PermissionCommonA
 import cn.iocoder.yudao.framework.datapermission.core.rule.dept.DeptDataPermissionRule;
 import cn.iocoder.yudao.framework.datapermission.core.rule.dept.DeptDataPermissionRuleCustomizer;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -22,13 +23,12 @@ import java.util.List;
 public class YudaoDeptDataPermissionAutoConfiguration {
 
     @Bean
-    public DeptDataPermissionRule deptDataPermissionRule(PermissionCommonApi permissionApi,
-                                                         List<DeptDataPermissionRuleCustomizer> customizers) {
+    public DeptDataPermissionRule deptDataPermissionRule(
+            PermissionCommonApi permissionApi, List<DeptDataPermissionRuleCustomizer> customizers) {
         // 创建 DeptDataPermissionRule 对象
         DeptDataPermissionRule rule = new DeptDataPermissionRule(permissionApi);
         // 补全表配置
         customizers.forEach(customizer -> customizer.customize(rule));
         return rule;
     }
-
 }

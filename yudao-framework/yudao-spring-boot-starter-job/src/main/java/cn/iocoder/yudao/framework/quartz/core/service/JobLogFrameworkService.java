@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.quartz.core.service;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 
 /**
@@ -21,11 +22,12 @@ public interface JobLogFrameworkService {
      * @param executeIndex    第几次执行
      * @return Job 日志的编号
      */
-    Long createJobLog(@NotNull(message = "任务编号不能为空") Long jobId,
-                      @NotNull(message = "开始时间") LocalDateTime beginTime,
-                      @NotEmpty(message = "Job 处理器的名字不能为空") String jobHandlerName,
-                      String jobHandlerParam,
-                      @NotNull(message = "第几次执行不能为空") Integer executeIndex);
+    Long createJobLog(
+            @NotNull(message = "任务编号不能为空") Long jobId,
+            @NotNull(message = "开始时间") LocalDateTime beginTime,
+            @NotEmpty(message = "Job 处理器的名字不能为空") String jobHandlerName,
+            String jobHandlerParam,
+            @NotNull(message = "第几次执行不能为空") Integer executeIndex);
 
     /**
      * 更新 Job 日志的执行结果
@@ -36,8 +38,10 @@ public interface JobLogFrameworkService {
      * @param success  是否成功
      * @param result   成功数据
      */
-    void updateJobLogResultAsync(@NotNull(message = "日志编号不能为空") Long logId,
-                                 @NotNull(message = "结束时间不能为空") LocalDateTime endTime,
-                                 @NotNull(message = "运行时长不能为空") Integer duration,
-                                 boolean success, String result);
+    void updateJobLogResultAsync(
+            @NotNull(message = "日志编号不能为空") Long logId,
+            @NotNull(message = "结束时间不能为空") LocalDateTime endTime,
+            @NotNull(message = "运行时长不能为空") Integer duration,
+            boolean success,
+            String result);
 }

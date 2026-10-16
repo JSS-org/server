@@ -65,7 +65,8 @@ public interface PmsProjectGroupService {
      * @param projectIds 当前用户参与的进行中项目编号集合
      * @return 项目分组编号与项目数量 Map
      */
-    Map<Long, Integer> getProjectGroupCountMap(Long userId, Collection<PmsProjectGroupDO> groups, Collection<Long> projectIds);
+    Map<Long, Integer> getProjectGroupCountMap(
+            Long userId, Collection<PmsProjectGroupDO> groups, Collection<Long> projectIds);
 
     /**
      * 移动项目到个人分组
@@ -91,5 +92,4 @@ public interface PmsProjectGroupService {
      * @param projectId 项目编号
      */
     void deleteProjectGroupRelationListByProjectId(Long projectId);
-
 }

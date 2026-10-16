@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkMqttConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -22,8 +24,8 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnClass(name = "org.eclipse.paho.client.mqttv3.MqttClient")
 @Component
 @Slf4j
-public class IotMqttDataRuleAction extends
-        IotDataRuleCacheableAction<IotDataSinkMqttConfig, MqttClient> {
+public class IotMqttDataRuleAction
+        extends IotDataRuleCacheableAction<IotDataSinkMqttConfig, MqttClient> {
 
     /**
      * 默认 QoS 等级（至少一次）
@@ -49,14 +51,22 @@ public class IotMqttDataRuleAction extends
             }
 
             // 2.2 构建并发送消息
-            MqttMessage mqttMessage = new MqttMessage(JsonUtils.toJsonString(message).getBytes(StandardCharsets.UTF_8));
+            MqttMessage mqttMessage =
+                    new MqttMessage(
+                            JsonUtils.toJsonString(message).getBytes(StandardCharsets.UTF_8));
             mqttMessage.setQos(DEFAULT_QOS);
             mqttClient.publish(config.getTopic(), mqttMessage);
-            log.info("[execute][message({}) 发送成功，MQTT 服务器: {}，topic: {}]",
-                    message.getId(), config.getUrl(), config.getTopic());
+            log.info(
+                    "[execute][message({}) 发送成功，MQTT 服务器: {}，topic: {}]",
+                    message.getId(),
+                    config.getUrl(),
+                    config.getTopic());
         } catch (Exception e) {
-            log.error("[execute][message({}) 发送失败，MQTT 服务器: {}]",
-                    message.getId(), config.getUrl(), e);
+            log.error(
+                    "[execute][message({}) 发送失败，MQTT 服务器: {}]",
+                    message.getId(),
+                    config.getUrl(),
+                    e);
             throw e;
         }
     }
@@ -70,8 +80,7 @@ public class IotMqttDataRuleAction extends
 
         // 2. 连接到 MQTT Broker
         mqttClient.connect(buildConnectOptions(config));
-        log.info("[initProducer][MQTT 客户端创建并连接成功，服务器: {}，clientId: {}]",
-                config.getUrl(), clientId);
+        log.info("[initProducer][MQTT 客户端创建并连接成功，服务器: {}，clientId: {}]", config.getUrl(), clientId);
         return mqttClient;
     }
 
@@ -104,5 +113,4 @@ public class IotMqttDataRuleAction extends
         }
         return options;
     }
-
 }

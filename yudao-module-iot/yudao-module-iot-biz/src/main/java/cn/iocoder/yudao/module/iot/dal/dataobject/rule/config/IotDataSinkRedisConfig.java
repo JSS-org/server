@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.dal.dataobject.rule.config;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotRedisDataStructureEnum;
+
 import lombok.Data;
 
 /**
@@ -16,14 +17,17 @@ public class IotDataSinkRedisConfig extends IotAbstractDataSinkConfig {
      * Redis 服务器地址
      */
     private String host;
+
     /**
      * 端口
      */
     private Integer port;
+
     /**
      * 密码
      */
     private String password;
+
     /**
      * 数据库索引
      */
@@ -60,5 +64,4 @@ public class IotDataSinkRedisConfig extends IotAbstractDataSinkConfig {
      * 指定消息中哪个字段作为分数，如果不指定则使用当前时间戳
      */
     private String scoreField;
-
 }

@@ -69,5 +69,4 @@ public interface MesWmOutsourceReceiptDetailService {
      * @param lineId 行编号
      */
     void deleteOutsourceReceiptDetailByLineId(Long lineId);
-
 }

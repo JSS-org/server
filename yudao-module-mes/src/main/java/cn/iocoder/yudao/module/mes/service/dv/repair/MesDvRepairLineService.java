@@ -68,5 +68,4 @@ public interface MesDvRepairLineService {
      * @param repairId 维修工单编号
      */
     void deleteByRepairId(Long repairId);
-
 }

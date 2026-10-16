@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.project.PmsProjectOverviewRespVO;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.project.PmsProjectPageReqVO;
@@ -9,8 +11,6 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectDO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 项目 Service 接口
@@ -128,5 +128,4 @@ public interface PmsProjectService {
      * @param userId 操作人编号
      */
     void deleteProject(Long id, Long userId);
-
 }

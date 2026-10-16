@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt.vo.MesWmItemReceiptPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -16,12 +17,15 @@ import java.util.List;
 public interface MesWmItemReceiptMapper extends BaseMapperX<MesWmItemReceiptDO> {
 
     default PageResult<MesWmItemReceiptDO> selectPage(MesWmItemReceiptPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesWmItemReceiptDO>()
-                .likeIfPresent(MesWmItemReceiptDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesWmItemReceiptDO::getName, reqVO.getName())
-                .eqIfPresent(MesWmItemReceiptDO::getVendorId, reqVO.getVendorId())
-                .betweenIfPresent(MesWmItemReceiptDO::getReceiptDate, reqVO.getReceiptDate())
-                .orderByDesc(MesWmItemReceiptDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesWmItemReceiptDO>()
+                        .likeIfPresent(MesWmItemReceiptDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesWmItemReceiptDO::getName, reqVO.getName())
+                        .eqIfPresent(MesWmItemReceiptDO::getVendorId, reqVO.getVendorId())
+                        .betweenIfPresent(
+                                MesWmItemReceiptDO::getReceiptDate, reqVO.getReceiptDate())
+                        .orderByDesc(MesWmItemReceiptDO::getId));
     }
 
     default MesWmItemReceiptDO selectByCode(String code) {
@@ -35,5 +39,4 @@ public interface MesWmItemReceiptMapper extends BaseMapperX<MesWmItemReceiptDO> 
     default List<MesWmItemReceiptDO> selectListByVendorId(Long vendorId) {
         return selectList(MesWmItemReceiptDO::getVendorId, vendorId);
     }
-
 }

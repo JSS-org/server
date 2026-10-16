@@ -20,7 +20,8 @@ public interface FmsCurrencyService {
      * @param presetCurrency 预置币别
      * @return 本位币
      */
-    FmsCurrencyDO initializeStandardCurrency(Long accountSetId, FmsCurrencyPresetEnum presetCurrency);
+    FmsCurrencyDO initializeStandardCurrency(
+            Long accountSetId, FmsCurrencyPresetEnum presetCurrency);
 
     /**
      * 创建币别
@@ -75,5 +76,4 @@ public interface FmsCurrencyService {
      * @return 币别列表
      */
     List<FmsCurrencyDO> validateCurrencyList(Long accountSetId, List<Long> ids);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.indicatorresult.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -68,7 +69,5 @@ public class MesQcIndicatorResultRespVO {
 
         @Schema(description = "值属性", example = "IMG")
         private String valueSpecification;
-
     }
-
 }

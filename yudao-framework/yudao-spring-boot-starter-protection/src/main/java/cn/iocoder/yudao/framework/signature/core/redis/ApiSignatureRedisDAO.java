@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.signature.core.redis;
 
 import lombok.AllArgsConstructor;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,9 @@ public class ApiSignatureRedisDAO {
     }
 
     public Boolean setNonce(String appId, String nonce, int time, TimeUnit timeUnit) {
-        return stringRedisTemplate.opsForValue().setIfAbsent(formatNonceKey(appId, nonce), "", time, timeUnit);
+        return stringRedisTemplate
+                .opsForValue()
+                .setIfAbsent(formatNonceKey(appId, nonce), "", time, timeUnit);
     }
 
     private static String formatNonceKey(String appId, String nonce) {
@@ -53,5 +56,4 @@ public class ApiSignatureRedisDAO {
     public String getAppSecret(String appId) {
         return (String) stringRedisTemplate.opsForHash().get(SIGNATURE_APPID, appId);
     }
-
 }

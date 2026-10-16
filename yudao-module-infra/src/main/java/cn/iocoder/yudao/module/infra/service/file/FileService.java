@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FileCreateReq
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePageReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePresignedUrlRespVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
+
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
@@ -33,11 +34,15 @@ public interface FileService {
      * @param type      文件的 MIME 类型，允许空
      * @return 文件路径
      */
-    String createFile(@NotEmpty(message = "文件内容不能为空") byte[] content,
-                      String name, String directory, String type);
+    String createFile(
+            @NotEmpty(message = "文件内容不能为空") byte[] content,
+            String name,
+            String directory,
+            String type);
 
     /** Explicit backend-selected storage; null retains the existing master-storage behavior. */
-    default String createFile(byte[] content, String name, String directory, String type, Long configId) {
+    default String createFile(
+            byte[] content, String name, String directory, String type, Long configId) {
         if (configId == null) return createFile(content, name, directory, type);
         throw new UnsupportedOperationException("Explicit file storage is not implemented");
     }
@@ -49,8 +54,9 @@ public interface FileService {
      * @param directory 目录
      * @return 预签名地址信息
      */
-    FilePresignedUrlRespVO presignPutUrl(@NotEmpty(message = "文件名不能为空") String name,
-                                         String directory);
+    FilePresignedUrlRespVO presignPutUrl(
+            @NotEmpty(message = "文件名不能为空") String name, String directory);
+
     /**
      * 生成文件预签名地址信息，用于读取
      *
@@ -67,6 +73,7 @@ public interface FileService {
      * @return 编号
      */
     Long createFile(FileCreateReqVO createReqVO);
+
     FileDO getFile(Long id);
 
     /**
@@ -108,5 +115,4 @@ public interface FileService {
      * @return 文件；不存在时返回 null
      */
     FileDO getFileByUrl(String url);
-
 }

@@ -4,9 +4,11 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.servlet.JakartaServletUtil;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.http.MediaType;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -30,7 +32,8 @@ public class ServletUtils {
      */
     public static void writeJSON(HttpServletResponse response, Object object) {
         String content = JsonUtils.toJsonString(object);
-        JakartaServletUtil.write(response, content, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+        JakartaServletUtil.write(
+                response, content, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
     }
 
     /**
@@ -72,7 +75,8 @@ public class ServletUtils {
     }
 
     public static boolean isJsonRequest(ServletRequest request) {
-        return StrUtil.startWithIgnoreCase(request.getContentType(), MediaType.APPLICATION_JSON_VALUE);
+        return StrUtil.startWithIgnoreCase(
+                request.getContentType(), MediaType.APPLICATION_JSON_VALUE);
     }
 
     public static String getBody(HttpServletRequest request) {
@@ -103,11 +107,11 @@ public class ServletUtils {
         return JakartaServletUtil.getHeaderMap(request);
     }
 
-    public static void writeAttachment(HttpServletResponse response, String filename, byte[] content)
-            throws IOException {
+    public static void writeAttachment(
+            HttpServletResponse response, String filename, byte[] content) throws IOException {
         response.getOutputStream().write(content);
-        response.addHeader("Content-Disposition", "attachment;filename=" + HttpUtils.encodeUtf8(filename));
+        response.addHeader(
+                "Content-Disposition", "attachment;filename=" + HttpUtils.encodeUtf8(filename));
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
     }
-
 }

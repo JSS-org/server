@@ -26,5 +26,4 @@ public interface BpmTrigger {
      * @param param 触发器参数
      */
     void execute(String processInstanceId, String param);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.mail.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,7 +35,10 @@ public class MailTemplateRespVO {
     @Schema(description = "参数数组", example = "name,code")
     private List<String> params;
 
-    @Schema(description = "状态，参见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态，参见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Integer status;
 
     @Schema(description = "备注", example = "奥特曼")
@@ -42,5 +46,4 @@ public class MailTemplateRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

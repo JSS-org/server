@@ -11,5 +11,4 @@ public interface WebSocketMessageTypeConstants {
 
     String KEFU_MESSAGE_TYPE = "kefu_message_type"; // 客服消息类型
     String KEFU_MESSAGE_ADMIN_READ = "kefu_message_read_status_change"; // 客服消息管理员已读
-
 }

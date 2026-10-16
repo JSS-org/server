@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.group.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,10 @@ public class ImGroupRequestManagerRespVO {
     @Schema(description = "群名称", example = "芋道技术交流群")
     private String groupName;
 
-    @Schema(description = "申请人 / 被邀请人用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
+    @Schema(
+            description = "申请人 / 被邀请人用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100")
     private Long userId;
 
     @Schema(description = "申请人 / 被邀请人昵称", example = "张三")
@@ -53,5 +57,4 @@ public class ImGroupRequestManagerRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

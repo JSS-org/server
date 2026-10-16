@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.insurance.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -32,5 +33,4 @@ public class HrmPortalInsuranceProjectRespVO {
 
     @Schema(description = "个人缴纳金额")
     private BigDecimal personalAmount;
-
 }

@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -31,14 +33,18 @@ public class FmsCashFlowAdjustmentUpdateReqVO {
         @NotNull(message = "数据编号不能为空")
         private Long id;
 
-        @Schema(description = "本期金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "本期金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "本期金额不能为空")
         private BigDecimal currentAmount;
 
-        @Schema(description = "本年累计金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "200.00")
+        @Schema(
+                description = "本年累计金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "200.00")
         @NotNull(message = "本年累计金额不能为空")
         private BigDecimal yearAmount;
-
     }
-
 }

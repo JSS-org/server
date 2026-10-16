@@ -28,8 +28,14 @@ public interface SmsLogService {
      * @param templateParams 短信参数
      * @return 发送日志编号
      */
-    Long createSmsLog(String mobile, Long userId, Integer userType, Boolean isSend,
-                      SmsTemplateDO template, String templateContent, Map<String, Object> templateParams);
+    Long createSmsLog(
+            String mobile,
+            Long userId,
+            Integer userType,
+            Boolean isSend,
+            SmsTemplateDO template,
+            String templateContent,
+            Map<String, Object> templateParams);
 
     /**
      * 更新日志的发送结果
@@ -41,9 +47,13 @@ public interface SmsLogService {
      * @param apiRequestId 短信 API 发送返回的唯一请求 ID
      * @param apiSerialNo 短信 API 发送返回的序号
      */
-    void updateSmsSendResult(Long id, Boolean success,
-                             String apiSendCode, String apiSendMsg,
-                             String apiRequestId, String apiSerialNo);
+    void updateSmsSendResult(
+            Long id,
+            Boolean success,
+            String apiSendCode,
+            String apiSendMsg,
+            String apiRequestId,
+            String apiSerialNo);
 
     /**
      * 更新日志的接收结果
@@ -55,8 +65,13 @@ public interface SmsLogService {
      * @param apiReceiveCode API 接收结果的编码
      * @param apiReceiveMsg API 接收结果的说明
      */
-    void updateSmsReceiveResult(Long id, String apiSerialNo, Boolean success,
-                                LocalDateTime receiveTime, String apiReceiveCode, String apiReceiveMsg);
+    void updateSmsReceiveResult(
+            Long id,
+            String apiSerialNo,
+            Boolean success,
+            LocalDateTime receiveTime,
+            String apiReceiveCode,
+            String apiReceiveMsg);
 
     /**
      * 获得短信日志
@@ -73,5 +88,4 @@ public interface SmsLogService {
      * @return 短信日志分页
      */
     PageResult<SmsLogDO> getSmsLogPage(SmsLogPageReqVO pageReqVO);
-
 }

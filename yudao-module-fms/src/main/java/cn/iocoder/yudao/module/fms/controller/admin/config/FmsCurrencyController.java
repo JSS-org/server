@@ -1,18 +1,25 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.currency.FmsCurrencyRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.currency.FmsCurrencySaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsCurrencyDO;
 import cn.iocoder.yudao.module.fms.service.config.FmsCurrencyService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,18 +33,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - FMS 币别")
 @RestController
 @RequestMapping("/fms/config/currency")
 @Validated
 public class FmsCurrencyController {
 
-    @Resource
-    private FmsCurrencyService currencyService;
+    @Resource private FmsCurrencyService currencyService;
 
     @PostMapping("/create")
     @Operation(summary = "创建币别")
@@ -49,7 +51,8 @@ public class FmsCurrencyController {
     @PutMapping("/update")
     @Operation(summary = "更新币别")
     @PreAuthorize("@ss.hasPermission('fms:config:currency:update')")
-    public CommonResult<Boolean> updateCurrency(@Valid @RequestBody FmsCurrencySaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateCurrency(
+            @Valid @RequestBody FmsCurrencySaveReqVO updateReqVO) {
         currencyService.updateCurrency(updateReqVO, getLoginUserId());
         return success(true);
     }
@@ -57,8 +60,8 @@ public class FmsCurrencyController {
     @DeleteMapping("/delete")
     @Operation(summary = "删除币别")
     @Parameters({
-            @Parameter(name = "accountSetId", description = "账套编号", required = true, example = "1024"),
-            @Parameter(name = "id", description = "币别编号", required = true, example = "1024")
+        @Parameter(name = "accountSetId", description = "账套编号", required = true, example = "1024"),
+        @Parameter(name = "id", description = "币别编号", required = true, example = "1024")
     })
     @PreAuthorize("@ss.hasPermission('fms:config:currency:delete')")
     public CommonResult<Boolean> deleteCurrency(
@@ -84,9 +87,15 @@ public class FmsCurrencyController {
     public CommonResult<List<FmsCurrencyRespVO>> getCurrencySimpleList(
             @RequestParam("accountSetId") @NotNull Long accountSetId) {
         List<FmsCurrencyDO> list = currencyService.getCurrencyList(accountSetId, getLoginUserId());
-        return success(convertList(list, currency -> new FmsCurrencyRespVO()
-                .setId(currency.getId()).setCode(currency.getCode()).setName(currency.getName())
-                .setExchangeRate(currency.getExchangeRate()).setStandard(currency.getStandard())));
+        return success(
+                convertList(
+                        list,
+                        currency ->
+                                new FmsCurrencyRespVO()
+                                        .setId(currency.getId())
+                                        .setCode(currency.getCode())
+                                        .setName(currency.getName())
+                                        .setExchangeRate(currency.getExchangeRate())
+                                        .setStandard(currency.getStandard())));
     }
-
 }

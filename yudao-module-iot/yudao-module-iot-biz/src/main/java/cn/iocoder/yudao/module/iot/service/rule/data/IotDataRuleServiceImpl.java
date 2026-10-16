@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.iot.service.rule.data;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_RULE_NAME_EXISTS;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_RULE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -22,19 +27,17 @@ import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
 import cn.iocoder.yudao.module.iot.service.rule.data.action.IotDataRuleAction;
 import cn.iocoder.yudao.module.iot.service.thingmodel.IotThingModelService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_RULE_NAME_EXISTS;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_RULE_NOT_EXISTS;
 
 /**
  * IoT 数据流转规则 Service 实现类
@@ -46,20 +49,14 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_RULE_NOT
 @Slf4j
 public class IotDataRuleServiceImpl implements IotDataRuleService {
 
-    @Resource
-    private IotDataRuleMapper dataRuleMapper;
+    @Resource private IotDataRuleMapper dataRuleMapper;
 
-    @Resource
-    private IotProductService productService;
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    private IotThingModelService thingModelService;
-    @Resource
-    private IotDataSinkService dataSinkService;
+    @Resource private IotProductService productService;
+    @Resource private IotDeviceService deviceService;
+    @Resource private IotThingModelService thingModelService;
+    @Resource private IotDataSinkService dataSinkService;
 
-    @Resource
-    private List<IotDataRuleAction> dataRuleActions;
+    @Resource private List<IotDataRuleAction> dataRuleActions;
 
     @Override
     @CacheEvict(value = RedisKeyConstants.DATA_RULE_LIST, allEntries = true)
@@ -150,8 +147,12 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
                 convertSet(sourceConfigs, IotDataRuleDO.SourceConfig::getProductId));
 
         // 2. 校验设备
-        deviceService.validateDeviceListExists(convertSet(sourceConfigs, IotDataRuleDO.SourceConfig::getDeviceId,
-                config -> ObjUtil.notEqual(config.getDeviceId(), IotDeviceDO.DEVICE_ID_ALL)));
+        deviceService.validateDeviceListExists(
+                convertSet(
+                        sourceConfigs,
+                        IotDataRuleDO.SourceConfig::getDeviceId,
+                        config ->
+                                ObjUtil.notEqual(config.getDeviceId(), IotDeviceDO.DEVICE_ID_ALL)));
 
         // 3. 校验物模型存在
         validateThingModelsExist(sourceConfigs);
@@ -168,8 +169,9 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
             if (StrUtil.isEmpty(config.getIdentifier())) {
                 continue;
             }
-            productIdIdentifiers.computeIfAbsent(config.getProductId(),
-                            productId -> new HashSet<>()).add(config.getIdentifier());
+            productIdIdentifiers
+                    .computeIfAbsent(config.getProductId(), productId -> new HashSet<>())
+                    .add(config.getIdentifier());
         }
         for (Map.Entry<Long, Set<String>> entry : productIdIdentifiers.entrySet()) {
             thingModelService.validateThingModelListExists(entry.getKey(), entry.getValue());
@@ -191,20 +193,32 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
         return dataRuleMapper.selectListBySinkId(sinkId);
     }
 
-    @Cacheable(value = RedisKeyConstants.DATA_RULE_LIST,
-               key = "#deviceId + '_' + #method + '_' + (#identifier ?: '')")
-    public List<IotDataRuleDO> getDataRuleListByConditionFromCache(Long deviceId, String method, String identifier) {
+    @Cacheable(
+            value = RedisKeyConstants.DATA_RULE_LIST,
+            key = "#deviceId + '_' + #method + '_' + (#identifier ?: '')")
+    public List<IotDataRuleDO> getDataRuleListByConditionFromCache(
+            Long deviceId, String method, String identifier) {
         // 1. 查询所有开启的数据流转规则
-        List<IotDataRuleDO> rules = dataRuleMapper.selectListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        List<IotDataRuleDO> rules =
+                dataRuleMapper.selectListByStatus(CommonStatusEnum.ENABLE.getStatus());
         // 2. 内存里过滤匹配的规则
         List<IotDataRuleDO> matchedRules = new ArrayList<>();
         for (IotDataRuleDO rule : rules) {
-            IotDataRuleDO.SourceConfig found = CollUtil.findOne(rule.getSourceConfigs(),
-                    config -> ObjectUtils.equalsAny(config.getDeviceId(), deviceId, IotDeviceDO.DEVICE_ID_ALL)
-                            && Objects.equals(config.getMethod(), method)
-                            && (StrUtil.isEmpty(config.getIdentifier()) || ObjUtil.equal(config.getIdentifier(), identifier)));
+            IotDataRuleDO.SourceConfig found =
+                    CollUtil.findOne(
+                            rule.getSourceConfigs(),
+                            config ->
+                                    ObjectUtils.equalsAny(
+                                                    config.getDeviceId(),
+                                                    deviceId,
+                                                    IotDeviceDO.DEVICE_ID_ALL)
+                                            && Objects.equals(config.getMethod(), method)
+                                            && (StrUtil.isEmpty(config.getIdentifier())
+                                                    || ObjUtil.equal(
+                                                            config.getIdentifier(), identifier)));
             if (found != null) {
-                matchedRules.add(new IotDataRuleDO().setId(rule.getId()).setSinkIds(rule.getSinkIds()));
+                matchedRules.add(
+                        new IotDataRuleDO().setId(rule.getId()).setSinkIds(rule.getSinkIds()));
             }
         }
         return matchedRules;
@@ -226,16 +240,24 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
             } else {
                 // 其他消息（事件 / 服务调用 / 状态）：单一 identifier
                 String identifier = IotDeviceMessageUtils.getIdentifier(message);
-                matchedRules = getSelf().getDataRuleListByConditionFromCache(deviceId, method, identifier);
+                matchedRules =
+                        getSelf().getDataRuleListByConditionFromCache(deviceId, method, identifier);
                 identifierForLog = identifier;
             }
             if (CollUtil.isEmpty(matchedRules)) {
-                log.debug("[executeDataRule][设备({}) 方法({}) 标识符({}) 没有匹配的数据流转规则]",
-                        deviceId, method, identifierForLog);
+                log.debug(
+                        "[executeDataRule][设备({}) 方法({}) 标识符({}) 没有匹配的数据流转规则]",
+                        deviceId,
+                        method,
+                        identifierForLog);
                 return;
             }
-            log.info("[executeDataRule][设备({}) 方法({}) 标识符({}) 匹配到 {} 条数据流转规则]",
-                    deviceId, method, identifierForLog, matchedRules.size());
+            log.info(
+                    "[executeDataRule][设备({}) 方法({}) 标识符({}) 匹配到 {} 条数据流转规则]",
+                    deviceId,
+                    method,
+                    identifierForLog,
+                    matchedRules.size());
 
             // 2. 跨规则去重 sink，避免多条规则命中同一数据目的时重复推送
             Set<Long> processedSinkIds = new HashSet<>();
@@ -255,18 +277,24 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
      * @param identifiers 上报消息中包含的属性标识符集合
      * @return 命中的数据流转规则列表
      */
-    private List<IotDataRuleDO> matchPropertyPostDataRules(Long deviceId, String method, Set<String> identifiers) {
+    private List<IotDataRuleDO> matchPropertyPostDataRules(
+            Long deviceId, String method, Set<String> identifiers) {
         LinkedHashMap<Long, IotDataRuleDO> matchedRuleMap = new LinkedHashMap<>();
         // 情况一：先匹配未填 identifier 的「任意属性」规则，默认就匹配
         collectMatchedRules(matchedRuleMap, deviceId, method, null);
         // 情况二：再针对每个上报的属性标识符匹配限定具体 identifier 的规则
-        identifiers.forEach(identifier -> collectMatchedRules(matchedRuleMap, deviceId, method, identifier));
+        identifiers.forEach(
+                identifier -> collectMatchedRules(matchedRuleMap, deviceId, method, identifier));
         return new ArrayList<>(matchedRuleMap.values());
     }
 
-    private void collectMatchedRules(Map<Long, IotDataRuleDO> matchedRuleMap,
-                                     Long deviceId, String method, String identifier) {
-        getSelf().getDataRuleListByConditionFromCache(deviceId, method, identifier)
+    private void collectMatchedRules(
+            Map<Long, IotDataRuleDO> matchedRuleMap,
+            Long deviceId,
+            String method,
+            String identifier) {
+        getSelf()
+                .getDataRuleListByConditionFromCache(deviceId, method, identifier)
                 .forEach(rule -> matchedRuleMap.putIfAbsent(rule.getId(), rule));
     }
 
@@ -277,30 +305,44 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
      * @param rule             数据流转规则
      * @param processedSinkIds 已处理的数据目的编号集合，跨规则去重，避免同一数据目的被重复推送
      */
-    private void executeDataRule(IotDeviceMessage message, IotDataRuleDO rule, Set<Long> processedSinkIds) {
-        rule.getSinkIds().forEach(sinkId -> {
-            // 同一消息下，多条规则命中同一数据目的时只推送一次
-            if (!processedSinkIds.add(sinkId)) {
-                return;
-            }
-            try {
-                // 获取数据目的配置
-                IotDataSinkDO dataSink = dataSinkService.getDataSinkFromCache(sinkId);
-                if (dataSink == null) {
-                    log.error("[executeDataRule][规则({}) 对应的数据目的({}) 不存在]", rule.getId(), sinkId);
-                    return;
-                }
-                if (CommonStatusEnum.isDisable(dataSink.getStatus())) {
-                    log.info("[executeDataRule][规则({}) 对应的数据目的({}) 状态为禁用]", rule.getId(), sinkId);
-                    return;
-                }
+    private void executeDataRule(
+            IotDeviceMessage message, IotDataRuleDO rule, Set<Long> processedSinkIds) {
+        rule.getSinkIds()
+                .forEach(
+                        sinkId -> {
+                            // 同一消息下，多条规则命中同一数据目的时只推送一次
+                            if (!processedSinkIds.add(sinkId)) {
+                                return;
+                            }
+                            try {
+                                // 获取数据目的配置
+                                IotDataSinkDO dataSink =
+                                        dataSinkService.getDataSinkFromCache(sinkId);
+                                if (dataSink == null) {
+                                    log.error(
+                                            "[executeDataRule][规则({}) 对应的数据目的({}) 不存在]",
+                                            rule.getId(),
+                                            sinkId);
+                                    return;
+                                }
+                                if (CommonStatusEnum.isDisable(dataSink.getStatus())) {
+                                    log.info(
+                                            "[executeDataRule][规则({}) 对应的数据目的({}) 状态为禁用]",
+                                            rule.getId(),
+                                            sinkId);
+                                    return;
+                                }
 
-                // 执行数据桥接操作
-                executeDataRuleAction(message, dataSink);
-            } catch (Exception e) {
-                log.error("[executeDataRule][规则({}) 数据目的({}) 执行异常]", rule.getId(), sinkId, e);
-            }
-        });
+                                // 执行数据桥接操作
+                                executeDataRuleAction(message, dataSink);
+                            } catch (Exception e) {
+                                log.error(
+                                        "[executeDataRule][规则({}) 数据目的({}) 执行异常]",
+                                        rule.getId(),
+                                        sinkId,
+                                        e);
+                            }
+                        });
     }
 
     /**
@@ -310,25 +352,35 @@ public class IotDataRuleServiceImpl implements IotDataRuleService {
      * @param dataSink 数据目的
      */
     private void executeDataRuleAction(IotDeviceMessage message, IotDataSinkDO dataSink) {
-        dataRuleActions.forEach(action -> {
-            if (ObjUtil.notEqual(action.getType(), dataSink.getType())) {
-                return;
-            }
-            if (CommonStatusEnum.isDisable(dataSink.getStatus())) {
-                log.warn("[executeDataRuleAction][消息({}) 数据目的({}) 状态为禁用]", message.getId(), dataSink.getId());
-                return;
-            }
-            try {
-                action.execute(message, dataSink);
-                log.info("[executeDataRuleAction][消息({}) 数据目的({}) 执行成功]", message.getId(), dataSink.getId());
-            } catch (Exception e) {
-                log.error("[executeDataRuleAction][消息({}) 数据目的({}) 执行异常]", message.getId(), dataSink.getId(), e);
-            }
-        });
+        dataRuleActions.forEach(
+                action -> {
+                    if (ObjUtil.notEqual(action.getType(), dataSink.getType())) {
+                        return;
+                    }
+                    if (CommonStatusEnum.isDisable(dataSink.getStatus())) {
+                        log.warn(
+                                "[executeDataRuleAction][消息({}) 数据目的({}) 状态为禁用]",
+                                message.getId(),
+                                dataSink.getId());
+                        return;
+                    }
+                    try {
+                        action.execute(message, dataSink);
+                        log.info(
+                                "[executeDataRuleAction][消息({}) 数据目的({}) 执行成功]",
+                                message.getId(),
+                                dataSink.getId());
+                    } catch (Exception e) {
+                        log.error(
+                                "[executeDataRuleAction][消息({}) 数据目的({}) 执行异常]",
+                                message.getId(),
+                                dataSink.getId(),
+                                e);
+                    }
+                });
     }
 
     private IotDataRuleServiceImpl getSelf() {
         return SpringUtils.getBean(IotDataRuleServiceImpl.class);
     }
-
 }

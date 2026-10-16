@@ -1,7 +1,13 @@
 package cn.iocoder.yudao.module.ai1.util;
 
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockStatic;
+
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.springframework.core.env.Environment;
@@ -10,10 +16,6 @@ import org.springframework.mock.env.MockEnvironment;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mockStatic;
 
 public class Ai1UtilsTest {
 
@@ -48,9 +50,11 @@ public class Ai1UtilsTest {
         nullKey.put(null, "value");
 
         // 调用，并断言异常
-        for (Map<String, String> input : List.of(duplicate, nullValue, nullKey, Map.of(" ", "value"))) {
+        for (Map<String, String> input :
+                List.of(duplicate, nullValue, nullKey, Map.of(" ", "value"))) {
             assertFalse(Ai1Utils.isHeadersValid(input));
-            ServiceException ex = assertThrows(ServiceException.class, () -> Ai1Utils.normalizeHeaders(input));
+            ServiceException ex =
+                    assertThrows(ServiceException.class, () -> Ai1Utils.normalizeHeaders(input));
             assertEquals(PROVIDER_HEADERS_INVALID.getCode(), ex.getCode());
             assertFalse(ex.getMessage().contains("static"));
         }
@@ -77,17 +81,28 @@ public class Ai1UtilsTest {
     public void testResolveSpringPlaceholders_unresolved() {
         // 准备参数
         try (MockedStatic<SpringUtil> spring = mockStatic(SpringUtil.class)) {
-            spring.when(() -> SpringUtil.getBean(Environment.class)).thenReturn(new MockEnvironment());
+            spring.when(() -> SpringUtil.getBean(Environment.class))
+                    .thenReturn(new MockEnvironment());
             // 调用，并断言异常
-            for (String value : List.of("literal-private-api-key-${MISSING}", "https://private-token@host/${MISSING}")) {
-                ServiceException ex = assertThrows(ServiceException.class, () -> Ai1Utils.resolveSpringPlaceholders(value));
+            for (String value :
+                    List.of(
+                            "literal-private-api-key-${MISSING}",
+                            "https://private-token@host/${MISSING}")) {
+                ServiceException ex =
+                        assertThrows(
+                                ServiceException.class,
+                                () -> Ai1Utils.resolveSpringPlaceholders(value));
                 assertEquals(CONFIG_PLACEHOLDER_NOT_RESOLVED.getCode(), ex.getCode());
                 assertFalse(ex.getMessage().contains("private"));
                 assertFalse(ex.getMessage().contains("Header"));
                 assertFalse(ex.getMessage().contains(value));
             }
-            ServiceException env = assertThrows(ServiceException.class, () ->
-                    Ai1Utils.resolveSpringPlaceholders(Map.of("MCP_TOKEN", "private-env-${MISSING}")));
+            ServiceException env =
+                    assertThrows(
+                            ServiceException.class,
+                            () ->
+                                    Ai1Utils.resolveSpringPlaceholders(
+                                            Map.of("MCP_TOKEN", "private-env-${MISSING}")));
             assertFalse(env.getMessage().contains("Header"));
             assertFalse(env.getMessage().contains("private-env"));
         }
@@ -110,8 +125,14 @@ public class Ai1UtilsTest {
             assertEquals("a\"b\\c-{session}", resolved.get("X-Z"));
             assertEquals(List.of("X-Z", "X-A"), List.copyOf(resolved.keySet()));
             assertEquals("${HEADER_TEST}-{session}", input.get("X-Z"));
-            ServiceException ex = assertThrows(ServiceException.class, () ->
-                    Ai1Utils.resolveSpringPlaceholders(Map.of("X-Test", "literal-secret-${MISSING_HEADER_TEST}")));
+            ServiceException ex =
+                    assertThrows(
+                            ServiceException.class,
+                            () ->
+                                    Ai1Utils.resolveSpringPlaceholders(
+                                            Map.of(
+                                                    "X-Test",
+                                                    "literal-secret-${MISSING_HEADER_TEST}")));
             assertEquals(CONFIG_PLACEHOLDER_NOT_RESOLVED.getCode(), ex.getCode());
             assertFalse(ex.getMessage().contains("literal-secret"));
         }

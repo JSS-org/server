@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.promotion.service.bargain;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjUtil;
@@ -12,19 +15,18 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainActivityD
 import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainRecordDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.bargain.BargainRecordMapper;
 import cn.iocoder.yudao.module.promotion.enums.bargain.BargainRecordStatusEnum;
+
+import jakarta.annotation.Nullable;
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Nullable;
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 
 /**
  * 砍价记录 Service 实现类
@@ -35,41 +37,51 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 @Validated
 public class BargainRecordServiceImpl implements BargainRecordService {
 
-    @Resource
-    private BargainActivityService bargainActivityService;
+    @Resource private BargainActivityService bargainActivityService;
 
-    @Resource
-    private BargainRecordMapper bargainRecordMapper;
+    @Resource private BargainRecordMapper bargainRecordMapper;
 
     @Override
     public Long createBargainRecord(Long userId, AppBargainRecordCreateReqVO reqVO) {
         // 1. 校验砍价活动（包括库存）
-        BargainActivityDO activity = bargainActivityService.validateBargainActivityCanJoin(reqVO.getActivityId());
+        BargainActivityDO activity =
+                bargainActivityService.validateBargainActivityCanJoin(reqVO.getActivityId());
 
         // 2.1 校验当前是否已经有参与中的砍价活动
-        if (CollUtil.isNotEmpty(bargainRecordMapper.selectListByUserIdAndActivityIdAndStatus(
-                userId, reqVO.getActivityId(), BargainRecordStatusEnum.IN_PROGRESS.getStatus()))) {
+        if (CollUtil.isNotEmpty(
+                bargainRecordMapper.selectListByUserIdAndActivityIdAndStatus(
+                        userId,
+                        reqVO.getActivityId(),
+                        BargainRecordStatusEnum.IN_PROGRESS.getStatus()))) {
             throw exception(BARGAIN_RECORD_CREATE_FAIL_EXISTS);
         }
         // 2.2 是否超过参与的上限
         if (bargainRecordMapper.selectCountByUserIdAndActivityIdAndStatus(
-                userId, reqVO.getActivityId(), BargainRecordStatusEnum.SUCCESS.getStatus()) >= activity.getTotalLimitCount()) {
+                        userId, reqVO.getActivityId(), BargainRecordStatusEnum.SUCCESS.getStatus())
+                >= activity.getTotalLimitCount()) {
             throw exception(BARGAIN_RECORD_CREATE_FAIL_LIMIT);
         }
 
         // 3. 创建砍价记录
-        BargainRecordDO record = BargainRecordDO.builder().userId(userId)
-                .activityId(reqVO.getActivityId()).spuId(activity.getSpuId()).skuId(activity.getSkuId())
-                .bargainFirstPrice(activity.getBargainFirstPrice()).bargainPrice(activity.getBargainFirstPrice())
-                .status(BargainRecordStatusEnum.IN_PROGRESS.getStatus()).build();
+        BargainRecordDO record =
+                BargainRecordDO.builder()
+                        .userId(userId)
+                        .activityId(reqVO.getActivityId())
+                        .spuId(activity.getSpuId())
+                        .skuId(activity.getSkuId())
+                        .bargainFirstPrice(activity.getBargainFirstPrice())
+                        .bargainPrice(activity.getBargainFirstPrice())
+                        .status(BargainRecordStatusEnum.IN_PROGRESS.getStatus())
+                        .build();
         bargainRecordMapper.insert(record);
         return record.getId();
     }
 
     @Override
-    public Boolean updateBargainRecordBargainPrice(Long id, Integer whereBargainPrice,
-                                                   Integer reducePrice, Boolean success) {
-        BargainRecordDO updateObj = new BargainRecordDO().setBargainPrice(whereBargainPrice - reducePrice);
+    public Boolean updateBargainRecordBargainPrice(
+            Long id, Integer whereBargainPrice, Integer reducePrice, Boolean success) {
+        BargainRecordDO updateObj =
+                new BargainRecordDO().setBargainPrice(whereBargainPrice - reducePrice);
         if (success) {
             updateObj.setStatus(BargainRecordStatusEnum.SUCCESS.getStatus());
         }
@@ -77,7 +89,8 @@ public class BargainRecordServiceImpl implements BargainRecordService {
     }
 
     @Override
-    public BargainValidateJoinRespDTO validateJoinBargain(Long userId, Long bargainRecordId, Long skuId) {
+    public BargainValidateJoinRespDTO validateJoinBargain(
+            Long userId, Long bargainRecordId, Long skuId) {
         // 1.1 砍价记录不存在
         BargainRecordDO record = bargainRecordMapper.selectByIdAndUserId(bargainRecordId, userId);
         if (record == null) {
@@ -93,9 +106,12 @@ public class BargainRecordServiceImpl implements BargainRecordService {
         }
 
         // 2.1 校验砍价活动（包括库存）
-        BargainActivityDO activity = bargainActivityService.validateBargainActivityCanJoin(record.getActivityId());
+        BargainActivityDO activity =
+                bargainActivityService.validateBargainActivityCanJoin(record.getActivityId());
         Assert.isTrue(Objects.equals(skuId, activity.getSkuId()), "砍价商品不匹配"); // 防御性校验
-        return new BargainValidateJoinRespDTO().setActivityId(activity.getId()).setName(activity.getName())
+        return new BargainValidateJoinRespDTO()
+                .setActivityId(activity.getId())
+                .setName(activity.getName())
                 .setBargainPrice(record.getBargainPrice());
     }
 
@@ -120,7 +136,8 @@ public class BargainRecordServiceImpl implements BargainRecordService {
     }
 
     @Override
-    public Map<Long, Integer> getBargainRecordUserCountMap(Collection<Long> activityIds, @Nullable Integer status) {
+    public Map<Long, Integer> getBargainRecordUserCountMap(
+            Collection<Long> activityIds, @Nullable Integer status) {
         return bargainRecordMapper.selectUserCountByActivityIdsAndStatus(activityIds, status);
     }
 
@@ -148,5 +165,4 @@ public class BargainRecordServiceImpl implements BargainRecordService {
     public List<BargainRecordDO> getBargainRecordList(Integer status, Integer count) {
         return bargainRecordMapper.selectListByStatusAndCount(status, count);
     }
-
 }

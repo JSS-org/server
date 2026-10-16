@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item;
 
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.sku.WmsItemSkuSaveReqVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -23,7 +26,10 @@ public class WmsItemSaveReqVO {
     @Size(max = 20, message = "商品编号长度不能超过 20 个字符")
     private String code;
 
-    @Schema(description = "商品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "华为 nova flip")
+    @Schema(
+            description = "商品名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "华为 nova flip")
     @NotBlank(message = "商品名称不能为空")
     @Size(max = 60, message = "商品名称长度不能超过 60 个字符")
     private String name;
@@ -47,5 +53,4 @@ public class WmsItemSaveReqVO {
     @Valid
     @NotEmpty(message = "至少包含一个商品规格")
     private List<WmsItemSkuSaveReqVO> skus;
-
 }

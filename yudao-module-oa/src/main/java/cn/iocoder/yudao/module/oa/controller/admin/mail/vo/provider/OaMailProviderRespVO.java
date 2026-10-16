@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.mail.vo.provider;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 邮箱服务配置 Response VO")
@@ -21,5 +22,4 @@ public class OaMailProviderRespVO {
 
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     private Integer status;
-
 }

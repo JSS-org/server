@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.ai.dal.dataobject.mindmap;
 
-import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
+import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 /**
@@ -21,8 +23,7 @@ public class AiMindMapDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 用户编号
@@ -37,12 +38,14 @@ public class AiMindMapDO extends BaseDO {
      * 枚举 {@link AiPlatformEnum}
      */
     private String platform;
+
     /**
      * 模型编号
      *
      * 关联 {@link AiModelDO#getId()}
      */
     private Long modelId;
+
     /**
      * 模型
      */
@@ -62,5 +65,4 @@ public class AiMindMapDO extends BaseDO {
      * 错误信息
      */
     private String errorMessage;
-
 }

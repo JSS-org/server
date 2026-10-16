@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.controller.admin.device.vo.property.IotDevice
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDevicePropertyDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
@@ -50,7 +51,8 @@ public interface IotDevicePropertyService {
      * @param listReqVO 列表请求
      * @return 设备属性历史数据
      */
-    List<IotDevicePropertyRespVO> getHistoryDevicePropertyList(@Valid IotDevicePropertyHistoryListReqVO listReqVO);
+    List<IotDevicePropertyRespVO> getHistoryDevicePropertyList(
+            @Valid IotDevicePropertyHistoryListReqVO listReqVO);
 
     // ========== 设备时间相关操作 ==========
 
@@ -85,5 +87,4 @@ public interface IotDevicePropertyService {
      * @return 网关 serverId
      */
     String getDeviceServerId(Long id);
-
 }

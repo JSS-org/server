@@ -25,7 +25,8 @@ public interface FmsInitialBalanceService {
      * @param userId 用户编号
      * @return 初始余额列表
      */
-    List<FmsInitialBalanceRespVO> getInitialBalanceList(Long accountSetId, Integer subjectType, Long userId);
+    List<FmsInitialBalanceRespVO> getInitialBalanceList(
+            Long accountSetId, Integer subjectType, Long userId);
 
     /**
      * 保存初始余额
@@ -88,7 +89,8 @@ public interface FmsInitialBalanceService {
      * @param auxiliaryItemIds 辅助核算项目编号数组
      * @return 初始余额数量
      */
-    Long getInitialBalanceCountByAuxiliaryItemIds(Long accountSetId, Collection<Long> auxiliaryItemIds);
+    Long getInitialBalanceCountByAuxiliaryItemIds(
+            Long accountSetId, Collection<Long> auxiliaryItemIds);
 
     /**
      * 获得引用指定辅助核算类别的初始余额数量
@@ -98,5 +100,4 @@ public interface FmsInitialBalanceService {
      * @return 初始余额数量
      */
     Long getInitialBalanceCountByAuxiliaryTypeId(Long accountSetId, Long auxiliaryTypeId);
-
 }

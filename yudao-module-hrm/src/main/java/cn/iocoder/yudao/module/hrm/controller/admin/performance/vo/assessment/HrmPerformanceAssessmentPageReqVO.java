@@ -5,7 +5,9 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.assessment.HrmPerformanceAppealStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformancePlanStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceStageTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -54,5 +56,4 @@ public class HrmPerformanceAssessmentPageReqVO extends PageParam {
 
     @Schema(description = "结果等级是否为空", example = "false")
     private Boolean resultLevelEmpty;
-
 }

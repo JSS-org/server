@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.pms.service.kb.interaction;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_REPLY_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_TYPE_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,7 +15,9 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.kb.interaction.PmsKnowledgeDoc
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.interaction.PmsKnowledgeDocumentCommentMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentTypeEnum;
 import cn.iocoder.yudao.module.pms.service.kb.content.PmsKnowledgeDocumentService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +25,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_REPLY_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_COMMENT_TYPE_INVALID;
 
 /**
  * PMS 知识库文档评论 Service 实现类
@@ -33,11 +35,9 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOC
 @Validated
 public class PmsKnowledgeDocumentCommentServiceImpl implements PmsKnowledgeDocumentCommentService {
 
-    @Resource
-    private PmsKnowledgeDocumentCommentMapper commentMapper;
+    @Resource private PmsKnowledgeDocumentCommentMapper commentMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免与文档回收逻辑形成循环依赖
+    @Resource @Lazy // 延迟加载，避免与文档回收逻辑形成循环依赖
     private PmsKnowledgeDocumentService documentService;
 
     @Override
@@ -45,19 +45,24 @@ public class PmsKnowledgeDocumentCommentServiceImpl implements PmsKnowledgeDocum
         // 1.1 校验文档可评论
         validateDocumentCommentable(saveReqVO.getDocumentId(), userId);
         // 1.2 校验回复关系
-        Long mainId = saveReqVO.getMainId() != null ? saveReqVO.getMainId()
-                : PmsKnowledgeDocumentCommentDO.MAIN_ID_ROOT;
+        Long mainId =
+                saveReqVO.getMainId() != null
+                        ? saveReqVO.getMainId()
+                        : PmsKnowledgeDocumentCommentDO.MAIN_ID_ROOT;
         if (ObjectUtil.notEqual(PmsKnowledgeDocumentCommentDO.MAIN_ID_ROOT, mainId)) {
             PmsKnowledgeDocumentCommentDO mainComment = validateCommentExists(mainId);
             if (ObjectUtil.notEqual(saveReqVO.getDocumentId(), mainComment.getDocumentId())
-                    || ObjectUtil.notEqual(PmsKnowledgeDocumentCommentDO.MAIN_ID_ROOT, mainComment.getMainId())) {
+                    || ObjectUtil.notEqual(
+                            PmsKnowledgeDocumentCommentDO.MAIN_ID_ROOT, mainComment.getMainId())) {
                 throw exception(KNOWLEDGE_DOCUMENT_COMMENT_REPLY_INVALID);
             }
         }
 
         // 2. 创建评论
-        PmsKnowledgeDocumentCommentDO comment = BeanUtils.toBean(saveReqVO, PmsKnowledgeDocumentCommentDO.class)
-                .setUserId(userId).setMainId(mainId);
+        PmsKnowledgeDocumentCommentDO comment =
+                BeanUtils.toBean(saveReqVO, PmsKnowledgeDocumentCommentDO.class)
+                        .setUserId(userId)
+                        .setMainId(mainId);
         commentMapper.insert(comment);
         return comment.getId();
     }
@@ -80,7 +85,8 @@ public class PmsKnowledgeDocumentCommentServiceImpl implements PmsKnowledgeDocum
     }
 
     @Override
-    public List<PmsKnowledgeDocumentCommentDO> getDocumentCommentList(Long documentId, Long userId) {
+    public List<PmsKnowledgeDocumentCommentDO> getDocumentCommentList(
+            Long documentId, Long userId) {
         // 1. 校验文档可访问
         validateDocumentCommentable(documentId, userId);
 
@@ -116,5 +122,4 @@ public class PmsKnowledgeDocumentCommentServiceImpl implements PmsKnowledgeDocum
             throw exception(KNOWLEDGE_DOCUMENT_COMMENT_TYPE_INVALID);
         }
     }
-
 }

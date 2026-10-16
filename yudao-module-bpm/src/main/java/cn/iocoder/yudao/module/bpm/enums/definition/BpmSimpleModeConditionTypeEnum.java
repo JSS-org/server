@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.bpm.enums.definition;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,11 +16,13 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum BpmSimpleModeConditionTypeEnum implements ArrayValuable<Integer> {
-
     EXPRESSION(1, "条件表达式"),
     RULE(2, "条件规则");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BpmSimpleModeConditionTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(BpmSimpleModeConditionTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     private final Integer type;
 

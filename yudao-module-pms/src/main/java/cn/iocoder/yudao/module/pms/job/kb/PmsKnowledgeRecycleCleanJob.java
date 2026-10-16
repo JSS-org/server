@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.pms.job.kb;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.pms.service.kb.recycle.PmsKnowledgeRecycleService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,8 +23,7 @@ public class PmsKnowledgeRecycleCleanJob implements JobHandler {
 
     private static final int RETAIN_DAYS = 30;
 
-    @Resource
-    private PmsKnowledgeRecycleService recycleService;
+    @Resource private PmsKnowledgeRecycleService recycleService;
 
     @Override
     @TenantJob
@@ -31,5 +33,4 @@ public class PmsKnowledgeRecycleCleanJob implements JobHandler {
         log.info("[execute][清理知识库到期回收站记录 ({}) 条]", cleanCount);
         return String.format("清理知识库到期回收站记录 %s 条", cleanCount);
     }
-
 }

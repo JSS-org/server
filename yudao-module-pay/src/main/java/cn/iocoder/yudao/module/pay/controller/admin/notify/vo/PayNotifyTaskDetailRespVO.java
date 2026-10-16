@@ -1,7 +1,7 @@
-
 package cn.iocoder.yudao.module.pay.controller.admin.notify.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -36,7 +36,5 @@ public class PayNotifyTaskDetailRespVO extends PayNotifyTaskRespVO {
 
         @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
         private LocalDateTime createTime;
-
     }
-
 }

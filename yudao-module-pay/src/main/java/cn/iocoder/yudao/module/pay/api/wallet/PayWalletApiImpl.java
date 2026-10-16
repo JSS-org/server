@@ -7,7 +7,9 @@ import cn.iocoder.yudao.module.pay.api.wallet.dto.PayWalletRespDTO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletDO;
 import cn.iocoder.yudao.module.pay.enums.wallet.PayWalletBizTypeEnum;
 import cn.iocoder.yudao.module.pay.service.wallet.PayWalletService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,18 +20,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class PayWalletApiImpl implements PayWalletApi {
 
-    @Resource
-    private PayWalletService payWalletService;
+    @Resource private PayWalletService payWalletService;
 
     @Override
     public void addWalletBalance(PayWalletAddBalanceReqDTO reqDTO) {
         // 创建或获取钱包
-        PayWalletDO wallet = payWalletService.getOrCreateWallet(reqDTO.getUserId(), reqDTO.getUserType());
+        PayWalletDO wallet =
+                payWalletService.getOrCreateWallet(reqDTO.getUserId(), reqDTO.getUserType());
         Assert.notNull(wallet, "钱包({}/{})不存在", reqDTO.getUserId(), reqDTO.getUserType());
 
         // 增加余额
         PayWalletBizTypeEnum bizType = PayWalletBizTypeEnum.valueOf(reqDTO.getBizType());
-        payWalletService.addWalletBalance(wallet.getId(), reqDTO.getBizId(), bizType, reqDTO.getPrice());
+        payWalletService.addWalletBalance(
+                wallet.getId(), reqDTO.getBizId(), bizType, reqDTO.getPrice());
     }
 
     @Override
@@ -37,5 +40,4 @@ public class PayWalletApiImpl implements PayWalletApi {
         PayWalletDO wallet = payWalletService.getOrCreateWallet(userId, userType);
         return BeanUtils.toBean(wallet, PayWalletRespDTO.class);
     }
-
 }

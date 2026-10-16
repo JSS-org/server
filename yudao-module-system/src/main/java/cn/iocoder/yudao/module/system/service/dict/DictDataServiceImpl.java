@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.service.dict;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,18 +13,19 @@ import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataSave
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictDataDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictTypeDO;
 import cn.iocoder.yudao.module.system.dal.mysql.dict.DictDataMapper;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 字典数据 Service 实现类
@@ -35,15 +39,12 @@ public class DictDataServiceImpl implements DictDataService {
     /**
      * 排序 dictType > sort
      */
-    private static final Comparator<DictDataDO> COMPARATOR_TYPE_AND_SORT = Comparator
-            .comparing(DictDataDO::getDictType)
-            .thenComparingInt(DictDataDO::getSort);
+    private static final Comparator<DictDataDO> COMPARATOR_TYPE_AND_SORT =
+            Comparator.comparing(DictDataDO::getDictType).thenComparingInt(DictDataDO::getSort);
 
-    @Resource
-    private DictTypeService dictTypeService;
+    @Resource private DictTypeService dictTypeService;
 
-    @Resource
-    private DictDataMapper dictDataMapper;
+    @Resource private DictDataMapper dictDataMapper;
 
     @Override
     public List<DictDataDO> getDictDataList(Integer status, String dictType) {
@@ -82,7 +83,8 @@ public class DictDataServiceImpl implements DictDataService {
         // 校验字典类型有效
         validateDictTypeExists(updateReqVO.getDictType());
         // 校验字典数据的值的唯一性
-        validateDictDataValueUnique(updateReqVO.getId(), updateReqVO.getDictType(), updateReqVO.getValue());
+        validateDictDataValueUnique(
+                updateReqVO.getId(), updateReqVO.getDictType(), updateReqVO.getValue());
 
         // 更新字典类型
         DictDataDO updateObj = BeanUtils.toBean(updateReqVO, DictDataDO.class);
@@ -150,18 +152,21 @@ public class DictDataServiceImpl implements DictDataService {
         if (CollUtil.isEmpty(values)) {
             return;
         }
-        Map<String, DictDataDO> dictDataMap = CollectionUtils.convertMap(
-                dictDataMapper.selectByDictTypeAndValues(dictType, values), DictDataDO::getValue);
+        Map<String, DictDataDO> dictDataMap =
+                CollectionUtils.convertMap(
+                        dictDataMapper.selectByDictTypeAndValues(dictType, values),
+                        DictDataDO::getValue);
         // 校验
-        values.forEach(value -> {
-            DictDataDO dictData = dictDataMap.get(value);
-            if (dictData == null) {
-                throw exception(DICT_DATA_NOT_EXISTS);
-            }
-            if (!CommonStatusEnum.ENABLE.getStatus().equals(dictData.getStatus())) {
-                throw exception(DICT_DATA_NOT_ENABLE, dictData.getLabel());
-            }
-        });
+        values.forEach(
+                value -> {
+                    DictDataDO dictData = dictDataMap.get(value);
+                    if (dictData == null) {
+                        throw exception(DICT_DATA_NOT_EXISTS);
+                    }
+                    if (!CommonStatusEnum.ENABLE.getStatus().equals(dictData.getStatus())) {
+                        throw exception(DICT_DATA_NOT_ENABLE, dictData.getLabel());
+                    }
+                });
     }
 
     @Override
@@ -180,5 +185,4 @@ public class DictDataServiceImpl implements DictDataService {
         list.sort(Comparator.comparing(DictDataDO::getSort));
         return list;
     }
-
 }

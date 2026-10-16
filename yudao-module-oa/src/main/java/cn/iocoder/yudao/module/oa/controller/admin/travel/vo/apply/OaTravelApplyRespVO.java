@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.oa.controller.admin.travel.vo.apply;
 
 import cn.iocoder.yudao.module.oa.dal.dataobject.travel.OaTravelApplyDO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,7 +17,10 @@ public class OaTravelApplyRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "单据编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "CC202609140001")
+    @Schema(
+            description = "单据编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "CC202609140001")
     private String no;
 
     @Schema(description = "出差事由", example = "赴北京参加客户项目验收")
@@ -59,7 +65,12 @@ public class OaTravelApplyRespVO {
     @Schema(description = "申请部门", example = "行政部")
     private String deptName;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
     @Schema(description = "明细")
@@ -67,6 +78,4 @@ public class OaTravelApplyRespVO {
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
     private List<String> fileUrls;
-
-
 }

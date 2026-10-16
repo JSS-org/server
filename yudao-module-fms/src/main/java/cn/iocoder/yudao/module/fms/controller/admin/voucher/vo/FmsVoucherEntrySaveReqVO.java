@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -54,13 +56,18 @@ public class FmsVoucherEntrySaveReqVO {
     @Data
     public static class AuxiliaryItem {
 
-        @Schema(description = "辅助核算类别编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11")
+        @Schema(
+                description = "辅助核算类别编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "11")
         @NotNull(message = "辅助核算类别不能为空")
         private Long typeId;
 
-        @Schema(description = "辅助核算项目编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算项目编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         @NotNull(message = "辅助核算项目不能为空")
         private Long itemId;
     }
-
 }

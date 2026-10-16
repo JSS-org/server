@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.mes.service.wm.miscissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE_DETAIL_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.line.MesWmMiscIssueLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueDetailDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscissue.MesWmMiscIssueDetailMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE_DETAIL_NOT_EXISTS;
 
 /**
  * MES 杂项出库明细 Service 实现类
@@ -21,8 +23,7 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE
 @Validated
 public class MesWmMiscIssueDetailServiceImpl implements MesWmMiscIssueDetailService {
 
-    @Resource
-    private MesWmMiscIssueDetailMapper issueDetailMapper;
+    @Resource private MesWmMiscIssueDetailMapper issueDetailMapper;
 
     @Override
     public Long createMiscIssueDetail(MesWmMiscIssueLineSaveReqVO createReqVO) {
@@ -36,13 +37,15 @@ public class MesWmMiscIssueDetailServiceImpl implements MesWmMiscIssueDetailServ
     @Override
     public void updateMiscIssueDetail(MesWmMiscIssueLineSaveReqVO updateReqVO) {
         // 基于 lineId 查询唯一的 detail 记录（VO 的 id 字段是 lineId）
-        List<MesWmMiscIssueDetailDO> details = issueDetailMapper.selectListByLineId(updateReqVO.getId());
+        List<MesWmMiscIssueDetailDO> details =
+                issueDetailMapper.selectListByLineId(updateReqVO.getId());
         if (CollUtil.isEmpty(details)) {
             return;
         }
 
         // 更新 detail（应该只有一条记录）
-        MesWmMiscIssueDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmMiscIssueDetailDO.class);
+        MesWmMiscIssueDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmMiscIssueDetailDO.class);
         updateObj.setId(details.get(0).getId()); // 使用查询到的 detail id
         updateObj.setLineId(updateReqVO.getId()); // VO 的 id 就是 lineId
         issueDetailMapper.updateById(updateObj);
@@ -64,5 +67,4 @@ public class MesWmMiscIssueDetailServiceImpl implements MesWmMiscIssueDetailServ
             throw exception(WM_MISC_ISSUE_DETAIL_NOT_EXISTS);
         }
     }
-
 }

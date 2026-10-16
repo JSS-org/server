@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum AfterSaleOperateTypeEnum {
-
     MEMBER_CREATE(10, "会员申请退款"),
     ADMIN_AGREE_APPLY(11, "商家同意退款"),
     ADMIN_DISAGREE_APPLY(12, "商家拒绝退款"),
@@ -29,9 +28,9 @@ public enum AfterSaleOperateTypeEnum {
      * 操作类型
      */
     private final Integer type;
+
     /**
      * 操作描述
      */
     private final String content;
-
 }

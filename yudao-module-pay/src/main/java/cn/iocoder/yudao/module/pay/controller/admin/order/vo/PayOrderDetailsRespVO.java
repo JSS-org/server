@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.admin.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -34,12 +35,13 @@ public class PayOrderDetailsRespVO extends PayOrderBaseVO {
     @Schema(description = "支付订单扩展")
     public static class PayOrderExtension {
 
-        @Schema(description = "支付订单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "支付订单号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private String no;
 
         @Schema(description = "支付异步通知的内容")
         private String channelNotifyData;
-
     }
-
 }

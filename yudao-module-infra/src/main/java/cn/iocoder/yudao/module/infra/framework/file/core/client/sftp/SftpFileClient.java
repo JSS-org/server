@@ -8,6 +8,7 @@ import cn.hutool.extra.ssh.JschRuntimeException;
 import cn.hutool.extra.ssh.Sftp;
 import cn.iocoder.yudao.framework.common.util.io.FileUtils;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.AbstractFileClient;
+
 import com.jcraft.jsch.JSch;
 
 import java.io.File;
@@ -23,6 +24,7 @@ public class SftpFileClient extends AbstractFileClient<SftpFileClientConfig> {
      * 连接超时时间，单位：毫秒
      */
     private static final Long CONNECTION_TIMEOUT = 3000L;
+
     /**
      * 读写超时时间，单位：毫秒
      */
@@ -42,8 +44,15 @@ public class SftpFileClient extends AbstractFileClient<SftpFileClientConfig> {
     @Override
     protected void doInit() {
         // 初始化 Sftp 对象
-        FtpConfig ftpConfig = new FtpConfig(config.getHost(), config.getPort(), config.getUsername(), config.getPassword(),
-                CharsetUtil.CHARSET_UTF_8, null, null);
+        FtpConfig ftpConfig =
+                new FtpConfig(
+                        config.getHost(),
+                        config.getPort(),
+                        config.getUsername(),
+                        config.getPassword(),
+                        CharsetUtil.CHARSET_UTF_8,
+                        null,
+                        null);
         ftpConfig.setConnectionTimeout(CONNECTION_TIMEOUT);
         ftpConfig.setSoTimeout(SO_TIMEOUT);
         this.sftp = new Sftp(ftpConfig);
@@ -89,5 +98,4 @@ public class SftpFileClient extends AbstractFileClient<SftpFileClientConfig> {
     private synchronized void reconnectIfTimeout() {
         sftp.reconnectIfTimeout();
     }
-
 }

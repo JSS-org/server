@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -35,5 +37,4 @@ public class BpmFormRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

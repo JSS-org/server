@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerRespVO
 import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.controller.app.banner.vo.AppBannerRespVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.banner.BannerDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -27,5 +28,4 @@ public interface BannerConvert {
     BannerDO convert(BannerUpdateReqVO updateReqVO);
 
     List<AppBannerRespVO> convertList01(List<BannerDO> bannerList);
-
 }

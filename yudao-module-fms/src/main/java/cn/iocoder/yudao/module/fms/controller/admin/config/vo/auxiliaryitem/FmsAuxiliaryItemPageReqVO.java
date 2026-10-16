@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,5 +29,4 @@ public class FmsAuxiliaryItemPageReqVO extends PageParam {
 
     @Schema(description = "关键词，匹配编码或名称", example = "测试")
     private String search;
-
 }

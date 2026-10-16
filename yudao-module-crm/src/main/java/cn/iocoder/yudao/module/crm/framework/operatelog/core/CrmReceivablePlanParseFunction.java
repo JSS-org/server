@@ -3,9 +3,13 @@ package cn.iocoder.yudao.module.crm.framework.operatelog.core;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.crm.dal.dataobject.receivable.CrmReceivablePlanDO;
 import cn.iocoder.yudao.module.crm.service.receivable.CrmReceivablePlanService;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,8 +23,7 @@ public class CrmReceivablePlanParseFunction implements IParseFunction {
 
     public static final String NAME = "getReceivablePlanServiceById";
 
-    @Resource
-    private CrmReceivablePlanService receivablePlanService;
+    @Resource private CrmReceivablePlanService receivablePlanService;
 
     @Override
     public boolean executeBefore() {
@@ -37,8 +40,8 @@ public class CrmReceivablePlanParseFunction implements IParseFunction {
         if (StrUtil.isEmptyIfStr(value)) {
             return "";
         }
-        CrmReceivablePlanDO receivablePlan = receivablePlanService.getReceivablePlan(Long.parseLong(value.toString()));
+        CrmReceivablePlanDO receivablePlan =
+                receivablePlanService.getReceivablePlan(Long.parseLong(value.toString()));
         return receivablePlan == null ? "" : receivablePlan.getPeriod().toString();
     }
-
 }

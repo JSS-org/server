@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.system.controller.admin.dict.vo.data;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,11 +33,17 @@ public class DictDataRespVO {
     @ExcelProperty("字典键值")
     private String value;
 
-    @Schema(description = "字典类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "sys_common_sex")
+    @Schema(
+            description = "字典类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "sys_common_sex")
     @ExcelProperty("字典类型")
     private String dictType;
 
-    @Schema(description = "状态,见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态,见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @ExcelProperty(value = "状态", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.COMMON_STATUS)
     private Integer status;
@@ -51,5 +59,4 @@ public class DictDataRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     private LocalDateTime createTime;
-
 }

@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.addIfNotNull;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
+
+import static java.util.Collections.emptyList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,8 +20,11 @@ import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmnModelConsta
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.FlowableUtils;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.common.engine.impl.db.SuspensionState;
 import org.flowable.engine.RepositoryService;
@@ -27,11 +36,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.addIfNotNull;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
-import static java.util.Collections.emptyList;
 
 /**
  * 流程定义实现
@@ -46,23 +50,24 @@ import static java.util.Collections.emptyList;
 @Slf4j
 public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionService {
 
-    @Resource
-    private RepositoryService repositoryService;
+    @Resource private RepositoryService repositoryService;
 
-    @Resource
-    private BpmProcessDefinitionInfoMapper processDefinitionMapper;
+    @Resource private BpmProcessDefinitionInfoMapper processDefinitionMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public ProcessDefinition getProcessDefinition(String id) {
-        // 不使用 repositoryService.getProcessDefinition(id) 的原因：流程定义不存在时，它会抛出 FlowableObjectNotFoundException，
+        // 不使用 repositoryService.getProcessDefinition(id) 的原因：流程定义不存在时，它会抛出
+        // FlowableObjectNotFoundException，
         // 而调用方都是通过返回 null 判断流程定义不存在
         if (StrUtil.isEmpty(id)) {
             return null;
         }
-        return repositoryService.createProcessDefinitionQuery().processDefinitionId(id).singleResult();
+        return repositoryService
+                .createProcessDefinitionQuery()
+                .processDefinitionId(id)
+                .singleResult();
     }
 
     @Override
@@ -75,11 +80,15 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
         if (StrUtil.isEmpty(deploymentId)) {
             return null;
         }
-        return repositoryService.createProcessDefinitionQuery().deploymentId(deploymentId).singleResult();
+        return repositoryService
+                .createProcessDefinitionQuery()
+                .deploymentId(deploymentId)
+                .singleResult();
     }
 
     @Override
-    public List<ProcessDefinition> getProcessDefinitionListByDeploymentIds(Set<String> deploymentIds) {
+    public List<ProcessDefinition> getProcessDefinitionListByDeploymentIds(
+            Set<String> deploymentIds) {
         if (CollUtil.isEmpty(deploymentIds)) {
             return emptyList();
         }
@@ -88,13 +97,17 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
 
     @Override
     public ProcessDefinition getActiveProcessDefinition(String key) {
-        return repositoryService.createProcessDefinitionQuery()
+        return repositoryService
+                .createProcessDefinitionQuery()
                 .processDefinitionTenantId(FlowableUtils.getTenantId())
-                .processDefinitionKey(key).active().singleResult();
+                .processDefinitionKey(key)
+                .active()
+                .singleResult();
     }
 
     @Override
-    public boolean canUserStartProcessDefinition(BpmProcessDefinitionInfoDO processDefinition, Long userId) {
+    public boolean canUserStartProcessDefinition(
+            BpmProcessDefinitionInfoDO processDefinition, Long userId) {
         if (processDefinition == null) {
             return false;
         }
@@ -137,19 +150,30 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
     }
 
     @Override
-    public String createProcessDefinition(Model model, BpmModelMetaInfoVO modelMetaInfo,
-                                          byte[] bpmnBytes, String simpleJson, BpmFormDO form) {
+    public String createProcessDefinition(
+            Model model,
+            BpmModelMetaInfoVO modelMetaInfo,
+            byte[] bpmnBytes,
+            String simpleJson,
+            BpmFormDO form) {
         // 创建 Deployment 部署
-        Deployment deploy = repositoryService.createDeployment()
-                .key(model.getKey()).name(model.getName()).category(model.getCategory())
-                .addBytes(model.getKey() + BpmnModelConstants.BPMN_FILE_SUFFIX, bpmnBytes)
-                .tenantId(FlowableUtils.getTenantId())
-                .disableSchemaValidation() // 禁用 XML Schema 验证，因为有自定义的属性
-                .deploy();
+        Deployment deploy =
+                repositoryService
+                        .createDeployment()
+                        .key(model.getKey())
+                        .name(model.getName())
+                        .category(model.getCategory())
+                        .addBytes(model.getKey() + BpmnModelConstants.BPMN_FILE_SUFFIX, bpmnBytes)
+                        .tenantId(FlowableUtils.getTenantId())
+                        .disableSchemaValidation() // 禁用 XML Schema 验证，因为有自定义的属性
+                        .deploy();
 
         // 设置 ProcessDefinition 的 category 分类
-        ProcessDefinition definition = repositoryService.createProcessDefinitionQuery()
-                .deploymentId(deploy.getId()).singleResult();
+        ProcessDefinition definition =
+                repositoryService
+                        .createProcessDefinitionQuery()
+                        .deploymentId(deploy.getId())
+                        .singleResult();
         repositoryService.setProcessDefinitionCategory(definition.getId(), model.getCategory());
         // 注意 1，ProcessDefinition 的 key 和 name 是通过 BPMN 中的 <bpmn2:process /> 的 id 和 name 决定
         // 注意 2，目前该项目的设计上，需要保证 Model、Deployment、ProcessDefinition 使用相同的 key，保证关联性。
@@ -158,13 +182,18 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
             throw exception(PROCESS_DEFINITION_KEY_NOT_MATCH, model.getKey(), definition.getKey());
         }
         if (!Objects.equals(definition.getName(), model.getName())) {
-            throw exception(PROCESS_DEFINITION_NAME_NOT_MATCH, model.getName(), definition.getName());
+            throw exception(
+                    PROCESS_DEFINITION_NAME_NOT_MATCH, model.getName(), definition.getName());
         }
 
         // 插入拓展表
-        BpmProcessDefinitionInfoDO definitionDO = BeanUtils.toBean(modelMetaInfo, BpmProcessDefinitionInfoDO.class)
-                .setModelId(model.getId()).setCategory(model.getCategory()).setProcessDefinitionId(definition.getId())
-                .setModelType(modelMetaInfo.getType()).setSimpleModel(simpleJson);
+        BpmProcessDefinitionInfoDO definitionDO =
+                BeanUtils.toBean(modelMetaInfo, BpmProcessDefinitionInfoDO.class)
+                        .setModelId(model.getId())
+                        .setCategory(model.getCategory())
+                        .setProcessDefinitionId(definition.getId())
+                        .setModelType(modelMetaInfo.getType())
+                        .setSimpleModel(simpleJson);
         if (form != null) {
             definitionDO.setFormFields(form.getFields()).setFormConf(form.getConf());
         }
@@ -200,7 +229,8 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
 
     @Override
     public void updateProcessDefinitionSortByModelId(String modelId, Long sort) {
-        processDefinitionMapper.updateByModelId(modelId, new BpmProcessDefinitionInfoDO().setSort(sort));
+        processDefinitionMapper.updateByModelId(
+                modelId, new BpmProcessDefinitionInfoDO().setSort(sort));
     }
 
     @Override
@@ -219,7 +249,8 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
     }
 
     @Override
-    public PageResult<ProcessDefinition> getProcessDefinitionPage(BpmProcessDefinitionPageReqVO pageVO) {
+    public PageResult<ProcessDefinition> getProcessDefinitionPage(
+            BpmProcessDefinitionPageReqVO pageVO) {
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
         query.processDefinitionTenantId(FlowableUtils.getTenantId());
         if (StrUtil.isNotBlank(pageVO.getKey())) {
@@ -230,13 +261,16 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
         if (count == 0) {
             return PageResult.empty(count);
         }
-        List<ProcessDefinition> list = query.orderByProcessDefinitionVersion().desc()
-                .listPage(PageUtils.getStart(pageVO), pageVO.getPageSize());
+        List<ProcessDefinition> list =
+                query.orderByProcessDefinitionVersion()
+                        .desc()
+                        .listPage(PageUtils.getStart(pageVO), pageVO.getPageSize());
         return new PageResult<>(list, count);
     }
 
     @Override
-    public List<ProcessDefinition> getProcessDefinitionListBySuspensionState(Integer suspensionState) {
+    public List<ProcessDefinition> getProcessDefinitionListBySuspensionState(
+            Integer suspensionState) {
         // 拼接查询条件
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
         if (Objects.equals(SuspensionState.SUSPENDED.getStateCode(), suspensionState)) {
@@ -248,5 +282,4 @@ public class BpmProcessDefinitionServiceImpl implements BpmProcessDefinitionServ
         query.processDefinitionTenantId(FlowableUtils.getTenantId());
         return query.list();
     }
-
 }

@@ -4,6 +4,7 @@ import cn.hutool.crypto.asymmetric.AsymmetricEncryptor;
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.crypto.symmetric.SymmetricEncryptor;
 import cn.iocoder.yudao.framework.encrypt.config.ApiEncryptProperties;
+
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,9 +33,11 @@ public class ApiEncryptResponseWrapper extends HttpServletResponseWrapper {
         this.printWriter = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream));
     }
 
-    public void encrypt(ApiEncryptProperties properties,
-                        SymmetricEncryptor symmetricEncryptor,
-                        AsymmetricEncryptor asymmetricEncryptor) throws IOException {
+    public void encrypt(
+            ApiEncryptProperties properties,
+            SymmetricEncryptor symmetricEncryptor,
+            AsymmetricEncryptor asymmetricEncryptor)
+            throws IOException {
         // 1.1 清空 body
         HttpServletResponse response = (HttpServletResponse) this.getResponse();
         response.resetBuffer();
@@ -48,8 +51,10 @@ public class ApiEncryptResponseWrapper extends HttpServletResponseWrapper {
         this.addHeader("Access-Control-Expose-Headers", properties.getHeader());
 
         // 3.1 加密 body
-        String encryptedBody = symmetricEncryptor != null ? symmetricEncryptor.encryptBase64(body)
-                : asymmetricEncryptor.encryptBase64(body, KeyType.PublicKey);
+        String encryptedBody =
+                symmetricEncryptor != null
+                        ? symmetricEncryptor.encryptBase64(body)
+                        : asymmetricEncryptor.encryptBase64(body, KeyType.PublicKey);
         // 3.2 输出加密后的 body：（设置 header 要放在 response 的 write 之前）
         response.getWriter().write(encryptedBody);
     }
@@ -84,8 +89,7 @@ public class ApiEncryptResponseWrapper extends HttpServletResponseWrapper {
             }
 
             @Override
-            public void setWriteListener(WriteListener writeListener) {
-            }
+            public void setWriteListener(WriteListener writeListener) {}
 
             @Override
             public void write(int b) {
@@ -103,8 +107,6 @@ public class ApiEncryptResponseWrapper extends HttpServletResponseWrapper {
             public void write(byte[] b, int off, int len) {
                 byteArrayOutputStream.write(b, off, len);
             }
-
         };
     }
-
 }

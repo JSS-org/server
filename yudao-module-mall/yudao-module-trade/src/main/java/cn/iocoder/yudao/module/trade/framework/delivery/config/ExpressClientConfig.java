@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.trade.framework.delivery.config;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.ExpressClient;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.ExpressClientFactory;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.impl.ExpressClientFactoryImpl;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -19,8 +20,8 @@ import org.springframework.web.client.RestTemplate;
 public class ExpressClientConfig {
 
     @Bean
-    public ExpressClientFactory expressClientFactory(TradeExpressProperties tradeExpressProperties,
-                                                     RestTemplate restTemplate) {
+    public ExpressClientFactory expressClientFactory(
+            TradeExpressProperties tradeExpressProperties, RestTemplate restTemplate) {
         return new ExpressClientFactoryImpl(tradeExpressProperties, restTemplate);
     }
 
@@ -28,5 +29,4 @@ public class ExpressClientConfig {
     public ExpressClient defaultExpressClient(ExpressClientFactory expressClientFactory) {
         return expressClientFactory.getDefaultExpressClient();
     }
-
 }

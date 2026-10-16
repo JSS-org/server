@@ -1,17 +1,20 @@
 package cn.iocoder.yudao.module.ai.dal.dataobject.image;
 
-import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.enums.image.AiImageStatusEnum;
+import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
+
 import org.springframework.ai.openai.OpenAiImageOptions;
 import org.springframework.ai.stabilityai.api.StabilityAiImageOptions;
 
@@ -32,8 +35,7 @@ public class AiImageDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 用户编号
@@ -53,12 +55,14 @@ public class AiImageDO extends BaseDO {
      * 枚举 {@link AiPlatformEnum}
      */
     private String platform;
+
     /**
      * 模型编号
      *
      * 关联 {@link AiModelDO#getId()}
      */
     private Long modelId;
+
     /**
      * 模型标识
      *
@@ -70,6 +74,7 @@ public class AiImageDO extends BaseDO {
      * 图片宽度
      */
     private Integer width;
+
     /**
      * 图片高度
      */
@@ -96,6 +101,7 @@ public class AiImageDO extends BaseDO {
      * 图片地址
      */
     private String picUrl;
+
     /**
      * 是否公开
      */
@@ -122,6 +128,4 @@ public class AiImageDO extends BaseDO {
      * 1. midjourney proxy：关联的 task id
      */
     private String taskId;
-
 }
-

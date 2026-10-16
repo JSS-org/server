@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.enums.diy;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,12 +15,12 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum DiyPageEnum implements ArrayValuable<Integer> {
-
     INDEX(1, "首页"),
     MY(2, "我的"),
     ;
 
-    private static final Integer[] ARRAYS = Arrays.stream(values()).map(DiyPageEnum::getPage).toArray(Integer[]::new);
+    private static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(DiyPageEnum::getPage).toArray(Integer[]::new);
 
     /**
      * 页面编号
@@ -35,5 +36,4 @@ public enum DiyPageEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

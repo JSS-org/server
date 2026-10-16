@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.seal.vo.apply;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -41,7 +42,12 @@ public class OaSealApplyRespVO {
     @Schema(description = "合同对方", example = "示例公司")
     private String contractParty;
 
-    @Schema(description = "预计用印时间", example = "1789088400000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "预计用印时间",
+            example = "1789088400000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime expectedUseTime;
 
     @Schema(description = "预计归还时间", example = "1789120800000", type = "integer", format = "int64")
@@ -56,7 +62,10 @@ public class OaSealApplyRespVO {
     @Schema(description = "附件地址列表", example = "[\"https://example.com/contract.pdf\"]")
     private List<String> fileUrls;
 
-    @Schema(description = "申请单号", example = "SEAL-APPLY-001", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            description = "申请单号",
+            example = "SEAL-APPLY-001",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private String no;
 
     @Schema(description = "印章编号", example = "SEAL-001", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -107,6 +116,11 @@ public class OaSealApplyRespVO {
     @Schema(description = "实际归还时间", example = "1789120800000", type = "integer", format = "int64")
     private LocalDateTime actualReturnTime;
 
-    @Schema(description = "创建时间", example = "1789088400000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "创建时间",
+            example = "1789088400000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime createTime;
 }

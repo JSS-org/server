@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.product.controller.admin.comment.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -21,7 +23,10 @@ public class ProductCommentCreateReqVO {
     @NotNull(message = "评价人名称不能为空")
     private String userNickname;
 
-    @Schema(description = "评价人头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+    @Schema(
+            description = "评价人头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xx.png")
     @NotNull(message = "评价人头像不能为空")
     private String userAvatar;
 
@@ -37,13 +42,17 @@ public class ProductCommentCreateReqVO {
     @NotNull(message = "服务星级分不能为空")
     private Integer benefitScores;
 
-    @Schema(description = "评论内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "穿起来非常丝滑凉快")
+    @Schema(
+            description = "评论内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "穿起来非常丝滑凉快")
     @NotNull(message = "评论内容不能为空")
     private String content;
 
-    @Schema(description = "评论图片地址数组，以逗号分隔最多上传 9 张", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "评论图片地址数组，以逗号分隔最多上传 9 张",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "[https://www.iocoder.cn/xx.png]")
     @Size(max = 9, message = "评论图片地址数组长度不能超过 9 张")
     private List<String> picUrls;
-
 }

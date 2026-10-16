@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.product.api.spu;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.product.api.spu.dto.ProductSpuRespDTO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 商品 SPU API 接口
@@ -52,5 +52,4 @@ public interface ProductSpuApi {
      * @return SPU
      */
     ProductSpuRespDTO getSpu(Long id);
-
 }

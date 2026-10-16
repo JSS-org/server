@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.erp.service.product;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.category.ErpProductCategoryListReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.category.ErpProductCategorySaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductCategoryDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * ERP 产品分类 Service 接口
@@ -73,5 +74,4 @@ public interface ErpProductCategoryService {
     default Map<Long, ErpProductCategoryDO> getProductCategoryMap(Collection<Long> ids) {
         return convertMap(getProductCategoryList(ids), ErpProductCategoryDO::getId);
     }
-
 }

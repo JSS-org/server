@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.monthrecord.em
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.insurance.employee.HrmInsuranceEmployeeStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -32,5 +35,4 @@ public class HrmInsuranceMonthEmployeeRecordPageReqVO extends PageParam {
     @Schema(description = "参保状态", example = "1")
     @InEnum(value = HrmInsuranceEmployeeStatusEnum.class, message = "参保状态必须是 {value}")
     private Integer status;
-
 }

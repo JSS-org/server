@@ -4,13 +4,16 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemDefectTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemPriorityEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -88,8 +91,10 @@ public class PmsWorkItemSaveReqVO {
     private List<Long> labelIds;
 
     @Schema(description = "创建时同时新增的子工作项标题列表")
-    private List<@NotBlank(message = "子工作项标题不能为空")
-            @Size(max = 100, message = "子工作项标题不能超过 100 个字符") String> childWorkItemNames;
+    private List<
+                    @NotBlank(message = "子工作项标题不能为空")
+                    @Size(max = 100, message = "子工作项标题不能超过 100 个字符") String>
+            childWorkItemNames;
 
     @Schema(description = "创建时登记的实际投入工时，单位：小时", example = "2")
     @Min(value = 1, message = "实际投入工时必须大于 0")
@@ -108,5 +113,4 @@ public class PmsWorkItemSaveReqVO {
     public boolean isWorkLogValid() {
         return remainingHours == null || actualHours != null;
     }
-
 }

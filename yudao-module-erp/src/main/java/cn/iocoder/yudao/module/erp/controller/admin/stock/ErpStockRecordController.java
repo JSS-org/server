@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.erp.controller.admin.stock;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -18,12 +22,15 @@ import cn.iocoder.yudao.module.erp.service.stock.ErpStockRecordService;
 import cn.iocoder.yudao.module.erp.service.stock.ErpWarehouseService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,25 +42,17 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - ERP 产品库存明细")
 @RestController
 @RequestMapping("/erp/stock-record")
 @Validated
 public class ErpStockRecordController {
 
-    @Resource
-    private ErpStockRecordService stockRecordService;
-    @Resource
-    private ErpProductService productService;
-    @Resource
-    private ErpWarehouseService warehouseService;
+    @Resource private ErpStockRecordService stockRecordService;
+    @Resource private ErpProductService productService;
+    @Resource private ErpWarehouseService warehouseService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @GetMapping("/get")
     @Operation(summary = "获得产品库存明细")
@@ -67,7 +66,8 @@ public class ErpStockRecordController {
     @GetMapping("/page")
     @Operation(summary = "获得产品库存明细分页")
     @PreAuthorize("@ss.hasPermission('erp:stock-record:query')")
-    public CommonResult<PageResult<ErpStockRecordRespVO>> getStockRecordPage(@Valid ErpStockRecordPageReqVO pageReqVO) {
+    public CommonResult<PageResult<ErpStockRecordRespVO>> getStockRecordPage(
+            @Valid ErpStockRecordPageReqVO pageReqVO) {
         PageResult<ErpStockRecordDO> pageResult = stockRecordService.getStockRecordPage(pageReqVO);
         return success(buildStockRecrodVOPageResult(pageResult));
     }
@@ -76,30 +76,52 @@ public class ErpStockRecordController {
     @Operation(summary = "导出产品库存明细 Excel")
     @PreAuthorize("@ss.hasPermission('erp:stock-record:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportStockRecordExcel(@Valid ErpStockRecordPageReqVO pageReqVO,
-              HttpServletResponse response) throws IOException {
+    public void exportStockRecordExcel(
+            @Valid ErpStockRecordPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<ErpStockRecordRespVO> list = buildStockRecrodVOPageResult(stockRecordService.getStockRecordPage(pageReqVO)).getList();
+        List<ErpStockRecordRespVO> list =
+                buildStockRecrodVOPageResult(stockRecordService.getStockRecordPage(pageReqVO))
+                        .getList();
         // 导出 Excel
         ExcelUtils.write(response, "产品库存明细.xls", "数据", ErpStockRecordRespVO.class, list);
     }
 
-    private PageResult<ErpStockRecordRespVO> buildStockRecrodVOPageResult(PageResult<ErpStockRecordDO> pageResult) {
+    private PageResult<ErpStockRecordRespVO> buildStockRecrodVOPageResult(
+            PageResult<ErpStockRecordDO> pageResult) {
         if (CollUtil.isEmpty(pageResult.getList())) {
             return PageResult.empty(pageResult.getTotal());
         }
-        Map<Long, ErpProductRespVO> productMap = productService.getProductVOMap(
-                convertSet(pageResult.getList(), ErpStockRecordDO::getProductId));
-        Map<Long, ErpWarehouseDO> warehouseMap = warehouseService.getWarehouseMap(
-                convertSet(pageResult.getList(), ErpStockRecordDO::getWarehouseId));
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), record -> Long.parseLong(record.getCreator())));
-        return BeanUtils.toBean(pageResult, ErpStockRecordRespVO.class, stock -> {
-            MapUtils.findAndThen(productMap, stock.getProductId(), product -> stock.setProductName(product.getName())
-                    .setCategoryName(product.getCategoryName()).setUnitName(product.getUnitName()));
-            MapUtils.findAndThen(warehouseMap, stock.getWarehouseId(), warehouse -> stock.setWarehouseName(warehouse.getName()));
-            MapUtils.findAndThen(userMap, Long.parseLong(stock.getCreator()), user -> stock.setCreatorName(user.getNickname()));
-        });
+        Map<Long, ErpProductRespVO> productMap =
+                productService.getProductVOMap(
+                        convertSet(pageResult.getList(), ErpStockRecordDO::getProductId));
+        Map<Long, ErpWarehouseDO> warehouseMap =
+                warehouseService.getWarehouseMap(
+                        convertSet(pageResult.getList(), ErpStockRecordDO::getWarehouseId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(
+                                pageResult.getList(),
+                                record -> Long.parseLong(record.getCreator())));
+        return BeanUtils.toBean(
+                pageResult,
+                ErpStockRecordRespVO.class,
+                stock -> {
+                    MapUtils.findAndThen(
+                            productMap,
+                            stock.getProductId(),
+                            product ->
+                                    stock.setProductName(product.getName())
+                                            .setCategoryName(product.getCategoryName())
+                                            .setUnitName(product.getUnitName()));
+                    MapUtils.findAndThen(
+                            warehouseMap,
+                            stock.getWarehouseId(),
+                            warehouse -> stock.setWarehouseName(warehouse.getName()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            Long.parseLong(stock.getCreator()),
+                            user -> stock.setCreatorName(user.getNickname()));
+                });
     }
-
 }

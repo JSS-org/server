@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_DELETE_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_PERMISSION_MEMBERS_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_PERMISSION_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_WRITE_ACCESS_DENIED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
@@ -20,7 +30,9 @@ import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,16 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_DELETE_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_PERMISSION_MEMBERS_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_PERMISSION_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CONTENT_WRITE_ACCESS_DENIED;
-
 /**
  * PMS 知识内容协作权限 Service 实现类
  *
@@ -51,70 +53,78 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_CON
  */
 @Service
 @Validated
-public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeContentPermissionService {
+public class PmsKnowledgeContentPermissionServiceImpl
+        implements PmsKnowledgeContentPermissionService {
 
-    @Resource
-    private PmsKnowledgeContentPermissionMapper permissionMapper;
-    @Resource
-    private PmsKnowledgeContentPermissionMemberMapper permissionMemberMapper;
+    @Resource private PmsKnowledgeContentPermissionMapper permissionMapper;
+    @Resource private PmsKnowledgeContentPermissionMemberMapper permissionMemberMapper;
 
-    @Resource
-    @Lazy
-    private PmsKnowledgeFolderService folderService;
-    @Resource
-    @Lazy
-    private PmsKnowledgeDocumentService documentService;
-    @Resource
-    private PmsKnowledgeLibraryMemberMapper libraryMemberMapper;
-    @Resource
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @Resource @Lazy private PmsKnowledgeFolderService folderService;
+    @Resource @Lazy private PmsKnowledgeDocumentService documentService;
+    @Resource private PmsKnowledgeLibraryMemberMapper libraryMemberMapper;
+    @Resource private PmsKnowledgeLibraryMemberService libraryMemberService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
+    @Resource private PermissionApi permissionApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createDefaultContentPermission(Long libraryId, Long userId) {
         // 1. 创建默认公开且仅预览的内容权限
-        PmsKnowledgeContentPermissionDO permission = new PmsKnowledgeContentPermissionDO().setLibraryId(libraryId)
-                .setOpenStatus(true).setOpenLevel(PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO permission =
+                new PmsKnowledgeContentPermissionDO()
+                        .setLibraryId(libraryId)
+                        .setOpenStatus(true)
+                        .setOpenLevel(PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permission.setCreator(String.valueOf(userId));
         permissionMapper.insert(permission);
 
         // 2. 创建人固定拥有管理权限
-        permissionMemberMapper.insert(new PmsKnowledgeContentPermissionMemberDO().setPermissionId(permission.getId()).setUserId(userId)
-                .setLevel(PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
+        permissionMemberMapper.insert(
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(permission.getId())
+                        .setUserId(userId)
+                        .setLevel(PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
         return permission.getId();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Map<Long, Long> cloneContentPermissions(Collection<Long> permissionIds, Long targetLibraryId) {
+    public Map<Long, Long> cloneContentPermissions(
+            Collection<Long> permissionIds, Long targetLibraryId) {
         if (CollUtil.isEmpty(permissionIds)) {
             return Collections.emptyMap();
         }
         // 1. 批量查询原权限及协作者
-        List<PmsKnowledgeContentPermissionDO> permissions = permissionMapper.selectByIds(permissionIds);
+        List<PmsKnowledgeContentPermissionDO> permissions =
+                permissionMapper.selectByIds(permissionIds);
         if (permissions.size() != permissionIds.size()) {
             throw exception(KNOWLEDGE_CONTENT_PERMISSION_NOT_EXISTS);
         }
-        List<PmsKnowledgeContentPermissionMemberDO> members = permissionMemberMapper.selectListByPermissionIds(permissionIds);
+        List<PmsKnowledgeContentPermissionMemberDO> members =
+                permissionMemberMapper.selectListByPermissionIds(permissionIds);
 
         // 2. 逐个复制权限和协作者，保持同一原权限仍对应同一新权限
         Map<Long, Long> clonedPermissionIdMap = new LinkedHashMap<>();
         for (PmsKnowledgeContentPermissionDO source : permissions) {
-            PmsKnowledgeContentPermissionDO target = new PmsKnowledgeContentPermissionDO().setLibraryId(targetLibraryId)
-                    .setOpenStatus(source.getOpenStatus()).setOpenLevel(source.getOpenLevel());
+            PmsKnowledgeContentPermissionDO target =
+                    new PmsKnowledgeContentPermissionDO()
+                            .setLibraryId(targetLibraryId)
+                            .setOpenStatus(source.getOpenStatus())
+                            .setOpenLevel(source.getOpenLevel());
             target.setCreator(source.getCreator());
             permissionMapper.insert(target);
-            List<PmsKnowledgeContentPermissionMemberDO> targetMembers = convertList(members, member ->
-                            new PmsKnowledgeContentPermissionMemberDO().setPermissionId(target.getId())
-                                    .setUserId(member.getUserId()).setDeptId(member.getDeptId()).setLevel(member.getLevel()),
-                    member -> source.getId().equals(member.getPermissionId()));
+            List<PmsKnowledgeContentPermissionMemberDO> targetMembers =
+                    convertList(
+                            members,
+                            member ->
+                                    new PmsKnowledgeContentPermissionMemberDO()
+                                            .setPermissionId(target.getId())
+                                            .setUserId(member.getUserId())
+                                            .setDeptId(member.getDeptId())
+                                            .setLevel(member.getLevel()),
+                            member -> source.getId().equals(member.getPermissionId()));
             if (CollUtil.isNotEmpty(targetMembers)) {
                 permissionMemberMapper.insertBatch(targetMembers);
             }
@@ -124,7 +134,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     }
 
     @Override
-    public Integer validateContentPermissionReadable(Long permissionId, Long libraryId, Long userId) {
+    public Integer validateContentPermissionReadable(
+            Long permissionId, Long libraryId, Long userId) {
         Integer level = getCurrentUserContentPermissionLevel(permissionId, libraryId, userId);
         if (level == null) {
             throw exception(KNOWLEDGE_CONTENT_ACCESS_DENIED);
@@ -133,7 +144,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     }
 
     @Override
-    public Integer validateContentPermissionWritable(Long permissionId, Long libraryId, Long userId) {
+    public Integer validateContentPermissionWritable(
+            Long permissionId, Long libraryId, Long userId) {
         Integer level = validateContentPermissionReadable(permissionId, libraryId, userId);
         if (!PmsKnowledgeContentLevelEnum.canEdit(level)) {
             throw exception(KNOWLEDGE_CONTENT_WRITE_ACCESS_DENIED);
@@ -142,7 +154,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     }
 
     @Override
-    public Integer validateContentPermissionDeletable(Long permissionId, Long libraryId, Long userId) {
+    public Integer validateContentPermissionDeletable(
+            Long permissionId, Long libraryId, Long userId) {
         Integer level = validateContentPermissionReadable(permissionId, libraryId, userId);
         if (!PmsKnowledgeContentLevelEnum.canDelete(level)) {
             throw exception(KNOWLEDGE_CONTENT_DELETE_ACCESS_DENIED);
@@ -151,7 +164,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     }
 
     @Override
-    public Integer validateContentPermissionManageable(Long permissionId, Long libraryId, Long userId) {
+    public Integer validateContentPermissionManageable(
+            Long permissionId, Long libraryId, Long userId) {
         Integer level = validateContentPermissionReadable(permissionId, libraryId, userId);
         if (ObjectUtil.notEqual(PmsKnowledgeContentLevelEnum.MANAGE.getLevel(), level)) {
             throw exception(KNOWLEDGE_CONTENT_WRITE_ACCESS_DENIED);
@@ -176,7 +190,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     }
 
     @Override
-    public List<PmsKnowledgeContentPermissionMemberDO> getContentPermissionMemberList(Long permissionId, Long userId) {
+    public List<PmsKnowledgeContentPermissionMemberDO> getContentPermissionMemberList(
+            Long permissionId, Long userId) {
         // 1. 校验内容权限存在、知识库可读且内容可读
         PmsKnowledgeContentPermissionDO permission = validatePermissionExists(permissionId);
         libraryMemberService.validateLibraryReadable(permission.getLibraryId(), userId);
@@ -187,25 +202,37 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     }
 
     @Override
-    public Integer getCurrentUserContentPermissionLevel(Long permissionId, Long libraryId, Long userId) {
-        return getCurrentUserContentPermissionLevelMap(Collections.singleton(permissionId), libraryId, userId).get(permissionId);
+    public Integer getCurrentUserContentPermissionLevel(
+            Long permissionId, Long libraryId, Long userId) {
+        return getCurrentUserContentPermissionLevelMap(
+                        Collections.singleton(permissionId), libraryId, userId)
+                .get(permissionId);
     }
 
     @Override
-    public Map<Long, Integer> getCurrentUserContentPermissionLevelMap(Collection<Long> permissionIds, Long libraryId, Long userId) {
+    public Map<Long, Integer> getCurrentUserContentPermissionLevelMap(
+            Collection<Long> permissionIds, Long libraryId, Long userId) {
         if (CollUtil.isEmpty(permissionIds)) {
             return Collections.emptyMap();
         }
         // 1. 批量查询内容权限并校验知识库归属
-        List<PmsKnowledgeContentPermissionDO> permissions = permissionMapper.selectByIds(permissionIds);
+        List<PmsKnowledgeContentPermissionDO> permissions =
+                permissionMapper.selectByIds(permissionIds);
         if (permissions.size() != permissionIds.size()
-                || permissions.stream().anyMatch(permission -> ObjectUtil.notEqual(libraryId, permission.getLibraryId()))) {
+                || permissions.stream()
+                        .anyMatch(
+                                permission ->
+                                        ObjectUtil.notEqual(
+                                                libraryId, permission.getLibraryId()))) {
             throw exception(KNOWLEDGE_CONTENT_PERMISSION_NOT_EXISTS);
         }
         Map<Long, Integer> levelMap = new LinkedHashMap<>();
         if (libraryMemberService.isLibraryAdmin(libraryId, userId)) {
-            permissions.forEach(permission -> levelMap.put(
-                    permission.getId(), PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
+            permissions.forEach(
+                    permission ->
+                            levelMap.put(
+                                    permission.getId(),
+                                    PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
             return levelMap;
         }
 
@@ -214,7 +241,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
         Long deptId = user != null ? user.getDeptId() : null;
         Map<Long, PmsKnowledgeContentPermissionMemberDO> userMemberMap = new LinkedHashMap<>();
         Map<Long, PmsKnowledgeContentPermissionMemberDO> deptMemberMap = new LinkedHashMap<>();
-        for (PmsKnowledgeContentPermissionMemberDO member : permissionMemberMapper.selectListByPermissionIds(permissionIds)) {
+        for (PmsKnowledgeContentPermissionMemberDO member :
+                permissionMemberMapper.selectListByPermissionIds(permissionIds)) {
             if (userId.equals(member.getUserId())) {
                 userMemberMap.put(member.getPermissionId(), member);
             } else if (deptId != null && deptId.equals(member.getDeptId())) {
@@ -222,12 +250,16 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
             }
         }
         for (PmsKnowledgeContentPermissionDO permission : permissions) {
-            PmsKnowledgeContentPermissionMemberDO userMember = userMemberMap.get(permission.getId());
-            PmsKnowledgeContentPermissionMemberDO deptMember = deptMemberMap.get(permission.getId());
-            Integer level = Boolean.TRUE.equals(permission.getOpenStatus()) ? permission.getOpenLevel()
-                    : userMember != null ? userMember.getLevel()
-                    : deptMember != null ? deptMember.getLevel()
-                    : null;
+            PmsKnowledgeContentPermissionMemberDO userMember =
+                    userMemberMap.get(permission.getId());
+            PmsKnowledgeContentPermissionMemberDO deptMember =
+                    deptMemberMap.get(permission.getId());
+            Integer level =
+                    Boolean.TRUE.equals(permission.getOpenStatus())
+                            ? permission.getOpenLevel()
+                            : userMember != null
+                                    ? userMember.getLevel()
+                                    : deptMember != null ? deptMember.getLevel() : null;
             levelMap.put(permission.getId(), level);
         }
         return levelMap;
@@ -239,7 +271,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
             return Collections.emptySet();
         }
         // 1.1 一次查询全部知识库的内容权限
-        List<PmsKnowledgeContentPermissionDO> permissions = permissionMapper.selectListByLibraryIds(libraryIds);
+        List<PmsKnowledgeContentPermissionDO> permissions =
+                permissionMapper.selectListByLibraryIds(libraryIds);
         if (CollUtil.isEmpty(permissions)) {
             return Collections.emptySet();
         }
@@ -254,7 +287,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
         Long deptId = user != null ? user.getDeptId() : null;
         Map<Long, PmsKnowledgeLibraryMemberDO> userLibraryMemberMap = new LinkedHashMap<>();
         Map<Long, PmsKnowledgeLibraryMemberDO> deptLibraryMemberMap = new LinkedHashMap<>();
-        List<PmsKnowledgeLibraryMemberDO> libraryMembers = libraryMemberMapper.selectListByLibraryIds(libraryIds);
+        List<PmsKnowledgeLibraryMemberDO> libraryMembers =
+                libraryMemberMapper.selectListByLibraryIds(libraryIds);
         for (PmsKnowledgeLibraryMemberDO member : libraryMembers) {
             if (userId.equals(member.getUserId())) {
                 userLibraryMemberMap.putIfAbsent(member.getLibraryId(), member);
@@ -268,16 +302,21 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
             if (member == null) {
                 member = deptLibraryMemberMap.get(libraryId);
             }
-            if (member != null && equalsAny(member.getLevel(),
-                    PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(),
-                    PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel())) {
+            if (member != null
+                    && equalsAny(
+                            member.getLevel(),
+                            PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(),
+                            PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel())) {
                 adminLibraryIds.add(libraryId);
             }
         }
         // 2.2 一次查询当前用户及其部门的内容协作权限，用户权限优先于部门权限
-        Map<Long, PmsKnowledgeContentPermissionMemberDO> userPermissionMemberMap = new LinkedHashMap<>();
-        Map<Long, PmsKnowledgeContentPermissionMemberDO> deptPermissionMemberMap = new LinkedHashMap<>();
-        for (PmsKnowledgeContentPermissionMemberDO member : permissionMemberMapper.selectListByPermissionIds(permissionIds)) {
+        Map<Long, PmsKnowledgeContentPermissionMemberDO> userPermissionMemberMap =
+                new LinkedHashMap<>();
+        Map<Long, PmsKnowledgeContentPermissionMemberDO> deptPermissionMemberMap =
+                new LinkedHashMap<>();
+        for (PmsKnowledgeContentPermissionMemberDO member :
+                permissionMemberMapper.selectListByPermissionIds(permissionIds)) {
             if (userId.equals(member.getUserId())) {
                 userPermissionMemberMap.put(member.getPermissionId(), member);
             } else if (deptId != null && deptId.equals(member.getDeptId())) {
@@ -300,21 +339,30 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateContentPermission(PmsKnowledgeContentPermissionUpdateReqVO updateReqVO, Long userId) {
+    public void updateContentPermission(
+            PmsKnowledgeContentPermissionUpdateReqVO updateReqVO, Long userId) {
         // 1.1 校验内容权限存在
         PmsKnowledgeContentPermissionDO permission = validatePermissionExists(updateReqVO.getId());
         // 1.2 校验知识库可访问
-        PmsKnowledgeLibraryDO library = libraryMemberService.validateLibraryReadable(permission.getLibraryId(), userId);
+        PmsKnowledgeLibraryDO library =
+                libraryMemberService.validateLibraryReadable(permission.getLibraryId(), userId);
         // 1.3 校验内容管理权限
-        if (!PmsKnowledgeContentLevelEnum.MANAGE.getLevel().equals(
-                getCurrentUserContentPermissionLevel(permission.getId(), permission.getLibraryId(), userId))) {
+        if (!PmsKnowledgeContentLevelEnum.MANAGE
+                .getLevel()
+                .equals(
+                        getCurrentUserContentPermissionLevel(
+                                permission.getId(), permission.getLibraryId(), userId))) {
             throw exception(KNOWLEDGE_CONTENT_WRITE_ACCESS_DENIED);
         }
         // 1.4 校验协作者唯一
-        Set<Long> userIds = convertSet(updateReqVO.getMembers(),
-                PmsKnowledgeContentPermissionUpdateReqVO.Member::getUserId);
-        Set<Long> deptIds = convertSet(updateReqVO.getMembers(),
-                PmsKnowledgeContentPermissionUpdateReqVO.Member::getDeptId);
+        Set<Long> userIds =
+                convertSet(
+                        updateReqVO.getMembers(),
+                        PmsKnowledgeContentPermissionUpdateReqVO.Member::getUserId);
+        Set<Long> deptIds =
+                convertSet(
+                        updateReqVO.getMembers(),
+                        PmsKnowledgeContentPermissionUpdateReqVO.Member::getDeptId);
         if (userIds.size() + deptIds.size() != updateReqVO.getMembers().size()) {
             throw exception(KNOWLEDGE_CONTENT_PERMISSION_MEMBERS_INVALID);
         }
@@ -328,10 +376,12 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
         deptApi.validateDeptList(deptIds);
         // 1.8 私有知识库的用户协作者必须是知识库成员
         if (!library.getOpenStatus()) {
-            List<PmsKnowledgeLibraryMemberDO> libraryMembers = libraryMemberMapper.selectListByLibraryId(
-                    library.getId());
-            Set<Long> libraryUserIds = convertSet(libraryMembers, PmsKnowledgeLibraryMemberDO::getUserId);
-            Set<Long> libraryDeptIds = convertSet(libraryMembers, PmsKnowledgeLibraryMemberDO::getDeptId);
+            List<PmsKnowledgeLibraryMemberDO> libraryMembers =
+                    libraryMemberMapper.selectListByLibraryId(library.getId());
+            Set<Long> libraryUserIds =
+                    convertSet(libraryMembers, PmsKnowledgeLibraryMemberDO::getUserId);
+            Set<Long> libraryDeptIds =
+                    convertSet(libraryMembers, PmsKnowledgeLibraryMemberDO::getDeptId);
             if (!libraryUserIds.containsAll(userIds)) {
                 throw exception(KNOWLEDGE_CONTENT_PERMISSION_MEMBERS_INVALID);
             }
@@ -342,15 +392,26 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
         }
 
         // 2. 更新公开权限并重建协作者
-        permissionMapper.updateById(BeanUtils.toBean(updateReqVO, PmsKnowledgeContentPermissionDO.class)
-                .setId(permission.getId()).setLibraryId(null));
+        permissionMapper.updateById(
+                BeanUtils.toBean(updateReqVO, PmsKnowledgeContentPermissionDO.class)
+                        .setId(permission.getId())
+                        .setLibraryId(null));
         permissionMemberMapper.deleteByPermissionId(permission.getId());
-        List<PmsKnowledgeContentPermissionMemberDO> members = convertList(updateReqVO.getMembers(), member ->
-                new PmsKnowledgeContentPermissionMemberDO().setPermissionId(permission.getId()).setUserId(member.getUserId())
-                        .setDeptId(member.getDeptId()).setLevel(member.getLevel()));
-        members.add(0, new PmsKnowledgeContentPermissionMemberDO().setPermissionId(permission.getId())
-                .setUserId(NumberUtils.parseLong(permission.getCreator()))
-                .setLevel(PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
+        List<PmsKnowledgeContentPermissionMemberDO> members =
+                convertList(
+                        updateReqVO.getMembers(),
+                        member ->
+                                new PmsKnowledgeContentPermissionMemberDO()
+                                        .setPermissionId(permission.getId())
+                                        .setUserId(member.getUserId())
+                                        .setDeptId(member.getDeptId())
+                                        .setLevel(member.getLevel()));
+        members.add(
+                0,
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(permission.getId())
+                        .setUserId(NumberUtils.parseLong(permission.getCreator()))
+                        .setLevel(PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
         permissionMemberMapper.insertBatch(members);
     }
 
@@ -374,7 +435,8 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteContentPermissionsByLibraryId(Long libraryId) {
-        List<PmsKnowledgeContentPermissionDO> permissions = permissionMapper.selectListByLibraryId(libraryId);
+        List<PmsKnowledgeContentPermissionDO> permissions =
+                permissionMapper.selectListByLibraryId(libraryId);
         Set<Long> permissionIds = convertSet(permissions, PmsKnowledgeContentPermissionDO::getId);
         if (CollUtil.isEmpty(permissionIds)) {
             return;
@@ -387,12 +449,15 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteContentPermissionMembersByLibraryId(Long libraryId, Collection<Long> userIds, Collection<Long> deptIds) {
+    public void deleteContentPermissionMembersByLibraryId(
+            Long libraryId, Collection<Long> userIds, Collection<Long> deptIds) {
         if (CollUtil.isEmpty(userIds) && CollUtil.isEmpty(deptIds)) {
             return;
         }
-        Set<Long> permissionIds = convertSet(permissionMapper.selectListByLibraryId(libraryId),
-                PmsKnowledgeContentPermissionDO::getId);
+        Set<Long> permissionIds =
+                convertSet(
+                        permissionMapper.selectListByLibraryId(libraryId),
+                        PmsKnowledgeContentPermissionDO::getId);
         if (CollUtil.isEmpty(permissionIds)) {
             return;
         }
@@ -413,5 +478,4 @@ public class PmsKnowledgeContentPermissionServiceImpl implements PmsKnowledgeCon
         }
         return permission;
     }
-
 }

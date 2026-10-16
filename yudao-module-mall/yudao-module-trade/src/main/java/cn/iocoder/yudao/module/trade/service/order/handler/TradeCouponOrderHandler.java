@@ -7,8 +7,11 @@ import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderItemDO;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderQueryService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderUpdateService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -23,14 +26,11 @@ import java.util.List;
 @Slf4j
 public class TradeCouponOrderHandler implements TradeOrderHandler {
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private TradeOrderUpdateService orderUpdateService;
-    @Resource
-    private TradeOrderQueryService orderQueryService;
+    @Resource private TradeOrderQueryService orderQueryService;
 
-    @Resource
-    private CouponApi couponApi;
+    @Resource private CouponApi couponApi;
 
     @Override
     public void afterOrderCreate(TradeOrderDO order, List<TradeOrderItemDO> orderItems) {
@@ -38,8 +38,11 @@ public class TradeCouponOrderHandler implements TradeOrderHandler {
             return;
         }
         // 不在前置扣减的原因，是因为优惠劵要记录使用的订单号
-        couponApi.useCoupon(new CouponUseReqDTO().setId(order.getCouponId()).setUserId(order.getUserId())
-                .setOrderId(order.getId()));
+        couponApi.useCoupon(
+                new CouponUseReqDTO()
+                        .setId(order.getCouponId())
+                        .setUserId(order.getUserId())
+                        .setOrderId(order.getId()));
     }
 
     @Override
@@ -49,13 +52,20 @@ public class TradeCouponOrderHandler implements TradeOrderHandler {
         }
         // 赠送优惠券
         try {
-            List<Long> couponIds = couponApi.takeCouponsByAdmin(order.getGiveCouponTemplateCounts(), order.getUserId());
+            List<Long> couponIds =
+                    couponApi.takeCouponsByAdmin(
+                            order.getGiveCouponTemplateCounts(), order.getUserId());
             if (CollUtil.isEmpty(couponIds)) {
                 return;
             }
-            orderUpdateService.updateOrderGiveCouponIds(order.getUserId(), order.getId(), couponIds);
+            orderUpdateService.updateOrderGiveCouponIds(
+                    order.getUserId(), order.getId(), couponIds);
         } catch (Exception e) {
-            log.error("[afterPayOrder][order({}) 赠送优惠券({})失败，需要手工补偿]", order.getId(), order.getGiveCouponTemplateCounts(), e);
+            log.error(
+                    "[afterPayOrder][order({}) 赠送优惠券({})失败，需要手工补偿]",
+                    order.getId(),
+                    order.getGiveCouponTemplateCounts(),
+                    e);
         }
     }
 
@@ -72,5 +82,4 @@ public class TradeCouponOrderHandler implements TradeOrderHandler {
         }
         couponApi.invalidateCouponsByAdmin(order.getGiveCouponIds(), order.getUserId());
     }
-
 }

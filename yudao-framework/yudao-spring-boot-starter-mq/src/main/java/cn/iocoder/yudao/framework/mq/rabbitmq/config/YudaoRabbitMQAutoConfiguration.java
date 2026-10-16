@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.mq.rabbitmq.config;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -24,5 +25,4 @@ public class YudaoRabbitMQAutoConfiguration {
     public MessageConverter createMessageConverter() {
         return new JacksonJsonMessageConverter();
     }
-
 }

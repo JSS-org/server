@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.List;
 public interface Demo03GradeErpMapper extends BaseMapperX<Demo03GradeDO> {
 
     default PageResult<Demo03GradeDO> selectPage(PageParam reqVO, Long studentId) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<Demo03GradeDO>()
-                .eq(Demo03GradeDO::getStudentId, studentId)
-                .orderByDesc(Demo03GradeDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<Demo03GradeDO>()
+                        .eq(Demo03GradeDO::getStudentId, studentId)
+                        .orderByDesc(Demo03GradeDO::getId));
     }
 
     default Demo03GradeDO selectByStudentId(Long studentId) {
@@ -34,5 +37,4 @@ public interface Demo03GradeErpMapper extends BaseMapperX<Demo03GradeDO> {
     default int deleteByStudentIds(List<Long> studentIds) {
         return deleteBatch(Demo03GradeDO::getStudentId, studentIds);
     }
-
 }

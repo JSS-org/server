@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 工资表薪资项保存 Request VO")
@@ -22,5 +24,4 @@ public class HrmSalaryOptionSaveReqVO {
     @Schema(description = "备注", example = "固定薪资项")
     @Size(max = 255, message = "备注长度不能超过 255 个字符")
     private String remark;
-
 }

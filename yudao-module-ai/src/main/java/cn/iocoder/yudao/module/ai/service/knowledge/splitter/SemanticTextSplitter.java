@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.service.knowledge.splitter;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.transformer.splitter.TextSplitter;
 
 import java.util.ArrayList;
@@ -40,18 +42,17 @@ public class SemanticTextSplitter extends TextSplitter {
     /**
      * 段落分隔符（按优先级排序）
      */
-    private static final List<String> PARAGRAPH_SEPARATORS = Arrays.asList(
-            "\n\n\n",    // 三个换行
-            "\n\n",      // 双换行
-            "\n"         // 单换行
-    );
+    private static final List<String> PARAGRAPH_SEPARATORS =
+            Arrays.asList(
+                    "\n\n\n", // 三个换行
+                    "\n\n", // 双换行
+                    "\n" // 单换行
+                    );
 
     /**
      * 句子结束标记（中英文标点）
      */
-    private static final Pattern SENTENCE_END_PATTERN = Pattern.compile(
-            "[。！？.!?]+[\\s\"'）)】\\]]*"
-    );
+    private static final Pattern SENTENCE_END_PATTERN = Pattern.compile("[。！？.!?]+[\\s\"'）)】\\]]*");
 
     /**
      * Token 估算器
@@ -180,9 +181,11 @@ public class SemanticTextSplitter extends TextSplitter {
                 continue;
             }
             // 计算加上分隔符的 Token 数
-            int separatorTokens = StrUtil.isEmpty(separator) ? 0 : tokenEstimator.estimate(separator);
+            int separatorTokens =
+                    StrUtil.isEmpty(separator) ? 0 : tokenEstimator.estimate(separator);
             // 如果加上这个片段会超过限制
-            if (!currentChunks.isEmpty() && currentLength + splitTokens + separatorTokens > chunkSize) {
+            if (!currentChunks.isEmpty()
+                    && currentLength + splitTokens + separatorTokens > chunkSize) {
                 // 保存当前块
                 String chunkText = String.join(separator, currentChunks);
                 chunks.add(chunkText.trim());
@@ -227,7 +230,9 @@ public class SemanticTextSplitter extends TextSplitter {
             }
             // 添加到重叠列表前端
             overlapping.add(0, chunk);
-            tokens += chunkTokens + (StrUtil.isEmpty(separator) ? 0 : tokenEstimator.estimate(separator));
+            tokens +=
+                    chunkTokens
+                            + (StrUtil.isEmpty(separator) ? 0 : tokenEstimator.estimate(separator));
         }
         return overlapping;
     }
@@ -297,5 +302,4 @@ public class SemanticTextSplitter extends TextSplitter {
             return chineseChars + (int) (englishWords * 1.3);
         }
     }
-
 }

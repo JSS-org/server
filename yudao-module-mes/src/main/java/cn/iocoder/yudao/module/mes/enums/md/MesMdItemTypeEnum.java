@@ -25,6 +25,7 @@ public enum MesMdItemTypeEnum {
      * 标识值
      */
     private final String value;
+
     /**
      * 标识名
      */
@@ -36,5 +37,4 @@ public enum MesMdItemTypeEnum {
     public static boolean isProduct(String value) {
         return PRODUCT.getValue().equals(value);
     }
-
 }

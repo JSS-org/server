@@ -13,7 +13,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsSubjectCategoryEnum {
-
     CURRENT_ASSET(1, 1, "流动资产"),
     NON_CURRENT_ASSET(1, 2, "非流动资产"),
     CURRENT_LIABILITY(2, 1, "流动负债"),
@@ -33,10 +32,12 @@ public enum FmsSubjectCategoryEnum {
      * 科目类型
      */
     private final Integer type;
+
     /**
      * 类别
      */
     private final Integer category;
+
     /**
      * 名字
      */
@@ -45,13 +46,14 @@ public enum FmsSubjectCategoryEnum {
     public static FmsSubjectCategoryEnum valueOf(Integer type, Integer category) {
         return Arrays.stream(values())
                 .filter(item -> item.getType().equals(type) && item.getCategory().equals(category))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
 
     public static FmsSubjectCategoryEnum valueOfName(String name) {
         return Arrays.stream(values())
                 .filter(item -> item.getName().equals(name))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
-
 }

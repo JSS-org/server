@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.controller.app.spu.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -32,10 +33,16 @@ public class AppProductSpuRespVO {
     @Schema(description = "规格类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
     private Boolean specType;
 
-    @Schema(description = "商品价格，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "商品价格，单位使用：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Integer price;
 
-    @Schema(description = "市场价，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "市场价，单位使用：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Integer marketPrice;
 
     @Schema(description = "库存", requiredMode = Schema.RequiredMode.REQUIRED, example = "666")
@@ -52,5 +59,4 @@ public class AppProductSpuRespVO {
 
     @Schema(description = "配送方式数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private List<Integer> deliveryTypes;
-
 }

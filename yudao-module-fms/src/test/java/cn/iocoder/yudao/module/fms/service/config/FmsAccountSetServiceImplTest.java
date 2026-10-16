@@ -1,5 +1,21 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_ALREADY_INITIALIZED;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_CODE_DUPLICATE;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountset.FmsAccountSetInitializeReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountset.FmsAccountSetSaveReqVO;
@@ -14,13 +30,9 @@ import cn.iocoder.yudao.module.fms.enums.config.FmsCurrencyPresetEnum;
 import cn.iocoder.yudao.module.fms.enums.ledger.FmsLedgerBalanceModeEnum;
 import cn.iocoder.yudao.module.fms.service.closing.FmsClosingSchemeService;
 import cn.iocoder.yudao.module.fms.service.closing.FmsClosingTemplateService;
-import cn.iocoder.yudao.module.fms.service.config.FmsAuxiliaryTypeService;
-import cn.iocoder.yudao.module.fms.service.config.FmsCurrencyService;
-import cn.iocoder.yudao.module.fms.service.config.FmsFinanceParameterService;
-import cn.iocoder.yudao.module.fms.service.config.FmsFinanceIndicatorService;
-import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
-import cn.iocoder.yudao.module.fms.service.config.FmsVoucherWordService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,47 +41,21 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_ALREADY_INITIALIZED;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_CODE_DUPLICATE;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.ACCOUNT_SET_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 @Import(FmsAccountSetServiceImpl.class)
 public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FmsAccountSetServiceImpl accountSetService;
-    @Resource
-    private FmsAccountSetMapper accountSetMapper;
+    @Resource private FmsAccountSetServiceImpl accountSetService;
+    @Resource private FmsAccountSetMapper accountSetMapper;
 
-    @MockitoBean
-    private FmsAccountUserService accountUserService;
-    @MockitoBean
-    private FmsCurrencyService currencyService;
-    @MockitoBean
-    private FmsFinanceParameterService financeParameterService;
-    @MockitoBean
-    private FmsVoucherWordService voucherWordService;
-    @MockitoBean
-    private FmsAuxiliaryTypeService auxiliaryTypeService;
-    @MockitoBean
-    private FmsSubjectService subjectService;
-    @MockitoBean
-    private FmsClosingSchemeService closingSchemeService;
-    @MockitoBean
-    private FmsClosingTemplateService closingTemplateService;
-    @MockitoBean
-    private FmsFinanceIndicatorService financeIndicatorService;
+    @MockitoBean private FmsAccountUserService accountUserService;
+    @MockitoBean private FmsCurrencyService currencyService;
+    @MockitoBean private FmsFinanceParameterService financeParameterService;
+    @MockitoBean private FmsVoucherWordService voucherWordService;
+    @MockitoBean private FmsAuxiliaryTypeService auxiliaryTypeService;
+    @MockitoBean private FmsSubjectService subjectService;
+    @MockitoBean private FmsClosingSchemeService closingSchemeService;
+    @MockitoBean private FmsClosingTemplateService closingTemplateService;
+    @MockitoBean private FmsFinanceIndicatorService financeIndicatorService;
 
     @Test
     public void testCreateAccountSet_success() {
@@ -95,7 +81,8 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         FmsAccountSetSaveReqVO reqVO = buildAccountSetSaveReqVO("WK001", "芋道科技有限公司");
 
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.createAccountSet(reqVO, randomLongId()),
+        assertServiceException(
+                () -> accountSetService.createAccountSet(reqVO, randomLongId()),
                 ACCOUNT_SET_CODE_DUPLICATE);
     }
 
@@ -120,7 +107,10 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         accountSetMapper.insert(accountSet);
         Long userId = randomLongId();
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.validateAccountSetReadPermission(accountSet.getId(), userId),
+        assertServiceException(
+                () ->
+                        accountSetService.validateAccountSetReadPermission(
+                                accountSet.getId(), userId),
                 ACCOUNT_SET_ACCESS_DENIED);
     }
 
@@ -134,7 +124,10 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
                 .thenReturn(new FmsAccountUserDO().setLevel(99));
 
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.validateAccountSetReadPermission(accountSet.getId(), userId),
+        assertServiceException(
+                () ->
+                        accountSetService.validateAccountSetReadPermission(
+                                accountSet.getId(), userId),
                 ACCOUNT_SET_ACCESS_DENIED);
     }
 
@@ -144,11 +137,15 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         FmsAccountSetDO accountSet = buildAccountSetDO("WK001", false);
         accountSetMapper.insert(accountSet);
         Long userId = randomLongId();
-        when(accountUserService.getAccountUser(accountSet.getId(), userId)).thenReturn(new FmsAccountUserDO()
-                .setLevel(FmsAccountUserLevelEnum.READ.getLevel()));
+        when(accountUserService.getAccountUser(accountSet.getId(), userId))
+                .thenReturn(
+                        new FmsAccountUserDO().setLevel(FmsAccountUserLevelEnum.READ.getLevel()));
 
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.validateAccountSetWritePermission(accountSet.getId(), userId),
+        assertServiceException(
+                () ->
+                        accountSetService.validateAccountSetWritePermission(
+                                accountSet.getId(), userId),
                 ACCOUNT_SET_ACCESS_DENIED);
     }
 
@@ -158,11 +155,13 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         FmsAccountSetDO accountSet = buildAccountSetDO("WK001", false);
         accountSetMapper.insert(accountSet);
         Long userId = randomLongId();
-        when(accountUserService.getAccountUser(accountSet.getId(), userId)).thenReturn(new FmsAccountUserDO()
-                .setLevel(FmsAccountUserLevelEnum.WRITE.getLevel()));
+        when(accountUserService.getAccountUser(accountSet.getId(), userId))
+                .thenReturn(
+                        new FmsAccountUserDO().setLevel(FmsAccountUserLevelEnum.WRITE.getLevel()));
 
         // 调用
-        FmsAccountSetDO result = accountSetService.validateAccountSetWritePermission(accountSet.getId(), userId);
+        FmsAccountSetDO result =
+                accountSetService.validateAccountSetWritePermission(accountSet.getId(), userId);
 
         // 断言
         assertEquals(accountSet.getId(), result.getId());
@@ -174,11 +173,15 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         FmsAccountSetDO accountSet = buildAccountSetDO("WK001", false);
         accountSetMapper.insert(accountSet);
         Long userId = randomLongId();
-        when(accountUserService.getAccountUser(accountSet.getId(), userId)).thenReturn(new FmsAccountUserDO()
-                .setLevel(FmsAccountUserLevelEnum.WRITE.getLevel()));
+        when(accountUserService.getAccountUser(accountSet.getId(), userId))
+                .thenReturn(
+                        new FmsAccountUserDO().setLevel(FmsAccountUserLevelEnum.WRITE.getLevel()));
 
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.validateAccountSetOwnerPermission(accountSet.getId(), userId),
+        assertServiceException(
+                () ->
+                        accountSetService.validateAccountSetOwnerPermission(
+                                accountSet.getId(), userId),
                 ACCOUNT_SET_ACCESS_DENIED);
     }
 
@@ -191,8 +194,9 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         accountSetMapper.insert(secondAccountSet);
 
         // 调用
-        List<FmsAccountSetDO> accountSets = accountSetService.getAccountSetList(
-                Arrays.asList(firstAccountSet.getId(), secondAccountSet.getId()));
+        List<FmsAccountSetDO> accountSets =
+                accountSetService.getAccountSetList(
+                        Arrays.asList(firstAccountSet.getId(), secondAccountSet.getId()));
 
         // 断言
         assertEquals(2, accountSets.size());
@@ -214,8 +218,8 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testLockAccountSet_notExists() {
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.lockAccountSet(randomLongId()),
-                ACCOUNT_SET_NOT_EXISTS);
+        assertServiceException(
+                () -> accountSetService.lockAccountSet(randomLongId()), ACCOUNT_SET_NOT_EXISTS);
     }
 
     @Test
@@ -224,9 +228,11 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         FmsAccountSetDO accountSet = buildAccountSetDO("WK001", false);
         accountSetMapper.insert(accountSet);
-        when(accountUserService.getAccountUser(accountSet.getId(), userId)).thenReturn(new FmsAccountUserDO()
-                .setLevel(FmsAccountUserLevelEnum.WRITE.getLevel()));
-        when(currencyService.initializeStandardCurrency(accountSet.getId(), FmsCurrencyPresetEnum.RMB))
+        when(accountUserService.getAccountUser(accountSet.getId(), userId))
+                .thenReturn(
+                        new FmsAccountUserDO().setLevel(FmsAccountUserLevelEnum.WRITE.getLevel()));
+        when(currencyService.initializeStandardCurrency(
+                        accountSet.getId(), FmsCurrencyPresetEnum.RMB))
                 .thenReturn(new FmsCurrencyDO().setId(100L));
         // 准备参数
         FmsAccountSetInitializeReqVO reqVO = buildInitializeReqVO(accountSet.getId());
@@ -255,23 +261,31 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         FmsAccountSetDO accountSet = buildAccountSetDO("WK001", true);
         accountSetMapper.insert(accountSet);
-        when(accountUserService.getAccountUser(accountSet.getId(), userId)).thenReturn(new FmsAccountUserDO()
-                .setLevel(FmsAccountUserLevelEnum.OWNER.getLevel()));
+        when(accountUserService.getAccountUser(accountSet.getId(), userId))
+                .thenReturn(
+                        new FmsAccountUserDO().setLevel(FmsAccountUserLevelEnum.OWNER.getLevel()));
         // 准备参数
         FmsAccountSetInitializeReqVO reqVO = buildInitializeReqVO(accountSet.getId());
 
         // 调用，并断言异常
-        assertServiceException(() -> accountSetService.initializeAccountSet(reqVO, userId),
+        assertServiceException(
+                () -> accountSetService.initializeAccountSet(reqVO, userId),
                 ACCOUNT_SET_ALREADY_INITIALIZED);
-        verifyNoInteractions(currencyService, financeParameterService,
-                voucherWordService, auxiliaryTypeService, subjectService,
-                closingTemplateService, closingSchemeService);
+        verifyNoInteractions(
+                currencyService,
+                financeParameterService,
+                voucherWordService,
+                auxiliaryTypeService,
+                subjectService,
+                closingTemplateService,
+                closingSchemeService);
     }
 
     // ========== 随机对象 ==========
 
     private FmsAccountSetInitializeReqVO buildInitializeReqVO(Long accountSetId) {
-        return new FmsAccountSetInitializeReqVO().setAccountSetId(accountSetId)
+        return new FmsAccountSetInitializeReqVO()
+                .setAccountSetId(accountSetId)
                 .setCurrencyCode(FmsCurrencyPresetEnum.RMB.getCode())
                 .setStartTime(LocalDateTime.of(2026, 8, 23, 12, 30))
                 .setStandard(FmsAccountingStandardEnum.SMALL_BUSINESS_2013.getStandard())
@@ -281,15 +295,26 @@ public class FmsAccountSetServiceImplTest extends BaseDbUnitTest {
     }
 
     private FmsAccountSetSaveReqVO buildAccountSetSaveReqVO(String code, String companyName) {
-        return randomPojo(FmsAccountSetSaveReqVO.class, reqVO -> reqVO
-                .setCompanyCode(code).setCompanyName(companyName)
-                .setCompanyProfile("企业数字化服务").setIndustry("软件和信息技术服务业")
-                .setContactName("张三").setMobile("15601691399").setEmail("finance@example.com"));
+        return randomPojo(
+                FmsAccountSetSaveReqVO.class,
+                reqVO ->
+                        reqVO.setCompanyCode(code)
+                                .setCompanyName(companyName)
+                                .setCompanyProfile("企业数字化服务")
+                                .setIndustry("软件和信息技术服务业")
+                                .setContactName("张三")
+                                .setMobile("15601691399")
+                                .setEmail("finance@example.com"));
     }
 
     private FmsAccountSetDO buildAccountSetDO(String code, Boolean initialized) {
-        return randomPojo(FmsAccountSetDO.class, accountSet -> accountSet.setId(null)
-                .setCompanyCode(code).setCompanyName(code + " 有限公司").setInitialized(initialized));
+        return randomPojo(
+                FmsAccountSetDO.class,
+                accountSet ->
+                        accountSet
+                                .setId(null)
+                                .setCompanyCode(code)
+                                .setCompanyName(code + " 有限公司")
+                                .setInitialized(initialized));
     }
-
 }

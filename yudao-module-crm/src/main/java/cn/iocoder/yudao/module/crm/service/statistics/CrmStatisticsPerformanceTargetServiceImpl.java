@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.crm.service.statistics;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -15,7 +18,9 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -26,9 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-
 /**
  * CRM 业绩目标统计 Service 实现类
  *
@@ -36,20 +38,18 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
  */
 @Service
 @Validated
-public class CrmStatisticsPerformanceTargetServiceImpl implements CrmStatisticsPerformanceTargetService {
+public class CrmStatisticsPerformanceTargetServiceImpl
+        implements CrmStatisticsPerformanceTargetService {
 
-    @Resource
-    private CrmStatisticsPerformanceTargetMapper performanceTargetMapper;
-    @Resource
-    private CrmPerformanceConfigService performanceConfigService;
+    @Resource private CrmStatisticsPerformanceTargetMapper performanceTargetMapper;
+    @Resource private CrmPerformanceConfigService performanceConfigService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @Override
-    public List<CrmStatisticsPerformanceTargetRespVO> getPerformanceTargetSummary(CrmStatisticsPerformanceTargetReqVO reqVO) {
+    public List<CrmStatisticsPerformanceTargetRespVO> getPerformanceTargetSummary(
+            CrmStatisticsPerformanceTargetReqVO reqVO) {
         // 1. 获得用户编号数组
         reqVO.setUserIds(getUserIds(reqVO));
         if (CollUtil.isEmpty(reqVO.getUserIds())) {
@@ -59,39 +59,57 @@ public class CrmStatisticsPerformanceTargetServiceImpl implements CrmStatisticsP
         // 2.1 获得目标配置
         List<CrmPerformanceConfigDO> performanceConfigs = getPerformanceConfigs(reqVO);
         // 2.2 获得实际完成金额
-        List<CrmStatisticsPerformanceTargetActualRespVO> actualList = ObjUtil.equal(reqVO.getBizType(),
-                CrmPerformanceConfigBizTypeEnum.CRM_RECEIVABLE.getBizType())
-                ? performanceTargetMapper.selectReceivableActualByMonth(reqVO)
-                : performanceTargetMapper.selectContractActualByMonth(reqVO);
-        Map<Integer, BigDecimal> actualMap = convertMap(actualList,
-                CrmStatisticsPerformanceTargetActualRespVO::getMonth,
-                CrmStatisticsPerformanceTargetActualRespVO::getCurrentPrice);
+        List<CrmStatisticsPerformanceTargetActualRespVO> actualList =
+                ObjUtil.equal(
+                                reqVO.getBizType(),
+                                CrmPerformanceConfigBizTypeEnum.CRM_RECEIVABLE.getBizType())
+                        ? performanceTargetMapper.selectReceivableActualByMonth(reqVO)
+                        : performanceTargetMapper.selectContractActualByMonth(reqVO);
+        Map<Integer, BigDecimal> actualMap =
+                convertMap(
+                        actualList,
+                        CrmStatisticsPerformanceTargetActualRespVO::getMonth,
+                        CrmStatisticsPerformanceTargetActualRespVO::getCurrentPrice);
 
         // 3. 组装数据返回
         List<CrmStatisticsPerformanceTargetRespVO> result = new ArrayList<>();
         for (int month = 1; month <= 12; month++) {
             BigDecimal targetPrice = getMonthTargetPrice(performanceConfigs, month);
             BigDecimal currentPrice = actualMap.getOrDefault(month, BigDecimal.ZERO);
-            result.add(new CrmStatisticsPerformanceTargetRespVO().setMonth(month).setTargetPrice(targetPrice)
-                    .setCurrentPrice(currentPrice)
-                    .setCompletionRate(calculateCompletionRate(currentPrice, targetPrice)));
+            result.add(
+                    new CrmStatisticsPerformanceTargetRespVO()
+                            .setMonth(month)
+                            .setTargetPrice(targetPrice)
+                            .setCurrentPrice(currentPrice)
+                            .setCompletionRate(calculateCompletionRate(currentPrice, targetPrice)));
         }
         return result;
     }
 
-    private List<CrmPerformanceConfigDO> getPerformanceConfigs(CrmStatisticsPerformanceTargetReqVO reqVO) {
+    private List<CrmPerformanceConfigDO> getPerformanceConfigs(
+            CrmStatisticsPerformanceTargetReqVO reqVO) {
         // 情况一：选中某个用户
         if (ObjUtil.isNotNull(reqVO.getUserId())) {
-            CrmPerformanceConfigDO performanceConfig = performanceConfigService.getPerformanceConfig(reqVO.getUserId(),
-                    CrmPerformanceConfigObjectTypeEnum.USER.getObjectType(), reqVO.getYear(), reqVO.getBizType());
-            return performanceConfig == null ? Collections.emptyList() : ListUtil.of(performanceConfig);
+            CrmPerformanceConfigDO performanceConfig =
+                    performanceConfigService.getPerformanceConfig(
+                            reqVO.getUserId(),
+                            CrmPerformanceConfigObjectTypeEnum.USER.getObjectType(),
+                            reqVO.getYear(),
+                            reqVO.getBizType());
+            return performanceConfig == null
+                    ? Collections.emptyList()
+                    : ListUtil.of(performanceConfig);
         }
         // 情况二：选中某个部门
-        return performanceConfigService.getPerformanceConfigList(getDeptIds(reqVO.getDeptId()),
-                CrmPerformanceConfigObjectTypeEnum.DEPT.getObjectType(), reqVO.getYear(), reqVO.getBizType());
+        return performanceConfigService.getPerformanceConfigList(
+                getDeptIds(reqVO.getDeptId()),
+                CrmPerformanceConfigObjectTypeEnum.DEPT.getObjectType(),
+                reqVO.getYear(),
+                reqVO.getBizType());
     }
 
-    private BigDecimal getMonthTargetPrice(List<CrmPerformanceConfigDO> performanceConfigs, int month) {
+    private BigDecimal getMonthTargetPrice(
+            List<CrmPerformanceConfigDO> performanceConfigs, int month) {
         return performanceConfigs.stream()
                 .map(performanceConfig -> getMonthTargetPrice(performanceConfig, month))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -152,7 +170,9 @@ public class CrmStatisticsPerformanceTargetServiceImpl implements CrmStatisticsP
         if (targetPrice == null || targetPrice.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
-        return currentPrice.multiply(BigDecimal.valueOf(100)).divide(targetPrice, 2, RoundingMode.HALF_UP);
+        return currentPrice
+                .multiply(BigDecimal.valueOf(100))
+                .divide(targetPrice, 2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -186,5 +206,4 @@ public class CrmStatisticsPerformanceTargetServiceImpl implements CrmStatisticsP
         deptIds.add(deptId);
         return deptIds;
     }
-
 }

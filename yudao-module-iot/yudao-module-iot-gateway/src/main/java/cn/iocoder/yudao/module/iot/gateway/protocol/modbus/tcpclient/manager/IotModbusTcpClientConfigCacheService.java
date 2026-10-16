@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.biz.IotDeviceCommonApi;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigListReqDTO;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigRespDTO;
-import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusModeEnum;
 import cn.iocoder.yudao.module.iot.core.enums.IotProtocolTypeEnum;
+import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusModeEnum;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,8 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 /**
  * IoT Modbus TCP Client 配置缓存服务
@@ -49,9 +50,13 @@ public class IotModbusTcpClientConfigCacheService {
     public List<IotModbusDeviceConfigRespDTO> refreshConfig() {
         try {
             // 1. 从远程获取配置
-            CommonResult<List<IotModbusDeviceConfigRespDTO>> result = deviceApi.getModbusDeviceConfigList(
-                    new IotModbusDeviceConfigListReqDTO().setStatus(CommonStatusEnum.ENABLE.getStatus())
-                            .setMode(IotModbusModeEnum.POLLING.getMode()).setProtocolType(IotProtocolTypeEnum.MODBUS_TCP_CLIENT.getType()));
+            CommonResult<List<IotModbusDeviceConfigRespDTO>> result =
+                    deviceApi.getModbusDeviceConfigList(
+                            new IotModbusDeviceConfigListReqDTO()
+                                    .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                    .setMode(IotModbusModeEnum.POLLING.getMode())
+                                    .setProtocolType(
+                                            IotProtocolTypeEnum.MODBUS_TCP_CLIENT.getType()));
             result.checkError();
             List<IotModbusDeviceConfigRespDTO> configs = result.getData();
 
@@ -84,7 +89,8 @@ public class IotModbusTcpClientConfigCacheService {
      */
     public Set<Long> cleanupRemovedDevices(List<IotModbusDeviceConfigRespDTO> currentConfigs) {
         // 1.1 获取当前有效的设备 ID
-        Set<Long> currentDeviceIds = convertSet(currentConfigs, IotModbusDeviceConfigRespDTO::getDeviceId);
+        Set<Long> currentDeviceIds =
+                convertSet(currentConfigs, IotModbusDeviceConfigRespDTO::getDeviceId);
         // 1.2 找出已删除的设备（基于旧的 knownDeviceIds）
         Set<Long> removedDeviceIds = new HashSet<>(knownDeviceIds);
         removedDeviceIds.removeAll(currentDeviceIds);
@@ -100,5 +106,4 @@ public class IotModbusTcpClientConfigCacheService {
         knownDeviceIds.addAll(currentDeviceIds);
         return removedDeviceIds;
     }
-
 }

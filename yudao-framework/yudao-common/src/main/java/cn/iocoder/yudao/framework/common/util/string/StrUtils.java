@@ -4,6 +4,7 @@ import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
+
 import org.aspectj.lang.JoinPoint;
 
 import java.util.Arrays;
@@ -111,17 +112,23 @@ public class StrUtils {
         if (ArrayUtil.isEmpty(args)) {
             return "";
         }
-        return ArrayUtil.join(args, ",", item -> {
-            if (item == null) {
-                return "";
-            }
-            // 讨论可见：https://t.zsxq.com/XUJVk、https://t.zsxq.com/MnKcL
-            String clazzName = item.getClass().getName();
-            if (StrUtil.startWithAny(clazzName, "javax.servlet", "jakarta.servlet", "org.springframework.web")) {
-                return "";
-            }
-            return item;
-        });
+        return ArrayUtil.join(
+                args,
+                ",",
+                item -> {
+                    if (item == null) {
+                        return "";
+                    }
+                    // 讨论可见：https://t.zsxq.com/XUJVk、https://t.zsxq.com/MnKcL
+                    String clazzName = item.getClass().getName();
+                    if (StrUtil.startWithAny(
+                            clazzName,
+                            "javax.servlet",
+                            "jakarta.servlet",
+                            "org.springframework.web")) {
+                        return "";
+                    }
+                    return item;
+                });
     }
-
 }

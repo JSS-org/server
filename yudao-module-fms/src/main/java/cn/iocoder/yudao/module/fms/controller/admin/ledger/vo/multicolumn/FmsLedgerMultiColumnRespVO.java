@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.multicolumn;
 
+import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.detail.FmsLedgerDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.detail.FmsLedgerDetailRespVO;
 
 import java.util.List;
 
@@ -34,7 +35,5 @@ public class FmsLedgerMultiColumnRespVO {
 
         @Schema(description = "余额方向", example = "1")
         private Integer balanceDirection;
-
     }
-
 }

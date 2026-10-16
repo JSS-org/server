@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.oa.service.overtime;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.oa.controller.admin.overtime.vo.OaOvertimeApplyPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.overtime.vo.OaOvertimeApplySaveReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.overtime.vo.OaOvertimeApplySubmitReqVO;
-import cn.iocoder.yudao.module.oa.controller.admin.overtime.vo.OaOvertimeApplyPageReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.overtime.OaOvertimeApplyDO;
 
 /**
@@ -52,7 +52,8 @@ public interface OaOvertimeApplyService {
      * @param pageReqVO 分页条件
      * @return 申请分页
      */
-    PageResult<OaOvertimeApplyDO> getOvertimeApplyPage(Long userId, OaOvertimeApplyPageReqVO pageReqVO);
+    PageResult<OaOvertimeApplyDO> getOvertimeApplyPage(
+            Long userId, OaOvertimeApplyPageReqVO pageReqVO);
 
     /**
      * 更新加班申请审批状态
@@ -61,5 +62,4 @@ public interface OaOvertimeApplyService {
      * @param status 审批状态
      */
     void updateOvertimeApplyStatus(Long id, Integer status);
-
 }

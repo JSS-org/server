@@ -20,5 +20,4 @@ public interface ExpressClientFactory {
      * @param clientEnum 快递客户端枚举
      */
     ExpressClient getOrCreateExpressClient(ExpressClientEnum clientEnum);
-
 }

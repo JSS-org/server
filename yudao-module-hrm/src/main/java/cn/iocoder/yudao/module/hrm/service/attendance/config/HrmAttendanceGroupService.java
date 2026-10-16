@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.group.HrmAtten
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.group.HrmAttendanceGroupSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.config.HrmAttendanceGroupDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.config.HrmAttendanceHolidayDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDate;
@@ -75,7 +76,8 @@ public interface HrmAttendanceGroupService {
      * @return 有效班次 Map
      */
     Map<LocalDate, HrmAttendanceGroupDO.Shift> getAttendanceGroupShiftMap(
-            HrmAttendanceGroupDO attendanceGroup, Collection<LocalDate> attendanceDates,
+            HrmAttendanceGroupDO attendanceGroup,
+            Collection<LocalDate> attendanceDates,
             Map<LocalDate, HrmAttendanceHolidayDO> holidayMap);
 
     /**
@@ -110,5 +112,4 @@ public interface HrmAttendanceGroupService {
      * @return 考勤组
      */
     HrmAttendanceGroupDO validateAttendanceGroupExists(Long id);
-
 }

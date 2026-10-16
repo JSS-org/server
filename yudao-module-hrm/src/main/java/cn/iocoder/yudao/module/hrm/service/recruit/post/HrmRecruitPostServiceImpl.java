@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.post;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_POST_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
@@ -13,10 +17,13 @@ import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnu
 import cn.iocoder.yudao.module.hrm.enums.recruit.post.HrmRecruitPostStatusEnum;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -27,10 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_POST_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
-
 /**
  * 招聘职位 Service 实现类
  *
@@ -40,28 +43,28 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
 @Validated
 public class HrmRecruitPostServiceImpl implements HrmRecruitPostService {
 
-    @Resource
-    private HrmRecruitPostMapper recruitPostMapper;
+    @Resource private HrmRecruitPostMapper recruitPostMapper;
 
-    @Resource
-    private HrmRecruitPostTypeService recruitPostTypeService;
+    @Resource private HrmRecruitPostTypeService recruitPostTypeService;
 
-    @Resource
-    private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeeService employeeService;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
     @Override
-    @LogRecord(type = HRM_RECRUIT_POST_TYPE, subType = HRM_RECRUIT_POST_CREATE_SUB_TYPE,
-            bizNo = "{{#recruitPostId}}", success = HRM_RECRUIT_POST_CREATE_SUCCESS)
+    @LogRecord(
+            type = HRM_RECRUIT_POST_TYPE,
+            subType = HRM_RECRUIT_POST_CREATE_SUB_TYPE,
+            bizNo = "{{#recruitPostId}}",
+            success = HRM_RECRUIT_POST_CREATE_SUCCESS)
     public Long createRecruitPost(HrmRecruitPostSaveReqVO createReqVO) {
         // 1. 校验招聘职位关联
         validateRecruitPost(createReqVO);
 
         // 2. 插入招聘职位。新职位统一为招聘中状态，后续通过状态接口停止招聘
-        HrmRecruitPostDO recruitPost = BeanUtils.toBean(createReqVO, HrmRecruitPostDO.class)
-                .setStatus(HrmRecruitPostStatusEnum.RECRUITING.getStatus());
+        HrmRecruitPostDO recruitPost =
+                BeanUtils.toBean(createReqVO, HrmRecruitPostDO.class)
+                        .setStatus(HrmRecruitPostStatusEnum.RECRUITING.getStatus());
         recruitPostMapper.insert(recruitPost);
 
         // 3. 记录操作日志上下文
@@ -70,8 +73,11 @@ public class HrmRecruitPostServiceImpl implements HrmRecruitPostService {
     }
 
     @Override
-    @LogRecord(type = HRM_RECRUIT_POST_TYPE, subType = HRM_RECRUIT_POST_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.id}}", success = HRM_RECRUIT_POST_UPDATE_SUCCESS)
+    @LogRecord(
+            type = HRM_RECRUIT_POST_TYPE,
+            subType = HRM_RECRUIT_POST_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
+            success = HRM_RECRUIT_POST_UPDATE_SUCCESS)
     public void updateRecruitPost(HrmRecruitPostSaveReqVO updateReqVO) {
         // 1. 校验招聘职位及其关联
         HrmRecruitPostDO recruitPost = validateRecruitPostExists(updateReqVO.getId());
@@ -81,7 +87,8 @@ public class HrmRecruitPostServiceImpl implements HrmRecruitPostService {
         recruitPostMapper.updateForEdit(BeanUtils.toBean(updateReqVO, HrmRecruitPostDO.class));
 
         // 3. 记录操作日志上下文
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT,
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
                 BeanUtils.toBean(recruitPost, HrmRecruitPostSaveReqVO.class));
     }
 
@@ -114,12 +121,16 @@ public class HrmRecruitPostServiceImpl implements HrmRecruitPostService {
 
     @Override
     public List<HrmRecruitPostDO> getRecruitPostSimpleList() {
-        return recruitPostMapper.selectListByStatus(HrmRecruitPostStatusEnum.RECRUITING.getStatus());
+        return recruitPostMapper.selectListByStatus(
+                HrmRecruitPostStatusEnum.RECRUITING.getStatus());
     }
 
     @Override
-    @LogRecord(type = HRM_RECRUIT_POST_TYPE, subType = HRM_RECRUIT_POST_UPDATE_STATUS_SUB_TYPE,
-            bizNo = "{{#reqVO.id}}", success = HRM_RECRUIT_POST_UPDATE_STATUS_SUCCESS)
+    @LogRecord(
+            type = HRM_RECRUIT_POST_TYPE,
+            subType = HRM_RECRUIT_POST_UPDATE_STATUS_SUB_TYPE,
+            bizNo = "{{#reqVO.id}}",
+            success = HRM_RECRUIT_POST_UPDATE_STATUS_SUCCESS)
     public void updateRecruitPostStatus(HrmRecruitPostStatusReqVO reqVO) {
         // 1. 校验招聘职位是否存在
         HrmRecruitPostDO recruitPost = validateRecruitPostExists(reqVO.getId());
@@ -150,10 +161,10 @@ public class HrmRecruitPostServiceImpl implements HrmRecruitPostService {
         }
 
         // 2. 校验招聘负责人和面试官存在
-        Set<Long> employeeIds = new HashSet<>(CollUtil.emptyIfNull(reqVO.getInterviewEmployeeIds()));
+        Set<Long> employeeIds =
+                new HashSet<>(CollUtil.emptyIfNull(reqVO.getInterviewEmployeeIds()));
         CollectionUtils.addIfNotNull(employeeIds, reqVO.getOwnerEmployeeId());
         employeeService.validateEmployeeListByEntryStatus(
                 employeeIds, HrmEmployeeEntryStatusEnum.ACTIVE.getStatus());
     }
-
 }

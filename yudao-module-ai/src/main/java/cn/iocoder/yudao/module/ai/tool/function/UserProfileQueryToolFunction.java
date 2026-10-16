@@ -1,18 +1,22 @@
 package cn.iocoder.yudao.module.ai.tool.function;
 
-import cn.iocoder.yudao.module.ai.util.AiUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
+import cn.iocoder.yudao.module.ai.util.AiUtils;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import jakarta.annotation.Resource;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.stereotype.Component;
 
@@ -27,10 +31,12 @@ import java.util.function.BiFunction;
  */
 @Component("user_profile_query")
 public class UserProfileQueryToolFunction
-        implements BiFunction<UserProfileQueryToolFunction.Request, ToolContext, UserProfileQueryToolFunction.Response> {
+        implements BiFunction<
+                UserProfileQueryToolFunction.Request,
+                ToolContext,
+                UserProfileQueryToolFunction.Response> {
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Data
     @JsonClassDescription("用户信息查询")
@@ -42,7 +48,6 @@ public class UserProfileQueryToolFunction
         @JsonProperty(value = "id")
         @JsonPropertyDescription("用户编号，例如说：1。如果查询自己，则 id 为空")
         private Long id;
-
     }
 
     @Data
@@ -54,6 +59,7 @@ public class UserProfileQueryToolFunction
          * 用户ID
          */
         private Long id;
+
         /**
          * 用户昵称
          */
@@ -63,11 +69,11 @@ public class UserProfileQueryToolFunction
          * 手机号码
          */
         private String mobile;
+
         /**
          * 用户头像
          */
         private String avatar;
-
     }
 
     @Override
@@ -77,16 +83,18 @@ public class UserProfileQueryToolFunction
             return new Response();
         }
         if (request.getId() == null) {
-            LoginUser loginUser = (LoginUser) toolContext.getContext().get(AiUtils.TOOL_CONTEXT_LOGIN_USER);
+            LoginUser loginUser =
+                    (LoginUser) toolContext.getContext().get(AiUtils.TOOL_CONTEXT_LOGIN_USER);
             if (loginUser == null) {
                 return new Response();
             }
             request.setId(loginUser.getId());
         }
-        return TenantUtils.execute(tenantId, () -> {
-            AdminUserRespDTO user = adminUserApi.getUser(request.getId());
-            return BeanUtils.toBean(user, Response.class);
-        });
+        return TenantUtils.execute(
+                tenantId,
+                () -> {
+                    AdminUserRespDTO user = adminUserApi.getUser(request.getId());
+                    return BeanUtils.toBean(user, Response.class);
+                });
     }
-
 }

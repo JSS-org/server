@@ -8,7 +8,9 @@ import cn.iocoder.yudao.module.mp.controller.admin.user.vo.MpUserRespVO;
 import cn.iocoder.yudao.module.mp.controller.admin.user.vo.MpUserUpdateReqVO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.user.MpUserDO;
+
 import me.chanjar.weixin.mp.bean.result.WxMpUser;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -27,18 +29,21 @@ public interface MpUserConvert {
 
     PageResult<MpUserRespVO> convertPage(PageResult<MpUserDO> page);
 
-    @Mappings(value = {
-            @Mapping(source = "openId", target = "openid"),
-            @Mapping(source = "unionId", target = "unionId"),
-            @Mapping(source = "headImgUrl", target = "headImageUrl"),
-            @Mapping(target = "subscribeTime", ignore = true), // 单独转换
-    })
+    @Mappings(
+            value = {
+                @Mapping(source = "openId", target = "openid"),
+                @Mapping(source = "unionId", target = "unionId"),
+                @Mapping(source = "headImgUrl", target = "headImageUrl"),
+                @Mapping(target = "subscribeTime", ignore = true), // 单独转换
+            })
     MpUserDO convert(WxMpUser wxMpUser);
 
     default MpUserDO convert(MpAccountDO account, WxMpUser wxMpUser) {
         MpUserDO user = convert(wxMpUser);
-        user.setSubscribeStatus(wxMpUser.getSubscribe() ? CommonStatusEnum.ENABLE.getStatus()
-                : CommonStatusEnum.DISABLE.getStatus());
+        user.setSubscribeStatus(
+                wxMpUser.getSubscribe()
+                        ? CommonStatusEnum.ENABLE.getStatus()
+                        : CommonStatusEnum.DISABLE.getStatus());
         user.setSubscribeTime(LocalDateTimeUtil.of(wxMpUser.getSubscribeTime() * 1000L));
         if (account != null) {
             user.setAccountId(account.getId());
@@ -52,5 +57,4 @@ public interface MpUserConvert {
     }
 
     MpUserDO convert(MpUserUpdateReqVO bean);
-
 }

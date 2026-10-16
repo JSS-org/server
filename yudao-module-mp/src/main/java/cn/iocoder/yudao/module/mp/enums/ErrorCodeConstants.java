@@ -17,8 +17,10 @@ public interface ErrorCodeConstants {
     // ========== 公众号统计 1-006-001-000 ============
     ErrorCode STATISTICS_GET_USER_SUMMARY_FAIL = new ErrorCode(1_006_001_000, "获取粉丝增减数据失败，原因：{}");
     ErrorCode STATISTICS_GET_USER_CUMULATE_FAIL = new ErrorCode(1_006_001_001, "获得粉丝累计数据失败，原因：{}");
-    ErrorCode STATISTICS_GET_UPSTREAM_MESSAGE_FAIL = new ErrorCode(1_006_001_002, "获得消息发送概况数据失败，原因：{}");
-    ErrorCode STATISTICS_GET_INTERFACE_SUMMARY_FAIL = new ErrorCode(1_006_001_003, "获得接口分析数据失败，原因：{}");
+    ErrorCode STATISTICS_GET_UPSTREAM_MESSAGE_FAIL =
+            new ErrorCode(1_006_001_002, "获得消息发送概况数据失败，原因：{}");
+    ErrorCode STATISTICS_GET_INTERFACE_SUMMARY_FAIL =
+            new ErrorCode(1_006_001_003, "获得接口分析数据失败，原因：{}");
 
     // ========== 公众号标签 1-006-002-000 ============
     ErrorCode TAG_NOT_EXISTS = new ErrorCode(1_006_002_000, "标签不存在");
@@ -57,14 +59,16 @@ public interface ErrorCodeConstants {
 
     // ========== 公众号自动回复 1-006-009-000 ============
     ErrorCode AUTO_REPLY_NOT_EXISTS = new ErrorCode(1_006_009_000, "自动回复不存在");
-    ErrorCode AUTO_REPLY_ADD_SUBSCRIBE_FAIL_EXISTS = new ErrorCode(1_006_009_001, "操作失败，原因：已存在关注时的回复");
-    ErrorCode AUTO_REPLY_ADD_MESSAGE_FAIL_EXISTS = new ErrorCode(1_006_009_002, "操作失败，原因：已存在该消息类型的回复");
-    ErrorCode AUTO_REPLY_ADD_KEYWORD_FAIL_EXISTS = new ErrorCode(1_006_009_003, "操作失败，原因：已关在该关键字的回复");
+    ErrorCode AUTO_REPLY_ADD_SUBSCRIBE_FAIL_EXISTS =
+            new ErrorCode(1_006_009_001, "操作失败，原因：已存在关注时的回复");
+    ErrorCode AUTO_REPLY_ADD_MESSAGE_FAIL_EXISTS =
+            new ErrorCode(1_006_009_002, "操作失败，原因：已存在该消息类型的回复");
+    ErrorCode AUTO_REPLY_ADD_KEYWORD_FAIL_EXISTS =
+            new ErrorCode(1_006_009_003, "操作失败，原因：已关在该关键字的回复");
 
     // ========== 公众号模版消息 1-006-010-000 ============
     ErrorCode MESSAGE_TEMPLATE_NOT_EXISTS = new ErrorCode(1_006_010_000, "模版消息不存在");
     ErrorCode MESSAGE_TEMPLATE_DELETE_FAIL = new ErrorCode(1_006_010_002, "删除模版消息失败，原因：{}");
     ErrorCode MESSAGE_TEMPLATE_SYNC_FAIL = new ErrorCode(1_006_010_003, "同步模版消息失败，原因：{}");
     ErrorCode MESSAGE_TEMPLATE_SEND_FAIL = new ErrorCode(1_006_010_004, "发送模版消息失败，原因：{}");
-
 }

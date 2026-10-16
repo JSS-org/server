@@ -4,10 +4,13 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionValueVO;
 import cn.iocoder.yudao.module.hrm.enums.salary.employee.HrmSalaryChangeReasonEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.employee.HrmSalaryChangeRecordTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -48,5 +51,4 @@ public class HrmSalaryEmployeeInfoUpdateReqVO {
     @Schema(description = "试用期薪资项列表")
     @Valid
     private List<HrmSalaryOptionValueVO> probationSalaryOptions;
-
 }

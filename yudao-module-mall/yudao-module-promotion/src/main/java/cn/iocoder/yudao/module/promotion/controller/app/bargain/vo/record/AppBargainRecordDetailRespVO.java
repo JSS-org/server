@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.bargain.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户 App - 砍价记录的明细 Response VO")
@@ -19,15 +20,25 @@ public class AppBargainRecordDetailRespVO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "666")
     private Long userId;
 
-    @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
+    @Schema(
+            description = "商品 SPU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2048")
     private Long spuId;
-    @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
+
+    @Schema(
+            description = "商品 SKU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2048")
     private Long skuId;
 
     @Schema(description = "活动编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "赵六")
     private Long activityId;
 
-    @Schema(description = "砍价起始价格，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "23")
+    @Schema(
+            description = "砍价起始价格，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "23")
     private Integer bargainFirstPrice;
 
     @Schema(description = "当前砍价，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "23")
@@ -50,5 +61,4 @@ public class AppBargainRecordDetailRespVO {
     // ========== 助力记录 ==========
 
     private Integer helpAction;
-
 }

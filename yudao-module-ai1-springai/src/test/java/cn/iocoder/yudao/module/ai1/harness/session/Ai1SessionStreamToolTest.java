@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.ai1.harness.session;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
@@ -18,6 +22,7 @@ import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
 import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionMessageService;
 import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,10 +51,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link Ai1SessionStreamTool} 的单元测试
  *
@@ -63,50 +64,47 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     private static final Long SESSION_ID = 10L;
     private static final StreamMessageId RECORD_ID = new StreamMessageId(1, 0);
 
-    @InjectMocks
-    private Ai1SessionStreamTool sessionStreamTool;
+    @InjectMocks private Ai1SessionStreamTool sessionStreamTool;
 
-    @Mock
-    private RedissonClient redissonClient;
-    @Mock
-    private RStream<String, String> taskStream;
-    @Mock
-    private RStream<String, String> resultStream;
-    @Mock
-    private RLock taskLock;
-    @Spy
-    private YudaoAi1Properties ai1Properties = new YudaoAi1Properties();
+    @Mock private RedissonClient redissonClient;
+    @Mock private RStream<String, String> taskStream;
+    @Mock private RStream<String, String> resultStream;
+    @Mock private RLock taskLock;
+    @Spy private YudaoAi1Properties ai1Properties = new YudaoAi1Properties();
 
-    @Mock
-    private Ai1SessionMessageService sessionMessageService;
-    @Mock
-    private Ai1SessionService sessionService;
-    @Mock
-    private Ai1AgentService agentService;
-    @Mock
-    private Ai1ModelService modelService;
-    @Mock
-    private Ai1KnowledgeBaseService knowledgeBaseService;
-    @Mock
-    private Ai1LlmChatTool llmChatTool;
-    @Mock
-    private Ai1McpToolFactory mcpToolFactory;
-    @Mock
-    private Ai1SkillToolFactory skillToolFactory;
-    @Mock
-    private Ai1RagTool ragTool;
+    @Mock private Ai1SessionMessageService sessionMessageService;
+    @Mock private Ai1SessionService sessionService;
+    @Mock private Ai1AgentService agentService;
+    @Mock private Ai1ModelService modelService;
+    @Mock private Ai1KnowledgeBaseService knowledgeBaseService;
+    @Mock private Ai1LlmChatTool llmChatTool;
+    @Mock private Ai1McpToolFactory mcpToolFactory;
+    @Mock private Ai1SkillToolFactory skillToolFactory;
+    @Mock private Ai1RagTool ragTool;
 
     @BeforeEach
     public void before() {
         // mock redissonClient 的方法（部分用例不访问 Redis）
-        lenient().doReturn(taskStream).when(redissonClient).getStream(eq("ai1:session:tasks"), any(Codec.class));
-        lenient().doReturn(resultStream).when(redissonClient).getStream(eq("ai1:session:result:" + MESSAGE_ID), any(Codec.class));
-        lenient().when(redissonClient.getLock("ai1:session:task-lock:" + MESSAGE_ID)).thenReturn(taskLock);
+        lenient()
+                .doReturn(taskStream)
+                .when(redissonClient)
+                .getStream(eq("ai1:session:tasks"), any(Codec.class));
+        lenient()
+                .doReturn(resultStream)
+                .when(redissonClient)
+                .getStream(eq("ai1:session:result:" + MESSAGE_ID), any(Codec.class));
+        lenient()
+                .when(redissonClient.getLock("ai1:session:task-lock:" + MESSAGE_ID))
+                .thenReturn(taskLock);
         lenient().when(taskLock.tryLock()).thenReturn(true);
         lenient().when(taskLock.isHeldByThread(anyLong())).thenReturn(true);
-        lenient().when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenReturn(new Ai1SessionMessageDO()
-                .setId(MESSAGE_ID).setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
-                .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus()));
+        lenient()
+                .when(sessionMessageService.getSessionMessage(MESSAGE_ID))
+                .thenReturn(
+                        new Ai1SessionMessageDO()
+                                .setId(MESSAGE_ID)
+                                .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                                .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus()));
     }
 
     @Test
@@ -114,12 +112,14 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
         // 准备参数
         SseEmitter emitter = mock(SseEmitter.class);
         // mock 连接断开
-        doThrow(new IOException("client disconnected")).when(emitter).send(
-                any(SseEmitter.SseEventBuilder.class));
+        doThrow(new IOException("client disconnected"))
+                .when(emitter)
+                .send(any(SseEmitter.SseEventBuilder.class));
 
         // 调用
-        Boolean shouldComplete = ReflectionTestUtils.invokeMethod(
-                sessionStreamTool, "streamResult", emitter, MESSAGE_ID, null, TENANT_ID);
+        Boolean shouldComplete =
+                ReflectionTestUtils.invokeMethod(
+                        sessionStreamTool, "streamResult", emitter, MESSAGE_ID, null, TENANT_ID);
 
         // 断言
         assertEquals(Boolean.FALSE, shouldComplete);
@@ -136,8 +136,9 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
                 .thenReturn(Map.of(RECORD_ID, Map.of("type", "done", "data", "")));
 
         // 调用
-        Boolean shouldComplete = ReflectionTestUtils.invokeMethod(
-                sessionStreamTool, "streamResult", emitter, MESSAGE_ID, null, TENANT_ID);
+        Boolean shouldComplete =
+                ReflectionTestUtils.invokeMethod(
+                        sessionStreamTool, "streamResult", emitter, MESSAGE_ID, null, TENANT_ID);
 
         // 断言
         assertEquals(Boolean.TRUE, shouldComplete);
@@ -148,8 +149,9 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
         // 准备参数
         SseEmitter emitter = mock(SseEmitter.class);
         // mock 连接断开
-        doThrow(new IOException("client disconnected")).when(emitter).send(
-                any(SseEmitter.SseEventBuilder.class));
+        doThrow(new IOException("client disconnected"))
+                .when(emitter)
+                .send(any(SseEmitter.SseEventBuilder.class));
 
         // 调用
         ReflectionTestUtils.invokeMethod(
@@ -163,24 +165,37 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     public void testFailLostMessage_generating() {
         // mock 方法
         AtomicReference<Long> tenantRef = new AtomicReference<>();
-        when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenAnswer(invocation -> {
-            tenantRef.set(TenantContextHolder.getTenantId());
-            return new Ai1SessionMessageDO().setId(MESSAGE_ID).setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus());
-        });
+        when(sessionMessageService.getSessionMessage(MESSAGE_ID))
+                .thenAnswer(
+                        invocation -> {
+                            tenantRef.set(TenantContextHolder.getTenantId());
+                            return new Ai1SessionMessageDO()
+                                    .setId(MESSAGE_ID)
+                                    .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus());
+                        });
 
         // 调用
         sessionStreamTool.failLostMessage(MESSAGE_ID, TENANT_ID);
         // 断言
         assertEquals(TENANT_ID, tenantRef.get());
-        verify(sessionMessageService).updateSessionMessage(argThat(message -> MESSAGE_ID.equals(message.getId())
-                && Ai1SessionMessageStatusEnum.FAILED.getStatus().equals(message.getStatus())));
+        verify(sessionMessageService)
+                .updateSessionMessage(
+                        argThat(
+                                message ->
+                                        MESSAGE_ID.equals(message.getId())
+                                                && Ai1SessionMessageStatusEnum.FAILED
+                                                        .getStatus()
+                                                        .equals(message.getStatus())));
     }
 
     @Test
     public void testFailLostMessage_finished() {
         // mock sessionMessageService 的方法
-        when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenReturn(
-                new Ai1SessionMessageDO().setId(MESSAGE_ID).setStatus(Ai1SessionMessageStatusEnum.SUCCESS.getStatus()));
+        when(sessionMessageService.getSessionMessage(MESSAGE_ID))
+                .thenReturn(
+                        new Ai1SessionMessageDO()
+                                .setId(MESSAGE_ID)
+                                .setStatus(Ai1SessionMessageStatusEnum.SUCCESS.getStatus()));
 
         // 调用
         sessionStreamTool.failLostMessage(MESSAGE_ID, TENANT_ID);
@@ -192,14 +207,31 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     public void testHandleTask_withoutTenant() {
         // mock 方法
         AtomicReference<Long> tenantIdInGenerate = new AtomicReference<>(-1L);
-        when(agentService.validateAgentExists(AGENT_ID)).thenAnswer(invocation -> {
-            tenantIdInGenerate.set(TenantContextHolder.getTenantId());
-            return new Ai1AgentDO().setId(AGENT_ID).setName("客服").setProviderId(1L).setModelId(2L);
-        });
-        when(modelService.getModelRespBO(1L, 2L)).thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
-        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
+        when(agentService.validateAgentExists(AGENT_ID))
+                .thenAnswer(
+                        invocation -> {
+                            tenantIdInGenerate.set(TenantContextHolder.getTenantId());
+                            return new Ai1AgentDO()
+                                    .setId(AGENT_ID)
+                                    .setName("客服")
+                                    .setProviderId(1L)
+                                    .setModelId(2L);
+                        });
+        when(modelService.getModelRespBO(1L, 2L))
+                .thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
+        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(
+                        eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
                 .thenReturn(new ArrayList<>());
-        when(llmChatTool.chat(any(), eq("你是 客服 的智能助手。"), anyList(), eq("你好"), anyList(), anyList(), eq(SESSION_ID), any(), any()))
+        when(llmChatTool.chat(
+                        any(),
+                        eq("你是 客服 的智能助手。"),
+                        anyList(),
+                        eq("你好"),
+                        anyList(),
+                        anyList(),
+                        eq(SESSION_ID),
+                        any(),
+                        any()))
                 .thenReturn(new Ai1LlmChatTool.ChatText("您好", ""));
         // 准备参数
         Map<String, String> fields = buildTaskFields();
@@ -209,9 +241,12 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
         sessionStreamTool.handleTask(RECORD_ID, fields);
         // 断言
         assertNull(tenantIdInGenerate.get());
-        ArgumentCaptor<Ai1SessionMessageDO> messageCaptor = ArgumentCaptor.forClass(Ai1SessionMessageDO.class);
+        ArgumentCaptor<Ai1SessionMessageDO> messageCaptor =
+                ArgumentCaptor.forClass(Ai1SessionMessageDO.class);
         verify(sessionMessageService).updateSessionMessage(messageCaptor.capture());
-        assertEquals(Ai1SessionMessageStatusEnum.SUCCESS.getStatus(), messageCaptor.getValue().getStatus());
+        assertEquals(
+                Ai1SessionMessageStatusEnum.SUCCESS.getStatus(),
+                messageCaptor.getValue().getStatus());
         assertEquals(List.of("ping", "done"), captureResultTypes());
         verify(taskStream).ack("ai1-session-workers", RECORD_ID);
     }
@@ -220,31 +255,52 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     public void testHandleTask_generateInTaskTenant() {
         // mock 方法
         AtomicReference<Long> tenantIdInGenerate = new AtomicReference<>();
-        when(agentService.validateAgentExists(AGENT_ID)).thenAnswer(invocation -> {
-            tenantIdInGenerate.set(TenantContextHolder.getTenantId());
-            return new Ai1AgentDO().setId(AGENT_ID).setName("客服").setProviderId(1L).setModelId(2L);
-        });
-        when(modelService.getModelRespBO(1L, 2L)).thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
-        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
+        when(agentService.validateAgentExists(AGENT_ID))
+                .thenAnswer(
+                        invocation -> {
+                            tenantIdInGenerate.set(TenantContextHolder.getTenantId());
+                            return new Ai1AgentDO()
+                                    .setId(AGENT_ID)
+                                    .setName("客服")
+                                    .setProviderId(1L)
+                                    .setModelId(2L);
+                        });
+        when(modelService.getModelRespBO(1L, 2L))
+                .thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
+        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(
+                        eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
                 .thenReturn(new ArrayList<>());
-        when(llmChatTool.chat(any(), anyString(), anyList(), eq("你好"), anyList(), anyList(), eq(SESSION_ID), any(), any()))
-                .thenAnswer(invocation -> {
-                    Consumer<String> onContent = invocation.getArgument(8);
-                    onContent.accept("您好");
-                    return new Ai1LlmChatTool.ChatText("您好", "");
-                });
+        when(llmChatTool.chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        eq("你好"),
+                        anyList(),
+                        anyList(),
+                        eq(SESSION_ID),
+                        any(),
+                        any()))
+                .thenAnswer(
+                        invocation -> {
+                            Consumer<String> onContent = invocation.getArgument(8);
+                            onContent.accept("您好");
+                            return new Ai1LlmChatTool.ChatText("您好", "");
+                        });
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields());
         // 断言
         assertEquals(TENANT_ID, tenantIdInGenerate.get());
         assertNull(TenantContextHolder.getTenantId());
-        ArgumentCaptor<Ai1SessionMessageDO> messageCaptor = ArgumentCaptor.forClass(Ai1SessionMessageDO.class);
+        ArgumentCaptor<Ai1SessionMessageDO> messageCaptor =
+                ArgumentCaptor.forClass(Ai1SessionMessageDO.class);
         verify(sessionMessageService).updateSessionMessage(messageCaptor.capture());
         assertEquals(MESSAGE_ID, messageCaptor.getValue().getId());
         assertEquals("您好", messageCaptor.getValue().getContent());
         assertNull(messageCaptor.getValue().getReasoning());
-        assertEquals(Ai1SessionMessageStatusEnum.SUCCESS.getStatus(), messageCaptor.getValue().getStatus());
+        assertEquals(
+                Ai1SessionMessageStatusEnum.SUCCESS.getStatus(),
+                messageCaptor.getValue().getStatus());
         verify(sessionService).touchSession(SESSION_ID);
         assertEquals(List.of("ping", "message", "done"), captureResultTypes());
     }
@@ -252,14 +308,18 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @Test
     public void testHandleTask_generateFailed() {
         // mock agentService 的方法
-        when(agentService.validateAgentExists(AGENT_ID)).thenThrow(new IllegalStateException("Agent 不存在"));
+        when(agentService.validateAgentExists(AGENT_ID))
+                .thenThrow(new IllegalStateException("Agent 不存在"));
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields());
         // 断言
-        ArgumentCaptor<Ai1SessionMessageDO> messageCaptor = ArgumentCaptor.forClass(Ai1SessionMessageDO.class);
+        ArgumentCaptor<Ai1SessionMessageDO> messageCaptor =
+                ArgumentCaptor.forClass(Ai1SessionMessageDO.class);
         verify(sessionMessageService).updateSessionMessage(messageCaptor.capture());
-        assertEquals(Ai1SessionMessageStatusEnum.FAILED.getStatus(), messageCaptor.getValue().getStatus());
+        assertEquals(
+                Ai1SessionMessageStatusEnum.FAILED.getStatus(),
+                messageCaptor.getValue().getStatus());
         assertEquals(List.of("ping", "error", "done"), captureResultTypes());
     }
 
@@ -278,11 +338,17 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @Test
     public void testHandleTask_finished() {
         // mock sessionMessageService 的方法
-        when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenReturn(new Ai1SessionMessageDO()
-                .setId(MESSAGE_ID).setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
-                .setStatus(Ai1SessionMessageStatusEnum.SUCCESS.getStatus()));
+        when(sessionMessageService.getSessionMessage(MESSAGE_ID))
+                .thenReturn(
+                        new Ai1SessionMessageDO()
+                                .setId(MESSAGE_ID)
+                                .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                                .setStatus(Ai1SessionMessageStatusEnum.SUCCESS.getStatus()));
 
-        when(resultStream.rangeReversed(StreamRangeArgs.startId(StreamMessageId.MAX).endId(StreamMessageId.MIN).count(1)))
+        when(resultStream.rangeReversed(
+                        StreamRangeArgs.startId(StreamMessageId.MAX)
+                                .endId(StreamMessageId.MIN)
+                                .count(1)))
                 .thenReturn(Map.of(RECORD_ID, Map.of("type", "done", "data", "")));
 
         // 调用
@@ -303,16 +369,24 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
         results.put(new StreamMessageId(1, 0), Map.of("type", "thinking", "data", "思考"));
         results.put(new StreamMessageId(1, 1), Map.of("type", "message", "data", "第一段"));
         results.put(new StreamMessageId(1, 2), Map.of("type", "message", "data", "第二段"));
-        when(resultStream.range(StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX))).thenReturn(results);
+        when(resultStream.range(
+                        StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX)))
+                .thenReturn(results);
         lenient().when(resultStream.isExists()).thenReturn(true);
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields(), reclaimed);
         // 断言
         verifyNoInteractions(llmChatTool, agentService);
-        verify(sessionMessageService).updateSessionMessage(argThat(message -> "第一段第二段".equals(message.getContent())
-                && "思考".equals(message.getReasoning())
-                && Ai1SessionMessageStatusEnum.FAILED.getStatus().equals(message.getStatus())));
+        verify(sessionMessageService)
+                .updateSessionMessage(
+                        argThat(
+                                message ->
+                                        "第一段第二段".equals(message.getContent())
+                                                && "思考".equals(message.getReasoning())
+                                                && Ai1SessionMessageStatusEnum.FAILED
+                                                        .getStatus()
+                                                        .equals(message.getStatus())));
         assertEquals(List.of("error", "done"), captureResultTypes());
         verify(taskStream).ack("ai1-session-workers", RECORD_ID);
     }
@@ -320,21 +394,31 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @Test
     public void testHandleTask_reclaimedWithoutResult() {
         // mock resultStream 的方法
-        when(resultStream.range(StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX))).thenReturn(Map.of());
+        when(resultStream.range(
+                        StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX)))
+                .thenReturn(Map.of());
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields(), true);
         // 断言
         verifyNoInteractions(llmChatTool);
-        verify(sessionMessageService).updateSessionMessage(argThat(message -> "".equals(message.getContent())
-                && Ai1SessionMessageStatusEnum.FAILED.getStatus().equals(message.getStatus())));
+        verify(sessionMessageService)
+                .updateSessionMessage(
+                        argThat(
+                                message ->
+                                        "".equals(message.getContent())
+                                                && Ai1SessionMessageStatusEnum.FAILED
+                                                        .getStatus()
+                                                        .equals(message.getStatus())));
         assertEquals(List.of("error", "done"), captureResultTypes());
     }
 
     @Test
     public void testHandleTask_resultReadFailedKeepsPending() {
         // mock resultStream 的方法
-        when(resultStream.range(StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX))).thenThrow(new IllegalStateException("Redis 不可用"));
+        when(resultStream.range(
+                        StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX)))
+                .thenThrow(new IllegalStateException("Redis 不可用"));
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields(), true);
@@ -349,18 +433,35 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @Test
     public void testHandleTask_lockLostDuringGenerate() {
         // mock 方法
-        when(agentService.validateAgentExists(AGENT_ID)).thenReturn(
-                new Ai1AgentDO().setId(AGENT_ID).setName("客服").setProviderId(1L).setModelId(2L));
-        when(modelService.getModelRespBO(1L, 2L)).thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
-        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
+        when(agentService.validateAgentExists(AGENT_ID))
+                .thenReturn(
+                        new Ai1AgentDO()
+                                .setId(AGENT_ID)
+                                .setName("客服")
+                                .setProviderId(1L)
+                                .setModelId(2L));
+        when(modelService.getModelRespBO(1L, 2L))
+                .thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
+        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(
+                        eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
                 .thenReturn(new ArrayList<>());
-        when(llmChatTool.chat(any(), anyString(), anyList(), anyString(), anyList(), anyList(), anyLong(), any(), any()))
-                .thenAnswer(invocation -> {
-                    when(taskLock.isHeldByThread(anyLong())).thenReturn(false);
-                    Consumer<String> onContent = invocation.getArgument(8);
-                    onContent.accept("旧 worker 输出");
-                    return new Ai1LlmChatTool.ChatText("旧 worker 输出", "");
-                });
+        when(llmChatTool.chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        anyString(),
+                        anyList(),
+                        anyList(),
+                        anyLong(),
+                        any(),
+                        any()))
+                .thenAnswer(
+                        invocation -> {
+                            when(taskLock.isHeldByThread(anyLong())).thenReturn(false);
+                            Consumer<String> onContent = invocation.getArgument(8);
+                            onContent.accept("旧 worker 输出");
+                            return new Ai1LlmChatTool.ChatText("旧 worker 输出", "");
+                        });
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields());
@@ -374,8 +475,12 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @Test
     public void testHandleTask_saveFailedKeepsPending() {
         // mock 方法
-        when(resultStream.range(StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX))).thenReturn(Map.of());
-        doThrow(new IllegalStateException("数据库不可用")).when(sessionMessageService).updateSessionMessage(any());
+        when(resultStream.range(
+                        StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX)))
+                .thenReturn(Map.of());
+        doThrow(new IllegalStateException("数据库不可用"))
+                .when(sessionMessageService)
+                .updateSessionMessage(any());
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields(), true);
@@ -389,31 +494,67 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @Test
     public void testHandleTask_ackFailedDoesNotRegenerate() {
         // mock 方法
-        Ai1SessionMessageDO message = new Ai1SessionMessageDO().setId(MESSAGE_ID)
-                .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
-                .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus());
+        Ai1SessionMessageDO message =
+                new Ai1SessionMessageDO()
+                        .setId(MESSAGE_ID)
+                        .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                        .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus());
         when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenReturn(message);
-        doAnswer(invocation -> {
-            message.setStatus(invocation.<Ai1SessionMessageDO>getArgument(0).getStatus());
-            return null;
-        }).when(sessionMessageService).updateSessionMessage(any());
-        when(agentService.validateAgentExists(AGENT_ID)).thenReturn(
-                new Ai1AgentDO().setId(AGENT_ID).setName("客服").setProviderId(1L).setModelId(2L));
-        when(modelService.getModelRespBO(1L, 2L)).thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
-        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
+        doAnswer(
+                        invocation -> {
+                            message.setStatus(
+                                    invocation.<Ai1SessionMessageDO>getArgument(0).getStatus());
+                            return null;
+                        })
+                .when(sessionMessageService)
+                .updateSessionMessage(any());
+        when(agentService.validateAgentExists(AGENT_ID))
+                .thenReturn(
+                        new Ai1AgentDO()
+                                .setId(AGENT_ID)
+                                .setName("客服")
+                                .setProviderId(1L)
+                                .setModelId(2L));
+        when(modelService.getModelRespBO(1L, 2L))
+                .thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
+        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(
+                        eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
                 .thenReturn(new ArrayList<>());
-        when(llmChatTool.chat(any(), anyString(), anyList(), anyString(), anyList(), anyList(), anyLong(), any(), any()))
+        when(llmChatTool.chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        anyString(),
+                        anyList(),
+                        anyList(),
+                        anyLong(),
+                        any(),
+                        any()))
                 .thenReturn(new Ai1LlmChatTool.ChatText("回复", ""));
-        when(taskStream.ack("ai1-session-workers", RECORD_ID)).thenThrow(new IllegalStateException("ACK 失败"))
+        when(taskStream.ack("ai1-session-workers", RECORD_ID))
+                .thenThrow(new IllegalStateException("ACK 失败"))
                 .thenReturn(1L);
-        when(resultStream.rangeReversed(StreamRangeArgs.startId(StreamMessageId.MAX).endId(StreamMessageId.MIN).count(1)))
+        when(resultStream.rangeReversed(
+                        StreamRangeArgs.startId(StreamMessageId.MAX)
+                                .endId(StreamMessageId.MIN)
+                                .count(1)))
                 .thenReturn(Map.of(RECORD_ID, Map.of("type", "done", "data", "")));
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields());
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields(), true);
         // 断言
-        verify(llmChatTool).chat(any(), anyString(), anyList(), anyString(), anyList(), anyList(), anyLong(), any(), any());
+        verify(llmChatTool)
+                .chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        anyString(),
+                        anyList(),
+                        anyList(),
+                        anyLong(),
+                        any(),
+                        any());
         verify(sessionMessageService).updateSessionMessage(any());
         assertEquals(List.of("ping", "done"), captureResultTypes());
         verify(taskStream, times(2)).ack("ai1-session-workers", RECORD_ID);
@@ -423,17 +564,28 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
     @ValueSource(ints = {1, 2})
     public void testHandleTask_finishedWithoutTerminal(Integer status) {
         // mock 方法
-        when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenReturn(new Ai1SessionMessageDO()
-                .setId(MESSAGE_ID).setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole()).setStatus(status));
-        when(resultStream.rangeReversed(StreamRangeArgs.startId(StreamMessageId.MAX).endId(StreamMessageId.MIN).count(1))).thenReturn(Map.of());
+        when(sessionMessageService.getSessionMessage(MESSAGE_ID))
+                .thenReturn(
+                        new Ai1SessionMessageDO()
+                                .setId(MESSAGE_ID)
+                                .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                                .setStatus(status));
+        when(resultStream.rangeReversed(
+                        StreamRangeArgs.startId(StreamMessageId.MAX)
+                                .endId(StreamMessageId.MIN)
+                                .count(1)))
+                .thenReturn(Map.of());
 
         // 调用
         sessionStreamTool.handleTask(RECORD_ID, buildTaskFields(), true);
         // 断言
         verifyNoInteractions(llmChatTool);
         verify(sessionMessageService, never()).updateSessionMessage(any());
-        assertEquals(status.equals(Ai1SessionMessageStatusEnum.SUCCESS.getStatus())
-                ? List.of("done") : List.of("error", "done"), captureResultTypes());
+        assertEquals(
+                status.equals(Ai1SessionMessageStatusEnum.SUCCESS.getStatus())
+                        ? List.of("done")
+                        : List.of("error", "done"),
+                captureResultTypes());
         verify(taskStream).ack("ai1-session-workers", RECORD_ID);
     }
 
@@ -473,5 +625,4 @@ public class Ai1SessionStreamToolTest extends BaseMockitoUnitTest {
             throw new IllegalStateException(e);
         }
     }
-
 }

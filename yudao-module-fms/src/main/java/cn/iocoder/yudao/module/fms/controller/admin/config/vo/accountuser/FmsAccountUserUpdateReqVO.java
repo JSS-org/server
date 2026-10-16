@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountuser;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.fms.enums.config.FmsAccountUserLevelEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -28,7 +31,10 @@ public class FmsAccountUserUpdateReqVO {
     @Data
     public static class Member {
 
-        @Schema(description = "后台用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "后台用户编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         @NotNull(message = "成员用户编号不能为空")
         private Long userId;
 
@@ -36,7 +42,5 @@ public class FmsAccountUserUpdateReqVO {
         @NotNull(message = "成员权限级别不能为空")
         @InEnum(FmsAccountUserLevelEnum.class)
         private Integer level;
-
     }
-
 }

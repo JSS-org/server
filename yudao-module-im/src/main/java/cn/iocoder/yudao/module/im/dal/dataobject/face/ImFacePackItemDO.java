@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.im.dal.dataobject.face;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -25,37 +27,42 @@ public class ImFacePackItemDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 所属表情包编号
      */
     private Long packId;
+
     /**
      * 表情图 URL
      */
     private String url;
+
     /**
      * 表情名（可选；如「狗头」「捂脸」）
      */
     private String name;
+
     /**
      * 渲染宽度（像素）
      */
     private Integer width;
+
     /**
      * 渲染高度（像素）
      */
     private Integer height;
+
     /**
      * 排序
      */
     private Integer sort;
+
     /**
      * 状态
      * <p>
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
-
 }

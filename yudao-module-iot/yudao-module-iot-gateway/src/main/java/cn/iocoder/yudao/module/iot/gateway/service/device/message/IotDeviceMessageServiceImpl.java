@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.iot.gateway.service.device.message;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_NOT_EXISTS;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotDeviceRespDTO;
@@ -10,14 +13,14 @@ import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializerManager;
 import cn.iocoder.yudao.module.iot.gateway.service.device.IotDeviceService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_NOT_EXISTS;
 
 /**
  * IoT 设备消息 Service 实现类
@@ -28,18 +31,15 @@ import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVIC
 @Slf4j
 public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
 
-    @Resource
-    private IotDeviceService deviceService;
+    @Resource private IotDeviceService deviceService;
 
-    @Resource
-    private IotDeviceMessageProducer deviceMessageProducer;
+    @Resource private IotDeviceMessageProducer deviceMessageProducer;
 
-    @Resource
-    private IotMessageSerializerManager messageSerializerManager;
+    @Resource private IotMessageSerializerManager messageSerializerManager;
 
     @Override
-    public byte[] serializeDeviceMessage(IotDeviceMessage message,
-                                         String productKey, String deviceName) {
+    public byte[] serializeDeviceMessage(
+            IotDeviceMessage message, String productKey, String deviceName) {
         // 1.1 获取设备信息
         IotDeviceRespDTO device = deviceService.getDeviceFromCache(productKey, deviceName);
         if (device == null) {
@@ -54,8 +54,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     }
 
     @Override
-    public byte[] serializeDeviceMessage(IotDeviceMessage message,
-                                         IotSerializeTypeEnum serializeType) {
+    public byte[] serializeDeviceMessage(
+            IotDeviceMessage message, IotSerializeTypeEnum serializeType) {
         // 1. 获取序列化器
         IotMessageSerializer serializer = messageSerializerManager.get(serializeType);
         if (serializer == null) {
@@ -67,8 +67,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     }
 
     @Override
-    public IotDeviceMessage deserializeDeviceMessage(byte[] bytes,
-                                                     String productKey, String deviceName) {
+    public IotDeviceMessage deserializeDeviceMessage(
+            byte[] bytes, String productKey, String deviceName) {
         // 1.1 获取设备信息
         IotDeviceRespDTO device = deviceService.getDeviceFromCache(productKey, deviceName);
         if (device == null) {
@@ -83,7 +83,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     }
 
     @Override
-    public IotDeviceMessage deserializeDeviceMessage(byte[] bytes, IotSerializeTypeEnum serializeType) {
+    public IotDeviceMessage deserializeDeviceMessage(
+            byte[] bytes, IotSerializeTypeEnum serializeType) {
         // 1. 获取序列化器
         IotMessageSerializer serializer = messageSerializerManager.get(serializeType);
         if (serializer == null) {
@@ -95,8 +96,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     }
 
     @Override
-    public void sendDeviceMessage(IotDeviceMessage message,
-                                  String productKey, String deviceName, String serverId) {
+    public void sendDeviceMessage(
+            IotDeviceMessage message, String productKey, String deviceName, String serverId) {
         // 1. 获取设备信息
         IotDeviceRespDTO device = deviceService.getDeviceFromCache(productKey, deviceName);
         if (device == null) {
@@ -115,14 +116,16 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
      * @param device   设备信息
      * @param serverId 设备连接的 serverId
      */
-    private void appendDeviceMessage(IotDeviceMessage message,
-                                     IotDeviceRespDTO device, String serverId) {
-        message.setId(IotDeviceMessageUtils.generateMessageId()).setReportTime(LocalDateTime.now())
-                .setDeviceId(device.getId()).setTenantId(device.getTenantId()).setServerId(serverId);
+    private void appendDeviceMessage(
+            IotDeviceMessage message, IotDeviceRespDTO device, String serverId) {
+        message.setId(IotDeviceMessageUtils.generateMessageId())
+                .setReportTime(LocalDateTime.now())
+                .setDeviceId(device.getId())
+                .setTenantId(device.getTenantId())
+                .setServerId(serverId);
         // 特殊：如果设备没有指定 requestId，则使用 messageId
         if (StrUtil.isEmpty(message.getRequestId())) {
             message.setRequestId(message.getId());
         }
     }
-
 }

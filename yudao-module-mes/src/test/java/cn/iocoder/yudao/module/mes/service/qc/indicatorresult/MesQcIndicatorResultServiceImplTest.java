@@ -1,5 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.qc.indicatorresult;
 
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -18,21 +30,12 @@ import cn.iocoder.yudao.module.mes.service.qc.iqc.MesQcIqcService;
 import cn.iocoder.yudao.module.mes.service.qc.oqc.MesQcOqcService;
 import cn.iocoder.yudao.module.mes.service.qc.rqc.MesQcRqcService;
 import cn.iocoder.yudao.module.system.api.dict.DictDataApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link MesQcIndicatorResultServiceImpl} 的单元测试
@@ -42,31 +45,23 @@ import static org.mockito.Mockito.*;
 @Import(MesQcIndicatorResultServiceImpl.class)
 public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesQcIndicatorResultServiceImpl indicatorResultService;
+    @Resource private MesQcIndicatorResultServiceImpl indicatorResultService;
 
-    @Resource
-    private MesQcIndicatorResultMapper resultMapper;
+    @Resource private MesQcIndicatorResultMapper resultMapper;
 
-    @MockitoBean
-    private MesQcIndicatorResultDetailService resultDetailService;
-    @MockitoBean
-    private MesQcIndicatorService indicatorService;
-    @MockitoBean
-    private MesQcIqcService iqcService;
-    @MockitoBean
-    private MesQcIpqcService ipqcService;
-    @MockitoBean
-    private MesQcOqcService oqcService;
-    @MockitoBean
-    private MesQcRqcService rqcService;
-    @MockitoBean
-    private DictDataApi dictDataApi;
+    @MockitoBean private MesQcIndicatorResultDetailService resultDetailService;
+    @MockitoBean private MesQcIndicatorService indicatorService;
+    @MockitoBean private MesQcIqcService iqcService;
+    @MockitoBean private MesQcIpqcService ipqcService;
+    @MockitoBean private MesQcOqcService oqcService;
+    @MockitoBean private MesQcRqcService rqcService;
+    @MockitoBean private DictDataApi dictDataApi;
 
     @Test
     public void testCreateIndicatorResult_success() {
         // 准备参数
-        MesQcIndicatorResultSaveReqVO reqVO = buildReqVO("plain text value", MesQcResultValueTypeEnum.TEXT.getType());
+        MesQcIndicatorResultSaveReqVO reqVO =
+                buildReqVO("plain text value", MesQcResultValueTypeEnum.TEXT.getType());
         // mock 方法
         mockIqcAndIndicator(reqVO, MesQcResultValueTypeEnum.TEXT.getType());
 
@@ -87,13 +82,16 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateIndicatorResult_fileValueInvalid() {
         // 准备参数
-        MesQcIndicatorResultSaveReqVO reqVO = buildReqVO("not-a-url", MesQcResultValueTypeEnum.FILE.getType());
+        MesQcIndicatorResultSaveReqVO reqVO =
+                buildReqVO("not-a-url", MesQcResultValueTypeEnum.FILE.getType());
         // mock 方法
         mockIqcAndIndicator(reqVO, MesQcResultValueTypeEnum.FILE.getType());
 
         // 调用，并断言异常
-        assertServiceException(() -> indicatorResultService.createIndicatorResult(reqVO),
-                QC_RESULT_VALUE_FORMAT_INVALID, "检测项[检测项A]要求文件 URL，实际值=not-a-url");
+        assertServiceException(
+                () -> indicatorResultService.createIndicatorResult(reqVO),
+                QC_RESULT_VALUE_FORMAT_INVALID,
+                "检测项[检测项A]要求文件 URL，实际值=not-a-url");
 
         // 断言：未入库
         assertEquals(0, resultMapper.selectCount());
@@ -103,12 +101,16 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateIndicatorResult_success() {
         // mock 数据
-        MesQcIndicatorResultDO dbResult = randomPojo(MesQcIndicatorResultDO.class, o -> {
-            o.setQcType(MesQcTypeEnum.IQC.getType());
-        });
+        MesQcIndicatorResultDO dbResult =
+                randomPojo(
+                        MesQcIndicatorResultDO.class,
+                        o -> {
+                            o.setQcType(MesQcTypeEnum.IQC.getType());
+                        });
         resultMapper.insert(dbResult);
         // 准备参数
-        MesQcIndicatorResultSaveReqVO reqVO = buildReqVO("updated text", MesQcResultValueTypeEnum.TEXT.getType());
+        MesQcIndicatorResultSaveReqVO reqVO =
+                buildReqVO("updated text", MesQcResultValueTypeEnum.TEXT.getType());
         reqVO.setId(dbResult.getId());
         // mock 方法
         MesQcIndicatorDO indicator = new MesQcIndicatorDO();
@@ -134,12 +136,13 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateIndicatorResult_notExists() {
         // 准备参数
-        MesQcIndicatorResultSaveReqVO reqVO = buildReqVO("text", MesQcResultValueTypeEnum.TEXT.getType());
+        MesQcIndicatorResultSaveReqVO reqVO =
+                buildReqVO("text", MesQcResultValueTypeEnum.TEXT.getType());
         reqVO.setId(randomLongId());
 
         // 调用，并断言异常
-        assertServiceException(() -> indicatorResultService.updateIndicatorResult(reqVO),
-                QC_RESULT_NOT_EXISTS);
+        assertServiceException(
+                () -> indicatorResultService.updateIndicatorResult(reqVO), QC_RESULT_NOT_EXISTS);
     }
 
     @Test
@@ -159,7 +162,8 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteIndicatorResult_notExists() {
         // 调用，并断言异常
-        assertServiceException(() -> indicatorResultService.deleteIndicatorResult(randomLongId()),
+        assertServiceException(
+                () -> indicatorResultService.deleteIndicatorResult(randomLongId()),
                 QC_RESULT_NOT_EXISTS);
     }
 
@@ -179,17 +183,21 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetIndicatorResultPage() {
         // mock 数据
-        MesQcIndicatorResultDO dbResult = randomPojo(MesQcIndicatorResultDO.class, o -> {
-            o.setQcId(1L);
-            o.setQcType(MesQcTypeEnum.IQC.getType());
-            o.setCode("SPL-001");
-            o.setItemId(100L);
-        });
+        MesQcIndicatorResultDO dbResult =
+                randomPojo(
+                        MesQcIndicatorResultDO.class,
+                        o -> {
+                            o.setQcId(1L);
+                            o.setQcType(MesQcTypeEnum.IQC.getType());
+                            o.setCode("SPL-001");
+                            o.setItemId(100L);
+                        });
         resultMapper.insert(dbResult);
         // 测试 qcId 不匹配
         resultMapper.insert(cloneIgnoreId(dbResult, o -> o.setQcId(2L)));
         // 测试 qcType 不匹配
-        resultMapper.insert(cloneIgnoreId(dbResult, o -> o.setQcType(MesQcTypeEnum.IPQC.getType())));
+        resultMapper.insert(
+                cloneIgnoreId(dbResult, o -> o.setQcType(MesQcTypeEnum.IPQC.getType())));
         // 测试 code 不匹配
         resultMapper.insert(cloneIgnoreId(dbResult, o -> o.setCode("SPL-999")));
         // 测试 itemId 不匹配
@@ -202,7 +210,8 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
         pageReqVO.setItemId(100L);
 
         // 调用
-        PageResult<MesQcIndicatorResultDO> pageResult = indicatorResultService.getIndicatorResultPage(pageReqVO);
+        PageResult<MesQcIndicatorResultDO> pageResult =
+                indicatorResultService.getIndicatorResultPage(pageReqVO);
 
         // 断言
         assertEquals(1, pageResult.getTotal());
@@ -213,24 +222,35 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetIndicatorResultCountByQcIdAndType() {
         // mock 数据
-        MesQcIndicatorResultDO result1 = randomPojo(MesQcIndicatorResultDO.class, o -> {
-            o.setQcId(1L);
-            o.setQcType(MesQcTypeEnum.IQC.getType());
-        });
+        MesQcIndicatorResultDO result1 =
+                randomPojo(
+                        MesQcIndicatorResultDO.class,
+                        o -> {
+                            o.setQcId(1L);
+                            o.setQcType(MesQcTypeEnum.IQC.getType());
+                        });
         resultMapper.insert(result1);
-        MesQcIndicatorResultDO result2 = randomPojo(MesQcIndicatorResultDO.class, o -> {
-            o.setQcId(1L);
-            o.setQcType(MesQcTypeEnum.IQC.getType());
-        });
+        MesQcIndicatorResultDO result2 =
+                randomPojo(
+                        MesQcIndicatorResultDO.class,
+                        o -> {
+                            o.setQcId(1L);
+                            o.setQcType(MesQcTypeEnum.IQC.getType());
+                        });
         resultMapper.insert(result2);
         // 不匹配
-        resultMapper.insert(randomPojo(MesQcIndicatorResultDO.class, o -> {
-            o.setQcId(2L);
-            o.setQcType(MesQcTypeEnum.IPQC.getType());
-        }));
+        resultMapper.insert(
+                randomPojo(
+                        MesQcIndicatorResultDO.class,
+                        o -> {
+                            o.setQcId(2L);
+                            o.setQcType(MesQcTypeEnum.IPQC.getType());
+                        }));
 
         // 调用
-        Long count = indicatorResultService.getIndicatorResultCountByQcIdAndType(1L, MesQcTypeEnum.IQC.getType());
+        Long count =
+                indicatorResultService.getIndicatorResultCountByQcIdAndType(
+                        1L, MesQcTypeEnum.IQC.getType());
 
         // 断言
         assertEquals(2L, count);
@@ -239,20 +259,26 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testValidateIndicatorResultExistsByQcIdAndType_success() {
         // mock 数据
-        resultMapper.insert(randomPojo(MesQcIndicatorResultDO.class, o -> {
-            o.setQcId(1L);
-            o.setQcType(MesQcTypeEnum.IQC.getType());
-        }));
+        resultMapper.insert(
+                randomPojo(
+                        MesQcIndicatorResultDO.class,
+                        o -> {
+                            o.setQcId(1L);
+                            o.setQcType(MesQcTypeEnum.IQC.getType());
+                        }));
 
         // 调用（不抛异常即通过）
-        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(1L, MesQcTypeEnum.IQC.getType());
+        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(
+                1L, MesQcTypeEnum.IQC.getType());
     }
 
     @Test
     public void testValidateIndicatorResultExistsByQcIdAndType_notExists() {
         // 调用，并断言异常
         assertServiceException(
-                () -> indicatorResultService.validateIndicatorResultExistsByQcIdAndType(randomLongId(), MesQcTypeEnum.IQC.getType()),
+                () ->
+                        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(
+                                randomLongId(), MesQcTypeEnum.IQC.getType()),
                 QC_FINISH_INDICATOR_RESULT_REQUIRED);
     }
 
@@ -284,5 +310,4 @@ public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {
         reqVO.setItems(ListUtil.of(item));
         return reqVO;
     }
-
 }

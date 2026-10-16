@@ -1,5 +1,19 @@
 package cn.iocoder.yudao.module.infra.service.file;
 
+import static cn.hutool.core.util.RandomUtil.randomEle;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_DELETE_FAIL_MASTER;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
@@ -15,9 +29,12 @@ import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientFactor
 import cn.iocoder.yudao.module.infra.framework.file.core.client.local.LocalFileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.local.LocalFileClientConfig;
 import cn.iocoder.yudao.module.infra.framework.file.core.enums.FileStorageEnum;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Validator;
+
 import lombok.Data;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -25,19 +42,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Map;
-
-import static cn.hutool.core.util.RandomUtil.randomEle;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_DELETE_FAIL_MASTER;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link FileConfigServiceImpl} 的单元测试类
@@ -47,25 +51,28 @@ import static org.mockito.Mockito.*;
 @Import(FileConfigServiceImpl.class)
 public class FileConfigServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FileConfigServiceImpl fileConfigService;
+    @Resource private FileConfigServiceImpl fileConfigService;
 
-    @Resource
-    private FileConfigMapper fileConfigMapper;
+    @Resource private FileConfigMapper fileConfigMapper;
 
-    @MockitoBean
-    private Validator validator;
-    @MockitoBean
-    private FileClientFactory fileClientFactory;
+    @MockitoBean private Validator validator;
+    @MockitoBean private FileClientFactory fileClientFactory;
 
     @Test
     public void testCreateFileConfig_success() {
         // 准备参数
-        Map<String, Object> config = MapUtil.<String, Object>builder().put("basePath", "/yunai")
-                .put("domain", "https://www.iocoder.cn").build();
-        FileConfigSaveReqVO reqVO = randomPojo(FileConfigSaveReqVO.class,
-                o -> o.setStorage(FileStorageEnum.LOCAL.getStorage()).setConfig(config))
-                .setId(null); // 避免 id 被赋值
+        Map<String, Object> config =
+                MapUtil.<String, Object>builder()
+                        .put("basePath", "/yunai")
+                        .put("domain", "https://www.iocoder.cn")
+                        .build();
+        FileConfigSaveReqVO reqVO =
+                randomPojo(
+                                FileConfigSaveReqVO.class,
+                                o ->
+                                        o.setStorage(FileStorageEnum.LOCAL.getStorage())
+                                                .setConfig(config))
+                        .setId(null); // 避免 id 被赋值
 
         // 调用
         Long fileConfigId = fileConfigService.createFileConfig(reqVO);
@@ -76,7 +83,9 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
         assertPojoEquals(reqVO, fileConfig, "id", "config");
         assertFalse(fileConfig.getMaster());
         assertEquals("/yunai", ((LocalFileClientConfig) fileConfig.getConfig()).getBasePath());
-        assertEquals("https://www.iocoder.cn", ((LocalFileClientConfig) fileConfig.getConfig()).getDomain());
+        assertEquals(
+                "https://www.iocoder.cn",
+                ((LocalFileClientConfig) fileConfig.getConfig()).getDomain());
         // 验证 cache
         assertNull(fileConfigService.getClientCache().getIfPresent(fileConfigId));
     }
@@ -84,17 +93,30 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateFileConfig_success() {
         // mock 数据
-        FileConfigDO dbFileConfig = randomPojo(FileConfigDO.class, o -> o.setStorage(FileStorageEnum.LOCAL.getStorage())
-                .setConfig(new LocalFileClientConfig().setBasePath("/yunai").setDomain("https://www.iocoder.cn")));
-        fileConfigMapper.insert(dbFileConfig);// @Sql: 先插入出一条存在的数据
+        FileConfigDO dbFileConfig =
+                randomPojo(
+                        FileConfigDO.class,
+                        o ->
+                                o.setStorage(FileStorageEnum.LOCAL.getStorage())
+                                        .setConfig(
+                                                new LocalFileClientConfig()
+                                                        .setBasePath("/yunai")
+                                                        .setDomain("https://www.iocoder.cn")));
+        fileConfigMapper.insert(dbFileConfig); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        FileConfigSaveReqVO reqVO = randomPojo(FileConfigSaveReqVO.class, o -> {
-            o.setId(dbFileConfig.getId()); // 设置更新的 ID
-            o.setStorage(FileStorageEnum.LOCAL.getStorage());
-            Map<String, Object> config = MapUtil.<String, Object>builder().put("basePath", "/yunai2")
-                    .put("domain", "https://doc.iocoder.cn").build();
-            o.setConfig(config);
-        });
+        FileConfigSaveReqVO reqVO =
+                randomPojo(
+                        FileConfigSaveReqVO.class,
+                        o -> {
+                            o.setId(dbFileConfig.getId()); // 设置更新的 ID
+                            o.setStorage(FileStorageEnum.LOCAL.getStorage());
+                            Map<String, Object> config =
+                                    MapUtil.<String, Object>builder()
+                                            .put("basePath", "/yunai2")
+                                            .put("domain", "https://doc.iocoder.cn")
+                                            .build();
+                            o.setConfig(config);
+                        });
 
         // 调用
         fileConfigService.updateFileConfig(reqVO);
@@ -102,7 +124,9 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
         FileConfigDO fileConfig = fileConfigMapper.selectById(reqVO.getId()); // 获取最新的
         assertPojoEquals(reqVO, fileConfig, "config");
         assertEquals("/yunai2", ((LocalFileClientConfig) fileConfig.getConfig()).getBasePath());
-        assertEquals("https://doc.iocoder.cn", ((LocalFileClientConfig) fileConfig.getConfig()).getDomain());
+        assertEquals(
+                "https://doc.iocoder.cn",
+                ((LocalFileClientConfig) fileConfig.getConfig()).getDomain());
         // 验证 cache
         assertNull(fileConfigService.getClientCache().getIfPresent(fileConfig.getId()));
     }
@@ -113,16 +137,17 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
         FileConfigSaveReqVO reqVO = randomPojo(FileConfigSaveReqVO.class);
 
         // 调用, 并断言异常
-        assertServiceException(() -> fileConfigService.updateFileConfig(reqVO), FILE_CONFIG_NOT_EXISTS);
+        assertServiceException(
+                () -> fileConfigService.updateFileConfig(reqVO), FILE_CONFIG_NOT_EXISTS);
     }
 
     @Test
     public void testUpdateFileConfigMaster_success() {
         // mock 数据
         FileConfigDO dbFileConfig = randomFileConfigDO().setMaster(false);
-        fileConfigMapper.insert(dbFileConfig);// @Sql: 先插入出一条存在的数据
+        fileConfigMapper.insert(dbFileConfig); // @Sql: 先插入出一条存在的数据
         FileConfigDO masterFileConfig = randomFileConfigDO().setMaster(true);
-        fileConfigMapper.insert(masterFileConfig);// @Sql: 先插入出一条存在的数据
+        fileConfigMapper.insert(masterFileConfig); // @Sql: 先插入出一条存在的数据
 
         // 调用
         fileConfigService.updateFileConfigMaster(dbFileConfig.getId());
@@ -136,14 +161,16 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateFileConfigMaster_notExists() {
         // 调用, 并断言异常
-        assertServiceException(() -> fileConfigService.updateFileConfigMaster(randomLongId()), FILE_CONFIG_NOT_EXISTS);
+        assertServiceException(
+                () -> fileConfigService.updateFileConfigMaster(randomLongId()),
+                FILE_CONFIG_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteFileConfig_success() {
         // mock 数据
         FileConfigDO dbFileConfig = randomFileConfigDO().setMaster(false);
-        fileConfigMapper.insert(dbFileConfig);// @Sql: 先插入出一条存在的数据
+        fileConfigMapper.insert(dbFileConfig); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbFileConfig.getId();
 
@@ -161,40 +188,49 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> fileConfigService.deleteFileConfig(id), FILE_CONFIG_NOT_EXISTS);
+        assertServiceException(
+                () -> fileConfigService.deleteFileConfig(id), FILE_CONFIG_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteFileConfig_master() {
         // mock 数据
         FileConfigDO dbFileConfig = randomFileConfigDO().setMaster(true);
-        fileConfigMapper.insert(dbFileConfig);// @Sql: 先插入出一条存在的数据
+        fileConfigMapper.insert(dbFileConfig); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbFileConfig.getId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> fileConfigService.deleteFileConfig(id), FILE_CONFIG_DELETE_FAIL_MASTER);
+        assertServiceException(
+                () -> fileConfigService.deleteFileConfig(id), FILE_CONFIG_DELETE_FAIL_MASTER);
     }
 
     @Test
     public void testGetFileConfigPage() {
         // mock 数据
-        FileConfigDO dbFileConfig = randomFileConfigDO().setName("芋道源码")
-                .setStorage(FileStorageEnum.LOCAL.getStorage());
-        dbFileConfig.setCreateTime(LocalDateTimeUtil.parse("2020-01-23", DatePattern.NORM_DATE_PATTERN));// 等会查询到
+        FileConfigDO dbFileConfig =
+                randomFileConfigDO().setName("芋道源码").setStorage(FileStorageEnum.LOCAL.getStorage());
+        dbFileConfig.setCreateTime(
+                LocalDateTimeUtil.parse("2020-01-23", DatePattern.NORM_DATE_PATTERN)); // 等会查询到
         fileConfigMapper.insert(dbFileConfig);
         // 测试 name 不匹配
         fileConfigMapper.insert(cloneIgnoreId(dbFileConfig, o -> o.setName("源码")));
         // 测试 storage 不匹配
-        fileConfigMapper.insert(cloneIgnoreId(dbFileConfig, o -> o.setStorage(FileStorageEnum.DB.getStorage())));
+        fileConfigMapper.insert(
+                cloneIgnoreId(dbFileConfig, o -> o.setStorage(FileStorageEnum.DB.getStorage())));
         // 测试 createTime 不匹配
-        fileConfigMapper.insert(cloneIgnoreId(dbFileConfig, o -> o.setCreateTime(LocalDateTimeUtil.parse("2020-11-23", DatePattern.NORM_DATE_PATTERN))));
+        fileConfigMapper.insert(
+                cloneIgnoreId(
+                        dbFileConfig,
+                        o ->
+                                o.setCreateTime(
+                                        LocalDateTimeUtil.parse(
+                                                "2020-11-23", DatePattern.NORM_DATE_PATTERN))));
         // 准备参数
         FileConfigPageReqVO reqVO = new FileConfigPageReqVO();
         reqVO.setName("芋道");
         reqVO.setStorage(FileStorageEnum.LOCAL.getStorage());
-        reqVO.setCreateTime((new LocalDateTime[]{buildTime(2020, 1, 1),
-                buildTime(2020, 1, 24)}));
+        reqVO.setCreateTime((new LocalDateTime[] {buildTime(2020, 1, 1), buildTime(2020, 1, 24)}));
 
         // 调用
         PageResult<FileConfigDO> pageResult = fileConfigService.getFileConfigPage(reqVO);
@@ -208,7 +244,7 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
     public void testFileConfig() throws Exception {
         // mock 数据
         FileConfigDO dbFileConfig = randomFileConfigDO().setMaster(false);
-        fileConfigMapper.insert(dbFileConfig);// @Sql: 先插入出一条存在的数据
+        fileConfigMapper.insert(dbFileConfig); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbFileConfig.getId();
         // mock 获得 Client
@@ -224,7 +260,7 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
     public void testGetFileConfig() {
         // mock 数据
         FileConfigDO dbFileConfig = randomFileConfigDO().setMaster(false);
-        fileConfigMapper.insert(dbFileConfig);// @Sql: 先插入出一条存在的数据
+        fileConfigMapper.insert(dbFileConfig); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbFileConfig.getId();
 
@@ -246,8 +282,9 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
         // 调用，并断言
         assertSame(fileClient, fileConfigService.getFileClient(id));
         // 断言缓存
-        verify(fileClientFactory).createOrUpdateFileClient(eq(id), eq(fileConfig.getStorage()),
-                eq(fileConfig.getConfig()));
+        verify(fileClientFactory)
+                .createOrUpdateFileClient(
+                        eq(id), eq(fileConfig.getStorage()), eq(fileConfig.getConfig()));
     }
 
     @Test
@@ -264,18 +301,19 @@ public class FileConfigServiceImplTest extends BaseDbUnitTest {
         // 调用，并断言
         assertSame(fileClient, fileConfigService.getMasterFileClient());
         // 断言缓存
-        verify(fileClientFactory).createOrUpdateFileClient(eq(fileConfig.getId()), eq(fileConfig.getStorage()),
-                eq(fileConfig.getConfig()));
+        verify(fileClientFactory)
+                .createOrUpdateFileClient(
+                        eq(fileConfig.getId()),
+                        eq(fileConfig.getStorage()),
+                        eq(fileConfig.getConfig()));
     }
 
     private FileConfigDO randomFileConfigDO() {
-        return randomPojo(FileConfigDO.class).setStorage(randomEle(FileStorageEnum.values()).getStorage())
+        return randomPojo(FileConfigDO.class)
+                .setStorage(randomEle(FileStorageEnum.values()).getStorage())
                 .setConfig(new EmptyFileClientConfig());
     }
 
     @Data
-    public static class EmptyFileClientConfig implements FileClientConfig, Serializable {
-
-    }
-
+    public static class EmptyFileClientConfig implements FileClientConfig, Serializable {}
 }

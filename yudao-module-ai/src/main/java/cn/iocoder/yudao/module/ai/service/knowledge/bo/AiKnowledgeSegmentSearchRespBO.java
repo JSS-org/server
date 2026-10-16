@@ -14,10 +14,12 @@ public class AiKnowledgeSegmentSearchRespBO {
      * 段落编号
      */
     private Long id;
+
     /**
      * 文档编号
      */
     private Long documentId;
+
     /**
      * 知识库编号
      */
@@ -27,6 +29,7 @@ public class AiKnowledgeSegmentSearchRespBO {
      * 内容
      */
     private String content;
+
     /**
      * 内容长度
      */
@@ -41,5 +44,4 @@ public class AiKnowledgeSegmentSearchRespBO {
      * 相似度分数
      */
     private Double score;
-
 }

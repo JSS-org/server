@@ -84,7 +84,8 @@ public interface OaOfficialDocReceiveService {
      * @param userId 操作用户编号
      * @return 公文收文分页
      */
-    PageResult<OaOfficialDocReceiveDO> getOfficialDocReceivePage(OaOfficialDocReceivePageReqVO reqVO, Long userId);
+    PageResult<OaOfficialDocReceiveDO> getOfficialDocReceivePage(
+            OaOfficialDocReceivePageReqVO reqVO, Long userId);
 
     /**
      * 获得公文收文
@@ -93,5 +94,4 @@ public interface OaOfficialDocReceiveService {
      * @return 公文收文
      */
     OaOfficialDocReceiveDO getOfficialDocReceive(Long id);
-
 }

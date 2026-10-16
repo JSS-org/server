@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.feedback.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,7 +16,10 @@ public class MesProFeedbackSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "报工单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "FB202503001")
+    @Schema(
+            description = "报工单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "FB202503001")
     @NotNull(message = "报工单编号不能为空")
     private String code;
 
@@ -91,5 +96,4 @@ public class MesProFeedbackSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
-    }
+}

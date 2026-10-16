@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.manager.sensitiveword.vo.ImSensitiveWordPageReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.sensitiveword.vo.ImSensitiveWordSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.sensitiveword.ImSensitiveWordDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -53,5 +54,4 @@ public interface ImSensitiveWordService {
      * 【管理后台】批量删除敏感词
      */
     void deleteSensitiveWordList(List<Long> ids);
-
 }

@@ -67,5 +67,4 @@ public interface WmsShipmentOrderDetailService {
      * @return 出库单明细数量
      */
     long getShipmentOrderDetailCountBySkuId(Long skuId);
-
 }

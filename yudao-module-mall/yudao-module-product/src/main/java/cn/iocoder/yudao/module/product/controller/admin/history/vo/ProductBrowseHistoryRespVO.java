@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.product.controller.admin.history.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 商品浏览记录 Response VO")
@@ -12,7 +14,10 @@ public class ProductBrowseHistoryRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "29502")
+    @Schema(
+            description = "商品 SPU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "29502")
     private Long spuId;
 
     // ========== 商品相关字段 ==========
@@ -31,5 +36,4 @@ public class ProductBrowseHistoryRespVO {
 
     @Schema(description = "库存", example = "100")
     private Integer stock;
-
 }

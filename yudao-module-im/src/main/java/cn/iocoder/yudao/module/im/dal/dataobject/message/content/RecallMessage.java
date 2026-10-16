@@ -14,5 +14,4 @@ public class RecallMessage {
      * 被撤回的原消息编号
      */
     private Long messageId;
-
 }

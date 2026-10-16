@@ -19,10 +19,12 @@ public final class MesOrderStatusConstants {
      * 已确认
      */
     public static final int CONFIRMED = 1;
+
     /**
      * 审批中
      */
     public static final int APPROVING = 2;
+
     /**
      * 已审批
      */
@@ -32,9 +34,9 @@ public final class MesOrderStatusConstants {
      * 已完成
      */
     public static final int FINISHED = 4;
+
     /**
      * 已取消
      */
     public static final int CANCELLED = 5;
-
 }

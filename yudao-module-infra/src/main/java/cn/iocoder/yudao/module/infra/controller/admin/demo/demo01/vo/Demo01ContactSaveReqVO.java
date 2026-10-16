@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.infra.controller.admin.demo.demo01.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -32,5 +34,4 @@ public class Demo01ContactSaveReqVO {
 
     @Schema(description = "头像")
     private String avatar;
-
 }

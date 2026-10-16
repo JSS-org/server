@@ -91,5 +91,4 @@ public interface RedisKeyConstants {
      * 用于保证 WebSocket 重连操作的线程安全
      */
     String WEBSOCKET_CONNECT_LOCK = "iot:websocket_connect_lock:%s";
-
 }

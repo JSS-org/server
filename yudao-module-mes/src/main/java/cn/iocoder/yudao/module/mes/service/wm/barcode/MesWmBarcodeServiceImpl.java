@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.barcode;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,14 +14,13 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.MesWmBarcodeSa
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.barcode.MesWmBarcodeConfigDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.barcode.MesWmBarcodeDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.barcode.MesWmBarcodeMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 条码清单 Service 实现类
@@ -29,25 +31,31 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmBarcodeServiceImpl implements MesWmBarcodeService {
 
-    @Resource
-    private MesWmBarcodeMapper barcodeMapper;
+    @Resource private MesWmBarcodeMapper barcodeMapper;
 
-    @Resource
-    private MesWmBarcodeConfigService barcodeConfigService;
+    @Resource private MesWmBarcodeConfigService barcodeConfigService;
 
     @Override
     public Long createBarcode(MesWmBarcodeSaveReqVO createReqVO) {
         // 1. 校验数据
-        MesWmBarcodeConfigDO config = validateBarcodeSaveData(createReqVO.getId(),
-                createReqVO.getBizType(), createReqVO.getBizId());
+        MesWmBarcodeConfigDO config =
+                validateBarcodeSaveData(
+                        createReqVO.getId(), createReqVO.getBizType(), createReqVO.getBizId());
 
         // 2. 生成条码内容，并校验唯一性
-        String content = generateAndValidateContent(createReqVO.getId(),
-                createReqVO.getContent(), config.getContentFormat(), createReqVO.getBizCode());
+        String content =
+                generateAndValidateContent(
+                        createReqVO.getId(),
+                        createReqVO.getContent(),
+                        config.getContentFormat(),
+                        createReqVO.getBizCode());
 
         // 3. 保存条码记录
-        MesWmBarcodeDO barcode = BeanUtils.toBean(createReqVO, MesWmBarcodeDO.class).setContent(content)
-                .setConfigId(config.getId()).setFormat(config.getFormat());
+        MesWmBarcodeDO barcode =
+                BeanUtils.toBean(createReqVO, MesWmBarcodeDO.class)
+                        .setContent(content)
+                        .setConfigId(config.getId())
+                        .setFormat(config.getFormat());
         barcodeMapper.insert(barcode);
         return barcode.getId();
     }
@@ -73,16 +81,23 @@ public class MesWmBarcodeServiceImpl implements MesWmBarcodeService {
         // 1.1 校验存在
         validateBarcodeExists(updateReqVO.getId());
         // 1.2 校验数据
-        MesWmBarcodeConfigDO config = validateBarcodeSaveData(updateReqVO.getId(),
-                updateReqVO.getBizType(), updateReqVO.getBizId());
+        MesWmBarcodeConfigDO config =
+                validateBarcodeSaveData(
+                        updateReqVO.getId(), updateReqVO.getBizType(), updateReqVO.getBizId());
 
         // 2. 生成条码内容，并校验唯一性
-        String content = generateAndValidateContent(updateReqVO.getId(),
-                updateReqVO.getContent(), config.getContentFormat(), updateReqVO.getBizCode());
+        String content =
+                generateAndValidateContent(
+                        updateReqVO.getId(),
+                        updateReqVO.getContent(),
+                        config.getContentFormat(),
+                        updateReqVO.getBizCode());
 
         // 3. 更新（刷新 configId 和 format，确保与最新配置一致）
-        MesWmBarcodeDO updateObj = BeanUtils.toBean(updateReqVO, MesWmBarcodeDO.class)
-                .setConfigId(config.getId()).setFormat(config.getFormat());
+        MesWmBarcodeDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmBarcodeDO.class)
+                        .setConfigId(config.getId())
+                        .setFormat(config.getFormat());
         if (StrUtil.isNotBlank(content)) {
             updateObj.setContent(content);
         }
@@ -131,7 +146,8 @@ public class MesWmBarcodeServiceImpl implements MesWmBarcodeService {
      * @param bizCode 业务编码
      * @return 最终条码内容
      */
-    private String generateAndValidateContent(Long id, String content, String contentFormat, String bizCode) {
+    private String generateAndValidateContent(
+            Long id, String content, String contentFormat, String bizCode) {
         // 1. 如果前端未传递内容，则自动生成
         if (StrUtil.isBlank(content)) {
             content = generateBarcodeContent(contentFormat, bizCode);
@@ -203,7 +219,8 @@ public class MesWmBarcodeServiceImpl implements MesWmBarcodeService {
     public void autoGenerateBarcode(Integer bizType, Long bizId, String bizCode, String bizName) {
         // 1.1 检查是否配置自动生成
         MesWmBarcodeConfigDO config = barcodeConfigService.getBarcodeConfigByBizType(bizType);
-        if (config == null || Boolean.FALSE.equals(config.getAutoGenerateFlag())
+        if (config == null
+                || Boolean.FALSE.equals(config.getAutoGenerateFlag())
                 || CommonStatusEnum.isDisable(config.getStatus())) {
             return;
         }
@@ -214,9 +231,13 @@ public class MesWmBarcodeServiceImpl implements MesWmBarcodeService {
         }
 
         // 2. 创建条码记录
-        MesWmBarcodeSaveReqVO createReqVO = new MesWmBarcodeSaveReqVO()
-                .setBizType(bizType).setBizId(bizId).setBizCode(bizCode).setBizName(bizName)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        MesWmBarcodeSaveReqVO createReqVO =
+                new MesWmBarcodeSaveReqVO()
+                        .setBizType(bizType)
+                        .setBizId(bizId)
+                        .setBizCode(bizCode)
+                        .setBizName(bizName)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         createBarcode(createReqVO);
     }
 
@@ -224,5 +245,4 @@ public class MesWmBarcodeServiceImpl implements MesWmBarcodeService {
     public long getBarcodeCountByConfigId(Long configId) {
         return barcodeMapper.selectCountByConfigId(configId);
     }
-
 }

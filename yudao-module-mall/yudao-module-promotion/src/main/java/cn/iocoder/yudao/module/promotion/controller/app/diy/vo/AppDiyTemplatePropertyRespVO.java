@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.app.diy.vo;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.ToString;
 
@@ -27,5 +29,4 @@ public class AppDiyTemplatePropertyRespVO {
     @Schema(description = "我的", requiredMode = Schema.RequiredMode.REQUIRED, example = "{}")
     @JsonRawValue
     private String user;
-
 }

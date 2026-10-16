@@ -3,11 +3,14 @@ package cn.iocoder.yudao.module.wms.controller.admin.order.shipment.vo.order;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.wms.controller.admin.order.shipment.vo.detail.WmsShipmentOrderDetailSaveReqVO;
 import cn.iocoder.yudao.module.wms.enums.order.WmsShipmentOrderTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,7 +23,10 @@ public class WmsShipmentOrderSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "出库单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "CK202605110001")
+    @Schema(
+            description = "出库单号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "CK202605110001")
     @NotBlank(message = "出库单号不能为空")
     @Size(max = 64, message = "出库单号长度不能超过 64 个字符")
     private String no;
@@ -52,5 +58,4 @@ public class WmsShipmentOrderSaveReqVO {
     @Schema(description = "出库明细")
     @Valid
     private List<WmsShipmentOrderDetailSaveReqVO> details;
-
 }

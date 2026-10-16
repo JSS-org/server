@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantSa
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -141,5 +142,4 @@ public interface TenantService {
      * @param id 租户编号
      */
     void validTenant(Long id);
-
 }

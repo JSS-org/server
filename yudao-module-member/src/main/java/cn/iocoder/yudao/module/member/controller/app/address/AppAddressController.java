@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.member.controller.app.address;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressRespVO;
@@ -7,18 +10,18 @@ import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdate
 import cn.iocoder.yudao.module.member.convert.address.AddressConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
 import cn.iocoder.yudao.module.member.service.address.AddressService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "用户 APP - 用户收件地址")
 @RestController
@@ -26,8 +29,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class AppAddressController {
 
-    @Resource
-    private AddressService addressService;
+    @Resource private AddressService addressService;
 
     @PostMapping("/create")
     @Operation(summary = "创建用户收件地址")
@@ -37,7 +39,8 @@ public class AppAddressController {
 
     @PutMapping("/update")
     @Operation(summary = "更新用户收件地址")
-    public CommonResult<Boolean> updateAddress(@Valid @RequestBody AppAddressUpdateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAddress(
+            @Valid @RequestBody AppAddressUpdateReqVO updateReqVO) {
         addressService.updateAddress(getLoginUserId(), updateReqVO);
         return success(true);
     }
@@ -71,5 +74,4 @@ public class AppAddressController {
         List<MemberAddressDO> list = addressService.getAddressList(getLoginUserId());
         return success(AddressConvert.INSTANCE.convertList(list));
     }
-
 }

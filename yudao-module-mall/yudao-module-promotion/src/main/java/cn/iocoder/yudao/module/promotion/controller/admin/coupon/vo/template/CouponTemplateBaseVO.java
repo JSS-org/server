@@ -1,31 +1,36 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.coupon.vo.template;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.TIME_ZONE_DEFAULT;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionDiscountTypeEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionProductScopeEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponTemplateValidityTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.TIME_ZONE_DEFAULT;
-
 /**
-* 优惠劵模板 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 优惠劵模板 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class CouponTemplateBaseVO {
 
@@ -36,11 +41,17 @@ public class CouponTemplateBaseVO {
     @Schema(description = "优惠券说明", example = "优惠券使用说明")
     private String description;
 
-    @Schema(description = "发行总量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024") // -1 - 则表示不限制发放数量
+    @Schema(
+            description = "发行总量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024") // -1 - 则表示不限制发放数量
     @NotNull(message = "发行总量不能为空")
     private Integer totalCount;
 
-    @Schema(description = "每人限领个数", requiredMode = Schema.RequiredMode.REQUIRED, example = "66") // -1 - 则表示不限制
+    @Schema(
+            description = "每人限领个数",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "66") // -1 - 则表示不限制
     @NotNull(message = "每人限领个数不能为空")
     private Integer takeLimitCount;
 
@@ -48,7 +59,10 @@ public class CouponTemplateBaseVO {
     @NotNull(message = "领取方式不能为空")
     private Integer takeType;
 
-    @Schema(description = "是否设置满多少金额可用", requiredMode = Schema.RequiredMode.REQUIRED, example = "100") // 单位：分；0 - 不限制
+    @Schema(
+            description = "是否设置满多少金额可用",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100") // 单位：分；0 - 不限制
     @NotNull(message = "是否设置满多少金额可用不能为空")
     private Integer usePrice;
 
@@ -137,7 +151,7 @@ public class CouponTemplateBaseVO {
     @JsonIgnore
     public boolean isDiscountPercentValid() {
         return ObjectUtil.notEqual(discountType, PromotionDiscountTypeEnum.PERCENT.getType())
-                || (discountPercent != null && discountPercent >= 1 && discountPercent<= 99);
+                || (discountPercent != null && discountPercent >= 1 && discountPercent <= 99);
     }
 
     @AssertTrue(message = "优惠金额不能为空")
@@ -153,5 +167,4 @@ public class CouponTemplateBaseVO {
         return ObjectUtil.notEqual(discountType, PromotionDiscountTypeEnum.PERCENT.getType())
                 || discountLimitPrice != null;
     }
-
 }

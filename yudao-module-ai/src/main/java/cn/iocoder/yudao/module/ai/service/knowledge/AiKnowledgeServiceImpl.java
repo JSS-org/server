@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai.service.knowledge;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.KNOWLEDGE_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,15 +12,15 @@ import cn.iocoder.yudao.module.ai.dal.dataobject.knowledge.AiKnowledgeDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.dal.mysql.knowledge.AiKnowledgeMapper;
 import cn.iocoder.yudao.module.ai.service.model.AiModelService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.KNOWLEDGE_NOT_EXISTS;
 
 /**
  * AI 知识库-基础信息 Service 实现类
@@ -28,15 +31,11 @@ import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.KNOWLEDGE_NOT_
 @Slf4j
 public class AiKnowledgeServiceImpl implements AiKnowledgeService {
 
-    @Resource
-    private AiKnowledgeMapper knowledgeMapper;
+    @Resource private AiKnowledgeMapper knowledgeMapper;
 
-    @Resource
-    private AiModelService modelService;
-    @Resource
-    private AiKnowledgeSegmentService knowledgeSegmentService;
-    @Resource
-    private AiKnowledgeDocumentService knowledgeDocumentService;
+    @Resource private AiModelService modelService;
+    @Resource private AiKnowledgeSegmentService knowledgeSegmentService;
+    @Resource private AiKnowledgeDocumentService knowledgeDocumentService;
 
     @Override
     public Long createKnowledge(AiKnowledgeSaveReqVO createReqVO) {
@@ -44,8 +43,9 @@ public class AiKnowledgeServiceImpl implements AiKnowledgeService {
         AiModelDO model = modelService.validateModel(createReqVO.getEmbeddingModelId());
 
         // 2. 插入知识库
-        AiKnowledgeDO knowledge = BeanUtils.toBean(createReqVO, AiKnowledgeDO.class)
-                .setEmbeddingModel(model.getModel());
+        AiKnowledgeDO knowledge =
+                BeanUtils.toBean(createReqVO, AiKnowledgeDO.class)
+                        .setEmbeddingModel(model.getModel());
         knowledgeMapper.insert(knowledge);
         return knowledge.getId();
     }
@@ -58,12 +58,14 @@ public class AiKnowledgeServiceImpl implements AiKnowledgeService {
         AiModelDO model = modelService.validateModel(updateReqVO.getEmbeddingModelId());
 
         // 2. 更新知识库
-        AiKnowledgeDO updateObj = BeanUtils.toBean(updateReqVO, AiKnowledgeDO.class)
-                .setEmbeddingModel(model.getModel());
+        AiKnowledgeDO updateObj =
+                BeanUtils.toBean(updateReqVO, AiKnowledgeDO.class)
+                        .setEmbeddingModel(model.getModel());
         knowledgeMapper.updateById(updateObj);
 
         // 3. 如果模型变化，需要 reindex 所有的文档
-        if (ObjUtil.notEqual(oldKnowledge.getEmbeddingModelId(), updateReqVO.getEmbeddingModelId())) {
+        if (ObjUtil.notEqual(
+                oldKnowledge.getEmbeddingModelId(), updateReqVO.getEmbeddingModelId())) {
             knowledgeSegmentService.reindexByKnowledgeIdAsync(updateReqVO.getId());
         }
     }
@@ -105,5 +107,4 @@ public class AiKnowledgeServiceImpl implements AiKnowledgeService {
     public List<AiKnowledgeDO> getKnowledgeSimpleListByStatus(Integer status) {
         return knowledgeMapper.selectListByStatus(status);
     }
-
 }

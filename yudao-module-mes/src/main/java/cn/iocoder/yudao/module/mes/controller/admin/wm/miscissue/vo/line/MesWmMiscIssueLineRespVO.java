@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.line;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -69,5 +70,4 @@ public class MesWmMiscIssueLineRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

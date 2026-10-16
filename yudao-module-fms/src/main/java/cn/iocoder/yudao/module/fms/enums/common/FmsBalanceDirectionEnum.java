@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 @Getter
 @AllArgsConstructor
 public enum FmsBalanceDirectionEnum {
-
     DEBIT("借"),
     CREDIT("贷"),
     FLAT("平");
@@ -26,5 +25,4 @@ public enum FmsBalanceDirectionEnum {
     public static FmsBalanceDirectionEnum valueOf(BigDecimal balance) {
         return balance.signum() > 0 ? DEBIT : balance.signum() < 0 ? CREDIT : FLAT;
     }
-
 }

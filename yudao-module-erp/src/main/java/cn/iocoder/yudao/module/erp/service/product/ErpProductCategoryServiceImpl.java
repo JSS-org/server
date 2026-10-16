@@ -1,11 +1,16 @@
 package cn.iocoder.yudao.module.erp.service.product;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.category.ErpProductCategoryListReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.category.ErpProductCategorySaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductCategoryDO;
 import cn.iocoder.yudao.module.erp.dal.mysql.product.ErpProductCategoryMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -13,9 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 /**
  * ERP 产品分类 Service 实现类
@@ -26,11 +28,9 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 @Validated
 public class ErpProductCategoryServiceImpl implements ErpProductCategoryService {
 
-    @Resource
-    private ErpProductCategoryMapper erpProductCategoryMapper;
+    @Resource private ErpProductCategoryMapper erpProductCategoryMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpProductService productService;
 
     @Override
@@ -54,7 +54,8 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
         // 校验父分类编号的有效性
         validateParentProductCategory(updateReqVO.getId(), updateReqVO.getParentId());
         // 校验分类名称的唯一性
-        validateProductCategoryNameUnique(updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
+        validateProductCategoryNameUnique(
+                updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
 
         // 更新
         ErpProductCategoryDO updateObj = BeanUtils.toBean(updateReqVO, ErpProductCategoryDO.class);
@@ -118,7 +119,8 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
     }
 
     private void validateProductCategoryNameUnique(Long id, Long parentId, String name) {
-        ErpProductCategoryDO productCategory = erpProductCategoryMapper.selectByParentIdAndName(parentId, name);
+        ErpProductCategoryDO productCategory =
+                erpProductCategoryMapper.selectByParentIdAndName(parentId, name);
         if (productCategory == null) {
             return;
         }
@@ -137,7 +139,8 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
     }
 
     @Override
-    public List<ErpProductCategoryDO> getProductCategoryList(ErpProductCategoryListReqVO listReqVO) {
+    public List<ErpProductCategoryDO> getProductCategoryList(
+            ErpProductCategoryListReqVO listReqVO) {
         return erpProductCategoryMapper.selectList(listReqVO);
     }
 
@@ -145,5 +148,4 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
     public List<ErpProductCategoryDO> getProductCategoryList(Collection<Long> ids) {
         return erpProductCategoryMapper.selectByIds(ids);
     }
-
 }

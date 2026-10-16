@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.file;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,7 +13,9 @@ import cn.iocoder.yudao.module.oa.enums.file.OaFilePermissionLevelEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileSubjectTypeEnum;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-
 /**
  * 云盘共享权限 Service 实现类
  *
@@ -33,17 +35,13 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaFilePermissionServiceImpl implements OaFilePermissionService {
 
-    @Resource
-    private OaFilePermissionMapper filePermissionMapper;
+    @Resource private OaFilePermissionMapper filePermissionMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaFileNodeService fileNodeService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @Override
     public List<OaFilePermissionDO> getFilePermissionListByNodeIds(Collection<Long> nodeIds) {
@@ -55,13 +53,15 @@ public class OaFilePermissionServiceImpl implements OaFilePermissionService {
 
     @Override
     public List<OaFilePermissionDO> getValidFilePermissionList(Long userId, Long deptId) {
-        return filePermissionMapper.selectListByUserIdAndDeptIdAndExpireTimeAfter(userId, deptId, LocalDateTime.now());
+        return filePermissionMapper.selectListByUserIdAndDeptIdAndExpireTimeAfter(
+                userId, deptId, LocalDateTime.now());
     }
 
     @Override
     public List<OaFilePermissionDO> getFilePermissionList(Long nodeId, Long userId) {
         // 1. 校验节点管理权限
-        fileNodeService.validateFileNodePermission(nodeId, userId, OaFilePermissionLevelEnum.MANAGE.getLevel());
+        fileNodeService.validateFileNodePermission(
+                nodeId, userId, OaFilePermissionLevelEnum.MANAGE.getLevel());
         // 2. 查询节点共享权限
         return filePermissionMapper.selectListByNodeId(nodeId);
     }
@@ -71,7 +71,8 @@ public class OaFilePermissionServiceImpl implements OaFilePermissionService {
     public Long saveFilePermission(OaFilePermissionSaveReqVO reqVO, Long userId) {
         // 1.1 校验节点管理权限
         fileNodeService.lockFileNode(reqVO.getNodeId());
-        fileNodeService.validateFileNodePermission(reqVO.getNodeId(), userId, OaFilePermissionLevelEnum.MANAGE.getLevel());
+        fileNodeService.validateFileNodePermission(
+                reqVO.getNodeId(), userId, OaFilePermissionLevelEnum.MANAGE.getLevel());
         // 1.2 校验共享主体确实存在
         if (ObjUtil.equal(reqVO.getSubjectType(), OaFileSubjectTypeEnum.USER.getType())) {
             adminUserApi.validateUser(reqVO.getSubjectId());
@@ -80,12 +81,14 @@ public class OaFilePermissionServiceImpl implements OaFilePermissionService {
         } else {
             throw new IllegalArgumentException("不支持的共享主体类型");
         }
-        OaFilePermissionDO existing = filePermissionMapper.selectByNodeIdAndSubjectTypeAndSubjectId(
-                reqVO.getNodeId(), reqVO.getSubjectType(), reqVO.getSubjectId());
+        OaFilePermissionDO existing =
+                filePermissionMapper.selectByNodeIdAndSubjectTypeAndSubjectId(
+                        reqVO.getNodeId(), reqVO.getSubjectType(), reqVO.getSubjectId());
 
         // 2.1 情况一：已有主体更新共享权限
         if (existing != null) {
-            OaFilePermissionDO permission = BeanUtils.toBean(reqVO, OaFilePermissionDO.class).setId(existing.getId());
+            OaFilePermissionDO permission =
+                    BeanUtils.toBean(reqVO, OaFilePermissionDO.class).setId(existing.getId());
             filePermissionMapper.updatePermission(permission);
             return existing.getId();
         }
@@ -104,7 +107,8 @@ public class OaFilePermissionServiceImpl implements OaFilePermissionService {
             throw exception(FILE_PERMISSION_NOT_EXISTS);
         }
         // 1.2 校验节点管理权限
-        fileNodeService.validateFileNodePermission(permission.getNodeId(), userId, OaFilePermissionLevelEnum.MANAGE.getLevel());
+        fileNodeService.validateFileNodePermission(
+                permission.getNodeId(), userId, OaFilePermissionLevelEnum.MANAGE.getLevel());
 
         // 2. 逻辑删除共享记录
         filePermissionMapper.deleteById(id);
@@ -117,5 +121,4 @@ public class OaFilePermissionServiceImpl implements OaFilePermissionService {
         }
         filePermissionMapper.deleteByNodeIds(nodeIds);
     }
-
 }

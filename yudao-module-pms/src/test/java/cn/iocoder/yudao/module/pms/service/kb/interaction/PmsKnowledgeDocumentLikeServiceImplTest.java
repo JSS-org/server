@@ -1,21 +1,24 @@
 package cn.iocoder.yudao.module.pms.service.kb.interaction;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.interaction.PmsKnowledgeDocumentLikeMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.PmsKnowledgeObjectTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link PmsKnowledgeDocumentLikeServiceImpl} 的单元测试类
@@ -25,14 +28,11 @@ import static org.mockito.Mockito.when;
 @Import(PmsKnowledgeDocumentLikeServiceImpl.class)
 public class PmsKnowledgeDocumentLikeServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsKnowledgeDocumentLikeServiceImpl documentLikeService;
+    @Resource private PmsKnowledgeDocumentLikeServiceImpl documentLikeService;
 
-    @Resource
-    private PmsKnowledgeDocumentLikeMapper documentLikeMapper;
+    @Resource private PmsKnowledgeDocumentLikeMapper documentLikeMapper;
 
-    @MockitoBean
-    private PmsKnowledgeInteractionTargetService interactionTargetService;
+    @MockitoBean private PmsKnowledgeInteractionTargetService interactionTargetService;
 
     @Test
     public void testCreateDocumentLike_idempotent() {
@@ -40,7 +40,8 @@ public class PmsKnowledgeDocumentLikeServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         Long documentId = randomLongId();
         when(interactionTargetService.validateTargetReadable(
-                PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId)).thenReturn(randomLongId());
+                        PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId))
+                .thenReturn(randomLongId());
 
         // 调用
         documentLikeService.createDocumentLike(documentId, userId);
@@ -56,7 +57,8 @@ public class PmsKnowledgeDocumentLikeServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         Long documentId = randomLongId();
         when(interactionTargetService.validateTargetReadable(
-                PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId)).thenReturn(randomLongId());
+                        PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId))
+                .thenReturn(randomLongId());
         documentLikeService.createDocumentLike(documentId, userId);
 
         // 调用
@@ -73,7 +75,8 @@ public class PmsKnowledgeDocumentLikeServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         Long documentId = randomLongId();
         when(interactionTargetService.validateTargetReadable(
-                PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId)).thenReturn(randomLongId());
+                        PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId))
+                .thenReturn(randomLongId());
         documentLikeService.createDocumentLike(documentId, userId);
 
         // 调用
@@ -82,5 +85,4 @@ public class PmsKnowledgeDocumentLikeServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertTrue(CollUtil.isEmpty(documentLikeMapper.selectListByDocumentId(documentId)));
     }
-
 }

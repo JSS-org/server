@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.service.websocket.notification.rtc;
 
 import cn.iocoder.yudao.module.im.dal.dataobject.rtc.ImRtcCallDO;
+
 import lombok.Data;
 
 /**
@@ -19,22 +20,27 @@ public class ImRtcParticipantConnectedNotification {
      * 业务通话编号
      */
     private String room;
+
     /**
      * 加入的参与者用户编号
      */
     private Long userId;
+
     /**
      * 会话类型
      */
     private Integer conversationType;
+
     /**
      * 群编号；群通话场景必填
      */
     private Long groupId;
+
     /**
      * 媒体类型；群聊场景的非邀请成员靠这个字段 首次填充胶囊条
      */
     private Integer mediaType;
+
     /**
      * 发起人用户编号；群聊场景的非邀请成员靠这个字段 首次填充胶囊条
      */
@@ -48,7 +54,8 @@ public class ImRtcParticipantConnectedNotification {
      * @return 通知载荷
      */
     public static ImRtcParticipantConnectedNotification of(ImRtcCallDO call, Long userId) {
-        ImRtcParticipantConnectedNotification notification = new ImRtcParticipantConnectedNotification();
+        ImRtcParticipantConnectedNotification notification =
+                new ImRtcParticipantConnectedNotification();
         notification.room = call.getRoom();
         notification.userId = userId;
         notification.conversationType = call.getConversationType();
@@ -57,5 +64,4 @@ public class ImRtcParticipantConnectedNotification {
         notification.inviterUserId = call.getInviterUserId();
         return notification;
     }
-
 }

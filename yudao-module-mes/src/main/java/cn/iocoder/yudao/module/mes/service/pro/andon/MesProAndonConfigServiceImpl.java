@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.andon;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_ANDON_CONFIG_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.andon.vo.config.MesProAndonConfigPageReqVO;
@@ -8,15 +11,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.pro.andon.MesProAndonConfigDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.andon.MesProAndonConfigMapper;
 import cn.iocoder.yudao.module.system.api.permission.RoleApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_ANDON_CONFIG_NOT_EXISTS;
 
 /**
  * MES 安灯呼叫配置 Service 实现类
@@ -27,13 +29,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_ANDON_CON
 @Validated
 public class MesProAndonConfigServiceImpl implements MesProAndonConfigService {
 
-    @Resource
-    private MesProAndonConfigMapper andonConfigMapper;
+    @Resource private MesProAndonConfigMapper andonConfigMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private RoleApi roleApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private RoleApi roleApi;
 
     @Override
     public Long createAndonConfig(MesProAndonConfigSaveReqVO createReqVO) {
@@ -82,7 +81,8 @@ public class MesProAndonConfigServiceImpl implements MesProAndonConfigService {
     }
 
     @Override
-    public PageResult<MesProAndonConfigDO> getAndonConfigPage(MesProAndonConfigPageReqVO pageReqVO) {
+    public PageResult<MesProAndonConfigDO> getAndonConfigPage(
+            MesProAndonConfigPageReqVO pageReqVO) {
         return andonConfigMapper.selectPage(pageReqVO);
     }
 
@@ -101,5 +101,4 @@ public class MesProAndonConfigServiceImpl implements MesProAndonConfigService {
             roleApi.validRoleList(Collections.singleton(reqVO.getHandlerRoleId()));
         }
     }
-
 }

@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPageUpd
 import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyPageDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -78,5 +79,4 @@ public interface DiyPageService {
      * @return 装修页面列表
      */
     List<DiyPageDO> getDiyPageByTemplateId(Long templateId);
-
 }

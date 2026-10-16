@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.*;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -11,15 +15,14 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
 import cn.iocoder.yudao.module.iot.gateway.service.auth.IotDeviceTokenService;
+
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.web.RoutingContext;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.*;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.MediaType;
 
 /**
  * IoT 网关 HTTP 协议的处理器抽象基类：提供通用的前置处理（认证）、全局的异常捕获等
@@ -29,7 +32,8 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 @Slf4j
 public abstract class IotHttpAbstractHandler implements Handler<RoutingContext> {
 
-    private final IotDeviceTokenService deviceTokenService = SpringUtil.getBean(IotDeviceTokenService.class);
+    private final IotDeviceTokenService deviceTokenService =
+            SpringUtil.getBean(IotDeviceTokenService.class);
 
     @Override
     public final void handle(RoutingContext context) {
@@ -99,7 +103,7 @@ public abstract class IotHttpAbstractHandler implements Handler<RoutingContext> 
 
     // ========== 序列化相关方法 ==========
 
-    protected static  <T> T deserializeRequest(RoutingContext context, Class<T> clazz) {
+    protected static <T> T deserializeRequest(RoutingContext context, Class<T> clazz) {
         byte[] body = context.body().buffer() != null ? context.body().buffer().getBytes() : null;
         if (ArrayUtil.isEmpty(body)) {
             throw invalidParamException("请求体不能为空");
@@ -118,5 +122,4 @@ public abstract class IotHttpAbstractHandler implements Handler<RoutingContext> 
                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .end(serializeResponse(data));
     }
-
 }

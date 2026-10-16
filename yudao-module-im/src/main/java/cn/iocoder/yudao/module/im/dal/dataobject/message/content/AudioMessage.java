@@ -12,10 +12,12 @@ public class AudioMessage {
      * 语音文件 URL
      */
     private String url;
+
     /**
      * 语音时长（秒）
      */
     private Integer duration;
+
     /**
      * 文件大小（字节）
      */
@@ -25,5 +27,4 @@ public class AudioMessage {
      * 引用消息（可选）
      */
     private QuoteMessage quote;
-
 }

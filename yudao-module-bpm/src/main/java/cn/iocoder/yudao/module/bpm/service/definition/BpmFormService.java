@@ -5,12 +5,12 @@ import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.form.BpmFormPageReqVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.form.BpmFormSaveReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmFormDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  * 动态表单 Service 接口
@@ -81,5 +81,4 @@ public interface BpmFormService {
      * @return 动态表单分页
      */
     PageResult<BpmFormDO> getFormPage(BpmFormPageReqVO pageReqVO);
-
 }

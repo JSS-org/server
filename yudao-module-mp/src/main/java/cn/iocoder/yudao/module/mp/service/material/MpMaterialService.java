@@ -6,9 +6,11 @@ import cn.iocoder.yudao.module.mp.controller.admin.material.vo.MpMaterialUploadN
 import cn.iocoder.yudao.module.mp.controller.admin.material.vo.MpMaterialUploadPermanentReqVO;
 import cn.iocoder.yudao.module.mp.controller.admin.material.vo.MpMaterialUploadTemporaryReqVO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.material.MpMaterialDO;
-import me.chanjar.weixin.common.api.WxConsts;
 
 import jakarta.validation.Valid;
+
+import me.chanjar.weixin.common.api.WxConsts;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +41,8 @@ public interface MpMaterialService {
      * @return 素材
      * @throws IOException 文件操作发生异常
      */
-    MpMaterialDO uploadTemporaryMaterial(@Valid MpMaterialUploadTemporaryReqVO reqVO) throws IOException;
+    MpMaterialDO uploadTemporaryMaterial(@Valid MpMaterialUploadTemporaryReqVO reqVO)
+            throws IOException;
 
     /**
      * 上传永久素材
@@ -48,7 +51,8 @@ public interface MpMaterialService {
      * @return 素材
      * @throws IOException 文件操作发生异常
      */
-    MpMaterialDO uploadPermanentMaterial(@Valid MpMaterialUploadPermanentReqVO reqVO) throws IOException;
+    MpMaterialDO uploadPermanentMaterial(@Valid MpMaterialUploadPermanentReqVO reqVO)
+            throws IOException;
 
     /**
      * 上传图文内容中的图片
@@ -80,5 +84,4 @@ public interface MpMaterialService {
      * @param id 编号
      */
     void deleteMaterial(Long id);
-
 }

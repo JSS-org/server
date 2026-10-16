@@ -183,5 +183,4 @@ public interface PmsProjectMemberService {
      * @param userIds 后台用户编号集合
      */
     void validateProjectMemberList(Long projectId, Collection<Long> userIds);
-
 }

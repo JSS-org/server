@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.member.service.address;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
 import cn.iocoder.yudao.module.member.convert.address.AddressConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
 import cn.iocoder.yudao.module.member.dal.mysql.address.MemberAddressMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NOT_EXISTS;
 
 /**
  * 用户收件地址 Service 实现类
@@ -25,16 +27,21 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NO
 @Validated
 public class AddressServiceImpl implements AddressService {
 
-    @Resource
-    private MemberAddressMapper memberAddressMapper;
+    @Resource private MemberAddressMapper memberAddressMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createAddress(Long userId, AppAddressCreateReqVO createReqVO) {
         // 如果添加的是默认收件地址，则将原默认地址修改为非默认
         if (Boolean.TRUE.equals(createReqVO.getDefaultStatus())) {
-            List<MemberAddressDO> addresses = memberAddressMapper.selectListByUserIdAndDefaulted(userId, true);
-            addresses.forEach(address -> memberAddressMapper.updateById(new MemberAddressDO().setId(address.getId()).setDefaultStatus(false)));
+            List<MemberAddressDO> addresses =
+                    memberAddressMapper.selectListByUserIdAndDefaulted(userId, true);
+            addresses.forEach(
+                    address ->
+                            memberAddressMapper.updateById(
+                                    new MemberAddressDO()
+                                            .setId(address.getId())
+                                            .setDefaultStatus(false)));
         }
 
         // 插入
@@ -53,9 +60,16 @@ public class AddressServiceImpl implements AddressService {
 
         // 如果修改的是默认收件地址，则将原默认地址修改为非默认
         if (Boolean.TRUE.equals(updateReqVO.getDefaultStatus())) {
-            List<MemberAddressDO> addresses = memberAddressMapper.selectListByUserIdAndDefaulted(userId, true);
-            addresses.stream().filter(u -> !u.getId().equals(updateReqVO.getId())) // 排除自己
-                    .forEach(address -> memberAddressMapper.updateById(new MemberAddressDO().setId(address.getId()).setDefaultStatus(false)));
+            List<MemberAddressDO> addresses =
+                    memberAddressMapper.selectListByUserIdAndDefaulted(userId, true);
+            addresses.stream()
+                    .filter(u -> !u.getId().equals(updateReqVO.getId())) // 排除自己
+                    .forEach(
+                            address ->
+                                    memberAddressMapper.updateById(
+                                            new MemberAddressDO()
+                                                    .setId(address.getId())
+                                                    .setDefaultStatus(false)));
         }
 
         // 更新
@@ -90,8 +104,8 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public MemberAddressDO getDefaultUserAddress(Long userId) {
-        List<MemberAddressDO> addresses = memberAddressMapper.selectListByUserIdAndDefaulted(userId, true);
+        List<MemberAddressDO> addresses =
+                memberAddressMapper.selectListByUserIdAndDefaulted(userId, true);
         return CollUtil.getFirst(addresses);
     }
-
 }

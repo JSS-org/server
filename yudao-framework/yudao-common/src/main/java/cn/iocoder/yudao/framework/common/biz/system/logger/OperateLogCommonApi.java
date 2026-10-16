@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.common.biz.system.logger;
 
 import cn.iocoder.yudao.framework.common.biz.system.logger.dto.OperateLogCreateReqDTO;
+
 import jakarta.validation.Valid;
+
 import org.springframework.scheduling.annotation.Async;
 
 /**
@@ -27,5 +29,4 @@ public interface OperateLogCommonApi {
     default void createOperateLogAsync(OperateLogCreateReqDTO createReqDTO) {
         createOperateLog(createReqDTO);
     }
-
 }

@@ -3,13 +3,16 @@ package cn.iocoder.yudao.module.member.controller.admin.signin.vo.config;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+
+import lombok.Data;
 
 /**
  * 签到规则 Base VO，提供给添加、修改、详细的子 VO 使用

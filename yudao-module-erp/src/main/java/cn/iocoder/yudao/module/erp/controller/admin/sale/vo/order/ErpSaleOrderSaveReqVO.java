@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -54,14 +56,20 @@ public class ErpSaleOrderSaveReqVO {
         @NotNull(message = "产品编号不能为空")
         private Long productId;
 
-        @Schema(description = "产品单位单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
+        @Schema(
+                description = "产品单位单位",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "3113")
         @NotNull(message = "产品单位单位不能为空")
         private Long productUnitId;
 
         @Schema(description = "产品单价", example = "100.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "产品数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "产品数量不能为空")
         private BigDecimal count;
 
@@ -70,7 +78,5 @@ public class ErpSaleOrderSaveReqVO {
 
         @Schema(description = "备注", example = "随便")
         private String remark;
-
     }
-
 }

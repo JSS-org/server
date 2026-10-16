@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.ai.controller.admin.image.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
+
 import org.springframework.ai.openai.OpenAiImageOptions;
 import org.springframework.ai.stabilityai.api.StabilityAiImageOptions;
 
@@ -45,5 +48,4 @@ public class AiImageDrawReqVO {
      */
     @Schema(description = "绘制参数")
     private Map<String, String> options;
-
 }

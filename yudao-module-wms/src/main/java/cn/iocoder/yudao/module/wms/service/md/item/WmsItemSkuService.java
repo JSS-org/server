@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.sku.WmsItemSkuPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.sku.WmsItemSkuSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemSkuDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 
 /**
  * WMS 商品 SKU Service 接口
@@ -112,5 +113,4 @@ public interface WmsItemSkuService {
     default Map<Long, List<WmsItemSkuDO>> getItemSkuMultiMap(Collection<Long> itemIds) {
         return convertMultiMap(getItemSkuList(itemIds), WmsItemSkuDO::getItemId);
     }
-
 }

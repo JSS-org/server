@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.timer;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -8,14 +10,15 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.framework.job.core.IotSchedulerManager;
 import cn.iocoder.yudao.module.iot.job.rule.IotSceneRuleJob;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
 
 /**
  * IoT 场景规则定时触发器处理器：负责管理定时触发器的注册、更新、删除等操作
@@ -39,8 +42,13 @@ public class IotSceneRuleTimerHandler {
         if (sceneRule == null || CollUtil.isEmpty(sceneRule.getTriggers())) {
             return;
         }
-        List<IotSceneRuleDO.Trigger> timerTriggers = filterList(sceneRule.getTriggers(),
-                trigger -> ObjUtil.equals(trigger.getType(), IotSceneRuleTriggerTypeEnum.TIMER.getType()));
+        List<IotSceneRuleDO.Trigger> timerTriggers =
+                filterList(
+                        sceneRule.getTriggers(),
+                        trigger ->
+                                ObjUtil.equals(
+                                        trigger.getType(),
+                                        IotSceneRuleTriggerTypeEnum.TIMER.getType()));
         if (CollUtil.isEmpty(timerTriggers)) {
             return;
         }
@@ -116,7 +124,8 @@ public class IotSceneRuleTimerHandler {
      * @param sceneRule 场景规则
      * @param trigger   定时触发器配置
      */
-    private void registerSingleTimerTrigger(IotSceneRuleDO sceneRule, IotSceneRuleDO.Trigger trigger) {
+    private void registerSingleTimerTrigger(
+            IotSceneRuleDO sceneRule, IotSceneRuleDO.Trigger trigger) {
         // 1. 参数校验
         if (StrUtil.isBlank(trigger.getCronExpression())) {
             log.error("[registerSingleTimerTrigger][场景规则({}) 定时触发器缺少 CRON 表达式]", sceneRule.getId());
@@ -131,13 +140,17 @@ public class IotSceneRuleTimerHandler {
                     IotSceneRuleJob.class,
                     jobName,
                     trigger.getCronExpression(),
-                    IotSceneRuleJob.buildJobDataMap(sceneRule.getId())
-            );
-            log.info("[registerSingleTimerTrigger][场景规则({}) 定时触发器注册成功，CRON: {}]",
-                    sceneRule.getId(), trigger.getCronExpression());
+                    IotSceneRuleJob.buildJobDataMap(sceneRule.getId()));
+            log.info(
+                    "[registerSingleTimerTrigger][场景规则({}) 定时触发器注册成功，CRON: {}]",
+                    sceneRule.getId(),
+                    trigger.getCronExpression());
         } catch (SchedulerException e) {
-            log.error("[registerSingleTimerTrigger][场景规则({}) 定时触发器注册失败，CRON: {}]",
-                    sceneRule.getId(), trigger.getCronExpression(), e);
+            log.error(
+                    "[registerSingleTimerTrigger][场景规则({}) 定时触发器注册失败，CRON: {}]",
+                    sceneRule.getId(),
+                    trigger.getCronExpression(),
+                    e);
         }
     }
 
@@ -150,5 +163,4 @@ public class IotSceneRuleTimerHandler {
     private String buildJobName(Long sceneRuleId) {
         return "iot_scene_rule_timer_" + sceneRuleId;
     }
-
 }

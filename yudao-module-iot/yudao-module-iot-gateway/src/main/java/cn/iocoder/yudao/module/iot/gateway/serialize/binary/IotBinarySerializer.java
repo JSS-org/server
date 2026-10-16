@@ -7,7 +7,9 @@ import cn.iocoder.yudao.module.iot.core.enums.IotSerializeTypeEnum;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
+
 import io.vertx.core.buffer.Buffer;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -108,24 +110,28 @@ public class IotBinarySerializer implements IotMessageSerializer {
 
             // 3. 读取消息类型
             byte messageType = buffer.getByte(index++);
-            Assert.isTrue(messageType == REQUEST || messageType == RESPONSE, "无效的消息类型: " + messageType);
+            Assert.isTrue(
+                    messageType == REQUEST || messageType == RESPONSE, "无效的消息类型: " + messageType);
 
             // 4. 读取消息长度
             int messageLength = buffer.getInt(index);
             index += 4;
-            Assert.isTrue(messageLength == buffer.length(),
+            Assert.isTrue(
+                    messageLength == buffer.length(),
                     "消息长度不匹配，期望: " + messageLength + ", 实际: " + buffer.length());
 
             // 5. 读取消息 ID
             short messageIdLength = buffer.getShort(index);
             index += 2;
-            String messageId = buffer.getString(index, index + messageIdLength, StandardCharsets.UTF_8.name());
+            String messageId =
+                    buffer.getString(index, index + messageIdLength, StandardCharsets.UTF_8.name());
             index += messageIdLength;
 
             // 6. 读取方法名
             short methodLength = buffer.getShort(index);
             index += 2;
-            String method = buffer.getString(index, index + methodLength, StandardCharsets.UTF_8.name());
+            String method =
+                    buffer.getString(index, index + methodLength, StandardCharsets.UTF_8.name());
             index += methodLength;
 
             // 7. 解析消息体
@@ -176,7 +182,8 @@ public class IotBinarySerializer implements IotMessageSerializer {
         return bodyBuffer.getBytes();
     }
 
-    private byte[] buildCompleteMessage(IotDeviceMessage message, byte messageType, byte[] bodyData) {
+    private byte[] buildCompleteMessage(
+            IotDeviceMessage message, byte messageType, byte[] bodyData) {
         Buffer buffer = Buffer.buffer();
         // 1. 写入协议头部
         buffer.appendByte(MAGIC_NUMBER);
@@ -186,8 +193,10 @@ public class IotBinarySerializer implements IotMessageSerializer {
         int lengthPosition = buffer.length();
         buffer.appendInt(0);
         // 3. 写入消息 ID
-        String messageId = StrUtil.isNotBlank(message.getRequestId()) ? message.getRequestId()
-                : IotDeviceMessageUtils.generateMessageId();
+        String messageId =
+                StrUtil.isNotBlank(message.getRequestId())
+                        ? message.getRequestId()
+                        : IotDeviceMessageUtils.generateMessageId();
         byte[] messageIdBytes = StrUtil.utf8Bytes(messageId);
         buffer.appendShort((short) messageIdBytes.length);
         buffer.appendBytes(messageIdBytes);
@@ -202,8 +211,8 @@ public class IotBinarySerializer implements IotMessageSerializer {
         return buffer.getBytes();
     }
 
-    private IotDeviceMessage parseMessageBody(Buffer buffer, int startIndex, byte messageType,
-                                              String messageId, String method) {
+    private IotDeviceMessage parseMessageBody(
+            Buffer buffer, int startIndex, byte messageType, String messageId, String method) {
         if (startIndex >= buffer.length()) {
             return IotDeviceMessage.of(messageId, method, null, null, null, null);
         }
@@ -216,7 +225,8 @@ public class IotBinarySerializer implements IotMessageSerializer {
         }
     }
 
-    private IotDeviceMessage parseResponseMessage(Buffer buffer, int startIndex, String messageId, String method) {
+    private IotDeviceMessage parseResponseMessage(
+            Buffer buffer, int startIndex, String messageId, String method) {
         int index = startIndex;
 
         // 1. 读取响应码
@@ -226,7 +236,10 @@ public class IotBinarySerializer implements IotMessageSerializer {
         // 2. 读取响应消息
         short msgLength = buffer.getShort(index);
         index += 2;
-        String msg = msgLength > 0 ? buffer.getString(index, index + msgLength, StandardCharsets.UTF_8.name()) : null;
+        String msg =
+                msgLength > 0
+                        ? buffer.getString(index, index + msgLength, StandardCharsets.UTF_8.name())
+                        : null;
         index += msgLength;
 
         // 3. 读取响应数据
@@ -250,5 +263,4 @@ public class IotBinarySerializer implements IotMessageSerializer {
             return buffer.getString(startIndex, endIndex, StandardCharsets.UTF_8.name());
         }
     }
-
 }

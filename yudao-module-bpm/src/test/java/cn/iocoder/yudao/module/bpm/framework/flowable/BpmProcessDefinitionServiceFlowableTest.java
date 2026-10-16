@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.module.bpm.service.definition.BpmProcessDefinitionServiceImpl;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link BpmProcessDefinitionServiceImpl} 依赖 Flowable 引擎的集成测试
@@ -20,19 +22,23 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class BpmProcessDefinitionServiceFlowableTest extends BaseFlowableUnitTest {
 
-    @Resource
-    private RepositoryService repositoryService;
+    @Resource private RepositoryService repositoryService;
 
-    private final BpmProcessDefinitionServiceImpl processDefinitionServiceImpl = new BpmProcessDefinitionServiceImpl();
+    private final BpmProcessDefinitionServiceImpl processDefinitionServiceImpl =
+            new BpmProcessDefinitionServiceImpl();
 
     private String deploymentId;
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(processDefinitionServiceImpl, "repositoryService", repositoryService);
-        deploymentId = repositoryService.createDeployment()
-                .addClasspathResource("bpmn/simple-approve.bpmn20.xml")
-                .deploy().getId();
+        ReflectionTestUtils.setField(
+                processDefinitionServiceImpl, "repositoryService", repositoryService);
+        deploymentId =
+                repositoryService
+                        .createDeployment()
+                        .addClasspathResource("bpmn/simple-approve.bpmn20.xml")
+                        .deploy()
+                        .getId();
     }
 
     @AfterEach
@@ -43,7 +49,12 @@ public class BpmProcessDefinitionServiceFlowableTest extends BaseFlowableUnitTes
     @Test
     public void testGetProcessDefinition_success() {
         // 准备参数
-        String id = repositoryService.createProcessDefinitionQuery().deploymentId(deploymentId).singleResult().getId();
+        String id =
+                repositoryService
+                        .createProcessDefinitionQuery()
+                        .deploymentId(deploymentId)
+                        .singleResult()
+                        .getId();
 
         // 调用
         ProcessDefinition processDefinition = processDefinitionServiceImpl.getProcessDefinition(id);
@@ -57,5 +68,4 @@ public class BpmProcessDefinitionServiceFlowableTest extends BaseFlowableUnitTes
         assertNull(processDefinitionServiceImpl.getProcessDefinition("not-exists"));
         assertNull(processDefinitionServiceImpl.getProcessDefinition(null));
     }
-
 }

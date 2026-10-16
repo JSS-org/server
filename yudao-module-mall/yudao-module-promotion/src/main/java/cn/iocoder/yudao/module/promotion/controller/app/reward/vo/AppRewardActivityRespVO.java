@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.app.reward.vo;
 
 import cn.iocoder.yudao.module.promotion.controller.admin.reward.vo.RewardActivityBaseVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -44,7 +46,5 @@ public class AppRewardActivityRespVO {
 
         @Schema(description = "规则描述")
         private String description; // 通过 {@link #limit}、{@link #discountPrice} 等字段进行拼接
-
     }
-
 }

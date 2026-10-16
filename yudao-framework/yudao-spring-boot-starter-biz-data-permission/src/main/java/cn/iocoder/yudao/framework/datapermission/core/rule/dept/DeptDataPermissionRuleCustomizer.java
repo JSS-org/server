@@ -16,5 +16,4 @@ public interface DeptDataPermissionRuleCustomizer {
      * @param rule 权限规则
      */
     void customize(DeptDataPermissionRule rule);
-
 }

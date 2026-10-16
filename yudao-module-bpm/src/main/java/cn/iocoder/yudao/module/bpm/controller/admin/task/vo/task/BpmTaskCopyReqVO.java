@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 
 import java.util.Collection;
@@ -14,7 +16,10 @@ public class BpmTaskCopyReqVO {
     @NotEmpty(message = "任务编号不能为空")
     private String id;
 
-    @Schema(description = "抄送的用户编号数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1,2]")
+    @Schema(
+            description = "抄送的用户编号数组",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1,2]")
     @NotEmpty(message = "抄送用户不能为空")
     private Collection<Long> copyUserIds;
 

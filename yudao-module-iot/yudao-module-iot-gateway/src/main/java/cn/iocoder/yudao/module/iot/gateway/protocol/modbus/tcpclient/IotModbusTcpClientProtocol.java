@@ -16,9 +16,12 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.Iot
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.IotModbusTcpClientConnectionManager;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.IotModbusTcpClientPollScheduler;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
+
 import io.vertx.core.Vertx;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
 import org.redisson.api.RedissonClient;
 
 import java.util.List;
@@ -37,22 +40,22 @@ public class IotModbusTcpClientProtocol implements IotProtocol {
      * 协议配置
      */
     private final ProtocolProperties properties;
+
     /**
      * 服务器 ID（用于消息追踪，全局唯一）
      */
-    @Getter
-    private final String serverId;
+    @Getter private final String serverId;
 
     /**
      * 运行状态
      */
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     /**
      * Vert.x 实例
      */
     private final Vertx vertx;
+
     /**
      * 配置刷新定时器 ID
      */
@@ -62,6 +65,7 @@ public class IotModbusTcpClientProtocol implements IotProtocol {
      * 连接管理器
      */
     private final IotModbusTcpClientConnectionManager connectionManager;
+
     /**
      * 下行消息订阅者
      */
@@ -84,14 +88,18 @@ public class IotModbusTcpClientProtocol implements IotProtocol {
         IotDeviceCommonApi deviceApi = SpringUtil.getBean(IotDeviceCommonApi.class);
         IotDeviceMessageService messageService = SpringUtil.getBean(IotDeviceMessageService.class);
         this.configCacheService = new IotModbusTcpClientConfigCacheService(deviceApi);
-        this.connectionManager = new IotModbusTcpClientConnectionManager(redissonClient, vertx,
-                messageService, configCacheService, serverId);
+        this.connectionManager =
+                new IotModbusTcpClientConnectionManager(
+                        redissonClient, vertx, messageService, configCacheService, serverId);
 
         // 初始化 Handler
-        IotModbusTcpClientUpstreamHandler upstreamHandler = new IotModbusTcpClientUpstreamHandler(messageService, serverId);
+        IotModbusTcpClientUpstreamHandler upstreamHandler =
+                new IotModbusTcpClientUpstreamHandler(messageService, serverId);
 
         // 初始化轮询调度器
-        this.pollScheduler = new IotModbusTcpClientPollScheduler(vertx, connectionManager, upstreamHandler, configCacheService);
+        this.pollScheduler =
+                new IotModbusTcpClientPollScheduler(
+                        vertx, connectionManager, upstreamHandler, configCacheService);
     }
 
     @Override
@@ -116,18 +124,18 @@ public class IotModbusTcpClientProtocol implements IotProtocol {
             refreshConfig();
             // 1.2 启动配置刷新定时器
             int refreshInterval = properties.getModbusTcpClient().getConfigRefreshInterval();
-            configRefreshTimerId = vertx.setPeriodic(
-                    TimeUnit.SECONDS.toMillis(refreshInterval),
-                    id -> refreshConfig()
-            );
+            configRefreshTimerId =
+                    vertx.setPeriodic(
+                            TimeUnit.SECONDS.toMillis(refreshInterval), id -> refreshConfig());
             running = true;
             log.info("[start][IoT Modbus TCP Client 协议 {} 启动成功，serverId={}]", getId(), serverId);
 
             // 2. 启动下行消息订阅者
             IotMessageBus messageBus = SpringUtil.getBean(IotMessageBus.class);
-            IotModbusTcpClientDownstreamHandler downstreamHandler = new IotModbusTcpClientDownstreamHandler(connectionManager,
-                    configCacheService);
-            this.downstreamSubscriber = new IotModbusTcpClientDownstreamSubscriber(this, downstreamHandler, messageBus);
+            IotModbusTcpClientDownstreamHandler downstreamHandler =
+                    new IotModbusTcpClientDownstreamHandler(connectionManager, configCacheService);
+            this.downstreamSubscriber =
+                    new IotModbusTcpClientDownstreamSubscriber(this, downstreamHandler, messageBus);
             this.downstreamSubscriber.start();
         } catch (Exception e) {
             log.error("[start][IoT Modbus TCP Client 协议 {} 启动失败]", getId(), e);
@@ -214,5 +222,4 @@ public class IotModbusTcpClientProtocol implements IotProtocol {
             log.error("[refreshConfig][刷新配置失败]", e);
         }
     }
-
 }

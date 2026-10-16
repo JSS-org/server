@@ -7,7 +7,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.statistics.service.product.ProductStatisticsService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,8 +20,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductStatisticsJob implements JobHandler {
 
-    @Resource
-    private ProductStatisticsService productStatisticsService;
+    @Resource private ProductStatisticsService productStatisticsService;
 
     /**
      * 执行商品统计任务
@@ -43,5 +44,4 @@ public class ProductStatisticsJob implements JobHandler {
         String result = productStatisticsService.statisticsProduct(days);
         return StrUtil.format("商品统计:\n{}", result);
     }
-
 }

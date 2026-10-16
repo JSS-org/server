@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.oa.service.reimbursement;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.oa.controller.admin.reimbursement.vo.OaReimbursementPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.reimbursement.vo.OaReimbursementSaveReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.reimbursement.vo.OaReimbursementSubmitReqVO;
-import cn.iocoder.yudao.module.oa.controller.admin.reimbursement.vo.OaReimbursementPageReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.reimbursement.OaReimbursementDO;
 
 /**
@@ -52,7 +52,8 @@ public interface OaReimbursementService {
      * @param pageReqVO 分页条件
      * @return 申请分页
      */
-    PageResult<OaReimbursementDO> getReimbursementPage(Long userId, OaReimbursementPageReqVO pageReqVO);
+    PageResult<OaReimbursementDO> getReimbursementPage(
+            Long userId, OaReimbursementPageReqVO pageReqVO);
 
     /**
      * 更新费用报销审批状态
@@ -61,5 +62,4 @@ public interface OaReimbursementService {
      * @param status 审批状态
      */
     void updateReimbursementStatus(Long id, Integer status);
-
 }

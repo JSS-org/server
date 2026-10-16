@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply.vo.issue;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 用品归还 Request VO")
@@ -20,5 +22,4 @@ public class OaSupplyReturnReqVO {
     @Schema(description = "归还备注", example = "物品完好，已归还入库")
     @Size(max = 500, message = "归还备注长度不能超过 {max} 个字符")
     private String returnRemark;
-
 }

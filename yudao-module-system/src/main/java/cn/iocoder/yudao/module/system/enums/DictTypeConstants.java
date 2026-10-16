@@ -22,5 +22,4 @@ public interface DictTypeConstants {
     String SMS_TEMPLATE_TYPE = "system_sms_template_type"; // 短信模板类型
     String SMS_SEND_STATUS = "system_sms_send_status"; // 短信发送状态
     String SMS_RECEIVE_STATUS = "system_sms_receive_status"; // 短信接收状态
-
 }

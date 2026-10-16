@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.crm.controller.admin.contract.vo.contract;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,6 +33,7 @@ public class CrmContractRespVO {
     @Schema(description = "客户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "18336")
     @ExcelProperty("客户编号")
     private Long customerId;
+
     @Schema(description = "客户名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "18336")
     @ExcelProperty("客户名称")
     private String customerName;
@@ -38,6 +41,7 @@ public class CrmContractRespVO {
     @Schema(description = "商机编号", example = "10864")
     @ExcelProperty("商机编号")
     private Long businessId;
+
     @Schema(description = "商机名称", example = "10864")
     @ExcelProperty("商机名称")
     private String businessName;
@@ -49,9 +53,11 @@ public class CrmContractRespVO {
     @Schema(description = "负责人的用户编号", example = "25682")
     @ExcelProperty("负责人的用户编号")
     private Long ownerUserId;
+
     @Schema(description = "负责人名字", example = "25682")
     @ExcelProperty("负责人名字")
     private String ownerUserName;
+
     @Schema(description = "负责人部门")
     @ExcelProperty("负责人部门")
     private String ownerUserDeptName;
@@ -94,12 +100,14 @@ public class CrmContractRespVO {
 
     @Schema(description = "客户签约人编号", example = "18546")
     private Long signContactId;
+
     @Schema(description = "客户签约人", example = "小豆")
     @ExcelProperty("客户签约人")
     private String signContactName;
 
     @Schema(description = "公司签约人", example = "14036")
     private Long signUserId;
+
     @Schema(description = "公司签约人", example = "小明")
     @ExcelProperty("公司签约人")
     private String signUserName;
@@ -136,27 +144,43 @@ public class CrmContractRespVO {
         @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "888")
         private Long id;
 
-        @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "20529")
+        @Schema(
+                description = "产品编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "20529")
         private Long productId;
+
         @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
         private String productName;
-        @Schema(description = "产品条码", requiredMode = Schema.RequiredMode.REQUIRED, example = "20529")
+
+        @Schema(
+                description = "产品条码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "20529")
         private String productNo;
+
         @Schema(description = "产品单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
         private int productUnit;
 
-        @Schema(description = "产品单价", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "产品单价",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "合同价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "合同价格",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         private BigDecimal contractPrice;
 
         @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "8911")
         private BigDecimal count;
 
-        @Schema(description = "总计价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "总计价格",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         private BigDecimal totalPrice;
-
     }
-
 }

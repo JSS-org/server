@@ -98,5 +98,4 @@ public interface MenuService {
      * @return 菜单数组
      */
     List<MenuDO> getMenuList(Collection<Long> ids);
-
 }

@@ -14,6 +14,7 @@ public class MemberAreaStatisticsRespBO {
      * 省份编号
      */
     private Integer areaId;
+
     /**
      * 省份名称
      */
@@ -28,6 +29,7 @@ public class MemberAreaStatisticsRespBO {
      * 下单的会员数量
      */
     private Integer orderCreateUserCount;
+
     /**
      * 支付订单的会员数量
      */
@@ -37,5 +39,4 @@ public class MemberAreaStatisticsRespBO {
      * 订单支付金额，单位：分
      */
     private Integer orderPayPrice;
-
 }

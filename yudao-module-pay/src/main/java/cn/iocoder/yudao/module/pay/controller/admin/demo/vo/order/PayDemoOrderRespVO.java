@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.pay.controller.admin.demo.vo.order;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 /**
-* 示例订单 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 示例订单 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class PayDemoOrderRespVO {
 
@@ -42,7 +43,10 @@ public class PayDemoOrderRespVO {
     @Schema(description = "支付退款编号", example = "23366")
     private Long payRefundId;
 
-    @Schema(description = "退款金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "14039")
+    @Schema(
+            description = "退款金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "14039")
     private Integer refundPrice;
 
     @Schema(description = "退款时间")
@@ -50,5 +54,4 @@ public class PayDemoOrderRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

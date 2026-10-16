@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.infra.controller.admin.job.vo.job;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 定时任务创建/修改 Request VO")
@@ -16,14 +18,20 @@ public class JobSaveReqVO {
     @NotEmpty(message = "任务名称不能为空")
     private String name;
 
-    @Schema(description = "处理器的名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "sysUserSessionTimeoutJob")
+    @Schema(
+            description = "处理器的名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "sysUserSessionTimeoutJob")
     @NotEmpty(message = "处理器的名字不能为空")
     private String handlerName;
 
     @Schema(description = "处理器的参数", example = "yudao")
     private String handlerParam;
 
-    @Schema(description = "CRON 表达式", requiredMode = Schema.RequiredMode.REQUIRED, example = "0/10 * * * * ? *")
+    @Schema(
+            description = "CRON 表达式",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "0/10 * * * * ? *")
     @NotEmpty(message = "CRON 表达式不能为空")
     private String cronExpression;
 
@@ -37,5 +45,4 @@ public class JobSaveReqVO {
 
     @Schema(description = "监控超时时间", example = "1000")
     private Integer monitorTimeout;
-
 }

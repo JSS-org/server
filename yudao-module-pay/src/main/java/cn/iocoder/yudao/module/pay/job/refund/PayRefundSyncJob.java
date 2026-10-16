@@ -4,9 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
  * 退款订单的同步 Job
@@ -18,8 +19,7 @@ import jakarta.annotation.Resource;
 @Component
 public class PayRefundSyncJob implements JobHandler {
 
-    @Resource
-    private PayRefundService refundService;
+    @Resource private PayRefundService refundService;
 
     @Override
     @TenantJob
@@ -27,5 +27,4 @@ public class PayRefundSyncJob implements JobHandler {
         int count = refundService.syncRefund();
         return StrUtil.format("同步退款订单 {} 个", count);
     }
-
 }

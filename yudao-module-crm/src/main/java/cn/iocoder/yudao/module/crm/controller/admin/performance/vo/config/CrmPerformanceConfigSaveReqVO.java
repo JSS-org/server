@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.crm.controller.admin.performance.vo.config;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.performance.CrmPerformanceConfigBizTypeEnum;
 import cn.iocoder.yudao.module.crm.enums.performance.CrmPerformanceConfigObjectTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -65,10 +68,8 @@ public class CrmPerformanceConfigSaveReqVO {
     @Schema(description = "十二月目标金额")
     private BigDecimal decemberTargetPrice;
 
-    @Schema(description = "目标类型",
-            requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
+    @Schema(description = "目标类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     @NotNull(message = "目标类型不能为空")
     @InEnum(value = CrmPerformanceConfigBizTypeEnum.class, message = "目标类型，必须是 {value}")
     private Integer bizType;
-
 }

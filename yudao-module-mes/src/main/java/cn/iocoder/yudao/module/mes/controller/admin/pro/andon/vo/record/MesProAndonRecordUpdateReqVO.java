@@ -1,10 +1,14 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.andon.vo.record;
 
 import cn.iocoder.yudao.module.mes.enums.pro.MesProAndonStatusEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -47,5 +51,4 @@ public class MesProAndonRecordUpdateReqVO {
         }
         return handlerUserId != null;
     }
-
 }

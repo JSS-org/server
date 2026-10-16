@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.websocket.core.util;
 
 import cn.iocoder.yudao.framework.security.core.LoginUser;
+
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Map;
@@ -63,5 +64,4 @@ public class WebSocketFrameworkUtils {
         LoginUser loginUser = getLoginUser(session);
         return loginUser != null ? loginUser.getTenantId() : null;
     }
-
 }

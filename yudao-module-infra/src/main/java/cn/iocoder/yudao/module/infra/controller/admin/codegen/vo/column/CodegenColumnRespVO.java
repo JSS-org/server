@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -33,10 +34,16 @@ public class CodegenColumnRespVO {
     @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
     private Integer ordinalPosition;
 
-    @Schema(description = "Java 属性类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "userAge")
+    @Schema(
+            description = "Java 属性类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "userAge")
     private String javaType;
 
-    @Schema(description = "Java 属性名", requiredMode = Schema.RequiredMode.REQUIRED, example = "Integer")
+    @Schema(
+            description = "Java 属性名",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "Integer")
     private String javaField;
 
     @Schema(description = "字典类型", example = "sys_gender")
@@ -45,19 +52,34 @@ public class CodegenColumnRespVO {
     @Schema(description = "数据示例", example = "1024")
     private String example;
 
-    @Schema(description = "是否为 Create 创建操作的字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否为 Create 创建操作的字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean createOperation;
 
-    @Schema(description = "是否为 Update 更新操作的字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "是否为 Update 更新操作的字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     private Boolean updateOperation;
 
-    @Schema(description = "是否为 List 查询操作的字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否为 List 查询操作的字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean listOperation;
 
-    @Schema(description = "List 查询操作的条件类型，参见 CodegenColumnListConditionEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "LIKE")
+    @Schema(
+            description = "List 查询操作的条件类型，参见 CodegenColumnListConditionEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "LIKE")
     private String listOperationCondition;
 
-    @Schema(description = "是否为 List 查询操作的返回字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否为 List 查询操作的返回字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean listOperationResult;
 
     @Schema(description = "显示类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "input")
@@ -65,5 +87,4 @@ public class CodegenColumnRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

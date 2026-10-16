@@ -45,7 +45,8 @@ public interface IotDeviceCommonApi {
      * @param reqDTO 子设备注册请求（包含网关标识和子设备列表）
      * @return 注册结果列表
      */
-    CommonResult<List<IotSubDeviceRegisterRespDTO>> registerSubDevices(IotSubDeviceRegisterFullReqDTO reqDTO);
+    CommonResult<List<IotSubDeviceRegisterRespDTO>> registerSubDevices(
+            IotSubDeviceRegisterFullReqDTO reqDTO);
 
     /**
      * 获取 Modbus 设备配置列表
@@ -53,6 +54,6 @@ public interface IotDeviceCommonApi {
      * @param listReqDTO 查询参数
      * @return Modbus 设备配置列表
      */
-    CommonResult<List<IotModbusDeviceConfigRespDTO>> getModbusDeviceConfigList(IotModbusDeviceConfigListReqDTO listReqDTO);
-
+    CommonResult<List<IotModbusDeviceConfigRespDTO>> getModbusDeviceConfigList(
+            IotModbusDeviceConfigListReqDTO listReqDTO);
 }

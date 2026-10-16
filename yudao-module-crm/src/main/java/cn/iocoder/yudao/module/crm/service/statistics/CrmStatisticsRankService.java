@@ -1,8 +1,7 @@
 package cn.iocoder.yudao.module.crm.service.statistics;
 
-
-import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankReqVO;
+import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankRespVO;
 
 import java.util.List;
 
@@ -76,5 +75,4 @@ public interface CrmStatisticsRankService {
      * @return 跟进客户数排行榜
      */
     List<CrmStatisticsRankRespVO> getFollowCustomerCountRank(CrmStatisticsRankReqVO rankReqVO);
-
 }

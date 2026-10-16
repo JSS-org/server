@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.ai.controller.admin.write.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.ai.enums.write.AiWriteTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI 写作生成 Request VO")
@@ -35,5 +38,4 @@ public class AiWriteGenerateReqVO {
     @Schema(description = "语言", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "语言不能为空")
     private Integer language;
-
 }

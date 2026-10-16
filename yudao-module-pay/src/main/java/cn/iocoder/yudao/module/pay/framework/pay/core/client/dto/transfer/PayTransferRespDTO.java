@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer;
 
 import cn.iocoder.yudao.module.pay.enums.transfer.PayTransferStatusEnum;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -44,6 +45,7 @@ public class PayTransferRespDTO {
      * 调用渠道的错误码
      */
     private String channelErrorCode;
+
     /**
      * 调用渠道报错时，错误信息
      */
@@ -60,8 +62,8 @@ public class PayTransferRespDTO {
     /**
      * 创建【WAITING】状态的转账返回
      */
-    public static PayTransferRespDTO waitingOf(String channelTransferNo,
-                                               String outTransferNo, Object rawData) {
+    public static PayTransferRespDTO waitingOf(
+            String channelTransferNo, String outTransferNo, Object rawData) {
         PayTransferRespDTO respDTO = new PayTransferRespDTO();
         respDTO.status = PayTransferStatusEnum.WAITING.getStatus();
         respDTO.channelTransferNo = channelTransferNo;
@@ -73,8 +75,8 @@ public class PayTransferRespDTO {
     /**
      * 创建【IN_PROGRESS】状态的转账返回
      */
-    public static PayTransferRespDTO processingOf(String channelTransferNo,
-                                                  String outTransferNo, Object rawData) {
+    public static PayTransferRespDTO processingOf(
+            String channelTransferNo, String outTransferNo, Object rawData) {
         PayTransferRespDTO respDTO = new PayTransferRespDTO();
         respDTO.status = PayTransferStatusEnum.PROCESSING.getStatus();
         respDTO.channelTransferNo = channelTransferNo;
@@ -86,8 +88,8 @@ public class PayTransferRespDTO {
     /**
      * 创建【CLOSED】状态的转账返回
      */
-    public static PayTransferRespDTO closedOf(String channelErrorCode, String channelErrorMsg,
-                                              String outTransferNo, Object rawData) {
+    public static PayTransferRespDTO closedOf(
+            String channelErrorCode, String channelErrorMsg, String outTransferNo, Object rawData) {
         PayTransferRespDTO respDTO = new PayTransferRespDTO();
         respDTO.status = PayTransferStatusEnum.CLOSED.getStatus();
         respDTO.channelErrorCode = channelErrorCode;
@@ -101,8 +103,11 @@ public class PayTransferRespDTO {
     /**
      * 创建【SUCCESS】状态的转账返回
      */
-    public static PayTransferRespDTO successOf(String channelTransferNo, LocalDateTime successTime,
-                                             String outTransferNo, Object rawData) {
+    public static PayTransferRespDTO successOf(
+            String channelTransferNo,
+            LocalDateTime successTime,
+            String outTransferNo,
+            Object rawData) {
         PayTransferRespDTO respDTO = new PayTransferRespDTO();
         respDTO.status = PayTransferStatusEnum.SUCCESS.getStatus();
         respDTO.channelTransferNo = channelTransferNo;
@@ -112,5 +117,4 @@ public class PayTransferRespDTO {
         respDTO.rawData = rawData;
         return respDTO;
     }
-
 }

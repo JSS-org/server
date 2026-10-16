@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.admin.demo.vo.withdraw;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,10 +16,13 @@ public class PayDemoWithdrawRespVO {
     @Schema(description = "提现标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "吃饭报销")
     private String subject;
 
-    @Schema(description = "提现金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "22338")
+    @Schema(
+            description = "提现金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "22338")
     private Integer price;
 
-    @Schema(description = "收款人姓名",  example = "test")
+    @Schema(description = "收款人姓名", example = "test")
     private String userName;
 
     @Schema(description = "收款人账号", example = "32167")
@@ -43,5 +47,4 @@ public class PayDemoWithdrawRespVO {
 
     @Schema(description = "转账失败原因", example = "IP 不正确")
     private String transferErrorMsg;
-
 }

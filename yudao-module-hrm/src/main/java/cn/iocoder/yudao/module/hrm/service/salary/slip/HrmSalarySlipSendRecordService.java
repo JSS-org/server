@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord.Hr
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord.HrmSalarySlipSendReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.slip.HrmSalarySlipSendRecordDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -55,5 +56,4 @@ public interface HrmSalarySlipSendRecordService {
      * @return 工资条发放记录
      */
     HrmSalarySlipSendRecordDO getSalarySlipSendRecord(Long id);
-
 }

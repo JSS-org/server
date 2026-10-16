@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.product.controller.admin.comment.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.ToString;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+import lombok.ToString;
 
 @Schema(description = "管理后台 - 商品评价可见修改 Request VO")
 @Data
@@ -18,5 +19,4 @@ public class ProductCommentUpdateVisibleReqVO {
     @Schema(description = "是否可见", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
     @NotNull(message = "是否可见不能为空")
     private Boolean visible;
-
 }

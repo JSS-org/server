@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -26,12 +27,17 @@ public class FmsHomeMetricDetailRespVO {
     @Data
     public static class Trend {
 
-        @Schema(description = "会计期间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-08")
+        @Schema(
+                description = "会计期间",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "2026-08")
         private String month;
 
-        @Schema(description = "指标金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000.00")
+        @Schema(
+                description = "指标金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10000.00")
         private BigDecimal amount;
-
     }
 
     @Schema(description = "管理后台 - FMS 首页财务指标科目构成 Response VO")
@@ -44,12 +50,16 @@ public class FmsHomeMetricDetailRespVO {
         @Schema(description = "科目编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "5001")
         private String subjectCode;
 
-        @Schema(description = "科目名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "主营业务收入")
+        @Schema(
+                description = "科目名称",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "主营业务收入")
         private String subjectName;
 
-        @Schema(description = "科目金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "8000.00")
+        @Schema(
+                description = "科目金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "8000.00")
         private BigDecimal amount;
-
     }
-
 }

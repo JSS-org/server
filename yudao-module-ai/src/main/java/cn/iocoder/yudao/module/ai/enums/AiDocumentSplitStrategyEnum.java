@@ -49,5 +49,4 @@ public enum AiDocumentSplitStrategyEnum {
      * 策略名称
      */
     private final String name;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.level.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,5 +19,4 @@ public class MemberLevelRecordRespVO extends MemberLevelRecordBaseVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

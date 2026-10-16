@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.app.wallet.vo.recharge;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,5 +39,4 @@ public class AppPayWalletRechargeRespVO {
 
     @Schema(description = "退款状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     private Integer refundStatus;
-
 }

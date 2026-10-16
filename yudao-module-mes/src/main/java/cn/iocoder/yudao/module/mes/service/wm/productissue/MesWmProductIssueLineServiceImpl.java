@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.productissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_ISSUE_LINE_ITEM_NOT_IN_BOM;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_ISSUE_LINE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -11,16 +15,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIs
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productissue.MesWmProductIssueLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderBomService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_ISSUE_LINE_ITEM_NOT_IN_BOM;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_ISSUE_LINE_NOT_EXISTS;
 
 /**
  * MES 领料出库单行 Service 实现类
@@ -29,19 +31,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_IS
 @Validated
 public class MesWmProductIssueLineServiceImpl implements MesWmProductIssueLineService {
 
-    @Resource
-    private MesWmProductIssueLineMapper issueLineMapper;
+    @Resource private MesWmProductIssueLineMapper issueLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmProductIssueService issueService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesProWorkOrderBomService workOrderBomService;
-    @Resource
-    @Lazy
-    private MesWmProductIssueDetailService issueDetailService;
+    @Resource @Lazy private MesWmProductIssueService issueService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesProWorkOrderBomService workOrderBomService;
+    @Resource @Lazy private MesWmProductIssueDetailService issueDetailService;
 
     @Override
     public Long createProductIssueLine(MesWmProductIssueLineSaveReqVO createReqVO) {
@@ -60,7 +55,8 @@ public class MesWmProductIssueLineServiceImpl implements MesWmProductIssueLineSe
         validateProductIssueLineSaveData(updateReqVO);
 
         // 更新
-        MesWmProductIssueLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmProductIssueLineDO.class);
+        MesWmProductIssueLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmProductIssueLineDO.class);
         issueLineMapper.updateById(updateObj);
     }
 
@@ -82,7 +78,8 @@ public class MesWmProductIssueLineServiceImpl implements MesWmProductIssueLineSe
     }
 
     @Override
-    public PageResult<MesWmProductIssueLineDO> getProductIssueLinePage(MesWmProductIssueLinePageReqVO pageReqVO) {
+    public PageResult<MesWmProductIssueLineDO> getProductIssueLinePage(
+            MesWmProductIssueLinePageReqVO pageReqVO) {
         return issueLineMapper.selectPage(pageReqVO);
     }
 
@@ -121,15 +118,15 @@ public class MesWmProductIssueLineServiceImpl implements MesWmProductIssueLineSe
         // 校验领料单存在，并获取工单编号
         MesWmProductIssueDO issue = issueService.validateProductIssueExists(issueId);
         // 校验物料是否在工单 BOM 中（防错料）
-        List<MesProWorkOrderBomDO> workOrderBoms = workOrderBomService.getWorkOrderBomListByWorkOrderId(issue.getWorkOrderId());
+        List<MesProWorkOrderBomDO> workOrderBoms =
+                workOrderBomService.getWorkOrderBomListByWorkOrderId(issue.getWorkOrderId());
         if (CollUtil.isEmpty(workOrderBoms)) {
             return;
         }
-        MesProWorkOrderBomDO workOrderBom = CollUtil.findOne(workOrderBoms,
-                bom -> bom.getItemId().equals(itemId));
+        MesProWorkOrderBomDO workOrderBom =
+                CollUtil.findOne(workOrderBoms, bom -> bom.getItemId().equals(itemId));
         if (workOrderBom == null) {
             throw exception(WM_PRODUCT_ISSUE_LINE_ITEM_NOT_IN_BOM);
         }
     }
-
 }

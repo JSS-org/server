@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.group.vo.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,10 @@ public class ImGroupRequestRespVO {
     @Schema(description = "群编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long groupId;
 
-    @Schema(description = "申请人 / 被邀请人用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
+    @Schema(
+            description = "申请人 / 被邀请人用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100")
     private Long userId;
 
     @Schema(description = "邀请人用户编号；NULL 表示用户主动申请", example = "200")
@@ -64,5 +68,4 @@ public class ImGroupRequestRespVO {
 
     @Schema(description = "群头像（实时聚合自 ImGroup）")
     private String groupAvatar;
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo.MesProWorkO
 import cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo.bom.MesProWorkOrderBomPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo.bom.MesProWorkOrderBomSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.workorder.MesProWorkOrderBomDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -79,5 +80,4 @@ public interface MesProWorkOrderBomService {
      * @param updated     是否为更新场景（true 时先删除旧 BOM）
      */
     void generateWorkOrderBom(Long workOrderId, MesProWorkOrderSaveReqVO reqVO, boolean updated);
-
 }

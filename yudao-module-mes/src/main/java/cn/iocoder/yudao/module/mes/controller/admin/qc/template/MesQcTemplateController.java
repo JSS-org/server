@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.template;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
@@ -11,12 +14,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.MesQcTemplate
 import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.MesQcTemplateSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateDO;
 import cn.iocoder.yudao.module.mes.service.qc.template.MesQcTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,29 +30,27 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - MES 质检方案")
 @RestController
 @RequestMapping("/mes/qc/template")
 @Validated
 public class MesQcTemplateController {
 
-    @Resource
-    private MesQcTemplateService templateService;
+    @Resource private MesQcTemplateService templateService;
 
     @PostMapping("/create")
     @Operation(summary = "创建质检方案")
     @PreAuthorize("@ss.hasPermission('mes:qc-template:create')")
-    public CommonResult<Long> createTemplate(@Valid @RequestBody MesQcTemplateSaveReqVO createReqVO) {
+    public CommonResult<Long> createTemplate(
+            @Valid @RequestBody MesQcTemplateSaveReqVO createReqVO) {
         return success(templateService.createTemplate(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新质检方案")
     @PreAuthorize("@ss.hasPermission('mes:qc-template:update')")
-    public CommonResult<Boolean> updateTemplate(@Valid @RequestBody MesQcTemplateSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateTemplate(
+            @Valid @RequestBody MesQcTemplateSaveReqVO updateReqVO) {
         templateService.updateTemplate(updateReqVO);
         return success(true);
     }
@@ -72,7 +76,8 @@ public class MesQcTemplateController {
     @GetMapping("/page")
     @Operation(summary = "获得质检方案分页")
     @PreAuthorize("@ss.hasPermission('mes:qc-template:query')")
-    public CommonResult<PageResult<MesQcTemplateRespVO>> getTemplatePage(@Valid MesQcTemplatePageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesQcTemplateRespVO>> getTemplatePage(
+            @Valid MesQcTemplatePageReqVO pageReqVO) {
         PageResult<MesQcTemplateDO> pageResult = templateService.getTemplatePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesQcTemplateRespVO.class));
     }
@@ -81,12 +86,16 @@ public class MesQcTemplateController {
     @Operation(summary = "导出质检方案 Excel")
     @PreAuthorize("@ss.hasPermission('mes:qc-template:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportTemplateExcel(@Valid MesQcTemplatePageReqVO pageReqVO,
-                                    HttpServletResponse response) throws IOException {
+    public void exportTemplateExcel(
+            @Valid MesQcTemplatePageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesQcTemplateDO> list = templateService.getTemplatePage(pageReqVO).getList();
-        ExcelUtils.write(response, "质检方案.xls", "数据", MesQcTemplateRespVO.class,
+        ExcelUtils.write(
+                response,
+                "质检方案.xls",
+                "数据",
+                MesQcTemplateRespVO.class,
                 BeanUtils.toBean(list, MesQcTemplateRespVO.class));
     }
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.product.controller.admin.category.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 商品分类新增/更新 Request VO")
@@ -33,5 +35,4 @@ public class ProductCategorySaveReqVO {
 
     @Schema(description = "分类描述", example = "描述")
     private String description;
-
 }

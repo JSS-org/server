@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.ai.dal.dataobject.write;
 
-import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.enums.DictTypeConstants;
+import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.module.ai.enums.write.AiWriteTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 /**
@@ -23,8 +25,7 @@ public class AiWriteDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 用户编号
@@ -46,12 +47,14 @@ public class AiWriteDO extends BaseDO {
      * 枚举 {@link AiPlatformEnum}
      */
     private String platform;
+
     /**
      * 模型编号
      *
      * 关联 {@link AiModelDO#getId()}
      */
     private Long modelId;
+
     /**
      * 模型
      */
@@ -66,6 +69,7 @@ public class AiWriteDO extends BaseDO {
      * 生成的内容
      */
     private String generatedContent;
+
     /**
      * 原文
      */
@@ -77,18 +81,21 @@ public class AiWriteDO extends BaseDO {
      * 字典：{@link DictTypeConstants#AI_WRITE_LENGTH}
      */
     private Integer length;
+
     /**
      * 格式提示词
      *
      * 字典：{@link DictTypeConstants#AI_WRITE_FORMAT}
      */
     private Integer format;
+
     /**
      * 语气提示词
      *
      * 字典：{@link DictTypeConstants#AI_WRITE_TONE}
      */
     private Integer tone;
+
     /**
      * 语言提示词
      *
@@ -100,5 +107,4 @@ public class AiWriteDO extends BaseDO {
      * 错误信息
      */
     private String errorMessage;
-
 }

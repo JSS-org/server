@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ public class OAuth2UserInfoRespVO {
 
     @Schema(description = "用户邮箱", example = "yudao@iocoder.cn")
     private String email;
+
     @Schema(description = "手机号码", example = "15601691300")
     private String mobile;
 
@@ -52,7 +54,6 @@ public class OAuth2UserInfoRespVO {
 
         @Schema(description = "部门名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "研发部")
         private String name;
-
     }
 
     @Schema(description = "岗位")
@@ -64,7 +65,5 @@ public class OAuth2UserInfoRespVO {
 
         @Schema(description = "岗位名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "开发")
         private String name;
-
     }
-
 }

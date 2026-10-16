@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sip.MesMdProductSipPageReqVO;
@@ -7,14 +10,13 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sip.MesMdProductS
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdProductSipDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.item.MesMdProductSipMapper;
 import cn.iocoder.yudao.module.mes.service.pro.process.MesProProcessService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 产品SIP Service 实现类
@@ -25,11 +27,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdProductSipServiceImpl implements MesMdProductSipService {
 
-    @Resource
-    private MesMdProductSipMapper productSipMapper;
+    @Resource private MesMdProductSipMapper productSipMapper;
 
-    @Resource
-    private MesProProcessService processService;
+    @Resource private MesProProcessService processService;
 
     @Override
     public Long createProductSip(MesMdProductSipSaveReqVO createReqVO) {
@@ -103,5 +103,4 @@ public class MesMdProductSipServiceImpl implements MesMdProductSipService {
     public void deleteProductSipByItemId(Long itemId) {
         productSipMapper.deleteByItemId(itemId);
     }
-
 }

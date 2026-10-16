@@ -1,18 +1,23 @@
 package cn.iocoder.yudao.module.crm.controller.admin.contact.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
+
 import cn.iocoder.yudao.framework.common.validation.Mobile;
 import cn.iocoder.yudao.framework.common.validation.Telephone;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.*;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
 
 @Schema(description = "管理后台 - CRM 联系人创建/更新 Request VO")
 @Data
@@ -94,5 +99,4 @@ public class CrmContactSaveReqVO {
 
     @Schema(description = "关联商机 ID", example = "122233")
     private Long businessId; // 注意：该字段用于在【商机】详情界面「新建联系人」时，自动进行关联
-
 }

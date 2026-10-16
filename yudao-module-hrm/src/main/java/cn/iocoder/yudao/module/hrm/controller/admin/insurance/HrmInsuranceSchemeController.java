@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,11 +18,14 @@ import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceProjectTyp
 import cn.iocoder.yudao.module.hrm.service.insurance.config.HrmInsuranceSchemeService;
 import cn.iocoder.yudao.module.hrm.service.insurance.employee.HrmInsuranceEmployeeInfoService;
 import cn.iocoder.yudao.module.hrm.service.insurance.monthrecord.HrmInsuranceMonthEmployeeRecordService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,23 +43,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
-
 @Tag(name = "管理后台 - HRM 社保方案")
 @RestController
 @RequestMapping("/hrm/insurance/scheme")
 @Validated
 public class HrmInsuranceSchemeController {
 
-    @Resource
-    private HrmInsuranceSchemeService insuranceSchemeService;
-    @Resource
-    private HrmInsuranceEmployeeInfoService insuranceEmployeeInfoService;
-    @Resource
-    private HrmInsuranceMonthEmployeeRecordService insuranceMonthEmployeeRecordService;
+    @Resource private HrmInsuranceSchemeService insuranceSchemeService;
+    @Resource private HrmInsuranceEmployeeInfoService insuranceEmployeeInfoService;
+    @Resource private HrmInsuranceMonthEmployeeRecordService insuranceMonthEmployeeRecordService;
 
     @PostMapping("/create")
     @Operation(summary = "创建社保方案")
@@ -63,7 +63,8 @@ public class HrmInsuranceSchemeController {
     @PutMapping("/update")
     @Operation(summary = "更新社保方案")
     @PreAuthorize("@ss.hasPermission('hrm:insurance:scheme:update')")
-    public CommonResult<Boolean> updateScheme(@Valid @RequestBody HrmInsuranceSchemeSaveReqVO reqVO) {
+    public CommonResult<Boolean> updateScheme(
+            @Valid @RequestBody HrmInsuranceSchemeSaveReqVO reqVO) {
         insuranceSchemeService.updateScheme(reqVO);
         return success(true);
     }
@@ -99,8 +100,11 @@ public class HrmInsuranceSchemeController {
     @PreAuthorize("@ss.hasPermission('hrm:insurance:scheme:query')")
     public CommonResult<List<HrmInsuranceSchemeRespVO>> getSchemeSimpleList() {
         List<HrmInsuranceSchemeDO> list = insuranceSchemeService.getSchemeList();
-        return success(BeanUtils.toBean(list, HrmInsuranceSchemeRespVO.class,
-                scheme -> scheme.setAreaName(AreaUtils.format(scheme.getAreaId()))));
+        return success(
+                BeanUtils.toBean(
+                        list,
+                        HrmInsuranceSchemeRespVO.class,
+                        scheme -> scheme.setAreaName(AreaUtils.format(scheme.getAreaId()))));
     }
 
     // ==================== 拼接 VO ====================
@@ -112,7 +116,8 @@ public class HrmInsuranceSchemeController {
         return CollUtil.getFirst(buildSchemeRespVOList(Collections.singletonList(scheme)));
     }
 
-    private List<HrmInsuranceSchemeRespVO> buildSchemeRespVOList(List<HrmInsuranceSchemeDO> schemes) {
+    private List<HrmInsuranceSchemeRespVO> buildSchemeRespVOList(
+            List<HrmInsuranceSchemeDO> schemes) {
         if (CollUtil.isEmpty(schemes)) {
             return Collections.emptyList();
         }
@@ -122,36 +127,67 @@ public class HrmInsuranceSchemeController {
                 insuranceSchemeService.getSchemeProjectListMap(schemeIds);
         Map<Long, Long> useCountMap =
                 insuranceEmployeeInfoService.getInsuranceEmployeeInfoCountMapBySchemeIds(schemeIds);
-        Map<Long, Long> monthRecordCountMap = insuranceMonthEmployeeRecordService
-                .getMonthEmployeeRecordCountMapBySchemeIds(schemeIds);
+        Map<Long, Long> monthRecordCountMap =
+                insuranceMonthEmployeeRecordService.getMonthEmployeeRecordCountMapBySchemeIds(
+                        schemeIds);
 
         // 2. 拼接响应
-        return convertList(schemes, scheme -> {
-            HrmInsuranceSchemeRespVO respVO = BeanUtils.toBean(scheme, HrmInsuranceSchemeRespVO.class);
-            respVO.setAreaName(AreaUtils.format(respVO.getAreaId()));
-            List<HrmInsuranceSchemeProjectRespVO> projects = BeanUtils.toBean(
-                    projectMap.getOrDefault(scheme.getId(), Collections.emptyList()), HrmInsuranceSchemeProjectRespVO.class);
-            respVO.setProjectList(projects);
-            List<HrmInsuranceSchemeProjectRespVO> socialSecurityProjects = convertList(
-                    projects, project -> project,
-                    project -> HrmInsuranceProjectTypeEnum.isSocialSecurity(project.getType()));
-            List<HrmInsuranceSchemeProjectRespVO> providentFundProjects = convertList(
-                    projects, project -> project,
-                    project -> HrmInsuranceProjectTypeEnum.isProvidentFund(project.getType()));
-            respVO.setSocialSecurityProjectList(socialSecurityProjects)
-                    .setProvidentFundProjectList(providentFundProjects);
-            respVO.setPersonalInsuranceAmount(getSumValue(socialSecurityProjects,
-                            HrmInsuranceSchemeProjectRespVO::getPersonalAmount, BigDecimal::add, BigDecimal.ZERO))
-                    .setCorporateInsuranceAmount(getSumValue(socialSecurityProjects,
-                            HrmInsuranceSchemeProjectRespVO::getCorporateAmount, BigDecimal::add, BigDecimal.ZERO))
-                    .setPersonalProvidentFundAmount(getSumValue(providentFundProjects,
-                            HrmInsuranceSchemeProjectRespVO::getPersonalAmount, BigDecimal::add, BigDecimal.ZERO))
-                    .setCorporateProvidentFundAmount(getSumValue(providentFundProjects,
-                            HrmInsuranceSchemeProjectRespVO::getCorporateAmount, BigDecimal::add, BigDecimal.ZERO))
-                    .setUseCount(useCountMap.getOrDefault(scheme.getId(), 0L))
-                    .setMonthRecordCount(monthRecordCountMap.getOrDefault(scheme.getId(), 0L));
-            return respVO;
-        });
+        return convertList(
+                schemes,
+                scheme -> {
+                    HrmInsuranceSchemeRespVO respVO =
+                            BeanUtils.toBean(scheme, HrmInsuranceSchemeRespVO.class);
+                    respVO.setAreaName(AreaUtils.format(respVO.getAreaId()));
+                    List<HrmInsuranceSchemeProjectRespVO> projects =
+                            BeanUtils.toBean(
+                                    projectMap.getOrDefault(
+                                            scheme.getId(), Collections.emptyList()),
+                                    HrmInsuranceSchemeProjectRespVO.class);
+                    respVO.setProjectList(projects);
+                    List<HrmInsuranceSchemeProjectRespVO> socialSecurityProjects =
+                            convertList(
+                                    projects,
+                                    project -> project,
+                                    project ->
+                                            HrmInsuranceProjectTypeEnum.isSocialSecurity(
+                                                    project.getType()));
+                    List<HrmInsuranceSchemeProjectRespVO> providentFundProjects =
+                            convertList(
+                                    projects,
+                                    project -> project,
+                                    project ->
+                                            HrmInsuranceProjectTypeEnum.isProvidentFund(
+                                                    project.getType()));
+                    respVO.setSocialSecurityProjectList(socialSecurityProjects)
+                            .setProvidentFundProjectList(providentFundProjects);
+                    respVO.setPersonalInsuranceAmount(
+                                    getSumValue(
+                                            socialSecurityProjects,
+                                            HrmInsuranceSchemeProjectRespVO::getPersonalAmount,
+                                            BigDecimal::add,
+                                            BigDecimal.ZERO))
+                            .setCorporateInsuranceAmount(
+                                    getSumValue(
+                                            socialSecurityProjects,
+                                            HrmInsuranceSchemeProjectRespVO::getCorporateAmount,
+                                            BigDecimal::add,
+                                            BigDecimal.ZERO))
+                            .setPersonalProvidentFundAmount(
+                                    getSumValue(
+                                            providentFundProjects,
+                                            HrmInsuranceSchemeProjectRespVO::getPersonalAmount,
+                                            BigDecimal::add,
+                                            BigDecimal.ZERO))
+                            .setCorporateProvidentFundAmount(
+                                    getSumValue(
+                                            providentFundProjects,
+                                            HrmInsuranceSchemeProjectRespVO::getCorporateAmount,
+                                            BigDecimal::add,
+                                            BigDecimal.ZERO))
+                            .setUseCount(useCountMap.getOrDefault(scheme.getId(), 0L))
+                            .setMonthRecordCount(
+                                    monthRecordCountMap.getOrDefault(scheme.getId(), 0L));
+                    return respVO;
+                });
     }
-
 }

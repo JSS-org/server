@@ -1,11 +1,15 @@
 package cn.iocoder.yudao.module.oa.service.travel;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.*;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
-import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.module.bpm.api.task.BpmProcessInstanceApi;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmProcessInstanceCreateReqDTO;
 import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
@@ -15,7 +19,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.travel.OaTravelReimbursementMapper;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -23,10 +29,6 @@ import org.springframework.validation.annotation.Validated;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.*;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 出差报销 Service 实现类
@@ -37,19 +39,14 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementService {
 
-    @Resource
-    private OaTravelReimbursementMapper travelReimbursementMapper;
+    @Resource private OaTravelReimbursementMapper travelReimbursementMapper;
 
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
-    @Resource
-    private OaTravelApplyService travelApplyService;
+    @Resource private OaTravelApplyService travelApplyService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -67,10 +64,12 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
         }
 
         // 2. 创建草稿
-        OaTravelReimbursementDO record = buildTravelReimbursement(reqVO)
-                .setNo(no)
-                .setDeptId(user.getDeptId()).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
-                .setPayStatus(false);
+        OaTravelReimbursementDO record =
+                buildTravelReimbursement(reqVO)
+                        .setNo(no)
+                        .setDeptId(user.getDeptId())
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
+                        .setPayStatus(false);
         travelReimbursementMapper.insert(record);
         return record.getId();
     }
@@ -101,7 +100,8 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
      */
     private OaTravelReimbursementDO buildTravelReimbursement(OaTravelReimbursementSaveReqVO reqVO) {
         OaTravelReimbursementDO record = BeanUtils.toBean(reqVO, OaTravelReimbursementDO.class);
-        record.setDays(LocalDateTimeUtils.getDaysBetweenCeiling(reqVO.getStartTime(), reqVO.getEndTime()));
+        record.setDays(
+                LocalDateTimeUtils.getDaysBetweenCeiling(reqVO.getStartTime(), reqVO.getEndTime()));
         BigDecimal totalPrice = BigDecimal.ZERO;
         if (CollUtil.isNotEmpty(record.getItems())) {
             for (OaTravelReimbursementDO.Item item : record.getItems()) {
@@ -110,13 +110,15 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
                 }
             }
         }
-        record.setTotalPrice(record.getItems() == null ? null : totalPrice.setScale(2, RoundingMode.HALF_UP));
+        record.setTotalPrice(
+                record.getItems() == null ? null : totalPrice.setScale(2, RoundingMode.HALF_UP));
         return record;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void submitTravelReimbursement(OaTravelReimbursementSubmitReqVO submitReqVO, Long userId) {
+    public void submitTravelReimbursement(
+            OaTravelReimbursementSubmitReqVO submitReqVO, Long userId) {
         // 1.1 查询并校验单据存在
         OaTravelReimbursementDO record = validateTravelReimbursementExists(submitReqVO.getId());
         // 1.2 校验本人归属
@@ -129,18 +131,29 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
         }
 
         // 2. 更新为审批中，兼容流程创建时的同步回调
-        travelReimbursementMapper.updateById(new OaTravelReimbursementDO().setId(record.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()).setProcessInstanceId(""));
+        travelReimbursementMapper.updateById(
+                new OaTravelReimbursementDO()
+                        .setId(record.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus())
+                        .setProcessInstanceId(""));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
         variables.put("days", record.getDays());
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(TRAVEL_REIMBURSEMENT)
-                        .setBusinessKey(record.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(TRAVEL_REIMBURSEMENT)
+                                .setBusinessKey(record.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        travelReimbursementMapper.updateById(new OaTravelReimbursementDO().setId(record.getId()).setProcessInstanceId(processInstanceId));
+        travelReimbursementMapper.updateById(
+                new OaTravelReimbursementDO()
+                        .setId(record.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -151,12 +164,14 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
         // 1.2 校验本人归属
         validateTravelReimbursementOwner(record, userId);
         // 1.3 仅审批中可以撤回
-        if (ObjUtil.notEqual(record.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
+        if (ObjUtil.notEqual(
+                record.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
             throw exception(TRAVEL_STATUS_INVALID);
         }
 
         // 2. 使用 BPM 取消流程，由事件回写单据状态
-        processInstanceApi.cancelProcessInstanceByStartUser(userId, record.getProcessInstanceId(), "申请人撤回出差报销");
+        processInstanceApi.cancelProcessInstanceByStartUser(
+                userId, record.getProcessInstanceId(), "申请人撤回出差报销");
     }
 
     @Override
@@ -179,7 +194,8 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
     }
 
     @Override
-    public PageResult<OaTravelReimbursementDO> getTravelReimbursementPage(Long userId, OaTravelReimbursementPageReqVO reqVO) {
+    public PageResult<OaTravelReimbursementDO> getTravelReimbursementPage(
+            Long userId, OaTravelReimbursementPageReqVO reqVO) {
         return travelReimbursementMapper.selectPage(userId, reqVO);
     }
 
@@ -194,10 +210,12 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
         }
 
         // 2. 更新审批状态
-        travelReimbursementMapper.updateById(new OaTravelReimbursementDO().setId(id).setStatus(status));
+        travelReimbursementMapper.updateById(
+                new OaTravelReimbursementDO().setId(id).setStatus(status));
 
         // 3. 审批通过时标记关联申请已报销，不修改支付状态
-        if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus()) && record.getTravelApplyId() != null) {
+        if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())
+                && record.getTravelApplyId() != null) {
             travelApplyService.updateTravelApplyReimburseStatus(record.getTravelApplyId());
         }
     }
@@ -234,10 +252,12 @@ public class OaTravelReimbursementServiceImpl implements OaTravelReimbursementSe
      * @param record 单据
      */
     private void validateTravelReimbursementEditable(OaTravelReimbursementDO record) {
-        if (ObjectUtils.notEqualsAny(record.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
-                BpmProcessInstanceStatusEnum.REJECT.getStatus(), BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
+        if (ObjectUtils.notEqualsAny(
+                record.getStatus(),
+                BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
+                BpmProcessInstanceStatusEnum.REJECT.getStatus(),
+                BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
             throw exception(TRAVEL_STATUS_INVALID);
         }
     }
-
 }

@@ -13,7 +13,6 @@ import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public enum PayDemoWithdrawStatusEnum {
-
     WAITING(0, "等待提现"),
     SUCCESS(10, "提现成功"),
     CLOSED(20, "提现关闭");
@@ -22,6 +21,7 @@ public enum PayDemoWithdrawStatusEnum {
      * 状态
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -38,5 +38,4 @@ public enum PayDemoWithdrawStatusEnum {
     public static boolean isWaiting(Integer status) {
         return Objects.equals(status, WAITING.getStatus());
     }
-
 }

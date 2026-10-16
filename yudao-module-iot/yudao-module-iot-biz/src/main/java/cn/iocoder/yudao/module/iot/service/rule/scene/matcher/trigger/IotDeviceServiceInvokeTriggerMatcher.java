@@ -9,7 +9,9 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherHelper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -22,8 +24,7 @@ import java.util.Map;
 @Component
 public class IotDeviceServiceInvokeTriggerMatcher implements IotSceneRuleTriggerMatcher {
 
-    @Resource
-    private IotDeviceService iotDeviceService;
+    @Resource private IotDeviceService iotDeviceService;
 
     @Override
     public IotSceneRuleTriggerTypeEnum getSupportedTriggerType() {
@@ -39,18 +40,29 @@ public class IotDeviceServiceInvokeTriggerMatcher implements IotSceneRuleTrigger
         }
         // 1.2 检查消息方法是否匹配
         if (!IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod().equals(message.getMethod())) {
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "消息方法不匹配，期望: " + IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod() + ", 实际: " + message.getMethod());
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(
+                    message,
+                    trigger,
+                    "消息方法不匹配，期望: "
+                            + IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod()
+                            + ", 实际: "
+                            + message.getMethod());
             return false;
         }
         // 1.3 修复触发器中忽略了产品和设备的一致性验证，2025.05.25 by panda
-        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(message, trigger.getProductId(),trigger.getDeviceId())){
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message,trigger,"触发器中产品或设备不匹配");
+        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(
+                message, trigger.getProductId(), trigger.getDeviceId())) {
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "触发器中产品或设备不匹配");
             return false;
         }
         // 1.4 检查标识符是否匹配
         String messageIdentifier = IotDeviceMessageUtils.getIdentifier(message);
-        if (!IotSceneRuleMatcherHelper.isIdentifierMatched(trigger.getIdentifier(), messageIdentifier)) {
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "标识符不匹配，期望: " + trigger.getIdentifier() + ", 实际: " + messageIdentifier);
+        if (!IotSceneRuleMatcherHelper.isIdentifierMatched(
+                trigger.getIdentifier(), messageIdentifier)) {
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(
+                    message,
+                    trigger,
+                    "标识符不匹配，期望: " + trigger.getIdentifier() + ", 实际: " + messageIdentifier);
             return false;
         }
 
@@ -81,7 +93,8 @@ public class IotDeviceServiceInvokeTriggerMatcher implements IotSceneRuleTrigger
      * @param trigger 触发器配置
      * @return 是否匹配
      */
-    private boolean matchParameterCondition(IotDeviceMessage message, IotSceneRuleDO.Trigger trigger) {
+    private boolean matchParameterCondition(
+            IotDeviceMessage message, IotSceneRuleDO.Trigger trigger) {
         // 1.1 从消息中提取服务调用的输入参数
         Map<String, Object> inputParams = IotDeviceMessageUtils.extractServiceInputParams(message);
         if (CollUtil.isEmpty(inputParams)) {
@@ -91,12 +104,15 @@ public class IotDeviceServiceInvokeTriggerMatcher implements IotSceneRuleTrigger
         // 1.2 获取要匹配的参数值（使用 identifier 作为参数名）
         Object paramValue = inputParams.get(trigger.getIdentifier());
         if (paramValue == null) {
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "服务输入参数中缺少指定参数: " + trigger.getIdentifier());
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(
+                    message, trigger, "服务输入参数中缺少指定参数: " + trigger.getIdentifier());
             return false;
         }
 
         // 2. 使用条件评估器进行匹配
-        boolean matched = IotSceneRuleMatcherHelper.evaluateCondition(paramValue, trigger.getOperator(), trigger.getValue());
+        boolean matched =
+                IotSceneRuleMatcherHelper.evaluateCondition(
+                        paramValue, trigger.getOperator(), trigger.getValue());
         if (matched) {
             IotSceneRuleMatcherHelper.logTriggerMatchSuccess(message, trigger);
         } else {
@@ -109,5 +125,4 @@ public class IotDeviceServiceInvokeTriggerMatcher implements IotSceneRuleTrigger
     public int getPriority() {
         return 40; // 较低优先级
     }
-
 }

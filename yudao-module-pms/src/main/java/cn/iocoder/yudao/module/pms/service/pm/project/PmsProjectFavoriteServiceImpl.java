@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.pms.service.pm.project;
 
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectFavoriteDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectFavoriteMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,10 +20,8 @@ import java.util.List;
 @Validated
 public class PmsProjectFavoriteServiceImpl implements PmsProjectFavoriteService {
 
-    @Resource
-    private PmsProjectFavoriteMapper favoriteMapper;
-    @Resource
-    private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectFavoriteMapper favoriteMapper;
+    @Resource private PmsProjectMemberService projectMemberService;
 
     @Override
     public void createProjectFavorite(Long projectId, Long userId) {
@@ -41,7 +41,8 @@ public class PmsProjectFavoriteServiceImpl implements PmsProjectFavoriteService 
         projectMemberService.validateProjectMember(projectId, userId);
 
         // 2. 删除收藏关系，重复请求保持幂等
-        PmsProjectFavoriteDO favorite = favoriteMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectFavoriteDO favorite =
+                favoriteMapper.selectByProjectIdAndUserId(projectId, userId);
         if (favorite != null) {
             favoriteMapper.deleteById(favorite.getId());
         }
@@ -56,5 +57,4 @@ public class PmsProjectFavoriteServiceImpl implements PmsProjectFavoriteService 
     public void deleteProjectFavoriteListByProjectId(Long projectId) {
         favoriteMapper.deleteByProjectIds(Collections.singleton(projectId));
     }
-
 }

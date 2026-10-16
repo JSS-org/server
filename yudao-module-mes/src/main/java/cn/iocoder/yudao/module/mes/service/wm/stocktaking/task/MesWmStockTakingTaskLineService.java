@@ -31,7 +31,8 @@ public interface MesWmStockTakingTaskLineService {
      * @param pageReqVO 分页查询条件
      * @return 盘点任务行分页结果
      */
-    PageResult<MesWmStockTakingTaskLineDO> getStockTakingTaskLinePage(MesWmStockTakingTaskLinePageReqVO pageReqVO);
+    PageResult<MesWmStockTakingTaskLineDO> getStockTakingTaskLinePage(
+            MesWmStockTakingTaskLinePageReqVO pageReqVO);
 
     /**
      * 获得盘点任务行
@@ -113,5 +114,4 @@ public interface MesWmStockTakingTaskLineService {
      * @param takingQuantity 盘点数量（增量）
      */
     void updateStockTakingTaskLineTakingQuantity(Long id, BigDecimal takingQuantity);
-
 }

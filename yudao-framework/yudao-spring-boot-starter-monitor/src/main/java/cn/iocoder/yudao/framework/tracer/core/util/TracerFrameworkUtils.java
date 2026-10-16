@@ -32,12 +32,14 @@ public class TracerFrameworkUtils {
 
         // 记录异常事件
         span.recordException(throwable);
-        String message = throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage();
+        String message =
+                throwable.getCause() != null
+                        ? throwable.getCause().getMessage()
+                        : throwable.getMessage();
         span.setStatus(StatusCode.ERROR, message == null ? "" : message);
         // 记录异常堆栈
         StringWriter sw = new StringWriter();
         throwable.printStackTrace(new PrintWriter(sw));
         span.setAttribute("error.stack", sw.toString());
     }
-
 }

@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.iot.framework.job.core;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.quartz.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.scheduling.quartz.SpringBeanJobFactory;
 
-import javax.sql.DataSource;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.sql.DataSource;
 
 /**
  * IoT 模块的 Scheduler 管理类，基于 Quartz 实现
@@ -27,8 +29,7 @@ public class IotSchedulerManager {
 
     private Scheduler scheduler;
 
-    public IotSchedulerManager(DataSource dataSource,
-                               ApplicationContext applicationContext) {
+    public IotSchedulerManager(DataSource dataSource, ApplicationContext applicationContext) {
         // 1. 参考 SchedulerFactoryBean 类
         SchedulerFactoryBean schedulerFactoryBean = new SchedulerFactoryBean();
         SpringBeanJobFactory jobFactory = new SpringBeanJobFactory();
@@ -45,7 +46,9 @@ public class IotSchedulerManager {
         properties.put("org.quartz.scheduler.instanceName", SCHEDULER_NAME);
         properties.put("org.quartz.scheduler.instanceId", "AUTO");
         // 2.2 JobStore 相关配置
-        properties.put("org.quartz.jobStore.class", "org.springframework.scheduling.quartz.LocalDataSourceJobStore");
+        properties.put(
+                "org.quartz.jobStore.class",
+                "org.springframework.scheduling.quartz.LocalDataSourceJobStore");
         properties.put("org.quartz.jobStore.isClustered", "true");
         properties.put("org.quartz.jobStore.clusterCheckinInterval", "15000");
         properties.put("org.quartz.jobStore.misfireThreshold", "60000");
@@ -84,8 +87,11 @@ public class IotSchedulerManager {
      * @param jobDataMap 任务数据
      * @throws SchedulerException 添加异常
      */
-    public void addOrUpdateJob(Class <? extends Job> jobClass, String jobName,
-                               String cronExpression, Map<String, Object> jobDataMap)
+    public void addOrUpdateJob(
+            Class<? extends Job> jobClass,
+            String jobName,
+            String cronExpression,
+            Map<String, Object> jobDataMap)
             throws SchedulerException {
         if (scheduler.checkExists(new JobKey(jobName))) {
             this.updateJob(jobName, cronExpression);
@@ -103,13 +109,18 @@ public class IotSchedulerManager {
      * @param jobDataMap 任务数据
      * @throws SchedulerException 添加异常
      */
-    public void addJob(Class <? extends Job> jobClass, String jobName,
-                       String cronExpression, Map<String, Object> jobDataMap)
+    public void addJob(
+            Class<? extends Job> jobClass,
+            String jobName,
+            String cronExpression,
+            Map<String, Object> jobDataMap)
             throws SchedulerException {
         // 创建 JobDetail 对象
-        JobDetail jobDetail = JobBuilder.newJob(jobClass)
-                .usingJobData(new JobDataMap(jobDataMap))
-                .withIdentity(jobName).build();
+        JobDetail jobDetail =
+                JobBuilder.newJob(jobClass)
+                        .usingJobData(new JobDataMap(jobDataMap))
+                        .withIdentity(jobName)
+                        .build();
         // 创建 Trigger 对象
         Trigger trigger = this.buildTrigger(jobName, cronExpression);
         // 新增 Job 调度
@@ -123,8 +134,7 @@ public class IotSchedulerManager {
      * @param cronExpression CRON 表达式
      * @throws SchedulerException 更新异常
      */
-    public void updateJob(String jobName, String cronExpression)
-            throws SchedulerException {
+    public void updateJob(String jobName, String cronExpression) throws SchedulerException {
         // 创建新 Trigger 对象
         Trigger newTrigger = this.buildTrigger(jobName, cronExpression);
         // 修改调度
@@ -182,5 +192,4 @@ public class IotSchedulerManager {
                 .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
                 .build();
     }
-
 }

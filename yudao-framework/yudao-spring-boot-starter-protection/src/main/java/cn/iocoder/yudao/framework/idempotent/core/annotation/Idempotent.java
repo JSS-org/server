@@ -1,7 +1,7 @@
 package cn.iocoder.yudao.framework.idempotent.core.annotation;
 
-import cn.iocoder.yudao.framework.idempotent.core.keyresolver.impl.DefaultIdempotentKeyResolver;
 import cn.iocoder.yudao.framework.idempotent.core.keyresolver.IdempotentKeyResolver;
+import cn.iocoder.yudao.framework.idempotent.core.keyresolver.impl.DefaultIdempotentKeyResolver;
 import cn.iocoder.yudao.framework.idempotent.core.keyresolver.impl.ExpressionIdempotentKeyResolver;
 import cn.iocoder.yudao.framework.idempotent.core.keyresolver.impl.UserIdempotentKeyResolver;
 
@@ -26,6 +26,7 @@ public @interface Idempotent {
      * 注意，如果执行时间超过它，请求还是会进来
      */
     int timeout() default 1;
+
     /**
      * 时间单位，默认为 SECONDS 秒
      */
@@ -44,6 +45,7 @@ public @interface Idempotent {
      * @see ExpressionIdempotentKeyResolver 自定义表达式，通过 {@link #keyArg()} 计算
      */
     Class<? extends IdempotentKeyResolver> keyResolver() default DefaultIdempotentKeyResolver.class;
+
     /**
      * 使用的 Key 参数
      */
@@ -59,5 +61,4 @@ public @interface Idempotent {
      * 回答：这种情况下，本质上是分布式锁，推荐使用 @Lock4j 注解
      */
     boolean deleteKeyWhenException() default true;
-
 }

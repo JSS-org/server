@@ -1,32 +1,35 @@
 package cn.iocoder.yudao.module.pay.service.channel;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClient;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientConfig;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientFactory;
 import cn.iocoder.yudao.module.pay.controller.admin.channel.vo.PayChannelCreateReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.channel.vo.PayChannelUpdateReqVO;
 import cn.iocoder.yudao.module.pay.convert.channel.PayChannelConvert;
 import cn.iocoder.yudao.module.pay.dal.dataobject.channel.PayChannelDO;
 import cn.iocoder.yudao.module.pay.dal.mysql.channel.PayChannelMapper;
+import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClient;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientConfig;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientFactory;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.NonePayClientConfig;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay.AlipayPayClientConfig;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Validator;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
 
 /**
  * 支付渠道 Service 实现类
@@ -38,14 +41,11 @@ import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
 @Validated
 public class PayChannelServiceImpl implements PayChannelService {
 
-    @Resource
-    private PayClientFactory payClientFactory;
+    @Resource private PayClientFactory payClientFactory;
 
-    @Resource
-    private PayChannelMapper payChannelMapper;
+    @Resource private PayChannelMapper payChannelMapper;
 
-    @Resource
-    private Validator validator;
+    @Resource private Validator validator;
 
     @Override
     public Long createChannel(PayChannelCreateReqVO reqVO) {
@@ -56,8 +56,10 @@ public class PayChannelServiceImpl implements PayChannelService {
         }
 
         // 新增渠道
-        PayChannelDO channel = PayChannelConvert.INSTANCE.convert(reqVO)
-                .setConfig(parseConfig(reqVO.getCode(), reqVO.getConfig()));
+        PayChannelDO channel =
+                PayChannelConvert.INSTANCE
+                        .convert(reqVO)
+                        .setConfig(parseConfig(reqVO.getCode(), reqVO.getConfig()));
         payChannelMapper.insert(channel);
         return channel.getId();
     }
@@ -68,8 +70,10 @@ public class PayChannelServiceImpl implements PayChannelService {
         PayChannelDO dbChannel = validateChannelExists(updateReqVO.getId());
 
         // 更新
-        PayChannelDO channel = PayChannelConvert.INSTANCE.convert(updateReqVO)
-                .setConfig(parseConfig(dbChannel.getCode(), updateReqVO.getConfig()));
+        PayChannelDO channel =
+                PayChannelConvert.INSTANCE
+                        .convert(updateReqVO)
+                        .setConfig(parseConfig(dbChannel.getCode(), updateReqVO.getConfig()));
         payChannelMapper.updateById(channel);
     }
 
@@ -82,9 +86,12 @@ public class PayChannelServiceImpl implements PayChannelService {
      */
     private PayClientConfig parseConfig(String code, String configStr) {
         // 解析配置
-        Class<? extends PayClientConfig> payClass = PayChannelEnum.isAlipay(code) ? AlipayPayClientConfig.class
-                : PayChannelEnum.isWeixin(code) ? WxPayClientConfig.class
-                : NonePayClientConfig.class;
+        Class<? extends PayClientConfig> payClass =
+                PayChannelEnum.isAlipay(code)
+                        ? AlipayPayClientConfig.class
+                        : PayChannelEnum.isWeixin(code)
+                                ? WxPayClientConfig.class
+                                : NonePayClientConfig.class;
         if (ObjectUtil.isNull(payClass)) {
             throw exception(CHANNEL_NOT_FOUND);
         }
@@ -166,5 +173,4 @@ public class PayChannelServiceImpl implements PayChannelService {
         PayChannelDO channel = validPayChannel(id);
         return payClientFactory.createOrUpdatePayClient(id, channel.getCode(), channel.getConfig());
     }
-
 }

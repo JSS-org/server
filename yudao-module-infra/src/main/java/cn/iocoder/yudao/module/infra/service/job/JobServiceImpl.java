@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.infra.service.job;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.containsAny;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -11,8 +15,11 @@ import cn.iocoder.yudao.module.infra.controller.admin.job.vo.job.JobSaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.job.JobDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.job.JobMapper;
 import cn.iocoder.yudao.module.infra.enums.job.JobStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.stereotype.Service;
@@ -21,10 +28,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.containsAny;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 
 /**
  * 定时任务 Service 实现类
@@ -36,11 +39,9 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 @Slf4j
 public class JobServiceImpl implements JobService {
 
-    @Resource
-    private JobMapper jobMapper;
+    @Resource private JobMapper jobMapper;
 
-    @Resource
-    private SchedulerManager schedulerManager;
+    @Resource private SchedulerManager schedulerManager;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -60,10 +61,16 @@ public class JobServiceImpl implements JobService {
         jobMapper.insert(job);
 
         // 3.1 添加 Job 到 Quartz 中
-        schedulerManager.addJob(job.getId(), job.getHandlerName(), job.getHandlerParam(), job.getCronExpression(),
-                createReqVO.getRetryCount(), createReqVO.getRetryInterval());
+        schedulerManager.addJob(
+                job.getId(),
+                job.getHandlerName(),
+                job.getHandlerParam(),
+                job.getCronExpression(),
+                createReqVO.getRetryCount(),
+                createReqVO.getRetryInterval());
         // 3.2 更新 JobDO
-        JobDO updateObj = JobDO.builder().id(job.getId()).status(JobStatusEnum.NORMAL.getStatus()).build();
+        JobDO updateObj =
+                JobDO.builder().id(job.getId()).status(JobStatusEnum.NORMAL.getStatus()).build();
         jobMapper.updateById(updateObj);
         return job.getId();
     }
@@ -87,8 +94,12 @@ public class JobServiceImpl implements JobService {
         jobMapper.updateById(updateObj);
 
         // 3. 更新 Job 到 Quartz 中
-        schedulerManager.updateJob(job.getHandlerName(), updateReqVO.getHandlerParam(), updateReqVO.getCronExpression(),
-                updateReqVO.getRetryCount(), updateReqVO.getRetryInterval());
+        schedulerManager.updateJob(
+                job.getHandlerName(),
+                updateReqVO.getHandlerParam(),
+                updateReqVO.getCronExpression(),
+                updateReqVO.getRetryCount(),
+                updateReqVO.getRetryInterval());
     }
 
     private void validateJobHandlerExists(String handlerName) {
@@ -107,7 +118,8 @@ public class JobServiceImpl implements JobService {
     @Transactional(rollbackFor = Exception.class)
     public void updateJobStatus(Long id, Integer status) throws SchedulerException {
         // 校验 status
-        if (!containsAny(status, JobStatusEnum.NORMAL.getStatus(), JobStatusEnum.STOP.getStatus())) {
+        if (!containsAny(
+                status, JobStatusEnum.NORMAL.getStatus(), JobStatusEnum.STOP.getStatus())) {
             throw exception(JOB_CHANGE_STATUS_INVALID);
         }
         // 校验存在
@@ -147,8 +159,13 @@ public class JobServiceImpl implements JobService {
         for (JobDO job : jobList) {
             // 2.1 先删除，再创建
             schedulerManager.deleteJob(job.getHandlerName());
-            schedulerManager.addJob(job.getId(), job.getHandlerName(), job.getHandlerParam(), job.getCronExpression(),
-                    job.getRetryCount(), job.getRetryInterval());
+            schedulerManager.addJob(
+                    job.getId(),
+                    job.getHandlerName(),
+                    job.getHandlerParam(),
+                    job.getCronExpression(),
+                    job.getRetryCount(),
+                    job.getRetryInterval());
             // 2.2 如果 status 为暂停，则需要暂停
             if (Objects.equals(job.getStatus(), JobStatusEnum.STOP.getStatus())) {
                 schedulerManager.pauseJob(job.getHandlerName());
@@ -211,5 +228,4 @@ public class JobServiceImpl implements JobService {
             job.setMonitorTimeout(0);
         }
     }
-
 }

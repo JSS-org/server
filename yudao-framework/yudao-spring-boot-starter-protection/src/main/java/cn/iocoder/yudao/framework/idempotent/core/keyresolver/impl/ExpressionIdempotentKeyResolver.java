@@ -3,6 +3,7 @@ package cn.iocoder.yudao.framework.idempotent.core.keyresolver.impl;
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.idempotent.core.annotation.Idempotent;
 import cn.iocoder.yudao.framework.idempotent.core.keyresolver.IdempotentKeyResolver;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -21,7 +22,8 @@ import java.lang.reflect.Method;
  */
 public class ExpressionIdempotentKeyResolver implements IdempotentKeyResolver {
 
-    private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private final ParameterNameDiscoverer parameterNameDiscoverer =
+            new DefaultParameterNameDiscoverer();
 
     private final ExpressionParser expressionParser = new SpelExpressionParser();
 
@@ -54,11 +56,11 @@ public class ExpressionIdempotentKeyResolver implements IdempotentKeyResolver {
 
         // 处理，声明在接口上的情况
         try {
-            return point.getTarget().getClass().getDeclaredMethod(
-                    point.getSignature().getName(), method.getParameterTypes());
+            return point.getTarget()
+                    .getClass()
+                    .getDeclaredMethod(point.getSignature().getName(), method.getParameterTypes());
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
-
 }

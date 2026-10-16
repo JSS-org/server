@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.team;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,11 +15,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.cal.team.MesCalTeamMemberDO;
 import cn.iocoder.yudao.module.mes.service.cal.team.MesCalTeamMemberService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,25 +32,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 班组成员")
 @RestController
 @RequestMapping("/mes/cal/team-member")
 @Validated
 public class MesCalTeamMemberController {
 
-    @Resource
-    private MesCalTeamMemberService teamMemberService;
+    @Resource private MesCalTeamMemberService teamMemberService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建班组成员")
     @PreAuthorize("@ss.hasPermission('mes:cal-team:create')")
-    public CommonResult<Long> createTeamMember(@Valid @RequestBody MesCalTeamMemberSaveReqVO createReqVO) {
+    public CommonResult<Long> createTeamMember(
+            @Valid @RequestBody MesCalTeamMemberSaveReqVO createReqVO) {
         return success(teamMemberService.createTeamMember(createReqVO));
     }
 
@@ -69,7 +71,8 @@ public class MesCalTeamMemberController {
     @GetMapping("/page")
     @Operation(summary = "获得班组成员分页")
     @PreAuthorize("@ss.hasPermission('mes:cal-team:query')")
-    public CommonResult<PageResult<MesCalTeamMemberRespVO>> getTeamMemberPage(@Valid MesCalTeamMemberPageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesCalTeamMemberRespVO>> getTeamMemberPage(
+            @Valid MesCalTeamMemberPageReqVO pageReqVO) {
         PageResult<MesCalTeamMemberDO> pageResult = teamMemberService.getTeamMemberPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesCalTeamMemberRespVO.class));
     }
@@ -97,13 +100,18 @@ public class MesCalTeamMemberController {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesCalTeamMemberDO::getUserId));
-        return BeanUtils.toBean(list, MesCalTeamMemberRespVO.class, vo ->
-                MapUtils.findAndThen(userMap, vo.getUserId(), user -> {
-                    vo.setNickname(user.getNickname());
-                    vo.setTelephone(user.getMobile());
-                }));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesCalTeamMemberDO::getUserId));
+        return BeanUtils.toBean(
+                list,
+                MesCalTeamMemberRespVO.class,
+                vo ->
+                        MapUtils.findAndThen(
+                                userMap,
+                                vo.getUserId(),
+                                user -> {
+                                    vo.setNickname(user.getNickname());
+                                    vo.setTelephone(user.getMobile());
+                                }));
     }
-
 }

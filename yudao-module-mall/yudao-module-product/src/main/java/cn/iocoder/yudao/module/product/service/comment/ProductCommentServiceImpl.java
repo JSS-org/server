@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.product.service.comment;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
 import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
@@ -16,15 +19,14 @@ import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
 import cn.iocoder.yudao.module.product.dal.mysql.comment.ProductCommentMapper;
 import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
 import cn.iocoder.yudao.module.product.service.spu.ProductSpuService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 
 /**
  * 商品评论 Service 实现类
@@ -35,18 +37,13 @@ import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 @Validated
 public class ProductCommentServiceImpl implements ProductCommentService {
 
-    @Resource
-    private ProductCommentMapper productCommentMapper;
+    @Resource private ProductCommentMapper productCommentMapper;
 
-    @Resource
-    private ProductSpuService productSpuService;
+    @Resource private ProductSpuService productSpuService;
 
-    @Resource
-    @Lazy
-    private ProductSkuService productSkuService;
+    @Resource @Lazy private ProductSkuService productSkuService;
 
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private MemberUserApi memberUserApi;
 
     @Override
     public void createComment(ProductCommentCreateReqVO createReqVO) {
@@ -72,7 +69,8 @@ public class ProductCommentServiceImpl implements ProductCommentService {
         MemberUserRespDTO user = memberUserApi.getUser(createReqDTO.getUserId());
 
         // 创建评论
-        ProductCommentDO comment = ProductCommentConvert.INSTANCE.convert(createReqDTO, spu, sku, user);
+        ProductCommentDO comment =
+                ProductCommentConvert.INSTANCE.convert(createReqDTO, spu, sku, user);
         productCommentMapper.insert(comment);
         return comment.getId();
     }
@@ -84,7 +82,8 @@ public class ProductCommentServiceImpl implements ProductCommentService {
      * @param orderItemId 订单项编号
      */
     private void validateCommentExists(Long userId, Long orderItemId) {
-        ProductCommentDO exist = productCommentMapper.selectByUserIdAndOrderItemId(userId, orderItemId);
+        ProductCommentDO exist =
+                productCommentMapper.selectByUserIdAndOrderItemId(userId, orderItemId);
         if (exist != null) {
             throw exception(COMMENT_ORDER_EXISTS);
         }
@@ -112,8 +111,10 @@ public class ProductCommentServiceImpl implements ProductCommentService {
         validateCommentExists(updateReqVO.getId());
 
         // 更新可见状态
-        productCommentMapper.updateById(new ProductCommentDO().setId(updateReqVO.getId())
-                .setVisible(updateReqVO.getVisible()));
+        productCommentMapper.updateById(
+                new ProductCommentDO()
+                        .setId(updateReqVO.getId())
+                        .setVisible(updateReqVO.getVisible()));
     }
 
     @Override
@@ -121,9 +122,13 @@ public class ProductCommentServiceImpl implements ProductCommentService {
         // 校验评论是否存在
         validateCommentExists(replyVO.getId());
         // 回复评论
-        productCommentMapper.updateById(new ProductCommentDO().setId(replyVO.getId())
-                .setReplyTime(LocalDateTime.now()).setReplyUserId(userId)
-                .setReplyStatus(Boolean.TRUE).setReplyContent(replyVO.getReplyContent()));
+        productCommentMapper.updateById(
+                new ProductCommentDO()
+                        .setId(replyVO.getId())
+                        .setReplyTime(LocalDateTime.now())
+                        .setReplyUserId(userId)
+                        .setReplyStatus(Boolean.TRUE)
+                        .setReplyContent(replyVO.getReplyContent()));
     }
 
     private ProductCommentDO validateCommentExists(Long id) {
@@ -135,7 +140,8 @@ public class ProductCommentServiceImpl implements ProductCommentService {
     }
 
     @Override
-    public PageResult<ProductCommentDO> getCommentPage(AppCommentPageReqVO pageVO, Boolean visible) {
+    public PageResult<ProductCommentDO> getCommentPage(
+            AppCommentPageReqVO pageVO, Boolean visible) {
         return productCommentMapper.selectPage(pageVO, visible);
     }
 
@@ -148,5 +154,4 @@ public class ProductCommentServiceImpl implements ProductCommentService {
     public PageResult<ProductCommentDO> getCommentPage(ProductCommentPageReqVO pageReqVO) {
         return productCommentMapper.selectPage(pageReqVO);
     }
-
 }

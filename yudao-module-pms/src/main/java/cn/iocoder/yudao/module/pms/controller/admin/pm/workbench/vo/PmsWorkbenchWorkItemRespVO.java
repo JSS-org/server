@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workbench.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -68,5 +69,4 @@ public class PmsWorkbenchWorkItemRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

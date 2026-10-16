@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.digest;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,5 +26,4 @@ public class FmsDigestRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

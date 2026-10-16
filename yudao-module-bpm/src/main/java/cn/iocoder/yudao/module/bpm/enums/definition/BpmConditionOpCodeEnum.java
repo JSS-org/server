@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum BpmConditionOpCodeEnum {
-
     EQ("==", "等于", " var:getOrDefault(%s, null) == %s "),
     NE("!=", "不等于", " var:getOrDefault(%s, null) != %s "),
     GT(">", "大于", " var:getOrDefault(%s, null) > %s "),
@@ -34,5 +33,4 @@ public enum BpmConditionOpCodeEnum {
         }
         throw new IllegalArgumentException("未知操作符: " + code);
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.coupon;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,19 +17,19 @@ import cn.iocoder.yudao.module.promotion.controller.admin.coupon.vo.coupon.Coupo
 import cn.iocoder.yudao.module.promotion.convert.coupon.CouponConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.coupon.CouponDO;
 import cn.iocoder.yudao.module.promotion.service.coupon.CouponService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 优惠劵")
 @RestController
@@ -34,10 +37,8 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class CouponController {
 
-    @Resource
-    private CouponService couponService;
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private CouponService couponService;
+    @Resource private MemberUserApi memberUserApi;
 
     @DeleteMapping("/delete")
     @Operation(summary = "回收优惠劵")
@@ -51,17 +52,27 @@ public class CouponController {
     @GetMapping("/page")
     @Operation(summary = "获得优惠劵分页")
     @PreAuthorize("@ss.hasPermission('promotion:coupon:query')")
-    public CommonResult<PageResult<CouponPageItemRespVO>> getCouponPage(@Valid CouponPageReqVO pageVO) {
+    public CommonResult<PageResult<CouponPageItemRespVO>> getCouponPage(
+            @Valid CouponPageReqVO pageVO) {
         PageResult<CouponDO> pageResult = couponService.getCouponPage(pageVO);
-        PageResult<CouponPageItemRespVO> pageResulVO = CouponConvert.INSTANCE.convertPage(pageResult);
+        PageResult<CouponPageItemRespVO> pageResulVO =
+                CouponConvert.INSTANCE.convertPage(pageResult);
         if (CollUtil.isEmpty(pageResulVO.getList())) {
             return success(pageResulVO);
         }
 
         // 读取用户信息，进行拼接
-        Map<Long, MemberUserRespDTO> userMap = memberUserApi.getUserMap(convertSet(pageResult.getList(), CouponDO::getUserId));
-        pageResulVO.getList().forEach(itemRespVO -> MapUtils.findAndThen(userMap, itemRespVO.getUserId(),
-                userRespDTO -> itemRespVO.setNickname(userRespDTO.getNickname())));
+        Map<Long, MemberUserRespDTO> userMap =
+                memberUserApi.getUserMap(convertSet(pageResult.getList(), CouponDO::getUserId));
+        pageResulVO
+                .getList()
+                .forEach(
+                        itemRespVO ->
+                                MapUtils.findAndThen(
+                                        userMap,
+                                        itemRespVO.getUserId(),
+                                        userRespDTO ->
+                                                itemRespVO.setNickname(userRespDTO.getNickname())));
         return success(pageResulVO);
     }
 
@@ -81,5 +92,4 @@ public class CouponController {
         couponService.takeCouponByAdmin(reqVO.getTemplateId(), reqVO.getUserIds());
         return success(true);
     }
-
 }

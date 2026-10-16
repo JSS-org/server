@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.api.user.dto;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+
 import lombok.Data;
 
 import java.util.Set;
@@ -17,10 +18,12 @@ public class AdminUserRespDTO {
      * 用户ID
      */
     private Long id;
+
     /**
      * 用户昵称
      */
     private String nickname;
+
     /**
      * 帐号状态
      *
@@ -32,25 +35,29 @@ public class AdminUserRespDTO {
      * 部门ID
      */
     private Long deptId;
+
     /**
      * 岗位编号数组
      */
     private Set<Long> postIds;
+
     /**
      * 手机号码
      */
     private String mobile;
+
     /**
      * 用户邮箱
      */
     private String email;
+
     /**
      * 用户性别
      */
     private Integer sex;
+
     /**
      * 用户头像
      */
     private String avatar;
-
 }

@@ -14,6 +14,7 @@ public class CombinationValidateJoinRespDTO {
      * 砍价活动编号
      */
     private Long activityId;
+
     /**
      * 砍价活动名称
      */
@@ -23,5 +24,4 @@ public class CombinationValidateJoinRespDTO {
      * 拼团金额
      */
     private Integer combinationPrice;
-
 }

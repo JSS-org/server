@@ -2,9 +2,13 @@ package cn.iocoder.yudao.module.crm.controller.admin.customer.vo.limitconfig;
 
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.SysAdminUserParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.SysDeptParseFunction;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -37,5 +41,4 @@ public class CrmCustomerLimitConfigSaveReqVO {
     @Schema(description = "成交客户是否占有拥有客户数(当 type = 1 时)")
     @DiffLogField(name = "成交客户是否占有拥有客户数")
     private Boolean dealCountEnabled;
-
 }

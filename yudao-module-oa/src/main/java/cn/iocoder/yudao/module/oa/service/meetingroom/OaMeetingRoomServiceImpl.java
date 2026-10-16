@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.meetingroom;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
@@ -11,18 +14,17 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.meetingroom.OaMeetingRoomDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.meetingroom.OaMeetingRoomMapper;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.oa.enums.meetingroom.*;
-import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.dict.DictDataApi;
+import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 会议室 Service 实现类
@@ -33,17 +35,13 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaMeetingRoomServiceImpl implements OaMeetingRoomService {
 
-    @Resource
-    private OaMeetingRoomMapper meetingRoomMapper;
+    @Resource private OaMeetingRoomMapper meetingRoomMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaMeetingRoomBookingService meetingRoomBookingService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DictDataApi dictDataApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DictDataApi dictDataApi;
 
     @Override
     public Long createMeetingRoom(OaMeetingRoomSaveReqVO createReqVO) {
@@ -95,11 +93,15 @@ public class OaMeetingRoomServiceImpl implements OaMeetingRoomService {
     }
 
     @Override
-    public PageResult<OaMeetingRoomDO> getMeetingRoomPageByBookingUserId(OaMeetingRoomPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaMeetingRoomDO> getMeetingRoomPageByBookingUserId(
+            OaMeetingRoomPageReqVO pageReqVO, Long userId) {
         // 1. 按负责人姓名查询匹配用户，空结果不继续查询
         List<Long> managerIds = null;
         if (StrUtil.isNotBlank(pageReqVO.getManagerName())) {
-            managerIds = convertList(adminUserApi.getUserListByNickname(pageReqVO.getManagerName()), AdminUserRespDTO::getId);
+            managerIds =
+                    convertList(
+                            adminUserApi.getUserListByNickname(pageReqVO.getManagerName()),
+                            AdminUserRespDTO::getId);
             if (CollUtil.isEmpty(managerIds)) {
                 return new PageResult<>(Collections.emptyList(), 0L);
             }
@@ -131,11 +133,13 @@ public class OaMeetingRoomServiceImpl implements OaMeetingRoomService {
         adminUserApi.validateUser(reqVO.getManagerUserId());
         // 2. 校验设备字典值
         if (CollUtil.isNotEmpty(reqVO.getEquipments())) {
-            dictDataApi.validateDictDataList(DictTypeConstants.MEETING_ROOM_EQUIPMENT,
+            dictDataApi.validateDictDataList(
+                    DictTypeConstants.MEETING_ROOM_EQUIPMENT,
                     convertList(reqVO.getEquipments(), String::valueOf));
         }
         // 3. 校验指定成员范围
-        if (ObjUtil.equal(reqVO.getBookingScope(), OaMeetingRoomBookingScopeEnum.SPECIFIED.getScope())) {
+        if (ObjUtil.equal(
+                reqVO.getBookingScope(), OaMeetingRoomBookingScopeEnum.SPECIFIED.getScope())) {
             if (CollUtil.isEmpty(reqVO.getBookingUserIds())) {
                 throw exception(MEETING_ROOM_SCOPE_INVALID);
             }

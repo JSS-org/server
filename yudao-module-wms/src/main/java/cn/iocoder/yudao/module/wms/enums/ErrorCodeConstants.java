@@ -55,7 +55,8 @@ public interface ErrorCodeConstants {
     ErrorCode RECEIPT_ORDER_NO_DUPLICATE = new ErrorCode(1_060_200_001, "入库单号重复");
     ErrorCode RECEIPT_ORDER_STATUS_NOT_PREPARE = new ErrorCode(1_060_200_002, "入库单状态不是草稿，不能操作");
     ErrorCode RECEIPT_ORDER_DETAIL_REQUIRED = new ErrorCode(1_060_200_003, "入库单至少包含一条明细");
-    ErrorCode RECEIPT_ORDER_STATUS_NOT_DELETABLE = new ErrorCode(1_060_200_005, "入库单状态不是草稿或已作废，不能删除");
+    ErrorCode RECEIPT_ORDER_STATUS_NOT_DELETABLE =
+            new ErrorCode(1_060_200_005, "入库单状态不是草稿或已作废，不能删除");
     ErrorCode RECEIPT_ORDER_DETAIL_NOT_EXISTS = new ErrorCode(1_060_200_007, "入库单明细不存在");
 
     // ========== WMS 出库单 1-060-201-000 ==========
@@ -63,7 +64,8 @@ public interface ErrorCodeConstants {
     ErrorCode SHIPMENT_ORDER_NO_DUPLICATE = new ErrorCode(1_060_201_001, "出库单号重复");
     ErrorCode SHIPMENT_ORDER_STATUS_NOT_PREPARE = new ErrorCode(1_060_201_002, "出库单状态不是草稿，不能操作");
     ErrorCode SHIPMENT_ORDER_DETAIL_REQUIRED = new ErrorCode(1_060_201_003, "出库单至少包含一条明细");
-    ErrorCode SHIPMENT_ORDER_STATUS_NOT_DELETABLE = new ErrorCode(1_060_201_005, "出库单状态不是草稿或已作废，不能删除");
+    ErrorCode SHIPMENT_ORDER_STATUS_NOT_DELETABLE =
+            new ErrorCode(1_060_201_005, "出库单状态不是草稿或已作废，不能删除");
     ErrorCode SHIPMENT_ORDER_DETAIL_NOT_EXISTS = new ErrorCode(1_060_201_007, "出库单明细不存在");
 
     // ========== WMS 移库单 1-060-202-000 ==========
@@ -71,7 +73,8 @@ public interface ErrorCodeConstants {
     ErrorCode MOVEMENT_ORDER_NO_DUPLICATE = new ErrorCode(1_060_202_001, "移库单号重复");
     ErrorCode MOVEMENT_ORDER_STATUS_NOT_PREPARE = new ErrorCode(1_060_202_002, "移库单状态不是草稿，不能操作");
     ErrorCode MOVEMENT_ORDER_DETAIL_REQUIRED = new ErrorCode(1_060_202_003, "移库单至少包含一条明细");
-    ErrorCode MOVEMENT_ORDER_STATUS_NOT_DELETABLE = new ErrorCode(1_060_202_005, "移库单状态不是草稿或已作废，不能删除");
+    ErrorCode MOVEMENT_ORDER_STATUS_NOT_DELETABLE =
+            new ErrorCode(1_060_202_005, "移库单状态不是草稿或已作废，不能删除");
     ErrorCode MOVEMENT_ORDER_DETAIL_NOT_EXISTS = new ErrorCode(1_060_202_006, "移库单明细不存在");
     ErrorCode MOVEMENT_ORDER_WAREHOUSE_SAME = new ErrorCode(1_060_202_007, "来源仓库和目标仓库不能相同");
 
@@ -85,7 +88,6 @@ public interface ErrorCodeConstants {
     ErrorCode CHECK_ORDER_INVENTORY_CHANGED = new ErrorCode(1_060_203_007, "盘库单库存已变化，请重新加载库存后再完成");
 
     // ========== WMS 库存 1-060-300-000 ==========
-    ErrorCode INVENTORY_QUANTITY_NOT_ENOUGH = new ErrorCode(1_060_300_000,
-            "库存不足，商品：{}，商品规格：{}，仓库：{}，当前库存：{}，变更数量：{}");
-
+    ErrorCode INVENTORY_QUANTITY_NOT_ENOUGH =
+            new ErrorCode(1_060_300_000, "库存不足，商品：{}，商品规格：{}，仓库：{}，当前库存：{}，变更数量：{}");
 }

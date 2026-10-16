@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusPointRespDTO;
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusByteOrderEnum;
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusRawDataTypeEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.codec.IotModbusFrame;
+
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,19 +40,25 @@ public class IotModbusCommonUtils {
 
     /** FC01: 读线圈 */
     public static final int FC_READ_COILS = 1;
+
     /** FC02: 读离散输入 */
     public static final int FC_READ_DISCRETE_INPUTS = 2;
+
     /** FC03: 读保持寄存器 */
     public static final int FC_READ_HOLDING_REGISTERS = 3;
+
     /** FC04: 读输入寄存器 */
     public static final int FC_READ_INPUT_REGISTERS = 4;
 
     /** FC05: 写单个线圈 */
     public static final int FC_WRITE_SINGLE_COIL = 5;
+
     /** FC06: 写单个寄存器 */
     public static final int FC_WRITE_SINGLE_REGISTER = 6;
+
     /** FC15: 写多个线圈 */
     public static final int FC_WRITE_MULTIPLE_COILS = 15;
+
     /** FC16: 写多个寄存器 */
     public static final int FC_WRITE_MULTIPLE_REGISTERS = 16;
 
@@ -80,8 +87,10 @@ public class IotModbusCommonUtils {
      * 判断是否为写响应（FC05/06/15/16）
      */
     public static boolean isWriteResponse(int functionCode) {
-        return functionCode == FC_WRITE_SINGLE_COIL || functionCode == FC_WRITE_SINGLE_REGISTER
-                || functionCode == FC_WRITE_MULTIPLE_COILS || functionCode == FC_WRITE_MULTIPLE_REGISTERS;
+        return functionCode == FC_WRITE_SINGLE_COIL
+                || functionCode == FC_WRITE_SINGLE_REGISTER
+                || functionCode == FC_WRITE_MULTIPLE_COILS
+                || functionCode == FC_WRITE_MULTIPLE_REGISTERS;
     }
 
     /**
@@ -325,7 +334,8 @@ public class IotModbusCommonUtils {
     private static byte[] reorderBytes(byte[] bytes, String byteOrder) {
         IotModbusByteOrderEnum byteOrderEnum = IotModbusByteOrderEnum.getByOrder(byteOrder);
         // null 或者大端序，不需要调整
-        if (ObjectUtils.equalsAny(byteOrderEnum, null, IotModbusByteOrderEnum.ABCD, IotModbusByteOrderEnum.AB)) {
+        if (ObjectUtils.equalsAny(
+                byteOrderEnum, null, IotModbusByteOrderEnum.ABCD, IotModbusByteOrderEnum.AB)) {
             return bytes;
         }
 
@@ -369,17 +379,18 @@ public class IotModbusCommonUtils {
     }
 
     @SuppressWarnings("EnhancedSwitchMigration")
-    private static int[] encodeToRegisters(BigDecimal rawValue, String rawDataType, String byteOrder, int registerCount) {
+    private static int[] encodeToRegisters(
+            BigDecimal rawValue, String rawDataType, String byteOrder, int registerCount) {
         IotModbusRawDataTypeEnum dataTypeEnum = IotModbusRawDataTypeEnum.getByType(rawDataType);
         if (dataTypeEnum == null) {
-            return new int[]{rawValue.intValue()};
+            return new int[] {rawValue.intValue()};
         }
         switch (dataTypeEnum) {
             case BOOLEAN:
-                return new int[]{rawValue.intValue() != 0 ? 1 : 0};
+                return new int[] {rawValue.intValue() != 0 ? 1 : 0};
             case INT16:
             case UINT16:
-                return new int[]{rawValue.intValue() & 0xFFFF};
+                return new int[] {rawValue.intValue() & 0xFFFF};
             case INT32:
                 return encodeInt32(rawValue.intValue(), byteOrder);
             case UINT32:
@@ -391,7 +402,7 @@ public class IotModbusCommonUtils {
             case DOUBLE:
                 return encodeDouble(rawValue.doubleValue(), byteOrder);
             default:
-                return new int[]{rawValue.intValue()};
+                return new int[] {rawValue.intValue()};
         }
     }
 
@@ -533,7 +544,8 @@ public class IotModbusCommonUtils {
      * @param identifier 点位标识符
      * @return 匹配的点位配置，未找到返回 null
      */
-    public static IotModbusPointRespDTO findPoint(IotModbusDeviceConfigRespDTO config, String identifier) {
+    public static IotModbusPointRespDTO findPoint(
+            IotModbusDeviceConfigRespDTO config, String identifier) {
         if (config == null || StrUtil.isBlank(identifier)) {
             return null;
         }
@@ -547,11 +559,11 @@ public class IotModbusCommonUtils {
      * @param pointId 点位 ID
      * @return 匹配的点位配置，未找到返回 null
      */
-    public static IotModbusPointRespDTO findPointById(IotModbusDeviceConfigRespDTO config, Long pointId) {
+    public static IotModbusPointRespDTO findPointById(
+            IotModbusDeviceConfigRespDTO config, Long pointId) {
         if (config == null || pointId == null) {
             return null;
         }
         return CollUtil.findOne(config.getPoints(), p -> p.getId().equals(pointId));
     }
-
 }

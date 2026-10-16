@@ -1,14 +1,17 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.activity;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 /**
  * 秒杀活动基地签证官
@@ -20,7 +23,10 @@ import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_
 @Data
 public class SeckillActivityBaseVO {
 
-    @Schema(description = "秒杀活动商品 id", requiredMode = Schema.RequiredMode.REQUIRED, example = "[121,1212]")
+    @Schema(
+            description = "秒杀活动商品 id",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[121,1212]")
     @NotNull(message = "秒杀活动商品不能为空")
     private Long spuId;
 
@@ -45,7 +51,10 @@ public class SeckillActivityBaseVO {
     @NotNull(message = "排序不能为空")
     private Integer sort;
 
-    @Schema(description = "秒杀时段 id", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1,2,3]")
+    @Schema(
+            description = "秒杀时段 id",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1,2,3]")
     @NotNull(message = "秒杀时段不能为空")
     private List<Long> configIds;
 
@@ -54,5 +63,4 @@ public class SeckillActivityBaseVO {
 
     @Schema(description = "单次限够数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "31683")
     private Integer singleLimitCount;
-
 }

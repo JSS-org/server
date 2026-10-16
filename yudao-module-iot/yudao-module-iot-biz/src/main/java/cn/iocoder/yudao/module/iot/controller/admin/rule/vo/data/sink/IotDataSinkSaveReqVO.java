@@ -4,9 +4,12 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotAbstractDataSinkConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IoT 数据流转目的新增/修改 Request VO")
@@ -36,5 +39,4 @@ public class IotDataSinkSaveReqVO {
     @Schema(description = "数据目的配置")
     @NotNull(message = "数据目的配置不能为空")
     private IotAbstractDataSinkConfig config;
-
 }

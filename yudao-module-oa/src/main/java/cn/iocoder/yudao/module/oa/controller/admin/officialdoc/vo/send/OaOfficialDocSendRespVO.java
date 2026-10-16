@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.send;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,7 +17,10 @@ public class OaOfficialDocSendRespVO {
     @Schema(description = "套红模板编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long templateId;
 
-    @Schema(description = "公文标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "关于开展办公用品盘点的通知")
+    @Schema(
+            description = "公文标题",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "关于开展办公用品盘点的通知")
     private String title;
 
     @Schema(description = "字号", example = "芋办")
@@ -36,13 +41,21 @@ public class OaOfficialDocSendRespVO {
     @Schema(description = "公开类别", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     private Integer disclosureType;
 
-    @Schema(description = "发文日期", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "发文日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime issueTime;
 
     @Schema(description = "发文部门编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long sendDeptId;
 
-    @Schema(description = "主送部门编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1, 2]")
+    @Schema(
+            description = "主送部门编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1, 2]")
     private List<Long> mainDeptIds;
 
     @Schema(description = "抄送部门编号列表", example = "[1, 2]")
@@ -90,7 +103,11 @@ public class OaOfficialDocSendRespVO {
     @Schema(description = "创建人编号", example = "1024")
     private String creator;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

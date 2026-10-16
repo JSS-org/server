@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.oa.controller.admin.attendance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -18,11 +23,14 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,24 +46,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - OA 考勤")
 @RestController
 @RequestMapping("/oa/attendance")
 @Validated
 public class OaAttendanceController {
 
-    @Resource
-    private OaAttendanceService attendanceService;
+    @Resource private OaAttendanceService attendanceService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     // ==================== 我的考勤 ====================
 
@@ -69,16 +69,19 @@ public class OaAttendanceController {
     @Operation(summary = "获得我的考勤分页列表")
     public CommonResult<PageResult<OaAttendanceRespVO>> getMyAttendancePage(
             @Valid OaAttendancePageReqVO pageReqVO) {
-        PageResult<OaAttendanceDO> pageResult = attendanceService.getMyAttendancePage(
-                pageReqVO, getLoginUserId());
-        return success(new PageResult<>(buildAttendanceRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<OaAttendanceDO> pageResult =
+                attendanceService.getMyAttendancePage(pageReqVO, getLoginUserId());
+        return success(
+                new PageResult<>(
+                        buildAttendanceRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/my-today-list")
     @Operation(summary = "获得我的今日考勤列表")
     public CommonResult<List<OaAttendanceRespVO>> getMyTodayAttendanceList() {
-        return success(buildAttendanceRespVOList(
-                attendanceService.getTodayAttendanceList(getLoginUserId())));
+        return success(
+                buildAttendanceRespVOList(
+                        attendanceService.getTodayAttendanceList(getLoginUserId())));
     }
 
     // ==================== 考勤管理 ====================
@@ -86,7 +89,8 @@ public class OaAttendanceController {
     @PutMapping("/update")
     @Operation(summary = "更新考勤记录")
     @PreAuthorize("@ss.hasPermission('oa:attendance:update')")
-    public CommonResult<Boolean> updateAttendance(@Valid @RequestBody OaAttendanceUpdateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAttendance(
+            @Valid @RequestBody OaAttendanceUpdateReqVO updateReqVO) {
         attendanceService.updateAttendance(updateReqVO, getLoginUserId());
         return success(true);
     }
@@ -114,8 +118,11 @@ public class OaAttendanceController {
     @PreAuthorize("@ss.hasPermission('oa:attendance:query')")
     public CommonResult<PageResult<OaAttendanceRespVO>> getAttendancePage(
             @Valid OaAttendancePageReqVO pageReqVO) {
-        PageResult<OaAttendanceDO> pageResult = attendanceService.getAttendancePage(pageReqVO, getLoginUserId());
-        return success(new PageResult<>(buildAttendanceRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<OaAttendanceDO> pageResult =
+                attendanceService.getAttendancePage(pageReqVO, getLoginUserId());
+        return success(
+                new PageResult<>(
+                        buildAttendanceRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 考勤报表 ====================
@@ -125,8 +132,9 @@ public class OaAttendanceController {
     @PreAuthorize("@ss.hasPermission('oa:attendance:query')")
     public CommonResult<List<OaAttendanceWeekReportRespVO>> getAttendanceWeekReport(
             @Valid OaAttendanceWeekReportReqVO reqVO) {
-        return success(buildAttendanceWeekReportRespVOList(
-                attendanceService.getAttendanceWeekReport(reqVO, getLoginUserId())));
+        return success(
+                buildAttendanceWeekReportRespVOList(
+                        attendanceService.getAttendanceWeekReport(reqVO, getLoginUserId())));
     }
 
     @GetMapping("/month-report")
@@ -134,8 +142,9 @@ public class OaAttendanceController {
     @PreAuthorize("@ss.hasPermission('oa:attendance:query')")
     public CommonResult<List<OaAttendanceMonthReportRespVO>> getAttendanceMonthReport(
             @Valid OaAttendanceMonthReportReqVO reqVO) {
-        return success(buildAttendanceMonthReportRespVOList(
-                attendanceService.getAttendanceMonthReport(reqVO, getLoginUserId())));
+        return success(
+                buildAttendanceMonthReportRespVOList(
+                        attendanceService.getAttendanceMonthReport(reqVO, getLoginUserId())));
     }
 
     // ==================== 拼接 VO ====================
@@ -163,12 +172,14 @@ public class OaAttendanceController {
         if (CollUtil.isEmpty(attendances)) {
             return Collections.emptyList();
         }
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(attendances, OaAttendanceDO::getUserId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
-        return BeanUtils.toBean(attendances, OaAttendanceRespVO.class, attendance ->
-                fillAttendanceUserInfo(attendance, userMap, deptMap));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(attendances, OaAttendanceDO::getUserId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
+        return BeanUtils.toBean(
+                attendances,
+                OaAttendanceRespVO.class,
+                attendance -> fillAttendanceUserInfo(attendance, userMap, deptMap));
     }
 
     /**
@@ -182,10 +193,11 @@ public class OaAttendanceController {
         if (CollUtil.isEmpty(reports)) {
             return Collections.emptyList();
         }
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(reports, OaAttendanceWeekReportRespVO::getUserId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(reports, OaAttendanceWeekReportRespVO::getUserId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
         reports.forEach(report -> fillAttendanceUserInfo(report, userMap, deptMap));
         return reports;
     }
@@ -201,10 +213,11 @@ public class OaAttendanceController {
         if (CollUtil.isEmpty(reports)) {
             return Collections.emptyList();
         }
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(reports, OaAttendanceMonthReportRespVO::getUserId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(reports, OaAttendanceMonthReportRespVO::getUserId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
         reports.forEach(report -> fillAttendanceUserInfo(report, userMap, deptMap));
         return reports;
     }
@@ -216,13 +229,20 @@ public class OaAttendanceController {
      * @param userMap 用户 Map
      * @param deptMap 部门 Map
      */
-    private void fillAttendanceUserInfo(OaAttendanceRespVO attendance,
-                                        Map<Long, AdminUserRespDTO> userMap,
-                                        Map<Long, DeptRespDTO> deptMap) {
-        MapUtils.findAndThen(userMap, attendance.getUserId(), user -> {
-            attendance.setUserName(user.getNickname()).setDeptId(user.getDeptId());
-            MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> attendance.setDeptName(dept.getName()));
-        });
+    private void fillAttendanceUserInfo(
+            OaAttendanceRespVO attendance,
+            Map<Long, AdminUserRespDTO> userMap,
+            Map<Long, DeptRespDTO> deptMap) {
+        MapUtils.findAndThen(
+                userMap,
+                attendance.getUserId(),
+                user -> {
+                    attendance.setUserName(user.getNickname()).setDeptId(user.getDeptId());
+                    MapUtils.findAndThen(
+                            deptMap,
+                            user.getDeptId(),
+                            dept -> attendance.setDeptName(dept.getName()));
+                });
     }
 
     /**
@@ -232,13 +252,18 @@ public class OaAttendanceController {
      * @param userMap 用户 Map
      * @param deptMap 部门 Map
      */
-    private void fillAttendanceUserInfo(OaAttendanceWeekReportRespVO report,
-                                        Map<Long, AdminUserRespDTO> userMap,
-                                        Map<Long, DeptRespDTO> deptMap) {
-        MapUtils.findAndThen(userMap, report.getUserId(), user -> {
-            report.setUserName(user.getNickname()).setDeptId(user.getDeptId());
-            MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> report.setDeptName(dept.getName()));
-        });
+    private void fillAttendanceUserInfo(
+            OaAttendanceWeekReportRespVO report,
+            Map<Long, AdminUserRespDTO> userMap,
+            Map<Long, DeptRespDTO> deptMap) {
+        MapUtils.findAndThen(
+                userMap,
+                report.getUserId(),
+                user -> {
+                    report.setUserName(user.getNickname()).setDeptId(user.getDeptId());
+                    MapUtils.findAndThen(
+                            deptMap, user.getDeptId(), dept -> report.setDeptName(dept.getName()));
+                });
     }
 
     /**
@@ -248,13 +273,17 @@ public class OaAttendanceController {
      * @param userMap 用户 Map
      * @param deptMap 部门 Map
      */
-    private void fillAttendanceUserInfo(OaAttendanceMonthReportRespVO report,
-                                        Map<Long, AdminUserRespDTO> userMap,
-                                        Map<Long, DeptRespDTO> deptMap) {
-        MapUtils.findAndThen(userMap, report.getUserId(), user -> {
-            report.setUserName(user.getNickname()).setDeptId(user.getDeptId());
-            MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> report.setDeptName(dept.getName()));
-        });
+    private void fillAttendanceUserInfo(
+            OaAttendanceMonthReportRespVO report,
+            Map<Long, AdminUserRespDTO> userMap,
+            Map<Long, DeptRespDTO> deptMap) {
+        MapUtils.findAndThen(
+                userMap,
+                report.getUserId(),
+                user -> {
+                    report.setUserName(user.getNickname()).setDeptId(user.getDeptId());
+                    MapUtils.findAndThen(
+                            deptMap, user.getDeptId(), dept -> report.setDeptName(dept.getName()));
+                });
     }
-
 }

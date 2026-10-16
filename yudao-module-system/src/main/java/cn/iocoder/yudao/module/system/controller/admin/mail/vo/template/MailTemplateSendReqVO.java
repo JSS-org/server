@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.system.controller.admin.mail.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.util.List;
 import java.util.Map;
 
@@ -12,14 +14,23 @@ import java.util.Map;
 @Data
 public class MailTemplateSendReqVO {
 
-    @Schema(description = "接收邮箱", requiredMode = Schema.RequiredMode.REQUIRED, example = "[user1@example.com, user2@example.com]")
+    @Schema(
+            description = "接收邮箱",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[user1@example.com, user2@example.com]")
     @NotEmpty(message = "接收邮箱不能为空")
     private List<String> toMails;
 
-    @Schema(description = "抄送邮箱", requiredMode = Schema.RequiredMode.REQUIRED, example = "[user3@example.com, user4@example.com]")
+    @Schema(
+            description = "抄送邮箱",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[user3@example.com, user4@example.com]")
     private List<String> ccMails;
 
-    @Schema(description = "密送邮箱", requiredMode = Schema.RequiredMode.REQUIRED, example = "[user5@example.com, user6@example.com]")
+    @Schema(
+            description = "密送邮箱",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[user5@example.com, user6@example.com]")
     private List<String> bccMails;
 
     @Schema(description = "模板编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "test_01")
@@ -28,5 +39,4 @@ public class MailTemplateSendReqVO {
 
     @Schema(description = "模板参数")
     private Map<String, Object> templateParams;
-
 }

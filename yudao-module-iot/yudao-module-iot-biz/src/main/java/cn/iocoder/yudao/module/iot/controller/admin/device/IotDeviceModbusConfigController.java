@@ -1,21 +1,24 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus.IotDeviceModbusConfigRespVO;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus.IotDeviceModbusConfigSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceModbusConfigDO;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceModbusConfigService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - IoT 设备 Modbus 连接配置")
 @RestController
@@ -23,13 +26,13 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class IotDeviceModbusConfigController {
 
-    @Resource
-    private IotDeviceModbusConfigService modbusConfigService;
+    @Resource private IotDeviceModbusConfigService modbusConfigService;
 
     @PostMapping("/save")
     @Operation(summary = "保存设备 Modbus 连接配置")
     @PreAuthorize("@ss.hasPermission('iot:device:update')")
-    public CommonResult<Boolean> saveDeviceModbusConfig(@Valid @RequestBody IotDeviceModbusConfigSaveReqVO saveReqVO) {
+    public CommonResult<Boolean> saveDeviceModbusConfig(
+            @Valid @RequestBody IotDeviceModbusConfigSaveReqVO saveReqVO) {
         modbusConfigService.saveDeviceModbusConfig(saveReqVO);
         return success(true);
     }
@@ -50,5 +53,4 @@ public class IotDeviceModbusConfigController {
         }
         return success(BeanUtils.toBean(modbusConfig, IotDeviceModbusConfigRespVO.class));
     }
-
 }

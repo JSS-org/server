@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.agent.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -24,7 +26,10 @@ public class Ai1AgentSaveReqVO {
     @Size(max = 500, message = "介绍长度不能超过 500 个字符")
     private String introduction;
 
-    @Schema(description = "模型所属 Provider 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "模型所属 Provider 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "Provider 不能为空")
     private Long providerId;
 
@@ -43,5 +48,4 @@ public class Ai1AgentSaveReqVO {
 
     @Schema(description = "SKILL 编号集合", example = "[1]")
     private List<Long> skillIds;
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.andon.vo.config.MesProAndonConfigPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.andon.vo.config.MesProAndonConfigSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.andon.MesProAndonConfigDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -67,5 +68,4 @@ public interface MesProAndonConfigService {
      * @return 安灯呼叫配置列表
      */
     List<MesProAndonConfigDO> getAndonConfigList();
-
 }

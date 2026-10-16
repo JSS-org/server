@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.ai.service.knowledge;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.segment.AiKnowledgeSegmentPageReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.segment.AiKnowledgeSegmentProcessRespVO;
@@ -8,13 +10,12 @@ import cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.segment.AiKnowle
 import cn.iocoder.yudao.module.ai.dal.dataobject.knowledge.AiKnowledgeSegmentDO;
 import cn.iocoder.yudao.module.ai.service.knowledge.bo.AiKnowledgeSegmentSearchReqBO;
 import cn.iocoder.yudao.module.ai.service.knowledge.bo.AiKnowledgeSegmentSearchRespBO;
+
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI 知识库段落 Service 接口
@@ -135,7 +136,8 @@ public interface AiKnowledgeSegmentService {
      * @param reqBO 搜索请求信息
      * @return 搜索结果段落列表
      */
-    List<AiKnowledgeSegmentSearchRespBO> searchKnowledgeSegment(AiKnowledgeSegmentSearchReqBO reqBO);
+    List<AiKnowledgeSegmentSearchRespBO> searchKnowledgeSegment(
+            AiKnowledgeSegmentSearchReqBO reqBO);
 
     /**
      * 根据 URL 内容，切片创建多个段落
@@ -153,5 +155,4 @@ public interface AiKnowledgeSegmentService {
      * @return 文档处理列表
      */
     List<AiKnowledgeSegmentProcessRespVO> getKnowledgeSegmentProcessList(List<Long> documentIds);
-
 }

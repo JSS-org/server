@@ -22,5 +22,4 @@ public enum NotifyTemplateTypeEnum {
     NOTIFICATION_MESSAGE(1);
 
     private final Integer type;
-
 }

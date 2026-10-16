@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.biz.IotDeviceCommonApi;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterRespDTO;
-import io.vertx.ext.web.RoutingContext;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import io.vertx.ext.web.RoutingContext;
 
 /**
  * IoT 网关 HTTP 协议的【设备动态注册】处理器
@@ -31,7 +32,8 @@ public class IotHttpRegisterHandler extends IotHttpAbstractHandler {
     @Override
     public CommonResult<Object> handle0(RoutingContext context) {
         // 1. 解析参数
-        IotDeviceRegisterReqDTO request = deserializeRequest(context, IotDeviceRegisterReqDTO.class);
+        IotDeviceRegisterReqDTO request =
+                deserializeRequest(context, IotDeviceRegisterReqDTO.class);
         Assert.notNull(request, "请求参数不能为空");
         Assert.notBlank(request.getProductKey(), "productKey 不能为空");
         Assert.notBlank(request.getDeviceName(), "deviceName 不能为空");
@@ -44,5 +46,4 @@ public class IotHttpRegisterHandler extends IotHttpAbstractHandler {
         // 3. 返回结果
         return success(result.getData());
     }
-
 }

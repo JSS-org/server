@@ -4,11 +4,13 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.property.ProductPropertyDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.property.ProductPropertyValueDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.*;
 
 import java.util.List;
@@ -31,47 +33,56 @@ public class ProductSkuDO extends BaseDO {
     /**
      * 商品 SKU 编号，自增
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * SPU 编号
      *
      * 关联 {@link ProductSpuDO#getId()}
      */
     private Long spuId;
+
     /**
      * 属性数组，JSON 格式
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<Property> properties;
+
     /**
      * 商品价格，单位：分
      */
     private Integer price;
+
     /**
      * 市场价，单位：分
      */
     private Integer marketPrice;
+
     /**
      * 成本价，单位：分
      */
     private Integer costPrice;
+
     /**
      * 商品条码
      */
     private String barCode;
+
     /**
      * 图片地址
      */
     private String picUrl;
+
     /**
      * 库存
      */
     private Integer stock;
+
     /**
      * 商品重量，单位：kg 千克
      */
     private Double weight;
+
     /**
      * 商品体积，单位：m^3 平米
      */
@@ -81,6 +92,7 @@ public class ProductSkuDO extends BaseDO {
      * 一级分销的佣金，单位：分
      */
     private Integer firstBrokeragePrice;
+
     /**
      * 二级分销的佣金，单位：分
      */
@@ -107,6 +119,7 @@ public class ProductSkuDO extends BaseDO {
          * 关联 {@link ProductPropertyDO#getId()}
          */
         private Long propertyId;
+
         /**
          * 属性名字
          * 冗余 {@link ProductPropertyDO#getName()}
@@ -120,6 +133,7 @@ public class ProductSkuDO extends BaseDO {
          * 关联 {@link ProductPropertyValueDO#getId()}
          */
         private Long valueId;
+
         /**
          * 属性值名字
          * 冗余 {@link ProductPropertyValueDO#getName()}
@@ -127,8 +141,5 @@ public class ProductSkuDO extends BaseDO {
          * 注意：每次属性值名字发生变化时，需要更新该冗余
          */
         private String valueName;
-
     }
-
 }
-

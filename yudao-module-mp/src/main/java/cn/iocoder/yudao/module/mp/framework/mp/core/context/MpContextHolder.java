@@ -18,8 +18,9 @@
 package cn.iocoder.yudao.module.mp.framework.mp.core.context;
 
 import cn.iocoder.yudao.module.mp.controller.admin.open.vo.MpOpenHandleMessageReqVO;
+
 import com.alibaba.ttl.TransmittableThreadLocal;
-import lombok.experimental.UtilityClass;
+
 import me.chanjar.weixin.mp.api.WxMpMessageHandler;
 
 /**
@@ -36,18 +37,17 @@ public class MpContextHolder {
     /**
      * 微信公众号的 appId 上下文
      */
-	private static final ThreadLocal<String> APPID = new TransmittableThreadLocal<>();
+    private static final ThreadLocal<String> APPID = new TransmittableThreadLocal<>();
 
-	public static void setAppId(String appId) {
-		APPID.set(appId);
-	}
+    public static void setAppId(String appId) {
+        APPID.set(appId);
+    }
 
-	public static String getAppId() {
-		return APPID.get();
-	}
+    public static String getAppId() {
+        return APPID.get();
+    }
 
-	public static void clear() {
-		APPID.remove();
-	}
-
+    public static void clear() {
+        APPID.remove();
+    }
 }

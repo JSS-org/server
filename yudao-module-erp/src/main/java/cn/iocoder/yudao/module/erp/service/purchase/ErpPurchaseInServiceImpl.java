@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.erp.service.purchase;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -22,7 +26,9 @@ import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
 import cn.iocoder.yudao.module.erp.service.stock.ErpStockRecordService;
 import cn.iocoder.yudao.module.erp.service.stock.bo.ErpStockRecordCreateReqBO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 // TODO 芋艿：记录操作日志
 
@@ -49,32 +51,25 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 @Validated
 public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
 
-    @Resource
-    private ErpPurchaseInMapper purchaseInMapper;
-    @Resource
-    private ErpPurchaseInItemMapper purchaseInItemMapper;
+    @Resource private ErpPurchaseInMapper purchaseInMapper;
+    @Resource private ErpPurchaseInItemMapper purchaseInItemMapper;
 
-    @Resource
-    private ErpNoRedisDAO noRedisDAO;
+    @Resource private ErpNoRedisDAO noRedisDAO;
 
-    @Resource
-    private ErpProductService productService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private ErpProductService productService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpPurchaseOrderService purchaseOrderService;
-    @Resource
-    private ErpAccountService accountService;
-    @Resource
-    private ErpStockRecordService stockRecordService;
+    @Resource private ErpAccountService accountService;
+    @Resource private ErpStockRecordService stockRecordService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createPurchaseIn(ErpPurchaseInSaveReqVO createReqVO) {
         // 1.1 校验采购订单已审核
-        ErpPurchaseOrderDO purchaseOrder = purchaseOrderService.validatePurchaseOrder(createReqVO.getOrderId());
+        ErpPurchaseOrderDO purchaseOrder =
+                purchaseOrderService.validatePurchaseOrder(createReqVO.getOrderId());
         // 1.2 校验入库项的有效性
         List<ErpPurchaseInItemDO> purchaseInItems = validatePurchaseInItems(createReqVO.getItems());
         // 1.3 校验结算账户
@@ -86,9 +81,13 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
         }
 
         // 2.1 插入入库
-        ErpPurchaseInDO purchaseIn = BeanUtils.toBean(createReqVO, ErpPurchaseInDO.class, in -> in
-                .setNo(no).setStatus(ErpAuditStatus.PROCESS.getStatus()))
-                .setOrderNo(purchaseOrder.getNo()).setSupplierId(purchaseOrder.getSupplierId());
+        ErpPurchaseInDO purchaseIn =
+                BeanUtils.toBean(
+                                createReqVO,
+                                ErpPurchaseInDO.class,
+                                in -> in.setNo(no).setStatus(ErpAuditStatus.PROCESS.getStatus()))
+                        .setOrderNo(purchaseOrder.getNo())
+                        .setSupplierId(purchaseOrder.getSupplierId());
         calculateTotalPrice(purchaseIn, purchaseInItems);
         purchaseInMapper.insert(purchaseIn);
         // 2.2 插入入库项
@@ -109,15 +108,18 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
             throw exception(PURCHASE_IN_UPDATE_FAIL_APPROVE, purchaseIn.getNo());
         }
         // 1.2 校验采购订单已审核
-        ErpPurchaseOrderDO purchaseOrder = purchaseOrderService.validatePurchaseOrder(updateReqVO.getOrderId());
+        ErpPurchaseOrderDO purchaseOrder =
+                purchaseOrderService.validatePurchaseOrder(updateReqVO.getOrderId());
         // 1.3 校验结算账户
         accountService.validateAccount(updateReqVO.getAccountId());
         // 1.4 校验订单项的有效性
         List<ErpPurchaseInItemDO> purchaseInItems = validatePurchaseInItems(updateReqVO.getItems());
 
         // 2.1 更新入库
-        ErpPurchaseInDO updateObj = BeanUtils.toBean(updateReqVO, ErpPurchaseInDO.class)
-                .setOrderNo(purchaseOrder.getNo()).setSupplierId(purchaseOrder.getSupplierId());
+        ErpPurchaseInDO updateObj =
+                BeanUtils.toBean(updateReqVO, ErpPurchaseInDO.class)
+                        .setOrderNo(purchaseOrder.getNo())
+                        .setSupplierId(purchaseOrder.getSupplierId());
         calculateTotalPrice(updateObj, purchaseInItems);
         purchaseInMapper.updateById(updateObj);
         // 2.2 更新入库项
@@ -131,36 +133,61 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
         }
     }
 
-    private void calculateTotalPrice(ErpPurchaseInDO purchaseIn, List<ErpPurchaseInItemDO> purchaseInItems) {
-        purchaseIn.setTotalCount(getSumValue(purchaseInItems, ErpPurchaseInItemDO::getCount, BigDecimal::add));
-        purchaseIn.setTotalProductPrice(getSumValue(purchaseInItems, ErpPurchaseInItemDO::getTotalPrice, BigDecimal::add, BigDecimal.ZERO));
-        purchaseIn.setTotalTaxPrice(getSumValue(purchaseInItems, ErpPurchaseInItemDO::getTaxPrice, BigDecimal::add, BigDecimal.ZERO));
-        purchaseIn.setTotalPrice(purchaseIn.getTotalProductPrice().add(purchaseIn.getTotalTaxPrice()));
+    private void calculateTotalPrice(
+            ErpPurchaseInDO purchaseIn, List<ErpPurchaseInItemDO> purchaseInItems) {
+        purchaseIn.setTotalCount(
+                getSumValue(purchaseInItems, ErpPurchaseInItemDO::getCount, BigDecimal::add));
+        purchaseIn.setTotalProductPrice(
+                getSumValue(
+                        purchaseInItems,
+                        ErpPurchaseInItemDO::getTotalPrice,
+                        BigDecimal::add,
+                        BigDecimal.ZERO));
+        purchaseIn.setTotalTaxPrice(
+                getSumValue(
+                        purchaseInItems,
+                        ErpPurchaseInItemDO::getTaxPrice,
+                        BigDecimal::add,
+                        BigDecimal.ZERO));
+        purchaseIn.setTotalPrice(
+                purchaseIn.getTotalProductPrice().add(purchaseIn.getTotalTaxPrice()));
         // 计算优惠价格
         if (purchaseIn.getDiscountPercent() == null) {
             purchaseIn.setDiscountPercent(BigDecimal.ZERO);
         }
-        purchaseIn.setDiscountPrice(MoneyUtils.priceMultiplyPercent(purchaseIn.getTotalPrice(), purchaseIn.getDiscountPercent()));
-        purchaseIn.setTotalPrice(purchaseIn.getTotalPrice().subtract(purchaseIn.getDiscountPrice()).add(purchaseIn.getOtherPrice()));
+        purchaseIn.setDiscountPrice(
+                MoneyUtils.priceMultiplyPercent(
+                        purchaseIn.getTotalPrice(), purchaseIn.getDiscountPercent()));
+        purchaseIn.setTotalPrice(
+                purchaseIn
+                        .getTotalPrice()
+                        .subtract(purchaseIn.getDiscountPrice())
+                        .add(purchaseIn.getOtherPrice()));
     }
 
     private void updatePurchaseOrderInCount(Long orderId) {
         // 1.1 查询已审核入库单，计算入库进度
-        List<ErpPurchaseInDO> approvedIns = purchaseInMapper.selectListByOrderIdAndStatus(
-                orderId, ErpAuditStatus.APPROVE.getStatus());
-        Map<Long, BigDecimal> inCountMap = purchaseInItemMapper.selectOrderItemCountSumMapByInIds(
-                convertList(approvedIns, ErpPurchaseInDO::getId));
+        List<ErpPurchaseInDO> approvedIns =
+                purchaseInMapper.selectListByOrderIdAndStatus(
+                        orderId, ErpAuditStatus.APPROVE.getStatus());
+        Map<Long, BigDecimal> inCountMap =
+                purchaseInItemMapper.selectOrderItemCountSumMapByInIds(
+                        convertList(approvedIns, ErpPurchaseInDO::getId));
         // 1.2 查询全部入库单，计算占用数量
         List<ErpPurchaseInDO> allIns = purchaseInMapper.selectListByOrderId(orderId);
-        Map<Long, BigDecimal> allCountMap = purchaseInItemMapper.selectOrderItemCountSumMapByInIds(
-                convertList(allIns, ErpPurchaseInDO::getId));
+        Map<Long, BigDecimal> allCountMap =
+                purchaseInItemMapper.selectOrderItemCountSumMapByInIds(
+                        convertList(allIns, ErpPurchaseInDO::getId));
         // 1.3 校验全部入库数量未超过采购订单项数量
-        List<ErpPurchaseOrderItemDO> orderItems = purchaseOrderService.getPurchaseOrderItemListByOrderId(orderId);
+        List<ErpPurchaseOrderItemDO> orderItems =
+                purchaseOrderService.getPurchaseOrderItemListByOrderId(orderId);
         for (ErpPurchaseOrderItemDO item : orderItems) {
             BigDecimal allCount = allCountMap.getOrDefault(item.getId(), BigDecimal.ZERO);
             if (allCount.compareTo(item.getCount()) > 0) {
-                throw exception(PURCHASE_ORDER_ITEM_IN_FAIL_PRODUCT_EXCEED,
-                        productService.getProduct(item.getProductId()).getName(), item.getCount());
+                throw exception(
+                        PURCHASE_ORDER_ITEM_IN_FAIL_PRODUCT_EXCEED,
+                        productService.getProduct(item.getProductId()).getName(),
+                        item.getCount());
             }
         }
 
@@ -184,22 +211,35 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
         }
 
         // 2. 更新状态
-        int updateCount = purchaseInMapper.updateByIdAndStatus(id, purchaseIn.getStatus(),
-                new ErpPurchaseInDO().setStatus(status));
+        int updateCount =
+                purchaseInMapper.updateByIdAndStatus(
+                        id, purchaseIn.getStatus(), new ErpPurchaseInDO().setStatus(status));
         if (updateCount == 0) {
             throw exception(approve ? PURCHASE_IN_APPROVE_FAIL : PURCHASE_IN_PROCESS_FAIL);
         }
 
         // 3. 变更库存
         List<ErpPurchaseInItemDO> purchaseInItems = purchaseInItemMapper.selectListByInId(id);
-        Integer bizType = approve ? ErpStockRecordBizTypeEnum.PURCHASE_IN.getType()
-                : ErpStockRecordBizTypeEnum.PURCHASE_IN_CANCEL.getType();
-        purchaseInItems.forEach(purchaseInItem -> {
-            BigDecimal count = approve ? purchaseInItem.getCount() : purchaseInItem.getCount().negate();
-            stockRecordService.createStockRecord(new ErpStockRecordCreateReqBO(
-                    purchaseInItem.getProductId(), purchaseInItem.getWarehouseId(), count,
-                    bizType, purchaseInItem.getInId(), purchaseInItem.getId(), purchaseIn.getNo()));
-        });
+        Integer bizType =
+                approve
+                        ? ErpStockRecordBizTypeEnum.PURCHASE_IN.getType()
+                        : ErpStockRecordBizTypeEnum.PURCHASE_IN_CANCEL.getType();
+        purchaseInItems.forEach(
+                purchaseInItem -> {
+                    BigDecimal count =
+                            approve
+                                    ? purchaseInItem.getCount()
+                                    : purchaseInItem.getCount().negate();
+                    stockRecordService.createStockRecord(
+                            new ErpStockRecordCreateReqBO(
+                                    purchaseInItem.getProductId(),
+                                    purchaseInItem.getWarehouseId(),
+                                    count,
+                                    bizType,
+                                    purchaseInItem.getInId(),
+                                    purchaseInItem.getId(),
+                                    purchaseIn.getNo()));
+                });
 
         // 4. 更新采购订单的入库数量
         updatePurchaseOrderInCount(purchaseIn.getOrderId());
@@ -212,34 +252,54 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
             return;
         }
         if (paymentPrice.compareTo(purchaseIn.getTotalPrice()) > 0) {
-            throw exception(PURCHASE_IN_FAIL_PAYMENT_PRICE_EXCEED, paymentPrice, purchaseIn.getTotalPrice());
+            throw exception(
+                    PURCHASE_IN_FAIL_PAYMENT_PRICE_EXCEED,
+                    paymentPrice,
+                    purchaseIn.getTotalPrice());
         }
         purchaseInMapper.updateById(new ErpPurchaseInDO().setId(id).setPaymentPrice(paymentPrice));
     }
 
-    private List<ErpPurchaseInItemDO> validatePurchaseInItems(List<ErpPurchaseInSaveReqVO.Item> list) {
+    private List<ErpPurchaseInItemDO> validatePurchaseInItems(
+            List<ErpPurchaseInSaveReqVO.Item> list) {
         // 1. 校验产品存在
-        List<ErpProductDO> productList = productService.validProductList(
-                convertSet(list, ErpPurchaseInSaveReqVO.Item::getProductId));
+        List<ErpProductDO> productList =
+                productService.validProductList(
+                        convertSet(list, ErpPurchaseInSaveReqVO.Item::getProductId));
         Map<Long, ErpProductDO> productMap = convertMap(productList, ErpProductDO::getId);
         // 2. 转化为 ErpPurchaseInItemDO 列表
-        return convertList(list, o -> BeanUtils.toBean(o, ErpPurchaseInItemDO.class, item -> {
-            item.setProductUnitId(productMap.get(item.getProductId()).getUnitId());
-            item.setTotalPrice(MoneyUtils.priceMultiply(item.getProductPrice(), item.getCount()));
-            if (item.getTotalPrice() == null) {
-                return;
-            }
-            if (item.getTaxPercent() != null) {
-                item.setTaxPrice(MoneyUtils.priceMultiplyPercent(item.getTotalPrice(), item.getTaxPercent()));
-            }
-        }));
+        return convertList(
+                list,
+                o ->
+                        BeanUtils.toBean(
+                                o,
+                                ErpPurchaseInItemDO.class,
+                                item -> {
+                                    item.setProductUnitId(
+                                            productMap.get(item.getProductId()).getUnitId());
+                                    item.setTotalPrice(
+                                            MoneyUtils.priceMultiply(
+                                                    item.getProductPrice(), item.getCount()));
+                                    if (item.getTotalPrice() == null) {
+                                        return;
+                                    }
+                                    if (item.getTaxPercent() != null) {
+                                        item.setTaxPrice(
+                                                MoneyUtils.priceMultiplyPercent(
+                                                        item.getTotalPrice(),
+                                                        item.getTaxPercent()));
+                                    }
+                                }));
     }
 
     private void updatePurchaseInItemList(Long id, List<ErpPurchaseInItemDO> newList) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
         List<ErpPurchaseInItemDO> oldList = purchaseInItemMapper.selectListByInId(id);
-        List<List<ErpPurchaseInItemDO>> diffList = diffList(oldList, newList, // id 不同，就认为是不同的记录
-                (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
+        List<List<ErpPurchaseInItemDO>> diffList =
+                diffList(
+                        oldList,
+                        newList, // id 不同，就认为是不同的记录
+                        (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(0))) {
@@ -250,7 +310,8 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
             purchaseInItemMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            purchaseInItemMapper.deleteByIds(convertList(diffList.get(2), ErpPurchaseInItemDO::getId));
+            purchaseInItemMapper.deleteByIds(
+                    convertList(diffList.get(2), ErpPurchaseInItemDO::getId));
         }
     }
 
@@ -262,23 +323,24 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
         if (CollUtil.isEmpty(purchaseIns)) {
             return;
         }
-        purchaseIns.forEach(purchaseIn -> {
-            if (ErpAuditStatus.APPROVE.getStatus().equals(purchaseIn.getStatus())) {
-                throw exception(PURCHASE_IN_DELETE_FAIL_APPROVE, purchaseIn.getNo());
-            }
-        });
+        purchaseIns.forEach(
+                purchaseIn -> {
+                    if (ErpAuditStatus.APPROVE.getStatus().equals(purchaseIn.getStatus())) {
+                        throw exception(PURCHASE_IN_DELETE_FAIL_APPROVE, purchaseIn.getNo());
+                    }
+                });
 
         // 2. 遍历删除，并记录操作日志
-        purchaseIns.forEach(purchaseIn -> {
-            // 2.1 删除订单
-            purchaseInMapper.deleteById(purchaseIn.getId());
-            // 2.2 删除订单项
-            purchaseInItemMapper.deleteByInId(purchaseIn.getId());
+        purchaseIns.forEach(
+                purchaseIn -> {
+                    // 2.1 删除订单
+                    purchaseInMapper.deleteById(purchaseIn.getId());
+                    // 2.2 删除订单项
+                    purchaseInItemMapper.deleteByInId(purchaseIn.getId());
 
-            // 2.3 更新采购订单的入库数量
-            updatePurchaseOrderInCount(purchaseIn.getOrderId());
-        });
-
+                    // 2.3 更新采购订单的入库数量
+                    updatePurchaseOrderInCount(purchaseIn.getOrderId());
+                });
     }
 
     private ErpPurchaseInDO validatePurchaseInExists(Long id) {
@@ -327,5 +389,4 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
     public Long getPurchaseInItemCountByProductId(Long productId) {
         return purchaseInItemMapper.selectCount(ErpPurchaseInItemDO::getProductId, productId);
     }
-
 }

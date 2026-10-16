@@ -12,6 +12,7 @@ public class SeckillValidateJoinRespDTO {
      * 秒杀活动名称
      */
     private String name;
+
     /**
      * 总限购数量
      *
@@ -23,5 +24,4 @@ public class SeckillValidateJoinRespDTO {
      * 秒杀金额
      */
     private Integer seckillPrice;
-
 }

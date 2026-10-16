@@ -14,10 +14,12 @@ public class IotDataSinkRocketMQConfig extends IotAbstractDataSinkConfig {
      * RocketMQ 名称服务器地址
      */
     private String nameServer;
+
     /**
      * 访问密钥
      */
     private String accessKey;
+
     /**
      * 秘密钥匙
      */
@@ -27,13 +29,14 @@ public class IotDataSinkRocketMQConfig extends IotAbstractDataSinkConfig {
      * 生产者组
      */
     private String group;
+
     /**
      * 主题
      */
     private String topic;
+
     /**
      * 标签
      */
     private String tags;
-
 }

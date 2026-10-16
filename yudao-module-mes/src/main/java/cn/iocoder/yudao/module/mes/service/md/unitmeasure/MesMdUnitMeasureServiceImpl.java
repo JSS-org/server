@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.unitmeasure;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -14,8 +17,10 @@ import cn.iocoder.yudao.module.mes.service.qc.iqc.MesQcIqcLineService;
 import cn.iocoder.yudao.module.mes.service.qc.oqc.MesQcOqcLineService;
 import cn.iocoder.yudao.module.mes.service.qc.rqc.MesQcRqcLineService;
 import cn.iocoder.yudao.module.mes.service.qc.template.MesQcTemplateIndicatorService;
-import org.springframework.context.annotation.Lazy;
+
 import jakarta.annotation.Resource;
+
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -23,9 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 计量单位 Service 实现类
@@ -36,30 +38,15 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdUnitMeasureServiceImpl implements MesMdUnitMeasureService {
 
-    @Resource
-    private MesMdUnitMeasureMapper unitMeasureMapper;
+    @Resource private MesMdUnitMeasureMapper unitMeasureMapper;
 
-    @Resource
-    @Lazy
-    private MesMdItemService itemService;
-    @Resource
-    @Lazy
-    private MesProTaskIssueService taskIssueService;
-    @Resource
-    @Lazy
-    private MesQcTemplateIndicatorService templateIndicatorService;
-    @Resource
-    @Lazy
-    private MesQcIqcLineService iqcLineService;
-    @Resource
-    @Lazy
-    private MesQcOqcLineService oqcLineService;
-    @Resource
-    @Lazy
-    private MesQcIpqcLineService ipqcLineService;
-    @Resource
-    @Lazy
-    private MesQcRqcLineService rqcLineService;
+    @Resource @Lazy private MesMdItemService itemService;
+    @Resource @Lazy private MesProTaskIssueService taskIssueService;
+    @Resource @Lazy private MesQcTemplateIndicatorService templateIndicatorService;
+    @Resource @Lazy private MesQcIqcLineService iqcLineService;
+    @Resource @Lazy private MesQcOqcLineService oqcLineService;
+    @Resource @Lazy private MesQcIpqcLineService ipqcLineService;
+    @Resource @Lazy private MesQcRqcLineService rqcLineService;
 
     @Override
     public Long createUnitMeasure(MesMdUnitMeasureSaveReqVO createReqVO) {
@@ -163,5 +150,4 @@ public class MesMdUnitMeasureServiceImpl implements MesMdUnitMeasureService {
     public MesMdUnitMeasureDO getUnitMeasureByCode(String code) {
         return unitMeasureMapper.selectByCode(code);
     }
-
 }

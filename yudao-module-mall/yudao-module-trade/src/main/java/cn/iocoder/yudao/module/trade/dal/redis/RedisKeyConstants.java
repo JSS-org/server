@@ -22,5 +22,4 @@ public interface RedisKeyConstants {
      * VALUE 数据格式 String, 物流信息集合
      */
     String EXPRESS_TRACK = "express_track";
-
 }

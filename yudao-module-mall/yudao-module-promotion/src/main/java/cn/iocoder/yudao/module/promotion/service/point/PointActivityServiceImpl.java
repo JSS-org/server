@@ -1,5 +1,16 @@
 package cn.iocoder.yudao.module.promotion.service.point;
 
+import static cn.hutool.core.collection.CollUtil.intersectionDistinct;
+import static cn.hutool.core.collection.CollUtil.isNotEmpty;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_EXISTS;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
+import static java.util.Collections.singletonList;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,7 +27,9 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.point.PointActivityDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.point.PointProductDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.point.PointActivityMapper;
 import cn.iocoder.yudao.module.promotion.dal.mysql.point.PointProductMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -24,16 +37,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.hutool.core.collection.CollUtil.intersectionDistinct;
-import static cn.hutool.core.collection.CollUtil.isNotEmpty;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_EXISTS;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singletonList;
 
 /**
  * 积分商城活动 Service 实现类
@@ -44,20 +47,21 @@ import static java.util.Collections.singletonList;
 @Validated
 public class PointActivityServiceImpl implements PointActivityService {
 
-    @Resource
-    private PointActivityMapper pointActivityMapper;
-    @Resource
-    private PointProductMapper pointProductMapper;
+    @Resource private PointActivityMapper pointActivityMapper;
+    @Resource private PointProductMapper pointProductMapper;
 
-    @Resource
-    private ProductSpuApi productSpuApi;
-    @Resource
-    private ProductSkuApi productSkuApi;
+    @Resource private ProductSpuApi productSpuApi;
+    @Resource private ProductSkuApi productSkuApi;
 
-    private static List<PointProductDO> buildPointProductDO(PointActivityDO pointActivity, List<PointProductSaveReqVO> products) {
-        return BeanUtils.toBean(products, PointProductDO.class, product ->
-                product.setSpuId(pointActivity.getSpuId()).setActivityId(pointActivity.getId())
-                        .setActivityStatus(pointActivity.getStatus()));
+    private static List<PointProductDO> buildPointProductDO(
+            PointActivityDO pointActivity, List<PointProductSaveReqVO> products) {
+        return BeanUtils.toBean(
+                products,
+                PointProductDO.class,
+                product ->
+                        product.setSpuId(pointActivity.getSpuId())
+                                .setActivityId(pointActivity.getId())
+                                .setActivityStatus(pointActivity.getStatus()));
     }
 
     @Override
@@ -69,13 +73,19 @@ public class PointActivityServiceImpl implements PointActivityService {
         validatePointActivityProductConflicts(null, createReqVO.getProducts());
 
         // 2.1 插入积分商城活动
-        PointActivityDO pointActivity = BeanUtils.toBean(createReqVO, PointActivityDO.class)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus())
-                .setStock(getSumValue(createReqVO.getProducts(), PointProductSaveReqVO::getStock, Integer::sum));
+        PointActivityDO pointActivity =
+                BeanUtils.toBean(createReqVO, PointActivityDO.class)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                        .setStock(
+                                getSumValue(
+                                        createReqVO.getProducts(),
+                                        PointProductSaveReqVO::getStock,
+                                        Integer::sum));
         pointActivity.setTotalStock(pointActivity.getStock());
         pointActivityMapper.insert(pointActivity);
         // 2.2 插入积分商城活动商品
-        pointProductMapper.insertBatch(buildPointProductDO(pointActivity, createReqVO.getProducts()));
+        pointProductMapper.insertBatch(
+                buildPointProductDO(pointActivity, createReqVO.getProducts()));
         return pointActivity.getId();
     }
 
@@ -93,8 +103,13 @@ public class PointActivityServiceImpl implements PointActivityService {
         validatePointActivityProductConflicts(updateReqVO.getId(), updateReqVO.getProducts());
 
         // 2.1 更新积分商城活动
-        PointActivityDO updateObj = BeanUtils.toBean(updateReqVO, PointActivityDO.class)
-                .setStock(getSumValue(updateReqVO.getProducts(), PointProductSaveReqVO::getStock, Integer::sum));
+        PointActivityDO updateObj =
+                BeanUtils.toBean(updateReqVO, PointActivityDO.class)
+                        .setStock(
+                                getSumValue(
+                                        updateReqVO.getProducts(),
+                                        PointProductSaveReqVO::getStock,
+                                        Integer::sum));
         if (updateObj.getStock() > activity.getTotalStock()) { // 如果更新的库存大于原来的库存，则更新总库存
             updateObj.setTotalStock(updateObj.getStock());
         }
@@ -150,10 +165,13 @@ public class PointActivityServiceImpl implements PointActivityService {
         }
 
         // 更新
-        pointActivityMapper.updateById(new PointActivityDO().setId(id).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        pointActivityMapper.updateById(
+                new PointActivityDO().setId(id).setStatus(CommonStatusEnum.DISABLE.getStatus()));
         // 更新活动商品状态
-        pointProductMapper.updateByActivityId(new PointProductDO().setActivityId(id).setActivityStatus(
-                CommonStatusEnum.DISABLE.getStatus()));
+        pointProductMapper.updateByActivityId(
+                new PointProductDO()
+                        .setActivityId(id)
+                        .setActivityStatus(CommonStatusEnum.DISABLE.getStatus()));
     }
 
     /**
@@ -162,17 +180,22 @@ public class PointActivityServiceImpl implements PointActivityService {
      * @param activity 积分活动
      * @param products 该活动的最新商品配置
      */
-    private void updatePointProduct(PointActivityDO activity, List<PointProductSaveReqVO> products) {
+    private void updatePointProduct(
+            PointActivityDO activity, List<PointProductSaveReqVO> products) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
         List<PointProductDO> newList = buildPointProductDO(activity, products);
         List<PointProductDO> oldList = pointProductMapper.selectListByActivityId(activity.getId());
-        List<List<PointProductDO>> diffList = diffList(oldList, newList, (oldVal, newVal) -> {
-            boolean same = ObjectUtil.equal(oldVal.getSkuId(), newVal.getSkuId());
-            if (same) {
-                newVal.setId(oldVal.getId());
-            }
-            return same;
-        });
+        List<List<PointProductDO>> diffList =
+                diffList(
+                        oldList,
+                        newList,
+                        (oldVal, newVal) -> {
+                            boolean same = ObjectUtil.equal(oldVal.getSkuId(), newVal.getSkuId());
+                            if (same) {
+                                newVal.setId(oldVal.getId());
+                            }
+                            return same;
+                        });
 
         // 第二步，批量添加、修改、删除
         if (isNotEmpty(diffList.get(0))) {
@@ -227,11 +250,12 @@ public class PointActivityServiceImpl implements PointActivityService {
         // 2. 校验商品 sku 都存在
         List<ProductSkuRespDTO> skus = productSkuApi.getSkuListBySpuId(singletonList(spuId));
         Map<Long, ProductSkuRespDTO> skuMap = convertMap(skus, ProductSkuRespDTO::getId);
-        products.forEach(product -> {
-            if (!skuMap.containsKey(product.getSkuId())) {
-                throw exception(SKU_NOT_EXISTS);
-            }
-        });
+        products.forEach(
+                product -> {
+                    if (!skuMap.containsKey(product.getSkuId())) {
+                        throw exception(SKU_NOT_EXISTS);
+                    }
+                });
     }
 
     /**
@@ -240,27 +264,39 @@ public class PointActivityServiceImpl implements PointActivityService {
      * @param id       编号
      * @param products 商品列表
      */
-    private void validatePointActivityProductConflicts(Long id, List<PointProductSaveReqVO> products) {
+    private void validatePointActivityProductConflicts(
+            Long id, List<PointProductSaveReqVO> products) {
         // 1.1 查询所有开启的积分商城活动
-        List<PointActivityDO> activityList = pointActivityMapper.selectList(PointActivityDO::getStatus,
-                CommonStatusEnum.ENABLE.getStatus());
+        List<PointActivityDO> activityList =
+                pointActivityMapper.selectList(
+                        PointActivityDO::getStatus, CommonStatusEnum.ENABLE.getStatus());
         if (id != null) { // 更新时排除自己
             activityList.removeIf(item -> ObjectUtil.equal(item.getId(), id));
         }
         // 1.2 查询活动下的所有商品
-        List<PointProductDO> productList = pointProductMapper.selectListByActivityId(
-                convertList(activityList, PointActivityDO::getId));
-        Map<Long, List<PointProductDO>> productListMap = convertMultiMap(productList, PointProductDO::getActivityId);
+        List<PointProductDO> productList =
+                pointProductMapper.selectListByActivityId(
+                        convertList(activityList, PointActivityDO::getId));
+        Map<Long, List<PointProductDO>> productListMap =
+                convertMultiMap(productList, PointProductDO::getActivityId);
 
         // 2. 校验商品是否冲突
-        activityList.forEach(item -> {
-            findAndThen(productListMap, item.getId(), discountProducts -> {
-                if (!intersectionDistinct(convertList(discountProducts, PointProductDO::getSpuId),
-                        convertList(products, PointProductSaveReqVO::getSpuId)).isEmpty()) {
-                    throw exception(POINT_ACTIVITY_SPU_CONFLICTS);
-                }
-            });
-        });
+        activityList.forEach(
+                item -> {
+                    findAndThen(
+                            productListMap,
+                            item.getId(),
+                            discountProducts -> {
+                                if (!intersectionDistinct(
+                                                convertList(
+                                                        discountProducts, PointProductDO::getSpuId),
+                                                convertList(
+                                                        products, PointProductSaveReqVO::getSpuId))
+                                        .isEmpty()) {
+                                    throw exception(POINT_ACTIVITY_SPU_CONFLICTS);
+                                }
+                            });
+                });
     }
 
     @Override
@@ -284,7 +320,8 @@ public class PointActivityServiceImpl implements PointActivityService {
     }
 
     @Override
-    public PointValidateJoinRespDTO validateJoinPointActivity(Long activityId, Long skuId, Integer count) {
+    public PointValidateJoinRespDTO validateJoinPointActivity(
+            Long activityId, Long skuId, Integer count) {
         // 1. 校验积分商城活动是否存在
         PointActivityDO activity = validatePointActivityExists(activityId);
         if (CommonStatusEnum.isDisable(activity.getStatus())) {
@@ -292,7 +329,8 @@ public class PointActivityServiceImpl implements PointActivityService {
         }
 
         // 2.1 校验积分商城商品是否存在
-        PointProductDO product = pointProductMapper.selectListByActivityIdAndSkuId(activityId, skuId);
+        PointProductDO product =
+                pointProductMapper.selectListByActivityIdAndSkuId(activityId, skuId);
         if (product == null) {
             throw exception(POINT_ACTIVITY_JOIN_ACTIVITY_PRODUCT_NOT_EXISTS);
         }
@@ -306,5 +344,4 @@ public class PointActivityServiceImpl implements PointActivityService {
         }
         return BeanUtils.toBean(product, PointValidateJoinRespDTO.class);
     }
-
 }

@@ -21,11 +21,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
+
 import com.xkcoding.http.config.HttpConfig;
 import com.xkcoding.justauth.autoconfigure.ExtendProperties;
 import com.xkcoding.justauth.autoconfigure.JustAuthProperties;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import me.zhyd.oauth.cache.AuthStateCache;
 import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.config.AuthDefaultSource;
@@ -33,6 +36,7 @@ import me.zhyd.oauth.config.AuthSource;
 import me.zhyd.oauth.enums.AuthResponseStatus;
 import me.zhyd.oauth.exception.AuthException;
 import me.zhyd.oauth.request.*;
+
 import org.springframework.util.CollectionUtils;
 
 import java.net.InetSocketAddress;
@@ -74,11 +78,10 @@ public class AuthRequestFactory {
             Class enumClass = extend.getEnumClass();
             List<String> names = EnumUtil.getNames(enumClass);
             // 扩展列表
-            extendList = extend.getConfig()
-                    .keySet()
-                    .stream()
-                    .filter(x -> names.contains(x.toUpperCase()))
-                    .collect(Collectors.toList());
+            extendList =
+                    extend.getConfig().keySet().stream()
+                            .filter(x -> names.contains(x.toUpperCase()))
+                            .collect(Collectors.toList());
         }
 
         // 合并
@@ -128,7 +131,8 @@ public class AuthRequestFactory {
             return null;
         }
 
-        Map<String, ExtendProperties.ExtendRequestConfig> extendConfig = properties.getExtend().getConfig();
+        Map<String, ExtendProperties.ExtendRequestConfig> extendConfig =
+                properties.getExtend().getConfig();
 
         // key 转大写
         Map<String, ExtendProperties.ExtendRequestConfig> upperConfig = new HashMap<>(6);
@@ -144,13 +148,13 @@ public class AuthRequestFactory {
 
             if (requestClass != null) {
                 // 反射获取 Request 对象，所以必须实现 2 个参数的构造方法
-                return ReflectUtil.newInstance(requestClass, (AuthConfig) extendRequestConfig, authStateCache);
+                return ReflectUtil.newInstance(
+                        requestClass, (AuthConfig) extendRequestConfig, authStateCache);
             }
         }
 
         return null;
     }
-
 
     /**
      * 获取默认的 Request
@@ -272,13 +276,13 @@ public class AuthRequestFactory {
             case OKTA:
                 return new AuthOktaRequest(config, authStateCache);
             case PROGINN:
-                return new AuthProginnRequest(config,authStateCache);
+                return new AuthProginnRequest(config, authStateCache);
             case AFDIAN:
-                return new AuthAfDianRequest(config,authStateCache);
+                return new AuthAfDianRequest(config, authStateCache);
             case APPLE:
-                return new AuthAppleRequest(config,authStateCache);
+                return new AuthAppleRequest(config, authStateCache);
             case FIGMA:
-                return new AuthFigmaRequest(config,authStateCache);
+                return new AuthFigmaRequest(config, authStateCache);
             case WECHAT_MINI_PROGRAM:
                 config.setIgnoreCheckRedirectUri(true);
                 config.setIgnoreCheckState(true);
@@ -298,7 +302,10 @@ public class AuthRequestFactory {
      * @param authSource {@link AuthSource}
      * @param authConfig {@link AuthConfig}
      */
-    private void configureHttpConfig(String authSource, AuthConfig authConfig, JustAuthProperties.JustAuthHttpConfig httpConfig) {
+    private void configureHttpConfig(
+            String authSource,
+            AuthConfig authConfig,
+            JustAuthProperties.JustAuthHttpConfig httpConfig) {
         if (null == httpConfig) {
             return;
         }
@@ -312,9 +319,14 @@ public class AuthRequestFactory {
             return;
         }
 
-        authConfig.setHttpConfig(HttpConfig.builder()
-                .timeout(httpConfig.getTimeout())
-                .proxy(new Proxy(Proxy.Type.valueOf(proxyConfig.getType()), new InetSocketAddress(proxyConfig.getHostname(), proxyConfig.getPort())))
-                .build());
+        authConfig.setHttpConfig(
+                HttpConfig.builder()
+                        .timeout(httpConfig.getTimeout())
+                        .proxy(
+                                new Proxy(
+                                        Proxy.Type.valueOf(proxyConfig.getType()),
+                                        new InetSocketAddress(
+                                                proxyConfig.getHostname(), proxyConfig.getPort())))
+                        .build());
     }
 }

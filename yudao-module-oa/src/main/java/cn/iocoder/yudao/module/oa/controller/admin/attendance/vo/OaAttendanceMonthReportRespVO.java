@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.attendance.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -36,13 +37,18 @@ public class OaAttendanceMonthReportRespVO {
     @Schema(description = "早退次数", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer earlyCount;
 
-    @Schema(description = "请假天数，审批通过且开始时间在当月的申请天数合计", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
+    @Schema(
+            description = "请假天数，审批通过且开始时间在当月的申请天数合计",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2")
     private Integer leaveDays;
 
-    @Schema(description = "出差天数，审批通过且开始时间在当月的申请天数合计", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
+    @Schema(
+            description = "出差天数，审批通过且开始时间在当月的申请天数合计",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "3")
     private Integer travelDays;
 
     @Schema(description = "旷工天数", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer absentDays;
-
 }

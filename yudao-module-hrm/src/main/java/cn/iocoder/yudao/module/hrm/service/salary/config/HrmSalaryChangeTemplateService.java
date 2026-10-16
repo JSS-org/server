@@ -50,5 +50,4 @@ public interface HrmSalaryChangeTemplateService {
      * @return 调薪模板列表
      */
     List<HrmSalaryChangeTemplateDO> getSalaryChangeTemplateList();
-
 }

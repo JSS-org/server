@@ -25,7 +25,8 @@ public interface CrmStatisticsPortraitService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticCustomerIndustryRespVO> getCustomerSummaryByIndustry(CrmStatisticsPortraitReqVO reqVO);
+    List<CrmStatisticCustomerIndustryRespVO> getCustomerSummaryByIndustry(
+            CrmStatisticsPortraitReqVO reqVO);
 
     /**
      * 获取客户级别统计数据
@@ -33,7 +34,8 @@ public interface CrmStatisticsPortraitService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticCustomerLevelRespVO> getCustomerSummaryByLevel(CrmStatisticsPortraitReqVO reqVO);
+    List<CrmStatisticCustomerLevelRespVO> getCustomerSummaryByLevel(
+            CrmStatisticsPortraitReqVO reqVO);
 
     /**
      * 获取客户来源统计数据
@@ -41,6 +43,6 @@ public interface CrmStatisticsPortraitService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticCustomerSourceRespVO> getCustomerSummaryBySource(CrmStatisticsPortraitReqVO reqVO);
-
+    List<CrmStatisticCustomerSourceRespVO> getCustomerSummaryBySource(
+            CrmStatisticsPortraitReqVO reqVO);
 }

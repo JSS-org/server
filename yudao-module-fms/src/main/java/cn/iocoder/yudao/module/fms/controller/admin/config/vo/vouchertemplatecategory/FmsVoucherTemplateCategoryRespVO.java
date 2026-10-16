@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplatecategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - FMS 凭证模板分类 Response VO")
@@ -15,5 +16,4 @@ public class FmsVoucherTemplateCategoryRespVO {
 
     @Schema(description = "分类名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "日常收支")
     private String name;
-
 }

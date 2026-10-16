@@ -15,13 +15,14 @@ public class FriendUpdateNotification extends BaseFriendNotification {
      * 备注；不为空则更新（空串表示清空）
      */
     private String displayName;
+
     /**
      * 免打扰；不为空则更新
      */
     private Boolean silent;
+
     /**
      * 联系人置顶；不为空则更新
      */
     private Boolean pinned;
-
 }

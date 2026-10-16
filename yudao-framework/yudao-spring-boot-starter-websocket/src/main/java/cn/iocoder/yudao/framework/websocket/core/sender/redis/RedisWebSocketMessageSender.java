@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.mq.redis.core.RedisMQTemplate;
 import cn.iocoder.yudao.framework.websocket.core.sender.AbstractWebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -16,8 +17,8 @@ public class RedisWebSocketMessageSender extends AbstractWebSocketMessageSender 
 
     private final RedisMQTemplate redisMQTemplate;
 
-    public RedisWebSocketMessageSender(WebSocketSessionManager sessionManager,
-                                       RedisMQTemplate redisMQTemplate) {
+    public RedisWebSocketMessageSender(
+            WebSocketSessionManager sessionManager, RedisMQTemplate redisMQTemplate) {
         super(sessionManager);
         this.redisMQTemplate = redisMQTemplate;
     }
@@ -46,12 +47,19 @@ public class RedisWebSocketMessageSender extends AbstractWebSocketMessageSender 
      * @param messageType 消息类型
      * @param messageContent 消息内容
      */
-    private void sendRedisMessage(String sessionId, Long userId, Integer userType,
-                                  String messageType, String messageContent) {
-        RedisWebSocketMessage mqMessage = new RedisWebSocketMessage()
-                .setSessionId(sessionId).setUserId(userId).setUserType(userType)
-                .setMessageType(messageType).setMessageContent(messageContent);
+    private void sendRedisMessage(
+            String sessionId,
+            Long userId,
+            Integer userType,
+            String messageType,
+            String messageContent) {
+        RedisWebSocketMessage mqMessage =
+                new RedisWebSocketMessage()
+                        .setSessionId(sessionId)
+                        .setUserId(userId)
+                        .setUserType(userType)
+                        .setMessageType(messageType)
+                        .setMessageContent(messageContent);
         redisMQTemplate.send(mqMessage);
     }
-
 }

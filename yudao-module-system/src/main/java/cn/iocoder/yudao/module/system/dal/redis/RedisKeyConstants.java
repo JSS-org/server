@@ -106,5 +106,4 @@ public interface RedisKeyConstants {
      * VALUE 数据格式 String, 模版信息
      */
     String WXA_SUBSCRIBE_TEMPLATE = "wxa_subscribe_template";
-
 }

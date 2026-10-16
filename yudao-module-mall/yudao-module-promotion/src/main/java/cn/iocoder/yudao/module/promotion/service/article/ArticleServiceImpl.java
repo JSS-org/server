@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.promotion.service.article;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_CATEGORY_NOT_EXISTS;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticleCreateReqVO;
@@ -10,15 +14,13 @@ import cn.iocoder.yudao.module.promotion.convert.article.ArticleConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleCategoryDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.article.ArticleMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_CATEGORY_NOT_EXISTS;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_NOT_EXISTS;
 
 /**
  * 文章管理 Service 实现类
@@ -29,11 +31,9 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE
 @Validated
 public class ArticleServiceImpl implements ArticleService {
 
-    @Resource
-    private ArticleMapper articleMapper;
+    @Resource private ArticleMapper articleMapper;
 
-    @Resource
-    private ArticleCategoryService articleCategoryService;
+    @Resource private ArticleCategoryService articleCategoryService;
 
     @Override
     public Long createArticle(ArticleCreateReqVO createReqVO) {
@@ -98,7 +98,8 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public List<ArticleDO> getArticleCategoryListByRecommend(Boolean recommendHot, Boolean recommendBanner) {
+    public List<ArticleDO> getArticleCategoryListByRecommend(
+            Boolean recommendHot, Boolean recommendBanner) {
         return articleMapper.selectList(recommendHot, recommendBanner);
     }
 
@@ -119,5 +120,4 @@ public class ArticleServiceImpl implements ArticleService {
         // 增加浏览次数
         articleMapper.updateBrowseCount(id);
     }
-
 }

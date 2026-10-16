@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.member.api.user;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 会员用户的 API 接口
@@ -64,5 +64,4 @@ public interface MemberUserApi {
      * @param id 用户编号
      */
     void validateUser(Long id);
-
 }

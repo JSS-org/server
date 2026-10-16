@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.infra.api.file;
 
+import static cn.hutool.core.util.StrUtil.isEmpty;
+
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
 import cn.iocoder.yudao.module.infra.service.file.FileService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
-import static cn.hutool.core.util.StrUtil.isEmpty;
 
 /**
  * 文件 API 实现类
@@ -19,8 +22,7 @@ import static cn.hutool.core.util.StrUtil.isEmpty;
 @Slf4j
 public class FileApiImpl implements FileApi {
 
-    @Resource
-    private FileService fileService;
+    @Resource private FileService fileService;
 
     @Override
     public String createFile(byte[] content, String name, String directory, String type) {
@@ -28,7 +30,8 @@ public class FileApiImpl implements FileApi {
     }
 
     @Override
-    public String createFile(byte[] content, String name, String directory, String type, Long configId) {
+    public String createFile(
+            byte[] content, String name, String directory, String type, Long configId) {
         return fileService.createFile(content, name, directory, type, configId);
     }
 
@@ -56,5 +59,4 @@ public class FileApiImpl implements FileApi {
             return null;
         }
     }
-
 }

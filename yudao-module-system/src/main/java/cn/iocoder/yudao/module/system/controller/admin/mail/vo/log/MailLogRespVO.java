@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.mail.vo.log;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,19 +21,31 @@ public class MailLogRespVO {
     @Schema(description = "用户类型，参见 UserTypeEnum 枚举", example = "2")
     private Byte userType;
 
-    @Schema(description = "接收邮箱地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "user1@example.com, user2@example.com")
+    @Schema(
+            description = "接收邮箱地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "user1@example.com, user2@example.com")
     private List<String> toMails;
 
-    @Schema(description = "抄送邮箱地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "user3@example.com, user4@example.com")
+    @Schema(
+            description = "抄送邮箱地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "user3@example.com, user4@example.com")
     private List<String> ccMails;
 
-    @Schema(description = "密送邮箱地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "user5@example.com, user6@example.com")
+    @Schema(
+            description = "密送邮箱地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "user5@example.com, user6@example.com")
     private List<String> bccMails;
 
     @Schema(description = "邮箱账号编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "18107")
     private Long accountId;
 
-    @Schema(description = "发送邮箱地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "85757@qq.com")
+    @Schema(
+            description = "发送邮箱地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "85757@qq.com")
     private String fromMail;
 
     @Schema(description = "模板编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "5678")
@@ -53,7 +66,10 @@ public class MailLogRespVO {
     @Schema(description = "邮件参数", requiredMode = Schema.RequiredMode.REQUIRED)
     private Map<String, Object> templateParams;
 
-    @Schema(description = "发送状态，参见 MailSendStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "发送状态，参见 MailSendStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Byte sendStatus;
 
     @Schema(description = "发送时间")
@@ -67,5 +83,4 @@ public class MailLogRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

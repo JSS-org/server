@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.infra.service.file;
 
+import static cn.hutool.core.date.DatePattern.PURE_DATE_PATTERN;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
@@ -19,17 +23,17 @@ import cn.iocoder.yudao.module.infra.dal.mysql.file.FileMapper;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.utils.FilePathUtils;
 import cn.iocoder.yudao.module.infra.framework.file.core.utils.FileTypeUtils;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import lombok.SneakyThrows;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-
-import static cn.hutool.core.date.DatePattern.PURE_DATE_PATTERN;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 
 /**
  * 文件 Service 实现类
@@ -42,25 +46,63 @@ public class FileServiceImpl implements FileService {
     /**
      * 允许上传的文件类型，可按业务需要调整
      */
-    private static final Set<String> ALLOWED_FILE_TYPES = Set.of(
-            // 图片
-            "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp",
-            "image/vnd.microsoft.icon", "image/tiff", "image/avif", "image/heic", "image/heif", "image/svg+xml",
-            // 文档
-            "application/pdf", "text/plain", "text/csv", "text/markdown", "text/html", "application/xhtml+xml",
-            "application/xml", "application/json", "application/epub+zip", "message/rfc822", "application/vnd.ms-outlook",
-            "application/msword", "application/vnd.ms-excel", "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            // 压缩包
-            "application/zip", "application/x-rar-compressed", "application/x-7z-compressed", "application/gzip",
-            // 音视频
-            "audio/mpeg", "audio/vnd.wave", "audio/vorbis", "audio/ogg", "audio/opus", "audio/mp4", "audio/webm",
-            "audio/x-aac", "audio/x-flac", "audio/amr", "audio/x-ms-wma",
-            "video/mp4", "video/quicktime", "video/x-msvideo", "video/webm", "video/x-ms-wmv", "video/x-flv",
-            "application/x-matroska", "video/x-matroska"
-    );
+    private static final Set<String> ALLOWED_FILE_TYPES =
+            Set.of(
+                    // 图片
+                    "image/jpeg",
+                    "image/png",
+                    "image/gif",
+                    "image/webp",
+                    "image/bmp",
+                    "image/vnd.microsoft.icon",
+                    "image/tiff",
+                    "image/avif",
+                    "image/heic",
+                    "image/heif",
+                    "image/svg+xml",
+                    // 文档
+                    "application/pdf",
+                    "text/plain",
+                    "text/csv",
+                    "text/markdown",
+                    "text/html",
+                    "application/xhtml+xml",
+                    "application/xml",
+                    "application/json",
+                    "application/epub+zip",
+                    "message/rfc822",
+                    "application/vnd.ms-outlook",
+                    "application/msword",
+                    "application/vnd.ms-excel",
+                    "application/vnd.ms-powerpoint",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    // 压缩包
+                    "application/zip",
+                    "application/x-rar-compressed",
+                    "application/x-7z-compressed",
+                    "application/gzip",
+                    // 音视频
+                    "audio/mpeg",
+                    "audio/vnd.wave",
+                    "audio/vorbis",
+                    "audio/ogg",
+                    "audio/opus",
+                    "audio/mp4",
+                    "audio/webm",
+                    "audio/x-aac",
+                    "audio/x-flac",
+                    "audio/amr",
+                    "audio/x-ms-wma",
+                    "video/mp4",
+                    "video/quicktime",
+                    "video/x-msvideo",
+                    "video/webm",
+                    "video/x-ms-wmv",
+                    "video/x-flv",
+                    "application/x-matroska",
+                    "video/x-matroska");
 
     /**
      * 上传文件的前缀，是否包含日期（yyyyMMdd）
@@ -68,6 +110,7 @@ public class FileServiceImpl implements FileService {
      * 目的：按照日期，进行分目录
      */
     static boolean PATH_PREFIX_DATE_ENABLE = true;
+
     /**
      * 上传文件的后缀，是否启用
      *
@@ -75,6 +118,7 @@ public class FileServiceImpl implements FileService {
      * 定制：可按需调整成 UUID、或者其他方式
      */
     static boolean PATH_SUFFIX_TIMESTAMP_ENABLE = false;
+
     /**
      * 后缀是否作为上级目录
      *
@@ -83,14 +127,11 @@ public class FileServiceImpl implements FileService {
      */
     static boolean PATH_SUFFIX_AS_DIRECTORY = true;
 
-    @Resource
-    private FileConfigService fileConfigService;
+    @Resource private FileConfigService fileConfigService;
 
-    @Resource
-    private FileMapper fileMapper;
+    @Resource private FileMapper fileMapper;
 
-    @Resource
-    private FilePrivatePathPolicy privatePathPolicy;
+    @Resource private FilePrivatePathPolicy privatePathPolicy;
 
     @Override
     public PageResult<FileDO> getFilePage(FilePageReqVO pageReqVO) {
@@ -105,7 +146,8 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @SneakyThrows
-    public String createFile(byte[] content, String name, String directory, String type, Long configId) {
+    public String createFile(
+            byte[] content, String name, String directory, String type, Long configId) {
         // 1.1 处理 name 的合法性，禁止携带目录路径
         name = FilePathUtils.validateFileName(name);
 
@@ -114,7 +156,8 @@ public class FileServiceImpl implements FileService {
             throw exception(FILE_IS_EMPTY);
         }
         type = FileTypeUtils.getMineType(content, name);
-        String nameType = StrUtil.isNotEmpty(FileUtil.extName(name)) ? validateFileType(name) : null;
+        String nameType =
+                StrUtil.isNotEmpty(FileUtil.extName(name)) ? validateFileType(name) : null;
         if (!ALLOWED_FILE_TYPES.contains(type)
                 || (FileTypeUtils.isImage(nameType) && ObjectUtil.notEqual(type, nameType))) {
             throw exception(FILE_TYPE_NOT_ALLOWED);
@@ -134,15 +177,23 @@ public class FileServiceImpl implements FileService {
         // 2.1 生成上传的 path，需要保证唯一
         String path = generateUploadPath(name, directory);
         // 2.2 上传到文件存储器
-        FileClient client = configId == null ? fileConfigService.getMasterFileClient() : fileConfigService.getFileClient(configId);
+        FileClient client =
+                configId == null
+                        ? fileConfigService.getMasterFileClient()
+                        : fileConfigService.getFileClient(configId);
         Assert.notNull(client, "客户端({}) 不能为空", configId == null ? "master" : configId);
         privatePathPolicy.validateUpload(path, client);
         String url = client.upload(content, path, type);
 
         // 3. 保存到数据库
-        fileMapper.insert(new FileDO().setConfigId(client.getId())
-                .setName(name).setPath(path).setUrl(url)
-                .setType(type).setSize((long) content.length));
+        fileMapper.insert(
+                new FileDO()
+                        .setConfigId(client.getId())
+                        .setName(name)
+                        .setPath(path)
+                        .setUrl(url)
+                        .setType(type)
+                        .setSize((long) content.length));
         return url;
     }
 
@@ -160,7 +211,9 @@ public class FileServiceImpl implements FileService {
         String suffix = null;
         if (PATH_SUFFIX_TIMESTAMP_ENABLE) {
             // 5 位随机数，避免同一毫秒内的重复
-            suffix = String.valueOf(System.currentTimeMillis()) + RandomUtil.randomInt(10000, 100000);
+            suffix =
+                    String.valueOf(System.currentTimeMillis())
+                            + RandomUtil.randomInt(10000, 100000);
         }
 
         // 2.1 先拼接 suffix 后缀
@@ -170,7 +223,12 @@ public class FileServiceImpl implements FileService {
             } else {
                 String ext = FileUtil.extName(name);
                 if (StrUtil.isNotEmpty(ext)) {
-                    name = FileUtil.mainName(name) + StrUtil.C_UNDERLINE + suffix + StrUtil.DOT + ext;
+                    name =
+                            FileUtil.mainName(name)
+                                    + StrUtil.C_UNDERLINE
+                                    + suffix
+                                    + StrUtil.DOT
+                                    + ext;
                 } else {
                     name = name + StrUtil.C_UNDERLINE + suffix;
                 }
@@ -202,8 +260,11 @@ public class FileServiceImpl implements FileService {
         FileClient fileClient = fileConfigService.getMasterFileClient();
         String uploadUrl = fileClient.presignPutUrl(path);
         String visitUrl = fileClient.presignGetUrl(path, null);
-        return new FilePresignedUrlRespVO().setConfigId(fileClient.getId())
-                .setPath(path).setUploadUrl(uploadUrl).setUrl(visitUrl);
+        return new FilePresignedUrlRespVO()
+                .setConfigId(fileClient.getId())
+                .setPath(path)
+                .setUploadUrl(uploadUrl)
+                .setUrl(visitUrl);
     }
 
     @Override
@@ -314,5 +375,4 @@ public class FileServiceImpl implements FileService {
         }
         return fileMapper.selectByUrl(url);
     }
-
 }

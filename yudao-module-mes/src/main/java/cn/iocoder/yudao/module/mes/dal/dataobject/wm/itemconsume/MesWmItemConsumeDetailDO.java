@@ -7,9 +7,11 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.materialstock.MesWmMaterial
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseAreaDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -35,20 +37,22 @@ public class MesWmItemConsumeDetailDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 消耗记录编号
      *
      * 关联 {@link MesWmItemConsumeDO#getId()}
      */
     private Long consumeId;
+
     /**
      * 消耗记录行编号
      *
      * 关联 {@link MesWmItemConsumeLineDO#getId()}
      */
     private Long lineId;
+
     /**
      * 库存台账编号
      *
@@ -56,49 +60,56 @@ public class MesWmItemConsumeDetailDO extends BaseDO {
      * 当线边库中无可用库存时为 null
      */
     private Long materialStockId;
+
     /**
      * 物料编号
      *
      * 关联 {@link MesMdItemDO#getId()}
      */
     private Long itemId;
+
     /**
      * 消耗数量
      */
     private BigDecimal quantity;
+
     /**
      * 批次编号
      *
      * 关联 {@link MesWmBatchDO#getId()}
      */
     private Long batchId;
+
     /**
      * 批次号
      *
      * 冗余 {@link MesWmBatchDO#getCode()}
      */
     private String batchCode;
+
     /**
      * 仓库编号
      *
      * 关联 {@link MesWmWarehouseDO#getId()}
      */
     private Long warehouseId;
+
     /**
      * 库区编号
      *
      * 关联 {@link MesWmWarehouseLocationDO#getId()}
      */
     private Long locationId;
+
     /**
      * 库位编号
      *
      * 关联 {@link MesWmWarehouseAreaDO#getId()}
      */
     private Long areaId;
+
     /**
      * 备注
      */
     private String remark;
-
 }

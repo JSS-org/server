@@ -27,7 +27,8 @@ public interface MemberExperienceRecordService {
      * @param pageReqVO 分页查询
      * @return 会员经验记录分页
      */
-    PageResult<MemberExperienceRecordDO> getExperienceRecordPage(MemberExperienceRecordPageReqVO pageReqVO);
+    PageResult<MemberExperienceRecordDO> getExperienceRecordPage(
+            MemberExperienceRecordPageReqVO pageReqVO);
 
     /**
      * 【会员】获得会员经验记录分页
@@ -47,7 +48,10 @@ public interface MemberExperienceRecordService {
      * @param bizType         业务类型
      * @param bizId           业务ID
      */
-    void createExperienceRecord(Long userId, Integer experience, Integer totalExperience,
-                                MemberExperienceBizTypeEnum bizType, String bizId);
-
+    void createExperienceRecord(
+            Long userId,
+            Integer experience,
+            Integer totalExperience,
+            MemberExperienceBizTypeEnum bizType,
+            String bizId);
 }

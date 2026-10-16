@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.dict.vo.data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 数据字典精简 Response VO")
@@ -21,5 +22,4 @@ public class DictDataSimpleRespVO {
 
     @Schema(description = "css 样式", example = "btn-visible")
     private String cssClass;
-
 }

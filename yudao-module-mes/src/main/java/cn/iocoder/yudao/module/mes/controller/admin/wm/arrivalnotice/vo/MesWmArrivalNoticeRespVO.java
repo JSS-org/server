@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,11 +18,17 @@ public class MesWmArrivalNoticeRespVO {
     @ExcelProperty("编号")
     private Long id;
 
-    @Schema(description = "通知单编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "AN2026020001")
+    @Schema(
+            description = "通知单编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "AN2026020001")
     @ExcelProperty("通知单编码")
     private String code;
 
-    @Schema(description = "通知单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "2 月份钢板到货")
+    @Schema(
+            description = "通知单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2 月份钢板到货")
     @ExcelProperty("通知单名称")
     private String name;
 
@@ -62,5 +70,4 @@ public class MesWmArrivalNoticeRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.workorder;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
@@ -22,12 +26,15 @@ import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -35,38 +42,31 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 生产工单")
 @RestController
 @RequestMapping("/mes/pro/work-order")
 @Validated
 public class MesProWorkOrderController {
 
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdClientService clientService;
-    @Resource
-    private MesMdVendorService vendorService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdClientService clientService;
+    @Resource private MesMdVendorService vendorService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
 
     @PostMapping("/create")
     @Operation(summary = "创建生产工单")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:create')")
-    public CommonResult<Long> createWorkOrder(@Valid @RequestBody MesProWorkOrderSaveReqVO createReqVO) {
+    public CommonResult<Long> createWorkOrder(
+            @Valid @RequestBody MesProWorkOrderSaveReqVO createReqVO) {
         return success(workOrderService.createWorkOrder(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新生产工单")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:update')")
-    public CommonResult<Boolean> updateWorkOrder(@Valid @RequestBody MesProWorkOrderSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateWorkOrder(
+            @Valid @RequestBody MesProWorkOrderSaveReqVO updateReqVO) {
         workOrderService.updateWorkOrder(updateReqVO);
         return success(true);
     }
@@ -95,17 +95,21 @@ public class MesProWorkOrderController {
     @GetMapping("/page")
     @Operation(summary = "获得生产工单分页")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:query')")
-    public CommonResult<PageResult<MesProWorkOrderRespVO>> getWorkOrderPage(@Valid MesProWorkOrderPageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesProWorkOrderRespVO>> getWorkOrderPage(
+            @Valid MesProWorkOrderPageReqVO pageReqVO) {
         PageResult<MesProWorkOrderDO> pageResult = workOrderService.getWorkOrderPage(pageReqVO);
-        return success(new PageResult<>(buildWorkOrderRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildWorkOrderRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出生产工单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportWorkOrderExcel(@Valid MesProWorkOrderPageReqVO pageReqVO,
-                                     HttpServletResponse response) throws IOException {
+    public void exportWorkOrderExcel(
+            @Valid MesProWorkOrderPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesProWorkOrderDO> list = workOrderService.getWorkOrderPage(pageReqVO).getList();
         List<MesProWorkOrderRespVO> voList = buildWorkOrderRespVOList(list);
@@ -146,32 +150,52 @@ public class MesProWorkOrderController {
             return Collections.emptyList();
         }
         // 1. 批量获取关联数据
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesProWorkOrderDO::getProductId));
-        Map<Long, MesMdClientDO> clientMap = clientService.getClientMap(
-                convertSet(list, MesProWorkOrderDO::getClientId));
-        Map<Long, MesMdVendorDO> vendorMap = vendorService.getVendorMap(
-                convertSet(list, MesProWorkOrderDO::getVendorId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesProWorkOrderDO::getProductId));
+        Map<Long, MesMdClientDO> clientMap =
+                clientService.getClientMap(convertSet(list, MesProWorkOrderDO::getClientId));
+        Map<Long, MesMdVendorDO> vendorMap =
+                vendorService.getVendorMap(convertSet(list, MesProWorkOrderDO::getVendorId));
         // 单位从产品关联的 item 获得
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
-        Map<Long, MesProWorkOrderDO> parentMap = workOrderService.getWorkOrderMap(
-                convertSet(list, MesProWorkOrderDO::getParentId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesProWorkOrderDO> parentMap =
+                workOrderService.getWorkOrderMap(convertSet(list, MesProWorkOrderDO::getParentId));
         // 2. 拼接 VO（单位名称从产品关联的 item 获得）
-        return BeanUtils.toBean(list, MesProWorkOrderRespVO.class, vo -> {
-            MapUtils.findAndThen(itemMap, vo.getProductId(), item -> {
-                vo.setProductName(item.getName()).setProductCode(item.getCode())
-                        .setProductSpecification(item.getSpecification());
-                MapUtils.findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unitMeasure -> vo.setUnitMeasureName(unitMeasure.getName()));
-            });
-            MapUtils.findAndThen(clientMap, vo.getClientId(),
-                    client -> vo.setClientName(client.getName()).setClientCode(client.getCode()));
-            MapUtils.findAndThen(vendorMap, vo.getVendorId(),
-                    vendor -> vo.setVendorName(vendor.getName()).setVendorCode(vendor.getCode()));
-            MapUtils.findAndThen(parentMap, vo.getParentId(),
-                    parent -> vo.setParentCode(parent.getCode()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesProWorkOrderRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            itemMap,
+                            vo.getProductId(),
+                            item -> {
+                                vo.setProductName(item.getName())
+                                        .setProductCode(item.getCode())
+                                        .setProductSpecification(item.getSpecification());
+                                MapUtils.findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unitMeasure ->
+                                                vo.setUnitMeasureName(unitMeasure.getName()));
+                            });
+                    MapUtils.findAndThen(
+                            clientMap,
+                            vo.getClientId(),
+                            client ->
+                                    vo.setClientName(client.getName())
+                                            .setClientCode(client.getCode()));
+                    MapUtils.findAndThen(
+                            vendorMap,
+                            vo.getVendorId(),
+                            vendor ->
+                                    vo.setVendorName(vendor.getName())
+                                            .setVendorCode(vendor.getCode()));
+                    MapUtils.findAndThen(
+                            parentMap,
+                            vo.getParentId(),
+                            parent -> vo.setParentCode(parent.getCode()));
+                });
     }
-
 }

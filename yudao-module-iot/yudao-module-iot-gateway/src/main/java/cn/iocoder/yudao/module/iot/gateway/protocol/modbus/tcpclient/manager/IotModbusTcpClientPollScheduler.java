@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigRespDTO;
@@ -8,16 +12,14 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.manager.Abstra
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusTcpClientUtils;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.handler.upstream.IotModbusTcpClientUpstreamHandler;
+
 import io.vertx.core.Vertx;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
 
 /**
  * IoT Modbus TCP Client 轮询调度器：管理点位的轮询定时器，调度读取任务并上报结果
@@ -31,10 +33,11 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
     private final IotModbusTcpClientUpstreamHandler upstreamHandler;
     private final IotModbusTcpClientConfigCacheService configCacheService;
 
-    public IotModbusTcpClientPollScheduler(Vertx vertx,
-                                           IotModbusTcpClientConnectionManager connectionManager,
-                                           IotModbusTcpClientUpstreamHandler upstreamHandler,
-                                           IotModbusTcpClientConfigCacheService configCacheService) {
+    public IotModbusTcpClientPollScheduler(
+            Vertx vertx,
+            IotModbusTcpClientConnectionManager connectionManager,
+            IotModbusTcpClientUpstreamHandler upstreamHandler,
+            IotModbusTcpClientConfigCacheService configCacheService) {
         super(vertx);
         this.connectionManager = connectionManager;
         this.upstreamHandler = upstreamHandler;
@@ -45,7 +48,9 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
 
     @Override
     protected List<PollTask> buildPollTasks(IotModbusDeviceConfigRespDTO config) {
-        return convertList(buildReadSegments(config), segment -> new PollTask(segment.getKey(), segment.getPollInterval()));
+        return convertList(
+                buildReadSegments(config),
+                segment -> new PollTask(segment.getKey(), segment.getPollInterval()));
     }
 
     /**
@@ -67,7 +72,8 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
         }
 
         // 2.1 获取连接
-        IotModbusTcpClientConnectionManager.ModbusConnection connection = connectionManager.getConnection(deviceId);
+        IotModbusTcpClientConnectionManager.ModbusConnection connection =
+                connectionManager.getConnection(deviceId);
         if (connection == null) {
             log.warn("[pollTask][设备 {} 没有连接]", deviceId);
             return;
@@ -77,11 +83,20 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
         Assert.notNull(slaveId, "设备 {} 没有配置 slaveId", deviceId);
 
         // 3. 执行 Modbus 批量读取
-        IotModbusTcpClientUtils.read(connection, slaveId, segment.getFunctionCode(),
-                        segment.getStartAddress(), segment.getRegisterCount())
+        IotModbusTcpClientUtils.read(
+                        connection,
+                        slaveId,
+                        segment.getFunctionCode(),
+                        segment.getStartAddress(),
+                        segment.getRegisterCount())
                 .onSuccess(rawValues -> handleSegmentReadResult(config, segment, rawValues))
-                .onFailure(e -> log.error("[pollTask][读取点位段失败, deviceId={}, segment={}]",
-                        deviceId, segment.getKey(), e));
+                .onFailure(
+                        e ->
+                                log.error(
+                                        "[pollTask][读取点位段失败, deviceId={}, segment={}]",
+                                        deviceId,
+                                        segment.getKey(),
+                                        e));
     }
 
     /**
@@ -103,7 +118,8 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
         }
 
         // 2.1 获取连接
-        IotModbusTcpClientConnectionManager.ModbusConnection connection = connectionManager.getConnection(deviceId);
+        IotModbusTcpClientConnectionManager.ModbusConnection connection =
+                connectionManager.getConnection(deviceId);
         if (connection == null) {
             log.warn("[pollPoint][设备 {} 没有连接]", deviceId);
             return;
@@ -115,19 +131,26 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
         // 3. 执行 Modbus 读取
         IotModbusTcpClientUtils.read(connection, slaveId, point)
                 .onSuccess(rawValue -> upstreamHandler.handleReadResult(config, point, rawValue))
-                .onFailure(e -> log.error("[pollPoint][读取点位失败, deviceId={}, identifier={}]",
-                        deviceId, point.getIdentifier(), e));
+                .onFailure(
+                        e ->
+                                log.error(
+                                        "[pollPoint][读取点位失败, deviceId={}, identifier={}]",
+                                        deviceId,
+                                        point.getIdentifier(),
+                                        e));
     }
 
-    private void handleSegmentReadResult(IotModbusDeviceConfigRespDTO config,
-                                         ReadSegment segment,
-                                         int[] rawValues) {
+    private void handleSegmentReadResult(
+            IotModbusDeviceConfigRespDTO config, ReadSegment segment, int[] rawValues) {
         for (IotModbusPointRespDTO point : segment.getPoints()) {
             // 批量读取返回的是整个连续地址段，需要按点位地址切片后再复用单点上报逻辑
             int[] pointRawValues = extractPointRawValues(rawValues, segment, point);
             if (pointRawValues == null) {
-                log.warn("[handleSegmentReadResult][读取段结果长度不足, deviceId={}, segment={}, identifier={}]",
-                        config.getDeviceId(), segment.getKey(), point.getIdentifier());
+                log.warn(
+                        "[handleSegmentReadResult][读取段结果长度不足, deviceId={}, segment={}, identifier={}]",
+                        config.getDeviceId(),
+                        segment.getKey(),
+                        point.getIdentifier());
                 continue;
             }
             upstreamHandler.handleReadResult(config, point, pointRawValues);
@@ -135,7 +158,8 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
     }
 
     private ReadSegment findReadSegment(IotModbusDeviceConfigRespDTO config, String taskKey) {
-        return CollUtil.findOne(buildReadSegments(config), segment -> segment.getKey().equals(taskKey));
+        return CollUtil.findOne(
+                buildReadSegments(config), segment -> segment.getKey().equals(taskKey));
     }
 
     /**
@@ -150,32 +174,41 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
         }
 
         // 1. 按功能码和轮询间隔分组：两者任一不同，都不能共用同一次 Modbus 读请求
-        List<IotModbusPointRespDTO> validPoints = filterList(config.getPoints(), IotModbusTcpClientPollScheduler::isValidReadPoint);
+        List<IotModbusPointRespDTO> validPoints =
+                filterList(config.getPoints(), IotModbusTcpClientPollScheduler::isValidReadPoint);
         if (CollUtil.isEmpty(validPoints)) {
             return Collections.emptyList();
         }
-        Map<SegmentGroupKey, List<IotModbusPointRespDTO>> pointsByGroup = convertMultiMap(validPoints,
-                point -> new SegmentGroupKey(point.getFunctionCode(), point.getPollInterval()));
+        Map<SegmentGroupKey, List<IotModbusPointRespDTO>> pointsByGroup =
+                convertMultiMap(
+                        validPoints,
+                        point ->
+                                new SegmentGroupKey(
+                                        point.getFunctionCode(), point.getPollInterval()));
 
         // 2. 组内按地址排序后，合并连续或重叠区间，生成实际轮询的读取段
         List<ReadSegment> segments = new ArrayList<>();
-        for (Map.Entry<SegmentGroupKey, List<IotModbusPointRespDTO>> entry : pointsByGroup.entrySet()) {
+        for (Map.Entry<SegmentGroupKey, List<IotModbusPointRespDTO>> entry :
+                pointsByGroup.entrySet()) {
             List<IotModbusPointRespDTO> points = entry.getValue();
-            points.sort(Comparator.comparing(IotModbusPointRespDTO::getRegisterAddress)
-                    .thenComparing(IotModbusPointRespDTO::getRegisterCount)
-                    .thenComparing(IotModbusPointRespDTO::getId));
+            points.sort(
+                    Comparator.comparing(IotModbusPointRespDTO::getRegisterAddress)
+                            .thenComparing(IotModbusPointRespDTO::getRegisterCount)
+                            .thenComparing(IotModbusPointRespDTO::getId));
             buildReadSegments(entry.getKey(), points, segments);
         }
         // 3. 固定排序，保证生成的 taskKey 稳定，便于 updatePolling 做增量更新
-        segments.sort(Comparator.comparing(ReadSegment::getFunctionCode)
-                .thenComparing(ReadSegment::getPollInterval)
-                .thenComparing(ReadSegment::getStartAddress));
+        segments.sort(
+                Comparator.comparing(ReadSegment::getFunctionCode)
+                        .thenComparing(ReadSegment::getPollInterval)
+                        .thenComparing(ReadSegment::getStartAddress));
         return segments;
     }
 
-    private static void buildReadSegments(SegmentGroupKey groupKey,
-                                          List<IotModbusPointRespDTO> points,
-                                          List<ReadSegment> segments) {
+    private static void buildReadSegments(
+            SegmentGroupKey groupKey,
+            List<IotModbusPointRespDTO> points,
+            List<ReadSegment> segments) {
         ReadSegment current = null;
         int maxRegisterCount = getMaxRegisterCount(groupKey.getFunctionCode());
         // points 已按 registerAddress 排序，因此可以线性合并连续/重叠地址段
@@ -183,13 +216,21 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
             int pointStartAddress = point.getRegisterAddress();
             int pointEndAddress = pointStartAddress + point.getRegisterCount();
             // 1. 当前点位无法合并时，新建一个读取段
-            if (current == null || !canMerge(current, pointStartAddress, pointEndAddress, maxRegisterCount)) {
-                current = new ReadSegment(groupKey.getFunctionCode(), groupKey.getPollInterval(),
-                        pointStartAddress, point.getRegisterCount(), new ArrayList<>());
+            if (current == null
+                    || !canMerge(current, pointStartAddress, pointEndAddress, maxRegisterCount)) {
+                current =
+                        new ReadSegment(
+                                groupKey.getFunctionCode(),
+                                groupKey.getPollInterval(),
+                                pointStartAddress,
+                                point.getRegisterCount(),
+                                new ArrayList<>());
                 segments.add(current);
             } else {
                 // 2. 当前点位可合并时，扩展读取段覆盖范围
-                current.setRegisterCount(Math.max(current.getEndAddress(), pointEndAddress) - current.getStartAddress());
+                current.setRegisterCount(
+                        Math.max(current.getEndAddress(), pointEndAddress)
+                                - current.getStartAddress());
             }
             // 3. 记录读取段包含的点位，读取成功后按点位逐个切片上报
             current.getPoints().add(point);
@@ -201,11 +242,13 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
      *
      * <p>仅合并连续或重叠区间，不合并存在地址空洞的区间，避免额外读取无关寄存器。
      */
-    private static boolean canMerge(ReadSegment segment, int pointStartAddress, int pointEndAddress, int maxRegisterCount) {
+    private static boolean canMerge(
+            ReadSegment segment, int pointStartAddress, int pointEndAddress, int maxRegisterCount) {
         if (pointStartAddress > segment.getEndAddress()) {
             return false;
         }
-        int mergedRegisterCount = Math.max(segment.getEndAddress(), pointEndAddress) - segment.getStartAddress();
+        int mergedRegisterCount =
+                Math.max(segment.getEndAddress(), pointEndAddress) - segment.getStartAddress();
         return mergedRegisterCount <= maxRegisterCount;
     }
 
@@ -214,7 +257,8 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
      *
      * <p>例如读取段从地址 10 开始，点位地址为 12、数量为 2，则取 rawValues[2..4)。
      */
-    static int[] extractPointRawValues(int[] rawValues, ReadSegment segment, IotModbusPointRespDTO point) {
+    static int[] extractPointRawValues(
+            int[] rawValues, ReadSegment segment, IotModbusPointRespDTO point) {
         if (rawValues == null) {
             return null;
         }
@@ -263,7 +307,6 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
 
         private Integer functionCode;
         private Integer pollInterval;
-
     }
 
     /**
@@ -286,7 +329,5 @@ public class IotModbusTcpClientPollScheduler extends AbstractIotModbusPollSchedu
         int getEndAddress() {
             return startAddress + registerCount;
         }
-
     }
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.service.performance.assessment;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment.HrmPerformanceArchiveEmployeePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment.HrmPerformanceArchivePageReqVO;
@@ -18,8 +20,6 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 员工绩效考核 Service 接口
@@ -50,7 +50,8 @@ public interface HrmPerformanceAssessmentService {
      * @param ids 员工绩效考核编号集合
      * @return 员工绩效考核 Map
      */
-    default Map<Long, HrmPerformanceAssessmentDO> getPerformanceAssessmentMap(Collection<Long> ids) {
+    default Map<Long, HrmPerformanceAssessmentDO> getPerformanceAssessmentMap(
+            Collection<Long> ids) {
         return convertMap(getPerformanceAssessmentList(ids), HrmPerformanceAssessmentDO::getId);
     }
 
@@ -68,7 +69,8 @@ public interface HrmPerformanceAssessmentService {
      * @param planIds 绩效计划编号集合
      * @return 员工考核列表
      */
-    List<HrmPerformanceAssessmentDO> getPerformanceAssessmentListByPlanIds(Collection<Long> planIds);
+    List<HrmPerformanceAssessmentDO> getPerformanceAssessmentListByPlanIds(
+            Collection<Long> planIds);
 
     /**
      * 校验员工绩效考核是否存在
@@ -319,7 +321,8 @@ public interface HrmPerformanceAssessmentService {
      * @return 是否可以发起面谈
      */
     boolean isPerformanceAssessmentInterviewReady(
-            HrmPerformancePlanDO plan, List<HrmPerformanceAssessmentDO> assessments,
+            HrmPerformancePlanDO plan,
+            List<HrmPerformanceAssessmentDO> assessments,
             List<HrmPerformanceAssessmentStageDO> stages);
 
     /**
@@ -331,5 +334,4 @@ public interface HrmPerformanceAssessmentService {
      */
     boolean isPerformanceAssessmentArchiveReady(
             HrmPerformancePlanDO plan, List<HrmPerformanceAssessmentDO> assessments);
-
 }

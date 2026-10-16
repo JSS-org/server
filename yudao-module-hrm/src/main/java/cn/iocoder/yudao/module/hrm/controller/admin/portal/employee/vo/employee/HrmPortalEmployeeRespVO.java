@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.employee.vo.employee;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -113,5 +114,4 @@ public class HrmPortalEmployeeRespVO {
 
     @Schema(description = "司龄，单位年", example = "2")
     private Integer companyAge;
-
 }

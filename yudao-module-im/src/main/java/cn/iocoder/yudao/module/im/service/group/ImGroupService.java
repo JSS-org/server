@@ -14,6 +14,7 @@ import cn.iocoder.yudao.module.im.controller.admin.group.vo.member.ImGroupMember
 import cn.iocoder.yudao.module.im.controller.admin.manager.group.vo.ImGroupManagerBanReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.group.vo.ImGroupManagerPageReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -247,5 +248,4 @@ public interface ImGroupService {
      * @param id 群编号
      */
     void dissolveGroupByManager(Long operatorUserId, Long id);
-
 }

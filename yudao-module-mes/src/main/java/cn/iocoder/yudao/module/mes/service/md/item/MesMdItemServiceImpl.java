@@ -1,8 +1,13 @@
 package cn.iocoder.yudao.module.mes.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,7 +15,6 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.MesMdItemImportEx
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.MesMdItemImportRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.MesMdItemPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.MesMdItemSaveReqVO;
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemBatchConfigDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemTypeDO;
@@ -19,10 +23,12 @@ import cn.iocoder.yudao.module.mes.dal.mysql.md.item.MesMdItemMapper;
 import cn.iocoder.yudao.module.mes.enums.md.MesMdItemTypeEnum;
 import cn.iocoder.yudao.module.mes.enums.md.autocode.MesMdAutoCodeRuleCodeEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
-import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.md.autocode.MesMdAutoCodeRecordService;
+import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -30,10 +36,6 @@ import org.springframework.validation.annotation.Validated;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 物料产品 Service 实现类
@@ -44,25 +46,16 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdItemServiceImpl implements MesMdItemService {
 
-    @Resource
-    private MesMdItemMapper itemMapper;
+    @Resource private MesMdItemMapper itemMapper;
 
-    @Resource
-    private MesMdItemTypeService itemTypeService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
-    @Resource
-    private MesMdItemBatchConfigService itemBatchConfigService;
-    @Resource
-    private MesMdProductBomService productBomService;
-    @Resource
-    private MesMdProductSopService productSopService;
-    @Resource
-    private MesMdProductSipService productSipService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
-    @Resource
-    private MesMdAutoCodeRecordService autoCodeRecordService;
+    @Resource private MesMdItemTypeService itemTypeService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesMdItemBatchConfigService itemBatchConfigService;
+    @Resource private MesMdProductBomService productBomService;
+    @Resource private MesMdProductSopService productSopService;
+    @Resource private MesMdProductSipService productSipService;
+    @Resource private MesWmBarcodeService barcodeService;
+    @Resource private MesMdAutoCodeRecordService autoCodeRecordService;
 
     @Override
     public Long createItem(MesMdItemSaveReqVO createReqVO) {
@@ -76,8 +69,8 @@ public class MesMdItemServiceImpl implements MesMdItemService {
         itemMapper.insert(item);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.ITEM.getValue(),
-                item.getId(), item.getCode(), item.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.ITEM.getValue(), item.getId(), item.getCode(), item.getName());
         return item.getId();
     }
 
@@ -218,20 +211,21 @@ public class MesMdItemServiceImpl implements MesMdItemService {
         if (config == null) {
             throw exception(MD_ITEM_BATCH_CONFIG_NOT_EXISTS);
         }
-        boolean hasAnyFlag = Boolean.TRUE.equals(config.getProduceDateFlag())
-                || Boolean.TRUE.equals(config.getExpireDateFlag())
-                || Boolean.TRUE.equals(config.getReceiptDateFlag())
-                || Boolean.TRUE.equals(config.getVendorFlag())
-                || Boolean.TRUE.equals(config.getClientFlag())
-                || Boolean.TRUE.equals(config.getSalesOrderCodeFlag())
-                || Boolean.TRUE.equals(config.getPurchaseOrderCodeFlag())
-                || Boolean.TRUE.equals(config.getWorkOrderFlag())
-                || Boolean.TRUE.equals(config.getTaskFlag())
-                || Boolean.TRUE.equals(config.getWorkstationFlag())
-                || Boolean.TRUE.equals(config.getToolFlag())
-                || Boolean.TRUE.equals(config.getMoldFlag())
-                || Boolean.TRUE.equals(config.getLotNumberFlag())
-                || Boolean.TRUE.equals(config.getQualityStatusFlag());
+        boolean hasAnyFlag =
+                Boolean.TRUE.equals(config.getProduceDateFlag())
+                        || Boolean.TRUE.equals(config.getExpireDateFlag())
+                        || Boolean.TRUE.equals(config.getReceiptDateFlag())
+                        || Boolean.TRUE.equals(config.getVendorFlag())
+                        || Boolean.TRUE.equals(config.getClientFlag())
+                        || Boolean.TRUE.equals(config.getSalesOrderCodeFlag())
+                        || Boolean.TRUE.equals(config.getPurchaseOrderCodeFlag())
+                        || Boolean.TRUE.equals(config.getWorkOrderFlag())
+                        || Boolean.TRUE.equals(config.getTaskFlag())
+                        || Boolean.TRUE.equals(config.getWorkstationFlag())
+                        || Boolean.TRUE.equals(config.getToolFlag())
+                        || Boolean.TRUE.equals(config.getMoldFlag())
+                        || Boolean.TRUE.equals(config.getLotNumberFlag())
+                        || Boolean.TRUE.equals(config.getQualityStatusFlag());
         if (!hasAnyFlag) {
             throw exception(MD_ITEM_BATCH_CONFIG_AT_LEAST_ONE_FLAG);
         }
@@ -249,7 +243,8 @@ public class MesMdItemServiceImpl implements MesMdItemService {
         if (pageReqVO.getItemTypeId() != null) {
             itemTypeIds = new HashSet<>();
             itemTypeIds.add(pageReqVO.getItemTypeId());
-            List<MesMdItemTypeDO> children = itemTypeService.getItemTypeChildrenList(pageReqVO.getItemTypeId());
+            List<MesMdItemTypeDO> children =
+                    itemTypeService.getItemTypeChildrenList(pageReqVO.getItemTypeId());
             itemTypeIds.addAll(convertSet(children, MesMdItemTypeDO::getId));
         }
         // 分页查询
@@ -276,90 +271,102 @@ public class MesMdItemServiceImpl implements MesMdItemService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MesMdItemImportRespVO importItemList(List<MesMdItemImportExcelVO> importItems, boolean updateSupport) {
+    public MesMdItemImportRespVO importItemList(
+            List<MesMdItemImportExcelVO> importItems, boolean updateSupport) {
         // 1. 参数校验
         if (CollUtil.isEmpty(importItems)) {
             throw exception(MD_ITEM_IMPORT_LIST_IS_EMPTY);
         }
 
         // 2. 遍历，逐个创建 or 更新
-        MesMdItemImportRespVO respVO = MesMdItemImportRespVO.builder()
-                .createCodes(new ArrayList<>()).updateCodes(new ArrayList<>())
-                .failureCodes(new LinkedHashMap<>()).build();
+        MesMdItemImportRespVO respVO =
+                MesMdItemImportRespVO.builder()
+                        .createCodes(new ArrayList<>())
+                        .updateCodes(new ArrayList<>())
+                        .failureCodes(new LinkedHashMap<>())
+                        .build();
         AtomicInteger index = new AtomicInteger(1);
-        importItems.forEach(importItem -> {
-            int currentIndex = index.getAndIncrement();
-            // 2.1 校验字段
-            if (StrUtil.isBlank(importItem.getCode())) {
-                // 空编码时自动生成
-                importItem.setCode(autoCodeRecordService.generateAutoCode(MesMdAutoCodeRuleCodeEnum.MD_ITEM_CODE.getCode()));
-            }
-            String key = importItem.getCode();
-            if (StrUtil.isBlank(importItem.getName())) {
-                respVO.getFailureCodes().put(key, "物料名称不能为空");
-                return;
-            }
-            if (StrUtil.isBlank(importItem.getUnitMeasureCode())) {
-                respVO.getFailureCodes().put(key, "单位编码不能为空");
-                return;
-            }
-            // 将单位编码转换为单位 ID
-            MesMdUnitMeasureDO unitMeasure = unitMeasureService.getUnitMeasureByCode(importItem.getUnitMeasureCode());
-            if (unitMeasure == null) {
-                respVO.getFailureCodes().put(key, "单位编码[" + importItem.getUnitMeasureCode() + "]不存在");
-                return;
-            }
-            if (importItem.getItemTypeId() == null) {
-                respVO.getFailureCodes().put(key, "物料分类编号不能为空");
-                return;
-            }
-            // 2.2 校验分类是否存在
-            try {
-                validateItemTypeExists(importItem.getItemTypeId());
-            } catch (ServiceException ex) {
-                respVO.getFailureCodes().put(key, ex.getMessage());
-                return;
-            }
+        importItems.forEach(
+                importItem -> {
+                    int currentIndex = index.getAndIncrement();
+                    // 2.1 校验字段
+                    if (StrUtil.isBlank(importItem.getCode())) {
+                        // 空编码时自动生成
+                        importItem.setCode(
+                                autoCodeRecordService.generateAutoCode(
+                                        MesMdAutoCodeRuleCodeEnum.MD_ITEM_CODE.getCode()));
+                    }
+                    String key = importItem.getCode();
+                    if (StrUtil.isBlank(importItem.getName())) {
+                        respVO.getFailureCodes().put(key, "物料名称不能为空");
+                        return;
+                    }
+                    if (StrUtil.isBlank(importItem.getUnitMeasureCode())) {
+                        respVO.getFailureCodes().put(key, "单位编码不能为空");
+                        return;
+                    }
+                    // 将单位编码转换为单位 ID
+                    MesMdUnitMeasureDO unitMeasure =
+                            unitMeasureService.getUnitMeasureByCode(
+                                    importItem.getUnitMeasureCode());
+                    if (unitMeasure == null) {
+                        respVO.getFailureCodes()
+                                .put(key, "单位编码[" + importItem.getUnitMeasureCode() + "]不存在");
+                        return;
+                    }
+                    if (importItem.getItemTypeId() == null) {
+                        respVO.getFailureCodes().put(key, "物料分类编号不能为空");
+                        return;
+                    }
+                    // 2.2 校验分类是否存在
+                    try {
+                        validateItemTypeExists(importItem.getItemTypeId());
+                    } catch (ServiceException ex) {
+                        respVO.getFailureCodes().put(key, ex.getMessage());
+                        return;
+                    }
 
-            // 2.3 判断：创建 or 更新
-            MesMdItemDO existItem = itemMapper.selectByCode(importItem.getCode());
-            if (existItem == null) {
-                // 2.3.1 创建
-                try {
-                    validateItemNameUnique(null, importItem.getName());
-                } catch (ServiceException ex) {
-                    respVO.getFailureCodes().put(key, ex.getMessage());
-                    return;
-                }
-                MesMdItemDO item = BeanUtils.toBean(importItem, MesMdItemDO.class);
-                item.setUnitMeasureId(unitMeasure.getId());
-                item.setStatus(CommonStatusEnum.DISABLE.getStatus()); // 默认禁用。信息完成后，再启用
-                clearStockIfNotSafe(item);
-                itemMapper.insert(item);
-                // 自动生成条码
-                barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.ITEM.getValue(),
-                        item.getId(), item.getCode(), item.getName());
-                respVO.getCreateCodes().add(importItem.getCode());
-            } else if (updateSupport) {
-                // 2.3.2 更新
-                try {
-                    validateItemNameUnique(existItem.getId(), importItem.getName());
-                } catch (ServiceException ex) {
-                    respVO.getFailureCodes().put(key, ex.getMessage());
-                    return;
-                }
-                MesMdItemDO updateObj = BeanUtils.toBean(importItem, MesMdItemDO.class);
-                updateObj.setId(existItem.getId());
-                updateObj.setUnitMeasureId(unitMeasure.getId());
-                clearStockIfNotSafe(updateObj);
-                itemMapper.updateById(updateObj);
-                respVO.getUpdateCodes().add(importItem.getCode());
-            } else {
-                // 不支持更新
-                respVO.getFailureCodes().put(key, "物料编码已存在");
-            }
-        });
+                    // 2.3 判断：创建 or 更新
+                    MesMdItemDO existItem = itemMapper.selectByCode(importItem.getCode());
+                    if (existItem == null) {
+                        // 2.3.1 创建
+                        try {
+                            validateItemNameUnique(null, importItem.getName());
+                        } catch (ServiceException ex) {
+                            respVO.getFailureCodes().put(key, ex.getMessage());
+                            return;
+                        }
+                        MesMdItemDO item = BeanUtils.toBean(importItem, MesMdItemDO.class);
+                        item.setUnitMeasureId(unitMeasure.getId());
+                        item.setStatus(CommonStatusEnum.DISABLE.getStatus()); // 默认禁用。信息完成后，再启用
+                        clearStockIfNotSafe(item);
+                        itemMapper.insert(item);
+                        // 自动生成条码
+                        barcodeService.autoGenerateBarcode(
+                                BarcodeBizTypeEnum.ITEM.getValue(),
+                                item.getId(),
+                                item.getCode(),
+                                item.getName());
+                        respVO.getCreateCodes().add(importItem.getCode());
+                    } else if (updateSupport) {
+                        // 2.3.2 更新
+                        try {
+                            validateItemNameUnique(existItem.getId(), importItem.getName());
+                        } catch (ServiceException ex) {
+                            respVO.getFailureCodes().put(key, ex.getMessage());
+                            return;
+                        }
+                        MesMdItemDO updateObj = BeanUtils.toBean(importItem, MesMdItemDO.class);
+                        updateObj.setId(existItem.getId());
+                        updateObj.setUnitMeasureId(unitMeasure.getId());
+                        clearStockIfNotSafe(updateObj);
+                        itemMapper.updateById(updateObj);
+                        respVO.getUpdateCodes().add(importItem.getCode());
+                    } else {
+                        // 不支持更新
+                        respVO.getFailureCodes().put(key, "物料编码已存在");
+                    }
+                });
         return respVO;
     }
-
 }

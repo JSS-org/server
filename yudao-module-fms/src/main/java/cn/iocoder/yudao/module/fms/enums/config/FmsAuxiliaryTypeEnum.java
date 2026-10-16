@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsAuxiliaryTypeEnum implements ArrayValuable<Integer> {
-
     CUSTOMER(1, "客户"),
     SUPPLIER(2, "供应商"),
     EMPLOYEE(3, "职员"),
@@ -24,16 +24,19 @@ public enum FmsAuxiliaryTypeEnum implements ArrayValuable<Integer> {
     INVENTORY(6, "存货"),
     CUSTOM(7, "自定义");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsAuxiliaryTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(FmsAuxiliaryTypeEnum::getType).toArray(Integer[]::new);
 
-    public static final FmsAuxiliaryTypeEnum[] SYSTEM_PRESET_TYPES = Arrays.stream(values())
-            .filter(type -> type != CUSTOM).toArray(FmsAuxiliaryTypeEnum[]::new);
+    public static final FmsAuxiliaryTypeEnum[] SYSTEM_PRESET_TYPES =
+            Arrays.stream(values())
+                    .filter(type -> type != CUSTOM)
+                    .toArray(FmsAuxiliaryTypeEnum[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -47,5 +50,4 @@ public enum FmsAuxiliaryTypeEnum implements ArrayValuable<Integer> {
     public static FmsAuxiliaryTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

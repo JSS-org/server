@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.app.signin.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户 App - 个人签到统计 Response VO")
@@ -15,5 +16,4 @@ public class AppMemberSignInRecordSummaryRespVO {
 
     @Schema(description = "今天是否已签到", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
     private Boolean todaySignIn;
-
 }

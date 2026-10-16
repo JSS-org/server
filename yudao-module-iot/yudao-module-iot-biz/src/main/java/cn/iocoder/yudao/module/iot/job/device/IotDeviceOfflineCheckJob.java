@@ -11,7 +11,9 @@ import cn.iocoder.yudao.module.iot.framework.iot.config.YudaoIotProperties;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -31,26 +33,24 @@ import java.util.Set;
 @Component
 public class IotDeviceOfflineCheckJob implements JobHandler {
 
-    @Resource
-    private YudaoIotProperties iotProperties;
+    @Resource private YudaoIotProperties iotProperties;
 
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    private IotDevicePropertyService devicePropertyService;
-    @Resource
-    private IotDeviceMessageService deviceMessageService;
+    @Resource private IotDeviceService deviceService;
+    @Resource private IotDevicePropertyService devicePropertyService;
+    @Resource private IotDeviceMessageService deviceMessageService;
 
     @Override
     @TenantJob
     public String execute(String param) {
         // 1.1 获得在线设备列表
-        List<IotDeviceDO> devices = deviceService.getDeviceListByState(IotDeviceStateEnum.ONLINE.getState());
+        List<IotDeviceDO> devices =
+                deviceService.getDeviceListByState(IotDeviceStateEnum.ONLINE.getState());
         if (CollUtil.isEmpty(devices)) {
             return JsonUtils.toJsonString(Collections.emptyList());
         }
         // 1.2 获取超时的设备集合
-        Set<Long> timeoutDeviceIds = devicePropertyService.getDeviceIdListByReportTime(getTimeoutTime());
+        Set<Long> timeoutDeviceIds =
+                devicePropertyService.getDeviceIdListByReportTime(getTimeoutTime());
 
         // 2. 下线设备
         List<String[]> offlineDevices = CollUtil.newArrayList();
@@ -58,16 +58,20 @@ public class IotDeviceOfflineCheckJob implements JobHandler {
             if (!timeoutDeviceIds.contains(device.getId())) {
                 continue;
             }
-            offlineDevices.add(new String[]{device.getProductKey(), device.getDeviceName()});
+            offlineDevices.add(new String[] {device.getProductKey(), device.getDeviceName()});
             // 为什么不直接更新状态呢？因为通过 IotDeviceMessage 可以经过一系列的处理，例如说记录日志等等
-            deviceMessageService.sendDeviceMessage(IotDeviceMessage.buildStateOffline().setDeviceId(device.getId()));
+            deviceMessageService.sendDeviceMessage(
+                    IotDeviceMessage.buildStateOffline().setDeviceId(device.getId()));
         }
         return JsonUtils.toJsonString(offlineDevices);
     }
 
     private LocalDateTime getTimeoutTime() {
-        return LocalDateTime.now().minus(Duration.ofNanos(
-                (long) (iotProperties.getKeepAliveTime().toNanos() * iotProperties.getKeepAliveFactor())));
+        return LocalDateTime.now()
+                .minus(
+                        Duration.ofNanos(
+                                (long)
+                                        (iotProperties.getKeepAliveTime().toNanos()
+                                                * iotProperties.getKeepAliveFactor())));
     }
-
 }

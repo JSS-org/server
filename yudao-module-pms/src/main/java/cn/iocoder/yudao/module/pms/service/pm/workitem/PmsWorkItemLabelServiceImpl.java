@@ -1,23 +1,24 @@
 package cn.iocoder.yudao.module.pms.service.pm.workitem;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_LABELS_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_LABEL_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.label.PmsWorkItemLabelSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemLabelDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemLabelMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_LABELS_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_LABEL_NOT_EXISTS;
 
 /**
  * PMS 工作项标签 Service 实现类
@@ -28,13 +29,14 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_LAB
 @Validated
 public class PmsWorkItemLabelServiceImpl implements PmsWorkItemLabelService {
 
-    @Resource
-    private PmsWorkItemLabelMapper labelMapper;
+    @Resource private PmsWorkItemLabelMapper labelMapper;
 
     @Override
     public Long createWorkItemLabel(PmsWorkItemLabelSaveReqVO saveReqVO) {
-        PmsWorkItemLabelDO label = BeanUtils.toBean(saveReqVO, PmsWorkItemLabelDO.class)
-                .setName(StrUtil.trim(saveReqVO.getName())).setColor(StrUtil.trim(saveReqVO.getColor()));
+        PmsWorkItemLabelDO label =
+                BeanUtils.toBean(saveReqVO, PmsWorkItemLabelDO.class)
+                        .setName(StrUtil.trim(saveReqVO.getName()))
+                        .setColor(StrUtil.trim(saveReqVO.getColor()));
         labelMapper.insert(label);
         return label.getId();
     }
@@ -45,8 +47,10 @@ public class PmsWorkItemLabelServiceImpl implements PmsWorkItemLabelService {
         validateLabelExists(saveReqVO.getId());
 
         // 2. 更新标签
-        labelMapper.updateById(BeanUtils.toBean(saveReqVO, PmsWorkItemLabelDO.class)
-                .setName(StrUtil.trim(saveReqVO.getName())).setColor(StrUtil.trim(saveReqVO.getColor())));
+        labelMapper.updateById(
+                BeanUtils.toBean(saveReqVO, PmsWorkItemLabelDO.class)
+                        .setName(StrUtil.trim(saveReqVO.getName()))
+                        .setColor(StrUtil.trim(saveReqVO.getColor())));
     }
 
     @Override
@@ -91,5 +95,4 @@ public class PmsWorkItemLabelServiceImpl implements PmsWorkItemLabelService {
             throw exception(WORK_ITEM_LABEL_NOT_EXISTS);
         }
     }
-
 }

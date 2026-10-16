@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.label;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 工作项标签新增/修改 Request VO")
@@ -21,5 +23,4 @@ public class PmsWorkItemLabelSaveReqVO {
     @NotBlank(message = "标签颜色不能为空")
     @Size(max = 20, message = "标签颜色不能超过 20 个字符")
     private String color;
-
 }

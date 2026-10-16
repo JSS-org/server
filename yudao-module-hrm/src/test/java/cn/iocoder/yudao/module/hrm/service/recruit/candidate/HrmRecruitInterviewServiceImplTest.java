@@ -1,5 +1,28 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.candidate;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_FINISHED;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_NOT_CURRENT;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_RESULT_INVALID;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_STATE_INVALID;
+import static cn.iocoder.yudao.module.hrm.enums.MessageTemplateConstants.RECRUIT_INTERVIEW_ARRANGED;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.interview.HrmRecruitInterviewResultReqVO;
@@ -14,7 +37,9 @@ import cn.iocoder.yudao.module.hrm.enums.recruit.candidate.HrmRecruitInterviewRe
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.system.api.notify.NotifyMessageSendApi;
 import cn.iocoder.yudao.module.system.api.notify.dto.NotifySendSingleToUserReqDTO;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.annotation.Import;
@@ -26,27 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_FINISHED;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_NOT_CURRENT;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_RESULT_INVALID;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_INTERVIEW_STATE_INVALID;
-import static cn.iocoder.yudao.module.hrm.enums.MessageTemplateConstants.RECRUIT_INTERVIEW_ARRANGED;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link HrmRecruitInterviewServiceImpl} 的单元测试类
  *
@@ -55,34 +59,39 @@ import static org.mockito.Mockito.*;
 @Import(HrmRecruitInterviewServiceImpl.class)
 public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmRecruitInterviewServiceImpl recruitInterviewService;
+    @Resource private HrmRecruitInterviewServiceImpl recruitInterviewService;
 
-    @Resource
-    private HrmRecruitInterviewMapper recruitInterviewMapper;
+    @Resource private HrmRecruitInterviewMapper recruitInterviewMapper;
 
-    @MockitoBean
-    private HrmRecruitCandidateService recruitCandidateService;
-    @MockitoBean
-    private HrmEmployeeService employeeService;
-    @MockitoBean
-    private NotifyMessageSendApi notifyMessageSendApi;
+    @MockitoBean private HrmRecruitCandidateService recruitCandidateService;
+    @MockitoBean private HrmEmployeeService employeeService;
+    @MockitoBean private NotifyMessageSendApi notifyMessageSendApi;
 
     @Test
     public void testCreateRecruitInterview_success() {
         // mock 数据
         Long candidateId = randomLongId();
-        HrmRecruitInterviewDO firstInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(candidateId).setStageNumber(1)
-                .setResult(HrmRecruitInterviewResultEnum.PASS.getResult()));
+        HrmRecruitInterviewDO firstInterview =
+                randomRecruitInterviewDO(
+                        o ->
+                                o.setCandidateId(candidateId)
+                                        .setStageNumber(1)
+                                        .setResult(HrmRecruitInterviewResultEnum.PASS.getResult()));
         recruitInterviewMapper.insert(firstInterview);
         // 准备参数
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setCandidateId(candidateId).setStageNumber(null));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o -> o.setCandidateId(candidateId).setStageNumber(null));
         // mock 方法
         when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(candidateId)))
-                .thenReturn(randomPojo(HrmRecruitCandidateDO.class, o -> o.setId(candidateId)
-                        .setStatus(HrmRecruitCandidateStatusEnum.PRIMARY_PASS.getStatus())));
+                .thenReturn(
+                        randomPojo(
+                                HrmRecruitCandidateDO.class,
+                                o ->
+                                        o.setId(candidateId)
+                                                .setStatus(
+                                                        HrmRecruitCandidateStatusEnum.PRIMARY_PASS
+                                                                .getStatus())));
         when(employeeService.getEmployeeMap(anyCollection())).thenReturn(emptyMap());
 
         // 调用
@@ -95,26 +104,35 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         assertEquals(firstInterview.getStageNumber() + 1, interview.getStageNumber());
         assertEquals(HrmRecruitInterviewResultEnum.UNFINISHED.getResult(), interview.getResult());
         verify(recruitCandidateService).updateRecruitCandidateInterview(candidateId, 2);
-        verify(employeeService).validateEmployeeListByEntryStatus(
-                anyCollection(), eq(HrmEmployeeEntryStatusEnum.ACTIVE.getStatus()));
+        verify(employeeService)
+                .validateEmployeeListByEntryStatus(
+                        anyCollection(), eq(HrmEmployeeEntryStatusEnum.ACTIVE.getStatus()));
     }
 
     @Test
     public void testCreateRecruitInterview_employeeNotExists() {
         // 准备参数
         Long candidateId = randomLongId();
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setCandidateId(candidateId));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(o -> o.setCandidateId(candidateId));
         // mock 方法
         when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(candidateId))
-                .thenReturn(randomPojo(HrmRecruitCandidateDO.class, o -> o.setId(candidateId)
-                        .setStatus(HrmRecruitCandidateStatusEnum.PRIMARY_PASS.getStatus())));
-        doThrow(exception(EMPLOYEE_NOT_EXISTS)).when(employeeService)
-                .validateEmployeeListByEntryStatus(anyCollection(),
-                        eq(HrmEmployeeEntryStatusEnum.ACTIVE.getStatus()));
+                .thenReturn(
+                        randomPojo(
+                                HrmRecruitCandidateDO.class,
+                                o ->
+                                        o.setId(candidateId)
+                                                .setStatus(
+                                                        HrmRecruitCandidateStatusEnum.PRIMARY_PASS
+                                                                .getStatus())));
+        doThrow(exception(EMPLOYEE_NOT_EXISTS))
+                .when(employeeService)
+                .validateEmployeeListByEntryStatus(
+                        anyCollection(), eq(HrmEmployeeEntryStatusEnum.ACTIVE.getStatus()));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitInterviewService.createRecruitInterview(reqVO), EMPLOYEE_NOT_EXISTS);
+        assertServiceException(
+                () -> recruitInterviewService.createRecruitInterview(reqVO), EMPLOYEE_NOT_EXISTS);
         assertEquals(0L, recruitInterviewMapper.selectCount());
     }
 
@@ -122,61 +140,91 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
     public void testCreateRecruitInterview_normalizeOtherInterviewEmployeeIds() {
         // 准备参数
         Long candidateId = randomLongId();
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setCandidateId(candidateId).setInterviewEmployeeId(1L)
-                .setOtherInterviewEmployeeIds(asList(2L, 1L, 2L, 3L)));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o ->
+                                o.setCandidateId(candidateId)
+                                        .setInterviewEmployeeId(1L)
+                                        .setOtherInterviewEmployeeIds(asList(2L, 1L, 2L, 3L)));
         // mock 方法
         when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(candidateId))
-                .thenReturn(randomPojo(HrmRecruitCandidateDO.class, o -> o.setId(candidateId)
-                        .setStatus(HrmRecruitCandidateStatusEnum.PRIMARY_PASS.getStatus())));
+                .thenReturn(
+                        randomPojo(
+                                HrmRecruitCandidateDO.class,
+                                o ->
+                                        o.setId(candidateId)
+                                                .setStatus(
+                                                        HrmRecruitCandidateStatusEnum.PRIMARY_PASS
+                                                                .getStatus())));
         when(employeeService.getEmployeeMap(anyCollection())).thenReturn(emptyMap());
 
         // 调用
         Long interviewId = recruitInterviewService.createRecruitInterview(reqVO);
 
         // 断言
-        assertEquals(asList(2L, 3L),
+        assertEquals(
+                asList(2L, 3L),
                 recruitInterviewMapper.selectById(interviewId).getOtherInterviewEmployeeIds());
-        verify(employeeService).validateEmployeeListByEntryStatus(
-                new HashSet<>(asList(1L, 2L, 3L)), HrmEmployeeEntryStatusEnum.ACTIVE.getStatus());
+        verify(employeeService)
+                .validateEmployeeListByEntryStatus(
+                        new HashSet<>(asList(1L, 2L, 3L)),
+                        HrmEmployeeEntryStatusEnum.ACTIVE.getStatus());
     }
 
     @Test
     public void testCreateRecruitInterview_emptyOtherInterviewEmployeeIds() {
         // 准备参数
         Long candidateId = randomLongId();
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setCandidateId(candidateId).setInterviewEmployeeId(1L)
-                .setOtherInterviewEmployeeIds(null));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o ->
+                                o.setCandidateId(candidateId)
+                                        .setInterviewEmployeeId(1L)
+                                        .setOtherInterviewEmployeeIds(null));
         // mock 方法
         when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(candidateId))
-                .thenReturn(randomPojo(HrmRecruitCandidateDO.class, o -> o.setId(candidateId)
-                        .setStatus(HrmRecruitCandidateStatusEnum.PRIMARY_PASS.getStatus())));
+                .thenReturn(
+                        randomPojo(
+                                HrmRecruitCandidateDO.class,
+                                o ->
+                                        o.setId(candidateId)
+                                                .setStatus(
+                                                        HrmRecruitCandidateStatusEnum.PRIMARY_PASS
+                                                                .getStatus())));
         when(employeeService.getEmployeeMap(anyCollection())).thenReturn(emptyMap());
 
         // 调用
         Long interviewId = recruitInterviewService.createRecruitInterview(reqVO);
 
         // 断言
-        assertEquals(emptyList(),
+        assertEquals(
+                emptyList(),
                 recruitInterviewMapper.selectById(interviewId).getOtherInterviewEmployeeIds());
-        verify(employeeService).validateEmployeeListByEntryStatus(
-                singleton(1L), HrmEmployeeEntryStatusEnum.ACTIVE.getStatus());
+        verify(employeeService)
+                .validateEmployeeListByEntryStatus(
+                        singleton(1L), HrmEmployeeEntryStatusEnum.ACTIVE.getStatus());
     }
 
     @Test
     public void testCreateRecruitInterview_candidateStateInvalid() {
         // 准备参数
         Long candidateId = randomLongId();
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setCandidateId(candidateId));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(o -> o.setCandidateId(candidateId));
         // mock 方法
         when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(candidateId))
-                .thenReturn(randomPojo(HrmRecruitCandidateDO.class, o -> o.setId(candidateId)
-                        .setStatus(HrmRecruitCandidateStatusEnum.OFFER_SENT.getStatus())));
+                .thenReturn(
+                        randomPojo(
+                                HrmRecruitCandidateDO.class,
+                                o ->
+                                        o.setId(candidateId)
+                                                .setStatus(
+                                                        HrmRecruitCandidateStatusEnum.OFFER_SENT
+                                                                .getStatus())));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitInterviewService.createRecruitInterview(reqVO),
+        assertServiceException(
+                () -> recruitInterviewService.createRecruitInterview(reqVO),
                 RECRUIT_INTERVIEW_STATE_INVALID);
         assertEquals(0L, recruitInterviewMapper.selectCount());
         verifyNoInteractions(employeeService);
@@ -185,15 +233,20 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateRecruitInterview_success() {
         // mock 数据
-        HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO(o -> o
-                .setResult(HrmRecruitInterviewResultEnum.UNFINISHED.getResult()));
+        HrmRecruitInterviewDO dbInterview =
+                randomRecruitInterviewDO(
+                        o -> o.setResult(HrmRecruitInterviewResultEnum.UNFINISHED.getResult()));
         recruitInterviewMapper.insert(dbInterview);
         // 准备参数
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setId(dbInterview.getId()).setCandidateId(dbInterview.getCandidateId())
-                .setStageNumber(randomInteger()));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o ->
+                                o.setId(dbInterview.getId())
+                                        .setCandidateId(dbInterview.getCandidateId())
+                                        .setStageNumber(randomInteger()));
         // mock 方法
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(dbInterview.getCandidateId())))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        eq(dbInterview.getCandidateId())))
                 .thenReturn(currentInterviewCandidate(dbInterview));
         when(employeeService.getEmployeeMap(anyCollection())).thenReturn(emptyMap());
 
@@ -206,22 +259,31 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         assertEquals(HrmRecruitInterviewResultEnum.UNFINISHED.getResult(), interview.getResult());
         assertNull(interview.getEvaluate());
         assertNull(interview.getCancelReason());
-        verify(recruitCandidateService).validateRecruitCandidateExistsForUpdate(dbInterview.getCandidateId());
-        verify(recruitCandidateService, never()).updateRecruitCandidateInterview(anyLong(), anyInt());
+        verify(recruitCandidateService)
+                .validateRecruitCandidateExistsForUpdate(dbInterview.getCandidateId());
+        verify(recruitCandidateService, never())
+                .updateRecruitCandidateInterview(anyLong(), anyInt());
     }
 
     @Test
     public void testUpdateRecruitInterview_cancelled() {
         // mock 数据
-        HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO(o -> o
-                .setResult(HrmRecruitInterviewResultEnum.CANCEL.getResult())
-                .setEvaluate(randomString()).setCancelReason(randomString()));
+        HrmRecruitInterviewDO dbInterview =
+                randomRecruitInterviewDO(
+                        o ->
+                                o.setResult(HrmRecruitInterviewResultEnum.CANCEL.getResult())
+                                        .setEvaluate(randomString())
+                                        .setCancelReason(randomString()));
         recruitInterviewMapper.insert(dbInterview);
         // 准备参数
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setId(dbInterview.getId()).setCandidateId(dbInterview.getCandidateId()));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o ->
+                                o.setId(dbInterview.getId())
+                                        .setCandidateId(dbInterview.getCandidateId()));
         // mock 方法
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(dbInterview.getCandidateId())))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        eq(dbInterview.getCandidateId())))
                 .thenReturn(currentInterviewCandidate(dbInterview));
         when(employeeService.getEmployeeMap(anyCollection())).thenReturn(emptyMap());
 
@@ -234,25 +296,32 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         assertEquals(HrmRecruitInterviewResultEnum.UNFINISHED.getResult(), interview.getResult());
         assertNull(interview.getEvaluate());
         assertNull(interview.getCancelReason());
-        verify(recruitCandidateService).updateRecruitCandidateInterview(
-                dbInterview.getCandidateId(), dbInterview.getStageNumber());
+        verify(recruitCandidateService)
+                .updateRecruitCandidateInterview(
+                        dbInterview.getCandidateId(), dbInterview.getStageNumber());
     }
 
     @Test
     public void testUpdateRecruitInterview_finished() {
         // mock 数据
-        HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO(o -> o
-                .setResult(HrmRecruitInterviewResultEnum.PASS.getResult()));
+        HrmRecruitInterviewDO dbInterview =
+                randomRecruitInterviewDO(
+                        o -> o.setResult(HrmRecruitInterviewResultEnum.PASS.getResult()));
         recruitInterviewMapper.insert(dbInterview);
         // 准备参数
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setId(dbInterview.getId()).setCandidateId(dbInterview.getCandidateId()));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o ->
+                                o.setId(dbInterview.getId())
+                                        .setCandidateId(dbInterview.getCandidateId()));
         // mock 方法
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(dbInterview.getCandidateId())))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        eq(dbInterview.getCandidateId())))
                 .thenReturn(currentInterviewCandidate(dbInterview));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitInterviewService.updateRecruitInterview(reqVO),
+        assertServiceException(
+                () -> recruitInterviewService.updateRecruitInterview(reqVO),
                 RECRUIT_INTERVIEW_FINISHED);
     }
 
@@ -261,7 +330,8 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO();
         recruitInterviewMapper.insert(dbInterview);
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(dbInterview.getCandidateId()))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        dbInterview.getCandidateId()))
                 .thenReturn(currentInterviewCandidate(dbInterview));
 
         // 调用
@@ -269,8 +339,11 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertNull(recruitInterviewMapper.selectById(dbInterview.getId()));
-        verify(recruitCandidateService).updateRecruitCandidateInterviewState(
-                dbInterview.getCandidateId(), HrmRecruitCandidateStatusEnum.NEW.getStatus(), 0);
+        verify(recruitCandidateService)
+                .updateRecruitCandidateInterviewState(
+                        dbInterview.getCandidateId(),
+                        HrmRecruitCandidateStatusEnum.NEW.getStatus(),
+                        0);
     }
 
     @Test
@@ -279,7 +352,8 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitInterviewService.deleteRecruitInterview(id),
+        assertServiceException(
+                () -> recruitInterviewService.deleteRecruitInterview(id),
                 RECRUIT_INTERVIEW_NOT_EXISTS);
         verifyNoInteractions(recruitCandidateService);
     }
@@ -291,7 +365,8 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         recruitInterviewMapper.insert(dbInterview);
 
         // 调用
-        HrmRecruitInterviewDO interview = recruitInterviewService.getRecruitInterview(dbInterview.getId());
+        HrmRecruitInterviewDO interview =
+                recruitInterviewService.getRecruitInterview(dbInterview.getId());
 
         // 断言
         assertPojoEquals(dbInterview, interview);
@@ -302,21 +377,22 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
     public void testGetRecruitInterviewListByCandidateId() {
         // mock 数据
         Long candidateId = randomLongId();
-        HrmRecruitInterviewDO firstInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(candidateId).setStageNumber(1));
+        HrmRecruitInterviewDO firstInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(candidateId).setStageNumber(1));
         recruitInterviewMapper.insert(firstInterview);
-        HrmRecruitInterviewDO secondInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(candidateId).setStageNumber(2));
+        HrmRecruitInterviewDO secondInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(candidateId).setStageNumber(2));
         recruitInterviewMapper.insert(secondInterview);
         // 测试 candidateId 不匹配
         recruitInterviewMapper.insert(randomRecruitInterviewDO());
 
         // 调用
-        List<HrmRecruitInterviewDO> interviews = recruitInterviewService
-                .getRecruitInterviewListByCandidateId(candidateId);
+        List<HrmRecruitInterviewDO> interviews =
+                recruitInterviewService.getRecruitInterviewListByCandidateId(candidateId);
 
         // 断言
-        assertEquals(asList(secondInterview.getId(), firstInterview.getId()),
+        assertEquals(
+                asList(secondInterview.getId(), firstInterview.getId()),
                 convertList(interviews, HrmRecruitInterviewDO::getId));
         verifyNoInteractions(recruitCandidateService);
     }
@@ -325,20 +401,22 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
     public void testGetLatestRecruitInterviewMapByCandidateIds() {
         // mock 数据
         Long firstCandidateId = randomLongId();
-        HrmRecruitInterviewDO historyInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(firstCandidateId).setStageNumber(1));
+        HrmRecruitInterviewDO historyInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(firstCandidateId).setStageNumber(1));
         recruitInterviewMapper.insert(historyInterview);
-        HrmRecruitInterviewDO latestInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(firstCandidateId).setStageNumber(2));
+        HrmRecruitInterviewDO latestInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(firstCandidateId).setStageNumber(2));
         recruitInterviewMapper.insert(latestInterview);
         Long secondCandidateId = randomLongId();
-        HrmRecruitInterviewDO secondInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(secondCandidateId).setStageNumber(1));
+        HrmRecruitInterviewDO secondInterview =
+                randomRecruitInterviewDO(
+                        o -> o.setCandidateId(secondCandidateId).setStageNumber(1));
         recruitInterviewMapper.insert(secondInterview);
 
         // 调用
-        Map<Long, HrmRecruitInterviewDO> interviewMap = recruitInterviewService
-                .getLatestRecruitInterviewMapByCandidateIds(asList(firstCandidateId, secondCandidateId));
+        Map<Long, HrmRecruitInterviewDO> interviewMap =
+                recruitInterviewService.getLatestRecruitInterviewMapByCandidateIds(
+                        asList(firstCandidateId, secondCandidateId));
 
         // 断言
         assertEquals(2, interviewMap.size());
@@ -349,8 +427,8 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetLatestRecruitInterviewMapByCandidateIds_empty() {
         // 调用
-        Map<Long, HrmRecruitInterviewDO> interviewMap = recruitInterviewService
-                .getLatestRecruitInterviewMapByCandidateIds(emptyList());
+        Map<Long, HrmRecruitInterviewDO> interviewMap =
+                recruitInterviewService.getLatestRecruitInterviewMapByCandidateIds(emptyList());
 
         // 断言
         assertTrue(interviewMap.isEmpty());
@@ -360,9 +438,11 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
     public void testDeleteRecruitInterviewByCandidateId_success() {
         // mock 数据
         Long candidateId = randomLongId();
-        HrmRecruitInterviewDO firstInterview = randomRecruitInterviewDO(o -> o.setCandidateId(candidateId));
+        HrmRecruitInterviewDO firstInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(candidateId));
         recruitInterviewMapper.insert(firstInterview);
-        HrmRecruitInterviewDO secondInterview = randomRecruitInterviewDO(o -> o.setCandidateId(candidateId));
+        HrmRecruitInterviewDO secondInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(candidateId));
         recruitInterviewMapper.insert(secondInterview);
         // 测试 candidateId 不匹配
         HrmRecruitInterviewDO retainedInterview = randomRecruitInterviewDO();
@@ -396,25 +476,31 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testUpdateRecruitInterviewResult_pass() {
-        testUpdateRecruitInterviewResult(HrmRecruitInterviewResultEnum.PASS.getResult(),
+        testUpdateRecruitInterviewResult(
+                HrmRecruitInterviewResultEnum.PASS.getResult(),
                 HrmRecruitCandidateStatusEnum.INTERVIEW_PASS.getStatus());
     }
 
     @Test
     public void testUpdateRecruitInterviewResult_notPass() {
-        testUpdateRecruitInterviewResult(HrmRecruitInterviewResultEnum.NOT_PASS.getResult(),
+        testUpdateRecruitInterviewResult(
+                HrmRecruitInterviewResultEnum.NOT_PASS.getResult(),
                 HrmRecruitCandidateStatusEnum.ELIMINATED.getStatus());
     }
 
-    private void testUpdateRecruitInterviewResult(Integer interviewResult, Integer candidateStatus) {
+    private void testUpdateRecruitInterviewResult(
+            Integer interviewResult, Integer candidateStatus) {
         // mock 数据
         HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO();
         recruitInterviewMapper.insert(dbInterview);
         // 准备参数
-        HrmRecruitInterviewResultReqVO reqVO = randomPojo(HrmRecruitInterviewResultReqVO.class, o -> o
-                .setId(dbInterview.getId()).setResult(interviewResult));
+        HrmRecruitInterviewResultReqVO reqVO =
+                randomPojo(
+                        HrmRecruitInterviewResultReqVO.class,
+                        o -> o.setId(dbInterview.getId()).setResult(interviewResult));
         // mock 方法
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(dbInterview.getCandidateId())))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        eq(dbInterview.getCandidateId())))
                 .thenReturn(currentInterviewCandidate(dbInterview));
 
         // 调用
@@ -423,8 +509,9 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         // 断言
         HrmRecruitInterviewDO interview = recruitInterviewMapper.selectById(dbInterview.getId());
         assertPojoEquals(reqVO, interview);
-        verify(recruitCandidateService).updateRecruitCandidateStatusByInterviewResult(
-                dbInterview.getCandidateId(), candidateStatus);
+        verify(recruitCandidateService)
+                .updateRecruitCandidateStatusByInterviewResult(
+                        dbInterview.getCandidateId(), candidateStatus);
     }
 
     @Test
@@ -433,11 +520,16 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO();
         recruitInterviewMapper.insert(dbInterview);
         // 准备参数
-        HrmRecruitInterviewResultReqVO reqVO = randomPojo(HrmRecruitInterviewResultReqVO.class, o -> o
-                .setId(dbInterview.getId()).setResult(HrmRecruitInterviewResultEnum.CANCEL.getResult())
-                .setCancelReason(randomString()));
+        HrmRecruitInterviewResultReqVO reqVO =
+                randomPojo(
+                        HrmRecruitInterviewResultReqVO.class,
+                        o ->
+                                o.setId(dbInterview.getId())
+                                        .setResult(HrmRecruitInterviewResultEnum.CANCEL.getResult())
+                                        .setCancelReason(randomString()));
         // mock 方法
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(dbInterview.getCandidateId())))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        eq(dbInterview.getCandidateId())))
                 .thenReturn(currentInterviewCandidate(dbInterview));
 
         // 调用
@@ -446,10 +538,13 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         // 断言
         HrmRecruitInterviewDO interview = recruitInterviewMapper.selectById(dbInterview.getId());
         assertPojoEquals(reqVO, interview);
-        verify(recruitCandidateService, never()).updateRecruitCandidateStatusByInterviewResult(anyLong(), anyInt());
-        verify(recruitCandidateService).updateRecruitCandidateInterviewState(
-                dbInterview.getCandidateId(), HrmRecruitCandidateStatusEnum.INTERVIEW.getStatus(),
-                dbInterview.getStageNumber());
+        verify(recruitCandidateService, never())
+                .updateRecruitCandidateStatusByInterviewResult(anyLong(), anyInt());
+        verify(recruitCandidateService)
+                .updateRecruitCandidateInterviewState(
+                        dbInterview.getCandidateId(),
+                        HrmRecruitCandidateStatusEnum.INTERVIEW.getStatus(),
+                        dbInterview.getStageNumber());
     }
 
     @Test
@@ -457,53 +552,73 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         HrmRecruitInterviewDO dbInterview = randomRecruitInterviewDO();
         recruitInterviewMapper.insert(dbInterview);
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(dbInterview.getCandidateId())))
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(
+                        eq(dbInterview.getCandidateId())))
                 .thenReturn(currentInterviewCandidate(dbInterview));
         // 准备参数
-        HrmRecruitInterviewResultReqVO reqVO = new HrmRecruitInterviewResultReqVO()
-                .setId(dbInterview.getId()).setResult(HrmRecruitInterviewResultEnum.UNFINISHED.getResult());
+        HrmRecruitInterviewResultReqVO reqVO =
+                new HrmRecruitInterviewResultReqVO()
+                        .setId(dbInterview.getId())
+                        .setResult(HrmRecruitInterviewResultEnum.UNFINISHED.getResult());
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitInterviewService.updateRecruitInterviewResult(reqVO),
+        assertServiceException(
+                () -> recruitInterviewService.updateRecruitInterviewResult(reqVO),
                 RECRUIT_INTERVIEW_RESULT_INVALID);
-        verify(recruitCandidateService, never()).updateRecruitCandidateStatusByInterviewResult(anyLong(), anyInt());
+        verify(recruitCandidateService, never())
+                .updateRecruitCandidateStatusByInterviewResult(anyLong(), anyInt());
     }
 
     @Test
     public void testUpdateRecruitInterviewResult_historicalInterview() {
         // mock 数据
         Long candidateId = randomLongId();
-        HrmRecruitInterviewDO historicalInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(candidateId).setStageNumber(1));
+        HrmRecruitInterviewDO historicalInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(candidateId).setStageNumber(1));
         recruitInterviewMapper.insert(historicalInterview);
-        HrmRecruitInterviewDO currentInterview = randomRecruitInterviewDO(o -> o
-                .setCandidateId(candidateId).setStageNumber(2));
+        HrmRecruitInterviewDO currentInterview =
+                randomRecruitInterviewDO(o -> o.setCandidateId(candidateId).setStageNumber(2));
         recruitInterviewMapper.insert(currentInterview);
         when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(candidateId))
                 .thenReturn(currentInterviewCandidate(currentInterview));
-        HrmRecruitInterviewResultReqVO reqVO = new HrmRecruitInterviewResultReqVO()
-                .setId(historicalInterview.getId()).setResult(HrmRecruitInterviewResultEnum.PASS.getResult());
+        HrmRecruitInterviewResultReqVO reqVO =
+                new HrmRecruitInterviewResultReqVO()
+                        .setId(historicalInterview.getId())
+                        .setResult(HrmRecruitInterviewResultEnum.PASS.getResult());
 
         // 调用、断言
-        assertServiceException(() -> recruitInterviewService.updateRecruitInterviewResult(reqVO),
+        assertServiceException(
+                () -> recruitInterviewService.updateRecruitInterviewResult(reqVO),
                 RECRUIT_INTERVIEW_NOT_CURRENT);
-        assertEquals(HrmRecruitInterviewResultEnum.UNFINISHED.getResult(),
+        assertEquals(
+                HrmRecruitInterviewResultEnum.UNFINISHED.getResult(),
                 recruitInterviewMapper.selectById(historicalInterview.getId()).getResult());
-        verify(recruitCandidateService, never()).updateRecruitCandidateStatusByInterviewResult(anyLong(), anyInt());
+        verify(recruitCandidateService, never())
+                .updateRecruitCandidateStatusByInterviewResult(anyLong(), anyInt());
     }
 
     @Test
     public void testCreateRecruitInterview_sendNotify() {
         // 准备参数
         Long candidateId = randomLongId();
-        HrmRecruitInterviewSaveReqVO reqVO = randomRecruitInterviewSaveReqVO(o -> o
-                .setCandidateId(candidateId)
-                .setInterviewEmployeeId(1L).setOtherInterviewEmployeeIds(asList(2L, 3L)));
+        HrmRecruitInterviewSaveReqVO reqVO =
+                randomRecruitInterviewSaveReqVO(
+                        o ->
+                                o.setCandidateId(candidateId)
+                                        .setInterviewEmployeeId(1L)
+                                        .setOtherInterviewEmployeeIds(asList(2L, 3L)));
         // mock 方法
-        HrmRecruitCandidateDO candidate = randomPojo(HrmRecruitCandidateDO.class, o -> o
-                .setId(candidateId).setName(randomString())
-                .setStatus(HrmRecruitCandidateStatusEnum.PRIMARY_PASS.getStatus()));
-        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(candidateId))).thenReturn(candidate);
+        HrmRecruitCandidateDO candidate =
+                randomPojo(
+                        HrmRecruitCandidateDO.class,
+                        o ->
+                                o.setId(candidateId)
+                                        .setName(randomString())
+                                        .setStatus(
+                                                HrmRecruitCandidateStatusEnum.PRIMARY_PASS
+                                                        .getStatus()));
+        when(recruitCandidateService.validateRecruitCandidateExistsForUpdate(eq(candidateId)))
+                .thenReturn(candidate);
         Map<Long, HrmEmployeeDO> employeeMap = new HashMap<>();
         employeeMap.put(1L, randomPojo(HrmEmployeeDO.class, o -> o.setId(1L).setUserId(11L)));
         employeeMap.put(2L, randomPojo(HrmEmployeeDO.class, o -> o.setId(2L).setUserId(12L)));
@@ -517,34 +632,48 @@ public class HrmRecruitInterviewServiceImplTest extends BaseDbUnitTest {
         ArgumentCaptor<NotifySendSingleToUserReqDTO> notifyCaptor =
                 ArgumentCaptor.forClass(NotifySendSingleToUserReqDTO.class);
         verify(notifyMessageSendApi, times(2)).sendSingleMessageToAdmin(notifyCaptor.capture());
-        assertEquals(RECRUIT_INTERVIEW_ARRANGED, notifyCaptor.getAllValues().get(0).getTemplateCode());
-        assertEquals(candidate.getName(),
+        assertEquals(
+                RECRUIT_INTERVIEW_ARRANGED, notifyCaptor.getAllValues().get(0).getTemplateCode());
+        assertEquals(
+                candidate.getName(),
                 notifyCaptor.getAllValues().get(0).getTemplateParams().get("candidateName"));
     }
 
     // ========== 随机对象 ==========
 
     @SafeVarargs
-    private static HrmRecruitInterviewDO randomRecruitInterviewDO(Consumer<HrmRecruitInterviewDO>... consumers) {
-        Consumer<HrmRecruitInterviewDO> consumer = o -> o.setType(1).setStageNumber(1)
-                .setOtherInterviewEmployeeIds(emptyList())
-                .setResult(HrmRecruitInterviewResultEnum.UNFINISHED.getResult());
+    private static HrmRecruitInterviewDO randomRecruitInterviewDO(
+            Consumer<HrmRecruitInterviewDO>... consumers) {
+        Consumer<HrmRecruitInterviewDO> consumer =
+                o ->
+                        o.setType(1)
+                                .setStageNumber(1)
+                                .setOtherInterviewEmployeeIds(emptyList())
+                                .setResult(HrmRecruitInterviewResultEnum.UNFINISHED.getResult());
         return randomPojo(HrmRecruitInterviewDO.class, ArrayUtils.append(consumer, consumers));
     }
 
     @SafeVarargs
     private static HrmRecruitInterviewSaveReqVO randomRecruitInterviewSaveReqVO(
             Consumer<HrmRecruitInterviewSaveReqVO>... consumers) {
-        Consumer<HrmRecruitInterviewSaveReqVO> consumer = o -> o.setId(null).setType(1).setStageNumber(null)
-                .setOtherInterviewEmployeeIds(singletonList(randomLongId()));
-        return randomPojo(HrmRecruitInterviewSaveReqVO.class, ArrayUtils.append(consumer, consumers));
+        Consumer<HrmRecruitInterviewSaveReqVO> consumer =
+                o ->
+                        o.setId(null)
+                                .setType(1)
+                                .setStageNumber(null)
+                                .setOtherInterviewEmployeeIds(singletonList(randomLongId()));
+        return randomPojo(
+                HrmRecruitInterviewSaveReqVO.class, ArrayUtils.append(consumer, consumers));
     }
 
-    private static HrmRecruitCandidateDO currentInterviewCandidate(HrmRecruitInterviewDO interview) {
-        return randomPojo(HrmRecruitCandidateDO.class, candidate -> candidate
-                .setId(interview.getCandidateId())
-                .setStatus(HrmRecruitCandidateStatusEnum.INTERVIEW.getStatus())
-                .setStageNumber(interview.getStageNumber()));
+    private static HrmRecruitCandidateDO currentInterviewCandidate(
+            HrmRecruitInterviewDO interview) {
+        return randomPojo(
+                HrmRecruitCandidateDO.class,
+                candidate ->
+                        candidate
+                                .setId(interview.getCandidateId())
+                                .setStatus(HrmRecruitCandidateStatusEnum.INTERVIEW.getStatus())
+                                .setStageNumber(interview.getStageNumber()));
     }
-
 }

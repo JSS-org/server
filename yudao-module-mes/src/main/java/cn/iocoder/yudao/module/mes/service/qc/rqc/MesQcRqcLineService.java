@@ -76,5 +76,4 @@ public interface MesQcRqcLineService {
      * @return 引用数量
      */
     Long getRqcLineCountByUnitMeasureId(Long unitMeasureId);
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 条码配置新增/修改 Request VO")
@@ -20,7 +22,10 @@ public class MesWmBarcodeConfigSaveReqVO {
     @NotNull(message = "业务类型不能为空")
     private Integer bizType;
 
-    @Schema(description = "内容格式模板", requiredMode = Schema.RequiredMode.REQUIRED, example = "WH-{BUSINESSCODE}")
+    @Schema(
+            description = "内容格式模板",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "WH-{BUSINESSCODE}")
     @NotEmpty(message = "内容格式模板不能为空")
     private String contentFormat;
 
@@ -39,5 +44,4 @@ public class MesWmBarcodeConfigSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

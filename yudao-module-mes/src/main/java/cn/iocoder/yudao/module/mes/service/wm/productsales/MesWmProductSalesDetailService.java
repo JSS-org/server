@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.wm.productsales;
 
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.detail.MesWmProductSalesDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDetailDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -72,5 +73,4 @@ public interface MesWmProductSalesDetailService {
      * @param salesId 出库单编号
      */
     void deleteProductSalesDetailBySalesId(Long salesId);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.service.session;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_MESSAGE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -11,10 +14,13 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionMessageDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMessageMapper;
 import cn.iocoder.yudao.module.ai1.enums.session.Ai1SessionMessageRoleEnum;
 import cn.iocoder.yudao.module.ai1.enums.session.Ai1SessionMessageStatusEnum;
-import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
 import cn.iocoder.yudao.module.ai1.harness.session.Ai1SessionStreamTool;
+import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -22,9 +28,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_MESSAGE_NOT_EXISTS;
 
 /**
  * AI1 会话消息 Service 实现类
@@ -38,16 +41,12 @@ import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_ME
 @Slf4j
 public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
 
-    @Resource
-    private Ai1SessionMessageMapper sessionMessageMapper;
+    @Resource private Ai1SessionMessageMapper sessionMessageMapper;
 
-    @Resource
-    private Ai1SessionService sessionService;
-    @Resource
-    private Ai1AgentService agentService;
+    @Resource private Ai1SessionService sessionService;
+    @Resource private Ai1AgentService agentService;
 
-    @Resource
-    private Ai1SessionStreamTool sessionStreamTool;
+    @Resource private Ai1SessionStreamTool sessionStreamTool;
 
     @Override
     public List<Ai1SessionMessageDO> getSessionMessageListBySessionId(Long sessionId) {
@@ -55,7 +54,8 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
     }
 
     @Override
-    public List<Ai1SessionMessageDO> getSessionMessageListBySessionIdAndIdLessThan(Long sessionId, Long id, Integer limit) {
+    public List<Ai1SessionMessageDO> getSessionMessageListBySessionIdAndIdLessThan(
+            Long sessionId, Long id, Integer limit) {
         return sessionMessageMapper.selectListBySessionIdAndIdLessThan(sessionId, id, limit);
     }
 
@@ -63,7 +63,8 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
     public SseEmitter sendSessionMessageStream(Long userId, Ai1SessionMessageSendReqVO sendReqVO) {
         try {
             // 1. 校验会话归属、Agent 存在且已开启
-            Ai1SessionDO session = sessionService.validateSessionMy(userId, sendReqVO.getSessionId());
+            Ai1SessionDO session =
+                    sessionService.validateSessionMy(userId, sendReqVO.getSessionId());
             agentService.validateAgentEnabled(session.getAgentId());
 
             // 2. 同一事务内落库用户消息与助手占位
@@ -71,7 +72,8 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
 
             // 3. 投递生成任务，并打开 SSE 连接
             try {
-                sessionStreamTool.submit(messageId, session.getAgentId(), session.getId(), sendReqVO.getContent());
+                sessionStreamTool.submit(
+                        messageId, session.getAgentId(), session.getId(), sendReqVO.getContent());
             } catch (Exception e) {
                 // 仅补偿投递失败；SSE 打开失败不影响已投递的后台任务
                 failSubmittedMessage(messageId);
@@ -81,7 +83,11 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
         } catch (ServiceException e) {
             return sessionStreamTool.error(e.getMessage());
         } catch (Exception e) {
-            log.warn("[sendSessionMessageStream][用户({}) 会话({}) 提交失败]", userId, sendReqVO.getSessionId(), e);
+            log.warn(
+                    "[sendSessionMessageStream][用户({}) 会话({}) 提交失败]",
+                    userId,
+                    sendReqVO.getSessionId(),
+                    e);
             return sessionStreamTool.error("会话提交失败，请稍后重试");
         }
     }
@@ -89,11 +95,17 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
     private void failSubmittedMessage(Long messageId) {
         try {
             // Redis 超时不代表任务一定未写入，只更新仍在生成中的占位，避免覆盖 worker 已回填的终态
-            sessionMessageMapper.update(new Ai1SessionMessageDO().setStatus(Ai1SessionMessageStatusEnum.FAILED.getStatus()),
+            sessionMessageMapper.update(
+                    new Ai1SessionMessageDO()
+                            .setStatus(Ai1SessionMessageStatusEnum.FAILED.getStatus()),
                     new LambdaQueryWrapperX<Ai1SessionMessageDO>()
                             .eq(Ai1SessionMessageDO::getId, messageId)
-                            .eq(Ai1SessionMessageDO::getRole, Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
-                            .eq(Ai1SessionMessageDO::getStatus, Ai1SessionMessageStatusEnum.GENERATING.getStatus()));
+                            .eq(
+                                    Ai1SessionMessageDO::getRole,
+                                    Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                            .eq(
+                                    Ai1SessionMessageDO::getStatus,
+                                    Ai1SessionMessageStatusEnum.GENERATING.getStatus()));
         } catch (Exception e) {
             // 补偿失败不能覆盖原始投递异常，后续仍由结果流丢失检查兜底
             log.error("[failSubmittedMessage][助手消息({}) 投递失败状态回填失败]", messageId, e);
@@ -133,17 +145,26 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
         if (Ai1SessionDO.TITLE_DEFAULT.equals(session.getTitle())
                 && sessionMessageMapper.selectCountBySessionId(session.getId()) == 0) {
             String title = content.trim();
-            sessionService.updateSessionTitle(session.getId(), title.length() > Ai1SessionDO.TITLE_MAX_LENGTH
-                    ? StrUtil.sub(title, 0, Ai1SessionDO.TITLE_MAX_LENGTH - 3) + "..." : title);
+            sessionService.updateSessionTitle(
+                    session.getId(),
+                    title.length() > Ai1SessionDO.TITLE_MAX_LENGTH
+                            ? StrUtil.sub(title, 0, Ai1SessionDO.TITLE_MAX_LENGTH - 3) + "..."
+                            : title);
         }
 
         // 2. 用户消息 + 助手占位；刷新页面后，前端按生成中的助手消息编号续传
-        sessionMessageMapper.insert(new Ai1SessionMessageDO().setSessionId(session.getId())
-                .setRole(Ai1SessionMessageRoleEnum.USER.getRole()).setContent(content)
-                .setStatus(Ai1SessionMessageStatusEnum.SUCCESS.getStatus()));
-        Ai1SessionMessageDO assistantMessage = new Ai1SessionMessageDO().setSessionId(session.getId())
-                .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole()).setContent("")
-                .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus());
+        sessionMessageMapper.insert(
+                new Ai1SessionMessageDO()
+                        .setSessionId(session.getId())
+                        .setRole(Ai1SessionMessageRoleEnum.USER.getRole())
+                        .setContent(content)
+                        .setStatus(Ai1SessionMessageStatusEnum.SUCCESS.getStatus()));
+        Ai1SessionMessageDO assistantMessage =
+                new Ai1SessionMessageDO()
+                        .setSessionId(session.getId())
+                        .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                        .setContent("")
+                        .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus());
         sessionMessageMapper.insert(assistantMessage);
 
         // 3. 刷新会话活跃时间
@@ -175,5 +196,4 @@ public class Ai1SessionMessageServiceImpl implements Ai1SessionMessageService {
     private Ai1SessionMessageServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }
-
 }

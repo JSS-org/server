@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +20,10 @@ public class MesCalPlanSaveReqVO {
     @NotEmpty(message = "计划编码不能为空")
     private String code;
 
-    @Schema(description = "计划名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024年排班计划")
+    @Schema(
+            description = "计划名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024年排班计划")
     @NotEmpty(message = "计划名称不能为空")
     private String name;
 
@@ -49,5 +54,4 @@ public class MesCalPlanSaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
-    }
+}

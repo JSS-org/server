@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.subject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 /**
@@ -29,5 +30,4 @@ public class FmsSubjectUsageRespVO {
 
     @Schema(description = "是否已被业务使用", requiredMode = Schema.RequiredMode.REQUIRED)
     private Boolean used;
-
 }

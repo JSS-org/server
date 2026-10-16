@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.pms.service.pm.iteration;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.sum;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.ITERATION_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.ITERATION_STATUS_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_STATUS_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -21,7 +30,9 @@ import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectMemberService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemActivityService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemWorkLogService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,15 +48,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.sum;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.ITERATION_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.ITERATION_STATUS_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_STATUS_INVALID;
-
 /**
  * PMS 项目迭代 Service 实现类
  *
@@ -59,21 +61,22 @@ public class PmsIterationServiceImpl implements PmsIterationService {
      * 完成趋势统计天数
      */
     private static final int TREND_DAYS = 14;
+
     /**
      * 最近活动最大展示数量
      */
     private static final int RECENT_ACTIVITY_LIMIT = 50;
 
-    @Resource
-    private PmsIterationMapper iterationMapper;
+    @Resource private PmsIterationMapper iterationMapper;
 
-    @Resource
-    private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectMemberService projectMemberService;
+
     @Lazy // 延迟加载，避免循环依赖
     @Resource
     private PmsWorkItemService workItemService;
-    @Resource
-    private PmsWorkItemActivityService workItemActivityService;
+
+    @Resource private PmsWorkItemActivityService workItemActivityService;
+
     @Lazy // 延迟加载，避免循环依赖
     @Resource
     private PmsWorkItemWorkLogService workItemWorkLogService;
@@ -87,9 +90,10 @@ public class PmsIterationServiceImpl implements PmsIterationService {
 
         // 2. 创建未开始的迭代
         Integer maxSort = iterationMapper.selectMaxSortByProjectId(saveReqVO.getProjectId());
-        PmsIterationDO iteration = BeanUtils.toBean(saveReqVO, PmsIterationDO.class)
-                .setStatus(PmsIterationStatusEnum.PLANNED.getStatus())
-                .setSort(maxSort == null ? 1 : maxSort + 1);
+        PmsIterationDO iteration =
+                BeanUtils.toBean(saveReqVO, PmsIterationDO.class)
+                        .setStatus(PmsIterationStatusEnum.PLANNED.getStatus())
+                        .setSort(maxSort == null ? 1 : maxSort + 1);
         iterationMapper.insert(iteration);
         return iteration.getId();
     }
@@ -104,8 +108,8 @@ public class PmsIterationServiceImpl implements PmsIterationService {
         validateOwnerUser(iteration.getProjectId(), saveReqVO.getOwnerUserId());
 
         // 2. 更新迭代基本信息
-        iterationMapper.updateById(BeanUtils.toBean(saveReqVO, PmsIterationDO.class)
-                .setProjectId(null));
+        iterationMapper.updateById(
+                BeanUtils.toBean(saveReqVO, PmsIterationDO.class).setProjectId(null));
     }
 
     @Override
@@ -115,13 +119,17 @@ public class PmsIterationServiceImpl implements PmsIterationService {
         // 1.2 校验项目可编辑
         validateProjectWritable(iteration.getProjectId(), userId);
         // 1.3 校验迭代处于未开始状态
-        if (ObjectUtil.notEqual(PmsIterationStatusEnum.PLANNED.getStatus(), iteration.getStatus())) {
+        if (ObjectUtil.notEqual(
+                PmsIterationStatusEnum.PLANNED.getStatus(), iteration.getStatus())) {
             throw exception(ITERATION_STATUS_INVALID);
         }
 
         // 2. 开始迭代并保存周期
-        iterationMapper.updateById(BeanUtils.toBean(startReqVO, PmsIterationDO.class)
-                .setId(iteration.getId()).setProjectId(null).setStatus(PmsIterationStatusEnum.ACTIVE.getStatus()));
+        iterationMapper.updateById(
+                BeanUtils.toBean(startReqVO, PmsIterationDO.class)
+                        .setId(iteration.getId())
+                        .setProjectId(null)
+                        .setStatus(PmsIterationStatusEnum.ACTIVE.getStatus()));
     }
 
     @Override
@@ -136,8 +144,11 @@ public class PmsIterationServiceImpl implements PmsIterationService {
         }
 
         // 2. 完成迭代
-        iterationMapper.updateById(new PmsIterationDO().setId(id)
-                .setStatus(PmsIterationStatusEnum.COMPLETED.getStatus()).setFinishTime(LocalDateTime.now()));
+        iterationMapper.updateById(
+                new PmsIterationDO()
+                        .setId(id)
+                        .setStatus(PmsIterationStatusEnum.COMPLETED.getStatus())
+                        .setFinishTime(LocalDateTime.now()));
     }
 
     @Override
@@ -176,27 +187,50 @@ public class PmsIterationServiceImpl implements PmsIterationService {
         List<PmsWorkItemDO> workItems = workItemService.getActiveWorkItemListByIterationId(id);
 
         // 2. 统计状态、类型和完成趋势
-        int pendingCount = CollUtil.count(workItems, item ->
-                PmsWorkItemStatusTypeEnum.PENDING.getType().equals(item.getStatus()));
-        int processingCount = CollUtil.count(workItems, item ->
-                PmsWorkItemStatusTypeEnum.PROCESSING.getType().equals(item.getStatus()));
-        int completedCount = CollUtil.count(workItems, item ->
-                PmsWorkItemStatusTypeEnum.COMPLETED.getType().equals(item.getStatus()));
+        int pendingCount =
+                CollUtil.count(
+                        workItems,
+                        item ->
+                                PmsWorkItemStatusTypeEnum.PENDING
+                                        .getType()
+                                        .equals(item.getStatus()));
+        int processingCount =
+                CollUtil.count(
+                        workItems,
+                        item ->
+                                PmsWorkItemStatusTypeEnum.PROCESSING
+                                        .getType()
+                                        .equals(item.getStatus()));
+        int completedCount =
+                CollUtil.count(
+                        workItems,
+                        item ->
+                                PmsWorkItemStatusTypeEnum.COMPLETED
+                                        .getType()
+                                        .equals(item.getStatus()));
         Map<Integer, Integer> typeCountMap = new LinkedHashMap<>();
         Map<Integer, Map<Integer, Integer>> typeStatusCountMap = new LinkedHashMap<>();
-        workItems.forEach(item -> {
-            typeCountMap.merge(item.getType(), 1, Integer::sum);
-            typeStatusCountMap.computeIfAbsent(item.getType(), key -> new LinkedHashMap<>())
-                    .merge(item.getStatus(), 1, Integer::sum);
-        });
+        workItems.forEach(
+                item -> {
+                    typeCountMap.merge(item.getType(), 1, Integer::sum);
+                    typeStatusCountMap
+                            .computeIfAbsent(item.getType(), key -> new LinkedHashMap<>())
+                            .merge(item.getStatus(), 1, Integer::sum);
+                });
 
         // 3. 计算状态趋势、燃尽数据和最近活动
         int progress = CollUtil.isEmpty(workItems) ? 0 : completedCount * 100 / workItems.size();
-        return new PmsIterationOverviewRespVO().setTotalCount(workItems.size()).setPendingCount(pendingCount)
-                .setProcessingCount(processingCount).setCompletedCount(completedCount).setProgress(progress)
-                .setTypeCountMap(typeCountMap).setTypeStatusCountMap(typeStatusCountMap)
+        return new PmsIterationOverviewRespVO()
+                .setTotalCount(workItems.size())
+                .setPendingCount(pendingCount)
+                .setProcessingCount(processingCount)
+                .setCompletedCount(completedCount)
+                .setProgress(progress)
+                .setTypeCountMap(typeCountMap)
+                .setTypeStatusCountMap(typeStatusCountMap)
                 .setStatusTrends(buildStatusTrends(workItems))
-                .setBurnDowns(buildBurnDowns(iteration, workItems)).setRecentActivities(buildRecentActivities(workItems));
+                .setBurnDowns(buildBurnDowns(iteration, workItems))
+                .setRecentActivities(buildRecentActivities(workItems));
     }
 
     /**
@@ -205,17 +239,25 @@ public class PmsIterationServiceImpl implements PmsIterationService {
      * @param workItems 工作项列表
      * @return 最近活动列表
      */
-    private List<PmsIterationOverviewRespVO.ActivityItem> buildRecentActivities(List<PmsWorkItemDO> workItems) {
+    private List<PmsIterationOverviewRespVO.ActivityItem> buildRecentActivities(
+            List<PmsWorkItemDO> workItems) {
         Map<Long, PmsWorkItemDO> workItemMap = convertMap(workItems, PmsWorkItemDO::getId);
-        List<PmsWorkItemActivityDO> activities = workItemActivityService.getWorkItemActivityListByWorkItemIds(
-                convertSet(workItems, PmsWorkItemDO::getId), RECENT_ACTIVITY_LIMIT);
-        return convertList(activities, activity -> {
-            PmsWorkItemDO workItem = workItemMap.get(activity.getWorkItemId());
-            return new PmsIterationOverviewRespVO.ActivityItem().setId(activity.getId())
-                    .setWorkItemId(activity.getWorkItemId()).setWorkItemSerialNumber(workItem.getSerialNumber())
-                    .setWorkItemName(workItem.getName()).setOperatorUserId(activity.getOperatorUserId())
-                    .setContent(activity.getContent()).setCreateTime(activity.getCreateTime());
-        });
+        List<PmsWorkItemActivityDO> activities =
+                workItemActivityService.getWorkItemActivityListByWorkItemIds(
+                        convertSet(workItems, PmsWorkItemDO::getId), RECENT_ACTIVITY_LIMIT);
+        return convertList(
+                activities,
+                activity -> {
+                    PmsWorkItemDO workItem = workItemMap.get(activity.getWorkItemId());
+                    return new PmsIterationOverviewRespVO.ActivityItem()
+                            .setId(activity.getId())
+                            .setWorkItemId(activity.getWorkItemId())
+                            .setWorkItemSerialNumber(workItem.getSerialNumber())
+                            .setWorkItemName(workItem.getName())
+                            .setOperatorUserId(activity.getOperatorUserId())
+                            .setContent(activity.getContent())
+                            .setCreateTime(activity.getCreateTime());
+                });
     }
 
     /**
@@ -224,23 +266,45 @@ public class PmsIterationServiceImpl implements PmsIterationService {
      * @param workItems 工作项列表
      * @return 状态趋势列表
      */
-    private List<PmsIterationOverviewRespVO.TrendItem> buildStatusTrends(List<PmsWorkItemDO> workItems) {
+    private List<PmsIterationOverviewRespVO.TrendItem> buildStatusTrends(
+            List<PmsWorkItemDO> workItems) {
         LocalDate beginDate = LocalDate.now().minusDays(TREND_DAYS - 1L);
         List<PmsIterationOverviewRespVO.TrendItem> statusTrends = new ArrayList<>();
         for (int index = 0; index < TREND_DAYS; index++) {
             LocalDate date = beginDate.plusDays(index);
-            int pendingCount = CollUtil.count(workItems, item ->
-                    PmsWorkItemStatusTypeEnum.PENDING.getType().equals(item.getStatus())
-                            && item.getUpdateTime() != null && date.equals(item.getUpdateTime().toLocalDate()));
-            int processingCount = CollUtil.count(workItems, item ->
-                    PmsWorkItemStatusTypeEnum.PROCESSING.getType().equals(item.getStatus())
-                            && item.getUpdateTime() != null && date.equals(item.getUpdateTime().toLocalDate()));
-            int completedCount = CollUtil.count(workItems, item ->
-                    PmsWorkItemStatusTypeEnum.COMPLETED.getType().equals(item.getStatus())
-                            && item.getUpdateTime() != null && date.equals(item.getUpdateTime().toLocalDate()));
-            statusTrends.add(new PmsIterationOverviewRespVO.TrendItem().setDate(date.toString())
-                    .setPendingCount(pendingCount).setProcessingCount(processingCount)
-                    .setCompletedCount(completedCount));
+            int pendingCount =
+                    CollUtil.count(
+                            workItems,
+                            item ->
+                                    PmsWorkItemStatusTypeEnum.PENDING
+                                                    .getType()
+                                                    .equals(item.getStatus())
+                                            && item.getUpdateTime() != null
+                                            && date.equals(item.getUpdateTime().toLocalDate()));
+            int processingCount =
+                    CollUtil.count(
+                            workItems,
+                            item ->
+                                    PmsWorkItemStatusTypeEnum.PROCESSING
+                                                    .getType()
+                                                    .equals(item.getStatus())
+                                            && item.getUpdateTime() != null
+                                            && date.equals(item.getUpdateTime().toLocalDate()));
+            int completedCount =
+                    CollUtil.count(
+                            workItems,
+                            item ->
+                                    PmsWorkItemStatusTypeEnum.COMPLETED
+                                                    .getType()
+                                                    .equals(item.getStatus())
+                                            && item.getUpdateTime() != null
+                                            && date.equals(item.getUpdateTime().toLocalDate()));
+            statusTrends.add(
+                    new PmsIterationOverviewRespVO.TrendItem()
+                            .setDate(date.toString())
+                            .setPendingCount(pendingCount)
+                            .setProcessingCount(processingCount)
+                            .setCompletedCount(completedCount));
         }
         return statusTrends;
     }
@@ -252,24 +316,35 @@ public class PmsIterationServiceImpl implements PmsIterationService {
      * @param workItems 工作项列表
      * @return 燃尽数据列表
      */
-    private List<PmsIterationOverviewRespVO.BurnDownItem> buildBurnDowns(PmsIterationDO iteration,
-                                                                          List<PmsWorkItemDO> workItems) {
+    private List<PmsIterationOverviewRespVO.BurnDownItem> buildBurnDowns(
+            PmsIterationDO iteration, List<PmsWorkItemDO> workItems) {
         // 1. 未配置完整迭代周期时，不生成燃尽数据
         if (iteration.getStartTime() == null || iteration.getEndTime() == null) {
             return new ArrayList<>();
         }
         // 2. 汇总迭代工作项的预估工时和每日实际投入工时
-        int totalEstimatedHours = (int) sum(workItems,
-                item -> item.getEstimatedHours() == null ? 0 : item.getEstimatedHours());
+        int totalEstimatedHours =
+                (int)
+                        sum(
+                                workItems,
+                                item ->
+                                        item.getEstimatedHours() == null
+                                                ? 0
+                                                : item.getEstimatedHours());
         Map<LocalDate, Integer> actualHoursByDate = new LinkedHashMap<>();
         List<Long> workItemIds = convertList(workItems, PmsWorkItemDO::getId);
-        workItemWorkLogService.getWorkItemWorkLogListByWorkItemIds(workItemIds).forEach(workLog -> {
-            if (workLog.getCreateTime() == null || workLog.getActualHours() == null) {
-                return;
-            }
-            LocalDate logDate = workLog.getCreateTime().toLocalDate();
-            actualHoursByDate.merge(logDate, workLog.getActualHours(), Integer::sum);
-        });
+        workItemWorkLogService
+                .getWorkItemWorkLogListByWorkItemIds(workItemIds)
+                .forEach(
+                        workLog -> {
+                            if (workLog.getCreateTime() == null
+                                    || workLog.getActualHours() == null) {
+                                return;
+                            }
+                            LocalDate logDate = workLog.getCreateTime().toLocalDate();
+                            actualHoursByDate.merge(
+                                    logDate, workLog.getActualHours(), Integer::sum);
+                        });
 
         // 3. 生成限定长度的日期轴，并逐日计算理想和实际剩余工时
         LocalDate beginDate = iteration.getStartTime().toLocalDate();
@@ -279,16 +354,26 @@ public class PmsIterationServiceImpl implements PmsIterationService {
         int actualHours = 0;
         for (LocalDate date = beginDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             long elapsedDays = ChronoUnit.DAYS.between(beginDate, date);
-            int idealRemaining = (int) Math.ceil(totalEstimatedHours * (totalDays - elapsedDays) * 1.0D / totalDays);
+            int idealRemaining =
+                    (int)
+                            Math.ceil(
+                                    totalEstimatedHours
+                                            * (totalDays - elapsedDays)
+                                            * 1.0D
+                                            / totalDays);
             actualHours += actualHoursByDate.getOrDefault(date, 0);
-            burnDowns.add(new PmsIterationOverviewRespVO.BurnDownItem().setDate(date.toString())
-                    .setIdealRemaining(idealRemaining).setActualRemaining(totalEstimatedHours - actualHours));
+            burnDowns.add(
+                    new PmsIterationOverviewRespVO.BurnDownItem()
+                            .setDate(date.toString())
+                            .setIdealRemaining(idealRemaining)
+                            .setActualRemaining(totalEstimatedHours - actualHours));
         }
         return burnDowns;
     }
 
     @Override
-    public PageResult<PmsIterationDO> getIterationPage(PmsIterationPageReqVO pageReqVO, Long userId) {
+    public PageResult<PmsIterationDO> getIterationPage(
+            PmsIterationPageReqVO pageReqVO, Long userId) {
         // 1. 校验项目读取权限
         projectMemberService.validateProjectReadable(pageReqVO.getProjectId(), userId);
 
@@ -302,16 +387,23 @@ public class PmsIterationServiceImpl implements PmsIterationService {
             return Collections.emptyMap();
         }
         // 1. 批量聚合迭代关联的正常工作项状态数量
-        Map<Long, Map<Integer, Long>> iterationStatusCountMap = workItemService.getIterationWorkItemStatusCountMap(ids);
+        Map<Long, Map<Integer, Long>> iterationStatusCountMap =
+                workItemService.getIterationWorkItemStatusCountMap(ids);
 
         // 2. 计算每个迭代的完成进度
         Map<Long, Integer> progressMap = new LinkedHashMap<>();
-        ids.forEach(id -> {
-            Map<Integer, Long> statusCountMap = iterationStatusCountMap.getOrDefault(id, Collections.emptyMap());
-            long totalCount = statusCountMap.values().stream().mapToLong(Long::longValue).sum();
-            long completedCount = statusCountMap.getOrDefault(PmsWorkItemStatusTypeEnum.COMPLETED.getType(), 0L);
-            progressMap.put(id, totalCount == 0 ? 0 : (int) (completedCount * 100 / totalCount));
-        });
+        ids.forEach(
+                id -> {
+                    Map<Integer, Long> statusCountMap =
+                            iterationStatusCountMap.getOrDefault(id, Collections.emptyMap());
+                    long totalCount =
+                            statusCountMap.values().stream().mapToLong(Long::longValue).sum();
+                    long completedCount =
+                            statusCountMap.getOrDefault(
+                                    PmsWorkItemStatusTypeEnum.COMPLETED.getType(), 0L);
+                    progressMap.put(
+                            id, totalCount == 0 ? 0 : (int) (completedCount * 100 / totalCount));
+                });
         return progressMap;
     }
 
@@ -324,29 +416,41 @@ public class PmsIterationServiceImpl implements PmsIterationService {
     }
 
     @Override
-    public PageResult<PmsIterationDO> getUncompletedIterationPage(PmsWorkbenchPageReqVO pageReqVO,
-                                                                  Collection<Long> projectIds, Long ownerUserId) {
+    public PageResult<PmsIterationDO> getUncompletedIterationPage(
+            PmsWorkbenchPageReqVO pageReqVO, Collection<Long> projectIds, Long ownerUserId) {
         if (CollUtil.isEmpty(projectIds)) {
             return PageResult.empty();
         }
-        return iterationMapper.selectWorkbenchPage(pageReqVO, projectIds, pageReqVO.getProjectId(),
-                pageReqVO.getName(), pageReqVO.getStatus(), pageReqVO.getEndTime(),
-                PmsIterationStatusEnum.COMPLETED.getStatus(), ownerUserId);
+        return iterationMapper.selectWorkbenchPage(
+                pageReqVO,
+                projectIds,
+                pageReqVO.getProjectId(),
+                pageReqVO.getName(),
+                pageReqVO.getStatus(),
+                pageReqVO.getEndTime(),
+                PmsIterationStatusEnum.COMPLETED.getStatus(),
+                ownerUserId);
     }
 
     @Override
-    public Long getUncompletedIterationCount(PmsWorkbenchPageReqVO pageReqVO,
-                                             Collection<Long> projectIds, Long ownerUserId) {
+    public Long getUncompletedIterationCount(
+            PmsWorkbenchPageReqVO pageReqVO, Collection<Long> projectIds, Long ownerUserId) {
         if (CollUtil.isEmpty(projectIds)) {
             return 0L;
         }
-        return iterationMapper.selectWorkbenchCount(projectIds, pageReqVO.getProjectId(), pageReqVO.getName(),
-                pageReqVO.getStatus(), pageReqVO.getEndTime(),
-                PmsIterationStatusEnum.COMPLETED.getStatus(), ownerUserId);
+        return iterationMapper.selectWorkbenchCount(
+                projectIds,
+                pageReqVO.getProjectId(),
+                pageReqVO.getName(),
+                pageReqVO.getStatus(),
+                pageReqVO.getEndTime(),
+                PmsIterationStatusEnum.COMPLETED.getStatus(),
+                ownerUserId);
     }
 
     @Override
-    public Map<Long, Map<Integer, Long>> getProjectIterationStatusCountMap(Collection<Long> projectIds) {
+    public Map<Long, Map<Integer, Long>> getProjectIterationStatusCountMap(
+            Collection<Long> projectIds) {
         if (CollUtil.isEmpty(projectIds)) {
             return Collections.emptyMap();
         }
@@ -391,5 +495,4 @@ public class PmsIterationServiceImpl implements PmsIterationService {
             projectMemberService.validateProjectMemberExists(projectId, ownerUserId);
         }
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.gym.controller.admin.file.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -43,9 +44,12 @@ public class GymFileRespVO {
     private LocalDateTime createTime;
 
     @Schema(description = "前端契约：原始文件名（兼容 name）")
-    public String getOriginalName() { return name; }
+    public String getOriginalName() {
+        return name;
+    }
 
     @Schema(description = "前端契约：文件字节数（兼容 size）")
-    public Long getByteSize() { return size; }
-
+    public Long getByteSize() {
+        return size;
+    }
 }

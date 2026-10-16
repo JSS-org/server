@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.productreceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_RECPT_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.line.MesWmProductReceiptLinePageReqVO;
@@ -7,16 +10,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.line.Me
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productreceipt.MesWmProductReceiptLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productreceipt.MesWmProductReceiptLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_RECPT_LINE_NOT_EXISTS;
 
 /**
  * MES 产品收货单行 Service 实现类
@@ -25,16 +27,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PRODUCT_RE
 @Validated
 public class MesWmProductReceiptLineServiceImpl implements MesWmProductReceiptLineService {
 
-    @Resource
-    private MesWmProductReceiptLineMapper productReceiptLineMapper;
+    @Resource private MesWmProductReceiptLineMapper productReceiptLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmProductReceiptService productReceiptService;
-    @Resource
-    private MesWmProductReceiptDetailService productReceiptDetailService;
-    @Resource
-    private MesMdItemService itemService;
+    @Resource @Lazy private MesWmProductReceiptService productReceiptService;
+    @Resource private MesWmProductReceiptDetailService productReceiptDetailService;
+    @Resource private MesMdItemService itemService;
 
     @Override
     public Long createProductReceiptLine(MesWmProductReceiptLineSaveReqVO createReqVO) {
@@ -42,7 +39,8 @@ public class MesWmProductReceiptLineServiceImpl implements MesWmProductReceiptLi
         validateProductReceiptLineSaveData(createReqVO);
 
         // 2. 新增
-        MesWmProductReceiptLineDO line = BeanUtils.toBean(createReqVO, MesWmProductReceiptLineDO.class);
+        MesWmProductReceiptLineDO line =
+                BeanUtils.toBean(createReqVO, MesWmProductReceiptLineDO.class);
         productReceiptLineMapper.insert(line);
         return line.getId();
     }
@@ -56,7 +54,8 @@ public class MesWmProductReceiptLineServiceImpl implements MesWmProductReceiptLi
         validateProductReceiptLineSaveData(updateReqVO);
 
         // 2. 更新
-        MesWmProductReceiptLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmProductReceiptLineDO.class);
+        MesWmProductReceiptLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmProductReceiptLineDO.class);
         productReceiptLineMapper.updateById(updateObj);
     }
 
@@ -80,7 +79,8 @@ public class MesWmProductReceiptLineServiceImpl implements MesWmProductReceiptLi
     }
 
     @Override
-    public PageResult<MesWmProductReceiptLineDO> getProductReceiptLinePage(MesWmProductReceiptLinePageReqVO pageReqVO) {
+    public PageResult<MesWmProductReceiptLineDO> getProductReceiptLinePage(
+            MesWmProductReceiptLinePageReqVO pageReqVO) {
         return productReceiptLineMapper.selectPage(pageReqVO);
     }
 
@@ -111,5 +111,4 @@ public class MesWmProductReceiptLineServiceImpl implements MesWmProductReceiptLi
         // 校验物料存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
     }
-
 }

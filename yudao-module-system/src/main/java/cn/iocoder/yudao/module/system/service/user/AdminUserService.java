@@ -11,7 +11,9 @@ import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserImportRe
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
+
 import jakarta.validation.Valid;
+
 import org.springframework.lang.Nullable;
 
 import java.util.Collection;
@@ -159,7 +161,6 @@ public interface AdminUserService {
      */
     List<AdminUserDO> getUserList(Collection<Long> ids);
 
-
     /**
      * 获得全部用户列表
      *
@@ -239,5 +240,4 @@ public interface AdminUserService {
      * @return 是否匹配
      */
     boolean isPasswordMatch(String rawPassword, String encodedPassword);
-
 }

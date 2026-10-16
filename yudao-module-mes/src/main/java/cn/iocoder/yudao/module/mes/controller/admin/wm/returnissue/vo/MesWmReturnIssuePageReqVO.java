@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,5 +26,4 @@ public class MesWmReturnIssuePageReqVO extends PageParam {
 
     @Schema(description = "退料类型", example = "1")
     private Integer type;
-
 }

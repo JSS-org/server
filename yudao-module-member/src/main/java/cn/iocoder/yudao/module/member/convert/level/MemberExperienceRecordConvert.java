@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.experience.MemberExperienceRecordRespVO;
 import cn.iocoder.yudao.module.member.controller.app.level.vo.experience.AppMemberExperienceRecordRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberExperienceRecordDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -25,10 +26,15 @@ public interface MemberExperienceRecordConvert {
 
     PageResult<MemberExperienceRecordRespVO> convertPage(PageResult<MemberExperienceRecordDO> page);
 
-    MemberExperienceRecordDO convert(Long userId, Integer experience, Integer totalExperience,
-                                     String bizId, Integer bizType,
-                                     String title, String description);
+    MemberExperienceRecordDO convert(
+            Long userId,
+            Integer experience,
+            Integer totalExperience,
+            String bizId,
+            Integer bizType,
+            String title,
+            String description);
 
-    PageResult<AppMemberExperienceRecordRespVO> convertPage02(PageResult<MemberExperienceRecordDO> page);
-
+    PageResult<AppMemberExperienceRecordRespVO> convertPage02(
+            PageResult<MemberExperienceRecordDO> page);
 }

@@ -7,7 +7,9 @@ import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.ratelimiter.core.annotation.RateLimiter;
 import cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.RateLimiterKeyResolver;
 import cn.iocoder.yudao.framework.ratelimiter.core.redis.RateLimiterRedisDAO;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -32,8 +34,10 @@ public class RateLimiterAspect {
 
     private final RateLimiterRedisDAO rateLimiterRedisDAO;
 
-    public RateLimiterAspect(List<RateLimiterKeyResolver> keyResolvers, RateLimiterRedisDAO rateLimiterRedisDAO) {
-        this.keyResolvers = CollectionUtils.convertMap(keyResolvers, RateLimiterKeyResolver::getClass);
+    public RateLimiterAspect(
+            List<RateLimiterKeyResolver> keyResolvers, RateLimiterRedisDAO rateLimiterRedisDAO) {
+        this.keyResolvers =
+                CollectionUtils.convertMap(keyResolvers, RateLimiterKeyResolver::getClass);
         this.rateLimiterRedisDAO = rateLimiterRedisDAO;
     }
 
@@ -46,15 +50,20 @@ public class RateLimiterAspect {
         String key = keyResolver.resolver(joinPoint, rateLimiter);
 
         // 获取 1 次限流
-        boolean success = rateLimiterRedisDAO.tryAcquire(key,
-                rateLimiter.count(), rateLimiter.time(), rateLimiter.timeUnit());
+        boolean success =
+                rateLimiterRedisDAO.tryAcquire(
+                        key, rateLimiter.count(), rateLimiter.time(), rateLimiter.timeUnit());
         if (!success) {
-            log.info("[beforePointCut][方法({}) 参数({}) 请求过于频繁]", joinPoint.getSignature().toString(), joinPoint.getArgs());
-            String message = StrUtil.blankToDefault(rateLimiter.message(),
-                    GlobalErrorCodeConstants.TOO_MANY_REQUESTS.getMsg());
-            throw new ServiceException(GlobalErrorCodeConstants.TOO_MANY_REQUESTS.getCode(), message);
+            log.info(
+                    "[beforePointCut][方法({}) 参数({}) 请求过于频繁]",
+                    joinPoint.getSignature().toString(),
+                    joinPoint.getArgs());
+            String message =
+                    StrUtil.blankToDefault(
+                            rateLimiter.message(),
+                            GlobalErrorCodeConstants.TOO_MANY_REQUESTS.getMsg());
+            throw new ServiceException(
+                    GlobalErrorCodeConstants.TOO_MANY_REQUESTS.getCode(), message);
         }
     }
-
 }
-

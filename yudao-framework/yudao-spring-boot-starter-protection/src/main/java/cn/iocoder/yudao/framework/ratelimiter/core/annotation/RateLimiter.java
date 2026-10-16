@@ -27,6 +27,7 @@ public @interface RateLimiter {
      * 限流的时间，默认为 1 秒
      */
     int time() default 1;
+
     /**
      * 时间单位，默认为 SECONDS 秒
      */
@@ -53,10 +54,11 @@ public @interface RateLimiter {
      * @see ServerNodeRateLimiterKeyResolver 服务器 Node 级别
      * @see ExpressionIdempotentKeyResolver 自定义表达式，通过 {@link #keyArg()} 计算
      */
-    Class<? extends RateLimiterKeyResolver> keyResolver() default DefaultRateLimiterKeyResolver.class;
+    Class<? extends RateLimiterKeyResolver> keyResolver() default
+            DefaultRateLimiterKeyResolver.class;
+
     /**
      * 使用的 Key 参数
      */
     String keyArg() default "";
-
 }

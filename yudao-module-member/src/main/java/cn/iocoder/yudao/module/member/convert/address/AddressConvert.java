@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressCreate
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressRespVO;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -28,7 +29,7 @@ public interface AddressConvert {
 
     MemberAddressDO convert(AppAddressUpdateReqVO bean);
 
-    @Mapping(source = "areaId", target = "areaName",  qualifiedByName = "convertAreaIdToAreaName")
+    @Mapping(source = "areaId", target = "areaName", qualifiedByName = "convertAreaIdToAreaName")
     AppAddressRespVO convert(MemberAddressDO bean);
 
     List<AppAddressRespVO> convertList(List<MemberAddressDO> list);
@@ -44,5 +45,4 @@ public interface AddressConvert {
     AddressRespVO convert03(MemberAddressDO bean);
 
     List<AddressRespVO> convertList2(List<MemberAddressDO> list);
-
 }

@@ -1,6 +1,10 @@
 package cn.iocoder.yudao.module.hrm.service.performance.config;
 
-import cn.iocoder.yudao.module.hrm.service.performance.plan.HrmPerformancePlanService;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_DATA_ILLEGAL;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_RESULT_TEMPLATE_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_RESULT_TEMPLATE_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +13,10 @@ import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttemplat
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttemplate.HrmPerformanceResultTemplateSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.performance.config.HrmPerformanceResultTemplateDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.performance.config.HrmPerformanceResultTemplateMapper;
+import cn.iocoder.yudao.module.hrm.service.performance.plan.HrmPerformancePlanService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.HashSet;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_DATA_ILLEGAL;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_RESULT_TEMPLATE_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_RESULT_TEMPLATE_NOT_EXISTS;
-
 /**
  * HRM 绩效结果模板 Service 实现类
  *
@@ -30,14 +32,12 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.PERFORMANCE_R
  */
 @Service
 @Validated
-public class HrmPerformanceResultTemplateServiceImpl implements HrmPerformanceResultTemplateService {
+public class HrmPerformanceResultTemplateServiceImpl
+        implements HrmPerformanceResultTemplateService {
 
-    @Resource
-    private HrmPerformanceResultTemplateMapper resultTemplateMapper;
+    @Resource private HrmPerformanceResultTemplateMapper resultTemplateMapper;
 
-    @Resource
-    @Lazy
-    private HrmPerformancePlanService performancePlanService;
+    @Resource @Lazy private HrmPerformancePlanService performancePlanService;
 
     @Override
     public Long createPerformanceResultTemplate(HrmPerformanceResultTemplateSaveReqVO createReqVO) {
@@ -45,9 +45,9 @@ public class HrmPerformanceResultTemplateServiceImpl implements HrmPerformanceRe
         validateResultTemplateNameUnique(null, createReqVO.getName());
 
         // 2. 创建结果模板
-        HrmPerformanceResultTemplateDO template = BeanUtils.toBean(
-                createReqVO, HrmPerformanceResultTemplateDO.class)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        HrmPerformanceResultTemplateDO template =
+                BeanUtils.toBean(createReqVO, HrmPerformanceResultTemplateDO.class)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         resultTemplateMapper.insert(template);
         return template.getId();
     }
@@ -62,13 +62,16 @@ public class HrmPerformanceResultTemplateServiceImpl implements HrmPerformanceRe
         validateResultTemplateNameUnique(updateReqVO.getId(), updateReqVO.getName());
 
         // 2. 停用旧模板，避免修改已被绩效计划引用的模板版本
-        resultTemplateMapper.updateById(new HrmPerformanceResultTemplateDO()
-                .setId(oldTemplate.getId()).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        resultTemplateMapper.updateById(
+                new HrmPerformanceResultTemplateDO()
+                        .setId(oldTemplate.getId())
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus()));
 
         // 3. 创建新版本，既有绩效计划继续引用旧模板编号和结果配置快照
-        HrmPerformanceResultTemplateDO template = BeanUtils.toBean(
-                updateReqVO, HrmPerformanceResultTemplateDO.class)
-                .setId(null).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        HrmPerformanceResultTemplateDO template =
+                BeanUtils.toBean(updateReqVO, HrmPerformanceResultTemplateDO.class)
+                        .setId(null)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         template.setCreator(oldTemplate.getCreator());
         template.setCreateTime(oldTemplate.getCreateTime());
         resultTemplateMapper.insert(template);
@@ -97,7 +100,8 @@ public class HrmPerformanceResultTemplateServiceImpl implements HrmPerformanceRe
         }
         // 1.2 校验结果模板未被绩效计划使用
         for (HrmPerformanceResultTemplateDO template : templates) {
-            if (performancePlanService.getPerformancePlanCountByResultTemplateId(template.getId()) > 0) {
+            if (performancePlanService.getPerformancePlanCountByResultTemplateId(template.getId())
+                    > 0) {
                 throw exception(PERFORMANCE_DATA_ILLEGAL);
             }
         }
@@ -146,5 +150,4 @@ public class HrmPerformanceResultTemplateServiceImpl implements HrmPerformanceRe
             throw exception(PERFORMANCE_RESULT_TEMPLATE_NAME_DUPLICATE);
         }
     }
-
 }

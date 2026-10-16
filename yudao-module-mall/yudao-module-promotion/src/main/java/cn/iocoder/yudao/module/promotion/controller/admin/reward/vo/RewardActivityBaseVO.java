@@ -4,13 +4,17 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionConditionTypeEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionProductScopeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,9 +23,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
-* 满减送活动 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 满减送活动 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class RewardActivityBaseVO {
 
@@ -64,7 +68,10 @@ public class RewardActivityBaseVO {
     @Data
     public static class Rule {
 
-        @Schema(description = "优惠门槛", requiredMode = Schema.RequiredMode.REQUIRED, example = "100") // 1. 满 N 元，单位：分; 2. 满 N 件
+        @Schema(
+                description = "优惠门槛",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100") // 1. 满 N 元，单位：分; 2. 满 N 件
         @Min(value = 1L, message = "优惠门槛必须大于等于 1")
         private Integer limit;
 
@@ -87,8 +94,6 @@ public class RewardActivityBaseVO {
         public boolean isPointValid() {
             return point == null || point >= 0;
         }
-
-
     }
 
     @AssertTrue(message = "商品范围编号的数组不能为空")
@@ -97,5 +102,4 @@ public class RewardActivityBaseVO {
         return Objects.equals(productScope, PromotionProductScopeEnum.ALL.getScope()) // 全部范围时，可以为空
                 || CollUtil.isNotEmpty(productScopeValues);
     }
-
 }

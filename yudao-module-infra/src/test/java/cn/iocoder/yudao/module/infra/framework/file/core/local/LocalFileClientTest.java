@@ -1,11 +1,16 @@
 package cn.iocoder.yudao.module.infra.framework.file.core.local;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.local.LocalFileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.local.LocalFileClientConfig;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -13,13 +18,9 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.junit.jupiter.api.Assertions.*;
-
 public class LocalFileClientTest {
 
-    @TempDir
-    public File tempDir;
+    @TempDir public File tempDir;
 
     @Test
     public void testUpload_success() {
@@ -52,7 +53,9 @@ public class LocalFileClientTest {
         String url = client.upload(content, path, "text/plain");
 
         // 断言
-        assertEquals("http://127.0.0.1:48080/admin-api/infra/file/0/get/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.txt", url);
+        assertEquals(
+                "http://127.0.0.1:48080/admin-api/infra/file/0/get/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.txt",
+                url);
         assertArrayEquals(content, FileUtil.readBytes(new File(tempDir, path)));
     }
 
@@ -63,7 +66,8 @@ public class LocalFileClientTest {
         byte[] content = "test".getBytes(StandardCharsets.UTF_8);
 
         // 调用，并断言异常
-        assertThrows(ServiceException.class, () -> client.upload(content, "../test.txt", "text/plain"));
+        assertThrows(
+                ServiceException.class, () -> client.upload(content, "../test.txt", "text/plain"));
         assertFalse(FileUtil.exist(new File(tempDir.getParentFile(), "test.txt")));
     }
 
@@ -106,5 +110,4 @@ public class LocalFileClientTest {
         client.init();
         return client;
     }
-
 }

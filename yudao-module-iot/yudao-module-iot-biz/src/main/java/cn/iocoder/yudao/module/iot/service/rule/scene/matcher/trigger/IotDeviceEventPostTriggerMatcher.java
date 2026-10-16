@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherHelper;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -38,22 +39,31 @@ public class IotDeviceEventPostTriggerMatcher implements IotSceneRuleTriggerMatc
 
         // 1.2 检查消息方法是否匹配
         if (!IotDeviceMessageMethodEnum.EVENT_POST.getMethod().equals(message.getMethod())) {
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "消息方法不匹配，期望: " +
-                    IotDeviceMessageMethodEnum.EVENT_POST.getMethod() + ", 实际: " + message.getMethod());
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(
+                    message,
+                    trigger,
+                    "消息方法不匹配，期望: "
+                            + IotDeviceMessageMethodEnum.EVENT_POST.getMethod()
+                            + ", 实际: "
+                            + message.getMethod());
             return false;
         }
 
         // 1.3 修复触发器中忽略了产品和设备的一致性验证，2025.05.25 by panda
-        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(message, trigger.getProductId(),trigger.getDeviceId())){
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message,trigger,"触发器中产品或设备不匹配");
+        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(
+                message, trigger.getProductId(), trigger.getDeviceId())) {
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "触发器中产品或设备不匹配");
             return false;
         }
 
         // 1.4 检查标识符是否匹配
         String messageIdentifier = IotDeviceMessageUtils.getIdentifier(message);
-        if (!IotSceneRuleMatcherHelper.isIdentifierMatched(trigger.getIdentifier(), messageIdentifier)) {
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "标识符不匹配，期望: " +
-                    trigger.getIdentifier() + ", 实际: " + messageIdentifier);
+        if (!IotSceneRuleMatcherHelper.isIdentifierMatched(
+                trigger.getIdentifier(), messageIdentifier)) {
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(
+                    message,
+                    trigger,
+                    "标识符不匹配，期望: " + trigger.getIdentifier() + ", 实际: " + messageIdentifier);
             return false;
         }
 
@@ -71,7 +81,9 @@ public class IotDeviceEventPostTriggerMatcher implements IotSceneRuleTriggerMatc
                 matched = matchStructuredEventValue(eventValue, trigger);
             } else {
                 // 标量事件值（字符串／数字／布尔）：走 SpEL，支持 = != > < 等运算
-                matched = IotSceneRuleMatcherHelper.evaluateCondition(eventValue, trigger.getOperator(), trigger.getValue());
+                matched =
+                        IotSceneRuleMatcherHelper.evaluateCondition(
+                                eventValue, trigger.getOperator(), trigger.getValue());
             }
             if (!matched) {
                 IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "事件数据条件不匹配");
@@ -90,12 +102,14 @@ public class IotDeviceEventPostTriggerMatcher implements IotSceneRuleTriggerMatc
             return false;
         }
         boolean equal = Objects.equals(eventValue, expected);
-        return IotSceneRuleConditionOperatorEnum.NOT_EQUALS.getOperator().equals(trigger.getOperator()) != equal;
+        return IotSceneRuleConditionOperatorEnum.NOT_EQUALS
+                        .getOperator()
+                        .equals(trigger.getOperator())
+                != equal;
     }
 
     @Override
     public int getPriority() {
         return 30; // 中等优先级
     }
-
 }

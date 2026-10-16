@@ -1,15 +1,18 @@
 package cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - ERP 销售订单分页 Request VO")
 @Data
@@ -21,10 +24,12 @@ public class ErpSaleOrderPageReqVO extends PageParam {
      * 出库状态 - 无
      */
     public static final Integer OUT_STATUS_NONE = 0;
+
     /**
      * 出库状态 - 部分
      */
     public static final Integer OUT_STATUS_PART = 1;
+
     /**
      * 出库状态 - 全部
      */
@@ -34,10 +39,12 @@ public class ErpSaleOrderPageReqVO extends PageParam {
      * 退货状态 - 无
      */
     public static final Integer RETURN_STATUS_NONE = 0;
+
     /**
      * 退货状态 - 部分
      */
     public static final Integer RETURN_STATUS_PART = 1;
+
     /**
      * 退货状态 - 全部
      */
@@ -76,5 +83,4 @@ public class ErpSaleOrderPageReqVO extends PageParam {
 
     @Schema(description = "是否可退货", example = "true")
     private Boolean returnEnable;
-
 }

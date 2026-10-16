@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.mes.service.pro.workorder;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo.MesProWorkOrderPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo.MesProWorkOrderSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.workorder.MesProWorkOrderDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 生产工单 Service 接口
@@ -136,5 +137,4 @@ public interface MesProWorkOrderService {
      * @return 数量
      */
     Long getWorkOrderCountByVendorId(Long vendorId);
-
 }

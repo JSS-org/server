@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -50,5 +52,4 @@ public class IotDeviceModbusPointSaveReqVO {
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     @NotNull(message = "状态不能为空")
     private Integer status;
-
 }

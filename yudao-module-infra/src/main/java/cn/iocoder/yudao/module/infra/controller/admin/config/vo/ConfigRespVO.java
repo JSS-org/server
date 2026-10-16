@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.infra.controller.admin.config.vo;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -27,7 +29,10 @@ public class ConfigRespVO {
     @ExcelProperty("参数名称")
     private String name;
 
-    @Schema(description = "参数键名", requiredMode = Schema.RequiredMode.REQUIRED, example = "yunai.db.username")
+    @Schema(
+            description = "参数键名",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "yunai.db.username")
     @ExcelProperty("参数键名")
     private String key;
 
@@ -35,7 +40,10 @@ public class ConfigRespVO {
     @ExcelProperty("参数键值")
     private String value;
 
-    @Schema(description = "参数类型，参见 SysConfigTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "参数类型，参见 SysConfigTypeEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @ExcelProperty(value = "参数类型", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.CONFIG_TYPE)
     private Integer type;
@@ -52,5 +60,4 @@ public class ConfigRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

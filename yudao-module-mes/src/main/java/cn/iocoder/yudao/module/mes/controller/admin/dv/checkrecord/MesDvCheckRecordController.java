@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.checkrecord;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -19,12 +23,15 @@ import cn.iocoder.yudao.module.mes.service.dv.checkrecord.MesDvCheckRecordServic
 import cn.iocoder.yudao.module.mes.service.dv.machinery.MesDvMachineryService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,37 +41,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 设备点检记录")
 @RestController
 @RequestMapping("/mes/dv/check-record")
 @Validated
 public class MesDvCheckRecordController {
 
-    @Resource
-    private MesDvCheckRecordService checkRecordService;
-    @Resource
-    private MesDvCheckPlanService checkPlanService;
-    @Resource
-    private MesDvMachineryService machineryService;
+    @Resource private MesDvCheckRecordService checkRecordService;
+    @Resource private MesDvCheckPlanService checkPlanService;
+    @Resource private MesDvMachineryService machineryService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建设备点检记录")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-record:create')")
-    public CommonResult<Long> createCheckRecord(@Valid @RequestBody MesDvCheckRecordSaveReqVO createReqVO) {
+    public CommonResult<Long> createCheckRecord(
+            @Valid @RequestBody MesDvCheckRecordSaveReqVO createReqVO) {
         return success(checkRecordService.createCheckRecord(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新设备点检记录")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-record:update')")
-    public CommonResult<Boolean> updateCheckRecord(@Valid @RequestBody MesDvCheckRecordSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateCheckRecord(
+            @Valid @RequestBody MesDvCheckRecordSaveReqVO updateReqVO) {
         checkRecordService.updateCheckRecord(updateReqVO);
         return success(true);
     }
@@ -102,20 +103,29 @@ public class MesDvCheckRecordController {
     @GetMapping("/page")
     @Operation(summary = "获得设备点检记录分页")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-record:query')")
-    public CommonResult<PageResult<MesDvCheckRecordRespVO>> getCheckRecordPage(@Valid MesDvCheckRecordPageReqVO pageReqVO) {
-        PageResult<MesDvCheckRecordDO> pageResult = checkRecordService.getCheckRecordPage(pageReqVO);
-        return success(new PageResult<>(buildCheckRecordRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<MesDvCheckRecordRespVO>> getCheckRecordPage(
+            @Valid MesDvCheckRecordPageReqVO pageReqVO) {
+        PageResult<MesDvCheckRecordDO> pageResult =
+                checkRecordService.getCheckRecordPage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildCheckRecordRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出设备点检记录 Excel")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-record:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportCheckRecordExcel(@Valid MesDvCheckRecordPageReqVO pageReqVO,
-                                       HttpServletResponse response) throws IOException {
+    public void exportCheckRecordExcel(
+            @Valid MesDvCheckRecordPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesDvCheckRecordDO> list = checkRecordService.getCheckRecordPage(pageReqVO).getList();
-        ExcelUtils.write(response, "设备点检记录.xls", "数据", MesDvCheckRecordRespVO.class,
+        ExcelUtils.write(
+                response,
+                "设备点检记录.xls",
+                "数据",
+                MesDvCheckRecordRespVO.class,
                 buildCheckRecordRespVOList(list));
     }
 
@@ -127,24 +137,39 @@ public class MesDvCheckRecordController {
             return Collections.emptyList();
         }
         // 1. 批量获取关联数据
-        Map<Long, MesDvCheckPlanDO> planMap = checkPlanService.getCheckPlanMap(
-                convertSet(list, MesDvCheckRecordDO::getPlanId));
-        Map<Long, MesDvMachineryDO> machineryMap = machineryService.getMachineryMap(
-                convertSet(list, MesDvCheckRecordDO::getMachineryId));
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesDvCheckRecordDO::getUserId));
+        Map<Long, MesDvCheckPlanDO> planMap =
+                checkPlanService.getCheckPlanMap(convertSet(list, MesDvCheckRecordDO::getPlanId));
+        Map<Long, MesDvMachineryDO> machineryMap =
+                machineryService.getMachineryMap(
+                        convertSet(list, MesDvCheckRecordDO::getMachineryId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesDvCheckRecordDO::getUserId));
         // 2. 拼接 VO
-        return BeanUtils.toBean(list, MesDvCheckRecordRespVO.class, vo -> {
-            MapUtils.findAndThen(planMap, vo.getPlanId(),
-                    plan -> vo.setPlanName(plan.getName()).setPlanCode(plan.getCode())
-                            .setPlanStartDate(plan.getStartDate()).setPlanEndDate(plan.getEndDate())
-                            .setPlanCycleType(plan.getCycleType()).setPlanCycleCount(plan.getCycleCount()));
-            MapUtils.findAndThen(machineryMap, vo.getMachineryId(), machinery -> vo
-                    .setMachineryCode(machinery.getCode()).setMachineryName(machinery.getName())
-                    .setMachineryBrand(machinery.getBrand()).setMachinerySpecification(machinery.getSpecification()));
-            MapUtils.findAndThen(userMap, vo.getUserId(),
-                    user -> vo.setNickname(user.getNickname()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesDvCheckRecordRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            planMap,
+                            vo.getPlanId(),
+                            plan ->
+                                    vo.setPlanName(plan.getName())
+                                            .setPlanCode(plan.getCode())
+                                            .setPlanStartDate(plan.getStartDate())
+                                            .setPlanEndDate(plan.getEndDate())
+                                            .setPlanCycleType(plan.getCycleType())
+                                            .setPlanCycleCount(plan.getCycleCount()));
+                    MapUtils.findAndThen(
+                            machineryMap,
+                            vo.getMachineryId(),
+                            machinery ->
+                                    vo.setMachineryCode(machinery.getCode())
+                                            .setMachineryName(machinery.getName())
+                                            .setMachineryBrand(machinery.getBrand())
+                                            .setMachinerySpecification(
+                                                    machinery.getSpecification()));
+                    MapUtils.findAndThen(
+                            userMap, vo.getUserId(), user -> vo.setNickname(user.getNickname()));
+                });
     }
-
 }

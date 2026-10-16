@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.util;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.tika.Tika;
 
 /**
@@ -33,5 +35,4 @@ public class FileTypeUtils {
     public static boolean isImage(String mineType) {
         return StrUtil.startWith(mineType, "image/");
     }
-
 }

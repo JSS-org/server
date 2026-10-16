@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.materialstock.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -32,5 +33,4 @@ public class MesWmMaterialStockListReqVO {
 
     @Schema(description = "结束时间（动态盘点用）")
     private LocalDateTime endTime;
-
 }

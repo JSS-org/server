@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.voucher;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsVoucherStatusEnum implements ArrayValuable<Integer> {
-
     PENDING_REVIEW(0, "待审核"),
     APPROVED(1, "已审核"),
     REJECTED(2, "已驳回"),
@@ -26,13 +26,14 @@ public enum FmsVoucherStatusEnum implements ArrayValuable<Integer> {
     DELETED(7, "已删除"),
     VOIDED(8, "已作废");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsVoucherStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(FmsVoucherStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 状态
      */
     private final Integer status;
+
     /**
      * 名字
      */
@@ -46,5 +47,4 @@ public enum FmsVoucherStatusEnum implements ArrayValuable<Integer> {
     public static FmsVoucherStatusEnum valueOf(Integer status) {
         return ArrayUtil.firstMatch(item -> item.getStatus().equals(status), values());
     }
-
 }

@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.crm.service.contract;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+import static cn.iocoder.yudao.module.crm.util.CrmAuditStatusUtils.convertBpmResultToAuditStatus;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
@@ -32,11 +38,15 @@ import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionTransferRe
 import cn.iocoder.yudao.module.crm.service.product.CrmProductService;
 import cn.iocoder.yudao.module.crm.service.receivable.CrmReceivableService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,12 +56,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
-import static cn.iocoder.yudao.module.crm.util.CrmAuditStatusUtils.convertBpmResultToAuditStatus;
 
 /**
  * CRM 合同 Service 实现类
@@ -68,41 +72,33 @@ public class CrmContractServiceImpl implements CrmContractService {
      */
     public static final String BPM_PROCESS_DEFINITION_KEY = "crm-contract-audit";
 
-    @Resource
-    private CrmContractMapper contractMapper;
-    @Resource
-    private CrmContractProductMapper contractProductMapper;
+    @Resource private CrmContractMapper contractMapper;
+    @Resource private CrmContractProductMapper contractProductMapper;
 
-    @Resource
-    private CrmNoRedisDAO noRedisDAO;
+    @Resource private CrmNoRedisDAO noRedisDAO;
 
-    @Resource
-    private CrmPermissionService crmPermissionService;
-    @Resource
-    private CrmProductService productService;
-    @Resource
-    private CrmCustomerService customerService;
-    @Resource
-    private CrmBusinessService businessService;
-    @Resource
-    private CrmContactService contactService;
-    @Resource
-    private CrmContractConfigService contractConfigService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private CrmPermissionService crmPermissionService;
+    @Resource private CrmProductService productService;
+    @Resource private CrmCustomerService customerService;
+    @Resource private CrmBusinessService businessService;
+    @Resource private CrmContactService contactService;
+    @Resource private CrmContractConfigService contractConfigService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private CrmReceivableService receivableService;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi bpmProcessInstanceApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi bpmProcessInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTRACT_TYPE, subType = CRM_CONTRACT_CREATE_SUB_TYPE, bizNo = "{{#contract.id}}",
+    @LogRecord(
+            type = CRM_CONTRACT_TYPE,
+            subType = CRM_CONTRACT_CREATE_SUB_TYPE,
+            bizNo = "{{#contract.id}}",
             success = CRM_CONTRACT_CREATE_SUCCESS)
     public Long createContract(CrmContractSaveReqVO createReqVO, Long userId) {
         // 1.1 校验产品项的有效性
-        List<CrmContractProductDO> contractProducts = validateContractProducts(createReqVO.getProducts());
+        List<CrmContractProductDO> contractProducts =
+                validateContractProducts(createReqVO.getProducts());
         // 1.2 校验关联字段
         validateRelationDataExists(createReqVO);
         // 1.3 生成序号
@@ -122,9 +118,12 @@ public class CrmContractServiceImpl implements CrmContractService {
         }
 
         // 3. 创建数据权限
-        crmPermissionService.createPermission(new CrmPermissionCreateReqBO().setUserId(contract.getOwnerUserId())
-                .setBizType(CrmBizTypeEnum.CRM_CONTRACT.getType()).setBizId(contract.getId())
-                .setLevel(CrmPermissionLevelEnum.OWNER.getLevel()));
+        crmPermissionService.createPermission(
+                new CrmPermissionCreateReqBO()
+                        .setUserId(contract.getOwnerUserId())
+                        .setBizType(CrmBizTypeEnum.CRM_CONTRACT.getType())
+                        .setBizId(contract.getId())
+                        .setLevel(CrmPermissionLevelEnum.OWNER.getLevel()));
 
         // 4. 记录操作日志上下文
         LogRecordContext.putVariable("contract", contract);
@@ -133,21 +132,30 @@ public class CrmContractServiceImpl implements CrmContractService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTRACT_TYPE, subType = CRM_CONTRACT_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+    @LogRecord(
+            type = CRM_CONTRACT_TYPE,
+            subType = CRM_CONTRACT_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
             success = CRM_CONTRACT_UPDATE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTRACT, bizId = "#updateReqVO.id", level = CrmPermissionLevelEnum.WRITE)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTRACT,
+            bizId = "#updateReqVO.id",
+            level = CrmPermissionLevelEnum.WRITE)
     public void updateContract(CrmContractSaveReqVO updateReqVO) {
         Assert.notNull(updateReqVO.getId(), "合同编号不能为空");
         updateReqVO.setOwnerUserId(null); // 不允许更新的字段
         // 1.1 校验存在
         CrmContractDO oldContract = validateContractExists(updateReqVO.getId());
         // 1.2 只有草稿、审批中，可以编辑；
-        if (!ObjectUtils.equalsAny(oldContract.getAuditStatus(), CrmAuditStatusEnum.DRAFT.getStatus(),
+        if (!ObjectUtils.equalsAny(
+                oldContract.getAuditStatus(),
+                CrmAuditStatusEnum.DRAFT.getStatus(),
                 CrmAuditStatusEnum.PROCESS.getStatus())) {
             throw exception(CONTRACT_UPDATE_FAIL_NOT_DRAFT);
         }
         // 1.3 校验产品项的有效性
-        List<CrmContractProductDO> contractProducts = validateContractProducts(updateReqVO.getProducts());
+        List<CrmContractProductDO> contractProducts =
+                validateContractProducts(updateReqVO.getProducts());
         // 1.4 校验关联字段
         validateRelationDataExists(updateReqVO);
 
@@ -160,14 +168,19 @@ public class CrmContractServiceImpl implements CrmContractService {
 
         // 3. 记录操作日志上下文
         updateReqVO.setOwnerUserId(oldContract.getOwnerUserId()); // 避免操作日志出现“删除负责人”的情况
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(oldContract, CrmContractSaveReqVO.class));
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
+                BeanUtils.toBean(oldContract, CrmContractSaveReqVO.class));
         LogRecordContext.putVariable("contractName", oldContract.getName());
     }
 
     private void updateContractProduct(Long id, List<CrmContractProductDO> newList) {
         List<CrmContractProductDO> oldList = contractProductMapper.selectListByContractId(id);
-        List<List<CrmContractProductDO>> diffList = diffList(oldList, newList, // id 不同，就认为是不同的记录
-                (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
+        List<List<CrmContractProductDO>> diffList =
+                diffList(
+                        oldList,
+                        newList, // id 不同，就认为是不同的记录
+                        (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
         if (CollUtil.isNotEmpty(diffList.get(0))) {
             diffList.get(0).forEach(o -> o.setContractId(id));
             contractProductMapper.insertBatch(diffList.get(0));
@@ -176,7 +189,8 @@ public class CrmContractServiceImpl implements CrmContractService {
             contractProductMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            contractProductMapper.deleteByIds(convertSet(diffList.get(2), CrmContractProductDO::getId));
+            contractProductMapper.deleteByIds(
+                    convertSet(diffList.get(2), CrmContractProductDO::getId));
         }
     }
 
@@ -207,29 +221,54 @@ public class CrmContractServiceImpl implements CrmContractService {
         }
     }
 
-    private List<CrmContractProductDO> validateContractProducts(List<CrmContractSaveReqVO.Product> list) {
+    private List<CrmContractProductDO> validateContractProducts(
+            List<CrmContractSaveReqVO.Product> list) {
         // 1. 校验产品存在
-        productService.validProductList(convertSet(list, CrmContractSaveReqVO.Product::getProductId));
+        productService.validProductList(
+                convertSet(list, CrmContractSaveReqVO.Product::getProductId));
         // 2. 转化为 CrmContractProductDO 列表
-        return convertList(list, o -> BeanUtils.toBean(o, CrmContractProductDO.class,
-                item -> item.setTotalPrice(MoneyUtils.priceMultiply(item.getContractPrice(), item.getCount()))));
+        return convertList(
+                list,
+                o ->
+                        BeanUtils.toBean(
+                                o,
+                                CrmContractProductDO.class,
+                                item ->
+                                        item.setTotalPrice(
+                                                MoneyUtils.priceMultiply(
+                                                        item.getContractPrice(),
+                                                        item.getCount()))));
     }
 
-    private void calculateTotalPrice(CrmContractDO contract, List<CrmContractProductDO> contractProducts) {
-        contract.setTotalProductPrice(getSumValue(contractProducts, CrmContractProductDO::getTotalPrice, BigDecimal::add, BigDecimal.ZERO));
+    private void calculateTotalPrice(
+            CrmContractDO contract, List<CrmContractProductDO> contractProducts) {
+        contract.setTotalProductPrice(
+                getSumValue(
+                        contractProducts,
+                        CrmContractProductDO::getTotalPrice,
+                        BigDecimal::add,
+                        BigDecimal.ZERO));
         // 无产品明细的合同，合同金额以传入值为准（支持手工填写合同金额），不做重算覆盖
         if (CollUtil.isEmpty(contractProducts)) {
             return;
         }
-        BigDecimal discountPrice = MoneyUtils.priceMultiplyPercent(contract.getTotalProductPrice(), contract.getDiscountPercent());
+        BigDecimal discountPrice =
+                MoneyUtils.priceMultiplyPercent(
+                        contract.getTotalProductPrice(), contract.getDiscountPercent());
         contract.setTotalPrice(contract.getTotalProductPrice().subtract(discountPrice));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTRACT_TYPE, subType = CRM_CONTRACT_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_CONTRACT_TYPE,
+            subType = CRM_CONTRACT_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_CONTRACT_DELETE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTRACT, bizId = "#id", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTRACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.OWNER)
     public void deleteContract(Long id) {
         // 1.1 校验存在
         CrmContractDO contract = validateContractExists(id);
@@ -257,33 +296,53 @@ public class CrmContractServiceImpl implements CrmContractService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTRACT_TYPE, subType = CRM_CONTRACT_TRANSFER_SUB_TYPE, bizNo = "{{#reqVO.id}}",
+    @LogRecord(
+            type = CRM_CONTRACT_TYPE,
+            subType = CRM_CONTRACT_TRANSFER_SUB_TYPE,
+            bizNo = "{{#reqVO.id}}",
             success = CRM_CONTRACT_TRANSFER_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTRACT, bizId = "#reqVO.id", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTRACT,
+            bizId = "#reqVO.id",
+            level = CrmPermissionLevelEnum.OWNER)
     public void transferContract(CrmContractTransferReqVO reqVO, Long userId) {
         // 1. 校验合同是否存在
         CrmContractDO contract = validateContractExists(reqVO.getId());
 
         // 2.1 数据权限转移
-        crmPermissionService.transferPermission(new CrmPermissionTransferReqBO(userId, CrmBizTypeEnum.CRM_CONTRACT.getType(),
-                reqVO.getId(), reqVO.getNewOwnerUserId(), reqVO.getOldOwnerPermissionLevel()));
+        crmPermissionService.transferPermission(
+                new CrmPermissionTransferReqBO(
+                        userId,
+                        CrmBizTypeEnum.CRM_CONTRACT.getType(),
+                        reqVO.getId(),
+                        reqVO.getNewOwnerUserId(),
+                        reqVO.getOldOwnerPermissionLevel()));
         // 2.2 设置负责人
-        contractMapper.updateById(new CrmContractDO().setId(reqVO.getId()).setOwnerUserId(reqVO.getNewOwnerUserId()));
+        contractMapper.updateById(
+                new CrmContractDO().setId(reqVO.getId()).setOwnerUserId(reqVO.getNewOwnerUserId()));
 
         // 3. 记录转移日志
         LogRecordContext.putVariable("contract", contract);
     }
 
     @Override
-    @LogRecord(type = CRM_CONTRACT_TYPE, subType = CRM_CONTRACT_FOLLOW_UP_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_CONTRACT_TYPE,
+            subType = CRM_CONTRACT_FOLLOW_UP_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_CONTRACT_FOLLOW_UP_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTRACT, bizId = "#id", level = CrmPermissionLevelEnum.WRITE)
-    public void updateContractFollowUp(Long id, LocalDateTime contactNextTime, String contactLastContent) {
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTRACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.WRITE)
+    public void updateContractFollowUp(
+            Long id, LocalDateTime contactNextTime, String contactLastContent) {
         // 1. 校验存在
         CrmContractDO contract = validateContractExists(id);
 
         // 2. 更新联系人的跟进信息
-        contractMapper.updateById(new CrmContractDO().setId(id).setContactLastTime(LocalDateTime.now()));
+        contractMapper.updateById(
+                new CrmContractDO().setId(id).setContactLastTime(LocalDateTime.now()));
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("contractName", contract.getName());
@@ -291,7 +350,10 @@ public class CrmContractServiceImpl implements CrmContractService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTRACT_TYPE, subType = CRM_CONTRACT_SUBMIT_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_CONTRACT_TYPE,
+            subType = CRM_CONTRACT_SUBMIT_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_CONTRACT_SUBMIT_SUCCESS)
     public void submitContract(Long id, Long userId) {
         // 1. 校验合同是否在审批
@@ -301,12 +363,19 @@ public class CrmContractServiceImpl implements CrmContractService {
         }
 
         // 2. 创建合同审批流程实例
-        String processInstanceId = bpmProcessInstanceApi.createProcessInstance(userId, new BpmProcessInstanceCreateReqDTO()
-                .setProcessDefinitionKey(BPM_PROCESS_DEFINITION_KEY).setBusinessKey(String.valueOf(id)));
+        String processInstanceId =
+                bpmProcessInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BPM_PROCESS_DEFINITION_KEY)
+                                .setBusinessKey(String.valueOf(id)));
 
         // 3. 更新合同工作流编号
-        contractMapper.updateById(new CrmContractDO().setId(id).setProcessInstanceId(processInstanceId)
-                .setAuditStatus(CrmAuditStatusEnum.PROCESS.getStatus()));
+        contractMapper.updateById(
+                new CrmContractDO()
+                        .setId(id)
+                        .setProcessInstanceId(processInstanceId)
+                        .setAuditStatus(CrmAuditStatusEnum.PROCESS.getStatus()));
 
         // 3. 记录日志
         LogRecordContext.putVariable("contractName", contract.getName());
@@ -318,8 +387,10 @@ public class CrmContractServiceImpl implements CrmContractService {
         CrmContractDO contract = validateContractExists(id);
         // 1.2 只有审批中，可以更新审批结果
         if (ObjUtil.notEqual(contract.getAuditStatus(), CrmAuditStatusEnum.PROCESS.getStatus())) {
-            log.error("[updateContractAuditStatus][contract({}) 不处于审批中，无法更新审批结果({})]",
-                    contract.getId(), bpmResult);
+            log.error(
+                    "[updateContractAuditStatus][contract({}) 不处于审批中，无法更新审批结果({})]",
+                    contract.getId(),
+                    bpmResult);
             throw exception(CONTRACT_UPDATE_AUDIT_STATUS_FAIL_NOT_PROCESS);
         }
 
@@ -331,7 +402,10 @@ public class CrmContractServiceImpl implements CrmContractService {
     // ======================= 查询相关 =======================
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTRACT, bizId = "#id", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTRACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.READ)
     public CrmContractDO getContract(Long id) {
         return contractMapper.selectById(id);
     }
@@ -367,13 +441,19 @@ public class CrmContractServiceImpl implements CrmContractService {
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CUSTOMER, bizId = "#pageReqVO.customerId", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CUSTOMER,
+            bizId = "#pageReqVO.customerId",
+            level = CrmPermissionLevelEnum.READ)
     public PageResult<CrmContractDO> getContractPageByCustomerId(CrmContractPageReqVO pageReqVO) {
         return contractMapper.selectPageByCustomerId(pageReqVO);
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_BUSINESS, bizId = "#pageReqVO.businessId", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_BUSINESS,
+            bizId = "#pageReqVO.businessId",
+            level = CrmPermissionLevelEnum.READ)
     public PageResult<CrmContractDO> getContractPageByBusinessId(CrmContractPageReqVO pageReqVO) {
         return contractMapper.selectPageByBusinessId(pageReqVO);
     }
@@ -418,8 +498,8 @@ public class CrmContractServiceImpl implements CrmContractService {
     }
 
     @Override
-    public List<CrmContractDO> getContractListByCustomerIdOwnerUserId(Long customerId, Long ownerUserId) {
+    public List<CrmContractDO> getContractListByCustomerIdOwnerUserId(
+            Long customerId, Long ownerUserId) {
         return contractMapper.selectListByCustomerIdOwnerUserId(customerId, ownerUserId);
     }
-
 }

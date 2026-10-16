@@ -1,12 +1,18 @@
 package cn.iocoder.yudao.module.oa.controller.admin.note;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.OaNoteFavoriteUpdateReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.OaNotePageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.OaNoteRespVO;
@@ -18,11 +24,14 @@ import cn.iocoder.yudao.module.oa.service.note.OaNoteCategoryService;
 import cn.iocoder.yudao.module.oa.service.note.OaNoteService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,25 +48,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - OA 笔记")
 @RestController
 @RequestMapping("/oa/note")
 @Validated
 public class OaNoteController {
 
-    @Resource
-    private OaNoteService noteService;
-    @Resource
-    private OaNoteCategoryService noteCategoryService;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private OaNoteService noteService;
+    @Resource private OaNoteCategoryService noteCategoryService;
+    @Resource private AdminUserApi adminUserApi;
 
     // ==================== 我的笔记 ====================
 
@@ -95,16 +94,20 @@ public class OaNoteController {
 
     @PutMapping("/update-favorite")
     @Operation(summary = "更新笔记收藏状态")
-    public CommonResult<Boolean> updateNoteFavorite(@Valid @RequestBody OaNoteFavoriteUpdateReqVO updateReqVO) {
-        noteService.updateNoteFavorite(updateReqVO.getId(), updateReqVO.getFavorite(), getLoginUserId());
+    public CommonResult<Boolean> updateNoteFavorite(
+            @Valid @RequestBody OaNoteFavoriteUpdateReqVO updateReqVO) {
+        noteService.updateNoteFavorite(
+                updateReqVO.getId(), updateReqVO.getFavorite(), getLoginUserId());
         return success(true);
     }
 
     @PutMapping("/update-share")
     @Operation(summary = "更新笔记共享接收人")
     @PreAuthorize("@ss.hasPermission('oa:note:update')")
-    public CommonResult<Boolean> updateNoteShare(@Valid @RequestBody OaNoteShareUpdateReqVO updateReqVO) {
-        noteService.updateNoteShare(updateReqVO.getId(), updateReqVO.getReceiverUserIds(), getLoginUserId());
+    public CommonResult<Boolean> updateNoteShare(
+            @Valid @RequestBody OaNoteShareUpdateReqVO updateReqVO) {
+        noteService.updateNoteShare(
+                updateReqVO.getId(), updateReqVO.getReceiverUserIds(), getLoginUserId());
         return success(true);
     }
 
@@ -124,15 +127,19 @@ public class OaNoteController {
     @PreAuthorize("@ss.hasPermission('oa:note:query')")
     public CommonResult<PageResult<OaNoteRespVO>> getMyNotePage(@Valid OaNotePageReqVO pageReqVO) {
         PageResult<OaNoteDO> pageResult = noteService.getMyNotePage(pageReqVO, getLoginUserId());
-        return success(new PageResult<>(buildNoteRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildNoteRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/received-page")
     @Operation(summary = "获得共享给我的笔记分页")
     @PreAuthorize("@ss.hasPermission('oa:note:query')")
-    public CommonResult<PageResult<OaNoteRespVO>> getReceivedNotePage(@Valid OaNotePageReqVO pageReqVO) {
-        PageResult<OaNoteDO> pageResult = noteService.getReceivedNotePage(pageReqVO, getLoginUserId());
-        return success(new PageResult<>(buildNoteRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<OaNoteRespVO>> getReceivedNotePage(
+            @Valid OaNotePageReqVO pageReqVO) {
+        PageResult<OaNoteDO> pageResult =
+                noteService.getReceivedNotePage(pageReqVO, getLoginUserId());
+        return success(
+                new PageResult<>(buildNoteRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -161,28 +168,45 @@ public class OaNoteController {
             return Collections.emptyList();
         }
         // 1. 查询接收关系、用户及目录信息
-        Map<Long, List<Long>> receiverUserIdListMap = noteService.getNoteReceiverUserIdListMap(
-                convertSet(notes, OaNoteDO::getId));
+        Map<Long, List<Long>> receiverUserIdListMap =
+                noteService.getNoteReceiverUserIdListMap(convertSet(notes, OaNoteDO::getId));
         Set<Long> userIds = convertSet(notes, note -> NumberUtils.parseLong(note.getCreator()));
         receiverUserIdListMap.values().forEach(userIds::addAll);
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
-        Map<Long, OaNoteCategoryDO> categoryMap = noteCategoryService.getNoteCategoryMap(convertSet(notes, OaNoteDO::getCategoryId));
+        Map<Long, OaNoteCategoryDO> categoryMap =
+                noteCategoryService.getNoteCategoryMap(convertSet(notes, OaNoteDO::getCategoryId));
         // 2. 转换笔记并拼接展示字段
-        return convertList(notes, noteDO -> {
-            OaNoteRespVO note = BeanUtils.toBean(noteDO, OaNoteRespVO.class)
-                    .setCreatorUserId(NumberUtils.parseLong(noteDO.getCreator()));
-            MapUtils.findAndThen(userMap, note.getCreatorUserId(), user -> note.setCreatorUserName(user.getNickname()));
-            MapUtils.findAndThen(categoryMap, note.getCategoryId(), category -> note.setCategoryName(category.getName()));
-            // 持有关系包含创建人，共享名单仅展示其他接收人
-            List<Long> receiverUserIds = filterList(receiverUserIdListMap.getOrDefault(note.getId(), Collections.emptyList()),
-                    userId -> ObjectUtil.notEqual(userId, note.getCreatorUserId()));
-            note.setReceiverUserIds(receiverUserIds);
-            note.setReceiverUserNames(convertList(receiverUserIds, receiverUserId -> {
-                AdminUserRespDTO receiverUser = userMap.get(receiverUserId);
-                return receiverUser != null ? receiverUser.getNickname() : null;
-            }));
-            return note;
-        });
+        return convertList(
+                notes,
+                noteDO -> {
+                    OaNoteRespVO note =
+                            BeanUtils.toBean(noteDO, OaNoteRespVO.class)
+                                    .setCreatorUserId(NumberUtils.parseLong(noteDO.getCreator()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            note.getCreatorUserId(),
+                            user -> note.setCreatorUserName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            categoryMap,
+                            note.getCategoryId(),
+                            category -> note.setCategoryName(category.getName()));
+                    // 持有关系包含创建人，共享名单仅展示其他接收人
+                    List<Long> receiverUserIds =
+                            filterList(
+                                    receiverUserIdListMap.getOrDefault(
+                                            note.getId(), Collections.emptyList()),
+                                    userId -> ObjectUtil.notEqual(userId, note.getCreatorUserId()));
+                    note.setReceiverUserIds(receiverUserIds);
+                    note.setReceiverUserNames(
+                            convertList(
+                                    receiverUserIds,
+                                    receiverUserId -> {
+                                        AdminUserRespDTO receiverUser = userMap.get(receiverUserId);
+                                        return receiverUser != null
+                                                ? receiverUser.getNickname()
+                                                : null;
+                                    }));
+                    return note;
+                });
     }
-
 }

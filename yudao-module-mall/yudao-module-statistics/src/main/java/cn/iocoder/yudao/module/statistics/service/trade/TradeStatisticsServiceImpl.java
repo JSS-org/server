@@ -13,11 +13,13 @@ import cn.iocoder.yudao.module.statistics.service.trade.bo.AfterSaleSummaryRespB
 import cn.iocoder.yudao.module.statistics.service.trade.bo.TradeOrderSummaryRespBO;
 import cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO;
 import cn.iocoder.yudao.module.statistics.service.trade.bo.WalletSummaryRespBO;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,17 +35,12 @@ import java.util.stream.IntStream;
 @Validated
 public class TradeStatisticsServiceImpl implements TradeStatisticsService {
 
-    @Resource
-    private TradeStatisticsMapper tradeStatisticsMapper;
+    @Resource private TradeStatisticsMapper tradeStatisticsMapper;
 
-    @Resource
-    private TradeOrderStatisticsService tradeOrderStatisticsService;
-    @Resource
-    private AfterSaleStatisticsService afterSaleStatisticsService;
-    @Resource
-    private BrokerageStatisticsService brokerageStatisticsService;
-    @Resource
-    private PayWalletStatisticsService payWalletStatisticsService;
+    @Resource private TradeOrderStatisticsService tradeOrderStatisticsService;
+    @Resource private AfterSaleStatisticsService afterSaleStatisticsService;
+    @Resource private BrokerageStatisticsService brokerageStatisticsService;
+    @Resource private PayWalletStatisticsService payWalletStatisticsService;
 
     @Override
     public TradeSummaryRespBO getTradeSummaryByDays(int days) {
@@ -56,17 +53,20 @@ public class TradeStatisticsServiceImpl implements TradeStatisticsService {
     public TradeSummaryRespBO getTradeSummaryByMonths(int months) {
         LocalDateTime monthDate = LocalDateTime.now().plusMonths(months);
         return tradeStatisticsMapper.selectOrderCreateCountSumAndOrderPayPriceSumByTimeBetween(
-                LocalDateTimeUtils.beginOfMonth(monthDate), LocalDateTimeUtils.endOfMonth(monthDate));
+                LocalDateTimeUtils.beginOfMonth(monthDate),
+                LocalDateTimeUtils.endOfMonth(monthDate));
     }
 
     @Override
-    public DataComparisonRespVO<TradeTrendSummaryRespVO> getTradeStatisticsAnalyse(LocalDateTime beginTime,
-                                                                                        LocalDateTime endTime) {
+    public DataComparisonRespVO<TradeTrendSummaryRespVO> getTradeStatisticsAnalyse(
+            LocalDateTime beginTime, LocalDateTime endTime) {
         // 统计数据
-        TradeTrendSummaryRespVO value = tradeStatisticsMapper.selectVoByTimeBetween(beginTime, endTime);
+        TradeTrendSummaryRespVO value =
+                tradeStatisticsMapper.selectVoByTimeBetween(beginTime, endTime);
         // 对照数据
         LocalDateTime referenceBeginTime = beginTime.minus(Duration.between(beginTime, endTime));
-        TradeTrendSummaryRespVO reference = tradeStatisticsMapper.selectVoByTimeBetween(referenceBeginTime, beginTime);
+        TradeTrendSummaryRespVO reference =
+                tradeStatisticsMapper.selectVoByTimeBetween(referenceBeginTime, beginTime);
         return TradeStatisticsConvert.INSTANCE.convert(value, reference);
     }
 
@@ -76,7 +76,8 @@ public class TradeStatisticsServiceImpl implements TradeStatisticsService {
     }
 
     @Override
-    public List<TradeStatisticsDO> getTradeStatisticsList(LocalDateTime beginTime, LocalDateTime endTime) {
+    public List<TradeStatisticsDO> getTradeStatisticsList(
+            LocalDateTime beginTime, LocalDateTime endTime) {
         return tradeStatisticsMapper.selectListByTimeBetween(beginTime, endTime);
     }
 
@@ -110,26 +111,34 @@ public class TradeStatisticsServiceImpl implements TradeStatisticsService {
         StopWatch stopWatch = new StopWatch(dateStr);
         // 3.1 统计订单
         stopWatch.start("统计订单");
-        TradeOrderSummaryRespBO orderSummary = tradeOrderStatisticsService.getOrderSummary(beginTime, endTime);
+        TradeOrderSummaryRespBO orderSummary =
+                tradeOrderStatisticsService.getOrderSummary(beginTime, endTime);
         stopWatch.stop();
         // 3.2 统计售后
         stopWatch.start("统计售后");
-        AfterSaleSummaryRespBO afterSaleSummary = afterSaleStatisticsService.getAfterSaleSummary(beginTime, endTime);
+        AfterSaleSummaryRespBO afterSaleSummary =
+                afterSaleStatisticsService.getAfterSaleSummary(beginTime, endTime);
         stopWatch.stop();
         // 3.3 统计佣金
         stopWatch.start("统计佣金");
-        Integer brokerageSettlementPrice = brokerageStatisticsService.getBrokerageSettlementPriceSummary(beginTime, endTime);
+        Integer brokerageSettlementPrice =
+                brokerageStatisticsService.getBrokerageSettlementPriceSummary(beginTime, endTime);
         stopWatch.stop();
         // 3.4 统计充值
         stopWatch.start("统计充值");
-        WalletSummaryRespBO walletSummary = payWalletStatisticsService.getWalletSummary(beginTime, endTime);
+        WalletSummaryRespBO walletSummary =
+                payWalletStatisticsService.getWalletSummary(beginTime, endTime);
         stopWatch.stop();
 
         // 4. 插入数据
-        entity = TradeStatisticsConvert.INSTANCE.convert(date, orderSummary, afterSaleSummary, brokerageSettlementPrice,
-                walletSummary);
+        entity =
+                TradeStatisticsConvert.INSTANCE.convert(
+                        date,
+                        orderSummary,
+                        afterSaleSummary,
+                        brokerageSettlementPrice,
+                        walletSummary);
         tradeStatisticsMapper.insert(entity);
         return stopWatch.prettyPrint();
     }
-
 }

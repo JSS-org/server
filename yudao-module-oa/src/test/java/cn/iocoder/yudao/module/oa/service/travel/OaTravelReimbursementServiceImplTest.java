@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.oa.service.travel;
 
+import static cn.iocoder.yudao.framework.common.util.object.BeanUtils.toBean;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
@@ -16,8 +25,10 @@ import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.system.api.dict.DictDataApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.ConstraintViolationException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,14 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
-import static cn.iocoder.yudao.framework.common.util.object.BeanUtils.toBean;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaTravelReimbursementServiceImpl} 的单元测试类
  *
@@ -52,29 +55,22 @@ import static org.mockito.Mockito.*;
 @Import({OaTravelReimbursementServiceImpl.class, ValidationAutoConfiguration.class})
 public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaTravelReimbursementService travelReimbursementService;
+    @Resource private OaTravelReimbursementService travelReimbursementService;
 
-    @Resource
-    private OaTravelReimbursementMapper travelReimbursementMapper;
+    @Resource private OaTravelReimbursementMapper travelReimbursementMapper;
 
-    @MockitoBean
-    private OaNoRedisDAO noRedisDAO;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private DictDataApi dictDataApi;
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
-    @MockitoBean
-    private OaTravelApplyService travelApplyService;
+    @MockitoBean private OaNoRedisDAO noRedisDAO;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private DictDataApi dictDataApi;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private OaTravelApplyService travelApplyService;
 
     @BeforeEach
     public void before() {
         DictFrameworkUtils.init(dictDataApi);
         DictFrameworkUtils.clearCache();
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(10L).setUserType(2),
-                new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
     }
 
     @AfterEach
@@ -90,10 +86,17 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         travelReimbursementMapper.insert(record);
         // mock 方法
         when(noRedisDAO.generate(anyString())).thenReturn(record.getNo());
-        when(adminUserApi.validateUser(10L)).thenReturn(new AdminUserRespDTO().setId(10L).setDeptId(20L));
+        when(adminUserApi.validateUser(10L))
+                .thenReturn(new AdminUserRespDTO().setId(10L).setDeptId(20L));
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.createTravelReimbursement(toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class), 10L),
+        assertServiceException(
+                () ->
+                        travelReimbursementService.createTravelReimbursement(
+                                toBean(
+                                        randomTravelReimbursementDO(),
+                                        OaTravelReimbursementSaveReqVO.class),
+                                10L),
                 TRAVEL_NO_DUPLICATE);
         verifyNoInteractions(processInstanceApi);
     }
@@ -104,8 +107,12 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementDO record = randomTravelReimbursementDO().setDays(2);
         travelReimbursementMapper.insert(record);
         // 准备参数
-        OaTravelReimbursementSubmitReqVO reqVO = new OaTravelReimbursementSubmitReqVO().setId(record.getId())
-                .setStartUserSelectAssignees(Collections.singletonMap("approve", Collections.singletonList(20L)));
+        OaTravelReimbursementSubmitReqVO reqVO =
+                new OaTravelReimbursementSubmitReqVO()
+                        .setId(record.getId())
+                        .setStartUserSelectAssignees(
+                                Collections.singletonMap(
+                                        "approve", Collections.singletonList(20L)));
         // mock 方法
         when(processInstanceApi.createProcessInstance(eq(10L), any())).thenReturn("new-process");
 
@@ -117,9 +124,16 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         assertEquals(record.getReason(), updated.getReason());
         assertEquals(record.getItems(), updated.getItems());
         assertEquals(record.getFileUrls(), updated.getFileUrls());
-        verify(processInstanceApi).createProcessInstance(eq(10L), argThat(dto ->
-                Integer.valueOf(2).equals(dto.getVariables().get("days"))
-                        && reqVO.getStartUserSelectAssignees().equals(dto.getStartUserSelectAssignees())));
+        verify(processInstanceApi)
+                .createProcessInstance(
+                        eq(10L),
+                        argThat(
+                                dto ->
+                                        Integer.valueOf(2).equals(dto.getVariables().get("days"))
+                                                && reqVO.getStartUserSelectAssignees()
+                                                        .equals(
+                                                                dto
+                                                                        .getStartUserSelectAssignees())));
     }
 
     @Test
@@ -128,20 +142,25 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementDO record = randomTravelReimbursementDO();
         travelReimbursementMapper.insert(record);
         // 准备参数
-        OaTravelReimbursementSubmitReqVO reqVO = new OaTravelReimbursementSubmitReqVO().setId(record.getId());
+        OaTravelReimbursementSubmitReqVO reqVO =
+                new OaTravelReimbursementSubmitReqVO().setId(record.getId());
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.submitTravelReimbursement(reqVO, 20L), TRAVEL_ACCESS_DENIED);
+        assertServiceException(
+                () -> travelReimbursementService.submitTravelReimbursement(reqVO, 20L),
+                TRAVEL_ACCESS_DENIED);
         verifyNoInteractions(processInstanceApi);
     }
 
     @Test
     public void testCreateTravelReimbursement_jsonAndDays() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class);
         // mock 方法
         when(noRedisDAO.generate(anyString())).thenReturn("TRAVEL-NEW");
-        when(adminUserApi.validateUser(10L)).thenReturn(new AdminUserRespDTO().setId(10L).setDeptId(20L));
+        when(adminUserApi.validateUser(10L))
+                .thenReturn(new AdminUserRespDTO().setId(10L).setDeptId(20L));
 
         // 调用
         Long id = travelReimbursementService.createTravelReimbursement(reqVO, 10L);
@@ -159,11 +178,14 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateTravelReimbursement_notExists() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setId(999L);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setId(999L);
 
         // 调用，并断言：修改不存在的单据不会转为新增
-        assertServiceException(() -> travelReimbursementService.updateTravelReimbursement(reqVO, 10L), TRAVEL_NOT_EXISTS);
+        assertServiceException(
+                () -> travelReimbursementService.updateTravelReimbursement(reqVO, 10L),
+                TRAVEL_NOT_EXISTS);
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
@@ -173,18 +195,23 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementSubmitReqVO reqVO = new OaTravelReimbursementSubmitReqVO().setId(999L);
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.submitTravelReimbursement(reqVO, 10L), TRAVEL_NOT_EXISTS);
+        assertServiceException(
+                () -> travelReimbursementService.submitTravelReimbursement(reqVO, 10L),
+                TRAVEL_NOT_EXISTS);
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
     @Test
     public void testCreateTravelReimbursement_nullItem() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setItems(Collections.singletonList(null));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setItems(Collections.singletonList(null));
 
         // 调用，并断言：空明细由级联校验拦截，不进入字典查询及保存
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(dictDataApi, noRedisDAO, processInstanceApi);
     }
 
@@ -194,7 +221,9 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementSaveReqVO reqVO = new OaTravelReimbursementSaveReqVO();
 
         // 调用，并断言：草稿保存也必须填写完整内容
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
@@ -204,10 +233,11 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementDO record = randomTravelReimbursementDO();
         travelReimbursementMapper.insert(record);
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(record, OaTravelReimbursementSaveReqVO.class)
-                .setStartTime(LocalDateTime.of(2026, 12, 31, 0, 0))
-                .setEndTime(LocalDateTime.of(2027, 1, 2, 0, 0))
-                .setFileUrls(Collections.singletonList("https://example.com/receipt.pdf"));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(record, OaTravelReimbursementSaveReqVO.class)
+                        .setStartTime(LocalDateTime.of(2026, 12, 31, 0, 0))
+                        .setEndTime(LocalDateTime.of(2027, 1, 2, 0, 0))
+                        .setFileUrls(Collections.singletonList("https://example.com/receipt.pdf"));
 
         // 调用
         travelReimbursementService.updateTravelReimbursement(reqVO, 10L);
@@ -226,10 +256,13 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementDO record = randomTravelReimbursementDO();
         travelReimbursementMapper.insert(record);
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(record, OaTravelReimbursementSaveReqVO.class).setReason(null);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(record, OaTravelReimbursementSaveReqVO.class).setReason(null);
 
         // 调用，并断言：修改不能清空必填内容，已有数据保持不变
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.updateTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.updateTravelReimbursement(reqVO, 10L));
         OaTravelReimbursementDO updated = travelReimbursementMapper.selectById(record.getId());
         assertEquals(record.getReason(), updated.getReason());
         assertEquals(record.getStatus(), updated.getStatus());
@@ -239,12 +272,16 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateTravelReimbursement_invalidDates() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setId(null)
-                .setStartTime(LocalDateTime.of(2026, 9, 15, 0, 0)).setEndTime(LocalDateTime.of(2026, 9, 14, 0, 0));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setId(null)
+                        .setStartTime(LocalDateTime.of(2026, 9, 15, 0, 0))
+                        .setEndTime(LocalDateTime.of(2026, 9, 14, 0, 0));
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
     }
 
     @ParameterizedTest
@@ -257,28 +294,38 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementSaveReqVO reqVO = toBean(record, OaTravelReimbursementSaveReqVO.class);
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.updateTravelReimbursement(reqVO, 10L), TRAVEL_STATUS_INVALID);
+        assertServiceException(
+                () -> travelReimbursementService.updateTravelReimbursement(reqVO, 10L),
+                TRAVEL_STATUS_INVALID);
     }
 
     @Test
     public void testCreateTravelReimbursement_missingFields() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO().setReason(null)
-                .setStartTime(null), OaTravelReimbursementSaveReqVO.class);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(
+                        randomTravelReimbursementDO().setReason(null).setStartTime(null),
+                        OaTravelReimbursementSaveReqVO.class);
 
         // 调用，并断言：必填校验在保存时完成，不生成单号或发起审批
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
     @Test
     public void testCreateTravelReimbursement_missingItems() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO()
-                .setItems(Collections.emptyList()), OaTravelReimbursementSaveReqVO.class);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(
+                        randomTravelReimbursementDO().setItems(Collections.emptyList()),
+                        OaTravelReimbursementSaveReqVO.class);
 
         // 调用，并断言：必填校验在保存时完成，不生成单号或发起审批
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
@@ -286,10 +333,12 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @ValueSource(ints = {-1, 3, 4})
     public void testSubmitTravelReimbursement_resubmit(Integer status) {
         // mock 数据
-        OaTravelReimbursementDO record = randomTravelReimbursementDO().setStatus(status).setProcessInstanceId("old-process");
+        OaTravelReimbursementDO record =
+                randomTravelReimbursementDO().setStatus(status).setProcessInstanceId("old-process");
         travelReimbursementMapper.insert(record);
         // 准备参数
-        OaTravelReimbursementSubmitReqVO reqVO = new OaTravelReimbursementSubmitReqVO().setId(record.getId());
+        OaTravelReimbursementSubmitReqVO reqVO =
+                new OaTravelReimbursementSubmitReqVO().setId(record.getId());
         // mock 方法
         when(processInstanceApi.createProcessInstance(eq(10L), any())).thenReturn("new-process");
 
@@ -311,12 +360,16 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementDO record = randomTravelReimbursementDO().setProcessInstanceId(null);
         travelReimbursementMapper.insert(record);
         // 准备参数
-        OaTravelReimbursementSubmitReqVO reqVO = new OaTravelReimbursementSubmitReqVO().setId(record.getId());
+        OaTravelReimbursementSubmitReqVO reqVO =
+                new OaTravelReimbursementSubmitReqVO().setId(record.getId());
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(10L), any())).thenThrow(new IllegalStateException("流程未部署"));
+        when(processInstanceApi.createProcessInstance(eq(10L), any()))
+                .thenThrow(new IllegalStateException("流程未部署"));
 
         // 调用，并断言：失败不遗留审批中单据，也不覆盖草稿
-        assertThrows(IllegalStateException.class, () -> travelReimbursementService.submitTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                IllegalStateException.class,
+                () -> travelReimbursementService.submitTravelReimbursement(reqVO, 10L));
         OaTravelReimbursementDO updated = travelReimbursementMapper.selectById(record.getId());
         assertEquals(-1, updated.getStatus());
         assertEquals(record.getReason(), updated.getReason());
@@ -328,14 +381,18 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         OaTravelReimbursementDO record = randomTravelReimbursementDO();
         travelReimbursementMapper.insert(record);
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(10L), any())).thenAnswer(invocation -> {
-            BpmProcessInstanceCreateReqDTO dto = invocation.getArgument(1);
-            travelReimbursementService.updateTravelReimbursementStatus(Long.valueOf(dto.getBusinessKey()), 2);
-            return "sync-process";
-        });
+        when(processInstanceApi.createProcessInstance(eq(10L), any()))
+                .thenAnswer(
+                        invocation -> {
+                            BpmProcessInstanceCreateReqDTO dto = invocation.getArgument(1);
+                            travelReimbursementService.updateTravelReimbursementStatus(
+                                    Long.valueOf(dto.getBusinessKey()), 2);
+                            return "sync-process";
+                        });
 
         // 调用
-        travelReimbursementService.submitTravelReimbursement(new OaTravelReimbursementSubmitReqVO().setId(record.getId()), 10L);
+        travelReimbursementService.submitTravelReimbursement(
+                new OaTravelReimbursementSubmitReqVO().setId(record.getId()), 10L);
 
         // 断言：绑定流程编号不会把同步审批通过回退成审批中
         OaTravelReimbursementDO updated = travelReimbursementMapper.selectById(record.getId());
@@ -346,14 +403,16 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCancelTravelReimbursement_running() {
         // mock 数据
-        OaTravelReimbursementDO record = randomTravelReimbursementDO().setStatus(1).setProcessInstanceId("running");
+        OaTravelReimbursementDO record =
+                randomTravelReimbursementDO().setStatus(1).setProcessInstanceId("running");
         travelReimbursementMapper.insert(record);
 
         // 调用
         travelReimbursementService.cancelTravelReimbursement(record.getId(), 10L);
 
         // 断言：通过 BPM 撤回，由事件回写状态
-        verify(processInstanceApi).cancelProcessInstanceByStartUser(eq(10L), eq("running"), anyString());
+        verify(processInstanceApi)
+                .cancelProcessInstanceByStartUser(eq(10L), eq("running"), anyString());
     }
 
     @ParameterizedTest
@@ -377,7 +436,8 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         travelReimbursementMapper.insert(record);
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.deleteTravelReimbursement(record.getId(), 10L),
+        assertServiceException(
+                () -> travelReimbursementService.deleteTravelReimbursement(record.getId(), 10L),
                 TRAVEL_STATUS_INVALID);
     }
 
@@ -388,7 +448,9 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         travelReimbursementMapper.insert(record);
 
         // 调用，并断言：查询对齐用印，不在 Service 增加本人或流程参与人判断
-        assertEquals(record.getId(), travelReimbursementService.getTravelReimbursement(record.getId()).getId());
+        assertEquals(
+                record.getId(),
+                travelReimbursementService.getTravelReimbursement(record.getId()).getId());
         assertNull(travelReimbursementService.getTravelReimbursement(-1L));
         verifyNoInteractions(processInstanceApi);
     }
@@ -400,9 +462,13 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         travelReimbursementMapper.insert(record);
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.updateTravelReimbursement(toBean(record, OaTravelReimbursementSaveReqVO.class), 20L),
+        assertServiceException(
+                () ->
+                        travelReimbursementService.updateTravelReimbursement(
+                                toBean(record, OaTravelReimbursementSaveReqVO.class), 20L),
                 TRAVEL_ACCESS_DENIED);
-        assertServiceException(() -> travelReimbursementService.deleteTravelReimbursement(record.getId(), 20L),
+        assertServiceException(
+                () -> travelReimbursementService.deleteTravelReimbursement(record.getId(), 20L),
                 TRAVEL_ACCESS_DENIED);
     }
 
@@ -416,7 +482,9 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         travelReimbursementMapper.insert(other);
 
         // 调用
-        PageResult<OaTravelReimbursementDO> page = travelReimbursementService.getTravelReimbursementPage(10L, new OaTravelReimbursementPageReqVO());
+        PageResult<OaTravelReimbursementDO> page =
+                travelReimbursementService.getTravelReimbursementPage(
+                        10L, new OaTravelReimbursementPageReqVO());
         // 断言
         assertEquals(1L, page.getTotal());
         assertEquals(mine.getId(), CollUtil.getFirst(page.getList()).getId());
@@ -426,14 +494,17 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     public void testUpdateTravelReimbursementStatus_notExists() {
 
         // 调用，并断言异常
-        assertServiceException(() -> travelReimbursementService.updateTravelReimbursementStatus(999L, 2), TRAVEL_NOT_EXISTS);
+        assertServiceException(
+                () -> travelReimbursementService.updateTravelReimbursementStatus(999L, 2),
+                TRAVEL_NOT_EXISTS);
     }
 
     @ParameterizedTest
     @ValueSource(ints = {2, 3, 4})
     public void testUpdateTravelReimbursementStatus(Integer status) {
         // mock 数据
-        OaTravelReimbursementDO record = randomTravelReimbursementDO().setStatus(1).setProcessInstanceId("current");
+        OaTravelReimbursementDO record =
+                randomTravelReimbursementDO().setStatus(1).setProcessInstanceId("current");
         travelReimbursementMapper.insert(record);
 
         // 调用
@@ -448,14 +519,19 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateTravelReimbursement_invalidExpenseType() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setItems(Collections.singletonList(
-                new OaTravelReimbursementSaveReqVO.Item().setExpenseType(999)));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaTravelReimbursementSaveReqVO.Item()
+                                                .setExpenseType(999)));
         // mock 方法
         when(dictDataApi.getDictDataList(anyString())).thenReturn(Collections.emptyList());
 
         // 调用，并断言：保存入口通过 InDict 校验费用类型
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verify(dictDataApi, never()).validateDictDataList(anyString(), anyCollection());
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
@@ -463,22 +539,33 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateTravelReimbursement_missingPrice() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO()
-                .setItems(Collections.singletonList(new OaTravelReimbursementDO.Item())), OaTravelReimbursementSaveReqVO.class);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(
+                        randomTravelReimbursementDO()
+                                .setItems(
+                                        Collections.singletonList(
+                                                new OaTravelReimbursementDO.Item())),
+                        OaTravelReimbursementSaveReqVO.class);
 
         // 调用，并断言：必填校验在保存时完成，不生成单号或发起审批
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
     @Test
     public void testCreateTravelReimbursement_missingFiles() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO()
-                .setFileUrls(Collections.emptyList()), OaTravelReimbursementSaveReqVO.class);
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(
+                        randomTravelReimbursementDO().setFileUrls(Collections.emptyList()),
+                        OaTravelReimbursementSaveReqVO.class);
 
         // 调用，并断言：必填校验在保存时完成，不生成单号或发起审批
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
 
@@ -489,24 +576,34 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         travelReimbursementMapper.insert(record);
         // 准备参数
         OaTravelReimbursementSaveReqVO reqVO = toBean(record, OaTravelReimbursementSaveReqVO.class);
-        reqVO.setItems(Arrays.asList(
-                new OaTravelReimbursementSaveReqVO.Item().setPrice(new BigDecimal("0.10")),
-                new OaTravelReimbursementSaveReqVO.Item().setPrice(new BigDecimal("0.20"))));
+        reqVO.setItems(
+                Arrays.asList(
+                        new OaTravelReimbursementSaveReqVO.Item().setPrice(new BigDecimal("0.10")),
+                        new OaTravelReimbursementSaveReqVO.Item()
+                                .setPrice(new BigDecimal("0.20"))));
 
         // 调用
         travelReimbursementService.updateTravelReimbursement(reqVO, 10L);
         // 断言：汇总使用十进制，避免金额浮点误差
-        assertEquals(new BigDecimal("0.30"), travelReimbursementMapper.selectById(record.getId()).getTotalPrice());
+        assertEquals(
+                new BigDecimal("0.30"),
+                travelReimbursementMapper.selectById(record.getId()).getTotalPrice());
     }
 
     @Test
     public void testCreateTravelReimbursement_negativePrice() {
         // 准备参数
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setItems(Collections.singletonList(new OaTravelReimbursementSaveReqVO.Item().setPrice(BigDecimal.ONE.negate())));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaTravelReimbursementSaveReqVO.Item()
+                                                .setPrice(BigDecimal.ONE.negate())));
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
     }
 
     @Test
@@ -528,8 +625,11 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateTravelReimbursementStatus_approved() {
         // mock 数据
-        OaTravelReimbursementDO record = randomTravelReimbursementDO()
-                .setStatus(1).setProcessInstanceId("current").setTravelApplyId(100L);
+        OaTravelReimbursementDO record =
+                randomTravelReimbursementDO()
+                        .setStatus(1)
+                        .setProcessInstanceId("current")
+                        .setTravelApplyId(100L);
         travelReimbursementMapper.insert(record);
 
         // 调用
@@ -544,14 +644,18 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
 
     @ParameterizedTest
     @CsvSource({"0,0", "120,1", "1440,1", "1441,2", "2880,2"})
-    public void testCreateAndUpdateTravelReimbursement_elapsedDays(Long minutes, Integer expectedDays) {
+    public void testCreateAndUpdateTravelReimbursement_elapsedDays(
+            Long minutes, Integer expectedDays) {
         // 准备参数：跨午夜不足一天、整天及超出整天的时间边界
         LocalDateTime startTime = LocalDateTime.of(2026, 9, 30, 23, 0);
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setStartTime(startTime).setEndTime(startTime.plusMinutes(minutes));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setStartTime(startTime)
+                        .setEndTime(startTime.plusMinutes(minutes));
         // mock 方法
         when(noRedisDAO.generate(anyString())).thenReturn("TRAVEL-DAYS");
-        when(adminUserApi.validateUser(10L)).thenReturn(new AdminUserRespDTO().setId(10L).setDeptId(20L));
+        when(adminUserApi.validateUser(10L))
+                .thenReturn(new AdminUserRespDTO().setId(10L).setDeptId(20L));
 
         // 调用
         Long id = travelReimbursementService.createTravelReimbursement(reqVO, 10L);
@@ -560,7 +664,9 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
         assertEquals(expectedDays, travelReimbursementMapper.selectById(id).getDays());
 
         // 调用：修改开始、结束时间后重新计算
-        reqVO.setId(id).setStartTime(startTime.plusMonths(1)).setEndTime(startTime.plusMonths(1).plusMinutes(minutes));
+        reqVO.setId(id)
+                .setStartTime(startTime.plusMonths(1))
+                .setEndTime(startTime.plusMonths(1).plusMinutes(minutes));
         travelReimbursementService.updateTravelReimbursement(reqVO, 10L);
 
         // 断言
@@ -571,11 +677,14 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
     public void testCreateTravelReimbursement_sameDayEndBeforeStart() {
         // 准备参数：同一天的结束时间早于开始时间
         LocalDateTime startTime = LocalDateTime.of(2026, 9, 30, 10, 0);
-        OaTravelReimbursementSaveReqVO reqVO = toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
-                .setStartTime(startTime).setEndTime(startTime.minusHours(1));
+        OaTravelReimbursementSaveReqVO reqVO =
+                toBean(randomTravelReimbursementDO(), OaTravelReimbursementSaveReqVO.class)
+                        .setStartTime(startTime)
+                        .setEndTime(startTime.minusHours(1));
 
         // 调用，并断言：不能保存负时长的出差
-        assertThrows(ConstraintViolationException.class,
+        assertThrows(
+                ConstraintViolationException.class,
                 () -> travelReimbursementService.createTravelReimbursement(reqVO, 10L));
         verifyNoInteractions(noRedisDAO, processInstanceApi);
     }
@@ -588,15 +697,28 @@ public class OaTravelReimbursementServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaTravelReimbursementDO randomTravelReimbursementDO() {
-        OaTravelReimbursementDO record = randomPojo(OaTravelReimbursementDO.class, item -> item.setId(null)
-                .setNo("TRAVEL-" + UUID.randomUUID()).setDeptId(20L)
-                .setStartTime(LocalDateTime.of(2026, 9, 14, 0, 0)).setEndTime(LocalDateTime.of(2026, 9, 15, 0, 0))
-                .setStatus(-1).setProcessInstanceId(null).setPayStatus(false)
-                .setTravelApplyId(null).setTotalPrice(BigDecimal.ZERO)
-                .setItems(Collections.singletonList(new OaTravelReimbursementDO.Item().setPrice(BigDecimal.ZERO)))
-                .setFileUrls(Collections.singletonList("https://example.com/receipt.pdf")));
+        OaTravelReimbursementDO record =
+                randomPojo(
+                        OaTravelReimbursementDO.class,
+                        item ->
+                                item.setId(null)
+                                        .setNo("TRAVEL-" + UUID.randomUUID())
+                                        .setDeptId(20L)
+                                        .setStartTime(LocalDateTime.of(2026, 9, 14, 0, 0))
+                                        .setEndTime(LocalDateTime.of(2026, 9, 15, 0, 0))
+                                        .setStatus(-1)
+                                        .setProcessInstanceId(null)
+                                        .setPayStatus(false)
+                                        .setTravelApplyId(null)
+                                        .setTotalPrice(BigDecimal.ZERO)
+                                        .setItems(
+                                                Collections.singletonList(
+                                                        new OaTravelReimbursementDO.Item()
+                                                                .setPrice(BigDecimal.ZERO)))
+                                        .setFileUrls(
+                                                Collections.singletonList(
+                                                        "https://example.com/receipt.pdf")));
         record.setCreator("10");
         return record;
     }
-
 }

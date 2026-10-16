@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemListReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * WMS 商品 Service 接口
@@ -107,5 +108,4 @@ public interface WmsItemService {
      * @return 商品数量
      */
     long getItemCountByBrandId(Long brandId);
-
 }

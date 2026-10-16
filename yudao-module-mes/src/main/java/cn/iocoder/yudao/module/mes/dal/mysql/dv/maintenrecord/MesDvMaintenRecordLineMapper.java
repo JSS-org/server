@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.maintenrecord.vo.line.MesDvMaintenRecordLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.maintenrecord.MesDvMaintenRecordLineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.List;
 public interface MesDvMaintenRecordLineMapper extends BaseMapperX<MesDvMaintenRecordLineDO> {
 
     default PageResult<MesDvMaintenRecordLineDO> selectPage(MesDvMaintenRecordLinePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesDvMaintenRecordLineDO>()
-                .eqIfPresent(MesDvMaintenRecordLineDO::getRecordId, reqVO.getRecordId())
-                .orderByDesc(MesDvMaintenRecordLineDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesDvMaintenRecordLineDO>()
+                        .eqIfPresent(MesDvMaintenRecordLineDO::getRecordId, reqVO.getRecordId())
+                        .orderByDesc(MesDvMaintenRecordLineDO::getId));
     }
 
     default List<MesDvMaintenRecordLineDO> selectListByRecordId(Long recordId) {
@@ -30,5 +33,4 @@ public interface MesDvMaintenRecordLineMapper extends BaseMapperX<MesDvMaintenRe
     default int deleteByRecordId(Long recordId) {
         return delete(MesDvMaintenRecordLineDO::getRecordId, recordId);
     }
-
 }

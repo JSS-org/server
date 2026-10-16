@@ -141,7 +141,6 @@ public interface FmsSubjectService {
      * @param userId 当前用户编号
      * @return 导入结果
      */
-    FmsSubjectImportRespVO importSubjectList(Long accountSetId, List<FmsSubjectImportExcelVO> importSubjects,
-                                            Long userId);
-
+    FmsSubjectImportRespVO importSubjectList(
+            Long accountSetId, List<FmsSubjectImportExcelVO> importSubjects, Long userId);
 }

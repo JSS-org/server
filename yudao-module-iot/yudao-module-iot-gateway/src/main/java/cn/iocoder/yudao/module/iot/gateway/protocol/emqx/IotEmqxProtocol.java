@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.emqx;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
@@ -13,6 +15,7 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.emqx.handler.downstream.IotE
 import cn.iocoder.yudao.module.iot.gateway.protocol.emqx.handler.upstream.IotEmqxAuthEventHandler;
 import cn.iocoder.yudao.module.iot.gateway.protocol.emqx.handler.upstream.IotEmqxUpstreamHandler;
 import cn.iocoder.yudao.module.iot.gateway.util.IotMqttTopicUtils;
+
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -24,14 +27,13 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * IoT 网关 EMQX 协议实现：
@@ -48,26 +50,27 @@ public class IotEmqxProtocol implements IotProtocol {
      * 协议配置
      */
     private final ProtocolProperties properties;
+
     /**
      * EMQX 配置
      */
     private final IotEmqxConfig emqxConfig;
+
     /**
      * 服务器 ID
      */
-    @Getter
-    private final String serverId;
+    @Getter private final String serverId;
 
     /**
      * 运行状态
      */
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     /**
      * Vert.x 实例
      */
     private Vertx vertx;
+
     /**
      * HTTP Hook 服务器
      */
@@ -77,6 +80,7 @@ public class IotEmqxProtocol implements IotProtocol {
      * MQTT Client
      */
     private volatile MqttClient mqttClient;
+
     /**
      * MQTT 重连定时器 ID
      */
@@ -97,7 +101,8 @@ public class IotEmqxProtocol implements IotProtocol {
         Assert.notNull(properties.getEmqx(), "EMQX 协议配置（emqx）不能为空");
         this.properties = properties;
         this.emqxConfig = properties.getEmqx();
-        Assert.notNull(emqxConfig.getConnectTimeoutSeconds(),
+        Assert.notNull(
+                emqxConfig.getConnectTimeoutSeconds(),
                 "MQTT 连接超时时间(emqx.connect-timeout-seconds)不能为空");
         this.serverId = IotDeviceMessageUtils.generateServerId(properties.getPort());
         this.upstreamHandler = new IotEmqxUpstreamHandler(serverId);
@@ -130,8 +135,11 @@ public class IotEmqxProtocol implements IotProtocol {
             // 1.3 启动 MQTT Client
             startMqttClient();
             running = true;
-            log.info("[start][IoT EMQX 协议 {} 启动成功，hookPort：{}，serverId：{}]",
-                    getId(), properties.getPort(), serverId);
+            log.info(
+                    "[start][IoT EMQX 协议 {} 启动成功，hookPort：{}，serverId：{}]",
+                    getId(),
+                    properties.getPort(),
+                    serverId);
 
             // 2. 启动下行消息订阅者
             IotMessageBus messageBus = SpringUtil.getBean(IotMessageBus.class);
@@ -177,8 +185,7 @@ public class IotEmqxProtocol implements IotProtocol {
         // 2.4 关闭 Vertx
         if (vertx != null) {
             try {
-                vertx.close().toCompletionStage().toCompletableFuture()
-                        .get(10, TimeUnit.SECONDS);
+                vertx.close().toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
                 log.info("[stop][IoT EMQX 协议 {} Vertx 已关闭]", getId());
             } catch (Exception e) {
                 log.error("[stop][IoT EMQX 协议 {} Vertx 关闭失败]", getId(), e);
@@ -189,7 +196,8 @@ public class IotEmqxProtocol implements IotProtocol {
         log.info("[stop][IoT EMQX 协议 {} 已停止]", getId());
     }
 
-    // ======================================= HTTP Hook Server =======================================
+    // ======================================= HTTP Hook Server
+    // =======================================
 
     /**
      * 启动 HTTP Hook 服务（/mqtt/auth、/mqtt/acl、/mqtt/event）
@@ -197,7 +205,8 @@ public class IotEmqxProtocol implements IotProtocol {
     private void startHttpServer() {
         // 1. 创建路由
         Router router = Router.router(vertx);
-        router.route().handler(BodyHandler.create().setBodyLimit(1024 * 1024)); // 限制 body 大小为 1MB，防止大包攻击
+        router.route()
+                .handler(BodyHandler.create().setBodyLimit(1024 * 1024)); // 限制 body 大小为 1MB，防止大包攻击
 
         // 2. 创建处理器
         IotEmqxAuthEventHandler handler = new IotEmqxAuthEventHandler(serverId, this);
@@ -209,23 +218,35 @@ public class IotEmqxProtocol implements IotProtocol {
         IotEmqxConfig.Http httpConfig = emqxConfig.getHttp();
         HttpServerOptions options = new HttpServerOptions().setPort(properties.getPort());
         if (httpConfig != null && Boolean.TRUE.equals(httpConfig.getSslEnabled())) {
-            Assert.notBlank(httpConfig.getSslCertPath(), "EMQX HTTP SSL 证书路径(emqx.http.ssl-cert-path)不能为空");
-            Assert.notBlank(httpConfig.getSslKeyPath(), "EMQX HTTP SSL 私钥路径(emqx.http.ssl-key-path)不能为空");
-            PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions()
-                    .setKeyPath(httpConfig.getSslKeyPath())
-                    .setCertPath(httpConfig.getSslCertPath());
+            Assert.notBlank(
+                    httpConfig.getSslCertPath(), "EMQX HTTP SSL 证书路径(emqx.http.ssl-cert-path)不能为空");
+            Assert.notBlank(
+                    httpConfig.getSslKeyPath(), "EMQX HTTP SSL 私钥路径(emqx.http.ssl-key-path)不能为空");
+            PemKeyCertOptions pemKeyCertOptions =
+                    new PemKeyCertOptions()
+                            .setKeyPath(httpConfig.getSslKeyPath())
+                            .setCertPath(httpConfig.getSslCertPath());
             options.setSsl(true).setKeyCertOptions(pemKeyCertOptions);
         }
         try {
-            httpServer = vertx.createHttpServer(options)
-                    .requestHandler(router)
-                    .listen()
-                    .toCompletionStage().toCompletableFuture()
-                    .get(10, TimeUnit.SECONDS);
-            log.info("[startHttpServer][IoT EMQX 协议 {} HTTP Hook 服务启动成功, port: {}, ssl: {}]",
-                    getId(), properties.getPort(), httpConfig != null && Boolean.TRUE.equals(httpConfig.getSslEnabled()));
+            httpServer =
+                    vertx.createHttpServer(options)
+                            .requestHandler(router)
+                            .listen()
+                            .toCompletionStage()
+                            .toCompletableFuture()
+                            .get(10, TimeUnit.SECONDS);
+            log.info(
+                    "[startHttpServer][IoT EMQX 协议 {} HTTP Hook 服务启动成功, port: {}, ssl: {}]",
+                    getId(),
+                    properties.getPort(),
+                    httpConfig != null && Boolean.TRUE.equals(httpConfig.getSslEnabled()));
         } catch (Exception e) {
-            log.error("[startHttpServer][IoT EMQX 协议 {} HTTP Hook 服务启动失败, port: {}]", getId(), properties.getPort(), e);
+            log.error(
+                    "[startHttpServer][IoT EMQX 协议 {} HTTP Hook 服务启动失败, port: {}]",
+                    getId(),
+                    properties.getPort(),
+                    e);
             throw new RuntimeException("HTTP Hook 服务启动失败", e);
         }
     }
@@ -235,8 +256,7 @@ public class IotEmqxProtocol implements IotProtocol {
             return;
         }
         try {
-            httpServer.close().toCompletionStage().toCompletableFuture()
-                    .get(5, TimeUnit.SECONDS);
+            httpServer.close().toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
             log.info("[stopHttpServer][IoT EMQX 协议 {} HTTP Hook 服务已停止]", getId());
         } catch (Exception e) {
             log.error("[stopHttpServer][IoT EMQX 协议 {} HTTP Hook 服务停止失败]", getId(), e);
@@ -262,7 +282,7 @@ public class IotEmqxProtocol implements IotProtocol {
 
     private void stopMqttClient() {
         MqttClient client = this.mqttClient;
-        this.mqttClient = null;  // 先清理引用
+        this.mqttClient = null; // 先清理引用
         if (client == null) {
             return;
         }
@@ -272,7 +292,9 @@ public class IotEmqxProtocol implements IotProtocol {
             List<String> topicList = emqxConfig.getMqttTopics();
             if (CollUtil.isNotEmpty(topicList)) {
                 try {
-                    client.unsubscribe(topicList).toCompletionStage().toCompletableFuture()
+                    client.unsubscribe(topicList)
+                            .toCompletionStage()
+                            .toCompletableFuture()
                             .get(5, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     log.warn("[stopMqttClient][IoT EMQX 协议 {} 取消订阅异常]", getId(), e);
@@ -282,8 +304,7 @@ public class IotEmqxProtocol implements IotProtocol {
 
         // 2. 断开 MQTT 连接
         try {
-            client.disconnect().toCompletionStage().toCompletableFuture()
-                    .get(5, TimeUnit.SECONDS);
+            client.disconnect().toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.warn("[stopMqttClient][IoT EMQX 协议 {} 断开连接异常]", getId(), e);
         }
@@ -298,14 +319,15 @@ public class IotEmqxProtocol implements IotProtocol {
      */
     private MqttClient createMqttClient() {
         // 1.1 基础配置
-        MqttClientOptions options = new MqttClientOptions()
-                .setClientId(emqxConfig.getMqttClientId())
-                .setUsername(emqxConfig.getMqttUsername())
-                .setPassword(emqxConfig.getMqttPassword())
-                .setSsl(Boolean.TRUE.equals(emqxConfig.getMqttSsl()))
-                .setCleanSession(Boolean.TRUE.equals(emqxConfig.getCleanSession()))
-                .setKeepAliveInterval(emqxConfig.getKeepAliveIntervalSeconds())
-                .setMaxInflightQueue(emqxConfig.getMaxInflightQueue());
+        MqttClientOptions options =
+                new MqttClientOptions()
+                        .setClientId(emqxConfig.getMqttClientId())
+                        .setUsername(emqxConfig.getMqttUsername())
+                        .setPassword(emqxConfig.getMqttPassword())
+                        .setSsl(Boolean.TRUE.equals(emqxConfig.getMqttSsl()))
+                        .setCleanSession(Boolean.TRUE.equals(emqxConfig.getCleanSession()))
+                        .setKeepAliveInterval(emqxConfig.getKeepAliveIntervalSeconds())
+                        .setMaxInflightQueue(emqxConfig.getMaxInflightQueue());
         options.setConnectTimeout(emqxConfig.getConnectTimeoutSeconds() * 1000); // Vert.x 需要毫秒
         options.setTrustAll(Boolean.TRUE.equals(emqxConfig.getTrustAll()));
         // 1.2 配置遗嘱消息
@@ -325,14 +347,16 @@ public class IotEmqxProtocol implements IotProtocol {
                 && Boolean.FALSE.equals(emqxConfig.getTrustAll())
                 && sslOptions != null) {
             if (StrUtil.isNotBlank(sslOptions.getTrustStorePath())) {
-                options.setTrustStoreOptions(new JksOptions()
-                        .setPath(sslOptions.getTrustStorePath())
-                        .setPassword(sslOptions.getTrustStorePassword()));
+                options.setTrustStoreOptions(
+                        new JksOptions()
+                                .setPath(sslOptions.getTrustStorePath())
+                                .setPassword(sslOptions.getTrustStorePassword()));
             }
             if (StrUtil.isNotBlank(sslOptions.getKeyStorePath())) {
-                options.setKeyStoreOptions(new JksOptions()
-                        .setPath(sslOptions.getKeyStorePath())
-                        .setPassword(sslOptions.getKeyStorePassword()));
+                options.setKeyStoreOptions(
+                        new JksOptions()
+                                .setPath(sslOptions.getKeyStorePath())
+                                .setPassword(sslOptions.getKeyStorePassword()));
             }
         }
 
@@ -353,10 +377,15 @@ public class IotEmqxProtocol implements IotProtocol {
         int timeoutSeconds = emqxConfig.getConnectTimeoutSeconds();
         try {
             // 1. 连接 Broker
-            client.connect(port, host).toCompletionStage().toCompletableFuture()
+            client.connect(port, host)
+                    .toCompletionStage()
+                    .toCompletableFuture()
                     .get(timeoutSeconds, TimeUnit.SECONDS);
-            log.info("[connectMqttClient][IoT EMQX 协议 {} 连接成功, host: {}, port: {}]",
-                    getId(), host, port);
+            log.info(
+                    "[connectMqttClient][IoT EMQX 协议 {} 连接成功, host: {}, port: {}]",
+                    getId(),
+                    host,
+                    port);
 
             // 2. 设置处理器
             setupMqttClientHandlers(client);
@@ -373,13 +402,16 @@ public class IotEmqxProtocol implements IotProtocol {
      */
     private void closeMqttClient() {
         MqttClient oldClient = this.mqttClient;
-        this.mqttClient = null;  // 先清理引用
+        this.mqttClient = null; // 先清理引用
         if (oldClient == null) {
             return;
         }
         // 尽力释放（无论是否连接都尝试 disconnect）
         try {
-            oldClient.disconnect().toCompletionStage().toCompletableFuture()
+            oldClient
+                    .disconnect()
+                    .toCompletionStage()
+                    .toCompletableFuture()
                     .get(5, TimeUnit.SECONDS);
         } catch (Exception ignored) {
         }
@@ -392,20 +424,26 @@ public class IotEmqxProtocol implements IotProtocol {
      */
     private void startMqttClientReconnectChecker() {
         long interval = emqxConfig.getReconnectDelayMs();
-        this.reconnectTimerId = vertx.setPeriodic(interval, timerId -> {
-            if (!running) {
-                return;
-            }
-            if (mqttClient != null && mqttClient.isConnected()) {
-                return;
-            }
-            log.info("[startMqttClientReconnectChecker][IoT EMQX 协议 {} 检测到断开，尝试重连]", getId());
-            // 用 executeBlocking 避免阻塞 event-loop（tryReconnectMqttClient 内部有同步等待）
-            vertx.executeBlocking(() -> {
-                tryReconnectMqttClient();
-                return null;
-            });
-        });
+        this.reconnectTimerId =
+                vertx.setPeriodic(
+                        interval,
+                        timerId -> {
+                            if (!running) {
+                                return;
+                            }
+                            if (mqttClient != null && mqttClient.isConnected()) {
+                                return;
+                            }
+                            log.info(
+                                    "[startMqttClientReconnectChecker][IoT EMQX 协议 {} 检测到断开，尝试重连]",
+                                    getId());
+                            // 用 executeBlocking 避免阻塞 event-loop（tryReconnectMqttClient 内部有同步等待）
+                            vertx.executeBlocking(
+                                    () -> {
+                                        tryReconnectMqttClient();
+                                        return null;
+                                    });
+                        });
     }
 
     /**
@@ -457,21 +495,27 @@ public class IotEmqxProtocol implements IotProtocol {
      */
     private void setupMqttClientHandlers(MqttClient client) {
         // 1. 断开重连监听
-        client.closeHandler(closeEvent -> {
-            if (!running) {
-                return;
-            }
-            log.warn("[setupMqttClientHandlers][IoT EMQX 协议 {} 连接断开，立即尝试重连]", getId());
-            // 用 executeBlocking 避免阻塞 event-loop（tryReconnectMqttClient 内部有同步等待）
-            vertx.executeBlocking(() -> {
-                tryReconnectMqttClient();
-                return null;
-            });
-        });
+        client.closeHandler(
+                closeEvent -> {
+                    if (!running) {
+                        return;
+                    }
+                    log.warn("[setupMqttClientHandlers][IoT EMQX 协议 {} 连接断开，立即尝试重连]", getId());
+                    // 用 executeBlocking 避免阻塞 event-loop（tryReconnectMqttClient 内部有同步等待）
+                    vertx.executeBlocking(
+                            () -> {
+                                tryReconnectMqttClient();
+                                return null;
+                            });
+                });
 
         // 2. 异常处理
-        client.exceptionHandler(exception ->
-                log.error("[setupMqttClientHandlers][IoT EMQX 协议 {} MQTT Client 异常]", getId(), exception));
+        client.exceptionHandler(
+                exception ->
+                        log.error(
+                                "[setupMqttClientHandlers][IoT EMQX 协议 {} MQTT Client 异常]",
+                                getId(),
+                                exception));
 
         // 3. 上行消息处理
         client.publishHandler(upstreamHandler::handle);
@@ -491,12 +535,20 @@ public class IotEmqxProtocol implements IotProtocol {
             return;
         }
         // 执行订阅
-        Map<String, Integer> topics = convertMap(emqxConfig.getMqttTopics(), topic -> topic,
-                topic -> emqxConfig.getMqttQos());
+        Map<String, Integer> topics =
+                convertMap(
+                        emqxConfig.getMqttTopics(),
+                        topic -> topic,
+                        topic -> emqxConfig.getMqttQos());
         try {
-            client.subscribe(topics).toCompletionStage().toCompletableFuture()
+            client.subscribe(topics)
+                    .toCompletionStage()
+                    .toCompletableFuture()
                     .get(10, TimeUnit.SECONDS);
-            log.info("[subscribeMqttClientTopics][IoT EMQX 协议 {} 订阅成功, 共 {} 个主题]", getId(), topicList.size());
+            log.info(
+                    "[subscribeMqttClientTopics][IoT EMQX 协议 {} 订阅成功, 共 {} 个主题]",
+                    getId(),
+                    topicList.size());
         } catch (Exception e) {
             log.error("[subscribeMqttClientTopics][IoT EMQX 协议 {} 订阅失败]", getId(), e);
         }
@@ -514,8 +566,15 @@ public class IotEmqxProtocol implements IotProtocol {
             return;
         }
         MqttQoS qos = MqttQoS.valueOf(emqxConfig.getMqttQos());
-        mqttClient.publish(topic, Buffer.buffer(payload), qos, false, false)
-                .onFailure(e -> log.error("[publishMessage][IoT EMQX 协议 {} 发布失败, topic: {}]", getId(), topic, e));
+        mqttClient
+                .publish(topic, Buffer.buffer(payload), qos, false, false)
+                .onFailure(
+                        e ->
+                                log.error(
+                                        "[publishMessage][IoT EMQX 协议 {} 发布失败, topic: {}]",
+                                        getId(),
+                                        topic,
+                                        e));
     }
 
     /**
@@ -528,5 +587,4 @@ public class IotEmqxProtocol implements IotProtocol {
     public void publishDelayMessage(String topic, byte[] payload, long delayMs) {
         vertx.setTimer(delayMs, id -> publishMessage(topic, payload));
     }
-
 }

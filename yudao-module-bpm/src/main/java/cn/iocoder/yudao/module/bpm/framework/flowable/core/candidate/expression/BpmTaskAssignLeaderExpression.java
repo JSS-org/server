@@ -1,21 +1,24 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.expression;
 
+import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
+
+import static java.util.Collections.emptySet;
+
 import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
+import jakarta.annotation.Resource;
+
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import jakarta.annotation.Resource;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
-import static java.util.Collections.emptySet;
 
 /**
  * 分配给发起人的 Leader 审批的 Expression 流程表达式
@@ -27,13 +30,10 @@ import static java.util.Collections.emptySet;
 @Deprecated // 仅仅是表达式的示例，建议使用 BpmTaskCandidateStartUserDeptLeaderStrategy 替代
 public class BpmTaskAssignLeaderExpression {
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
-    @Resource
-    private BpmProcessInstanceService processInstanceService;
+    @Resource private BpmProcessInstanceService processInstanceService;
 
     /**
      * 计算审批的候选人
@@ -45,7 +45,8 @@ public class BpmTaskAssignLeaderExpression {
     public Set<Long> calculateUsers(DelegateExecution execution, int level) {
         Assert.isTrue(level > 0, "level 必须大于 0");
         // 获得发起人
-        ProcessInstance processInstance = processInstanceService.getProcessInstance(execution.getProcessInstanceId());
+        ProcessInstance processInstance =
+                processInstanceService.getProcessInstance(execution.getProcessInstanceId());
         Long startUserId = NumberUtils.parseLong(processInstance.getStartUserId());
         // 获得对应 leve 的部门
         DeptRespDTO dept = null;
@@ -74,5 +75,4 @@ public class BpmTaskAssignLeaderExpression {
         }
         return deptApi.getDept(startUser.getDeptId());
     }
-
 }

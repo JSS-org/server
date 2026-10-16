@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.mp.controller.admin.message;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.message.vo.message.MpMessagePageReqVO;
@@ -8,16 +10,16 @@ import cn.iocoder.yudao.module.mp.controller.admin.message.vo.message.MpMessageS
 import cn.iocoder.yudao.module.mp.convert.message.MpMessageConvert;
 import cn.iocoder.yudao.module.mp.dal.dataobject.message.MpMessageDO;
 import cn.iocoder.yudao.module.mp.service.message.MpMessageService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "管理后台 - 公众号消息")
 @RestController
@@ -25,13 +27,13 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MpMessageController {
 
-    @Resource
-    private MpMessageService mpMessageService;
+    @Resource private MpMessageService mpMessageService;
 
     @GetMapping("/page")
     @Operation(summary = "获得公众号消息分页")
     @PreAuthorize("@ss.hasPermission('mp:message:query')")
-    public CommonResult<PageResult<MpMessageRespVO>> getMessagePage(@Valid MpMessagePageReqVO pageVO) {
+    public CommonResult<PageResult<MpMessageRespVO>> getMessagePage(
+            @Valid MpMessagePageReqVO pageVO) {
         PageResult<MpMessageDO> pageResult = mpMessageService.getMessagePage(pageVO);
         return success(MpMessageConvert.INSTANCE.convertPage(pageResult));
     }
@@ -43,5 +45,4 @@ public class MpMessageController {
         MpMessageDO message = mpMessageService.sendKefuMessage(reqVO);
         return success(MpMessageConvert.INSTANCE.convert(message));
     }
-
 }

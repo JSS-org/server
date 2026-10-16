@@ -26,15 +26,16 @@ public interface PayWalletTransactionService {
      * @param userType 用户类型
      * @param pageVO   分页查询参数
      */
-    PageResult<PayWalletTransactionDO> getWalletTransactionPage(Long userId, Integer userType,
-                                                                AppPayWalletTransactionPageReqVO pageVO);
+    PageResult<PayWalletTransactionDO> getWalletTransactionPage(
+            Long userId, Integer userType, AppPayWalletTransactionPageReqVO pageVO);
 
     /**
      * 查询钱包余额流水分页
      *
      * @param pageVO   分页查询参数
      */
-    PageResult<PayWalletTransactionDO> getWalletTransactionPage(PayWalletTransactionPageReqVO pageVO);
+    PageResult<PayWalletTransactionDO> getWalletTransactionPage(
+            PayWalletTransactionPageReqVO pageVO);
 
     /**
      * 新增钱包余额流水
@@ -68,7 +69,6 @@ public interface PayWalletTransactionService {
      * @param createTime 时间段
      * @return 钱包流水统计
      */
-    AppPayWalletTransactionSummaryRespVO getWalletTransactionSummary(Long userId, Integer userType,
-                                                                     LocalDateTime[] createTime);
-
+    AppPayWalletTransactionSummaryRespVO getWalletTransactionSummary(
+            Long userId, Integer userType, LocalDateTime[] createTime);
 }

@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.member.controller.app.user.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Pattern;
+import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "用户 APP - 修改密码 Request VO")
 @Data
@@ -27,5 +29,4 @@ public class AppMemberUserUpdatePasswordReqVO {
     @Length(min = 4, max = 6, message = "手机验证码长度为 4-6 位")
     @Pattern(regexp = "^[0-9]+$", message = "手机验证码必须都是数字")
     private String code;
-
 }

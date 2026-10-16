@@ -17,5 +17,4 @@ public interface LoginLogApi {
      * @param reqDTO 日志信息
      */
     void createLoginLog(@Valid LoginLogCreateReqDTO reqDTO);
-
 }

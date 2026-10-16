@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 代码生成字段定义创建/修改 Request VO")
@@ -39,11 +41,17 @@ public class CodegenColumnSaveReqVO {
     @NotNull(message = "排序不能为空")
     private Integer ordinalPosition;
 
-    @Schema(description = "Java 属性类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "userAge")
+    @Schema(
+            description = "Java 属性类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "userAge")
     @NotNull(message = "Java 属性类型不能为空")
     private String javaType;
 
-    @Schema(description = "Java 属性名", requiredMode = Schema.RequiredMode.REQUIRED, example = "Integer")
+    @Schema(
+            description = "Java 属性名",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "Integer")
     @NotNull(message = "Java 属性名不能为空")
     private String javaField;
 
@@ -53,28 +61,42 @@ public class CodegenColumnSaveReqVO {
     @Schema(description = "数据示例", example = "1024")
     private String example;
 
-    @Schema(description = "是否为 Create 创建操作的字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否为 Create 创建操作的字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     @NotNull(message = "是否为 Create 创建操作的字段不能为空")
     private Boolean createOperation;
 
-    @Schema(description = "是否为 Update 更新操作的字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "是否为 Update 更新操作的字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     @NotNull(message = "是否为 Update 更新操作的字段不能为空")
     private Boolean updateOperation;
 
-    @Schema(description = "是否为 List 查询操作的字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否为 List 查询操作的字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     @NotNull(message = "是否为 List 查询操作的字段不能为空")
     private Boolean listOperation;
 
-    @Schema(description = "List 查询操作的条件类型，参见 CodegenColumnListConditionEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "LIKE")
+    @Schema(
+            description = "List 查询操作的条件类型，参见 CodegenColumnListConditionEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "LIKE")
     @NotNull(message = "List 查询操作的条件类型不能为空")
     private String listOperationCondition;
 
-    @Schema(description = "是否为 List 查询操作的返回字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否为 List 查询操作的返回字段",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     @NotNull(message = "是否为 List 查询操作的返回字段不能为空")
     private Boolean listOperationResult;
 
     @Schema(description = "显示类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "input")
     @NotNull(message = "显示类型不能为空")
     private String htmlType;
-
 }

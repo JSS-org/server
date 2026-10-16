@@ -1,15 +1,25 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum.CLOSED;
+import static cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum.WAITING;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradePayModel;
 import com.alipay.api.request.AlipayTradePayRequest;
 import com.alipay.api.response.AlipayTradePayResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,13 +30,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum.CLOSED;
-import static cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum.WAITING;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link AlipayBarPayClient} 单元测试
  *
@@ -34,8 +37,7 @@ import static org.mockito.Mockito.when;
  */
 public class AlipayBarPayClientTest extends AbstractAlipayClientTest {
 
-    @InjectMocks
-    private AlipayBarPayClient client = new AlipayBarPayClient(randomLongId(), config);
+    @InjectMocks private AlipayBarPayClient client = new AlipayBarPayClient(randomLongId(), config);
 
     @Override
     @BeforeEach
@@ -51,16 +53,26 @@ public class AlipayBarPayClientTest extends AbstractAlipayClientTest {
         String notifyUrl = randomURL();
         Integer price = randomInteger();
         String authCode = randomString();
-        AlipayTradePayResponse response = randomPojo(AlipayTradePayResponse.class, o -> o.setSubCode(""));
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradePayRequest>) request -> {
-            assertInstanceOf(AlipayTradePayModel.class, request.getBizModel());
-            assertEquals(notifyUrl, request.getNotifyUrl());
-            AlipayTradePayModel model = (AlipayTradePayModel) request.getBizModel();
-            assertEquals(outTradeNo, model.getOutTradeNo());
-            assertEquals(String.valueOf(price / 100.0), model.getTotalAmount());
-            assertEquals(authCode, model.getAuthCode());
-            return true;
-        }))).thenReturn(response);
+        AlipayTradePayResponse response =
+                randomPojo(AlipayTradePayResponse.class, o -> o.setSubCode(""));
+        when(defaultAlipayClient.execute(
+                        argThat(
+                                (ArgumentMatcher<AlipayTradePayRequest>)
+                                        request -> {
+                                            assertInstanceOf(
+                                                    AlipayTradePayModel.class,
+                                                    request.getBizModel());
+                                            assertEquals(notifyUrl, request.getNotifyUrl());
+                                            AlipayTradePayModel model =
+                                                    (AlipayTradePayModel) request.getBizModel();
+                                            assertEquals(outTradeNo, model.getOutTradeNo());
+                                            assertEquals(
+                                                    String.valueOf(price / 100.0),
+                                                    model.getTotalAmount());
+                                            assertEquals(authCode, model.getAuthCode());
+                                            return true;
+                                        })))
+                .thenReturn(response);
         // 准备请求参数
         PayOrderUnifiedReqDTO reqDTO = buildOrderUnifiedReqDTO(notifyUrl, outTradeNo, price);
         Map<String, String> extraParam = new HashMap<>();
@@ -90,19 +102,24 @@ public class AlipayBarPayClientTest extends AbstractAlipayClientTest {
         String channelNo = randomString();
         String channelUserId = randomString();
         Date payTime = randomDate();
-        AlipayTradePayResponse response = randomPojo(AlipayTradePayResponse.class, o -> {
-            o.setSubCode("");
-            o.setCode("10000");
-            o.setOutTradeNo(outTradeNo);
-            o.setTradeNo(channelNo);
-            o.setBuyerUserId(channelUserId);
-            o.setGmtPayment(payTime);
-        });
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradePayRequest>) request -> true)))
+        AlipayTradePayResponse response =
+                randomPojo(
+                        AlipayTradePayResponse.class,
+                        o -> {
+                            o.setSubCode("");
+                            o.setCode("10000");
+                            o.setOutTradeNo(outTradeNo);
+                            o.setTradeNo(channelNo);
+                            o.setBuyerUserId(channelUserId);
+                            o.setGmtPayment(payTime);
+                        });
+        when(defaultAlipayClient.execute(
+                        argThat((ArgumentMatcher<AlipayTradePayRequest>) request -> true)))
                 .thenReturn(response);
         // 准备请求参数
         String authCode = randomString();
-        PayOrderUnifiedReqDTO reqDTO = buildOrderUnifiedReqDTO(randomURL(), outTradeNo, randomInteger());
+        PayOrderUnifiedReqDTO reqDTO =
+                buildOrderUnifiedReqDTO(randomURL(), outTradeNo, randomInteger());
         Map<String, String> extraParam = new HashMap<>();
         extraParam.put("auth_code", authCode);
         reqDTO.setChannelExtras(extraParam);
@@ -126,7 +143,8 @@ public class AlipayBarPayClientTest extends AbstractAlipayClientTest {
     @DisplayName("支付宝条码支付：没有传条码")
     public void testUnifiedOrder_emptyAuthCode() {
         // 准备参数
-        PayOrderUnifiedReqDTO reqDTO = buildOrderUnifiedReqDTO(randomURL(), randomString(), randomInteger());
+        PayOrderUnifiedReqDTO reqDTO =
+                buildOrderUnifiedReqDTO(randomURL(), randomString(), randomInteger());
 
         // 调用，并断言
         assertThrows(ServiceException.class, () -> client.unifiedOrder(reqDTO));
@@ -138,16 +156,21 @@ public class AlipayBarPayClientTest extends AbstractAlipayClientTest {
         // mock 方法
         String subCode = randomString();
         String subMsg = randomString();
-        AlipayTradePayResponse response = randomPojo(AlipayTradePayResponse.class, o -> {
-            o.setSubCode(subCode);
-            o.setSubMsg(subMsg);
-        });
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradePayRequest>) request -> true)))
+        AlipayTradePayResponse response =
+                randomPojo(
+                        AlipayTradePayResponse.class,
+                        o -> {
+                            o.setSubCode(subCode);
+                            o.setSubMsg(subMsg);
+                        });
+        when(defaultAlipayClient.execute(
+                        argThat((ArgumentMatcher<AlipayTradePayRequest>) request -> true)))
                 .thenReturn(response);
         // 准备请求参数
         String authCode = randomString();
         String outTradeNo = randomString();
-        PayOrderUnifiedReqDTO reqDTO = buildOrderUnifiedReqDTO(randomURL(), outTradeNo, randomInteger());
+        PayOrderUnifiedReqDTO reqDTO =
+                buildOrderUnifiedReqDTO(randomURL(), outTradeNo, randomInteger());
         Map<String, String> extraParam = new HashMap<>();
         extraParam.put("auth_code", authCode);
         reqDTO.setChannelExtras(extraParam);
@@ -166,5 +189,4 @@ public class AlipayBarPayClientTest extends AbstractAlipayClientTest {
         assertEquals(subCode, resp.getChannelErrorCode());
         assertEquals(subMsg, resp.getChannelErrorMsg());
     }
-
 }

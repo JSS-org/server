@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.qc.ipqc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,7 +17,9 @@ import cn.iocoder.yudao.module.mes.dal.mysql.qc.ipqc.MesQcIpqcLineMapper;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcDefectLevelEnum;
 import cn.iocoder.yudao.module.mes.service.qc.indicator.MesQcIndicatorService;
 import cn.iocoder.yudao.module.mes.service.qc.template.MesQcTemplateIndicatorService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -20,11 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 过程检验单行 Service 实现类
@@ -35,13 +37,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcIpqcLineServiceImpl implements MesQcIpqcLineService {
 
-    @Resource
-    private MesQcIpqcLineMapper ipqcLineMapper;
+    @Resource private MesQcIpqcLineMapper ipqcLineMapper;
 
-    @Resource
-    private MesQcIndicatorService indicatorService;
-    @Resource
-    private MesQcTemplateIndicatorService templateIndicatorService;
+    @Resource private MesQcIndicatorService indicatorService;
+    @Resource private MesQcTemplateIndicatorService templateIndicatorService;
 
     @Override
     public MesQcIpqcLineDO validateIpqcLineExists(Long id) {
@@ -64,22 +63,33 @@ public class MesQcIpqcLineServiceImpl implements MesQcIpqcLineService {
 
     @Override
     public void createLinesFromTemplate(Long ipqcId, Long templateId) {
-        List<MesQcTemplateIndicatorDO> templateIndicators = templateIndicatorService.getTemplateIndicatorListByTemplateId(templateId);
+        List<MesQcTemplateIndicatorDO> templateIndicators =
+                templateIndicatorService.getTemplateIndicatorListByTemplateId(templateId);
         if (CollUtil.isEmpty(templateIndicators)) {
             return;
         }
-        Map<Long, MesQcIndicatorDO> indicatorMap = indicatorService.getIndicatorMap(
-                convertSet(templateIndicators, MesQcTemplateIndicatorDO::getIndicatorId));
-        List<MesQcIpqcLineDO> lines = convertList(templateIndicators, templateIndicator -> {
-            MesQcIndicatorDO indicator = indicatorMap.get(templateIndicator.getIndicatorId());
-            return new MesQcIpqcLineDO()
-                    .setIpqcId(ipqcId).setIndicatorId(templateIndicator.getIndicatorId())
-                    .setTool(indicator != null ? indicator.getTool() : null)
-                    .setCheckMethod(templateIndicator.getCheckMethod())
-                    .setStandardValue(templateIndicator.getStandardValue()).setUnitMeasureId(templateIndicator.getUnitMeasureId())
-                    .setMaxThreshold(templateIndicator.getThresholdMax()).setMinThreshold(templateIndicator.getThresholdMin())
-                    .setCriticalQuantity(0).setMajorQuantity(0).setMinorQuantity(0);
-        });
+        Map<Long, MesQcIndicatorDO> indicatorMap =
+                indicatorService.getIndicatorMap(
+                        convertSet(templateIndicators, MesQcTemplateIndicatorDO::getIndicatorId));
+        List<MesQcIpqcLineDO> lines =
+                convertList(
+                        templateIndicators,
+                        templateIndicator -> {
+                            MesQcIndicatorDO indicator =
+                                    indicatorMap.get(templateIndicator.getIndicatorId());
+                            return new MesQcIpqcLineDO()
+                                    .setIpqcId(ipqcId)
+                                    .setIndicatorId(templateIndicator.getIndicatorId())
+                                    .setTool(indicator != null ? indicator.getTool() : null)
+                                    .setCheckMethod(templateIndicator.getCheckMethod())
+                                    .setStandardValue(templateIndicator.getStandardValue())
+                                    .setUnitMeasureId(templateIndicator.getUnitMeasureId())
+                                    .setMaxThreshold(templateIndicator.getThresholdMax())
+                                    .setMinThreshold(templateIndicator.getThresholdMin())
+                                    .setCriticalQuantity(0)
+                                    .setMajorQuantity(0)
+                                    .setMinorQuantity(0);
+                        });
         ipqcLineMapper.insertBatch(lines);
     }
 
@@ -101,16 +111,22 @@ public class MesQcIpqcLineServiceImpl implements MesQcIpqcLineService {
                 int quantity = ObjUtil.defaultIfNull(record.getQuantity(), 1);
                 if (Objects.equals(record.getLevel(), MesQcDefectLevelEnum.CRITICAL.getType())) {
                     critical += quantity;
-                } else if (Objects.equals(record.getLevel(), MesQcDefectLevelEnum.MAJOR.getType())) {
+                } else if (Objects.equals(
+                        record.getLevel(), MesQcDefectLevelEnum.MAJOR.getType())) {
                     major += quantity;
-                } else if (Objects.equals(record.getLevel(), MesQcDefectLevelEnum.MINOR.getType())) {
+                } else if (Objects.equals(
+                        record.getLevel(), MesQcDefectLevelEnum.MINOR.getType())) {
                     minor += quantity;
                 } else {
                     throw exception(QC_DEFECT_RECORD_LEVEL_UNKNOWN);
                 }
             }
-            updateLines.add(new MesQcIpqcLineDO().setId(line.getId())
-                    .setCriticalQuantity(critical).setMajorQuantity(major).setMinorQuantity(minor));
+            updateLines.add(
+                    new MesQcIpqcLineDO()
+                            .setId(line.getId())
+                            .setCriticalQuantity(critical)
+                            .setMajorQuantity(major)
+                            .setMinorQuantity(minor));
         }
         for (MesQcIpqcLineDO updateLine : updateLines) {
             ipqcLineMapper.updateById(updateLine);
@@ -131,5 +147,4 @@ public class MesQcIpqcLineServiceImpl implements MesQcIpqcLineService {
     public Long getIpqcLineCountByUnitMeasureId(Long unitMeasureId) {
         return ipqcLineMapper.selectCountByUnitMeasureId(unitMeasureId);
     }
-
 }

@@ -5,12 +5,16 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.util.Objects;
 
 @Schema(description = "管理后台 - 社交客户端创建/修改 Request VO")
@@ -34,7 +38,10 @@ public class SocialClientSaveReqVO {
     @InEnum(UserTypeEnum.class)
     private Integer userType;
 
-    @Schema(description = "客户端编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "wwd411c69a39ad2e54")
+    @Schema(
+            description = "客户端编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "wwd411c69a39ad2e54")
     @NotNull(message = "客户端编号不能为空")
     private String clientId;
 
@@ -42,7 +49,10 @@ public class SocialClientSaveReqVO {
     @NotNull(message = "客户端密钥不能为空")
     private String clientSecret;
 
-    @Schema(description = "授权方的网页应用编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2000045")
+    @Schema(
+            description = "授权方的网页应用编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2000045")
     private String agentId;
 
     @Schema(description = "publicKey 公钥", example = "2000045")
@@ -68,5 +78,4 @@ public class SocialClientSaveReqVO {
         return !Objects.equals(socialType, SocialTypeEnum.ALIPAY_MINI_PROGRAM.getType())
                 || !StrUtil.isEmpty(publicKey);
     }
-
 }

@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.promotion.controller.app.coupon;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
+
+import static java.util.Collections.singletonList;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -14,12 +19,15 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionProductScopeEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponTakeTypeEnum;
 import cn.iocoder.yudao.module.promotion.service.coupon.CouponService;
 import cn.iocoder.yudao.module.promotion.service.coupon.CouponTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,23 +36,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
-import static java.util.Collections.singletonList;
-
 @Tag(name = "用户 App - 优惠劵模板")
 @RestController
 @RequestMapping("/promotion/coupon-template")
 @Validated
 public class AppCouponTemplateController {
 
-    @Resource
-    private CouponTemplateService couponTemplateService;
-    @Resource
-    private CouponService couponService;
+    @Resource private CouponTemplateService couponTemplateService;
+    @Resource private CouponService couponService;
 
-    @Resource
-    private ProductSpuApi productSpuApi;
+    @Resource private ProductSpuApi productSpuApi;
 
     @GetMapping("/get")
     @Operation(summary = "获得优惠劵模版")
@@ -56,17 +57,19 @@ public class AppCouponTemplateController {
             return success(null);
         }
         // 处理是否可领取
-        Map<Long, Boolean> canCanTakeMap = couponService.getUserCanCanTakeMap(getLoginUserId(), singletonList(template));
-        return success(BeanUtils.toBean(template, AppCouponTemplateRespVO.class)
-                .setCanTake(canCanTakeMap.get(template.getId())));
+        Map<Long, Boolean> canCanTakeMap =
+                couponService.getUserCanCanTakeMap(getLoginUserId(), singletonList(template));
+        return success(
+                BeanUtils.toBean(template, AppCouponTemplateRespVO.class)
+                        .setCanTake(canCanTakeMap.get(template.getId())));
     }
 
     @GetMapping("/list")
     @Operation(summary = "获得优惠劵模版列表")
     @Parameters({
-            @Parameter(name = "spuId", description = "商品 SPU 编号"), // 目前主要给商品详情使用
-            @Parameter(name = "productScope", description = "使用类型"),
-            @Parameter(name = "count", description = "数量", required = true)
+        @Parameter(name = "spuId", description = "商品 SPU 编号"), // 目前主要给商品详情使用
+        @Parameter(name = "productScope", description = "使用类型"),
+        @Parameter(name = "count", description = "数量", required = true)
     })
     @PermitAll
     public CommonResult<List<AppCouponTemplateRespVO>> getCouponTemplateList(
@@ -79,11 +82,13 @@ public class AppCouponTemplateController {
         List<Integer> canTakeTypes = singletonList(CouponTakeTypeEnum.USER.getType());
 
         // 2. 查询
-        List<CouponTemplateDO> list = couponTemplateService.getCouponTemplateList(canTakeTypes, productScope,
-                productScopeValue, count);
+        List<CouponTemplateDO> list =
+                couponTemplateService.getCouponTemplateList(
+                        canTakeTypes, productScope, productScopeValue, count);
 
         // 3.1 领取数量
-        Map<Long, Boolean> canCanTakeMap = couponService.getUserCanCanTakeMap(getLoginUserId(), list);
+        Map<Long, Boolean> canCanTakeMap =
+                couponService.getUserCanCanTakeMap(getLoginUserId(), list);
         // 3.2 拼接返回
         return success(CouponTemplateConvert.INSTANCE.convertAppList(list, canCanTakeMap));
     }
@@ -98,7 +103,8 @@ public class AppCouponTemplateController {
         List<CouponTemplateDO> list = couponTemplateService.getCouponTemplateList(ids);
 
         // 2.1 领取数量
-        Map<Long, Boolean> canCanTakeMap = couponService.getUserCanCanTakeMap(getLoginUserId(), list);
+        Map<Long, Boolean> canCanTakeMap =
+                couponService.getUserCanCanTakeMap(getLoginUserId(), list);
         // 2.2 拼接返回
         return success(CouponTemplateConvert.INSTANCE.convertAppList(list, canCanTakeMap));
     }
@@ -106,18 +112,26 @@ public class AppCouponTemplateController {
     @GetMapping("/page")
     @Operation(summary = "获得优惠劵模版分页")
     @PermitAll
-    public CommonResult<PageResult<AppCouponTemplateRespVO>> getCouponTemplatePage(AppCouponTemplatePageReqVO pageReqVO) {
+    public CommonResult<PageResult<AppCouponTemplateRespVO>> getCouponTemplatePage(
+            AppCouponTemplatePageReqVO pageReqVO) {
         // 1.1 处理查询条件：商品范围编号
-        Long productScopeValue = getProductScopeValue(pageReqVO.getProductScope(), pageReqVO.getSpuId());
+        Long productScopeValue =
+                getProductScopeValue(pageReqVO.getProductScope(), pageReqVO.getSpuId());
         // 1.2 处理查询条件：领取方式 = 直接领取
         List<Integer> canTakeTypes = singletonList(CouponTakeTypeEnum.USER.getType());
 
         // 2. 分页查询
-        PageResult<CouponTemplateDO> pageResult = couponTemplateService.getCouponTemplatePage(
-                CouponTemplateConvert.INSTANCE.convert(pageReqVO, canTakeTypes, pageReqVO.getProductScope(), productScopeValue));
+        PageResult<CouponTemplateDO> pageResult =
+                couponTemplateService.getCouponTemplatePage(
+                        CouponTemplateConvert.INSTANCE.convert(
+                                pageReqVO,
+                                canTakeTypes,
+                                pageReqVO.getProductScope(),
+                                productScopeValue));
 
         // 3.1 领取数量
-        Map<Long, Boolean> canCanTakeMap = couponService.getUserCanCanTakeMap(getLoginUserId(), pageResult.getList());
+        Map<Long, Boolean> canCanTakeMap =
+                couponService.getUserCanCanTakeMap(getLoginUserId(), pageResult.getList());
         // 3.2 拼接返回
         return success(CouponTemplateConvert.INSTANCE.convertAppPage(pageResult, canCanTakeMap));
     }
@@ -135,12 +149,12 @@ public class AppCouponTemplateController {
             return null;
         }
         // 品类券：查询商品的品类编号
-        if (Objects.equals(productScope, PromotionProductScopeEnum.CATEGORY.getScope()) && spuId != null) {
+        if (Objects.equals(productScope, PromotionProductScopeEnum.CATEGORY.getScope())
+                && spuId != null) {
             ProductSpuRespDTO spu = productSpuApi.getSpu(spuId);
             return spu != null ? spu.getCategoryId() : null;
         }
         // 商品劵：直接返回
         return spuId;
     }
-
 }

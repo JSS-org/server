@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,5 +20,4 @@ public class HrmPortalPerformanceFillQuotaReqVO {
     @Schema(description = "指标列表")
     @Valid
     private List<HrmPortalPerformanceQuotaSaveReqVO> quotas;
-
 }

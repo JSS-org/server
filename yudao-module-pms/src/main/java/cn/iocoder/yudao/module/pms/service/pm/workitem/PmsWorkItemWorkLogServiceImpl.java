@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.pms.service.pm.workitem;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_WORK_LOG_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_WORK_LOG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.WORK_LOG_CREATED;
+import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.WORK_LOG_UPDATED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -16,7 +26,9 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemWorkLog
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemWorkLogMapper;
 import cn.iocoder.yudao.module.pms.service.pm.iteration.PmsIterationService;
 import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectMemberService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -32,16 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_WORK_LOG_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_WORK_LOG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.WORK_LOG_CREATED;
-import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.WORK_LOG_UPDATED;
-
 /**
  * PMS 工作项工时记录 Service 实现类
  *
@@ -51,31 +53,33 @@ import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityC
 @Validated
 public class PmsWorkItemWorkLogServiceImpl implements PmsWorkItemWorkLogService {
 
-    @Resource
-    private PmsWorkItemWorkLogMapper workLogMapper;
+    @Resource private PmsWorkItemWorkLogMapper workLogMapper;
 
-    @Resource
-    private PmsWorkItemService workItemService;
-    @Resource
-    private PmsProjectMemberService projectMemberService;
-    @Resource
-    private PmsWorkItemActivityService workItemActivityService;
-    @Resource
-    private PmsIterationService iterationService;
+    @Resource private PmsWorkItemService workItemService;
+    @Resource private PmsProjectMemberService projectMemberService;
+    @Resource private PmsWorkItemActivityService workItemActivityService;
+    @Resource private PmsIterationService iterationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createWorkItemWorkLog(PmsWorkItemWorkLogSaveReqVO saveReqVO, Long userId) {
         // 1. 校验工作项可编辑
-        PmsWorkItemDO workItem = workItemService.getWritableWorkItem(saveReqVO.getWorkItemId(), userId);
+        PmsWorkItemDO workItem =
+                workItemService.getWritableWorkItem(saveReqVO.getWorkItemId(), userId);
 
         // 2.1 创建工时记录
-        PmsWorkItemWorkLogDO workLog = BeanUtils.toBean(saveReqVO, PmsWorkItemWorkLogDO.class)
-                .setProjectId(workItem.getProjectId()).setDescription(StrUtil.trim(saveReqVO.getDescription()));
+        PmsWorkItemWorkLogDO workLog =
+                BeanUtils.toBean(saveReqVO, PmsWorkItemWorkLogDO.class)
+                        .setProjectId(workItem.getProjectId())
+                        .setDescription(StrUtil.trim(saveReqVO.getDescription()));
         workLogMapper.insert(workLog);
         // 2.2 记录工时创建动态
         workItemActivityService.createWorkItemActivity(
-                workItem.getProjectId(), workItem.getId(), userId, WORK_LOG_CREATED, saveReqVO.getActualHours());
+                workItem.getProjectId(),
+                workItem.getId(),
+                userId,
+                WORK_LOG_CREATED,
+                saveReqVO.getActualHours());
         return workLog.getId();
     }
 
@@ -89,11 +93,14 @@ public class PmsWorkItemWorkLogServiceImpl implements PmsWorkItemWorkLogService 
             throw exception(WORK_ITEM_WORK_LOG_INVALID);
         }
         // 1.3 校验工作项可编辑
-        PmsWorkItemDO workItem = workItemService.getWritableWorkItem(workLog.getWorkItemId(), userId);
+        PmsWorkItemDO workItem =
+                workItemService.getWritableWorkItem(workLog.getWorkItemId(), userId);
 
         // 2.1 更新投入工时和说明
-        workLogMapper.updateForEdit(BeanUtils.toBean(saveReqVO, PmsWorkItemWorkLogDO.class)
-                .setId(workLog.getId()).setDescription(StrUtil.trim(saveReqVO.getDescription())));
+        workLogMapper.updateForEdit(
+                BeanUtils.toBean(saveReqVO, PmsWorkItemWorkLogDO.class)
+                        .setId(workLog.getId())
+                        .setDescription(StrUtil.trim(saveReqVO.getDescription())));
         // 2.2 记录工时更新动态
         workItemActivityService.createWorkItemActivity(
                 workItem.getProjectId(), workItem.getId(), userId, WORK_LOG_UPDATED);
@@ -117,20 +124,30 @@ public class PmsWorkItemWorkLogServiceImpl implements PmsWorkItemWorkLogService 
 
         // 2. 汇总已登记工时，剩余工时取最新一条登记记录
         int actualHours = workLogs.stream().mapToInt(PmsWorkItemWorkLogDO::getActualHours).sum();
-        Integer remainingHours = CollUtil.isNotEmpty(workLogs)
-                ? CollUtil.getFirst(workLogs).getRemainingHours() : workItem.getEstimatedHours();
+        Integer remainingHours =
+                CollUtil.isNotEmpty(workLogs)
+                        ? CollUtil.getFirst(workLogs).getRemainingHours()
+                        : workItem.getEstimatedHours();
         if (remainingHours == null && workItem.getEstimatedHours() != null) {
             remainingHours = Math.max(workItem.getEstimatedHours() - actualHours, 0);
         }
-        List<PmsWorkItemWorkLogRespVO> workLogVOs = convertList(workLogs, workLog ->
-                BeanUtils.toBean(workLog, PmsWorkItemWorkLogRespVO.class)
-                        .setCreatorUserId(NumberUtils.parseLong(workLog.getCreator())));
-        return new PmsWorkItemWorkLogSummaryRespVO().setEstimatedHours(workItem.getEstimatedHours())
-                .setActualHours(actualHours).setRemainingHours(remainingHours).setRecords(workLogVOs);
+        List<PmsWorkItemWorkLogRespVO> workLogVOs =
+                convertList(
+                        workLogs,
+                        workLog ->
+                                BeanUtils.toBean(workLog, PmsWorkItemWorkLogRespVO.class)
+                                        .setCreatorUserId(
+                                                NumberUtils.parseLong(workLog.getCreator())));
+        return new PmsWorkItemWorkLogSummaryRespVO()
+                .setEstimatedHours(workItem.getEstimatedHours())
+                .setActualHours(actualHours)
+                .setRemainingHours(remainingHours)
+                .setRecords(workLogVOs);
     }
 
     @Override
-    public List<PmsWorkItemWorkLogDO> getWorkItemWorkLogListByWorkItemIds(Collection<Long> workItemIds) {
+    public List<PmsWorkItemWorkLogDO> getWorkItemWorkLogListByWorkItemIds(
+            Collection<Long> workItemIds) {
         if (CollUtil.isEmpty(workItemIds)) {
             return Collections.emptyList();
         }
@@ -150,55 +167,90 @@ public class PmsWorkItemWorkLogServiceImpl implements PmsWorkItemWorkLogService 
         }
 
         // 2.1 查询范围内工时和关联工作项
-        List<PmsWorkItemWorkLogDO> workLogs = workLogMapper.selectListByProjectIdAndCreateTimeBetween(
-                reqVO.getProjectId(), beginTime, endTime);
-        Map<Long, PmsWorkItemDO> workItemMap = convertMap(workItemService.getWorkItemList(
-                convertSet(workLogs, PmsWorkItemWorkLogDO::getWorkItemId)), PmsWorkItemDO::getId);
+        List<PmsWorkItemWorkLogDO> workLogs =
+                workLogMapper.selectListByProjectIdAndCreateTimeBetween(
+                        reqVO.getProjectId(), beginTime, endTime);
+        Map<Long, PmsWorkItemDO> workItemMap =
+                convertMap(
+                        workItemService.getWorkItemList(
+                                convertSet(workLogs, PmsWorkItemWorkLogDO::getWorkItemId)),
+                        PmsWorkItemDO::getId);
         // 2.2 查询迭代并按迭代名称筛选
         Set<Long> iterationIds = convertSet(workItemMap.values(), PmsWorkItemDO::getIterationId);
         iterationIds.remove(null);
-        Map<Long, PmsIterationDO> iterationMap = convertMap(iterationService.getIterationList(iterationIds),
-                PmsIterationDO::getId);
+        Map<Long, PmsIterationDO> iterationMap =
+                convertMap(iterationService.getIterationList(iterationIds), PmsIterationDO::getId);
         if (StrUtil.isNotBlank(reqVO.getIterationName())) {
-            workItemMap.entrySet().removeIf(entry -> {
-                PmsIterationDO iteration = entry.getValue().getIterationId() != null
-                        ? iterationMap.get(entry.getValue().getIterationId()) : null;
-                String currentIterationName = iteration != null ? iteration.getName() : "未规划事项";
-                return !StrUtil.containsIgnoreCase(currentIterationName, reqVO.getIterationName());
-            });
+            workItemMap
+                    .entrySet()
+                    .removeIf(
+                            entry -> {
+                                PmsIterationDO iteration =
+                                        entry.getValue().getIterationId() != null
+                                                ? iterationMap.get(
+                                                        entry.getValue().getIterationId())
+                                                : null;
+                                String currentIterationName =
+                                        iteration != null ? iteration.getName() : "未规划事项";
+                                return !StrUtil.containsIgnoreCase(
+                                        currentIterationName, reqVO.getIterationName());
+                            });
             workLogs.removeIf(workLog -> !workItemMap.containsKey(workLog.getWorkItemId()));
         }
 
         // 3. 按迭代和工作项汇总每日工时
-        Map<Long, List<PmsWorkItemDO>> groupedWorkItems = convertMultiMap(workItemMap.values(),
-                item -> item.getIterationId() != null ? item.getIterationId() : 0L);
-        Map<Long, List<PmsWorkItemWorkLogDO>> groupedWorkLogs = convertMultiMap(
-                workLogs, PmsWorkItemWorkLogDO::getWorkItemId);
+        Map<Long, List<PmsWorkItemDO>> groupedWorkItems =
+                convertMultiMap(
+                        workItemMap.values(),
+                        item -> item.getIterationId() != null ? item.getIterationId() : 0L);
+        Map<Long, List<PmsWorkItemWorkLogDO>> groupedWorkLogs =
+                convertMultiMap(workLogs, PmsWorkItemWorkLogDO::getWorkItemId);
         List<PmsProjectWorkLogReportRespVO.Group> groups = new ArrayList<>();
         for (Map.Entry<Long, List<PmsWorkItemDO>> entry : groupedWorkItems.entrySet()) {
             Long iterationId = entry.getKey() != 0L ? entry.getKey() : null;
             List<PmsProjectWorkLogReportRespVO.Item> items = new ArrayList<>();
             for (PmsWorkItemDO workItem : entry.getValue()) {
                 Map<String, Integer> dailyHours = new LinkedHashMap<>();
-                for (PmsWorkItemWorkLogDO workLog : groupedWorkLogs.getOrDefault(
-                        workItem.getId(), Collections.emptyList())) {
-                    dailyHours.merge(workLog.getCreateTime().toLocalDate().toString(),
-                            workLog.getActualHours(), Integer::sum);
+                for (PmsWorkItemWorkLogDO workLog :
+                        groupedWorkLogs.getOrDefault(workItem.getId(), Collections.emptyList())) {
+                    dailyHours.merge(
+                            workLog.getCreateTime().toLocalDate().toString(),
+                            workLog.getActualHours(),
+                            Integer::sum);
                 }
                 int totalHours = dailyHours.values().stream().mapToInt(Integer::intValue).sum();
-                items.add(new PmsProjectWorkLogReportRespVO.Item().setWorkItemId(workItem.getId())
-                        .setSerialNumber(workItem.getSerialNumber()).setName(workItem.getName())
-                        .setType(workItem.getType()).setTotalHours(totalHours).setDailyHours(dailyHours));
+                items.add(
+                        new PmsProjectWorkLogReportRespVO.Item()
+                                .setWorkItemId(workItem.getId())
+                                .setSerialNumber(workItem.getSerialNumber())
+                                .setName(workItem.getName())
+                                .setType(workItem.getType())
+                                .setTotalHours(totalHours)
+                                .setDailyHours(dailyHours));
             }
-            items.sort(Comparator.comparingInt(PmsProjectWorkLogReportRespVO.Item::getSerialNumber));
+            items.sort(
+                    Comparator.comparingInt(PmsProjectWorkLogReportRespVO.Item::getSerialNumber));
             PmsIterationDO iteration = iterationId != null ? iterationMap.get(iterationId) : null;
-            groups.add(new PmsProjectWorkLogReportRespVO.Group().setIterationId(iterationId)
-                    .setIterationName(iteration != null ? iteration.getName() : "未规划事项")
-                    .setTotalHours(items.stream().mapToInt(PmsProjectWorkLogReportRespVO.Item::getTotalHours).sum())
-                    .setItems(items));
+            groups.add(
+                    new PmsProjectWorkLogReportRespVO.Group()
+                            .setIterationId(iterationId)
+                            .setIterationName(iteration != null ? iteration.getName() : "未规划事项")
+                            .setTotalHours(
+                                    items.stream()
+                                            .mapToInt(
+                                                    PmsProjectWorkLogReportRespVO.Item
+                                                            ::getTotalHours)
+                                            .sum())
+                            .setItems(items));
         }
-        groups.sort((first, second) -> first.getIterationId() == null ? 1
-                : second.getIterationId() == null ? -1 : first.getIterationName().compareTo(second.getIterationName()));
+        groups.sort(
+                (first, second) ->
+                        first.getIterationId() == null
+                                ? 1
+                                : second.getIterationId() == null
+                                        ? -1
+                                        : first.getIterationName()
+                                                .compareTo(second.getIterationName()));
 
         // 4. 返回连续日期轴和总工时
         LocalDate beginDate = beginTime.toLocalDate();
@@ -207,8 +259,12 @@ public class PmsWorkItemWorkLogServiceImpl implements PmsWorkItemWorkLogService 
         for (LocalDate date = beginDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             dates.add(date.toString());
         }
-        return new PmsProjectWorkLogReportRespVO().setDates(dates)
-                .setTotalHours(groups.stream().mapToInt(PmsProjectWorkLogReportRespVO.Group::getTotalHours).sum())
+        return new PmsProjectWorkLogReportRespVO()
+                .setDates(dates)
+                .setTotalHours(
+                        groups.stream()
+                                .mapToInt(PmsProjectWorkLogReportRespVO.Group::getTotalHours)
+                                .sum())
                 .setGroups(groups);
     }
 
@@ -235,5 +291,4 @@ public class PmsWorkItemWorkLogServiceImpl implements PmsWorkItemWorkLogService 
         }
         return workLog;
     }
-
 }

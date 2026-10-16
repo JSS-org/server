@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.erp.controller.admin.finance.vo.account;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -20,5 +22,4 @@ public class ErpAccountPageReqVO extends PageParam {
 
     @Schema(description = "备注", example = "随便")
     private String remark;
-
 }

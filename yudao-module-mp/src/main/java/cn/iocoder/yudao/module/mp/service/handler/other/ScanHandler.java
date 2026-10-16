@@ -6,6 +6,7 @@ import me.chanjar.weixin.mp.api.WxMpMessageHandler;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlOutMessage;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -17,9 +18,12 @@ import java.util.Map;
 public class ScanHandler implements WxMpMessageHandler {
 
     @Override
-    public WxMpXmlOutMessage handle(WxMpXmlMessage wxMpXmlMessage, Map<String, Object> context,
-                                    WxMpService wxMpService, WxSessionManager wxSessionManager) throws WxErrorException {
+    public WxMpXmlOutMessage handle(
+            WxMpXmlMessage wxMpXmlMessage,
+            Map<String, Object> context,
+            WxMpService wxMpService,
+            WxSessionManager wxSessionManager)
+            throws WxErrorException {
         throw new UnsupportedOperationException("未实现该处理，请自行重写");
     }
-
 }

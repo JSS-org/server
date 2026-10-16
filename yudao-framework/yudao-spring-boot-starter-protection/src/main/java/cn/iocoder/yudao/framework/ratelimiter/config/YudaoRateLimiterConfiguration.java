@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.RateLimiterKeyRes
 import cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.impl.*;
 import cn.iocoder.yudao.framework.ratelimiter.core.redis.RateLimiterRedisDAO;
 import cn.iocoder.yudao.framework.redis.config.YudaoRedisAutoConfiguration;
+
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +16,8 @@ import java.util.List;
 public class YudaoRateLimiterConfiguration {
 
     @Bean
-    public RateLimiterAspect rateLimiterAspect(List<RateLimiterKeyResolver> keyResolvers, RateLimiterRedisDAO rateLimiterRedisDAO) {
+    public RateLimiterAspect rateLimiterAspect(
+            List<RateLimiterKeyResolver> keyResolvers, RateLimiterRedisDAO rateLimiterRedisDAO) {
         return new RateLimiterAspect(keyResolvers, rateLimiterRedisDAO);
     }
 
@@ -51,5 +53,4 @@ public class YudaoRateLimiterConfiguration {
     public ExpressionRateLimiterKeyResolver expressionRateLimiterKeyResolver() {
         return new ExpressionRateLimiterKeyResolver();
     }
-
 }

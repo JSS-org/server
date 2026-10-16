@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.admin.brokerage.vo.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -21,8 +22,12 @@ public class BrokerageUserRespVO extends BrokerageUserBaseVO {
 
     // ========== 用户信息 ==========
 
-    @Schema(description = "用户头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xxx.png")
+    @Schema(
+            description = "用户头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xxx.png")
     private String avatar;
+
     @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
     private String nickname;
 
@@ -30,8 +35,10 @@ public class BrokerageUserRespVO extends BrokerageUserBaseVO {
 
     @Schema(description = "推广用户数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "20019")
     private Integer brokerageUserCount;
+
     @Schema(description = "推广订单数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "20019")
     private Integer brokerageOrderCount;
+
     @Schema(description = "推广订单金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "20019")
     private Integer brokerageOrderPrice;
 
@@ -39,7 +46,7 @@ public class BrokerageUserRespVO extends BrokerageUserBaseVO {
 
     @Schema(description = "已提现金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "20019")
     private Integer withdrawPrice;
+
     @Schema(description = "已提现次数", requiredMode = Schema.RequiredMode.REQUIRED, example = "20019")
     private Integer withdrawCount;
-
 }

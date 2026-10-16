@@ -12,18 +12,22 @@ public class ImageMessage {
      * 图片 URL
      */
     private String url;
+
     /**
      * 缩略图 URL
      */
     private String thumbnailUrl;
+
     /**
      * 图片宽度
      */
     private Integer width;
+
     /**
      * 图片高度
      */
     private Integer height;
+
     /**
      * 图片大小（字节）
      */
@@ -33,5 +37,4 @@ public class ImageMessage {
      * 引用消息（可选）
      */
     private QuoteMessage quote;
-
 }

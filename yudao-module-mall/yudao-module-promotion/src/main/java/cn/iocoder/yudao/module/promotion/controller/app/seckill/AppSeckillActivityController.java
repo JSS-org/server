@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.promotion.controller.app.seckill;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.cache.CacheUtils.buildAsyncReloadingCache;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBetween;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -18,13 +24,17 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillConfigDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillProductDO;
 import cn.iocoder.yudao.module.promotion.service.seckill.SeckillActivityService;
 import cn.iocoder.yudao.module.promotion.service.seckill.SeckillConfigService;
+
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,12 +49,6 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.cache.CacheUtils.buildAsyncReloadingCache;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBetween;
-
 @Tag(name = "用户 App - 秒杀活动")
 @RestController
 @RequestMapping("/promotion/seckill-activity")
@@ -54,24 +58,21 @@ public class AppSeckillActivityController {
     /**
      * {@link AppSeckillActivityNowRespVO} 缓存，通过它异步刷新 {@link #getNowSeckillActivity()} 所要的首页数据
      */
-    private final LoadingCache<String, AppSeckillActivityNowRespVO> nowSeckillActivityCache = buildAsyncReloadingCache(Duration.ofSeconds(10L),
-            new CacheLoader<String, AppSeckillActivityNowRespVO>() {
+    private final LoadingCache<String, AppSeckillActivityNowRespVO> nowSeckillActivityCache =
+            buildAsyncReloadingCache(
+                    Duration.ofSeconds(10L),
+                    new CacheLoader<String, AppSeckillActivityNowRespVO>() {
 
-                @Override
-                public AppSeckillActivityNowRespVO load(String key) {
-                     return getNowSeckillActivity0();
-                }
+                        @Override
+                        public AppSeckillActivityNowRespVO load(String key) {
+                            return getNowSeckillActivity0();
+                        }
+                    });
 
-            });
+    @Resource private SeckillActivityService activityService;
+    @Resource @Lazy private SeckillConfigService configService;
 
-    @Resource
-    private SeckillActivityService activityService;
-    @Resource
-    @Lazy
-    private SeckillConfigService configService;
-
-    @Resource
-    private ProductSpuApi spuApi;
+    @Resource private ProductSpuApi spuApi;
 
     @GetMapping("/get-now")
     @Operation(summary = "获得当前秒杀活动", description = "获取当前正在进行的活动，提供给首页使用")
@@ -88,36 +89,46 @@ public class AppSeckillActivityController {
         }
 
         // 2.1 查询满足当前阶段的活动
-        List<SeckillActivityDO> activityList = activityService.getSeckillActivityListByConfigIdAndStatus(config.getId(), CommonStatusEnum.ENABLE.getStatus());
-        List<SeckillProductDO> productList = activityService.getSeckillProductListByActivityIds(
-                convertList(activityList, SeckillActivityDO::getId));
+        List<SeckillActivityDO> activityList =
+                activityService.getSeckillActivityListByConfigIdAndStatus(
+                        config.getId(), CommonStatusEnum.ENABLE.getStatus());
+        List<SeckillProductDO> productList =
+                activityService.getSeckillProductListByActivityIds(
+                        convertList(activityList, SeckillActivityDO::getId));
         // 2.2 获取 spu 信息
-        List<ProductSpuRespDTO> spuList = spuApi.getSpuList(convertList(activityList, SeckillActivityDO::getSpuId));
+        List<ProductSpuRespDTO> spuList =
+                spuApi.getSpuList(convertList(activityList, SeckillActivityDO::getSpuId));
         return SeckillActivityConvert.INSTANCE.convert(config, activityList, productList, spuList);
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得秒杀活动分页")
     @PermitAll
-    public CommonResult<PageResult<AppSeckillActivityRespVO>> getSeckillActivityPage(AppSeckillActivityPageReqVO pageReqVO) {
+    public CommonResult<PageResult<AppSeckillActivityRespVO>> getSeckillActivityPage(
+            AppSeckillActivityPageReqVO pageReqVO) {
         // 1. 查询满足当前阶段的活动
-        PageResult<SeckillActivityDO> pageResult = activityService.getSeckillActivityAppPageByConfigId(pageReqVO);
+        PageResult<SeckillActivityDO> pageResult =
+                activityService.getSeckillActivityAppPageByConfigId(pageReqVO);
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(PageResult.empty(pageResult.getTotal()));
         }
-        List<SeckillProductDO> productList = activityService.getSeckillProductListByActivityIds(
-                convertList(pageResult.getList(), SeckillActivityDO::getId));
+        List<SeckillProductDO> productList =
+                activityService.getSeckillProductListByActivityIds(
+                        convertList(pageResult.getList(), SeckillActivityDO::getId));
 
         // 2. 拼接数据
-        List<ProductSpuRespDTO> spuList = spuApi.getSpuList(convertList(pageResult.getList(), SeckillActivityDO::getSpuId));
-        return success(SeckillActivityConvert.INSTANCE.convertPage02(pageResult, productList, spuList));
+        List<ProductSpuRespDTO> spuList =
+                spuApi.getSpuList(convertList(pageResult.getList(), SeckillActivityDO::getSpuId));
+        return success(
+                SeckillActivityConvert.INSTANCE.convertPage02(pageResult, productList, spuList));
     }
 
     @GetMapping("/get-detail")
     @Operation(summary = "获得秒杀活动明细")
     @Parameter(name = "id", description = "活动编号", required = true, example = "1024")
     @PermitAll
-    public CommonResult<AppSeckillActivityDetailRespVO> getSeckillActivity(@RequestParam("id") Long id) {
+    public CommonResult<AppSeckillActivityDetailRespVO> getSeckillActivity(
+            @RequestParam("id") Long id) {
         // 1. 获取活动
         SeckillActivityDO activity = activityService.getSeckillActivity(id);
         if (activity == null
@@ -126,10 +137,14 @@ public class AppSeckillActivityController {
         }
 
         // 2. 获取时间段
-        List<SeckillConfigDO> configs = configService.getSeckillConfigListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        List<SeckillConfigDO> configs =
+                configService.getSeckillConfigListByStatus(CommonStatusEnum.ENABLE.getStatus());
         configs.removeIf(config -> !CollUtil.contains(activity.getConfigIds(), config.getId()));
         // 2.1 优先使用当前时间段
-        SeckillConfigDO config = findFirst(configs, config0 -> isBetween(config0.getStartTime(), config0.getEndTime()));
+        SeckillConfigDO config =
+                findFirst(
+                        configs,
+                        config0 -> isBetween(config0.getStartTime(), config0.getEndTime()));
         // 2.2 如果没有，则获取最后一个，因为倾向优先展示“未开始” > “已结束”
         if (config == null) {
             config = CollUtil.getLast(configs);
@@ -150,15 +165,19 @@ public class AppSeckillActivityController {
         LocalDateTime endTime = LocalDateTime.of(nowDate, LocalTime.parse(config.getEndTime()));
 
         // 4. 拼接数据
-        List<SeckillProductDO> productList = activityService.getSeckillProductListByActivityId(activity.getId());
-        return success(SeckillActivityConvert.INSTANCE.convert3(activity, productList, startTime, endTime));
+        List<SeckillProductDO> productList =
+                activityService.getSeckillProductListByActivityId(activity.getId());
+        return success(
+                SeckillActivityConvert.INSTANCE.convert3(
+                        activity, productList, startTime, endTime));
     }
 
     @GetMapping("/list-by-ids")
     @Operation(summary = "获得秒杀活动列表，基于活动编号数组")
     @Parameter(name = "ids", description = "活动编号数组", required = true, example = "[1024, 1025]")
     @PermitAll
-    public CommonResult<List<AppSeckillActivityRespVO>> getCombinationActivityListByIds(@RequestParam("ids") List<Long> ids) {
+    public CommonResult<List<AppSeckillActivityRespVO>> getCombinationActivityListByIds(
+            @RequestParam("ids") List<Long> ids) {
         // 1. 获得开启的活动列表
         List<SeckillActivityDO> activityList = activityService.getSeckillActivityListByIds(ids);
         activityList.removeIf(activity -> CommonStatusEnum.isDisable(activity.getStatus()));
@@ -166,10 +185,12 @@ public class AppSeckillActivityController {
             return success(Collections.emptyList());
         }
         // 2. 拼接返回
-        List<SeckillProductDO> productList = activityService.getSeckillProductListByActivityIds(
-                convertList(activityList, SeckillActivityDO::getId));
-        List<ProductSpuRespDTO> spuList = spuApi.getSpuList(convertList(activityList, SeckillActivityDO::getSpuId));
-        return success(SeckillActivityConvert.INSTANCE.convertAppList(activityList, productList, spuList));
+        List<SeckillProductDO> productList =
+                activityService.getSeckillProductListByActivityIds(
+                        convertList(activityList, SeckillActivityDO::getId));
+        List<ProductSpuRespDTO> spuList =
+                spuApi.getSpuList(convertList(activityList, SeckillActivityDO::getSpuId));
+        return success(
+                SeckillActivityConvert.INSTANCE.convertAppList(activityList, productList, spuList));
     }
-
 }

@@ -17,5 +17,4 @@ public enum RoleTypeEnum {
     CUSTOM(2);
 
     private final Integer type;
-
 }

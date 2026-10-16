@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.iot.core.util;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.core.topic.event.IotDeviceEventPostReqDTO;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotDeviceMessageUtils} 的单元测试
@@ -242,7 +243,8 @@ public class IotDeviceMessageUtilsTest {
 
         // 调用 & 断言：验证互补性
         boolean containsResult = IotDeviceMessageUtils.containsIdentifier(message, identifier);
-        boolean notContainsResult = IotDeviceMessageUtils.notContainsIdentifier(message, identifier);
+        boolean notContainsResult =
+                IotDeviceMessageUtils.notContainsIdentifier(message, identifier);
         assertTrue(containsResult);
         assertFalse(notContainsResult);
         assertEquals(!containsResult, notContainsResult);
@@ -265,7 +267,8 @@ public class IotDeviceMessageUtilsTest {
 
         // 调用 & 断言：验证互补性
         boolean containsResult = IotDeviceMessageUtils.containsIdentifier(message, identifier);
-        boolean notContainsResult = IotDeviceMessageUtils.notContainsIdentifier(message, identifier);
+        boolean notContainsResult =
+                IotDeviceMessageUtils.notContainsIdentifier(message, identifier);
         assertFalse(containsResult);
         assertTrue(notContainsResult);
         assertEquals(!containsResult, notContainsResult);
@@ -285,7 +288,8 @@ public class IotDeviceMessageUtilsTest {
 
         // 调用 & 断言：验证互补性
         boolean containsResult = IotDeviceMessageUtils.containsIdentifier(message, identifier);
-        boolean notContainsResult = IotDeviceMessageUtils.notContainsIdentifier(message, identifier);
+        boolean notContainsResult =
+                IotDeviceMessageUtils.notContainsIdentifier(message, identifier);
         assertFalse(containsResult);
         assertTrue(notContainsResult);
         assertEquals(!containsResult, notContainsResult);
@@ -347,5 +351,4 @@ public class IotDeviceMessageUtilsTest {
         assertTrue(identifiers.contains("temperature"));
         assertTrue(identifiers.contains("humidity"));
     }
-
 }

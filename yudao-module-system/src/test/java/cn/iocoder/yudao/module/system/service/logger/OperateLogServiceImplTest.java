@@ -1,31 +1,32 @@
 package cn.iocoder.yudao.module.system.service.logger;
 
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.framework.test.core.util.RandomUtils;
-import cn.iocoder.yudao.framework.common.biz.system.logger.dto.OperateLogCreateReqDTO;
-import cn.iocoder.yudao.module.system.api.logger.dto.OperateLogPageReqDTO;
-import cn.iocoder.yudao.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
-import cn.iocoder.yudao.module.system.dal.dataobject.logger.OperateLogDO;
-import cn.iocoder.yudao.module.system.dal.mysql.logger.OperateLogMapper;
-import jakarta.annotation.Resource;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
 import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import cn.iocoder.yudao.framework.common.biz.system.logger.dto.OperateLogCreateReqDTO;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.framework.test.core.util.RandomUtils;
+import cn.iocoder.yudao.module.system.api.logger.dto.OperateLogPageReqDTO;
+import cn.iocoder.yudao.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.logger.OperateLogDO;
+import cn.iocoder.yudao.module.system.dal.mysql.logger.OperateLogMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
 
 @Import({OperateLogServiceImpl.class})
 public class OperateLogServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OperateLogService operateLogServiceImpl;
+    @Resource private OperateLogService operateLogServiceImpl;
 
-    @Resource
-    private OperateLogMapper operateLogMapper;
+    @Resource private OperateLogMapper operateLogMapper;
 
     @Test
     public void testCreateOperateLog() {
@@ -41,14 +42,17 @@ public class OperateLogServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetOperateLogPage_vo() {
         // 构造操作日志
-        OperateLogDO operateLogDO = RandomUtils.randomPojo(OperateLogDO.class, o -> {
-            o.setUserId(2048L);
-            o.setBizId(999L);
-            o.setType("订单");
-            o.setSubType("创建订单");
-            o.setAction("修改编号为 1 的用户信息");
-            o.setCreateTime(buildTime(2021, 3, 6));
-        });
+        OperateLogDO operateLogDO =
+                RandomUtils.randomPojo(
+                        OperateLogDO.class,
+                        o -> {
+                            o.setUserId(2048L);
+                            o.setBizId(999L);
+                            o.setType("订单");
+                            o.setSubType("创建订单");
+                            o.setAction("修改编号为 1 的用户信息");
+                            o.setCreateTime(buildTime(2021, 3, 6));
+                        });
         operateLogMapper.insert(operateLogDO);
         // 测试 userId 不匹配
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setUserId(1024L)));
@@ -61,7 +65,8 @@ public class OperateLogServiceImplTest extends BaseDbUnitTest {
         // 测试 action 不匹配
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setAction("修改编号为 1 退款信息")));
         // 测试 createTime 不匹配
-        operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setCreateTime(buildTime(2021, 2, 6))));
+        operateLogMapper.insert(
+                cloneIgnoreId(operateLogDO, o -> o.setCreateTime(buildTime(2021, 2, 6))));
 
         // 构造调用参数
         OperateLogPageReqVO reqVO = new OperateLogPageReqVO();
@@ -83,11 +88,14 @@ public class OperateLogServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetOperateLogPage_dto() {
         // 构造操作日志
-        OperateLogDO operateLogDO = RandomUtils.randomPojo(OperateLogDO.class, o -> {
-            o.setUserId(2048L);
-            o.setBizId(999L);
-            o.setType("订单");
-        });
+        OperateLogDO operateLogDO =
+                RandomUtils.randomPojo(
+                        OperateLogDO.class,
+                        o -> {
+                            o.setUserId(2048L);
+                            o.setBizId(999L);
+                            o.setType("订单");
+                        });
         operateLogMapper.insert(operateLogDO);
         // 测试 userId 不匹配
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setUserId(1024L)));
@@ -109,5 +117,4 @@ public class OperateLogServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, pageResult.getList().size());
         assertPojoEquals(operateLogDO, pageResult.getList().get(0));
     }
-
 }

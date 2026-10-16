@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.promotion.controller.app.article.vo.article.AppAr
 import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -72,7 +73,8 @@ public interface ArticleService {
      * @param recommendBanner 是否轮播图
      * @return 文章列表
      */
-    List<ArticleDO> getArticleCategoryListByRecommend(Boolean recommendHot, Boolean recommendBanner);
+    List<ArticleDO> getArticleCategoryListByRecommend(
+            Boolean recommendHot, Boolean recommendBanner);
 
     /**
      * 获得文章分页
@@ -96,5 +98,4 @@ public interface ArticleService {
      * @param id 文章编号
      */
     void addArticleBrowseCount(Long id);
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo.MesDvRepairConf
 import cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo.MesDvRepairPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo.MesDvRepairSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.repair.MesDvRepairDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -90,5 +91,4 @@ public interface MesDvRepairService {
      * @param userId 当前登录用户编号
      */
     void finishRepair(Long id, Integer result, Long userId);
-
 }

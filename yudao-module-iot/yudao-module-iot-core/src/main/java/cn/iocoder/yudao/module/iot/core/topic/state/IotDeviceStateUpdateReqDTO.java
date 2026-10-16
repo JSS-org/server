@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.state;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,5 +22,4 @@ public class IotDeviceStateUpdateReqDTO {
      * 设备状态
      */
     private Integer state;
-
 }

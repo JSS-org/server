@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.qc.indicator;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,7 +15,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.indicator.vo.MesQcIndicat
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.indicator.MesQcIndicatorDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.qc.indicator.MesQcIndicatorMapper;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcResultValueTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -19,10 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 质检指标 Service 实现类
@@ -33,8 +35,7 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcIndicatorServiceImpl implements MesQcIndicatorService {
 
-    @Resource
-    private MesQcIndicatorMapper indicatorMapper;
+    @Resource private MesQcIndicatorMapper indicatorMapper;
 
     @Override
     public Long createIndicator(MesQcIndicatorSaveReqVO createReqVO) {
@@ -103,7 +104,9 @@ public class MesQcIndicatorServiceImpl implements MesQcIndicatorService {
     }
 
     private void validateResultSpecification(Integer resultType, String resultSpecification) {
-        if (ObjectUtils.equalsAny(resultType, MesQcResultValueTypeEnum.FILE.getType(),
+        if (ObjectUtils.equalsAny(
+                resultType,
+                MesQcResultValueTypeEnum.FILE.getType(),
                 MesQcResultValueTypeEnum.DICT.getType())) {
             if (StrUtil.isBlank(resultSpecification)) {
                 throw exception(QC_INDICATOR_RESULT_SPECIFICATION_REQUIRED);
@@ -142,5 +145,4 @@ public class MesQcIndicatorServiceImpl implements MesQcIndicatorService {
         }
         return convertMap(indicators, MesQcIndicatorDO::getId);
     }
-
 }

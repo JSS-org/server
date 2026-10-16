@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.service.order;
 
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderLogDO;
 import cn.iocoder.yudao.module.trade.service.order.bo.TradeOrderLogCreateReqBO;
+
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
@@ -31,5 +32,4 @@ public interface TradeOrderLogService {
      * @return 交易订单日志列表
      */
     List<TradeOrderLogDO> getOrderLogListByOrderId(Long orderId);
-
 }

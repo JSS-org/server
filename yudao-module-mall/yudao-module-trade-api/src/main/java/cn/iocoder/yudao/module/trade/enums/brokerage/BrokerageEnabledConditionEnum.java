@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.enums.brokerage;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -25,12 +26,16 @@ public enum BrokerageEnabledConditionEnum implements ArrayValuable<Integer> {
     ADMIN(2, "指定分销"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BrokerageEnabledConditionEnum::getCondition).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(BrokerageEnabledConditionEnum::getCondition)
+                    .toArray(Integer[]::new);
 
     /**
      * 模式
      */
     private final Integer condition;
+
     /**
      * 名字
      */
@@ -40,5 +45,4 @@ public enum BrokerageEnabledConditionEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

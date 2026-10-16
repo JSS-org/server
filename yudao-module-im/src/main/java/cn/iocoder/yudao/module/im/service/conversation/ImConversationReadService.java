@@ -22,7 +22,8 @@ public interface ImConversationReadService {
      * @param readMessageId    已读到的最大消息编号
      * @return 读位置是否前进；true 时调用方才需要下发已读 / 回执事件
      */
-    boolean updateConversationReadPosition(Long userId, Integer conversationType, Long conversationId, Long readMessageId);
+    boolean updateConversationReadPosition(
+            Long userId, Integer conversationType, Long conversationId, Long readMessageId);
 
     /**
      * 获取用户在某会话的最大已读位置
@@ -51,7 +52,8 @@ public interface ImConversationReadService {
      * @param conversationIds  会话编号集合
      * @return conversationId → 最大已读消息编号
      */
-    Map<Long, Long> getConversationReadMessageIdMap(Long userId, Integer conversationType, Collection<Long> conversationIds);
+    Map<Long, Long> getConversationReadMessageIdMap(
+            Long userId, Integer conversationType, Collection<Long> conversationIds);
 
     /**
      * 增量拉取当前用户的会话读位置（重连 / 离线补偿：按 update_time + id 游标）
@@ -62,6 +64,6 @@ public interface ImConversationReadService {
      * @param limit          单次拉取条数
      * @return 会话读位置列表，按更新时间、id 正序
      */
-    List<ImConversationReadDO> pullConversationReadList(Long userId, Long lastUpdateTime, Long lastId, Integer limit);
-
+    List<ImConversationReadDO> pullConversationReadList(
+            Long userId, Long lastUpdateTime, Long lastId, Integer limit);
 }

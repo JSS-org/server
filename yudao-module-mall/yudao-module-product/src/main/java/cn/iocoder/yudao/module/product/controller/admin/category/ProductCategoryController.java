@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.product.controller.admin.category;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.product.controller.admin.category.vo.ProductCategoryListReqVO;
@@ -7,11 +9,14 @@ import cn.iocoder.yudao.module.product.controller.admin.category.vo.ProductCateg
 import cn.iocoder.yudao.module.product.controller.admin.category.vo.ProductCategorySaveReqVO;
 import cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO;
 import cn.iocoder.yudao.module.product.service.category.ProductCategoryService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,28 +24,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - 商品分类")
 @RestController
 @RequestMapping("/product/category")
 @Validated
 public class ProductCategoryController {
 
-    @Resource
-    private ProductCategoryService categoryService;
+    @Resource private ProductCategoryService categoryService;
 
     @PostMapping("/create")
     @Operation(summary = "创建商品分类")
     @PreAuthorize("@ss.hasPermission('product:category:create')")
-    public CommonResult<Long> createCategory(@Valid @RequestBody ProductCategorySaveReqVO createReqVO) {
+    public CommonResult<Long> createCategory(
+            @Valid @RequestBody ProductCategorySaveReqVO createReqVO) {
         return success(categoryService.createCategory(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新商品分类")
     @PreAuthorize("@ss.hasPermission('product:category:update')")
-    public CommonResult<Boolean> updateCategory(@Valid @RequestBody ProductCategorySaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateCategory(
+            @Valid @RequestBody ProductCategorySaveReqVO updateReqVO) {
         categoryService.updateCategory(updateReqVO);
         return success(true);
     }
@@ -66,10 +70,10 @@ public class ProductCategoryController {
     @GetMapping("/list")
     @Operation(summary = "获得商品分类列表")
     @PreAuthorize("@ss.hasPermission('product:category:query')")
-    public CommonResult<List<ProductCategoryRespVO>> getCategoryList(@Valid ProductCategoryListReqVO listReqVO) {
+    public CommonResult<List<ProductCategoryRespVO>> getCategoryList(
+            @Valid ProductCategoryListReqVO listReqVO) {
         List<ProductCategoryDO> list = categoryService.getCategoryList(listReqVO);
         list.sort(Comparator.comparing(ProductCategoryDO::getSort));
         return success(BeanUtils.toBean(list, ProductCategoryRespVO.class));
     }
-
 }

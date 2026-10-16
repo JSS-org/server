@@ -29,5 +29,4 @@ public interface DatabaseTableService {
      * @return 表
      */
     TableInfo getTable(Long dataSourceConfigId, String tableName);
-
 }

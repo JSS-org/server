@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.infra.service.codegen.inner;
 
+import static cn.hutool.core.text.CharSequenceUtil.*;
+import static cn.hutool.core.util.RandomUtil.randomEle;
+import static cn.hutool.core.util.RandomUtil.randomInt;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -10,18 +14,16 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenColumnHtmlTypeEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenColumnListConditionEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenTemplateTypeEnum;
+
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static cn.hutool.core.text.CharSequenceUtil.*;
-import static cn.hutool.core.util.RandomUtil.randomEle;
-import static cn.hutool.core.util.RandomUtil.randomInt;
 
 /**
  * 代码生成器的 Builder，负责：
@@ -35,12 +37,13 @@ public class CodegenBuilder {
      * 字段名与 {@link CodegenColumnListConditionEnum} 的默认映射
      * 注意，字段的匹配以后缀的方式
      */
-    private static final Map<String, CodegenColumnListConditionEnum> COLUMN_LIST_OPERATION_CONDITION_MAPPINGS =
-            MapUtil.<String, CodegenColumnListConditionEnum>builder()
-                    .put("name", CodegenColumnListConditionEnum.LIKE)
-                    .put("time", CodegenColumnListConditionEnum.BETWEEN)
-                    .put("date", CodegenColumnListConditionEnum.BETWEEN)
-                    .build();
+    private static final Map<String, CodegenColumnListConditionEnum>
+            COLUMN_LIST_OPERATION_CONDITION_MAPPINGS =
+                    MapUtil.<String, CodegenColumnListConditionEnum>builder()
+                            .put("name", CodegenColumnListConditionEnum.LIKE)
+                            .put("time", CodegenColumnListConditionEnum.BETWEEN)
+                            .put("date", CodegenColumnListConditionEnum.BETWEEN)
+                            .build();
 
     /**
      * 字段名与 {@link CodegenColumnHtmlTypeEnum} 的默认映射
@@ -64,29 +67,35 @@ public class CodegenBuilder {
      * 多租户编号的字段名
      */
     public static final String TENANT_ID_FIELD = "tenantId";
+
     /**
      * {@link cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO} 的字段
      */
     public static final Set<String> BASE_DO_FIELDS = new HashSet<>();
+
     /**
      * 新增操作，不需要传递的字段
      */
     private static final Set<String> CREATE_OPERATION_EXCLUDE_COLUMN = Sets.newHashSet("id");
+
     /**
      * 修改操作，不需要传递的字段
      */
     private static final Set<String> UPDATE_OPERATION_EXCLUDE_COLUMN = Sets.newHashSet();
+
     /**
      * 列表操作的条件，不需要传递的字段
      */
     private static final Set<String> LIST_OPERATION_EXCLUDE_COLUMN = Sets.newHashSet("id");
+
     /**
      * 列表操作的结果，不需要返回的字段
      */
     private static final Set<String> LIST_OPERATION_RESULT_EXCLUDE_COLUMN = Sets.newHashSet();
 
     static {
-        Arrays.stream(ReflectUtil.getFields(BaseDO.class)).forEach(field -> BASE_DO_FIELDS.add(field.getName()));
+        Arrays.stream(ReflectUtil.getFields(BaseDO.class))
+                .forEach(field -> BASE_DO_FIELDS.add(field.getName()));
         BASE_DO_FIELDS.add(TENANT_ID_FIELD);
         // 处理 OPERATION 相关的字段
         CREATE_OPERATION_EXCLUDE_COLUMN.addAll(BASE_DO_FIELDS);
@@ -119,7 +128,8 @@ public class CodegenBuilder {
         // 驼峰 + 首字母大写；第一步，第一个 _ 前缀的后面，作为 class 名字；第二步，驼峰命名
         table.setClassName(upperFirst(toCamelCase(subAfter(tableName, '_', false))));
         // 去除结尾的表，作为类描述；注释中的英文引号替换为中文引号，避免破坏生成代码中的字符串字面量
-        table.setClassComment(StrUtil.removeSuffixIgnoreCase(sanitizeComment(table.getTableComment()), "表"));
+        table.setClassComment(
+                StrUtil.removeSuffixIgnoreCase(sanitizeComment(table.getTableComment()), "表"));
         table.setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
     }
 
@@ -144,30 +154,37 @@ public class CodegenBuilder {
 
     private void processColumnOperation(CodegenColumnDO column) {
         // 处理 createOperation 字段
-        column.setCreateOperation(!CREATE_OPERATION_EXCLUDE_COLUMN.contains(column.getJavaField())
-                && !column.getPrimaryKey()); // 对于主键，创建时无需传递
+        column.setCreateOperation(
+                !CREATE_OPERATION_EXCLUDE_COLUMN.contains(column.getJavaField())
+                        && !column.getPrimaryKey()); // 对于主键，创建时无需传递
         // 处理 updateOperation 字段
-        column.setUpdateOperation(!UPDATE_OPERATION_EXCLUDE_COLUMN.contains(column.getJavaField())
-                || column.getPrimaryKey()); // 对于主键，更新时需要传递
+        column.setUpdateOperation(
+                !UPDATE_OPERATION_EXCLUDE_COLUMN.contains(column.getJavaField())
+                        || column.getPrimaryKey()); // 对于主键，更新时需要传递
         // 处理 listOperation 字段
-        column.setListOperation(!LIST_OPERATION_EXCLUDE_COLUMN.contains(column.getJavaField())
-                && !column.getPrimaryKey()); // 对于主键，列表过滤不需要传递
+        column.setListOperation(
+                !LIST_OPERATION_EXCLUDE_COLUMN.contains(column.getJavaField())
+                        && !column.getPrimaryKey()); // 对于主键，列表过滤不需要传递
         // 处理 listOperationCondition 字段
         COLUMN_LIST_OPERATION_CONDITION_MAPPINGS.entrySet().stream()
                 .filter(entry -> StrUtil.endWithIgnoreCase(column.getJavaField(), entry.getKey()))
-                .findFirst().ifPresent(entry -> column.setListOperationCondition(entry.getValue().getCondition()));
+                .findFirst()
+                .ifPresent(
+                        entry -> column.setListOperationCondition(entry.getValue().getCondition()));
         if (column.getListOperationCondition() == null) {
             column.setListOperationCondition(CodegenColumnListConditionEnum.EQ.getCondition());
         }
         // 处理 listOperationResult 字段
-        column.setListOperationResult(!LIST_OPERATION_RESULT_EXCLUDE_COLUMN.contains(column.getJavaField()));
+        column.setListOperationResult(
+                !LIST_OPERATION_RESULT_EXCLUDE_COLUMN.contains(column.getJavaField()));
     }
 
     private void processColumnUI(CodegenColumnDO column) {
         // 基于后缀进行匹配
         COLUMN_HTML_TYPE_MAPPINGS.entrySet().stream()
                 .filter(entry -> StrUtil.endWithIgnoreCase(column.getJavaField(), entry.getKey()))
-                .findFirst().ifPresent(entry -> column.setHtmlType(entry.getValue().getType()));
+                .findFirst()
+                .ifPresent(entry -> column.setHtmlType(entry.getValue().getType()));
         // 如果是 Boolean 类型时，设置为 radio 类型.
         if (Boolean.class.getSimpleName().equals(column.getJavaType())) {
             column.setHtmlType(CodegenColumnHtmlTypeEnum.RADIO.getType());
@@ -195,12 +212,12 @@ public class CodegenBuilder {
         }
         // name
         if (StrUtil.endWithIgnoreCase(column.getJavaField(), "name")) {
-            column.setExample(randomEle(new String[]{"张三", "李四", "王五", "赵六", "芋艿"}));
+            column.setExample(randomEle(new String[] {"张三", "李四", "王五", "赵六", "芋艿"}));
             return;
         }
         // status
         if (StrUtil.endWithAnyIgnoreCase(column.getJavaField(), "status", "type")) {
-            column.setExample(randomEle(new String[]{"1", "2"}));
+            column.setExample(randomEle(new String[] {"1", "2"}));
             return;
         }
         // url
@@ -210,12 +227,12 @@ public class CodegenBuilder {
         }
         // reason
         if (StrUtil.endWithIgnoreCase(column.getColumnName(), "reason")) {
-            column.setExample(randomEle(new String[]{"不喜欢", "不对", "不好", "不香"}));
+            column.setExample(randomEle(new String[] {"不喜欢", "不对", "不好", "不香"}));
             return;
         }
         // description、memo、remark
         if (StrUtil.endWithAnyIgnoreCase(column.getColumnName(), "description", "memo", "remark")) {
-            column.setExample(randomEle(new String[]{"你猜", "随便", "你说的对"}));
+            column.setExample(randomEle(new String[] {"你猜", "随便", "你说的对"}));
         }
     }
 
@@ -232,5 +249,4 @@ public class CodegenBuilder {
         }
         return comment.replace('"', '“').replace('\'', '‘');
     }
-
 }

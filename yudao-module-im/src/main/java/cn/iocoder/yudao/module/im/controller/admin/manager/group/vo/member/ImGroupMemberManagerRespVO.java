@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.group.vo.member;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -41,5 +42,4 @@ public class ImGroupMemberManagerRespVO {
 
     @Schema(description = "禁言到期时间")
     private LocalDateTime muteEndTime;
-
 }

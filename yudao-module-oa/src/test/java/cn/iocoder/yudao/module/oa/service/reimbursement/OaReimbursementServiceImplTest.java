@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.reimbursement;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.jackson.config.YudaoJacksonAutoConfiguration;
@@ -14,8 +22,11 @@ import cn.iocoder.yudao.module.oa.controller.admin.reimbursement.vo.OaReimbursem
 import cn.iocoder.yudao.module.oa.dal.dataobject.reimbursement.OaReimbursementDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.reimbursement.OaReimbursementMapper;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +35,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -31,39 +43,32 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaReimbursementServiceImpl} 的单元测试类
  *
  * @author 芋道源码
  */
-@Import({OaReimbursementServiceImpl.class, JacksonAutoConfiguration.class, YudaoJacksonAutoConfiguration.class})
+@Import({
+    OaReimbursementServiceImpl.class,
+    JacksonAutoConfiguration.class,
+    YudaoJacksonAutoConfiguration.class
+})
 public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaReimbursementService reimbursementService;
+    @Resource private OaReimbursementService reimbursementService;
 
-    @Resource
-    private OaReimbursementMapper reimbursementMapper;
-    @Resource
-    private ObjectMapper objectMapper;
+    @Resource private OaReimbursementMapper reimbursementMapper;
+    @Resource private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
 
     @BeforeEach
     public void before() {
         // JSON 处理器为静态共享配置，每个用例恢复当前上下文的生产日期序列化配置
         Jackson3TypeHandler.setObjectMapper(objectMapper);
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
     }
 
     @AfterEach
@@ -75,12 +80,17 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
     public void testDraft_updateAndSubmitPermissions() {
         // mock 数据
         Long id = reimbursementService.createReimbursement(randomReimbursementSaveReqVO());
-        OaReimbursementSaveReqVO reqVO = randomReimbursementSaveReqVO().setId(id).setTitle("修改后的草稿");
+        OaReimbursementSaveReqVO reqVO =
+                randomReimbursementSaveReqVO().setId(id).setTitle("修改后的草稿");
 
         // 调用，并断言：他人不能修改、提交
-        assertServiceException(() -> reimbursementService.updateReimbursement(reqVO, 99L), APPLY_ACCESS_DENIED);
-        assertServiceException(() -> reimbursementService.submitReimbursement(new OaReimbursementSubmitReqVO()
-                .setId(id), 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () -> reimbursementService.updateReimbursement(reqVO, 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () ->
+                        reimbursementService.submitReimbursement(
+                                new OaReimbursementSubmitReqVO().setId(id), 99L),
+                APPLY_ACCESS_DENIED);
         reimbursementService.updateReimbursement(reqVO, 10L);
         assertEquals("修改后的草稿", reimbursementMapper.selectById(id).getTitle());
         assertEquals(-1, reimbursementMapper.selectById(id).getStatus());
@@ -97,10 +107,16 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         // 调用
         reimbursementService.submitReimbursement(new OaReimbursementSubmitReqVO().setId(id), 10L);
         // 断言
-        assertServiceException(() -> reimbursementService.submitReimbursement(new OaReimbursementSubmitReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
-        assertServiceException(() -> reimbursementService.updateReimbursement(randomReimbursementSaveReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        reimbursementService.submitReimbursement(
+                                new OaReimbursementSubmitReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        reimbursementService.updateReimbursement(
+                                randomReimbursementSaveReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
         verify(processInstanceApi, times(1)).createProcessInstance(eq(10L), any());
     }
 
@@ -126,9 +142,14 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         assertEquals(new BigDecimal("12.34"), application.getTotalPrice());
         assertEquals(2, application.getInvoiceCount());
         assertEquals(1, CollUtil.getFirst(application.getItems()).getExpenseType());
-        verify(processInstanceApi).createProcessInstance(eq(10L), argThat(dto ->
-                "oa_reimbursement".equals(dto.getProcessDefinitionKey()) && id.toString().equals(dto.getBusinessKey())
-                        && !dto.getVariables().containsKey("title")));
+        verify(processInstanceApi)
+                .createProcessInstance(
+                        eq(10L),
+                        argThat(
+                                dto ->
+                                        "oa_reimbursement".equals(dto.getProcessDefinitionKey())
+                                                && id.toString().equals(dto.getBusinessKey())
+                                                && !dto.getVariables().containsKey("title")));
     }
 
     @Test
@@ -136,13 +157,17 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         OaReimbursementSaveReqVO reqVO = randomReimbursementSaveReqVO();
         // mock 方法
-        when(processInstanceApi.createProcessInstance(anyLong(), any())).thenThrow(new IllegalStateException("流程尚未配置"));
+        when(processInstanceApi.createProcessInstance(anyLong(), any()))
+                .thenThrow(new IllegalStateException("流程尚未配置"));
 
         // 调用
         Long id = reimbursementService.createReimbursement(reqVO);
         // 断言
-        assertThrows(IllegalStateException.class, () -> reimbursementService.submitReimbursement(
-                new OaReimbursementSubmitReqVO().setId(id), 10L));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        reimbursementService.submitReimbursement(
+                                new OaReimbursementSubmitReqVO().setId(id), 10L));
         assertEquals(1L, reimbursementMapper.selectCount());
         assertEquals(-1, reimbursementMapper.selectById(id).getStatus());
         assertNull(reimbursementMapper.selectById(id).getProcessInstanceId());
@@ -178,11 +203,14 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long id = reimbursementService.createReimbursement(randomReimbursementSaveReqVO());
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(10L), any())).thenAnswer(invocation -> {
-            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
-            reimbursementService.updateReimbursementStatus(Long.valueOf(reqDTO.getBusinessKey()), 2);
-            return "process-1";
-        });
+        when(processInstanceApi.createProcessInstance(eq(10L), any()))
+                .thenAnswer(
+                        invocation -> {
+                            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
+                            reimbursementService.updateReimbursementStatus(
+                                    Long.valueOf(reqDTO.getBusinessKey()), 2);
+                            return "process-1";
+                        });
 
         // 调用
         reimbursementService.submitReimbursement(new OaReimbursementSubmitReqVO().setId(id), 10L);
@@ -201,7 +229,8 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         OaReimbursementDO otherApplication = randomReimbursementDO().setTitle("匹配申请");
         otherApplication.setCreator("99");
         reimbursementMapper.insert(otherApplication);
-        reimbursementMapper.insert(randomReimbursementDO().setId(null).setStatus(2).setTitle("匹配申请"));
+        reimbursementMapper.insert(
+                randomReimbursementDO().setId(null).setStatus(2).setTitle("匹配申请"));
         // 准备参数
         OaReimbursementPageReqVO reqVO = new OaReimbursementPageReqVO().setTitle("匹配").setStatus(1);
 
@@ -231,7 +260,8 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
     public void testUpdateReimbursementStatus_notExists() {
 
         // 调用，并断言异常
-        assertServiceException(() -> reimbursementService.updateReimbursementStatus(1024L, 2), APPLY_NOT_EXISTS);
+        assertServiceException(
+                () -> reimbursementService.updateReimbursementStatus(1024L, 2), APPLY_NOT_EXISTS);
     }
 
     @Test
@@ -249,7 +279,8 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         OaReimbursementDO reimbursement = reimbursementMapper.selectById(id);
         assertEquals(new BigDecimal("25.50"), reimbursement.getTotalPrice());
         assertEquals(3, reimbursement.getInvoiceCount());
-        assertEquals(new BigDecimal("25.50"), CollUtil.getFirst(reimbursement.getItems()).getPrice());
+        assertEquals(
+                new BigDecimal("25.50"), CollUtil.getFirst(reimbursement.getItems()).getPrice());
         assertEquals(-1, reimbursement.getStatus());
         verifyNoInteractions(processInstanceApi);
     }
@@ -259,9 +290,12 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         OaReimbursementSaveReqVO reqVO = randomReimbursementSaveReqVO();
         OaReimbursementSaveReqVO.Item firstItem = CollUtil.getFirst(reqVO.getItems());
-        OaReimbursementSaveReqVO.Item secondItem = new OaReimbursementSaveReqVO.Item()
-                .setExpenseTime(firstItem.getExpenseTime()).setExpenseType(2)
-                .setPrice(new BigDecimal("7.66")).setInvoiceCount(3);
+        OaReimbursementSaveReqVO.Item secondItem =
+                new OaReimbursementSaveReqVO.Item()
+                        .setExpenseTime(firstItem.getExpenseTime())
+                        .setExpenseType(2)
+                        .setPrice(new BigDecimal("7.66"))
+                        .setInvoiceCount(3);
         reqVO.setItems(Arrays.asList(firstItem, secondItem));
 
         // 调用
@@ -284,11 +318,19 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
      * @return 请求参数
      */
     private static OaReimbursementSaveReqVO randomReimbursementSaveReqVO() {
-        return randomPojo(OaReimbursementSaveReqVO.class).setTitle("业务申请").setUrgency(1).setId(null)
-                .setWitnessUserId(20L).setPaymentMethod(1)
-                .setItems(Collections.singletonList(new OaReimbursementSaveReqVO.Item()
-                        .setExpenseTime(LocalDateTime.of(2026, 9, 13, 8, 0)).setExpenseType(1)
-                        .setPrice(new BigDecimal("12.34")).setInvoiceCount(2)));
+        return randomPojo(OaReimbursementSaveReqVO.class)
+                .setTitle("业务申请")
+                .setUrgency(1)
+                .setId(null)
+                .setWitnessUserId(20L)
+                .setPaymentMethod(1)
+                .setItems(
+                        Collections.singletonList(
+                                new OaReimbursementSaveReqVO.Item()
+                                        .setExpenseTime(LocalDateTime.of(2026, 9, 13, 8, 0))
+                                        .setExpenseType(1)
+                                        .setPrice(new BigDecimal("12.34"))
+                                        .setInvoiceCount(2)));
     }
 
     /**
@@ -297,11 +339,20 @@ public class OaReimbursementServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaReimbursementDO randomReimbursementDO() {
-        return randomPojo(OaReimbursementDO.class, application -> {
-            application.setId(null).setTitle("申请").setUrgency(1).setStatus(1).setProcessInstanceId("process-1");
-            application.setCreator("10").setDeleted(false);
-            application.setTotalPrice(new BigDecimal("12.34")).setItems(Collections.emptyList()).setInvoiceCount(2);
-        });
+        return randomPojo(
+                OaReimbursementDO.class,
+                application -> {
+                    application
+                            .setId(null)
+                            .setTitle("申请")
+                            .setUrgency(1)
+                            .setStatus(1)
+                            .setProcessInstanceId("process-1");
+                    application.setCreator("10").setDeleted(false);
+                    application
+                            .setTotalPrice(new BigDecimal("12.34"))
+                            .setItems(Collections.emptyList())
+                            .setInvoiceCount(2);
+                });
     }
-
 }

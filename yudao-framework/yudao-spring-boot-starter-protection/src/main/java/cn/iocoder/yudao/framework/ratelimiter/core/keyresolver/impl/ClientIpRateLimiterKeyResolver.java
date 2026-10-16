@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.framework.ratelimiter.core.annotation.RateLimiter;
 import cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.RateLimiterKeyResolver;
+
 import org.aspectj.lang.JoinPoint;
 
 /**
@@ -23,5 +24,4 @@ public class ClientIpRateLimiterKeyResolver implements RateLimiterKeyResolver {
         String clientIp = ServletUtils.getClientIP();
         return SecureUtil.md5(methodName + argsStr + clientIp);
     }
-
 }

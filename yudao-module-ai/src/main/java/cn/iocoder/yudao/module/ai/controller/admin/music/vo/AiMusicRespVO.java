@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.music.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -37,7 +38,9 @@ public class AiMusicRespVO {
     @Schema(description = "描述词", example = "一首轻快的歌曲")
     private String gptDescriptionPrompt;
 
-    @Schema(description = "提示词", example = "创作一首带有轻松吉他旋律的流行歌曲，[verse] 描述夏日海滩的宁静，[chorus] 节奏加快，表达对自由的向往。")
+    @Schema(
+            description = "提示词",
+            example = "创作一首带有轻松吉他旋律的流行歌曲，[verse] 描述夏日海滩的宁静，[chorus] 节奏加快，表达对自由的向往。")
     private String prompt;
 
     @Schema(description = "模型平台", requiredMode = Schema.RequiredMode.REQUIRED, example = "Suno")
@@ -66,5 +69,4 @@ public class AiMusicRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

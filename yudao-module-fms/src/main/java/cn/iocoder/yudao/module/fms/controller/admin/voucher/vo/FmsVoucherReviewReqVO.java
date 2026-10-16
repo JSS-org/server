@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.fms.enums.voucher.FmsVoucherStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -25,5 +28,4 @@ public class FmsVoucherReviewReqVO {
     @NotNull(message = "审核状态不能为空")
     @InEnum(FmsVoucherStatusEnum.class)
     private Integer status;
-
 }

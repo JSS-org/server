@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.oa.dal.mysql.note;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteCategoryDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -20,10 +21,10 @@ public interface OaNoteCategoryMapper extends BaseMapperX<OaNoteCategoryDO> {
     }
 
     default List<OaNoteCategoryDO> selectListByUserId(Long userId) {
-        return selectList(new LambdaQueryWrapperX<OaNoteCategoryDO>()
-                .eq(OaNoteCategoryDO::getUserId, userId)
-                .orderByAsc(OaNoteCategoryDO::getSort)
-                .orderByAsc(OaNoteCategoryDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<OaNoteCategoryDO>()
+                        .eq(OaNoteCategoryDO::getUserId, userId)
+                        .orderByAsc(OaNoteCategoryDO::getSort)
+                        .orderByAsc(OaNoteCategoryDO::getId));
     }
-
 }

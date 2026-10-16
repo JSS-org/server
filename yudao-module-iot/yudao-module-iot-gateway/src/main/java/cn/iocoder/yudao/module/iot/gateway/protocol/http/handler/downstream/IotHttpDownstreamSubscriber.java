@@ -2,8 +2,9 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.downstream;
 
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
-import cn.iocoder.yudao.module.iot.gateway.protocol.IotProtocol;
 import cn.iocoder.yudao.module.iot.gateway.protocol.AbstractIotProtocolDownstreamSubscriber;
+import cn.iocoder.yudao.module.iot.gateway.protocol.IotProtocol;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -11,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author 芋道源码
  */
-
 @Slf4j
 public class IotHttpDownstreamSubscriber extends AbstractIotProtocolDownstreamSubscriber {
 
@@ -23,5 +23,4 @@ public class IotHttpDownstreamSubscriber extends AbstractIotProtocolDownstreamSu
     protected void handleMessage(IotDeviceMessage message) {
         log.info("[handleMessage][IoT 网关 HTTP 协议不支持下行消息，忽略消息：{}]", message);
     }
-
 }

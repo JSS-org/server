@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.promotion.convert.diy;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.*;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyPageDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -33,5 +34,4 @@ public interface DiyPageConvert {
     DiyPagePropertyRespVO convertPropertyVo(DiyPageDO diyPage);
 
     DiyPageDO convert(DiyPagePropertyUpdateRequestVO updateReqVO);
-
 }

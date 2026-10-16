@@ -8,6 +8,4 @@ import lombok.Data;
  * @author 芋道源码
  */
 @Data
-public class IotHttpConfig {
-
-}
+public class IotHttpConfig {}

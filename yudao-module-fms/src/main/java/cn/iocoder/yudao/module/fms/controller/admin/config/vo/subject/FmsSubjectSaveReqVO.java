@@ -5,11 +5,14 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.fms.enums.common.FmsDebitCreditDirectionEnum;
 import cn.iocoder.yudao.module.fms.enums.config.FmsSubjectCategoryEnum;
 import cn.iocoder.yudao.module.fms.enums.config.FmsSubjectTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -86,7 +89,9 @@ public class FmsSubjectSaveReqVO {
 
     @AssertTrue(message = "科目类别与科目类型不匹配")
     public boolean isCategoryValid() {
-        return type == null || category == null || FmsSubjectCategoryEnum.valueOf(type, category) != null;
+        return type == null
+                || category == null
+                || FmsSubjectCategoryEnum.valueOf(type, category) != null;
     }
 
     @AssertTrue(message = "启用数量核算时数量单位不能为空")
@@ -100,14 +105,18 @@ public class FmsSubjectSaveReqVO {
     @Data
     public static class AuxiliaryMapping {
 
-        @Schema(description = "辅助核算类别编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算类别编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         @NotNull(message = "辅助核算类别编号不能为空")
         private Long typeId;
 
-        @Schema(description = "辅助核算项目编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算项目编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         @NotNull(message = "辅助核算项目编号不能为空")
         private Long itemId;
-
     }
-
 }

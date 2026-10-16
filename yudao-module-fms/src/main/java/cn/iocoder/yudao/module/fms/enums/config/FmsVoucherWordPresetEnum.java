@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FmsVoucherWordPresetEnum {
-
     RECORD("记", "记账凭证", true, 1),
     RECEIPT("收", "收款凭证", false, 2),
     TRANSFER("转", "转账凭证", false, 3),
@@ -21,17 +20,19 @@ public enum FmsVoucherWordPresetEnum {
      * 凭证字
      */
     private final String name;
+
     /**
      * 打印标题
      */
     private final String printTitle;
+
     /**
      * 是否默认凭证字
      */
     private final Boolean defaultStatus;
+
     /**
      * 显示顺序
      */
     private final Integer sort;
-
 }

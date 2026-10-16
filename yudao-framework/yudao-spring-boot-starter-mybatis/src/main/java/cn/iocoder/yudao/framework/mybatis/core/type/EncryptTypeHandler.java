@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.AES;
 import cn.hutool.extra.spring.SpringUtil;
+
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
@@ -25,7 +26,8 @@ public class EncryptTypeHandler extends BaseTypeHandler<String> {
     private static AES aes;
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, String parameter, JdbcType jdbcType) throws SQLException {
+    public void setNonNullParameter(
+            PreparedStatement ps, int i, String parameter, JdbcType jdbcType) throws SQLException {
         ps.setString(i, encrypt(parameter));
     }
 
@@ -71,5 +73,4 @@ public class EncryptTypeHandler extends BaseTypeHandler<String> {
         aes = SecureUtil.aes(password.getBytes());
         return aes;
     }
-
 }

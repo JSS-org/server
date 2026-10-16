@@ -8,6 +8,4 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class GroupCancelMutedNotification extends BaseGroupNotification {
-
-}
+public class GroupCancelMutedNotification extends BaseGroupNotification {}

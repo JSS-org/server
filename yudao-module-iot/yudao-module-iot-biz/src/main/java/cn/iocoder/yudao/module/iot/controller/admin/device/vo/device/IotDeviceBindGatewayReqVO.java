@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.device;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.Set;
@@ -18,5 +20,4 @@ public class IotDeviceBindGatewayReqVO {
     @Schema(description = "网关设备编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
     @NotNull(message = "网关设备编号不能为空")
     private Long gatewayId;
-
 }

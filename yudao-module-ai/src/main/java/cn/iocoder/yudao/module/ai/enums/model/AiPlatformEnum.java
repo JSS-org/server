@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.enums.model;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -42,19 +43,20 @@ public enum AiPlatformEnum implements ArrayValuable<String> {
     MIDJOURNEY("Midjourney", "Midjourney"), // Midjourney
     SUNO("Suno", "Suno"), // Suno AI
     GROK("Grok", "Grok"), // Grok
-
     ;
 
     /**
      * 平台
      */
     private final String platform;
+
     /**
      * 平台名
      */
     private final String name;
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(AiPlatformEnum::getPlatform).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(AiPlatformEnum::getPlatform).toArray(String[]::new);
 
     public static AiPlatformEnum validatePlatform(String platform) {
         for (AiPlatformEnum platformEnum : AiPlatformEnum.values()) {
@@ -69,5 +71,4 @@ public enum AiPlatformEnum implements ArrayValuable<String> {
     public String[] array() {
         return ARRAYS;
     }
-
 }

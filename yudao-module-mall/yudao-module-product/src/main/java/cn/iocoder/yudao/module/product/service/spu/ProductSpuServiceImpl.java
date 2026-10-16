@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.product.service.spu;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO.CATEGORY_LEVEL;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -19,19 +24,17 @@ import cn.iocoder.yudao.module.product.enums.spu.ProductSpuStatusEnum;
 import cn.iocoder.yudao.module.product.service.brand.ProductBrandService;
 import cn.iocoder.yudao.module.product.service.category.ProductCategoryService;
 import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
+
 import com.google.common.collect.Maps;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO.CATEGORY_LEVEL;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 
 /**
  * 商品 SPU Service 实现类
@@ -42,16 +45,12 @@ import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 @Validated
 public class ProductSpuServiceImpl implements ProductSpuService {
 
-    @Resource
-    private ProductSpuMapper productSpuMapper;
+    @Resource private ProductSpuMapper productSpuMapper;
 
-    @Resource
-    @Lazy // 循环依赖，避免报错
+    @Resource @Lazy // 循环依赖，避免报错
     private ProductSkuService productSkuService;
-    @Resource
-    private ProductBrandService brandService;
-    @Resource
-    private ProductCategoryService categoryService;
+    @Resource private ProductBrandService brandService;
+    @Resource private ProductCategoryService categoryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -87,7 +86,8 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         productSkuService.validateSkuList(skuSaveReqList, updateReqVO.getSpecType());
 
         // 更新 SPU
-        ProductSpuDO updateObj = BeanUtils.toBean(updateReqVO, ProductSpuDO.class).setStatus(spu.getStatus());
+        ProductSpuDO updateObj =
+                BeanUtils.toBean(updateReqVO, ProductSpuDO.class).setStatus(spu.getStatus());
         initSpuFromSkus(updateObj, skuSaveReqList);
         productSpuMapper.updateById(updateObj);
         // 批量更新 SKU
@@ -140,21 +140,22 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         List<ProductSpuDO> list = productSpuMapper.selectByIds(ids);
         Map<Long, ProductSpuDO> spuMap = CollectionUtils.convertMap(list, ProductSpuDO::getId);
         // 校验
-        ids.forEach(id -> {
-            ProductSpuDO spu = spuMap.get(id);
-            if (spu == null) {
-                throw exception(SPU_NOT_EXISTS);
-            }
-            if (!ProductSpuStatusEnum.isEnable(spu.getStatus())) {
-                throw exception(SPU_NOT_ENABLE, spu.getName());
-            }
-        });
+        ids.forEach(
+                id -> {
+                    ProductSpuDO spu = spuMap.get(id);
+                    if (spu == null) {
+                        throw exception(SPU_NOT_EXISTS);
+                    }
+                    if (!ProductSpuStatusEnum.isEnable(spu.getStatus())) {
+                        throw exception(SPU_NOT_ENABLE, spu.getName());
+                    }
+                });
         return list;
     }
 
     @Override
     public void updateBrowseCount(Long id, int incrCount) {
-        productSpuMapper.updateBrowseCount(id , incrCount);
+        productSpuMapper.updateBrowseCount(id, incrCount);
     }
 
     @Override
@@ -202,7 +203,8 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        Map<Long, ProductSpuDO> spuMap = convertMap(productSpuMapper.selectByIds(ids), ProductSpuDO::getId);
+        Map<Long, ProductSpuDO> spuMap =
+                convertMap(productSpuMapper.selectByIds(ids), ProductSpuDO::getId);
         // 需要按照 ids 顺序返回。例如说：店铺装修选择了 [3, 1, 2] 三个商品，返回结果还是 [3, 1, 2]  这样的顺序
         return convertList(ids, spuMap::get);
     }
@@ -223,14 +225,20 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         Set<Long> categoryIds = new HashSet<>();
         if (pageReqVO.getCategoryId() != null && pageReqVO.getCategoryId() > 0) {
             categoryIds.add(pageReqVO.getCategoryId());
-            List<ProductCategoryDO> categoryChildren = categoryService.getCategoryList(new ProductCategoryListReqVO()
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()).setParentId(pageReqVO.getCategoryId()));
+            List<ProductCategoryDO> categoryChildren =
+                    categoryService.getCategoryList(
+                            new ProductCategoryListReqVO()
+                                    .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                    .setParentId(pageReqVO.getCategoryId()));
             categoryIds.addAll(convertList(categoryChildren, ProductCategoryDO::getId));
         }
         if (CollUtil.isNotEmpty(pageReqVO.getCategoryIds())) {
             categoryIds.addAll(pageReqVO.getCategoryIds());
-            List<ProductCategoryDO> categoryChildren = categoryService.getCategoryList(new ProductCategoryListReqVO()
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()).setParentIds(pageReqVO.getCategoryIds()));
+            List<ProductCategoryDO> categoryChildren =
+                    categoryService.getCategoryList(
+                            new ProductCategoryListReqVO()
+                                    .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                    .setParentIds(pageReqVO.getCategoryIds()));
             categoryIds.addAll(convertList(categoryChildren, ProductCategoryDO::getId));
         }
         // 分页查询
@@ -251,7 +259,8 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         // TODO 芋艿：【可选】参与活动中的商品，不允许下架？？？
 
         // 更新状态
-        ProductSpuDO productSpuDO = productSpuMapper.selectById(updateReqVO.getId()).setStatus(updateReqVO.getStatus());
+        ProductSpuDO productSpuDO =
+                productSpuMapper.selectById(updateReqVO.getId()).setStatus(updateReqVO.getStatus());
         productSpuMapper.updateById(productSpuDO);
     }
 
@@ -259,15 +268,20 @@ public class ProductSpuServiceImpl implements ProductSpuService {
     public Map<Integer, Long> getTabsCount(ProductSpuPageReqVO reqVO) {
         Map<Integer, Long> counts = Maps.newLinkedHashMapWithExpectedSize(5);
         // 每个 tab 的数量 = 筛选条件（name/categoryId/createTime）+ 该 tab 的状态/库存条件
-        counts.put(ProductSpuPageReqVO.FOR_SALE,
+        counts.put(
+                ProductSpuPageReqVO.FOR_SALE,
                 productSpuMapper.selectCountByTab(reqVO, ProductSpuPageReqVO.FOR_SALE));
-        counts.put(ProductSpuPageReqVO.IN_WAREHOUSE,
+        counts.put(
+                ProductSpuPageReqVO.IN_WAREHOUSE,
                 productSpuMapper.selectCountByTab(reqVO, ProductSpuPageReqVO.IN_WAREHOUSE));
-        counts.put(ProductSpuPageReqVO.SOLD_OUT,
+        counts.put(
+                ProductSpuPageReqVO.SOLD_OUT,
                 productSpuMapper.selectCountByTab(reqVO, ProductSpuPageReqVO.SOLD_OUT));
-        counts.put(ProductSpuPageReqVO.ALERT_STOCK,
+        counts.put(
+                ProductSpuPageReqVO.ALERT_STOCK,
                 productSpuMapper.selectCountByTab(reqVO, ProductSpuPageReqVO.ALERT_STOCK));
-        counts.put(ProductSpuPageReqVO.RECYCLE_BIN,
+        counts.put(
+                ProductSpuPageReqVO.RECYCLE_BIN,
                 productSpuMapper.selectCountByTab(reqVO, ProductSpuPageReqVO.RECYCLE_BIN));
         return counts;
     }
@@ -276,5 +290,4 @@ public class ProductSpuServiceImpl implements ProductSpuService {
     public Long getSpuCountByCategoryId(Long categoryId) {
         return productSpuMapper.selectCount(ProductSpuDO::getCategoryId, categoryId);
     }
-
 }

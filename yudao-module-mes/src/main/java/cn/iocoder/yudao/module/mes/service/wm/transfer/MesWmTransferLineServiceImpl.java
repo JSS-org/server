@@ -1,25 +1,27 @@
 package cn.iocoder.yudao.module.mes.service.wm.transfer;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MATERIAL_STOCK_NOT_EXISTS;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_LINE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_LINE_QUANTITY_EXCEED_STOCK;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo.line.MesWmTransferLineSaveReqVO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.materialstock.MesWmMaterialStockDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.transfer.MesWmTransferLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.transfer.MesWmTransferLineMapper;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.materialstock.MesWmMaterialStockDO;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MATERIAL_STOCK_NOT_EXISTS;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_LINE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_LINE_QUANTITY_EXCEED_STOCK;
 
 /**
  * MES 转移单行 Service 实现类
@@ -28,21 +30,13 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_L
 @Validated
 public class MesWmTransferLineServiceImpl implements MesWmTransferLineService {
 
-    @Resource
-    private MesWmTransferLineMapper transferLineMapper;
+    @Resource private MesWmTransferLineMapper transferLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmTransferService transferService;
-    @Resource
-    @Lazy
-    private MesWmTransferDetailService transferDetailService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
+    @Resource @Lazy private MesWmTransferService transferService;
+    @Resource @Lazy private MesWmTransferDetailService transferDetailService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource private MesWmMaterialStockService materialStockService;
 
     @Override
     public Long createTransferLine(MesWmTransferLineSaveReqVO createReqVO) {
@@ -111,10 +105,11 @@ public class MesWmTransferLineServiceImpl implements MesWmTransferLineService {
         // 校验产品存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
         // 校验来源仓库、库区、库位的关联关系
-        warehouseAreaService.validateWarehouseAreaExists(reqVO.getFromWarehouseId(),
-                reqVO.getFromLocationId(), reqVO.getFromAreaId());
+        warehouseAreaService.validateWarehouseAreaExists(
+                reqVO.getFromWarehouseId(), reqVO.getFromLocationId(), reqVO.getFromAreaId());
         // 校验库存记录存在，且转移数量不超过库存数量
-        MesWmMaterialStockDO stock = materialStockService.getMaterialStock(reqVO.getMaterialStockId());
+        MesWmMaterialStockDO stock =
+                materialStockService.getMaterialStock(reqVO.getMaterialStockId());
         if (stock == null) {
             throw exception(WM_MATERIAL_STOCK_NOT_EXISTS);
         }
@@ -122,5 +117,4 @@ public class MesWmTransferLineServiceImpl implements MesWmTransferLineService {
             throw exception(WM_TRANSFER_LINE_QUANTITY_EXCEED_STOCK);
         }
     }
-
 }

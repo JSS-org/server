@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord;
 
 import cn.hutool.core.collection.CollUtil;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.template.HrmSalarySlipTemplateOptionVO;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -27,7 +31,10 @@ public class HrmSalarySlipSendReqVO {
     @Valid
     private List<HrmSalarySlipTemplateOptionVO> options;
 
-    @Schema(description = "是否发放全部筛选结果", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "是否发放全部筛选结果",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     @NotNull(message = "是否发放全部筛选结果不能为空")
     private Boolean all;
 
@@ -48,5 +55,4 @@ public class HrmSalarySlipSendReqVO {
     public boolean isEmployeeIdsValid() {
         return Boolean.TRUE.equals(all) || CollUtil.isNotEmpty(employeeIds);
     }
-
 }

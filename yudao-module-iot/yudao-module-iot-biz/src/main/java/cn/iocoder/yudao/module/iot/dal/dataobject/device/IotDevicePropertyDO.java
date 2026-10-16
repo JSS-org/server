@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.dal.dataobject.device;
 
 import cn.iocoder.yudao.module.iot.dal.redis.device.DevicePropertyRedisDAO;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,5 +32,4 @@ public class IotDevicePropertyDO {
      * 更新时间
      */
     private LocalDateTime updateTime;
-
 }

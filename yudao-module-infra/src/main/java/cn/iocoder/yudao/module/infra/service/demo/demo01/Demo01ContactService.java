@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.infra.controller.admin.demo.demo01.vo.Demo01ContactPageReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.demo.demo01.vo.Demo01ContactSaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo01.Demo01ContactDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -59,5 +60,4 @@ public interface Demo01ContactService {
      * @return 示例联系人分页
      */
     PageResult<Demo01ContactDO> getDemo01ContactPage(Demo01ContactPageReqVO pageReqVO);
-
 }

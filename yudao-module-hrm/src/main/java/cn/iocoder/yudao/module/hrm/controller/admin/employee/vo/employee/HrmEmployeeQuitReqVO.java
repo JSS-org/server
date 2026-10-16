@@ -1,19 +1,23 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isAfterOrEqual;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBeforeOrEqual;
+
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeQuitReasonEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeQuitTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isAfterOrEqual;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBeforeOrEqual;
 
 @Schema(description = "管理后台 - HRM 员工离职 Request VO")
 @Data
@@ -51,14 +55,16 @@ public class HrmEmployeeQuitReqVO {
     @AssertTrue(message = "申请离职时间不能晚于计划离职时间")
     @JsonIgnore
     public boolean isApplyQuitTimeValid() {
-        return applyQuitTime == null || planQuitTime == null
+        return applyQuitTime == null
+                || planQuitTime == null
                 || isBeforeOrEqual(applyQuitTime.toLocalDate(), planQuitTime.toLocalDate());
     }
 
     @AssertTrue(message = "薪资结算时间不能早于计划离职时间")
     @JsonIgnore
     public boolean isSalarySettlementTimeValid() {
-        return salarySettlementTime == null || planQuitTime == null
+        return salarySettlementTime == null
+                || planQuitTime == null
                 || isAfterOrEqual(salarySettlementTime.toLocalDate(), planQuitTime.toLocalDate());
     }
 
@@ -71,5 +77,4 @@ public class HrmEmployeeQuitReqVO {
         HrmEmployeeQuitReasonEnum quitReason = HrmEmployeeQuitReasonEnum.valueOf(reason);
         return quitReason != null && quitReason.getQuitType().equals(type);
     }
-
 }

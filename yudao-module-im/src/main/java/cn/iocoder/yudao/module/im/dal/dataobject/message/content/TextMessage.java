@@ -17,5 +17,4 @@ public class TextMessage {
      * 引用消息（可选）
      */
     private QuoteMessage quote;
-
 }

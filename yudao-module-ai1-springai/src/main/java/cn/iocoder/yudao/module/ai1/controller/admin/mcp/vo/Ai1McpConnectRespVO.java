@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.mcp.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -24,10 +25,16 @@ public class Ai1McpConnectRespVO {
     @Schema(description = "可用工具数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private Integer toolCount;
 
-    @Schema(description = "测试耗时，单位：毫秒", requiredMode = Schema.RequiredMode.REQUIRED, example = "320")
+    @Schema(
+            description = "测试耗时，单位：毫秒",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "320")
     private Long elapsedMs;
 
-    @Schema(description = "测试过程描述", requiredMode = Schema.RequiredMode.REQUIRED, example = "连接成功，发现 2 个工具")
+    @Schema(
+            description = "测试过程描述",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "连接成功，发现 2 个工具")
     private String message;
 
     @Schema(description = "可用工具明细")
@@ -37,7 +44,10 @@ public class Ai1McpConnectRespVO {
     @Data
     public static class Tool {
 
-        @Schema(description = "工具名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "get_weather")
+        @Schema(
+                description = "工具名称",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "get_weather")
         private String name;
 
         @Schema(description = "工具标题", example = "天气查询")
@@ -45,7 +55,5 @@ public class Ai1McpConnectRespVO {
 
         @Schema(description = "工具描述", example = "查询指定城市的天气")
         private String description;
-
     }
-
 }

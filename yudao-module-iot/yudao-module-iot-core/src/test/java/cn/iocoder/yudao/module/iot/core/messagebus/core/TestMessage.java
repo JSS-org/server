@@ -8,5 +8,4 @@ public class TestMessage {
     private String nickname;
 
     private Integer age;
-
 }

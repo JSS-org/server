@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order;
 import cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.exception.PayClientException;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ public class PayOrderRespDTO {
      * 支付渠道编号
      */
     private String channelOrderNo;
+
     /**
      * 支付渠道用户编号
      */
@@ -56,6 +58,7 @@ public class PayOrderRespDTO {
      * 枚举 {@link PayOrderDisplayModeEnum} 类
      */
     private String displayMode;
+
     /**
      * 展示内容
      */
@@ -68,19 +71,19 @@ public class PayOrderRespDTO {
      * 如果是系统异常，则会抛出 {@link PayClientException}
      */
     private String channelErrorCode;
+
     /**
      * 调用渠道报错时，错误信息
      */
     private String channelErrorMsg;
 
-    public PayOrderRespDTO() {
-    }
+    public PayOrderRespDTO() {}
 
     /**
      * 创建【WAITING】状态的订单返回
      */
-    public static PayOrderRespDTO waitingOf(String displayMode, String displayContent,
-                                            String outTradeNo, Object rawData) {
+    public static PayOrderRespDTO waitingOf(
+            String displayMode, String displayContent, String outTradeNo, Object rawData) {
         PayOrderRespDTO respDTO = new PayOrderRespDTO();
         respDTO.status = PayOrderStatusEnum.WAITING.getStatus();
         respDTO.displayMode = displayMode;
@@ -94,8 +97,12 @@ public class PayOrderRespDTO {
     /**
      * 创建【SUCCESS】状态的订单返回
      */
-    public static PayOrderRespDTO successOf(String channelOrderNo, String channelUserId, LocalDateTime successTime,
-                                            String outTradeNo, Object rawData) {
+    public static PayOrderRespDTO successOf(
+            String channelOrderNo,
+            String channelUserId,
+            LocalDateTime successTime,
+            String outTradeNo,
+            Object rawData) {
         PayOrderRespDTO respDTO = new PayOrderRespDTO();
         respDTO.status = PayOrderStatusEnum.SUCCESS.getStatus();
         respDTO.channelOrderNo = channelOrderNo;
@@ -110,8 +117,13 @@ public class PayOrderRespDTO {
     /**
      * 创建指定状态的订单返回，适合支付渠道回调时
      */
-    public static PayOrderRespDTO of(Integer status, String channelOrderNo, String channelUserId, LocalDateTime successTime,
-                                     String outTradeNo, Object rawData) {
+    public static PayOrderRespDTO of(
+            Integer status,
+            String channelOrderNo,
+            String channelUserId,
+            LocalDateTime successTime,
+            String outTradeNo,
+            Object rawData) {
         PayOrderRespDTO respDTO = new PayOrderRespDTO();
         respDTO.status = status;
         respDTO.channelOrderNo = channelOrderNo;
@@ -126,8 +138,8 @@ public class PayOrderRespDTO {
     /**
      * 创建【CLOSED】状态的订单返回，适合调用支付渠道失败时
      */
-    public static PayOrderRespDTO closedOf(String channelErrorCode, String channelErrorMsg,
-                                           String outTradeNo, Object rawData) {
+    public static PayOrderRespDTO closedOf(
+            String channelErrorCode, String channelErrorMsg, String outTradeNo, Object rawData) {
         PayOrderRespDTO respDTO = new PayOrderRespDTO();
         respDTO.status = PayOrderStatusEnum.CLOSED.getStatus();
         respDTO.channelErrorCode = channelErrorCode;
@@ -137,5 +149,4 @@ public class PayOrderRespDTO {
         respDTO.rawData = rawData;
         return respDTO;
     }
-
 }

@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.infra.service.logger;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.dal.dataobject.logger.ApiErrorLogDO.REQUEST_PARAMS_MAX_LENGTH;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_NOT_FOUND;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_PROCESSED;
+
 import cn.iocoder.yudao.framework.common.biz.infra.logger.dto.ApiErrorLogCreateReqDTO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,17 +15,15 @@ import cn.iocoder.yudao.module.infra.controller.admin.logger.vo.apierrorlog.ApiE
 import cn.iocoder.yudao.module.infra.dal.dataobject.logger.ApiErrorLogDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.logger.ApiErrorLogMapper;
 import cn.iocoder.yudao.module.infra.enums.logger.ApiErrorLogProcessStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.dal.dataobject.logger.ApiErrorLogDO.REQUEST_PARAMS_MAX_LENGTH;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_NOT_FOUND;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_PROCESSED;
 
 /**
  * API 错误日志 Service 实现类
@@ -32,14 +35,15 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_L
 @Slf4j
 public class ApiErrorLogServiceImpl implements ApiErrorLogService {
 
-    @Resource
-    private ApiErrorLogMapper apiErrorLogMapper;
+    @Resource private ApiErrorLogMapper apiErrorLogMapper;
 
     @Override
     public void createApiErrorLog(ApiErrorLogCreateReqDTO createDTO) {
-        ApiErrorLogDO apiErrorLog = BeanUtils.toBean(createDTO, ApiErrorLogDO.class)
-                .setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus());
-        apiErrorLog.setRequestParams(StrUtils.maxLength(apiErrorLog.getRequestParams(), REQUEST_PARAMS_MAX_LENGTH));
+        ApiErrorLogDO apiErrorLog =
+                BeanUtils.toBean(createDTO, ApiErrorLogDO.class)
+                        .setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus());
+        apiErrorLog.setRequestParams(
+                StrUtils.maxLength(apiErrorLog.getRequestParams(), REQUEST_PARAMS_MAX_LENGTH));
         try {
             if (TenantContextHolder.getTenantId() != null) {
                 apiErrorLogMapper.insert(apiErrorLog);
@@ -73,8 +77,13 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
             throw exception(API_ERROR_LOG_PROCESSED);
         }
         // 标记处理
-        apiErrorLogMapper.updateById(ApiErrorLogDO.builder().id(id).processStatus(processStatus)
-                .processUserId(processUserId).processTime(LocalDateTime.now()).build());
+        apiErrorLogMapper.updateById(
+                ApiErrorLogDO.builder()
+                        .id(id)
+                        .processStatus(processStatus)
+                        .processUserId(processUserId)
+                        .processTime(LocalDateTime.now())
+                        .build());
     }
 
     @Override
@@ -93,5 +102,4 @@ public class ApiErrorLogServiceImpl implements ApiErrorLogService {
         }
         return count;
     }
-
 }

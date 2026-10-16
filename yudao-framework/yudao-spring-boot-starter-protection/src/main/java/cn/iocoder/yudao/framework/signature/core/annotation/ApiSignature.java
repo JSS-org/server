@@ -5,7 +5,6 @@ import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstant
 import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 
-
 /**
  * HTTP API 签名注解
  *
@@ -55,5 +54,4 @@ public @interface ApiSignature {
      * sign 客户端签名
      */
     String sign() default "sign";
-
 }

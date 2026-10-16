@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.withdraw;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,7 +25,10 @@ public class AppBrokerageWithdrawRespVO {
     @Schema(description = "提现状态名", requiredMode = Schema.RequiredMode.REQUIRED, example = "审核中")
     private String statusName;
 
-    @Schema(description = "提现金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1000")
+    @Schema(
+            description = "提现金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1000")
     private Integer price;
 
     @Schema(description = "提现时间", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -40,5 +44,4 @@ public class AppBrokerageWithdrawRespVO {
 
     @Schema(description = "渠道商户号")
     private String transferChannelMchId;
-
 }

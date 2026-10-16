@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -46,7 +47,6 @@ public class HrmHrHomeStatisticsRespVO {
 
         @Schema(description = "本月调岗人数")
         private Long transferThisMonthCount;
-
     }
 
     @Schema(description = "管理后台 - HRM HR 工作台招聘动态 Response VO")
@@ -64,7 +64,6 @@ public class HrmHrHomeStatisticsRespVO {
 
         @Schema(description = "已入职人数")
         private Long joinedCount;
-
     }
 
     @Schema(description = "管理后台 - HRM HR 工作台上月薪资 Response VO")
@@ -82,7 +81,6 @@ public class HrmHrHomeStatisticsRespVO {
 
         @Schema(description = "部门薪资占比列表")
         private List<SalaryDept> deptProportions;
-
     }
 
     @Schema(description = "管理后台 - HRM HR 工作台部门薪资占比 Response VO")
@@ -100,7 +98,6 @@ public class HrmHrHomeStatisticsRespVO {
 
         @Schema(description = "实发工资")
         private BigDecimal totalSalary;
-
     }
 
     @Schema(description = "管理后台 - HRM HR 工作台待办提醒 Response VO")
@@ -124,7 +121,5 @@ public class HrmHrHomeStatisticsRespVO {
 
         @Schema(description = "本月生日员工数量")
         private Long toBirthdayCount;
-
     }
-
 }

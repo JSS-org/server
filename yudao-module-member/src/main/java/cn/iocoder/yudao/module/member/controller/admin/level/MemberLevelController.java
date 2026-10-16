@@ -1,22 +1,25 @@
 package cn.iocoder.yudao.module.member.controller.admin.level;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.*;
 import cn.iocoder.yudao.module.member.convert.level.MemberLevelConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.service.level.MemberLevelService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 会员等级")
 @RestController
@@ -24,8 +27,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MemberLevelController {
 
-    @Resource
-    private MemberLevelService levelService;
+    @Resource private MemberLevelService levelService;
 
     @PostMapping("/create")
     @Operation(summary = "创建会员等级")
@@ -37,7 +39,8 @@ public class MemberLevelController {
     @PutMapping("/update")
     @Operation(summary = "更新会员等级")
     @PreAuthorize("@ss.hasPermission('member:level:update')")
-    public CommonResult<Boolean> updateLevel(@Valid @RequestBody MemberLevelUpdateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateLevel(
+            @Valid @RequestBody MemberLevelUpdateReqVO updateReqVO) {
         levelService.updateLevel(updateReqVO);
         return success(true);
     }
@@ -72,9 +75,9 @@ public class MemberLevelController {
     @GetMapping("/list")
     @Operation(summary = "获得会员等级列表")
     @PreAuthorize("@ss.hasPermission('member:level:query')")
-    public CommonResult<List<MemberLevelRespVO>> getLevelList(@Valid MemberLevelListReqVO listReqVO) {
+    public CommonResult<List<MemberLevelRespVO>> getLevelList(
+            @Valid MemberLevelListReqVO listReqVO) {
         List<MemberLevelDO> result = levelService.getLevelList(listReqVO);
         return success(MemberLevelConvert.INSTANCE.convertList(result));
     }
-
 }

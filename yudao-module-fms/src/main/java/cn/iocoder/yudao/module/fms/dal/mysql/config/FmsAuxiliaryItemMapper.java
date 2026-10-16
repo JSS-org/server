@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem.FmsAuxiliaryItemPageReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryItemDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -20,61 +21,74 @@ import java.util.List;
 public interface FmsAuxiliaryItemMapper extends BaseMapperX<FmsAuxiliaryItemDO> {
 
     default PageResult<FmsAuxiliaryItemDO> selectPage(FmsAuxiliaryItemPageReqVO reqVO) {
-        LambdaQueryWrapperX<FmsAuxiliaryItemDO> query = new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, reqVO.getAccountSetId())
-                .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, reqVO.getAuxiliaryTypeId());
+        LambdaQueryWrapperX<FmsAuxiliaryItemDO> query =
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, reqVO.getAccountSetId())
+                        .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, reqVO.getAuxiliaryTypeId());
         if (StrUtil.isNotBlank(reqVO.getSearch())) {
-            query.and(wrapper -> wrapper.like(FmsAuxiliaryItemDO::getCode, reqVO.getSearch())
-                    .or().like(FmsAuxiliaryItemDO::getName, reqVO.getSearch()));
+            query.and(
+                    wrapper ->
+                            wrapper.like(FmsAuxiliaryItemDO::getCode, reqVO.getSearch())
+                                    .or()
+                                    .like(FmsAuxiliaryItemDO::getName, reqVO.getSearch()));
         }
-        return selectPage(reqVO, query.orderByDesc(FmsAuxiliaryItemDO::getCode)
-                .orderByDesc(FmsAuxiliaryItemDO::getId));
+        return selectPage(
+                reqVO,
+                query.orderByDesc(FmsAuxiliaryItemDO::getCode)
+                        .orderByDesc(FmsAuxiliaryItemDO::getId));
     }
 
-    default FmsAuxiliaryItemDO selectByTypeIdAndCode(Long accountSetId, Long auxiliaryTypeId, String code) {
-        return selectOne(new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
-                .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId)
-                .eq(FmsAuxiliaryItemDO::getCode, code));
+    default FmsAuxiliaryItemDO selectByTypeIdAndCode(
+            Long accountSetId, Long auxiliaryTypeId, String code) {
+        return selectOne(
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
+                        .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId)
+                        .eq(FmsAuxiliaryItemDO::getCode, code));
     }
 
     default Long selectCountByAuxiliaryTypeId(Long accountSetId, Long auxiliaryTypeId) {
-        return selectCount(new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
-                .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId));
+        return selectCount(
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
+                        .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId));
     }
 
-    default List<FmsAuxiliaryItemDO> selectListByIdsAndAccountSetId(Collection<Long> ids, Long accountSetId) {
-        return selectList(new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .in(FmsAuxiliaryItemDO::getId, ids)
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId));
+    default List<FmsAuxiliaryItemDO> selectListByIdsAndAccountSetId(
+            Collection<Long> ids, Long accountSetId) {
+        return selectList(
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .in(FmsAuxiliaryItemDO::getId, ids)
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId));
     }
 
     default List<FmsAuxiliaryItemDO> selectListByAccountSetIdAndAuxiliaryTypeId(
             Long accountSetId, Long auxiliaryTypeId) {
-        return selectList(new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
-                .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId)
-                .orderByAsc(FmsAuxiliaryItemDO::getCode)
-                .orderByAsc(FmsAuxiliaryItemDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
+                        .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId)
+                        .orderByAsc(FmsAuxiliaryItemDO::getCode)
+                        .orderByAsc(FmsAuxiliaryItemDO::getId));
     }
 
     default List<FmsAuxiliaryItemDO> selectListByAccountSetIdAndAuxiliaryTypeIdAndStatus(
             Long accountSetId, Long auxiliaryTypeId, Integer status) {
-        return selectList(new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
-                .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId)
-                .eq(FmsAuxiliaryItemDO::getStatus, status)
-                .orderByAsc(FmsAuxiliaryItemDO::getCode)
-                .orderByAsc(FmsAuxiliaryItemDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
+                        .eq(FmsAuxiliaryItemDO::getAuxiliaryTypeId, auxiliaryTypeId)
+                        .eq(FmsAuxiliaryItemDO::getStatus, status)
+                        .orderByAsc(FmsAuxiliaryItemDO::getCode)
+                        .orderByAsc(FmsAuxiliaryItemDO::getId));
     }
 
     default List<FmsAuxiliaryItemDO> selectListByAccountSetId(Long accountSetId) {
-        return selectList(new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
-                .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
-                .orderByAsc(FmsAuxiliaryItemDO::getAuxiliaryTypeId)
-                .orderByDesc(FmsAuxiliaryItemDO::getCode)
-                .orderByDesc(FmsAuxiliaryItemDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<FmsAuxiliaryItemDO>()
+                        .eq(FmsAuxiliaryItemDO::getAccountSetId, accountSetId)
+                        .orderByAsc(FmsAuxiliaryItemDO::getAuxiliaryTypeId)
+                        .orderByDesc(FmsAuxiliaryItemDO::getCode)
+                        .orderByDesc(FmsAuxiliaryItemDO::getId));
     }
-
 }

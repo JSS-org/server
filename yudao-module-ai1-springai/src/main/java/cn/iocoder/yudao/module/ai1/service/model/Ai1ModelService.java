@@ -1,18 +1,19 @@
 package cn.iocoder.yudao.module.ai1.service.model;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.model.Ai1ModelImportReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.model.Ai1ModelPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.model.Ai1ModelSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ModelDO;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI1 模型 Service 接口
@@ -90,7 +91,8 @@ public interface Ai1ModelService {
      * @param status     状态
      * @return 模型列表
      */
-    List<Ai1ModelDO> getModelListByProviderIdAndTypeAndStatus(Long providerId, Integer type, Integer status);
+    List<Ai1ModelDO> getModelListByProviderIdAndTypeAndStatus(
+            Long providerId, Integer type, Integer status);
 
     /**
      * 获得模型列表
@@ -142,5 +144,4 @@ public interface Ai1ModelService {
      * @return 实际导入数量
      */
     Integer importRemoteModelList(@Valid Ai1ModelImportReqVO importReqVO);
-
 }

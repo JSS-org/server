@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.infra.controller.admin.codegen.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -14,8 +16,10 @@ public class CodegenCreateListReqVO {
     @NotNull(message = "数据源配置的编号不能为空")
     private Long dataSourceConfigId;
 
-    @Schema(description = "表名数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1, 2, 3]")
+    @Schema(
+            description = "表名数组",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1, 2, 3]")
     @NotNull(message = "表名数组不能为空")
     private List<String> tableNames;
-
 }

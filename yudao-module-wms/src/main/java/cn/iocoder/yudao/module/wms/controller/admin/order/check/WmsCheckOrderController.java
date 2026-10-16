@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.wms.controller.admin.order.check;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
@@ -25,12 +30,15 @@ import cn.iocoder.yudao.module.wms.service.md.item.WmsItemSkuService;
 import cn.iocoder.yudao.module.wms.service.md.warehouse.WmsWarehouseService;
 import cn.iocoder.yudao.module.wms.service.order.check.WmsCheckOrderDetailService;
 import cn.iocoder.yudao.module.wms.service.order.check.WmsCheckOrderService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,42 +49,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-
 @Tag(name = "管理后台 - WMS 盘库单")
 @RestController
 @RequestMapping("/wms/check-order")
 @Validated
 public class WmsCheckOrderController {
 
-    @Resource
-    private WmsCheckOrderService checkOrderService;
-    @Resource
-    private WmsCheckOrderDetailService checkOrderDetailService;
-    @Resource
-    private WmsWarehouseService warehouseService;
-    @Resource
-    private WmsItemService itemService;
-    @Resource
-    private WmsItemSkuService itemSkuService;
+    @Resource private WmsCheckOrderService checkOrderService;
+    @Resource private WmsCheckOrderDetailService checkOrderDetailService;
+    @Resource private WmsWarehouseService warehouseService;
+    @Resource private WmsItemService itemService;
+    @Resource private WmsItemSkuService itemSkuService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建盘库单")
     @PreAuthorize("@ss.hasPermission('wms:check-order:create')")
-    public CommonResult<Long> createCheckOrder(@Valid @RequestBody WmsCheckOrderSaveReqVO createReqVO) {
+    public CommonResult<Long> createCheckOrder(
+            @Valid @RequestBody WmsCheckOrderSaveReqVO createReqVO) {
         return success(checkOrderService.createCheckOrder(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新盘库单")
     @PreAuthorize("@ss.hasPermission('wms:check-order:update')")
-    public CommonResult<Boolean> updateCheckOrder(@Valid @RequestBody WmsCheckOrderSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateCheckOrder(
+            @Valid @RequestBody WmsCheckOrderSaveReqVO updateReqVO) {
         checkOrderService.updateCheckOrder(updateReqVO);
         return success(true);
     }
@@ -118,30 +117,40 @@ public class WmsCheckOrderController {
             return success(null);
         }
         // 获得盘库单的明细列表
-        List<WmsCheckOrderDetailDO> detailList = checkOrderDetailService.getCheckOrderDetailList(id);
+        List<WmsCheckOrderDetailDO> detailList =
+                checkOrderDetailService.getCheckOrderDetailList(id);
         // 拼接结果返回
-        WmsCheckOrderRespVO respVO = buildCheckOrderRespVO(order)
-                .setDetails(buildCheckOrderDetailRespVOList(detailList));
+        WmsCheckOrderRespVO respVO =
+                buildCheckOrderRespVO(order)
+                        .setDetails(buildCheckOrderDetailRespVOList(detailList));
         return success(respVO);
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得盘库单分页")
     @PreAuthorize("@ss.hasPermission('wms:check-order:query')")
-    public CommonResult<PageResult<WmsCheckOrderRespVO>> getCheckOrderPage(@Valid WmsCheckOrderPageReqVO pageReqVO) {
+    public CommonResult<PageResult<WmsCheckOrderRespVO>> getCheckOrderPage(
+            @Valid WmsCheckOrderPageReqVO pageReqVO) {
         PageResult<WmsCheckOrderDO> pageResult = checkOrderService.getCheckOrderPage(pageReqVO);
-        return success(new PageResult<>(buildCheckOrderRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildCheckOrderRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出盘库单 Excel")
     @PreAuthorize("@ss.hasPermission('wms:check-order:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportCheckOrderExcel(@Valid WmsCheckOrderPageReqVO pageReqVO,
-                                      HttpServletResponse response) throws IOException {
+    public void exportCheckOrderExcel(
+            @Valid WmsCheckOrderPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<WmsCheckOrderDO> list = checkOrderService.getCheckOrderPage(pageReqVO).getList();
-        ExcelUtils.write(response, "盘库单.xls", "数据", WmsCheckOrderRespVO.class,
+        ExcelUtils.write(
+                response,
+                "盘库单.xls",
+                "数据",
+                WmsCheckOrderRespVO.class,
                 buildCheckOrderRespVOList(list));
     }
 
@@ -151,7 +160,8 @@ public class WmsCheckOrderController {
         if (order == null) {
             return null;
         }
-        List<WmsCheckOrderRespVO> list = buildCheckOrderRespVOList(Collections.singletonList(order));
+        List<WmsCheckOrderRespVO> list =
+                buildCheckOrderRespVOList(Collections.singletonList(order));
         return CollUtil.getFirst(list);
     }
 
@@ -160,39 +170,77 @@ public class WmsCheckOrderController {
             return Collections.emptyList();
         }
         // 获取相关的仓库、用户等数据
-        Map<Long, WmsWarehouseDO> warehouseMap = warehouseService.getWarehouseMap(convertSet(list, WmsCheckOrderDO::getWarehouseId));
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertSetByFlatMap(list,
-                order -> Stream.of(parseUserId(order.getCreator()), parseUserId(order.getUpdater()))));
+        Map<Long, WmsWarehouseDO> warehouseMap =
+                warehouseService.getWarehouseMap(convertSet(list, WmsCheckOrderDO::getWarehouseId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSetByFlatMap(
+                                list,
+                                order ->
+                                        Stream.of(
+                                                parseUserId(order.getCreator()),
+                                                parseUserId(order.getUpdater()))));
         // 拼接数据
-        return BeanUtils.toBean(list, WmsCheckOrderRespVO.class, vo -> {
-            MapUtils.findAndThen(warehouseMap, vo.getWarehouseId(), warehouse -> vo.setWarehouseName(warehouse.getName()));
-            MapUtils.findAndThen(userMap, parseUserId(vo.getCreator()), user -> vo.setCreatorName(user.getNickname()));
-            MapUtils.findAndThen(userMap, parseUserId(vo.getUpdater()), user -> vo.setUpdaterName(user.getNickname()));
-        });
+        return BeanUtils.toBean(
+                list,
+                WmsCheckOrderRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            warehouseMap,
+                            vo.getWarehouseId(),
+                            warehouse -> vo.setWarehouseName(warehouse.getName()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            parseUserId(vo.getCreator()),
+                            user -> vo.setCreatorName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            parseUserId(vo.getUpdater()),
+                            user -> vo.setUpdaterName(user.getNickname()));
+                });
     }
 
     private Long parseUserId(String userId) {
         return NumberUtil.parseLong(userId, null);
     }
 
-    private List<WmsCheckOrderDetailRespVO> buildCheckOrderDetailRespVOList(List<WmsCheckOrderDetailDO> list) {
+    private List<WmsCheckOrderDetailRespVO> buildCheckOrderDetailRespVOList(
+            List<WmsCheckOrderDetailDO> list) {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
         // 获取相关的商品、SKU、仓库等数据
-        Map<Long, WmsItemSkuDO> skuMap = itemSkuService.getItemSkuMap(convertSet(list, WmsCheckOrderDetailDO::getSkuId));
-        Map<Long, WmsItemDO> itemMap = itemService.getItemMap(convertSet(skuMap.values(), WmsItemSkuDO::getItemId));
-        Map<Long, WmsWarehouseDO> warehouseMap = warehouseService.getWarehouseMap(
-                convertSet(list, WmsCheckOrderDetailDO::getWarehouseId));
+        Map<Long, WmsItemSkuDO> skuMap =
+                itemSkuService.getItemSkuMap(convertSet(list, WmsCheckOrderDetailDO::getSkuId));
+        Map<Long, WmsItemDO> itemMap =
+                itemService.getItemMap(convertSet(skuMap.values(), WmsItemSkuDO::getItemId));
+        Map<Long, WmsWarehouseDO> warehouseMap =
+                warehouseService.getWarehouseMap(
+                        convertSet(list, WmsCheckOrderDetailDO::getWarehouseId));
         // 拼接数据
-        return BeanUtils.toBean(list, WmsCheckOrderDetailRespVO.class, vo -> {
-            MapUtils.findAndThen(skuMap, vo.getSkuId(), sku -> {
-                vo.setSkuCode(sku.getCode()).setSkuName(sku.getName()).setItemId(sku.getItemId());
-                MapUtils.findAndThen(itemMap, sku.getItemId(), item -> vo.setItemCode(item.getCode())
-                        .setItemName(item.getName()).setUnit(item.getUnit()));
-            });
-            MapUtils.findAndThen(warehouseMap, vo.getWarehouseId(), warehouse -> vo.setWarehouseName(warehouse.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                WmsCheckOrderDetailRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            skuMap,
+                            vo.getSkuId(),
+                            sku -> {
+                                vo.setSkuCode(sku.getCode())
+                                        .setSkuName(sku.getName())
+                                        .setItemId(sku.getItemId());
+                                MapUtils.findAndThen(
+                                        itemMap,
+                                        sku.getItemId(),
+                                        item ->
+                                                vo.setItemCode(item.getCode())
+                                                        .setItemName(item.getName())
+                                                        .setUnit(item.getUnit()));
+                            });
+                    MapUtils.findAndThen(
+                            warehouseMap,
+                            vo.getWarehouseId(),
+                            warehouse -> vo.setWarehouseName(warehouse.getName()));
+                });
     }
-
 }

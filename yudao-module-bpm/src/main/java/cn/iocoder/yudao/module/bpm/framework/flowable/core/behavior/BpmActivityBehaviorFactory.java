@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.behavior;
 
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateInvoker;
+
 import lombok.Setter;
+
 import org.flowable.bpmn.model.Activity;
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
@@ -28,17 +30,16 @@ public class BpmActivityBehaviorFactory extends DefaultActivityBehaviorFactory {
     }
 
     @Override
-    public ParallelMultiInstanceBehavior createParallelMultiInstanceBehavior(Activity activity,
-                                                                             AbstractBpmnActivityBehavior behavior) {
+    public ParallelMultiInstanceBehavior createParallelMultiInstanceBehavior(
+            Activity activity, AbstractBpmnActivityBehavior behavior) {
         return new BpmParallelMultiInstanceBehavior(activity, behavior)
                 .setTaskCandidateInvoker(taskCandidateInvoker);
     }
 
     @Override
-    public SequentialMultiInstanceBehavior createSequentialMultiInstanceBehavior(Activity activity,
-                                                                                 AbstractBpmnActivityBehavior behavior) {
+    public SequentialMultiInstanceBehavior createSequentialMultiInstanceBehavior(
+            Activity activity, AbstractBpmnActivityBehavior behavior) {
         return new BpmSequentialMultiInstanceBehavior(activity, behavior)
                 .setTaskCandidateInvoker(taskCandidateInvoker);
     }
-
 }

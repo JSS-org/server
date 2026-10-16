@@ -5,11 +5,16 @@ import cn.iocoder.yudao.framework.common.validation.Mobile;
 import cn.iocoder.yudao.module.system.framework.operatelog.core.DeptParseFunction;
 import cn.iocoder.yudao.module.system.framework.operatelog.core.PostParseFunction;
 import cn.iocoder.yudao.module.system.framework.operatelog.core.SexParseFunction;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.Length;
 
 import java.util.Set;
@@ -76,5 +81,4 @@ public class UserSaveReqVO {
         return id != null // 修改时，不需要传递
                 || (ObjectUtil.isAllNotEmpty(password)); // 新增时，必须都传递 password
     }
-
 }

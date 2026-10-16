@@ -12,9 +12,9 @@ public class GroupNameUpdateNotification extends BaseGroupNotification {
      * 旧群名
      */
     private String oldName;
+
     /**
      * 新群名
      */
     private String newName;
-
 }

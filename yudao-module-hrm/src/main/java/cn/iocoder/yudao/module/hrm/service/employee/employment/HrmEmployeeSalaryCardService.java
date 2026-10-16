@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.hrm.service.employee.employment;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.salarycard.HrmEmployeeSalaryCardSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeSalaryCardDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 员工工资卡 Service 接口
@@ -65,5 +66,4 @@ public interface HrmEmployeeSalaryCardService {
     default Map<Long, HrmEmployeeSalaryCardDO> getSalaryCardMap(Collection<Long> employeeIds) {
         return convertMap(getSalaryCardList(employeeIds), HrmEmployeeSalaryCardDO::getEmployeeId);
     }
-
 }

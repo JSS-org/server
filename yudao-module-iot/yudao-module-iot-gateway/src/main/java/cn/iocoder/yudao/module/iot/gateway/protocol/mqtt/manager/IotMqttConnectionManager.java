@@ -1,11 +1,14 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.mqtt.manager;
 
 import cn.hutool.core.util.StrUtil;
+
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.mqtt.MqttEndpoint;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -82,8 +85,10 @@ public class IotMqttConnectionManager {
         // 如果设备已有其他连接，先清理旧连接
         MqttEndpoint oldEndpoint = deviceEndpointMap.get(deviceId);
         if (oldEndpoint != null && oldEndpoint != endpoint) {
-            log.info("[registerConnection][设备已有其他连接，断开旧连接，设备 ID: {}，旧连接: {}]",
-                    deviceId, getEndpointAddress(oldEndpoint));
+            log.info(
+                    "[registerConnection][设备已有其他连接，断开旧连接，设备 ID: {}，旧连接: {}]",
+                    deviceId,
+                    getEndpointAddress(oldEndpoint));
             // 先清理映射，再关闭连接（避免旧连接处理器干扰）
             connectionMap.remove(oldEndpoint);
             try {
@@ -98,8 +103,12 @@ public class IotMqttConnectionManager {
         // 注册新连接
         connectionMap.put(endpoint, connectionInfo);
         deviceEndpointMap.put(deviceId, endpoint);
-        log.info("[registerConnection][注册设备连接，设备 ID: {}，连接: {}，productKey: {}，deviceName: {}]",
-                deviceId, getEndpointAddress(endpoint), connectionInfo.getProductKey(), connectionInfo.getDeviceName());
+        log.info(
+                "[registerConnection][注册设备连接，设备 ID: {}，连接: {}，productKey: {}，deviceName: {}]",
+                deviceId,
+                getEndpointAddress(endpoint),
+                connectionInfo.getProductKey(),
+                connectionInfo.getDeviceName());
     }
 
     /**
@@ -115,7 +124,10 @@ public class IotMqttConnectionManager {
         Long deviceId = connectionInfo.getDeviceId();
         // 仅当 deviceEndpointMap 中的 endpoint 是当前 endpoint 时才移除，避免误删新连接
         deviceEndpointMap.remove(deviceId, endpoint);
-        log.info("[unregisterConnection][注销设备连接，设备 ID: {}，连接: {}]", deviceId, getEndpointAddress(endpoint));
+        log.info(
+                "[unregisterConnection][注销设备连接，设备 ID: {}，连接: {}]",
+                deviceId,
+                getEndpointAddress(endpoint));
     }
 
     /**
@@ -151,7 +163,8 @@ public class IotMqttConnectionManager {
      * @param retain   是否保留消息
      * @return 是否发送成功
      */
-    public boolean sendToDevice(Long deviceId, String topic, byte[] payload, int qos, boolean retain) {
+    public boolean sendToDevice(
+            Long deviceId, String topic, byte[] payload, int qos, boolean retain) {
         MqttEndpoint endpoint = deviceEndpointMap.get(deviceId);
         if (endpoint == null) {
             log.warn("[sendToDevice][设备离线，无法发送消息，设备 ID: {}，主题: {}]", deviceId, topic);
@@ -163,7 +176,11 @@ public class IotMqttConnectionManager {
             log.debug("[sendToDevice][发送消息成功，设备 ID: {}，主题: {}，QoS: {}]", deviceId, topic, qos);
             return true;
         } catch (Exception e) {
-            log.error("[sendToDevice][发送消息失败，设备 ID: {}，主题: {}，错误: {}]", deviceId, topic, e.getMessage());
+            log.error(
+                    "[sendToDevice][发送消息失败，设备 ID: {}，主题: {}，错误: {}]",
+                    deviceId,
+                    topic,
+                    e.getMessage());
             return false;
         }
     }
@@ -203,10 +220,12 @@ public class IotMqttConnectionManager {
          * 设备 ID
          */
         private Long deviceId;
+
         /**
          * 产品 Key
          */
         private String productKey;
+
         /**
          * 设备名称
          */
@@ -216,7 +235,5 @@ public class IotMqttConnectionManager {
          * 连接地址
          */
         private String remoteAddress;
-
     }
-
 }

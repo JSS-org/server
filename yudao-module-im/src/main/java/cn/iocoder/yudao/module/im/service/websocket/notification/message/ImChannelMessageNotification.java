@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.im.service.websocket.notification.message;
 
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImChannelMessageDO;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -23,22 +24,27 @@ public class ImChannelMessageNotification {
      * 消息编号
      */
     private Long id;
+
     /**
      * 频道编号
      */
     private Long channelId;
+
     /**
      * 关联素材编号
      */
     private Long materialId;
+
     /**
      * 消息类型
      */
     private Integer type;
+
     /**
      * 消息内容；payload JSON 串
      */
     private String content;
+
     /**
      * 发送时间
      */
@@ -50,5 +56,4 @@ public class ImChannelMessageNotification {
     public static ImChannelMessageNotification ofSend(ImChannelMessageDO message) {
         return BeanUtils.toBean(message, ImChannelMessageNotification.class);
     }
-
 }

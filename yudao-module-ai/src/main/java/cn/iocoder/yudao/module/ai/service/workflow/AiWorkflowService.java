@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.ai.controller.admin.workflow.vo.AiWorkflowPageReq
 import cn.iocoder.yudao.module.ai.controller.admin.workflow.vo.AiWorkflowSaveReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.workflow.vo.AiWorkflowTestReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.workflow.AiWorkflowDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -58,5 +59,4 @@ public interface AiWorkflowService {
      * @param testReqVO 测试数据
      */
     Object testWorkflow(AiWorkflowTestReqVO testReqVO);
-
 }

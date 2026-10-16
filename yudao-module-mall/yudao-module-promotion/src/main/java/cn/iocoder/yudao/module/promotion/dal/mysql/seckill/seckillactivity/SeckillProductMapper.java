@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.promotion.dal.mysql.seckill.seckillactivity;
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillProductDO;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -22,8 +24,8 @@ public interface SeckillProductMapper extends BaseMapperX<SeckillProductDO> {
     }
 
     default SeckillProductDO selectByActivityIdAndSkuId(Long activityId, Long skuId) {
-        return selectOne(SeckillProductDO::getActivityId, activityId,
-                SeckillProductDO::getSkuId, skuId);
+        return selectOne(
+                SeckillProductDO::getActivityId, activityId, SeckillProductDO::getSkuId, skuId);
     }
 
     default List<SeckillProductDO> selectListByActivityId(Collection<Long> ids) {
@@ -39,10 +41,12 @@ public interface SeckillProductMapper extends BaseMapperX<SeckillProductDO> {
      */
     default int updateStockDecr(Long id, int count) {
         Assert.isTrue(count > 0);
-        return update(null, new LambdaUpdateWrapper<SeckillProductDO>()
-                .eq(SeckillProductDO::getId, id)
-                .ge(SeckillProductDO::getStock, count)
-                .setSql("stock = stock - " + count));
+        return update(
+                null,
+                new LambdaUpdateWrapper<SeckillProductDO>()
+                        .eq(SeckillProductDO::getId, id)
+                        .ge(SeckillProductDO::getStock, count)
+                        .setSql("stock = stock - " + count));
     }
 
     /**
@@ -54,9 +58,10 @@ public interface SeckillProductMapper extends BaseMapperX<SeckillProductDO> {
      */
     default int updateStockIncr(Long id, int count) {
         Assert.isTrue(count > 0);
-        return update(null, new LambdaUpdateWrapper<SeckillProductDO>()
-                .eq(SeckillProductDO::getId, id)
-                .setSql("stock = stock + " + count));
+        return update(
+                null,
+                new LambdaUpdateWrapper<SeckillProductDO>()
+                        .eq(SeckillProductDO::getId, id)
+                        .setSql("stock = stock + " + count));
     }
-
 }

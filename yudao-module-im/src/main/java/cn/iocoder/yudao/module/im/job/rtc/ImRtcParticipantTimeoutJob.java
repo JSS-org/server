@@ -6,8 +6,11 @@ import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.im.framework.config.ImProperties;
 import cn.iocoder.yudao.module.im.service.rtc.ImRtcCallService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,11 +22,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ImRtcParticipantTimeoutJob implements JobHandler {
 
-    @Resource
-    private ImRtcCallService rtcCallService;
+    @Resource private ImRtcCallService rtcCallService;
 
-    @Resource
-    private ImProperties imProperties;
+    @Resource private ImProperties imProperties;
 
     /**
      * 执行超时扫描
@@ -54,5 +55,4 @@ public class ImRtcParticipantTimeoutJob implements JobHandler {
         int minutes = Integer.parseInt(param);
         return minutes > 0 ? minutes : defaultMinutes;
     }
-
 }

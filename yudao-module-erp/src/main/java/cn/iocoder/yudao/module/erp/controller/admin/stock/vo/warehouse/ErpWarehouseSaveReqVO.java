@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.warehouse;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -43,5 +46,4 @@ public class ErpWarehouseSaveReqVO {
     @NotNull(message = "开启状态不能为空")
     @InEnum(CommonStatusEnum.class)
     private Integer status;
-
 }

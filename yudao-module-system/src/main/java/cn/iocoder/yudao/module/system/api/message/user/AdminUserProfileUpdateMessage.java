@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.api.message.user;
 
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -19,13 +20,14 @@ public class AdminUserProfileUpdateMessage {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
+
     /**
      * 变更后的昵称（无变更时为 null）
      */
     private String nickname;
+
     /**
      * 变更后的头像（无变更时为 null）
      */
     private String avatar;
-
 }

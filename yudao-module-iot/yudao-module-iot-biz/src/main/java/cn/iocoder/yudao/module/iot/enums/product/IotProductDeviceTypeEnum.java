@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.enums.product;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum IotProductDeviceTypeEnum implements ArrayValuable<Integer> {
-
     DIRECT(0, "直连设备"),
     GATEWAY_SUB(1, "网关子设备"),
     GATEWAY(2, "网关设备");
@@ -29,7 +29,8 @@ public enum IotProductDeviceTypeEnum implements ArrayValuable<Integer> {
      */
     private final String description;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(IotProductDeviceTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(IotProductDeviceTypeEnum::getType).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
@@ -55,5 +56,4 @@ public enum IotProductDeviceTypeEnum implements ArrayValuable<Integer> {
     public static boolean isGatewaySub(Integer type) {
         return GATEWAY_SUB.getType().equals(type);
     }
-
 }

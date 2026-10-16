@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.topo;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.Data;
 
 /**
@@ -12,6 +13,4 @@ import lombok.Data;
  * @see <a href="https://help.aliyun.com/zh/marketplace/obtain-topological-relationship">阿里云 - 获取拓扑关系</a>
  */
 @Data
-public class IotDeviceTopoGetReqDTO {
-
-}
+public class IotDeviceTopoGetReqDTO {}

@@ -5,6 +5,7 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+
 import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
 
@@ -38,36 +39,58 @@ public class RandomUtils {
 
     static {
         // 字符串
-        PODAM_FACTORY.getStrategy().addOrReplaceTypeManufacturer(String.class,
-                (dataProviderStrategy, attributeMetadata, map) -> randomString());
+        PODAM_FACTORY
+                .getStrategy()
+                .addOrReplaceTypeManufacturer(
+                        String.class,
+                        (dataProviderStrategy, attributeMetadata, map) -> randomString());
         // Integer
-        PODAM_FACTORY.getStrategy().addOrReplaceTypeManufacturer(Integer.class, (dataProviderStrategy, attributeMetadata, map) -> {
-            // 如果是 status 的字段，返回 0 或 1
-            if ("status".equals(attributeMetadata.getAttributeName())) {
-                return RandomUtil.randomEle(CommonStatusEnum.values()).getStatus();
-            }
-            // 如果是 type、status 结尾的字段，返回 tinyint 范围
-            if (StrUtil.endWithAnyIgnoreCase(attributeMetadata.getAttributeName(),
-                    "type", "status", "category", "scope", "result")) {
-                return RandomUtil.randomInt(0, TINYINT_MAX + 1);
-            }
-            return RandomUtil.randomInt();
-        });
+        PODAM_FACTORY
+                .getStrategy()
+                .addOrReplaceTypeManufacturer(
+                        Integer.class,
+                        (dataProviderStrategy, attributeMetadata, map) -> {
+                            // 如果是 status 的字段，返回 0 或 1
+                            if ("status".equals(attributeMetadata.getAttributeName())) {
+                                return RandomUtil.randomEle(CommonStatusEnum.values()).getStatus();
+                            }
+                            // 如果是 type、status 结尾的字段，返回 tinyint 范围
+                            if (StrUtil.endWithAnyIgnoreCase(
+                                    attributeMetadata.getAttributeName(),
+                                    "type",
+                                    "status",
+                                    "category",
+                                    "scope",
+                                    "result")) {
+                                return RandomUtil.randomInt(0, TINYINT_MAX + 1);
+                            }
+                            return RandomUtil.randomInt();
+                        });
         // BigDecimal：限制精度在 DECIMAL(10,2) 范围内，避免 H2 等数据库溢出
-        PODAM_FACTORY.getStrategy().addOrReplaceTypeManufacturer(BigDecimal.class,
-                (dataProviderStrategy, attributeMetadata, map) ->
-                        BigDecimal.valueOf(RandomUtil.randomInt(0, 10000000), 2));
+        PODAM_FACTORY
+                .getStrategy()
+                .addOrReplaceTypeManufacturer(
+                        BigDecimal.class,
+                        (dataProviderStrategy, attributeMetadata, map) ->
+                                BigDecimal.valueOf(RandomUtil.randomInt(0, 10000000), 2));
         // LocalDateTime
-        PODAM_FACTORY.getStrategy().addOrReplaceTypeManufacturer(LocalDateTime.class,
-                (dataProviderStrategy, attributeMetadata, map) -> randomLocalDateTime());
+        PODAM_FACTORY
+                .getStrategy()
+                .addOrReplaceTypeManufacturer(
+                        LocalDateTime.class,
+                        (dataProviderStrategy, attributeMetadata, map) -> randomLocalDateTime());
         // Boolean
-        PODAM_FACTORY.getStrategy().addOrReplaceTypeManufacturer(Boolean.class, (dataProviderStrategy, attributeMetadata, map) -> {
-            // 如果是 deleted 的字段，返回非删除
-            if ("deleted".equals(attributeMetadata.getAttributeName())) {
-                return false;
-            }
-            return RandomUtil.randomBoolean();
-        });
+        PODAM_FACTORY
+                .getStrategy()
+                .addOrReplaceTypeManufacturer(
+                        Boolean.class,
+                        (dataProviderStrategy, attributeMetadata, map) -> {
+                            // 如果是 deleted 的字段，返回非删除
+                            if ("deleted".equals(attributeMetadata.getAttributeName())) {
+                                return false;
+                            }
+                            return RandomUtil.randomBoolean();
+                        });
     }
 
     public static String randomString() {
@@ -96,8 +119,10 @@ public class RandomUtils {
     }
 
     public static <T> Set<T> randomSet(Class<T> clazz) {
-        return Stream.iterate(0, i -> i).limit(RandomUtil.randomInt(1, RANDOM_COLLECTION_LENGTH))
-                .map(i -> randomPojo(clazz)).collect(Collectors.toSet());
+        return Stream.iterate(0, i -> i)
+                .limit(RandomUtil.randomInt(1, RANDOM_COLLECTION_LENGTH))
+                .map(i -> randomPojo(clazz))
+                .collect(Collectors.toSet());
     }
 
     public static Integer randomCommonStatus() {
@@ -144,8 +169,9 @@ public class RandomUtils {
 
     @SafeVarargs
     public static <T> List<T> randomPojoList(Class<T> clazz, int size, Consumer<T>... consumers) {
-        return Stream.iterate(0, i -> i).limit(size).map(o -> randomPojo(clazz, consumers))
+        return Stream.iterate(0, i -> i)
+                .limit(size)
+                .map(o -> randomPojo(clazz, consumers))
                 .collect(Collectors.toList());
     }
-
 }

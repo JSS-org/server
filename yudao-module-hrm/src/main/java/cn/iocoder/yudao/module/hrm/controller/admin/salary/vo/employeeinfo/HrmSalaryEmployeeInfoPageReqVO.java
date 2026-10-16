@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -38,5 +40,4 @@ public class HrmSalaryEmployeeInfoPageReqVO extends PageParam {
 
     @Schema(description = "员工状态页签", example = "1")
     private Integer statusCategory;
-
 }

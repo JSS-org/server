@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.card.vo.process.MesProCardProcessPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.card.vo.process.MesProCardProcessSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.card.MesProCardProcessDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -57,5 +58,4 @@ public interface MesProCardProcessService {
      * @param cardId 流转卡编号
      */
     void deleteCardProcessByCardId(Long cardId);
-
 }

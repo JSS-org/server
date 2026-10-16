@@ -38,5 +38,4 @@ public interface Ai1RedisKeyConstants {
      * messageId 全局唯一，KEY 不带 tenantId；续传前已按租户、用户校验消息归属
      */
     String SESSION_RESULT_STREAM = "ai1:session:result:%d";
-
 }

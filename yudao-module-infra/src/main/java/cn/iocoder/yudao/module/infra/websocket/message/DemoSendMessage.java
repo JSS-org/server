@@ -16,9 +16,9 @@ public class DemoSendMessage {
      * 如果为空，说明发送给所有人
      */
     private Long toUserId;
+
     /**
      * 内容
      */
     private String text;
-
 }

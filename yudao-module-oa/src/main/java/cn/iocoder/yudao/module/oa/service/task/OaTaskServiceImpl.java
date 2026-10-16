@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.oa.service.task;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_RECEIVED_DELETE_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_RECEIVER_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_STATUS_TRANSITION_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -15,7 +24,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.task.OaTaskMapper;
 import cn.iocoder.yudao.module.oa.dal.mysql.task.OaTaskReceiverMapper;
 import cn.iocoder.yudao.module.oa.enums.task.OaTaskStatusEnum;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -27,15 +38,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_RECEIVER_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_RECEIVED_DELETE_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_STATUS_TRANSITION_INVALID;
-
 /**
  * OA 任务 Service 实现类
  *
@@ -45,15 +47,11 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.TASK_STATUS_TR
 @Validated
 public class OaTaskServiceImpl implements OaTaskService {
 
-    @Resource
-    private OaTaskMapper taskMapper;
-    @Resource
-    private OaTaskReceiverMapper taskReceiverMapper;
-    @Resource
-    private OaTaskLogMapper taskLogMapper;
+    @Resource private OaTaskMapper taskMapper;
+    @Resource private OaTaskReceiverMapper taskReceiverMapper;
+    @Resource private OaTaskLogMapper taskLogMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -62,12 +60,19 @@ public class OaTaskServiceImpl implements OaTaskService {
         adminUserApi.validateUserList(createReqVO.getReceiverUserIds());
 
         // 2. 新增任务
-        OaTaskDO task = BeanUtils.toBean(createReqVO, OaTaskDO.class).setPublishTime(LocalDateTime.now());
+        OaTaskDO task =
+                BeanUtils.toBean(createReqVO, OaTaskDO.class).setPublishTime(LocalDateTime.now());
         taskMapper.insert(task);
 
         // 3. 新增任务接收人，初始进度与发布人选择的任务状态一致
-        taskReceiverMapper.insertBatch(convertList(createReqVO.getReceiverUserIds(), receiverUserId -> new OaTaskReceiverDO()
-                .setTaskId(task.getId()).setUserId(receiverUserId).setStatus(task.getStatus())));
+        taskReceiverMapper.insertBatch(
+                convertList(
+                        createReqVO.getReceiverUserIds(),
+                        receiverUserId ->
+                                new OaTaskReceiverDO()
+                                        .setTaskId(task.getId())
+                                        .setUserId(receiverUserId)
+                                        .setStatus(task.getStatus())));
         return task.getId();
     }
 
@@ -80,18 +85,28 @@ public class OaTaskServiceImpl implements OaTaskService {
         adminUserApi.validateUserList(updateReqVO.getReceiverUserIds());
 
         // 2. 按发布人表单更新任务信息及总体状态
-        taskMapper.updateById(BeanUtils.toBean(updateReqVO, OaTaskDO.class).setPublishTime(LocalDateTime.now()));
+        taskMapper.updateById(
+                BeanUtils.toBean(updateReqVO, OaTaskDO.class).setPublishTime(LocalDateTime.now()));
 
         // 3. 更新任务接收人，移除不再接收任务的关系
-        List<OaTaskReceiverDO> existingReceivers = taskReceiverMapper.selectListByTaskId(task.getId());
-        List<List<Long>> diff = diffList(convertList(existingReceivers, OaTaskReceiverDO::getUserId),
-                updateReqVO.getReceiverUserIds(), ObjUtil::equal);
+        List<OaTaskReceiverDO> existingReceivers =
+                taskReceiverMapper.selectListByTaskId(task.getId());
+        List<List<Long>> diff =
+                diffList(
+                        convertList(existingReceivers, OaTaskReceiverDO::getUserId),
+                        updateReqVO.getReceiverUserIds(),
+                        ObjUtil::equal);
         if (CollUtil.isNotEmpty(diff.get(2))) {
             taskReceiverMapper.deleteByTaskIdAndUserIds(task.getId(), diff.get(2));
         }
-        List<OaTaskReceiverDO> addedReceivers = convertList(diff.get(0),
-                receiverUserId -> new OaTaskReceiverDO().setTaskId(task.getId()).setUserId(receiverUserId)
-                        .setStatus(updateReqVO.getStatus()));
+        List<OaTaskReceiverDO> addedReceivers =
+                convertList(
+                        diff.get(0),
+                        receiverUserId ->
+                                new OaTaskReceiverDO()
+                                        .setTaskId(task.getId())
+                                        .setUserId(receiverUserId)
+                                        .setStatus(updateReqVO.getStatus()));
         if (CollUtil.isNotEmpty(addedReceivers)) {
             taskReceiverMapper.insertBatch(addedReceivers);
         }
@@ -147,13 +162,13 @@ public class OaTaskServiceImpl implements OaTaskService {
 
     @Override
     public PageResult<OaTaskDO> getReceivedTaskPage(OaTaskPageReqVO pageReqVO, Long userId) {
-        List<OaTaskReceiverDO> receivers = taskReceiverMapper.selectListByUserIdAndStatus(
-                userId, pageReqVO.getStatus());
+        List<OaTaskReceiverDO> receivers =
+                taskReceiverMapper.selectListByUserIdAndStatus(userId, pageReqVO.getStatus());
         if (CollUtil.isEmpty(receivers)) {
             return PageResult.empty();
         }
-        return taskMapper.selectReceivedPage(pageReqVO,
-                convertList(receivers, OaTaskReceiverDO::getTaskId));
+        return taskMapper.selectReceivedPage(
+                pageReqVO, convertList(receivers, OaTaskReceiverDO::getTaskId));
     }
 
     @Override
@@ -170,7 +185,8 @@ public class OaTaskServiceImpl implements OaTaskService {
             if (ObjUtil.notEqual(task.getCreator(), userId.toString())) {
                 throw exception(TASK_ACCESS_DENIED);
             }
-            taskMapper.updateById(new OaTaskDO().setId(task.getId()).setStatus(createReqVO.getStatus()));
+            taskMapper.updateById(
+                    new OaTaskDO().setId(task.getId()).setStatus(createReqVO.getStatus()));
             taskReceiverMapper.updateStatusByTaskId(task.getId(), createReqVO.getStatus());
         } else {
             OaTaskReceiverDO receiver = validateTaskReceiver(task.getId(), userId);
@@ -207,12 +223,17 @@ public class OaTaskServiceImpl implements OaTaskService {
 
     @Override
     public Map<Long, Long> getCompletedTaskCountMapByUserId() {
-        Map<Long, Long> counts = taskMapper.selectCountMapByStatusGroupByCreator(
-                OaTaskStatusEnum.COMPLETED.getStatus());
+        Map<Long, Long> counts =
+                taskMapper.selectCountMapByStatusGroupByCreator(
+                        OaTaskStatusEnum.COMPLETED.getStatus());
         Map<Long, Long> countMap = new LinkedHashMap<>();
-        counts.entrySet().stream().sorted(Map.Entry.<Long, Long>comparingByValue().reversed()
-                        .thenComparing(Map.Entry.comparingByKey()))
-                .limit(5).forEach(entry -> countMap.put(entry.getKey(), entry.getValue()));
+        counts.entrySet().stream()
+                .sorted(
+                        Map.Entry.<Long, Long>comparingByValue()
+                                .reversed()
+                                .thenComparing(Map.Entry.comparingByKey()))
+                .limit(5)
+                .forEach(entry -> countMap.put(entry.getKey(), entry.getValue()));
         return countMap;
     }
 
@@ -226,7 +247,8 @@ public class OaTaskServiceImpl implements OaTaskService {
         if (CollUtil.isEmpty(receivers)) {
             return;
         }
-        Integer overallStatus = Collections.min(convertList(receivers, OaTaskReceiverDO::getStatus));
+        Integer overallStatus =
+                Collections.min(convertList(receivers, OaTaskReceiverDO::getStatus));
         taskMapper.updateById(new OaTaskDO().setId(taskId).setStatus(overallStatus));
     }
 
@@ -273,5 +295,4 @@ public class OaTaskServiceImpl implements OaTaskService {
         }
         return task;
     }
-
 }

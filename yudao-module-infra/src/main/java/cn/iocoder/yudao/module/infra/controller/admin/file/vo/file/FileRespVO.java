@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.infra.controller.admin.file.vo.file;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,13 +16,22 @@ public class FileRespVO {
     @Schema(description = "配置编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11")
     private Long configId;
 
-    @Schema(description = "文件路径", requiredMode = Schema.RequiredMode.REQUIRED, example = "yudao.jpg")
+    @Schema(
+            description = "文件路径",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "yudao.jpg")
     private String path;
 
-    @Schema(description = "原文件名", requiredMode = Schema.RequiredMode.REQUIRED, example = "yudao.jpg")
+    @Schema(
+            description = "原文件名",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "yudao.jpg")
     private String name;
 
-    @Schema(description = "文件 URL", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/yudao.jpg")
+    @Schema(
+            description = "文件 URL",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/yudao.jpg")
     private String url;
 
     @Schema(description = "文件MIME类型", example = "application/octet-stream")
@@ -32,5 +42,4 @@ public class FileRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

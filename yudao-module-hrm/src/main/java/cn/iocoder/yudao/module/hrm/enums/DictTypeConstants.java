@@ -45,5 +45,4 @@ public interface DictTypeConstants {
     String HRM_PERFORMANCE_SCORE_CALCULATION = "hrm_performance_score_calculation"; // 绩效计分方式
     String HRM_PERFORMANCE_UPPER_LIMIT_TYPE = "hrm_performance_upper_limit_type"; // 绩效上限类型
     String HRM_PERFORMANCE_YES_NO = "hrm_performance_yes_no"; // 绩效是否
-
 }

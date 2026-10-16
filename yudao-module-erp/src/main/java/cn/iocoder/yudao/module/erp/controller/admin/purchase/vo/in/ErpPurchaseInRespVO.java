@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.in;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -29,6 +32,7 @@ public class ErpPurchaseInRespVO {
 
     @Schema(description = "供应商编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1724")
     private Long supplierId;
+
     @Schema(description = "供应商名称", example = "芋道")
     @ExcelProperty("供应商名称")
     private String supplierName;
@@ -43,31 +47,49 @@ public class ErpPurchaseInRespVO {
 
     @Schema(description = "采购订单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "17386")
     private Long orderId;
+
     @Schema(description = "采购订单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "XS001")
     private String orderNo;
 
     @Schema(description = "合计数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "15663")
     @ExcelProperty("合计数量")
     private BigDecimal totalCount;
+
     @Schema(description = "最终合计价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "24906")
     @ExcelProperty("最终合计价格")
     private BigDecimal totalPrice;
-    @Schema(description = "已付款金额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "7127")
+
+    @Schema(
+            description = "已付款金额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "7127")
     private BigDecimal paymentPrice;
 
-    @Schema(description = "合计产品价格，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "7127")
+    @Schema(
+            description = "合计产品价格，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "7127")
     private BigDecimal totalProductPrice;
 
-    @Schema(description = "合计税额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "7127")
+    @Schema(
+            description = "合计税额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "7127")
     private BigDecimal totalTaxPrice;
 
     @Schema(description = "优惠率，百分比", requiredMode = Schema.RequiredMode.REQUIRED, example = "99.88")
     private BigDecimal discountPercent;
 
-    @Schema(description = "优惠金额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "7127")
+    @Schema(
+            description = "优惠金额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "7127")
     private BigDecimal discountPrice;
 
-    @Schema(description = "定金金额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "7127")
+    @Schema(
+            description = "定金金额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "7127")
     private BigDecimal otherPrice;
 
     @Schema(description = "附件地址", example = "https://www.iocoder.cn")
@@ -80,6 +102,7 @@ public class ErpPurchaseInRespVO {
 
     @Schema(description = "创建人", example = "芋道")
     private String creator;
+
     @Schema(description = "创建人名称", example = "芋道")
     private String creatorName;
 
@@ -100,7 +123,10 @@ public class ErpPurchaseInRespVO {
         @Schema(description = "入库项编号", example = "11756")
         private Long id;
 
-        @Schema(description = "采购订单项编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11756")
+        @Schema(
+                description = "采购订单项编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "11756")
         private Long orderItemId;
 
         @Schema(description = "仓库编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
@@ -109,13 +135,19 @@ public class ErpPurchaseInRespVO {
         @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
         private Long productId;
 
-        @Schema(description = "产品单位单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
+        @Schema(
+                description = "产品单位单位",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "3113")
         private Long productUnitId;
 
         @Schema(description = "产品单价", example = "100.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "产品数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "产品数量不能为空")
         private BigDecimal count;
 
@@ -132,14 +164,20 @@ public class ErpPurchaseInRespVO {
 
         @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "巧克力")
         private String productName;
-        @Schema(description = "产品条码", requiredMode = Schema.RequiredMode.REQUIRED, example = "A9985")
+
+        @Schema(
+                description = "产品条码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "A9985")
         private String productBarCode;
+
         @Schema(description = "产品单位名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "盒")
         private String productUnitName;
 
-        @Schema(description = "库存数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "库存数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         private BigDecimal stockCount; // 该字段仅仅在“详情”和“编辑”时使用
-
     }
-
 }

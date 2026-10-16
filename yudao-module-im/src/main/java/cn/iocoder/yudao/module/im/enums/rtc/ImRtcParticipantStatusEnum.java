@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.im.enums.rtc;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -23,24 +24,28 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImRtcParticipantStatusEnum implements ArrayValuable<Integer> {
-
     INVITING(10, "邀请中"), // 已发出 invite，等被叫响应
     JOINED(20, "已加入"), // 已 connect 进 LiveKit 房间
     REJECTED(30, "已拒绝"), // 接通前点拒接
     NO_ANSWER(40, "未应答"), // 通话已结束仍未应答；endSession 批量改
     LEFT(50, "已离开"); // 接通后挂断 / Webhook 兜底
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImRtcParticipantStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(ImRtcParticipantStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 活跃状态集合；尚未离开通话（INVITING / JOINED）
      */
-    public static final List<Integer> ACTIVE_STATUSES = ListUtil.of(INVITING.getStatus(), JOINED.getStatus());
+    public static final List<Integer> ACTIVE_STATUSES =
+            ListUtil.of(INVITING.getStatus(), JOINED.getStatus());
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -58,5 +63,4 @@ public enum ImRtcParticipantStatusEnum implements ArrayValuable<Integer> {
     public static boolean isJoined(Integer status) {
         return Objects.equals(JOINED.status, status);
     }
-
 }

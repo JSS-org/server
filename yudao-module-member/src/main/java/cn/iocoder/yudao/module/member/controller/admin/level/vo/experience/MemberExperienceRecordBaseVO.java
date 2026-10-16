@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.member.controller.admin.level.vo.experience;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 会员经验记录 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -36,8 +37,10 @@ public class MemberExperienceRecordBaseVO {
     @NotNull(message = "变更后的经验不能为空")
     private Integer totalExperience;
 
-    @Schema(description = "描述", requiredMode = Schema.RequiredMode.REQUIRED, example = "下单增加 100 经验")
+    @Schema(
+            description = "描述",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "下单增加 100 经验")
     @NotNull(message = "描述不能为空")
     private String description;
-
 }

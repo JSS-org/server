@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.StrUtil;
@@ -12,9 +15,13 @@ import cn.iocoder.yudao.module.system.mq.message.mail.MailSendMessage;
 import cn.iocoder.yudao.module.system.mq.producer.mail.MailProducer;
 import cn.iocoder.yudao.module.system.service.member.MemberService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.dromara.hutool.extra.mail.MailAccount;
 import org.dromara.hutool.extra.mail.MailUtil;
 import org.springframework.stereotype.Service;
@@ -24,9 +31,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 邮箱发送 Service 实现类
@@ -39,26 +43,25 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MailSendServiceImpl implements MailSendService {
 
-    @Resource
-    private AdminUserService adminUserService;
-    @Resource
-    private MemberService memberService;
+    @Resource private AdminUserService adminUserService;
+    @Resource private MemberService memberService;
 
-    @Resource
-    private MailAccountService mailAccountService;
-    @Resource
-    private MailTemplateService mailTemplateService;
+    @Resource private MailAccountService mailAccountService;
+    @Resource private MailTemplateService mailTemplateService;
 
-    @Resource
-    private MailLogService mailLogService;
-    @Resource
-    private MailProducer mailProducer;
+    @Resource private MailLogService mailLogService;
+    @Resource private MailProducer mailProducer;
 
     @Override
-    public Long sendSingleMail(Collection<String> toMails, Collection<String> ccMails, Collection<String> bccMails,
-                               Long userId, Integer userType,
-                               String templateCode, Map<String, Object> templateParams,
-                               File... attachments) {
+    public Long sendSingleMail(
+            Collection<String> toMails,
+            Collection<String> ccMails,
+            Collection<String> bccMails,
+            Long userId,
+            Integer userType,
+            String templateCode,
+            Map<String, Object> templateParams,
+            File... attachments) {
         // 1.1 校验邮箱模版是否合法
         MailTemplateDO template = validateMailTemplate(templateCode);
         // 1.2 校验邮箱账号是否合法
@@ -89,14 +92,35 @@ public class MailSendServiceImpl implements MailSendService {
 
         // 创建发送日志。如果模板被禁用，则不发送短信，只记录日志
         Boolean isSend = CommonStatusEnum.ENABLE.getStatus().equals(template.getStatus());
-        String title = mailTemplateService.formatMailTemplateContent(template.getTitle(), templateParams);
-        String content = mailTemplateService.formatMailTemplateContent(template.getContent(), templateParams);
-        Long sendLogId = mailLogService.createMailLog(userId, userType, toMailSet, ccMailSet, bccMailSet,
-                account, template, content, templateParams, isSend);
+        String title =
+                mailTemplateService.formatMailTemplateContent(template.getTitle(), templateParams);
+        String content =
+                mailTemplateService.formatMailTemplateContent(
+                        template.getContent(), templateParams);
+        Long sendLogId =
+                mailLogService.createMailLog(
+                        userId,
+                        userType,
+                        toMailSet,
+                        ccMailSet,
+                        bccMailSet,
+                        account,
+                        template,
+                        content,
+                        templateParams,
+                        isSend);
         // 发送 MQ 消息，异步执行发送短信
         if (isSend) {
-            mailProducer.sendMailSendMessage(sendLogId, toMailSet, ccMailSet, bccMailSet,
-                    account.getId(), template.getNickname(), title, content, attachments);
+            mailProducer.sendMailSendMessage(
+                    sendLogId,
+                    toMailSet,
+                    ccMailSet,
+                    bccMailSet,
+                    account.getId(),
+                    template.getNickname(),
+                    title,
+                    content,
+                    attachments);
         }
         return sendLogId;
     }
@@ -121,11 +145,19 @@ public class MailSendServiceImpl implements MailSendService {
     public void doSendMail(MailSendMessage message) {
         // 1. 创建发送账号
         MailAccountDO account = validateMailAccount(message.getAccountId());
-        MailAccount mailAccount  = buildMailAccount(account, message.getNickname());
+        MailAccount mailAccount = buildMailAccount(account, message.getNickname());
         // 2. 发送邮件
         try {
-            String messageId = MailUtil.send(mailAccount, message.getToMails(), message.getCcMails(), message.getBccMails(),
-                    message.getTitle(), message.getContent(), true, message.getAttachments());
+            String messageId =
+                    MailUtil.send(
+                            mailAccount,
+                            message.getToMails(),
+                            message.getCcMails(),
+                            message.getBccMails(),
+                            message.getTitle(),
+                            message.getContent(),
+                            true,
+                            message.getAttachments());
             // 3. 更新结果（成功）
             mailLogService.updateMailSendResult(message.getLogId(), messageId, null);
         } catch (Exception e) {
@@ -135,11 +167,19 @@ public class MailSendServiceImpl implements MailSendService {
     }
 
     private MailAccount buildMailAccount(MailAccountDO account, String nickname) {
-        String from = StrUtil.isNotEmpty(nickname) ? nickname + " <" + account.getMail() + ">" : account.getMail();
-        return new MailAccount().setFrom(from).setAuth(true)
-                .setUser(account.getUsername()).setPass(account.getPassword().toCharArray())
-                .setHost(account.getHost()).setPort(account.getPort())
-                .setSslEnable(account.getSslEnable()).setStarttlsEnable(account.getStarttlsEnable());
+        String from =
+                StrUtil.isNotEmpty(nickname)
+                        ? nickname + " <" + account.getMail() + ">"
+                        : account.getMail();
+        return new MailAccount()
+                .setFrom(from)
+                .setAuth(true)
+                .setUser(account.getUsername())
+                .setPass(account.getPassword().toCharArray())
+                .setHost(account.getHost())
+                .setPort(account.getPort())
+                .setSslEnable(account.getSslEnable())
+                .setStarttlsEnable(account.getStarttlsEnable());
     }
 
     @VisibleForTesting
@@ -172,12 +212,13 @@ public class MailSendServiceImpl implements MailSendService {
      */
     @VisibleForTesting
     void validateTemplateParams(MailTemplateDO template, Map<String, Object> templateParams) {
-        template.getParams().forEach(key -> {
-            Object value = templateParams.get(key);
-            if (value == null) {
-                throw exception(MAIL_SEND_TEMPLATE_PARAM_MISS, key);
-            }
-        });
+        template.getParams()
+                .forEach(
+                        key -> {
+                            Object value = templateParams.get(key);
+                            if (value == null) {
+                                throw exception(MAIL_SEND_TEMPLATE_PARAM_MISS, key);
+                            }
+                        });
     }
-
 }

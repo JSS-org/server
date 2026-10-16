@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.im.controller.admin.group.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 成员禁言 Request VO")
@@ -17,9 +19,11 @@ public class ImGroupMuteMemberReqVO {
     @NotNull(message = "用户编号不能为空")
     private Long userId;
 
-    @Schema(description = "禁言时长（秒），0 表示永久禁言", requiredMode = Schema.RequiredMode.REQUIRED, example = "600")
+    @Schema(
+            description = "禁言时长（秒），0 表示永久禁言",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "600")
     @NotNull(message = "禁言时长不能为空")
     @Min(value = 0, message = "禁言时长不能小于 0 秒")
     private Integer mutedSeconds;
-
 }

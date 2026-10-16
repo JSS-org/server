@@ -31,5 +31,4 @@ public @interface DataPermission {
      * 排除的数据权限规则数组，优先级最低
      */
     Class<? extends DataPermissionRule>[] excludeRules() default {};
-
 }

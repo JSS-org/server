@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.andon;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -15,11 +18,14 @@ import cn.iocoder.yudao.module.system.api.permission.RoleApi;
 import cn.iocoder.yudao.module.system.api.permission.dto.RoleRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,34 +34,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 安灯呼叫配置")
 @RestController
 @RequestMapping("/mes/pro/andon-config")
 @Validated
 public class MesProAndonConfigController {
 
-    @Resource
-    private MesProAndonConfigService andonConfigService;
+    @Resource private MesProAndonConfigService andonConfigService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private RoleApi roleApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private RoleApi roleApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建安灯呼叫配置")
     @PreAuthorize("@ss.hasPermission('mes:pro-andon-config:create')")
-    public CommonResult<Long> createAndonConfig(@Valid @RequestBody MesProAndonConfigSaveReqVO createReqVO) {
+    public CommonResult<Long> createAndonConfig(
+            @Valid @RequestBody MesProAndonConfigSaveReqVO createReqVO) {
         return success(andonConfigService.createAndonConfig(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新安灯呼叫配置")
     @PreAuthorize("@ss.hasPermission('mes:pro-andon-config:update')")
-    public CommonResult<Boolean> updateAndonConfig(@Valid @RequestBody MesProAndonConfigSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAndonConfig(
+            @Valid @RequestBody MesProAndonConfigSaveReqVO updateReqVO) {
         andonConfigService.updateAndonConfig(updateReqVO);
         return success(true);
     }
@@ -84,9 +86,13 @@ public class MesProAndonConfigController {
     @GetMapping("/page")
     @Operation(summary = "获得安灯呼叫配置分页")
     @PreAuthorize("@ss.hasPermission('mes:pro-andon-config:query')")
-    public CommonResult<PageResult<MesProAndonConfigRespVO>> getAndonConfigPage(@Valid MesProAndonConfigPageReqVO pageReqVO) {
-        PageResult<MesProAndonConfigDO> pageResult = andonConfigService.getAndonConfigPage(pageReqVO);
-        return success(new PageResult<>(buildConfigRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<MesProAndonConfigRespVO>> getAndonConfigPage(
+            @Valid MesProAndonConfigPageReqVO pageReqVO) {
+        PageResult<MesProAndonConfigDO> pageResult =
+                andonConfigService.getAndonConfigPage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildConfigRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/list")
@@ -104,17 +110,23 @@ public class MesProAndonConfigController {
             return Collections.emptyList();
         }
         // 1. 批量获取关联数据
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesProAndonConfigDO::getHandlerUserId));
-        Map<Long, RoleRespDTO> roleMap = roleApi.getRoleMap(
-                convertSet(list, MesProAndonConfigDO::getHandlerRoleId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesProAndonConfigDO::getHandlerUserId));
+        Map<Long, RoleRespDTO> roleMap =
+                roleApi.getRoleMap(convertSet(list, MesProAndonConfigDO::getHandlerRoleId));
         // 2. 拼接 VO
-        return BeanUtils.toBean(list, MesProAndonConfigRespVO.class, vo -> {
-            MapUtils.findAndThen(userMap, vo.getHandlerUserId(),
-                    user -> vo.setHandlerUserNickname(user.getNickname()));
-            MapUtils.findAndThen(roleMap, vo.getHandlerRoleId(),
-                    role -> vo.setHandlerRoleName(role.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesProAndonConfigRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            userMap,
+                            vo.getHandlerUserId(),
+                            user -> vo.setHandlerUserNickname(user.getNickname()));
+                    MapUtils.findAndThen(
+                            roleMap,
+                            vo.getHandlerRoleId(),
+                            role -> vo.setHandlerRoleName(role.getName()));
+                });
     }
-
 }

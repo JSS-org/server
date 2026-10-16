@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.iot.service.product;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.PRODUCT_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.iot.controller.admin.product.IotProductController;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductDO;
 import cn.iocoder.yudao.module.iot.dal.mysql.product.IotProductMapper;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.PRODUCT_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotProductServiceImpl} 的产品表结构同步单元测试
@@ -27,16 +30,12 @@ import static org.mockito.Mockito.*;
 @Import(IotProductServiceImpl.class)
 public class IotProductSyncTest extends BaseDbUnitTest {
 
-    @Resource
-    private IotProductServiceImpl productService;
+    @Resource private IotProductServiceImpl productService;
 
-    @Resource
-    private IotProductMapper productMapper;
+    @Resource private IotProductMapper productMapper;
 
-    @MockitoBean
-    private IotDeviceService deviceService;
-    @MockitoBean
-    private IotDevicePropertyService devicePropertyDataService;
+    @MockitoBean private IotDeviceService deviceService;
+    @MockitoBean private IotDevicePropertyService devicePropertyDataService;
 
     @Test
     public void testSyncProductPropertyTable_success() {
@@ -61,7 +60,8 @@ public class IotProductSyncTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用，并断言异常
-        assertServiceException(() -> productService.syncProductPropertyTable(id), PRODUCT_NOT_EXISTS);
+        assertServiceException(
+                () -> productService.syncProductPropertyTable(id), PRODUCT_NOT_EXISTS);
         verifyNoInteractions(devicePropertyDataService);
     }
 
@@ -77,14 +77,20 @@ public class IotProductSyncTest extends BaseDbUnitTest {
         doThrow(failure).when(devicePropertyDataService).defineDevicePropertyData(id);
 
         // 调用，并断言异常
-        assertSame(failure, assertThrows(RuntimeException.class, () -> productService.syncProductPropertyTable(id)));
+        assertSame(
+                failure,
+                assertThrows(
+                        RuntimeException.class, () -> productService.syncProductPropertyTable(id)));
     }
 
     @Test
     public void testController_syncProductPropertyTable_idRequired() throws Exception {
         // 调用：读取请求参数定义
-        RequestParam parameter = IotProductController.class.getDeclaredMethod("syncProductPropertyTable", Long.class)
-                .getParameters()[0].getAnnotation(RequestParam.class);
+        RequestParam parameter =
+                IotProductController.class
+                        .getDeclaredMethod("syncProductPropertyTable", Long.class)
+                        .getParameters()[0]
+                        .getAnnotation(RequestParam.class);
         // 断言
         assertEquals("id", parameter.value());
         assertTrue(parameter.required());

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -44,5 +45,4 @@ public class IotOtaTaskRecordRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

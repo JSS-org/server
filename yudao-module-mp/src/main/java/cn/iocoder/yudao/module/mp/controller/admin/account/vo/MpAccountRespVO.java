@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mp.controller.admin.account.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -21,5 +22,4 @@ public class MpAccountRespVO extends MpAccountBaseVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -13,9 +13,12 @@ import cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductSta
 import cn.iocoder.yudao.module.statistics.controller.admin.product.vo.ProductStatisticsRespVO;
 import cn.iocoder.yudao.module.statistics.dal.dataobject.product.ProductStatisticsDO;
 import cn.iocoder.yudao.module.statistics.dal.mysql.product.ProductStatisticsMapper;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.springframework.validation.annotation.Validated;
@@ -26,7 +29,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-
 /**
  * 商品统计 Service 实现类
  *
@@ -36,18 +38,19 @@ import java.util.stream.IntStream;
 @Validated
 public class ProductStatisticsServiceImpl implements ProductStatisticsService {
 
-    @Resource
-    private ProductStatisticsMapper productStatisticsMapper;
-
+    @Resource private ProductStatisticsMapper productStatisticsMapper;
 
     @Override
-    public PageResult<ProductStatisticsDO> getProductStatisticsRankPage(ProductStatisticsReqVO reqVO, SortablePageParam pageParam) {
-        PageUtils.buildDefaultSortingField(pageParam, ProductStatisticsDO::getBrowseCount); // 默认浏览量倒序
+    public PageResult<ProductStatisticsDO> getProductStatisticsRankPage(
+            ProductStatisticsReqVO reqVO, SortablePageParam pageParam) {
+        PageUtils.buildDefaultSortingField(
+                pageParam, ProductStatisticsDO::getBrowseCount); // 默认浏览量倒序
         return productStatisticsMapper.selectPageGroupBySpuId(reqVO, pageParam);
     }
 
     @Override
-    public DataComparisonRespVO<ProductStatisticsRespVO> getProductStatisticsAnalyse(ProductStatisticsReqVO reqVO) {
+    public DataComparisonRespVO<ProductStatisticsRespVO> getProductStatisticsAnalyse(
+            ProductStatisticsReqVO reqVO) {
         LocalDateTime beginTime = ArrayUtil.get(reqVO.getTimes(), 0);
         LocalDateTime endTime = ArrayUtil.get(reqVO.getTimes(), 1);
 
@@ -55,8 +58,10 @@ public class ProductStatisticsServiceImpl implements ProductStatisticsService {
         ProductStatisticsRespVO value = productStatisticsMapper.selectVoByTimeBetween(reqVO);
         // 对照数据
         LocalDateTime referenceBeginTime = beginTime.minus(Duration.between(beginTime, endTime));
-        ProductStatisticsReqVO referenceReqVO = new ProductStatisticsReqVO(new LocalDateTime[]{referenceBeginTime, beginTime});
-        ProductStatisticsRespVO reference = productStatisticsMapper.selectVoByTimeBetween(referenceReqVO);
+        ProductStatisticsReqVO referenceReqVO =
+                new ProductStatisticsReqVO(new LocalDateTime[] {referenceBeginTime, beginTime});
+        ProductStatisticsRespVO reference =
+                productStatisticsMapper.selectVoByTimeBetween(referenceReqVO);
         return new DataComparisonRespVO<>(value, reference);
     }
 
@@ -96,16 +101,19 @@ public class ProductStatisticsServiceImpl implements ProductStatisticsService {
         // 4. 分页统计，避免商品表数据较多时，出现超时问题
         final int pageSize = 100;
         for (int pageNo = 1; ; pageNo++) {
-            IPage<ProductStatisticsDO> page = productStatisticsMapper.selectStatisticsResultPageByTimeBetween(
-                    Page.of(pageNo, pageSize, false), beginTime, endTime);
+            IPage<ProductStatisticsDO> page =
+                    productStatisticsMapper.selectStatisticsResultPageByTimeBetween(
+                            Page.of(pageNo, pageSize, false), beginTime, endTime);
             if (CollUtil.isEmpty(page.getRecords())) {
                 break;
             }
             // 4.1 计算访客支付转化率（百分比）
             for (ProductStatisticsDO record : page.getRecords()) {
                 record.setTime(date.toLocalDate());
-                if (record.getBrowseUserCount() != null && ObjUtil.notEqual(record.getBrowseUserCount(), 0)) {
-                    record.setBrowseConvertPercent(100 * record.getOrderPayCount() / record.getBrowseUserCount());
+                if (record.getBrowseUserCount() != null
+                        && ObjUtil.notEqual(record.getBrowseUserCount(), 0)) {
+                    record.setBrowseConvertPercent(
+                            100 * record.getOrderPayCount() / record.getBrowseUserCount());
                 }
             }
             // 4.2 插入数据
@@ -113,5 +121,4 @@ public class ProductStatisticsServiceImpl implements ProductStatisticsService {
         }
         return stopWatch.prettyPrint();
     }
-
 }

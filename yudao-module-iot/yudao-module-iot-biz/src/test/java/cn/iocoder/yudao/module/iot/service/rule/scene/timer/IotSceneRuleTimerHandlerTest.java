@@ -1,10 +1,15 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.timer;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.framework.job.core.IotSchedulerManager;
 import cn.iocoder.yudao.module.iot.job.rule.IotSceneRuleJob;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,10 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.SchedulerException;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotSceneRuleTimerHandler} 的单元测试类
@@ -25,11 +26,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class IotSceneRuleTimerHandlerTest {
 
-    @Mock
-    private IotSchedulerManager schedulerManager;
+    @Mock private IotSchedulerManager schedulerManager;
 
-    @InjectMocks
-    private IotSceneRuleTimerHandler timerHandler;
+    @InjectMocks private IotSceneRuleTimerHandler timerHandler;
 
     @BeforeEach
     void setUp() {
@@ -54,12 +53,12 @@ public class IotSceneRuleTimerHandlerTest {
         timerHandler.registerTimerTriggers(sceneRule);
 
         // 验证
-        verify(schedulerManager, times(1)).addOrUpdateJob(
-                eq(IotSceneRuleJob.class),
-                eq("iot_scene_rule_timer_" + sceneRuleId),
-                eq("0 0 12 * * ?"),
-                eq(IotSceneRuleJob.buildJobDataMap(sceneRuleId))
-        );
+        verify(schedulerManager, times(1))
+                .addOrUpdateJob(
+                        eq(IotSceneRuleJob.class),
+                        eq("iot_scene_rule_timer_" + sceneRuleId),
+                        eq("0 0 12 * * ?"),
+                        eq(IotSceneRuleJob.buildJobDataMap(sceneRuleId)));
     }
 
     @Test
@@ -122,5 +121,4 @@ public class IotSceneRuleTimerHandlerTest {
         // 验证
         verify(schedulerManager, times(1)).pauseJob("iot_scene_rule_timer_" + sceneRuleId);
     }
-
 }

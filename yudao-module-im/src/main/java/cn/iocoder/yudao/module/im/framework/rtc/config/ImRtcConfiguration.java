@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.im.framework.rtc.config;
 
 import cn.iocoder.yudao.module.im.framework.config.ImProperties;
 import cn.iocoder.yudao.module.im.framework.rtc.core.LiveKitClient;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,5 +21,4 @@ public class ImRtcConfiguration {
     public LiveKitClient liveKitClient(ImProperties imProperties) {
         return new LiveKitClient(imProperties);
     }
-
 }

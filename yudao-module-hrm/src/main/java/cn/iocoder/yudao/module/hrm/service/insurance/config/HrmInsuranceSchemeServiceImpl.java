@@ -1,35 +1,5 @@
 package cn.iocoder.yudao.module.hrm.service.insurance.config;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
-import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
-import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme.HrmInsuranceSchemeProjectSaveReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme.HrmInsuranceSchemeSaveReqVO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeProjectDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeDO;
-import cn.iocoder.yudao.module.hrm.dal.mysql.insurance.config.HrmInsuranceSchemeProjectMapper;
-import cn.iocoder.yudao.module.hrm.dal.mysql.insurance.config.HrmInsuranceSchemeMapper;
-import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceProjectTypeEnum;
-import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceSchemeTypeEnum;
-import cn.iocoder.yudao.module.hrm.service.insurance.employee.HrmInsuranceEmployeeInfoService;
-import cn.iocoder.yudao.module.hrm.service.insurance.monthrecord.HrmInsuranceMonthEmployeeRecordService;
-import com.mzt.logapi.context.LogRecordContext;
-import com.mzt.logapi.starter.annotation.LogRecord;
-import jakarta.annotation.Resource;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
@@ -50,6 +20,39 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_INSURANCE
 import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_INSURANCE_SCHEME_UPDATE_SUB_TYPE;
 import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_INSURANCE_SCHEME_UPDATE_SUCCESS;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
+import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
+import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme.HrmInsuranceSchemeProjectSaveReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme.HrmInsuranceSchemeSaveReqVO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeProjectDO;
+import cn.iocoder.yudao.module.hrm.dal.mysql.insurance.config.HrmInsuranceSchemeMapper;
+import cn.iocoder.yudao.module.hrm.dal.mysql.insurance.config.HrmInsuranceSchemeProjectMapper;
+import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceProjectTypeEnum;
+import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceSchemeTypeEnum;
+import cn.iocoder.yudao.module.hrm.service.insurance.employee.HrmInsuranceEmployeeInfoService;
+import cn.iocoder.yudao.module.hrm.service.insurance.monthrecord.HrmInsuranceMonthEmployeeRecordService;
+
+import com.mzt.logapi.context.LogRecordContext;
+import com.mzt.logapi.starter.annotation.LogRecord;
+
+import jakarta.annotation.Resource;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * HRM 社保方案 Service 实现类
  *
@@ -59,21 +62,20 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_INSURANCE
 @Validated
 public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService {
 
-    @Resource
-    private HrmInsuranceSchemeMapper insuranceSchemeMapper;
-    @Resource
-    private HrmInsuranceSchemeProjectMapper insuranceSchemeProjectMapper;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private HrmInsuranceSchemeMapper insuranceSchemeMapper;
+    @Resource private HrmInsuranceSchemeProjectMapper insuranceSchemeProjectMapper;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private HrmInsuranceEmployeeInfoService insuranceEmployeeInfoService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private HrmInsuranceMonthEmployeeRecordService insuranceMonthEmployeeRecordService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_INSURANCE_SCHEME_TYPE, subType = HRM_INSURANCE_SCHEME_CREATE_SUB_TYPE,
-            bizNo = "{{#insuranceScheme.id}}", success = HRM_INSURANCE_SCHEME_CREATE_SUCCESS)
+    @LogRecord(
+            type = HRM_INSURANCE_SCHEME_TYPE,
+            subType = HRM_INSURANCE_SCHEME_CREATE_SUB_TYPE,
+            bizNo = "{{#insuranceScheme.id}}",
+            success = HRM_INSURANCE_SCHEME_CREATE_SUCCESS)
     public Long createScheme(HrmInsuranceSchemeSaveReqVO reqVO) {
         // 1. 校验方案名称和项目
         validateNameUnique(null, reqVO.getName());
@@ -81,12 +83,16 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
         Integer cityAreaId = validateAndGetCityAreaId(reqVO.getAreaId());
 
         // 2.1 创建社保方案
-        HrmInsuranceSchemeDO scheme = BeanUtils.toBean(reqVO, HrmInsuranceSchemeDO.class)
-                .setAreaId(cityAreaId);
+        HrmInsuranceSchemeDO scheme =
+                BeanUtils.toBean(reqVO, HrmInsuranceSchemeDO.class).setAreaId(cityAreaId);
         insuranceSchemeMapper.insert(scheme);
         // 2.2 创建社保方案项目
-        insuranceSchemeProjectMapper.insertBatch(convertList(reqVO.getProjectList(),
-                project -> buildSchemeProjectDO(scheme.getId(), reqVO.getType(), project).setId(null)));
+        insuranceSchemeProjectMapper.insertBatch(
+                convertList(
+                        reqVO.getProjectList(),
+                        project ->
+                                buildSchemeProjectDO(scheme.getId(), reqVO.getType(), project)
+                                        .setId(null)));
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("insuranceScheme", scheme);
@@ -95,8 +101,11 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_INSURANCE_SCHEME_TYPE, subType = HRM_INSURANCE_SCHEME_UPDATE_SUB_TYPE,
-            bizNo = "{{#insuranceScheme.id}}", success = HRM_INSURANCE_SCHEME_UPDATE_SUCCESS)
+    @LogRecord(
+            type = HRM_INSURANCE_SCHEME_TYPE,
+            subType = HRM_INSURANCE_SCHEME_UPDATE_SUB_TYPE,
+            bizNo = "{{#insuranceScheme.id}}",
+            success = HRM_INSURANCE_SCHEME_UPDATE_SUCCESS)
     public void updateScheme(HrmInsuranceSchemeSaveReqVO reqVO) {
         // 1. 校验社保方案
         HrmInsuranceSchemeDO oldScheme = validateSchemeExistsForUpdate(reqVO.getId());
@@ -108,11 +117,17 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
         insuranceSchemeProjectMapper.deleteBySchemeId(oldScheme.getId());
         insuranceSchemeMapper.deleteById(oldScheme.getId());
         // 2.2 创建新方案及项目
-        HrmInsuranceSchemeDO scheme = BeanUtils.toBean(reqVO, HrmInsuranceSchemeDO.class)
-                .setId(null).setAreaId(cityAreaId);
+        HrmInsuranceSchemeDO scheme =
+                BeanUtils.toBean(reqVO, HrmInsuranceSchemeDO.class)
+                        .setId(null)
+                        .setAreaId(cityAreaId);
         insuranceSchemeMapper.insert(scheme);
-        insuranceSchemeProjectMapper.insertBatch(convertList(reqVO.getProjectList(),
-                project -> buildSchemeProjectDO(scheme.getId(), reqVO.getType(), project).setId(null)));
+        insuranceSchemeProjectMapper.insertBatch(
+                convertList(
+                        reqVO.getProjectList(),
+                        project ->
+                                buildSchemeProjectDO(scheme.getId(), reqVO.getType(), project)
+                                        .setId(null)));
 
         // 3. 将员工和月度记录迁移到新方案，历史月度金额及项目快照保持不变
         insuranceEmployeeInfoService.updateInsuranceEmployeeInfoSchemeIdBySchemeId(
@@ -126,13 +141,18 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_INSURANCE_SCHEME_TYPE, subType = HRM_INSURANCE_SCHEME_DELETE_SUB_TYPE,
-            bizNo = "{{#id}}", success = HRM_INSURANCE_SCHEME_DELETE_SUCCESS)
+    @LogRecord(
+            type = HRM_INSURANCE_SCHEME_TYPE,
+            subType = HRM_INSURANCE_SCHEME_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
+            success = HRM_INSURANCE_SCHEME_DELETE_SUCCESS)
     public void deleteScheme(Long id) {
         // 1. 校验社保方案及使用情况
         HrmInsuranceSchemeDO scheme = validateSchemeExists(id);
-        long usedByEmployee = insuranceEmployeeInfoService.getInsuranceEmployeeInfoCountBySchemeId(id);
-        long usedByMonth = insuranceMonthEmployeeRecordService.getMonthEmployeeRecordCountBySchemeId(id);
+        long usedByEmployee =
+                insuranceEmployeeInfoService.getInsuranceEmployeeInfoCountBySchemeId(id);
+        long usedByMonth =
+                insuranceMonthEmployeeRecordService.getMonthEmployeeRecordCountBySchemeId(id);
         if (usedByEmployee > 0 || usedByMonth > 0) {
             throw exception(INSURANCE_SCHEME_USED);
         }
@@ -180,7 +200,8 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
     @Override
     public List<HrmInsuranceSchemeDO> getSchemeListByAreaId(Integer areaId) {
         Integer cityAreaId = AreaUtils.getParentIdByType(areaId, AreaTypeEnum.CITY);
-        return cityAreaId == null ? Collections.emptyList()
+        return cityAreaId == null
+                ? Collections.emptyList()
                 : insuranceSchemeMapper.selectListByAreaId(cityAreaId);
     }
 
@@ -190,11 +211,13 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
     }
 
     @Override
-    public Map<Long, List<HrmInsuranceSchemeProjectDO>> getSchemeProjectListMap(Collection<Long> schemeIds) {
+    public Map<Long, List<HrmInsuranceSchemeProjectDO>> getSchemeProjectListMap(
+            Collection<Long> schemeIds) {
         if (CollUtil.isEmpty(schemeIds)) {
             return Collections.emptyMap();
         }
-        return convertMultiMap(insuranceSchemeProjectMapper.selectListBySchemeIds(schemeIds),
+        return convertMultiMap(
+                insuranceSchemeProjectMapper.selectListBySchemeIds(schemeIds),
                 HrmInsuranceSchemeProjectDO::getSchemeId);
     }
 
@@ -221,7 +244,8 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
         boolean hasSocialSecurityProject = false;
         Set<Integer> standardProjectTypes = new HashSet<>();
         for (HrmInsuranceSchemeProjectSaveReqVO project : projects) {
-            HrmInsuranceProjectTypeEnum projectType = HrmInsuranceProjectTypeEnum.valueOf(project.getType());
+            HrmInsuranceProjectTypeEnum projectType =
+                    HrmInsuranceProjectTypeEnum.valueOf(project.getType());
             if (projectType == null) {
                 throw exception(INSURANCE_DATA_ILLEGAL);
             }
@@ -262,21 +286,25 @@ public class HrmInsuranceSchemeServiceImpl implements HrmInsuranceSchemeService 
      * @param reqVO    社保方案项目
      * @return 社保方案项目
      */
-    private HrmInsuranceSchemeProjectDO buildSchemeProjectDO(Long schemeId, Integer type,
-                                                              HrmInsuranceSchemeProjectSaveReqVO reqVO) {
+    private HrmInsuranceSchemeProjectDO buildSchemeProjectDO(
+            Long schemeId, Integer type, HrmInsuranceSchemeProjectSaveReqVO reqVO) {
         // 1. 统一金额和比例精度
-        HrmInsuranceSchemeProjectDO project = BeanUtils.toBean(reqVO, HrmInsuranceSchemeProjectDO.class)
-                .setSchemeId(schemeId)
-                .setBaseAmount(priceScale(reqVO.getBaseAmount()))
-                .setCorporateRate(priceScale(reqVO.getCorporateRate()))
-                .setPersonalRate(priceScale(reqVO.getPersonalRate()));
+        HrmInsuranceSchemeProjectDO project =
+                BeanUtils.toBean(reqVO, HrmInsuranceSchemeProjectDO.class)
+                        .setSchemeId(schemeId)
+                        .setBaseAmount(priceScale(reqVO.getBaseAmount()))
+                        .setCorporateRate(priceScale(reqVO.getCorporateRate()))
+                        .setPersonalRate(priceScale(reqVO.getPersonalRate()));
         // 2. 按比例方案自动计算金额，固定金额方案保留填写金额
         if (ObjectUtil.equal(type, HrmInsuranceSchemeTypeEnum.PROPORTION.getType())) {
-            return project.setCorporateAmount(priceMultiplyPercent(project.getBaseAmount(), project.getCorporateRate()))
-                    .setPersonalAmount(priceMultiplyPercent(project.getBaseAmount(), project.getPersonalRate()));
+            return project.setCorporateAmount(
+                            priceMultiplyPercent(
+                                    project.getBaseAmount(), project.getCorporateRate()))
+                    .setPersonalAmount(
+                            priceMultiplyPercent(
+                                    project.getBaseAmount(), project.getPersonalRate()));
         }
         return project.setCorporateAmount(priceScale(project.getCorporateAmount()))
                 .setPersonalAmount(priceScale(project.getPersonalAmount()));
     }
-
 }

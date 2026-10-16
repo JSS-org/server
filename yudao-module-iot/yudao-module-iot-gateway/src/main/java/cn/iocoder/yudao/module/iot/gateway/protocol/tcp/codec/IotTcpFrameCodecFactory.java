@@ -23,5 +23,4 @@ public class IotTcpFrameCodecFactory {
         Assert.notNull(type, "不支持的 CodecType 类型：" + config.getType());
         return ReflectUtil.newInstance(type.getCodecClass(), config);
     }
-
 }

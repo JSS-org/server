@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.admin.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -17,7 +18,10 @@ public class TradeOrderBaseVO {
     @Schema(description = "订单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "订单流水号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1146347329394184195")
+    @Schema(
+            description = "订单流水号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1146347329394184195")
     private String no;
 
     @Schema(description = "下单时间", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -32,7 +36,10 @@ public class TradeOrderBaseVO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
     private Long userId;
 
-    @Schema(description = "用户 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "用户 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     private String userIp;
 
     @Schema(description = "用户备注", requiredMode = Schema.RequiredMode.REQUIRED, example = "你猜")
@@ -114,13 +121,22 @@ public class TradeOrderBaseVO {
     @Schema(description = "收件人名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "张三")
     private String receiverName;
 
-    @Schema(description = "收件人手机", requiredMode = Schema.RequiredMode.REQUIRED, example = "13800138000")
+    @Schema(
+            description = "收件人手机",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "13800138000")
     private String receiverMobile;
 
-    @Schema(description = "收件人地区编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "110000")
+    @Schema(
+            description = "收件人地区编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "110000")
     private Integer receiverAreaId;
 
-    @Schema(description = "收件人详细地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "中关村大街 1 号")
+    @Schema(
+            description = "收件人详细地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "中关村大街 1 号")
     private String receiverDetailAddress;
 
     // ========== 售后基本信息 ==========
@@ -147,5 +163,4 @@ public class TradeOrderBaseVO {
 
     @Schema(description = "推广人编号", example = "1")
     private Long brokerageUserId;
-
 }

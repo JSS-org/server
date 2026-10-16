@@ -3,7 +3,9 @@ package cn.iocoder.yudao.framework.websocket.core.sender.rabbitmq;
 import cn.iocoder.yudao.framework.websocket.core.sender.AbstractWebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -19,9 +21,10 @@ public class RabbitMQWebSocketMessageSender extends AbstractWebSocketMessageSend
 
     private final TopicExchange topicExchange;
 
-    public RabbitMQWebSocketMessageSender(WebSocketSessionManager sessionManager,
-                                          RabbitTemplate rabbitTemplate,
-                                          TopicExchange topicExchange) {
+    public RabbitMQWebSocketMessageSender(
+            WebSocketSessionManager sessionManager,
+            RabbitTemplate rabbitTemplate,
+            TopicExchange topicExchange) {
         super(sessionManager);
         this.rabbitTemplate = rabbitTemplate;
         this.topicExchange = topicExchange;
@@ -51,12 +54,19 @@ public class RabbitMQWebSocketMessageSender extends AbstractWebSocketMessageSend
      * @param messageType 消息类型
      * @param messageContent 消息内容
      */
-    private void sendRabbitMQMessage(String sessionId, Long userId, Integer userType,
-                                     String messageType, String messageContent) {
-        RabbitMQWebSocketMessage mqMessage = new RabbitMQWebSocketMessage()
-                .setSessionId(sessionId).setUserId(userId).setUserType(userType)
-                .setMessageType(messageType).setMessageContent(messageContent);
+    private void sendRabbitMQMessage(
+            String sessionId,
+            Long userId,
+            Integer userType,
+            String messageType,
+            String messageContent) {
+        RabbitMQWebSocketMessage mqMessage =
+                new RabbitMQWebSocketMessage()
+                        .setSessionId(sessionId)
+                        .setUserId(userId)
+                        .setUserType(userType)
+                        .setMessageType(messageType)
+                        .setMessageContent(messageContent);
         rabbitTemplate.convertAndSend(topicExchange.getName(), null, mqMessage);
     }
-
 }

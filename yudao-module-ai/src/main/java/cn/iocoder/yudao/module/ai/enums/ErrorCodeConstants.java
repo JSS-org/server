@@ -12,7 +12,8 @@ public interface ErrorCodeConstants {
     // ========== API 密钥 1-040-000-000 ==========
     ErrorCode API_KEY_NOT_EXISTS = new ErrorCode(1_040_000_000, "API 密钥不存在");
     ErrorCode API_KEY_DISABLE = new ErrorCode(1_040_000_001, "API 密钥已禁用！");
-    ErrorCode API_CONFIG_PLACEHOLDER_NOT_RESOLVED = new ErrorCode(1_040_000_002, "AI 配置({})无法解析，请检查环境变量或配置项");
+    ErrorCode API_CONFIG_PLACEHOLDER_NOT_RESOLVED =
+            new ErrorCode(1_040_000_002, "AI 配置({})无法解析，请检查环境变量或配置项");
 
     // ========== API 模型 1-040-001-000 ==========
     ErrorCode MODEL_NOT_EXISTS = new ErrorCode(1_040_001_000, "模型不存在!");
@@ -35,7 +36,8 @@ public interface ErrorCodeConstants {
     // ========== API 绘画 1-040-005-000 ==========
     ErrorCode IMAGE_NOT_EXISTS = new ErrorCode(1_040_005_000, "图片不存在!");
     ErrorCode IMAGE_MIDJOURNEY_SUBMIT_FAIL = new ErrorCode(1_040_005_001, "Midjourney 提交失败!原因：{}");
-    ErrorCode IMAGE_CUSTOM_ID_NOT_EXISTS = new ErrorCode(1_040_005_002, "Midjourney 按钮 customId 不存在! {}");
+    ErrorCode IMAGE_CUSTOM_ID_NOT_EXISTS =
+            new ErrorCode(1_040_005_002, "Midjourney 按钮 customId 不存在! {}");
 
     // ========== API 音乐 1-040-006-000 ==========
     ErrorCode MUSIC_NOT_EXISTS = new ErrorCode(1_040_006_000, "音乐不存在!");
@@ -56,7 +58,8 @@ public interface ErrorCodeConstants {
     ErrorCode KNOWLEDGE_DOCUMENT_FILE_READ_FAIL = new ErrorCode(1_040_009_102, "文档加载失败!");
 
     ErrorCode KNOWLEDGE_SEGMENT_NOT_EXISTS = new ErrorCode(1_040_009_202, "段落不存在!");
-    ErrorCode KNOWLEDGE_SEGMENT_CONTENT_TOO_LONG = new ErrorCode(1_040_009_203, "内容 Token 数为 {}，超过最大限制 {}");
+    ErrorCode KNOWLEDGE_SEGMENT_CONTENT_TOO_LONG =
+            new ErrorCode(1_040_009_203, "内容 Token 数为 {}，超过最大限制 {}");
 
     // ========== AI 工具 1-040-010-000 ==========
     ErrorCode TOOL_NOT_EXISTS = new ErrorCode(1_040_010_000, "工具不存在");
@@ -65,5 +68,4 @@ public interface ErrorCodeConstants {
     // ========== AI 工作流 1-040-011-000 ==========
     ErrorCode WORKFLOW_NOT_EXISTS = new ErrorCode(1_040_011_000, "工作流不存在");
     ErrorCode WORKFLOW_CODE_EXISTS = new ErrorCode(1_040_011_001, "工作流标识已存在");
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.enums.coupon;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,17 +15,20 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum CouponTemplateValidityTypeEnum implements ArrayValuable<Integer> {
-
     DATE(1, "固定日期"),
     TERM(2, "领取之后"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(CouponTemplateValidityTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(CouponTemplateValidityTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 值
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -34,5 +38,4 @@ public enum CouponTemplateValidityTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

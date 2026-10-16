@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.viewrecord;
 
 import cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.PmsKnowledgeInteractionItemRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,5 +20,4 @@ public class PmsKnowledgeRecentListRespVO {
 
     @Schema(description = "更早 30 天浏览列表", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<PmsKnowledgeInteractionItemRespVO> recent30DayItems;
-
 }

@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 退回流程任务的 Request VO")
 @Data
@@ -20,5 +21,4 @@ public class BpmTaskReturnReqVO {
     @Schema(description = "退回意见", requiredMode = Schema.RequiredMode.REQUIRED, example = "我就是想驳回")
     @NotEmpty(message = "退回意见不能为空")
     private String reason;
-
 }

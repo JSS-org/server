@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.framework.tdengine.core;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -74,5 +75,4 @@ public class TDengineTableField {
         }
         return StrUtil.toUnderlineCase(field).toLowerCase(Locale.ROOT);
     }
-
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.pay.api.transfer;
 import cn.iocoder.yudao.module.pay.api.transfer.dto.PayTransferCreateReqDTO;
 import cn.iocoder.yudao.module.pay.api.transfer.dto.PayTransferCreateRespDTO;
 import cn.iocoder.yudao.module.pay.api.transfer.dto.PayTransferRespDTO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -30,5 +31,4 @@ public interface PayTransferApi {
      * @return 转账单
      */
     PayTransferRespDTO getTransfer(Long id);
-
 }

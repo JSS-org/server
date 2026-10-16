@@ -9,7 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum CodegenColumnListConditionEnum {
-
     EQ("="),
     NE("!="),
     GT(">"),
@@ -23,5 +22,4 @@ public enum CodegenColumnListConditionEnum {
      * 条件
      */
     private final String condition;
-
 }

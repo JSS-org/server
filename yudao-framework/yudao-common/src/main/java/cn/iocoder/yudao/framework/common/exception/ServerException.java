@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.common.exception;
 
 import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,6 +18,7 @@ public final class ServerException extends RuntimeException {
      * @see GlobalErrorCodeConstants
      */
     private Integer code;
+
     /**
      * 错误提示
      */
@@ -25,8 +27,7 @@ public final class ServerException extends RuntimeException {
     /**
      * 空构造方法，避免反序列化问题
      */
-    public ServerException() {
-    }
+    public ServerException() {}
 
     public ServerException(ErrorCode errorCode) {
         this.code = errorCode.getCode();
@@ -56,5 +57,4 @@ public final class ServerException extends RuntimeException {
         this.message = message;
         return this;
     }
-
 }

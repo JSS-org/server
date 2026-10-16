@@ -9,10 +9,11 @@ import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.topic.event.IotDeviceEventPostReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.property.IotDevicePropertyPostReqDTO;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 
 /**
  * IoT 网关子设备 HTTP 协议集成测试（手动测试）
@@ -54,7 +55,8 @@ public class IotGatewaySubDeviceHttpProtocolIntegrationTest {
     /**
      * 网关子设备 Token：从 {@link #testAuth()} 方法获取后，粘贴到这里
      */
-    private static final String TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiakF1ZkVNVEYxVzZ3blBobiIsImV4cCI6MTc2OTg3MTI3NCwiZGV2aWNlTmFtZSI6ImNoYXp1by1pdCJ9.99sAlRalzMU3CqRlGStDzCwWSBJq6u3PJw48JQ3NpzQ";
+    private static final String TOKEN =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiakF1ZkVNVEYxVzZ3blBobiIsImV4cCI6MTc2OTg3MTI3NCwiZGV2aWNlTmFtZSI6ImNoYXp1by1pdCJ9.99sAlRalzMU3CqRlGStDzCwWSBJq6u3PJw48JQ3NpzQ";
 
     // ===================== 认证测试 =====================
 
@@ -65,11 +67,13 @@ public class IotGatewaySubDeviceHttpProtocolIntegrationTest {
     public void testAuth() {
         // 1.1 构建请求
         String url = String.format("http://%s:%d/auth", SERVER_HOST, SERVER_PORT);
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
         String payload = JsonUtils.toJsonString(authReqDTO);
         // 1.2 输出请求
         log.info("[testAuth][请求 URL: {}]", url);
@@ -90,27 +94,31 @@ public class IotGatewaySubDeviceHttpProtocolIntegrationTest {
     @Test
     public void testPropertyPost() {
         // 1.1 构建请求
-        String url = String.format("http://%s:%d/topic/sys/%s/%s/thing/property/post",
-                SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
-        String payload = JsonUtils.toJsonString(MapUtil.builder()
-                .put("method", IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
-                .put("params", IotDevicePropertyPostReqDTO.of(MapUtil.<String, Object>builder()
-                        .put("power", 100)
-                        .put("status", "online")
-                        .put("temperature", 36.5)
-                        .build())
-                )
-                .build());
+        String url =
+                String.format(
+                        "http://%s:%d/topic/sys/%s/%s/thing/property/post",
+                        SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
+        String payload =
+                JsonUtils.toJsonString(
+                        MapUtil.builder()
+                                .put("method", IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
+                                .put(
+                                        "params",
+                                        IotDevicePropertyPostReqDTO.of(
+                                                MapUtil.<String, Object>builder()
+                                                        .put("power", 100)
+                                                        .put("status", "online")
+                                                        .put("temperature", 36.5)
+                                                        .build()))
+                                .build());
         // 1.2 输出请求
         log.info("[testPropertyPost][子设备属性上报 - 请求实际由 Gateway 代为转发]");
         log.info("[testPropertyPost][请求 URL: {}]", url);
         log.info("[testPropertyPost][请求体: {}]", payload);
 
         // 2.1 发送请求
-        try (HttpResponse httpResponse = HttpUtil.createPost(url)
-                .header("Authorization", TOKEN)
-                .body(payload)
-                .execute()) {
+        try (HttpResponse httpResponse =
+                HttpUtil.createPost(url).header("Authorization", TOKEN).body(payload).execute()) {
             // 2.2 输出结果
             log.info("[testPropertyPost][响应体: {}]", httpResponse.body());
         }
@@ -124,34 +132,36 @@ public class IotGatewaySubDeviceHttpProtocolIntegrationTest {
     @Test
     public void testEventPost() {
         // 1.1 构建请求
-        String url = String.format("http://%s:%d/topic/sys/%s/%s/thing/event/post",
-                SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
-        String payload = JsonUtils.toJsonString(MapUtil.builder()
-                .put("method", IotDeviceMessageMethodEnum.EVENT_POST.getMethod())
-                .put("params", IotDeviceEventPostReqDTO.of(
-                        "alarm",
-                        MapUtil.<String, Object>builder()
-                                .put("level", "warning")
-                                .put("message", "temperature too high")
-                                .put("threshold", 40)
-                                .put("current", 42)
-                                .build(),
-                        System.currentTimeMillis())
-                )
-                .build());
+        String url =
+                String.format(
+                        "http://%s:%d/topic/sys/%s/%s/thing/event/post",
+                        SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
+        String payload =
+                JsonUtils.toJsonString(
+                        MapUtil.builder()
+                                .put("method", IotDeviceMessageMethodEnum.EVENT_POST.getMethod())
+                                .put(
+                                        "params",
+                                        IotDeviceEventPostReqDTO.of(
+                                                "alarm",
+                                                MapUtil.<String, Object>builder()
+                                                        .put("level", "warning")
+                                                        .put("message", "temperature too high")
+                                                        .put("threshold", 40)
+                                                        .put("current", 42)
+                                                        .build(),
+                                                System.currentTimeMillis()))
+                                .build());
         // 1.2 输出请求
         log.info("[testEventPost][子设备事件上报 - 请求实际由 Gateway 代为转发]");
         log.info("[testEventPost][请求 URL: {}]", url);
         log.info("[testEventPost][请求体: {}]", payload);
 
         // 2.1 发送请求
-        try (HttpResponse httpResponse = HttpUtil.createPost(url)
-                .header("Authorization", TOKEN)
-                .body(payload)
-                .execute()) {
+        try (HttpResponse httpResponse =
+                HttpUtil.createPost(url).header("Authorization", TOKEN).body(payload).execute()) {
             // 2.2 输出结果
             log.info("[testEventPost][响应体: {}]", httpResponse.body());
         }
     }
-
 }

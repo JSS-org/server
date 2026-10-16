@@ -24,5 +24,4 @@ public interface IotDataRuleAction {
      * @param dataSink 数据流转目的
      */
     void execute(IotDeviceMessage message, IotDataSinkDO dataSink);
-
 }

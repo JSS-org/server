@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.recrod;
 
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,5 +20,4 @@ public class CombinationRecordPageItemRespVO extends CombinationRecordBaseVO {
     // ========== 活动相关 ==========
 
     private CombinationActivityRespVO activity;
-
 }

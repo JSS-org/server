@@ -18,12 +18,14 @@ public class MaterialMessage {
      * 素材编号
      */
     private Long materialId;
+
     /**
      * 频道编号
      * <p>
      * 冗余到 payload 内；转发到私聊 / 群聊后客户端用本字段定位频道，渲染卡片底部的频道头像 + 名称
      */
     private Long channelId;
+
     /**
      * 素材内容类型
      * <p>
@@ -31,21 +33,24 @@ public class MaterialMessage {
      * 客户端按本字段判定点击行为：CONTENT 走站内详情页拉富文本；LINK 跳 url
      */
     private Integer type;
+
     /**
      * 标题
      */
     private String title;
+
     /**
      * 封面图
      */
     private String coverUrl;
+
     /**
      * 摘要
      */
     private String summary;
+
     /**
      * 跳转链接
      */
     private String url;
-
 }

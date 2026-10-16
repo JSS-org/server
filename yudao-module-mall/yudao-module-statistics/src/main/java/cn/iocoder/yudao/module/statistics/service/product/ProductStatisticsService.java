@@ -23,7 +23,8 @@ public interface ProductStatisticsService {
      * @param pageParam 分页排序查询
      * @return 商品统计分页
      */
-    PageResult<ProductStatisticsDO> getProductStatisticsRankPage(ProductStatisticsReqVO reqVO, SortablePageParam pageParam);
+    PageResult<ProductStatisticsDO> getProductStatisticsRankPage(
+            ProductStatisticsReqVO reqVO, SortablePageParam pageParam);
 
     /**
      * 获得商品状况统计分析
@@ -31,7 +32,8 @@ public interface ProductStatisticsService {
      * @param reqVO 查询条件
      * @return 统计数据对照
      */
-    DataComparisonRespVO<ProductStatisticsRespVO> getProductStatisticsAnalyse(ProductStatisticsReqVO reqVO);
+    DataComparisonRespVO<ProductStatisticsRespVO> getProductStatisticsAnalyse(
+            ProductStatisticsReqVO reqVO);
 
     /**
      * 获得商品状况明细
@@ -47,5 +49,4 @@ public interface ProductStatisticsService {
      * @return 统计结果
      */
     String statisticsProduct(Integer days);
-
 }

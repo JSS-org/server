@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.packages.TenantPackagePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.packages.TenantPackageSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantPackageDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -75,5 +76,4 @@ public interface TenantPackageService {
      * @return 租户套餐
      */
     List<TenantPackageDO> getTenantPackageListByStatus(Integer status);
-
 }

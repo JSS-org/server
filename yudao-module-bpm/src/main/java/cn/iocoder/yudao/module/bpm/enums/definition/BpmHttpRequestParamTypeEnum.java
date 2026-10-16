@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.enums.definition;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,18 +15,19 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum BpmHttpRequestParamTypeEnum implements ArrayValuable<Integer> {
-
     FIXED_VALUE(1, "固定值"),
     FROM_FORM(2, "表单");
 
     private final Integer type;
     private final String name;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BpmHttpRequestParamTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(BpmHttpRequestParamTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

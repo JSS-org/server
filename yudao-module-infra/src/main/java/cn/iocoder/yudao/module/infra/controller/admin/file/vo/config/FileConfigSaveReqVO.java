@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.infra.controller.admin.file.vo.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.Map;
@@ -17,7 +19,10 @@ public class FileConfigSaveReqVO {
     @NotNull(message = "配置名不能为空")
     private String name;
 
-    @Schema(description = "存储器，参见 FileStorageEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "存储器，参见 FileStorageEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "存储器不能为空")
     private Integer storage;
 
@@ -27,5 +32,4 @@ public class FileConfigSaveReqVO {
 
     @Schema(description = "备注", example = "我是备注")
     private String remark;
-
 }

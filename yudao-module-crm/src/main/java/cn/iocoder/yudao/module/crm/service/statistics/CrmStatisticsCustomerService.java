@@ -17,7 +17,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerSummaryByDateRespVO> getCustomerSummaryByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsCustomerSummaryByDateRespVO> getCustomerSummaryByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 总量分析(按用户)
@@ -25,7 +26,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerSummaryByUserRespVO> getCustomerSummaryByUser(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsCustomerSummaryByUserRespVO> getCustomerSummaryByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 跟进次数分析(按日期)
@@ -33,7 +35,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsFollowUpSummaryByDateRespVO> getFollowUpSummaryByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsFollowUpSummaryByDateRespVO> getFollowUpSummaryByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 跟进次数分析(按用户)
@@ -41,7 +44,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsFollowUpSummaryByUserRespVO> getFollowUpSummaryByUser(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsFollowUpSummaryByUserRespVO> getFollowUpSummaryByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 客户跟进次数分析(按类型)
@@ -49,7 +53,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsFollowUpSummaryByTypeRespVO> getFollowUpSummaryByType(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsFollowUpSummaryByTypeRespVO> getFollowUpSummaryByType(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 获取客户的首次合同、回款信息列表，用于【客户转化率】页面
@@ -57,7 +62,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerContractSummaryRespVO> getContractSummary(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsCustomerContractSummaryRespVO> getContractSummary(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 公海客户分析(按日期)
@@ -65,7 +71,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByDateRespVO> getPoolSummaryByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByDateRespVO> getPoolSummaryByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 公海客户分析(按用户)
@@ -73,7 +80,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByUserRespVO> getPoolSummaryByUser(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByUserRespVO> getPoolSummaryByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 客户成交周期(按日期)
@@ -83,7 +91,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerDealCycleByDateRespVO> getCustomerDealCycleByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsCustomerDealCycleByDateRespVO> getCustomerDealCycleByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 客户成交周期(按用户)
@@ -91,7 +100,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerDealCycleByUserRespVO> getCustomerDealCycleByUser(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsCustomerDealCycleByUserRespVO> getCustomerDealCycleByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 客户成交周期(按区域)
@@ -99,7 +109,8 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerDealCycleByAreaRespVO> getCustomerDealCycleByArea(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsCustomerDealCycleByAreaRespVO> getCustomerDealCycleByArea(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 客户成交周期(按产品)
@@ -107,6 +118,6 @@ public interface CrmStatisticsCustomerService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsCustomerDealCycleByProductRespVO> getCustomerDealCycleByProduct(CrmStatisticsCustomerReqVO reqVO);
-
+    List<CrmStatisticsCustomerDealCycleByProductRespVO> getCustomerDealCycleByProduct(
+            CrmStatisticsCustomerReqVO reqVO);
 }

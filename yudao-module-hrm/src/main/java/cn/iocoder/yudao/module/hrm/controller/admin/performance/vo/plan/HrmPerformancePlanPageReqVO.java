@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformancePlanStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceStageTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -23,5 +25,4 @@ public class HrmPerformancePlanPageReqVO extends PageParam {
     @Schema(description = "阶段状态", example = "2")
     @InEnum(value = HrmPerformanceStageTypeEnum.class, message = "阶段状态必须是 {value}")
     private Integer stageType;
-
 }

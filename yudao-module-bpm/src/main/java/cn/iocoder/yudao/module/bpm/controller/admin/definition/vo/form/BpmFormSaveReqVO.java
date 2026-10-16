@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.form;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.*;
+
 import java.util.List;
 
 @Schema(description = "管理后台 - 动态表单创建/更新 Request VO")
@@ -24,11 +27,13 @@ public class BpmFormSaveReqVO {
     @NotNull(message = "表单项的数组不能为空")
     private List<String> fields;
 
-    @Schema(description = "表单状态-参见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "表单状态-参见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "表单状态不能为空")
     private Integer status;
 
     @Schema(description = "备注", example = "我是备注")
     private String remark;
-
 }

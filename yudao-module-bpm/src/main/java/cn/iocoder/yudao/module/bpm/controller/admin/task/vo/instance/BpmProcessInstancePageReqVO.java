@@ -1,15 +1,18 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.instance;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - 流程实例分页 Request VO")
 @Data
@@ -41,5 +44,4 @@ public class BpmProcessInstancePageReqVO extends PageParam {
 
     @Schema(description = "动态表单字段查询 JSON Str", example = "{}")
     private String formFieldsParams; // SpringMVC 在 get 请求下，无法方便的定义 Map 类型的参数，所以通过 String 接收后，逻辑里面转换
-
 }

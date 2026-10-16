@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.controller.admin.base.dept.DeptSimpleBaseVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.base.user.UserSimpleBaseVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.simple.BpmSimpleModelNodeVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.process.BpmProcessDefinitionRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -17,7 +19,10 @@ public class BpmModelRespVO extends BpmModelMetaInfoVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private String id;
 
-    @Schema(description = "流程标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "process_yudao")
+    @Schema(
+            description = "流程标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "process_yudao")
     private String key;
 
     @Schema(description = "流程名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
@@ -28,6 +33,7 @@ public class BpmModelRespVO extends BpmModelMetaInfoVO {
 
     @Schema(description = "流程分类编号", example = "1")
     private String category;
+
     @Schema(description = "流程分类名字", example = "请假")
     private String categoryName;
 
@@ -53,5 +59,4 @@ public class BpmModelRespVO extends BpmModelMetaInfoVO {
      * 最新部署的流程定义
      */
     private BpmProcessDefinitionRespVO processDefinition;
-
 }

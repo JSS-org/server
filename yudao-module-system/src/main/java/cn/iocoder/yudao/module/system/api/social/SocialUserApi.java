@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialUserBindReqDTO;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialUserRespDTO;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialUserUnbindReqDTO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -49,6 +50,6 @@ public interface SocialUserApi {
      * @param state      state
      * @return 社交用户
      */
-    SocialUserRespDTO getSocialUserByCode(Integer userType, Integer socialType, String code, String state);
-
+    SocialUserRespDTO getSocialUserByCode(
+            Integer userType, Integer socialType, String code, String state);
 }

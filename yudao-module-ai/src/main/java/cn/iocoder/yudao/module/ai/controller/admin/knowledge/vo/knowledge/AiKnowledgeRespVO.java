@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.knowledge;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,10 @@ public class AiKnowledgeRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "24790")
     private Long id;
 
-    @Schema(description = "知识库名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "ruoyi-vue-pro 用户指南")
+    @Schema(
+            description = "知识库名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ruoyi-vue-pro 用户指南")
     private String name;
 
     @Schema(description = "知识库描述", example = "帮助你快速构建系统")
@@ -21,7 +25,10 @@ public class AiKnowledgeRespVO {
     @Schema(description = "向量模型编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "14")
     private Long embeddingModelId;
 
-    @Schema(description = "向量模型标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "qwen-72b-chat")
+    @Schema(
+            description = "向量模型标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "qwen-72b-chat")
     private String embeddingModel;
 
     @Schema(description = "topK", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
@@ -35,5 +42,4 @@ public class AiKnowledgeRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

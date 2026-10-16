@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.team.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -20,5 +22,4 @@ public class MesCalTeamPageReqVO extends PageParam {
 
     @Schema(description = "班组类型", example = "1")
     private Integer calendarType;
-
 }

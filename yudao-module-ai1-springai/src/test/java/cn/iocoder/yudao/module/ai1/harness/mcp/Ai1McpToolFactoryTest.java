@@ -1,12 +1,18 @@
 package cn.iocoder.yudao.module.ai1.harness.mcp;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.service.mcp.Ai1McpService;
+
 import io.modelcontextprotocol.spec.McpSchema;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -15,10 +21,6 @@ import org.springframework.ai.tool.ToolCallback;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link Ai1McpToolFactory} 的单元测试
  *
@@ -26,13 +28,10 @@ import static org.mockito.Mockito.when;
  */
 public class Ai1McpToolFactoryTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private Ai1McpToolFactory mcpToolFactory;
+    @InjectMocks private Ai1McpToolFactory mcpToolFactory;
 
-    @Mock
-    private Ai1McpService mcpService;
-    @Mock
-    private Ai1McpClientTool mcpClientTool;
+    @Mock private Ai1McpService mcpService;
+    @Mock private Ai1McpClientTool mcpClientTool;
 
     @Test
     public void testBuildTools_chineseNames() {
@@ -43,20 +42,23 @@ public class Ai1McpToolFactoryTest extends BaseMockitoUnitTest {
         // 调用
         List<ToolCallback> callbacks = buildTools(List.of(first, second), List.of("search"));
         // 断言
-        assertEquals(List.of("mcp_1__search", "mcp_2__search"), callbacks.stream()
-                .map(callback -> callback.getToolDefinition().name()).toList());
+        assertEquals(
+                List.of("mcp_1__search", "mcp_2__search"),
+                callbacks.stream().map(callback -> callback.getToolDefinition().name()).toList());
     }
 
     @Test
     public void testBuildTools_emptyNames() {
         // mock 数据
-        List<Ai1McpDO> mcps = List.of(buildMcp(1L, "   "), buildMcp(2L, "___"), buildMcp(3L, "!!!"));
+        List<Ai1McpDO> mcps =
+                List.of(buildMcp(1L, "   "), buildMcp(2L, "___"), buildMcp(3L, "!!!"));
 
         // 调用
         List<ToolCallback> callbacks = buildTools(mcps, List.of("search"));
         // 断言
-        assertEquals(List.of("mcp_1__search", "mcp_2__search", "mcp_3__search"), callbacks.stream()
-                .map(callback -> callback.getToolDefinition().name()).toList());
+        assertEquals(
+                List.of("mcp_1__search", "mcp_2__search", "mcp_3__search"),
+                callbacks.stream().map(callback -> callback.getToolDefinition().name()).toList());
     }
 
     @Test
@@ -89,7 +91,8 @@ public class Ai1McpToolFactoryTest extends BaseMockitoUnitTest {
         String prefix = "search_" + "a".repeat(80);
 
         // 调用
-        List<ToolCallback> callbacks = buildTools(List.of(mcp), List.of(prefix + "_first", prefix + "_second"));
+        List<ToolCallback> callbacks =
+                buildTools(List.of(mcp), List.of(prefix + "_first", prefix + "_second"));
         // 断言
         String firstName = callbacks.get(0).getToolDefinition().name();
         String secondName = callbacks.get(1).getToolDefinition().name();
@@ -134,10 +137,18 @@ public class Ai1McpToolFactoryTest extends BaseMockitoUnitTest {
     }
 
     private List<ToolCallback> buildTools(List<Ai1McpDO> mcps, List<String> toolNames) {
-        Ai1AgentDO agent = new Ai1AgentDO().setId(1L).setMcpIds(mcps.stream().map(Ai1McpDO::getId).toList());
+        Ai1AgentDO agent =
+                new Ai1AgentDO().setId(1L).setMcpIds(mcps.stream().map(Ai1McpDO::getId).toList());
         when(mcpService.getMcpList(agent.getMcpIds())).thenReturn(mcps);
-        List<McpSchema.Tool> tools = toolNames.stream().map(name -> McpSchema.Tool.builder(name)
-                .description("测试工具").inputSchema(Map.of("type", "object")).build()).toList();
+        List<McpSchema.Tool> tools =
+                toolNames.stream()
+                        .map(
+                                name ->
+                                        McpSchema.Tool.builder(name)
+                                                .description("测试工具")
+                                                .inputSchema(Map.of("type", "object"))
+                                                .build())
+                        .toList();
         for (Ai1McpDO mcp : mcps) {
             when(mcpClientTool.listTools(mcp)).thenReturn(tools);
         }
@@ -145,7 +156,9 @@ public class Ai1McpToolFactoryTest extends BaseMockitoUnitTest {
     }
 
     private static Ai1McpDO buildMcp(Long id, String name) {
-        return new Ai1McpDO().setId(id).setName(name).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        return new Ai1McpDO()
+                .setId(id)
+                .setName(name)
+                .setStatus(CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

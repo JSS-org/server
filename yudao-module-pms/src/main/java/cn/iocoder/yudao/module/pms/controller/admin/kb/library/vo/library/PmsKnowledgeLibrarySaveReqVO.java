@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.library;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -42,5 +44,4 @@ public class PmsKnowledgeLibrarySaveReqVO {
     @Schema(description = "模板编号，仅创建时有效", example = "1")
     @Positive(message = "模板编号必须大于 0")
     private Long templateId;
-
 }

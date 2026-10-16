@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.enums.employee.config;
 
 import cn.hutool.core.util.ArrayUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,7 +13,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeArchiveFieldEnum {
-
     NAME("name", "员工姓名", "基本信息", true, true, false),
     COUNTRY("country", "国家或地区", "基本信息", true, true, false),
     NATION("nation", "民族", "基本信息", true, true, false),
@@ -32,22 +32,27 @@ public enum HrmEmployeeArchiveFieldEnum {
      * 字段名称
      */
     private final String name;
+
     /**
      * 字段标题
      */
     private final String title;
+
     /**
      * 字段分组名称
      */
     private final String groupName;
+
     /**
      * 默认是否显示
      */
     private final Boolean defaultVisible;
+
     /**
      * 默认是否允许员工编辑
      */
     private final Boolean defaultEditable;
+
     /**
      * 是否锁定编辑
      */
@@ -56,5 +61,4 @@ public enum HrmEmployeeArchiveFieldEnum {
     public static HrmEmployeeArchiveFieldEnum valueOfName(String name) {
         return ArrayUtil.firstMatch(item -> item.getName().equals(name), values());
     }
-
 }

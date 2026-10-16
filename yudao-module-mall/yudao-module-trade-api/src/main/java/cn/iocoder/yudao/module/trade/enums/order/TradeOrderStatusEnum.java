@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.trade.enums.order;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -16,19 +17,20 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum TradeOrderStatusEnum implements ArrayValuable<Integer> {
-
     UNPAID(0, "待支付"),
     UNDELIVERED(10, "待发货"),
     DELIVERED(20, "已发货"),
     COMPLETED(30, "已完成"),
     CANCELED(40, "已取消");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(TradeOrderStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(TradeOrderStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -99,8 +101,8 @@ public enum TradeOrderStatusEnum implements ArrayValuable<Integer> {
      * @return 是否
      */
     public static boolean havePaid(Integer status) {
-        return ObjectUtils.equalsAny(status, UNDELIVERED.getStatus(),
-                DELIVERED.getStatus(), COMPLETED.getStatus());
+        return ObjectUtils.equalsAny(
+                status, UNDELIVERED.getStatus(), DELIVERED.getStatus(), COMPLETED.getStatus());
     }
 
     /**
@@ -112,5 +114,4 @@ public enum TradeOrderStatusEnum implements ArrayValuable<Integer> {
     public static boolean haveDelivered(Integer status) {
         return ObjectUtils.equalsAny(status, DELIVERED.getStatus(), COMPLETED.getStatus());
     }
-
 }

@@ -1,10 +1,17 @@
 package cn.iocoder.yudao.module.oa.service.file;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.oa.dal.dataobject.file.OaFileFavoriteDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.file.OaFileFavoriteMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -12,10 +19,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link OaFileFavoriteServiceImpl} 的单元测试类
@@ -25,14 +28,11 @@ import static org.mockito.Mockito.*;
 @Import(OaFileFavoriteServiceImpl.class)
 public class OaFileFavoriteServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaFileFavoriteService fileFavoriteService;
+    @Resource private OaFileFavoriteService fileFavoriteService;
 
-    @Resource
-    private OaFileFavoriteMapper fileFavoriteMapper;
+    @Resource private OaFileFavoriteMapper fileFavoriteMapper;
 
-    @MockitoBean
-    private OaFileNodeService fileNodeService;
+    @MockitoBean private OaFileNodeService fileNodeService;
 
     @Test
     public void testGetFileFavoriteListByUserIdAndNodeIds() {
@@ -46,7 +46,9 @@ public class OaFileFavoriteServiceImplTest extends BaseDbUnitTest {
         fileFavoriteMapper.deleteById(deleted.getId());
 
         // 调用
-        List<OaFileFavoriteDO> result = fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(1L, Arrays.asList(10L, 12L));
+        List<OaFileFavoriteDO> result =
+                fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(
+                        1L, Arrays.asList(10L, 12L));
         // 断言
         assertEquals(1, result.size());
         assertEquals(matched.getId(), CollUtil.getFirst(result).getId());
@@ -58,7 +60,9 @@ public class OaFileFavoriteServiceImplTest extends BaseDbUnitTest {
         fileFavoriteMapper.insert(randomFileFavoriteDO(10L, 1L));
 
         // 调用
-        List<OaFileFavoriteDO> result = fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(1L, Collections.emptyList());
+        List<OaFileFavoriteDO> result =
+                fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(
+                        1L, Collections.emptyList());
         // 断言：空页不能退化成查询全部收藏
         assertTrue(CollUtil.isEmpty(result));
     }
@@ -123,10 +127,11 @@ public class OaFileFavoriteServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaFileFavoriteDO randomFileFavoriteDO(Long nodeId, Long userId) {
-        return randomPojo(OaFileFavoriteDO.class, favorite -> {
-            favorite.setNodeId(nodeId);
-            favorite.setUserId(userId);
-        });
+        return randomPojo(
+                OaFileFavoriteDO.class,
+                favorite -> {
+                    favorite.setNodeId(nodeId);
+                    favorite.setUserId(userId);
+                });
     }
-
 }

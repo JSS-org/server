@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.fms.service.report;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.subjectbalance.FmsLedgerSubjectBalanceRespVO;
@@ -20,7 +26,9 @@ import cn.iocoder.yudao.module.fms.service.config.FmsInitialBalanceService;
 import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
 import cn.iocoder.yudao.module.fms.service.ledger.FmsLedgerService;
 import cn.iocoder.yudao.module.fms.service.voucher.FmsVoucherService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -28,52 +36,37 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import javax.sql.DataSource;
 
-@Import({FmsBalanceSheetServiceImpl.class, FmsIncomeStatementServiceImpl.class,
-        FmsCashFlowStatementServiceImpl.class, FmsReportCommonServiceImpl.class})
+@Import({
+    FmsBalanceSheetServiceImpl.class,
+    FmsIncomeStatementServiceImpl.class,
+    FmsCashFlowStatementServiceImpl.class,
+    FmsReportCommonServiceImpl.class
+})
 public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
 
-    @Resource
-    private DataSource dataSource;
-    @Resource
-    private FmsReportTemplateMapper reportTemplateMapper;
-    @Resource
-    private FmsBalanceSheetServiceImpl balanceSheetService;
-    @Resource
-    private FmsIncomeStatementServiceImpl incomeStatementService;
-    @Resource
-    private FmsCashFlowStatementServiceImpl cashFlowStatementService;
+    @Resource private DataSource dataSource;
+    @Resource private FmsReportTemplateMapper reportTemplateMapper;
+    @Resource private FmsBalanceSheetServiceImpl balanceSheetService;
+    @Resource private FmsIncomeStatementServiceImpl incomeStatementService;
+    @Resource private FmsCashFlowStatementServiceImpl cashFlowStatementService;
 
-    @MockitoBean
-    private FmsAccountSetService accountSetService;
-    @MockitoBean
-    private FmsSubjectService subjectService;
-    @MockitoBean
-    private FmsLedgerService ledgerService;
-    @MockitoBean
-    private FmsFinanceParameterService financeParameterService;
-    @MockitoBean
-    private FmsInitialBalanceService initialBalanceService;
-    @MockitoBean
-    private FmsClosingPeriodService closingPeriodService;
-    @MockitoBean
-    private FmsClosingSchemeService closingSchemeService;
-    @MockitoBean
-    private FmsClosingVoucherService closingVoucherService;
-    @MockitoBean
-    private FmsVoucherService voucherService;
+    @MockitoBean private FmsAccountSetService accountSetService;
+    @MockitoBean private FmsSubjectService subjectService;
+    @MockitoBean private FmsLedgerService ledgerService;
+    @MockitoBean private FmsFinanceParameterService financeParameterService;
+    @MockitoBean private FmsInitialBalanceService initialBalanceService;
+    @MockitoBean private FmsClosingPeriodService closingPeriodService;
+    @MockitoBean private FmsClosingSchemeService closingSchemeService;
+    @MockitoBean private FmsClosingVoucherService closingVoucherService;
+    @MockitoBean private FmsVoucherService voucherService;
 
     private final List<FmsSubjectDO> subjects = new ArrayList<>();
     private final List<FmsLedgerSubjectBalanceRespVO> balances = new ArrayList<>();
@@ -83,8 +76,11 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         // 初始化报表模板
         initializeTemplates();
         // mock 账套、科目和账簿余额
-        FmsAccountSetDO accountSet = new FmsAccountSetDO().setId(1L).setInitialized(true)
-                .setStartTime(LocalDateTime.of(2026, 1, 1, 0, 0));
+        FmsAccountSetDO accountSet =
+                new FmsAccountSetDO()
+                        .setId(1L)
+                        .setInitialized(true)
+                        .setStartTime(LocalDateTime.of(2026, 1, 1, 0, 0));
         when(accountSetService.validateAccountSetReadPermission(1L, 10L)).thenReturn(accountSet);
         when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(subjects);
         when(ledgerService.getSubjectBalanceList(any(), eq(10L))).thenReturn(balances);
@@ -93,19 +89,38 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
     @Test
     public void testInitializeTemplates_repeatExecution() {
         // mock 数据：模拟用户修改已有报表公式
-        FmsReportTemplateDO template = CollUtil.findOne(
-                reportTemplateMapper.selectListByType(FmsReportTypeEnum.INCOME_STATEMENT.getType()),
-                item -> Integer.valueOf(21).equals(item.getRowNo()));
-        reportTemplateMapper.updateById(new FmsReportTemplateDO().setId(template.getId()).setFormula("[\"L1\"]"));
+        FmsReportTemplateDO template =
+                CollUtil.findOne(
+                        reportTemplateMapper.selectListByType(
+                                FmsReportTypeEnum.INCOME_STATEMENT.getType()),
+                        item -> Integer.valueOf(21).equals(item.getRowNo()));
+        reportTemplateMapper.updateById(
+                new FmsReportTemplateDO().setId(template.getId()).setFormula("[\"L1\"]"));
 
         // 调用
         initializeTemplates();
 
         // 断言
-        assertEquals(58, reportTemplateMapper.selectListByType(FmsReportTypeEnum.BALANCE_SHEET.getType()).size());
-        assertEquals(31, reportTemplateMapper.selectListByType(FmsReportTypeEnum.INCOME_STATEMENT.getType()).size());
-        assertEquals(25, reportTemplateMapper.selectListByType(FmsReportTypeEnum.CASH_FLOW_STATEMENT.getType()).size());
-        assertEquals(21, reportTemplateMapper.selectListByType(FmsReportTypeEnum.CASH_FLOW_ADJUSTMENT.getType()).size());
+        assertEquals(
+                58,
+                reportTemplateMapper
+                        .selectListByType(FmsReportTypeEnum.BALANCE_SHEET.getType())
+                        .size());
+        assertEquals(
+                31,
+                reportTemplateMapper
+                        .selectListByType(FmsReportTypeEnum.INCOME_STATEMENT.getType())
+                        .size());
+        assertEquals(
+                25,
+                reportTemplateMapper
+                        .selectListByType(FmsReportTypeEnum.CASH_FLOW_STATEMENT.getType())
+                        .size());
+        assertEquals(
+                21,
+                reportTemplateMapper
+                        .selectListByType(FmsReportTypeEnum.CASH_FLOW_ADJUSTMENT.getType())
+                        .size());
         assertEquals(135, reportTemplateMapper.selectCount());
         assertEquals("[\"L1\"]", reportTemplateMapper.selectById(template.getId()).getFormula());
     }
@@ -116,9 +131,12 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         List<FmsReportTemplateDO> templates = new ArrayList<>();
         for (FmsReportTemplateDO template : reportTemplateMapper.selectList()) {
             String oldFormula;
-            if (FmsReportTypeEnum.BALANCE_SHEET.getType().equals(template.getType()) && (template.getRowNo() == 9
-                    || template.getRowNo() == 24 || template.getRowNo() == 25)) {
-                oldFormula = template.getFormula().replace("\"operator\":\"-\"", "\"operator\":\"+\"");
+            if (FmsReportTypeEnum.BALANCE_SHEET.getType().equals(template.getType())
+                    && (template.getRowNo() == 9
+                            || template.getRowNo() == 24
+                            || template.getRowNo() == 25)) {
+                oldFormula =
+                        template.getFormula().replace("\"operator\":\"-\"", "\"operator\":\"+\"");
             } else if (FmsReportTypeEnum.INCOME_STATEMENT.getType().equals(template.getType())
                     && template.getRowNo() == 21) {
                 oldFormula = "[\"L1-L2-L3-L11-L14-L18\"]";
@@ -129,7 +147,8 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
                 continue;
             }
             templates.add(template);
-            reportTemplateMapper.updateById(new FmsReportTemplateDO().setId(template.getId()).setFormula(oldFormula));
+            reportTemplateMapper.updateById(
+                    new FmsReportTemplateDO().setId(template.getId()).setFormula(oldFormula));
         }
 
         // 调用
@@ -138,7 +157,9 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         // 断言
         assertEquals(5, templates.size());
         for (FmsReportTemplateDO template : templates) {
-            assertEquals(template.getFormula(), reportTemplateMapper.selectById(template.getId()).getFormula());
+            assertEquals(
+                    template.getFormula(),
+                    reportTemplateMapper.selectById(template.getId()).getFormula());
         }
         assertEquals(135, reportTemplateMapper.selectCount());
     }
@@ -146,20 +167,26 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
     @Test
     public void testInitializeTemplates_preserveLegacySubjectIds() {
         // mock 数据：模拟使用历史科目编号的公式
-        FmsReportTemplateDO template = CollUtil.findOne(
-                reportTemplateMapper.selectListByType(FmsReportTypeEnum.BALANCE_SHEET.getType()),
-                item -> Integer.valueOf(25).equals(item.getRowNo()));
-        String oldFormula = "[{\"operator\":\"+\",\"rules\":0,\"subjectId\":1371,"
-                + "\"subjectName\":\"无形资产\",\"subjectNumber\":\"1701\"},"
-                + "{\"operator\":\"+\",\"rules\":0,\"subjectId\":1372,"
-                + "\"subjectName\":\"累计摊销\",\"subjectNumber\":\"1702\"}]";
-        reportTemplateMapper.updateById(new FmsReportTemplateDO().setId(template.getId()).setFormula(oldFormula));
+        FmsReportTemplateDO template =
+                CollUtil.findOne(
+                        reportTemplateMapper.selectListByType(
+                                FmsReportTypeEnum.BALANCE_SHEET.getType()),
+                        item -> Integer.valueOf(25).equals(item.getRowNo()));
+        String oldFormula =
+                "[{\"operator\":\"+\",\"rules\":0,\"subjectId\":1371,"
+                        + "\"subjectName\":\"无形资产\",\"subjectNumber\":\"1701\"},"
+                        + "{\"operator\":\"+\",\"rules\":0,\"subjectId\":1372,"
+                        + "\"subjectName\":\"累计摊销\",\"subjectNumber\":\"1702\"}]";
+        reportTemplateMapper.updateById(
+                new FmsReportTemplateDO().setId(template.getId()).setFormula(oldFormula));
 
         // 调用
         initializeTemplates();
 
         // 断言
-        assertEquals(template.getFormula(), reportTemplateMapper.selectById(template.getId()).getFormula());
+        assertEquals(
+                template.getFormula(),
+                reportTemplateMapper.selectById(template.getId()).getFormula());
     }
 
     @Test
@@ -172,13 +199,16 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         FmsReportListReqVO reqVO = buildQueryReqVO();
 
         // 调用
-        List<FmsBalanceSheetRowRespVO> balanceSheet = balanceSheetService.getBalanceSheet(reqVO, 10L);
-        List<FmsReportItemRespVO> cashFlow = cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
+        List<FmsBalanceSheetRowRespVO> balanceSheet =
+                balanceSheetService.getBalanceSheet(reqVO, 10L);
+        List<FmsReportItemRespVO> cashFlow =
+                cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
 
         // 断言
         assertAssetAmount(balanceSheet, 30, 100);
-        FmsBalanceSheetRowRespVO total = CollUtil.findOne(balanceSheet,
-                row -> Integer.valueOf(53).equals(row.getLiabilityRowNo()));
+        FmsBalanceSheetRowRespVO total =
+                CollUtil.findOne(
+                        balanceSheet, row -> Integer.valueOf(53).equals(row.getLiabilityRowNo()));
         assertNotNull(total);
         assertAmount(100, total.getLiabilityClosingAmount());
         assertItemAmount(cashFlow, 15, 100);
@@ -220,8 +250,10 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         FmsReportListReqVO reqVO = buildQueryReqVO();
 
         // 调用
-        List<FmsReportItemRespVO> incomeItems = incomeStatementService.getIncomeStatement(reqVO, 10L);
-        List<FmsReportItemRespVO> result = cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
+        List<FmsReportItemRespVO> incomeItems =
+                incomeStatementService.getIncomeStatement(reqVO, 10L);
+        List<FmsReportItemRespVO> result =
+                cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
 
         // 断言
         assertItemAmount(incomeItems, 1, 100);
@@ -242,7 +274,8 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         FmsReportListReqVO reqVO = buildQueryReqVO();
 
         // 调用
-        List<FmsReportItemRespVO> result = cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
+        List<FmsReportItemRespVO> result =
+                cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
 
         // 断言
         assertItemAmount(result, 3, 40);
@@ -266,7 +299,8 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         FmsReportListReqVO reqVO = buildQueryReqVO();
 
         // 调用
-        List<FmsReportItemRespVO> result = cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
+        List<FmsReportItemRespVO> result =
+                cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
 
         // 断言
         assertItemAmount(result, 4, 30);
@@ -286,7 +320,8 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         FmsReportListReqVO reqVO = buildQueryReqVO();
 
         // 调用
-        List<FmsReportItemRespVO> result = cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
+        List<FmsReportItemRespVO> result =
+                cashFlowStatementService.getCashFlowStatement(reqVO, 10L);
 
         // 断言
         assertItemAmount(result, 16, 30);
@@ -318,25 +353,39 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
      * 执行报表模板升级脚本
      */
     private void initializeTemplates() {
-        new ResourceDatabasePopulator(new FileSystemResource("../sql/mysql/upgrade/20260926-fms-report-template.sql"))
+        new ResourceDatabasePopulator(
+                        new FileSystemResource(
+                                "../sql/mysql/upgrade/20260926-fms-report-template.sql"))
                 .execute(dataSource);
     }
 
     /**
      * 模拟科目余额和发生额：余额借方为正、贷方为负，发生额已扣除损益结转数据
      */
-    private void mockSubjectBalance(String code, int direction, int opening, int closing, int debit, int credit) {
+    private void mockSubjectBalance(
+            String code, int direction, int opening, int closing, int debit, int credit) {
         Long id = Long.valueOf(code);
-        subjects.add(new FmsSubjectDO().setId(id).setAccountSetId(1L).setCode(code).setName(code)
-                .setLevel(1).setBalanceDirection(direction));
-        balances.add(new FmsLedgerSubjectBalanceRespVO().setSubjectId(id).setSubjectCode(code)
-                .setOpeningDebitAmount(BigDecimal.valueOf(Math.max(opening, 0)))
-                .setOpeningCreditAmount(BigDecimal.valueOf(Math.max(-opening, 0)))
-                .setEndingDebitAmount(BigDecimal.valueOf(Math.max(closing, 0)))
-                .setEndingCreditAmount(BigDecimal.valueOf(Math.max(-closing, 0)))
-                .setPeriodDebitAmount(BigDecimal.valueOf(debit)).setPeriodCreditAmount(BigDecimal.valueOf(credit))
-                .setYearDebitAmount(BigDecimal.valueOf(debit)).setYearCreditAmount(BigDecimal.valueOf(credit))
-                .setChildren(Collections.emptyList()));
+        subjects.add(
+                new FmsSubjectDO()
+                        .setId(id)
+                        .setAccountSetId(1L)
+                        .setCode(code)
+                        .setName(code)
+                        .setLevel(1)
+                        .setBalanceDirection(direction));
+        balances.add(
+                new FmsLedgerSubjectBalanceRespVO()
+                        .setSubjectId(id)
+                        .setSubjectCode(code)
+                        .setOpeningDebitAmount(BigDecimal.valueOf(Math.max(opening, 0)))
+                        .setOpeningCreditAmount(BigDecimal.valueOf(Math.max(-opening, 0)))
+                        .setEndingDebitAmount(BigDecimal.valueOf(Math.max(closing, 0)))
+                        .setEndingCreditAmount(BigDecimal.valueOf(Math.max(-closing, 0)))
+                        .setPeriodDebitAmount(BigDecimal.valueOf(debit))
+                        .setPeriodCreditAmount(BigDecimal.valueOf(credit))
+                        .setYearDebitAmount(BigDecimal.valueOf(debit))
+                        .setYearCreditAmount(BigDecimal.valueOf(credit))
+                        .setChildren(Collections.emptyList()));
     }
 
     /**
@@ -354,7 +403,8 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
      * 断言报表指定行的本期和本年金额
      */
     private void assertItemAmount(List<FmsReportItemRespVO> rows, int rowNo, int expected) {
-        FmsReportItemRespVO item = CollUtil.findOne(rows, row -> Integer.valueOf(rowNo).equals(row.getRowNo()));
+        FmsReportItemRespVO item =
+                CollUtil.findOne(rows, row -> Integer.valueOf(rowNo).equals(row.getRowNo()));
         assertNotNull(item);
         assertAmount(expected, item.getCurrentAmount());
         assertAmount(expected, item.getYearAmount());
@@ -364,8 +414,8 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
      * 断言资产负债表指定行的资产期末余额
      */
     private void assertAssetAmount(List<FmsBalanceSheetRowRespVO> rows, int rowNo, int expected) {
-        FmsBalanceSheetRowRespVO item = CollUtil.findOne(rows,
-                row -> Integer.valueOf(rowNo).equals(row.getAssetRowNo()));
+        FmsBalanceSheetRowRespVO item =
+                CollUtil.findOne(rows, row -> Integer.valueOf(rowNo).equals(row.getAssetRowNo()));
         assertNotNull(item);
         assertAmount(expected, item.getAssetClosingAmount());
     }
@@ -377,5 +427,4 @@ public class FmsReportTemplateServiceTest extends BaseDbUnitTest {
         assertNotNull(actual);
         assertEquals(0, BigDecimal.valueOf(expected).compareTo(actual), "实际金额：" + actual);
     }
-
 }

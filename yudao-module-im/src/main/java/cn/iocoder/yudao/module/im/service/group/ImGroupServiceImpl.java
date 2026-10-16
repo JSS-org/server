@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.im.service.group;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.im.dal.redis.RedisKeyConstants.GROUP;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
@@ -27,17 +32,19 @@ import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupDO;
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupMemberDO;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImGroupMessageDO;
 import cn.iocoder.yudao.module.im.dal.mysql.group.ImGroupMapper;
+import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
 import cn.iocoder.yudao.module.im.enums.group.ImGroupAddSourceEnum;
 import cn.iocoder.yudao.module.im.enums.group.ImGroupMemberRoleEnum;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
-import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
 import cn.iocoder.yudao.module.im.framework.config.ImProperties;
 import cn.iocoder.yudao.module.im.service.friend.ImFriendService;
 import cn.iocoder.yudao.module.im.service.message.ImGroupMessageService;
 import cn.iocoder.yudao.module.im.service.message.dto.ImGroupMessageSendDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -49,11 +56,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.im.dal.redis.RedisKeyConstants.GROUP;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
-
 /**
  * 用户群 Service 实现类
  *
@@ -63,27 +65,20 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
 @Validated
 public class ImGroupServiceImpl implements ImGroupService {
 
-    @Resource
-    private ImGroupMapper groupMapper;
+    @Resource private ImGroupMapper groupMapper;
 
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource @Lazy // 避免循环依赖
     private ImGroupMemberService groupMemberService;
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource @Lazy // 避免循环依赖
     private ImGroupMessageService groupMessageService;
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource @Lazy // 避免循环依赖
     private ImGroupRequestService groupRequestService;
 
-    @Resource
-    private ImFriendService friendService;
+    @Resource private ImFriendService friendService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
-    @Resource
-    private ImProperties imProperties;
+    @Resource private ImProperties imProperties;
 
     // ==================== 群的写操作 ====================
 
@@ -91,14 +86,18 @@ public class ImGroupServiceImpl implements ImGroupService {
     @Transactional(rollbackFor = Exception.class)
     public ImGroupDO createGroup(ImGroupCreateReqVO createReqVO, Long userId) {
         // 1.1 处理初始成员列表（去重 + 排除创建者自己）
-        Set<Long> initialMemberUserIds = createReqVO.getMemberUserIds() == null
-                ? new HashSet<>() : new HashSet<>(createReqVO.getMemberUserIds());
+        Set<Long> initialMemberUserIds =
+                createReqVO.getMemberUserIds() == null
+                        ? new HashSet<>()
+                        : new HashSet<>(createReqVO.getMemberUserIds());
         initialMemberUserIds.remove(userId);
         // 1.2 校验初始成员都是创建者的好友
         if (CollUtil.isNotEmpty(initialMemberUserIds)) {
-            List<ImFriendDO> friends = friendService.getActiveFriendList(userId, initialMemberUserIds);
+            List<ImFriendDO> friends =
+                    friendService.getActiveFriendList(userId, initialMemberUserIds);
             Set<Long> friendUserIds = convertSet(friends, ImFriendDO::getFriendUserId);
-            Collection<Long> notFriendUserIds = CollUtil.subtract(initialMemberUserIds, friendUserIds);
+            Collection<Long> notFriendUserIds =
+                    CollUtil.subtract(initialMemberUserIds, friendUserIds);
             if (CollUtil.isNotEmpty(notFriendUserIds)) {
                 throw exception(GROUP_INVITE_NOT_FRIEND, getUserNicknames(notFriendUserIds));
             }
@@ -110,20 +109,28 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         // 2.1 插入群记录
-        ImGroupDO group = BeanUtils.toBean(createReqVO, ImGroupDO.class)
-                .setOwnerUserId(userId).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        ImGroupDO group =
+                BeanUtils.toBean(createReqVO, ImGroupDO.class)
+                        .setOwnerUserId(userId)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         groupMapper.insert(group);
         // 2.2 创建者作为 OWNER 入群
-        groupMemberService.addGroupMember(group.getId(), userId, ImGroupMemberRoleEnum.OWNER.getRole());
+        groupMemberService.addGroupMember(
+                group.getId(), userId, ImGroupMemberRoleEnum.OWNER.getRole());
         // 2.3 批量添加初始成员；标记 addSource=INVITE / inviter=创建者
         if (CollUtil.isNotEmpty(initialMemberUserIds)) {
-            groupMemberService.addGroupMembers(group.getId(), initialMemberUserIds,
-                    ImGroupAddSourceEnum.INVITE.getSource(), userId);
+            groupMemberService.addGroupMembers(
+                    group.getId(),
+                    initialMemberUserIds,
+                    ImGroupAddSourceEnum.INVITE.getSource(),
+                    userId);
         }
 
         // 3. 推送 GROUP_CREATE 通知给全员（含创建者多端同步 + 初始成员）
         List<Long> allMemberUserIds = CollectionUtils.of(userId, initialMemberUserIds);
-        groupMessageService.sendGroupMessage(userId, allMemberUserIds,
+        groupMessageService.sendGroupMessage(
+                userId,
+                allMemberUserIds,
                 ImGroupMessageSendDTO.ofGroupCreate(group.getId(), userId, allMemberUserIds));
         return group;
     }
@@ -149,25 +156,49 @@ public class ImGroupServiceImpl implements ImGroupService {
         boolean nameChanged = StrUtil.isNotEmpty(updateReqVO.getName());
         boolean noticeChanged = updateReqVO.getNotice() != null;
         boolean avatarChanged = StrUtil.isNotEmpty(updateReqVO.getAvatar());
-        boolean joinApprovalChanged = updateReqVO.getJoinApproval() != null
-                && ObjUtil.notEqual(group.getJoinApproval(), updateReqVO.getJoinApproval());
+        boolean joinApprovalChanged =
+                updateReqVO.getJoinApproval() != null
+                        && ObjUtil.notEqual(group.getJoinApproval(), updateReqVO.getJoinApproval());
         if (nameChanged || noticeChanged || avatarChanged || joinApprovalChanged) {
-            List<Long> memberUserIds = groupMemberService.getActiveGroupMemberUserIdsByGroupId(groupId);
+            List<Long> memberUserIds =
+                    groupMemberService.getActiveGroupMemberUserIdsByGroupId(groupId);
             if (nameChanged) {
-                groupMessageService.sendGroupMessage(userId, memberUserIds, ImGroupMessageSendDTO.ofGroupNameUpdate(
-                        groupId, userId, group.getName(), updateReqVO.getName()));
+                groupMessageService.sendGroupMessage(
+                        userId,
+                        memberUserIds,
+                        ImGroupMessageSendDTO.ofGroupNameUpdate(
+                                groupId, userId, group.getName(), updateReqVO.getName()));
             }
             if (noticeChanged) {
-                groupMessageService.sendGroupMessage(userId, memberUserIds, ImGroupMessageSendDTO.ofGroupNoticeUpdate(
-                        groupId, userId, group.getNotice(), updateReqVO.getNotice()));
+                groupMessageService.sendGroupMessage(
+                        userId,
+                        memberUserIds,
+                        ImGroupMessageSendDTO.ofGroupNoticeUpdate(
+                                groupId, userId, group.getNotice(), updateReqVO.getNotice()));
             }
             if (avatarChanged) {
-                groupMessageService.sendGroupMessage(userId, memberUserIds, ImGroupMessageSendDTO.ofGroupInfoUpdate(
-                        groupId, userId, group.getAvatar(), updateReqVO.getAvatar(), null, null));
+                groupMessageService.sendGroupMessage(
+                        userId,
+                        memberUserIds,
+                        ImGroupMessageSendDTO.ofGroupInfoUpdate(
+                                groupId,
+                                userId,
+                                group.getAvatar(),
+                                updateReqVO.getAvatar(),
+                                null,
+                                null));
             }
             if (joinApprovalChanged) {
-                groupMessageService.sendGroupMessage(userId, memberUserIds, ImGroupMessageSendDTO.ofGroupInfoUpdate(
-                        groupId, userId, null, null, group.getJoinApproval(), updateReqVO.getJoinApproval()));
+                groupMessageService.sendGroupMessage(
+                        userId,
+                        memberUserIds,
+                        ImGroupMessageSendDTO.ofGroupInfoUpdate(
+                                groupId,
+                                userId,
+                                null,
+                                null,
+                                group.getJoinApproval(),
+                                updateReqVO.getJoinApproval()));
             }
         }
 
@@ -192,11 +223,15 @@ public class ImGroupServiceImpl implements ImGroupService {
 
     private void dissolveGroup0(Long id, Long userId) {
         // 1. 先发 GROUP_DISSOLVE 通知：放在成员移除前，sendGroupMessage 才能查到全员
-        groupMessageService.sendGroupMessage(userId, ImGroupMessageSendDTO.ofGroupDissolve(id, userId));
+        groupMessageService.sendGroupMessage(
+                userId, ImGroupMessageSendDTO.ofGroupDissolve(id, userId));
 
         // 2.1 更新群状态为已解散
-        groupMapper.updateById(new ImGroupDO().setId(id)
-                .setStatus(CommonStatusEnum.DISABLE.getStatus()).setDissolvedTime(LocalDateTime.now()));
+        groupMapper.updateById(
+                new ImGroupDO()
+                        .setId(id)
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus())
+                        .setDissolvedTime(LocalDateTime.now()));
         // 2.2 移除全部群成员
         groupMemberService.removeGroupMembersByGroupId(id);
     }
@@ -211,10 +246,12 @@ public class ImGroupServiceImpl implements ImGroupService {
         ImGroupDO group = validateGroupExists(groupId);
         ImGroupMemberDO operator = groupMemberService.validateMemberInGroup(groupId, userId);
         // 1.2 入参去重 + 排除已在群中的用户
-        List<ImGroupMemberDO> activeMembers = groupMemberService.getActiveGroupMemberListByGroupId(groupId);
+        List<ImGroupMemberDO> activeMembers =
+                groupMemberService.getActiveGroupMemberListByGroupId(groupId);
         Set<Long> activeMemberUserIds = convertSet(activeMembers, ImGroupMemberDO::getUserId);
-        List<Long> memberUserIds = CollUtil.subtractToList(
-                CollUtil.distinct(inviteReqVO.getMemberUserIds()), activeMemberUserIds);
+        List<Long> memberUserIds =
+                CollUtil.subtractToList(
+                        CollUtil.distinct(inviteReqVO.getMemberUserIds()), activeMemberUserIds);
         if (CollUtil.isEmpty(memberUserIds)) {
             return;
         }
@@ -240,13 +277,15 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         // 3. 情况二：未开审批 / 群主 / 管理员邀请，直进；批量添加群成员，写 addSource=INVITE / inviterUserId=操作人 留痕
-        groupMemberService.addGroupMembers(groupId, memberUserIds,
-                ImGroupAddSourceEnum.INVITE.getSource(), userId);
+        groupMemberService.addGroupMembers(
+                groupId, memberUserIds, ImGroupAddSourceEnum.INVITE.getSource(), userId);
 
         // 4. 发 GROUP_MEMBER_INVITE 通知给全员；本地拼 receivers（已查的 active + 新邀请）避免缓存刚 evict 后强制走 DB
         Set<Long> allReceivers = new HashSet<>(memberUserIds);
         allReceivers.addAll(activeMemberUserIds);
-        groupMessageService.sendGroupMessage(userId, allReceivers,
+        groupMessageService.sendGroupMessage(
+                userId,
+                allReceivers,
                 ImGroupMessageSendDTO.ofGroupMemberInvite(groupId, userId, memberUserIds));
     }
 
@@ -269,7 +308,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         groupMemberService.validateMemberInGroup(groupId, userId);
 
         // 2. 先发广播，后移成员（见类 javadoc）
-        groupMessageService.sendGroupMessage(userId, ImGroupMessageSendDTO.ofGroupMemberQuit(groupId, userId));
+        groupMessageService.sendGroupMessage(
+                userId, ImGroupMessageSendDTO.ofGroupMemberQuit(groupId, userId));
 
         // 3. 移除群成员
         groupMemberService.removeGroupMember(groupId, userId);
@@ -287,8 +327,10 @@ public class ImGroupServiceImpl implements ImGroupService {
             throw exception(GROUP_CANNOT_REMOVE_SELF);
         }
         // 1.3 仅保留仍有效的成员；已退群（DISABLE）/ 查无记录的目标直接跳过，只踢有效成员，不让整批失败
-        List<ImGroupMemberDO> targets = filterList(groupMemberService.getGroupMembers(groupId, targetUserIds),
-                target -> CommonStatusEnum.ENABLE.getStatus().equals(target.getStatus()));
+        List<ImGroupMemberDO> targets =
+                filterList(
+                        groupMemberService.getGroupMembers(groupId, targetUserIds),
+                        target -> CommonStatusEnum.ENABLE.getStatus().equals(target.getStatus()));
         Set<Long> validTargetUserIds = convertSet(targets, ImGroupMemberDO::getUserId);
         // 1.4 目标全部已不在群：无人可踢，直接返回
         if (CollUtil.isEmpty(validTargetUserIds)) {
@@ -306,7 +348,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         // 2. 先发 GROUP_MEMBER_KICK 通知：放在被踢者移除前，sendGroupMessage 才能查到全员（含被踢者）
-        groupMessageService.sendGroupMessage(userId,
+        groupMessageService.sendGroupMessage(
+                userId,
                 ImGroupMessageSendDTO.ofGroupMemberKick(groupId, userId, validTargetUserIds));
 
         // 3. 批量移除群成员；不清理读位置（保留退群前历史已读，供离线补偿）
@@ -321,34 +364,40 @@ public class ImGroupServiceImpl implements ImGroupService {
         // 1.1 仅群主可操作
         validateGroupOwnerForUpdate(groupId, userId);
         // 1.2 校验目标都是有效成员且非群主
-        Map<Long, ImGroupMemberDO> targetMap = convertMap(
-                groupMemberService.getGroupMembers(groupId, targetUserIds), ImGroupMemberDO::getUserId);
+        Map<Long, ImGroupMemberDO> targetMap =
+                convertMap(
+                        groupMemberService.getGroupMembers(groupId, targetUserIds),
+                        ImGroupMemberDO::getUserId);
         validateAdminTargets(targetUserIds, targetMap);
         // 1.3 幂等过滤：跳过已是 ADMIN
-        Set<Long> changedUserIds = convertSet(targetUserIds,
-                id -> id,
-                id -> !ImGroupMemberRoleEnum.isAdmin(targetMap.get(id).getRole()));
+        Set<Long> changedUserIds =
+                convertSet(
+                        targetUserIds,
+                        id -> id,
+                        id -> !ImGroupMemberRoleEnum.isAdmin(targetMap.get(id).getRole()));
         if (CollUtil.isEmpty(changedUserIds)) {
             return;
         }
         // 1.4 校验上限
-        Long existAdminCount = groupMemberService.getGroupMemberCountByRole(
-                groupId, ImGroupMemberRoleEnum.ADMIN.getRole());
+        Long existAdminCount =
+                groupMemberService.getGroupMemberCountByRole(
+                        groupId, ImGroupMemberRoleEnum.ADMIN.getRole());
         int adminMaxCount = imProperties.getGroup().getAdminMaxCount();
         if (existAdminCount + changedUserIds.size() > adminMaxCount) {
             throw exception(GROUP_ADMIN_MAX_LIMIT, adminMaxCount);
         }
 
         // 2. 批量更新角色
-        int affected = groupMemberService.updateGroupMemberRole(groupId, changedUserIds,
-                ImGroupMemberRoleEnum.ADMIN.getRole());
+        int affected =
+                groupMemberService.updateGroupMemberRole(
+                        groupId, changedUserIds, ImGroupMemberRoleEnum.ADMIN.getRole());
         if (affected != changedUserIds.size()) {
             throw exception(GROUP_ADMIN_TARGET_NOT_IN_GROUP);
         }
 
         // 3. 推送 GROUP_ADMIN_ADD 通知给全员
-        groupMessageService.sendGroupMessage(userId,
-                ImGroupMessageSendDTO.ofGroupAdminAdd(groupId, userId, changedUserIds));
+        groupMessageService.sendGroupMessage(
+                userId, ImGroupMessageSendDTO.ofGroupAdminAdd(groupId, userId, changedUserIds));
     }
 
     @Override
@@ -359,33 +408,39 @@ public class ImGroupServiceImpl implements ImGroupService {
         // 1.1 仅群主可操作
         validateGroupOwnerForUpdate(groupId, userId);
         // 1.2 校验目标都是有效成员且非群主
-        Map<Long, ImGroupMemberDO> targetMap = convertMap(
-                groupMemberService.getGroupMembers(groupId, targetUserIds), ImGroupMemberDO::getUserId);
+        Map<Long, ImGroupMemberDO> targetMap =
+                convertMap(
+                        groupMemberService.getGroupMembers(groupId, targetUserIds),
+                        ImGroupMemberDO::getUserId);
         validateAdminTargets(targetUserIds, targetMap);
         // 1.3 幂等过滤：跳过已是 MEMBER
-        Set<Long> changedUserIds = convertSet(targetUserIds,
-                id -> id,
-                id -> ImGroupMemberRoleEnum.isAdmin(targetMap.get(id).getRole()));
+        Set<Long> changedUserIds =
+                convertSet(
+                        targetUserIds,
+                        id -> id,
+                        id -> ImGroupMemberRoleEnum.isAdmin(targetMap.get(id).getRole()));
         if (CollUtil.isEmpty(changedUserIds)) {
             return;
         }
 
         // 2. 批量更新角色
-        int affected = groupMemberService.updateGroupMemberRole(groupId, changedUserIds,
-                ImGroupMemberRoleEnum.NORMAL.getRole());
+        int affected =
+                groupMemberService.updateGroupMemberRole(
+                        groupId, changedUserIds, ImGroupMemberRoleEnum.NORMAL.getRole());
         if (affected != changedUserIds.size()) {
             throw exception(GROUP_ADMIN_TARGET_NOT_IN_GROUP);
         }
 
         // 3. 推送 GROUP_ADMIN_REMOVE 通知给全员
-        groupMessageService.sendGroupMessage(userId,
-                ImGroupMessageSendDTO.ofGroupAdminRemove(groupId, userId, changedUserIds));
+        groupMessageService.sendGroupMessage(
+                userId, ImGroupMessageSendDTO.ofGroupAdminRemove(groupId, userId, changedUserIds));
     }
 
     /**
      * 校验管理员变更目标都是当前群的有效成员（status=ENABLE）且非群主
      */
-    private void validateAdminTargets(Set<Long> targetUserIds, Map<Long, ImGroupMemberDO> targetMap) {
+    private void validateAdminTargets(
+            Set<Long> targetUserIds, Map<Long, ImGroupMemberDO> targetMap) {
         for (Long targetUserId : targetUserIds) {
             ImGroupMemberDO target = targetMap.get(targetUserId);
             if (target == null || CommonStatusEnum.DISABLE.getStatus().equals(target.getStatus())) {
@@ -410,16 +465,23 @@ public class ImGroupServiceImpl implements ImGroupService {
             throw exception(GROUP_TRANSFER_OWNER_TO_SELF);
         }
         // 1.3 新群主必须是群的有效成员
-        ImGroupMemberDO newOwner = groupMemberService.validateMemberInGroup(groupId, newOwnerUserId);
+        ImGroupMemberDO newOwner =
+                groupMemberService.validateMemberInGroup(groupId, newOwnerUserId);
 
         // 2.1 更新成员角色
-        int newOwnerAffected = groupMemberService.updateGroupMemberRole(groupId, CollUtil.newHashSet(newOwner.getUserId()),
-                ImGroupMemberRoleEnum.OWNER.getRole());
+        int newOwnerAffected =
+                groupMemberService.updateGroupMemberRole(
+                        groupId,
+                        CollUtil.newHashSet(newOwner.getUserId()),
+                        ImGroupMemberRoleEnum.OWNER.getRole());
         if (newOwnerAffected != 1) {
             throw exception(GROUP_MEMBER_NOT_IN_GROUP);
         }
-        int oldOwnerAffected = groupMemberService.updateGroupMemberRole(groupId, CollUtil.newHashSet(userId),
-                ImGroupMemberRoleEnum.NORMAL.getRole());
+        int oldOwnerAffected =
+                groupMemberService.updateGroupMemberRole(
+                        groupId,
+                        CollUtil.newHashSet(userId),
+                        ImGroupMemberRoleEnum.NORMAL.getRole());
         if (oldOwnerAffected != 1) {
             throw exception(GROUP_MEMBER_NOT_IN_GROUP);
         }
@@ -427,7 +489,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         groupMapper.updateById(new ImGroupDO().setId(groupId).setOwnerUserId(newOwnerUserId));
 
         // 3. 推送 GROUP_OWNER_TRANSFER 通知给全员
-        groupMessageService.sendGroupMessage(userId,
+        groupMessageService.sendGroupMessage(
+                userId,
                 ImGroupMessageSendDTO.ofGroupOwnerTransfer(groupId, userId, newOwnerUserId));
     }
 
@@ -464,8 +527,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         groupMapper.updateById(new ImGroupDO().setId(groupId).setPinnedMessageIds(pinned));
 
         // 3. 推送 GROUP_MESSAGE_PIN 通知给全员
-        groupMessageService.sendGroupMessage(userId,
-                ImGroupMessageSendDTO.ofGroupMessagePin(groupId, userId, message));
+        groupMessageService.sendGroupMessage(
+                userId, ImGroupMessageSendDTO.ofGroupMessagePin(groupId, userId, message));
     }
 
     @Override
@@ -483,8 +546,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         groupMapper.updateById(new ImGroupDO().setId(groupId).setPinnedMessageIds(pinned));
 
         // 3. 推送 GROUP_MESSAGE_UNPIN 通知给全员
-        groupMessageService.sendGroupMessage(userId,
-                ImGroupMessageSendDTO.ofGroupMessageUnpin(groupId, userId, messageId));
+        groupMessageService.sendGroupMessage(
+                userId, ImGroupMessageSendDTO.ofGroupMessageUnpin(groupId, userId, messageId));
     }
 
     /**
@@ -636,11 +699,16 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
 
         // 3. 更新封禁状态
-        groupMapper.updateById(new ImGroupDO().setId(banReqVO.getId())
-                .setBanned(true).setBannedReason(banReqVO.getReason()).setBannedTime(LocalDateTime.now()));
+        groupMapper.updateById(
+                new ImGroupDO()
+                        .setId(banReqVO.getId())
+                        .setBanned(true)
+                        .setBannedReason(banReqVO.getReason())
+                        .setBannedTime(LocalDateTime.now()));
 
         // 4. 广播通知
-        groupMessageService.sendGroupMessage(operatorUserId,
+        groupMessageService.sendGroupMessage(
+                operatorUserId,
                 ImGroupMessageSendDTO.ofGroupBanned(banReqVO.getId(), operatorUserId, true));
     }
 
@@ -656,8 +724,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         groupMapper.updateById(new ImGroupDO().setId(id).setBanned(false));
 
         // 3. 广播通知
-        groupMessageService.sendGroupMessage(operatorUserId,
-                ImGroupMessageSendDTO.ofGroupBanned(id, operatorUserId, false));
+        groupMessageService.sendGroupMessage(
+                operatorUserId, ImGroupMessageSendDTO.ofGroupBanned(id, operatorUserId, false));
     }
 
     @Override
@@ -681,12 +749,14 @@ public class ImGroupServiceImpl implements ImGroupService {
         validateGroupOwnerOrAdmin(reqVO.getId(), userId);
 
         // 2. 更新 mutedAll
-        groupMapper.updateById(new ImGroupDO().setId(reqVO.getId()).setMutedAll(reqVO.getMutedAll()));
+        groupMapper.updateById(
+                new ImGroupDO().setId(reqVO.getId()).setMutedAll(reqVO.getMutedAll()));
 
         // 3. 广播通知
-        ImGroupMessageSendDTO messageSendDTO = Boolean.TRUE.equals(reqVO.getMutedAll())
-                ? ImGroupMessageSendDTO.ofGroupMuted(reqVO.getId(), userId)
-                : ImGroupMessageSendDTO.ofGroupCancelMuted(reqVO.getId(), userId);
+        ImGroupMessageSendDTO messageSendDTO =
+                Boolean.TRUE.equals(reqVO.getMutedAll())
+                        ? ImGroupMessageSendDTO.ofGroupMuted(reqVO.getId(), userId)
+                        : ImGroupMessageSendDTO.ofGroupCancelMuted(reqVO.getId(), userId);
         groupMessageService.sendGroupMessage(userId, messageSendDTO);
     }
 
@@ -700,20 +770,26 @@ public class ImGroupServiceImpl implements ImGroupService {
         // 1.2 校验群存在且未封禁
         validateGroupExists(reqVO.getId());
         // 1.3 校验操作人和目标都在群中
-        ImGroupMemberDO operatorMember = groupMemberService.validateMemberInGroup(reqVO.getId(), userId);
-        ImGroupMemberDO targetMember = groupMemberService.validateMemberInGroup(reqVO.getId(), reqVO.getUserId());
+        ImGroupMemberDO operatorMember =
+                groupMemberService.validateMemberInGroup(reqVO.getId(), userId);
+        ImGroupMemberDO targetMember =
+                groupMemberService.validateMemberInGroup(reqVO.getId(), reqVO.getUserId());
         // 1.4 三档权限校验
         validateMutePermission(operatorMember, targetMember);
 
         // 2. 设置 muteEndTime
-        LocalDateTime muteEndTime = reqVO.getMutedSeconds() == 0
-                ? ImGroupMemberDO.PERMANENT_MUTE_END_TIME : LocalDateTime.now().plusSeconds(reqVO.getMutedSeconds());
-        groupMemberService.updateGroupMemberMuteEndTime(reqVO.getId(), reqVO.getUserId(), muteEndTime);
+        LocalDateTime muteEndTime =
+                reqVO.getMutedSeconds() == 0
+                        ? ImGroupMemberDO.PERMANENT_MUTE_END_TIME
+                        : LocalDateTime.now().plusSeconds(reqVO.getMutedSeconds());
+        groupMemberService.updateGroupMemberMuteEndTime(
+                reqVO.getId(), reqVO.getUserId(), muteEndTime);
 
         // 3. 广播通知
-        groupMessageService.sendGroupMessage(userId,
-                ImGroupMessageSendDTO.ofGroupMemberMuted(reqVO.getId(), userId,
-                        reqVO.getUserId(), muteEndTime));
+        groupMessageService.sendGroupMessage(
+                userId,
+                ImGroupMessageSendDTO.ofGroupMemberMuted(
+                        reqVO.getId(), userId, reqVO.getUserId(), muteEndTime));
     }
 
     @Override
@@ -722,8 +798,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         // 1.1 校验群存在且未封禁
         validateGroupExists(reqVO.getId());
         // 1.2 校验操作人和目标都在群中
-        ImGroupMemberDO operatorMember = groupMemberService.validateMemberInGroup(reqVO.getId(), userId);
-        ImGroupMemberDO targetMember = groupMemberService.validateMemberInGroup(reqVO.getId(), reqVO.getUserId());
+        ImGroupMemberDO operatorMember =
+                groupMemberService.validateMemberInGroup(reqVO.getId(), userId);
+        ImGroupMemberDO targetMember =
+                groupMemberService.validateMemberInGroup(reqVO.getId(), reqVO.getUserId());
         // 1.3 三档权限校验
         validateMutePermission(operatorMember, targetMember);
 
@@ -731,8 +809,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         groupMemberService.updateGroupMemberMuteEndTime(reqVO.getId(), reqVO.getUserId(), null);
 
         // 3. 广播通知
-        groupMessageService.sendGroupMessage(userId,
-                ImGroupMessageSendDTO.ofGroupMemberCancelMuted(reqVO.getId(), userId, reqVO.getUserId()));
+        groupMessageService.sendGroupMessage(
+                userId,
+                ImGroupMessageSendDTO.ofGroupMemberCancelMuted(
+                        reqVO.getId(), userId, reqVO.getUserId()));
     }
 
     /**
@@ -748,7 +828,8 @@ public class ImGroupServiceImpl implements ImGroupService {
             throw exception(GROUP_MUTE_OWNER_DENIED);
         }
         // 管理员不能禁言其他管理员
-        if (ImGroupMemberRoleEnum.isAdmin(target.getRole()) && !ImGroupMemberRoleEnum.isOwner(operator.getRole())) {
+        if (ImGroupMemberRoleEnum.isAdmin(target.getRole())
+                && !ImGroupMemberRoleEnum.isOwner(operator.getRole())) {
             throw exception(GROUP_MUTE_ADMIN_DENIED);
         }
     }
@@ -766,8 +847,11 @@ public class ImGroupServiceImpl implements ImGroupService {
     private String getUserNicknames(Collection<Long> userIds) {
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
         return userIds.stream()
-                .map(id -> userMap.containsKey(id) ? userMap.get(id).getNickname() : String.valueOf(id))
+                .map(
+                        id ->
+                                userMap.containsKey(id)
+                                        ? userMap.get(id).getNickname()
+                                        : String.valueOf(id))
                 .collect(Collectors.joining(","));
     }
-
 }

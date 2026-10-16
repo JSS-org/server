@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.travel;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,22 +13,23 @@ import cn.iocoder.yudao.module.oa.controller.admin.travel.vo.apply.*;
 import cn.iocoder.yudao.module.oa.controller.admin.travel.vo.apply.OaTravelApplyRespVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.travel.*;
 import cn.iocoder.yudao.module.oa.service.travel.*;
-import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
-import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.*;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 出差申请")
 @RestController
@@ -32,13 +37,10 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaTravelApplyController {
 
-    @Resource
-    private OaTravelApplyService travelApplyService;
+    @Resource private OaTravelApplyService travelApplyService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建出差申请草稿")
@@ -50,7 +52,8 @@ public class OaTravelApplyController {
     @PutMapping("/update")
     @Operation(summary = "更新出差申请草稿")
     @PreAuthorize("@ss.hasPermission('oa:travel-apply:save')")
-    public CommonResult<Boolean> updateTravelApply(@Valid @RequestBody OaTravelApplySaveReqVO reqVO) {
+    public CommonResult<Boolean> updateTravelApply(
+            @Valid @RequestBody OaTravelApplySaveReqVO reqVO) {
         travelApplyService.updateTravelApply(reqVO, getLoginUserId());
         return success(true);
     }
@@ -58,7 +61,8 @@ public class OaTravelApplyController {
     @PostMapping("/submit")
     @Operation(summary = "提交出差申请")
     @PreAuthorize("@ss.hasPermission('oa:travel-apply:save')")
-    public CommonResult<Boolean> submitTravelApply(@Valid @RequestBody OaTravelApplySubmitReqVO submitReqVO) {
+    public CommonResult<Boolean> submitTravelApply(
+            @Valid @RequestBody OaTravelApplySubmitReqVO submitReqVO) {
         travelApplyService.submitTravelApply(submitReqVO, getLoginUserId());
         return success(true);
     }
@@ -93,15 +97,19 @@ public class OaTravelApplyController {
     @GetMapping("/page")
     @Operation(summary = "获得本人出差申请分页")
     @PreAuthorize("@ss.hasPermission('oa:travel-apply:query')")
-    public CommonResult<PageResult<OaTravelApplyRespVO>> getTravelApplyPage(@Valid OaTravelApplyPageReqVO reqVO) {
-        PageResult<OaTravelApplyDO> page = travelApplyService.getTravelApplyPage(getLoginUserId(), reqVO);
-        return success(new PageResult<>(buildTravelApplyRespVOList(page.getList()), page.getTotal()));
+    public CommonResult<PageResult<OaTravelApplyRespVO>> getTravelApplyPage(
+            @Valid OaTravelApplyPageReqVO reqVO) {
+        PageResult<OaTravelApplyDO> page =
+                travelApplyService.getTravelApplyPage(getLoginUserId(), reqVO);
+        return success(
+                new PageResult<>(buildTravelApplyRespVOList(page.getList()), page.getTotal()));
     }
 
     @GetMapping("/approved-list")
     @Operation(summary = "获得本人可关联的已通过出差申请")
     public CommonResult<List<OaTravelApplyRespVO>> getApprovedTravelApplyList() {
-        List<OaTravelApplyDO> applies = travelApplyService.getApprovedTravelApplyList(getLoginUserId());
+        List<OaTravelApplyDO> applies =
+                travelApplyService.getApprovedTravelApplyList(getLoginUserId());
         return success(BeanUtils.toBean(applies, OaTravelApplyRespVO.class));
     }
 
@@ -131,16 +139,23 @@ public class OaTravelApplyController {
             return Collections.emptyList();
         }
         // 1. 批量查询展示信息
-        Map<Long, AdminUserRespDTO> users = adminUserApi.getUserMap(
-                convertSet(records, record -> Long.valueOf(record.getCreator())));
-        Map<Long, DeptRespDTO> depts = deptApi.getDeptMap(convertSet(records, OaTravelApplyDO::getDeptId));
+        Map<Long, AdminUserRespDTO> users =
+                adminUserApi.getUserMap(
+                        convertSet(records, record -> Long.valueOf(record.getCreator())));
+        Map<Long, DeptRespDTO> depts =
+                deptApi.getDeptMap(convertSet(records, OaTravelApplyDO::getDeptId));
         // 2. 转换并拼接 VO
-        return convertList(records, record -> {
-            OaTravelApplyRespVO vo = BeanUtils.toBean(record, OaTravelApplyRespVO.class);
-            MapUtils.findAndThen(users, Long.valueOf(record.getCreator()), user -> vo.setCreatorName(user.getNickname()));
-            MapUtils.findAndThen(depts, record.getDeptId(), dept -> vo.setDeptName(dept.getName()));
-            return vo;
-        });
+        return convertList(
+                records,
+                record -> {
+                    OaTravelApplyRespVO vo = BeanUtils.toBean(record, OaTravelApplyRespVO.class);
+                    MapUtils.findAndThen(
+                            users,
+                            Long.valueOf(record.getCreator()),
+                            user -> vo.setCreatorName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            depts, record.getDeptId(), dept -> vo.setDeptName(dept.getName()));
+                    return vo;
+                });
     }
-
 }

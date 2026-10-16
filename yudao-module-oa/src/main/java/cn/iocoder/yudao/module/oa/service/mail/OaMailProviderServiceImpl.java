@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.mail.vo.provider.OaMailProviderSaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.OaMailProviderDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.mail.OaMailProviderMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 企业邮箱服务配置 Service 实现类
@@ -23,11 +25,8 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaMailProviderServiceImpl implements OaMailProviderService {
 
-    @Resource
-    private OaMailProviderMapper mailProviderMapper;
-    @Resource
-    @Lazy
-    private OaMailAccountService mailAccountService;
+    @Resource private OaMailProviderMapper mailProviderMapper;
+    @Resource @Lazy private OaMailAccountService mailAccountService;
 
     @Override
     public Long createMailProvider(OaMailProviderSaveReqVO reqVO) {
@@ -76,5 +75,4 @@ public class OaMailProviderServiceImpl implements OaMailProviderService {
     public List<OaMailProviderDO> getMailProviderList(Integer status) {
         return mailProviderMapper.selectListByStatus(status);
     }
-
 }

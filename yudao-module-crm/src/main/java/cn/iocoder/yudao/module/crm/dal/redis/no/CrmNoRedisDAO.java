@@ -3,13 +3,14 @@ package cn.iocoder.yudao.module.crm.dal.redis.no;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.iocoder.yudao.module.crm.dal.redis.RedisKeyConstants;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-
 
 /**
  * Crm 订单序号的 Redis DAO
@@ -29,8 +30,7 @@ public class CrmNoRedisDAO {
      */
     public static final String RECEIVABLE_PREFIX = "HK";
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Resource private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 生成序号，使用当前日期，格式为 {PREFIX} + yyyyMMdd + 6 位自增
@@ -41,12 +41,12 @@ public class CrmNoRedisDAO {
      */
     public String generate(String prefix) {
         // 递增序号
-        String noPrefix = prefix + DateUtil.format(LocalDateTime.now(), DatePattern.PURE_DATE_PATTERN);
+        String noPrefix =
+                prefix + DateUtil.format(LocalDateTime.now(), DatePattern.PURE_DATE_PATTERN);
         String key = RedisKeyConstants.NO + noPrefix;
         Long no = stringRedisTemplate.opsForValue().increment(key);
         // 设置过期时间
         stringRedisTemplate.expire(key, Duration.ofDays(1L));
         return noPrefix + String.format("%06d", no);
     }
-
 }

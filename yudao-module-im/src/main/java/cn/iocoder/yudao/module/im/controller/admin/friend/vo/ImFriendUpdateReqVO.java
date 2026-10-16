@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.im.controller.admin.friend.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IM 好友更新 Request VO")
@@ -22,5 +24,4 @@ public class ImFriendUpdateReqVO {
 
     @Schema(description = "是否置顶联系人；不传表示不修改", example = "true")
     private Boolean pinned;
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class Ai1KnowledgeBasePageReqVO extends PageParam {
 
     @Schema(description = "状态", example = "0")
     private Integer status;
-
 }

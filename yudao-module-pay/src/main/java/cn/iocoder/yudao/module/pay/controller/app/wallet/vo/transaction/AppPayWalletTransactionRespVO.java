@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.app.wallet.vo.transaction;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,5 +21,4 @@ public class AppPayWalletTransactionRespVO {
 
     @Schema(description = "交易时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

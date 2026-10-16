@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
@@ -48,5 +49,4 @@ public class IotCoapRegisterSubResource extends CoapResource {
         log.debug("[handlePOST][收到子设备动态注册请求]");
         registerSubHandler.handle(exchange);
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums.friend;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,17 +16,20 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImFriendRequestHandleResultEnum implements ArrayValuable<Integer> {
-
     UNHANDLED(0, "未处理"),
     AGREED(1, "同意"),
     REFUSED(2, "拒绝");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImFriendRequestHandleResultEnum::getResult).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(ImFriendRequestHandleResultEnum::getResult)
+                    .toArray(Integer[]::new);
 
     /**
      * 结果
      */
     private final Integer result;
+
     /**
      * 名字
      */
@@ -42,5 +46,4 @@ public enum ImFriendRequestHandleResultEnum implements ArrayValuable<Integer> {
     public static boolean isUnhandled(Integer result) {
         return Objects.equals(UNHANDLED.result, result);
     }
-
 }

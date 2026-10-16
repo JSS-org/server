@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.oa.service.schedule;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.schedule.vo.OaSchedulePageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.schedule.vo.OaScheduleSaveReqVO;
@@ -9,8 +11,6 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.schedule.OaScheduleParticipantD
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 
 /**
  * OA 日程 Service 接口
@@ -117,9 +117,12 @@ public interface OaScheduleService {
      * @param scheduleIds 日程编号集合
      * @return 日程编号与参与人用户编号列表的 Map
      */
-    default Map<Long, List<Long>> getScheduleParticipantUserIdListMap(Collection<Long> scheduleIds) {
+    default Map<Long, List<Long>> getScheduleParticipantUserIdListMap(
+            Collection<Long> scheduleIds) {
         List<OaScheduleParticipantDO> participants = getScheduleParticipantList(scheduleIds);
-        return convertMultiMap(participants, OaScheduleParticipantDO::getScheduleId, OaScheduleParticipantDO::getUserId);
+        return convertMultiMap(
+                participants,
+                OaScheduleParticipantDO::getScheduleId,
+                OaScheduleParticipantDO::getUserId);
     }
-
 }

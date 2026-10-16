@@ -1,19 +1,23 @@
 package cn.iocoder.yudao.framework.quartz.config;
 
 import com.alibaba.ttl.TtlRunnable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
 
 /**
  * 异步任务 Configuration
  */
 @AutoConfiguration
-@EnableAsync(proxyTargetClass = true) // proxyTargetClass=true：与 @EnableTransactionManagement(proxyTargetClass = true) 保持一致，否则会有 https://github.com/YunaiV/ruoyi-vue-pro/pull/1223 问题
+@EnableAsync(
+        proxyTargetClass =
+                true) // proxyTargetClass=true：与 @EnableTransactionManagement(proxyTargetClass =
+// true) 保持一致，否则会有 https://github.com/YunaiV/ruoyi-vue-pro/pull/1223 问题
 public class YudaoAsyncAutoConfiguration {
 
     @Bean
@@ -22,7 +26,8 @@ public class YudaoAsyncAutoConfiguration {
 
             @Override
             @SuppressWarnings("PatternVariableCanBeUsed")
-            public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+            public Object postProcessBeforeInitialization(Object bean, String beanName)
+                    throws BeansException {
                 // 处理 ThreadPoolTaskExecutor
                 if (bean instanceof ThreadPoolTaskExecutor) {
                     ThreadPoolTaskExecutor executor = (ThreadPoolTaskExecutor) bean;
@@ -38,8 +43,6 @@ public class YudaoAsyncAutoConfiguration {
                 }
                 return bean;
             }
-
         };
     }
-
 }

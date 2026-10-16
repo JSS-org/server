@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.trade.service.aftersale;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -40,18 +44,17 @@ import cn.iocoder.yudao.module.trade.framework.order.config.TradeOrderProperties
 import cn.iocoder.yudao.module.trade.service.delivery.DeliveryExpressService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderQueryService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderUpdateService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 
 /**
  * 售后订单 Service 实现类
@@ -63,26 +66,18 @@ import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 @Validated
 public class AfterSaleServiceImpl implements AfterSaleService {
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private TradeOrderUpdateService tradeOrderUpdateService;
-    @Resource
-    private TradeOrderQueryService tradeOrderQueryService;
-    @Resource
-    private DeliveryExpressService deliveryExpressService;
+    @Resource private TradeOrderQueryService tradeOrderQueryService;
+    @Resource private DeliveryExpressService deliveryExpressService;
 
-    @Resource
-    private AfterSaleMapper tradeAfterSaleMapper;
-    @Resource
-    private TradeNoRedisDAO tradeNoRedisDAO;
+    @Resource private AfterSaleMapper tradeAfterSaleMapper;
+    @Resource private TradeNoRedisDAO tradeNoRedisDAO;
 
-    @Resource
-    private PayRefundApi payRefundApi;
-    @Resource
-    private CombinationRecordApi combinationRecordApi;
+    @Resource private PayRefundApi payRefundApi;
+    @Resource private CombinationRecordApi combinationRecordApi;
 
-    @Resource
-    private TradeOrderProperties tradeOrderProperties;
+    @Resource private TradeOrderProperties tradeOrderProperties;
 
     @Override
     public PageResult<AfterSaleDO> getAfterSalePage(AfterSalePageReqVO pageReqVO) {
@@ -123,9 +118,11 @@ public class AfterSaleServiceImpl implements AfterSaleService {
      * @param createReqVO 售后创建信息
      * @return 交易订单项
      */
-    private TradeOrderItemDO validateOrderItemApplicable(Long userId, AppAfterSaleCreateReqVO createReqVO) {
+    private TradeOrderItemDO validateOrderItemApplicable(
+            Long userId, AppAfterSaleCreateReqVO createReqVO) {
         // 校验订单项存在
-        TradeOrderItemDO orderItem = tradeOrderQueryService.getOrderItem(userId, createReqVO.getOrderItemId());
+        TradeOrderItemDO orderItem =
+                tradeOrderQueryService.getOrderItem(userId, createReqVO.getOrderItemId());
         if (orderItem == null) {
             throw exception(ORDER_ITEM_NOT_FOUND);
         }
@@ -159,34 +156,40 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         }
         // 如果是拼团订单，则进行中不允许售后
         if (TradeOrderTypeEnum.isCombination(order.getType())) {
-            CombinationRecordRespDTO combinationRecord = combinationRecordApi.getCombinationRecordByOrderId(
-                    order.getUserId(), order.getId());
-            if (combinationRecord != null && CombinationRecordStatusEnum.isInProgress(combinationRecord.getStatus())) {
+            CombinationRecordRespDTO combinationRecord =
+                    combinationRecordApi.getCombinationRecordByOrderId(
+                            order.getUserId(), order.getId());
+            if (combinationRecord != null
+                    && CombinationRecordStatusEnum.isInProgress(combinationRecord.getStatus())) {
                 throw exception(AFTER_SALE_CREATE_FAIL_ORDER_STATUS_COMBINATION_IN_PROGRESS);
             }
         }
         return orderItem;
     }
 
-    private AfterSaleDO createAfterSale(AppAfterSaleCreateReqVO createReqVO,
-                                        TradeOrderItemDO orderItem) {
+    private AfterSaleDO createAfterSale(
+            AppAfterSaleCreateReqVO createReqVO, TradeOrderItemDO orderItem) {
         // 创建售后单
         AfterSaleDO afterSale = AfterSaleConvert.INSTANCE.convert(createReqVO, orderItem);
         afterSale.setNo(tradeNoRedisDAO.generate(TradeNoRedisDAO.AFTER_SALE_NO_PREFIX));
         afterSale.setStatus(AfterSaleStatusEnum.APPLY.getStatus());
         // 标记是售中还是售后
-        TradeOrderDO order = tradeOrderQueryService.getOrder(orderItem.getUserId(), orderItem.getOrderId());
+        TradeOrderDO order =
+                tradeOrderQueryService.getOrder(orderItem.getUserId(), orderItem.getOrderId());
         afterSale.setOrderNo(order.getNo()); // 记录 orderNo 订单流水，方便后续检索
-        afterSale.setType(TradeOrderStatusEnum.isCompleted(order.getStatus())
-                ? AfterSaleTypeEnum.AFTER_SALE.getType() : AfterSaleTypeEnum.IN_SALE.getType());
+        afterSale.setType(
+                TradeOrderStatusEnum.isCompleted(order.getStatus())
+                        ? AfterSaleTypeEnum.AFTER_SALE.getType()
+                        : AfterSaleTypeEnum.IN_SALE.getType());
         tradeAfterSaleMapper.insert(afterSale);
 
         // 更新交易订单项的售后状态
-        tradeOrderUpdateService.updateOrderItemWhenAfterSaleCreate(orderItem.getId(), afterSale.getId());
+        tradeOrderUpdateService.updateOrderItemWhenAfterSaleCreate(
+                orderItem.getId(), afterSale.getId());
 
         // 记录售后日志
-        AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), null,
-                AfterSaleStatusEnum.APPLY.getStatus());
+        AfterSaleLogUtils.setAfterSaleInfo(
+                afterSale.getId(), null, AfterSaleStatusEnum.APPLY.getStatus());
         return afterSale;
     }
 
@@ -200,10 +203,17 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         // 更新售后单的状态
         // 情况一：退款：标记为 WAIT_REFUND 状态。后续等退款发起成功后，在标记为 COMPLETE 状态
         // 情况二：退货退款：需要等用户退货后，才能发起退款
-        Integer newStatus = afterSale.getWay().equals(AfterSaleWayEnum.REFUND.getWay()) ?
-                AfterSaleStatusEnum.WAIT_REFUND.getStatus() : AfterSaleStatusEnum.SELLER_AGREE.getStatus();
-        updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.APPLY.getStatus(), new AfterSaleDO()
-                .setStatus(newStatus).setAuditUserId(userId).setAuditTime(LocalDateTime.now()));
+        Integer newStatus =
+                afterSale.getWay().equals(AfterSaleWayEnum.REFUND.getWay())
+                        ? AfterSaleStatusEnum.WAIT_REFUND.getStatus()
+                        : AfterSaleStatusEnum.SELLER_AGREE.getStatus();
+        updateAfterSaleStatus(
+                afterSale.getId(),
+                AfterSaleStatusEnum.APPLY.getStatus(),
+                new AfterSaleDO()
+                        .setStatus(newStatus)
+                        .setAuditUserId(userId)
+                        .setAuditTime(LocalDateTime.now()));
 
         // 记录售后日志
         AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(), newStatus);
@@ -218,9 +228,14 @@ public class AfterSaleServiceImpl implements AfterSaleService {
 
         // 更新售后单的状态
         Integer newStatus = AfterSaleStatusEnum.SELLER_DISAGREE.getStatus();
-        updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.APPLY.getStatus(), new AfterSaleDO()
-                .setStatus(newStatus).setAuditUserId(userId).setAuditTime(LocalDateTime.now())
-                .setAuditReason(auditReqVO.getAuditReason()));
+        updateAfterSaleStatus(
+                afterSale.getId(),
+                AfterSaleStatusEnum.APPLY.getStatus(),
+                new AfterSaleDO()
+                        .setStatus(newStatus)
+                        .setAuditUserId(userId)
+                        .setAuditTime(LocalDateTime.now())
+                        .setAuditReason(auditReqVO.getAuditReason()));
 
         // 记录售后日志
         AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(), newStatus);
@@ -258,26 +273,37 @@ public class AfterSaleServiceImpl implements AfterSaleService {
     @AfterSaleLog(operateType = AfterSaleOperateTypeEnum.MEMBER_DELIVERY)
     public void deliveryAfterSale(Long userId, AppAfterSaleDeliveryReqVO deliveryReqVO) {
         // 校验售后单存在，并状态未退货
-        AfterSaleDO afterSale = tradeAfterSaleMapper.selectByIdAndUserId(deliveryReqVO.getId(), userId);
+        AfterSaleDO afterSale =
+                tradeAfterSaleMapper.selectByIdAndUserId(deliveryReqVO.getId(), userId);
         if (afterSale == null) {
             throw exception(AFTER_SALE_NOT_FOUND);
         }
-        if (ObjectUtil.notEqual(afterSale.getStatus(), AfterSaleStatusEnum.SELLER_AGREE.getStatus())) {
+        if (ObjectUtil.notEqual(
+                afterSale.getStatus(), AfterSaleStatusEnum.SELLER_AGREE.getStatus())) {
             throw exception(AFTER_SALE_DELIVERY_FAIL_STATUS_NOT_SELLER_AGREE);
         }
-        DeliveryExpressDO express = deliveryExpressService.validateDeliveryExpress(deliveryReqVO.getLogisticsId());
+        DeliveryExpressDO express =
+                deliveryExpressService.validateDeliveryExpress(deliveryReqVO.getLogisticsId());
 
         // 更新售后单的物流信息
-        updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.SELLER_AGREE.getStatus(), new AfterSaleDO()
-                .setStatus(AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())
-                .setLogisticsId(deliveryReqVO.getLogisticsId()).setLogisticsNo(deliveryReqVO.getLogisticsNo())
-                .setDeliveryTime(LocalDateTime.now()));
+        updateAfterSaleStatus(
+                afterSale.getId(),
+                AfterSaleStatusEnum.SELLER_AGREE.getStatus(),
+                new AfterSaleDO()
+                        .setStatus(AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())
+                        .setLogisticsId(deliveryReqVO.getLogisticsId())
+                        .setLogisticsNo(deliveryReqVO.getLogisticsNo())
+                        .setDeliveryTime(LocalDateTime.now()));
 
         // 记录售后日志
-        AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(),
+        AfterSaleLogUtils.setAfterSaleInfo(
+                afterSale.getId(),
+                afterSale.getStatus(),
                 AfterSaleStatusEnum.BUYER_DELIVERY.getStatus(),
-                MapUtil.<String, Object>builder().put("deliveryName", express.getName())
-                        .put("logisticsNo", deliveryReqVO.getLogisticsNo()).build());
+                MapUtil.<String, Object>builder()
+                        .put("deliveryName", express.getName())
+                        .put("logisticsNo", deliveryReqVO.getLogisticsNo())
+                        .build());
     }
 
     @Override
@@ -288,11 +314,17 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         AfterSaleDO afterSale = validateAfterSaleReceivable(id);
 
         // 更新售后单的状态
-        updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.BUYER_DELIVERY.getStatus(), new AfterSaleDO()
-                .setStatus(AfterSaleStatusEnum.WAIT_REFUND.getStatus()).setReceiveTime(LocalDateTime.now()));
+        updateAfterSaleStatus(
+                afterSale.getId(),
+                AfterSaleStatusEnum.BUYER_DELIVERY.getStatus(),
+                new AfterSaleDO()
+                        .setStatus(AfterSaleStatusEnum.WAIT_REFUND.getStatus())
+                        .setReceiveTime(LocalDateTime.now()));
 
         // 记录售后日志
-        AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(),
+        AfterSaleLogUtils.setAfterSaleInfo(
+                afterSale.getId(),
+                afterSale.getStatus(),
                 AfterSaleStatusEnum.WAIT_REFUND.getStatus());
     }
 
@@ -305,17 +337,24 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         if (afterSale == null) {
             throw exception(AFTER_SALE_NOT_FOUND);
         }
-        if (ObjectUtil.notEqual(afterSale.getStatus(), AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())) {
+        if (ObjectUtil.notEqual(
+                afterSale.getStatus(), AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())) {
             throw exception(AFTER_SALE_CONFIRM_FAIL_STATUS_NOT_BUYER_DELIVERY);
         }
 
         // 更新售后单的状态
-        updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.BUYER_DELIVERY.getStatus(), new AfterSaleDO()
-                .setStatus(AfterSaleStatusEnum.SELLER_REFUSE.getStatus()).setReceiveTime(LocalDateTime.now())
-                .setReceiveReason(refuseReqVO.getRefuseMemo()));
+        updateAfterSaleStatus(
+                afterSale.getId(),
+                AfterSaleStatusEnum.BUYER_DELIVERY.getStatus(),
+                new AfterSaleDO()
+                        .setStatus(AfterSaleStatusEnum.SELLER_REFUSE.getStatus())
+                        .setReceiveTime(LocalDateTime.now())
+                        .setReceiveReason(refuseReqVO.getRefuseMemo()));
 
         // 记录售后日志
-        AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(),
+        AfterSaleLogUtils.setAfterSaleInfo(
+                afterSale.getId(),
+                afterSale.getStatus(),
                 AfterSaleStatusEnum.SELLER_REFUSE.getStatus(),
                 MapUtil.of("reason", refuseReqVO.getRefuseMemo()));
 
@@ -334,7 +373,8 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         if (afterSale == null) {
             throw exception(AFTER_SALE_NOT_FOUND);
         }
-        if (ObjectUtil.notEqual(afterSale.getStatus(), AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())) {
+        if (ObjectUtil.notEqual(
+                afterSale.getStatus(), AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())) {
             throw exception(AFTER_SALE_CONFIRM_FAIL_STATUS_NOT_BUYER_DELIVERY);
         }
         return afterSale;
@@ -349,20 +389,25 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         if (afterSale == null) {
             throw exception(AFTER_SALE_NOT_FOUND);
         }
-        if (ObjectUtil.notEqual(afterSale.getStatus(), AfterSaleStatusEnum.WAIT_REFUND.getStatus())) {
+        if (ObjectUtil.notEqual(
+                afterSale.getStatus(), AfterSaleStatusEnum.WAIT_REFUND.getStatus())) {
             throw exception(AFTER_SALE_REFUND_FAIL_STATUS_NOT_WAIT_REFUND);
         }
 
         Integer newStatus;
         if (ObjUtil.equals(afterSale.getRefundPrice(), 0)) {
             // 特殊：退款为 0 的订单，直接标记为完成（积分商城）。关联案例：https://t.zsxq.com/AQEvL
-            updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.WAIT_REFUND.getStatus(), new AfterSaleDO()
-                    .setStatus(AfterSaleStatusEnum.COMPLETE.getStatus()).setRefundTime(LocalDateTime.now()));
+            updateAfterSaleStatus(
+                    afterSale.getId(),
+                    AfterSaleStatusEnum.WAIT_REFUND.getStatus(),
+                    new AfterSaleDO()
+                            .setStatus(AfterSaleStatusEnum.COMPLETE.getStatus())
+                            .setRefundTime(LocalDateTime.now()));
             newStatus = AfterSaleStatusEnum.COMPLETE.getStatus();
         } else {
             // 发起退款单。注意，需要在事务提交后，再进行发起，避免重复发起
             createPayRefund(userIp, afterSale);
-            newStatus = afterSale.getStatus();  // 特殊：这里状态不变，而是最终 updateAfterSaleRefunded 处理！！！
+            newStatus = afterSale.getStatus(); // 特殊：这里状态不变，而是最终 updateAfterSaleRefunded 处理！！！
         }
 
         // 记录售后日志
@@ -371,13 +416,17 @@ public class AfterSaleServiceImpl implements AfterSaleService {
 
     private void createPayRefund(String userIp, AfterSaleDO afterSale) {
         // 创建退款单
-        PayRefundCreateReqDTO createReqDTO = AfterSaleConvert.INSTANCE.convert(userIp, afterSale, tradeOrderProperties)
-                .setUserId(afterSale.getUserId()).setUserType(UserTypeEnum.MEMBER.getValue())
-                .setReason(StrUtil.format("退款【{}】", afterSale.getSpuName()));
+        PayRefundCreateReqDTO createReqDTO =
+                AfterSaleConvert.INSTANCE
+                        .convert(userIp, afterSale, tradeOrderProperties)
+                        .setUserId(afterSale.getUserId())
+                        .setUserType(UserTypeEnum.MEMBER.getValue())
+                        .setReason(StrUtil.format("退款【{}】", afterSale.getSpuName()));
         Long payRefundId = payRefundApi.createRefund(createReqDTO);
 
         // 更新售后单的退款单号
-        tradeAfterSaleMapper.updateById(new AfterSaleDO().setId(afterSale.getId()).setPayRefundId(payRefundId));
+        tradeAfterSaleMapper.updateById(
+                new AfterSaleDO().setId(afterSale.getId()).setPayRefundId(payRefundId));
     }
 
     @Override
@@ -389,7 +438,8 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         if (afterSale == null) {
             throw exception(AFTER_SALE_NOT_FOUND);
         }
-        if (ObjectUtil.notEqual(afterSale.getStatus(), AfterSaleStatusEnum.WAIT_REFUND.getStatus())) {
+        if (ObjectUtil.notEqual(
+                afterSale.getStatus(), AfterSaleStatusEnum.WAIT_REFUND.getStatus())) {
             throw exception(AFTER_SALE_REFUND_FAIL_STATUS_NOT_WAIT_REFUND);
         }
 
@@ -399,19 +449,28 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         // 3. 处理退款结果
         if (PayRefundStatusEnum.isSuccess(payRefund.getStatus())) {
             // 【情况一：退款成功】
-            updateAfterSaleStatus(afterSale.getId(), AfterSaleStatusEnum.WAIT_REFUND.getStatus(), new AfterSaleDO()
-                .setStatus(AfterSaleStatusEnum.COMPLETE.getStatus()).setRefundTime(LocalDateTime.now()));
+            updateAfterSaleStatus(
+                    afterSale.getId(),
+                    AfterSaleStatusEnum.WAIT_REFUND.getStatus(),
+                    new AfterSaleDO()
+                            .setStatus(AfterSaleStatusEnum.COMPLETE.getStatus())
+                            .setRefundTime(LocalDateTime.now()));
 
             // 记录售后日志
-            AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(), AfterSaleStatusEnum.COMPLETE.getStatus());
+            AfterSaleLogUtils.setAfterSaleInfo(
+                    afterSale.getId(),
+                    afterSale.getStatus(),
+                    AfterSaleStatusEnum.COMPLETE.getStatus());
 
             // 更新交易订单项的售后状态为【已完成】
-            tradeOrderUpdateService.updateOrderItemWhenAfterSaleSuccess(afterSale.getOrderItemId(), afterSale.getRefundPrice());
+            tradeOrderUpdateService.updateOrderItemWhenAfterSaleSuccess(
+                    afterSale.getOrderItemId(), afterSale.getRefundPrice());
             // 【情况二：退款失败】
         } else if (PayRefundStatusEnum.isFailure(payRefund.getStatus())) {
             // 记录售后日志
             AfterSaleLogUtils.setAfterSaleOperateType(AfterSaleOperateTypeEnum.SYSTEM_REFUND_FAIL);
-            AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(), afterSale.getStatus());
+            AfterSaleLogUtils.setAfterSaleInfo(
+                    afterSale.getId(), afterSale.getStatus(), afterSale.getStatus());
         }
     }
 
@@ -426,26 +485,39 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         // 1. 校验退款单是否存在
         PayRefundRespDTO payRefund = payRefundApi.getRefund(payRefundId);
         if (payRefund == null) {
-            log.error("[validatePayRefund][afterSale({}) payRefund({}) 不存在，请进行处理！]", afterSale.getId(), payRefundId);
+            log.error(
+                    "[validatePayRefund][afterSale({}) payRefund({}) 不存在，请进行处理！]",
+                    afterSale.getId(),
+                    payRefundId);
             throw exception(AFTER_SALE_REFUND_FAIL_REFUND_NOT_FOUND);
         }
         // 2.1 校验退款单无退款结果（成功、失败）
         if (!PayRefundStatusEnum.isSuccess(payRefund.getStatus())
-            && !PayRefundStatusEnum.isFailure(payRefund.getStatus())) {
-            log.error("[validatePayRefund][afterSale({}) payRefund({}) 无退款结果，请进行处理！payRefund 数据是：{}]",
-                    afterSale.getId(), payRefundId, toJsonString(payRefund));
+                && !PayRefundStatusEnum.isFailure(payRefund.getStatus())) {
+            log.error(
+                    "[validatePayRefund][afterSale({}) payRefund({}) 无退款结果，请进行处理！payRefund 数据是：{}]",
+                    afterSale.getId(),
+                    payRefundId,
+                    toJsonString(payRefund));
             throw exception(AFTER_SALE_REFUND_FAIL_REFUND_NOT_SUCCESS_OR_FAILURE);
         }
         // 2.2 校验退款金额一致
         if (ObjectUtil.notEqual(payRefund.getRefundPrice(), afterSale.getRefundPrice())) {
-            log.error("[validatePayRefund][afterSale({}) payRefund({}) 退款金额不匹配，请进行处理！afterSale 数据是：{}，payRefund 数据是：{}]",
-                    afterSale.getId(), payRefundId, toJsonString(afterSale), toJsonString(payRefund));
+            log.error(
+                    "[validatePayRefund][afterSale({}) payRefund({}) 退款金额不匹配，请进行处理！afterSale 数据是：{}，payRefund 数据是：{}]",
+                    afterSale.getId(),
+                    payRefundId,
+                    toJsonString(afterSale),
+                    toJsonString(payRefund));
             throw exception(AFTER_SALE_REFUND_FAIL_REFUND_PRICE_NOT_MATCH);
         }
         // 2.3 校验退款订单匹配（二次）
         if (ObjectUtil.notEqual(payRefund.getMerchantRefundId(), afterSale.getId().toString())) {
-            log.error("[validatePayRefund][afterSale({}) 退款单不匹配({})，请进行处理！payRefund 数据是：{}]",
-                    afterSale.getId(), payRefundId, toJsonString(payRefund));
+            log.error(
+                    "[validatePayRefund][afterSale({}) 退款单不匹配({})，请进行处理！payRefund 数据是：{}]",
+                    afterSale.getId(),
+                    payRefundId,
+                    toJsonString(payRefund));
             throw exception(AFTER_SALE_REFUND_FAIL_REFUND_ORDER_ID_ERROR);
         }
         return payRefund;
@@ -460,18 +532,24 @@ public class AfterSaleServiceImpl implements AfterSaleService {
         if (afterSale == null) {
             throw exception(AFTER_SALE_NOT_FOUND);
         }
-        if (!ObjectUtils.equalsAny(afterSale.getStatus(), AfterSaleStatusEnum.APPLY.getStatus(),
+        if (!ObjectUtils.equalsAny(
+                afterSale.getStatus(),
+                AfterSaleStatusEnum.APPLY.getStatus(),
                 AfterSaleStatusEnum.SELLER_AGREE.getStatus(),
                 AfterSaleStatusEnum.BUYER_DELIVERY.getStatus())) {
             throw exception(AFTER_SALE_CANCEL_FAIL_STATUS_NOT_APPLY_OR_AGREE_OR_BUYER_DELIVERY);
         }
 
         // 更新售后单的状态为【已取消】
-        updateAfterSaleStatus(afterSale.getId(), afterSale.getStatus(), new AfterSaleDO()
-                .setStatus(AfterSaleStatusEnum.BUYER_CANCEL.getStatus()));
+        updateAfterSaleStatus(
+                afterSale.getId(),
+                afterSale.getStatus(),
+                new AfterSaleDO().setStatus(AfterSaleStatusEnum.BUYER_CANCEL.getStatus()));
 
         // 记录售后日志
-        AfterSaleLogUtils.setAfterSaleInfo(afterSale.getId(), afterSale.getStatus(),
+        AfterSaleLogUtils.setAfterSaleInfo(
+                afterSale.getId(),
+                afterSale.getStatus(),
                 AfterSaleStatusEnum.BUYER_CANCEL.getStatus());
 
         // 更新交易订单项的售后状态为【未申请】
@@ -480,7 +558,7 @@ public class AfterSaleServiceImpl implements AfterSaleService {
 
     @Override
     public Long getApplyingAfterSaleCount(Long userId) {
-        return tradeAfterSaleMapper.selectCountByUserIdAndStatus(userId, AfterSaleStatusEnum.APPLYING_STATUSES);
+        return tradeAfterSaleMapper.selectCountByUserIdAndStatus(
+                userId, AfterSaleStatusEnum.APPLYING_STATUSES);
     }
-
 }

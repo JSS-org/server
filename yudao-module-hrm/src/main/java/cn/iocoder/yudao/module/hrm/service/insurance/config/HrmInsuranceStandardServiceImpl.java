@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.hrm.service.insurance.config;
 
+import static cn.iocoder.yudao.module.hrm.dal.redis.RedisKeyConstants.INSURANCE_STANDARD_PROJECT;
+import static cn.iocoder.yudao.module.hrm.dal.redis.RedisKeyConstants.INSURANCE_STANDARD_TYPE;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
@@ -14,7 +17,9 @@ import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.standard.HrmInsuranceStandardProjectRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.standard.HrmInsuranceStandardTypeRespVO;
 import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceProjectTypeEnum;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -28,9 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.module.hrm.dal.redis.RedisKeyConstants.INSURANCE_STANDARD_PROJECT;
-import static cn.iocoder.yudao.module.hrm.dal.redis.RedisKeyConstants.INSURANCE_STANDARD_TYPE;
-
 /**
  * HRM 标准参保数据 Service 实现类
  *
@@ -42,8 +44,7 @@ public class HrmInsuranceStandardServiceImpl implements HrmInsuranceStandardServ
 
     private static final String INSURANCE_TYPE_URL =
             "https://user.1renshi.com/Home/GetSocialTypeAndHouseRange";
-    private static final String INSURANCE_SCALE_URL =
-            "https://www.shebao100.cn/user/funbasequery";
+    private static final String INSURANCE_SCALE_URL = "https://www.shebao100.cn/user/funbasequery";
 
     private static final int HTTP_TIMEOUT_MILLIS = 5000;
 
@@ -54,20 +55,26 @@ public class HrmInsuranceStandardServiceImpl implements HrmInsuranceStandardServ
      * @return 标准参保类型列表
      */
     @Override
-    @Cacheable(cacheNames = INSURANCE_STANDARD_TYPE + "#7d", key = "#areaId",
+    @Cacheable(
+            cacheNames = INSURANCE_STANDARD_TYPE + "#7d",
+            key = "#areaId",
             unless = "#result.isEmpty()")
     public List<HrmInsuranceStandardTypeRespVO> getStandardTypeList(Integer areaId) {
         String cityName = getCityName(areaId);
         if (StrUtil.isBlank(cityName)) {
             return Collections.emptyList();
         }
-        try (HttpResponse response = HttpRequest.get(INSURANCE_TYPE_URL)
-                .form(Collections.singletonMap("cityName", cityName))
-                .timeout(HTTP_TIMEOUT_MILLIS)
-                .execute()) {
+        try (HttpResponse response =
+                HttpRequest.get(INSURANCE_TYPE_URL)
+                        .form(Collections.singletonMap("cityName", cityName))
+                        .timeout(HTTP_TIMEOUT_MILLIS)
+                        .execute()) {
             if (!response.isOk()) {
-                log.warn("[getStandardTypeList][areaId({}) cityName({}) 查询失败，响应状态码为 {}]",
-                        areaId, cityName, response.getStatus());
+                log.warn(
+                        "[getStandardTypeList][areaId({}) cityName({}) 查询失败，响应状态码为 {}]",
+                        areaId,
+                        cityName,
+                        response.getStatus());
                 return Collections.emptyList();
             }
             return parseTypeList(response.body());
@@ -85,9 +92,12 @@ public class HrmInsuranceStandardServiceImpl implements HrmInsuranceStandardServ
      * @return 标准参保项目列表
      */
     @Override
-    @Cacheable(cacheNames = INSURANCE_STANDARD_PROJECT + "#7d", key = "#areaId + ':' + #typeCode",
+    @Cacheable(
+            cacheNames = INSURANCE_STANDARD_PROJECT + "#7d",
+            key = "#areaId + ':' + #typeCode",
             unless = "#result.isEmpty()")
-    public List<HrmInsuranceStandardProjectRespVO> getStandardProjectList(Integer areaId, String typeCode) {
+    public List<HrmInsuranceStandardProjectRespVO> getStandardProjectList(
+            Integer areaId, String typeCode) {
         String cityName = getCityName(areaId);
         if (StrUtil.isBlank(cityName) || StrUtil.isBlank(typeCode)) {
             return Collections.emptyList();
@@ -96,20 +106,29 @@ public class HrmInsuranceStandardServiceImpl implements HrmInsuranceStandardServ
         params.put("js_cityid_name", cityName);
         params.put("cs_classtype", typeCode);
         params.put("X-Requested-With", "XMLHttpRequest");
-        try (HttpResponse response = HttpRequest.get(INSURANCE_SCALE_URL)
-                .header("X-Requested-With", "XMLHttpRequest")
-                .form(params)
-                .timeout(HTTP_TIMEOUT_MILLIS)
-                .execute()) {
+        try (HttpResponse response =
+                HttpRequest.get(INSURANCE_SCALE_URL)
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .form(params)
+                        .timeout(HTTP_TIMEOUT_MILLIS)
+                        .execute()) {
             if (!response.isOk()) {
-                log.warn("[getStandardProjectList][areaId({}) cityName({}) typeCode({}) 查询失败，响应状态码为 {}]",
-                        areaId, cityName, typeCode, response.getStatus());
+                log.warn(
+                        "[getStandardProjectList][areaId({}) cityName({}) typeCode({}) 查询失败，响应状态码为 {}]",
+                        areaId,
+                        cityName,
+                        typeCode,
+                        response.getStatus());
                 return Collections.emptyList();
             }
             return parseProjectList(response.body());
         } catch (Exception ex) {
-            log.warn("[getStandardProjectList][areaId({}) cityName({}) typeCode({}) 查询失败]",
-                    areaId, cityName, typeCode, ex);
+            log.warn(
+                    "[getStandardProjectList][areaId({}) cityName({}) typeCode({}) 查询失败]",
+                    areaId,
+                    cityName,
+                    typeCode,
+                    ex);
             return Collections.emptyList();
         }
     }
@@ -155,19 +174,25 @@ public class HrmInsuranceStandardServiceImpl implements HrmInsuranceStandardServ
             if (projectType == null) {
                 continue;
             }
-            projectMap.putIfAbsent(projectType.getType(), new HrmInsuranceStandardProjectRespVO()
-                    .setType(projectType.getType()).setName(projectType.getName())
-                    .setBaseAmount(NumberUtils.parseFirstBigDecimal(cells.get(1).text()))
-                    .setCorporateRate(NumberUtils.parseFirstBigDecimal(cells.get(3).text()))
-                    .setPersonalRate(NumberUtils.parseFirstBigDecimal(cells.get(4).text()))
-                    .setCorporateAmount(NumberUtils.parseFirstBigDecimal(cells.get(5).text()))
-                    .setPersonalAmount(NumberUtils.parseFirstBigDecimal(cells.get(6).text())));
+            projectMap.putIfAbsent(
+                    projectType.getType(),
+                    new HrmInsuranceStandardProjectRespVO()
+                            .setType(projectType.getType())
+                            .setName(projectType.getName())
+                            .setBaseAmount(NumberUtils.parseFirstBigDecimal(cells.get(1).text()))
+                            .setCorporateRate(NumberUtils.parseFirstBigDecimal(cells.get(3).text()))
+                            .setPersonalRate(NumberUtils.parseFirstBigDecimal(cells.get(4).text()))
+                            .setCorporateAmount(
+                                    NumberUtils.parseFirstBigDecimal(cells.get(5).text()))
+                            .setPersonalAmount(
+                                    NumberUtils.parseFirstBigDecimal(cells.get(6).text())));
         }
         return new ArrayList<>(projectMap.values());
     }
 
     private HrmInsuranceProjectTypeEnum getProjectType(String name) {
-        if (name.contains("大病") || name.contains("大额医疗")
+        if (name.contains("大病")
+                || name.contains("大额医疗")
                 || name.contains("补充") && name.contains("医疗")) {
             return HrmInsuranceProjectTypeEnum.SUPPLEMENTARY_MEDICAL_INSURANCE;
         }
@@ -212,5 +237,4 @@ public class HrmInsuranceStandardServiceImpl implements HrmInsuranceStandardServ
         }
         return StrUtil.removeSuffix(StrUtil.removeSuffix(area.getName(), "城区"), "市");
     }
-
 }

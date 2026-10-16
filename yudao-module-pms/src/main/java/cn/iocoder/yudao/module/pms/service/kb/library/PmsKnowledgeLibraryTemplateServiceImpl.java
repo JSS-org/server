@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.pms.service.kb.library;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_TEMPLATE_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_TEMPLATE_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_TEMPLATE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -14,7 +19,9 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.kb.library.PmsKnowledgeLibrary
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.library.PmsKnowledgeLibraryTemplateMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentTypeEnum;
 import cn.iocoder.yudao.module.pms.service.kb.content.PmsKnowledgeDocumentService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -22,11 +29,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_TEMPLATE_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_TEMPLATE_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_TEMPLATE_NOT_EXISTS;
 
 /**
  * PMS 知识库模板 Service 实现类
@@ -37,10 +39,8 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIB
 @Validated
 public class PmsKnowledgeLibraryTemplateServiceImpl implements PmsKnowledgeLibraryTemplateService {
 
-    @Resource
-    private PmsKnowledgeLibraryTemplateMapper libraryTemplateMapper;
-    @Resource
-    private PmsKnowledgeDocumentService documentService;
+    @Resource private PmsKnowledgeLibraryTemplateMapper libraryTemplateMapper;
+    @Resource private PmsKnowledgeDocumentService documentService;
 
     @Override
     public Long createLibraryTemplate(PmsKnowledgeLibraryTemplateSaveReqVO createReqVO) {
@@ -49,8 +49,12 @@ public class PmsKnowledgeLibraryTemplateServiceImpl implements PmsKnowledgeLibra
         validateLibraryTemplateDocuments(createReqVO.getDocuments());
 
         // 2. 创建知识库模板
-        PmsKnowledgeLibraryTemplateDO template = BeanUtils.toBean(createReqVO, PmsKnowledgeLibraryTemplateDO.class)
-                .setDocuments(BeanUtils.toBean(createReqVO.getDocuments(), PmsKnowledgeLibraryTemplateDO.Document.class));
+        PmsKnowledgeLibraryTemplateDO template =
+                BeanUtils.toBean(createReqVO, PmsKnowledgeLibraryTemplateDO.class)
+                        .setDocuments(
+                                BeanUtils.toBean(
+                                        createReqVO.getDocuments(),
+                                        PmsKnowledgeLibraryTemplateDO.Document.class));
         libraryTemplateMapper.insert(template);
         return template.getId();
     }
@@ -63,8 +67,12 @@ public class PmsKnowledgeLibraryTemplateServiceImpl implements PmsKnowledgeLibra
         validateLibraryTemplateDocuments(updateReqVO.getDocuments());
 
         // 2. 更新知识库模板
-        libraryTemplateMapper.updateById(BeanUtils.toBean(updateReqVO, PmsKnowledgeLibraryTemplateDO.class)
-                .setDocuments(BeanUtils.toBean(updateReqVO.getDocuments(), PmsKnowledgeLibraryTemplateDO.Document.class)));
+        libraryTemplateMapper.updateById(
+                BeanUtils.toBean(updateReqVO, PmsKnowledgeLibraryTemplateDO.class)
+                        .setDocuments(
+                                BeanUtils.toBean(
+                                        updateReqVO.getDocuments(),
+                                        PmsKnowledgeLibraryTemplateDO.Document.class)));
     }
 
     @Override
@@ -106,11 +114,15 @@ public class PmsKnowledgeLibraryTemplateServiceImpl implements PmsKnowledgeLibra
 
         // 2. 在知识库根目录创建模板富文本文档；每篇文档独立创建内容权限
         for (PmsKnowledgeLibraryTemplateDO.Document document : template.getDocuments()) {
-            documentService.createDocument(new PmsKnowledgeDocumentCreateReqVO().setLibraryId(libraryId)
-                    .setFolderId(PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
-                    .setParentId(PmsKnowledgeDocumentDO.PARENT_ID_ROOT).setTitle(document.getTitle())
-                    .setType(PmsKnowledgeDocumentTypeEnum.RICH_TEXT.getType())
-                    .setContent(document.getContent()), userId);
+            documentService.createDocument(
+                    new PmsKnowledgeDocumentCreateReqVO()
+                            .setLibraryId(libraryId)
+                            .setFolderId(PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
+                            .setParentId(PmsKnowledgeDocumentDO.PARENT_ID_ROOT)
+                            .setTitle(document.getTitle())
+                            .setType(PmsKnowledgeDocumentTypeEnum.RICH_TEXT.getType())
+                            .setContent(document.getContent()),
+                    userId);
         }
     }
 
@@ -142,17 +154,18 @@ public class PmsKnowledgeLibraryTemplateServiceImpl implements PmsKnowledgeLibra
         }
     }
 
-    private void validateLibraryTemplateDocuments(List<PmsKnowledgeLibraryTemplateSaveReqVO.Document> documents) {
+    private void validateLibraryTemplateDocuments(
+            List<PmsKnowledgeLibraryTemplateSaveReqVO.Document> documents) {
         if (CollUtil.isEmpty(documents)) {
             throw exception(KNOWLEDGE_LIBRARY_TEMPLATE_INVALID);
         }
         Set<String> titles = new HashSet<>();
         for (PmsKnowledgeLibraryTemplateSaveReqVO.Document document : documents) {
-            if (document == null || StrUtil.hasBlank(document.getTitle(), document.getContent())
+            if (document == null
+                    || StrUtil.hasBlank(document.getTitle(), document.getContent())
                     || !titles.add(document.getTitle())) {
                 throw exception(KNOWLEDGE_LIBRARY_TEMPLATE_INVALID);
             }
         }
     }
-
 }

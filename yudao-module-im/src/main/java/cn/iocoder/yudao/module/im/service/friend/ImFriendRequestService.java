@@ -59,7 +59,8 @@ public interface ImFriendRequestService {
      * @param limit          单次拉取条数
      * @return 申请记录列表，按更新时间、id 正序
      */
-    List<ImFriendRequestDO> pullFriendRequestList(Long userId, Long lastUpdateTime, Long lastId, Integer limit);
+    List<ImFriendRequestDO> pullFriendRequestList(
+            Long userId, Long lastUpdateTime, Long lastId, Integer limit);
 
     /**
      * 按 id 单查申请记录；通用读接口，调用方自行做越权过滤
@@ -72,5 +73,4 @@ public interface ImFriendRequestService {
      * 【管理后台】分页查询好友申请记录
      */
     PageResult<ImFriendRequestDO> getFriendRequestPage(ImFriendRequestManagerPageReqVO reqVO);
-
 }

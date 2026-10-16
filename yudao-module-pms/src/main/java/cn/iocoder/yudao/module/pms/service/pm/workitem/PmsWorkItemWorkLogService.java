@@ -66,7 +66,8 @@ public interface PmsWorkItemWorkLogService {
      * @param userId 用户编号
      * @return 工时报表
      */
-    PmsProjectWorkLogReportRespVO getProjectWorkItemWorkLogReport(PmsProjectWorkLogReportReqVO reqVO, Long userId);
+    PmsProjectWorkLogReportRespVO getProjectWorkItemWorkLogReport(
+            PmsProjectWorkLogReportReqVO reqVO, Long userId);
 
     /**
      * 删除项目的全部工时记录
@@ -81,5 +82,4 @@ public interface PmsWorkItemWorkLogService {
      * @param workItemId 工作项编号
      */
     void deleteWorkItemWorkLogListByWorkItemId(Long workItemId);
-
 }

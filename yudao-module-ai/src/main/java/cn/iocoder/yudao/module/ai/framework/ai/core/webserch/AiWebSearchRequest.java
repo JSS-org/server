@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Data
@@ -30,5 +31,4 @@ public class AiWebSearchRequest {
     @Min(message = "返回结果条数最小为 1", value = 1)
     @Max(message = "返回结果条数最大为 50", value = 50)
     private Integer count;
-
 }

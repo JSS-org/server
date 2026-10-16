@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.messagebus.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.mq.redis.core.RedisMQTemplate;
 import cn.iocoder.yudao.framework.mq.redis.core.job.RedisPendingMessageResendJob;
 import cn.iocoder.yudao.framework.mq.redis.core.job.RedisStreamMessageCleanupJob;
@@ -12,7 +14,9 @@ import cn.iocoder.yudao.module.iot.core.messagebus.core.rabbitmq.IotRabbitMQMess
 import cn.iocoder.yudao.module.iot.core.messagebus.core.redis.IotRedisMessageBus;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.rocketmq.IotRocketMQMessageBus;
 import cn.iocoder.yudao.module.iot.core.mq.producer.IotDeviceMessageProducer;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.rocketmq.spring.autoconfigure.RocketMQProperties;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.redisson.api.RedissonClient;
@@ -33,8 +37,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 /**
  * IoT 消息总线自动配置
  *
@@ -53,7 +55,11 @@ public class IotMessageBusAutoConfiguration {
     // ==================== Local 实现 ====================
 
     @Configuration
-    @ConditionalOnProperty(prefix = "yudao.iot.message-bus", name = "type", havingValue = "local", matchIfMissing = true)
+    @ConditionalOnProperty(
+            prefix = "yudao.iot.message-bus",
+            name = "type",
+            havingValue = "local",
+            matchIfMissing = true)
     public static class IotLocalMessageBusConfiguration {
 
         @Bean
@@ -61,23 +67,24 @@ public class IotMessageBusAutoConfiguration {
             log.info("[iotLocalMessageBus][创建 IoT Local 消息总线]");
             return new IotLocalMessageBus(applicationContext);
         }
-
     }
 
     // ==================== RocketMQ 实现 ====================
 
     @Configuration
-    @ConditionalOnProperty(prefix = "yudao.iot.message-bus", name = "type", havingValue = "rocketmq")
+    @ConditionalOnProperty(
+            prefix = "yudao.iot.message-bus",
+            name = "type",
+            havingValue = "rocketmq")
     @ConditionalOnClass(RocketMQTemplate.class)
     public static class IotRocketMQMessageBusConfiguration {
 
         @Bean
-        public IotRocketMQMessageBus iotRocketMQMessageBus(RocketMQProperties rocketMQProperties,
-                                                           RocketMQTemplate rocketMQTemplate) {
+        public IotRocketMQMessageBus iotRocketMQMessageBus(
+                RocketMQProperties rocketMQProperties, RocketMQTemplate rocketMQTemplate) {
             log.info("[iotRocketMQMessageBus][创建 IoT RocketMQ 消息总线]");
             return new IotRocketMQMessageBus(rocketMQProperties, rocketMQTemplate);
         }
-
     }
 
     // ==================== Kafka 实现 ====================
@@ -92,7 +99,6 @@ public class IotMessageBusAutoConfiguration {
             log.info("[iotKafkaMessageBus][创建 IoT Kafka 消息总线]");
             return new IotKafkaMessageBus(kafkaProperties);
         }
-
     }
 
     // ==================== Redis 实现 ====================
@@ -117,11 +123,15 @@ public class IotMessageBusAutoConfiguration {
          * 创建 Redis Stream 重新消费的任务
          */
         @Bean
-        public RedisPendingMessageResendJob iotRedisPendingMessageResendJob(IotRedisMessageBus messageBus,
-                                                                            RedisMQTemplate redisTemplate,
-                                                                            RedissonClient redissonClient) {
+        public RedisPendingMessageResendJob iotRedisPendingMessageResendJob(
+                IotRedisMessageBus messageBus,
+                RedisMQTemplate redisTemplate,
+                RedissonClient redissonClient) {
             List<AbstractRedisStreamMessageListener<?>> listeners = getListeners(messageBus);
-            return new RedisPendingMessageResendJob(listeners, redisTemplate, redissonClient,
+            return new RedisPendingMessageResendJob(
+                    listeners,
+                    redisTemplate,
+                    redissonClient,
                     RedisPendingMessageResendJob.IOT_RESEND_LOCK_KEY);
         }
 
@@ -129,31 +139,41 @@ public class IotMessageBusAutoConfiguration {
          * 创建 Redis Stream 消息清理任务
          */
         @Bean
-        public RedisStreamMessageCleanupJob iotRedisStreamMessageCleanupJob(IotRedisMessageBus messageBus,
-                                                                            RedisMQTemplate redisTemplate,
-                                                                            RedissonClient redissonClient) {
+        public RedisStreamMessageCleanupJob iotRedisStreamMessageCleanupJob(
+                IotRedisMessageBus messageBus,
+                RedisMQTemplate redisTemplate,
+                RedissonClient redissonClient) {
             List<AbstractRedisStreamMessageListener<?>> listeners = getListeners(messageBus);
-            return new RedisStreamMessageCleanupJob(listeners, redisTemplate, redissonClient,
+            return new RedisStreamMessageCleanupJob(
+                    listeners,
+                    redisTemplate,
+                    redissonClient,
                     RedisStreamMessageCleanupJob.IOT_CLEANUP_LOCK_KEY);
         }
 
-        private List<AbstractRedisStreamMessageListener<?>> getListeners(IotRedisMessageBus messageBus) {
-            return convertList(messageBus.getSubscribers(), subscriber ->
-                    new AbstractRedisStreamMessageListener<>(subscriber.getTopic(), subscriber.getGroup()) {
+        private List<AbstractRedisStreamMessageListener<?>> getListeners(
+                IotRedisMessageBus messageBus) {
+            return convertList(
+                    messageBus.getSubscribers(),
+                    subscriber ->
+                            new AbstractRedisStreamMessageListener<>(
+                                    subscriber.getTopic(), subscriber.getGroup()) {
 
-                        @Override
-                        public void onMessage(AbstractRedisStreamMessage message) {
-                            throw new UnsupportedOperationException("不应该调用！！！");
-                        }
-                    });
+                                @Override
+                                public void onMessage(AbstractRedisStreamMessage message) {
+                                    throw new UnsupportedOperationException("不应该调用！！！");
+                                }
+                            });
         }
-
     }
 
     // ==================== RabbitMQ 实现 ====================
 
     @Configuration
-    @ConditionalOnProperty(prefix = "yudao.iot.message-bus", name = "type", havingValue = "rabbitmq")
+    @ConditionalOnProperty(
+            prefix = "yudao.iot.message-bus",
+            name = "type",
+            havingValue = "rabbitmq")
     @ConditionalOnClass(RabbitTemplate.class)
     public static class IotRabbitMQMessageBusConfiguration {
 
@@ -164,11 +184,10 @@ public class IotMessageBusAutoConfiguration {
         }
 
         @Bean
-        public IotRabbitMQMessageBus iotRabbitMQMessageBus(RabbitTemplate rabbitTemplate, RabbitAdmin rabbitAdmin) {
+        public IotRabbitMQMessageBus iotRabbitMQMessageBus(
+                RabbitTemplate rabbitTemplate, RabbitAdmin rabbitAdmin) {
             log.info("[iotRabbitMQMessageBus][创建 IoT RabbitMQ 消息总线]");
             return new IotRabbitMQMessageBus(rabbitTemplate, rabbitAdmin);
         }
-
     }
-
 }

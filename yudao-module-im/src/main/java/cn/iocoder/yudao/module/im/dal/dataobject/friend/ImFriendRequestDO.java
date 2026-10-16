@@ -3,9 +3,11 @@ package cn.iocoder.yudao.module.im.dal.dataobject.friend;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.im.enums.friend.ImFriendAddSourceEnum;
 import cn.iocoder.yudao.module.im.enums.friend.ImFriendRequestHandleResultEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -33,14 +35,15 @@ public class ImFriendRequestDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 发起方用户编号
      * <p>
      * 关联 AdminUserDO 的 id 字段
      */
     private Long fromUserId;
+
     /**
      * 接收方用户编号
      * <p>
@@ -53,12 +56,14 @@ public class ImFriendRequestDO extends BaseDO {
      * 申请理由
      */
     private String applyContent;
+
     /**
      * 发起方对接收方的备注
      * <p>
      * 同意后写入 A 侧 {@link ImFriendDO#getDisplayName()}；B 侧不动
      */
     private String displayName;
+
     /**
      * 添加来源
      * <p>
@@ -73,13 +78,14 @@ public class ImFriendRequestDO extends BaseDO {
      * 枚举 {@link ImFriendRequestHandleResultEnum}
      */
     private Integer handleResult;
+
     /**
      * 处理理由（接收方拒绝时可选填）
      */
     private String handleContent;
+
     /**
      * 处理时间
      */
     private LocalDateTime handleTime;
-
 }

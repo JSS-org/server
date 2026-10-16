@@ -7,14 +7,17 @@ import cn.iocoder.yudao.module.oa.enums.officialdoc.OaOfficialDocHandleStatusEnu
 import cn.iocoder.yudao.module.oa.enums.officialdoc.OaOfficialDocReceiveTypeEnum;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
 import org.flowable.engine.history.HistoricProcessInstance;
 
 import java.time.LocalDateTime;
@@ -35,18 +38,20 @@ public class OaOfficialDocReceiveDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 单据编号
      */
     private String no;
+
     /**
      * 来源发文编号
      *
      * 关联 {@link OaOfficialDocSendDO#getId()}，手工新增收文时为空
      */
     private Long sendId;
+
     /**
      * 收文类型
      *
@@ -54,18 +59,21 @@ public class OaOfficialDocReceiveDO extends BaseDO {
      * 字典 {@link DictTypeConstants#OFFICIAL_DOC_RECEIVE_TYPE}
      */
     private Integer receiveType;
+
     /**
      * 标题
      *
      * 自动生成时冗余 {@link OaOfficialDocSendDO#getTitle()}，手工收文直接填写
      */
     private String title;
+
     /**
      * 来文字号
      *
      * 自动生成时冗余 {@link OaOfficialDocSendDO#getDocumentNo()}，手工收文直接填写
      */
     private String documentNo;
+
     /**
      * 密级
      *
@@ -73,6 +81,7 @@ public class OaOfficialDocReceiveDO extends BaseDO {
      * 自动生成时冗余 {@link OaOfficialDocSendDO#getSecrecyLevel()}，手工收文直接填写
      */
     private Integer secrecyLevel;
+
     /**
      * 紧急程度
      *
@@ -80,44 +89,53 @@ public class OaOfficialDocReceiveDO extends BaseDO {
      * 自动生成时冗余 {@link OaOfficialDocSendDO#getUrgencyLevel()}，手工收文直接填写
      */
     private Integer urgencyLevel;
+
     /**
      * 收文时间
      */
     private LocalDateTime receiveTime;
+
     /**
      * 收文部门编号
      *
      * 关联 {@link DeptRespDTO#getId()}
      */
     private Long receiveDeptId;
+
     /**
      * 主办人用户编号
      *
      * 关联 {@link AdminUserRespDTO#getId()}
      */
     private Long handlerUserId;
+
     /**
      * 领导批示
      */
     private String instruction;
+
     /**
      * 办理结果
      *
      * 收文办理的结果说明，独立于流程审批意见
      */
     private String result;
+
     /**
      * 办理期限
      */
     private LocalDateTime deadlineTime;
+
     /**
      * 内容摘要
      */
     private String summary;
+
     /**
      * 备注
      */
     private String remark;
+
     /**
      * 附件地址列表
      *
@@ -125,12 +143,14 @@ public class OaOfficialDocReceiveDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<String> fileUrls;
+
     /**
      * 正式公文地址
      *
      * 冗余 {@link OaOfficialDocSendDO#getFormalFileUrl()}，独立于收文附件
      */
     private String formalFileUrl;
+
     /**
      * 办理状态
      *
@@ -138,17 +158,18 @@ public class OaOfficialDocReceiveDO extends BaseDO {
      * 字典 {@link DictTypeConstants#OFFICIAL_DOC_HANDLE_STATUS}
      */
     private Integer handleStatus;
+
     /**
      * 审批状态
      *
      * 枚举 {@link BpmProcessInstanceStatusEnum}
      */
     private Integer status;
+
     /**
      * BPM 流程实例编号
      *
      * 关联 {@link HistoricProcessInstance#getId()}
      */
     private String processInstanceId;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.attendance.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -33,13 +34,20 @@ public class OaAttendanceWeekReportRespVO {
     @Accessors(chain = true)
     public static class DailyAttendance {
 
-        @Schema(description = "日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-09-07")
+        @Schema(
+                description = "日期",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "2026-09-07")
         private LocalDate date;
 
         @Schema(description = "上班考勤记录编号", example = "1024")
         private Long clockInId;
 
-        @Schema(description = "上班打卡时间", type = "integer", format = "int64", example = "1789347600000")
+        @Schema(
+                description = "上班打卡时间",
+                type = "integer",
+                format = "int64",
+                example = "1789347600000")
         private LocalDateTime clockInTime;
 
         @Schema(description = "上班打卡状态", example = "1")
@@ -48,12 +56,14 @@ public class OaAttendanceWeekReportRespVO {
         @Schema(description = "下班考勤记录编号", example = "1025")
         private Long clockOutId;
 
-        @Schema(description = "下班打卡时间", type = "integer", format = "int64", example = "1789380000000")
+        @Schema(
+                description = "下班打卡时间",
+                type = "integer",
+                format = "int64",
+                example = "1789380000000")
         private LocalDateTime clockOutTime;
 
         @Schema(description = "下班打卡状态", example = "1")
         private Integer clockOutStatus;
-
     }
-
 }

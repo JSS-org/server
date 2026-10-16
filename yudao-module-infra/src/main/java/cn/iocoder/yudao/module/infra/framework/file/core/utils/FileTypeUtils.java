@@ -3,9 +3,12 @@ package cn.iocoder.yudao.module.infra.framework.file.core.utils;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
+
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
@@ -78,7 +81,8 @@ public class FileTypeUtils {
      * @param filename 文件名
      * @param content  附件内容
      */
-    public static void writeAttachment(HttpServletResponse response, String filename, byte[] content) throws IOException {
+    public static void writeAttachment(
+            HttpServletResponse response, String filename, byte[] content) throws IOException {
         // 设置 header 和 contentType
         String mineType = getMineType(content, filename);
         response.setContentType(mineType);
@@ -87,7 +91,8 @@ public class FileTypeUtils {
             // 参见 https://github.com/YunaiV/ruoyi-vue-pro/issues/692 讨论
             response.setHeader("Content-Disposition", buildContentDisposition("inline", filename));
         } else {
-            response.setHeader("Content-Disposition", buildContentDisposition("attachment", filename));
+            response.setHeader(
+                    "Content-Disposition", buildContentDisposition("attachment", filename));
         }
         // 针对 video 的特殊处理，解决视频地址在移动端播放的兼容性问题
         if (StrUtil.containsIgnoreCase(mineType, "video")) {
@@ -99,8 +104,11 @@ public class FileTypeUtils {
     }
 
     private static String buildContentDisposition(String dispositionType, String filename) {
-        return StrUtil.format("{};filename=\"{}\";filename*=UTF-8''{}",
-                dispositionType, buildFallbackFilename(filename), HttpUtils.encodeUrlPathSegment(filename));
+        return StrUtil.format(
+                "{};filename=\"{}\";filename*=UTF-8''{}",
+                dispositionType,
+                buildFallbackFilename(filename),
+                HttpUtils.encodeUrlPathSegment(filename));
     }
 
     private static String buildFallbackFilename(String filename) {
@@ -130,5 +138,4 @@ public class FileTypeUtils {
     public static boolean isImage(String mineType) {
         return StrUtil.startWith(mineType, "image/");
     }
-
 }

@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.emplo
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.monthrecord.HrmSalaryMonthRecordStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -20,5 +23,4 @@ public class HrmSalaryEmployeeMonthRecordPageReqVO extends PageParam {
     @Schema(description = "月度工资表状态", example = "10")
     @InEnum(value = HrmSalaryMonthRecordStatusEnum.class, message = "月度工资表状态必须是 {value}")
     private Integer monthRecordStatus;
-
 }

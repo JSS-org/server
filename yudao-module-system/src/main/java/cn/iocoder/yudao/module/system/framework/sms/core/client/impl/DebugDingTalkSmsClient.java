@@ -37,22 +37,31 @@ public class DebugDingTalkSmsClient extends AbstractSmsClient {
     }
 
     @Override
-    public SmsSendRespDTO sendSms(Long sendLogId, String mobile,
-                                  String apiTemplateId, List<KeyValue<String, Object>> templateParams) throws Throwable {
+    public SmsSendRespDTO sendSms(
+            Long sendLogId,
+            String mobile,
+            String apiTemplateId,
+            List<KeyValue<String, Object>> templateParams)
+            throws Throwable {
         // 构建请求
         String url = buildUrl("robot/send");
         Map<String, Object> params = new HashMap<>();
         params.put("msgtype", "text");
-        String content = String.format("【模拟短信】\n手机号：%s\n短信日志编号：%d\n模板参数：%s",
-                mobile, sendLogId, MapUtils.convertMap(templateParams));
+        String content =
+                String.format(
+                        "【模拟短信】\n手机号：%s\n短信日志编号：%d\n模板参数：%s",
+                        mobile, sendLogId, MapUtils.convertMap(templateParams));
         params.put("text", MapUtil.builder().put("content", content).build());
         // 执行请求
         String responseText = HttpUtil.post(url, JsonUtils.toJsonString(params));
         // 解析结果
         Map<?, ?> responseObj = JsonUtils.parseObject(responseText, Map.class);
         String errorCode = MapUtil.getStr(responseObj, "errcode");
-        return new SmsSendRespDTO().setSuccess(Objects.equals(errorCode, "0")).setSerialNo(StrUtil.uuid())
-                .setApiCode(errorCode).setApiMsg(MapUtil.getStr(responseObj, "errorMsg"));
+        return new SmsSendRespDTO()
+                .setSuccess(Objects.equals(errorCode, "0"))
+                .setSerialNo(StrUtil.uuid())
+                .setApiCode(errorCode)
+                .setApiMsg(MapUtil.getStr(responseObj, "errorMsg"));
     }
 
     /**
@@ -70,10 +79,13 @@ public class DebugDingTalkSmsClient extends AbstractSmsClient {
         // 生成 sign
         String secret = properties.getApiSecret();
         String stringToSign = timestamp + "\n" + secret;
-        byte[] signData = DigestUtil.hmac(HmacAlgorithm.HmacSHA256, StrUtil.bytes(secret)).digest(stringToSign);
+        byte[] signData =
+                DigestUtil.hmac(HmacAlgorithm.HmacSHA256, StrUtil.bytes(secret))
+                        .digest(stringToSign);
         String sign = Base64.encode(signData);
         // 构建最终 URL
-        return String.format("https://oapi.dingtalk.com/%s?access_token=%s&timestamp=%d&sign=%s",
+        return String.format(
+                "https://oapi.dingtalk.com/%s?access_token=%s&timestamp=%d&sign=%s",
                 path, properties.getApiKey(), timestamp, sign);
     }
 
@@ -84,8 +96,10 @@ public class DebugDingTalkSmsClient extends AbstractSmsClient {
 
     @Override
     public SmsTemplateRespDTO getSmsTemplate(String apiTemplateId) {
-        return new SmsTemplateRespDTO().setId(apiTemplateId).setContent("")
-                .setAuditStatus(SmsTemplateAuditStatusEnum.SUCCESS.getStatus()).setAuditReason("");
+        return new SmsTemplateRespDTO()
+                .setId(apiTemplateId)
+                .setContent("")
+                .setAuditStatus(SmsTemplateAuditStatusEnum.SUCCESS.getStatus())
+                .setAuditReason("");
     }
-
 }

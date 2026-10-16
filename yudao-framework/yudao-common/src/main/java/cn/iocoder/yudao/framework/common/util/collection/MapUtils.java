@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.KeyValue;
+
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
@@ -30,13 +31,14 @@ public class MapUtils {
      */
     public static <K, V> List<V> getList(Multimap<K, V> multimap, Collection<K> keys) {
         List<V> result = new ArrayList<>();
-        keys.forEach(k -> {
-            Collection<V> values = multimap.get(k);
-            if (CollectionUtil.isEmpty(values)) {
-                return;
-            }
-            result.addAll(values);
-        });
+        keys.forEach(
+                k -> {
+                    Collection<V> values = multimap.get(k);
+                    if (CollectionUtil.isEmpty(values)) {
+                        return;
+                    }
+                    result.addAll(values);
+                });
         return result;
     }
 
@@ -85,7 +87,8 @@ public class MapUtils {
      * @param defaultValue 默认值
      * @return BigDecimal 值，解析失败或值为 null 时返回默认值
      */
-    public static BigDecimal getBigDecimal(Map<String, ?> map, String key, BigDecimal defaultValue) {
+    public static BigDecimal getBigDecimal(
+            Map<String, ?> map, String key, BigDecimal defaultValue) {
         if (map == null) {
             return defaultValue;
         }
@@ -108,5 +111,4 @@ public class MapUtils {
         }
         return defaultValue;
     }
-
 }

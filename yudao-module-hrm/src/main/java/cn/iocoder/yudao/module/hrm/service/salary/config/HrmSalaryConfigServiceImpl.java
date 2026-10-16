@@ -1,27 +1,30 @@
 package cn.iocoder.yudao.module.hrm.service.salary.config;
 
-import cn.iocoder.yudao.module.hrm.service.salary.monthrecord.HrmSalaryMonthRecordService;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.config.HrmSalaryConfigCreateReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.config.HrmSalaryConfigUpdateReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.HrmSalaryMonthRecordCreateReqVO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryConfigDO;
-import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryConfigMapper;
-import com.mzt.logapi.context.LogRecordContext;
-import com.mzt.logapi.service.impl.DiffParseFunction;
-import com.mzt.logapi.starter.annotation.LogRecord;
-import jakarta.annotation.Resource;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_CONFIG_EXISTS;
 import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_CONFIG_NOT_EXISTS;
 import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_SALARY_CONFIG_TYPE;
 import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_SALARY_CONFIG_UPDATE_SUB_TYPE;
 import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_SALARY_CONFIG_UPDATE_SUCCESS;
+
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.config.HrmSalaryConfigCreateReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.config.HrmSalaryConfigUpdateReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.HrmSalaryMonthRecordCreateReqVO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryConfigDO;
+import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryConfigMapper;
+import cn.iocoder.yudao.module.hrm.service.salary.monthrecord.HrmSalaryMonthRecordService;
+
+import com.mzt.logapi.context.LogRecordContext;
+import com.mzt.logapi.service.impl.DiffParseFunction;
+import com.mzt.logapi.starter.annotation.LogRecord;
+
+import jakarta.annotation.Resource;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * HRM 计薪配置 Service 实现类
@@ -32,11 +35,9 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_SALARY_CO
 @Validated
 public class HrmSalaryConfigServiceImpl implements HrmSalaryConfigService {
 
-    @Resource
-    private HrmSalaryConfigMapper salaryConfigMapper;
+    @Resource private HrmSalaryConfigMapper salaryConfigMapper;
 
-    @Resource
-    @Lazy // 延迟加载
+    @Resource @Lazy // 延迟加载
     private HrmSalaryMonthRecordService salaryMonthRecordService;
 
     @Override
@@ -51,26 +52,34 @@ public class HrmSalaryConfigServiceImpl implements HrmSalaryConfigService {
         salaryConfigMapper.insert(config);
 
         // 3. 创建启用月份的工资表
-        HrmSalaryMonthRecordCreateReqVO monthRecordCreateReqVO = new HrmSalaryMonthRecordCreateReqVO()
-                .setYear(config.getStartYear()).setMonth(config.getStartMonth());
+        HrmSalaryMonthRecordCreateReqVO monthRecordCreateReqVO =
+                new HrmSalaryMonthRecordCreateReqVO()
+                        .setYear(config.getStartYear())
+                        .setMonth(config.getStartMonth());
         salaryMonthRecordService.createMonthRecord(monthRecordCreateReqVO);
         return config.getId();
     }
 
     @Override
-    @LogRecord(type = HRM_SALARY_CONFIG_TYPE, subType = HRM_SALARY_CONFIG_UPDATE_SUB_TYPE,
-            bizNo = "{{#salaryConfig.id}}", success = HRM_SALARY_CONFIG_UPDATE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_CONFIG_TYPE,
+            subType = HRM_SALARY_CONFIG_UPDATE_SUB_TYPE,
+            bizNo = "{{#salaryConfig.id}}",
+            success = HRM_SALARY_CONFIG_UPDATE_SUCCESS)
     public void updateSalaryConfig(HrmSalaryConfigUpdateReqVO updateReqVO) {
         // 1. 校验计薪配置存在
         HrmSalaryConfigDO config = validateSalaryConfigExists();
 
         // 2. 更新计薪配置
-        salaryConfigMapper.updateById(new HrmSalaryConfigDO().setId(config.getId())
-                .setSocialSecurityMonthType(updateReqVO.getSocialSecurityMonthType()));
+        salaryConfigMapper.updateById(
+                new HrmSalaryConfigDO()
+                        .setId(config.getId())
+                        .setSocialSecurityMonthType(updateReqVO.getSocialSecurityMonthType()));
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("salaryConfig", config);
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT,
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
                 BeanUtils.toBean(config, HrmSalaryConfigUpdateReqVO.class));
     }
 
@@ -92,5 +101,4 @@ public class HrmSalaryConfigServiceImpl implements HrmSalaryConfigService {
         }
         return config;
     }
-
 }

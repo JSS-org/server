@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.module.bpm.service.oa.listener;
 
+import static org.mockito.Mockito.verify;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.service.oa.BpmOALeaveService;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
-import static org.mockito.Mockito.verify;
 
 /**
  * {@link BpmOALeaveStatusListener} 的单元测试
@@ -16,11 +17,9 @@ import static org.mockito.Mockito.verify;
  */
 public class BpmOALeaveStatusListenerTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private BpmOALeaveStatusListener leaveStatusListener;
+    @InjectMocks private BpmOALeaveStatusListener leaveStatusListener;
 
-    @Mock
-    private BpmOALeaveService leaveService;
+    @Mock private BpmOALeaveService leaveService;
 
     @Test
     public void testOnApplicationEvent_sameProcessDefinitionKey_updateStatus() {
@@ -45,5 +44,4 @@ public class BpmOALeaveStatusListenerTest extends BaseMockitoUnitTest {
         // 断言
         org.mockito.Mockito.verifyNoInteractions(leaveService);
     }
-
 }

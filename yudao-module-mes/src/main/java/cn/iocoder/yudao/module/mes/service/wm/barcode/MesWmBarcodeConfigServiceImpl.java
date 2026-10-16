@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.barcode;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,13 +10,12 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.config.MesWmBa
 import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.config.MesWmBarcodeConfigSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.barcode.MesWmBarcodeConfigDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.barcode.MesWmBarcodeConfigMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 条码配置 Service 实现类
@@ -24,12 +26,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmBarcodeConfigServiceImpl implements MesWmBarcodeConfigService {
 
-    @Resource
-    private MesWmBarcodeConfigMapper barcodeConfigMapper;
+    @Resource private MesWmBarcodeConfigMapper barcodeConfigMapper;
 
-    @Resource
-    @Lazy
-    private MesWmBarcodeService barcodeService;
+    @Resource @Lazy private MesWmBarcodeService barcodeService;
 
     @Override
     public Long createBarcodeConfig(MesWmBarcodeConfigSaveReqVO createReqVO) {
@@ -91,7 +90,8 @@ public class MesWmBarcodeConfigServiceImpl implements MesWmBarcodeConfigService 
     }
 
     @Override
-    public PageResult<MesWmBarcodeConfigDO> getBarcodeConfigPage(MesWmBarcodeConfigPageReqVO pageReqVO) {
+    public PageResult<MesWmBarcodeConfigDO> getBarcodeConfigPage(
+            MesWmBarcodeConfigPageReqVO pageReqVO) {
         return barcodeConfigMapper.selectPage(pageReqVO);
     }
 
@@ -108,5 +108,4 @@ public class MesWmBarcodeConfigServiceImpl implements MesWmBarcodeConfigService 
         }
         return config;
     }
-
 }

@@ -2,11 +2,13 @@ package cn.iocoder.yudao.module.pms.dal.dataobject.kb.library;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -30,30 +32,35 @@ public class PmsKnowledgeLibraryTemplateDO extends BaseDO {
     /**
      * 模板编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 模板名称
      */
     private String name;
+
     /**
      * 模板简介
      */
     private String description;
+
     /**
      * 模板封面地址
      */
     private String coverUrl;
+
     /**
      * 模板状态
      *
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+
     /**
      * 显示顺序
      */
     private Integer sort;
+
     /**
      * 模板文档列表
      */
@@ -70,11 +77,10 @@ public class PmsKnowledgeLibraryTemplateDO extends BaseDO {
          * 文档标题
          */
         private String title;
+
         /**
          * 文档内容
          */
         private String content;
-
     }
-
 }

@@ -3,11 +3,15 @@ package cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenSceneEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenTemplateTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 代码生成表定义创建/修改 Response VO")
@@ -17,7 +21,10 @@ public class CodegenTableSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "生成场景，参见 CodegenSceneEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "生成场景，参见 CodegenSceneEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "导入类型不能为空")
     private Integer scene;
 
@@ -42,7 +49,10 @@ public class CodegenTableSaveReqVO {
     @Pattern(regexp = "^[a-z][a-z0-9]*$", message = "业务名只能由小写字母和数字组成，且不能以数字开头")
     private String businessName;
 
-    @Schema(description = "类名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "CodegenTable")
+    @Schema(
+            description = "类名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "CodegenTable")
     @NotNull(message = "类名称不能为空")
     @Pattern(regexp = "^[A-Z][A-Za-z0-9]*$", message = "类名称必须以大写字母开头，且只能由字母和数字组成")
     private String className;
@@ -55,11 +65,17 @@ public class CodegenTableSaveReqVO {
     @NotNull(message = "作者不能为空")
     private String author;
 
-    @Schema(description = "模板类型，参见 CodegenTemplateTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "模板类型，参见 CodegenTemplateTypeEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "模板类型不能为空")
     private Integer templateType;
 
-    @Schema(description = "前端类型，参见 CodegenFrontTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "20")
+    @Schema(
+            description = "前端类型，参见 CodegenFrontTypeEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "20")
     @NotNull(message = "前端类型不能为空")
     private Integer frontType;
 
@@ -68,13 +84,16 @@ public class CodegenTableSaveReqVO {
 
     @Schema(description = "主表的编号", example = "2048")
     private Long masterTableId;
+
     @Schema(description = "子表关联主表的字段编号", example = "4096")
     private Long subJoinColumnId;
+
     @Schema(description = "主表与子表是否一对多", example = "4096")
     private Boolean subJoinMany;
 
     @Schema(description = "树表的父字段编号", example = "8192")
     private Long treeParentColumnId;
+
     @Schema(description = "树表的名字字段编号", example = "16384")
     private Long treeNameColumnId;
 
@@ -99,5 +118,4 @@ public class CodegenTableSaveReqVO {
         return ObjectUtil.notEqual(templateType, CodegenTemplateTypeEnum.TREE)
                 || (ObjectUtil.isAllNotEmpty(treeParentColumnId, treeNameColumnId));
     }
-
 }

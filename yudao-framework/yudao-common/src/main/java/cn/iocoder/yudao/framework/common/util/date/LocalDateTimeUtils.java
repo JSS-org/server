@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.common.util.date;
 
+import static cn.hutool.core.date.DatePattern.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
@@ -7,6 +9,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.DateIntervalEnum;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -25,8 +28,6 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-import static cn.hutool.core.date.DatePattern.*;
-
 /**
  * 时间工具类，用于 {@link LocalDate}、{@link LocalDateTime}
  *
@@ -42,12 +43,16 @@ public class LocalDateTimeUtils {
      * @param scale 保留的小数位数
      * @return 按毫秒精度计算的天数，时间缺失时返回 null
      */
-    public static BigDecimal getDaysBetween(LocalDateTime beginTime, LocalDateTime endTime, int scale) {
+    public static BigDecimal getDaysBetween(
+            LocalDateTime beginTime, LocalDateTime endTime, int scale) {
         if (beginTime == null || endTime == null) {
             return null;
         }
         return BigDecimal.valueOf(Duration.between(beginTime, endTime).toMillis())
-                .divide(BigDecimal.valueOf(Duration.ofDays(1).toMillis()), scale, RoundingMode.HALF_UP);
+                .divide(
+                        BigDecimal.valueOf(Duration.ofDays(1).toMillis()),
+                        scale,
+                        RoundingMode.HALF_UP);
     }
 
     /**
@@ -65,7 +70,8 @@ public class LocalDateTimeUtils {
             return null;
         }
         return BigDecimal.valueOf(Duration.between(beginTime, endTime).toMillis())
-                .divide(BigDecimal.valueOf(Duration.ofDays(1).toMillis()), 0, RoundingMode.CEILING).intValueExact();
+                .divide(BigDecimal.valueOf(Duration.ofDays(1).toMillis()), 0, RoundingMode.CEILING)
+                .intValueExact();
     }
 
     /**
@@ -79,7 +85,8 @@ public class LocalDateTimeUtils {
         if (beginTime == null || endTime == null) {
             return null;
         }
-        return Math.toIntExact(ChronoUnit.DAYS.between(beginTime.toLocalDate(), endTime.toLocalDate()) + 1);
+        return Math.toIntExact(
+                ChronoUnit.DAYS.between(beginTime.toLocalDate(), endTime.toLocalDate()) + 1);
     }
 
     /**
@@ -87,12 +94,14 @@ public class LocalDateTimeUtils {
      */
     public static LocalDateTime EMPTY = buildTime(1970, 1, 1);
 
-    public static DateTimeFormatter UTC_MS_WITH_XXX_OFFSET_FORMATTER = createFormatter(UTC_MS_WITH_XXX_OFFSET_PATTERN);
+    public static DateTimeFormatter UTC_MS_WITH_XXX_OFFSET_FORMATTER =
+            createFormatter(UTC_MS_WITH_XXX_OFFSET_PATTERN);
 
     /**
      * 默认时区
      */
-    private static final ZoneId DEFAULT_ZONE_ID = TimeZone.getTimeZone(DateUtils.TIME_ZONE_DEFAULT).toZoneId();
+    private static final ZoneId DEFAULT_ZONE_ID =
+            TimeZone.getTimeZone(DateUtils.TIME_ZONE_DEFAULT).toZoneId();
 
     /**
      * 解析时间
@@ -238,8 +247,11 @@ public class LocalDateTimeUtils {
      * @return 是否位于闭区间内
      */
     public static boolean isBetween(LocalDate beginDate, LocalDate endDate, LocalDate date) {
-        return beginDate != null && endDate != null && date != null
-                && isAfterOrEqual(date, beginDate) && isBeforeOrEqual(date, endDate);
+        return beginDate != null
+                && endDate != null
+                && date != null
+                && isAfterOrEqual(date, beginDate)
+                && isBeforeOrEqual(date, endDate);
     }
 
     /**
@@ -262,9 +274,13 @@ public class LocalDateTimeUtils {
      * @param time 指定时间
      * @return 是否位于闭区间内
      */
-    public static boolean isBetween(LocalDateTime beginTime, LocalDateTime endTime, LocalDateTime time) {
-        return beginTime != null && endTime != null && time != null
-                && isAfterOrEqual(time, beginTime) && isBeforeOrEqual(time, endTime);
+    public static boolean isBetween(
+            LocalDateTime beginTime, LocalDateTime endTime, LocalDateTime time) {
+        return beginTime != null
+                && endTime != null
+                && time != null
+                && isAfterOrEqual(time, beginTime)
+                && isBeforeOrEqual(time, endTime);
     }
 
     /**
@@ -275,7 +291,8 @@ public class LocalDateTimeUtils {
      * @param time 指定时间
      * @return 是否不在闭区间内；任一参数为空时返回 {@code true}
      */
-    public static boolean isNotBetween(LocalDateTime beginTime, LocalDateTime endTime, LocalDateTime time) {
+    public static boolean isNotBetween(
+            LocalDateTime beginTime, LocalDateTime endTime, LocalDateTime time) {
         return !isBetween(beginTime, endTime, time);
     }
 
@@ -300,7 +317,8 @@ public class LocalDateTimeUtils {
      * @param excludedRange 需要扣除的时间范围
      * @return 扣除后的时间范围列表
      */
-    public static List<TimeRange> subtractTimeRanges(List<TimeRange> sourceRanges, TimeRange excludedRange) {
+    public static List<TimeRange> subtractTimeRanges(
+            List<TimeRange> sourceRanges, TimeRange excludedRange) {
         List<TimeRange> result = new ArrayList<>();
         for (TimeRange sourceRange : sourceRanges) {
             TimeRange overlap = intersectTimeRange(sourceRange, excludedRange);
@@ -328,9 +346,10 @@ public class LocalDateTimeUtils {
         if (CollUtil.isEmpty(timeRanges)) {
             return Collections.emptyList();
         }
-        List<TimeRange> sortedRanges = timeRanges.stream()
-                .sorted(Comparator.comparing(TimeRange::getStartTime))
-                .collect(Collectors.toList());
+        List<TimeRange> sortedRanges =
+                timeRanges.stream()
+                        .sorted(Comparator.comparing(TimeRange::getStartTime))
+                        .collect(Collectors.toList());
         List<TimeRange> result = new ArrayList<>();
         TimeRange currentRange = CollUtil.getFirst(sortedRanges);
         for (int i = 1; i < sortedRanges.size(); i++) {
@@ -340,8 +359,10 @@ public class LocalDateTimeUtils {
                 currentRange = nextRange;
                 continue;
             }
-            LocalDateTime endTime = currentRange.getEndTime().isAfter(nextRange.getEndTime())
-                    ? currentRange.getEndTime() : nextRange.getEndTime();
+            LocalDateTime endTime =
+                    currentRange.getEndTime().isAfter(nextRange.getEndTime())
+                            ? currentRange.getEndTime()
+                            : nextRange.getEndTime();
             currentRange = new TimeRange(currentRange.getStartTime(), endTime);
         }
         result.add(currentRange);
@@ -377,10 +398,14 @@ public class LocalDateTimeUtils {
      * @return 交集时间范围；没有交集时返回 {@code null}
      */
     public static TimeRange intersectTimeRange(TimeRange firstRange, TimeRange secondRange) {
-        LocalDateTime startTime = firstRange.getStartTime().isAfter(secondRange.getStartTime())
-                ? firstRange.getStartTime() : secondRange.getStartTime();
-        LocalDateTime endTime = firstRange.getEndTime().isBefore(secondRange.getEndTime())
-                ? firstRange.getEndTime() : secondRange.getEndTime();
+        LocalDateTime startTime =
+                firstRange.getStartTime().isAfter(secondRange.getStartTime())
+                        ? firstRange.getStartTime()
+                        : secondRange.getStartTime();
+        LocalDateTime endTime =
+                firstRange.getEndTime().isBefore(secondRange.getEndTime())
+                        ? firstRange.getEndTime()
+                        : secondRange.getEndTime();
         return endTime.isAfter(startTime) ? new TimeRange(startTime, endTime) : null;
     }
 
@@ -392,8 +417,11 @@ public class LocalDateTimeUtils {
      */
     public static int calculateDurationMinutes(List<TimeRange> timeRanges) {
         return timeRanges.stream()
-                .mapToInt(range -> Math.toIntExact(Duration.between(
-                        range.getStartTime(), range.getEndTime()).toMinutes()))
+                .mapToInt(
+                        range ->
+                                Math.toIntExact(
+                                        Duration.between(range.getStartTime(), range.getEndTime())
+                                                .toMinutes()))
                 .sum();
     }
 
@@ -410,7 +438,10 @@ public class LocalDateTimeUtils {
      */
     public static List<TimeRange> buildDailyTimeRanges(
             LocalDate beginDate, LocalDate endDate, LocalTime beginTime, LocalTime endTime) {
-        if (beginDate == null || endDate == null || beginTime == null || endTime == null
+        if (beginDate == null
+                || endDate == null
+                || beginTime == null
+                || endTime == null
                 || beginDate.isAfter(endDate)) {
             return Collections.emptyList();
         }
@@ -443,10 +474,11 @@ public class LocalDateTimeUtils {
         if (date == null || time == null) {
             return null;
         }
-        List<TimeRange> timeRanges = buildDailyTimeRanges(
-                date.minusDays(1), date.plusDays(1), beginTime, endTime);
-        return CollUtil.findOne(timeRanges, timeRange -> isBetween(
-                timeRange.getStartTime(), timeRange.getEndTime(), time));
+        List<TimeRange> timeRanges =
+                buildDailyTimeRanges(date.minusDays(1), date.plusDays(1), beginTime, endTime);
+        return CollUtil.findOne(
+                timeRanges,
+                timeRange -> isBetween(timeRange.getStartTime(), timeRange.getEndTime(), time));
     }
 
     /**
@@ -482,9 +514,9 @@ public class LocalDateTimeUtils {
         return LocalDateTime.of(year, month, day, 0, 0, 0);
     }
 
-    public static LocalDateTime[] buildBetweenTime(int year1, int month1, int day1,
-                                                   int year2, int month2, int day2) {
-        return new LocalDateTime[]{buildTime(year1, month1, day1), buildTime(year2, month2, day2)};
+    public static LocalDateTime[] buildBetweenTime(
+            int year1, int month1, int day1, int year2, int month2, int day2) {
+        return new LocalDateTime[] {buildTime(year1, month1, day1), buildTime(year2, month2, day2)};
     }
 
     /**
@@ -495,7 +527,8 @@ public class LocalDateTimeUtils {
      * @param time 指定时间
      * @return 是否
      */
-    public static boolean isBetween(LocalDateTime startTime, LocalDateTime endTime, Timestamp time) {
+    public static boolean isBetween(
+            LocalDateTime startTime, LocalDateTime endTime, Timestamp time) {
         if (startTime == null || endTime == null || time == null) {
             return false;
         }
@@ -543,7 +576,8 @@ public class LocalDateTimeUtils {
             return false;
         }
         LocalDate nowDate = LocalDate.now();
-        return LocalDateTimeUtil.isIn(LocalDateTime.now(),
+        return LocalDateTimeUtil.isIn(
+                LocalDateTime.now(),
                 LocalDateTime.of(nowDate, LocalTime.parse(startTime)),
                 LocalDateTime.of(nowDate, LocalTime.parse(endTime)));
     }
@@ -557,10 +591,14 @@ public class LocalDateTimeUtils {
      * @param endTime2   结束 time2
      * @return 重叠：true 不重叠：false
      */
-    public static boolean isOverlap(LocalTime startTime1, LocalTime endTime1, LocalTime startTime2, LocalTime endTime2) {
+    public static boolean isOverlap(
+            LocalTime startTime1, LocalTime endTime1, LocalTime startTime2, LocalTime endTime2) {
         LocalDate nowDate = LocalDate.now();
-        return LocalDateTimeUtil.isOverlap(LocalDateTime.of(nowDate, startTime1), LocalDateTime.of(nowDate, endTime1),
-                LocalDateTime.of(nowDate, startTime2), LocalDateTime.of(nowDate, endTime2));
+        return LocalDateTimeUtil.isOverlap(
+                LocalDateTime.of(nowDate, startTime1),
+                LocalDateTime.of(nowDate, endTime1),
+                LocalDateTime.of(nowDate, startTime2),
+                LocalDateTime.of(nowDate, endTime2));
     }
 
     /**
@@ -614,7 +652,7 @@ public class LocalDateTimeUtils {
         if (beginDate == null && endDate == null) {
             return null;
         }
-        return new LocalDateTime[]{getDayBeginTime(beginDate), getDayEndTime(endDate)};
+        return new LocalDateTime[] {getDayBeginTime(beginDate), getDayEndTime(endDate)};
     }
 
     /**
@@ -626,7 +664,8 @@ public class LocalDateTimeUtils {
      */
     public static LocalDateTime[] getMonthDateTimeRange(int year, int month) {
         LocalDate monthBeginDate = LocalDate.of(year, month, 1);
-        return getDateTimeRange(monthBeginDate, monthBeginDate.with(TemporalAdjusters.lastDayOfMonth()));
+        return getDateTimeRange(
+                monthBeginDate, monthBeginDate.with(TemporalAdjusters.lastDayOfMonth()));
     }
 
     /**
@@ -712,8 +751,11 @@ public class LocalDateTimeUtils {
      * @param endTime2 第二个范围的结束时间
      * @return 是否存在正时长的重叠
      */
-    public static boolean isOverlap(LocalDateTime beginTime1, LocalDateTime endTime1,
-                                    LocalDateTime beginTime2, LocalDateTime endTime2) {
+    public static boolean isOverlap(
+            LocalDateTime beginTime1,
+            LocalDateTime endTime1,
+            LocalDateTime beginTime2,
+            LocalDateTime endTime2) {
         if (beginTime1 == null || endTime1 == null || beginTime2 == null || endTime2 == null) {
             return false;
         }
@@ -729,8 +771,11 @@ public class LocalDateTimeUtils {
      * @param endTime2 第二个范围的结束时间
      * @return 是否重叠
      */
-    public static boolean isClosedRangeOverlap(LocalDateTime beginTime1, LocalDateTime endTime1,
-                                               LocalDateTime beginTime2, LocalDateTime endTime2) {
+    public static boolean isClosedRangeOverlap(
+            LocalDateTime beginTime1,
+            LocalDateTime endTime1,
+            LocalDateTime beginTime2,
+            LocalDateTime endTime2) {
         if (beginTime1 == null || endTime1 == null || beginTime2 == null || endTime2 == null) {
             return false;
         }
@@ -810,9 +855,8 @@ public class LocalDateTimeUtils {
         return dates;
     }
 
-    public static List<LocalDateTime[]> getDateRangeList(LocalDateTime startTime,
-                                                         LocalDateTime endTime,
-                                                         Integer interval) {
+    public static List<LocalDateTime[]> getDateRangeList(
+            LocalDateTime startTime, LocalDateTime endTime, Integer interval) {
         // 1.1 找到枚举
         DateIntervalEnum intervalEnum = DateIntervalEnum.valueOf(interval);
         Assert.notNull(intervalEnum, "interval({}} 找不到对应的枚举", interval);
@@ -825,43 +869,61 @@ public class LocalDateTimeUtils {
         switch (intervalEnum) {
             case HOUR:
                 while (startTime.isBefore(endTime)) {
-                    timeRanges.add(new LocalDateTime[]{startTime, startTime.plusHours(1).minusNanos(1)});
+                    timeRanges.add(
+                            new LocalDateTime[] {startTime, startTime.plusHours(1).minusNanos(1)});
                     startTime = startTime.plusHours(1);
                 }
             case DAY:
                 while (startTime.isBefore(endTime)) {
-                    timeRanges.add(new LocalDateTime[]{startTime, startTime.plusDays(1).minusNanos(1)});
+                    timeRanges.add(
+                            new LocalDateTime[] {startTime, startTime.plusDays(1).minusNanos(1)});
                     startTime = startTime.plusDays(1);
                 }
                 break;
             case WEEK:
                 while (startTime.isBefore(endTime)) {
-                    LocalDateTime endOfWeek = startTime.with(DayOfWeek.SUNDAY).plusDays(1).minusNanos(1);
-                    timeRanges.add(new LocalDateTime[]{startTime, endOfWeek});
+                    LocalDateTime endOfWeek =
+                            startTime.with(DayOfWeek.SUNDAY).plusDays(1).minusNanos(1);
+                    timeRanges.add(new LocalDateTime[] {startTime, endOfWeek});
                     startTime = endOfWeek.plusNanos(1);
                 }
                 break;
             case MONTH:
                 while (startTime.isBefore(endTime)) {
-                    LocalDateTime endOfMonth = startTime.with(TemporalAdjusters.lastDayOfMonth()).plusDays(1).minusNanos(1);
-                    timeRanges.add(new LocalDateTime[]{startTime, endOfMonth});
+                    LocalDateTime endOfMonth =
+                            startTime
+                                    .with(TemporalAdjusters.lastDayOfMonth())
+                                    .plusDays(1)
+                                    .minusNanos(1);
+                    timeRanges.add(new LocalDateTime[] {startTime, endOfMonth});
                     startTime = endOfMonth.plusNanos(1);
                 }
                 break;
             case QUARTER:
                 while (startTime.isBefore(endTime)) {
                     int quarterOfYear = getQuarterOfYear(startTime);
-                    LocalDateTime quarterEnd = quarterOfYear == 4
-                            ? startTime.with(TemporalAdjusters.lastDayOfYear()).plusDays(1).minusNanos(1)
-                            : startTime.withMonth(quarterOfYear * 3 + 1).withDayOfMonth(1).minusNanos(1);
-                    timeRanges.add(new LocalDateTime[]{startTime, quarterEnd});
+                    LocalDateTime quarterEnd =
+                            quarterOfYear == 4
+                                    ? startTime
+                                            .with(TemporalAdjusters.lastDayOfYear())
+                                            .plusDays(1)
+                                            .minusNanos(1)
+                                    : startTime
+                                            .withMonth(quarterOfYear * 3 + 1)
+                                            .withDayOfMonth(1)
+                                            .minusNanos(1);
+                    timeRanges.add(new LocalDateTime[] {startTime, quarterEnd});
                     startTime = quarterEnd.plusNanos(1);
                 }
                 break;
             case YEAR:
                 while (startTime.isBefore(endTime)) {
-                    LocalDateTime endOfYear = startTime.with(TemporalAdjusters.lastDayOfYear()).plusDays(1).minusNanos(1);
-                    timeRanges.add(new LocalDateTime[]{startTime, endOfYear});
+                    LocalDateTime endOfYear =
+                            startTime
+                                    .with(TemporalAdjusters.lastDayOfYear())
+                                    .plusDays(1)
+                                    .minusNanos(1);
+                    timeRanges.add(new LocalDateTime[] {startTime, endOfYear});
                     startTime = endOfYear.plusNanos(1);
                 }
                 break;
@@ -899,7 +961,8 @@ public class LocalDateTimeUtils {
      * @param interval  时间间隔
      * @return 时间范围
      */
-    public static String formatDateRange(LocalDateTime startTime, LocalDateTime endTime, Integer interval) {
+    public static String formatDateRange(
+            LocalDateTime startTime, LocalDateTime endTime, Integer interval) {
         // 1. 找到枚举
         DateIntervalEnum intervalEnum = DateIntervalEnum.valueOf(interval);
         Assert.notNull(intervalEnum, "interval({}} 找不到对应的枚举", interval);
@@ -907,7 +970,8 @@ public class LocalDateTimeUtils {
         // 2. 循环，生成时间范围
         switch (intervalEnum) {
             case HOUR:
-                return LocalDateTimeUtil.format(startTime, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
+                return LocalDateTimeUtil.format(
+                        startTime, DatePattern.NORM_DATETIME_MINUTE_PATTERN);
             case DAY:
                 return LocalDateTimeUtil.format(startTime, DatePattern.NORM_DATE_PATTERN);
             case WEEK:
@@ -980,11 +1044,10 @@ public class LocalDateTimeUtils {
          * 开始时间
          */
         private final LocalDateTime startTime;
+
         /**
          * 结束时间
          */
         private final LocalDateTime endTime;
-
     }
-
 }

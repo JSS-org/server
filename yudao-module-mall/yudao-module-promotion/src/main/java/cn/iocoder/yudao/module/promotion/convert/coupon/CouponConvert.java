@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.coupon.CouponDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.coupon.CouponTemplateDO;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponStatusEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponTemplateValidityTypeEnum;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -30,23 +31,26 @@ public interface CouponConvert {
     CouponRespDTO convert(CouponDO bean);
 
     default CouponDO convert(CouponTemplateDO template, Long userId) {
-        CouponDO coupon = new CouponDO()
-                .setTemplateId(template.getId())
-                .setName(template.getName())
-                .setTakeType(template.getTakeType())
-                .setUsePrice(template.getUsePrice())
-                .setProductScope(template.getProductScope())
-                .setProductScopeValues(template.getProductScopeValues())
-                .setDiscountType(template.getDiscountType())
-                .setDiscountPercent(template.getDiscountPercent())
-                .setDiscountPrice(template.getDiscountPrice())
-                .setDiscountLimitPrice(template.getDiscountLimitPrice())
-                .setStatus(CouponStatusEnum.UNUSED.getStatus())
-                .setUserId(userId);
+        CouponDO coupon =
+                new CouponDO()
+                        .setTemplateId(template.getId())
+                        .setName(template.getName())
+                        .setTakeType(template.getTakeType())
+                        .setUsePrice(template.getUsePrice())
+                        .setProductScope(template.getProductScope())
+                        .setProductScopeValues(template.getProductScopeValues())
+                        .setDiscountType(template.getDiscountType())
+                        .setDiscountPercent(template.getDiscountPercent())
+                        .setDiscountPrice(template.getDiscountPrice())
+                        .setDiscountLimitPrice(template.getDiscountLimitPrice())
+                        .setStatus(CouponStatusEnum.UNUSED.getStatus())
+                        .setUserId(userId);
         if (CouponTemplateValidityTypeEnum.DATE.getType().equals(template.getValidityType())) {
             coupon.setValidStartTime(template.getValidStartTime());
             coupon.setValidEndTime(template.getValidEndTime());
-        } else if (CouponTemplateValidityTypeEnum.TERM.getType().equals(template.getValidityType())) {
+        } else if (CouponTemplateValidityTypeEnum.TERM
+                .getType()
+                .equals(template.getValidityType())) {
             coupon.setValidStartTime(LocalDateTime.now().plusDays(template.getFixedStartTerm()));
             coupon.setValidEndTime(coupon.getValidStartTime().plusDays(template.getFixedEndTerm()));
         }
@@ -54,5 +58,4 @@ public interface CouponConvert {
     }
 
     CouponPageReqVO convert(AppCouponPageReqVO pageReqVO, Collection<Long> userIds);
-
 }

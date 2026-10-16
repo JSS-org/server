@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.iot.controller.admin.ota;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.IotOtaTaskCreateReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.IotOtaTaskPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.IotOtaTaskRespVO;
-import cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.IotOtaTaskCreateReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.ota.IotOtaTaskDO;
 import cn.iocoder.yudao.module.iot.service.ota.IotOtaTaskService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - IoT OTA 升级任务")
 @RestController
@@ -25,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class IotOtaTaskController {
 
-    @Resource
-    private IotOtaTaskService otaTaskService;
+    @Resource private IotOtaTaskService otaTaskService;
 
     @PostMapping("/create")
     @Operation(summary = "创建 OTA 升级任务")
@@ -47,7 +49,8 @@ public class IotOtaTaskController {
     @GetMapping("/page")
     @Operation(summary = "获得 OTA 升级任务分页")
     @PreAuthorize(value = "@ss.hasPermission('iot:ota-task:query')")
-    public CommonResult<PageResult<IotOtaTaskRespVO>> getOtaTaskPage(@Valid IotOtaTaskPageReqVO pageReqVO) {
+    public CommonResult<PageResult<IotOtaTaskRespVO>> getOtaTaskPage(
+            @Valid IotOtaTaskPageReqVO pageReqVO) {
         PageResult<IotOtaTaskDO> pageResult = otaTaskService.getOtaTaskPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, IotOtaTaskRespVO.class));
     }
@@ -60,5 +63,4 @@ public class IotOtaTaskController {
         IotOtaTaskDO upgradeTask = otaTaskService.getOtaTask(id);
         return success(BeanUtils.toBean(upgradeTask, IotOtaTaskRespVO.class));
     }
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.signin;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSignInConfigCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSignInConfigRespVO;
@@ -7,18 +9,19 @@ import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSi
 import cn.iocoder.yudao.module.member.convert.signin.MemberSignInConfigConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.signin.MemberSignInConfigDO;
 import cn.iocoder.yudao.module.member.service.signin.MemberSignInConfigService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 // TODO 芋艿：url
 @Tag(name = "管理后台 - 签到规则")
@@ -27,20 +30,21 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MemberSignInConfigController {
 
-    @Resource
-    private MemberSignInConfigService signInConfigService;
+    @Resource private MemberSignInConfigService signInConfigService;
 
     @PostMapping("/create")
     @Operation(summary = "创建签到规则")
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:create')")
-    public CommonResult<Long> createSignInConfig(@Valid @RequestBody MemberSignInConfigCreateReqVO createReqVO) {
+    public CommonResult<Long> createSignInConfig(
+            @Valid @RequestBody MemberSignInConfigCreateReqVO createReqVO) {
         return success(signInConfigService.createSignInConfig(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新签到规则")
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:update')")
-    public CommonResult<Boolean> updateSignInConfig(@Valid @RequestBody MemberSignInConfigUpdateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSignInConfig(
+            @Valid @RequestBody MemberSignInConfigUpdateReqVO updateReqVO) {
         signInConfigService.updateSignInConfig(updateReqVO);
         return success(true);
     }
@@ -70,5 +74,4 @@ public class MemberSignInConfigController {
         List<MemberSignInConfigDO> list = signInConfigService.getSignInConfigList();
         return success(MemberSignInConfigConvert.INSTANCE.convertList(list));
     }
-
 }

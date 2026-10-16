@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.candidate;
 
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -26,7 +29,10 @@ public class HrmRecruitCandidateSaveReqVO {
     @DiffLogField(name = "候选人姓名")
     private String name;
 
-    @Schema(description = "手机号码", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601691399")
+    @Schema(
+            description = "手机号码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601691399")
     @NotBlank(message = "手机号码不能为空")
     @Size(max = 18, message = "手机号码长度不能超过 18 个字符")
     @Pattern(regexp = "^(\\+?0?\\d{2,4}-?)?\\d{6,11}$", message = "手机号码格式不正确")
@@ -89,5 +95,4 @@ public class HrmRecruitCandidateSaveReqVO {
     @Size(max = 5, message = "简历附件不能超过 5 个")
     @DiffLogField(name = "简历附件")
     private List<@Size(max = 512, message = "简历附件地址长度不能超过 512 个字符") String> resumeUrls;
-
 }

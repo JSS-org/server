@@ -1,6 +1,17 @@
 package cn.iocoder.yudao.module.hrm.service.salary.slip;
 
-import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryOptionService;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getMaxValue;
+import static cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO.ADJUSTABLE_CATEGORY_MAX_CODE;
+import static cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO.ADJUSTABLE_CATEGORY_MIN_CODE;
+import static cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO.ROOT_PARENT_CODE;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_DATA_ILLEGAL;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_SLIP_TEMPLATE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,7 +24,10 @@ import cn.iocoder.yudao.module.hrm.dal.mysql.salary.slip.HrmSalarySlipTemplateMa
 import cn.iocoder.yudao.module.hrm.enums.salary.config.HrmSalaryOptionCodeEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.slip.HrmSalarySlipTemplateCategoryEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.slip.HrmSalarySlipTemplateOptionTypeEnum;
+import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryOptionService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -28,18 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getMaxValue;
-import static cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO.ADJUSTABLE_CATEGORY_MAX_CODE;
-import static cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO.ADJUSTABLE_CATEGORY_MIN_CODE;
-import static cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO.ROOT_PARENT_CODE;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_DATA_ILLEGAL;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_SLIP_TEMPLATE_NOT_EXISTS;
-
 /**
  * HRM 工资条模板 Service 实现类
  *
@@ -49,10 +51,8 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_SLIP_T
 @Validated
 public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateService {
 
-    @Resource
-    private HrmSalarySlipTemplateMapper salarySlipTemplateMapper;
-    @Resource
-    private HrmSalaryOptionService salaryOptionService;
+    @Resource private HrmSalarySlipTemplateMapper salarySlipTemplateMapper;
+    @Resource private HrmSalaryOptionService salaryOptionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -62,9 +62,12 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
                 buildSalarySlipTemplateOptions(createReqVO.getOptions());
 
         // 2. 创建自定义工资条模板
-        HrmSalarySlipTemplateDO template = new HrmSalarySlipTemplateDO()
-                .setName(createReqVO.getName()).setHideEmpty(Boolean.TRUE.equals(createReqVO.getHideEmpty()))
-                .setDefaultStatus(false).setOptions(options);
+        HrmSalarySlipTemplateDO template =
+                new HrmSalarySlipTemplateDO()
+                        .setName(createReqVO.getName())
+                        .setHideEmpty(Boolean.TRUE.equals(createReqVO.getHideEmpty()))
+                        .setDefaultStatus(false)
+                        .setOptions(options);
         salarySlipTemplateMapper.insert(template);
         return template.getId();
     }
@@ -82,9 +85,13 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
                 buildSalarySlipTemplateOptions(updateReqVO.getOptions());
 
         // 2. 更新自定义工资条模板
-        HrmSalarySlipTemplateDO updateObj = new HrmSalarySlipTemplateDO().setId(updateReqVO.getId())
-                .setName(updateReqVO.getName()).setHideEmpty(Boolean.TRUE.equals(updateReqVO.getHideEmpty()))
-                .setDefaultStatus(false).setOptions(options);
+        HrmSalarySlipTemplateDO updateObj =
+                new HrmSalarySlipTemplateDO()
+                        .setId(updateReqVO.getId())
+                        .setName(updateReqVO.getName())
+                        .setHideEmpty(Boolean.TRUE.equals(updateReqVO.getHideEmpty()))
+                        .setDefaultStatus(false)
+                        .setOptions(options);
         salarySlipTemplateMapper.updateById(updateObj);
     }
 
@@ -112,16 +119,19 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<HrmSalarySlipTemplateDO> getSalarySlipTemplateList() {
-        List<HrmSalarySlipTemplateDO> templates = salarySlipTemplateMapper.selectListByDefaultStatusDesc();
-        if (CollUtil.findOne(templates, template -> Boolean.TRUE.equals(template.getDefaultStatus())) == null) {
+        List<HrmSalarySlipTemplateDO> templates =
+                salarySlipTemplateMapper.selectListByDefaultStatusDesc();
+        if (CollUtil.findOne(
+                        templates, template -> Boolean.TRUE.equals(template.getDefaultStatus()))
+                == null) {
             HrmSalarySlipTemplateDO globalDefaultTemplate = getGlobalDefaultSalarySlipTemplate();
             if (globalDefaultTemplate != null) {
                 templates.add(0, globalDefaultTemplate);
             }
         }
         List<HrmSalaryOptionDO> salaryOptions = salaryOptionService.getSalaryOptionList(false);
-        return convertList(templates,
-                template -> buildDynamicSalarySlipTemplate(template, salaryOptions));
+        return convertList(
+                templates, template -> buildDynamicSalarySlipTemplate(template, salaryOptions));
     }
 
     @Override
@@ -160,16 +170,26 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
         // 3. 自定义模板保留原布局，并将新增薪资项归入“未分类科目”
         List<HrmSalarySlipTemplateDO.Option> templateOptions =
                 copySalarySlipTemplateOptions(template.getOptions());
-        Set<Integer> selectedCodes = convertSetByFlatMap(templateOptions,
-                option -> CollUtil.emptyIfNull(option.getChildren()).stream()
-                        .map(HrmSalarySlipTemplateDO.Option::getCode));
-        selectedCodes.addAll(convertSet(templateOptions, HrmSalarySlipTemplateDO.Option::getCode,
-                option -> ObjectUtil.equal(option.getType(), HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType())));
+        Set<Integer> selectedCodes =
+                convertSetByFlatMap(
+                        templateOptions,
+                        option ->
+                                CollUtil.emptyIfNull(option.getChildren()).stream()
+                                        .map(HrmSalarySlipTemplateDO.Option::getCode));
+        selectedCodes.addAll(
+                convertSet(
+                        templateOptions,
+                        HrmSalarySlipTemplateDO.Option::getCode,
+                        option ->
+                                ObjectUtil.equal(
+                                        option.getType(),
+                                        HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType())));
         List<HrmSalaryOptionDO> detailOptions = getSalarySlipDetailOptions(salaryOptions);
-        List<HrmSalaryOptionDO> missingOptions = filterList(detailOptions,
-                option -> !selectedCodes.contains(option.getCode()));
+        List<HrmSalaryOptionDO> missingOptions =
+                filterList(detailOptions, option -> !selectedCodes.contains(option.getCode()));
         if (CollUtil.isNotEmpty(missingOptions)) {
-            Set<Integer> usedCodes = convertSet(templateOptions, HrmSalarySlipTemplateDO.Option::getCode);
+            Set<Integer> usedCodes =
+                    convertSet(templateOptions, HrmSalarySlipTemplateDO.Option::getCode);
             int categoryCode = HrmSalarySlipTemplateCategoryEnum.BASIC.getCode();
             for (int i = 0; i <= usedCodes.size(); i++) {
                 if (!usedCodes.contains(categoryCode)) {
@@ -177,14 +197,20 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
                 }
                 categoryCode--;
             }
-            Integer maxSort = getMaxValue(
-                    filterList(templateOptions, option -> option.getSort() != null),
-                    HrmSalarySlipTemplateDO.Option::getSort);
+            Integer maxSort =
+                    getMaxValue(
+                            filterList(templateOptions, option -> option.getSort() != null),
+                            HrmSalarySlipTemplateDO.Option::getSort);
             int categorySort = (maxSort == null ? 0 : maxSort) + 1;
-            templateOptions.add(HrmSalarySlipTemplateDO.Option.builder()
-                    .name("未分类科目").type(HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType()).code(categoryCode)
-                    .hidden(false).sort(categorySort)
-                    .children(buildSalarySlipTemplateItems(missingOptions)).build());
+            templateOptions.add(
+                    HrmSalarySlipTemplateDO.Option.builder()
+                            .name("未分类科目")
+                            .type(HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())
+                            .code(categoryCode)
+                            .hidden(false)
+                            .sort(categorySort)
+                            .children(buildSalarySlipTemplateItems(missingOptions))
+                            .build());
         }
         template.setOptions(templateOptions);
         return template;
@@ -199,18 +225,35 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
     private List<HrmSalarySlipTemplateDO.Option> buildDefaultSalarySlipTemplateOptions(
             List<HrmSalaryOptionDO> salaryOptions) {
         // 1. 构建基本项分类
-        List<HrmSalaryOptionDO> basicOptions = filterList(salaryOptions,
-                option -> HrmSalaryOptionCodeEnum.SALARY_SLIP_BASIC_CODES.contains(option.getCode()));
+        List<HrmSalaryOptionDO> basicOptions =
+                filterList(
+                        salaryOptions,
+                        option ->
+                                HrmSalaryOptionCodeEnum.SALARY_SLIP_BASIC_CODES.contains(
+                                        option.getCode()));
         basicOptions.sort(Comparator.comparing(HrmSalaryOptionDO::getCode));
-        HrmSalarySlipTemplateDO.Option basicCategory = HrmSalarySlipTemplateDO.Option.builder()
-                .name(HrmSalarySlipTemplateCategoryEnum.BASIC.getName()).type(HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType()).code(HrmSalarySlipTemplateCategoryEnum.BASIC.getCode())
-                .hidden(false).sort(HrmSalarySlipTemplateCategoryEnum.BASIC.getSort()).children(buildSalarySlipTemplateItems(basicOptions)).build();
+        HrmSalarySlipTemplateDO.Option basicCategory =
+                HrmSalarySlipTemplateDO.Option.builder()
+                        .name(HrmSalarySlipTemplateCategoryEnum.BASIC.getName())
+                        .type(HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())
+                        .code(HrmSalarySlipTemplateCategoryEnum.BASIC.getCode())
+                        .hidden(false)
+                        .sort(HrmSalarySlipTemplateCategoryEnum.BASIC.getSort())
+                        .children(buildSalarySlipTemplateItems(basicOptions))
+                        .build();
 
         // 2. 构建明细项分类
-        HrmSalarySlipTemplateDO.Option detailCategory = HrmSalarySlipTemplateDO.Option.builder()
-                .name(HrmSalarySlipTemplateCategoryEnum.DETAIL.getName()).type(HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType()).code(HrmSalarySlipTemplateCategoryEnum.DETAIL.getCode())
-                .hidden(false).sort(HrmSalarySlipTemplateCategoryEnum.DETAIL.getSort())
-                .children(buildSalarySlipTemplateItems(getSalarySlipDetailOptions(salaryOptions))).build();
+        HrmSalarySlipTemplateDO.Option detailCategory =
+                HrmSalarySlipTemplateDO.Option.builder()
+                        .name(HrmSalarySlipTemplateCategoryEnum.DETAIL.getName())
+                        .type(HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())
+                        .code(HrmSalarySlipTemplateCategoryEnum.DETAIL.getCode())
+                        .hidden(false)
+                        .sort(HrmSalarySlipTemplateCategoryEnum.DETAIL.getSort())
+                        .children(
+                                buildSalarySlipTemplateItems(
+                                        getSalarySlipDetailOptions(salaryOptions)))
+                        .build();
         return Arrays.asList(basicCategory, detailCategory);
     }
 
@@ -220,11 +263,15 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
      * @param salaryOptions 有效薪资项
      * @return 明细薪资项
      */
-    private List<HrmSalaryOptionDO> getSalarySlipDetailOptions(List<HrmSalaryOptionDO> salaryOptions) {
-        List<HrmSalaryOptionDO> detailOptions = filterList(salaryOptions,
-                option -> option.getParentCode() != null
-                        && option.getParentCode() >= ADJUSTABLE_CATEGORY_MIN_CODE
-                        && option.getParentCode() <= ADJUSTABLE_CATEGORY_MAX_CODE);
+    private List<HrmSalaryOptionDO> getSalarySlipDetailOptions(
+            List<HrmSalaryOptionDO> salaryOptions) {
+        List<HrmSalaryOptionDO> detailOptions =
+                filterList(
+                        salaryOptions,
+                        option ->
+                                option.getParentCode() != null
+                                        && option.getParentCode() >= ADJUSTABLE_CATEGORY_MIN_CODE
+                                        && option.getParentCode() <= ADJUSTABLE_CATEGORY_MAX_CODE);
         detailOptions.sort(Comparator.comparing(HrmSalaryOptionDO::getCode));
         return detailOptions;
     }
@@ -240,10 +287,16 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
         List<HrmSalarySlipTemplateDO.Option> options = new ArrayList<>();
         for (int i = 0; i < salaryOptions.size(); i++) {
             HrmSalaryOptionDO salaryOption = salaryOptions.get(i);
-            options.add(HrmSalarySlipTemplateDO.Option.builder()
-                    .name(salaryOption.getName()).type(HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType()).code(salaryOption.getCode())
-                    .remark(salaryOption.getRemark()).hidden(false).sort(i + 1)
-                    .children(Collections.emptyList()).build());
+            options.add(
+                    HrmSalarySlipTemplateDO.Option.builder()
+                            .name(salaryOption.getName())
+                            .type(HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType())
+                            .code(salaryOption.getCode())
+                            .remark(salaryOption.getRemark())
+                            .hidden(false)
+                            .sort(i + 1)
+                            .children(Collections.emptyList())
+                            .build());
         }
         return options;
     }
@@ -256,8 +309,16 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
      */
     private List<HrmSalarySlipTemplateDO.Option> copySalarySlipTemplateOptions(
             List<HrmSalarySlipTemplateDO.Option> options) {
-        return convertList(options, option -> BeanUtils.toBean(option, HrmSalarySlipTemplateDO.Option.class,
-                copy -> copy.setChildren(copySalarySlipTemplateOptions(option.getChildren()))));
+        return convertList(
+                options,
+                option ->
+                        BeanUtils.toBean(
+                                option,
+                                HrmSalarySlipTemplateDO.Option.class,
+                                copy ->
+                                        copy.setChildren(
+                                                copySalarySlipTemplateOptions(
+                                                        option.getChildren()))));
     }
 
     // ==================== 校验 ====================
@@ -283,7 +344,8 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
         }
         HrmSalarySlipTemplateDO globalDefaultTemplate = getGlobalDefaultSalarySlipTemplate();
         return globalDefaultTemplate != null && ObjectUtil.equal(globalDefaultTemplate.getId(), id)
-                ? globalDefaultTemplate : null;
+                ? globalDefaultTemplate
+                : null;
     }
 
     /**
@@ -308,24 +370,33 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
      */
     private List<HrmSalarySlipTemplateDO.Option> buildSalarySlipTemplateOptions(
             List<HrmSalarySlipTemplateOptionVO> optionVOs) {
-        List<HrmSalarySlipTemplateOptionVO> sortedOptions = convertList(optionVOs, option -> option);
-        sortedOptions.sort(Comparator.comparing(option -> option.getSort() == null
-                ? Integer.MAX_VALUE : option.getSort()));
+        List<HrmSalarySlipTemplateOptionVO> sortedOptions =
+                convertList(optionVOs, option -> option);
+        sortedOptions.sort(
+                Comparator.comparing(
+                        option -> option.getSort() == null ? Integer.MAX_VALUE : option.getSort()));
 
         // 1. 校验节点并构建分类
         List<HrmSalarySlipTemplateDO.Option> options = new ArrayList<>();
         Map<Integer, HrmSalarySlipTemplateDO.Option> categoryMap = new HashMap<>();
         Set<Integer> optionCodes = new HashSet<>();
         for (HrmSalarySlipTemplateOptionVO option : sortedOptions) {
-            if ((ObjectUtil.notEqual(option.getType(), HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())
-                    && ObjectUtil.notEqual(option.getType(), HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType()))
-                    || option.getCode() == null || !optionCodes.add(option.getCode())) {
+            if ((ObjectUtil.notEqual(
+                                    option.getType(),
+                                    HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())
+                            && ObjectUtil.notEqual(
+                                    option.getType(),
+                                    HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType()))
+                    || option.getCode() == null
+                    || !optionCodes.add(option.getCode())) {
                 throw exception(SALARY_DATA_ILLEGAL);
             }
-            if (ObjectUtil.notEqual(option.getType(), HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())) {
+            if (ObjectUtil.notEqual(
+                    option.getType(), HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())) {
                 continue;
             }
-            if (option.getParentCode() != null && ObjectUtil.notEqual(option.getParentCode(), ROOT_PARENT_CODE)) {
+            if (option.getParentCode() != null
+                    && ObjectUtil.notEqual(option.getParentCode(), ROOT_PARENT_CODE)) {
                 throw exception(SALARY_DATA_ILLEGAL);
             }
             HrmSalarySlipTemplateDO.Option category = buildSalarySlipTemplateOption(option);
@@ -335,12 +406,14 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
 
         // 2. 将薪资项放入根节点或对应分类
         for (HrmSalarySlipTemplateOptionVO option : sortedOptions) {
-            if (ObjectUtil.equal(option.getType(), HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())) {
+            if (ObjectUtil.equal(
+                    option.getType(), HrmSalarySlipTemplateOptionTypeEnum.CATEGORY.getType())) {
                 continue;
             }
             HrmSalarySlipTemplateDO.Option item = buildSalarySlipTemplateOption(option);
             HrmSalarySlipTemplateDO.Option category = categoryMap.get(option.getParentCode());
-            if (option.getParentCode() == null || ObjectUtil.equal(option.getParentCode(), ROOT_PARENT_CODE)) {
+            if (option.getParentCode() == null
+                    || ObjectUtil.equal(option.getParentCode(), ROOT_PARENT_CODE)) {
                 options.add(item);
             } else if (category == null) {
                 throw exception(SALARY_DATA_ILLEGAL);
@@ -349,23 +422,36 @@ public class HrmSalarySlipTemplateServiceImpl implements HrmSalarySlipTemplateSe
             }
         }
         if (!optionCodes.contains(HrmSalaryOptionCodeEnum.REAL_PAY.getCode())) {
-            options.add(HrmSalarySlipTemplateDO.Option.builder()
-                    .name(HrmSalaryOptionCodeEnum.REAL_PAY.getName()).type(HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType()).code(HrmSalaryOptionCodeEnum.REAL_PAY.getCode())
-                    .hidden(false).sort(HrmSalaryOptionCodeEnum.REAL_PAY.getCode()).children(Collections.emptyList()).build());
+            options.add(
+                    HrmSalarySlipTemplateDO.Option.builder()
+                            .name(HrmSalaryOptionCodeEnum.REAL_PAY.getName())
+                            .type(HrmSalarySlipTemplateOptionTypeEnum.ITEM.getType())
+                            .code(HrmSalaryOptionCodeEnum.REAL_PAY.getCode())
+                            .hidden(false)
+                            .sort(HrmSalaryOptionCodeEnum.REAL_PAY.getCode())
+                            .children(Collections.emptyList())
+                            .build());
         }
-        options.sort(Comparator.comparing(option -> option.getSort() == null
-                ? Integer.MAX_VALUE : option.getSort()));
+        options.sort(
+                Comparator.comparing(
+                        option -> option.getSort() == null ? Integer.MAX_VALUE : option.getSort()));
         return options;
     }
 
     private HrmSalarySlipTemplateDO.Option buildSalarySlipTemplateOption(
             HrmSalarySlipTemplateOptionVO option) {
         return HrmSalarySlipTemplateDO.Option.builder()
-                .name(option.getName()).type(option.getType()).code(option.getCode()).remark(option.getRemark())
-                .hidden(ObjectUtil.notEqual(option.getCode(), HrmSalaryOptionCodeEnum.REAL_PAY.getCode())
-                        && Boolean.TRUE.equals(option.getHidden()))
+                .name(option.getName())
+                .type(option.getType())
+                .code(option.getCode())
+                .remark(option.getRemark())
+                .hidden(
+                        ObjectUtil.notEqual(
+                                        option.getCode(),
+                                        HrmSalaryOptionCodeEnum.REAL_PAY.getCode())
+                                && Boolean.TRUE.equals(option.getHidden()))
                 .sort(option.getSort() == null ? option.getCode() : option.getSort())
-                .children(new ArrayList<>()).build();
+                .children(new ArrayList<>())
+                .build();
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.officialdoc;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -25,13 +26,16 @@ public enum OaOfficialDocReceiveTypeEnum implements ArrayValuable<Integer> {
      */
     COPY(1, "抄送");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaOfficialDocReceiveTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(OaOfficialDocReceiveTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 收文类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -45,5 +49,4 @@ public enum OaOfficialDocReceiveTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

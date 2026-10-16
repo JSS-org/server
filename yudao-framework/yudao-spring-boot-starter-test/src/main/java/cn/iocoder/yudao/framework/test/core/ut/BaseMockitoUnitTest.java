@@ -9,5 +9,4 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * @author 芋道源码
  */
 @ExtendWith(MockitoExtension.class)
-public class BaseMockitoUnitTest {
-}
+public class BaseMockitoUnitTest {}

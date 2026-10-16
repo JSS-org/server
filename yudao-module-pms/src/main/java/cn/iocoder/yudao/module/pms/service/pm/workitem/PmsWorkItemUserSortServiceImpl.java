@@ -1,10 +1,14 @@
 package cn.iocoder.yudao.module.pms.service.pm.workitem;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemUserSortDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemUserSortMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -12,8 +16,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 工作项个人排序 Service 实现类
@@ -24,8 +26,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class PmsWorkItemUserSortServiceImpl implements PmsWorkItemUserSortService {
 
-    @Resource
-    private PmsWorkItemUserSortMapper workItemUserSortMapper;
+    @Resource private PmsWorkItemUserSortMapper workItemUserSortMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -35,8 +36,12 @@ public class PmsWorkItemUserSortServiceImpl implements PmsWorkItemUserSortServic
 
         // 2. 按请求顺序保存个人排序
         for (int index = 0; index < workItemIds.size(); index++) {
-            workItemUserSortMapper.insert(new PmsWorkItemUserSortDO().setProjectId(projectId)
-                    .setWorkItemId(workItemIds.get(index)).setUserId(userId).setSort(index + 1));
+            workItemUserSortMapper.insert(
+                    new PmsWorkItemUserSortDO()
+                            .setProjectId(projectId)
+                            .setWorkItemId(workItemIds.get(index))
+                            .setUserId(userId)
+                            .setSort(index + 1));
         }
     }
 
@@ -50,12 +55,17 @@ public class PmsWorkItemUserSortServiceImpl implements PmsWorkItemUserSortServic
         }
 
         // 2. 转换个人排序 Map，并排列工作项
-        Map<Long, Integer> userSortMap = convertMap(userSorts,
-                PmsWorkItemUserSortDO::getWorkItemId, PmsWorkItemUserSortDO::getSort);
-        workItems.sort(Comparator
-                .comparing((PmsWorkItemDO item) -> userSortMap.containsKey(item.getId()) ? 0 : 1)
-                .thenComparing(item -> userSortMap.getOrDefault(item.getId(), 0))
-                .thenComparing(PmsWorkItemDO::getId, Comparator.reverseOrder()));
+        Map<Long, Integer> userSortMap =
+                convertMap(
+                        userSorts,
+                        PmsWorkItemUserSortDO::getWorkItemId,
+                        PmsWorkItemUserSortDO::getSort);
+        workItems.sort(
+                Comparator.comparing(
+                                (PmsWorkItemDO item) ->
+                                        userSortMap.containsKey(item.getId()) ? 0 : 1)
+                        .thenComparing(item -> userSortMap.getOrDefault(item.getId(), 0))
+                        .thenComparing(PmsWorkItemDO::getId, Comparator.reverseOrder()));
     }
 
     @Override
@@ -67,5 +77,4 @@ public class PmsWorkItemUserSortServiceImpl implements PmsWorkItemUserSortServic
     public void deleteWorkItemUserSortByProjectId(Long projectId) {
         workItemUserSortMapper.deleteByProjectId(projectId);
     }
-
 }

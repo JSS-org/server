@@ -21,5 +21,4 @@ public class ExpressTrackRespDTO {
      * 快递状态
      */
     private String content;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.admin.config.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -14,7 +15,9 @@ public class TradeConfigRespVO extends TradeConfigBaseVO {
     @Schema(description = "自增主键", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "腾讯地图 KEY", requiredMode = Schema.RequiredMode.REQUIRED, example = "123456")
+    @Schema(
+            description = "腾讯地图 KEY",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "123456")
     private String tencentLbsKey;
-
 }

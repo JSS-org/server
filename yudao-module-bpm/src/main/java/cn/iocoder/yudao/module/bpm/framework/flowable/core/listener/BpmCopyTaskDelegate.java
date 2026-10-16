@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.listener;
 
+import static cn.iocoder.yudao.module.bpm.framework.flowable.core.listener.BpmCopyTaskDelegate.BEAN_NAME;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateInvoker;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.FlowableUtils;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceCopyService;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
-
-import static cn.iocoder.yudao.module.bpm.framework.flowable.core.listener.BpmCopyTaskDelegate.BEAN_NAME;
 
 /**
  * 处理抄送用户的 {@link JavaDelegate} 的实现类
@@ -26,11 +28,9 @@ public class BpmCopyTaskDelegate implements JavaDelegate {
 
     public static final String BEAN_NAME = "bpmCopyTaskDelegate";
 
-    @Resource
-    private BpmTaskCandidateInvoker taskCandidateInvoker;
+    @Resource private BpmTaskCandidateInvoker taskCandidateInvoker;
 
-    @Resource
-    private BpmProcessInstanceCopyService processInstanceCopyService;
+    @Resource private BpmProcessInstanceCopyService processInstanceCopyService;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -41,9 +41,15 @@ public class BpmCopyTaskDelegate implements JavaDelegate {
         }
         // 2. 执行抄送
         FlowElement currentFlowElement = execution.getCurrentFlowElement();
-        FlowableUtils.execute(execution.getTenantId(), () ->
-                processInstanceCopyService.createProcessInstanceCopy(userIds, null, execution.getProcessInstanceId(),
-                        currentFlowElement.getId(), currentFlowElement.getName(), null));
+        FlowableUtils.execute(
+                execution.getTenantId(),
+                () ->
+                        processInstanceCopyService.createProcessInstanceCopy(
+                                userIds,
+                                null,
+                                execution.getProcessInstanceId(),
+                                currentFlowElement.getId(),
+                                currentFlowElement.getName(),
+                                null));
     }
-
 }

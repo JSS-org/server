@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.pay.dal.dataobject.app.PayAppDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderExtensionDO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -31,7 +32,8 @@ public interface PayOrderConvert {
 
     PayOrderRespDTO convert2(PayOrderDO order);
 
-    default PayOrderDetailsRespVO convert(PayOrderDO order, PayOrderExtensionDO orderExtension, PayAppDO app) {
+    default PayOrderDetailsRespVO convert(
+            PayOrderDO order, PayOrderExtensionDO orderExtension, PayAppDO app) {
         PayOrderDetailsRespVO respVO = convertDetail(order);
         respVO.setExtension(convert(orderExtension));
         if (app != null) {
@@ -39,23 +41,37 @@ public interface PayOrderConvert {
         }
         return respVO;
     }
+
     PayOrderDetailsRespVO convertDetail(PayOrderDO bean);
+
     PayOrderDetailsRespVO.PayOrderExtension convert(PayOrderExtensionDO bean);
 
-    default PageResult<PayOrderPageItemRespVO> convertPage(PageResult<PayOrderDO> page, Map<Long, PayAppDO> appMap) {
+    default PageResult<PayOrderPageItemRespVO> convertPage(
+            PageResult<PayOrderDO> page, Map<Long, PayAppDO> appMap) {
         PageResult<PayOrderPageItemRespVO> result = convertPage(page);
-        result.getList().forEach(order -> MapUtils.findAndThen(appMap, order.getAppId(), app -> order.setAppName(app.getName())));
+        result.getList()
+                .forEach(
+                        order ->
+                                MapUtils.findAndThen(
+                                        appMap,
+                                        order.getAppId(),
+                                        app -> order.setAppName(app.getName())));
         return result;
     }
+
     PageResult<PayOrderPageItemRespVO> convertPage(PageResult<PayOrderDO> page);
 
     default List<PayOrderExcelVO> convertList(List<PayOrderDO> list, Map<Long, PayAppDO> appMap) {
-        return CollectionUtils.convertList(list, order -> {
-            PayOrderExcelVO excelVO = convertExcel(order);
-            MapUtils.findAndThen(appMap, order.getAppId(), app -> excelVO.setAppName(app.getName()));
-            return excelVO;
-        });
+        return CollectionUtils.convertList(
+                list,
+                order -> {
+                    PayOrderExcelVO excelVO = convertExcel(order);
+                    MapUtils.findAndThen(
+                            appMap, order.getAppId(), app -> excelVO.setAppName(app.getName()));
+                    return excelVO;
+                });
     }
+
     PayOrderExcelVO convertExcel(PayOrderDO bean);
 
     PayOrderDO convert(PayOrderCreateReqDTO bean);
@@ -66,6 +82,8 @@ public interface PayOrderConvert {
     PayOrderUnifiedReqDTO convert2(PayOrderSubmitReqVO reqVO, String userIp);
 
     @Mapping(source = "order.status", target = "status")
-    PayOrderSubmitRespVO convert(PayOrderDO order, cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO respDTO);
-
+    PayOrderSubmitRespVO convert(
+            PayOrderDO order,
+            cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO
+                    respDTO);
 }

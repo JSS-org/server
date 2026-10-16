@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.service.dept;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,7 +12,9 @@ import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostPageReqV
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
 import cn.iocoder.yudao.module.system.dal.mysql.dept.PostMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -16,10 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 岗位 Service 实现类
@@ -30,8 +32,7 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Validated
 public class PostServiceImpl implements PostService {
 
-    @Resource
-    private PostMapper postMapper;
+    @Resource private PostMapper postMapper;
 
     @Override
     public Long createPost(PostSaveReqVO createReqVO) {
@@ -47,7 +48,8 @@ public class PostServiceImpl implements PostService {
     @Override
     public void updatePost(PostSaveReqVO updateReqVO) {
         // 校验正确性
-        validatePostForCreateOrUpdate(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getCode());
+        validatePostForCreateOrUpdate(
+                updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getCode());
 
         // 更新岗位
         PostDO updateObj = BeanUtils.toBean(updateReqVO, PostDO.class);
@@ -145,14 +147,15 @@ public class PostServiceImpl implements PostService {
         List<PostDO> posts = postMapper.selectByIds(ids);
         Map<Long, PostDO> postMap = convertMap(posts, PostDO::getId);
         // 校验
-        ids.forEach(id -> {
-            PostDO post = postMap.get(id);
-            if (post == null) {
-                throw exception(POST_NOT_FOUND);
-            }
-            if (!CommonStatusEnum.ENABLE.getStatus().equals(post.getStatus())) {
-                throw exception(POST_NOT_ENABLE, post.getName());
-            }
-        });
+        ids.forEach(
+                id -> {
+                    PostDO post = postMap.get(id);
+                    if (post == null) {
+                        throw exception(POST_NOT_FOUND);
+                    }
+                    if (!CommonStatusEnum.ENABLE.getStatus().equals(post.getStatus())) {
+                        throw exception(POST_NOT_ENABLE, post.getName());
+                    }
+                });
     }
 }

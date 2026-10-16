@@ -26,5 +26,4 @@ public interface DictTypeConstants {
     String PMS_KNOWLEDGE_LIBRARY_MEMBER_LEVEL = "pms_knowledge_library_member_level"; // PMS 知识库成员等级
     String PMS_KNOWLEDGE_OBJECT_TYPE = "pms_knowledge_object_type"; // PMS 知识对象类型
     String PMS_KNOWLEDGE_DOCUMENT_TYPE = "pms_knowledge_document_type"; // PMS 知识文档类型
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -57,5 +58,4 @@ public class MesHomeSummaryRespVO {
 
     @Schema(description = "未完成维修工单数", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private Long repairActiveCount;
-
 }

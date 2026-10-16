@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.notify.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,10 @@ public class NotifyMessageRespVO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "25025")
     private Long userId;
 
-    @Schema(description = "用户类型，参见 UserTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "用户类型，参见 UserTypeEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Byte userType;
 
     @Schema(description = "模版编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "13013")
@@ -45,5 +49,4 @@ public class NotifyMessageRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

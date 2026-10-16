@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.plan;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -25,7 +27,10 @@ public class CrmReceivablePlanSaveReqVO {
     @NotNull(message = "负责人编号不能为空")
     private Long ownerUserId;
 
-    @Schema(description = "计划回款日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-02-02")
+    @Schema(
+            description = "计划回款日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-02-02")
     @NotNull(message = "计划回款日期不能为空")
     private LocalDateTime returnTime;
 
@@ -41,5 +46,4 @@ public class CrmReceivablePlanSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

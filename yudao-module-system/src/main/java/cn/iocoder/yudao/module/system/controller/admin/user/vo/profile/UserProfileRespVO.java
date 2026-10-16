@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.system.controller.admin.user.vo.profile;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptSimpleRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostSimpleRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSimpleRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,7 +36,10 @@ public class UserProfileRespVO {
     @Schema(description = "用户头像", example = "https://www.iocoder.cn/xxx.png")
     private String avatar;
 
-    @Schema(description = "最后登录 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "192.168.1.1")
+    @Schema(
+            description = "最后登录 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "192.168.1.1")
     private String loginIp;
 
     @Schema(description = "最后登录时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
@@ -47,13 +52,14 @@ public class UserProfileRespVO {
      * 所属角色
      */
     private List<RoleSimpleRespVO> roles;
+
     /**
      * 所在部门
      */
     private DeptSimpleRespVO dept;
+
     /**
      * 所属岗位数组
      */
     private List<PostSimpleRespVO> posts;
-
 }

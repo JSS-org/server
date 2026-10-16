@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.system.framework.operatelog.core;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,5 +38,4 @@ public class AreaParseFunction implements IParseFunction {
         }
         return AreaUtils.format(Convert.toInt(value));
     }
-
 }

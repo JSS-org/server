@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.ledger;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,17 +16,17 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsLedgerBalanceModeEnum implements ArrayValuable<Integer> {
-
     SAME_AS_SUBJECT(1, "与科目方向相同"),
     OPPOSITE_TO_SUBJECT(2, "与科目方向相反");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsLedgerBalanceModeEnum::getMode).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(FmsLedgerBalanceModeEnum::getMode).toArray(Integer[]::new);
 
     /**
      * 模式
      */
     private final Integer mode;
+
     /**
      * 名字
      */
@@ -39,5 +40,4 @@ public enum FmsLedgerBalanceModeEnum implements ArrayValuable<Integer> {
     public static FmsLedgerBalanceModeEnum valueOf(Integer mode) {
         return ArrayUtil.firstMatch(item -> item.getMode().equals(mode), values());
     }
-
 }

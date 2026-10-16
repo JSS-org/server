@@ -11,5 +11,4 @@ public interface DictTypeConstants {
 
     String BROKERAGE_WITHDRAW_TYPE = "brokerage_withdraw_type"; // 佣金提现类型
     String BROKERAGE_WITHDRAW_STATUS = "brokerage_withdraw_status"; // 佣金提现状态
-
 }

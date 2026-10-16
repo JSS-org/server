@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.dal.dataobject.rule.config;
 
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import lombok.Data;
 
 /**
@@ -16,15 +18,15 @@ import lombok.Data;
 @Data
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = IotDataSinkHttpConfig.class, name = "1"),
-        @JsonSubTypes.Type(value = IotDataSinkTcpConfig.class, name = "2"),
-        @JsonSubTypes.Type(value = IotDataSinkWebSocketConfig.class, name = "3"),
-        @JsonSubTypes.Type(value = IotDataSinkMqttConfig.class, name = "10"),
-        @JsonSubTypes.Type(value = IotDataSinkDatabaseConfig.class, name = "20"),
-        @JsonSubTypes.Type(value = IotDataSinkRedisConfig.class, name = "21"),
-        @JsonSubTypes.Type(value = IotDataSinkRocketMQConfig.class, name = "30"),
-        @JsonSubTypes.Type(value = IotDataSinkRabbitMQConfig.class, name = "31"),
-        @JsonSubTypes.Type(value = IotDataSinkKafkaConfig.class, name = "32"),
+    @JsonSubTypes.Type(value = IotDataSinkHttpConfig.class, name = "1"),
+    @JsonSubTypes.Type(value = IotDataSinkTcpConfig.class, name = "2"),
+    @JsonSubTypes.Type(value = IotDataSinkWebSocketConfig.class, name = "3"),
+    @JsonSubTypes.Type(value = IotDataSinkMqttConfig.class, name = "10"),
+    @JsonSubTypes.Type(value = IotDataSinkDatabaseConfig.class, name = "20"),
+    @JsonSubTypes.Type(value = IotDataSinkRedisConfig.class, name = "21"),
+    @JsonSubTypes.Type(value = IotDataSinkRocketMQConfig.class, name = "30"),
+    @JsonSubTypes.Type(value = IotDataSinkRabbitMQConfig.class, name = "31"),
+    @JsonSubTypes.Type(value = IotDataSinkKafkaConfig.class, name = "32"),
 })
 public abstract class IotAbstractDataSinkConfig {
 
@@ -34,5 +36,4 @@ public abstract class IotAbstractDataSinkConfig {
      * 枚举 {@link IotDataSinkTypeEnum#getType()}
      */
     private String type;
-
 }

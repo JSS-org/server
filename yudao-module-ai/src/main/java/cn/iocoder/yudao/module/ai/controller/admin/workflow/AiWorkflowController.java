@@ -1,21 +1,25 @@
 package cn.iocoder.yudao.module.ai.controller.admin.workflow;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.ai.controller.admin.workflow.vo.*;
 import cn.iocoder.yudao.module.ai.dal.dataobject.workflow.AiWorkflowDO;
 import cn.iocoder.yudao.module.ai.service.workflow.AiWorkflowService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - AI 工作流")
 @RestController
@@ -23,8 +27,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Slf4j
 public class AiWorkflowController {
 
-    @Resource
-    private AiWorkflowService workflowService;
+    @Resource private AiWorkflowService workflowService;
 
     @PostMapping("/create")
     @Operation(summary = "创建 AI 工作流")
@@ -36,7 +39,8 @@ public class AiWorkflowController {
     @PutMapping("/update")
     @Operation(summary = "更新 AI 工作流")
     @PreAuthorize("@ss.hasPermission('ai:workflow:update')")
-    public CommonResult<Boolean> updateWorkflow(@Valid @RequestBody AiWorkflowSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateWorkflow(
+            @Valid @RequestBody AiWorkflowSaveReqVO updateReqVO) {
         workflowService.updateWorkflow(updateReqVO);
         return success(true);
     }
@@ -62,7 +66,8 @@ public class AiWorkflowController {
     @GetMapping("/page")
     @Operation(summary = "获得 AI 工作流分页")
     @PreAuthorize("@ss.hasPermission('ai:workflow:query')")
-    public CommonResult<PageResult<AiWorkflowRespVO>> getWorkflowPage(@Valid AiWorkflowPageReqVO pageReqVO) {
+    public CommonResult<PageResult<AiWorkflowRespVO>> getWorkflowPage(
+            @Valid AiWorkflowPageReqVO pageReqVO) {
         PageResult<AiWorkflowDO> pageResult = workflowService.getWorkflowPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, AiWorkflowRespVO.class));
     }
@@ -73,5 +78,4 @@ public class AiWorkflowController {
     public CommonResult<Object> testWorkflow(@Valid @RequestBody AiWorkflowTestReqVO testReqVO) {
         return success(workflowService.testWorkflow(testReqVO));
     }
-
 }

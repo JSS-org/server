@@ -26,5 +26,4 @@ public interface HrmEmployeeFileService {
      * @return 材料附件列表
      */
     List<HrmEmployeeFileDO> getEmployeeFileList(Long employeeId);
-
 }

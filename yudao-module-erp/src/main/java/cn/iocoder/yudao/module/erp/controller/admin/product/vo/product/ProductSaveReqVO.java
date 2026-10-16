@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.erp.controller.admin.product.vo.product;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -54,5 +56,4 @@ public class ProductSaveReqVO {
 
     @Schema(description = "最低价格，单位：元", example = "161.87")
     private BigDecimal minPrice;
-
 }

@@ -5,8 +5,10 @@ import cn.iocoder.yudao.framework.mq.redis.core.interceptor.RedisMessageIntercep
 import cn.iocoder.yudao.framework.mq.redis.core.message.AbstractRedisMessage;
 import cn.iocoder.yudao.framework.mq.redis.core.pubsub.AbstractRedisChannelMessage;
 import cn.iocoder.yudao.framework.mq.redis.core.stream.AbstractRedisStreamMessage;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,13 +24,12 @@ import java.util.List;
 @AllArgsConstructor
 public class RedisMQTemplate {
 
-    @Getter
-    private final RedisTemplate<String, ?> redisTemplate;
+    @Getter private final RedisTemplate<String, ?> redisTemplate;
+
     /**
      * 拦截器数组
      */
-    @Getter
-    private final List<RedisMessageInterceptor> interceptors = new ArrayList<>();
+    @Getter private final List<RedisMessageInterceptor> interceptors = new ArrayList<>();
 
     /**
      * 发送 Redis 消息，基于 Redis pub/sub 实现
@@ -55,9 +56,12 @@ public class RedisMQTemplate {
         try {
             sendMessageBefore(message);
             // 发送消息
-            return redisTemplate.opsForStream().add(StreamRecords.newRecord()
-                    .ofObject(JsonUtils.toJsonString(message)) // 设置内容
-                    .withStreamKey(message.getStreamKey())); // 设置 stream key
+            return redisTemplate
+                    .opsForStream()
+                    .add(
+                            StreamRecords.newRecord()
+                                    .ofObject(JsonUtils.toJsonString(message)) // 设置内容
+                                    .withStreamKey(message.getStreamKey())); // 设置 stream key
         } finally {
             sendMessageAfter(message);
         }
@@ -83,5 +87,4 @@ public class RedisMQTemplate {
             interceptors.get(i).sendMessageAfter(message);
         }
     }
-
 }

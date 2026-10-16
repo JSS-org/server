@@ -69,5 +69,4 @@ public interface PmsKnowledgeDocumentLabelService {
      */
     PageResult<PmsKnowledgeDocumentDO> getDocumentPageByLabel(
             PmsKnowledgeDocumentLabelPageReqVO pageReqVO, Long userId);
-
 }

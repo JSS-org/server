@@ -9,5 +9,4 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableConfigurationProperties(TradeOrderProperties.class)
-public class TradeOrderConfig {
-}
+public class TradeOrderConfig {}

@@ -1,11 +1,16 @@
 package cn.iocoder.yudao.module.infra.controller.app.file.vo;
 
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FileUploadReqVO;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.web.multipart.MultipartFile;
 
 @Schema(description = "用户 App - 上传文件 Request VO")
@@ -24,5 +29,4 @@ public class AppFileUploadReqVO {
     public boolean isDirectoryValid() {
         return FileUploadReqVO.isDirectoryValid(directory);
     }
-
 }

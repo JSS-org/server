@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.im.dal.dataobject.channel;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -29,29 +31,32 @@ public class ImChannelDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 频道业务码
      */
     private String code;
+
     /**
      * 频道名称
      */
     private String name;
+
     /**
      * 频道头像
      */
     private String avatar;
+
     /**
      * 排序
      */
     private Integer sort;
+
     /**
      * 状态
      * <p>
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
-
 }

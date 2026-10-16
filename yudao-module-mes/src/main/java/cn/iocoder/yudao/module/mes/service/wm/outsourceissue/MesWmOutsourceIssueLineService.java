@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo.line.MesWmOutsourceIssueLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo.line.MesWmOutsourceIssueLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.outsourceissue.MesWmOutsourceIssueLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -51,7 +52,8 @@ public interface MesWmOutsourceIssueLineService {
      * @param pageReqVO 分页参数
      * @return 外协发料单行分页
      */
-    PageResult<MesWmOutsourceIssueLineDO> getOutsourceIssueLinePage(MesWmOutsourceIssueLinePageReqVO pageReqVO);
+    PageResult<MesWmOutsourceIssueLineDO> getOutsourceIssueLinePage(
+            MesWmOutsourceIssueLinePageReqVO pageReqVO);
 
     /**
      * 获得外协发料单行列表
@@ -67,5 +69,4 @@ public interface MesWmOutsourceIssueLineService {
      * @param issueId 发料单ID
      */
     void deleteOutsourceIssueLineByIssueId(Long issueId);
-
 }

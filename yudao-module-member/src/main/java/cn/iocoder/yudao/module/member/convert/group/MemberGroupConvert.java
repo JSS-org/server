@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.member.controller.admin.group.vo.MemberGroupRespV
 import cn.iocoder.yudao.module.member.controller.admin.group.vo.MemberGroupSimpleRespVO;
 import cn.iocoder.yudao.module.member.controller.admin.group.vo.MemberGroupUpdateReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

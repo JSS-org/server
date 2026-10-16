@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.business.vo.status;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ public class CrmBusinessStatusRespVO {
 
     @Schema(description = "使用的部门编号", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<Long> deptIds;
+
     @Schema(description = "使用的部门名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> deptNames;
 
@@ -45,7 +47,5 @@ public class CrmBusinessStatusRespVO {
 
         @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
         private Integer sort;
-
     }
-
 }

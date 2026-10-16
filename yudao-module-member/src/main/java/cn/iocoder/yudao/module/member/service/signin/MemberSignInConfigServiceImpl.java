@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.member.service.signin;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_CONFIG_EXISTS;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_CONFIG_NOT_EXISTS;
+
 import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSignInConfigCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSignInConfigUpdateReqVO;
 import cn.iocoder.yudao.module.member.convert.signin.MemberSignInConfigConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.signin.MemberSignInConfigDO;
 import cn.iocoder.yudao.module.member.dal.mysql.signin.MemberSignInConfigMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_CONFIG_EXISTS;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_CONFIG_NOT_EXISTS;
 
 /**
  * 签到规则 Service 实现类
@@ -25,8 +27,7 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_CO
 @Validated
 public class MemberSignInConfigServiceImpl implements MemberSignInConfigService {
 
-    @Resource
-    private MemberSignInConfigMapper memberSignInConfigMapper;
+    @Resource private MemberSignInConfigMapper memberSignInConfigMapper;
 
     @Override
     public Long createSignInConfig(MemberSignInConfigCreateReqVO createReqVO) {
@@ -102,5 +103,4 @@ public class MemberSignInConfigServiceImpl implements MemberSignInConfigService 
         list.sort(Comparator.comparing(MemberSignInConfigDO::getDay));
         return list;
     }
-
 }

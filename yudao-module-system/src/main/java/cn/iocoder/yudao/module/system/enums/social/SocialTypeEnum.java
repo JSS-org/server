@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.enums.social;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -61,12 +62,14 @@ public enum SocialTypeEnum implements ArrayValuable<Integer> {
     ALIPAY_MINI_PROGRAM(40, "ALIPAY"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(SocialTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(SocialTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 类型的标识
      */
@@ -80,5 +83,4 @@ public enum SocialTypeEnum implements ArrayValuable<Integer> {
     public static SocialTypeEnum valueOfType(Integer type) {
         return ArrayUtil.firstMatch(o -> o.getType().equals(type), values());
     }
-
 }

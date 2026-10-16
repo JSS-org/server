@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.iot.service.rule.data.action.websocket;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
+
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotWebSocketClient} 的单元测试
@@ -56,7 +58,8 @@ class IotWebSocketClientTest {
         }
 
         @Override
-        public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
+        public void onFailure(
+                @NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
             // 连接失败
         }
     }
@@ -83,7 +86,8 @@ class IotWebSocketClientTest {
         String dataFormat = "TEXT";
 
         // 调用
-        IotWebSocketClient client = new IotWebSocketClient(serverUrl, connectTimeoutMs, sendTimeoutMs, dataFormat);
+        IotWebSocketClient client =
+                new IotWebSocketClient(serverUrl, connectTimeoutMs, sendTimeoutMs, dataFormat);
 
         // 断言
         assertNotNull(client);
@@ -136,11 +140,12 @@ class IotWebSocketClientTest {
         String serverUrl = "ws://" + mockWebServer.getHostName() + ":" + mockWebServer.getPort();
         IotWebSocketClient client = new IotWebSocketClient(serverUrl, 5000, 5000, "JSON");
 
-        IotDeviceMessage message = IotDeviceMessage.builder()
-                .deviceId(123L)
-                .method("thing.property.report")
-                .params("{\"temperature\": 25.5}")
-                .build();
+        IotDeviceMessage message =
+                IotDeviceMessage.builder()
+                        .deviceId(123L)
+                        .method("thing.property.report")
+                        .params("{\"temperature\": 25.5}")
+                        .build();
 
         // mock
         mockWebServer.enqueue(new MockResponse().withWebSocketUpgrade(new TestWebSocketListener()));
@@ -162,11 +167,12 @@ class IotWebSocketClientTest {
         String serverUrl = "ws://localhost:8080";
         IotWebSocketClient client = new IotWebSocketClient(serverUrl, 5000, 5000, "JSON");
 
-        IotDeviceMessage message = IotDeviceMessage.builder()
-                .deviceId(123L)
-                .method("thing.property.report")
-                .params("{\"temperature\": 25.5}")
-                .build();
+        IotDeviceMessage message =
+                IotDeviceMessage.builder()
+                        .deviceId(123L)
+                        .method("thing.property.report")
+                        .params("{\"temperature\": 25.5}")
+                        .build();
 
         // 调用 & 断言：未连接时发送消息应抛出异常
         assertThrows(IllegalStateException.class, () -> client.sendMessage(message));
@@ -234,11 +240,12 @@ class IotWebSocketClientTest {
         String serverUrl = "ws://" + mockWebServer.getHostName() + ":" + mockWebServer.getPort();
         IotWebSocketClient client = new IotWebSocketClient(serverUrl, 5000, 5000, "TEXT");
 
-        IotDeviceMessage message = IotDeviceMessage.builder()
-                .deviceId(123L)
-                .method("thing.property.report")
-                .params("{\"temperature\": 25.5}")
-                .build();
+        IotDeviceMessage message =
+                IotDeviceMessage.builder()
+                        .deviceId(123L)
+                        .method("thing.property.report")
+                        .params("{\"temperature\": 25.5}")
+                        .build();
 
         // mock
         mockWebServer.enqueue(new MockResponse().withWebSocketUpgrade(new TestWebSocketListener()));
@@ -253,5 +260,4 @@ class IotWebSocketClientTest {
         // 清理
         client.close();
     }
-
 }

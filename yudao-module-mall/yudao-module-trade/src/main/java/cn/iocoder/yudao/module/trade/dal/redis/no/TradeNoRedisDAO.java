@@ -3,10 +3,12 @@ package cn.iocoder.yudao.module.trade.dal.redis.no;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.iocoder.yudao.module.trade.dal.redis.RedisKeyConstants;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import jakarta.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -22,8 +24,7 @@ public class TradeNoRedisDAO {
 
     public static final String AFTER_SALE_NO_PREFIX = "r";
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Resource private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 生成序号
@@ -33,12 +34,12 @@ public class TradeNoRedisDAO {
      */
     public String generate(String prefix) {
         // 递增序号
-        String noPrefix = prefix + DateUtil.format(LocalDateTime.now(), DatePattern.PURE_DATETIME_PATTERN);
+        String noPrefix =
+                prefix + DateUtil.format(LocalDateTime.now(), DatePattern.PURE_DATETIME_PATTERN);
         String key = RedisKeyConstants.TRADE_NO + noPrefix;
         Long no = stringRedisTemplate.opsForValue().increment(key);
         // 设置过期时间
         stringRedisTemplate.expire(key, Duration.ofMinutes(1L));
         return noPrefix + no;
     }
-
 }

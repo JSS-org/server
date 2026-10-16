@@ -8,8 +8,11 @@ import cn.iocoder.yudao.module.im.service.friend.ImFriendService;
 import cn.iocoder.yudao.module.im.service.websocket.ImWebSocketService;
 import cn.iocoder.yudao.module.im.service.websocket.notification.friend.FriendInfoUpdatedNotification;
 import cn.iocoder.yudao.module.system.api.message.user.AdminUserProfileUpdateMessage;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -26,13 +29,12 @@ import java.util.List;
 @Component
 public class AdminUserProfileUpdateConsumer {
 
-    @Resource
-    private ImFriendService friendService;
-    @Resource
-    private ImWebSocketService websocketService;
+    @Resource private ImFriendService friendService;
+    @Resource private ImWebSocketService websocketService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    @Async // Spring Event 默认在 Producer 发送的线程，通过 @Async 实现异步；事务提交后触发，避免回滚误推幽灵通知 / Consumer 抢在 commit 前读旧值
+    @Async // Spring Event 默认在 Producer 发送的线程，通过 @Async 实现异步；事务提交后触发，避免回滚误推幽灵通知 / Consumer 抢在 commit
+    // 前读旧值
     public void onMessage(AdminUserProfileUpdateMessage message) {
         try {
             log.info("[onMessage][消息内容({})]", message);
@@ -50,21 +52,31 @@ public class AdminUserProfileUpdateConsumer {
             int successCount = 0;
             for (ImFriendDO friend : friends) {
                 try {
-                    FriendInfoUpdatedNotification payload = (FriendInfoUpdatedNotification) new FriendInfoUpdatedNotification()
-                            .setOperatorUserId(userId).setFriendUserId(userId);
-                    websocketService.sendNotificationAsync(friend.getFriendUserId(),
+                    FriendInfoUpdatedNotification payload =
+                            (FriendInfoUpdatedNotification)
+                                    new FriendInfoUpdatedNotification()
+                                            .setOperatorUserId(userId)
+                                            .setFriendUserId(userId);
+                    websocketService.sendNotificationAsync(
+                            friend.getFriendUserId(),
                             ImConversationTypeEnum.NONE.getType(),
-                            ImContentTypeEnum.FRIEND_INFO_UPDATED.getType(), payload);
+                            ImContentTypeEnum.FRIEND_INFO_UPDATED.getType(),
+                            payload);
                     successCount++;
                 } catch (Exception e) {
-                    log.warn("[onMessage][userId({}) friendUserId({}) 推送失败]",
-                            userId, friend.getFriendUserId(), e);
+                    log.warn(
+                            "[onMessage][userId({}) friendUserId({}) 推送失败]",
+                            userId,
+                            friend.getFriendUserId(),
+                            e);
                 }
             }
-            log.info("[onMessage][userId({}) 推送 FRIEND_INFO_UPDATED 给 {} 位好友]", userId, successCount);
+            log.info(
+                    "[onMessage][userId({}) 推送 FRIEND_INFO_UPDATED 给 {} 位好友]",
+                    userId,
+                    successCount);
         } catch (Exception e) {
             log.error("[onMessage][消息内容({}) 处理失败]", message, e);
         }
     }
-
 }

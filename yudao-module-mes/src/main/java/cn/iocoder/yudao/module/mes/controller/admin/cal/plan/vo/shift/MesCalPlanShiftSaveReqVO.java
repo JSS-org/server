@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo.shift;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 计划班次新增/修改 Request VO")
@@ -34,5 +36,4 @@ public class MesCalPlanShiftSaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
-    }
+}

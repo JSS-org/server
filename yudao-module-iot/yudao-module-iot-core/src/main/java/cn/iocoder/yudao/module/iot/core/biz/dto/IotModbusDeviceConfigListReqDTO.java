@@ -33,5 +33,4 @@ public class IotModbusDeviceConfigListReqDTO {
      * 设备 ID 集合
      */
     private Set<Long> deviceIds;
-
 }

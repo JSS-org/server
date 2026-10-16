@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.hutool.core.util.ObjectUtil.notEqual;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_FOLDER_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_MOVE_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_MOVE_TARGET_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_PARENT_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -15,7 +24,9 @@ import cn.iocoder.yudao.module.pms.service.kb.interaction.PmsKnowledgeFavoriteSe
 import cn.iocoder.yudao.module.pms.service.kb.interaction.PmsKnowledgeViewRecordService;
 import cn.iocoder.yudao.module.pms.service.kb.library.PmsKnowledgeLibraryMemberService;
 import cn.iocoder.yudao.module.pms.service.kb.recycle.PmsKnowledgeRecycleService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,15 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.hutool.core.util.ObjectUtil.notEqual;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_FOLDER_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_MOVE_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_MOVE_TARGET_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_PARENT_INVALID;
-
 /**
  * PMS 知识库文档 Service 实现类
  *
@@ -50,25 +52,17 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOC
 @Validated
 public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentService {
 
-    @Resource
-    private PmsKnowledgeDocumentMapper documentMapper;
+    @Resource private PmsKnowledgeDocumentMapper documentMapper;
 
-    @Resource
-    private PmsKnowledgeFolderService folderService;
-    @Resource
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
-    @Resource
-    private PmsKnowledgeContentPermissionService contentPermissionService;
-    @Resource
-    private PmsKnowledgeDocumentLabelService documentLabelService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private PmsKnowledgeFolderService folderService;
+    @Resource private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @Resource private PmsKnowledgeContentPermissionService contentPermissionService;
+    @Resource private PmsKnowledgeDocumentLabelService documentLabelService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeFavoriteService favoriteService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeViewRecordService viewRecordService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeRecycleService recycleService;
 
     @Override
@@ -77,14 +71,18 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         // 1.1 校验知识库读取权限
         libraryMemberService.validateLibraryReadable(createReqVO.getLibraryId(), userId);
         // 1.2 规范并校验目录位置，同时确定文档权限
-        PmsKnowledgeDocumentDO document = BeanUtils.toBean(createReqVO, PmsKnowledgeDocumentDO.class);
+        PmsKnowledgeDocumentDO document =
+                BeanUtils.toBean(createReqVO, PmsKnowledgeDocumentDO.class);
         Long permissionId = normalizeAndValidateDocumentPlacement(document, null, userId);
         if (permissionId == null) {
-            permissionId = contentPermissionService.createDefaultContentPermission(createReqVO.getLibraryId(), userId);
+            permissionId =
+                    contentPermissionService.createDefaultContentPermission(
+                            createReqVO.getLibraryId(), userId);
         }
 
         // 2. 创建文档
-        document.setPermissionId(permissionId).setType(createReqVO.getType())
+        document.setPermissionId(permissionId)
+                .setType(createReqVO.getType())
                 .setStatus(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
         documentMapper.insert(document);
         return document.getId();
@@ -97,7 +95,8 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         // 1.2 校验所属知识库可读
         libraryMemberService.validateLibraryReadable(document.getLibraryId(), userId);
         // 1.3 校验内容编辑权限
-        contentPermissionService.validateContentPermissionWritable(document.getPermissionId(), document.getLibraryId(), userId);
+        contentPermissionService.validateContentPermissionWritable(
+                document.getPermissionId(), document.getLibraryId(), userId);
         // 1.4 校验标签均存在
         documentLabelService.validateDocumentLabelList(updateReqVO.getLabelIds());
 
@@ -113,7 +112,8 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         // 1.2 校验所属知识库可读
         libraryMemberService.validateLibraryReadable(document.getLibraryId(), userId);
         // 1.3 校验文档内容删除权限
-        contentPermissionService.validateContentPermissionDeletable(document.getPermissionId(), document.getLibraryId(), userId);
+        contentPermissionService.validateContentPermissionDeletable(
+                document.getPermissionId(), document.getLibraryId(), userId);
 
         // 2. 将文档和全部子文档移入回收站
         recycleService.recycleDocument(document, getDocumentDescendantList(document), userId);
@@ -136,19 +136,24 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         contentPermissionService.validateContentPermissionManageable(
                 document.getPermissionId(), document.getLibraryId(), userId);
         // 1.5 规范并校验目标位置，禁止移动到自身或子文档
-        PmsKnowledgeDocumentDO placement = new PmsKnowledgeDocumentDO()
-                .setLibraryId(moveReqVO.getTargetLibraryId()).setFolderId(moveReqVO.getTargetFolderId())
-                .setParentId(moveReqVO.getTargetParentId());
+        PmsKnowledgeDocumentDO placement =
+                new PmsKnowledgeDocumentDO()
+                        .setLibraryId(moveReqVO.getTargetLibraryId())
+                        .setFolderId(moveReqVO.getTargetFolderId())
+                        .setParentId(moveReqVO.getTargetParentId());
         normalizeAndValidateDocumentPlacement(placement, document, userId);
 
         // 2.1 获得文档子树
         List<PmsKnowledgeDocumentDO> documents = getDocumentDescendantList(document);
         // 2.2 跨知识库移动时复制权限，避免影响原知识库内容
-        Set<Long> sourcePermissionIds = convertSet(documents, PmsKnowledgeDocumentDO::getPermissionId);
+        Set<Long> sourcePermissionIds =
+                convertSet(documents, PmsKnowledgeDocumentDO::getPermissionId);
         boolean crossLibrary = notEqual(document.getLibraryId(), moveReqVO.getTargetLibraryId());
-        Map<Long, Long> clonedPermissionIdMap = !crossLibrary
-                ? Collections.emptyMap()
-                : contentPermissionService.cloneContentPermissions(sourcePermissionIds, moveReqVO.getTargetLibraryId());
+        Map<Long, Long> clonedPermissionIdMap =
+                !crossLibrary
+                        ? Collections.emptyMap()
+                        : contentPermissionService.cloneContentPermissions(
+                                sourcePermissionIds, moveReqVO.getTargetLibraryId());
 
         // 3. 更新文档位置，并同步全部子文档所属知识库与权限
         for (PmsKnowledgeDocumentDO item : documents) {
@@ -167,8 +172,10 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         // 4. 跨知识库移动时同步关注和最近浏览记录的当前归属
         if (crossLibrary) {
             Set<Long> documentIds = convertSet(documents, PmsKnowledgeDocumentDO::getId);
-            favoriteService.updateFavoriteLibraryIdByEntityIds(Collections.emptySet(), documentIds, moveReqVO.getTargetLibraryId());
-            viewRecordService.updateViewRecordLibraryIdByEntityIds(Collections.emptySet(), documentIds, moveReqVO.getTargetLibraryId());
+            favoriteService.updateFavoriteLibraryIdByEntityIds(
+                    Collections.emptySet(), documentIds, moveReqVO.getTargetLibraryId());
+            viewRecordService.updateViewRecordLibraryIdByEntityIds(
+                    Collections.emptySet(), documentIds, moveReqVO.getTargetLibraryId());
         }
         if (CollUtil.isNotEmpty(clonedPermissionIdMap)) {
             contentPermissionService.deleteUnusedContentPermissions(sourcePermissionIds);
@@ -183,7 +190,8 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         // 2.1 校验知识库读取权限
         libraryMemberService.validateLibraryReadable(document.getLibraryId(), userId);
         // 2.2 校验内容读取权限
-        contentPermissionService.validateContentPermissionReadable(document.getPermissionId(), document.getLibraryId(), userId);
+        contentPermissionService.validateContentPermissionReadable(
+                document.getPermissionId(), document.getLibraryId(), userId);
         return document;
     }
 
@@ -237,12 +245,14 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
             return Collections.emptyList();
         }
         List<PmsKnowledgeDocumentDO> documents = new ArrayList<>(roots);
-        Set<Long> visitedDocumentIds = new LinkedHashSet<>(convertSet(roots, PmsKnowledgeDocumentDO::getId));
+        Set<Long> visitedDocumentIds =
+                new LinkedHashSet<>(convertSet(roots, PmsKnowledgeDocumentDO::getId));
         Set<Long> parentIds = convertSet(roots, PmsKnowledgeDocumentDO::getId);
 
         // 2. 逐层查询子文档；使用深度上限和已访问集合共同防御异常循环数据
         for (int depth = 0; depth < Short.MAX_VALUE && CollUtil.isNotEmpty(parentIds); depth++) {
-            List<PmsKnowledgeDocumentDO> childDocuments = documentMapper.selectListByParentIds(parentIds);
+            List<PmsKnowledgeDocumentDO> childDocuments =
+                    documentMapper.selectListByParentIds(parentIds);
             List<PmsKnowledgeDocumentDO> newChildDocuments = new ArrayList<>();
             for (PmsKnowledgeDocumentDO childDocument : childDocuments) {
                 if (visitedDocumentIds.add(childDocument.getId())) {
@@ -259,8 +269,10 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
     }
 
     @Override
-    public void moveDocumentList(Collection<PmsKnowledgeDocumentDO> documents, Long targetLibraryId,
-                                 Map<Long, Long> permissionIdMap) {
+    public void moveDocumentList(
+            Collection<PmsKnowledgeDocumentDO> documents,
+            Long targetLibraryId,
+            Map<Long, Long> permissionIdMap) {
         if (CollUtil.isEmpty(documents)) {
             return;
         }
@@ -279,16 +291,22 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         // 1. 查询当前用户可读的知识库和内容权限
         List<Long> readableLibraryIds = libraryMemberService.getReadableLibraryIdList(userId);
         if (CollUtil.isEmpty(readableLibraryIds)
-                || pageReqVO.getLibraryId() != null && !readableLibraryIds.contains(pageReqVO.getLibraryId())) {
+                || pageReqVO.getLibraryId() != null
+                        && !readableLibraryIds.contains(pageReqVO.getLibraryId())) {
             return PageResult.empty();
         }
-        Set<Long> readablePermissionIds = contentPermissionService.getReadableContentPermissionIdSet(readableLibraryIds, userId);
+        Set<Long> readablePermissionIds =
+                contentPermissionService.getReadableContentPermissionIdSet(
+                        readableLibraryIds, userId);
         if (CollUtil.isEmpty(readablePermissionIds)) {
             return PageResult.empty();
         }
 
         // 2. 使用 MySQL 对标题和正文进行模糊搜索
-        return documentMapper.selectPage(pageReqVO, readableLibraryIds, readablePermissionIds,
+        return documentMapper.selectPage(
+                pageReqVO,
+                readableLibraryIds,
+                readablePermissionIds,
                 PmsKnowledgeDocumentStatusEnum.ACTIVE_STATUSES);
     }
 
@@ -298,15 +316,19 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         libraryMemberService.validateLibraryReadable(libraryId, userId);
 
         // 2. 查询全部正常文档
-        List<PmsKnowledgeDocumentDO> documents = documentMapper.selectListByLibraryIdAndStatus(
-                libraryId, PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
+        List<PmsKnowledgeDocumentDO> documents =
+                documentMapper.selectListByLibraryIdAndStatus(
+                        libraryId, PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
         if (CollUtil.isEmpty(documents)) {
             return Collections.emptyList();
         }
 
         // 3. 按内容权限过滤，只返回当前用户有读取权限的文档
-        Map<Long, Integer> permissionLevelMap = contentPermissionService.getCurrentUserContentPermissionLevelMap(
-                convertSet(documents, PmsKnowledgeDocumentDO::getPermissionId), libraryId, userId);
+        Map<Long, Integer> permissionLevelMap =
+                contentPermissionService.getCurrentUserContentPermissionLevelMap(
+                        convertSet(documents, PmsKnowledgeDocumentDO::getPermissionId),
+                        libraryId,
+                        userId);
         documents.removeIf(document -> permissionLevelMap.get(document.getPermissionId()) == null);
 
         // 4. 父文档不可见时，整条子文档分支均不可见
@@ -318,13 +340,15 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
                 visibleDocumentIds.add(document.getId());
                 pendingDocumentIds.add(document.getId());
             } else {
-                childDocumentIdMap.computeIfAbsent(document.getParentId(), key -> new ArrayList<>())
+                childDocumentIdMap
+                        .computeIfAbsent(document.getParentId(), key -> new ArrayList<>())
                         .add(document.getId());
             }
         }
         while (CollUtil.isNotEmpty(pendingDocumentIds)) {
             Long parentId = pendingDocumentIds.removeFirst();
-            for (Long childId : childDocumentIdMap.getOrDefault(parentId, Collections.emptyList())) {
+            for (Long childId :
+                    childDocumentIdMap.getOrDefault(parentId, Collections.emptyList())) {
                 if (visibleDocumentIds.add(childId)) {
                     pendingDocumentIds.addLast(childId);
                 }
@@ -336,14 +360,18 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
 
     @Override
     public Map<Long, Map<Integer, Long>> getDocumentTypeCountMap(Collection<Long> libraryIds) {
-        return CollUtil.isEmpty(libraryIds) ? Collections.emptyMap()
+        return CollUtil.isEmpty(libraryIds)
+                ? Collections.emptyMap()
                 : documentMapper.selectTypeCountMapByLibraryIdsAndStatus(
                         libraryIds, PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
     }
 
     private PmsKnowledgeDocumentDO validateDocumentExists(Long id) {
         PmsKnowledgeDocumentDO document = documentMapper.selectById(id);
-        if (document == null || PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus().equals(document.getStatus())) {
+        if (document == null
+                || PmsKnowledgeDocumentStatusEnum.RECYCLED
+                        .getStatus()
+                        .equals(document.getStatus())) {
             throw exception(KNOWLEDGE_DOCUMENT_NOT_EXISTS);
         }
         return document;
@@ -357,16 +385,17 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
      * @param userId 用户编号
      * @return 继承的内容权限编号；位于知识库根目录时返回 {@code null}
      */
-    private Long normalizeAndValidateDocumentPlacement(PmsKnowledgeDocumentDO placement,
-                                                        PmsKnowledgeDocumentDO document,
-                                                        Long userId) {
+    private Long normalizeAndValidateDocumentPlacement(
+            PmsKnowledgeDocumentDO placement, PmsKnowledgeDocumentDO document, Long userId) {
         // 1. 文件夹优先于父文档，文档放入文件夹根节点并继承文件夹权限
         if (placement.getFolderId() != null
                 && notEqual(PmsKnowledgeDocumentDO.FOLDER_ID_ROOT, placement.getFolderId())) {
             placement.setParentId(PmsKnowledgeDocumentDO.PARENT_ID_ROOT);
             PmsKnowledgeFolderDO folder = folderService.getFolder(placement.getFolderId(), userId);
             if (notEqual(placement.getLibraryId(), folder.getLibraryId())
-                    || notEqual(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus(), folder.getStatus())) {
+                    || notEqual(
+                            PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus(),
+                            folder.getStatus())) {
                 throw exception(KNOWLEDGE_DOCUMENT_FOLDER_INVALID);
             }
             if (document == null) {
@@ -440,7 +469,8 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
 
         // 2. 逐层查询子文档，并通过已访问文档编号避免异常环路和重复数据
         for (int i = 0; i < Short.MAX_VALUE; i++) {
-            List<PmsKnowledgeDocumentDO> childDocuments = documentMapper.selectListByParentIds(parentIds);
+            List<PmsKnowledgeDocumentDO> childDocuments =
+                    documentMapper.selectListByParentIds(parentIds);
             childDocuments.removeIf(child -> !visitedDocumentIds.add(child.getId()));
             if (CollUtil.isEmpty(childDocuments)) {
                 break;
@@ -458,5 +488,4 @@ public class PmsKnowledgeDocumentServiceImpl implements PmsKnowledgeDocumentServ
         }
         return documentMapper.selectExistingPermissionIdSet(permissionIds);
     }
-
 }

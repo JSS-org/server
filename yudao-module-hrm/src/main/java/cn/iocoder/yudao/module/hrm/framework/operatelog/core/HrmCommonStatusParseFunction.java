@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.hrm.framework.operatelog.core;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,5 +39,4 @@ public class HrmCommonStatusParseFunction implements IParseFunction {
         }
         return "";
     }
-
 }

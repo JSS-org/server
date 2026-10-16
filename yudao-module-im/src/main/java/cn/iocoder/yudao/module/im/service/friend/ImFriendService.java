@@ -125,5 +125,4 @@ public interface ImFriendService {
      * 【管理后台】分页查询好友关系
      */
     PageResult<ImFriendDO> getFriendPage(ImFriendManagerPageReqVO reqVO);
-
 }

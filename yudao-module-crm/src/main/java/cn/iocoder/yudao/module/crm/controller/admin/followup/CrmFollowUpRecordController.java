@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.crm.controller.admin.followup;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CRM_PERMISSION_DENIED;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.FOLLOW_UP_RECORD_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
@@ -19,25 +27,19 @@ import cn.iocoder.yudao.module.crm.service.followup.CrmFollowUpRecordService;
 import cn.iocoder.yudao.module.crm.service.permission.CrmPermissionService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CRM_PERMISSION_DENIED;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.FOLLOW_UP_RECORD_NOT_EXISTS;
-
 
 @Tag(name = "管理后台 - 跟进记录")
 @RestController
@@ -45,21 +47,17 @@ import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.FOLLOW_UP_REC
 @Validated
 public class CrmFollowUpRecordController {
 
-    @Resource
-    private CrmFollowUpRecordService followUpRecordService;
-    @Resource
-    private CrmContactService contactService;
-    @Resource
-    private CrmBusinessService businessService;
-    @Resource
-    private CrmPermissionService permissionService;
+    @Resource private CrmFollowUpRecordService followUpRecordService;
+    @Resource private CrmContactService contactService;
+    @Resource private CrmBusinessService businessService;
+    @Resource private CrmPermissionService permissionService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建跟进记录")
-    public CommonResult<Long> createFollowUpRecord(@Valid @RequestBody CrmFollowUpRecordSaveReqVO createReqVO) {
+    public CommonResult<Long> createFollowUpRecord(
+            @Valid @RequestBody CrmFollowUpRecordSaveReqVO createReqVO) {
         return success(followUpRecordService.createFollowUpRecord(createReqVO));
     }
 
@@ -79,37 +77,83 @@ public class CrmFollowUpRecordController {
         if (followUpRecord == null) {
             throw exception(FOLLOW_UP_RECORD_NOT_EXISTS);
         }
-        if (!permissionService.hasPermission(followUpRecord.getBizType(), followUpRecord.getBizId(),
-                getLoginUserId(), CrmPermissionLevelEnum.READ)) {
-            throw exception(CRM_PERMISSION_DENIED, CrmBizTypeEnum.getNameByType(followUpRecord.getBizType()));
+        if (!permissionService.hasPermission(
+                followUpRecord.getBizType(),
+                followUpRecord.getBizId(),
+                getLoginUserId(),
+                CrmPermissionLevelEnum.READ)) {
+            throw exception(
+                    CRM_PERMISSION_DENIED,
+                    CrmBizTypeEnum.getNameByType(followUpRecord.getBizType()));
         }
         return success(BeanUtils.toBean(followUpRecord, CrmFollowUpRecordRespVO.class));
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得跟进记录分页")
-    public CommonResult<PageResult<CrmFollowUpRecordRespVO>> getFollowUpRecordPage(@Valid CrmFollowUpRecordPageReqVO pageReqVO) {
-        PageResult<CrmFollowUpRecordDO> pageResult = followUpRecordService.getFollowUpRecordPage(pageReqVO);
+    public CommonResult<PageResult<CrmFollowUpRecordRespVO>> getFollowUpRecordPage(
+            @Valid CrmFollowUpRecordPageReqVO pageReqVO) {
+        PageResult<CrmFollowUpRecordDO> pageResult =
+                followUpRecordService.getFollowUpRecordPage(pageReqVO);
         // 1.1 查询联系人和商机
-        Map<Long, CrmContactDO> contactMap = contactService.getContactMap(
-                convertSetByFlatMap(pageResult.getList(), item -> item.getContactIds().stream()));
-        Map<Long, CrmBusinessDO> businessMap = businessService.getBusinessMap(
-                convertSetByFlatMap(pageResult.getList(), item -> item.getBusinessIds().stream()));
+        Map<Long, CrmContactDO> contactMap =
+                contactService.getContactMap(
+                        convertSetByFlatMap(
+                                pageResult.getList(), item -> item.getContactIds().stream()));
+        Map<Long, CrmBusinessDO> businessMap =
+                businessService.getBusinessMap(
+                        convertSetByFlatMap(
+                                pageResult.getList(), item -> item.getBusinessIds().stream()));
         // 1.2 查询用户
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), item -> Long.valueOf(item.getCreator())));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(pageResult.getList(), item -> Long.valueOf(item.getCreator())));
         // 2. 拼接数据
-        PageResult<CrmFollowUpRecordRespVO> voPageResult = BeanUtils.toBean(pageResult, CrmFollowUpRecordRespVO.class, record -> {
-            // 2.1 设置联系人和商机信息
-            record.setBusinesses(new ArrayList<>()).setContacts(new ArrayList<>());
-            record.getContactIds().forEach(id -> MapUtils.findAndThen(contactMap, id, contact ->
-                    record.getContacts().add(new CrmBusinessRespVO().setId(contact.getId()).setName(contact.getName()))));
-            record.getBusinessIds().forEach(id -> MapUtils.findAndThen(businessMap, id, business ->
-                    record.getBusinesses().add(new CrmBusinessRespVO().setId(business.getId()).setName(business.getName()))));
-            // 2.2 设置用户信息
-            MapUtils.findAndThen(userMap, Long.valueOf(record.getCreator()), user -> record.setCreatorName(user.getNickname()));
-        });
+        PageResult<CrmFollowUpRecordRespVO> voPageResult =
+                BeanUtils.toBean(
+                        pageResult,
+                        CrmFollowUpRecordRespVO.class,
+                        record -> {
+                            // 2.1 设置联系人和商机信息
+                            record.setBusinesses(new ArrayList<>()).setContacts(new ArrayList<>());
+                            record.getContactIds()
+                                    .forEach(
+                                            id ->
+                                                    MapUtils.findAndThen(
+                                                            contactMap,
+                                                            id,
+                                                            contact ->
+                                                                    record.getContacts()
+                                                                            .add(
+                                                                                    new CrmBusinessRespVO()
+                                                                                            .setId(
+                                                                                                    contact
+                                                                                                            .getId())
+                                                                                            .setName(
+                                                                                                    contact
+                                                                                                            .getName()))));
+                            record.getBusinessIds()
+                                    .forEach(
+                                            id ->
+                                                    MapUtils.findAndThen(
+                                                            businessMap,
+                                                            id,
+                                                            business ->
+                                                                    record.getBusinesses()
+                                                                            .add(
+                                                                                    new CrmBusinessRespVO()
+                                                                                            .setId(
+                                                                                                    business
+                                                                                                            .getId())
+                                                                                            .setName(
+                                                                                                    business
+                                                                                                            .getName()))));
+                            // 2.2 设置用户信息
+                            MapUtils.findAndThen(
+                                    userMap,
+                                    Long.valueOf(record.getCreator()),
+                                    user -> record.setCreatorName(user.getNickname()));
+                        });
         return success(voPageResult);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.file;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaFilePermissionLevelEnum implements ArrayValuable<Integer> {
-
     READ(1, "只读"),
     DOWNLOAD(2, "下载"),
     EDIT(3, "编辑"),
@@ -26,13 +26,16 @@ public enum OaFilePermissionLevelEnum implements ArrayValuable<Integer> {
      */
     public static final int LEVEL_NONE = 0;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaFilePermissionLevelEnum::getLevel).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(OaFilePermissionLevelEnum::getLevel)
+                    .toArray(Integer[]::new);
 
     /**
      * 云盘权限级别
      */
     private final Integer level;
+
     /**
      * 名称
      */
@@ -52,5 +55,4 @@ public enum OaFilePermissionLevelEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

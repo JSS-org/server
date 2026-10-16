@@ -42,5 +42,4 @@ public interface MesWmMiscReceiptDetailService {
      * @param id 编号
      */
     void validateMiscReceiptDetailExists(Long id);
-
 }

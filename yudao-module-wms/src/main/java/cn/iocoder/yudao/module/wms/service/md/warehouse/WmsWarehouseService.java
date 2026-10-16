@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.wms.service.md.warehouse;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.md.warehouse.vo.WmsWarehousePageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.warehouse.vo.WmsWarehouseSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.warehouse.WmsWarehouseDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * WMS 仓库 Service 接口
@@ -83,5 +84,4 @@ public interface WmsWarehouseService {
     default Map<Long, WmsWarehouseDO> getWarehouseMap(Collection<Long> ids) {
         return convertMap(getWarehouseList(ids), WmsWarehouseDO::getId);
     }
-
 }

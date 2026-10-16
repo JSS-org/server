@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
@@ -8,18 +11,17 @@ import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.github.binarywang.wxpay.bean.request.WxPayMicropayRequest;
 import com.github.binarywang.wxpay.bean.result.WxPayMicropayResult;
 import com.github.binarywang.wxpay.constant.WxPayConstants;
 import com.github.binarywang.wxpay.exception.WxPayException;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
 
 /**
  * 微信支付【付款码支付】的 PayClient 实现类
@@ -53,23 +55,28 @@ public class WxBarPayClient extends AbstractWxPayClient {
             expireTime = reqDTO.getExpireTime();
         }
         // 构建 WxPayMicropayRequest 对象
-        WxPayMicropayRequest request = WxPayMicropayRequest.newBuilder()
-                .outTradeNo(reqDTO.getOutTradeNo())
-                .body(reqDTO.getSubject())
-                .detail(reqDTO.getBody())
-                .totalFee(reqDTO.getPrice()) // 单位分
-                .timeExpire(formatDateV2(expireTime))
-                .spbillCreateIp(reqDTO.getUserIp())
-                .authCode(getAuthCode(reqDTO))
-                .build();
+        WxPayMicropayRequest request =
+                WxPayMicropayRequest.newBuilder()
+                        .outTradeNo(reqDTO.getOutTradeNo())
+                        .body(reqDTO.getSubject())
+                        .detail(reqDTO.getBody())
+                        .totalFee(reqDTO.getPrice()) // 单位分
+                        .timeExpire(formatDateV2(expireTime))
+                        .spbillCreateIp(reqDTO.getUserIp())
+                        .authCode(getAuthCode(reqDTO))
+                        .build();
         // 执行请求，重试直到失败（过期），或者成功
         WxPayException lastWxPayException = null;
         for (int i = 1; i < Byte.MAX_VALUE; i++) {
             try {
                 WxPayMicropayResult response = client.micropay(request);
                 // 支付成功，例如说：1）用户输入了密码；2）用户免密支付
-                return PayOrderRespDTO.successOf(response.getTransactionId(), response.getOpenid(), parseDateV2(response.getTimeEnd()),
-                        response.getOutTradeNo(), response)
+                return PayOrderRespDTO.successOf(
+                                response.getTransactionId(),
+                                response.getOpenid(),
+                                parseDateV2(response.getTimeEnd()),
+                                response.getOutTradeNo(),
+                                response)
                         .setDisplayMode(PayOrderDisplayModeEnum.BAR_CODE.getMode());
             } catch (WxPayException ex) {
                 lastWxPayException = ex;
@@ -81,8 +88,11 @@ public class WxBarPayClient extends AbstractWxPayClient {
                     throw ex;
                 }
                 // 等待 5 秒，继续下一轮重新发起支付
-                log.info("[doUnifiedOrderV2][发起微信 Bar 支付第({})失败，等待下一轮重试，请求({})，响应({})]", i,
-                        toJsonString(request), ex.getMessage());
+                log.info(
+                        "[doUnifiedOrderV2][发起微信 Bar 支付第({})失败，等待下一轮重试，请求({})，响应({})]",
+                        i,
+                        toJsonString(request),
+                        ex.getMessage());
                 ThreadUtil.sleep(5, TimeUnit.SECONDS);
             }
         }
@@ -103,5 +113,4 @@ public class WxBarPayClient extends AbstractWxPayClient {
         }
         return authCode;
     }
-
 }

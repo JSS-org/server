@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.pay.controller.admin.refund.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
-* 退款订单 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 退款订单 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class PayRefundBaseVO {
 
@@ -52,7 +53,10 @@ public class PayRefundBaseVO {
     @Schema(description = "退款原因", requiredMode = Schema.RequiredMode.REQUIRED, example = "我要退了")
     private String reason;
 
-    @Schema(description = "用户 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "用户 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     private String userIp;
 
     // ========== 渠道相关字段 ==========
@@ -74,5 +78,4 @@ public class PayRefundBaseVO {
 
     @Schema(description = "支付渠道的额外参数")
     private String channelNotifyData;
-
 }

@@ -5,10 +5,12 @@ import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradeWapPayModel;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.response.AlipayTradeWapPayResponse;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -53,7 +55,7 @@ public class AlipayWapPayClient extends AbstractAlipayPayClient {
         if (!response.isSuccess()) {
             return buildClosedPayOrderRespDTO(reqDTO, response);
         }
-        return PayOrderRespDTO.waitingOf(displayMode, response.getBody(),
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                displayMode, response.getBody(), reqDTO.getOutTradeNo(), response);
     }
 }

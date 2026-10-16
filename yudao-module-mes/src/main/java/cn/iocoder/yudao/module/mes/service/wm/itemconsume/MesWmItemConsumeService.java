@@ -37,5 +37,4 @@ public interface MesWmItemConsumeService {
      * @return 消耗记录，不存在返回 null
      */
     MesWmItemConsumeDO getByFeedbackId(Long feedbackId);
-
 }

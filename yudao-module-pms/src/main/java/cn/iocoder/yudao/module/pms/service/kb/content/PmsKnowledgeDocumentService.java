@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.document.PmsKnowledgeDocumentCreateReqVO;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.document.PmsKnowledgeDocumentMoveReqVO;
@@ -11,8 +13,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 知识库文档 Service 接口
@@ -133,8 +133,10 @@ public interface PmsKnowledgeDocumentService {
      * @param targetLibraryId 目标知识库编号
      * @param permissionIdMap 原权限编号到新权限编号的映射
      */
-    void moveDocumentList(Collection<PmsKnowledgeDocumentDO> documents, Long targetLibraryId,
-                          Map<Long, Long> permissionIdMap);
+    void moveDocumentList(
+            Collection<PmsKnowledgeDocumentDO> documents,
+            Long targetLibraryId,
+            Map<Long, Long> permissionIdMap);
 
     /**
      * 使用 MySQL 搜索当前用户可读的文档（用户可按需二次开发，使用 Elasticsearch 检索）
@@ -170,5 +172,4 @@ public interface PmsKnowledgeDocumentService {
      * @return 被引用的内容权限编号集合
      */
     Set<Long> getExistingContentPermissionIdSet(Collection<Long> permissionIds);
-
 }

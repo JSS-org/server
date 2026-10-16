@@ -22,5 +22,4 @@ public interface MemberService {
      * @return 邮箱
      */
     String getMemberUserEmail(Long id);
-
 }

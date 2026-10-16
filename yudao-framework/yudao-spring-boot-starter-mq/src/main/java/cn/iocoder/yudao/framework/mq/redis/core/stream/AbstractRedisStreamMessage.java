@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.mq.redis.core.stream;
 
 import cn.iocoder.yudao.framework.mq.redis.core.message.AbstractRedisMessage;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -19,5 +20,4 @@ public abstract class AbstractRedisStreamMessage extends AbstractRedisMessage {
     public String getStreamKey() {
         return getClass().getSimpleName();
     }
-
 }

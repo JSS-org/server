@@ -80,5 +80,4 @@ public interface MesDvCheckRecordService {
      * @return 设备点检记录分页
      */
     PageResult<MesDvCheckRecordDO> getCheckRecordPage(MesDvCheckRecordPageReqVO pageReqVO);
-
 }

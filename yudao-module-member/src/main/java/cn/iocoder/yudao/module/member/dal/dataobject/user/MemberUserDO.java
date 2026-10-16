@@ -8,11 +8,14 @@ import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.system.enums.common.SexEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -39,41 +42,48 @@ public class MemberUserDO extends TenantBaseDO {
     /**
      * 用户ID
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 手机
      */
     private String mobile;
+
     /**
      * 邮箱
      */
     private String email;
+
     /**
      * 加密后的密码
      *
      * 因为目前使用 {@link BCryptPasswordEncoder} 加密器，所以无需自己处理 salt 盐
      */
     private String password;
+
     /**
      * 帐号状态
      *
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+
     /**
      * 注册 IP
      */
     private String registerIp;
+
     /**
      * 注册终端
      * 枚举 {@link TerminalEnum}
      */
     private Integer registerTerminal;
+
     /**
      * 最后登录IP
      */
     private String loginIp;
+
     /**
      * 最后登录时间
      */
@@ -85,6 +95,7 @@ public class MemberUserDO extends TenantBaseDO {
      * 用户昵称
      */
     private String nickname;
+
     /**
      * 用户头像
      */
@@ -94,22 +105,26 @@ public class MemberUserDO extends TenantBaseDO {
      * 真实名字
      */
     private String name;
+
     /**
      * 性别
      *
      * 枚举 {@link SexEnum}
      */
     private Integer sex;
+
     /**
      * 出生日期
      */
     private LocalDateTime birthday;
+
     /**
      * 所在地
      *
      * 关联 {@link Area#getId()} 字段
      */
     private Integer areaId;
+
     /**
      * 用户备注
      */
@@ -121,6 +136,7 @@ public class MemberUserDO extends TenantBaseDO {
      * 积分
      */
     private Integer point;
+
     // TODO 疯狂：增加一个 totalPoint；个人信息接口要返回
 
     /**
@@ -135,15 +151,16 @@ public class MemberUserDO extends TenantBaseDO {
      * 关联 {@link MemberLevelDO#getId()} 字段
      */
     private Long levelId;
+
     /**
      * 会员经验
      */
     private Integer experience;
+
     /**
      * 用户分组编号
      *
      * 关联 {@link MemberGroupDO#getId()} 字段
      */
     private Long groupId;
-
 }

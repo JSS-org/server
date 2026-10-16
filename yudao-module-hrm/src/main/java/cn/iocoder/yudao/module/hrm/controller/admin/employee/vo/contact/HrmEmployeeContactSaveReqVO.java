@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.contact;
 
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 员工联系人保存 Request VO")
@@ -52,5 +55,4 @@ public class HrmEmployeeContactSaveReqVO {
     @Schema(description = "排序", example = "1")
     @DiffLogField(name = "排序")
     private Integer sort;
-
 }

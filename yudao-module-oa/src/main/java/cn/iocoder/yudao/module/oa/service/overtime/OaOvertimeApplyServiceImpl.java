@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.overtime;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
@@ -13,16 +16,15 @@ import cn.iocoder.yudao.module.oa.controller.admin.overtime.vo.OaOvertimeApplySu
 import cn.iocoder.yudao.module.oa.dal.dataobject.overtime.OaOvertimeApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.overtime.OaOvertimeApplyMapper;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 加班申请 Service 实现类
@@ -33,18 +35,19 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaOvertimeApplyServiceImpl implements OaOvertimeApplyService {
 
-    @Resource
-    private OaOvertimeApplyMapper overtimeApplyMapper;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private OaOvertimeApplyMapper overtimeApplyMapper;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createOvertimeApply(OaOvertimeApplySaveReqVO saveReqVO) {
         // TODO DONE @AI：天数计算复用 LocalDateTimeUtils，仍保留一位小数并四舍五入。
         // 1. 转换申请内容并计算天数
-        OaOvertimeApplyDO overtimeApply = BeanUtils.toBean(saveReqVO, OaOvertimeApplyDO.class)
-                .setDays(LocalDateTimeUtils.getDaysBetween(saveReqVO.getStartTime(), saveReqVO.getEndTime(), 1));
+        OaOvertimeApplyDO overtimeApply =
+                BeanUtils.toBean(saveReqVO, OaOvertimeApplyDO.class)
+                        .setDays(
+                                LocalDateTimeUtils.getDaysBetween(
+                                        saveReqVO.getStartTime(), saveReqVO.getEndTime(), 1));
 
         // 2. 保存草稿
         overtimeApply.setId(null).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
@@ -59,8 +62,11 @@ public class OaOvertimeApplyServiceImpl implements OaOvertimeApplyService {
         validateOvertimeApplyEditable(saveReqVO.getId(), userId);
 
         // 2. 更新加班申请
-        OaOvertimeApplyDO overtimeApply = BeanUtils.toBean(saveReqVO, OaOvertimeApplyDO.class)
-                .setDays(LocalDateTimeUtils.getDaysBetween(saveReqVO.getStartTime(), saveReqVO.getEndTime(), 1));
+        OaOvertimeApplyDO overtimeApply =
+                BeanUtils.toBean(saveReqVO, OaOvertimeApplyDO.class)
+                        .setDays(
+                                LocalDateTimeUtils.getDaysBetween(
+                                        saveReqVO.getStartTime(), saveReqVO.getEndTime(), 1));
         overtimeApplyMapper.updateById(overtimeApply);
     }
 
@@ -68,21 +74,32 @@ public class OaOvertimeApplyServiceImpl implements OaOvertimeApplyService {
     @Transactional(rollbackFor = Exception.class)
     public void submitOvertimeApply(OaOvertimeApplySubmitReqVO submitReqVO, Long userId) {
         // 1. 校验申请可提交
-        OaOvertimeApplyDO overtimeApply = validateOvertimeApplyEditable(submitReqVO.getId(), userId);
+        OaOvertimeApplyDO overtimeApply =
+                validateOvertimeApplyEditable(submitReqVO.getId(), userId);
 
         // 2. 更新为审批中
-        overtimeApplyMapper.updateById(new OaOvertimeApplyDO().setId(overtimeApply.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        overtimeApplyMapper.updateById(
+                new OaOvertimeApplyDO()
+                        .setId(overtimeApply.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
         variables.put("days", overtimeApply.getDays());
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.OVERTIME_APPLY)
-                        .setBusinessKey(overtimeApply.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.OVERTIME_APPLY)
+                                .setBusinessKey(overtimeApply.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        overtimeApplyMapper.updateById(new OaOvertimeApplyDO().setId(overtimeApply.getId()).setProcessInstanceId(processInstanceId));
+        overtimeApplyMapper.updateById(
+                new OaOvertimeApplyDO()
+                        .setId(overtimeApply.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -91,7 +108,8 @@ public class OaOvertimeApplyServiceImpl implements OaOvertimeApplyService {
     }
 
     @Override
-    public PageResult<OaOvertimeApplyDO> getOvertimeApplyPage(Long userId, OaOvertimeApplyPageReqVO pageReqVO) {
+    public PageResult<OaOvertimeApplyDO> getOvertimeApplyPage(
+            Long userId, OaOvertimeApplyPageReqVO pageReqVO) {
         return overtimeApplyMapper.selectPage(userId, pageReqVO);
     }
 
@@ -123,7 +141,8 @@ public class OaOvertimeApplyServiceImpl implements OaOvertimeApplyService {
             throw exception(APPLY_ACCESS_DENIED);
         }
         // 3. 只有未提交草稿允许修改或提交
-        if (ObjUtil.notEqual(overtimeApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                overtimeApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(APPLY_STATUS_INVALID);
         }
         return overtimeApply;
@@ -142,5 +161,4 @@ public class OaOvertimeApplyServiceImpl implements OaOvertimeApplyService {
         }
         return overtimeApply;
     }
-
 }

@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.mes.service.md.workstation;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.machine.MesMdWorkstationMachineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationMachineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.workstation.MesMdWorkstationMachineMapper;
 import cn.iocoder.yudao.module.mes.service.dv.machinery.MesDvMachineryService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 设备资源 Service 实现类
@@ -25,14 +27,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdWorkstationMachineServiceImpl implements MesMdWorkstationMachineService {
 
-    @Resource
-    private MesMdWorkstationMachineMapper workstationMachineMapper;
+    @Resource private MesMdWorkstationMachineMapper workstationMachineMapper;
 
-    @Resource
-    @Lazy
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesDvMachineryService machineryService;
+    @Resource @Lazy private MesMdWorkstationService workstationService;
+    @Resource private MesDvMachineryService machineryService;
 
     @Override
     public Long createWorkstationMachine(MesMdWorkstationMachineSaveReqVO createReqVO) {
@@ -40,7 +38,8 @@ public class MesMdWorkstationMachineServiceImpl implements MesMdWorkstationMachi
         validateWorkstationMachineSaveData(createReqVO);
 
         // 插入
-        MesMdWorkstationMachineDO machine = BeanUtils.toBean(createReqVO, MesMdWorkstationMachineDO.class);
+        MesMdWorkstationMachineDO machine =
+                BeanUtils.toBean(createReqVO, MesMdWorkstationMachineDO.class);
         workstationMachineMapper.insert(machine);
         return machine.getId();
     }
@@ -49,11 +48,16 @@ public class MesMdWorkstationMachineServiceImpl implements MesMdWorkstationMachi
         // 校验设备是否存在
         machineryService.validateMachineryExists(reqVO.getMachineryId());
         // 校验该设备是否已分配到其他工作站（一台设备只能分配到一个工作站）
-        MesMdWorkstationMachineDO existing = workstationMachineMapper.selectByMachineryId(reqVO.getMachineryId());
+        MesMdWorkstationMachineDO existing =
+                workstationMachineMapper.selectByMachineryId(reqVO.getMachineryId());
         if (existing != null) {
-            MesMdWorkstationDO workstation = workstationService.getWorkstation(existing.getWorkstationId());
-            throw exception(MD_WORKSTATION_MACHINE_EXISTS,
-                    workstation != null ? workstation.getName() : String.valueOf(existing.getWorkstationId()));
+            MesMdWorkstationDO workstation =
+                    workstationService.getWorkstation(existing.getWorkstationId());
+            throw exception(
+                    MD_WORKSTATION_MACHINE_EXISTS,
+                    workstation != null
+                            ? workstation.getName()
+                            : String.valueOf(existing.getWorkstationId()));
         }
     }
 
@@ -66,7 +70,8 @@ public class MesMdWorkstationMachineServiceImpl implements MesMdWorkstationMachi
     }
 
     @Override
-    public List<MesMdWorkstationMachineDO> getWorkstationMachineListByWorkstationId(Long workstationId) {
+    public List<MesMdWorkstationMachineDO> getWorkstationMachineListByWorkstationId(
+            Long workstationId) {
         return workstationMachineMapper.selectListByWorkstationId(workstationId);
     }
 
@@ -74,5 +79,4 @@ public class MesMdWorkstationMachineServiceImpl implements MesMdWorkstationMachi
     public void deleteWorkstationMachineByWorkstationId(Long workstationId) {
         workstationMachineMapper.deleteByWorkstationId(workstationId);
     }
-
 }

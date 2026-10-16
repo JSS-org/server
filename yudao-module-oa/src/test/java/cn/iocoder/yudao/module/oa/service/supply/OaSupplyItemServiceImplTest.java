@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.oa.service.supply;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,7 +14,9 @@ import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.supply.OaSupplyItemDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.supply.OaSupplyItemMapper;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Import;
@@ -18,11 +26,6 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * {@link OaSupplyItemServiceImpl} 的单元测试类
  *
@@ -31,16 +34,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(OaSupplyItemServiceImpl.class)
 public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaSupplyItemService supplyItemService;
+    @Resource private OaSupplyItemService supplyItemService;
 
-    @Resource
-    private OaSupplyItemMapper supplyItemMapper;
+    @Resource private OaSupplyItemMapper supplyItemMapper;
 
-    @MockitoBean
-    private OaSupplyApplyService supplyApplyService;
-    @MockitoBean
-    private DeptApi deptApi;
+    @MockitoBean private OaSupplyApplyService supplyApplyService;
+    @MockitoBean private DeptApi deptApi;
 
     @Test
     public void testDeleteSupplyItem_pendingIssue() {
@@ -51,7 +50,8 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         Mockito.when(supplyApplyService.getPendingSupplyItemCount(item.getId())).thenReturn(1L);
 
         // 调用，并断言异常
-        assertServiceException(() -> supplyItemService.deleteSupplyItem(item.getId()), SUPPLY_ITEM_PENDING_ISSUE);
+        assertServiceException(
+                () -> supplyItemService.deleteSupplyItem(item.getId()), SUPPLY_ITEM_PENDING_ISSUE);
         assertNotNull(supplyItemMapper.selectById(item.getId()));
     }
 
@@ -76,14 +76,16 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         Mockito.when(supplyApplyService.getUnreturnedSupplyItemCount(item.getId())).thenReturn(1L);
 
         // 调用，并断言异常
-        assertServiceException(() -> supplyItemService.deleteSupplyItem(item.getId()), SUPPLY_ITEM_NOT_RETURNED);
+        assertServiceException(
+                () -> supplyItemService.deleteSupplyItem(item.getId()), SUPPLY_ITEM_NOT_RETURNED);
         assertNotNull(supplyItemMapper.selectById(item.getId()));
     }
 
     @Test
     public void testCreateSupplyItem_success() {
         // 准备参数
-        OaSupplyItemSaveReqVO reqVO = BeanUtils.toBean(randomSupplyItemDO(), OaSupplyItemSaveReqVO.class);
+        OaSupplyItemSaveReqVO reqVO =
+                BeanUtils.toBean(randomSupplyItemDO(), OaSupplyItemSaveReqVO.class);
 
         // 调用
         Long id = supplyItemService.createSupplyItem(reqVO);
@@ -108,8 +110,11 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         OaSupplyItemDO item = randomSupplyItemDO();
         supplyItemMapper.insert(item);
         // 准备参数
-        OaSupplyItemSaveReqVO reqVO = BeanUtils.toBean(item, OaSupplyItemSaveReqVO.class)
-                .setNo("NEW-CODE").setStockQuantity(8).setStatus(1);
+        OaSupplyItemSaveReqVO reqVO =
+                BeanUtils.toBean(item, OaSupplyItemSaveReqVO.class)
+                        .setNo("NEW-CODE")
+                        .setStockQuantity(8)
+                        .setStatus(1);
 
         // 调用
         supplyItemService.updateSupplyItem(reqVO);
@@ -127,10 +132,12 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         OaSupplyItemDO item = randomSupplyItemDO();
         supplyItemMapper.insert(item);
         // 准备参数
-        OaSupplyItemSaveReqVO reqVO = BeanUtils.toBean(item, OaSupplyItemSaveReqVO.class).setId(null);
+        OaSupplyItemSaveReqVO reqVO =
+                BeanUtils.toBean(item, OaSupplyItemSaveReqVO.class).setId(null);
 
         // 调用，并断言异常
-        assertServiceException(() -> supplyItemService.createSupplyItem(reqVO), SUPPLY_ITEM_NO_DUPLICATE);
+        assertServiceException(
+                () -> supplyItemService.createSupplyItem(reqVO), SUPPLY_ITEM_NO_DUPLICATE);
     }
 
     @Test
@@ -157,7 +164,8 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         OaSupplyItemDO item = randomSupplyItemDO();
         supplyItemMapper.insert(item);
         // 准备参数
-        OaSupplyItemStockInReqVO reqVO = new OaSupplyItemStockInReqVO().setId(item.getId()).setQuantity(3);
+        OaSupplyItemStockInReqVO reqVO =
+                new OaSupplyItemStockInReqVO().setId(item.getId()).setQuantity(3);
 
         // 调用
         supplyItemService.stockInSupplyItem(reqVO);
@@ -173,7 +181,8 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         supplyItemMapper.insert(item);
 
         // 调用，并断言异常
-        assertServiceException(() -> supplyItemService.updateSupplyItemStockQuantity(item.getId(), -6),
+        assertServiceException(
+                () -> supplyItemService.updateSupplyItemStockQuantity(item.getId(), -6),
                 SUPPLY_STOCK_INSUFFICIENT);
         assertEquals(5, supplyItemMapper.selectById(item.getId()).getStockQuantity());
     }
@@ -199,7 +208,8 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
         supplyItemMapper.insert(randomSupplyItemDO());
 
         // 调用
-        Map<Long, OaSupplyItemDO> items = supplyItemService.getSupplyItemMap(Collections.singletonList(item.getId()));
+        Map<Long, OaSupplyItemDO> items =
+                supplyItemService.getSupplyItemMap(Collections.singletonList(item.getId()));
 
         // 断言
         assertEquals(1, items.size());
@@ -234,9 +244,18 @@ public class OaSupplyItemServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaSupplyItemDO randomSupplyItemDO() {
-        return randomPojo(OaSupplyItemDO.class, item -> item.setId(null).setDeptId(100L).setCategory(1)
-                .setManageType(2).setStatus(0).setSort(0).setStockQuantity(5).setMinStockQuantity(1)
-                .setReferencePrice(BigDecimal.ONE).setDeleted(false));
+        return randomPojo(
+                OaSupplyItemDO.class,
+                item ->
+                        item.setId(null)
+                                .setDeptId(100L)
+                                .setCategory(1)
+                                .setManageType(2)
+                                .setStatus(0)
+                                .setSort(0)
+                                .setStockQuantity(5)
+                                .setMinStockQuantity(1)
+                                .setReferencePrice(BigDecimal.ONE)
+                                .setDeleted(false));
     }
-
 }

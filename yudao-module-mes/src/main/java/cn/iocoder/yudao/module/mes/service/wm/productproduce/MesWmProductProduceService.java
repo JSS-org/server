@@ -45,7 +45,6 @@ public interface MesWmProductProduceService {
      * @param qualifiedQty    合格品数量
      * @param unqualifiedQty  不合格品数量
      */
-    void splitPendingAndFinishProduce(Long feedbackId, Long sourceLineId,
-                                      BigDecimal qualifiedQty, BigDecimal unqualifiedQty);
-
+    void splitPendingAndFinishProduce(
+            Long feedbackId, Long sourceLineId, BigDecimal qualifiedQty, BigDecimal unqualifiedQty);
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -17,5 +18,4 @@ public class HrmSalaryEmployeeInfoUpdateListRespVO {
 
     @Schema(description = "失败员工及原因")
     private Map<Long, String> failureEmployeeReasons = new LinkedHashMap<>();
-
 }

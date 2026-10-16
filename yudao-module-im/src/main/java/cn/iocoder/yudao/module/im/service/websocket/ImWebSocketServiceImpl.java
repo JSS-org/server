@@ -1,11 +1,16 @@
 package cn.iocoder.yudao.module.im.service.websocket;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertLinkedSet;
+
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.module.im.service.websocket.notification.ImNotificationWebSocketDTO;
 import cn.iocoder.yudao.module.infra.api.websocket.WebSocketSenderApi;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -14,8 +19,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertLinkedSet;
 
 /**
  * IM WebSocket 推送 Service 实现类
@@ -30,24 +33,29 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Slf4j
 public class ImWebSocketServiceImpl implements ImWebSocketService {
 
-    @Resource
-    private WebSocketSenderApi webSocketSenderApi;
+    @Resource private WebSocketSenderApi webSocketSenderApi;
 
     @Override
-    public void sendNotificationAsync(Collection<Long> userIds, Integer conversationType, Integer contentType,
-                                      Object payload) {
-        ImNotificationWebSocketDTO notification = buildNotification(conversationType, contentType, payload);
+    public void sendNotificationAsync(
+            Collection<Long> userIds,
+            Integer conversationType,
+            Integer contentType,
+            Object payload) {
+        ImNotificationWebSocketDTO notification =
+                buildNotification(conversationType, contentType, payload);
         executeAfterTransaction(() -> getSelf().doSendNotification(userIds, notification));
     }
 
     @Override
-    public void broadcastNotificationAsync(Integer conversationType, Integer contentType, Object payload) {
-        ImNotificationWebSocketDTO notification = buildNotification(conversationType, contentType, payload);
+    public void broadcastNotificationAsync(
+            Integer conversationType, Integer contentType, Object payload) {
+        ImNotificationWebSocketDTO notification =
+                buildNotification(conversationType, contentType, payload);
         executeAfterTransaction(() -> getSelf().doBroadcastNotification(notification));
     }
 
-    private static ImNotificationWebSocketDTO buildNotification(Integer conversationType, Integer contentType,
-                                                                Object payload) {
+    private static ImNotificationWebSocketDTO buildNotification(
+            Integer conversationType, Integer contentType, Object payload) {
         return new ImNotificationWebSocketDTO()
                 .setConversationType(conversationType)
                 .setContentType(contentType)
@@ -58,13 +66,21 @@ public class ImWebSocketServiceImpl implements ImWebSocketService {
      * 异步发送 WebSocket 通知
      */
     @Async
-    public void doSendNotification(Collection<Long> userIds, ImNotificationWebSocketDTO notification) {
+    public void doSendNotification(
+            Collection<Long> userIds, ImNotificationWebSocketDTO notification) {
         for (Long userId : getDistinctUserIds(userIds)) {
             try {
-                webSocketSenderApi.sendObject(UserTypeEnum.ADMIN.getValue(), userId,
-                        ImNotificationWebSocketDTO.TYPE, notification);
+                webSocketSenderApi.sendObject(
+                        UserTypeEnum.ADMIN.getValue(),
+                        userId,
+                        ImNotificationWebSocketDTO.TYPE,
+                        notification);
             } catch (Exception e) {
-                log.error("[doSendNotification][userId({}) notification({}) 发送失败]", userId, notification, e);
+                log.error(
+                        "[doSendNotification][userId({}) notification({}) 发送失败]",
+                        userId,
+                        notification,
+                        e);
             }
         }
     }
@@ -75,8 +91,8 @@ public class ImWebSocketServiceImpl implements ImWebSocketService {
     @Async
     public void doBroadcastNotification(ImNotificationWebSocketDTO notification) {
         try {
-            webSocketSenderApi.sendObject(UserTypeEnum.ADMIN.getValue(),
-                    ImNotificationWebSocketDTO.TYPE, notification);
+            webSocketSenderApi.sendObject(
+                    UserTypeEnum.ADMIN.getValue(), ImNotificationWebSocketDTO.TYPE, notification);
         } catch (Exception e) {
             log.error("[doBroadcastNotification][notification({}) 广播失败]", notification, e);
         }
@@ -96,14 +112,14 @@ public class ImWebSocketServiceImpl implements ImWebSocketService {
             task.run();
             return;
         }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
 
-            @Override
-            public void afterCommit() {
-                task.run();
-            }
-
-        });
+                    @Override
+                    public void afterCommit() {
+                        task.run();
+                    }
+                });
     }
 
     /**
@@ -112,5 +128,4 @@ public class ImWebSocketServiceImpl implements ImWebSocketService {
     private ImWebSocketServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }
-
 }

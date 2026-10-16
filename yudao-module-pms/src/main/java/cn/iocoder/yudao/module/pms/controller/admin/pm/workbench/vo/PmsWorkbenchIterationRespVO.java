@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workbench.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -35,5 +36,4 @@ public class PmsWorkbenchIterationRespVO {
 
     @Schema(description = "迭代目标", example = "完成登录模块")
     private String target;
-
 }

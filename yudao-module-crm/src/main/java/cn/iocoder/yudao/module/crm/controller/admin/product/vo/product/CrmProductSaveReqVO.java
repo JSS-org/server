@@ -2,9 +2,13 @@ package cn.iocoder.yudao.module.crm.controller.admin.product.vo.product;
 
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmProductStatusParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmProductUnitParseFunction;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -49,8 +53,10 @@ public class CrmProductSaveReqVO {
     @DiffLogField(name = "产品描述")
     private String description;
 
-    @Schema(description = "负责人的用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "31926")
+    @Schema(
+            description = "负责人的用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "31926")
     @NotNull(message = "负责人的用户编号不能为空")
     private Long ownerUserId;
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.product.service.brand;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandCreateReqVO;
@@ -9,16 +12,16 @@ import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandUpd
 import cn.iocoder.yudao.module.product.convert.brand.ProductBrandConvert;
 import cn.iocoder.yudao.module.product.dal.dataobject.brand.ProductBrandDO;
 import cn.iocoder.yudao.module.product.dal.mysql.brand.ProductBrandMapper;
+
 import com.google.common.annotations.VisibleForTesting;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 
 /**
  * 品牌 Service 实现类
@@ -29,8 +32,7 @@ import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 @Validated
 public class ProductBrandServiceImpl implements ProductBrandService {
 
-    @Resource
-    private ProductBrandMapper brandMapper;
+    @Resource private ProductBrandMapper brandMapper;
 
     @Override
     public Long createBrand(ProductBrandCreateReqVO createReqVO) {
@@ -118,5 +120,4 @@ public class ProductBrandServiceImpl implements ProductBrandService {
     public List<ProductBrandDO> getBrandListByStatus(Integer status) {
         return brandMapper.selectListByStatus(status);
     }
-
 }

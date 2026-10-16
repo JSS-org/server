@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.recycle.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 知识库回收站内容预览 Response VO")
@@ -24,5 +25,4 @@ public class PmsKnowledgeRecyclePreviewRespVO {
 
     @Schema(description = "文件大小，单位：字节", example = "102400")
     private Long fileSize;
-
 }

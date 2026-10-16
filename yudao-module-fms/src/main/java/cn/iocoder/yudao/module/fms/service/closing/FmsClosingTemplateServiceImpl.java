@@ -1,39 +1,5 @@
 package cn.iocoder.yudao.module.fms.service.closing;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.io.IoUtil;
-import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingTemplateRespVO;
-import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingTemplateSaveReqVO;
-import cn.iocoder.yudao.module.fms.dal.dataobject.closing.FmsClosingTemplateDO;
-import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsFinanceParameterDO;
-import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
-import cn.iocoder.yudao.module.fms.dal.mysql.closing.FmsClosingTemplateMapper;
-import cn.iocoder.yudao.module.fms.enums.closing.FmsClosingTemplateCategoryEnum;
-import cn.iocoder.yudao.module.fms.enums.common.FmsDebitCreditDirectionEnum;
-import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
-import cn.iocoder.yudao.module.fms.service.config.FmsFinanceParameterService;
-import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
-import com.mzt.logapi.context.LogRecordContext;
-import com.mzt.logapi.starter.annotation.LogRecord;
-import jakarta.annotation.Resource;
-import lombok.Data;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
@@ -53,6 +19,44 @@ import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CLOSING_T
 import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CLOSING_TEMPLATE_UPDATE_SUCCESS;
 import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CLOSING_TYPE;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.IoUtil;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingTemplateRespVO;
+import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingTemplateSaveReqVO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.closing.FmsClosingTemplateDO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsFinanceParameterDO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
+import cn.iocoder.yudao.module.fms.dal.mysql.closing.FmsClosingTemplateMapper;
+import cn.iocoder.yudao.module.fms.enums.closing.FmsClosingTemplateCategoryEnum;
+import cn.iocoder.yudao.module.fms.enums.common.FmsDebitCreditDirectionEnum;
+import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
+import cn.iocoder.yudao.module.fms.service.config.FmsFinanceParameterService;
+import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
+
+import com.mzt.logapi.context.LogRecordContext;
+import com.mzt.logapi.starter.annotation.LogRecord;
+
+import jakarta.annotation.Resource;
+
+import lombok.Data;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+
 /**
  * FMS 结账模板 Service 实现类
  *
@@ -64,15 +68,11 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
 
     private static final String PRESET_RESOURCE = "fms/closing/closing-template-presets.json";
 
-    @Resource
-    private FmsClosingTemplateMapper closingTemplateMapper;
+    @Resource private FmsClosingTemplateMapper closingTemplateMapper;
 
-    @Resource
-    private FmsAccountSetService accountSetService;
-    @Resource
-    private FmsSubjectService subjectService;
-    @Resource
-    private FmsFinanceParameterService financeParameterService;
+    @Resource private FmsAccountSetService accountSetService;
+    @Resource private FmsSubjectService subjectService;
+    @Resource private FmsFinanceParameterService financeParameterService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -81,24 +81,38 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
         List<Preset> presets = loadPresets();
         validatePresets(presets);
         // 1.2 查询尚未初始化的预置编码
-        Set<String> existingCodes = convertSet(closingTemplateMapper.selectListByAccountSetId(accountSetId),
-                FmsClosingTemplateDO::getPresetCode, Objects::nonNull);
-        List<Preset> pendingPresets = filterList(presets,
-                preset -> !existingCodes.contains(preset.getCode()));
+        Set<String> existingCodes =
+                convertSet(
+                        closingTemplateMapper.selectListByAccountSetId(accountSetId),
+                        FmsClosingTemplateDO::getPresetCode,
+                        Objects::nonNull);
+        List<Preset> pendingPresets =
+                filterList(presets, preset -> !existingCodes.contains(preset.getCode()));
         if (CollUtil.isEmpty(pendingPresets)) {
             return;
         }
 
         // 2. 查询账套科目并建立实际科目编码索引
         List<FmsSubjectDO> subjects = subjectService.getSubjectList(accountSetId, null, userId);
-        Map<String, FmsSubjectDO> subjectMap = convertMap(subjects, FmsSubjectDO::getCode,
-                Function.identity(), (first, second) -> first);
-        FmsFinanceParameterDO financeParameter = financeParameterService.getFinanceParameter(accountSetId);
+        Map<String, FmsSubjectDO> subjectMap =
+                convertMap(
+                        subjects,
+                        FmsSubjectDO::getCode,
+                        Function.identity(),
+                        (first, second) -> first);
+        FmsFinanceParameterDO financeParameter =
+                financeParameterService.getFinanceParameter(accountSetId);
 
         // 3. 转换预置模板并批量创建
-        List<FmsClosingTemplateDO> templates = convertList(pendingPresets,
-                preset -> buildPresetTemplate(accountSetId, preset, subjectMap,
-                        financeParameter.getSubjectCodeRule()));
+        List<FmsClosingTemplateDO> templates =
+                convertList(
+                        pendingPresets,
+                        preset ->
+                                buildPresetTemplate(
+                                        accountSetId,
+                                        preset,
+                                        subjectMap,
+                                        financeParameter.getSubjectCodeRule()));
         closingTemplateMapper.insertBatch(templates);
     }
 
@@ -108,24 +122,41 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
         accountSetService.validateAccountSetReadPermission(accountSetId, userId);
 
         // 2. 查询结账模板
-        return convertList(closingTemplateMapper.selectListByAccountSetId(accountSetId), this::buildTemplateRespVO);
+        return convertList(
+                closingTemplateMapper.selectListByAccountSetId(accountSetId),
+                this::buildTemplateRespVO);
     }
 
     @Override
-    public Long getClosingTemplateCountBySubjectIds(Long accountSetId, Collection<Long> subjectIds) {
+    public Long getClosingTemplateCountBySubjectIds(
+            Long accountSetId, Collection<Long> subjectIds) {
         // 1. 查询账套结账模板
-        List<FmsClosingTemplateDO> templates = closingTemplateMapper.selectListByAccountSetId(accountSetId);
+        List<FmsClosingTemplateDO> templates =
+                closingTemplateMapper.selectListByAccountSetId(accountSetId);
 
         // 2. 统计来源科目或分录科目被引用的模板数量
         Set<Long> subjectIdSet = new HashSet<>(subjectIds);
-        return (long) filterList(templates, template -> subjectIdSet.contains(template.getSubjectId())
-                || CollUtil.emptyIfNull(template.getSubjectRules()).stream()
-                .anyMatch(rule -> subjectIdSet.contains(rule.getSubjectId()))).size();
+        return (long)
+                filterList(
+                                templates,
+                                template ->
+                                        subjectIdSet.contains(template.getSubjectId())
+                                                || CollUtil.emptyIfNull(template.getSubjectRules())
+                                                        .stream()
+                                                        .anyMatch(
+                                                                rule ->
+                                                                        subjectIdSet.contains(
+                                                                                rule
+                                                                                        .getSubjectId())))
+                        .size();
     }
 
     @Override
-    @LogRecord(type = FMS_CLOSING_TYPE, subType = FMS_CLOSING_TEMPLATE_CREATE_SUB_TYPE,
-            bizNo = "{{#templateId}}", success = FMS_CLOSING_TEMPLATE_CREATE_SUCCESS)
+    @LogRecord(
+            type = FMS_CLOSING_TYPE,
+            subType = FMS_CLOSING_TEMPLATE_CREATE_SUB_TYPE,
+            bizNo = "{{#templateId}}",
+            success = FMS_CLOSING_TEMPLATE_CREATE_SUCCESS)
     public Long createClosingTemplate(FmsClosingTemplateSaveReqVO createReqVO, Long userId) {
         // 1.1 校验账套写权限
         accountSetService.validateAccountSetWritePermission(createReqVO.getAccountSetId(), userId);
@@ -142,8 +173,11 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
     }
 
     @Override
-    @LogRecord(type = FMS_CLOSING_TYPE, subType = FMS_CLOSING_TEMPLATE_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.id}}", success = FMS_CLOSING_TEMPLATE_UPDATE_SUCCESS)
+    @LogRecord(
+            type = FMS_CLOSING_TYPE,
+            subType = FMS_CLOSING_TEMPLATE_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
+            success = FMS_CLOSING_TEMPLATE_UPDATE_SUCCESS)
     public void updateClosingTemplate(FmsClosingTemplateSaveReqVO updateReqVO, Long userId) {
         // 1.1 校验账套写权限
         accountSetService.validateAccountSetWritePermission(updateReqVO.getAccountSetId(), userId);
@@ -157,8 +191,11 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
     }
 
     @Override
-    @LogRecord(type = FMS_CLOSING_TYPE, subType = FMS_CLOSING_TEMPLATE_DELETE_SUB_TYPE,
-            bizNo = "{{#id}}", success = FMS_CLOSING_TEMPLATE_DELETE_SUCCESS)
+    @LogRecord(
+            type = FMS_CLOSING_TYPE,
+            subType = FMS_CLOSING_TEMPLATE_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
+            success = FMS_CLOSING_TEMPLATE_DELETE_SUCCESS)
     public void deleteClosingTemplate(Long accountSetId, Long id, Long userId) {
         // 1.1 校验账套写权限
         accountSetService.validateAccountSetWritePermission(accountSetId, userId);
@@ -177,7 +214,8 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
      * @return 结账模板
      */
     private FmsClosingTemplateDO validateClosingTemplateExists(Long accountSetId, Long id) {
-        FmsClosingTemplateDO template = closingTemplateMapper.selectByIdAndAccountSetId(id, accountSetId);
+        FmsClosingTemplateDO template =
+                closingTemplateMapper.selectByIdAndAccountSetId(id, accountSetId);
         if (template == null) {
             throw exception(CLOSING_TEMPLATE_NOT_EXISTS);
         }
@@ -194,26 +232,41 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
     private Map<Long, FmsSubjectDO> validateClosingTemplate(
             FmsClosingTemplateSaveReqVO saveReqVO, Long userId) {
         // 1. 校验来源科目和规则科目存在且为末级科目
-        List<FmsSubjectDO> subjects = subjectService.getSubjectList(saveReqVO.getAccountSetId(), null, userId);
+        List<FmsSubjectDO> subjects =
+                subjectService.getSubjectList(saveReqVO.getAccountSetId(), null, userId);
         Map<Long, FmsSubjectDO> subjectMap = convertMap(subjects, FmsSubjectDO::getId);
         Set<Long> parentIds = convertSet(subjects, FmsSubjectDO::getParentId, Objects::nonNull);
         if (saveReqVO.getSubjectId() != null
-                && (!subjectMap.containsKey(saveReqVO.getSubjectId()) || parentIds.contains(saveReqVO.getSubjectId()))) {
+                && (!subjectMap.containsKey(saveReqVO.getSubjectId())
+                        || parentIds.contains(saveReqVO.getSubjectId()))) {
             throw exception(CLOSING_SCHEME_SUBJECT_INVALID);
         }
         for (FmsClosingTemplateSaveReqVO.SubjectRule rule : saveReqVO.getSubjects()) {
-            if (!subjectMap.containsKey(rule.getSubjectId()) || parentIds.contains(rule.getSubjectId())) {
+            if (!subjectMap.containsKey(rule.getSubjectId())
+                    || parentIds.contains(rule.getSubjectId())) {
                 throw exception(CLOSING_SCHEME_SUBJECT_INVALID);
             }
         }
 
         // 2. 校验借贷金额比例分别等于 100%
-        BigDecimal debitRatio = sumBigDecimal(filterList(saveReqVO.getSubjects(), rule -> Objects.equals(
-                rule.getDirection(), FmsDebitCreditDirectionEnum.DEBIT.getType())),
-                FmsClosingTemplateSaveReqVO.SubjectRule::getAmountRatio);
-        BigDecimal creditRatio = sumBigDecimal(filterList(saveReqVO.getSubjects(), rule -> Objects.equals(
-                rule.getDirection(), FmsDebitCreditDirectionEnum.CREDIT.getType())),
-                FmsClosingTemplateSaveReqVO.SubjectRule::getAmountRatio);
+        BigDecimal debitRatio =
+                sumBigDecimal(
+                        filterList(
+                                saveReqVO.getSubjects(),
+                                rule ->
+                                        Objects.equals(
+                                                rule.getDirection(),
+                                                FmsDebitCreditDirectionEnum.DEBIT.getType())),
+                        FmsClosingTemplateSaveReqVO.SubjectRule::getAmountRatio);
+        BigDecimal creditRatio =
+                sumBigDecimal(
+                        filterList(
+                                saveReqVO.getSubjects(),
+                                rule ->
+                                        Objects.equals(
+                                                rule.getDirection(),
+                                                FmsDebitCreditDirectionEnum.CREDIT.getType())),
+                        FmsClosingTemplateSaveReqVO.SubjectRule::getAmountRatio);
         if (debitRatio.compareTo(BigDecimal.valueOf(100)) != 0
                 || creditRatio.compareTo(BigDecimal.valueOf(100)) != 0) {
             throw exception(CLOSING_SCHEME_RATIO_INVALID);
@@ -228,10 +281,10 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
      * @param subjectMap 科目编号到科目的 Map
      * @return 结账模板
      */
-    private FmsClosingTemplateDO buildClosingTemplate(FmsClosingTemplateSaveReqVO saveReqVO,
-            Map<Long, FmsSubjectDO> subjectMap) {
-        List<FmsClosingTemplateDO.SubjectRule> rules = BeanUtils.toBean(
-                saveReqVO.getSubjects(), FmsClosingTemplateDO.SubjectRule.class);
+    private FmsClosingTemplateDO buildClosingTemplate(
+            FmsClosingTemplateSaveReqVO saveReqVO, Map<Long, FmsSubjectDO> subjectMap) {
+        List<FmsClosingTemplateDO.SubjectRule> rules =
+                BeanUtils.toBean(saveReqVO.getSubjects(), FmsClosingTemplateDO.SubjectRule.class);
         rules.forEach(rule -> rule.setSubjectCode(subjectMap.get(rule.getSubjectId()).getCode()));
         return BeanUtils.toBean(saveReqVO, FmsClosingTemplateDO.class).setSubjectRules(rules);
     }
@@ -244,7 +297,10 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
      */
     private FmsClosingTemplateRespVO buildTemplateRespVO(FmsClosingTemplateDO template) {
         return BeanUtils.toBean(template, FmsClosingTemplateRespVO.class)
-                .setSubjects(BeanUtils.toBean(template.getSubjectRules(), FmsClosingTemplateRespVO.SubjectRule.class));
+                .setSubjects(
+                        BeanUtils.toBean(
+                                template.getSubjectRules(),
+                                FmsClosingTemplateRespVO.SubjectRule.class));
     }
 
     /**
@@ -256,23 +312,45 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
      * @param subjectCodeRule 科目编码规则
      * @return 结账模板
      */
-    private FmsClosingTemplateDO buildPresetTemplate(Long accountSetId, Preset preset,
-            Map<String, FmsSubjectDO> subjectMap, String subjectCodeRule) {
-        List<FmsClosingTemplateDO.SubjectRule> rules = convertList(preset.getEntries(), entry -> {
-            String actualCode = financeParameterService.convertStandardSubjectCode(
-                    entry.getSubjectCode(), subjectCodeRule);
-            FmsSubjectDO subject = subjectMap.get(actualCode);
-            if (subject == null) {
-                throw exception(CLOSING_TEMPLATE_PRESET_SUBJECT_NOT_EXISTS, preset.getCode(), entry.getSubjectCode());
-            }
-            return FmsClosingTemplateDO.SubjectRule.builder().subjectId(subject.getId())
-                    .subjectCode(subject.getCode()).digest(entry.getDigest())
-                    .direction(FmsDebitCreditDirectionEnum.valueOf(entry.getDirection()).getType())
-                    .amountRatio(entry.getAmountRatio()).build();
-        });
-        return new FmsClosingTemplateDO().setAccountSetId(accountSetId).setPresetCode(preset.getCode())
-                .setName(preset.getName()).setCategory(FmsClosingTemplateCategoryEnum.valueOf(preset.getCategory()).getCategory())
-                .setPeriodEnd(true).setSubjectRules(rules).setSort(preset.getSort());
+    private FmsClosingTemplateDO buildPresetTemplate(
+            Long accountSetId,
+            Preset preset,
+            Map<String, FmsSubjectDO> subjectMap,
+            String subjectCodeRule) {
+        List<FmsClosingTemplateDO.SubjectRule> rules =
+                convertList(
+                        preset.getEntries(),
+                        entry -> {
+                            String actualCode =
+                                    financeParameterService.convertStandardSubjectCode(
+                                            entry.getSubjectCode(), subjectCodeRule);
+                            FmsSubjectDO subject = subjectMap.get(actualCode);
+                            if (subject == null) {
+                                throw exception(
+                                        CLOSING_TEMPLATE_PRESET_SUBJECT_NOT_EXISTS,
+                                        preset.getCode(),
+                                        entry.getSubjectCode());
+                            }
+                            return FmsClosingTemplateDO.SubjectRule.builder()
+                                    .subjectId(subject.getId())
+                                    .subjectCode(subject.getCode())
+                                    .digest(entry.getDigest())
+                                    .direction(
+                                            FmsDebitCreditDirectionEnum.valueOf(
+                                                            entry.getDirection())
+                                                    .getType())
+                                    .amountRatio(entry.getAmountRatio())
+                                    .build();
+                        });
+        return new FmsClosingTemplateDO()
+                .setAccountSetId(accountSetId)
+                .setPresetCode(preset.getCode())
+                .setName(preset.getName())
+                .setCategory(
+                        FmsClosingTemplateCategoryEnum.valueOf(preset.getCategory()).getCategory())
+                .setPeriodEnd(true)
+                .setSubjectRules(rules)
+                .setSort(preset.getSort());
     }
 
     /**
@@ -295,7 +373,8 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
      */
     private void validatePresets(List<Preset> presets) {
         // 1. 校验预置编码唯一
-        if (CollUtil.isEmpty(presets) || convertSet(presets, Preset::getCode).size() != presets.size()) {
+        if (CollUtil.isEmpty(presets)
+                || convertSet(presets, Preset::getCode).size() != presets.size()) {
             throw exception(CLOSING_TEMPLATE_PRESET_INVALID);
         }
         for (Preset preset : presets) {
@@ -312,10 +391,24 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
                 throw exception(CLOSING_TEMPLATE_PRESET_INVALID);
             }
             // 3. 校验借贷金额比例分别等于 100%
-            BigDecimal debitRatio = sumBigDecimal(filterList(preset.getEntries(), entry -> Objects.equals(
-                    entry.getDirection(), FmsDebitCreditDirectionEnum.DEBIT.name())), Preset.Entry::getAmountRatio);
-            BigDecimal creditRatio = sumBigDecimal(filterList(preset.getEntries(), entry -> Objects.equals(
-                    entry.getDirection(), FmsDebitCreditDirectionEnum.CREDIT.name())), Preset.Entry::getAmountRatio);
+            BigDecimal debitRatio =
+                    sumBigDecimal(
+                            filterList(
+                                    preset.getEntries(),
+                                    entry ->
+                                            Objects.equals(
+                                                    entry.getDirection(),
+                                                    FmsDebitCreditDirectionEnum.DEBIT.name())),
+                            Preset.Entry::getAmountRatio);
+            BigDecimal creditRatio =
+                    sumBigDecimal(
+                            filterList(
+                                    preset.getEntries(),
+                                    entry ->
+                                            Objects.equals(
+                                                    entry.getDirection(),
+                                                    FmsDebitCreditDirectionEnum.CREDIT.name())),
+                            Preset.Entry::getAmountRatio);
             if (debitRatio.compareTo(BigDecimal.valueOf(100)) != 0
                     || creditRatio.compareTo(BigDecimal.valueOf(100)) != 0) {
                 throw exception(CLOSING_TEMPLATE_PRESET_INVALID);
@@ -330,18 +423,22 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
          * 预置编码
          */
         private String code;
+
         /**
          * 模板名称
          */
         private String name;
+
         /**
          * 模板分类
          */
         private String category;
+
         /**
          * 显示顺序
          */
         private Integer sort;
+
         /**
          * 分录数组
          */
@@ -354,19 +451,21 @@ public class FmsClosingTemplateServiceImpl implements FmsClosingTemplateService 
              * 标准科目编码
              */
             private String subjectCode;
+
             /**
              * 摘要
              */
             private String digest;
+
             /**
              * 借贷方向
              */
             private String direction;
+
             /**
              * 金额比例
              */
             private BigDecimal amountRatio;
         }
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.combination.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -15,7 +16,9 @@ public class AppCombinationRecordDetailRespVO {
     @Schema(description = "成员的拼团记录", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<AppCombinationRecordRespVO> memberRecords;
 
-    @Schema(description = "当前用户参团记录对应的订单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "当前用户参团记录对应的订单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Long orderId;
-
 }

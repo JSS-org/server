@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.dv.machinery;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,15 +10,14 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.machinery.vo.type.MesDvMa
 import cn.iocoder.yudao.module.mes.controller.admin.dv.machinery.vo.type.MesDvMachineryTypeSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.machinery.MesDvMachineryTypeDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.machinery.MesDvMachineryTypeMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 设备类型 Service 实现类
@@ -26,11 +28,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesDvMachineryTypeServiceImpl implements MesDvMachineryTypeService {
 
-    @Resource
-    private MesDvMachineryTypeMapper machineryTypeMapper;
+    @Resource private MesDvMachineryTypeMapper machineryTypeMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private MesDvMachineryService machineryService;
 
     @Override
@@ -39,7 +39,8 @@ public class MesDvMachineryTypeServiceImpl implements MesDvMachineryTypeService 
         validateMachineryTypeSaveData(createReqVO);
 
         // 插入
-        MesDvMachineryTypeDO machineryType = BeanUtils.toBean(createReqVO, MesDvMachineryTypeDO.class);
+        MesDvMachineryTypeDO machineryType =
+                BeanUtils.toBean(createReqVO, MesDvMachineryTypeDO.class);
         machineryTypeMapper.insert(machineryType);
         return machineryType.getId();
     }
@@ -78,9 +79,11 @@ public class MesDvMachineryTypeServiceImpl implements MesDvMachineryTypeService 
         // 校验父级节点有效性
         validateParentMachineryType(saveReqVO.getId(), saveReqVO.getParentId());
         // 校验类型名称唯一性
-        validateMachineryTypeNameUnique(saveReqVO.getId(), saveReqVO.getParentId(), saveReqVO.getName());
+        validateMachineryTypeNameUnique(
+                saveReqVO.getId(), saveReqVO.getParentId(), saveReqVO.getName());
         // 校验类型编码唯一性
-        validateMachineryTypeCodeUnique(saveReqVO.getId(), saveReqVO.getParentId(), saveReqVO.getCode());
+        validateMachineryTypeCodeUnique(
+                saveReqVO.getId(), saveReqVO.getParentId(), saveReqVO.getCode());
     }
 
     private void validateMachineryTypeExists(Long id) {
@@ -124,7 +127,8 @@ public class MesDvMachineryTypeServiceImpl implements MesDvMachineryTypeService 
     }
 
     private void validateMachineryTypeNameUnique(Long id, Long parentId, String name) {
-        MesDvMachineryTypeDO machineryType = machineryTypeMapper.selectByParentIdAndName(parentId, name);
+        MesDvMachineryTypeDO machineryType =
+                machineryTypeMapper.selectByParentIdAndName(parentId, name);
         if (machineryType == null) {
             return;
         }
@@ -166,8 +170,11 @@ public class MesDvMachineryTypeServiceImpl implements MesDvMachineryTypeService 
         List<MesDvMachineryTypeDO> allList = machineryTypeMapper.selectList(); // 类型总量小，全量查
         // 1. 构建 parentId -> children 的 Map（类似 menu 的 treeNodeMap 思路）
         Map<Long, List<MesDvMachineryTypeDO>> parentChildrenMap = new LinkedHashMap<>();
-        allList.forEach(type -> parentChildrenMap
-                .computeIfAbsent(type.getParentId(), k -> new ArrayList<>()).add(type));
+        allList.forEach(
+                type ->
+                        parentChildrenMap
+                                .computeIfAbsent(type.getParentId(), k -> new ArrayList<>())
+                                .add(type));
         // 2. 收集所有后代节点
         List<MesDvMachineryTypeDO> result = new ArrayList<>();
         List<Long> parentIds = new ArrayList<>();
@@ -187,5 +194,4 @@ public class MesDvMachineryTypeServiceImpl implements MesDvMachineryTypeService 
         }
         return result;
     }
-
 }

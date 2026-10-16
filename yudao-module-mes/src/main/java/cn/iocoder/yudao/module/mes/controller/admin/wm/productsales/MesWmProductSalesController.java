@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productsales;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -18,12 +22,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNotic
 import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
 import cn.iocoder.yudao.module.mes.service.wm.productsales.MesWmProductSalesService;
 import cn.iocoder.yudao.module.mes.service.wm.salesnotice.MesWmSalesNoticeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,34 +38,29 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 销售出库单")
 @RestController
 @RequestMapping("/mes/wm/product-sales")
 @Validated
 public class MesWmProductSalesController {
 
-    @Resource
-    private MesWmProductSalesService productSalesService;
-    @Resource
-    private MesMdClientService clientService;
-    @Resource
-    private MesWmSalesNoticeService salesNoticeService;
+    @Resource private MesWmProductSalesService productSalesService;
+    @Resource private MesMdClientService clientService;
+    @Resource private MesWmSalesNoticeService salesNoticeService;
 
     @PostMapping("/create")
     @Operation(summary = "创建销售出库单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-sales:create')")
-    public CommonResult<Long> createProductSales(@Valid @RequestBody MesWmProductSalesSaveReqVO createReqVO) {
+    public CommonResult<Long> createProductSales(
+            @Valid @RequestBody MesWmProductSalesSaveReqVO createReqVO) {
         return success(productSalesService.createProductSales(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改销售出库单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-sales:update')")
-    public CommonResult<Boolean> updateProductSales(@Valid @RequestBody MesWmProductSalesSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProductSales(
+            @Valid @RequestBody MesWmProductSalesSaveReqVO updateReqVO) {
         productSalesService.updateProductSales(updateReqVO);
         return success(true);
     }
@@ -89,19 +91,27 @@ public class MesWmProductSalesController {
     @PreAuthorize("@ss.hasPermission('mes:wm-product-sales:query')")
     public CommonResult<PageResult<MesWmProductSalesRespVO>> getProductSalesPage(
             @Valid MesWmProductSalesPageReqVO pageReqVO) {
-        PageResult<MesWmProductSalesDO> pageResult = productSalesService.getProductSalesPage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmProductSalesDO> pageResult =
+                productSalesService.getProductSalesPage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出销售出库单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-sales:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportProductSalesExcel(@Valid MesWmProductSalesPageReqVO pageReqVO,
-                                        HttpServletResponse response) throws IOException {
+    public void exportProductSalesExcel(
+            @Valid MesWmProductSalesPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmProductSalesDO> pageResult = productSalesService.getProductSalesPage(pageReqVO);
-        ExcelUtils.write(response, "销售出库单.xls", "数据", MesWmProductSalesRespVO.class,
+        PageResult<MesWmProductSalesDO> pageResult =
+                productSalesService.getProductSalesPage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "销售出库单.xls",
+                "数据",
+                MesWmProductSalesRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -134,7 +144,8 @@ public class MesWmProductSalesController {
     @PutMapping("/shipping")
     @Operation(summary = "填写运单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-sales:shipping')")
-    public CommonResult<Boolean> shippingProductSales(@Valid @RequestBody MesWmProductSalesShippingReqVO reqVO) {
+    public CommonResult<Boolean> shippingProductSales(
+            @Valid @RequestBody MesWmProductSalesShippingReqVO reqVO) {
         productSalesService.shippingProductSales(reqVO);
         return success(true);
     }
@@ -164,17 +175,26 @@ public class MesWmProductSalesController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdClientDO> clientMap = clientService.getClientMap(
-                convertSet(list, MesWmProductSalesDO::getClientId));
-        Map<Long, MesWmSalesNoticeDO> noticeMap = salesNoticeService.getSalesNoticeMap(
-                convertSet(list, MesWmProductSalesDO::getNoticeId));
+        Map<Long, MesMdClientDO> clientMap =
+                clientService.getClientMap(convertSet(list, MesWmProductSalesDO::getClientId));
+        Map<Long, MesWmSalesNoticeDO> noticeMap =
+                salesNoticeService.getSalesNoticeMap(
+                        convertSet(list, MesWmProductSalesDO::getNoticeId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmProductSalesRespVO.class, vo -> {
-            MapUtils.findAndThen(clientMap, vo.getClientId(), client ->
-                    vo.setClientName(client.getName()).setClientCode(client.getCode()));
-            MapUtils.findAndThen(noticeMap, vo.getNoticeId(),
-                    notice -> vo.setNoticeCode(notice.getCode()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmProductSalesRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            clientMap,
+                            vo.getClientId(),
+                            client ->
+                                    vo.setClientName(client.getName())
+                                            .setClientCode(client.getCode()));
+                    MapUtils.findAndThen(
+                            noticeMap,
+                            vo.getNoticeId(),
+                            notice -> vo.setNoticeCode(notice.getCode()));
+                });
     }
-
 }

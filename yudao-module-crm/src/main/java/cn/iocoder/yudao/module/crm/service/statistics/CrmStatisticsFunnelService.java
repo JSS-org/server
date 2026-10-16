@@ -27,7 +27,8 @@ public interface CrmStatisticsFunnelService {
      * @param reqVO 请求
      * @return 商机结束状态统计
      */
-    List<CrmStatisticsBusinessSummaryByEndStatusRespVO> getBusinessSummaryByEndStatus(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessSummaryByEndStatusRespVO> getBusinessSummaryByEndStatus(
+            CrmStatisticsFunnelReqVO reqVO);
 
     /**
      * 获得商机阶段统计
@@ -35,7 +36,8 @@ public interface CrmStatisticsFunnelService {
      * @param reqVO 请求
      * @return 商机阶段统计
      */
-    List<CrmStatisticsBusinessSummaryByStatusRespVO> getBusinessSummaryByStatus(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessSummaryByStatusRespVO> getBusinessSummaryByStatus(
+            CrmStatisticsFunnelReqVO reqVO);
 
     /**
      * 获取新增商机分析(按日期)
@@ -43,7 +45,8 @@ public interface CrmStatisticsFunnelService {
      * @param reqVO 请求
      * @return 新增商机分析
      */
-    List<CrmStatisticsBusinessSummaryByDateRespVO> getBusinessSummaryByDate(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessSummaryByDateRespVO> getBusinessSummaryByDate(
+            CrmStatisticsFunnelReqVO reqVO);
 
     /**
      * 获得商机转化率分析(按日期)
@@ -51,7 +54,8 @@ public interface CrmStatisticsFunnelService {
      * @param reqVO 请求
      * @return 商机转化率分析
      */
-    List<CrmStatisticsBusinessInversionRateSummaryByDateRespVO> getBusinessInversionRateSummaryByDate(CrmStatisticsFunnelReqVO reqVO);
+    List<CrmStatisticsBusinessInversionRateSummaryByDateRespVO>
+            getBusinessInversionRateSummaryByDate(CrmStatisticsFunnelReqVO reqVO);
 
     /**
      * 获得商机分页(按日期)
@@ -60,5 +64,4 @@ public interface CrmStatisticsFunnelService {
      * @return 商机分页
      */
     PageResult<CrmBusinessDO> getBusinessPageByDate(CrmStatisticsFunnelReqVO pageVO);
-
 }

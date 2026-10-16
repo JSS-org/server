@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherHelper;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,8 +29,10 @@ public class IotDeviceStateConditionMatcher implements IotSceneRuleConditionMatc
             return false;
         }
         // 1.2 修复条件匹配中忽略了产品和设备的一致性验证，2025.05.25 by panda
-        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(message, condition.getProductId(),condition.getDeviceId())){
-            IotSceneRuleMatcherHelper.logConditionMatchFailure(message,condition,"条件匹配器中产品或设备不匹配");
+        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(
+                message, condition.getProductId(), condition.getDeviceId())) {
+            IotSceneRuleMatcherHelper.logConditionMatchFailure(
+                    message, condition, "条件匹配器中产品或设备不匹配");
             return false;
         }
 
@@ -48,7 +51,9 @@ public class IotDeviceStateConditionMatcher implements IotSceneRuleConditionMatc
         }
 
         // 2.2 使用条件评估器进行匹配
-        boolean matched = IotSceneRuleMatcherHelper.evaluateCondition(stateValue, condition.getOperator(), condition.getParam());
+        boolean matched =
+                IotSceneRuleMatcherHelper.evaluateCondition(
+                        stateValue, condition.getOperator(), condition.getParam());
         if (matched) {
             IotSceneRuleMatcherHelper.logConditionMatchSuccess(message, condition);
         } else {
@@ -61,5 +66,4 @@ public class IotDeviceStateConditionMatcher implements IotSceneRuleConditionMatc
     public int getPriority() {
         return 30; // 中等优先级
     }
-
 }

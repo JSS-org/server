@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.wms.controller.admin.order.shipment.vo.detail;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -30,5 +32,4 @@ public class WmsShipmentOrderDetailSaveReqVO {
     @Schema(description = "行金额", example = "1000.00")
     @DecimalMin(value = "0", message = "行金额不能小于 0")
     private BigDecimal totalPrice;
-
 }

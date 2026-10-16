@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.OaMailFolderDO;
+
 import java.util.List;
 
 /**
@@ -49,5 +50,4 @@ public interface OaMailFolderService {
      * @param folder 文件夹更新信息
      */
     void updateMailFolder(OaMailFolderDO folder);
-
 }

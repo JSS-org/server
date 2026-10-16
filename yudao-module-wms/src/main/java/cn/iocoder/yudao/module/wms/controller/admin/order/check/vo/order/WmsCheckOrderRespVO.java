@@ -6,7 +6,9 @@ import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.detail.WmsCheckOrderDetailRespVO;
 import cn.iocoder.yudao.module.wms.enums.DictTypeConstants;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -21,7 +23,10 @@ public class WmsCheckOrderRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "盘库单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "PK202605110001")
+    @Schema(
+            description = "盘库单号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "PK202605110001")
     @ExcelProperty("盘库单号")
     private String no;
 
@@ -65,6 +70,7 @@ public class WmsCheckOrderRespVO {
 
     @Schema(description = "创建者", example = "1")
     private String creator;
+
     @Schema(description = "创建者名称", example = "芋道")
     private String creatorName;
 
@@ -73,7 +79,7 @@ public class WmsCheckOrderRespVO {
 
     @Schema(description = "更新者", example = "1")
     private String updater;
+
     @Schema(description = "更新者名称", example = "芋道")
     private String updaterName;
-
 }

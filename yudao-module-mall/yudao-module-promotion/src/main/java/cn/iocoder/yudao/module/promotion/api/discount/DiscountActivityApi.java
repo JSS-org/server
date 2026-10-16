@@ -19,5 +19,4 @@ public interface DiscountActivityApi {
      * @return 限时折扣信息
      */
     List<DiscountProductRespDTO> getMatchDiscountProductListBySkuIds(Collection<Long> skuIds);
-
 }

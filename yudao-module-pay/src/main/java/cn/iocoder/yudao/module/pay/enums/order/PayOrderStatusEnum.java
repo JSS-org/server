@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.pay.enums.order;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public enum PayOrderStatusEnum implements ArrayValuable<Integer> {
-
     WAITING(0, "未支付"),
     SUCCESS(10, "支付成功"),
     REFUND(20, "已退款"),
@@ -67,8 +67,7 @@ public enum PayOrderStatusEnum implements ArrayValuable<Integer> {
      * @return 是否支付成功或者已退款
      */
     public static boolean isSuccessOrRefund(Integer status) {
-        return ObjectUtils.equalsAny(status,
-                SUCCESS.getStatus(), REFUND.getStatus());
+        return ObjectUtils.equalsAny(status, SUCCESS.getStatus(), REFUND.getStatus());
     }
 
     /**
@@ -80,5 +79,4 @@ public enum PayOrderStatusEnum implements ArrayValuable<Integer> {
     public static boolean isClosed(Integer status) {
         return Objects.equals(status, CLOSED.getStatus());
     }
-
 }

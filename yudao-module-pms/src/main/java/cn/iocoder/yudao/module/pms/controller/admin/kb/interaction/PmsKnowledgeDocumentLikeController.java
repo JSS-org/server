@@ -1,11 +1,17 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.interaction;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.pms.service.kb.interaction.PmsKnowledgeDocumentLikeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,17 +20,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 知识库文档点赞")
 @RestController
 @RequestMapping("/pms/kb/document-like")
 @Validated
 public class PmsKnowledgeDocumentLikeController {
 
-    @Resource
-    private PmsKnowledgeDocumentLikeService documentLikeService;
+    @Resource private PmsKnowledgeDocumentLikeService documentLikeService;
 
     @PostMapping("/create")
     @Operation(summary = "点赞文档")
@@ -43,5 +45,4 @@ public class PmsKnowledgeDocumentLikeController {
         documentLikeService.deleteDocumentLike(documentId, getLoginUserId());
         return success(true);
     }
-
 }

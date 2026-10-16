@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.crm.controller.admin.operatelog.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -32,7 +34,10 @@ public class CrmOperateLogRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "13563")
     private Long bizId;
 
-    @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "将什么从什么改为了什么")
+    @Schema(
+            description = "编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "将什么从什么改为了什么")
     private String action;
 
     @Schema(description = "编号", example = "{orderId: 1}")
@@ -40,5 +45,4 @@ public class CrmOperateLogRespVO {
 
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-01-01")
     private LocalDateTime createTime;
-
 }

@@ -12,9 +12,9 @@ public class GroupNoticeUpdateNotification extends BaseGroupNotification {
      * 旧群公告
      */
     private String oldNotice;
+
     /**
      * 新群公告
      */
     private String newNotice;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.datapermission.core.aop;
 
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
+
 import com.alibaba.ttl.TransmittableThreadLocal;
 
 import java.util.LinkedList;
@@ -68,5 +69,4 @@ public class DataPermissionContextHolder {
     public static void clear() {
         DATA_PERMISSIONS.remove();
     }
-
 }

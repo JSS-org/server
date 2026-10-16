@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.io.Serializable;
@@ -25,10 +26,16 @@ public class AppTradeProductSettlementRespVO {
     @Data
     public static class Sku implements Serializable {
 
-        @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+        @Schema(
+                description = "商品 SKU 编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1")
         private Long id;
 
-        @Schema(description = "优惠后价格，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
+        @Schema(
+                description = "优惠后价格，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100")
         private Integer promotionPrice;
 
         @Schema(description = "营销类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "4")
@@ -39,7 +46,6 @@ public class AppTradeProductSettlementRespVO {
 
         @Schema(description = "活动结束时间", requiredMode = Schema.RequiredMode.REQUIRED)
         private LocalDateTime promotionEndTime;
-
     }
 
     @Schema(description = "满减送活动信息")
@@ -54,14 +60,16 @@ public class AppTradeProductSettlementRespVO {
 
         @Schema(description = "优惠规则的数组", requiredMode = Schema.RequiredMode.REQUIRED)
         private List<RewardActivityRule> rules;
-
     }
 
     @Schema(description = "优惠规则")
     @Data
     public static class RewardActivityRule {
 
-        @Schema(description = "优惠门槛", requiredMode = Schema.RequiredMode.REQUIRED, example = "100") // 1. 满 N 元，单位：分; 2. 满 N 件
+        @Schema(
+                description = "优惠门槛",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100") // 1. 满 N 元，单位：分; 2. 满 N 件
         private Integer limit;
 
         @Schema(description = "优惠价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
@@ -75,7 +83,5 @@ public class AppTradeProductSettlementRespVO {
 
         @Schema(description = "赠送的优惠劵编号的数组")
         private Map<Long, Integer> giveCouponTemplateCounts;
-
     }
-
 }

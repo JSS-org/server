@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.workrecord.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -34,5 +35,4 @@ public class MesProWorkRecordRespVO {
 
     @Schema(description = "下工时间")
     private LocalDateTime clockOutTime;
-
 }

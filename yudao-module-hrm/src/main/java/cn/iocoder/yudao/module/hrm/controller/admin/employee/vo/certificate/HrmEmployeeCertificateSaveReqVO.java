@@ -1,17 +1,20 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.certificate;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isAfterOrEqual;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isAfterOrEqual;
 
 @Schema(description = "管理后台 - HRM 员工证书保存 Request VO")
 @Data
@@ -71,5 +74,4 @@ public class HrmEmployeeCertificateSaveReqVO {
     public boolean isTimeRangeValid() {
         return startTime == null || endTime == null || isAfterOrEqual(endTime, startTime);
     }
-
 }

@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.group;
 
 import cn.hutool.core.collection.CollUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -38,5 +42,4 @@ public class HrmSalaryGroupSaveReqVO {
     public boolean isScopeValid() {
         return CollUtil.isNotEmpty(deptIds) || CollUtil.isNotEmpty(employeeIds);
     }
-
 }

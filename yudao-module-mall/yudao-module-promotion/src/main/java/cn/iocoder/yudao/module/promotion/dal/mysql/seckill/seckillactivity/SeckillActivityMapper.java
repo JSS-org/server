@@ -9,7 +9,9 @@ import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.activity.SeckillActivityPageReqVO;
 import cn.iocoder.yudao.module.promotion.controller.app.seckill.vo.activity.AppSeckillActivityPageReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillActivityDO;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -24,17 +26,21 @@ import java.util.List;
 public interface SeckillActivityMapper extends BaseMapperX<SeckillActivityDO> {
 
     default PageResult<SeckillActivityDO> selectPage(SeckillActivityPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<SeckillActivityDO>()
-                .likeIfPresent(SeckillActivityDO::getName, reqVO.getName())
-                .eqIfPresent(SeckillActivityDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(SeckillActivityDO::getCreateTime, reqVO.getCreateTime())
-                .apply(ObjectUtil.isNotNull(reqVO.getConfigId()), MyBatisUtils.findInSet("config_ids"), reqVO.getConfigId())
-                .orderByDesc(SeckillActivityDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<SeckillActivityDO>()
+                        .likeIfPresent(SeckillActivityDO::getName, reqVO.getName())
+                        .eqIfPresent(SeckillActivityDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(SeckillActivityDO::getCreateTime, reqVO.getCreateTime())
+                        .apply(
+                                ObjectUtil.isNotNull(reqVO.getConfigId()),
+                                MyBatisUtils.findInSet("config_ids"),
+                                reqVO.getConfigId())
+                        .orderByDesc(SeckillActivityDO::getId));
     }
 
     default List<SeckillActivityDO> selectListBySpuIdAndStatus(Long spuId, Integer status) {
-        return selectList(SeckillActivityDO::getSpuId, spuId,
-                SeckillActivityDO::getStatus, status);
+        return selectList(SeckillActivityDO::getSpuId, spuId, SeckillActivityDO::getStatus, status);
     }
 
     /**
@@ -46,10 +52,12 @@ public interface SeckillActivityMapper extends BaseMapperX<SeckillActivityDO> {
      */
     default int updateStockDecr(Long id, int count) {
         Assert.isTrue(count > 0);
-        return update(null, new LambdaUpdateWrapper<SeckillActivityDO>()
-                .eq(SeckillActivityDO::getId, id)
-                .ge(SeckillActivityDO::getStock, count)
-                .setSql("stock = stock - " + count));
+        return update(
+                null,
+                new LambdaUpdateWrapper<SeckillActivityDO>()
+                        .eq(SeckillActivityDO::getId, id)
+                        .ge(SeckillActivityDO::getStock, count)
+                        .setSql("stock = stock - " + count));
     }
 
     /**
@@ -61,26 +69,38 @@ public interface SeckillActivityMapper extends BaseMapperX<SeckillActivityDO> {
      */
     default int updateStockIncr(Long id, int count) {
         Assert.isTrue(count > 0);
-        return update(null, new LambdaUpdateWrapper<SeckillActivityDO>()
-                .eq(SeckillActivityDO::getId, id)
-                .setSql("stock = stock + " + count));
+        return update(
+                null,
+                new LambdaUpdateWrapper<SeckillActivityDO>()
+                        .eq(SeckillActivityDO::getId, id)
+                        .setSql("stock = stock + " + count));
     }
 
-    default PageResult<SeckillActivityDO> selectPage(AppSeckillActivityPageReqVO pageReqVO, Integer status, LocalDateTime dateTime) {
-        return selectPage(pageReqVO, new LambdaQueryWrapperX<SeckillActivityDO>()
-                .eqIfPresent(SeckillActivityDO::getStatus, status)
-                .lt(SeckillActivityDO::getStartTime, dateTime)
-                .gt(SeckillActivityDO::getEndTime, dateTime)// 开始时间 < 指定时间 < 结束时间，也就是说获取指定时间段的活动
-                .apply(ObjectUtil.isNotNull(pageReqVO.getConfigId()), MyBatisUtils.findInSet("config_ids"), pageReqVO.getConfigId()));
+    default PageResult<SeckillActivityDO> selectPage(
+            AppSeckillActivityPageReqVO pageReqVO, Integer status, LocalDateTime dateTime) {
+        return selectPage(
+                pageReqVO,
+                new LambdaQueryWrapperX<SeckillActivityDO>()
+                        .eqIfPresent(SeckillActivityDO::getStatus, status)
+                        .lt(SeckillActivityDO::getStartTime, dateTime)
+                        .gt(
+                                SeckillActivityDO::getEndTime,
+                                dateTime) // 开始时间 < 指定时间 < 结束时间，也就是说获取指定时间段的活动
+                        .apply(
+                                ObjectUtil.isNotNull(pageReqVO.getConfigId()),
+                                MyBatisUtils.findInSet("config_ids"),
+                                pageReqVO.getConfigId()));
     }
 
     default SeckillActivityDO selectBySpuIdAndStatusAndNow(Long spuId, Integer status) {
         LocalDateTime now = LocalDateTime.now();
-        return selectOne(new LambdaQueryWrapperX<SeckillActivityDO>()
-                .eq(SeckillActivityDO::getSpuId, spuId)
-                .eq(SeckillActivityDO::getStatus, status)
-                .lt(SeckillActivityDO::getStartTime, now)
-                .gt(SeckillActivityDO::getEndTime, now)); // 开始时间 < now < 结束时间，也就是说获取指定时间段的活动
+        return selectOne(
+                new LambdaQueryWrapperX<SeckillActivityDO>()
+                        .eq(SeckillActivityDO::getSpuId, spuId)
+                        .eq(SeckillActivityDO::getStatus, status)
+                        .lt(SeckillActivityDO::getStartTime, now)
+                        .gt(
+                                SeckillActivityDO::getEndTime,
+                                now)); // 开始时间 < now < 结束时间，也就是说获取指定时间段的活动
     }
-
 }

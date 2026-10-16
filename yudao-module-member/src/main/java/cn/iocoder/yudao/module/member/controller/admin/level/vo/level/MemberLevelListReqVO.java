@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.level.vo.level;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.ToString;
 
@@ -14,5 +15,4 @@ public class MemberLevelListReqVO {
 
     @Schema(description = "状态", example = "1")
     private Integer status;
-
 }

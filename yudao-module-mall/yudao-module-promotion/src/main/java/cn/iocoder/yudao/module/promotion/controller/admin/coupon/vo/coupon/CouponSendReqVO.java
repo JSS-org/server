@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.coupon.vo.coupon;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.ToString;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+import lombok.ToString;
+
 import java.util.Set;
 
 @Schema(description = "管理后台 - 优惠劵发放 Request VO")
@@ -20,5 +22,4 @@ public class CouponSendReqVO {
     @Schema(description = "用户编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1, 2]")
     @NotEmpty(message = "用户编号列表不能为空")
     private Set<Long> userIds;
-
 }

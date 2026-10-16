@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.codec;
 
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusFrameFormatEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,8 +32,13 @@ public class IotModbusFrameEncoder {
      * @param transactionId 事务 ID（TCP 模式下使用，RTU 模式传 null）
      * @return 编码后的字节数组
      */
-    public byte[] encodeReadRequest(int slaveId, int functionCode, int startAddress, int quantity,
-                                    IotModbusFrameFormatEnum format, Integer transactionId) {
+    public byte[] encodeReadRequest(
+            int slaveId,
+            int functionCode,
+            int startAddress,
+            int quantity,
+            IotModbusFrameFormatEnum format,
+            Integer transactionId) {
         // PDU: [FC(1)] [StartAddress(2)] [Quantity(2)]
         byte[] pdu = new byte[5];
         pdu[0] = (byte) functionCode;
@@ -54,8 +60,13 @@ public class IotModbusFrameEncoder {
      * @param transactionId 事务 ID（TCP 模式下使用，RTU 模式传 null）
      * @return 编码后的字节数组
      */
-    public byte[] encodeWriteSingleRequest(int slaveId, int functionCode, int address, int value,
-                                           IotModbusFrameFormatEnum format, Integer transactionId) {
+    public byte[] encodeWriteSingleRequest(
+            int slaveId,
+            int functionCode,
+            int address,
+            int value,
+            IotModbusFrameFormatEnum format,
+            Integer transactionId) {
         // FC05 单写线圈：Modbus 标准要求 value 为 0xFF00（ON）或 0x0000（OFF）
         if (functionCode == IotModbusCommonUtils.FC_WRITE_SINGLE_COIL) {
             value = (value != 0) ? 0xFF00 : 0x0000;
@@ -80,8 +91,12 @@ public class IotModbusFrameEncoder {
      * @param transactionId 事务 ID（TCP 模式下使用，RTU 模式传 null）
      * @return 编码后的字节数组
      */
-    public byte[] encodeWriteMultipleRegistersRequest(int slaveId, int address, int[] values,
-                                                      IotModbusFrameFormatEnum format, Integer transactionId) {
+    public byte[] encodeWriteMultipleRegistersRequest(
+            int slaveId,
+            int address,
+            int[] values,
+            IotModbusFrameFormatEnum format,
+            Integer transactionId) {
         // PDU: [FC(1)] [Address(2)] [Quantity(2)] [ByteCount(1)] [Values(N*2)]
         int quantity = values.length;
         int byteCount = quantity * 2;
@@ -111,8 +126,12 @@ public class IotModbusFrameEncoder {
      * @param transactionId 事务 ID（TCP 模式下使用，RTU 模式传 null）
      * @return 编码后的字节数组
      */
-    public byte[] encodeWriteMultipleCoilsRequest(int slaveId, int address, int[] values,
-                                                   IotModbusFrameFormatEnum format, Integer transactionId) {
+    public byte[] encodeWriteMultipleCoilsRequest(
+            int slaveId,
+            int address,
+            int[] values,
+            IotModbusFrameFormatEnum format,
+            Integer transactionId) {
         // PDU: [FC(1)] [Address(2)] [Quantity(2)] [ByteCount(1)] [CoilValues(N)]
         int quantity = values.length;
         int byteCount = (quantity + 7) / 8; // 向上取整
@@ -141,8 +160,8 @@ public class IotModbusFrameEncoder {
      * @param transactionId 事务 ID（TCP 模式下使用，RTU 模式传 null）
      * @return 编码后的字节数组
      */
-    public byte[] encodeCustomFrame(int slaveId, String jsonData,
-                                    IotModbusFrameFormatEnum format, Integer transactionId) {
+    public byte[] encodeCustomFrame(
+            int slaveId, String jsonData, IotModbusFrameFormatEnum format, Integer transactionId) {
         byte[] jsonBytes = jsonData.getBytes(StandardCharsets.UTF_8);
         // PDU: [FC(1)] [ByteCount(1)] [JSON data(N)]
         byte[] pdu = new byte[2 + jsonBytes.length];
@@ -163,7 +182,8 @@ public class IotModbusFrameEncoder {
      * @param transactionId 事务 ID（TCP 模式下使用，RTU 模式可为 null）
      * @return 完整帧字节数组
      */
-    private byte[] wrapFrame(int slaveId, byte[] pdu, IotModbusFrameFormatEnum format, Integer transactionId) {
+    private byte[] wrapFrame(
+            int slaveId, byte[] pdu, IotModbusFrameFormatEnum format, Integer transactionId) {
         if (format == IotModbusFrameFormatEnum.MODBUS_TCP) {
             return wrapTcpFrame(slaveId, pdu, transactionId != null ? transactionId : 0);
         } else {
@@ -202,9 +222,8 @@ public class IotModbusFrameEncoder {
         System.arraycopy(pdu, 0, frame, 1, pdu.length);
         // 计算并追加 CRC16
         int crc = IotModbusCommonUtils.calculateCrc16(frame, frame.length - 2);
-        frame[frame.length - 2] = (byte) (crc & 0xFF);        // CRC Low
+        frame[frame.length - 2] = (byte) (crc & 0xFF); // CRC Low
         frame[frame.length - 1] = (byte) ((crc >> 8) & 0xFF); // CRC High
         return frame;
     }
-
 }

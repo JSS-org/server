@@ -3,10 +3,12 @@ package cn.iocoder.yudao.framework.tenant.core.db;
 import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
+
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.toolkit.SqlParserUtils;
+
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 
@@ -30,9 +32,12 @@ public class TenantDatabaseInterceptor implements TenantLineHandler {
 
     public TenantDatabaseInterceptor(TenantProperties properties) {
         // 不同 DB 下，大小写的习惯不同，所以需要都添加进去
-        properties.getIgnoreTables().forEach(table -> {
-            addIgnoreTable(table, true);
-        });
+        properties
+                .getIgnoreTables()
+                .forEach(
+                        table -> {
+                            addIgnoreTable(table, true);
+                        });
         // 在 OracleKeyGenerator 中，生成主键时，会查询这个表，查询这个表后，会自动拼接 TENANT_ID 导致报错
         addIgnoreTable("DUAL", true);
     }
@@ -79,5 +84,4 @@ public class TenantDatabaseInterceptor implements TenantLineHandler {
         TenantIgnore tenantIgnore = tableInfo.getEntityType().getAnnotation(TenantIgnore.class);
         return tenantIgnore != null;
     }
-
 }

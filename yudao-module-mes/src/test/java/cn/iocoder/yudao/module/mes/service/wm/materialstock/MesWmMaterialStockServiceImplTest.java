@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.wm.materialstock;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.materialstock.vo.MesWmMaterialStockPageReqVO;
@@ -10,7 +15,9 @@ import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemTypeService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -18,10 +25,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link MesWmMaterialStockServiceImpl} 的单元测试
@@ -31,28 +34,24 @@ import static org.mockito.Mockito.when;
 @Import(MesWmMaterialStockServiceImpl.class)
 public class MesWmMaterialStockServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesWmMaterialStockServiceImpl materialStockService;
+    @Resource private MesWmMaterialStockServiceImpl materialStockService;
 
-    @Resource
-    private MesWmMaterialStockMapper materialStockMapper;
+    @Resource private MesWmMaterialStockMapper materialStockMapper;
 
-    @MockitoBean
-    private MesMdItemService itemService;
-    @MockitoBean
-    private MesMdItemTypeService itemTypeService;
-    @MockitoBean
-    private MesWmWarehouseAreaService areaService;
-    @MockitoBean
-    private MesWmWarehouseService warehouseService;
+    @MockitoBean private MesMdItemService itemService;
+    @MockitoBean private MesMdItemTypeService itemTypeService;
+    @MockitoBean private MesWmWarehouseAreaService areaService;
+    @MockitoBean private MesWmWarehouseService warehouseService;
 
     @Test
     public void testGetMaterialStockPage_virtualFilterOnly() {
         // 准备数据：虚拟仓库存 + 普通仓库存
         Long virtualWarehouseId = 100L;
         Long normalWarehouseId = 200L;
-        MesWmMaterialStockDO virtualStock = createMaterialStockPojo(o -> o.setWarehouseId(virtualWarehouseId));
-        MesWmMaterialStockDO normalStock = createMaterialStockPojo(o -> o.setWarehouseId(normalWarehouseId));
+        MesWmMaterialStockDO virtualStock =
+                createMaterialStockPojo(o -> o.setWarehouseId(virtualWarehouseId));
+        MesWmMaterialStockDO normalStock =
+                createMaterialStockPojo(o -> o.setWarehouseId(normalWarehouseId));
         materialStockMapper.insert(virtualStock);
         materialStockMapper.insert(normalStock);
         mockVirtualWarehouse(virtualWarehouseId);
@@ -73,8 +72,10 @@ public class MesWmMaterialStockServiceImplTest extends BaseDbUnitTest {
         // 准备数据：虚拟仓库存 + 普通仓库存
         Long virtualWarehouseId = 100L;
         Long normalWarehouseId = 200L;
-        MesWmMaterialStockDO virtualStock = createMaterialStockPojo(o -> o.setWarehouseId(virtualWarehouseId));
-        MesWmMaterialStockDO normalStock = createMaterialStockPojo(o -> o.setWarehouseId(normalWarehouseId));
+        MesWmMaterialStockDO virtualStock =
+                createMaterialStockPojo(o -> o.setWarehouseId(virtualWarehouseId));
+        MesWmMaterialStockDO normalStock =
+                createMaterialStockPojo(o -> o.setWarehouseId(normalWarehouseId));
         materialStockMapper.insert(virtualStock);
         materialStockMapper.insert(normalStock);
         mockVirtualWarehouse(virtualWarehouseId);
@@ -91,13 +92,15 @@ public class MesWmMaterialStockServiceImplTest extends BaseDbUnitTest {
     }
 
     private MesWmMaterialStockDO createMaterialStockPojo(Consumer<MesWmMaterialStockDO> consumer) {
-        return randomPojo(MesWmMaterialStockDO.class, o -> {
-            o.setQuantity(new BigDecimal("10.00"));
-            o.setReceiptTime(LocalDateTime.of(2026, 1, 1, 0, 0));
-            o.setFrozen(false);
-            o.setDeleted(false);
-            consumer.accept(o);
-        });
+        return randomPojo(
+                MesWmMaterialStockDO.class,
+                o -> {
+                    o.setQuantity(new BigDecimal("10.00"));
+                    o.setReceiptTime(LocalDateTime.of(2026, 1, 1, 0, 0));
+                    o.setFrozen(false);
+                    o.setDeleted(false);
+                    consumer.accept(o);
+                });
     }
 
     private void mockVirtualWarehouse(Long virtualWarehouseId) {
@@ -106,5 +109,4 @@ public class MesWmMaterialStockServiceImplTest extends BaseDbUnitTest {
         when(warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE))
                 .thenReturn(virtualWarehouse);
     }
-
 }

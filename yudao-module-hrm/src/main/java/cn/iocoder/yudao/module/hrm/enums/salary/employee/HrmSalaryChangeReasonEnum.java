@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.salary.employee;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmSalaryChangeReasonEnum implements ArrayValuable<Integer> {
-
     ENTRY_SALARY(0, "入职定薪"),
     ENTRY_CONFIRM(1, "入职核定"),
     REGULAR(2, "转正"),
@@ -26,13 +26,16 @@ public enum HrmSalaryChangeReasonEnum implements ArrayValuable<Integer> {
     SPECIAL_ADJUSTMENT(7, "特别调薪"),
     OTHER(8, "其他");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmSalaryChangeReasonEnum::getReason).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmSalaryChangeReasonEnum::getReason)
+                    .toArray(Integer[]::new);
 
     /**
      * 原因
      */
     private final Integer reason;
+
     /**
      * 名称
      */
@@ -50,5 +53,4 @@ public enum HrmSalaryChangeReasonEnum implements ArrayValuable<Integer> {
     public static HrmSalaryChangeReasonEnum valueOfName(String name) {
         return ArrayUtil.firstMatch(item -> item.getName().equals(name), values());
     }
-
 }

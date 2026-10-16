@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,16 +35,18 @@ public class HrmSalaryChangeTemplateDO extends BaseDO {
     /**
      * 调薪模板编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 模板名称
      */
     private String name;
+
     /**
      * 是否默认模板
      */
     private Boolean defaultStatus;
+
     /**
      * 调薪项配置
      */
@@ -64,13 +68,12 @@ public class HrmSalaryChangeTemplateDO extends BaseDO {
          * 关联 {@link HrmSalaryOptionDO#getName()}
          */
         private String name;
+
         /**
          * 薪资项编码
          *
          * 关联 {@link HrmSalaryOptionDO#getCode()}
          */
         private Integer code;
-
     }
-
 }

@@ -1,6 +1,9 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.group;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.*;
 
 import java.util.Set;
@@ -26,5 +29,4 @@ public class BpmUserGroupSaveReqVO {
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "状态不能为空")
     private Integer status;
-
 }

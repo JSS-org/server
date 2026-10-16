@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.erp.service.stock.bo;
 
 import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,11 +23,13 @@ public class ErpStockRecordCreateReqBO {
      */
     @NotNull(message = "产品编号不能为空")
     private Long productId;
+
     /**
      * 仓库编号
      */
     @NotNull(message = "仓库编号不能为空")
     private Long warehouseId;
+
     /**
      * 出入库数量
      *
@@ -40,20 +43,22 @@ public class ErpStockRecordCreateReqBO {
      */
     @NotNull(message = "业务类型不能为空")
     private Integer bizType;
+
     /**
      * 业务编号
      */
     @NotNull(message = "业务编号不能为空")
     private Long bizId;
+
     /**
      * 业务项编号
      */
     @NotNull(message = "业务项编号不能为空")
     private Long bizItemId;
+
     /**
      * 业务单号
      */
     @NotNull(message = "业务单号不能为空")
     private String bizNo;
-
 }

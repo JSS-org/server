@@ -1,18 +1,21 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils;
 
+import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.*;
+
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusPointRespDTO;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.IotModbusTcpClientConnectionManager;
+
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.msg.*;
 import com.ghgande.j2mod.modbus.procimg.InputRegister;
 import com.ghgande.j2mod.modbus.procimg.Register;
 import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 import com.ghgande.j2mod.modbus.util.BitVector;
+
 import io.vertx.core.Future;
+
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-
-import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.*;
 
 /**
  * IoT Modbus TCP 客户端工具类
@@ -36,11 +39,17 @@ public class IotModbusTcpClientUtils {
      * @param point      点位配置
      * @return 原始值（int 数组）
      */
-    public static Future<int[]> read(IotModbusTcpClientConnectionManager.ModbusConnection connection,
-                                     Integer slaveId,
-                                     IotModbusPointRespDTO point) {
-        return read(connection, slaveId, point.getFunctionCode(),
-                point.getRegisterAddress(), point.getRegisterCount(), point.getIdentifier());
+    public static Future<int[]> read(
+            IotModbusTcpClientConnectionManager.ModbusConnection connection,
+            Integer slaveId,
+            IotModbusPointRespDTO point) {
+        return read(
+                connection,
+                slaveId,
+                point.getFunctionCode(),
+                point.getRegisterAddress(),
+                point.getRegisterCount(),
+                point.getIdentifier());
     }
 
     /**
@@ -53,39 +62,50 @@ public class IotModbusTcpClientUtils {
      * @param registerCount   寄存器数量
      * @return 原始值（int 数组）
      */
-    public static Future<int[]> read(IotModbusTcpClientConnectionManager.ModbusConnection connection,
-                                     Integer slaveId,
-                                     Integer functionCode,
-                                     Integer registerAddress,
-                                     Integer registerCount) {
+    public static Future<int[]> read(
+            IotModbusTcpClientConnectionManager.ModbusConnection connection,
+            Integer slaveId,
+            Integer functionCode,
+            Integer registerAddress,
+            Integer registerCount) {
         return read(connection, slaveId, functionCode, registerAddress, registerCount, null);
     }
 
-    private static Future<int[]> read(IotModbusTcpClientConnectionManager.ModbusConnection connection,
-                                      Integer slaveId,
-                                      Integer functionCode,
-                                      Integer registerAddress,
-                                      Integer registerCount,
-                                      String identifier) {
-        return connection.executeBlocking(tcpConnection -> {
-            try {
-                // 1. 创建请求
-                ModbusRequest request = createReadRequest(functionCode, registerAddress, registerCount);
-                request.setUnitID(slaveId);
+    private static Future<int[]> read(
+            IotModbusTcpClientConnectionManager.ModbusConnection connection,
+            Integer slaveId,
+            Integer functionCode,
+            Integer registerAddress,
+            Integer registerCount,
+            String identifier) {
+        return connection.executeBlocking(
+                tcpConnection -> {
+                    try {
+                        // 1. 创建请求
+                        ModbusRequest request =
+                                createReadRequest(functionCode, registerAddress, registerCount);
+                        request.setUnitID(slaveId);
 
-                // 2. 执行事务（请求）
-                ModbusTCPTransaction transaction = new ModbusTCPTransaction(tcpConnection);
-                transaction.setRequest(request);
-                transaction.execute();
+                        // 2. 执行事务（请求）
+                        ModbusTCPTransaction transaction = new ModbusTCPTransaction(tcpConnection);
+                        transaction.setRequest(request);
+                        transaction.execute();
 
-                // 3. 解析响应
-                ModbusResponse response = transaction.getResponse();
-                return extractValues(response, functionCode);
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("Modbus 读取失败 [slaveId=%d, identifier=%s, functionCode=%d, address=%d, count=%d]",
-                        slaveId, identifier, functionCode, registerAddress, registerCount), e);
-            }
-        });
+                        // 3. 解析响应
+                        ModbusResponse response = transaction.getResponse();
+                        return extractValues(response, functionCode);
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                                String.format(
+                                        "Modbus 读取失败 [slaveId=%d, identifier=%s, functionCode=%d, address=%d, count=%d]",
+                                        slaveId,
+                                        identifier,
+                                        functionCode,
+                                        registerAddress,
+                                        registerCount),
+                                e);
+                    }
+                });
     }
 
     /**
@@ -97,37 +117,48 @@ public class IotModbusTcpClientUtils {
      * @param values     要写入的值
      * @return 是否成功
      */
-    public static Future<Boolean> write(IotModbusTcpClientConnectionManager.ModbusConnection connection,
-                                        Integer slaveId,
-                                        IotModbusPointRespDTO point,
-                                        int[] values) {
-        return connection.executeBlocking(tcpConnection -> {
-            try {
-                // 1. 创建请求
-                ModbusRequest request = createWriteRequest(point.getFunctionCode(),
-                        point.getRegisterAddress(), point.getRegisterCount(), values);
-                if (request == null) {
-                    throw new RuntimeException("功能码 " + point.getFunctionCode() + " 不支持写操作");
-                }
-                request.setUnitID(slaveId);
+    public static Future<Boolean> write(
+            IotModbusTcpClientConnectionManager.ModbusConnection connection,
+            Integer slaveId,
+            IotModbusPointRespDTO point,
+            int[] values) {
+        return connection.executeBlocking(
+                tcpConnection -> {
+                    try {
+                        // 1. 创建请求
+                        ModbusRequest request =
+                                createWriteRequest(
+                                        point.getFunctionCode(),
+                                        point.getRegisterAddress(),
+                                        point.getRegisterCount(),
+                                        values);
+                        if (request == null) {
+                            throw new RuntimeException(
+                                    "功能码 " + point.getFunctionCode() + " 不支持写操作");
+                        }
+                        request.setUnitID(slaveId);
 
-                // 2. 执行事务（请求）
-                ModbusTCPTransaction transaction = new ModbusTCPTransaction(tcpConnection);
-                transaction.setRequest(request);
-                transaction.execute();
-                return true;
-            } catch (Exception e) {
-                throw new RuntimeException(String.format("Modbus 写入失败 [slaveId=%d, identifier=%s, address=%d]",
-                        slaveId, point.getIdentifier(), point.getRegisterAddress()), e);
-            }
-        });
+                        // 2. 执行事务（请求）
+                        ModbusTCPTransaction transaction = new ModbusTCPTransaction(tcpConnection);
+                        transaction.setRequest(request);
+                        transaction.execute();
+                        return true;
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                                String.format(
+                                        "Modbus 写入失败 [slaveId=%d, identifier=%s, address=%d]",
+                                        slaveId, point.getIdentifier(), point.getRegisterAddress()),
+                                e);
+                    }
+                });
     }
 
     /**
      * 创建读取请求
      */
     @SuppressWarnings("EnhancedSwitchMigration")
-    private static ModbusRequest createReadRequest(Integer functionCode, Integer address, Integer count) {
+    private static ModbusRequest createReadRequest(
+            Integer functionCode, Integer address, Integer count) {
         switch (functionCode) {
             case FC_READ_COILS:
                 return new ReadCoilsRequest(address, count);
@@ -146,7 +177,8 @@ public class IotModbusTcpClientUtils {
      * 创建写入请求
      */
     @SuppressWarnings("EnhancedSwitchMigration")
-    private static ModbusRequest createWriteRequest(Integer functionCode, Integer address, Integer count, int[] values) {
+    private static ModbusRequest createWriteRequest(
+            Integer functionCode, Integer address, Integer count, int[] values) {
         switch (functionCode) {
             case FC_READ_COILS: // 写线圈（使用功能码 5 或 15）
                 if (count == 1) {
@@ -191,7 +223,8 @@ public class IotModbusTcpClientUtils {
                 }
                 return coilValues;
             case FC_READ_DISCRETE_INPUTS:
-                ReadInputDiscretesResponse discretesResponse = (ReadInputDiscretesResponse) response;
+                ReadInputDiscretesResponse discretesResponse =
+                        (ReadInputDiscretesResponse) response;
                 int discreteCount = discretesResponse.getBitCount();
                 int[] discreteValues = new int[discreteCount];
                 for (int i = 0; i < discreteCount; i++) {
@@ -199,7 +232,8 @@ public class IotModbusTcpClientUtils {
                 }
                 return discreteValues;
             case FC_READ_HOLDING_REGISTERS:
-                ReadMultipleRegistersResponse holdingResponse = (ReadMultipleRegistersResponse) response;
+                ReadMultipleRegistersResponse holdingResponse =
+                        (ReadMultipleRegistersResponse) response;
                 InputRegister[] holdingRegisters = holdingResponse.getRegisters();
                 int[] holdingValues = new int[holdingRegisters.length];
                 for (int i = 0; i < holdingRegisters.length; i++) {
@@ -218,5 +252,4 @@ public class IotModbusTcpClientUtils {
                 throw new IllegalArgumentException("不支持的功能码: " + functionCode);
         }
     }
-
 }

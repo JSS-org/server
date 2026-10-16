@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.file;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,17 +16,17 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaFileSubjectTypeEnum implements ArrayValuable<Integer> {
-
     USER(1, "用户"),
     DEPT(2, "部门");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaFileSubjectTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaFileSubjectTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 云盘共享主体类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -45,5 +46,4 @@ public enum OaFileSubjectTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

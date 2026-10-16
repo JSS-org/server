@@ -11,6 +11,4 @@ import lombok.Data;
  * 此处 friendUserId 表示「资料被更新的那个人」（即对端），与 operatorUserId 一致
  */
 @Data
-public class FriendInfoUpdatedNotification extends BaseFriendNotification {
-
-}
+public class FriendInfoUpdatedNotification extends BaseFriendNotification {}

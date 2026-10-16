@@ -8,10 +8,14 @@ import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.BpmnModelUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.SimpleModelUtils;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceService;
 import cn.iocoder.yudao.module.bpm.service.task.trigger.BpmTrigger;
-import tools.jackson.core.type.TypeReference;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
+
+import tools.jackson.core.type.TypeReference;
 
 import java.util.List;
 import java.util.Map;
@@ -25,8 +29,7 @@ import java.util.Map;
 @Slf4j
 public class BpmFormUpdateTrigger implements BpmTrigger {
 
-    @Resource
-    private BpmProcessInstanceService processInstanceService;
+    @Resource private BpmProcessInstanceService processInstanceService;
 
     @Override
     public BpmTriggerTypeEnum getType() {
@@ -43,7 +46,8 @@ public class BpmFormUpdateTrigger implements BpmTrigger {
         }
 
         // 2. 获取流程变量
-        Map<String, Object> processVariables = processInstanceService.getProcessInstance(processInstanceId).getProcessVariables();
+        Map<String, Object> processVariables =
+                processInstanceService.getProcessInstance(processInstanceId).getProcessVariables();
 
         // 3. 更新流程变量
         for (FormTriggerSetting setting : settings) {
@@ -53,13 +57,18 @@ public class BpmFormUpdateTrigger implements BpmTrigger {
             // 配置了条件，判断条件是否满足
             boolean isFormUpdateNeeded = true;
             if (setting.getConditionType() != null) {
-                String conditionExpression = SimpleModelUtils.buildConditionExpression(
-                        setting.getConditionType(), setting.getConditionExpression(), setting.getConditionGroups());
-                isFormUpdateNeeded = BpmnModelUtils.evalConditionExpress(processVariables, conditionExpression);
+                String conditionExpression =
+                        SimpleModelUtils.buildConditionExpression(
+                                setting.getConditionType(),
+                                setting.getConditionExpression(),
+                                setting.getConditionGroups());
+                isFormUpdateNeeded =
+                        BpmnModelUtils.evalConditionExpress(processVariables, conditionExpression);
             }
             // 更新流程表单
             if (isFormUpdateNeeded) {
-                processInstanceService.updateProcessInstanceVariables(processInstanceId, setting.getUpdateFormFields());
+                processInstanceService.updateProcessInstanceVariables(
+                        processInstanceId, setting.getUpdateFormFields());
             }
         }
     }

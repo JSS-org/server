@@ -12,11 +12,14 @@ import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkService;
 import cn.iocoder.yudao.framework.web.config.WebProperties;
 import cn.iocoder.yudao.framework.web.core.filter.ApiRequestFilter;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.util.AntPathMatcher;
 
 import java.io.IOException;
@@ -48,11 +51,12 @@ public class TenantSecurityWebFilter extends ApiRequestFilter {
     private final GlobalExceptionHandler globalExceptionHandler;
     private final TenantFrameworkService tenantFrameworkService;
 
-    public TenantSecurityWebFilter(WebProperties webProperties,
-                                   TenantProperties tenantProperties,
-                                   Set<String> ignoreUrls,
-                                   GlobalExceptionHandler globalExceptionHandler,
-                                   TenantFrameworkService tenantFrameworkService) {
+    public TenantSecurityWebFilter(
+            WebProperties webProperties,
+            TenantProperties tenantProperties,
+            Set<String> ignoreUrls,
+            GlobalExceptionHandler globalExceptionHandler,
+            TenantFrameworkService tenantFrameworkService) {
         super(webProperties);
         this.tenantProperties = tenantProperties;
         this.ignoreUrls = ignoreUrls;
@@ -62,7 +66,8 @@ public class TenantSecurityWebFilter extends ApiRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         Long tenantId = TenantContextHolder.getTenantId();
         // 1. 登陆的用户，校验是否有权限访问该租户，避免越权问题。
@@ -72,13 +77,20 @@ public class TenantSecurityWebFilter extends ApiRequestFilter {
             if (tenantId == null) {
                 tenantId = user.getTenantId();
                 TenantContextHolder.setTenantId(tenantId);
-            // 如果传递了租户编号，则进行比对租户编号，避免越权问题
+                // 如果传递了租户编号，则进行比对租户编号，避免越权问题
             } else if (!Objects.equals(user.getTenantId(), TenantContextHolder.getTenantId())) {
-                log.error("[doFilterInternal][租户({}) User({}/{}) 越权访问租户({}) URL({}/{})]",
-                        user.getTenantId(), user.getId(), user.getUserType(),
-                        TenantContextHolder.getTenantId(), request.getRequestURI(), request.getMethod());
-                ServletUtils.writeJSON(response, CommonResult.error(GlobalErrorCodeConstants.FORBIDDEN.getCode(),
-                        "您无权访问该租户的数据"));
+                log.error(
+                        "[doFilterInternal][租户({}) User({}/{}) 越权访问租户({}) URL({}/{})]",
+                        user.getTenantId(),
+                        user.getId(),
+                        user.getUserType(),
+                        TenantContextHolder.getTenantId(),
+                        request.getRequestURI(),
+                        request.getMethod());
+                ServletUtils.writeJSON(
+                        response,
+                        CommonResult.error(
+                                GlobalErrorCodeConstants.FORBIDDEN.getCode(), "您无权访问该租户的数据"));
                 return;
             }
         }
@@ -87,9 +99,15 @@ public class TenantSecurityWebFilter extends ApiRequestFilter {
         if (!isIgnoreUrl(request)) {
             // 2. 如果请求未带租户的编号，不允许访问。
             if (tenantId == null) {
-                log.error("[doFilterInternal][URL({}/{}) 未传递租户编号]", request.getRequestURI(), request.getMethod());
-                ServletUtils.writeJSON(response, CommonResult.error(GlobalErrorCodeConstants.BAD_REQUEST.getCode(),
-                        "请求的租户标识未传递，请进行排查"));
+                log.error(
+                        "[doFilterInternal][URL({}/{}) 未传递租户编号]",
+                        request.getRequestURI(),
+                        request.getMethod());
+                ServletUtils.writeJSON(
+                        response,
+                        CommonResult.error(
+                                GlobalErrorCodeConstants.BAD_REQUEST.getCode(),
+                                "请求的租户标识未传递，请进行排查"));
                 return;
             }
             // 3. 校验租户是合法，例如说被禁用、到期
@@ -114,7 +132,7 @@ public class TenantSecurityWebFilter extends ApiRequestFilter {
         String apiUri = request.getRequestURI().substring(request.getContextPath().length());
         // 快速匹配，保证性能
         if (CollUtil.contains(tenantProperties.getIgnoreUrls(), apiUri)
-            || CollUtil.contains(ignoreUrls, apiUri)) {
+                || CollUtil.contains(ignoreUrls, apiUri)) {
             return true;
         }
         // 逐个 Ant 路径匹配
@@ -130,5 +148,4 @@ public class TenantSecurityWebFilter extends ApiRequestFilter {
         }
         return false;
     }
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.app.combination;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,14 +14,17 @@ import cn.iocoder.yudao.module.promotion.controller.app.combination.vo.record.Ap
 import cn.iocoder.yudao.module.promotion.convert.combination.CombinationActivityConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationRecordDO;
 import cn.iocoder.yudao.module.promotion.service.combination.CombinationRecordService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,18 +35,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "用户 APP - 拼团活动")
 @RestController
 @RequestMapping("/promotion/combination-record")
 @Validated
 public class AppCombinationRecordController {
 
-    @Resource
-    private CombinationRecordService combinationRecordService;
+    @Resource private CombinationRecordService combinationRecordService;
 
     @GetMapping("/get-summary")
     @Operation(summary = "获得拼团记录的概要信息", description = "用于小程序首页")
@@ -56,8 +58,9 @@ public class AppCombinationRecordController {
         summary.setUserCount(userCount);
 
         // 2. 获得拼团记录头像
-        List<CombinationRecordDO> records = combinationRecordService.getLatestCombinationRecordList(
-                AppCombinationRecordSummaryRespVO.AVATAR_COUNT);
+        List<CombinationRecordDO> records =
+                combinationRecordService.getLatestCombinationRecordList(
+                        AppCombinationRecordSummaryRespVO.AVATAR_COUNT);
         summary.setAvatars(convertList(records, CombinationRecordDO::getAvatar));
         return success(summary);
     }
@@ -65,16 +68,17 @@ public class AppCombinationRecordController {
     @GetMapping("/get-head-list")
     @Operation(summary = "获得最近 n 条拼团记录（团长发起的）")
     @Parameters({
-            @Parameter(name = "activityId", description = "拼团活动编号"),
-            @Parameter(name = "status", description = "拼团状态"), // 对应 CombinationRecordStatusEnum 枚举
-            @Parameter(name = "count", description = "数量")
+        @Parameter(name = "activityId", description = "拼团活动编号"),
+        @Parameter(name = "status", description = "拼团状态"), // 对应 CombinationRecordStatusEnum 枚举
+        @Parameter(name = "count", description = "数量")
     })
     @PermitAll
     public CommonResult<List<AppCombinationRecordRespVO>> getHeadCombinationRecordList(
             @RequestParam(value = "activityId", required = false) Long activityId,
             @RequestParam("status") Integer status,
             @RequestParam(value = "count", defaultValue = "20") @Max(20) Integer count) {
-        List<CombinationRecordDO> list = combinationRecordService.getHeadCombinationRecordList(activityId, status, count);
+        List<CombinationRecordDO> list =
+                combinationRecordService.getHeadCombinationRecordList(activityId, status, count);
         return success(BeanUtils.toBean(list, AppCombinationRecordRespVO.class));
     }
 
@@ -82,8 +86,8 @@ public class AppCombinationRecordController {
     @Operation(summary = "获得我的拼团记录分页")
     public CommonResult<PageResult<AppCombinationRecordRespVO>> getCombinationRecordPage(
             @Valid AppCombinationRecordPageReqVO pageReqVO) {
-        PageResult<CombinationRecordDO> pageResult = combinationRecordService.getCombinationRecordPage(
-                getLoginUserId(), pageReqVO);
+        PageResult<CombinationRecordDO> pageResult =
+                combinationRecordService.getCombinationRecordPage(getLoginUserId(), pageReqVO);
         return success(BeanUtils.toBean(pageResult, AppCombinationRecordRespVO.class));
     }
 
@@ -91,7 +95,8 @@ public class AppCombinationRecordController {
     @Operation(summary = "获得拼团记录明细")
     @Parameter(name = "id", description = "拼团记录编号", required = true, example = "1024")
     @PermitAll
-    public CommonResult<AppCombinationRecordDetailRespVO> getCombinationRecordDetail(@RequestParam("id") Long id) {
+    public CommonResult<AppCombinationRecordDetailRespVO> getCombinationRecordDetail(
+            @RequestParam("id") Long id) {
         // 1. 查找这条拼团记录
         CombinationRecordDO record = combinationRecordService.getCombinationRecordById(id);
         if (record == null) {
@@ -103,14 +108,17 @@ public class AppCombinationRecordController {
         List<CombinationRecordDO> memberRecords;
         if (Objects.equals(record.getHeadId(), CombinationRecordDO.HEAD_ID_GROUP)) { // 情况一：团长
             headRecord = record;
-            memberRecords = combinationRecordService.getCombinationRecordListByHeadId(record.getId());
+            memberRecords =
+                    combinationRecordService.getCombinationRecordListByHeadId(record.getId());
         } else { // 情况二：团员
             headRecord = combinationRecordService.getCombinationRecordById(record.getHeadId());
-            memberRecords = combinationRecordService.getCombinationRecordListByHeadId(headRecord.getId());
+            memberRecords =
+                    combinationRecordService.getCombinationRecordListByHeadId(headRecord.getId());
         }
 
         // 3. 拼接数据
-        return success(CombinationActivityConvert.INSTANCE.convert(getLoginUserId(), headRecord, memberRecords));
+        return success(
+                CombinationActivityConvert.INSTANCE.convert(
+                        getLoginUserId(), headRecord, memberRecords));
     }
-
 }

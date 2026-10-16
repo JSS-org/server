@@ -12,5 +12,4 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(YudaoAi1Properties.class)
-public class Ai1AutoConfiguration {
-}
+public class Ai1AutoConfiguration {}

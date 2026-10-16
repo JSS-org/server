@@ -25,5 +25,4 @@ public interface IotDeviceService {
      * @return 设备信息
      */
     IotDeviceRespDTO getDeviceFromCache(Long id);
-
 }

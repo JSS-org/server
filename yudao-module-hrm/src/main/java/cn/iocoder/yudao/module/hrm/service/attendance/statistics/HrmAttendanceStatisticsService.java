@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.statistics;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics.HrmAttendanceDailyDetailReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics.HrmAttendanceDailyDetailRespVO;
@@ -10,8 +12,6 @@ import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics.Hrm
 
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 考勤统计 Service 接口
@@ -34,7 +34,8 @@ public interface HrmAttendanceStatisticsService {
      * @param reqVO 分页查询条件
      * @return 月度考勤汇总分页
      */
-    PageResult<HrmAttendanceMonthRecordRespVO> getAttendanceMonthRecordPage(HrmAttendanceMonthRecordPageReqVO reqVO);
+    PageResult<HrmAttendanceMonthRecordRespVO> getAttendanceMonthRecordPage(
+            HrmAttendanceMonthRecordPageReqVO reqVO);
 
     /**
      * 获得员工月度考勤汇总列表
@@ -42,7 +43,8 @@ public interface HrmAttendanceStatisticsService {
      * @param reqVO 查询条件
      * @return 月度考勤汇总列表
      */
-    List<HrmAttendanceMonthRecordRespVO> getAttendanceMonthRecordList(HrmAttendanceMonthRecordPageReqVO reqVO);
+    List<HrmAttendanceMonthRecordRespVO> getAttendanceMonthRecordList(
+            HrmAttendanceMonthRecordPageReqVO reqVO);
 
     /**
      * 获得指定员工的月度考勤汇总列表
@@ -65,7 +67,8 @@ public interface HrmAttendanceStatisticsService {
      */
     default Map<Long, HrmAttendanceMonthRecordRespVO> getAttendanceMonthRecordMap(
             Integer year, Integer month, List<Long> employeeIds) {
-        return convertMap(getAttendanceMonthRecordList(year, month, employeeIds),
+        return convertMap(
+                getAttendanceMonthRecordList(year, month, employeeIds),
                 HrmAttendanceMonthRecordRespVO::getEmployeeId);
     }
 
@@ -95,6 +98,6 @@ public interface HrmAttendanceStatisticsService {
      * @param month 月份
      * @return 考勤月详情
      */
-    HrmAttendanceMonthDetailRespVO getAttendanceMonthDetail(Long employeeId, Integer year, Integer month);
-
+    HrmAttendanceMonthDetailRespVO getAttendanceMonthDetail(
+            Long employeeId, Integer year, Integer month);
 }

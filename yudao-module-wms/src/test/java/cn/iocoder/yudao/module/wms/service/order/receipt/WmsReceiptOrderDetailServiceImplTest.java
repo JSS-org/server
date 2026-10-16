@@ -1,12 +1,21 @@
 package cn.iocoder.yudao.module.wms.service.order.receipt;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.RECEIPT_ORDER_DETAIL_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.wms.controller.admin.order.receipt.vo.detail.WmsReceiptOrderDetailSaveReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.order.receipt.vo.order.WmsReceiptOrderSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.receipt.WmsReceiptOrderDetailDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.order.receipt.WmsReceiptOrderDetailMapper;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemSkuService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -16,37 +25,30 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.RECEIPT_ORDER_DETAIL_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 @Import(WmsReceiptOrderDetailServiceImpl.class)
 public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private WmsReceiptOrderDetailServiceImpl receiptOrderDetailService;
+    @Resource private WmsReceiptOrderDetailServiceImpl receiptOrderDetailService;
 
-    @Resource
-    private WmsReceiptOrderDetailMapper receiptOrderDetailMapper;
+    @Resource private WmsReceiptOrderDetailMapper receiptOrderDetailMapper;
 
-    @MockitoBean
-    private WmsItemSkuService itemSkuService;
+    @MockitoBean private WmsItemSkuService itemSkuService;
 
     @Test
     public void testCreateReceiptOrderDetailList_success() {
         // mock 数据
         Long orderId = 10L;
-        WmsReceiptOrderSaveReqVO reqVO = createReceiptOrderReqVO(
-                createReceiptOrderDetailReqVO(null, 1001L, "1.00"),
-                createReceiptOrderDetailReqVO(null, 1002L, "2.00"));
+        WmsReceiptOrderSaveReqVO reqVO =
+                createReceiptOrderReqVO(
+                        createReceiptOrderDetailReqVO(null, 1001L, "1.00"),
+                        createReceiptOrderDetailReqVO(null, 1002L, "2.00"));
 
         // 调用
         receiptOrderDetailService.createReceiptOrderDetailList(orderId, reqVO);
 
         // 断言
-        List<WmsReceiptOrderDetailDO> details = receiptOrderDetailMapper.selectListByOrderId(orderId);
+        List<WmsReceiptOrderDetailDO> details =
+                receiptOrderDetailMapper.selectListByOrderId(orderId);
         assertEquals(2, details.size());
         assertEquals(orderId, details.get(0).getOrderId());
         assertEquals(orderId, details.get(1).getOrderId());
@@ -57,8 +59,8 @@ public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateReceiptOrderDetailList_ignoreId() {
         // mock 数据
-        WmsReceiptOrderSaveReqVO reqVO = createReceiptOrderReqVO(
-                createReceiptOrderDetailReqVO(999L, 1001L, "1.00"));
+        WmsReceiptOrderSaveReqVO reqVO =
+                createReceiptOrderReqVO(createReceiptOrderDetailReqVO(999L, 1001L, "1.00"));
 
         // 调用
         receiptOrderDetailService.createReceiptOrderDetailList(10L, reqVO);
@@ -78,26 +80,31 @@ public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
         WmsReceiptOrderDetailDO detail02 = createReceiptOrderDetail(orderId, 1002L, "2.00");
         receiptOrderDetailMapper.insert(detail01);
         receiptOrderDetailMapper.insert(detail02);
-        WmsReceiptOrderSaveReqVO reqVO = createReceiptOrderReqVO(
-                createReceiptOrderDetailReqVO(detail01.getId(), 2001L, "11.00"),
-                createReceiptOrderDetailReqVO(null, 2002L, "22.00"));
+        WmsReceiptOrderSaveReqVO reqVO =
+                createReceiptOrderReqVO(
+                        createReceiptOrderDetailReqVO(detail01.getId(), 2001L, "11.00"),
+                        createReceiptOrderDetailReqVO(null, 2002L, "22.00"));
 
         // 调用
         receiptOrderDetailService.updateReceiptOrderDetailList(orderId, reqVO);
 
         // 断言：修改
-        WmsReceiptOrderDetailDO dbUpdateDetail = receiptOrderDetailMapper.selectById(detail01.getId());
+        WmsReceiptOrderDetailDO dbUpdateDetail =
+                receiptOrderDetailMapper.selectById(detail01.getId());
         assertNotNull(dbUpdateDetail);
         assertEquals(orderId, dbUpdateDetail.getOrderId());
         assertEquals(2001L, dbUpdateDetail.getSkuId());
         assertEquals(0, new BigDecimal("11.00").compareTo(dbUpdateDetail.getQuantity()));
         assertEquals(0, new BigDecimal("1100.00").compareTo(dbUpdateDetail.getTotalPrice()));
         // 断言：新增
-        List<WmsReceiptOrderDetailDO> details = receiptOrderDetailMapper.selectListByOrderId(orderId);
+        List<WmsReceiptOrderDetailDO> details =
+                receiptOrderDetailMapper.selectListByOrderId(orderId);
         assertEquals(2, details.size());
-        WmsReceiptOrderDetailDO dbCreateDetail = details.stream()
-                .filter(detail -> Long.valueOf(2002L).equals(detail.getSkuId()))
-                .findFirst().orElse(null);
+        WmsReceiptOrderDetailDO dbCreateDetail =
+                details.stream()
+                        .filter(detail -> Long.valueOf(2002L).equals(detail.getSkuId()))
+                        .findFirst()
+                        .orElse(null);
         assertNotNull(dbCreateDetail);
         assertEquals(orderId, dbCreateDetail.getOrderId());
         assertEquals(0, new BigDecimal("22.00").compareTo(dbCreateDetail.getQuantity()));
@@ -109,15 +116,17 @@ public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateReceiptOrderDetailList_detailNotExists() {
         // mock 数据
-        WmsReceiptOrderSaveReqVO reqVO = createReceiptOrderReqVO(
-                createReceiptOrderDetailReqVO(999L, 1001L, "1.00"));
+        WmsReceiptOrderSaveReqVO reqVO =
+                createReceiptOrderReqVO(createReceiptOrderDetailReqVO(999L, 1001L, "1.00"));
 
         // 调用，并断言
-        assertServiceException(() -> receiptOrderDetailService.updateReceiptOrderDetailList(10L, reqVO),
+        assertServiceException(
+                () -> receiptOrderDetailService.updateReceiptOrderDetailList(10L, reqVO),
                 RECEIPT_ORDER_DETAIL_NOT_EXISTS);
     }
 
-    private static WmsReceiptOrderSaveReqVO createReceiptOrderReqVO(WmsReceiptOrderDetailSaveReqVO... details) {
+    private static WmsReceiptOrderSaveReqVO createReceiptOrderReqVO(
+            WmsReceiptOrderDetailSaveReqVO... details) {
         WmsReceiptOrderSaveReqVO reqVO = new WmsReceiptOrderSaveReqVO();
         reqVO.setOrderTime(LocalDateTime.of(2026, 5, 12, 0, 0));
         reqVO.setWarehouseId(100L);
@@ -125,7 +134,8 @@ public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
         return reqVO;
     }
 
-    private static WmsReceiptOrderDetailSaveReqVO createReceiptOrderDetailReqVO(Long id, Long skuId, String quantity) {
+    private static WmsReceiptOrderDetailSaveReqVO createReceiptOrderDetailReqVO(
+            Long id, Long skuId, String quantity) {
         WmsReceiptOrderDetailSaveReqVO reqVO = new WmsReceiptOrderDetailSaveReqVO();
         reqVO.setId(id);
         reqVO.setSkuId(skuId);
@@ -135,7 +145,8 @@ public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
         return reqVO;
     }
 
-    private static WmsReceiptOrderDetailDO createReceiptOrderDetail(Long orderId, Long skuId, String quantity) {
+    private static WmsReceiptOrderDetailDO createReceiptOrderDetail(
+            Long orderId, Long skuId, String quantity) {
         return WmsReceiptOrderDetailDO.builder()
                 .orderId(orderId)
                 .skuId(skuId)
@@ -145,5 +156,4 @@ public class WmsReceiptOrderDetailServiceImplTest extends BaseDbUnitTest {
                 .totalPrice(new BigDecimal(quantity).multiply(new BigDecimal("100.00")))
                 .build();
     }
-
 }

@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.monthrecord.employee;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -12,7 +14,10 @@ import java.util.List;
 @Data
 public class HrmInsuranceMonthEmployeeRecordUpdateReqVO {
 
-    @Schema(description = "员工月度社保记录编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "员工月度社保记录编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     @NotNull(message = "员工社保记录编号不能为空")
     private Long id;
 
@@ -24,5 +29,4 @@ public class HrmInsuranceMonthEmployeeRecordUpdateReqVO {
     @NotEmpty(message = "社保项目不能为空")
     @Valid
     private List<HrmInsuranceMonthEmployeeProjectUpdateReqVO> projects;
-
 }

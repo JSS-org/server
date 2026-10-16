@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.sku.WmsItemSkuRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,7 +24,10 @@ public class WmsItemRespVO {
     @ExcelProperty("商品编号")
     private String code;
 
-    @Schema(description = "商品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "华为 nova flip")
+    @Schema(
+            description = "商品名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "华为 nova flip")
     @ExcelProperty("商品名称")
     private String name;
 
@@ -54,5 +59,4 @@ public class WmsItemRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

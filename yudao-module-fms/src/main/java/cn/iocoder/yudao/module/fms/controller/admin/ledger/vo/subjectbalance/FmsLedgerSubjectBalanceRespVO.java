@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.subjectbalance;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -112,5 +114,4 @@ public class FmsLedgerSubjectBalanceRespVO {
 
     @Schema(description = "下级科目")
     private List<FmsLedgerSubjectBalanceRespVO> children = new ArrayList<>();
-
 }

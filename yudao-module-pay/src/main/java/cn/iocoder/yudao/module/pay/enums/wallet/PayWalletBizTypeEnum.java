@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.enums.wallet;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum PayWalletBizTypeEnum implements ArrayValuable<Integer> {
-
     RECHARGE(1, "充值"),
     RECHARGE_REFUND(2, "充值退款"),
     PAYMENT(3, "支付"),
@@ -26,20 +26,24 @@ public enum PayWalletBizTypeEnum implements ArrayValuable<Integer> {
      * 业务分类
      */
     private final Integer type;
+
     /**
      * 说明
      */
     private final String description;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(PayWalletBizTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(PayWalletBizTypeEnum::getType).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
-         return ARRAYS;
+        return ARRAYS;
     }
 
     public static PayWalletBizTypeEnum valueOf(Integer type) {
-        return Arrays.stream(values()).filter(item -> item.getType().equals(type)).findFirst().orElse(null);
+        return Arrays.stream(values())
+                .filter(item -> item.getType().equals(type))
+                .findFirst()
+                .orElse(null);
     }
-
 }

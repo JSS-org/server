@@ -5,12 +5,16 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.ai1.enums.mcp.Ai1McpTransportEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.Map;
@@ -39,7 +43,9 @@ public class Ai1McpSaveReqVO {
     @Schema(description = "请求头，远程配置以此字段为准；为空时清空请求头", example = "{\"Authorization\":\"Bearer xxx\"}")
     private Map<String, String> headers;
 
-    @Schema(description = "完整 MCP 配置，JSON 对象；本地必填 command", example = "{\"transport\":\"stdio\",\"command\":\"npx\",\"args\":[\"-y\",\"xxx\"]}")
+    @Schema(
+            description = "完整 MCP 配置，JSON 对象；本地必填 command",
+            example = "{\"transport\":\"stdio\",\"command\":\"npx\",\"args\":[\"-y\",\"xxx\"]}")
     private String config;
 
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
@@ -56,5 +62,4 @@ public class Ai1McpSaveReqVO {
     public boolean isHeadersValid() {
         return MapUtil.isEmpty(headers) || JsonUtils.toJsonString(headers).length() <= 500;
     }
-
 }

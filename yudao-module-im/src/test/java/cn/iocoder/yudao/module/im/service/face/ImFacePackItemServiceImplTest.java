@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.im.service.face;
 
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_ITEM_NOT_EXISTS;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
@@ -7,6 +17,7 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.item.ImFacePa
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackDO;
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackItemDO;
 import cn.iocoder.yudao.module.im.dal.mysql.face.ImFacePackItemMapper;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -16,15 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_ITEM_NOT_EXISTS;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link ImFacePackItemServiceImpl} 的单元测试
  *
@@ -32,13 +34,10 @@ import static org.mockito.Mockito.when;
  */
 public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private ImFacePackItemServiceImpl service;
+    @InjectMocks private ImFacePackItemServiceImpl service;
 
-    @Mock
-    private ImFacePackItemMapper facePackItemMapper;
-    @Mock
-    private ImFacePackService facePackService;
+    @Mock private ImFacePackItemMapper facePackItemMapper;
+    @Mock private ImFacePackService facePackService;
 
     // ========== getEnabledItemListByPackIds ==========
 
@@ -54,7 +53,8 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
         // 准备
         List<Long> packIds = Arrays.asList(1L, 2L);
         ImFacePackItemDO item = new ImFacePackItemDO();
-        when(facePackItemMapper.selectListByPackIdsAndStatus(packIds, CommonStatusEnum.ENABLE.getStatus()))
+        when(facePackItemMapper.selectListByPackIdsAndStatus(
+                        packIds, CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.singletonList(item));
 
         // 调用 + 断言
@@ -67,8 +67,13 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
     public void testCreateFacePackItem_success() {
         // 准备
         ImFacePackItemSaveReqVO reqVO = new ImFacePackItemSaveReqVO();
-        reqVO.setPackId(10L).setUrl("a.png").setName("dog").setWidth(100).setHeight(100)
-                .setSort(0).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        reqVO.setPackId(10L)
+                .setUrl("a.png")
+                .setName("dog")
+                .setWidth(100)
+                .setHeight(100)
+                .setSort(0)
+                .setStatus(CommonStatusEnum.ENABLE.getStatus());
         when(facePackService.validateFacePackExists(10L)).thenReturn(new ImFacePackDO());
 
         // 调用
@@ -85,10 +90,16 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
     public void testCreateFacePackItem_packNotExists() {
         // 准备：所属表情包不存在
         ImFacePackItemSaveReqVO reqVO = new ImFacePackItemSaveReqVO();
-        reqVO.setPackId(99L).setUrl("a.png").setWidth(100).setHeight(100).setSort(0)
+        reqVO.setPackId(99L)
+                .setUrl("a.png")
+                .setWidth(100)
+                .setHeight(100)
+                .setSort(0)
                 .setStatus(CommonStatusEnum.ENABLE.getStatus());
         when(facePackService.validateFacePackExists(99L))
-                .thenThrow(new ServiceException(FACE_PACK_NOT_EXISTS.getCode(), FACE_PACK_NOT_EXISTS.getMsg()));
+                .thenThrow(
+                        new ServiceException(
+                                FACE_PACK_NOT_EXISTS.getCode(), FACE_PACK_NOT_EXISTS.getMsg()));
 
         // 调用 + 断言：不落库
         assertThrows(ServiceException.class, () -> service.createFacePackItem(reqVO));
@@ -101,8 +112,13 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
     public void testUpdateFacePackItem_success() {
         // 准备
         ImFacePackItemSaveReqVO reqVO = new ImFacePackItemSaveReqVO();
-        reqVO.setId(1L).setPackId(10L).setUrl("a.png").setWidth(100).setHeight(100)
-                .setSort(0).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        reqVO.setId(1L)
+                .setPackId(10L)
+                .setUrl("a.png")
+                .setWidth(100)
+                .setHeight(100)
+                .setSort(0)
+                .setStatus(CommonStatusEnum.ENABLE.getStatus());
         when(facePackItemMapper.selectById(1L)).thenReturn(new ImFacePackItemDO());
         when(facePackService.validateFacePackExists(10L)).thenReturn(new ImFacePackDO());
 
@@ -116,12 +132,17 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testUpdateFacePackItem_itemNotExists() {
         ImFacePackItemSaveReqVO reqVO = new ImFacePackItemSaveReqVO();
-        reqVO.setId(99L).setPackId(10L).setUrl("a.png").setWidth(100).setHeight(100).setSort(0)
+        reqVO.setId(99L)
+                .setPackId(10L)
+                .setUrl("a.png")
+                .setWidth(100)
+                .setHeight(100)
+                .setSort(0)
                 .setStatus(CommonStatusEnum.ENABLE.getStatus());
         when(facePackItemMapper.selectById(99L)).thenReturn(null);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.updateFacePackItem(reqVO));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.updateFacePackItem(reqVO));
         assertEquals(FACE_PACK_ITEM_NOT_EXISTS.getCode(), exception.getCode());
         verify(facePackItemMapper, never()).updateById(any(ImFacePackItemDO.class));
     }
@@ -141,8 +162,8 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
     public void testDeleteFacePackItem_notExists() {
         when(facePackItemMapper.selectById(99L)).thenReturn(null);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.deleteFacePackItem(99L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.deleteFacePackItem(99L));
         assertEquals(FACE_PACK_ITEM_NOT_EXISTS.getCode(), exception.getCode());
         verify(facePackItemMapper, never()).deleteById(anyLong());
     }
@@ -173,5 +194,4 @@ public class ImFacePackItemServiceImplTest extends BaseMockitoUnitTest {
 
         verify(facePackItemMapper).deleteByIds(ids);
     }
-
 }

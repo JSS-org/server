@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.tool.method;
 
 import jakarta.annotation.PostConstruct;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +34,8 @@ public class PersonServiceImpl implements PersonService {
     /**
      * Embedded CSV data for initial population
      */
-    private static final String CSV_DATA = """
+    private static final String CSV_DATA =
+            """
             Id,FirstName,LastName,Email,Sex,IpAddress,JobTitle,Age
             1,Fons,Tollfree,ftollfree0@senate.gov,Male,55.1 Tollfree Lane,Research Associate,31
             2,Emlynne,Tabourier,etabourier1@networksolutions.com,Female,18 Tabourier Way,Associate Professor,38
@@ -145,7 +148,10 @@ public class PersonServiceImpl implements PersonService {
         log.info("Initializing PersonService data store...");
         int maxId = loadDataFromCsv();
         idGenerator = new AtomicInteger(maxId);
-        log.info("PersonService initialized with {} records. Next ID: {}", personStore.size(), idGenerator.get() + 1);
+        log.info(
+                "PersonService initialized with {} records. Next ID: {}",
+                personStore.size(),
+                idGenerator.get() + 1);
     }
 
     /**
@@ -159,32 +165,51 @@ public class PersonServiceImpl implements PersonService {
         // Clear existing data before loading (important for tests or re-initialization scenarios)
         personStore.clear();
         try (Stream<String> lines = CSV_DATA.lines().skip(1)) { // Skip header row
-            lines.forEach(line -> {
-                try {
-                    // Split carefully, handling potential commas within quoted fields if necessary (simple split here)
-                    String[] fields = line.split(",", 8); // Limit split to handle potential commas in job title
-                    if (fields.length == 8) {
-                        int id = Integer.parseInt(fields[0].trim());
-                        String firstName = fields[1].trim();
-                        String lastName = fields[2].trim();
-                        String email = fields[3].trim();
-                        String sex = fields[4].trim();
-                        String ipAddress = fields[5].trim();
-                        String jobTitle = fields[6].trim();
-                        int age = Integer.parseInt(fields[7].trim());
+            lines.forEach(
+                    line -> {
+                        try {
+                            // Split carefully, handling potential commas within quoted fields if
+                            // necessary (simple split here)
+                            String[] fields =
+                                    line.split(
+                                            ",",
+                                            8); // Limit split to handle potential commas in job
+                            // title
+                            if (fields.length == 8) {
+                                int id = Integer.parseInt(fields[0].trim());
+                                String firstName = fields[1].trim();
+                                String lastName = fields[2].trim();
+                                String email = fields[3].trim();
+                                String sex = fields[4].trim();
+                                String ipAddress = fields[5].trim();
+                                String jobTitle = fields[6].trim();
+                                int age = Integer.parseInt(fields[7].trim());
 
-                        Person person = new Person(id, firstName, lastName, email, sex, ipAddress, jobTitle, age);
-                        personStore.put(id, person);
-                        currentMaxId.updateAndGet(max -> Math.max(max, id));
-                    } else {
-                        log.warn("Skipping malformed CSV line (expected 8 fields, found {}): {}", fields.length, line);
-                    }
-                } catch (NumberFormatException e) {
-                    log.warn("Skipping line due to parsing error (ID or Age): {} - Error: {}", line, e.getMessage());
-                } catch (Exception e) {
-                    log.error("Skipping line due to unexpected error: {} - Error: {}", line, e.getMessage(), e);
-                }
-            });
+                                Person person =
+                                        new Person(
+                                                id, firstName, lastName, email, sex, ipAddress,
+                                                jobTitle, age);
+                                personStore.put(id, person);
+                                currentMaxId.updateAndGet(max -> Math.max(max, id));
+                            } else {
+                                log.warn(
+                                        "Skipping malformed CSV line (expected 8 fields, found {}): {}",
+                                        fields.length,
+                                        line);
+                            }
+                        } catch (NumberFormatException e) {
+                            log.warn(
+                                    "Skipping line due to parsing error (ID or Age): {} - Error: {}",
+                                    line,
+                                    e.getMessage());
+                        } catch (Exception e) {
+                            log.error(
+                                    "Skipping line due to unexpected error: {} - Error: {}",
+                                    line,
+                                    e.getMessage(),
+                                    e);
+                        }
+                    });
         } catch (Exception e) {
             log.error("Fatal error reading embedded CSV data: {}", e.getMessage(), e);
             // In a real application, might throw a specific initialization exception
@@ -194,25 +219,24 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     @Tool(
-        name = "ps_create_person",
-        description = "Create a new person record in the in-memory store."
-    )
+            name = "ps_create_person",
+            description = "Create a new person record in the in-memory store.")
     public Person createPerson(Person personData) {
         if (personData == null) {
             throw new IllegalArgumentException("Person data cannot be null");
         }
         int newId = idGenerator.incrementAndGet();
         // Create a new Person record using data from the input, but with the generated ID
-        Person newPerson = new Person(
-                newId,
-                personData.firstName(),
-                personData.lastName(),
-                personData.email(),
-                personData.sex(),
-                personData.ipAddress(),
-                personData.jobTitle(),
-                personData.age()
-        );
+        Person newPerson =
+                new Person(
+                        newId,
+                        personData.firstName(),
+                        personData.lastName(),
+                        personData.email(),
+                        personData.sex(),
+                        personData.ipAddress(),
+                        personData.jobTitle(),
+                        personData.age());
         personStore.put(newId, newPerson);
         log.debug("Created person: {}", newPerson);
         return newPerson;
@@ -220,9 +244,8 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     @Tool(
-        name = "ps_get_person_by_id",
-        description = "Retrieve a person record by ID from the in-memory store."
-    )
+            name = "ps_get_person_by_id",
+            description = "Retrieve a person record by ID from the in-memory store.")
     public Optional<Person> getPersonById(int id) {
         Person person = personStore.get(id);
         log.debug("Retrieved person by ID {}: {}", id, person);
@@ -231,9 +254,8 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     @Tool(
-        name = "ps_get_all_persons",
-        description = "Retrieve all person records from the in-memory store."
-    )
+            name = "ps_get_all_persons",
+            description = "Retrieve all person records from the in-memory store.")
     public List<Person> getAllPersons() {
         // Return an unmodifiable view of the values
         List<Person> allPersons = personStore.values().stream().toList();
@@ -243,94 +265,98 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     @Tool(
-        name = "ps_update_person",
-        description = "Update an existing person record by ID in the in-memory store."
-    )
+            name = "ps_update_person",
+            description = "Update an existing person record by ID in the in-memory store.")
     public boolean updatePerson(int id, Person updatedPersonData) {
-         if (updatedPersonData == null) {
+        if (updatedPersonData == null) {
             throw new IllegalArgumentException("Updated person data cannot be null");
         }
         // Use computeIfPresent for atomic update if the key exists
-        Person result = personStore.computeIfPresent(id, (key, existingPerson) ->
-                // Create a new Person record with the original ID but updated data
-                new Person(
-                        id, // Keep original ID
-                        updatedPersonData.firstName(),
-                        updatedPersonData.lastName(),
-                        updatedPersonData.email(),
-                        updatedPersonData.sex(),
-                        updatedPersonData.ipAddress(),
-                        updatedPersonData.jobTitle(),
-                        updatedPersonData.age()
-                )
-        );
+        Person result =
+                personStore.computeIfPresent(
+                        id,
+                        (key, existingPerson) ->
+                                // Create a new Person record with the original ID but updated data
+                                new Person(
+                                        id, // Keep original ID
+                                        updatedPersonData.firstName(),
+                                        updatedPersonData.lastName(),
+                                        updatedPersonData.email(),
+                                        updatedPersonData.sex(),
+                                        updatedPersonData.ipAddress(),
+                                        updatedPersonData.jobTitle(),
+                                        updatedPersonData.age()));
         boolean updated = result != null;
-        log.debug("Update attempt for ID {}: {}", id, updated ? "Successful" : "Failed (Not Found)");
-        if(updated) log.trace("Updated person data for ID {}: {}", id, result);
+        log.debug(
+                "Update attempt for ID {}: {}", id, updated ? "Successful" : "Failed (Not Found)");
+        if (updated) log.trace("Updated person data for ID {}: {}", id, result);
         return updated;
     }
 
     @Override
     @Tool(
-        name = "ps_delete_person",
-        description = "Delete a person record by ID from the in-memory store."
-    )
+            name = "ps_delete_person",
+            description = "Delete a person record by ID from the in-memory store.")
     public boolean deletePerson(int id) {
         boolean removed = personStore.remove(id) != null;
-        log.debug("Delete attempt for ID {}: {}", id, removed ? "Successful" : "Failed (Not Found)");
+        log.debug(
+                "Delete attempt for ID {}: {}", id, removed ? "Successful" : "Failed (Not Found)");
         return removed;
     }
 
     @Override
     @Tool(
-        name = "ps_search_by_job_title",
-        description = "Search for persons by job title in the in-memory store."
-    )
+            name = "ps_search_by_job_title",
+            description = "Search for persons by job title in the in-memory store.")
     public List<Person> searchByJobTitle(String jobTitleQuery) {
         if (jobTitleQuery == null || jobTitleQuery.isBlank()) {
             log.debug("Search by job title skipped due to blank query.");
             return Collections.emptyList();
         }
         String lowerCaseQuery = jobTitleQuery.toLowerCase();
-        List<Person> results = personStore.values().stream()
-                .filter(person -> person.jobTitle() != null && person.jobTitle().toLowerCase().contains(lowerCaseQuery))
-                .collect(Collectors.toList());
+        List<Person> results =
+                personStore.values().stream()
+                        .filter(
+                                person ->
+                                        person.jobTitle() != null
+                                                && person.jobTitle()
+                                                        .toLowerCase()
+                                                        .contains(lowerCaseQuery))
+                        .collect(Collectors.toList());
         log.debug("Search by job title '{}' found {} results.", jobTitleQuery, results.size());
         return Collections.unmodifiableList(results);
     }
 
     @Override
-    @Tool(
-        name = "ps_filter_by_sex",
-        description = "Filters Persons by sex (case-insensitive)."
-    )
+    @Tool(name = "ps_filter_by_sex", description = "Filters Persons by sex (case-insensitive).")
     public List<Person> filterBySex(String sex) {
         if (sex == null || sex.isBlank()) {
-             log.debug("Filter by sex skipped due to blank filter.");
+            log.debug("Filter by sex skipped due to blank filter.");
             return Collections.emptyList();
         }
-        List<Person> results = personStore.values().stream()
-                .filter(person -> person.sex() != null && person.sex().equalsIgnoreCase(sex))
-                .collect(Collectors.toList());
+        List<Person> results =
+                personStore.values().stream()
+                        .filter(
+                                person ->
+                                        person.sex() != null && person.sex().equalsIgnoreCase(sex))
+                        .collect(Collectors.toList());
         log.debug("Filter by sex '{}' found {} results.", sex, results.size());
         return Collections.unmodifiableList(results);
     }
 
     @Override
-    @Tool(
-        name = "ps_filter_by_age",
-        description = "Filters Persons by age."
-    )
+    @Tool(name = "ps_filter_by_age", description = "Filters Persons by age.")
     public List<Person> filterByAge(int age) {
-         if (age < 0) {
+        if (age < 0) {
             log.debug("Filter by age skipped due to negative age: {}", age);
-            return Collections.emptyList(); // Or throw IllegalArgumentException based on requirements
+            return Collections
+                    .emptyList(); // Or throw IllegalArgumentException based on requirements
         }
-        List<Person> results = personStore.values().stream()
-                .filter(person -> person.age() == age)
-                .collect(Collectors.toList());
+        List<Person> results =
+                personStore.values().stream()
+                        .filter(person -> person.age() == age)
+                        .collect(Collectors.toList());
         log.debug("Filter by age {} found {} results.", age, results.size());
         return Collections.unmodifiableList(results);
     }
-
 }

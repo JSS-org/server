@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.wm.itemreceipt;
 
 import cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt.vo.detail.MesWmItemReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDetailDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -70,5 +71,4 @@ public interface MesWmItemReceiptDetailService {
      * @param receiptId 入库单编号
      */
     void deleteItemReceiptDetailByReceiptId(Long receiptId);
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.infra.enums.job;
 
 import com.google.common.collect.Sets;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import org.quartz.impl.jdbcjobstore.Constants;
 
 import java.util.Collections;
@@ -24,7 +26,10 @@ public enum JobStatusEnum {
     /**
      * 开启
      */
-    NORMAL(1, Sets.newHashSet(Constants.STATE_WAITING, Constants.STATE_ACQUIRED, Constants.STATE_BLOCKED)),
+    NORMAL(
+            1,
+            Sets.newHashSet(
+                    Constants.STATE_WAITING, Constants.STATE_ACQUIRED, Constants.STATE_BLOCKED)),
     /**
      * 暂停
      */
@@ -34,9 +39,9 @@ public enum JobStatusEnum {
      * 状态
      */
     private final Integer status;
+
     /**
      * 对应的 Quartz 触发器的状态集合
      */
     private final Set<String> quartzStates;
-
 }

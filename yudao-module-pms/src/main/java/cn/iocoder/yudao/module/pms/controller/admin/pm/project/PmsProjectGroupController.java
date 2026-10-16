@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.group.PmsProjectGroupMoveReqVO;
@@ -9,11 +12,14 @@ import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.group.PmsProje
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectGroupDO;
 import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectGroupService;
 import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectMemberService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,31 +34,28 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 项目分组")
 @RestController
 @RequestMapping("/pms/pm/project-group")
 @Validated
 public class PmsProjectGroupController {
 
-    @Resource
-    private PmsProjectGroupService projectGroupService;
-    @Resource
-    private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectGroupService projectGroupService;
+    @Resource private PmsProjectMemberService projectMemberService;
 
     @PostMapping("/create")
     @Operation(summary = "创建项目分组")
     @PreAuthorize("@ss.hasPermission('pms:pm:project-group:create')")
-    public CommonResult<Long> createProjectGroup(@Valid @RequestBody PmsProjectGroupSaveReqVO createReqVO) {
+    public CommonResult<Long> createProjectGroup(
+            @Valid @RequestBody PmsProjectGroupSaveReqVO createReqVO) {
         return success(projectGroupService.createProjectGroup(createReqVO, getLoginUserId()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改项目分组")
     @PreAuthorize("@ss.hasPermission('pms:pm:project-group:update')")
-    public CommonResult<Boolean> updateProjectGroup(@Valid @RequestBody PmsProjectGroupSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProjectGroup(
+            @Valid @RequestBody PmsProjectGroupSaveReqVO updateReqVO) {
         projectGroupService.updateProjectGroup(updateReqVO, getLoginUserId());
         return success(true);
     }
@@ -60,7 +63,8 @@ public class PmsProjectGroupController {
     @PutMapping("/update-sort")
     @Operation(summary = "修改项目分组排序")
     @PreAuthorize("@ss.hasPermission('pms:pm:project-group:update')")
-    public CommonResult<Boolean> updateProjectGroupSort(@Valid @RequestBody PmsProjectGroupSortReqVO sortReqVO) {
+    public CommonResult<Boolean> updateProjectGroupSort(
+            @Valid @RequestBody PmsProjectGroupSortReqVO sortReqVO) {
         projectGroupService.updateProjectGroupSort(sortReqVO, getLoginUserId());
         return success(true);
     }
@@ -81,17 +85,23 @@ public class PmsProjectGroupController {
         Long userId = getLoginUserId();
         List<PmsProjectGroupDO> groups = projectGroupService.getProjectGroupList(userId);
         List<Long> projectIds = projectMemberService.getActiveProjectIdListByUserId(userId);
-        Map<Long, Integer> groupCountMap = projectGroupService.getProjectGroupCountMap(userId, groups, projectIds);
-        return success(BeanUtils.toBean(groups, PmsProjectGroupRespVO.class,
-                group -> group.setProjectCount(groupCountMap.getOrDefault(group.getId(), 0))));
+        Map<Long, Integer> groupCountMap =
+                projectGroupService.getProjectGroupCountMap(userId, groups, projectIds);
+        return success(
+                BeanUtils.toBean(
+                        groups,
+                        PmsProjectGroupRespVO.class,
+                        group ->
+                                group.setProjectCount(
+                                        groupCountMap.getOrDefault(group.getId(), 0))));
     }
 
     @PutMapping("/move-project")
     @Operation(summary = "移动项目到个人分组")
     @PreAuthorize("@ss.hasPermission('pms:pm:project-group:update')")
-    public CommonResult<Boolean> moveProjectToGroup(@Valid @RequestBody PmsProjectGroupMoveReqVO moveReqVO) {
+    public CommonResult<Boolean> moveProjectToGroup(
+            @Valid @RequestBody PmsProjectGroupMoveReqVO moveReqVO) {
         projectGroupService.moveProjectToGroup(moveReqVO, getLoginUserId());
         return success(true);
     }
-
 }

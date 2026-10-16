@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.strategy.dept;
 
+import static cn.hutool.core.collection.ListUtil.toList;
+
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceService;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -17,19 +21,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.hutool.core.collection.ListUtil.toList;
-
 /**
  * 发起人连续多级部门的负责人 {@link BpmTaskCandidateStrategy} 实现类
  *
  * @author jason
  */
 @Component
-public class BpmTaskCandidateStartUserDeptLeaderMultiStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {
+public class BpmTaskCandidateStartUserDeptLeaderMultiStrategy
+        extends AbstractBpmTaskCandidateDeptLeaderStrategy {
 
-    @Resource
-    @Lazy
-    private BpmProcessInstanceService processInstanceService;
+    @Resource @Lazy private BpmProcessInstanceService processInstanceService;
 
     @Override
     public BpmTaskCandidateStrategyEnum getStrategy() {
@@ -46,10 +47,12 @@ public class BpmTaskCandidateStartUserDeptLeaderMultiStrategy extends AbstractBp
     public Set<Long> calculateUsersByTask(DelegateExecution execution, String param) {
         int level = Integer.parseInt(param); // 参数是部门的层级
         // 获得流程发起人
-        ProcessInstance processInstance = processInstanceService.getProcessInstance(execution.getProcessInstanceId());
+        ProcessInstance processInstance =
+                processInstanceService.getProcessInstance(execution.getProcessInstanceId());
         Long startUserId = NumberUtils.parseLong(processInstance.getStartUserId());
         // 获取发起人的 multi 部门负责人
-        DeptRespDTO dept = super.getStartUserDept(startUserId, processInstance.getProcessVariables());
+        DeptRespDTO dept =
+                super.getStartUserDept(startUserId, processInstance.getProcessVariables());
         if (dept == null) {
             return new HashSet<>();
         }
@@ -57,8 +60,13 @@ public class BpmTaskCandidateStartUserDeptLeaderMultiStrategy extends AbstractBp
     }
 
     @Override
-    public Set<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId, String param,
-                                              Long startUserId, String processDefinitionId, Map<String, Object> processVariables) {
+    public Set<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
         int level = Integer.parseInt(param); // 参数是部门的层级
         DeptRespDTO dept = super.getStartUserDept(startUserId, processVariables);
         if (dept == null) {
@@ -66,5 +74,4 @@ public class BpmTaskCandidateStartUserDeptLeaderMultiStrategy extends AbstractBp
         }
         return super.getMultiLevelDeptLeaderIds(toList(dept.getId()), level);
     }
-
 }

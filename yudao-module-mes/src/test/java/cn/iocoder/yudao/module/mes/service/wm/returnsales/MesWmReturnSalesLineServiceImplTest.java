@@ -1,24 +1,26 @@
 package cn.iocoder.yudao.module.mes.service.wm.returnsales;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnsales.MesWmReturnSalesLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.returnsales.MesWmReturnSalesLineMapper;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcCheckResultEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmQualityStatusEnum;
+import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
+import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
-import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
-
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * {@link MesWmReturnSalesLineServiceImpl} 的单元测试类
@@ -28,23 +30,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Import(MesWmReturnSalesLineServiceImpl.class)
 public class MesWmReturnSalesLineServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesWmReturnSalesLineServiceImpl returnSalesLineService;
+    @Resource private MesWmReturnSalesLineServiceImpl returnSalesLineService;
 
-    @Resource
-    private MesWmReturnSalesLineMapper returnSalesLineMapper;
+    @Resource private MesWmReturnSalesLineMapper returnSalesLineMapper;
 
-    @MockitoBean
-    private MesWmReturnSalesService returnSalesService;
+    @MockitoBean private MesWmReturnSalesService returnSalesService;
 
-    @MockitoBean
-    private MesMdItemService itemService;
+    @MockitoBean private MesMdItemService itemService;
 
-    @MockitoBean
-    private MesWmBatchService batchService;
+    @MockitoBean private MesWmBatchService batchService;
 
-    @MockitoBean
-    private MesWmReturnSalesDetailService returnSalesDetailService;
+    @MockitoBean private MesWmReturnSalesDetailService returnSalesDetailService;
 
     @Test
     public void testUpdateReturnSalesLineWhenRqcFinish_allPass() {
@@ -54,7 +50,8 @@ public class MesWmReturnSalesLineServiceImplTest extends BaseDbUnitTest {
         BigDecimal unqualifiedQty = BigDecimal.ZERO;
 
         // mock 数据
-        MesWmReturnSalesLineDO lineDO = randomPojo(MesWmReturnSalesLineDO.class, o -> o.setQuantity(qualifiedQty));
+        MesWmReturnSalesLineDO lineDO =
+                randomPojo(MesWmReturnSalesLineDO.class, o -> o.setQuantity(qualifiedQty));
         returnSalesLineMapper.insert(lineDO);
 
         // 调用（sourceDocId 传 null 不联动主表状态）
@@ -74,7 +71,8 @@ public class MesWmReturnSalesLineServiceImplTest extends BaseDbUnitTest {
         BigDecimal unqualifiedQty = new BigDecimal("100");
 
         // mock 数据
-        MesWmReturnSalesLineDO lineDO = randomPojo(MesWmReturnSalesLineDO.class, o -> o.setQuantity(unqualifiedQty));
+        MesWmReturnSalesLineDO lineDO =
+                randomPojo(MesWmReturnSalesLineDO.class, o -> o.setQuantity(unqualifiedQty));
         returnSalesLineMapper.insert(lineDO);
 
         // 调用
@@ -94,8 +92,8 @@ public class MesWmReturnSalesLineServiceImplTest extends BaseDbUnitTest {
         BigDecimal unqualifiedQty = new BigDecimal("30");
 
         // mock 数据
-        MesWmReturnSalesLineDO lineDO = randomPojo(MesWmReturnSalesLineDO.class, o ->
-                o.setQuantity(new BigDecimal("100")));
+        MesWmReturnSalesLineDO lineDO =
+                randomPojo(MesWmReturnSalesLineDO.class, o -> o.setQuantity(new BigDecimal("100")));
         returnSalesLineMapper.insert(lineDO);
 
         // 调用
@@ -108,14 +106,16 @@ public class MesWmReturnSalesLineServiceImplTest extends BaseDbUnitTest {
         assertEquals(0, qualifiedQty.compareTo(originalLine.getQuantity()));
 
         // 断言：新增了一行不合格品
-        List<MesWmReturnSalesLineDO> allLines = returnSalesLineMapper.selectListByReturnId(lineDO.getReturnId());
+        List<MesWmReturnSalesLineDO> allLines =
+                returnSalesLineMapper.selectListByReturnId(lineDO.getReturnId());
         assertEquals(2, allLines.size());
-        MesWmReturnSalesLineDO newLine = allLines.stream()
-                .filter(l -> !l.getId().equals(lineDO.getId()))
-                .findFirst().orElse(null);
+        MesWmReturnSalesLineDO newLine =
+                allLines.stream()
+                        .filter(l -> !l.getId().equals(lineDO.getId()))
+                        .findFirst()
+                        .orElse(null);
         assertNotNull(newLine);
         assertEquals(MesWmQualityStatusEnum.FAIL.getStatus(), newLine.getQualityStatus());
         assertEquals(0, unqualifiedQty.compareTo(newLine.getQuantity()));
     }
-
 }

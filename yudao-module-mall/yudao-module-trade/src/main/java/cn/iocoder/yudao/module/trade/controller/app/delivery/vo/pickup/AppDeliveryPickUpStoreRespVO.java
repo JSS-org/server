@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.trade.controller.app.delivery.vo.pickup;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalTime;
@@ -17,10 +20,16 @@ public class AppDeliveryPickUpStoreRespVO {
     @Schema(description = "门店名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
     private String name;
 
-    @Schema(description = "门店 logo", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/1.png")
+    @Schema(
+            description = "门店 logo",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/1.png")
     private String logo;
 
-    @Schema(description = "门店手机", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601892312")
+    @Schema(
+            description = "门店手机",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601892312")
     private String phone;
 
     @Schema(description = "区域编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "18733")
@@ -29,7 +38,10 @@ public class AppDeliveryPickUpStoreRespVO {
     @Schema(description = "地区名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "上海上海市普陀区")
     private String areaName;
 
-    @Schema(description = "门店详细地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "复旦大学路 188 号")
+    @Schema(
+            description = "门店详细地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "复旦大学路 188 号")
     private String detailAddress;
 
     @Schema(description = "营业开始时间", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -50,5 +62,4 @@ public class AppDeliveryPickUpStoreRespVO {
 
     @Schema(description = "距离，单位：千米", example = "100") // 只有在用户传递了经纬度时，才进行计算
     private Double distance;
-
 }

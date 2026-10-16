@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.document;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -22,5 +25,4 @@ public class Ai1KnowledgeDocumentPageReqVO extends PageParam {
 
     @Schema(description = "向量化状态", example = "1")
     private Integer status;
-
 }

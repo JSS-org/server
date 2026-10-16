@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.enums.brokerage;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum BrokerageWithdrawTypeEnum implements ArrayValuable<Integer> {
-
     WALLET(1, "钱包"),
     BANK(2, "银行卡"),
     WECHAT_QR(3, "微信收款码"), // 手动打款
@@ -24,12 +24,14 @@ public enum BrokerageWithdrawTypeEnum implements ArrayValuable<Integer> {
     ALIPAY_API(6, "支付宝余额"), // 自动打款，通过支付宝转账 API
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BrokerageWithdrawTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(BrokerageWithdrawTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -47,7 +49,7 @@ public enum BrokerageWithdrawTypeEnum implements ArrayValuable<Integer> {
      * @return 是否
      */
     public static boolean isApi(Integer type) {
-        return ObjectUtils.equalsAny(type, WALLET.getType(), ALIPAY_API.getType(), WECHAT_API.getType());
+        return ObjectUtils.equalsAny(
+                type, WALLET.getType(), ALIPAY_API.getType(), WECHAT_API.getType());
     }
-
 }

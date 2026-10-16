@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.trade.controller.admin.aftersale.vo;
 
 import cn.iocoder.yudao.module.trade.controller.admin.base.member.user.MemberUserRespVO;
 import cn.iocoder.yudao.module.trade.controller.admin.base.product.property.ProductPropertyValueDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -31,5 +33,4 @@ public class AfterSaleRespPageItemVO extends AfterSaleBaseVO {
      * 用户信息
      */
     private MemberUserRespVO user;
-
 }

@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.AbstractFileClient;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -50,37 +51,44 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
         // 优先级：配置的 region > 从 endpoint 解析的 region > 默认值 us-east-1
         String regionStr = resolveRegion();
         Region region = Region.of(regionStr);
-        AwsCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(config.getAccessKey(), config.getAccessSecret()));
+        AwsCredentialsProvider credentialsProvider =
+                StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(
+                                config.getAccessKey(), config.getAccessSecret()));
         URI endpoint = URI.create(buildEndpoint());
         URI presignerEndpoint = URI.create(buildPresignerEndpoint());
-        S3Configuration serviceConfiguration = S3Configuration.builder() // Path-style 访问
-                .pathStyleAccessEnabled(Boolean.TRUE.equals(config.getEnablePathStyleAccess()))
-                .chunkedEncodingEnabled(false) // 禁用分块编码，参见 https://t.zsxq.com/kBy57
-                .build();
-        client = S3Client.builder()
-                .credentialsProvider(credentialsProvider)
-                .region(region)
-                .endpointOverride(endpoint)
-                .serviceConfiguration(serviceConfiguration)
-                .build();
-        presigner = S3Presigner.builder()
-                .credentialsProvider(credentialsProvider)
-                .region(region)
-                .endpointOverride(presignerEndpoint)
-                .serviceConfiguration(serviceConfiguration)
-                .build();
+        S3Configuration serviceConfiguration =
+                S3Configuration.builder() // Path-style 访问
+                        .pathStyleAccessEnabled(
+                                Boolean.TRUE.equals(config.getEnablePathStyleAccess()))
+                        .chunkedEncodingEnabled(false) // 禁用分块编码，参见 https://t.zsxq.com/kBy57
+                        .build();
+        client =
+                S3Client.builder()
+                        .credentialsProvider(credentialsProvider)
+                        .region(region)
+                        .endpointOverride(endpoint)
+                        .serviceConfiguration(serviceConfiguration)
+                        .build();
+        presigner =
+                S3Presigner.builder()
+                        .credentialsProvider(credentialsProvider)
+                        .region(region)
+                        .endpointOverride(presignerEndpoint)
+                        .serviceConfiguration(serviceConfiguration)
+                        .build();
     }
 
     @Override
     public String upload(byte[] content, String path, String type) {
         // 构造 PutObjectRequest
-        PutObjectRequest putRequest = PutObjectRequest.builder()
-                .bucket(config.getBucket())
-                .key(path)
-                .contentType(type)
-                .contentLength((long) content.length)
-                .build();
+        PutObjectRequest putRequest =
+                PutObjectRequest.builder()
+                        .bucket(config.getBucket())
+                        .key(path)
+                        .contentType(type)
+                        .contentLength((long) content.length)
+                        .build();
         // 上传文件
         client.putObject(putRequest, RequestBody.fromBytes(content));
         // 拼接返回路径
@@ -89,28 +97,28 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
 
     @Override
     public void delete(String path) {
-        DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                .bucket(config.getBucket())
-                .key(path)
-                .build();
+        DeleteObjectRequest deleteRequest =
+                DeleteObjectRequest.builder().bucket(config.getBucket()).key(path).build();
         client.deleteObject(deleteRequest);
     }
 
     @Override
     public byte[] getContent(String path) {
-        GetObjectRequest getRequest = GetObjectRequest.builder()
-                .bucket(config.getBucket())
-                .key(path)
-                .build();
+        GetObjectRequest getRequest =
+                GetObjectRequest.builder().bucket(config.getBucket()).key(path).build();
         return IoUtil.readBytes(client.getObject(getRequest));
     }
 
     @Override
     public String presignPutUrl(String path) {
-        return presigner.presignPutObject(PutObjectPresignRequest.builder()
-                .signatureDuration(EXPIRATION_DEFAULT)
-                .putObjectRequest(b -> b.bucket(config.getBucket()).key(path)).build())
-                .url().toString();
+        return presigner
+                .presignPutObject(
+                        PutObjectPresignRequest.builder()
+                                .signatureDuration(EXPIRATION_DEFAULT)
+                                .putObjectRequest(b -> b.bucket(config.getBucket()).key(path))
+                                .build())
+                .url()
+                .toString();
     }
 
     @Override
@@ -132,11 +140,19 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
 
         // 2.2 情况二：私有访问：生成 GET 预签名 URL
         String finalPath = path;
-        Duration expiration = expirationSeconds != null ? Duration.ofSeconds(expirationSeconds) : EXPIRATION_DEFAULT;
-        URL signedUrl = presigner.presignGetObject(GetObjectPresignRequest.builder()
-                .signatureDuration(expiration)
-                .getObjectRequest(b -> b.bucket(config.getBucket()).key(finalPath)).build())
-                .url();
+        Duration expiration =
+                expirationSeconds != null
+                        ? Duration.ofSeconds(expirationSeconds)
+                        : EXPIRATION_DEFAULT;
+        URL signedUrl =
+                presigner
+                        .presignGetObject(
+                                GetObjectPresignRequest.builder()
+                                        .signatureDuration(expiration)
+                                        .getObjectRequest(
+                                                b -> b.bucket(config.getBucket()).key(finalPath))
+                                        .build())
+                        .url();
         return signedUrl.toString();
     }
 
@@ -185,9 +201,11 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
         }
 
         if (Boolean.TRUE.equals(config.getEnablePathStyleAccess())) {
-            return StrUtil.removeSuffix(config.getDomain(), StrUtil.format("/{}", config.getBucket()));
+            return StrUtil.removeSuffix(
+                    config.getDomain(), StrUtil.format("/{}", config.getBucket()));
         }
-        return StrUtil.replace(config.getDomain(), StrUtil.format("://{}.", config.getBucket()), "://");
+        return StrUtil.replace(
+                config.getDomain(), StrUtil.format("://{}.", config.getBucket()), "://");
     }
 
     /**
@@ -237,8 +255,10 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
         // 3.2 阿里云 OSS 格式：oss-cn-beijing.aliyuncs.com
         if (host.contains(S3FileClientConfig.ENDPOINT_ALIYUN)) {
             // 匹配 oss-{region}.aliyuncs.com 格式
-            if (host.startsWith("oss-") && host.contains("." + S3FileClientConfig.ENDPOINT_ALIYUN)) {
-                String regionPart = host.substring(4, host.indexOf("." + S3FileClientConfig.ENDPOINT_ALIYUN));
+            if (host.startsWith("oss-")
+                    && host.contains("." + S3FileClientConfig.ENDPOINT_ALIYUN)) {
+                String regionPart =
+                        host.substring(4, host.indexOf("." + S3FileClientConfig.ENDPOINT_ALIYUN));
                 if (StrUtil.isNotEmpty(regionPart)) {
                     return regionPart;
                 }
@@ -247,8 +267,10 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
         // 3.3 腾讯云 COS 格式：cos.ap-shanghai.myqcloud.com
         if (host.contains(S3FileClientConfig.ENDPOINT_TENCENT)) {
             // 匹配 cos.{region}.myqcloud.com 格式
-            if (host.startsWith("cos.") && host.contains("." + S3FileClientConfig.ENDPOINT_TENCENT)) {
-                String regionPart = host.substring(4, host.indexOf("." + S3FileClientConfig.ENDPOINT_TENCENT));
+            if (host.startsWith("cos.")
+                    && host.contains("." + S3FileClientConfig.ENDPOINT_TENCENT)) {
+                String regionPart =
+                        host.substring(4, host.indexOf("." + S3FileClientConfig.ENDPOINT_TENCENT));
                 if (StrUtil.isNotEmpty(regionPart)) {
                     return regionPart;
                 }
@@ -258,5 +280,4 @@ public class S3FileClient extends AbstractFileClient<S3FileClientConfig> {
         // 3.4 其他情况（MinIO、七牛云等）使用默认值
         return "us-east-1";
     }
-
 }

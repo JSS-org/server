@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.md.workstation;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.MesMdWorkstationPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.MesMdWorkstationSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 工作站 Service 接口
@@ -130,5 +131,4 @@ public interface MesMdWorkstationService {
     default Map<Long, MesMdWorkstationDO> getWorkstationMap(Collection<Long> ids) {
         return convertMap(getWorkstationList(ids), MesMdWorkstationDO::getId);
     }
-
 }

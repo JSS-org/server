@@ -118,5 +118,4 @@ public interface ProductSkuService {
      * @return int 影响的行数
      */
     int updateSkuPropertyValue(Long propertyValueId, String propertyValueName);
-
 }

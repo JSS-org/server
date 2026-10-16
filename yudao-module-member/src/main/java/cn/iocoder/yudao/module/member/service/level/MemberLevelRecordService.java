@@ -33,5 +33,4 @@ public interface MemberLevelRecordService {
      * @param levelRecord 会员等级记录
      */
     void createLevelRecord(MemberLevelRecordDO levelRecord);
-
 }

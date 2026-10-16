@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productissue.vo.line.MesWmProductIssueLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productissue.vo.line.MesWmProductIssueLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -49,7 +50,8 @@ public interface MesWmProductIssueLineService {
      * @param pageReqVO 分页查询
      * @return 领料出库单行分页
      */
-    PageResult<MesWmProductIssueLineDO> getProductIssueLinePage(MesWmProductIssueLinePageReqVO pageReqVO);
+    PageResult<MesWmProductIssueLineDO> getProductIssueLinePage(
+            MesWmProductIssueLinePageReqVO pageReqVO);
 
     /**
      * 根据领料单ID获取行列表
@@ -73,5 +75,4 @@ public interface MesWmProductIssueLineService {
      * @return 领料出库单行
      */
     MesWmProductIssueLineDO validateProductIssueLineExists(Long id);
-
 }

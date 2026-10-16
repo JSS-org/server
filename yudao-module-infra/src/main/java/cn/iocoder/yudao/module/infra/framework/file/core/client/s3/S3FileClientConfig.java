@@ -2,12 +2,15 @@ package cn.iocoder.yudao.module.infra.framework.file.core.client.s3;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientConfig;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.URL;
 
 /**
  * S3 文件客户端的配置类
@@ -33,6 +36,7 @@ public class S3FileClientConfig implements FileClientConfig {
      */
     @NotNull(message = "endpoint 不能为空")
     private String endpoint;
+
     /**
      * 自定义域名
      * 1. MinIO：通过 Nginx 配置
@@ -44,6 +48,7 @@ public class S3FileClientConfig implements FileClientConfig {
      */
     @URL(message = "domain 必须是 URL 格式")
     private String domain;
+
     /**
      * 存储 Bucket
      */
@@ -61,6 +66,7 @@ public class S3FileClientConfig implements FileClientConfig {
      */
     @NotNull(message = "accessKey 不能为空")
     private String accessKey;
+
     /**
      * 访问 Secret
      */
@@ -104,5 +110,4 @@ public class S3FileClientConfig implements FileClientConfig {
         }
         return true;
     }
-
 }

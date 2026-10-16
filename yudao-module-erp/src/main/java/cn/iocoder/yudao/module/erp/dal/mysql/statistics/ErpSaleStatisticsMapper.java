@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @Mapper
 public interface ErpSaleStatisticsMapper {
 
-    BigDecimal getSalePrice(@Param("beginTime") LocalDateTime beginTime,
-                            @Param("endTime") LocalDateTime endTime);
-
+    BigDecimal getSalePrice(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 }

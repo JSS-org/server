@@ -1,9 +1,13 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.manager;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigRespDTO;
-import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusPointRespDTO;
+
 import io.vertx.core.Vertx;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 /**
  * Modbus 轮询调度器基类
@@ -35,6 +36,7 @@ public abstract class AbstractIotModbusPollScheduler {
      * 同设备最小请求间隔（毫秒），防止 Modbus 设备性能不足时请求堆积
      */
     private static final long MIN_REQUEST_INTERVAL = 1000;
+
     /**
      * 每个设备请求队列的最大长度，超出时丢弃最旧请求
      */
@@ -43,16 +45,19 @@ public abstract class AbstractIotModbusPollScheduler {
     /**
      * 设备轮询任务的定时器映射：deviceId -> (taskKey -> PollTimerInfo)
      */
-    private final Map<Long, Map<String, PollTimerInfo>> devicePollTimers = new ConcurrentHashMap<>();
+    private final Map<Long, Map<String, PollTimerInfo>> devicePollTimers =
+            new ConcurrentHashMap<>();
 
     /**
      * per-device 请求队列：deviceId -> 待执行请求队列
      */
     private final Map<Long, Queue<Runnable>> deviceRequestQueues = new ConcurrentHashMap<>();
+
     /**
      * per-device 上次请求时间戳：deviceId -> lastRequestTimeMs
      */
     private final Map<Long, Long> deviceLastRequestTime = new ConcurrentHashMap<>();
+
     /**
      * per-device 延迟 timer 标记：deviceId -> 是否有延迟 timer 在等待
      */
@@ -73,11 +78,11 @@ public abstract class AbstractIotModbusPollScheduler {
          * 任务标识
          */
         private String key;
+
         /**
          * 轮询间隔（用于判断是否需要更新定时器）
          */
         private Integer pollInterval;
-
     }
 
     /**
@@ -91,11 +96,11 @@ public abstract class AbstractIotModbusPollScheduler {
          * Vert.x 定时器 ID
          */
         private Long timerId;
+
         /**
          * 轮询间隔（用于判断是否需要更新定时器）
          */
         private Integer pollInterval;
-
     }
 
     // ========== 轮询管理 ==========
@@ -111,8 +116,8 @@ public abstract class AbstractIotModbusPollScheduler {
     public void updatePolling(IotModbusDeviceConfigRespDTO config) {
         Long deviceId = config.getDeviceId();
         List<PollTask> newTasks = buildPollTasks(config);
-        Map<String, PollTimerInfo> currentTimers = devicePollTimers
-                .computeIfAbsent(deviceId, k -> new ConcurrentHashMap<>());
+        Map<String, PollTimerInfo> currentTimers =
+                devicePollTimers.computeIfAbsent(deviceId, k -> new ConcurrentHashMap<>());
         // 1.1 计算新配置中的任务 Key 集合
         Set<String> newTaskKeys = convertSet(newTasks, PollTask::getKey);
         // 1.2 计算删除的任务 Key 集合
@@ -141,8 +146,11 @@ public abstract class AbstractIotModbusPollScheduler {
                 Long timerId = createPollTimer(deviceId, taskKey, newPollInterval);
                 if (timerId != null) {
                     currentTimers.put(taskKey, new PollTimerInfo(timerId, newPollInterval));
-                    log.debug("[updatePolling][设备 {} 轮询任务 {} 定时器已创建, interval={}ms]",
-                            deviceId, taskKey, newPollInterval);
+                    log.debug(
+                            "[updatePolling][设备 {} 轮询任务 {} 定时器已创建, interval={}ms]",
+                            deviceId,
+                            taskKey,
+                            newPollInterval);
                 }
             } else if (!Objects.equals(existingTimer.getPollInterval(), newPollInterval)) {
                 // 3.2 pollInterval 变化：重建定时器
@@ -150,8 +158,12 @@ public abstract class AbstractIotModbusPollScheduler {
                 Long timerId = createPollTimer(deviceId, taskKey, newPollInterval);
                 if (timerId != null) {
                     currentTimers.put(taskKey, new PollTimerInfo(timerId, newPollInterval));
-                    log.debug("[updatePolling][设备 {} 轮询任务 {} 定时器已更新, interval={}ms -> {}ms]",
-                            deviceId, taskKey, existingTimer.getPollInterval(), newPollInterval);
+                    log.debug(
+                            "[updatePolling][设备 {} 轮询任务 {} 定时器已更新, interval={}ms -> {}ms]",
+                            deviceId,
+                            taskKey,
+                            existingTimer.getPollInterval(),
+                            newPollInterval);
                 } else {
                     currentTimers.remove(taskKey);
                 }
@@ -166,7 +178,9 @@ public abstract class AbstractIotModbusPollScheduler {
      * 默认每个点位一个轮询任务。TCP Client 等协议可覆盖该方法，将多个点位合并为一个批量读取任务。
      */
     protected List<PollTask> buildPollTasks(IotModbusDeviceConfigRespDTO config) {
-        return convertList(config.getPoints(), point -> new PollTask(String.valueOf(point.getId()), point.getPollInterval()));
+        return convertList(
+                config.getPoints(),
+                point -> new PollTask(String.valueOf(point.getId()), point.getPollInterval()));
     }
 
     /**
@@ -176,13 +190,19 @@ public abstract class AbstractIotModbusPollScheduler {
         if (pollInterval == null || pollInterval <= 0) {
             return null;
         }
-        return vertx.setPeriodic(pollInterval, timerId -> {
-            try {
-                submitPollRequest(deviceId, taskKey);
-            } catch (Exception e) {
-                log.error("[createPollTimer][轮询任务失败, deviceId={}, taskKey={}]", deviceId, taskKey, e);
-            }
-        });
+        return vertx.setPeriodic(
+                pollInterval,
+                timerId -> {
+                    try {
+                        submitPollRequest(deviceId, taskKey);
+                    } catch (Exception e) {
+                        log.error(
+                                "[createPollTimer][轮询任务失败, deviceId={}, taskKey={}]",
+                                deviceId,
+                                taskKey,
+                                e);
+                    }
+                });
     }
 
     // ========== 请求队列（per-device 限速） ==========
@@ -192,7 +212,8 @@ public abstract class AbstractIotModbusPollScheduler {
      */
     private void submitPollRequest(Long deviceId, String taskKey) {
         // 1. 【重要】将请求添加到设备的请求队列
-        Queue<Runnable> queue = deviceRequestQueues.computeIfAbsent(deviceId, k -> new ConcurrentLinkedQueue<>());
+        Queue<Runnable> queue =
+                deviceRequestQueues.computeIfAbsent(deviceId, k -> new ConcurrentLinkedQueue<>());
         while (queue.size() >= MAX_QUEUE_SIZE) {
             // 超出上限时，丢弃最旧的请求
             queue.poll();
@@ -245,25 +266,27 @@ public abstract class AbstractIotModbusPollScheduler {
 
     private void scheduleNextRequest(Long deviceId, long delayMs) {
         deviceDelayTimerActive.put(deviceId, true);
-        vertx.setTimer(delayMs, id -> {
-            deviceDelayTimerActive.put(deviceId, false);
-            Queue<Runnable> queue = deviceRequestQueues.get(deviceId);
-            if (CollUtil.isEmpty(queue)) {
-                return;
-            }
+        vertx.setTimer(
+                delayMs,
+                id -> {
+                    deviceDelayTimerActive.put(deviceId, false);
+                    Queue<Runnable> queue = deviceRequestQueues.get(deviceId);
+                    if (CollUtil.isEmpty(queue)) {
+                        return;
+                    }
 
-            // 满足间隔要求，立即执行
-            Runnable task = queue.poll();
-            if (task == null) {
-                return;
-            }
-            deviceLastRequestTime.put(deviceId, System.currentTimeMillis());
-            task.run();
-            // 继续处理队列中的下一个（如果有的话，需要延迟）
-            if (CollUtil.isNotEmpty(queue)) {
-                scheduleNextRequest(deviceId);
-            }
-        });
+                    // 满足间隔要求，立即执行
+                    Runnable task = queue.poll();
+                    if (task == null) {
+                        return;
+                    }
+                    deviceLastRequestTime.put(deviceId, System.currentTimeMillis());
+                    task.run();
+                    // 继续处理队列中的下一个（如果有的话，需要延迟）
+                    if (CollUtil.isNotEmpty(queue)) {
+                        scheduleNextRequest(deviceId);
+                    }
+                });
     }
 
     // ========== 轮询执行 ==========
@@ -301,7 +324,9 @@ public abstract class AbstractIotModbusPollScheduler {
         deviceRequestQueues.remove(deviceId);
         deviceLastRequestTime.remove(deviceId);
         deviceDelayTimerActive.remove(deviceId);
-        log.debug("[stopPolling][设备 {} 停止了 {} 个轮询定时器]", deviceId,
+        log.debug(
+                "[stopPolling][设备 {} 停止了 {} 个轮询定时器]",
+                deviceId,
                 CollUtil.isEmpty(timers) ? 0 : timers.size());
     }
 
@@ -313,5 +338,4 @@ public abstract class AbstractIotModbusPollScheduler {
             stopPolling(deviceId);
         }
     }
-
 }

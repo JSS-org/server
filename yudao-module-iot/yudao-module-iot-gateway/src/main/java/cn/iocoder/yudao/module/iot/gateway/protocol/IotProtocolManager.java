@@ -13,8 +13,10 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.mqtt.IotMqttProtocol;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.IotTcpProtocol;
 import cn.iocoder.yudao.module.iot.gateway.protocol.udp.IotUdpProtocol;
 import cn.iocoder.yudao.module.iot.gateway.protocol.websocket.IotWebSocketProtocol;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.SmartLifecycle;
 
 import java.util.ArrayList;
@@ -35,8 +37,7 @@ public class IotProtocolManager implements SmartLifecycle {
      */
     private final List<IotProtocol> protocols = new ArrayList<>();
 
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     public IotProtocolManager(IotGatewayProperties gatewayProperties) {
         this.gatewayProperties = gatewayProperties;
@@ -47,7 +48,8 @@ public class IotProtocolManager implements SmartLifecycle {
         if (running) {
             return;
         }
-        List<IotGatewayProperties.ProtocolProperties> protocolConfigs = gatewayProperties.getProtocols();
+        List<IotGatewayProperties.ProtocolProperties> protocolConfigs =
+                gatewayProperties.getProtocols();
         if (CollUtil.isEmpty(protocolConfigs)) {
             log.info("[start][没有配置协议实例，跳过启动]");
             return;
@@ -96,7 +98,8 @@ public class IotProtocolManager implements SmartLifecycle {
     private IotProtocol createProtocol(IotGatewayProperties.ProtocolProperties config) {
         IotProtocolTypeEnum protocolType = IotProtocolTypeEnum.of(config.getProtocol());
         if (protocolType == null) {
-            log.error("[createProtocol][协议实例 {} 的协议类型 {} 不存在]", config.getId(), config.getProtocol());
+            log.error(
+                    "[createProtocol][协议实例 {} 的协议类型 {} 不存在]", config.getId(), config.getProtocol());
             return null;
         }
         switch (protocolType) {
@@ -119,8 +122,10 @@ public class IotProtocolManager implements SmartLifecycle {
             case MODBUS_TCP_SERVER:
                 return createModbusTcpServerProtocol(config);
             default:
-                throw new IllegalArgumentException(String.format(
-                        "[createProtocol][协议实例 %s 的协议类型 %s 暂不支持]", config.getId(), protocolType));
+                throw new IllegalArgumentException(
+                        String.format(
+                                "[createProtocol][协议实例 %s 的协议类型 %s 暂不支持]",
+                                config.getId(), protocolType));
         }
     }
 
@@ -170,7 +175,8 @@ public class IotProtocolManager implements SmartLifecycle {
      * @param config 协议实例配置
      * @return WebSocket 协议实例
      */
-    private IotWebSocketProtocol createWebSocketProtocol(IotGatewayProperties.ProtocolProperties config) {
+    private IotWebSocketProtocol createWebSocketProtocol(
+            IotGatewayProperties.ProtocolProperties config) {
         return new IotWebSocketProtocol(config);
     }
 
@@ -200,7 +206,8 @@ public class IotProtocolManager implements SmartLifecycle {
      * @param config 协议实例配置
      * @return Modbus TCP Client 协议实例
      */
-    private IotModbusTcpClientProtocol createModbusTcpClientProtocol(IotGatewayProperties.ProtocolProperties config) {
+    private IotModbusTcpClientProtocol createModbusTcpClientProtocol(
+            IotGatewayProperties.ProtocolProperties config) {
         return new IotModbusTcpClientProtocol(config);
     }
 
@@ -210,8 +217,8 @@ public class IotProtocolManager implements SmartLifecycle {
      * @param config 协议实例配置
      * @return Modbus TCP Server 协议实例
      */
-    private IotModbusTcpServerProtocol createModbusTcpServerProtocol(IotGatewayProperties.ProtocolProperties config) {
+    private IotModbusTcpServerProtocol createModbusTcpServerProtocol(
+            IotGatewayProperties.ProtocolProperties config) {
         return new IotModbusTcpServerProtocol(config);
     }
-
 }

@@ -1,11 +1,14 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model.vo.chatRole;
 
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.Data;
+
 import org.dromara.core.trans.anno.Trans;
 import org.dromara.core.trans.constant.TransType;
 import org.dromara.core.trans.vo.VO;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,17 +24,26 @@ public class AiChatRoleRespVO implements VO {
     private Long userId;
 
     @Schema(description = "模型编号", example = "17640")
-    @Trans(type = TransType.SIMPLE, target = AiModelDO.class, fields = { "name", "model" }, refs = { "modelName", "model" })
+    @Trans(
+            type = TransType.SIMPLE,
+            target = AiModelDO.class,
+            fields = {"name", "model"},
+            refs = {"modelName", "model"})
     private Long modelId;
+
     @Schema(description = "模型名字", example = "张三")
     private String modelName;
+
     @Schema(description = "模型标识", example = "gpt-3.5-turbo-0125")
     private String model;
 
     @Schema(description = "角色名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
     private String name;
 
-    @Schema(description = "角色头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/1.png")
+    @Schema(
+            description = "角色头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/1.png")
     private String avatar;
 
     @Schema(description = "角色类别", requiredMode = Schema.RequiredMode.REQUIRED, example = "创作")
@@ -63,5 +75,4 @@ public class AiChatRoleRespVO implements VO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -2,11 +2,14 @@ package cn.iocoder.yudao.module.system.mq.producer.sms;
 
 import cn.iocoder.yudao.framework.common.core.KeyValue;
 import cn.iocoder.yudao.module.system.mq.message.sms.SmsSendMessage;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -19,8 +22,7 @@ import java.util.List;
 @Component
 public class SmsProducer {
 
-    @Resource
-    private ApplicationContext applicationContext;
+    @Resource private ApplicationContext applicationContext;
 
     /**
      * 发送 {@link SmsSendMessage} 消息
@@ -31,11 +33,16 @@ public class SmsProducer {
      * @param apiTemplateId 短信模板编号
      * @param templateParams 短信模板参数
      */
-    public void sendSmsSendMessage(Long logId, String mobile,
-                                   Long channelId, String apiTemplateId, List<KeyValue<String, Object>> templateParams) {
+    public void sendSmsSendMessage(
+            Long logId,
+            String mobile,
+            Long channelId,
+            String apiTemplateId,
+            List<KeyValue<String, Object>> templateParams) {
         SmsSendMessage message = new SmsSendMessage().setLogId(logId).setMobile(mobile);
-        message.setChannelId(channelId).setApiTemplateId(apiTemplateId).setTemplateParams(templateParams);
+        message.setChannelId(channelId)
+                .setApiTemplateId(apiTemplateId)
+                .setTemplateParams(templateParams);
         applicationContext.publishEvent(message);
     }
-
 }

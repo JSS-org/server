@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI1 首页按 Agent 消息统计 Response VO")
@@ -15,5 +16,4 @@ public class Ai1HomeMessageSummaryByAgentRespVO {
 
     @Schema(description = "消息数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "36")
     private Long count;
-
 }

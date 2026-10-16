@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryExpressTemp
 import cn.iocoder.yudao.module.trade.service.delivery.bo.DeliveryExpressTemplateRespBO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,8 @@ public interface DeliveryExpressTemplateService {
      * @param pageReqVO 分页查询
      * @return 快递运费模板分页
      */
-    PageResult<DeliveryExpressTemplateDO> getDeliveryExpressTemplatePage(DeliveryExpressTemplatePageReqVO pageReqVO);
+    PageResult<DeliveryExpressTemplateDO> getDeliveryExpressTemplatePage(
+            DeliveryExpressTemplatePageReqVO pageReqVO);
 
     /**
      * 校验快递运费模板
@@ -90,6 +92,6 @@ public interface DeliveryExpressTemplateService {
      * @param areaId 区域编号
      * @return Map (templateId -> 运费模板设置)
      */
-    Map<Long, DeliveryExpressTemplateRespBO> getExpressTemplateMapByIdsAndArea(Collection<Long> ids, Integer areaId);
-
+    Map<Long, DeliveryExpressTemplateRespBO> getExpressTemplateMapByIdsAndArea(
+            Collection<Long> ids, Integer areaId);
 }

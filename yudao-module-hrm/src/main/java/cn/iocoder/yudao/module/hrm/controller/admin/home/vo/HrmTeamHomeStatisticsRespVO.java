@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -33,7 +34,6 @@ public class HrmTeamHomeStatisticsRespVO {
 
         @Schema(description = "本月转正人数", example = "3")
         private Long regularThisMonthCount;
-
     }
 
     @Schema(description = "管理后台 - HRM 团队工作台团队概况 Response VO")
@@ -51,7 +51,6 @@ public class HrmTeamHomeStatisticsRespVO {
 
         @Schema(description = "成员司龄占比")
         private List<AnalysisItem> companyAgeAnalysis;
-
     }
 
     @Schema(description = "管理后台 - HRM 团队工作台统计分析项 Response VO")
@@ -63,7 +62,5 @@ public class HrmTeamHomeStatisticsRespVO {
 
         @Schema(description = "数量", example = "8")
         private Long count;
-
     }
-
 }

@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.member.controller.admin.level.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 会员等级记录 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -43,5 +44,4 @@ public class MemberLevelRecordBaseVO {
     @Schema(description = "描述", requiredMode = Schema.RequiredMode.REQUIRED, example = "升级为金牌会员")
     @NotNull(message = "描述不能为空")
     private String description;
-
 }

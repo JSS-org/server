@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -70,5 +72,4 @@ public class FmsBalanceSheetRowRespVO {
 
     @Schema(description = "负债和所有者权益项目公式")
     private String liabilityFormula;
-
 }

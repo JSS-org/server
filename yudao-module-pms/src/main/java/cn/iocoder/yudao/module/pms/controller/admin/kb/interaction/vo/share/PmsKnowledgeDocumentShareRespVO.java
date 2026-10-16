@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.share;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -33,5 +34,4 @@ public class PmsKnowledgeDocumentShareRespVO {
 
     @Schema(description = "关闭时间")
     private LocalDateTime closeTime;
-
 }

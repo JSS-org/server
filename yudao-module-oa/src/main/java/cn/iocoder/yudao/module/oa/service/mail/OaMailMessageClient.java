@@ -1,12 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
+import cn.hutool.core.lang.Pair;
 import cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.*;
+
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
 import java.io.IOException;
-import cn.hutool.core.lang.Pair;
 import java.util.List;
 import java.util.Map;
 
@@ -81,7 +82,8 @@ public interface OaMailMessageClient {
      * @throws MessagingException 读取邮件信息失败
      * @throws IOException 读取邮件内容失败
      */
-    OaMailMessageDO getDetail(Folder folder, OaMailMessageDO index) throws MessagingException, IOException;
+    OaMailMessageDO getDetail(Folder folder, OaMailMessageDO index)
+            throws MessagingException, IOException;
 
     /**
      * 过滤邮件 HTML 正文
@@ -115,7 +117,8 @@ public interface OaMailMessageClient {
      * @param permanent 是否彻底删除
      * @throws MessagingException 移动或删除邮件失败
      */
-    void deleteMessage(Store store, Folder folder, Message message, String trash, boolean permanent) throws MessagingException;
+    void deleteMessage(Store store, Folder folder, Message message, String trash, boolean permanent)
+            throws MessagingException;
 
     /**
      * 将单封邮件移动到指定文件夹
@@ -126,7 +129,8 @@ public interface OaMailMessageClient {
      * @param target 目标文件夹完整名称
      * @throws MessagingException 移动失败
      */
-    void moveMessage(Store store, Folder folder, Message message, String target) throws MessagingException;
+    void moveMessage(Store store, Folder folder, Message message, String target)
+            throws MessagingException;
 
     /**
      * 构建待保存或发送的邮件
@@ -139,7 +143,8 @@ public interface OaMailMessageClient {
      * @return MIME 邮件
      * @throws MessagingException 构建邮件失败
      */
-    MimeMessage createMessage(OaMailAccountDO account, OaMailMessageSaveReqVO reqVO, boolean send) throws MessagingException;
+    MimeMessage createMessage(OaMailAccountDO account, OaMailMessageSaveReqVO reqVO, boolean send)
+            throws MessagingException;
 
     /**
      * 解析邮箱地址
@@ -163,7 +168,8 @@ public interface OaMailMessageClient {
      * @throws MessagingException 处理邮件结构失败
      * @throws IOException 读取邮件内容失败
      */
-    void copyAttachments(MimeMessage target, MimeMessage source, List<String> attachmentParts) throws MessagingException, IOException;
+    void copyAttachments(MimeMessage target, MimeMessage source, List<String> attachmentParts)
+            throws MessagingException, IOException;
 
     /**
      * 读取邮件中的指定附件，不允许将正文作为附件下载
@@ -174,7 +180,8 @@ public interface OaMailMessageClient {
      * @throws MessagingException 邮件结构读取失败
      * @throws IOException 附件内容读取失败
      */
-    Pair<String, byte[]> getAttachment(Message message, String path) throws MessagingException, IOException;
+    Pair<String, byte[]> getAttachment(Message message, String path)
+            throws MessagingException, IOException;
 
     /**
      * 通过 SMTP 发送邮件
@@ -210,7 +217,9 @@ public interface OaMailMessageClient {
      * @param imap 是否测试 IMAP，false 时测试 SMTP
      * @return 是否连接成功
      */
-    boolean testConnection(OaMailProviderDO.ConnectionConfig config, String username, String password,
-                           boolean imap);
-
+    boolean testConnection(
+            OaMailProviderDO.ConnectionConfig config,
+            String username,
+            String password,
+            boolean imap);
 }

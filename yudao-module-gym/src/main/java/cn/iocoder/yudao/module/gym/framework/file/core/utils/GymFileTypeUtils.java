@@ -4,7 +4,9 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.module.gym.enums.file.GymFileMimeTypeEnum;
+
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -26,23 +28,30 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class GymFileTypeUtils {
 
-    private GymFileTypeUtils() {
-    }
+    private GymFileTypeUtils() {}
 
     /** PNG: 89 50 4E 47 0D 0A 1A 0A */
     private static final byte[] MAGIC_PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+
     /** JPEG: FF D8 FF */
     private static final byte[] MAGIC_JPEG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+
     /** GIF: GIF87a / GIF89a */
     private static final byte[] MAGIC_GIF87A = "GIF87a".getBytes(StandardCharsets.US_ASCII);
+
     private static final byte[] MAGIC_GIF89A = "GIF89a".getBytes(StandardCharsets.US_ASCII);
+
     /** WEBP: RIFF....WEBP */
     private static final byte[] MAGIC_RIFF = "RIFF".getBytes(StandardCharsets.US_ASCII);
+
     private static final byte[] MAGIC_WEBP = "WEBP".getBytes(StandardCharsets.US_ASCII);
+
     /** PDF: %PDF */
     private static final byte[] MAGIC_PDF = "%PDF".getBytes(StandardCharsets.US_ASCII);
+
     /** MP4 / MOV: [4 字节长度]ftyp[4 字节 brand] */
     private static final byte[] MAGIC_FTYP = "ftyp".getBytes(StandardCharsets.US_ASCII);
+
     private static final byte[] BRAND_QUICKTIME = "qt  ".getBytes(StandardCharsets.US_ASCII);
 
     /**
@@ -85,7 +94,8 @@ public class GymFileTypeUtils {
         // MP4 / MOV 同属 ISO BMFF：第 4~7 字节为 ftyp，第 8~11 字节为 brand
         if (matchesAt(content, 4, MAGIC_FTYP)) {
             return matchesAt(content, 8, BRAND_QUICKTIME)
-                    ? GymFileMimeTypeEnum.QUICKTIME : GymFileMimeTypeEnum.MP4;
+                    ? GymFileMimeTypeEnum.QUICKTIME
+                    : GymFileMimeTypeEnum.MP4;
         }
         return null;
     }
@@ -111,12 +121,14 @@ public class GymFileTypeUtils {
      * @param mimeType MIME 类型
      * @param content  文件内容
      */
-    public static void writeAttachment(HttpServletResponse response, String filename,
-                                       String mimeType, byte[] content) throws IOException {
+    public static void writeAttachment(
+            HttpServletResponse response, String filename, String mimeType, byte[] content)
+            throws IOException {
         response.setContentType(mimeType);
         GymFileMimeTypeEnum type = GymFileMimeTypeEnum.findByMimeType(mimeType);
         boolean inline = type != null && (type.isImage() || type.isVideo());
-        response.setHeader("Content-Disposition",
+        response.setHeader(
+                "Content-Disposition",
                 buildContentDisposition(inline ? "inline" : "attachment", filename));
         // 视频需要显式长度 + 允许分段，否则移动端播放器无法拖动进度
         if (type != null && type.isVideo()) {
@@ -127,8 +139,11 @@ public class GymFileTypeUtils {
     }
 
     private static String buildContentDisposition(String dispositionType, String filename) {
-        return StrUtil.format("{};filename=\"{}\";filename*=UTF-8''{}",
-                dispositionType, buildFallbackFilename(filename), HttpUtils.encodeUrlPathSegment(filename));
+        return StrUtil.format(
+                "{};filename=\"{}\";filename*=UTF-8''{}",
+                dispositionType,
+                buildFallbackFilename(filename),
+                HttpUtils.encodeUrlPathSegment(filename));
     }
 
     /** 非 ASCII 字符降级为 _，保证老浏览器也能拿到一个合法文件名 */
@@ -165,5 +180,4 @@ public class GymFileTypeUtils {
         }
         return true;
     }
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.group.vo.request.ImGroupRequestApplyReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.group.vo.ImGroupRequestManagerPageReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupRequestDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -74,7 +75,8 @@ public interface ImGroupRequestService {
      * @param limit          单次拉取条数
      * @return 申请记录列表
      */
-    List<ImGroupRequestDO> pullGroupRequestList(Long userId, Long lastUpdateTime, Long lastId, Integer limit);
+    List<ImGroupRequestDO> pullGroupRequestList(
+            Long userId, Long lastUpdateTime, Long lastId, Integer limit);
 
     /**
      * 拉取指定群下的全部加群申请（含已处理）；仅群主 / 管理员可查
@@ -101,5 +103,4 @@ public interface ImGroupRequestService {
      * 【管理后台】分页查询加群申请记录
      */
     PageResult<ImGroupRequestDO> getGroupRequestPage(ImGroupRequestManagerPageReqVO reqVO);
-
 }

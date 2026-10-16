@@ -12,13 +12,14 @@ public class PointValidateJoinRespDTO {
      * 可兑换次数
      */
     private Integer count;
+
     /**
      * 所需兑换积分
      */
     private Integer point;
+
     /**
      * 所需兑换金额，单位：分
      */
     private Integer price;
-
 }

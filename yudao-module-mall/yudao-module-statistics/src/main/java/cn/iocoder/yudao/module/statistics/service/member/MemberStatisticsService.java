@@ -27,8 +27,8 @@ public interface MemberStatisticsService {
      * @param endTime   截止时间
      * @return 会员分析对照数据
      */
-    DataComparisonRespVO<MemberAnalyseDataRespVO> getMemberAnalyseComparisonData(LocalDateTime beginTime,
-                                                                                 LocalDateTime endTime);
+    DataComparisonRespVO<MemberAnalyseDataRespVO> getMemberAnalyseComparisonData(
+            LocalDateTime beginTime, LocalDateTime endTime);
 
     /**
      * 按照省份，获得会员统计列表
@@ -58,7 +58,8 @@ public interface MemberStatisticsService {
      * @param endTime   截止时间
      * @return 注册数量列表
      */
-    List<MemberRegisterCountRespVO> getMemberRegisterCountList(LocalDateTime beginTime, LocalDateTime endTime);
+    List<MemberRegisterCountRespVO> getMemberRegisterCountList(
+            LocalDateTime beginTime, LocalDateTime endTime);
 
     /**
      * 获得用户数量量统计对照
@@ -66,5 +67,4 @@ public interface MemberStatisticsService {
      * @return 用户数量量统计对照
      */
     DataComparisonRespVO<MemberCountRespVO> getUserCountComparison();
-
 }

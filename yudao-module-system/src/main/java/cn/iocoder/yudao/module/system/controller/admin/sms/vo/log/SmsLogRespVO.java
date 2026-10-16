@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.module.system.controller.admin.sms.vo.log;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.framework.excel.core.convert.JsonConvert;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -42,19 +44,31 @@ public class SmsLogRespVO {
     @DictFormat(DictTypeConstants.SMS_TEMPLATE_TYPE)
     private Integer templateType;
 
-    @Schema(description = "短信内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "你好，你的验证码是 1024")
+    @Schema(
+            description = "短信内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "你好，你的验证码是 1024")
     @ExcelProperty("短信内容")
     private String templateContent;
 
-    @Schema(description = "短信参数", requiredMode = Schema.RequiredMode.REQUIRED, example = "name,code")
+    @Schema(
+            description = "短信参数",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "name,code")
     @ExcelProperty(value = "短信参数", converter = JsonConvert.class)
     private Map<String, Object> templateParams;
 
-    @Schema(description = "短信 API 的模板编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "SMS_207945135")
+    @Schema(
+            description = "短信 API 的模板编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "SMS_207945135")
     @ExcelProperty("短信 API 的模板编号")
     private String apiTemplateId;
 
-    @Schema(description = "手机号", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601691300")
+    @Schema(
+            description = "手机号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601691300")
     @ExcelProperty("手机号")
     private String mobile;
 
@@ -112,5 +126,4 @@ public class SmsLogRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

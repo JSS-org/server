@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.ai1.harness.session;
 
+import static cn.iocoder.yudao.module.ai1.dal.redis.Ai1RedisKeyConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionMessageDO;
@@ -17,6 +23,7 @@ import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
 import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionMessageService;
 import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionService;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,11 +56,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static cn.iocoder.yudao.module.ai1.dal.redis.Ai1RedisKeyConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * 会话任务认领与执行锁的 Redis 集成测试
  *
@@ -69,24 +71,15 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
     private static final Long MESSAGE_ID = 1024L;
     private static final Long SESSION_ID = 10L;
 
-    @Mock
-    private Ai1SessionMessageService sessionMessageService;
-    @Mock
-    private Ai1SessionService sessionService;
-    @Mock
-    private Ai1AgentService agentService;
-    @Mock
-    private Ai1ModelService modelService;
-    @Mock
-    private Ai1KnowledgeBaseService knowledgeBaseService;
-    @Mock
-    private Ai1LlmChatTool llmChatTool;
-    @Mock
-    private Ai1McpToolFactory mcpToolFactory;
-    @Mock
-    private Ai1SkillToolFactory skillToolFactory;
-    @Mock
-    private Ai1RagTool ragTool;
+    @Mock private Ai1SessionMessageService sessionMessageService;
+    @Mock private Ai1SessionService sessionService;
+    @Mock private Ai1AgentService agentService;
+    @Mock private Ai1ModelService modelService;
+    @Mock private Ai1KnowledgeBaseService knowledgeBaseService;
+    @Mock private Ai1LlmChatTool llmChatTool;
+    @Mock private Ai1McpToolFactory mcpToolFactory;
+    @Mock private Ai1SkillToolFactory skillToolFactory;
+    @Mock private Ai1RagTool ragTool;
 
     private RedissonClient firstClient;
     private RedissonClient secondClient;
@@ -108,32 +101,54 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
         firstWorker = createWorker(firstClient);
         secondWorker = createWorker(secondClient);
         taskStream = secondClient.getStream(SESSION_TASK_STREAM, StringCodec.INSTANCE);
-        resultStream = secondClient.getStream(String.format(SESSION_RESULT_STREAM, MESSAGE_ID), StringCodec.INSTANCE);
+        resultStream =
+                secondClient.getStream(
+                        String.format(SESSION_RESULT_STREAM, MESSAGE_ID), StringCodec.INSTANCE);
         taskStream.createGroup(StreamCreateGroupArgs.name(SESSION_TASK_GROUP).makeStream());
         executor = Executors.newSingleThreadExecutor();
-        message.set(new Ai1SessionMessageDO().setId(MESSAGE_ID).setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
-                .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus()));
+        message.set(
+                new Ai1SessionMessageDO()
+                        .setId(MESSAGE_ID)
+                        .setRole(Ai1SessionMessageRoleEnum.ASSISTANT.getRole())
+                        .setStatus(Ai1SessionMessageStatusEnum.GENERATING.getStatus()));
 
         // mock 业务方法
-        when(sessionMessageService.getSessionMessage(MESSAGE_ID)).thenAnswer(invocation -> message.get());
-        doAnswer(invocation -> {
-            message.set(invocation.getArgument(0));
-            return null;
-        }).when(sessionMessageService).updateSessionMessage(any());
-        when(agentService.validateAgentExists(1L)).thenReturn(new Ai1AgentDO().setId(1L).setName("客服")
-                .setProviderId(1L).setModelId(2L));
-        when(modelService.getModelRespBO(1L, 2L)).thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
-        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
+        when(sessionMessageService.getSessionMessage(MESSAGE_ID))
+                .thenAnswer(invocation -> message.get());
+        doAnswer(
+                        invocation -> {
+                            message.set(invocation.getArgument(0));
+                            return null;
+                        })
+                .when(sessionMessageService)
+                .updateSessionMessage(any());
+        when(agentService.validateAgentExists(1L))
+                .thenReturn(
+                        new Ai1AgentDO().setId(1L).setName("客服").setProviderId(1L).setModelId(2L));
+        when(modelService.getModelRespBO(1L, 2L))
+                .thenReturn(new Ai1ModelRespBO().setModelType(Ai1ModelTypeEnum.CHAT.getType()));
+        when(sessionMessageService.getSessionMessageListBySessionIdAndIdLessThan(
+                        eq(SESSION_ID), eq(MESSAGE_ID), anyInt()))
                 .thenReturn(new ArrayList<>());
-        when(llmChatTool.chat(any(), anyString(), anyList(), anyString(), anyList(), anyList(), anyLong(), any(), any()))
-                .thenAnswer(invocation -> {
-                    Consumer<String> onContent = invocation.getArgument(8);
-                    onContent.accept("第一段");
-                    generated.countDown();
-                    assertTrue(release.await(15, TimeUnit.SECONDS));
-                    onContent.accept("第二段");
-                    return new Ai1LlmChatTool.ChatText("第一段第二段", "");
-                });
+        when(llmChatTool.chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        anyString(),
+                        anyList(),
+                        anyList(),
+                        anyLong(),
+                        any(),
+                        any()))
+                .thenAnswer(
+                        invocation -> {
+                            Consumer<String> onContent = invocation.getArgument(8);
+                            onContent.accept("第一段");
+                            generated.countDown();
+                            assertTrue(release.await(15, TimeUnit.SECONDS));
+                            onContent.accept("第二段");
+                            return new Ai1LlmChatTool.ChatText("第一段第二段", "");
+                        });
     }
 
     @AfterEach
@@ -152,8 +167,13 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
     public void testReclaim_activeWorkerIsNotRegenerated() throws Exception {
         // 准备任务，交给第一个节点生成
         StreamMessageId recordId = addTask();
-        Map<String, String> fields = taskStream.readGroup(SESSION_TASK_GROUP, "first",
-                StreamReadGroupArgs.neverDelivered().count(1)).get(recordId);
+        Map<String, String> fields =
+                taskStream
+                        .readGroup(
+                                SESSION_TASK_GROUP,
+                                "first",
+                                StreamReadGroupArgs.neverDelivered().count(1))
+                        .get(recordId);
         Future<?> generation = executor.submit(() -> firstWorker.handleTask(recordId, fields));
         assertTrue(generated.await(5, TimeUnit.SECONDS));
 
@@ -167,7 +187,17 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
         // 断言第二个节点没有生成或确认在途任务
         assertEquals(1, taskStream.getPendingInfo(SESSION_TASK_GROUP).getTotal());
         assertEquals(List.of("ping", "message"), resultTypes());
-        verify(llmChatTool).chat(any(), anyString(), anyList(), anyString(), anyList(), anyList(), anyLong(), any(), any());
+        verify(llmChatTool)
+                .chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        anyString(),
+                        anyList(),
+                        anyList(),
+                        anyLong(),
+                        any(),
+                        any());
 
         // 调用第一个节点继续完成，并断言只有一份输出
         release.countDown();
@@ -182,8 +212,13 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
     public void testReclaim_stoppedWorkerKeepsPartialResult() throws Exception {
         // 准备任务，交给第一个节点生成
         StreamMessageId recordId = addTask();
-        Map<String, String> fields = taskStream.readGroup(SESSION_TASK_GROUP, "first",
-                StreamReadGroupArgs.neverDelivered().count(1)).get(recordId);
+        Map<String, String> fields =
+                taskStream
+                        .readGroup(
+                                SESSION_TASK_GROUP,
+                                "first",
+                                StreamReadGroupArgs.neverDelivered().count(1))
+                        .get(recordId);
         Future<?> generation = executor.submit(() -> firstWorker.handleTask(recordId, fields));
         assertTrue(generated.await(5, TimeUnit.SECONDS));
 
@@ -199,7 +234,17 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
         assertEquals(Ai1SessionMessageStatusEnum.FAILED.getStatus(), message.get().getStatus());
         assertEquals(List.of("ping", "message", "error", "done"), resultTypes());
         assertEquals(0, taskStream.getPendingInfo(SESSION_TASK_GROUP).getTotal());
-        verify(llmChatTool).chat(any(), anyString(), anyList(), anyString(), anyList(), anyList(), anyLong(), any(), any());
+        verify(llmChatTool)
+                .chat(
+                        any(),
+                        anyString(),
+                        anyList(),
+                        anyString(),
+                        anyList(),
+                        anyList(),
+                        anyLong(),
+                        any(),
+                        any());
 
         // 调用旧节点恢复，断言不追加旧增量或覆盖回填结果
         release.countDown();
@@ -213,18 +258,24 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
     private RedissonClient createClient() {
         Config config = new Config().setLockWatchdogTimeout(1500);
         // 两个节点共享本用例的独立 Key 前缀，测试及清理不会访问业务队列
-        config.setNameMapper(new NameMapper() {
-            @Override
-            public String map(String name) {
-                return name == null ? null : keyPrefix + name;
-            }
+        config.setNameMapper(
+                new NameMapper() {
+                    @Override
+                    public String map(String name) {
+                        return name == null ? null : keyPrefix + name;
+                    }
 
-            @Override
-            public String unmap(String name) {
-                return name != null && name.startsWith(keyPrefix) ? name.substring(keyPrefix.length()) : name;
-            }
-        });
-        config.useSingleServer().setAddress(System.getProperty("ai1.integration.redis.address", "redis://127.0.0.1:6379"));
+                    @Override
+                    public String unmap(String name) {
+                        return name != null && name.startsWith(keyPrefix)
+                                ? name.substring(keyPrefix.length())
+                                : name;
+                    }
+                });
+        config.useSingleServer()
+                .setAddress(
+                        System.getProperty(
+                                "ai1.integration.redis.address", "redis://127.0.0.1:6379"));
         return Redisson.create(config);
     }
 
@@ -245,21 +296,39 @@ public class Ai1SessionTaskRecoveryIntegrationTest extends BaseMockitoUnitTest {
     }
 
     private StreamMessageId addTask() {
-        return taskStream.add(StreamAddArgs.entries(Map.of("messageId", String.valueOf(MESSAGE_ID),
-                "agentId", "1", "sessionId", String.valueOf(SESSION_ID), "content", "你好")));
+        return taskStream.add(
+                StreamAddArgs.entries(
+                        Map.of(
+                                "messageId",
+                                String.valueOf(MESSAGE_ID),
+                                "agentId",
+                                "1",
+                                "sessionId",
+                                String.valueOf(SESSION_ID),
+                                "content",
+                                "你好")));
     }
 
     private Map<StreamMessageId, Map<String, String>> reclaimTask(StreamMessageId recordId) {
         // 只调整本用例独立前缀下的任务，复用生产的查询与认领逻辑
-        secondClient.getScript(StringCodec.INSTANCE).eval(RScript.Mode.READ_WRITE,
-                "return #redis.call('XCLAIM', KEYS[1], ARGV[1], 'first', 0, ARGV[2], 'IDLE', 300000, 'JUSTID')",
-                RScript.ReturnType.LONG, List.of(SESSION_TASK_STREAM), SESSION_TASK_GROUP, recordId.toString());
+        secondClient
+                .getScript(StringCodec.INSTANCE)
+                .eval(
+                        RScript.Mode.READ_WRITE,
+                        "return #redis.call('XCLAIM', KEYS[1], ARGV[1], 'first', 0, ARGV[2], 'IDLE', 300000, 'JUSTID')",
+                        RScript.ReturnType.LONG,
+                        List.of(SESSION_TASK_STREAM),
+                        SESSION_TASK_GROUP,
+                        recordId.toString());
         return ReflectionTestUtils.invokeMethod(secondWorker, "reclaimTasks", "second");
     }
 
     private List<String> resultTypes() {
-        return resultStream.range(StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX)).values().stream()
-                .map(fields -> fields.get("type")).toList();
+        return resultStream
+                .range(StreamRangeArgs.startId(StreamMessageId.MIN).endId(StreamMessageId.MAX))
+                .values()
+                .stream()
+                .map(fields -> fields.get("type"))
+                .toList();
     }
-
 }

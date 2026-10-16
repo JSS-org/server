@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.im.service.websocket.notification.rtc;
 
 import cn.iocoder.yudao.module.im.dal.dataobject.rtc.ImRtcCallDO;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import lombok.Data;
 
 /**
@@ -24,22 +25,27 @@ public class ImRtcCallStartNotification {
      * 业务通话编号
      */
     private String room;
+
     /**
      * 会话类型：当前固定 GROUP（私聊无 START）
      */
     private Integer conversationType;
+
     /**
      * 媒体类型
      */
     private Integer mediaType;
+
     /**
      * 发起人用户编号
      */
     private Long inviterUserId;
+
     /**
      * 发起人昵称：用于聊天 tip 文案，可空走前端 fallback
      */
     private String inviterNickname;
+
     /**
      * 发起人头像：可空，预留给点击 tip 展示发起人卡片
      */
@@ -57,5 +63,4 @@ public class ImRtcCallStartNotification {
         }
         return notification;
     }
-
 }

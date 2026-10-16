@@ -3,12 +3,16 @@ package cn.iocoder.yudao.module.oa.controller.admin.plan.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.plan.OaPlanStatusEnum;
 import cn.iocoder.yudao.module.oa.enums.plan.OaPlanTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -40,7 +44,10 @@ public class OaPlanSaveReqVO {
     @Size(max = 255, message = "标签长度不能超过 255 个字符")
     private String label;
 
-    @Schema(description = "计划内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "下周完成各部门办公用品盘点差异核实，并按实际需求补充库存。")
+    @Schema(
+            description = "计划内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "下周完成各部门办公用品盘点差异核实，并按实际需求补充库存。")
     @NotBlank(message = "计划内容不能为空")
     @Size(min = 20, message = "计划内容不能少于 20 个字符")
     private String content;
@@ -48,16 +55,29 @@ public class OaPlanSaveReqVO {
     @Schema(description = "计划总结", example = "已完成本周计划的全部任务")
     private String summary;
 
-    @Schema(description = "开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "开始时间不能为空")
     private LocalDateTime startTime;
 
-    @Schema(description = "结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     @NotNull(message = "结束时间不能为空")
     private LocalDateTime endTime;
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 512, message = "附件地址长度不能超过 512 个字符") String> fileUrls;
+    private List<
+                    @NotBlank(message = "附件地址不能为空") @Size(max = 512, message = "附件地址长度不能超过 512 个字符")
+                    String>
+            fileUrls;
 
     @JsonIgnore
     @AssertTrue(message = "计划结束时间必须晚于开始时间")
@@ -70,5 +90,4 @@ public class OaPlanSaveReqVO {
     public boolean isSummaryValid() {
         return summary == null || summary.isEmpty() || summary.trim().length() >= 20;
     }
-
 }

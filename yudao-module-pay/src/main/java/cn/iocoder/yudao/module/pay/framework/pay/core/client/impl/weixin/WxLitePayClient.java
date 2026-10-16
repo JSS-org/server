@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin;
 
 import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -18,5 +19,4 @@ public class WxLitePayClient extends WxPubPayClient {
     public WxLitePayClient(Long channelId, WxPayClientConfig config) {
         super(channelId, PayChannelEnum.WX_LITE.getCode(), config);
     }
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.ai1.harness.skill;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.io.FileUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
@@ -10,6 +14,7 @@ import cn.iocoder.yudao.module.ai1.enums.skill.Ai1SkillFileTypeEnum;
 import cn.iocoder.yudao.module.ai1.framework.ai.config.YudaoAi1Properties;
 import cn.iocoder.yudao.module.ai1.service.skill.Ai1SkillFileService;
 import cn.iocoder.yudao.module.ai1.service.skill.Ai1SkillService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,10 +28,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link Ai1SkillToolFactory} 的单元测试
  *
@@ -36,20 +37,16 @@ public class Ai1SkillToolFactoryTest extends BaseMockitoUnitTest {
 
     private static final Long AGENT_ID = 1L;
     private static final Long SKILL_ID = 10L;
-    private static final String SKILL_CONTENT = "---\nname: pdf-reader\ndescription: 读取 PDF\n---\n\n# pdf-reader\n";
+    private static final String SKILL_CONTENT =
+            "---\nname: pdf-reader\ndescription: 读取 PDF\n---\n\n# pdf-reader\n";
 
-    @InjectMocks
-    private Ai1SkillToolFactory skillToolFactory;
+    @InjectMocks private Ai1SkillToolFactory skillToolFactory;
 
-    @Spy
-    private YudaoAi1Properties ai1Properties = new YudaoAi1Properties();
-    @Mock
-    private Ai1SkillService skillService;
-    @Mock
-    private Ai1SkillFileService skillFileService;
+    @Spy private YudaoAi1Properties ai1Properties = new YudaoAi1Properties();
+    @Mock private Ai1SkillService skillService;
+    @Mock private Ai1SkillFileService skillFileService;
 
-    @TempDir
-    private Path tempDir;
+    @TempDir private Path tempDir;
 
     @BeforeEach
     public void before() {
@@ -69,8 +66,12 @@ public class Ai1SkillToolFactoryTest extends BaseMockitoUnitTest {
         assertEquals(6, tools.size());
         assertInstanceOf(ToolCallback.class, tools.get(0));
         Path skillDirectory = agentRoot().resolve("pdf-reader");
-        assertEquals(SKILL_CONTENT, FileUtil.readUtf8String(skillDirectory.resolve("SKILL.md").toFile()));
-        assertEquals("echo hi", FileUtil.readUtf8String(skillDirectory.resolve("scripts/run.sh").toFile()));
+        assertEquals(
+                SKILL_CONTENT,
+                FileUtil.readUtf8String(skillDirectory.resolve("SKILL.md").toFile()));
+        assertEquals(
+                "echo hi",
+                FileUtil.readUtf8String(skillDirectory.resolve("scripts/run.sh").toFile()));
         assertTrue(FileUtil.exist(agentRoot().resolve(".fingerprint").toFile()));
     }
 
@@ -97,7 +98,9 @@ public class Ai1SkillToolFactoryTest extends BaseMockitoUnitTest {
         skillToolFactory.buildTools(agent);
         // 断言
         verify(skillFileService, times(2)).getSkillFileListBySkillId(SKILL_ID);
-        assertEquals("echo v2", FileUtil.readUtf8String(agentRoot().resolve("pdf-reader/scripts/run.sh").toFile()));
+        assertEquals(
+                "echo v2",
+                FileUtil.readUtf8String(agentRoot().resolve("pdf-reader/scripts/run.sh").toFile()));
         assertFalse(FileUtil.exist(agentRoot().resolve("stale.txt").toFile()));
     }
 
@@ -136,7 +139,10 @@ public class Ai1SkillToolFactoryTest extends BaseMockitoUnitTest {
     @Test
     public void testBuildTools_noSkill() {
         // 调用，并断言
-        assertTrue(skillToolFactory.buildTools(new Ai1AgentDO().setId(AGENT_ID).setSkillIds(List.of())).isEmpty());
+        assertTrue(
+                skillToolFactory
+                        .buildTools(new Ai1AgentDO().setId(AGENT_ID).setSkillIds(List.of()))
+                        .isEmpty());
         verify(skillService, never()).getSkillList(anyCollection());
     }
 
@@ -163,16 +169,37 @@ public class Ai1SkillToolFactoryTest extends BaseMockitoUnitTest {
     @Test
     public void testBuildTools_duplicateFrontmatter() {
         // 准备参数
-        Ai1SkillDO first = new Ai1SkillDO().setId(10L).setName("first").setStatus(CommonStatusEnum.ENABLE.getStatus());
-        Ai1SkillDO second = new Ai1SkillDO().setId(20L).setName("second").setStatus(CommonStatusEnum.ENABLE.getStatus());
+        Ai1SkillDO first =
+                new Ai1SkillDO()
+                        .setId(10L)
+                        .setName("first")
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        Ai1SkillDO second =
+                new Ai1SkillDO()
+                        .setId(20L)
+                        .setName("second")
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         Ai1AgentDO agent = new Ai1AgentDO().setId(AGENT_ID).setSkillIds(List.of(20L, 10L));
         // mock skillService 和 skillFileService 的方法
         when(skillService.getSkillList(agent.getSkillIds())).thenReturn(List.of(second, first));
         for (Ai1SkillDO skill : List.of(first, second)) {
-            String content = "---\nname: same\ndescription: " + skill.getName() + "\n---\n" + skill.getName() + "-content\n";
-            when(skillFileService.getSkillFileListBySkillId(skill.getId())).thenReturn(List.of(
-                    Ai1SkillFileDO.builder().id(skill.getId()).skillId(skill.getId()).parentId(Ai1SkillFileDO.PARENT_ID_ROOT)
-                            .name(Ai1SkillFileDO.NAME_SKILL).type(Ai1SkillFileTypeEnum.FILE.getType()).content(content).build()));
+            String content =
+                    "---\nname: same\ndescription: "
+                            + skill.getName()
+                            + "\n---\n"
+                            + skill.getName()
+                            + "-content\n";
+            when(skillFileService.getSkillFileListBySkillId(skill.getId()))
+                    .thenReturn(
+                            List.of(
+                                    Ai1SkillFileDO.builder()
+                                            .id(skill.getId())
+                                            .skillId(skill.getId())
+                                            .parentId(Ai1SkillFileDO.PARENT_ID_ROOT)
+                                            .name(Ai1SkillFileDO.NAME_SKILL)
+                                            .type(Ai1SkillFileTypeEnum.FILE.getType())
+                                            .content(content)
+                                            .build()));
         }
 
         // 调用
@@ -210,13 +237,33 @@ public class Ai1SkillToolFactoryTest extends BaseMockitoUnitTest {
     }
 
     private void mockSkillFiles(String scriptContent) {
-        Ai1SkillFileDO skillFile = Ai1SkillFileDO.builder().id(100L).skillId(SKILL_ID).parentId(Ai1SkillFileDO.PARENT_ID_ROOT)
-                .name(Ai1SkillFileDO.NAME_SKILL).type(Ai1SkillFileTypeEnum.FILE.getType()).content(SKILL_CONTENT).build();
-        Ai1SkillFileDO scripts = Ai1SkillFileDO.builder().id(101L).skillId(SKILL_ID).parentId(Ai1SkillFileDO.PARENT_ID_ROOT)
-                .name("scripts").type(Ai1SkillFileTypeEnum.DIRECTORY.getType()).build();
-        Ai1SkillFileDO script = Ai1SkillFileDO.builder().id(102L).skillId(SKILL_ID).parentId(101L)
-                .name("run.sh").type(Ai1SkillFileTypeEnum.FILE.getType()).content(scriptContent).build();
-        when(skillFileService.getSkillFileListBySkillId(SKILL_ID)).thenReturn(Arrays.asList(skillFile, scripts, script));
+        Ai1SkillFileDO skillFile =
+                Ai1SkillFileDO.builder()
+                        .id(100L)
+                        .skillId(SKILL_ID)
+                        .parentId(Ai1SkillFileDO.PARENT_ID_ROOT)
+                        .name(Ai1SkillFileDO.NAME_SKILL)
+                        .type(Ai1SkillFileTypeEnum.FILE.getType())
+                        .content(SKILL_CONTENT)
+                        .build();
+        Ai1SkillFileDO scripts =
+                Ai1SkillFileDO.builder()
+                        .id(101L)
+                        .skillId(SKILL_ID)
+                        .parentId(Ai1SkillFileDO.PARENT_ID_ROOT)
+                        .name("scripts")
+                        .type(Ai1SkillFileTypeEnum.DIRECTORY.getType())
+                        .build();
+        Ai1SkillFileDO script =
+                Ai1SkillFileDO.builder()
+                        .id(102L)
+                        .skillId(SKILL_ID)
+                        .parentId(101L)
+                        .name("run.sh")
+                        .type(Ai1SkillFileTypeEnum.FILE.getType())
+                        .content(scriptContent)
+                        .build();
+        when(skillFileService.getSkillFileListBySkillId(SKILL_ID))
+                .thenReturn(Arrays.asList(skillFile, scripts, script));
     }
-
 }

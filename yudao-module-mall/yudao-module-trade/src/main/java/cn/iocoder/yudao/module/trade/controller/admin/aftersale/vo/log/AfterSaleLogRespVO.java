@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.admin.aftersale.vo.log;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - 交易售后日志 Response VO")
@@ -28,10 +28,12 @@ public class AfterSaleLogRespVO {
     @Schema(description = "售后状态（之后）", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer afterStatus;
 
-    @Schema(description = "操作明细", requiredMode = Schema.RequiredMode.REQUIRED, example = "维权完成，退款金额：¥37776.00")
+    @Schema(
+            description = "操作明细",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "维权完成，退款金额：¥37776.00")
     private String content;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

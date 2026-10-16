@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.oa.service.leave;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getMonthDateTimeRange;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
@@ -15,7 +24,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.leave.OaLeaveApplyMapper;
 import cn.iocoder.yudao.module.oa.enums.attendance.OaAttendanceTypeEnum;
 import cn.iocoder.yudao.module.oa.enums.leave.OaLeaveTypeEnum;
 import cn.iocoder.yudao.module.oa.service.attendance.OaAttendanceService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,14 +42,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getMonthDateTimeRange;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaLeaveApplyServiceImpl} 的单元测试类
  *
@@ -47,20 +50,17 @@ import static org.mockito.Mockito.*;
 @Import(OaLeaveApplyServiceImpl.class)
 public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaLeaveApplyService leaveApplyService;
+    @Resource private OaLeaveApplyService leaveApplyService;
 
-    @Resource
-    private OaLeaveApplyMapper leaveApplyMapper;
+    @Resource private OaLeaveApplyMapper leaveApplyMapper;
 
-    @MockitoBean
-    private OaAttendanceService attendanceService;
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private OaAttendanceService attendanceService;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
 
     @BeforeEach
     public void before() {
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
     }
 
     @AfterEach
@@ -71,8 +71,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateLeaveApplyStatus_createAttendance() {
         // mock 数据
-        OaLeaveApplyDO apply = randomPojo(OaLeaveApplyDO.class, row -> row.setId(null).setType(1).setUrgency(1))
-                .setStatus(1).setDays(2).setStartTime(LocalDateTime.of(2026, 9, 1, 8, 0));
+        OaLeaveApplyDO apply =
+                randomPojo(OaLeaveApplyDO.class, row -> row.setId(null).setType(1).setUrgency(1))
+                        .setStatus(1)
+                        .setDays(2)
+                        .setStartTime(LocalDateTime.of(2026, 9, 1, 8, 0));
         apply.setCreator("10");
         leaveApplyMapper.insert(apply);
 
@@ -80,15 +83,16 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         leaveApplyService.updateLeaveApplyStatus(apply.getId(), 2);
         // 断言
         assertEquals(2, leaveApplyMapper.selectById(apply.getId()).getStatus());
-        verify(attendanceService).createApplyAttendance(10L,
-                OaAttendanceTypeEnum.LEAVE,
-                apply.getStartTime());
+        verify(attendanceService)
+                .createApplyAttendance(10L, OaAttendanceTypeEnum.LEAVE, apply.getStartTime());
     }
 
     @Test
     public void testUpdateLeaveApplyStatus_rejectWithoutAttendance() {
         // mock 数据
-        OaLeaveApplyDO apply = randomPojo(OaLeaveApplyDO.class, row -> row.setId(null).setType(1).setUrgency(1)).setStatus(1);
+        OaLeaveApplyDO apply =
+                randomPojo(OaLeaveApplyDO.class, row -> row.setId(null).setType(1).setUrgency(1))
+                        .setStatus(1);
         leaveApplyMapper.insert(apply);
 
         // 调用
@@ -104,9 +108,13 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         OaLeaveApplySaveReqVO reqVO = randomLeaveApplySaveReqVO().setId(id).setTitle("修改后的草稿");
 
         // 调用，并断言：他人不能修改、提交
-        assertServiceException(() -> leaveApplyService.updateLeaveApply(reqVO, 99L), APPLY_ACCESS_DENIED);
-        assertServiceException(() -> leaveApplyService.submitLeaveApply(new OaLeaveApplySubmitReqVO()
-                .setId(id), 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () -> leaveApplyService.updateLeaveApply(reqVO, 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () ->
+                        leaveApplyService.submitLeaveApply(
+                                new OaLeaveApplySubmitReqVO().setId(id), 99L),
+                APPLY_ACCESS_DENIED);
         leaveApplyService.updateLeaveApply(reqVO, 10L);
         assertEquals("修改后的草稿", leaveApplyMapper.selectById(id).getTitle());
         assertEquals(-1, leaveApplyMapper.selectById(id).getStatus());
@@ -123,10 +131,16 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         // 调用
         leaveApplyService.submitLeaveApply(new OaLeaveApplySubmitReqVO().setId(id), 10L);
         // 断言
-        assertServiceException(() -> leaveApplyService.submitLeaveApply(new OaLeaveApplySubmitReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
-        assertServiceException(() -> leaveApplyService.updateLeaveApply(randomLeaveApplySaveReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        leaveApplyService.submitLeaveApply(
+                                new OaLeaveApplySubmitReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        leaveApplyService.updateLeaveApply(
+                                randomLeaveApplySaveReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
         verify(processInstanceApi, times(1)).createProcessInstance(eq(10L), any());
     }
 
@@ -150,9 +164,16 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, application.getStatus());
         assertEquals("process-1", application.getProcessInstanceId());
         assertEquals(1, application.getDays());
-        verify(processInstanceApi).createProcessInstance(eq(10L), argThat(dto ->
-                "oa_leave_apply".equals(dto.getProcessDefinitionKey()) && id.toString().equals(dto.getBusinessKey())
-                        && !dto.getVariables().containsKey("title") && Integer.valueOf(1).equals(dto.getVariables().get("days"))));
+        verify(processInstanceApi)
+                .createProcessInstance(
+                        eq(10L),
+                        argThat(
+                                dto ->
+                                        "oa_leave_apply".equals(dto.getProcessDefinitionKey())
+                                                && id.toString().equals(dto.getBusinessKey())
+                                                && !dto.getVariables().containsKey("title")
+                                                && Integer.valueOf(1)
+                                                        .equals(dto.getVariables().get("days"))));
     }
 
     @Test
@@ -160,13 +181,17 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         OaLeaveApplySaveReqVO reqVO = randomLeaveApplySaveReqVO();
         // mock 方法
-        when(processInstanceApi.createProcessInstance(anyLong(), any())).thenThrow(new IllegalStateException("流程尚未配置"));
+        when(processInstanceApi.createProcessInstance(anyLong(), any()))
+                .thenThrow(new IllegalStateException("流程尚未配置"));
 
         // 调用
         Long id = leaveApplyService.createLeaveApply(reqVO);
         // 断言
-        assertThrows(IllegalStateException.class, () -> leaveApplyService.submitLeaveApply(
-                new OaLeaveApplySubmitReqVO().setId(id), 10L));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        leaveApplyService.submitLeaveApply(
+                                new OaLeaveApplySubmitReqVO().setId(id), 10L));
         assertEquals(1L, leaveApplyMapper.selectCount());
         assertEquals(-1, leaveApplyMapper.selectById(id).getStatus());
         assertNull(leaveApplyMapper.selectById(id).getProcessInstanceId());
@@ -202,11 +227,14 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long id = leaveApplyService.createLeaveApply(randomLeaveApplySaveReqVO());
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(10L), any())).thenAnswer(invocation -> {
-            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
-            leaveApplyService.updateLeaveApplyStatus(Long.valueOf(reqDTO.getBusinessKey()), 2);
-            return "process-1";
-        });
+        when(processInstanceApi.createProcessInstance(eq(10L), any()))
+                .thenAnswer(
+                        invocation -> {
+                            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
+                            leaveApplyService.updateLeaveApplyStatus(
+                                    Long.valueOf(reqDTO.getBusinessKey()), 2);
+                            return "process-1";
+                        });
 
         // 调用
         leaveApplyService.submitLeaveApply(new OaLeaveApplySubmitReqVO().setId(id), 10L);
@@ -255,15 +283,17 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
     public void testUpdateLeaveApplyStatus_notExists() {
 
         // 调用，并断言异常
-        assertServiceException(() -> leaveApplyService.updateLeaveApplyStatus(1024L, 2), APPLY_NOT_EXISTS);
+        assertServiceException(
+                () -> leaveApplyService.updateLeaveApplyStatus(1024L, 2), APPLY_NOT_EXISTS);
     }
 
     @Test
     public void testCreateLeaveApply_crossMidnight() {
         // 准备参数
-        OaLeaveApplySaveReqVO reqVO = randomLeaveApplySaveReqVO()
-                .setStartTime(LocalDateTime.of(2026, 9, 13, 23, 0))
-                .setEndTime(LocalDateTime.of(2026, 9, 14, 1, 0));
+        OaLeaveApplySaveReqVO reqVO =
+                randomLeaveApplySaveReqVO()
+                        .setStartTime(LocalDateTime.of(2026, 9, 13, 23, 0))
+                        .setEndTime(LocalDateTime.of(2026, 9, 14, 1, 0));
 
         // 调用
         Long id = leaveApplyService.createLeaveApply(reqVO);
@@ -278,9 +308,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long id = leaveApplyService.createLeaveApply(randomLeaveApplySaveReqVO());
         // 准备参数
-        OaLeaveApplySaveReqVO reqVO = randomLeaveApplySaveReqVO().setId(id)
-                .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0))
-                .setEndTime(LocalDateTime.of(2026, 9, 14, 20, 0));
+        OaLeaveApplySaveReqVO reqVO =
+                randomLeaveApplySaveReqVO()
+                        .setId(id)
+                        .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0))
+                        .setEndTime(LocalDateTime.of(2026, 9, 14, 20, 0));
 
         // 调用
         leaveApplyService.updateLeaveApply(reqVO, 10L);
@@ -297,8 +329,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
     public void testCreateLeaveApply_daysLimit(Integer type, Integer maxDays) {
         // 准备参数：恰好达到上限
         LocalDateTime startTime = LocalDateTime.of(2026, 9, 1, 9, 0);
-        OaLeaveApplySaveReqVO reqVO = randomLeaveApplySaveReqVO().setType(type)
-                .setStartTime(startTime).setEndTime(startTime.plusDays(maxDays));
+        OaLeaveApplySaveReqVO reqVO =
+                randomLeaveApplySaveReqVO()
+                        .setType(type)
+                        .setStartTime(startTime)
+                        .setEndTime(startTime.plusDays(maxDays));
 
         // 调用
         Long id = leaveApplyService.createLeaveApply(reqVO);
@@ -306,8 +341,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         // 断言：合法申请正常保存；多一分钟向上取整后超限
         assertEquals(maxDays, leaveApplyMapper.selectById(id).getDays());
         reqVO.setEndTime(reqVO.getEndTime().plusMinutes(1));
-        assertServiceException(() -> leaveApplyService.createLeaveApply(reqVO), LEAVE_APPLY_DAYS_EXCEEDED,
-                OaLeaveTypeEnum.valueOf(type).getName(), maxDays);
+        assertServiceException(
+                () -> leaveApplyService.createLeaveApply(reqVO),
+                LEAVE_APPLY_DAYS_EXCEEDED,
+                OaLeaveTypeEnum.valueOf(type).getName(),
+                maxDays);
         assertEquals(1L, leaveApplyMapper.selectCount());
     }
 
@@ -316,8 +354,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
     public void testCreateLeaveApply_otherTypesNotLimited(Integer type) {
         // 准备参数：其他类型不套用单次天数上限
         LocalDateTime startTime = LocalDateTime.of(2026, 9, 1, 9, 0);
-        OaLeaveApplySaveReqVO reqVO = randomLeaveApplySaveReqVO().setType(type)
-                .setStartTime(startTime).setEndTime(startTime.plusDays(20));
+        OaLeaveApplySaveReqVO reqVO =
+                randomLeaveApplySaveReqVO()
+                        .setType(type)
+                        .setStartTime(startTime)
+                        .setEndTime(startTime.plusDays(20));
 
         // 调用
         Long id = leaveApplyService.createLeaveApply(reqVO);
@@ -335,8 +376,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         reqVO.setEndTime(reqVO.getStartTime().plusDays(5));
 
         // 调用，并断言：修改类型或时间不能绕过上限
-        assertServiceException(() -> leaveApplyService.updateLeaveApply(reqVO, 10L),
-                LEAVE_APPLY_DAYS_EXCEEDED, "事假", 4);
+        assertServiceException(
+                () -> leaveApplyService.updateLeaveApply(reqVO, 10L),
+                LEAVE_APPLY_DAYS_EXCEEDED,
+                "事假",
+                4);
         assertEquals(1, leaveApplyMapper.selectById(id).getType());
         assertEquals(1, leaveApplyMapper.selectById(id).getDays());
     }
@@ -350,8 +394,11 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
         OaLeaveApplySubmitReqVO reqVO = new OaLeaveApplySubmitReqVO().setId(application.getId());
 
         // 调用，并断言异常
-        assertServiceException(() -> leaveApplyService.submitLeaveApply(reqVO, 10L),
-                LEAVE_APPLY_DAYS_EXCEEDED, "婚假", 10);
+        assertServiceException(
+                () -> leaveApplyService.submitLeaveApply(reqVO, 10L),
+                LEAVE_APPLY_DAYS_EXCEEDED,
+                "婚假",
+                10);
         assertEquals(-1, leaveApplyMapper.selectById(application.getId()).getStatus());
         verifyNoInteractions(processInstanceApi);
     }
@@ -360,30 +407,50 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
     public void testGetApprovedLeaveDaysMap() {
         // mock 数据：包含月初、月末开始且跨月的申请
         LocalDateTime startTime = LocalDateTime.of(2026, 9, 1, 0, 0);
-        leaveApplyMapper.insert(randomLeaveApplyDO().setStatus(2).setStartTime(startTime).setDays(2));
-        leaveApplyMapper.insert(randomLeaveApplyDO().setStatus(2).setStartTime(startTime.plusMonths(1).minusSeconds(1))
-                .setEndTime(startTime.plusMonths(1).plusDays(2)).setDays(3));
+        leaveApplyMapper.insert(
+                randomLeaveApplyDO().setStatus(2).setStartTime(startTime).setDays(2));
+        leaveApplyMapper.insert(
+                randomLeaveApplyDO()
+                        .setStatus(2)
+                        .setStartTime(startTime.plusMonths(1).minusSeconds(1))
+                        .setEndTime(startTime.plusMonths(1).plusDays(2))
+                        .setDays(3));
         // 排除非通过、前后月份、其他用户和已删除的申请
         for (Integer status : Arrays.asList(-1, 1, 3, 4)) {
-            leaveApplyMapper.insert(randomLeaveApplyDO().setStatus(status).setStartTime(startTime).setDays(10));
+            leaveApplyMapper.insert(
+                    randomLeaveApplyDO().setStatus(status).setStartTime(startTime).setDays(10));
         }
-        leaveApplyMapper.insert(randomLeaveApplyDO().setStatus(2).setStartTime(startTime.minusSeconds(1)).setDays(10));
-        leaveApplyMapper.insert(randomLeaveApplyDO().setStatus(2).setStartTime(startTime.plusMonths(1)).setDays(10));
-        OaLeaveApplyDO otherUserApply = randomLeaveApplyDO().setStatus(2).setStartTime(startTime).setDays(10);
+        leaveApplyMapper.insert(
+                randomLeaveApplyDO()
+                        .setStatus(2)
+                        .setStartTime(startTime.minusSeconds(1))
+                        .setDays(10));
+        leaveApplyMapper.insert(
+                randomLeaveApplyDO()
+                        .setStatus(2)
+                        .setStartTime(startTime.plusMonths(1))
+                        .setDays(10));
+        OaLeaveApplyDO otherUserApply =
+                randomLeaveApplyDO().setStatus(2).setStartTime(startTime).setDays(10);
         otherUserApply.setCreator("99");
         leaveApplyMapper.insert(otherUserApply);
-        OaLeaveApplyDO deletedApply = randomLeaveApplyDO().setStatus(2).setStartTime(startTime).setDays(10);
+        OaLeaveApplyDO deletedApply =
+                randomLeaveApplyDO().setStatus(2).setStartTime(startTime).setDays(10);
         deletedApply.setDeleted(true);
         leaveApplyMapper.insert(deletedApply);
         // 准备参数
         LocalDateTime[] monthTime = getMonthDateTimeRange(2026, 9);
 
         // 调用
-        Map<Long, Integer> result = leaveApplyService.getApprovedLeaveDaysMap(Arrays.asList(10L, 20L), monthTime);
+        Map<Long, Integer> result =
+                leaveApplyService.getApprovedLeaveDaysMap(Arrays.asList(10L, 20L), monthTime);
 
         // 断言：整笔归入开始月份，无申请用户不返回
         assertEquals(Collections.singletonMap(10L, 5), result);
-        assertTrue(leaveApplyService.getApprovedLeaveDaysMap(Collections.emptyList(), monthTime).isEmpty());
+        assertTrue(
+                leaveApplyService
+                        .getApprovedLeaveDaysMap(Collections.emptyList(), monthTime)
+                        .isEmpty());
     }
 
     // ========== 随机对象 ==========
@@ -394,8 +461,13 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
      * @return 请求参数
      */
     private static OaLeaveApplySaveReqVO randomLeaveApplySaveReqVO() {
-        return randomPojo(OaLeaveApplySaveReqVO.class).setTitle("业务申请").setUrgency(1).setId(null).setType(1)
-                .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0)).setEndTime(LocalDateTime.of(2026, 9, 13, 20, 0));
+        return randomPojo(OaLeaveApplySaveReqVO.class)
+                .setTitle("业务申请")
+                .setUrgency(1)
+                .setId(null)
+                .setType(1)
+                .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0))
+                .setEndTime(LocalDateTime.of(2026, 9, 13, 20, 0));
     }
 
     /**
@@ -404,10 +476,16 @@ public class OaLeaveApplyServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaLeaveApplyDO randomLeaveApplyDO() {
-        return randomPojo(OaLeaveApplyDO.class, application -> {
-            application.setId(null).setTitle("申请").setUrgency(1).setStatus(1).setProcessInstanceId("process-1");
-            application.setCreator("10").setDeleted(false);
-        });
+        return randomPojo(
+                OaLeaveApplyDO.class,
+                application -> {
+                    application
+                            .setId(null)
+                            .setTitle("申请")
+                            .setUrgency(1)
+                            .setStatus(1)
+                            .setProcessInstanceId("process-1");
+                    application.setCreator("10").setDeleted(false);
+                });
     }
-
 }

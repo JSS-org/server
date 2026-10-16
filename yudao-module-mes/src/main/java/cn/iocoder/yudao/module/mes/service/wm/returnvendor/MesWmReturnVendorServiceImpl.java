@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.returnvendor;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -18,17 +22,15 @@ import cn.iocoder.yudao.module.mes.enums.wm.MesWmTransactionTypeEnum;
 import cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSaveReqDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 供应商退货单 Service 实现类
@@ -37,17 +39,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
 
-    @Resource
-    private MesWmReturnVendorMapper returnVendorMapper;
+    @Resource private MesWmReturnVendorMapper returnVendorMapper;
 
-    @Resource
-    private MesWmReturnVendorLineService returnVendorLineService;
-    @Resource
-    private MesWmReturnVendorDetailService returnVendorDetailService;
-    @Resource
-    private MesMdVendorService vendorService;
-    @Resource
-    private MesWmTransactionService wmTransactionService;
+    @Resource private MesWmReturnVendorLineService returnVendorLineService;
+    @Resource private MesWmReturnVendorDetailService returnVendorDetailService;
+    @Resource private MesMdVendorService vendorService;
+    @Resource private MesWmTransactionService wmTransactionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -93,7 +90,8 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
     }
 
     @Override
-    public PageResult<MesWmReturnVendorDO> getReturnVendorPage(MesWmReturnVendorPageReqVO pageReqVO) {
+    public PageResult<MesWmReturnVendorDO> getReturnVendorPage(
+            MesWmReturnVendorPageReqVO pageReqVO) {
         return returnVendorMapper.selectPage(pageReqVO);
     }
 
@@ -103,14 +101,17 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
         // 校验存在 + 草稿状态
         validateReturnVendorExistsAndPrepare(id);
         // 校验至少有一条行
-        List<MesWmReturnVendorLineDO> lines = returnVendorLineService.getReturnVendorLineListByReturnId(id);
+        List<MesWmReturnVendorLineDO> lines =
+                returnVendorLineService.getReturnVendorLineListByReturnId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(WM_RETURN_VENDOR_NO_LINE);
         }
 
         // 提交（草稿 -> 待拣货）
-        returnVendorMapper.updateById(new MesWmReturnVendorDO()
-                .setId(id).setStatus(MesWmReturnVendorStatusEnum.APPROVING.getStatus()));
+        returnVendorMapper.updateById(
+                new MesWmReturnVendorDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnVendorStatusEnum.APPROVING.getStatus()));
     }
 
     @Override
@@ -118,12 +119,15 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
     public void stockReturnVendor(Long id) {
         // 校验存在
         MesWmReturnVendorDO returnVendor = validateReturnVendorExists(id);
-        if (ObjUtil.notEqual(MesWmReturnVendorStatusEnum.APPROVING.getStatus(), returnVendor.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmReturnVendorStatusEnum.APPROVING.getStatus(), returnVendor.getStatus())) {
             throw exception(WM_RETURN_VENDOR_STATUS_INVALID);
         }
         // 执行拣货（待拣货 -> 待执行退货）
-        returnVendorMapper.updateById(new MesWmReturnVendorDO()
-                .setId(id).setStatus(MesWmReturnVendorStatusEnum.APPROVED.getStatus()));
+        returnVendorMapper.updateById(
+                new MesWmReturnVendorDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnVendorStatusEnum.APPROVED.getStatus()));
     }
 
     @Override
@@ -131,11 +135,13 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
     public void finishReturnVendor(Long id) {
         // 1.1 校验存在
         MesWmReturnVendorDO returnVendor = validateReturnVendorExists(id);
-        if (ObjUtil.notEqual(MesWmReturnVendorStatusEnum.APPROVED.getStatus(), returnVendor.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmReturnVendorStatusEnum.APPROVED.getStatus(), returnVendor.getStatus())) {
             throw exception(WM_RETURN_VENDOR_STATUS_INVALID);
         }
         // 1.2 校验明细不为空
-        List<MesWmReturnVendorDetailDO> details = returnVendorDetailService.getReturnVendorDetailListByReturnId(id);
+        List<MesWmReturnVendorDetailDO> details =
+                returnVendorDetailService.getReturnVendorDetailListByReturnId(id);
         if (CollUtil.isEmpty(details)) {
             throw exception(WM_RETURN_VENDOR_NO_DETAIL);
         }
@@ -144,19 +150,32 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
         createTransactionList(returnVendor, details);
 
         // 3. 更新退货单状态
-        returnVendorMapper.updateById(new MesWmReturnVendorDO()
-                .setId(id).setStatus(MesWmReturnVendorStatusEnum.FINISHED.getStatus()));
+        returnVendorMapper.updateById(
+                new MesWmReturnVendorDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnVendorStatusEnum.FINISHED.getStatus()));
     }
 
-    private void createTransactionList(MesWmReturnVendorDO returnVendor, List<MesWmReturnVendorDetailDO> details) {
-        wmTransactionService.createTransactionList(convertList(details, detail -> new MesWmTransactionSaveReqDTO()
-                .setType(MesWmTransactionTypeEnum.OUT.getType()).setItemId(detail.getItemId())
-                .setQuantity(detail.getQuantity().negate()) // 出库数量为负数
-                .setBatchId(detail.getBatchId()).setBatchCode(detail.getBatchCode())
-                .setWarehouseId(detail.getWarehouseId()).setLocationId(detail.getLocationId()).setAreaId(detail.getAreaId())
-                .setVendorId(returnVendor.getVendorId())
-                .setBizType(MesBizTypeConstants.WM_RETURN_VENDOR).setBizId(returnVendor.getId())
-                .setBizCode(returnVendor.getCode()).setBizLineId(detail.getLineId())));
+    private void createTransactionList(
+            MesWmReturnVendorDO returnVendor, List<MesWmReturnVendorDetailDO> details) {
+        wmTransactionService.createTransactionList(
+                convertList(
+                        details,
+                        detail ->
+                                new MesWmTransactionSaveReqDTO()
+                                        .setType(MesWmTransactionTypeEnum.OUT.getType())
+                                        .setItemId(detail.getItemId())
+                                        .setQuantity(detail.getQuantity().negate()) // 出库数量为负数
+                                        .setBatchId(detail.getBatchId())
+                                        .setBatchCode(detail.getBatchCode())
+                                        .setWarehouseId(detail.getWarehouseId())
+                                        .setLocationId(detail.getLocationId())
+                                        .setAreaId(detail.getAreaId())
+                                        .setVendorId(returnVendor.getVendorId())
+                                        .setBizType(MesBizTypeConstants.WM_RETURN_VENDOR)
+                                        .setBizId(returnVendor.getId())
+                                        .setBizCode(returnVendor.getCode())
+                                        .setBizLineId(detail.getLineId())));
     }
 
     @Override
@@ -165,24 +184,33 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
         // 校验存在
         MesWmReturnVendorDO returnVendor = validateReturnVendorExists(id);
         // 已完成和已取消不允许取消
-        if (ObjectUtils.equalsAny(returnVendor.getStatus(),
+        if (ObjectUtils.equalsAny(
+                returnVendor.getStatus(),
                 MesWmReturnVendorStatusEnum.FINISHED.getStatus(),
                 MesWmReturnVendorStatusEnum.CANCELED.getStatus())) {
             throw exception(WM_RETURN_VENDOR_CANCEL_NOT_ALLOWED);
         }
 
         // 取消
-        returnVendorMapper.updateById(new MesWmReturnVendorDO()
-                .setId(id).setStatus(MesWmReturnVendorStatusEnum.CANCELED.getStatus()));
+        returnVendorMapper.updateById(
+                new MesWmReturnVendorDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnVendorStatusEnum.CANCELED.getStatus()));
     }
 
     @Override
     public Boolean checkReturnVendorQuantity(Long id) {
-        List<MesWmReturnVendorLineDO> lines = returnVendorLineService.getReturnVendorLineListByReturnId(id);
+        List<MesWmReturnVendorLineDO> lines =
+                returnVendorLineService.getReturnVendorLineListByReturnId(id);
         for (MesWmReturnVendorLineDO line : lines) {
-            List<MesWmReturnVendorDetailDO> details = returnVendorDetailService.getReturnVendorDetailListByLineId(line.getId());
-            BigDecimal totalDetailQty = CollectionUtils.getSumValue(details,
-                    MesWmReturnVendorDetailDO::getQuantity, BigDecimal::add, BigDecimal.ZERO);
+            List<MesWmReturnVendorDetailDO> details =
+                    returnVendorDetailService.getReturnVendorDetailListByLineId(line.getId());
+            BigDecimal totalDetailQty =
+                    CollectionUtils.getSumValue(
+                            details,
+                            MesWmReturnVendorDetailDO::getQuantity,
+                            BigDecimal::add,
+                            BigDecimal.ZERO);
             if (line.getQuantity() != null && totalDetailQty.compareTo(line.getQuantity()) != 0) {
                 return false;
             }
@@ -202,7 +230,8 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
     @Override
     public MesWmReturnVendorDO validateReturnVendorExistsAndPrepare(Long id) {
         MesWmReturnVendorDO returnVendor = validateReturnVendorExists(id);
-        if (ObjUtil.notEqual(MesWmReturnVendorStatusEnum.PREPARE.getStatus(), returnVendor.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmReturnVendorStatusEnum.PREPARE.getStatus(), returnVendor.getStatus())) {
             throw exception(WM_RETURN_VENDOR_STATUS_INVALID);
         }
         return returnVendor;
@@ -239,5 +268,4 @@ public class MesWmReturnVendorServiceImpl implements MesWmReturnVendorService {
     public Long getReturnVendorCountByVendorId(Long vendorId) {
         return returnVendorMapper.selectCountByVendorId(vendorId);
     }
-
 }

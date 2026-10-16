@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -40,7 +41,5 @@ public class FmsBalanceSheetCheckRespVO {
 
         @Schema(description = "科目名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "库存现金")
         private String name;
-
     }
-
 }

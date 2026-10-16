@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session.Ai1Sessio
 import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session.Ai1SessionPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session.Ai1SessionUpdateMyReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -91,5 +92,4 @@ public interface Ai1SessionService {
      * @param agentIds Agent 编号集合
      */
     void deleteSessionListByAgentIds(Collection<Long> agentIds);
-
 }

@@ -74,5 +74,4 @@ public interface DiyTemplateService {
      * @return 装修模板
      */
     DiyTemplateDO getUsedDiyTemplate();
-
 }

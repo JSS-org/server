@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.gym.dal.dataobject.file;
 
 import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,8 +40,7 @@ public class GymFileDO extends TenantBaseDO {
     /**
      * 文件编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 归属门店编号（system_dept.id；门店 = 部门）
@@ -78,5 +79,4 @@ public class GymFileDO extends TenantBaseDO {
      * 上传人编号（system_users.id）
      */
     private Long uploaderId;
-
 }

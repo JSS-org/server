@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.pay.framework.pay.config;
 
+import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.URL;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
-
-import jakarta.validation.constraints.NotEmpty;
 
 @ConfigurationProperties(prefix = "yudao.pay")
 @Validated
@@ -65,5 +66,4 @@ public class PayProperties {
      */
     @NotEmpty(message = "钱包支付应用 AppKey 不能为空")
     private String walletPayAppKey = WALLET_PAY_APP_KEY_DEFAULT;
-
 }

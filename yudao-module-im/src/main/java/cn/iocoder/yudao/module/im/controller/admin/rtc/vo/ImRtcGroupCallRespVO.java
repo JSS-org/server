@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.rtc.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.Set;
@@ -26,5 +27,4 @@ public class ImRtcGroupCallRespVO {
 
     @Schema(description = "被邀请池；用于胶囊条展开时显示待加入头像")
     private Set<Long> inviteeIds;
-
 }

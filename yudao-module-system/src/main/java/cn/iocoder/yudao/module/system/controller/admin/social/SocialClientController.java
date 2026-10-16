@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.social;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,18 +12,19 @@ import cn.iocoder.yudao.module.system.controller.admin.social.vo.client.SocialCl
 import cn.iocoder.yudao.module.system.controller.admin.social.vo.client.SocialClientSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.social.SocialClientDO;
 import cn.iocoder.yudao.module.system.service.social.SocialClientService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 社交客户端")
 @RestController
@@ -29,22 +32,22 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class SocialClientController {
 
-    @Resource
-    private SocialClientService socialClientService;
-    @Resource
-    private SocialClientApi socialClientApi;
+    @Resource private SocialClientService socialClientService;
+    @Resource private SocialClientApi socialClientApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建社交客户端")
     @PreAuthorize("@ss.hasPermission('system:social-client:create')")
-    public CommonResult<Long> createSocialClient(@Valid @RequestBody SocialClientSaveReqVO createReqVO) {
+    public CommonResult<Long> createSocialClient(
+            @Valid @RequestBody SocialClientSaveReqVO createReqVO) {
         return success(socialClientService.createSocialClient(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新社交客户端")
     @PreAuthorize("@ss.hasPermission('system:social-client:update')")
-    public CommonResult<Boolean> updateSocialClient(@Valid @RequestBody SocialClientSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSocialClient(
+            @Valid @RequestBody SocialClientSaveReqVO updateReqVO) {
         socialClientService.updateSocialClient(updateReqVO);
         return success(true);
     }
@@ -79,7 +82,8 @@ public class SocialClientController {
     @GetMapping("/page")
     @Operation(summary = "获得社交客户端分页")
     @PreAuthorize("@ss.hasPermission('system:social-client:query')")
-    public CommonResult<PageResult<SocialClientRespVO>> getSocialClientPage(@Valid SocialClientPageReqVO pageVO) {
+    public CommonResult<PageResult<SocialClientRespVO>> getSocialClientPage(
+            @Valid SocialClientPageReqVO pageVO) {
         PageResult<SocialClientDO> pageResult = socialClientService.getSocialClientPage(pageVO);
         return success(BeanUtils.toBean(pageResult, SocialClientRespVO.class));
     }
@@ -90,5 +94,4 @@ public class SocialClientController {
     public void sendSubscribeMessage(@RequestBody SocialWxaSubscribeMessageSendReqDTO reqDTO) {
         socialClientApi.sendWxaSubscribeMessage(reqDTO);
     }
-
 }

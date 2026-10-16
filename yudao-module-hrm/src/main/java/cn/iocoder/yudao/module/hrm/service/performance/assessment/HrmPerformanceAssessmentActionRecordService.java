@@ -25,9 +25,13 @@ public interface HrmPerformanceAssessmentActionRecordService {
      * @param contentArgs 动作内容参数
      */
     void createPerformanceAssessmentActionRecord(
-            Long employeeId, Long assessmentId, Long stageId,
+            Long employeeId,
+            Long assessmentId,
+            Long stageId,
             HrmPerformanceAssessmentActionTypeEnum actionType,
-            List<String> fileUrls, Integer status, Object... contentArgs);
+            List<String> fileUrls,
+            Integer status,
+            Object... contentArgs);
 
     /**
      * 获得员工绩效考核动作记录列表
@@ -35,7 +39,8 @@ public interface HrmPerformanceAssessmentActionRecordService {
      * @param assessmentId 员工绩效考核编号
      * @return 动作记录列表
      */
-    List<HrmPerformanceAssessmentActionRecordDO> getPerformanceAssessmentActionRecordList(Long assessmentId);
+    List<HrmPerformanceAssessmentActionRecordDO> getPerformanceAssessmentActionRecordList(
+            Long assessmentId);
 
     /**
      * 删除员工绩效考核动作记录
@@ -43,5 +48,4 @@ public interface HrmPerformanceAssessmentActionRecordService {
      * @param assessmentIds 员工绩效考核编号集合
      */
     void deletePerformanceAssessmentActionRecordList(Collection<Long> assessmentIds);
-
 }

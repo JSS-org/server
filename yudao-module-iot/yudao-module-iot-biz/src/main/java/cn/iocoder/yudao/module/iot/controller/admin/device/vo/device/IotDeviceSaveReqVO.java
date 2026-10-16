@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.device;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -48,5 +50,4 @@ public class IotDeviceSaveReqVO {
     @DecimalMin(value = "-180", message = "经度范围为 -180 到 180")
     @DecimalMax(value = "180", message = "经度范围为 -180 到 180")
     private BigDecimal longitude;
-
 }

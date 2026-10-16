@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -37,7 +38,10 @@ public class OaVehicleRespVO {
     @Schema(description = "座位数", example = "7", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer seatCount;
 
-    @Schema(description = "裸车价格（元）", example = "250000.00", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            description = "裸车价格（元）",
+            example = "250000.00",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private BigDecimal barePrice;
 
     @Schema(description = "交强险到期时间", example = "1789002000000", type = "integer", format = "int64")
@@ -61,7 +65,11 @@ public class OaVehicleRespVO {
     @Schema(description = "备注", example = "部门公务用车")
     private String remark;
 
-    @Schema(description = "创建时间", example = "1789002000000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "创建时间",
+            example = "1789002000000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime createTime;
-
 }

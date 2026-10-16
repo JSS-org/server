@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.enums.modbus;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @Getter
 @RequiredArgsConstructor
 public enum IotModbusByteOrderEnum implements ArrayValuable<String> {
-
     AB("AB", "大端序（16位）", 2),
     BA("BA", "小端序（16位）", 2),
     ABCD("ABCD", "大端序（32位）", 4),
@@ -22,18 +22,19 @@ public enum IotModbusByteOrderEnum implements ArrayValuable<String> {
     DCBA("DCBA", "小端序（32位）", 4),
     BADC("BADC", "小端字交换（32位）", 4);
 
-    public static final String[] ARRAYS = Arrays.stream(values())
-            .map(IotModbusByteOrderEnum::getOrder)
-            .toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(IotModbusByteOrderEnum::getOrder).toArray(String[]::new);
 
     /**
      * 字节序
      */
     private final String order;
+
     /**
      * 名称
      */
     private final String name;
+
     /**
      * 字节数
      */
@@ -50,5 +51,4 @@ public enum IotModbusByteOrderEnum implements ArrayValuable<String> {
                 .findFirst()
                 .orElse(null);
     }
-
 }

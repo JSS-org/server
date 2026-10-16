@@ -54,5 +54,4 @@ public interface OAuth2TokenCommonApi {
      * @return 访问令牌的信息
      */
     OAuth2AccessTokenRespDTO refreshAccessToken(String refreshToken, String clientId);
-
 }

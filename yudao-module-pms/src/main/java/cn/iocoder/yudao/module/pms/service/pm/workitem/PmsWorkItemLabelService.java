@@ -1,13 +1,13 @@
 package cn.iocoder.yudao.module.pms.service.pm.workitem;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.label.PmsWorkItemLabelSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemLabelDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 工作项标签 Service 接口
@@ -70,5 +70,4 @@ public interface PmsWorkItemLabelService {
      * @param ids 标签编号集合
      */
     void validateWorkItemLabelIds(Collection<Long> ids);
-
 }

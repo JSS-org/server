@@ -2,10 +2,11 @@ package cn.iocoder.yudao.module.system.api.notify.dto;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Data
 public class NotifyTemplateReqDTO {
@@ -30,5 +31,4 @@ public class NotifyTemplateReqDTO {
     private Integer status;
 
     private String remark;
-
 }

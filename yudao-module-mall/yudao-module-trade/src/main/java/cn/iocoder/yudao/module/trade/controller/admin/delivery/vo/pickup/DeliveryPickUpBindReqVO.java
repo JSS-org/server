@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.ToString;
 
@@ -17,8 +19,10 @@ public class DeliveryPickUpBindReqVO {
     @NotNull(message = "编号不能为空")
     private Long id;
 
-    @Schema(description = "绑定用户编号组数", requiredMode = Schema.RequiredMode.REQUIRED, example = "23128")
+    @Schema(
+            description = "绑定用户编号组数",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "23128")
     @NotEmpty(message = "绑定用户编号组数不能未空")
     private List<Long> verifyUserIds;
-
 }

@@ -25,5 +25,4 @@ public interface MesMdAutoCodeRecordService {
      * @return 生成的编码
      */
     String generateAutoCode(String ruleCode, String inputChar);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.service.delivery.bo;
 
 import cn.iocoder.yudao.module.trade.enums.delivery.DeliveryExpressChargeModeEnum;
+
 import lombok.Data;
 
 /**
@@ -40,14 +41,17 @@ public class DeliveryExpressTemplateRespBO {
          * 首件数量(件数,重量，或体积)
          */
         private Double startCount;
+
         /**
          * 起步价，单位：分
          */
         private Integer startPrice;
+
         /**
          * 续件数量(件, 重量，或体积)
          */
         private Double extraCount;
+
         /**
          * 额外价，单位：分
          */
@@ -76,5 +80,4 @@ public class DeliveryExpressTemplateRespBO {
          */
         private Integer freeCount;
     }
-
 }

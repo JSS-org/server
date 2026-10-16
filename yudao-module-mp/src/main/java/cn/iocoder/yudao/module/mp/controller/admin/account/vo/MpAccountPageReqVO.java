@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mp.controller.admin.account.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -20,5 +22,4 @@ public class MpAccountPageReqVO extends PageParam {
 
     @Schema(name = "公众号 appid", description = "模糊匹配")
     private String appId;
-
 }

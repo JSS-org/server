@@ -83,9 +83,14 @@ public class NumberUtils {
         double radLat2 = lat2 * Math.PI / 180.0;
         double a = radLat1 - radLat2;
         double b = lng1 * Math.PI / 180.0 - lng2 * Math.PI / 180.0;
-        double distance = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2)
-                + Math.cos(radLat1) * Math.cos(radLat2)
-                * Math.pow(Math.sin(b / 2), 2)));
+        double distance =
+                2
+                        * Math.asin(
+                                Math.sqrt(
+                                        Math.pow(Math.sin(a / 2), 2)
+                                                + Math.cos(radLat1)
+                                                        * Math.cos(radLat2)
+                                                        * Math.pow(Math.sin(b / 2), 2)));
         distance = distance * 6378.137;
         distance = Math.round(distance * 10000d) / 10000d;
         return distance;
@@ -107,5 +112,4 @@ public class NumberUtils {
         }
         return NumberUtil.mul(values);
     }
-
 }

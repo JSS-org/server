@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,7 +39,10 @@ public class IotDeviceMessageRespVO {
     @Schema(description = "请求编号", example = "req_123")
     private String requestId;
 
-    @Schema(description = "请求方法", requiredMode = Schema.RequiredMode.REQUIRED, example = "thing.property.post")
+    @Schema(
+            description = "请求方法",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "thing.property.post")
     private String method;
 
     @Schema(description = "请求参数")
@@ -52,5 +56,4 @@ public class IotDeviceMessageRespVO {
 
     @Schema(description = "响应提示", example = "操作成功")
     private String msg;
-
 }

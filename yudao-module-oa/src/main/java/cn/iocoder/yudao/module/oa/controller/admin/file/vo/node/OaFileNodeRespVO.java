@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.file.vo.node;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,10 @@ public class OaFileNodeRespVO {
     @Schema(description = "节点类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     private Integer type;
 
-    @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "办公用品盘点结果.pdf")
+    @Schema(
+            description = "名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "办公用品盘点结果.pdf")
     private String name;
 
     @Schema(description = "临时文件地址，仅详情中具有下载权限时返回", example = "https://example.com/file.pdf")
@@ -39,10 +43,20 @@ public class OaFileNodeRespVO {
     @Schema(description = "创建人", example = "1024")
     private String creator;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
-    @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "更新时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime updateTime;
 
     @Schema(description = "当前用户权限级别", example = "1")
@@ -50,5 +64,4 @@ public class OaFileNodeRespVO {
 
     @Schema(description = "是否收藏", example = "false")
     private Boolean favorite;
-
 }

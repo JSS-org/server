@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.promotion.service.coupon;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.product.api.category.ProductCategoryApi;
@@ -12,16 +15,15 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.coupon.CouponTemplateDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.coupon.CouponTemplateMapper;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionProductScopeEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponTakeTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 
 /**
  * 优惠劵模板 Service 实现类
@@ -32,13 +34,10 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 @Validated
 public class CouponTemplateServiceImpl implements CouponTemplateService {
 
-    @Resource
-    private CouponTemplateMapper couponTemplateMapper;
+    @Resource private CouponTemplateMapper couponTemplateMapper;
 
-    @Resource
-    private ProductCategoryApi productCategoryApi;
-    @Resource
-    private ProductSpuApi productSpuApi;
+    @Resource private ProductCategoryApi productCategoryApi;
+    @Resource private ProductSpuApi productSpuApi;
 
     @Override
     public boolean isTakeLimitCountUnlimited(Integer takeLimitCount) {
@@ -53,13 +52,17 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
     @Override
     public Long createCouponTemplate(CouponTemplateCreateReqVO createReqVO) {
         // 校验发放数量不能小于每人限领数量（仅在 CouponTakeTypeEnum.USER 用户领取时）
-        validateTotalCountNotLessThanTakeLimitCount(createReqVO.getTakeType(), createReqVO.getTotalCount(),
+        validateTotalCountNotLessThanTakeLimitCount(
+                createReqVO.getTakeType(),
+                createReqVO.getTotalCount(),
                 createReqVO.getTakeLimitCount());
         // 校验商品范围
         validateProductScope(createReqVO.getProductScope(), createReqVO.getProductScopeValues());
         // 插入
-        CouponTemplateDO couponTemplate = CouponTemplateConvert.INSTANCE.convert(createReqVO)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        CouponTemplateDO couponTemplate =
+                CouponTemplateConvert.INSTANCE
+                        .convert(createReqVO)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         couponTemplateMapper.insert(couponTemplate);
         // 返回
         return couponTemplate.getId();
@@ -70,7 +73,9 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
         // 校验存在
         CouponTemplateDO couponTemplate = validateCouponTemplateExists(updateReqVO.getId());
         // 校验发放数量不能小于每人限领数量（仅在 CouponTakeTypeEnum.USER 用户领取时）
-        validateTotalCountNotLessThanTakeLimitCount(updateReqVO.getTakeType(), updateReqVO.getTotalCount(),
+        validateTotalCountNotLessThanTakeLimitCount(
+                updateReqVO.getTakeType(),
+                updateReqVO.getTotalCount(),
                 updateReqVO.getTakeLimitCount());
         // 校验发放数量不能过小（仅在 CouponTakeTypeEnum.USER 用户领取时）
         if (CouponTakeTypeEnum.isUser(updateReqVO.getTakeType())
@@ -110,7 +115,8 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
         return couponTemplate;
     }
 
-    private void validateTotalCountNotLessThanTakeLimitCount(Integer takeType, Integer totalCount, Integer takeLimitCount) {
+    private void validateTotalCountNotLessThanTakeLimitCount(
+            Integer takeType, Integer totalCount, Integer takeLimitCount) {
         // 修复 https://gitee.com/yudaocode/yudao-mall-uniapp/issues/IJLP6Q 反馈
         if (CouponTakeTypeEnum.isUser(takeType)
                 && !isTakeLimitCountUnlimited(takeLimitCount)
@@ -152,14 +158,17 @@ public class CouponTemplateServiceImpl implements CouponTemplateService {
     }
 
     @Override
-    public List<CouponTemplateDO> getCouponTemplateList(List<Integer> canTakeTypes, Integer productScope,
-                                                        Long productScopeValue, Integer count) {
-        return couponTemplateMapper.selectList(canTakeTypes, productScope, productScopeValue, count);
+    public List<CouponTemplateDO> getCouponTemplateList(
+            List<Integer> canTakeTypes,
+            Integer productScope,
+            Long productScopeValue,
+            Integer count) {
+        return couponTemplateMapper.selectList(
+                canTakeTypes, productScope, productScopeValue, count);
     }
 
     @Override
     public List<CouponTemplateDO> getCouponTemplateList(Collection<Long> ids) {
         return couponTemplateMapper.selectByIds(ids);
     }
-
 }

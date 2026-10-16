@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttemplate.HrmPerformanceResultTemplatePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttemplate.HrmPerformanceResultTemplateSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.performance.config.HrmPerformanceResultTemplateDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -84,5 +85,4 @@ public interface HrmPerformanceResultTemplateService {
      * @return 绩效结果模板
      */
     HrmPerformanceResultTemplateDO validatePerformanceResultTemplateEnabled(Long id);
-
 }

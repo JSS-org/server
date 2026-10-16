@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.mes.service.wm.productreceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.detail.MesWmProductReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productreceipt.MesWmProductReceiptDetailDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productreceipt.MesWmProductReceiptDetailMapper;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 产品收货单明细 Service 实现类
@@ -22,14 +24,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmProductReceiptDetailServiceImpl implements MesWmProductReceiptDetailService {
 
-    @Resource
-    private MesWmProductReceiptDetailMapper productReceiptDetailMapper;
+    @Resource private MesWmProductReceiptDetailMapper productReceiptDetailMapper;
 
-    @Resource
-    @Lazy
-    private MesWmProductReceiptService productReceiptService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource @Lazy private MesWmProductReceiptService productReceiptService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
 
     @Override
     public Long createProductReceiptDetail(MesWmProductReceiptDetailSaveReqVO createReqVO) {
@@ -37,7 +35,8 @@ public class MesWmProductReceiptDetailServiceImpl implements MesWmProductReceipt
         validateProductReceiptDetailSaveData(createReqVO);
 
         // 2. 新增
-        MesWmProductReceiptDetailDO detail = BeanUtils.toBean(createReqVO, MesWmProductReceiptDetailDO.class);
+        MesWmProductReceiptDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmProductReceiptDetailDO.class);
         productReceiptDetailMapper.insert(detail);
         return detail.getId();
     }
@@ -45,13 +44,15 @@ public class MesWmProductReceiptDetailServiceImpl implements MesWmProductReceipt
     @Override
     public void updateProductReceiptDetail(MesWmProductReceiptDetailSaveReqVO updateReqVO) {
         // 1.1 校验存在
-        MesWmProductReceiptDetailDO detail = validateProductReceiptDetailExists(updateReqVO.getId());
+        MesWmProductReceiptDetailDO detail =
+                validateProductReceiptDetailExists(updateReqVO.getId());
         // 1.2 校验关联数据
         updateReqVO.setReceiptId(detail.getReceiptId());
         validateProductReceiptDetailSaveData(updateReqVO);
 
         // 2. 更新
-        MesWmProductReceiptDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmProductReceiptDetailDO.class);
+        MesWmProductReceiptDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmProductReceiptDetailDO.class);
         productReceiptDetailMapper.updateById(updateObj);
     }
 
@@ -109,5 +110,4 @@ public class MesWmProductReceiptDetailServiceImpl implements MesWmProductReceipt
         warehouseAreaService.validateWarehouseAreaExists(
                 reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
     }
-
 }

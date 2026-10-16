@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.iot.controller.admin.product.vo.category;
 
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,5 +31,4 @@ public class IotProductCategoryRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

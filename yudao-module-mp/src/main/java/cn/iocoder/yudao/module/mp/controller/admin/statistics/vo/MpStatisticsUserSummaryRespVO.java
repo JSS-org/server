@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mp.controller.admin.statistics.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,5 +21,4 @@ public class MpStatisticsUserSummaryRespVO {
 
     @Schema(description = "取消关注的粉丝数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "20")
     private Integer cancelUser;
-
 }

@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.coupon.vo.template.Cou
 import cn.iocoder.yudao.module.promotion.controller.app.coupon.vo.template.AppCouponTemplatePageReqVO;
 import cn.iocoder.yudao.module.promotion.controller.app.coupon.vo.template.AppCouponTemplateRespVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.coupon.CouponTemplateDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -33,19 +34,25 @@ public interface CouponTemplateConvert {
 
     PageResult<CouponTemplateRespVO> convertPage(PageResult<CouponTemplateDO> page);
 
-    CouponTemplatePageReqVO convert(AppCouponTemplatePageReqVO pageReqVO, List<Integer> canTakeTypes, Integer productScope, Long productScopeValue);
+    CouponTemplatePageReqVO convert(
+            AppCouponTemplatePageReqVO pageReqVO,
+            List<Integer> canTakeTypes,
+            Integer productScope,
+            Long productScopeValue);
 
     PageResult<AppCouponTemplateRespVO> convertAppPage(PageResult<CouponTemplateDO> pageResult);
 
     List<AppCouponTemplateRespVO> convertAppList(List<CouponTemplateDO> list);
 
-    default PageResult<AppCouponTemplateRespVO> convertAppPage(PageResult<CouponTemplateDO> pageResult, Map<Long, Boolean> userCanTakeMap) {
+    default PageResult<AppCouponTemplateRespVO> convertAppPage(
+            PageResult<CouponTemplateDO> pageResult, Map<Long, Boolean> userCanTakeMap) {
         PageResult<AppCouponTemplateRespVO> result = convertAppPage(pageResult);
         copyTo(result.getList(), userCanTakeMap);
         return result;
     }
 
-    default List<AppCouponTemplateRespVO> convertAppList(List<CouponTemplateDO> list, Map<Long, Boolean> userCanTakeMap) {
+    default List<AppCouponTemplateRespVO> convertAppList(
+            List<CouponTemplateDO> list, Map<Long, Boolean> userCanTakeMap) {
         List<AppCouponTemplateRespVO> result = convertAppList(list);
         copyTo(result, userCanTakeMap);
         return result;
@@ -59,5 +66,4 @@ public interface CouponTemplateConvert {
     }
 
     List<CouponTemplateRespVO> convertList(List<CouponTemplateDO> list);
-
 }

@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.mes.service.md.autocode;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PART_FIXED_CHAR_DUPLICATE;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PART_NOT_EXISTS;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PART_SERIAL_NUMBER_DUPLICATE;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,7 +14,9 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePartD
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodeRuleDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.autocode.MesMdAutoCodePartMapper;
 import cn.iocoder.yudao.module.mes.enums.md.autocode.MesMdAutoCodePartTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -19,12 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PART_FIXED_CHAR_DUPLICATE;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PART_NOT_EXISTS;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PART_SERIAL_NUMBER_DUPLICATE;
-
 /**
  * MES 编码规则组成 Service 实现类
  *
@@ -34,10 +36,8 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.AUTO_CODE_PAR
 @Validated
 public class MesMdAutoCodePartServiceImpl implements MesMdAutoCodePartService {
 
-    @Resource
-    private MesMdAutoCodePartMapper partMapper;
-    @Resource
-    private MesMdAutoCodeRuleService ruleService;
+    @Resource private MesMdAutoCodePartMapper partMapper;
+    @Resource private MesMdAutoCodeRuleService ruleService;
 
     @Override
     public Long createAutoCodePart(MesMdAutoCodePartSaveReqVO createReqVO) {
@@ -61,7 +61,8 @@ public class MesMdAutoCodePartServiceImpl implements MesMdAutoCodePartService {
         // 校验规则存在
         ruleService.validateAutoCodeRuleExists(updateReqVO.getRuleId());
         // 校验流水号分段唯一性
-        validateSerialNumberPartUnique(updateReqVO.getId(), updateReqVO.getRuleId(), updateReqVO.getType());
+        validateSerialNumberPartUnique(
+                updateReqVO.getId(), updateReqVO.getRuleId(), updateReqVO.getType());
         // 校验固定字符（编码前缀）与其他规则不重复
         validateFixedCharUnique(updateReqVO.getId(), updateReqVO);
 
@@ -104,10 +105,15 @@ public class MesMdAutoCodePartServiceImpl implements MesMdAutoCodePartService {
         }
         // 查询该规则下所有流水号分段
         List<MesMdAutoCodePartDO> parts = partMapper.selectListByRuleId(ruleId);
-        long count = parts.stream()
-                .filter(part -> MesMdAutoCodePartTypeEnum.SERIAL_NUMBER.getType().equals(part.getType()))
-                .filter(part -> ObjUtil.notEqual(id, part.getId())) // 排除自己
-                .count();
+        long count =
+                parts.stream()
+                        .filter(
+                                part ->
+                                        MesMdAutoCodePartTypeEnum.SERIAL_NUMBER
+                                                .getType()
+                                                .equals(part.getType()))
+                        .filter(part -> ObjUtil.notEqual(id, part.getId())) // 排除自己
+                        .count();
         if (count > 0) {
             throw exception(AUTO_CODE_PART_SERIAL_NUMBER_DUPLICATE);
         }
@@ -122,11 +128,15 @@ public class MesMdAutoCodePartServiceImpl implements MesMdAutoCodePartService {
      */
     private void validateFixedCharUnique(Long id, MesMdAutoCodePartSaveReqVO reqVO) {
         // 1.1 所有固定字符分段，按规则分组
-        Map<Long, List<MesMdAutoCodePartDO>> fixedPartsByRuleId = convertMultiMap(
-                partMapper.selectByType(MesMdAutoCodePartTypeEnum.FIXED_CHAR.getType()), MesMdAutoCodePartDO::getRuleId);
+        Map<Long, List<MesMdAutoCodePartDO>> fixedPartsByRuleId =
+                convertMultiMap(
+                        partMapper.selectByType(MesMdAutoCodePartTypeEnum.FIXED_CHAR.getType()),
+                        MesMdAutoCodePartDO::getRuleId);
         // 1.2 本次保存后，本规则的前缀指纹（排除正在修改的分段，加入本次保存的分段）
-        List<MesMdAutoCodePartDO> myFixedParts = new ArrayList<>(
-                fixedPartsByRuleId.getOrDefault(reqVO.getRuleId(), Collections.emptyList()));
+        List<MesMdAutoCodePartDO> myFixedParts =
+                new ArrayList<>(
+                        fixedPartsByRuleId.getOrDefault(
+                                reqVO.getRuleId(), Collections.emptyList()));
         myFixedParts.removeIf(part -> ObjUtil.equal(id, part.getId()));
         if (MesMdAutoCodePartTypeEnum.FIXED_CHAR.getType().equals(reqVO.getType())) {
             myFixedParts.add(BeanUtils.toBean(reqVO, MesMdAutoCodePartDO.class));
@@ -139,7 +149,8 @@ public class MesMdAutoCodePartServiceImpl implements MesMdAutoCodePartService {
             if (ObjUtil.equal(rule.getId(), reqVO.getRuleId())) {
                 continue;
             }
-            List<MesMdAutoCodePartDO> otherFixedParts = fixedPartsByRuleId.getOrDefault(rule.getId(), Collections.emptyList());
+            List<MesMdAutoCodePartDO> otherFixedParts =
+                    fixedPartsByRuleId.getOrDefault(rule.getId(), Collections.emptyList());
             String otherFingerprint = buildFixedCharFingerprint(otherFixedParts);
             if (myFingerprint.equals(otherFingerprint)) {
                 throw exception(AUTO_CODE_PART_FIXED_CHAR_DUPLICATE);
@@ -153,8 +164,12 @@ public class MesMdAutoCodePartServiceImpl implements MesMdAutoCodePartService {
     private String buildFixedCharFingerprint(List<MesMdAutoCodePartDO> fixedParts) {
         return fixedParts.stream()
                 .sorted(Comparator.comparing(MesMdAutoCodePartDO::getSort))
-                .map(part -> StrUtil.sub(StrUtil.emptyToDefault(part.getFixCharacter(), ""), 0, part.getLength()))
+                .map(
+                        part ->
+                                StrUtil.sub(
+                                        StrUtil.emptyToDefault(part.getFixCharacter(), ""),
+                                        0,
+                                        part.getLength()))
                 .collect(Collectors.joining());
     }
-
 }

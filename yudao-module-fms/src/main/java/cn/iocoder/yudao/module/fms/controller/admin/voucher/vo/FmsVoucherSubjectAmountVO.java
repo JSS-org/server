@@ -16,13 +16,14 @@ public class FmsVoucherSubjectAmountVO {
      * 科目编号
      */
     private Long subjectId;
+
     /**
      * 借方发生额
      */
     private BigDecimal debitAmount;
+
     /**
      * 贷方发生额
      */
     private BigDecimal creditAmount;
-
 }

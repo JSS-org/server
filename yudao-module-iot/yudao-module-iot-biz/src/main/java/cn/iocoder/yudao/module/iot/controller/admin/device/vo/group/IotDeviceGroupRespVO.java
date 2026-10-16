@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,5 +27,4 @@ public class IotDeviceGroupRespVO {
 
     @Schema(description = "设备数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
     private Long deviceCount;
-
 }

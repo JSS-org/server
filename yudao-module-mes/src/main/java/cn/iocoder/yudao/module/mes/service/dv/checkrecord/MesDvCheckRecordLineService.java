@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.checkrecord.vo.line.MesDv
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkrecord.MesDvCheckRecordLineDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -72,7 +73,8 @@ public interface MesDvCheckRecordLineService {
      * @param pageReqVO 分页查询
      * @return 点检记录明细分页
      */
-    PageResult<MesDvCheckRecordLineDO> getCheckRecordLinePage(MesDvCheckRecordLinePageReqVO pageReqVO);
+    PageResult<MesDvCheckRecordLineDO> getCheckRecordLinePage(
+            MesDvCheckRecordLinePageReqVO pageReqVO);
 
     /**
      * 获得指定点检记录的所有明细
@@ -81,5 +83,4 @@ public interface MesDvCheckRecordLineService {
      * @return 明细列表
      */
     List<MesDvCheckRecordLineDO> getCheckRecordLineListByRecordId(Long recordId);
-
 }

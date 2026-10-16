@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.pay.api.transfer.dto;
 
 import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.enums.transfer.PayTransferStatusEnum;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -58,6 +59,7 @@ public class PayTransferRespDTO {
      * 调用渠道的错误码
      */
     private String channelErrorCode;
+
     /**
      * 调用渠道的错误提示
      */
@@ -70,6 +72,7 @@ public class PayTransferRespDTO {
      * @see <a href="https://pay.weixin.qq.com/doc/v3/merchant/4012716430">JSAPI 调起用户确认收款</a>
      */
     private String channelPackageInfo;
+
     /**
      * 渠道商户号
      *
@@ -77,5 +80,4 @@ public class PayTransferRespDTO {
      * @see <a href="https://pay.weixin.qq.com/doc/v3/merchant/4012716430">JSAPI 调起用户确认收款</a>
      */
     private String channelMchId;
-
 }

@@ -17,42 +17,52 @@ public class IotDataSinkWebSocketConfig extends IotAbstractDataSinkConfig {
      * 默认连接超时时间（毫秒）
      */
     public static final int DEFAULT_CONNECT_TIMEOUT_MS = 5000;
+
     /**
      * 默认发送超时时间（毫秒）
      */
     public static final int DEFAULT_SEND_TIMEOUT_MS = 10000;
+
     /**
      * 默认心跳间隔时间（毫秒）
      */
     public static final long DEFAULT_HEARTBEAT_INTERVAL_MS = 30000L;
+
     /**
      * 默认心跳消息内容
      */
     public static final String DEFAULT_HEARTBEAT_MESSAGE = "{\"type\":\"heartbeat\"}";
+
     /**
      * 默认是否启用 SSL 证书验证
      */
     public static final boolean DEFAULT_VERIFY_SSL_CERT = true;
+
     /**
      * 默认数据格式
      */
     public static final String DEFAULT_DATA_FORMAT = "JSON";
+
     /**
      * 默认重连间隔时间（毫秒）
      */
     public static final long DEFAULT_RECONNECT_INTERVAL_MS = 5000L;
+
     /**
      * 默认最大重连次数
      */
     public static final int DEFAULT_MAX_RECONNECT_ATTEMPTS = 3;
+
     /**
      * 默认是否启用压缩
      */
     public static final boolean DEFAULT_ENABLE_COMPRESSION = false;
+
     /**
      * 默认消息发送重试次数
      */
     public static final int DEFAULT_SEND_RETRY_COUNT = 1;
+
     /**
      * 默认消息发送重试间隔（毫秒）
      */
@@ -128,5 +138,4 @@ public class IotDataSinkWebSocketConfig extends IotAbstractDataSinkConfig {
      * 消息发送重试间隔（毫秒）
      */
     private Long sendRetryIntervalMs = DEFAULT_SEND_RETRY_INTERVAL_MS;
-
 }

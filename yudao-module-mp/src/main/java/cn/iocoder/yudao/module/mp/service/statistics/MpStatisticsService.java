@@ -50,5 +50,4 @@ public interface MpStatisticsService {
      * @return 接口分析数据
      */
     List<WxDataCubeInterfaceResult> getInterfaceSummary(Long accountId, LocalDateTime[] date);
-
 }

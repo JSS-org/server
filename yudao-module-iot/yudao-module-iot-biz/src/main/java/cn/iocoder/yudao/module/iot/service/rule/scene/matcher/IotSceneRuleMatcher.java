@@ -34,5 +34,4 @@ public interface IotSceneRuleMatcher {
     default boolean isEnabled() {
         return true;
     }
-
 }

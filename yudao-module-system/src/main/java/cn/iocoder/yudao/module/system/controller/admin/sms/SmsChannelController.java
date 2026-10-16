@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.sms;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,38 +11,40 @@ import cn.iocoder.yudao.module.system.controller.admin.sms.vo.channel.SmsChannel
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.channel.SmsChannelSimpleRespVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.sms.SmsChannelDO;
 import cn.iocoder.yudao.module.system.service.sms.SmsChannelService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - 短信渠道")
 @RestController
 @RequestMapping("system/sms-channel")
 public class SmsChannelController {
 
-    @Resource
-    private SmsChannelService smsChannelService;
+    @Resource private SmsChannelService smsChannelService;
 
     @PostMapping("/create")
     @Operation(summary = "创建短信渠道")
     @PreAuthorize("@ss.hasPermission('system:sms-channel:create')")
-    public CommonResult<Long> createSmsChannel(@Valid @RequestBody SmsChannelSaveReqVO createReqVO) {
+    public CommonResult<Long> createSmsChannel(
+            @Valid @RequestBody SmsChannelSaveReqVO createReqVO) {
         return success(smsChannelService.createSmsChannel(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新短信渠道")
     @PreAuthorize("@ss.hasPermission('system:sms-channel:update')")
-    public CommonResult<Boolean> updateSmsChannel(@Valid @RequestBody SmsChannelSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSmsChannel(
+            @Valid @RequestBody SmsChannelSaveReqVO updateReqVO) {
         smsChannelService.updateSmsChannel(updateReqVO);
         return success(true);
     }
@@ -75,7 +79,8 @@ public class SmsChannelController {
     @GetMapping("/page")
     @Operation(summary = "获得短信渠道分页")
     @PreAuthorize("@ss.hasPermission('system:sms-channel:query')")
-    public CommonResult<PageResult<SmsChannelRespVO>> getSmsChannelPage(@Valid SmsChannelPageReqVO pageVO) {
+    public CommonResult<PageResult<SmsChannelRespVO>> getSmsChannelPage(
+            @Valid SmsChannelPageReqVO pageVO) {
         PageResult<SmsChannelDO> pageResult = smsChannelService.getSmsChannelPage(pageVO);
         return success(BeanUtils.toBean(pageResult, SmsChannelRespVO.class));
     }
@@ -87,5 +92,4 @@ public class SmsChannelController {
         list.sort(Comparator.comparing(SmsChannelDO::getId));
         return success(BeanUtils.toBean(list, SmsChannelSimpleRespVO.class));
     }
-
 }

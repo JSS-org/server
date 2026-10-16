@@ -67,5 +67,4 @@ public interface WmsReceiptOrderDetailService {
      * @return 入库单明细数量
      */
     long getReceiptOrderDetailCountBySkuId(Long skuId);
-
 }

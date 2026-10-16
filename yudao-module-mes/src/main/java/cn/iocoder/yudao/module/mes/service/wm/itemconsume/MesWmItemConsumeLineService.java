@@ -26,7 +26,8 @@ public interface MesWmItemConsumeLineService {
      * @param pageReqVO 分页查询参数（含 feedbackId）
      * @return 消耗行分页
      */
-    PageResult<MesWmItemConsumeLineDO> getItemConsumeLinePage(MesWmItemConsumeLinePageReqVO pageReqVO);
+    PageResult<MesWmItemConsumeLineDO> getItemConsumeLinePage(
+            MesWmItemConsumeLinePageReqVO pageReqVO);
 
     /**
      * 查询指定消耗记录的所有行
@@ -35,5 +36,4 @@ public interface MesWmItemConsumeLineService {
      * @return 消耗行列表
      */
     List<MesWmItemConsumeLineDO> getItemConsumeLineListByConsumeId(Long consumeId);
-
 }

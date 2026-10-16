@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.service.device.remote;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR;
+
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.biz.IotDeviceCommonApi;
@@ -16,7 +18,9 @@ import cn.iocoder.yudao.module.iot.gateway.config.IotGatewayProperties;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -27,8 +31,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR;
-
 /**
  * Iot 设备信息 Service 实现类：调用远程的 device http 接口，进行设备认证、设备获取等
  *
@@ -38,53 +40,61 @@ import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeC
 @Slf4j
 public class IotDeviceApiImpl implements IotDeviceCommonApi {
 
-    @Resource
-    private IotGatewayProperties gatewayProperties;
+    @Resource private IotGatewayProperties gatewayProperties;
 
     private RestTemplate restTemplate;
 
     @PostConstruct
     public void init() {
         IotGatewayProperties.RpcProperties rpc = gatewayProperties.getRpc();
-        restTemplate = new RestTemplateBuilder()
-                .baseUri(rpc.getUrl())
-                .readTimeout(rpc.getReadTimeout())
-                .connectTimeout(rpc.getConnectTimeout())
-                .build();
+        restTemplate =
+                new RestTemplateBuilder()
+                        .baseUri(rpc.getUrl())
+                        .readTimeout(rpc.getReadTimeout())
+                        .connectTimeout(rpc.getConnectTimeout())
+                        .build();
     }
 
     @Override
     public CommonResult<Boolean> authDevice(IotDeviceAuthReqDTO authReqDTO) {
-        return doPost("/rpc-api/iot/device/auth", authReqDTO, new ParameterizedTypeReference<>() { });
+        return doPost(
+                "/rpc-api/iot/device/auth", authReqDTO, new ParameterizedTypeReference<>() {});
     }
 
     @Override
     public CommonResult<IotDeviceRespDTO> getDevice(IotDeviceGetReqDTO getReqDTO) {
-        return doPost("/rpc-api/iot/device/get", getReqDTO, new ParameterizedTypeReference<>() { });
+        return doPost("/rpc-api/iot/device/get", getReqDTO, new ParameterizedTypeReference<>() {});
     }
 
     @Override
-    public CommonResult<List<IotModbusDeviceConfigRespDTO>> getModbusDeviceConfigList(IotModbusDeviceConfigListReqDTO listReqDTO) {
-        return doPost("/rpc-api/iot/modbus/config-list", listReqDTO, new ParameterizedTypeReference<>() { });
+    public CommonResult<List<IotModbusDeviceConfigRespDTO>> getModbusDeviceConfigList(
+            IotModbusDeviceConfigListReqDTO listReqDTO) {
+        return doPost(
+                "/rpc-api/iot/modbus/config-list",
+                listReqDTO,
+                new ParameterizedTypeReference<>() {});
     }
 
     @Override
     public CommonResult<IotDeviceRegisterRespDTO> registerDevice(IotDeviceRegisterReqDTO reqDTO) {
-        return doPost("/rpc-api/iot/device/register", reqDTO, new ParameterizedTypeReference<>() { });
+        return doPost(
+                "/rpc-api/iot/device/register", reqDTO, new ParameterizedTypeReference<>() {});
     }
 
     @Override
-    public CommonResult<List<IotSubDeviceRegisterRespDTO>> registerSubDevices(IotSubDeviceRegisterFullReqDTO reqDTO) {
-        return doPost("/rpc-api/iot/device/register-sub", reqDTO, new ParameterizedTypeReference<>() { });
+    public CommonResult<List<IotSubDeviceRegisterRespDTO>> registerSubDevices(
+            IotSubDeviceRegisterFullReqDTO reqDTO) {
+        return doPost(
+                "/rpc-api/iot/device/register-sub", reqDTO, new ParameterizedTypeReference<>() {});
     }
 
-    private <T, R> CommonResult<R> doPost(String url, T body,
-                                          ParameterizedTypeReference<CommonResult<R>> responseType) {
+    private <T, R> CommonResult<R> doPost(
+            String url, T body, ParameterizedTypeReference<CommonResult<R>> responseType) {
         try {
             // 请求
             HttpEntity<T> requestEntity = new HttpEntity<>(body);
-            ResponseEntity<CommonResult<R>> response = restTemplate.exchange(
-                    url, HttpMethod.POST, requestEntity, responseType);
+            ResponseEntity<CommonResult<R>> response =
+                    restTemplate.exchange(url, HttpMethod.POST, requestEntity, responseType);
             // 响应
             CommonResult<R> result = response.getBody();
             Assert.notNull(result, "请求结果不能为空");
@@ -94,5 +104,4 @@ public class IotDeviceApiImpl implements IotDeviceCommonApi {
             return CommonResult.error(INTERNAL_SERVER_ERROR);
         }
     }
-
 }

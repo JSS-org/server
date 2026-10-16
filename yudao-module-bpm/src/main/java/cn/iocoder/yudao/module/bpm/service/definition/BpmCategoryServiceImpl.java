@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,7 +11,9 @@ import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.category.BpmCa
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.category.BpmCategorySaveReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmCategoryDO;
 import cn.iocoder.yudao.module.bpm.dal.mysql.category.BpmCategoryMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -19,9 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
-
 /**
  * BPM 流程分类 Service 实现类
  *
@@ -31,11 +33,9 @@ import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
 @Validated
 public class BpmCategoryServiceImpl implements BpmCategoryService {
 
-    @Resource
-    private BpmCategoryMapper bpmCategoryMapper;
+    @Resource private BpmCategoryMapper bpmCategoryMapper;
 
-    @Resource
-    private BpmModelService modelService;
+    @Resource private BpmModelService modelService;
 
     @Override
     public Long createCategory(BpmCategorySaveReqVO createReqVO) {
@@ -61,8 +61,7 @@ public class BpmCategoryServiceImpl implements BpmCategoryService {
 
     private void validateCategoryNameUnique(BpmCategorySaveReqVO updateReqVO) {
         BpmCategoryDO category = bpmCategoryMapper.selectByName(updateReqVO.getName());
-        if (category == null
-                || ObjUtil.equal(category.getId(), updateReqVO.getId())) {
+        if (category == null || ObjUtil.equal(category.getId(), updateReqVO.getId())) {
             return;
         }
         throw exception(CATEGORY_NAME_DUPLICATE, updateReqVO.getName());
@@ -70,8 +69,7 @@ public class BpmCategoryServiceImpl implements BpmCategoryService {
 
     private void validateCategoryCodeUnique(BpmCategorySaveReqVO updateReqVO) {
         BpmCategoryDO category = bpmCategoryMapper.selectByCode(updateReqVO.getCode());
-        if (category == null
-                || ObjUtil.equal(category.getId(), updateReqVO.getId())) {
+        if (category == null || ObjUtil.equal(category.getId(), updateReqVO.getId())) {
             return;
         }
         throw exception(CATEGORY_CODE_DUPLICATE, updateReqVO.getCode());
@@ -131,10 +129,10 @@ public class BpmCategoryServiceImpl implements BpmCategoryService {
         }
 
         // 批量更新排序
-        List<BpmCategoryDO> updateList = IntStream.range(0, ids.size())
-                .mapToObj(index -> new BpmCategoryDO().setId(ids.get(index)).setSort(index))
-                .collect(Collectors.toList());
+        List<BpmCategoryDO> updateList =
+                IntStream.range(0, ids.size())
+                        .mapToObj(index -> new BpmCategoryDO().setId(ids.get(index)).setSort(index))
+                        .collect(Collectors.toList());
         bpmCategoryMapper.updateBatch(updateList);
     }
-
 }

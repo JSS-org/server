@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.app.order.vo;
 
 import cn.iocoder.yudao.module.trade.controller.app.order.vo.item.AppTradeOrderItemRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class AppTradeOrderPageItemRespVO {
     @Schema(description = "订单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "订单流水号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1146347329394184195")
+    @Schema(
+            description = "订单流水号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1146347329394184195")
     private String no;
 
     @Schema(description = "订单类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
@@ -37,7 +42,10 @@ public class AppTradeOrderPageItemRespVO {
     @Schema(description = "支付订单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long payOrderId;
 
-    @Schema(description = "应付金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1000")
+    @Schema(
+            description = "应付金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1000")
     private Integer payPrice;
 
     // ========== 收件 + 物流基本信息 ==========
@@ -54,5 +62,4 @@ public class AppTradeOrderPageItemRespVO {
 
     @Schema(description = "拼团记录编号", example = "100")
     private Long combinationRecordId;
-
 }

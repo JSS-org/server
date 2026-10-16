@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.enums.device.IotDeviceStateEnum;
 import cn.iocoder.yudao.module.iot.core.topic.state.IotDeviceStateUpdateReqDTO;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,7 +32,8 @@ public class IotDeviceMessage {
      *
      * 其中，%s 就是该"server"(protocol) 的标识
      */
-    public static final String MESSAGE_BUS_GATEWAY_DEVICE_MESSAGE_TOPIC = MESSAGE_BUS_DEVICE_MESSAGE_TOPIC + "_%s";
+    public static final String MESSAGE_BUS_GATEWAY_DEVICE_MESSAGE_TOPIC =
+            MESSAGE_BUS_DEVICE_MESSAGE_TOPIC + "_%s";
 
     /**
      * 消息编号
@@ -39,6 +41,7 @@ public class IotDeviceMessage {
      * 由后端生成，通过 {@link IotDeviceMessageUtils#generateMessageId()}
      */
     private String id;
+
     /**
      * 上报时间
      *
@@ -50,6 +53,7 @@ public class IotDeviceMessage {
      * 设备编号
      */
     private Long deviceId;
+
     /**
      * 租户编号
      */
@@ -68,6 +72,7 @@ public class IotDeviceMessage {
      * 由设备生成，对应阿里云 IoT 的 Alink 协议中的 id、华为云 IoTDA 协议的 request_id
      */
     private String requestId;
+
     /**
      * 请求方法
      *
@@ -75,20 +80,24 @@ public class IotDeviceMessage {
      * 例如说：thing.property.post 属性上报
      */
     private String method;
+
     /**
      * 请求参数
      *
      * 例如说：属性上报的 properties、事件上报的 params
      */
     private Object params;
+
     /**
      * 响应结果
      */
     private Object data;
+
     /**
      * 响应错误码
      */
     private Integer code;
+
     /**
      * 返回结果信息
      */
@@ -118,15 +127,17 @@ public class IotDeviceMessage {
      * @param params   消息参数
      * @return 消息对象
      */
-    public static IotDeviceMessage requestOf(Long deviceId, Long tenantId, String serverId,
-                                             String method, Object params) {
+    public static IotDeviceMessage requestOf(
+            Long deviceId, Long tenantId, String serverId, String method, Object params) {
         IotDeviceMessage message = of(null, method, params, null, null, null);
         return message.setId(IotDeviceMessageUtils.generateMessageId())
-                .setDeviceId(deviceId).setTenantId(tenantId).setServerId(serverId);
+                .setDeviceId(deviceId)
+                .setTenantId(tenantId)
+                .setServerId(serverId);
     }
 
-    public static IotDeviceMessage replyOf(String requestId, String method,
-                                           Object data, Integer code, String msg) {
+    public static IotDeviceMessage replyOf(
+            String requestId, String method, Object data, Integer code, String msg) {
         if (code == null) {
             code = GlobalErrorCodeConstants.SUCCESS.getCode();
             msg = GlobalErrorCodeConstants.SUCCESS.getMsg();
@@ -134,27 +145,34 @@ public class IotDeviceMessage {
         return of(requestId, method, null, data, code, msg);
     }
 
-    public static IotDeviceMessage of(String requestId, String method,
-                                      Object params, Object data, Integer code, String msg) {
+    public static IotDeviceMessage of(
+            String requestId, String method, Object params, Object data, Integer code, String msg) {
         // 通用参数
-        IotDeviceMessage message = new IotDeviceMessage()
-                .setId(IotDeviceMessageUtils.generateMessageId()).setReportTime(LocalDateTime.now());
+        IotDeviceMessage message =
+                new IotDeviceMessage()
+                        .setId(IotDeviceMessageUtils.generateMessageId())
+                        .setReportTime(LocalDateTime.now());
         // 当前参数
-        message.setRequestId(requestId).setMethod(method).setParams(params)
-                .setData(data).setCode(code).setMsg(msg);
+        message.setRequestId(requestId)
+                .setMethod(method)
+                .setParams(params)
+                .setData(data)
+                .setCode(code)
+                .setMsg(msg);
         return message;
     }
 
     // ========== 核心方法：在 of 基础方法之上，添加对应 method ==========
 
     public static IotDeviceMessage buildStateUpdateOnline() {
-        return requestOf(IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod(),
+        return requestOf(
+                IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod(),
                 new IotDeviceStateUpdateReqDTO(IotDeviceStateEnum.ONLINE.getState()));
     }
 
     public static IotDeviceMessage buildStateOffline() {
-        return requestOf(IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod(),
+        return requestOf(
+                IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod(),
                 new IotDeviceStateUpdateReqDTO(IotDeviceStateEnum.OFFLINE.getState()));
     }
-
 }

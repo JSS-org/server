@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.chat;
 
+import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
+
 import cn.hutool.system.SystemUtil;
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.grok.GrokChatModel;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.Message;
@@ -11,13 +14,12 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
 
 /**
  * {@link GrokChatModel} 集成测试
@@ -26,19 +28,20 @@ import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
  */
 public class GrokChatModelTests {
 
-    private static final String API_KEY = SystemUtil.get("GROK_API_KEY",
-            "sk-xxxx");
-    private static final String MODEL = SystemUtil.get("GROK_MODEL",
-            GrokChatModel.MODEL_DEFAULT);
+    private static final String API_KEY = SystemUtil.get("GROK_API_KEY", "sk-xxxx");
+    private static final String MODEL = SystemUtil.get("GROK_MODEL", GrokChatModel.MODEL_DEFAULT);
 
-    private final GrokChatModel chatModel = new GrokChatModel(OpenAiChatModel.builder()
-            .options(OpenAiChatOptions.builder()
-                    .baseUrl(GrokChatModel.BASE_URL)
-                    .apiKey(API_KEY)
-                    .model(MODEL)
-                    .temperature(0.7)
-                    .build())
-            .build());
+    private final GrokChatModel chatModel =
+            new GrokChatModel(
+                    OpenAiChatModel.builder()
+                            .options(
+                                    OpenAiChatOptions.builder()
+                                            .baseUrl(GrokChatModel.BASE_URL)
+                                            .apiKey(API_KEY)
+                                            .model(MODEL)
+                                            .temperature(0.7)
+                                            .build())
+                            .build());
 
     @Test
     @Disabled
@@ -68,10 +71,13 @@ public class GrokChatModelTests {
         // 调用
         Flux<ChatResponse> flux = chatModel.stream(new Prompt(messages));
         // 打印结果
-        flux.doOnNext(response -> {
-//            System.out.println(response);
-            System.out.println(Objects.requireNonNull(response.getResult()).getOutput());
-        }).then().block();
+        flux.doOnNext(
+                        response -> {
+                            //            System.out.println(response);
+                            System.out.println(
+                                    Objects.requireNonNull(response.getResult()).getOutput());
+                        })
+                .then()
+                .block();
     }
-
 }

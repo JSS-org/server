@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +12,9 @@ import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemPageR
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.md.item.WmsItemMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 商品 Service 实现类
@@ -31,16 +33,12 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsItemServiceImpl implements WmsItemService {
 
-    @Resource
-    private WmsItemMapper itemMapper;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private WmsItemMapper itemMapper;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsItemCategoryService categoryService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsItemBrandService brandService;
-    @Resource
-    private WmsItemSkuService itemSkuService;
+    @Resource private WmsItemSkuService itemSkuService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -140,13 +138,15 @@ public class WmsItemServiceImpl implements WmsItemService {
 
     @Override
     public PageResult<WmsItemDO> getItemPage(WmsItemPageReqVO pageReqVO) {
-        return itemMapper.selectPage(pageReqVO,
+        return itemMapper.selectPage(
+                pageReqVO,
                 categoryService.getSelfAndChildItemCategoryIdList(pageReqVO.getCategoryId()));
     }
 
     @Override
     public List<WmsItemDO> getItemList(WmsItemListReqVO listReqVO) {
-        return itemMapper.selectList(listReqVO,
+        return itemMapper.selectList(
+                listReqVO,
                 categoryService.getSelfAndChildItemCategoryIdList(listReqVO.getCategoryId()));
     }
 
@@ -167,5 +167,4 @@ public class WmsItemServiceImpl implements WmsItemService {
     public long getItemCountByBrandId(Long brandId) {
         return itemMapper.selectCountByBrandId(brandId);
     }
-
 }

@@ -1,8 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.discussion;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.reply.OaDiscussionReplyPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.reply.OaDiscussionReplyCreateReqVO;
+import cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.reply.OaDiscussionReplyPageReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.discussion.OaDiscussionReplyDO;
 
 import java.util.Collection;
@@ -70,5 +70,4 @@ public interface OaDiscussionReplyService {
      * @param discussionId 讨论编号
      */
     void deleteDiscussionRepliesByDiscussionId(Long discussionId);
-
 }

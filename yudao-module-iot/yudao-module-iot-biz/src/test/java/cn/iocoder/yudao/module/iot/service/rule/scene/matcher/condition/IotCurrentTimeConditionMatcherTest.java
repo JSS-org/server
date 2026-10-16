@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.matcher.condition;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotBaseConditionMatcherTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotCurrentTimeConditionMatcher} 的单元测试
@@ -63,10 +65,10 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
         long pastTimestamp = LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.of("+8"));
-        IotSceneRuleDO.TriggerCondition condition = createDateTimeCondition(
-                IotSceneRuleConditionOperatorEnum.DATE_TIME_GREATER_THAN.getOperator(),
-                String.valueOf(pastTimestamp)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createDateTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.DATE_TIME_GREATER_THAN.getOperator(),
+                        String.valueOf(pastTimestamp));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -80,10 +82,10 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
         long futureTimestamp = LocalDateTime.now().plusHours(1).toEpochSecond(ZoneOffset.of("+8"));
-        IotSceneRuleDO.TriggerCondition condition = createDateTimeCondition(
-                IotSceneRuleConditionOperatorEnum.DATE_TIME_GREATER_THAN.getOperator(),
-                String.valueOf(futureTimestamp)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createDateTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.DATE_TIME_GREATER_THAN.getOperator(),
+                        String.valueOf(futureTimestamp));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -97,10 +99,10 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
         long futureTimestamp = LocalDateTime.now().plusHours(1).toEpochSecond(ZoneOffset.of("+8"));
-        IotSceneRuleDO.TriggerCondition condition = createDateTimeCondition(
-                IotSceneRuleConditionOperatorEnum.DATE_TIME_LESS_THAN.getOperator(),
-                String.valueOf(futureTimestamp)
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createDateTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.DATE_TIME_LESS_THAN.getOperator(),
+                        String.valueOf(futureTimestamp));
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -115,10 +117,10 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
         IotDeviceMessage message = createDeviceMessage();
         long startTimestamp = LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.of("+8"));
         long endTimestamp = LocalDateTime.now().plusHours(1).toEpochSecond(ZoneOffset.of("+8"));
-        IotSceneRuleDO.TriggerCondition condition = createDateTimeCondition(
-                IotSceneRuleConditionOperatorEnum.DATE_TIME_BETWEEN.getOperator(),
-                startTimestamp + "," + endTimestamp
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createDateTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.DATE_TIME_BETWEEN.getOperator(),
+                        startTimestamp + "," + endTimestamp);
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -133,10 +135,10 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
         IotDeviceMessage message = createDeviceMessage();
         long startTimestamp = LocalDateTime.now().plusHours(1).toEpochSecond(ZoneOffset.of("+8"));
         long endTimestamp = LocalDateTime.now().plusHours(2).toEpochSecond(ZoneOffset.of("+8"));
-        IotSceneRuleDO.TriggerCondition condition = createDateTimeCondition(
-                IotSceneRuleConditionOperatorEnum.DATE_TIME_BETWEEN.getOperator(),
-                startTimestamp + "," + endTimestamp
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createDateTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.DATE_TIME_BETWEEN.getOperator(),
+                        startTimestamp + "," + endTimestamp);
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -151,10 +153,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_timeGreaterThan_earlyMorning() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createTimeCondition(
-                IotSceneRuleConditionOperatorEnum.TIME_GREATER_THAN.getOperator(),
-                "06:00:00" // 早上6点
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.TIME_GREATER_THAN.getOperator(),
+                        "06:00:00" // 早上6点
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -168,10 +171,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_timeLessThan_lateNight() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createTimeCondition(
-                IotSceneRuleConditionOperatorEnum.TIME_LESS_THAN.getOperator(),
-                "23:59:59" // 晚上11点59分59秒
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.TIME_LESS_THAN.getOperator(),
+                        "23:59:59" // 晚上11点59分59秒
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -185,10 +189,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_timeBetween_allDay() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createTimeCondition(
-                IotSceneRuleConditionOperatorEnum.TIME_BETWEEN.getOperator(),
-                "00:00:00,23:59:59" // 全天
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.TIME_BETWEEN.getOperator(),
+                        "00:00:00,23:59:59" // 全天
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -201,10 +206,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_timeBetween_workingHours() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createTimeCondition(
-                IotSceneRuleConditionOperatorEnum.TIME_BETWEEN.getOperator(),
-                "09:00:00,17:00:00" // 工作时间
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.TIME_BETWEEN.getOperator(),
+                        "09:00:00,17:00:00" // 工作时间
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -262,10 +268,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_invalidTimeFormat() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createTimeCondition(
-                IotSceneRuleConditionOperatorEnum.TIME_GREATER_THAN.getOperator(),
-                randomString() // 随机无效时间格式
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.TIME_GREATER_THAN.getOperator(),
+                        randomString() // 随机无效时间格式
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -278,10 +285,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_invalidTimestampFormat() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createDateTimeCondition(
-                IotSceneRuleConditionOperatorEnum.DATE_TIME_GREATER_THAN.getOperator(),
-                randomString() // 随机无效时间戳格式
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createDateTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.DATE_TIME_GREATER_THAN.getOperator(),
+                        randomString() // 随机无效时间戳格式
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -294,10 +302,11 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
     public void testMatches_invalidBetweenFormat() {
         // 准备参数
         IotDeviceMessage message = createDeviceMessage();
-        IotSceneRuleDO.TriggerCondition condition = createTimeCondition(
-                IotSceneRuleConditionOperatorEnum.TIME_BETWEEN.getOperator(),
-                "09:00:00" // 缺少结束时间
-        );
+        IotSceneRuleDO.TriggerCondition condition =
+                createTimeCondition(
+                        IotSceneRuleConditionOperatorEnum.TIME_BETWEEN.getOperator(),
+                        "09:00:00" // 缺少结束时间
+                        );
 
         // 调用
         boolean result = matcher.matches(message, condition);
@@ -338,5 +347,4 @@ public class IotCurrentTimeConditionMatcherTest extends IotBaseConditionMatcherT
         condition.setParam(param);
         return condition;
     }
-
 }

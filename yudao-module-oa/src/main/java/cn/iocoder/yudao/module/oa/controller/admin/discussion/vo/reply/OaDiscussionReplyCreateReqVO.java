@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.reply;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.AssertTrue;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - OA 讨论回复新增 Request VO")
@@ -18,7 +21,10 @@ public class OaDiscussionReplyCreateReqVO {
     @Schema(description = "父回复编号", example = "0")
     private Long parentId;
 
-    @Schema(description = "回复内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "已收到，将按时完成。")
+    @Schema(
+            description = "回复内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "已收到，将按时完成。")
     @NotBlank(message = "回复内容不能为空")
     private String content;
 
@@ -32,5 +38,4 @@ public class OaDiscussionReplyCreateReqVO {
     public boolean isCommentLengthValid() {
         return parentId == null || parentId == 0L || content == null || content.length() <= 255;
     }
-
 }

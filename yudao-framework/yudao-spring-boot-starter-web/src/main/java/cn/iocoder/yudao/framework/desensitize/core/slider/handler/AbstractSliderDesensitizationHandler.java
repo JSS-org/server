@@ -34,9 +34,9 @@ public abstract class AbstractSliderDesensitizationHandler<T extends Annotation>
         }
 
         // 情况二：原始字符串长度大于前后缀保留字符串长度，则替换中间字符串
-        return origin.substring(0, prefixKeep) +
-                buildReplacerByLength(replacer, interval) +
-                origin.substring(prefixKeep + interval);
+        return origin.substring(0, prefixKeep)
+                + buildReplacerByLength(replacer, interval)
+                + origin.substring(prefixKeep + interval);
     }
 
     /**
@@ -73,5 +73,4 @@ public abstract class AbstractSliderDesensitizationHandler<T extends Annotation>
      * @return 替换符
      */
     abstract String getReplacer(T annotation);
-
 }

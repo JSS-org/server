@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.machinery;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 点检保养方案设备新增 Request VO")
@@ -21,5 +23,4 @@ public class MesDvCheckPlanMachinerySaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
-    }
+}

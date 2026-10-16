@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.product.controller.admin.comment.vo.ProductCommen
 import cn.iocoder.yudao.module.product.controller.admin.comment.vo.ProductCommentUpdateVisibleReqVO;
 import cn.iocoder.yudao.module.product.controller.app.comment.vo.AppCommentPageReqVO;
 import cn.iocoder.yudao.module.product.dal.dataobject.comment.ProductCommentDO;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -76,5 +77,4 @@ public interface ProductCommentService {
      * @return 商品评价分页
      */
     PageResult<ProductCommentDO> getCommentPage(AppCommentPageReqVO pageVO, Boolean visible);
-
 }

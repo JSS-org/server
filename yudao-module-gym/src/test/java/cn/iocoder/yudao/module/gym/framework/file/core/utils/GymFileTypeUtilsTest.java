@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.gym.framework.file.core.utils;
 
-import cn.iocoder.yudao.module.gym.enums.file.GymFileCategoryEnum;
-import cn.iocoder.yudao.module.gym.enums.file.GymFileMimeTypeEnum;
-import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import cn.iocoder.yudao.module.gym.enums.file.GymFileCategoryEnum;
+import cn.iocoder.yudao.module.gym.enums.file.GymFileMimeTypeEnum;
+
+import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * {@link GymFileTypeUtils} 的单元测试：验证魔数嗅探只认内容、不认后缀
@@ -20,11 +21,15 @@ public class GymFileTypeUtilsTest {
 
     /** 合法 PNG 头 + 填充 */
     private static byte[] png() {
-        return concat(new byte[]{(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A}, "filler-bytes".getBytes());
+        return concat(
+                new byte[] {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A},
+                "filler-bytes".getBytes());
     }
 
     private static byte[] jpeg() {
-        return concat(new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0}, "filler-bytes".getBytes());
+        return concat(
+                new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0},
+                "filler-bytes".getBytes());
     }
 
     private static byte[] gif() {
@@ -32,7 +37,8 @@ public class GymFileTypeUtilsTest {
     }
 
     private static byte[] webp() {
-        return concat(concat("RIFF".getBytes(StandardCharsets.US_ASCII), new byte[]{0, 0, 0, 0}),
+        return concat(
+                concat("RIFF".getBytes(StandardCharsets.US_ASCII), new byte[] {0, 0, 0, 0}),
                 concat("WEBP".getBytes(StandardCharsets.US_ASCII), "filler-bytes".getBytes()));
     }
 
@@ -42,9 +48,13 @@ public class GymFileTypeUtilsTest {
 
     /** ftyp box：4 字节长度 + ftyp + brand + 填充 */
     private static byte[] ftyp(String brand) {
-        return concat(new byte[]{0, 0, 0, 0x18},
-                concat("ftyp".getBytes(StandardCharsets.US_ASCII),
-                        concat(brand.getBytes(StandardCharsets.US_ASCII), "filler-bytes".getBytes())));
+        return concat(
+                new byte[] {0, 0, 0, 0x18},
+                concat(
+                        "ftyp".getBytes(StandardCharsets.US_ASCII),
+                        concat(
+                                brand.getBytes(StandardCharsets.US_ASCII),
+                                "filler-bytes".getBytes())));
     }
 
     private static byte[] concat(byte[] a, byte[] b) {
@@ -69,10 +79,17 @@ public class GymFileTypeUtilsTest {
     public void testDetectMimeType_unrecognized() {
         assertNull(GymFileTypeUtils.detectMimeType(null));
         assertNull(GymFileTypeUtils.detectMimeType(new byte[0]));
-        assertNull(GymFileTypeUtils.detectMimeType("MZ\u0000\u0000executable".getBytes(StandardCharsets.US_ASCII)));
+        assertNull(
+                GymFileTypeUtils.detectMimeType(
+                        "MZ\u0000\u0000executable".getBytes(StandardCharsets.US_ASCII)));
         // RIFF 但不是 WEBP（例如 WAV）
-        assertNull(GymFileTypeUtils.detectMimeType(concat("RIFF".getBytes(StandardCharsets.US_ASCII),
-                concat(new byte[]{0, 0, 0, 0}, "WAVE".getBytes(StandardCharsets.US_ASCII)))));
+        assertNull(
+                GymFileTypeUtils.detectMimeType(
+                        concat(
+                                "RIFF".getBytes(StandardCharsets.US_ASCII),
+                                concat(
+                                        new byte[] {0, 0, 0, 0},
+                                        "WAVE".getBytes(StandardCharsets.US_ASCII)))));
     }
 
     @Test
@@ -106,5 +123,4 @@ public class GymFileTypeUtilsTest {
         assertNull(GymFileCategoryEnum.find("coupon"));
         assertEquals(GymFileCategoryEnum.BODY_REPORT, GymFileCategoryEnum.find("body_report"));
     }
-
 }

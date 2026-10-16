@@ -78,6 +78,6 @@ public interface TradeOrderStatisticsService {
      * @param reqVO 统计参数
      * @return 订单量趋势统计
      */
-    List<DataComparisonRespVO<TradeOrderTrendRespVO>> getOrderCountTrendComparison(TradeOrderTrendReqVO reqVO);
-
+    List<DataComparisonRespVO<TradeOrderTrendRespVO>> getOrderCountTrendComparison(
+            TradeOrderTrendReqVO reqVO);
 }

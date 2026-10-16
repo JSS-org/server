@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.dv.checkplan;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +12,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.MesDvCheckPl
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkplan.MesDvCheckPlanDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.checkplan.MesDvCheckPlanMapper;
 import cn.iocoder.yudao.module.mes.enums.dv.MesDvCheckPlanStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 点检保养方案 Service 实现类
@@ -31,15 +33,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesDvCheckPlanServiceImpl implements MesDvCheckPlanService {
 
-    @Resource
-    private MesDvCheckPlanMapper checkPlanMapper;
+    @Resource private MesDvCheckPlanMapper checkPlanMapper;
 
-    @Resource
-    @Lazy
-    private MesDvCheckPlanMachineryService checkPlanMachineryService;
-    @Resource
-    @Lazy
-    private MesDvCheckPlanSubjectService checkPlanSubjectService;
+    @Resource @Lazy private MesDvCheckPlanMachineryService checkPlanMachineryService;
+    @Resource @Lazy private MesDvCheckPlanSubjectService checkPlanSubjectService;
 
     @Override
     public Long createCheckPlan(MesDvCheckPlanSaveReqVO createReqVO) {
@@ -86,8 +83,10 @@ public class MesDvCheckPlanServiceImpl implements MesDvCheckPlanService {
         }
 
         // 2. 更新状态为已启用
-        checkPlanMapper.updateById(new MesDvCheckPlanDO().setId(id)
-                .setStatus(MesDvCheckPlanStatusEnum.ENABLED.getStatus()));
+        checkPlanMapper.updateById(
+                new MesDvCheckPlanDO()
+                        .setId(id)
+                        .setStatus(MesDvCheckPlanStatusEnum.ENABLED.getStatus()));
     }
 
     @Override
@@ -99,8 +98,10 @@ public class MesDvCheckPlanServiceImpl implements MesDvCheckPlanService {
         }
 
         // 2. 更新状态为草稿
-        checkPlanMapper.updateById(new MesDvCheckPlanDO().setId(id)
-                .setStatus(MesDvCheckPlanStatusEnum.PREPARE.getStatus()));
+        checkPlanMapper.updateById(
+                new MesDvCheckPlanDO()
+                        .setId(id)
+                        .setStatus(MesDvCheckPlanStatusEnum.PREPARE.getStatus()));
     }
 
     @Override
@@ -181,5 +182,4 @@ public class MesDvCheckPlanServiceImpl implements MesDvCheckPlanService {
         }
         return checkPlanMapper.selectByIds(ids);
     }
-
 }

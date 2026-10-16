@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeChangeReasonEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -47,5 +50,4 @@ public class HrmEmployeeRegularReqVO {
     @Schema(description = "备注", example = "试用期考核通过")
     @Size(max = 500, message = "备注不能超过 500 个字符")
     private String remark;
-
 }

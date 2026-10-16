@@ -20,8 +20,10 @@ public interface ImWebSocketService {
      * @param contentType      内容类型，参见 ImContentTypeEnum 枚举类
      * @param payload          通知 payload
      */
-    default void sendNotificationAsync(Long userId, Integer conversationType, Integer contentType, Object payload) {
-        sendNotificationAsync(Collections.singleton(userId), conversationType, contentType, payload);
+    default void sendNotificationAsync(
+            Long userId, Integer conversationType, Integer contentType, Object payload) {
+        sendNotificationAsync(
+                Collections.singleton(userId), conversationType, contentType, payload);
     }
 
     /**
@@ -32,7 +34,11 @@ public interface ImWebSocketService {
      * @param contentType      内容类型，参见 ImContentTypeEnum 枚举类
      * @param payload          通知 payload
      */
-    void sendNotificationAsync(Collection<Long> userIds, Integer conversationType, Integer contentType, Object payload);
+    void sendNotificationAsync(
+            Collection<Long> userIds,
+            Integer conversationType,
+            Integer contentType,
+            Object payload);
 
     /**
      * 异步广播 WebSocket 通知给当前所有在线管理端用户
@@ -42,5 +48,4 @@ public interface ImWebSocketService {
      * @param payload          通知 payload
      */
     void broadcastNotificationAsync(Integer conversationType, Integer contentType, Object payload);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.task.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - OA 任务完成排行 Response VO")
@@ -15,5 +16,4 @@ public class OaTaskRankingRespVO {
 
     @Schema(description = "完成任务数量", example = "10")
     private Long completedCount;
-
 }

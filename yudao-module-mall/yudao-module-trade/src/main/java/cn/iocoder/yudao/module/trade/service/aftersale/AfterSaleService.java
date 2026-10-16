@@ -132,5 +132,4 @@ public interface AfterSaleService {
      * @return 数量
      */
     Long getApplyingAfterSaleCount(Long userId);
-
 }

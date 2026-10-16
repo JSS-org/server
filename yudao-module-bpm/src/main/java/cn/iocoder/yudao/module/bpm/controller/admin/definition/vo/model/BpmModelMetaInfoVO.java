@@ -6,11 +6,15 @@ import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.simple.B
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmAutoApproveTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmModelFormTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmModelTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
@@ -44,11 +48,13 @@ public class BpmModelMetaInfoVO {
     @InEnum(BpmModelFormTypeEnum.class)
     @NotNull(message = "表单类型不能为空")
     private Integer formType;
+
     @Schema(description = "表单编号", example = "1024")
     private Long formId; // formType 为 NORMAL 使用，必须非空
 
     @Schema(description = "自定义表单的提交路径，使用 Vue 的路由地址", example = "/bpm/oa/leave/create")
     private String formCustomCreatePath; // 表单类型为 CUSTOM 时，必须非空
+
     @Schema(description = "自定义表单的查看路径，使用 Vue 的路由地址", example = "/bpm/oa/leave/view")
     private String formCustomViewPath; // 表单类型为 CUSTOM 时，必须非空
 
@@ -62,7 +68,10 @@ public class BpmModelMetaInfoVO {
     @Schema(description = "可发起部门编号数组", example = "[2,4,6]")
     private List<Long> startDeptIds;
 
-    @Schema(description = "可管理用户编号数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "[2,4,6]")
+    @Schema(
+            description = "可管理用户编号数组",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[2,4,6]")
     @NotEmpty(message = "可管理用户编号数组不能为空")
     private List<Long> managerUserIds;
 
@@ -125,7 +134,6 @@ public class BpmModelMetaInfoVO {
         @Schema(description = "序列长度", example = "5")
         @NotNull(message = "序列长度不能为空")
         private Integer length;
-
     }
 
     @Schema(description = "标题设置")
@@ -139,7 +147,6 @@ public class BpmModelMetaInfoVO {
 
         @Schema(description = "标题", example = "流程标题")
         private String title;
-
     }
 
     @Schema(description = "摘要设置")
@@ -153,7 +160,6 @@ public class BpmModelMetaInfoVO {
 
         @Schema(description = "摘要字段数组", example = "[]")
         private List<String> summary;
-
     }
 
     @Schema(description = "http 请求通知设置", example = "{}")
@@ -181,7 +187,6 @@ public class BpmModelMetaInfoVO {
          */
         @Schema(description = "请求返回处理设置", example = "[]")
         private List<KeyValue<String, String>> response;
-
     }
 
     @Schema(description = "自定义打印模板设置")
@@ -194,7 +199,5 @@ public class BpmModelMetaInfoVO {
 
         @Schema(description = "打印模板", example = "<p></p>")
         private String template;
-
     }
-
 }

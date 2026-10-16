@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task;
 
-import org.dromara.core.trans.vo.VO;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
+import org.dromara.core.trans.vo.VO;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +36,9 @@ public class IotOtaTaskRespVO implements VO {
     @Schema(description = "设备成功数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "66")
     private Integer deviceSuccessCount;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2022-07-08 07:30:00")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2022-07-08 07:30:00")
     private LocalDateTime createTime;
-
 }

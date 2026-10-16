@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSi
 import cn.iocoder.yudao.module.member.controller.admin.signin.vo.config.MemberSignInConfigUpdateReqVO;
 import cn.iocoder.yudao.module.member.controller.app.signin.vo.config.AppMemberSignInConfigRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.signin.MemberSignInConfigDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -29,5 +30,4 @@ public interface MemberSignInConfigConvert {
     List<MemberSignInConfigRespVO> convertList(List<MemberSignInConfigDO> list);
 
     List<AppMemberSignInConfigRespVO> convertList02(List<MemberSignInConfigDO> list);
-
 }

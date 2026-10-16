@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.mes.service.pro.route;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.product.MesProRouteProductSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.route.MesProRouteProductMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工艺路线产品 Service 实现类
@@ -25,15 +27,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProRouteProductServiceImpl implements MesProRouteProductService {
 
-    @Resource
-    private MesProRouteProductMapper routeProductMapper;
+    @Resource private MesProRouteProductMapper routeProductMapper;
 
-    @Resource
-    @Lazy
-    private MesProRouteService routeService;
-    @Resource
-    @Lazy
-    private MesProRouteProductBomService routeProductBomService;
+    @Resource @Lazy private MesProRouteService routeService;
+    @Resource @Lazy private MesProRouteProductBomService routeProductBomService;
 
     @Override
     public Long createRouteProduct(MesProRouteProductSaveReqVO createReqVO) {
@@ -43,7 +40,8 @@ public class MesProRouteProductServiceImpl implements MesProRouteProductService 
         validateItemUnique(null, createReqVO.getItemId());
 
         // 2. 插入
-        MesProRouteProductDO routeProduct = BeanUtils.toBean(createReqVO, MesProRouteProductDO.class);
+        MesProRouteProductDO routeProduct =
+                BeanUtils.toBean(createReqVO, MesProRouteProductDO.class);
         routeProductMapper.insert(routeProduct);
         return routeProduct.getId();
     }
@@ -72,7 +70,8 @@ public class MesProRouteProductServiceImpl implements MesProRouteProductService 
         routeService.validateRouteNotEnable(routeProduct.getRouteId());
 
         // 2.1 级联删除关联的 BOM
-        routeProductBomService.deleteRouteProductBomByRouteIdAndProductId(routeProduct.getRouteId(), routeProduct.getItemId());
+        routeProductBomService.deleteRouteProductBomByRouteIdAndProductId(
+                routeProduct.getRouteId(), routeProduct.getItemId());
         // 2.2 删除产品关联
         routeProductMapper.deleteById(id);
     }
@@ -118,5 +117,4 @@ public class MesProRouteProductServiceImpl implements MesProRouteProductService 
     public void deleteRouteProductByRouteId(Long routeId) {
         routeProductMapper.deleteByRouteId(routeId);
     }
-
 }

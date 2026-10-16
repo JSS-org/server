@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.datapermission.core.rule;
 
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
 
@@ -32,5 +33,4 @@ public interface DataPermissionRule {
      * @return 过滤条件 Expression 表达式
      */
     Expression getExpression(String tableName, Alias tableAlias);
-
 }

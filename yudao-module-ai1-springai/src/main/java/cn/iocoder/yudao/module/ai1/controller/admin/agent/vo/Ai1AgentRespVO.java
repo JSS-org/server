@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.agent.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,7 +20,10 @@ public class Ai1AgentRespVO {
     @Schema(description = "介绍", example = "解答产品使用问题")
     private String introduction;
 
-    @Schema(description = "模型所属 Provider 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "模型所属 Provider 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Long providerId;
 
     @Schema(description = "模型所属 Provider 名称", example = "DeepSeek")
@@ -51,5 +55,4 @@ public class Ai1AgentRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

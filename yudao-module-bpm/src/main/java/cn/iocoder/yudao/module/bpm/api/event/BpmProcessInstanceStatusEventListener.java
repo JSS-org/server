@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.api.event;
 
 import cn.hutool.core.util.StrUtil;
+
 import org.springframework.context.ApplicationListener;
 
 /**
@@ -30,5 +31,4 @@ public abstract class BpmProcessInstanceStatusEventListener
      * @param event 事件
      */
     protected abstract void onEvent(BpmProcessInstanceStatusEvent event);
-
 }

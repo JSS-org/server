@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.oa.service.meetingroom;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
 import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.booking.*;
+import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.meetingroom.*;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 会议室 Service 接口
@@ -91,6 +92,6 @@ public interface OaMeetingRoomService {
      * @param userId 用户编号
      * @return 会议室分页
      */
-    PageResult<OaMeetingRoomDO> getMeetingRoomPageByBookingUserId(OaMeetingRoomPageReqVO pageReqVO, Long userId);
-
+    PageResult<OaMeetingRoomDO> getMeetingRoomPageByBookingUserId(
+            OaMeetingRoomPageReqVO pageReqVO, Long userId);
 }

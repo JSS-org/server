@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.iot.service.product;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.product.IotProductPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.product.IotProductSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductDO;
+
 import jakarta.validation.Valid;
 
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import javax.annotation.Nullable;
 
 /**
  * IoT 产品 Service 接口
@@ -155,5 +157,4 @@ public interface IotProductService {
      * 目的：当 MySQL 和 TDengine 不同步时，强制将指定产品的表结构同步到 TDengine 中
      */
     void syncProductPropertyTable(Long id);
-
 }

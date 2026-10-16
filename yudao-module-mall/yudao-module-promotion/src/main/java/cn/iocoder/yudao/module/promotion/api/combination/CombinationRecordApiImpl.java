@@ -8,7 +8,9 @@ import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationValidate
 import cn.iocoder.yudao.module.promotion.convert.combination.CombinationActivityConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationRecordDO;
 import cn.iocoder.yudao.module.promotion.service.combination.CombinationRecordService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,17 +23,20 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class CombinationRecordApiImpl implements CombinationRecordApi {
 
-    @Resource
-    private CombinationRecordService combinationRecordService;
+    @Resource private CombinationRecordService combinationRecordService;
 
     @Override
-    public void validateCombinationRecord(Long userId, Long activityId, Long headId, Long skuId, Integer count) {
-        combinationRecordService.validateCombinationRecord(userId, activityId, headId, skuId, count);
+    public void validateCombinationRecord(
+            Long userId, Long activityId, Long headId, Long skuId, Integer count) {
+        combinationRecordService.validateCombinationRecord(
+                userId, activityId, headId, skuId, count);
     }
 
     @Override
-    public CombinationRecordCreateRespDTO createCombinationRecord(CombinationRecordCreateReqDTO reqDTO) {
-        return CombinationActivityConvert.INSTANCE.convert4(combinationRecordService.createCombinationRecord(reqDTO));
+    public CombinationRecordCreateRespDTO createCombinationRecord(
+            CombinationRecordCreateReqDTO reqDTO) {
+        return CombinationActivityConvert.INSTANCE.convert4(
+                combinationRecordService.createCombinationRecord(reqDTO));
     }
 
     @Override
@@ -41,8 +46,9 @@ public class CombinationRecordApiImpl implements CombinationRecordApi {
     }
 
     @Override
-    public CombinationValidateJoinRespDTO validateJoinCombination(Long userId, Long activityId, Long headId, Long skuId, Integer count) {
-        return combinationRecordService.validateJoinCombination(userId, activityId, headId, skuId, count);
+    public CombinationValidateJoinRespDTO validateJoinCombination(
+            Long userId, Long activityId, Long headId, Long skuId, Integer count) {
+        return combinationRecordService.validateJoinCombination(
+                userId, activityId, headId, skuId, count);
     }
-
 }

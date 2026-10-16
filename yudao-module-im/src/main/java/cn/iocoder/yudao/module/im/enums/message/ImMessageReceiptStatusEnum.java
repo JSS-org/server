@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums.message;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,12 +15,14 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum ImMessageReceiptStatusEnum implements ArrayValuable<Integer> {
-
     NO_RECEIPT(0, "不需要回执"),
     PENDING(1, "待完成"),
     DONE(2, "已完成");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImMessageReceiptStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(ImMessageReceiptStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态
@@ -35,5 +38,4 @@ public enum ImMessageReceiptStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

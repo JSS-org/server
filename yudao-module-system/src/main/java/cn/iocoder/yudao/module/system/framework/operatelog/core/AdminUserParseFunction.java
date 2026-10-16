@@ -4,9 +4,13 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,8 +24,7 @@ public class AdminUserParseFunction implements IParseFunction {
 
     public static final String NAME = "getAdminUserById";
 
-    @Resource
-    private AdminUserService adminUserService;
+    @Resource private AdminUserService adminUserService;
 
     @Override
     public String functionName() {
@@ -47,5 +50,4 @@ public class AdminUserParseFunction implements IParseFunction {
         }
         return StrUtil.format("{}({})", nickname, user.getMobile());
     }
-
 }

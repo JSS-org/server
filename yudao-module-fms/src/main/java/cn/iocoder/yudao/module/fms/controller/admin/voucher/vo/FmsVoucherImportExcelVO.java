@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -98,10 +99,12 @@ public class FmsVoucherImportExcelVO {
      * 辅助核算类别编号与项目编码的映射
      */
     private Map<Long, String> auxiliaryCodes = new LinkedHashMap<>();
+
     /**
      * Excel 表头与原始单元格值的映射
      */
     private Map<String, String> sourceValues = new LinkedHashMap<>();
+
     /**
      * 校验错误数组
      */
@@ -112,5 +115,4 @@ public class FmsVoucherImportExcelVO {
             errors.add(error);
         }
     }
-
 }

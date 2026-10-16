@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.config.Seck
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillConfigDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -93,5 +94,4 @@ public interface SeckillConfigService {
      * @return 时段
      */
     SeckillConfigDO getCurrentSeckillConfig();
-
 }

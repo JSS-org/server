@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.api.spu.dto;
 
 import cn.iocoder.yudao.module.product.enums.spu.ProductSpuStatusEnum;
+
 import lombok.Data;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class ProductSpuRespDTO {
      * 商品分类编号
      */
     private Long categoryId;
+
     /**
      * 商品封面图
      */
@@ -51,18 +53,22 @@ public class ProductSpuRespDTO {
      * true - 多规格
      */
     private Boolean specType;
+
     /**
      * 商品价格，单位使用：分
      */
     private Integer price;
+
     /**
      * 市场价，单位使用：分
      */
     private Integer marketPrice;
+
     /**
      * 成本价，单位使用：分
      */
     private Integer costPrice;
+
     /**
      * 库存
      */
@@ -100,5 +106,4 @@ public class ProductSpuRespDTO {
      * true - 自行设置
      */
     private Boolean subCommissionType;
-
 }

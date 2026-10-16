@@ -4,11 +4,15 @@ import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @Schema(description = "管理后台 - 企业邮箱服务配置新增/修改 Request VO")
@@ -41,7 +45,10 @@ public class OaMailProviderSaveReqVO {
     @Data
     public static class ConnectionConfig {
 
-        @Schema(description = "服务器域名", requiredMode = Schema.RequiredMode.REQUIRED, example = "imap.example.com")
+        @Schema(
+                description = "服务器域名",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "imap.example.com")
         @NotBlank(message = "服务器域名不能为空")
         @Size(max = 253, message = "服务器域名长度不能超过 253 个字符")
         private String host;
@@ -52,11 +59,17 @@ public class OaMailProviderSaveReqVO {
         @Max(value = 65535, message = "服务器端口不能大于 65535")
         private Integer port;
 
-        @Schema(description = "是否开启 SSL", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+        @Schema(
+                description = "是否开启 SSL",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "true")
         @NotNull(message = "是否开启 SSL 不能为空")
         private Boolean sslEnable;
 
-        @Schema(description = "是否开启 STARTTLS", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+        @Schema(
+                description = "是否开启 STARTTLS",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "false")
         @NotNull(message = "是否开启 STARTTLS 不能为空")
         private Boolean starttlsEnable;
 
@@ -84,11 +97,11 @@ public class OaMailProviderSaveReqVO {
                 return Validator.isIpv6(host);
             }
             if (host.matches("\\d+(?:\\.\\d+){3}")) {
-                return host.matches("(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)){3}");
+                return host.matches(
+                        "(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)){3}");
             }
-            return host.matches("(?i)[a-z\\d](?:[a-z\\d-]{0,61}[a-z\\d])?(?:\\.[a-z\\d](?:[a-z\\d-]{0,61}[a-z\\d])?)*\\.?");
+            return host.matches(
+                    "(?i)[a-z\\d](?:[a-z\\d-]{0,61}[a-z\\d])?(?:\\.[a-z\\d](?:[a-z\\d-]{0,61}[a-z\\d])?)*\\.?");
         }
-
     }
-
 }

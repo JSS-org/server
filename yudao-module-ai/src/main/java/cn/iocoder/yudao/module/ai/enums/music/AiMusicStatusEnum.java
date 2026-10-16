@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.enums.music;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum AiMusicStatusEnum implements ArrayValuable<Integer> {
-
     IN_PROGRESS(10, "进行中"),
     SUCCESS(20, "已完成"),
     FAIL(30, "已失败");
@@ -29,11 +29,11 @@ public enum AiMusicStatusEnum implements ArrayValuable<Integer> {
      */
     private final String name;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(AiMusicStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(AiMusicStatusEnum::getStatus).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

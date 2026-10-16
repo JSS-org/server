@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.crm.service.customer;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.crm.controller.admin.customer.vo.customer.*;
 import cn.iocoder.yudao.module.crm.dal.dataobject.customer.CrmCustomerDO;
 import cn.iocoder.yudao.module.crm.service.customer.bo.CrmCustomerCreateReqBO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 客户 Service 接口
@@ -103,7 +104,8 @@ public interface CrmCustomerService {
      * @param userId 用户编号
      * @return 客户分页
      */
-    PageResult<CrmCustomerDO> getPutPoolRemindCustomerPage(CrmCustomerPageReqVO pageVO, Long userId);
+    PageResult<CrmCustomerDO> getPutPoolRemindCustomerPage(
+            CrmCustomerPageReqVO pageVO, Long userId);
 
     /**
      * 获得待进入公海的客户数量
@@ -168,7 +170,8 @@ public interface CrmCustomerService {
      * @param importReqVO     请求
      * @return 导入结果
      */
-    CrmCustomerImportRespVO importCustomerList(List<CrmCustomerImportExcelVO> importCustomers, CrmCustomerImportReqVO importReqVO);
+    CrmCustomerImportRespVO importCustomerList(
+            List<CrmCustomerImportExcelVO> importCustomers, CrmCustomerImportReqVO importReqVO);
 
     // ==================== 公海相关操作 ====================
 
@@ -194,5 +197,4 @@ public interface CrmCustomerService {
      * @return 掉入公海数量
      */
     int autoPutCustomerPool();
-
 }

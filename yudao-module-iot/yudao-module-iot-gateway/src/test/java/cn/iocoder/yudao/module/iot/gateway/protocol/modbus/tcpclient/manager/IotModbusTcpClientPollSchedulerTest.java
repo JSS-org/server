@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager;
 
+import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.FC_READ_COILS;
+import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.FC_READ_HOLDING_REGISTERS;
+import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.FC_READ_INPUT_REGISTERS;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigRespDTO;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusPointRespDTO;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.IotModbusTcpClientPollScheduler.ReadSegment;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.FC_READ_COILS;
-import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.FC_READ_HOLDING_REGISTERS;
-import static cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils.FC_READ_INPUT_REGISTERS;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotModbusTcpClientPollScheduler} 的单元测试
@@ -102,28 +104,33 @@ public class IotModbusTcpClientPollSchedulerTest {
     public void testExtractPointRawValues() {
         // 准备参数
         IotModbusPointRespDTO point = randomPoint(1L, FC_READ_HOLDING_REGISTERS, 12, 2, 1000);
-        ReadSegment segment = new ReadSegment(FC_READ_HOLDING_REGISTERS, 1000, 10, 4, Collections.singletonList(point));
-        int[] rawValues = new int[]{100, 200, 300, 400};
+        ReadSegment segment =
+                new ReadSegment(
+                        FC_READ_HOLDING_REGISTERS, 1000, 10, 4, Collections.singletonList(point));
+        int[] rawValues = new int[] {100, 200, 300, 400};
 
         // 调用
-        int[] pointRawValues = IotModbusTcpClientPollScheduler.extractPointRawValues(rawValues, segment, point);
+        int[] pointRawValues =
+                IotModbusTcpClientPollScheduler.extractPointRawValues(rawValues, segment, point);
 
         // 断言
-        assertArrayEquals(new int[]{300, 400}, pointRawValues);
+        assertArrayEquals(new int[] {300, 400}, pointRawValues);
     }
 
     @Test
     public void testExtractPointRawValuesForCoils() {
         // 准备参数
         IotModbusPointRespDTO point = randomPoint(1L, FC_READ_COILS, 3, 2, 1000);
-        ReadSegment segment = new ReadSegment(FC_READ_COILS, 1000, 0, 5, Collections.singletonList(point));
-        int[] rawValues = new int[]{1, 0, 1, 1, 0, 0, 0, 0}; // 线圈响应可能按字节补齐
+        ReadSegment segment =
+                new ReadSegment(FC_READ_COILS, 1000, 0, 5, Collections.singletonList(point));
+        int[] rawValues = new int[] {1, 0, 1, 1, 0, 0, 0, 0}; // 线圈响应可能按字节补齐
 
         // 调用
-        int[] pointRawValues = IotModbusTcpClientPollScheduler.extractPointRawValues(rawValues, segment, point);
+        int[] pointRawValues =
+                IotModbusTcpClientPollScheduler.extractPointRawValues(rawValues, segment, point);
 
         // 断言
-        assertArrayEquals(new int[]{1, 0}, pointRawValues);
+        assertArrayEquals(new int[] {1, 0}, pointRawValues);
     }
 
     private static IotModbusDeviceConfigRespDTO randomConfig(IotModbusPointRespDTO... points) {
@@ -133,8 +140,12 @@ public class IotModbusTcpClientPollSchedulerTest {
         return config;
     }
 
-    private static IotModbusPointRespDTO randomPoint(Long id, Integer functionCode, Integer registerAddress,
-                                                     Integer registerCount, Integer pollInterval) {
+    private static IotModbusPointRespDTO randomPoint(
+            Long id,
+            Integer functionCode,
+            Integer registerAddress,
+            Integer registerCount,
+            Integer pollInterval) {
         IotModbusPointRespDTO point = new IotModbusPointRespDTO();
         point.setId(id);
         point.setFunctionCode(functionCode);
@@ -143,5 +154,4 @@ public class IotModbusTcpClientPollSchedulerTest {
         point.setPollInterval(pollInterval);
         return point;
     }
-
 }

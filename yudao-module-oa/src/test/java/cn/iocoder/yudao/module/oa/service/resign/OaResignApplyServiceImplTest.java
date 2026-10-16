@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.resign;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
@@ -13,7 +21,9 @@ import cn.iocoder.yudao.module.oa.controller.admin.resign.vo.OaResignApplySubmit
 import cn.iocoder.yudao.module.oa.dal.dataobject.resign.OaResignApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.resign.OaResignApplyMapper;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +34,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaResignApplyServiceImpl} 的单元测试类
  *
@@ -39,20 +42,17 @@ import static org.mockito.Mockito.*;
 @Import(OaResignApplyServiceImpl.class)
 public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaResignApplyService resignApplyService;
+    @Resource private OaResignApplyService resignApplyService;
 
-    @Resource
-    private OaResignApplyMapper resignApplyMapper;
+    @Resource private OaResignApplyMapper resignApplyMapper;
 
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
 
     @BeforeEach
     public void before() {
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
     }
 
     @AfterEach
@@ -67,9 +67,13 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
         OaResignApplySaveReqVO reqVO = randomResignApplySaveReqVO().setId(id).setTitle("修改后的草稿");
 
         // 调用，并断言：他人不能修改、提交
-        assertServiceException(() -> resignApplyService.updateResignApply(reqVO, 99L), APPLY_ACCESS_DENIED);
-        assertServiceException(() -> resignApplyService.submitResignApply(new OaResignApplySubmitReqVO()
-                .setId(id), 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () -> resignApplyService.updateResignApply(reqVO, 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () ->
+                        resignApplyService.submitResignApply(
+                                new OaResignApplySubmitReqVO().setId(id), 99L),
+                APPLY_ACCESS_DENIED);
         resignApplyService.updateResignApply(reqVO, 10L);
         assertEquals("修改后的草稿", resignApplyMapper.selectById(id).getTitle());
         assertEquals(-1, resignApplyMapper.selectById(id).getStatus());
@@ -86,10 +90,16 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
         // 调用
         resignApplyService.submitResignApply(new OaResignApplySubmitReqVO().setId(id), 10L);
         // 断言
-        assertServiceException(() -> resignApplyService.submitResignApply(new OaResignApplySubmitReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
-        assertServiceException(() -> resignApplyService.updateResignApply(randomResignApplySaveReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        resignApplyService.submitResignApply(
+                                new OaResignApplySubmitReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        resignApplyService.updateResignApply(
+                                randomResignApplySaveReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
         verify(processInstanceApi, times(1)).createProcessInstance(eq(10L), any());
     }
 
@@ -112,8 +122,13 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
         assertEquals("10", application.getCreator());
         assertEquals(1, application.getStatus());
         assertEquals("process-1", application.getProcessInstanceId());
-        verify(processInstanceApi).createProcessInstance(eq(10L), argThat(dto ->
-                "oa_resign_apply".equals(dto.getProcessDefinitionKey()) && id.toString().equals(dto.getBusinessKey())));
+        verify(processInstanceApi)
+                .createProcessInstance(
+                        eq(10L),
+                        argThat(
+                                dto ->
+                                        "oa_resign_apply".equals(dto.getProcessDefinitionKey())
+                                                && id.toString().equals(dto.getBusinessKey())));
     }
 
     @Test
@@ -121,13 +136,17 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         OaResignApplySaveReqVO reqVO = randomResignApplySaveReqVO();
         // mock 方法
-        when(processInstanceApi.createProcessInstance(anyLong(), any())).thenThrow(new IllegalStateException("流程尚未配置"));
+        when(processInstanceApi.createProcessInstance(anyLong(), any()))
+                .thenThrow(new IllegalStateException("流程尚未配置"));
 
         // 调用
         Long id = resignApplyService.createResignApply(reqVO);
         // 断言
-        assertThrows(IllegalStateException.class, () -> resignApplyService.submitResignApply(
-                new OaResignApplySubmitReqVO().setId(id), 10L));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        resignApplyService.submitResignApply(
+                                new OaResignApplySubmitReqVO().setId(id), 10L));
         assertEquals(1L, resignApplyMapper.selectCount());
         assertEquals(-1, resignApplyMapper.selectById(id).getStatus());
         assertNull(resignApplyMapper.selectById(id).getProcessInstanceId());
@@ -192,11 +211,13 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertEquals(status, resignApplyMapper.selectById(application.getId()).getStatus());
     }
+
     @Test
     public void testUpdateResignApplyStatus_notExists() {
 
         // 调用，并断言异常
-        assertServiceException(() -> resignApplyService.updateResignApplyStatus(1024L, 2), APPLY_NOT_EXISTS);
+        assertServiceException(
+                () -> resignApplyService.updateResignApplyStatus(1024L, 2), APPLY_NOT_EXISTS);
     }
 
     @Test
@@ -204,11 +225,14 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long id = resignApplyService.createResignApply(randomResignApplySaveReqVO());
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(10L), any())).thenAnswer(invocation -> {
-            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
-            resignApplyService.updateResignApplyStatus(Long.valueOf(reqDTO.getBusinessKey()), 2);
-            return "process-1";
-        });
+        when(processInstanceApi.createProcessInstance(eq(10L), any()))
+                .thenAnswer(
+                        invocation -> {
+                            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
+                            resignApplyService.updateResignApplyStatus(
+                                    Long.valueOf(reqDTO.getBusinessKey()), 2);
+                            return "process-1";
+                        });
 
         // 调用
         resignApplyService.submitResignApply(new OaResignApplySubmitReqVO().setId(id), 10L);
@@ -227,7 +251,11 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
      * @return 请求参数
      */
     private static OaResignApplySaveReqVO randomResignApplySaveReqVO() {
-        return randomPojo(OaResignApplySaveReqVO.class).setTitle("业务申请").setUrgency(1).setId(null).setHandoverUserId(20L)
+        return randomPojo(OaResignApplySaveReqVO.class)
+                .setTitle("业务申请")
+                .setUrgency(1)
+                .setId(null)
+                .setHandoverUserId(20L)
                 .setHasPendingReimbursement(false);
     }
 
@@ -237,10 +265,16 @@ public class OaResignApplyServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaResignApplyDO randomResignApplyDO() {
-        return randomPojo(OaResignApplyDO.class, application -> {
-            application.setId(null).setTitle("申请").setUrgency(1).setStatus(1).setProcessInstanceId("process-1");
-            application.setCreator("10").setDeleted(false);
-        });
+        return randomPojo(
+                OaResignApplyDO.class,
+                application -> {
+                    application
+                            .setId(null)
+                            .setTitle("申请")
+                            .setUrgency(1)
+                            .setStatus(1)
+                            .setProcessInstanceId("process-1");
+                    application.setCreator("10").setDeleted(false);
+                });
     }
-
 }

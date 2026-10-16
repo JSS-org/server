@@ -20,5 +20,4 @@ public interface DictDataApi extends DictDataCommonApi {
      * @param values   字典数据值的数组
      */
     void validateDictDataList(String dictType, Collection<String> values);
-
 }

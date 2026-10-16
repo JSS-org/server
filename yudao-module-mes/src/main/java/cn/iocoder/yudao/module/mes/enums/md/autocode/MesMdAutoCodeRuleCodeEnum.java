@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MesMdAutoCodeRuleCodeEnum {
-
     MD_ITEM_TYPE_CODE("MD_ITEM_TYPE_CODE", "物料分类编码"),
     MD_ITEM_CODE("MD_ITEM_CODE", "物料编码"),
     MD_VENDOR_CODE("MD_VENDOR_CODE", "供应商编码"),
@@ -59,9 +58,9 @@ public enum MesMdAutoCodeRuleCodeEnum {
      * 规则代码
      */
     private final String code;
+
     /**
      * 规则名称
      */
     private final String name;
-
 }

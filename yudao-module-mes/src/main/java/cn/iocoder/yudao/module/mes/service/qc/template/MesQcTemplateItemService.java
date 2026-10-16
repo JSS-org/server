@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.item.MesQcTem
 import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.item.MesQcTemplateItemSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateItemDO;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcTypeEnum;
+
 import jakarta.validation.Valid;
 
 /**
@@ -67,5 +68,4 @@ public interface MesQcTemplateItemService {
      * @return 匹配的产品关联
      */
     MesQcTemplateItemDO getRequiredTemplateByItemIdAndType(Long itemId, Integer qcType);
-
 }

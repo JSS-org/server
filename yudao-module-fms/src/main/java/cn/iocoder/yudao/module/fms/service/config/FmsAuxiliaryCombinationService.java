@@ -29,8 +29,8 @@ public interface FmsAuxiliaryCombinationService {
      * @param items 辅助核算项目数组
      * @return 辅助核算组合
      */
-    FmsAuxiliaryCombinationDO saveAuxiliaryCombination(Long accountSetId, Long subjectId,
-                                                       List<FmsAuxiliaryCombinationDO.AuxiliaryItem> items);
+    FmsAuxiliaryCombinationDO saveAuxiliaryCombination(
+            Long accountSetId, Long subjectId, List<FmsAuxiliaryCombinationDO.AuxiliaryItem> items);
 
     /**
      * 获得指定科目的辅助核算组合数量
@@ -56,6 +56,6 @@ public interface FmsAuxiliaryCombinationService {
      * @param accountSetId 账套编号
      * @param auxiliaryItemIds 辅助核算项目编号数组
      */
-    void deleteAuxiliaryCombinationByAuxiliaryItemIds(Long accountSetId, Collection<Long> auxiliaryItemIds);
-
+    void deleteAuxiliaryCombinationByAuxiliaryItemIds(
+            Long accountSetId, Collection<Long> auxiliaryItemIds);
 }

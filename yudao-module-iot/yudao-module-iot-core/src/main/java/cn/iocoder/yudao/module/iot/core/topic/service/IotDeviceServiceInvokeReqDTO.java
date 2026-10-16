@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.service;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,5 +29,4 @@ public class IotDeviceServiceInvokeReqDTO {
      * 服务输入参数
      */
     private Map<String, Object> inputParams;
-
 }

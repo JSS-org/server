@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.kefu.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 发送客服消息 Request VO")
@@ -25,7 +27,7 @@ public class KeFuMessageSendReqVO {
 
     @Schema(description = "发送人编号", example = "24571", hidden = true)
     private Long senderId;
+
     @Schema(description = "发送人类型", example = "1", hidden = true)
     private Integer senderType;
-
 }

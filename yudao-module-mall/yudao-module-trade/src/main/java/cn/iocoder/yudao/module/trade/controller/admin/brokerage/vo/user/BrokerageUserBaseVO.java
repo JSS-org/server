@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.trade.controller.admin.brokerage.vo.user;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 
 /**
  * 分销用户 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -39,5 +42,4 @@ public class BrokerageUserBaseVO {
     @Schema(description = "冻结佣金", requiredMode = Schema.RequiredMode.REQUIRED, example = "30916")
     @NotNull(message = "冻结佣金不能为空")
     private Integer frozenPrice;
-
 }

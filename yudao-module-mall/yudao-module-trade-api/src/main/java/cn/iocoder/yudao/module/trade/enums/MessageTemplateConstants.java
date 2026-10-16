@@ -14,5 +14,4 @@ public interface MessageTemplateConstants {
     // ======================= 小程序订阅消息模版 =======================
 
     String WXA_ORDER_DELIVERY = "订单发货通知";
-
 }

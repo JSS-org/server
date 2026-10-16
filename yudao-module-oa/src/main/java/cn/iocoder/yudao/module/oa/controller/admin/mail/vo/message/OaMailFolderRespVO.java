@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 邮件目录 Response VO")
@@ -15,5 +16,4 @@ public class OaMailFolderRespVO {
 
     @Schema(description = "未读数量", example = "1")
     private Long unreadCount;
-
 }

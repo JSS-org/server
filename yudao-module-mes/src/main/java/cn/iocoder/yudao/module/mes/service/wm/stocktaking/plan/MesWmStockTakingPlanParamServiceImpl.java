@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.mes.service.wm.stocktaking.plan;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKING_PLAN_PARAM_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.param.MesWmStockTakingPlanParamPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.param.MesWmStockTakingPlanParamSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.plan.MesWmStockTakingPlanParamDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.stocktaking.plan.MesWmStockTakingPlanParamMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKING_PLAN_PARAM_NOT_EXISTS;
 
 /**
  * MES 盘点方案参数 Service 实现类
@@ -25,12 +27,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKI
 @Validated
 public class MesWmStockTakingPlanParamServiceImpl implements MesWmStockTakingPlanParamService {
 
-    @Resource
-    private MesWmStockTakingPlanParamMapper stockTakingPlanParamMapper;
+    @Resource private MesWmStockTakingPlanParamMapper stockTakingPlanParamMapper;
 
-    @Resource
-    @Lazy
-    private MesWmStockTakingPlanService stockTakingPlanService;
+    @Resource @Lazy private MesWmStockTakingPlanService stockTakingPlanService;
 
     @Override
     public Long createStockTakingPlanParam(MesWmStockTakingPlanParamSaveReqVO createReqVO) {
@@ -38,7 +37,8 @@ public class MesWmStockTakingPlanParamServiceImpl implements MesWmStockTakingPla
         stockTakingPlanService.validateStockTakingPlanEditable(createReqVO.getPlanId());
 
         // 创建盘点方案参数
-        MesWmStockTakingPlanParamDO param = BeanUtils.toBean(createReqVO, MesWmStockTakingPlanParamDO.class);
+        MesWmStockTakingPlanParamDO param =
+                BeanUtils.toBean(createReqVO, MesWmStockTakingPlanParamDO.class);
         stockTakingPlanParamMapper.insert(param);
         return param.getId();
     }
@@ -51,7 +51,8 @@ public class MesWmStockTakingPlanParamServiceImpl implements MesWmStockTakingPla
         stockTakingPlanService.validateStockTakingPlanEditable(param.getPlanId());
 
         // 更新盘点方案参数
-        MesWmStockTakingPlanParamDO updateObj = BeanUtils.toBean(updateReqVO, MesWmStockTakingPlanParamDO.class);
+        MesWmStockTakingPlanParamDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmStockTakingPlanParamDO.class);
         updateObj.setPlanId(param.getPlanId());
         stockTakingPlanParamMapper.updateById(updateObj);
     }
@@ -73,7 +74,8 @@ public class MesWmStockTakingPlanParamServiceImpl implements MesWmStockTakingPla
     }
 
     @Override
-    public PageResult<MesWmStockTakingPlanParamDO> getStockTakingPlanParamPage(MesWmStockTakingPlanParamPageReqVO pageReqVO) {
+    public PageResult<MesWmStockTakingPlanParamDO> getStockTakingPlanParamPage(
+            MesWmStockTakingPlanParamPageReqVO pageReqVO) {
         return stockTakingPlanParamMapper.selectPage(pageReqVO);
     }
 
@@ -95,5 +97,4 @@ public class MesWmStockTakingPlanParamServiceImpl implements MesWmStockTakingPla
     public List<MesWmStockTakingPlanParamDO> getStockTakingPlanParamListByPlanId(Long planId) {
         return stockTakingPlanParamMapper.selectListByPlanId(planId);
     }
-
 }

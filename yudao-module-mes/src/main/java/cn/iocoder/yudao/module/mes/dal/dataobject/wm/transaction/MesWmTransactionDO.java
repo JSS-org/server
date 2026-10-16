@@ -7,16 +7,18 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.materialstock.MesWmMaterial
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseAreaDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
+import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmTransactionTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
 
 /**
  * MES 库存事务流水 DO
@@ -36,8 +38,7 @@ public class MesWmTransactionDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     // ==================== 业务归属 ====================
 
@@ -55,14 +56,17 @@ public class MesWmTransactionDO extends BaseDO {
      * 对应 {@link MesBizTypeConstants} 中的常量
      */
     private Integer bizType;
+
     /**
      * 来源业务主单 ID
      */
     private Long bizId;
+
     /**
      * 来源业务单号
      */
     private String bizCode;
+
     /**
      * 来源业务行 ID
      */
@@ -74,6 +78,7 @@ public class MesWmTransactionDO extends BaseDO {
      * 关联 {@link MesWmMaterialStockDO#getId()}
      */
     private Long materialStockId;
+
     /**
      * 关联的事务 ID
      *
@@ -89,18 +94,21 @@ public class MesWmTransactionDO extends BaseDO {
      * 关联 {@link MesMdItemDO#getId()}
      */
     private Long itemId;
+
     /**
      * 本次变动数量
      *
      * 正数=入库，负数=出库
      */
     private BigDecimal quantity;
+
     /**
      * 批次 ID
      *
      * 关联 {@link MesWmBatchDO#getId()}
      */
     private Long batchId;
+
     /**
      * 批次号
      *
@@ -116,12 +124,14 @@ public class MesWmTransactionDO extends BaseDO {
      * 关联 {@link MesWmWarehouseDO#getId()}
      */
     private Long warehouseId;
+
     /**
      * 库区 ID
      *
      * 关联 {@link MesWmWarehouseLocationDO#getId()}
      */
     private Long locationId;
+
     /**
      * 库位 ID
      *
@@ -135,13 +145,14 @@ public class MesWmTransactionDO extends BaseDO {
      * 事务发生时间
      */
     private LocalDateTime transactionTime;
+
     /**
      * ERP 账期
      */
     private LocalDateTime erpTime;
+
     /**
      * 入库时间
      */
     private LocalDateTime receiptTime;
-
 }

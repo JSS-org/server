@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.MesMdWorkstationPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,13 +19,15 @@ import java.util.List;
 public interface MesMdWorkstationMapper extends BaseMapperX<MesMdWorkstationDO> {
 
     default PageResult<MesMdWorkstationDO> selectPage(MesMdWorkstationPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesMdWorkstationDO>()
-                .eqIfPresent(MesMdWorkstationDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesMdWorkstationDO::getName, reqVO.getName())
-                .eqIfPresent(MesMdWorkstationDO::getWorkshopId, reqVO.getWorkshopId())
-                .eqIfPresent(MesMdWorkstationDO::getProcessId, reqVO.getProcessId())
-                .eqIfPresent(MesMdWorkstationDO::getStatus, reqVO.getStatus())
-                .orderByDesc(MesMdWorkstationDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesMdWorkstationDO>()
+                        .eqIfPresent(MesMdWorkstationDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesMdWorkstationDO::getName, reqVO.getName())
+                        .eqIfPresent(MesMdWorkstationDO::getWorkshopId, reqVO.getWorkshopId())
+                        .eqIfPresent(MesMdWorkstationDO::getProcessId, reqVO.getProcessId())
+                        .eqIfPresent(MesMdWorkstationDO::getStatus, reqVO.getStatus())
+                        .orderByDesc(MesMdWorkstationDO::getId));
     }
 
     default MesMdWorkstationDO selectByCode(String code) {
@@ -54,5 +57,4 @@ public interface MesMdWorkstationMapper extends BaseMapperX<MesMdWorkstationDO> 
     default Long selectCountByAreaId(Long areaId) {
         return selectCount(MesMdWorkstationDO::getAreaId, areaId);
     }
-
 }

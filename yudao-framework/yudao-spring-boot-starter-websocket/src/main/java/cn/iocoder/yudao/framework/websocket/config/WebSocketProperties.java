@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.framework.websocket.config;
 
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
-
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * WebSocket 配置项
@@ -30,5 +31,4 @@ public class WebSocketProperties {
      */
     @NotNull(message = "WebSocket 的消息发送者不能为空")
     private String senderType = "local";
-
 }

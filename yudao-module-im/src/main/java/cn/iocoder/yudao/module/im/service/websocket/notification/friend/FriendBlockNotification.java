@@ -8,6 +8,4 @@ import lombok.Data;
  * A 拉黑 B 后仅推 A 多端；B 端不感知（B 那边 blocked=0 不变）
  */
 @Data
-public class FriendBlockNotification extends BaseFriendNotification {
-
-}
+public class FriendBlockNotification extends BaseFriendNotification {}

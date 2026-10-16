@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.oa.service.discussion;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_VOTE_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,18 +18,15 @@ import cn.iocoder.yudao.module.oa.dal.mysql.discussion.OaDiscussionMapper;
 import cn.iocoder.yudao.module.oa.enums.discussion.OaDiscussionTypeEnum;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Arrays;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_VOTE_INVALID;
 
 /**
  * OA 讨论 Service 实现类
@@ -35,33 +37,31 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_VOT
 @Validated
 public class OaDiscussionServiceImpl implements OaDiscussionService {
 
-    @Resource
-    private OaDiscussionMapper discussionMapper;
+    @Resource private OaDiscussionMapper discussionMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaDiscussionReplyService discussionReplyService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaDiscussionLikeService discussionLikeService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaDiscussionVoteService discussionVoteService;
 
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private PermissionApi permissionApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createDiscussion(OaDiscussionSaveReqVO createReqVO, Long userId) {
         // 1. 新增讨论
-        OaDiscussionDO discussion = BeanUtils.toBean(createReqVO, OaDiscussionDO.class)
-                .setUserId(userId).setVisitCount(0);
+        OaDiscussionDO discussion =
+                BeanUtils.toBean(createReqVO, OaDiscussionDO.class)
+                        .setUserId(userId)
+                        .setVisitCount(0);
         clearVoteConfigIfNotVote(discussion);
         discussionMapper.insert(discussion);
 
         // 2. 新增投票选项
-        discussionVoteService.createVoteOptionList(discussion.getId(), createReqVO.getVoteOptions());
+        discussionVoteService.createVoteOptionList(
+                discussion.getId(), createReqVO.getVoteOptions());
         return discussion.getId();
     }
 
@@ -73,13 +73,13 @@ public class OaDiscussionServiceImpl implements OaDiscussionService {
         // 1.2 投票结束时间必须晚于原开始时间
         if (ObjectUtil.equal(OaDiscussionTypeEnum.VOTE.getType(), discussion.getType())
                 && (updateReqVO.getVoteEndTime() == null
-                || !updateReqVO.getVoteEndTime().isAfter(discussion.getVoteStartTime()))) {
+                        || !updateReqVO.getVoteEndTime().isAfter(discussion.getVoteStartTime()))) {
             throw exception(DISCUSSION_VOTE_INVALID);
         }
 
         // 2. 更新讨论；注意：发布后不允许修改类型以及已有投票的基础配置和选项
-        OaDiscussionDO updateObj = BeanUtils.toBean(updateReqVO, OaDiscussionDO.class)
-                .setUserId(null).setType(null);
+        OaDiscussionDO updateObj =
+                BeanUtils.toBean(updateReqVO, OaDiscussionDO.class).setUserId(null).setType(null);
         if (OaDiscussionTypeEnum.VOTE.getType().equals(discussion.getType())) {
             updateObj.setVoteMultiple(null).setVoteStartTime(null);
         } else {
@@ -112,15 +112,19 @@ public class OaDiscussionServiceImpl implements OaDiscussionService {
     @Override
     public PageResult<OaDiscussionDO> getDiscussionPage(OaDiscussionPageReqVO pageReqVO) {
         if (CollUtil.isEmpty(pageReqVO.getSortingFields())) {
-            pageReqVO.setSortingFields(Arrays.asList(
-                    PageUtils.buildSortingField(OaDiscussionDO::getType, SortingField.ORDER_ASC),
-                    PageUtils.buildSortingField(OaDiscussionDO::getUpdateTime, SortingField.ORDER_DESC)));
+            pageReqVO.setSortingFields(
+                    Arrays.asList(
+                            PageUtils.buildSortingField(
+                                    OaDiscussionDO::getType, SortingField.ORDER_ASC),
+                            PageUtils.buildSortingField(
+                                    OaDiscussionDO::getUpdateTime, SortingField.ORDER_DESC)));
         }
         return discussionMapper.selectPage(pageReqVO);
     }
 
     @Override
-    public PageResult<OaDiscussionDO> getDiscussionManagePage(OaDiscussionPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaDiscussionDO> getDiscussionManagePage(
+            OaDiscussionPageReqVO pageReqVO, Long userId) {
         // 1. 普通用户只能管理本人讨论，不接受请求指定的其他发布人
         if (!isSuperAdmin(userId)) {
             pageReqVO.setUserId(userId);
@@ -199,5 +203,4 @@ public class OaDiscussionServiceImpl implements OaDiscussionService {
         }
         discussion.setVoteMultiple(null).setVoteStartTime(null).setVoteEndTime(null);
     }
-
 }

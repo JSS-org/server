@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.im.service.websocket.notification.rtc;
 import cn.iocoder.yudao.module.im.dal.dataobject.rtc.ImRtcCallDO;
 import cn.iocoder.yudao.module.im.enums.rtc.ImRtcParticipantStatusEnum;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import lombok.Data;
 
 import java.util.Collection;
@@ -31,14 +32,17 @@ public class ImRtcCallNotification {
      * 业务通话编号
      */
     private String room;
+
     /**
      * 会话类型
      */
     private Integer conversationType;
+
     /**
      * 媒体类型
      */
     private Integer mediaType;
+
     /**
      * 群编号：群通话场景必填
      */
@@ -50,22 +54,27 @@ public class ImRtcCallNotification {
      * LiveKit Server WebSocket 地址；INVITE 专属
      */
     private String livekitUrl;
+
     /**
      * 该被叫专属的 LiveKit 接听 Token；接通后直接 connect 用；INVITE 专属
      */
     private String token;
+
     /**
      * 发起人用户编号；INVITE 专属
      */
     private Long inviterUserId;
+
     /**
      * 发起人昵称；INVITE 专属，前端来电界面展示
      */
     private String inviterNickname;
+
     /**
      * 发起人头像；INVITE 专属，前端来电界面展示
      */
     private String inviterAvatar;
+
     /**
      * 本次被邀请人列表；INVITE 专属，前端来电界面展示「邀请的其他人」
      *
@@ -79,10 +88,12 @@ public class ImRtcCallNotification {
      * 操作者用户编号；REJECT 触发本次状态变迁的人
      */
     private Long operatorUserId;
+
     /**
      * 操作者昵称；前端按需展示（被某某拒接）；普通文案不依赖
      */
     private String operatorNickname;
+
     /**
      * 操作者头像；前端按需展示；普通文案不依赖
      */
@@ -98,10 +109,14 @@ public class ImRtcCallNotification {
      * @param inviteeIds  本次被邀请人列表；前端来电界面展示「邀请的其他人」用
      * @return INVITE 信令
      */
-    public static ImRtcCallNotification ofInvite(ImRtcCallDO call, AdminUserRespDTO inviter,
-                                                 String livekitUrl, String token,
-                                                 Collection<Long> inviteeIds) {
-        ImRtcCallNotification notification = baseOf(call, ImRtcParticipantStatusEnum.INVITING.getStatus());
+    public static ImRtcCallNotification ofInvite(
+            ImRtcCallDO call,
+            AdminUserRespDTO inviter,
+            String livekitUrl,
+            String token,
+            Collection<Long> inviteeIds) {
+        ImRtcCallNotification notification =
+                baseOf(call, ImRtcParticipantStatusEnum.INVITING.getStatus());
         notification.livekitUrl = livekitUrl;
         notification.token = token;
         notification.inviterUserId = call.getInviterUserId();
@@ -121,8 +136,10 @@ public class ImRtcCallNotification {
      * @param operator        拒接者；可空，缺失时 operatorNickname / operatorAvatar 留空
      * @return REJECT 信令
      */
-    public static ImRtcCallNotification ofReject(ImRtcCallDO call, Long operatorUserId, AdminUserRespDTO operator) {
-        ImRtcCallNotification notification = baseOf(call, ImRtcParticipantStatusEnum.REJECTED.getStatus());
+    public static ImRtcCallNotification ofReject(
+            ImRtcCallDO call, Long operatorUserId, AdminUserRespDTO operator) {
+        ImRtcCallNotification notification =
+                baseOf(call, ImRtcParticipantStatusEnum.REJECTED.getStatus());
         notification.operatorUserId = operatorUserId;
         if (operator != null) {
             notification.operatorNickname = operator.getNickname();
@@ -139,8 +156,10 @@ public class ImRtcCallNotification {
      * @param operator       未接听者；可空，缺失时 operatorNickname / operatorAvatar 留空
      * @return NO_ANSWER 信令
      */
-    public static ImRtcCallNotification ofNoAnswer(ImRtcCallDO call, Long operatorUserId, AdminUserRespDTO operator) {
-        ImRtcCallNotification notification = baseOf(call, ImRtcParticipantStatusEnum.NO_ANSWER.getStatus());
+    public static ImRtcCallNotification ofNoAnswer(
+            ImRtcCallDO call, Long operatorUserId, AdminUserRespDTO operator) {
+        ImRtcCallNotification notification =
+                baseOf(call, ImRtcParticipantStatusEnum.NO_ANSWER.getStatus());
         notification.operatorUserId = operatorUserId;
         if (operator != null) {
             notification.operatorNickname = operator.getNickname();
@@ -161,5 +180,4 @@ public class ImRtcCallNotification {
         notification.groupId = call.getGroupId();
         return notification;
     }
-
 }

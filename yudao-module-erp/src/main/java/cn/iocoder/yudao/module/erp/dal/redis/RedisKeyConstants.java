@@ -14,5 +14,4 @@ public interface RedisKeyConstants {
      * VALUE 数据格式：编号自增
      */
     String NO = "erp:seq_no:";
-
 }

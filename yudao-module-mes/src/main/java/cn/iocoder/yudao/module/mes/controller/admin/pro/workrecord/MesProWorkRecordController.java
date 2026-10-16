@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.workrecord;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -17,12 +23,15 @@ import cn.iocoder.yudao.module.mes.service.md.workstation.MesMdWorkstationServic
 import cn.iocoder.yudao.module.mes.service.pro.workrecord.MesProWorkRecordService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -32,33 +41,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - MES 工作记录")
 @RestController
 @RequestMapping("/mes/pro/workrecord")
 @Validated
 public class MesProWorkRecordController {
 
-    @Resource
-    private MesProWorkRecordService workRecordService;
-    @Resource
-    private MesMdWorkstationService workstationService;
+    @Resource private MesProWorkRecordService workRecordService;
+    @Resource private MesMdWorkstationService workstationService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @GetMapping("/log/page")
     @Operation(summary = "获得工作记录流水分页")
     @PreAuthorize("@ss.hasPermission('mes:pro-workrecord:query')")
     public CommonResult<PageResult<MesProWorkRecordLogRespVO>> getWorkRecordLogPage(
             @Valid MesProWorkRecordLogPageReqVO pageReqVO) {
-        PageResult<MesProWorkRecordLogDO> pageResult = workRecordService.getWorkRecordLogPage(pageReqVO);
-        return success(new PageResult<>(buildWorkRecordLogRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesProWorkRecordLogDO> pageResult =
+                workRecordService.getWorkRecordLogPage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildWorkRecordLogRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/log/get")
@@ -74,10 +77,12 @@ public class MesProWorkRecordController {
     @Operation(summary = "导出工作记录 Excel")
     @PreAuthorize("@ss.hasPermission('mes:pro-workrecord:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportWorkRecordLogExcel(@Valid MesProWorkRecordLogPageReqVO pageReqVO,
-                                       HttpServletResponse response) throws IOException {
+    public void exportWorkRecordLogExcel(
+            @Valid MesProWorkRecordLogPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<MesProWorkRecordLogDO> list = workRecordService.getWorkRecordLogPage(pageReqVO).getList();
+        List<MesProWorkRecordLogDO> list =
+                workRecordService.getWorkRecordLogPage(pageReqVO).getList();
         List<MesProWorkRecordLogRespVO> voList = buildWorkRecordLogRespVOList(list);
         ExcelUtils.write(response, "工作记录.xls", "数据", MesProWorkRecordLogRespVO.class, voList);
     }
@@ -114,22 +119,33 @@ public class MesProWorkRecordController {
         return buildWorkRecordLogRespVOList(Collections.singletonList(log)).get(0);
     }
 
-    private List<MesProWorkRecordLogRespVO> buildWorkRecordLogRespVOList(List<MesProWorkRecordLogDO> list) {
+    private List<MesProWorkRecordLogRespVO> buildWorkRecordLogRespVOList(
+            List<MesProWorkRecordLogDO> list) {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
         // 1. 查询相关数据
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesProWorkRecordLogDO::getUserId));
-        Map<Long, MesMdWorkstationDO> workstationMap = workstationService.getWorkstationMap(
-                convertSet(list, MesProWorkRecordLogDO::getWorkstationId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesProWorkRecordLogDO::getUserId));
+        Map<Long, MesMdWorkstationDO> workstationMap =
+                workstationService.getWorkstationMap(
+                        convertSet(list, MesProWorkRecordLogDO::getWorkstationId));
         // 2. 拼接 VO
-        return BeanUtils.toBean(list, MesProWorkRecordLogRespVO.class, vo -> {
-            findAndThen(userMap, vo.getUserId(), user ->
-                    vo.setUserNickname(user.getNickname()));
-            findAndThen(workstationMap, vo.getWorkstationId(), ws ->
-                    vo.setWorkstationCode(ws.getCode()).setWorkstationName(ws.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesProWorkRecordLogRespVO.class,
+                vo -> {
+                    findAndThen(
+                            userMap,
+                            vo.getUserId(),
+                            user -> vo.setUserNickname(user.getNickname()));
+                    findAndThen(
+                            workstationMap,
+                            vo.getWorkstationId(),
+                            ws ->
+                                    vo.setWorkstationCode(ws.getCode())
+                                            .setWorkstationName(ws.getName()));
+                });
     }
 
     private MesProWorkRecordRespVO buildWorkRecordRespVO(MesProWorkRecordDO record) {
@@ -149,5 +165,4 @@ public class MesProWorkRecordController {
         }
         return vo;
     }
-
 }

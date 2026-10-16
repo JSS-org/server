@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model.vo.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -44,5 +45,4 @@ public class AiModelRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

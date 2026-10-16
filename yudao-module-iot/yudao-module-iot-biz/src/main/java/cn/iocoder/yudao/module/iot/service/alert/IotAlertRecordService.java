@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.alert.IotAlertConfigDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.alert.IotAlertRecordDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
+
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
@@ -43,8 +44,10 @@ public interface IotAlertRecordService {
      * @param processStatus 处理状态，允许空
      * @return 告警记录列表
      */
-    List<IotAlertRecordDO> getAlertRecordListBySceneRuleId(@NotNull(message = "场景规则编号不能为空") Long sceneRuleId,
-                                                           Long deviceId, Boolean processStatus);
+    List<IotAlertRecordDO> getAlertRecordListBySceneRuleId(
+            @NotNull(message = "场景规则编号不能为空") Long sceneRuleId,
+            Long deviceId,
+            Boolean processStatus);
 
     /**
      * 处理告警记录
@@ -64,7 +67,9 @@ public interface IotAlertRecordService {
      * @return 告警记录编号
      */
     @SuppressWarnings("UnusedReturnValue")
-    Long createAlertRecord(IotAlertConfigDO config, Long sceneRuleId,
-                           @Nullable IotDeviceMessage deviceMessage, @Nullable IotDeviceDO device);
-
+    Long createAlertRecord(
+            IotAlertConfigDO config,
+            Long sceneRuleId,
+            @Nullable IotDeviceMessage deviceMessage,
+            @Nullable IotDeviceDO device);
 }

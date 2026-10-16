@@ -5,6 +5,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.context.expression.BeanFactoryResolver;
@@ -32,13 +33,14 @@ public class SpringExpressionUtils {
      * Spring EL 表达式解析器
      */
     private static final ExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
+
     /**
      * 参数名发现器
      */
-    private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
+    private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER =
+            new DefaultParameterNameDiscoverer();
 
-    private SpringExpressionUtils() {
-    }
+    private SpringExpressionUtils() {}
 
     /**
      * 从切面中，单个解析 EL 表达式的结果
@@ -48,7 +50,8 @@ public class SpringExpressionUtils {
      * @return 执行界面
      */
     public static Object parseExpression(JoinPoint joinPoint, String expressionString) {
-        Map<String, Object> result = parseExpressions(joinPoint, Collections.singletonList(expressionString));
+        Map<String, Object> result =
+                parseExpressions(joinPoint, Collections.singletonList(expressionString));
         return result.get(expressionString);
     }
 
@@ -59,7 +62,8 @@ public class SpringExpressionUtils {
      * @param expressionStrings EL 表达式数组
      * @return 结果，key 为表达式，value 为对应值
      */
-    public static Map<String, Object> parseExpressions(JoinPoint joinPoint, List<String> expressionStrings) {
+    public static Map<String, Object> parseExpressions(
+            JoinPoint joinPoint, List<String> expressionStrings) {
         // 如果为空，则不进行解析
         if (CollUtil.isEmpty(expressionStrings)) {
             return MapUtil.newHashMap();
@@ -83,10 +87,11 @@ public class SpringExpressionUtils {
 
         // 第二步，逐个参数解析
         Map<String, Object> result = MapUtil.newHashMap(expressionStrings.size(), true);
-        expressionStrings.forEach(key -> {
-            Object value = EXPRESSION_PARSER.parseExpression(key).getValue(context);
-            result.put(key, value);
-        });
+        expressionStrings.forEach(
+                key -> {
+                    Object value = EXPRESSION_PARSER.parseExpression(key).getValue(context);
+                    result.put(key, value);
+                });
         return result;
     }
 
@@ -119,5 +124,4 @@ public class SpringExpressionUtils {
         }
         return expression.getValue(context);
     }
-
 }

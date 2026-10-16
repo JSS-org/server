@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.receipt.ErpFinanc
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.receipt.ErpFinanceReceiptSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinanceReceiptDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinanceReceiptItemDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -79,6 +80,6 @@ public interface ErpFinanceReceiptService {
      * @param receiptIds 收款单编号数组
      * @return 收款单项 List
      */
-    List<ErpFinanceReceiptItemDO> getFinanceReceiptItemListByReceiptIds(Collection<Long> receiptIds);
-
+    List<ErpFinanceReceiptItemDO> getFinanceReceiptItemListByReceiptIds(
+            Collection<Long> receiptIds);
 }

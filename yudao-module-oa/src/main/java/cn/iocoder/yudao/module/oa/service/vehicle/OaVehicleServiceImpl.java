@@ -1,21 +1,23 @@
 package cn.iocoder.yudao.module.oa.service.vehicle;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.vehicle.OaVehicleMapper;
-import jakarta.annotation.Resource;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
-import org.springframework.stereotype.Service;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 车辆 Service 实现类
@@ -26,14 +28,11 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaVehicleServiceImpl implements OaVehicleService {
 
-    @Resource
-    private OaVehicleMapper vehicleMapper;
+    @Resource private OaVehicleMapper vehicleMapper;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private OaVehicleApplyService vehicleApplyService;
 
     @Override
@@ -105,5 +104,4 @@ public class OaVehicleServiceImpl implements OaVehicleService {
             throw exception(VEHICLE_NO_DUPLICATE);
         }
     }
-
 }

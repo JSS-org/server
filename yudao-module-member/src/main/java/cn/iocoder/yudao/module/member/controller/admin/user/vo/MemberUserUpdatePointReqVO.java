@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.member.controller.admin.user.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.ToString;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+import lombok.ToString;
 
 @Schema(description = "管理后台 - 用户修改积分 Request VO")
 @Data
@@ -15,8 +16,10 @@ public class MemberUserUpdatePointReqVO {
     @NotNull(message = "用户编号不能为空")
     private Long id;
 
-    @Schema(description = "变动积分，正数为增加，负数为减少", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
+    @Schema(
+            description = "变动积分，正数为增加，负数为减少",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100")
     @NotNull(message = "变动积分不能为空")
     private Integer point;
-
 }

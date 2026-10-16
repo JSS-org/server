@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.api.social;
 
 import cn.iocoder.yudao.module.system.api.social.dto.*;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public interface SocialClientApi {
      */
     SocialWxJsapiSignatureRespDTO createWxMpJsapiSignature(Integer userType, String url);
 
-    //======================= 微信小程序独有 =======================
+    // ======================= 微信小程序独有 =======================
 
     /**
      * 获得微信小程序的手机信息
@@ -71,7 +72,8 @@ public interface SocialClientApi {
      * @param userType 用户类型
      * @param reqDTO 请求
      */
-    void uploadWxaOrderShippingInfo(Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO);
+    void uploadWxaOrderShippingInfo(
+            Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO);
 
     /**
      * 通知订单收货到微信小程序
@@ -79,6 +81,6 @@ public interface SocialClientApi {
      * @param userType 用户类型
      * @param reqDTO 请求
      */
-    void notifyWxaOrderConfirmReceive(Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO);
-
+    void notifyWxaOrderConfirmReceive(
+            Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO);
 }

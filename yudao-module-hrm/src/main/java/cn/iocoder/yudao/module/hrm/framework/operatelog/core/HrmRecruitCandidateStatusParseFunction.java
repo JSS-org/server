@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.hrm.framework.operatelog.core;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.hrm.enums.recruit.candidate.HrmRecruitCandidateStatusEnum;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,9 +30,8 @@ public class HrmRecruitCandidateStatusParseFunction implements IParseFunction {
         if (StrUtil.isEmptyIfStr(value)) {
             return "";
         }
-        HrmRecruitCandidateStatusEnum status = HrmRecruitCandidateStatusEnum.valueOf(
-                Integer.valueOf(value.toString()));
+        HrmRecruitCandidateStatusEnum status =
+                HrmRecruitCandidateStatusEnum.valueOf(Integer.valueOf(value.toString()));
         return status == null ? "" : status.getName();
     }
-
 }

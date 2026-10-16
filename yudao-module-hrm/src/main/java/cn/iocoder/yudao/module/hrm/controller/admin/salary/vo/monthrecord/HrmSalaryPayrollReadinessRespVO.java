@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -52,6 +53,7 @@ public class HrmSalaryPayrollReadinessRespVO {
 
     @Schema(description = "未定薪员工列表")
     private List<Employee> noSalaryEmployees;
+
     @Schema(description = "未分配薪资组员工列表")
     private List<Employee> noSalaryGroupEmployees;
 
@@ -85,7 +87,5 @@ public class HrmSalaryPayrollReadinessRespVO {
 
         @Schema(description = "入职时间")
         private LocalDateTime entryTime;
-
     }
-
 }

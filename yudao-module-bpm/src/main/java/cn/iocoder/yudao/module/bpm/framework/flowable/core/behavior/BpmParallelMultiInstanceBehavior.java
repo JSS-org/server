@@ -6,15 +6,17 @@ import cn.iocoder.yudao.module.bpm.enums.definition.BpmChildProcessMultiInstance
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateInvoker;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.BpmnModelUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.FlowableUtils;
+
 import lombok.Setter;
+
 import org.flowable.bpmn.model.Activity;
 import org.flowable.bpmn.model.CallActivity;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.UserTask;
+import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ParallelMultiInstanceBehavior;
-import org.flowable.common.engine.api.delegate.Expression;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,8 +35,8 @@ public class BpmParallelMultiInstanceBehavior extends ParallelMultiInstanceBehav
 
     private BpmTaskCandidateInvoker taskCandidateInvoker;
 
-    public BpmParallelMultiInstanceBehavior(Activity activity,
-                                            AbstractBpmnActivityBehavior innerActivityBehavior) {
+    public BpmParallelMultiInstanceBehavior(
+            Activity activity, AbstractBpmnActivityBehavior innerActivityBehavior) {
         super(activity, innerActivityBehavior);
         // 关联 Pull Request：https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1483
         // 在解析/构造阶段基于 activityId 初始化与 activity 绑定且不变的字段，避免在运行期修改 Behavior 实例状态
@@ -43,9 +45,11 @@ public class BpmParallelMultiInstanceBehavior extends ParallelMultiInstanceBehav
             return;
         }
         super.collectionExpression = null; // collectionExpression 和 collectionVariable 是互斥的
-        super.collectionVariable = FlowableUtils.formatExecutionCollectionVariable(activity.getId());
+        super.collectionVariable =
+                FlowableUtils.formatExecutionCollectionVariable(activity.getId());
         // 从 execution.getVariable() 读取当前所有任务处理的人的 key
-        super.collectionElementVariable = FlowableUtils.formatExecutionCollectionElementVariable(activity.getId());
+        super.collectionElementVariable =
+                FlowableUtils.formatExecutionCollectionElementVariable(activity.getId());
     }
 
     /**
@@ -64,7 +68,8 @@ public class BpmParallelMultiInstanceBehavior extends ParallelMultiInstanceBehav
         if (execution.getCurrentFlowElement() instanceof UserTask) {
             // 获取任务的所有处理人
             @SuppressWarnings("unchecked")
-            Set<Long> assigneeUserIds = (Set<Long>) execution.getVariable(super.collectionVariable, Set.class);
+            Set<Long> assigneeUserIds =
+                    (Set<Long>) execution.getVariable(super.collectionVariable, Set.class);
             if (assigneeUserIds == null) {
                 assigneeUserIds = taskCandidateInvoker.calculateUsersByTask(execution);
                 if (CollUtil.isEmpty(assigneeUserIds)) {
@@ -82,11 +87,17 @@ public class BpmParallelMultiInstanceBehavior extends ParallelMultiInstanceBehav
         if (execution.getCurrentFlowElement() instanceof CallActivity) {
             FlowElement flowElement = execution.getCurrentFlowElement();
             Integer sourceType = BpmnModelUtils.parseMultiInstanceSourceType(flowElement);
-            if (Objects.equals(sourceType, BpmChildProcessMultiInstanceSourceTypeEnum.NUMBER_FORM.getType())) {
-                return execution.getVariable(super.collectionExpression.getExpressionText(), Integer.class);
+            if (Objects.equals(
+                    sourceType, BpmChildProcessMultiInstanceSourceTypeEnum.NUMBER_FORM.getType())) {
+                return execution.getVariable(
+                        super.collectionExpression.getExpressionText(), Integer.class);
             }
-            if (Objects.equals(sourceType, BpmChildProcessMultiInstanceSourceTypeEnum.MULTIPLE_FORM.getType())) {
-                return execution.getVariable(super.collectionExpression.getExpressionText(), List.class).size();
+            if (Objects.equals(
+                    sourceType,
+                    BpmChildProcessMultiInstanceSourceTypeEnum.MULTIPLE_FORM.getType())) {
+                return execution
+                        .getVariable(super.collectionExpression.getExpressionText(), List.class)
+                        .size();
             }
         }
 
@@ -121,5 +132,4 @@ public class BpmParallelMultiInstanceBehavior extends ParallelMultiInstanceBehav
         }
         super.setCollectionElementVariable(collectionElementVariable);
     }
-
 }

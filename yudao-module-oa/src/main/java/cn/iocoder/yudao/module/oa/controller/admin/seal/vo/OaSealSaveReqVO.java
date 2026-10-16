@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.oa.controller.admin.seal.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.seal.OaSealStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -64,5 +67,4 @@ public class OaSealSaveReqVO {
     @Schema(description = "备注", example = "合同签署完成后归档")
     @Size(max = 500, message = "备注长度不能超过 500 个字符")
     private String remark;
-
 }

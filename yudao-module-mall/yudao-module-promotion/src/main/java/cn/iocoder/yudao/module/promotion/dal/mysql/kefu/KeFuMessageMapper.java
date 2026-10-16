@@ -4,8 +4,10 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.QueryWrapperX;
 import cn.iocoder.yudao.module.promotion.controller.admin.kefu.vo.message.KeFuMessageListReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.kefu.KeFuMessageDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -28,24 +30,26 @@ public interface KeFuMessageMapper extends BaseMapperX<KeFuMessageDO> {
      * @return 消息列表
      */
     default List<KeFuMessageDO> selectList(KeFuMessageListReqVO reqVO) {
-        return selectList(new QueryWrapperX<KeFuMessageDO>()
-                .eqIfPresent("conversation_id", reqVO.getConversationId())
-                .ltIfPresent("create_time", reqVO.getCreateTime())
-                .orderByDesc("create_time")
-                .limitN(reqVO.getLimit()));
+        return selectList(
+                new QueryWrapperX<KeFuMessageDO>()
+                        .eqIfPresent("conversation_id", reqVO.getConversationId())
+                        .ltIfPresent("create_time", reqVO.getCreateTime())
+                        .orderByDesc("create_time")
+                        .limitN(reqVO.getLimit()));
     }
 
-    default List<KeFuMessageDO> selectListByConversationIdAndUserTypeAndReadStatus(Long conversationId, Integer userType,
-                                                                                   Boolean readStatus) {
-        return selectList(new LambdaQueryWrapper<KeFuMessageDO>()
-                .eq(KeFuMessageDO::getConversationId, conversationId)
-                .ne(KeFuMessageDO::getSenderType, userType) // 管理员：查询出未读的会员消息，会员：查询出未读的客服消息
-                .eq(KeFuMessageDO::getReadStatus, readStatus));
+    default List<KeFuMessageDO> selectListByConversationIdAndUserTypeAndReadStatus(
+            Long conversationId, Integer userType, Boolean readStatus) {
+        return selectList(
+                new LambdaQueryWrapper<KeFuMessageDO>()
+                        .eq(KeFuMessageDO::getConversationId, conversationId)
+                        .ne(KeFuMessageDO::getSenderType, userType) // 管理员：查询出未读的会员消息，会员：查询出未读的客服消息
+                        .eq(KeFuMessageDO::getReadStatus, readStatus));
     }
 
     default void updateReadStatusBatchByIds(Collection<Long> ids, KeFuMessageDO keFuMessageDO) {
-        update(keFuMessageDO, new LambdaUpdateWrapper<KeFuMessageDO>()
-                .in(KeFuMessageDO::getId, ids));
+        update(
+                keFuMessageDO,
+                new LambdaUpdateWrapper<KeFuMessageDO>().in(KeFuMessageDO::getId, ids));
     }
-
 }

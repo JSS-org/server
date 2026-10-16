@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.product.controller.admin.spu.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.*;
 
 import java.util.List;
@@ -12,11 +14,17 @@ import java.util.List;
 @Data
 public class ProductSkuSaveReqVO {
 
-    @Schema(description = "商品 SKU 名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "清凉小短袖")
+    @Schema(
+            description = "商品 SKU 名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "清凉小短袖")
     @NotEmpty(message = "商品 SKU 名字不能为空")
     private String name;
 
-    @Schema(description = "销售价格，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1999")
+    @Schema(
+            description = "销售价格，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1999")
     @NotNull(message = "销售价格，单位：分不能为空")
     @Min(value = 0, message = "销售价格，单位：分不能小于 0")
     private Integer price;
@@ -32,7 +40,10 @@ public class ProductSkuSaveReqVO {
     @Schema(description = "条形码", example = "15156165456")
     private String barCode;
 
-    @Schema(description = "图片地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+    @Schema(
+            description = "图片地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xx.png")
     @NotNull(message = "图片地址不能为空")
     private String picUrl;
 
@@ -74,7 +85,5 @@ public class ProductSkuSaveReqVO {
 
         @Schema(description = "属性值名字", example = "红色")
         private String valueName;
-
     }
-
 }

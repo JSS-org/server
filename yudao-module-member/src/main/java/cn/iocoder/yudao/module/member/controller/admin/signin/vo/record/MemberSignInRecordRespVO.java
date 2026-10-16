@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.signin.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,5 +27,4 @@ public class MemberSignInRecordRespVO {
 
     @Schema(description = "签到时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

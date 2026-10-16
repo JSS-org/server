@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.supply;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,15 +12,14 @@ import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.supply.*;
 import cn.iocoder.yudao.module.oa.dal.mysql.supply.*;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 办公用品 Service 实现类
@@ -28,15 +30,12 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaSupplyItemServiceImpl implements OaSupplyItemService {
 
-    @Resource
-    private OaSupplyItemMapper supplyItemMapper;
+    @Resource private OaSupplyItemMapper supplyItemMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaSupplyApplyService supplyApplyService;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
     @Override
     public Long createSupplyItem(OaSupplyItemSaveReqVO createReqVO) {
@@ -149,5 +148,4 @@ public class OaSupplyItemServiceImpl implements OaSupplyItemService {
             throw exception(SUPPLY_ITEM_NO_DUPLICATE);
         }
     }
-
 }

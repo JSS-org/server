@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.system.dal.dataobject.social.SocialUserDO;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -66,7 +67,8 @@ public interface SocialUserService {
      * @param state state
      * @return 社交用户
      */
-    SocialUserRespDTO getSocialUserByCode(Integer userType, Integer socialType, String code, String state);
+    SocialUserRespDTO getSocialUserByCode(
+            Integer userType, Integer socialType, String code, String state);
 
     // ==================== 社交用户 CRUD ====================
 
@@ -85,5 +87,4 @@ public interface SocialUserService {
      * @return 社交用户分页
      */
     PageResult<SocialUserDO> getSocialUserPage(SocialUserPageReqVO pageReqVO);
-
 }

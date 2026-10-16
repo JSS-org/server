@@ -1,5 +1,16 @@
 package cn.iocoder.yudao.module.promotion.service.coupon;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.COUPON_TEMPLATE_NOT_ENOUGH;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.COUPON_TEMPLATE_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
@@ -15,58 +26,49 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionDiscountTypeEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionProductScopeEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponTakeTypeEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponTemplateValidityTypeEnum;
+
+import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.COUPON_TEMPLATE_NOT_ENOUGH;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.COUPON_TEMPLATE_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
-* {@link CouponTemplateServiceImpl} 的单元测试类
-*
-* @author 芋道源码
-*/
+ * {@link CouponTemplateServiceImpl} 的单元测试类
+ *
+ * @author 芋道源码
+ */
 @Import(CouponTemplateServiceImpl.class)
 public class CouponTemplateServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private CouponTemplateServiceImpl couponTemplateService;
+    @Resource private CouponTemplateServiceImpl couponTemplateService;
 
-    @Resource
-    private CouponTemplateMapper couponTemplateMapper;
+    @Resource private CouponTemplateMapper couponTemplateMapper;
 
-    @MockitoBean
-    private ProductCategoryApi productCategoryApi;
-    @MockitoBean
-    private ProductSpuApi productSpuApi;
+    @MockitoBean private ProductCategoryApi productCategoryApi;
+    @MockitoBean private ProductSpuApi productSpuApi;
 
     @Test
     public void testCreateCouponTemplate_success() {
         // 准备参数
-        CouponTemplateCreateReqVO reqVO = randomPojo(CouponTemplateCreateReqVO.class, o -> {
-            o.setTotalCount(10);
-            o.setTakeLimitCount(2);
-            o.setTakeType(CouponTakeTypeEnum.USER.getType());
-            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
-            o.setProductScopeValues(null);
-            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
-            o.setFixedStartTerm(0);
-            o.setFixedEndTerm(7);
-            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
-            o.setDiscountPrice(100);
-        });
+        CouponTemplateCreateReqVO reqVO =
+                randomPojo(
+                        CouponTemplateCreateReqVO.class,
+                        o -> {
+                            o.setTotalCount(10);
+                            o.setTakeLimitCount(2);
+                            o.setTakeType(CouponTakeTypeEnum.USER.getType());
+                            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
+                            o.setProductScopeValues(null);
+                            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
+                            o.setFixedStartTerm(0);
+                            o.setFixedEndTerm(7);
+                            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
+                            o.setDiscountPrice(100);
+                        });
 
         // 调用
         Long couponTemplateId = couponTemplateService.createCouponTemplate(reqVO);
@@ -81,21 +83,24 @@ public class CouponTemplateServiceImplTest extends BaseDbUnitTest {
     public void testUpdateCouponTemplate_success() {
         // mock 数据
         CouponTemplateDO dbCouponTemplate = randomCouponTemplateDO();
-        couponTemplateMapper.insert(dbCouponTemplate);// @Sql: 先插入出一条存在的数据
+        couponTemplateMapper.insert(dbCouponTemplate); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        CouponTemplateUpdateReqVO reqVO = randomPojo(CouponTemplateUpdateReqVO.class, o -> {
-            o.setId(dbCouponTemplate.getId()); // 设置更新的 ID
-            o.setTotalCount(10);
-            o.setTakeLimitCount(2);
-            o.setTakeType(CouponTakeTypeEnum.USER.getType());
-            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
-            o.setProductScopeValues(null);
-            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
-            o.setFixedStartTerm(0);
-            o.setFixedEndTerm(7);
-            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
-            o.setDiscountPrice(100);
-        });
+        CouponTemplateUpdateReqVO reqVO =
+                randomPojo(
+                        CouponTemplateUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbCouponTemplate.getId()); // 设置更新的 ID
+                            o.setTotalCount(10);
+                            o.setTakeLimitCount(2);
+                            o.setTakeType(CouponTakeTypeEnum.USER.getType());
+                            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
+                            o.setProductScopeValues(null);
+                            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
+                            o.setFixedStartTerm(0);
+                            o.setFixedEndTerm(7);
+                            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
+                            o.setDiscountPrice(100);
+                        });
 
         // 调用
         couponTemplateService.updateCouponTemplate(reqVO);
@@ -107,30 +112,38 @@ public class CouponTemplateServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateCouponTemplate_notExists() {
         // 准备参数
-        CouponTemplateUpdateReqVO reqVO = randomPojo(CouponTemplateUpdateReqVO.class, o -> o.setId(randomLongId()));
+        CouponTemplateUpdateReqVO reqVO =
+                randomPojo(CouponTemplateUpdateReqVO.class, o -> o.setId(randomLongId()));
 
         // 调用, 并断言异常
-        assertServiceException(() -> couponTemplateService.updateCouponTemplate(reqVO), COUPON_TEMPLATE_NOT_EXISTS);
+        assertServiceException(
+                () -> couponTemplateService.updateCouponTemplate(reqVO),
+                COUPON_TEMPLATE_NOT_EXISTS);
     }
 
     @Test
     public void testCreateCouponTemplate_takeLimitCountGreaterThanTotalCount() {
         // 准备参数
-        CouponTemplateCreateReqVO reqVO = randomPojo(CouponTemplateCreateReqVO.class, o -> {
-            o.setTotalCount(1);
-            o.setTakeLimitCount(2);
-            o.setTakeType(CouponTakeTypeEnum.USER.getType());
-            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
-            o.setProductScopeValues(null);
-            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
-            o.setFixedStartTerm(0);
-            o.setFixedEndTerm(7);
-            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
-            o.setDiscountPrice(100);
-        });
+        CouponTemplateCreateReqVO reqVO =
+                randomPojo(
+                        CouponTemplateCreateReqVO.class,
+                        o -> {
+                            o.setTotalCount(1);
+                            o.setTakeLimitCount(2);
+                            o.setTakeType(CouponTakeTypeEnum.USER.getType());
+                            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
+                            o.setProductScopeValues(null);
+                            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
+                            o.setFixedStartTerm(0);
+                            o.setFixedEndTerm(7);
+                            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
+                            o.setDiscountPrice(100);
+                        });
 
         // 调用，并断言
-        assertServiceException(() -> couponTemplateService.createCouponTemplate(reqVO), COUPON_TEMPLATE_NOT_ENOUGH);
+        assertServiceException(
+                () -> couponTemplateService.createCouponTemplate(reqVO),
+                COUPON_TEMPLATE_NOT_ENOUGH);
     }
 
     @Test
@@ -139,36 +152,41 @@ public class CouponTemplateServiceImplTest extends BaseDbUnitTest {
         CouponTemplateDO couponTemplate = randomCouponTemplateDO();
         couponTemplateMapper.insert(couponTemplate);
         // 准备参数
-        CouponTemplateUpdateReqVO reqVO = randomPojo(CouponTemplateUpdateReqVO.class, o -> {
-            o.setId(couponTemplate.getId()); // 设置更新的 ID
-            o.setTotalCount(1);
-            o.setTakeLimitCount(2);
-            o.setTakeType(CouponTakeTypeEnum.USER.getType());
-            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
-            o.setProductScopeValues(null);
-            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
-            o.setFixedStartTerm(0);
-            o.setFixedEndTerm(7);
-            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
-            o.setDiscountPrice(100);
-        });
+        CouponTemplateUpdateReqVO reqVO =
+                randomPojo(
+                        CouponTemplateUpdateReqVO.class,
+                        o -> {
+                            o.setId(couponTemplate.getId()); // 设置更新的 ID
+                            o.setTotalCount(1);
+                            o.setTakeLimitCount(2);
+                            o.setTakeType(CouponTakeTypeEnum.USER.getType());
+                            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
+                            o.setProductScopeValues(null);
+                            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
+                            o.setFixedStartTerm(0);
+                            o.setFixedEndTerm(7);
+                            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
+                            o.setDiscountPrice(100);
+                        });
 
         // 调用，并断言
-        assertServiceException(() -> couponTemplateService.updateCouponTemplate(reqVO), COUPON_TEMPLATE_NOT_ENOUGH);
+        assertServiceException(
+                () -> couponTemplateService.updateCouponTemplate(reqVO),
+                COUPON_TEMPLATE_NOT_ENOUGH);
     }
 
     @Test
     public void testDeleteCouponTemplate_success() {
         // mock 数据
         CouponTemplateDO dbCouponTemplate = randomCouponTemplateDO();
-        couponTemplateMapper.insert(dbCouponTemplate);// @Sql: 先插入出一条存在的数据
+        couponTemplateMapper.insert(dbCouponTemplate); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbCouponTemplate.getId();
 
         // 调用
         couponTemplateService.deleteCouponTemplate(id);
-       // 校验数据不存在了
-       assertNull(couponTemplateMapper.selectById(id));
+        // 校验数据不存在了
+        assertNull(couponTemplateMapper.selectById(id));
     }
 
     @Test
@@ -177,61 +195,73 @@ public class CouponTemplateServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> couponTemplateService.deleteCouponTemplate(id), COUPON_TEMPLATE_NOT_EXISTS);
+        assertServiceException(
+                () -> couponTemplateService.deleteCouponTemplate(id), COUPON_TEMPLATE_NOT_EXISTS);
     }
 
     @Test
     public void testGetCouponTemplatePage() {
-       // mock 数据
-       CouponTemplateDO dbCouponTemplate = randomPojo(CouponTemplateDO.class, o -> { // 等会查询到
-           o.setName("芋艿");
-           o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-           o.setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType());
-           o.setCreateTime(buildTime(2022, 2, 2));
-       });
-       couponTemplateMapper.insert(dbCouponTemplate);
-       // 测试 name 不匹配
-       couponTemplateMapper.insert(cloneIgnoreId(dbCouponTemplate, o -> o.setName("土豆")));
-       // 测试 status 不匹配
-       couponTemplateMapper.insert(cloneIgnoreId(dbCouponTemplate, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
-       // 测试 type 不匹配
-       couponTemplateMapper.insert(cloneIgnoreId(dbCouponTemplate, o -> o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType())));
-       // 测试 createTime 不匹配
-       couponTemplateMapper.insert(cloneIgnoreId(dbCouponTemplate, o -> o.setCreateTime(buildTime(2022, 1, 1))));
-       // 准备参数
-       CouponTemplatePageReqVO reqVO = new CouponTemplatePageReqVO();
-       reqVO.setName("芋艿");
-       reqVO.setStatus(CommonStatusEnum.ENABLE.getStatus());
-       reqVO.setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType());
-       reqVO.setCreateTime((new LocalDateTime[]{buildTime(2022, 2, 1), buildTime(2022, 2, 3)}));
+        // mock 数据
+        CouponTemplateDO dbCouponTemplate =
+                randomPojo(
+                        CouponTemplateDO.class,
+                        o -> { // 等会查询到
+                            o.setName("芋艿");
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                            o.setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType());
+                            o.setCreateTime(buildTime(2022, 2, 2));
+                        });
+        couponTemplateMapper.insert(dbCouponTemplate);
+        // 测试 name 不匹配
+        couponTemplateMapper.insert(cloneIgnoreId(dbCouponTemplate, o -> o.setName("土豆")));
+        // 测试 status 不匹配
+        couponTemplateMapper.insert(
+                cloneIgnoreId(
+                        dbCouponTemplate, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        // 测试 type 不匹配
+        couponTemplateMapper.insert(
+                cloneIgnoreId(
+                        dbCouponTemplate,
+                        o -> o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType())));
+        // 测试 createTime 不匹配
+        couponTemplateMapper.insert(
+                cloneIgnoreId(dbCouponTemplate, o -> o.setCreateTime(buildTime(2022, 1, 1))));
+        // 准备参数
+        CouponTemplatePageReqVO reqVO = new CouponTemplatePageReqVO();
+        reqVO.setName("芋艿");
+        reqVO.setStatus(CommonStatusEnum.ENABLE.getStatus());
+        reqVO.setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType());
+        reqVO.setCreateTime((new LocalDateTime[] {buildTime(2022, 2, 1), buildTime(2022, 2, 3)}));
 
-       // 调用
-       PageResult<CouponTemplateDO> pageResult = couponTemplateService.getCouponTemplatePage(reqVO);
-       // 断言
-       assertEquals(1, pageResult.getTotal());
-       assertEquals(1, pageResult.getList().size());
-       assertPojoEquals(dbCouponTemplate, pageResult.getList().get(0));
+        // 调用
+        PageResult<CouponTemplateDO> pageResult =
+                couponTemplateService.getCouponTemplatePage(reqVO);
+        // 断言
+        assertEquals(1, pageResult.getTotal());
+        assertEquals(1, pageResult.getList().size());
+        assertPojoEquals(dbCouponTemplate, pageResult.getList().get(0));
     }
 
     @SafeVarargs
-    private static CouponTemplateDO randomCouponTemplateDO(Consumer<CouponTemplateDO>... consumers) {
-        Consumer<CouponTemplateDO> consumer = o -> {
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-            o.setTotalCount(10);
-            o.setTakeLimitCount(1);
-            o.setTakeType(CouponTakeTypeEnum.USER.getType());
-            o.setUsePrice(0);
-            o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
-            o.setProductScopeValues(null);
-            o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
-            o.setFixedStartTerm(0);
-            o.setFixedEndTerm(7);
-            o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
-            o.setDiscountPrice(100);
-            o.setTakeCount(0);
-            o.setUseCount(0);
-        };
+    private static CouponTemplateDO randomCouponTemplateDO(
+            Consumer<CouponTemplateDO>... consumers) {
+        Consumer<CouponTemplateDO> consumer =
+                o -> {
+                    o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                    o.setTotalCount(10);
+                    o.setTakeLimitCount(1);
+                    o.setTakeType(CouponTakeTypeEnum.USER.getType());
+                    o.setUsePrice(0);
+                    o.setProductScope(PromotionProductScopeEnum.ALL.getScope());
+                    o.setProductScopeValues(null);
+                    o.setValidityType(CouponTemplateValidityTypeEnum.TERM.getType());
+                    o.setFixedStartTerm(0);
+                    o.setFixedEndTerm(7);
+                    o.setDiscountType(PromotionDiscountTypeEnum.PRICE.getType());
+                    o.setDiscountPrice(100);
+                    o.setTakeCount(0);
+                    o.setUseCount(0);
+                };
         return randomPojo(CouponTemplateDO.class, ArrayUtils.append(consumer, consumers));
     }
-
 }

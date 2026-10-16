@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.segment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - AI 知识库段落搜索 Request VO")
 @Data
@@ -23,5 +24,4 @@ public class AiKnowledgeSegmentSearchReqVO {
 
     @Schema(description = "相似度阈值", example = "0.7")
     private Double similarityThreshold;
-
 }

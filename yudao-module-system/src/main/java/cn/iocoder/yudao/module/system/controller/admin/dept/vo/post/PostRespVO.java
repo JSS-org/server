@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.system.controller.admin.dept.vo.post;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,7 +33,10 @@ public class PostRespVO {
     @ExcelProperty("岗位排序")
     private Integer sort;
 
-    @Schema(description = "状态，参见 CommonStatusEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态，参见 CommonStatusEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @ExcelProperty(value = "状态", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.COMMON_STATUS)
     private Integer status;
@@ -41,5 +46,4 @@ public class PostRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

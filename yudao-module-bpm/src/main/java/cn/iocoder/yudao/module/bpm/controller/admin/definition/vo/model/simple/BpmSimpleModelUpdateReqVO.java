@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.simple;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 // TODO @jason：需要考虑，如果某个节点的配置不正确，需要有提示；具体怎么实现，可以讨论下；
@@ -19,5 +21,4 @@ public class BpmSimpleModelUpdateReqVO {
     @NotNull(message = "仿钉钉流程设计模型对象不能为空")
     @Valid
     private BpmSimpleModelNodeVO simpleModel;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -22,5 +23,4 @@ public class CrmStatisticsPerformanceTargetRespVO {
 
     @Schema(description = "完成率", requiredMode = Schema.RequiredMode.REQUIRED, example = "80.00")
     private BigDecimal completionRate;
-
 }

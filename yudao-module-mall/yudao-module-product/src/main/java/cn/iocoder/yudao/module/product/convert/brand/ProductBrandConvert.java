@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandRes
 import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandSimpleRespVO;
 import cn.iocoder.yudao.module.product.controller.admin.brand.vo.ProductBrandUpdateReqVO;
 import cn.iocoder.yudao.module.product.dal.dataobject.brand.ProductBrandDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -32,5 +33,4 @@ public interface ProductBrandConvert {
     List<ProductBrandRespVO> convertList(List<ProductBrandDO> list);
 
     PageResult<ProductBrandRespVO> convertPage(PageResult<ProductBrandDO> page);
-
 }

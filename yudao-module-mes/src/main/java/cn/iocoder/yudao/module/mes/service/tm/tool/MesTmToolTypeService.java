@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.tm.tool;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.tm.tool.vo.type.MesTmToolTypePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.tm.tool.vo.type.MesTmToolTypeSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.tm.tool.MesTmToolTypeDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 工具类型 Service 接口
@@ -88,5 +89,4 @@ public interface MesTmToolTypeService {
     default Map<Long, MesTmToolTypeDO> getToolTypeMap(Collection<Long> ids) {
         return convertMap(getToolTypeList(ids), MesTmToolTypeDO::getId);
     }
-
 }

@@ -7,10 +7,12 @@ import cn.iocoder.yudao.module.crm.dal.dataobject.business.CrmBusinessDO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.contact.CrmContactDO;
 import cn.iocoder.yudao.module.crm.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -24,7 +26,8 @@ import java.util.List;
  * @author 芋道源码
  */
 @TableName(value = "crm_follow_up_record", autoResultMap = true)
-@KeySequence("crm_follow_up_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "crm_follow_up_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -36,8 +39,7 @@ public class CrmFollowUpRecordDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 数据类型
@@ -45,6 +47,7 @@ public class CrmFollowUpRecordDO extends BaseDO {
      * 枚举 {@link CrmBizTypeEnum}
      */
     private Integer bizType;
+
     /**
      * 数据编号
      *
@@ -58,10 +61,12 @@ public class CrmFollowUpRecordDO extends BaseDO {
      * 关联 {@link DictTypeConstants#CRM_FOLLOW_UP_TYPE} 字典
      */
     private Integer type;
+
     /**
      * 跟进内容
      */
     private String content;
+
     /**
      * 下次联系时间
      */
@@ -72,6 +77,7 @@ public class CrmFollowUpRecordDO extends BaseDO {
      */
     @TableField(typeHandler = StringListTypeHandler.class)
     private List<String> picUrls;
+
     /**
      * 附件
      */
@@ -85,6 +91,7 @@ public class CrmFollowUpRecordDO extends BaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> businessIds;
+
     /**
      * 关联的联系人编号数组
      *
@@ -92,6 +99,4 @@ public class CrmFollowUpRecordDO extends BaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> contactIds;
-
-
 }

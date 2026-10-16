@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.Art
 import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticleUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.controller.app.article.vo.article.AppArticleRespVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -35,6 +36,6 @@ public interface ArticleConvert {
 
     PageResult<AppArticleRespVO> convertPage02(PageResult<ArticleDO> articlePage);
 
-    List<AppArticleRespVO> convertList03(List<ArticleDO> articleCategoryListByRecommendHotAndRecommendBanner);
-
+    List<AppArticleRespVO> convertList03(
+            List<ArticleDO> articleCategoryListByRecommendHotAndRecommendBanner);
 }

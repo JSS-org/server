@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.hrm.service.attendance.record.HrmAttendanceLeaveService;
 import cn.iocoder.yudao.module.hrm.service.attendance.record.HrmAttendanceLeaveServiceImpl;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class HrmAttendanceLeaveStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private HrmAttendanceLeaveService attendanceLeaveService;
+    @Resource private HrmAttendanceLeaveService attendanceLeaveService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -26,7 +27,9 @@ public class HrmAttendanceLeaveStatusListener extends BpmProcessInstanceStatusEv
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
         attendanceLeaveService.updateLeaveApprovalStatus(
-                Long.parseLong(event.getBusinessKey()), event.getId(), event.getStatus(), event.getReason());
+                Long.parseLong(event.getBusinessKey()),
+                event.getId(),
+                event.getStatus(),
+                event.getReason());
     }
-
 }

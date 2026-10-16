@@ -5,8 +5,11 @@ import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.pendinginspect.vo.MesQcPendingInspectPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.pendinginspect.vo.MesQcPendingInspectRespVO;
 import cn.iocoder.yudao.module.mes.dal.mysql.qc.pendinginspect.MesQcPendingInspectMapper;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -17,17 +20,16 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class MesQcPendingInspectServiceImpl implements MesQcPendingInspectService {
 
-    @Resource
-    private MesQcPendingInspectMapper pendingInspectMapper;
+    @Resource private MesQcPendingInspectMapper pendingInspectMapper;
 
     @Override
-    public PageResult<MesQcPendingInspectRespVO> getPendingInspectPage(MesQcPendingInspectPageReqVO pageReqVO) {
+    public PageResult<MesQcPendingInspectRespVO> getPendingInspectPage(
+            MesQcPendingInspectPageReqVO pageReqVO) {
         // 分页查询
         IPage<MesQcPendingInspectRespVO> page = MyBatisUtils.buildPage(pageReqVO);
-        pendingInspectMapper.selectQcPendingPage(page,
-                pageReqVO.getSourceDocCode(), pageReqVO.getQcType(), pageReqVO.getItemId());
+        pendingInspectMapper.selectQcPendingPage(
+                page, pageReqVO.getSourceDocCode(), pageReqVO.getQcType(), pageReqVO.getItemId());
         // 返回结果
         return new PageResult<>(page.getRecords(), page.getTotal());
     }
-
 }

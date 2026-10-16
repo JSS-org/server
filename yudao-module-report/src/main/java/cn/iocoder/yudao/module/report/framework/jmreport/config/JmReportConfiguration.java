@@ -5,7 +5,7 @@ import cn.iocoder.yudao.framework.common.biz.system.permission.PermissionCommonA
 import cn.iocoder.yudao.framework.security.config.SecurityProperties;
 import cn.iocoder.yudao.module.report.framework.jmreport.core.service.JmOnlDragExternalServiceImpl;
 import cn.iocoder.yudao.module.report.framework.jmreport.core.service.JmReportTokenServiceImpl;
-import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
+
 import org.jeecg.modules.jmreport.api.JmReportTokenServiceI;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -22,9 +22,10 @@ import org.springframework.context.annotation.Primary;
 public class JmReportConfiguration {
 
     @Bean
-    public JmReportTokenServiceI jmReportTokenService(OAuth2TokenCommonApi oAuth2TokenApi,
-                                                      PermissionCommonApi permissionApi,
-                                                      SecurityProperties securityProperties) {
+    public JmReportTokenServiceI jmReportTokenService(
+            OAuth2TokenCommonApi oAuth2TokenApi,
+            PermissionCommonApi permissionApi,
+            SecurityProperties securityProperties) {
         return new JmReportTokenServiceImpl(oAuth2TokenApi, permissionApi, securityProperties);
     }
 
@@ -33,5 +34,4 @@ public class JmReportConfiguration {
     public JmOnlDragExternalServiceImpl jmOnlDragExternalService2() {
         return new JmOnlDragExternalServiceImpl();
     }
-
 }

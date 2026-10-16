@@ -3,15 +3,19 @@ package cn.iocoder.yudao.module.system.framework.weixin.config;
 import cn.binarywang.wx.miniapp.config.WxMaConfig;
 import cn.binarywang.wx.miniapp.config.impl.WxMaDefaultConfigImpl;
 import cn.binarywang.wx.miniapp.config.impl.WxMaRedisBetterConfigImpl;
+
 import com.binarywang.spring.starter.wxjava.miniapp.properties.WxMaProperties;
 import com.binarywang.spring.starter.wxjava.mp.properties.WxMpProperties;
+
 import lombok.extern.slf4j.Slf4j;
+
 import me.chanjar.weixin.common.redis.RedisTemplateWxRedisOps;
 import me.chanjar.weixin.common.redis.WxRedisOps;
 import me.chanjar.weixin.mp.config.WxMpConfigStorage;
 import me.chanjar.weixin.mp.config.WxMpHostConfig;
 import me.chanjar.weixin.mp.config.impl.WxMpDefaultConfigImpl;
 import me.chanjar.weixin.mp.config.impl.WxMpRedisConfigImpl;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -39,25 +43,35 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 public class YudaoWxClientConfiguration {
 
     @Bean
-    @ConditionalOnProperty(prefix = WxMpProperties.PREFIX + ".config-storage", name = "type", havingValue = "redistemplate")
+    @ConditionalOnProperty(
+            prefix = WxMpProperties.PREFIX + ".config-storage",
+            name = "type",
+            havingValue = "redistemplate")
     @ConditionalOnClass(StringRedisTemplate.class)
     @ConditionalOnMissingBean(WxMpConfigStorage.class)
-    public WxMpConfigStorage wxMpConfigStorage(WxMpProperties properties, ApplicationContext applicationContext) {
+    public WxMpConfigStorage wxMpConfigStorage(
+            WxMpProperties properties, ApplicationContext applicationContext) {
         StringRedisTemplate redisTemplate = applicationContext.getBean(StringRedisTemplate.class);
         WxRedisOps redisOps = new RedisTemplateWxRedisOps(redisTemplate);
-        WxMpRedisConfigImpl config = new WxMpRedisConfigImpl(redisOps, properties.getConfigStorage().getKeyPrefix());
+        WxMpRedisConfigImpl config =
+                new WxMpRedisConfigImpl(redisOps, properties.getConfigStorage().getKeyPrefix());
         applyWxMpConfig(config, properties);
         return config;
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = WxMaProperties.PREFIX + ".config-storage", name = "type", havingValue = "redistemplate")
+    @ConditionalOnProperty(
+            prefix = WxMaProperties.PREFIX + ".config-storage",
+            name = "type",
+            havingValue = "redistemplate")
     @ConditionalOnClass(StringRedisTemplate.class)
     @ConditionalOnMissingBean(WxMaConfig.class)
     public WxMaConfig wxMaConfig(WxMaProperties properties, ApplicationContext applicationContext) {
         StringRedisTemplate redisTemplate = applicationContext.getBean(StringRedisTemplate.class);
         WxRedisOps redisOps = new RedisTemplateWxRedisOps(redisTemplate);
-        WxMaRedisBetterConfigImpl config = new WxMaRedisBetterConfigImpl(redisOps, properties.getConfigStorage().getKeyPrefix());
+        WxMaRedisBetterConfigImpl config =
+                new WxMaRedisBetterConfigImpl(
+                        redisOps, properties.getConfigStorage().getKeyPrefix());
         applyWxMaConfig(config, properties);
         return config;
     }
@@ -77,7 +91,8 @@ public class YudaoWxClientConfiguration {
             config.setHttpProxyPort(storage.getHttpProxyPort());
         }
 
-        if (properties.getHosts() != null && StringUtils.isNotEmpty(properties.getHosts().getApiHost())) {
+        if (properties.getHosts() != null
+                && StringUtils.isNotEmpty(properties.getHosts().getApiHost())) {
             WxMpHostConfig hostConfig = new WxMpHostConfig();
             hostConfig.setApiHost(properties.getHosts().getApiHost());
             hostConfig.setOpenHost(properties.getHosts().getOpenHost());
@@ -107,5 +122,4 @@ public class YudaoWxClientConfiguration {
         config.setRetrySleepMillis(Math.max(storage.getRetrySleepMillis(), 1000));
         config.setMaxRetryTimes(Math.max(storage.getMaxRetryTimes(), 0));
     }
-
 }

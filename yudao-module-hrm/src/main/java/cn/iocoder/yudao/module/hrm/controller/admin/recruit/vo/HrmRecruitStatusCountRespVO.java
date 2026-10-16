@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,5 +17,4 @@ public class HrmRecruitStatusCountRespVO {
 
     @Schema(description = "数量", example = "12")
     private Long count;
-
 }

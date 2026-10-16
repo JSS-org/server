@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.app.order.vo;
 
 import cn.iocoder.yudao.module.trade.controller.app.order.vo.item.AppTradeOrderItemRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,7 +18,10 @@ public class AppTradeOrderDetailRespVO {
     @Schema(description = "订单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "订单流水号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1146347329394184195")
+    @Schema(
+            description = "订单流水号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1146347329394184195")
     private String no;
 
     @Schema(description = "订单类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
@@ -59,6 +64,7 @@ public class AppTradeOrderDetailRespVO {
 
     @Schema(description = "支付渠道", example = "wx_lite_pay")
     private String payChannelCode;
+
     @Schema(description = "支付渠道名", example = "微信小程序支付")
     private String payChannelName;
 
@@ -100,16 +106,28 @@ public class AppTradeOrderDetailRespVO {
     @Schema(description = "收件人名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "张三")
     private String receiverName;
 
-    @Schema(description = "收件人手机", requiredMode = Schema.RequiredMode.REQUIRED, example = "13800138000")
+    @Schema(
+            description = "收件人手机",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "13800138000")
     private String receiverMobile;
 
-    @Schema(description = "收件人地区编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "110000")
+    @Schema(
+            description = "收件人地区编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "110000")
     private Integer receiverAreaId;
 
-    @Schema(description = "收件人地区名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "上海 上海市 普陀区")
+    @Schema(
+            description = "收件人地区名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "上海 上海市 普陀区")
     private String receiverAreaName;
 
-    @Schema(description = "收件人详细地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "中关村大街 1 号")
+    @Schema(
+            description = "收件人详细地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "中关村大街 1 号")
     private String receiverDetailAddress;
 
     @Schema(description = "自提门店编号", example = "1088")
@@ -147,5 +165,4 @@ public class AppTradeOrderDetailRespVO {
      * 订单项数组
      */
     private List<AppTradeOrderItemRespVO> items;
-
 }

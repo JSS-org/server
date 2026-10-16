@@ -3,19 +3,22 @@ package cn.iocoder.yudao.module.pay.dal.dataobject.channel;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientConfig;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.app.PayAppDO;
+import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientConfig;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.NonePayClientConfig;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay.AlipayPayClientConfig;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.AbstractJsonTypeHandler;
-import tools.jackson.core.type.TypeReference;
+
 import lombok.*;
+
+import tools.jackson.core.type.TypeReference;
 
 import java.lang.reflect.Field;
 
@@ -41,22 +44,26 @@ public class PayChannelDO extends TenantBaseDO {
      * 渠道编号，数据库自增
      */
     private Long id;
+
     /**
      * 渠道编码
      *
      * 枚举 {@link PayChannelEnum}
      */
     private String code;
+
     /**
      * 状态
      *
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+
     /**
      * 渠道费率，单位：百分比
      */
     private Double feeRate;
+
     /**
      * 备注
      */
@@ -68,6 +75,7 @@ public class PayChannelDO extends TenantBaseDO {
      * 关联 {@link PayAppDO#getId()}
      */
     private Long appId;
+
     /**
      * 支付渠道配置
      */
@@ -110,7 +118,5 @@ public class PayChannelDO extends TenantBaseDO {
         public String toJson(Object obj) {
             return JsonUtils.toJsonString(obj);
         }
-
     }
-
 }

@@ -1,17 +1,19 @@
 package cn.iocoder.yudao.module.hrm.service.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.config.HrmConfigDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.config.HrmConfigMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 /**
  * HRM 配置 Service 实现类
@@ -22,8 +24,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class HrmConfigServiceImpl implements HrmConfigService {
 
-    @Resource
-    private HrmConfigMapper hrmConfigMapper;
+    @Resource private HrmConfigMapper hrmConfigMapper;
 
     @Override
     public List<String> getConfigValueList(Integer type) {
@@ -46,5 +47,4 @@ public class HrmConfigServiceImpl implements HrmConfigService {
         }
         hrmConfigMapper.insertBatch(configs);
     }
-
 }

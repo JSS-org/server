@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordCr
 import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordCreateRespDTO;
 import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordRespDTO;
 import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationValidateJoinRespDTO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -22,7 +23,8 @@ public interface CombinationRecordApi {
      * @param skuId      sku 编号
      * @param count      数量
      */
-    void validateCombinationRecord(Long userId, Long activityId, Long headId, Long skuId, Integer count);
+    void validateCombinationRecord(
+            Long userId, Long activityId, Long headId, Long skuId, Integer count);
 
     /**
      * 创建开团记录
@@ -30,7 +32,8 @@ public interface CombinationRecordApi {
      * @param reqDTO 请求 DTO
      * @return 拼团信息
      */
-    CombinationRecordCreateRespDTO createCombinationRecord(@Valid CombinationRecordCreateReqDTO reqDTO);
+    CombinationRecordCreateRespDTO createCombinationRecord(
+            @Valid CombinationRecordCreateReqDTO reqDTO);
 
     /**
      * 基于订单编号，查询拼团记录
@@ -53,7 +56,6 @@ public interface CombinationRecordApi {
      * @param count      数量
      * @return 拼团信息
      */
-    CombinationValidateJoinRespDTO validateJoinCombination(Long userId, Long activityId, Long headId,
-                                                           Long skuId, Integer count);
-
+    CombinationValidateJoinRespDTO validateJoinCombination(
+            Long userId, Long activityId, Long headId, Long skuId, Integer count);
 }

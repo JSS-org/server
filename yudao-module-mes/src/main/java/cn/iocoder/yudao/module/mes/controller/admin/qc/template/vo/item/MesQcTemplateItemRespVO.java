@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.item;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -68,5 +70,4 @@ public class MesQcTemplateItemRespVO {
     @Schema(description = "计量单位名称", example = "个")
     @ExcelProperty("计量单位")
     private String unitMeasureName;
-
 }

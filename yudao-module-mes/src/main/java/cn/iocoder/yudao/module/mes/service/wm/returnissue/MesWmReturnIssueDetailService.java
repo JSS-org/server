@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.wm.returnissue;
 
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo.detail.MesWmReturnIssueDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueDetailDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -70,5 +71,4 @@ public interface MesWmReturnIssueDetailService {
      * @param lineId 行 ID
      */
     void deleteReturnIssueDetailByLineId(Long lineId);
-
 }

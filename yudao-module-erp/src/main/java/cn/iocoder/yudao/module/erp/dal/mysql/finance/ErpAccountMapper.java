@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.account.ErpAccountPageReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpAccountDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,11 +19,13 @@ import java.util.List;
 public interface ErpAccountMapper extends BaseMapperX<ErpAccountDO> {
 
     default PageResult<ErpAccountDO> selectPage(ErpAccountPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ErpAccountDO>()
-                .likeIfPresent(ErpAccountDO::getName, reqVO.getName())
-                .likeIfPresent(ErpAccountDO::getNo, reqVO.getNo())
-                .eqIfPresent(ErpAccountDO::getRemark, reqVO.getRemark())
-                .orderByDesc(ErpAccountDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<ErpAccountDO>()
+                        .likeIfPresent(ErpAccountDO::getName, reqVO.getName())
+                        .likeIfPresent(ErpAccountDO::getNo, reqVO.getNo())
+                        .eqIfPresent(ErpAccountDO::getRemark, reqVO.getRemark())
+                        .orderByDesc(ErpAccountDO::getId));
     }
 
     default ErpAccountDO selectByDefaultStatus() {
@@ -32,5 +35,4 @@ public interface ErpAccountMapper extends BaseMapperX<ErpAccountDO> {
     default List<ErpAccountDO> selectListByStatus(Integer status) {
         return selectList(ErpAccountDO::getStatus, status);
     }
-
 }

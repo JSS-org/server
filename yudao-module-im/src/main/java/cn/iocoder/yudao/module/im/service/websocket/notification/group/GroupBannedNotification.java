@@ -12,5 +12,4 @@ public class GroupBannedNotification extends BaseGroupNotification {
      * 是否封禁
      */
     private Boolean banned;
-
 }

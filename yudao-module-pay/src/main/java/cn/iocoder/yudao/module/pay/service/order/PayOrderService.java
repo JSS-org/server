@@ -1,7 +1,6 @@
 package cn.iocoder.yudao.module.pay.service.order;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.api.order.dto.PayOrderCreateReqDTO;
 import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderExportReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderPageReqVO;
@@ -9,9 +8,11 @@ import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderSubmitReqVO
 import cn.iocoder.yudao.module.pay.controller.admin.order.vo.PayOrderSubmitRespVO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderExtensionDO;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -96,8 +97,8 @@ public interface PayOrderService {
      * @param userIp 提交 IP
      * @return 提交结果
      */
-    PayOrderSubmitRespVO submitOrder(@Valid PayOrderSubmitReqVO reqVO,
-                                     @NotEmpty(message = "提交 IP 不能为空") String userIp);
+    PayOrderSubmitRespVO submitOrder(
+            @Valid PayOrderSubmitReqVO reqVO, @NotEmpty(message = "提交 IP 不能为空") String userIp);
 
     /**
      * 通知支付单成功
@@ -170,5 +171,4 @@ public interface PayOrderService {
      * @param id 支付单编号
      */
     void closeOrder(Long id);
-
 }

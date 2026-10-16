@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,5 +20,4 @@ public class MesHomeWorkOrderStatusRespVO {
 
     @Schema(description = "工单数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "12")
     private Long count;
-
 }

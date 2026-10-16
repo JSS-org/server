@@ -2,11 +2,14 @@ package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -44,7 +47,5 @@ public class PmsWorkItemBoardConfigSaveReqVO {
         @Schema(description = "关联状态编号列表，可为空", example = "[1024, 2048]")
         @NotNull(message = "关联状态编号列表不能为空")
         private List<Long> statusIds;
-
     }
-
 }

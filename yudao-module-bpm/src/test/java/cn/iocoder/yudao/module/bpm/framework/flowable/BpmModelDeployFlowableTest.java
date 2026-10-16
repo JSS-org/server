@@ -1,5 +1,16 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_UPDATE_FAIL_NOT_MANAGER;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.PROCESS_DEFINITION_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+
 import cn.iocoder.yudao.framework.common.exception.ErrorCode;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmProcessInstanceCreateReqDTO;
@@ -20,13 +31,14 @@ import cn.iocoder.yudao.module.bpm.service.definition.BpmModelServiceImpl;
 import cn.iocoder.yudao.module.bpm.service.definition.BpmProcessDefinitionServiceImpl;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceServiceImpl;
 import cn.iocoder.yudao.module.bpm.service.task.BpmTaskServiceImpl;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.common.engine.impl.db.SuspensionState;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
-import org.flowable.engine.repository.Model;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.task.api.Task;
 import org.junit.jupiter.api.AfterEach;
@@ -37,16 +49,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_UPDATE_FAIL_NOT_MANAGER;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.PROCESS_DEFINITION_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.AdditionalAnswers.delegatesTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
-
 /**
  * 流程模型部署、挂起、排序、清理、删除的 Flowable 集成测试
  *
@@ -55,63 +57,75 @@ import static org.mockito.Mockito.verify;
  *
  * @author HUIHUI
  */
-@Sql(scripts = "/sql/flowable/create_tables.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(
+        scripts = "/sql/flowable/create_tables.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "/sql/flowable/clean.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
 
     private static final String MODEL_KEY = "modelDeploy";
 
-    @Resource
-    private RepositoryService repositoryService;
-    @Resource
-    private RuntimeService runtimeService;
-    @Resource
-    private HistoryService historyService;
-    @Resource
-    private TaskService flowableTaskService;
-    @Resource
-    private BpmProcessDefinitionInfoMapper processDefinitionMapper;
+    @Resource private RepositoryService repositoryService;
+    @Resource private RuntimeService runtimeService;
+    @Resource private HistoryService historyService;
+    @Resource private TaskService flowableTaskService;
+    @Resource private BpmProcessDefinitionInfoMapper processDefinitionMapper;
 
-    @Resource
-    private BpmTaskServiceImpl taskService;
-    @Resource
-    private BpmProcessInstanceServiceImpl processInstanceService;
+    @Resource private BpmTaskServiceImpl taskService;
+    @Resource private BpmProcessInstanceServiceImpl processInstanceService;
 
-    private final BpmProcessDefinitionServiceImpl processDefinitionServiceImpl = new BpmProcessDefinitionServiceImpl();
+    private final BpmProcessDefinitionServiceImpl processDefinitionServiceImpl =
+            new BpmProcessDefinitionServiceImpl();
     private final BpmModelServiceImpl modelServiceImpl = new BpmModelServiceImpl();
 
     @BeforeEach
     public void setUp() {
         // 真实的流程定义、流程模型 Service，依赖的 Flowable、Mapper 使用 Spring 中的真实 Bean
-        ReflectionTestUtils.setField(processDefinitionServiceImpl, "repositoryService", repositoryService);
-        ReflectionTestUtils.setField(processDefinitionServiceImpl, "processDefinitionMapper", processDefinitionMapper);
+        ReflectionTestUtils.setField(
+                processDefinitionServiceImpl, "repositoryService", repositoryService);
+        ReflectionTestUtils.setField(
+                processDefinitionServiceImpl, "processDefinitionMapper", processDefinitionMapper);
         ReflectionTestUtils.setField(processDefinitionServiceImpl, "adminUserApi", adminUserApi);
         ReflectionTestUtils.setField(modelServiceImpl, "repositoryService", repositoryService);
         ReflectionTestUtils.setField(modelServiceImpl, "runtimeService", runtimeService);
         ReflectionTestUtils.setField(modelServiceImpl, "historyService", historyService);
         ReflectionTestUtils.setField(modelServiceImpl, "taskService", flowableTaskService);
-        ReflectionTestUtils.setField(modelServiceImpl, "processDefinitionService", processDefinitionServiceImpl);
+        ReflectionTestUtils.setField(
+                modelServiceImpl, "processDefinitionService", processDefinitionServiceImpl);
         ReflectionTestUtils.setField(modelServiceImpl, "bpmFormService", formService);
-        ReflectionTestUtils.setField(modelServiceImpl, "taskCandidateInvoker", taskCandidateInvoker);
-        ReflectionTestUtils.setField(modelServiceImpl, "processInstanceCopyService", processInstanceCopyService);
+        ReflectionTestUtils.setField(
+                modelServiceImpl, "taskCandidateInvoker", taskCandidateInvoker);
+        ReflectionTestUtils.setField(
+                modelServiceImpl, "processInstanceCopyService", processInstanceCopyService);
 
         // 发起、审批流程时，流程定义相关的查询委托给真实实现，读取部署后写入的 bpm_process_definition_info
         mockFlowableBackedServices(repositoryService);
-        doAnswer(delegatesTo(processDefinitionServiceImpl)).when(processDefinitionService)
+        doAnswer(delegatesTo(processDefinitionServiceImpl))
+                .when(processDefinitionService)
                 .getActiveProcessDefinition(anyString());
-        doAnswer(delegatesTo(processDefinitionServiceImpl)).when(processDefinitionService)
+        doAnswer(delegatesTo(processDefinitionServiceImpl))
+                .when(processDefinitionService)
                 .getProcessDefinition(anyString());
-        doAnswer(delegatesTo(processDefinitionServiceImpl)).when(processDefinitionService)
+        doAnswer(delegatesTo(processDefinitionServiceImpl))
+                .when(processDefinitionService)
                 .getProcessDefinitionInfo(anyString());
-        doAnswer(delegatesTo(processDefinitionServiceImpl)).when(processDefinitionService)
+        doAnswer(delegatesTo(processDefinitionServiceImpl))
+                .when(processDefinitionService)
                 .canUserStartProcessDefinition(any(), any());
     }
 
     @AfterEach
     public void tearDown() {
-        repositoryService.createDeploymentQuery().deploymentKey(MODEL_KEY).list()
-                .forEach(deployment -> repositoryService.deleteDeployment(deployment.getId(), true));
-        repositoryService.createModelQuery().modelKey(MODEL_KEY).list()
+        repositoryService
+                .createDeploymentQuery()
+                .deploymentKey(MODEL_KEY)
+                .list()
+                .forEach(
+                        deployment -> repositoryService.deleteDeployment(deployment.getId(), true));
+        repositoryService
+                .createModelQuery()
+                .modelKey(MODEL_KEY)
+                .list()
                 .forEach(model -> repositoryService.deleteModel(model.getId()));
     }
 
@@ -126,8 +140,11 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
         ProcessDefinition definition1 = getActiveProcessDefinition();
         assertEquals("模型部署", definition1.getName());
         assertEquals("OA", definition1.getCategory());
-        assertEquals(definition1.getDeploymentId(), repositoryService.getModel(modelId).getDeploymentId());
-        BpmProcessDefinitionInfoDO definitionInfo1 = processDefinitionMapper.selectByProcessDefinitionId(definition1.getId());
+        assertEquals(
+                definition1.getDeploymentId(),
+                repositoryService.getModel(modelId).getDeploymentId());
+        BpmProcessDefinitionInfoDO definitionInfo1 =
+                processDefinitionMapper.selectByProcessDefinitionId(definition1.getId());
         assertEquals(modelId, definitionInfo1.getModelId());
         assertEquals(BpmModelTypeEnum.SIMPLE.getType(), definitionInfo1.getModelType());
         assertEquals(List.of(1L), definitionInfo1.getManagerUserIds());
@@ -144,20 +161,28 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
         ProcessDefinition definition2 = getActiveProcessDefinition();
         assertNotEquals(definition1.getId(), definition2.getId());
         assertTrue(repositoryService.getProcessDefinition(definition1.getId()).isSuspended());
-        assertEquals(definition2.getDeploymentId(), repositoryService.getModel(modelId).getDeploymentId());
+        assertEquals(
+                definition2.getDeploymentId(),
+                repositoryService.getModel(modelId).getDeploymentId());
         String processInstanceId2 = startProcessInstance();
-        assertEquals(definition2.getId(), getRunningTask(processInstanceId2).getProcessDefinitionId());
+        assertEquals(
+                definition2.getId(), getRunningTask(processInstanceId2).getProcessDefinitionId());
 
         // 调用 + 断言：老流程定义上进行中的流程不受挂起影响，仍可审批通过
         approveTask(task1);
-        assertProcessInstanceStatus(processInstanceId1, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        assertProcessInstanceStatus(
+                processInstanceId1, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         approveTask(getRunningTask(processInstanceId2));
-        assertProcessInstanceStatus(processInstanceId2, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        assertProcessInstanceStatus(
+                processInstanceId2, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
 
         // 调用 + 断言：调整排序，同一模型的所有流程定义拓展信息同步更新
         modelServiceImpl.updateModelSortBatch(1L, List.of(modelId));
-        Long sort = processDefinitionMapper.selectByProcessDefinitionId(definition2.getId()).getSort();
-        assertEquals(sort, processDefinitionMapper.selectByProcessDefinitionId(definition1.getId()).getSort());
+        Long sort =
+                processDefinitionMapper.selectByProcessDefinitionId(definition2.getId()).getSort();
+        assertEquals(
+                sort,
+                processDefinitionMapper.selectByProcessDefinitionId(definition1.getId()).getSort());
         assertTrue(sort > definitionInfo1.getSort());
     }
 
@@ -167,8 +192,16 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
         String modelId = createModel();
 
         // 调用，并断言异常：非模型管理员不允许部署
-        assertServiceException(() -> modelServiceImpl.deployModel(2L, modelId), MODEL_UPDATE_FAIL_NOT_MANAGER, "模型部署");
-        assertEquals(0, repositoryService.createProcessDefinitionQuery().processDefinitionKey(MODEL_KEY).count());
+        assertServiceException(
+                () -> modelServiceImpl.deployModel(2L, modelId),
+                MODEL_UPDATE_FAIL_NOT_MANAGER,
+                "模型部署");
+        assertEquals(
+                0,
+                repositoryService
+                        .createProcessDefinitionQuery()
+                        .processDefinitionKey(MODEL_KEY)
+                        .count());
     }
 
     @Test
@@ -201,9 +234,20 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
         // 调用
         modelServiceImpl.cleanModel(1L, modelId);
         // 断言：流程实例、历史、任务、抄送全部清理，模型与流程定义保留
-        assertEquals(0, runtimeService.createProcessInstanceQuery().processDefinitionKey(MODEL_KEY).count());
-        assertEquals(0, historyService.createHistoricProcessInstanceQuery().processDefinitionKey(MODEL_KEY).count());
-        assertEquals(0, flowableTaskService.createTaskQuery().processDefinitionKey(MODEL_KEY).count());
+        assertEquals(
+                0,
+                runtimeService
+                        .createProcessInstanceQuery()
+                        .processDefinitionKey(MODEL_KEY)
+                        .count());
+        assertEquals(
+                0,
+                historyService
+                        .createHistoricProcessInstanceQuery()
+                        .processDefinitionKey(MODEL_KEY)
+                        .count());
+        assertEquals(
+                0, flowableTaskService.createTaskQuery().processDefinitionKey(MODEL_KEY).count());
         verify(processInstanceCopyService).deleteProcessInstanceCopy(runningId);
         verify(processInstanceCopyService).deleteProcessInstanceCopy(finishedId);
         assertNotNull(repositoryService.getModel(modelId));
@@ -226,7 +270,8 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
         assertStartProcessInstanceFail(PROCESS_DEFINITION_NOT_EXISTS);
         // 断言：进行中的流程不受影响，仍可审批通过
         approveTask(getRunningTask(processInstanceId));
-        assertProcessInstanceStatus(processInstanceId, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        assertProcessInstanceStatus(
+                processInstanceId, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
     }
 
     // ========== 私有方法 ==========
@@ -235,15 +280,25 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
      * 创建 Simple 模型：发起人 -> 审批（用户 1）-> 结束，管理员为用户 1
      */
     private String createModel() {
-        BpmSimpleModelNodeVO approveNode = new BpmSimpleModelNodeVO().setId("approve").setName("审批")
-                .setType(BpmSimpleModelNodeTypeEnum.APPROVE_NODE.getType())
-                .setApproveType(BpmUserTaskApproveTypeEnum.USER.getType())
-                .setApproveMethod(BpmUserTaskApproveMethodEnum.RANDOM.getMethod())
-                .setCandidateStrategy(BpmTaskCandidateStrategyEnum.USER.getStrategy()).setCandidateParam("1")
-                .setChildNode(new BpmSimpleModelNodeVO().setId("end").setType(BpmSimpleModelNodeTypeEnum.END_NODE.getType()));
-        BpmSimpleModelNodeVO startUserNode = new BpmSimpleModelNodeVO().setId("start-user").setName("发起人")
-                .setType(BpmSimpleModelNodeTypeEnum.START_USER_NODE.getType())
-                .setChildNode(approveNode);
+        BpmSimpleModelNodeVO approveNode =
+                new BpmSimpleModelNodeVO()
+                        .setId("approve")
+                        .setName("审批")
+                        .setType(BpmSimpleModelNodeTypeEnum.APPROVE_NODE.getType())
+                        .setApproveType(BpmUserTaskApproveTypeEnum.USER.getType())
+                        .setApproveMethod(BpmUserTaskApproveMethodEnum.RANDOM.getMethod())
+                        .setCandidateStrategy(BpmTaskCandidateStrategyEnum.USER.getStrategy())
+                        .setCandidateParam("1")
+                        .setChildNode(
+                                new BpmSimpleModelNodeVO()
+                                        .setId("end")
+                                        .setType(BpmSimpleModelNodeTypeEnum.END_NODE.getType()));
+        BpmSimpleModelNodeVO startUserNode =
+                new BpmSimpleModelNodeVO()
+                        .setId("start-user")
+                        .setName("发起人")
+                        .setType(BpmSimpleModelNodeTypeEnum.START_USER_NODE.getType())
+                        .setChildNode(approveNode);
         BpmModelSaveReqVO reqVO = new BpmModelSaveReqVO();
         reqVO.setKey(MODEL_KEY);
         reqVO.setName("模型部署");
@@ -259,39 +314,48 @@ public class BpmModelDeployFlowableTest extends BaseFlowableUnitTest {
     }
 
     private ProcessDefinition getActiveProcessDefinition() {
-        ProcessDefinition definition = processDefinitionServiceImpl.getActiveProcessDefinition(MODEL_KEY);
+        ProcessDefinition definition =
+                processDefinitionServiceImpl.getActiveProcessDefinition(MODEL_KEY);
         assertNotNull(definition);
         return definition;
     }
 
     private String startProcessInstance() {
-        return processInstanceService.createProcessInstance(1L, new BpmProcessInstanceCreateReqDTO()
-                .setProcessDefinitionKey(MODEL_KEY).setBusinessKey("business-1"));
+        return processInstanceService.createProcessInstance(
+                1L,
+                new BpmProcessInstanceCreateReqDTO()
+                        .setProcessDefinitionKey(MODEL_KEY)
+                        .setBusinessKey("business-1"));
     }
 
     /**
      * 发起流程失败：ServiceException 被 FlowableUtils#executeAuthenticatedUserId 包装，由全局异常处理器解包
      */
     private void assertStartProcessInstanceFail(ErrorCode errorCode) {
-        RuntimeException exception = assertThrows(RuntimeException.class, this::startProcessInstance);
-        ServiceException serviceException = assertInstanceOf(ServiceException.class, exception.getCause());
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, this::startProcessInstance);
+        ServiceException serviceException =
+                assertInstanceOf(ServiceException.class, exception.getCause());
         assertEquals(errorCode.getCode(), serviceException.getCode());
     }
 
     private Task getRunningTask(String processInstanceId) {
-        List<Task> tasks = taskService.getRunningTaskListByProcessInstanceId(processInstanceId, null, null);
+        List<Task> tasks =
+                taskService.getRunningTaskListByProcessInstanceId(processInstanceId, null, null);
         assertEquals(1, tasks.size());
         return tasks.get(0);
     }
 
     private void approveTask(Task task) {
-        taskService.approveTask(Long.valueOf(task.getAssignee()), new BpmTaskApproveReqVO().setId(task.getId())
-                .setReason("同意"));
+        taskService.approveTask(
+                Long.valueOf(task.getAssignee()),
+                new BpmTaskApproveReqVO().setId(task.getId()).setReason("同意"));
     }
 
     private void assertProcessInstanceStatus(String processInstanceId, Integer status) {
-        assertEquals(status, FlowableUtils.getProcessInstanceStatus(
-                processInstanceService.getHistoricProcessInstance(processInstanceId)));
+        assertEquals(
+                status,
+                FlowableUtils.getProcessInstanceStatus(
+                        processInstanceService.getHistoricProcessInstance(processInstanceId)));
     }
-
 }

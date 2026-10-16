@@ -24,5 +24,4 @@ public class PayTransferCreateRespDTO {
      * @see <a href="https://pay.weixin.qq.com/doc/v3/merchant/4012716430">JSAPI 调起用户确认收款</a>
      */
     private String channelPackageInfo;
-
 }

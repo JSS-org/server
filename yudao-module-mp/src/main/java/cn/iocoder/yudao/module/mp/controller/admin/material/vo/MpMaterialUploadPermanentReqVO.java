@@ -1,15 +1,20 @@
 package cn.iocoder.yudao.module.mp.controller.admin.material.vo;
 
 import cn.hutool.core.util.ObjectUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import me.chanjar.weixin.common.api.WxConsts;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import me.chanjar.weixin.common.api.WxConsts;
+
+import org.springframework.web.multipart.MultipartFile;
 
 @Schema(description = "管理后台 - 公众号素材上传永久 Request VO")
 @Data
@@ -19,7 +24,10 @@ public class MpMaterialUploadPermanentReqVO {
     @NotNull(message = "公众号账号的编号不能为空")
     private Long accountId;
 
-    @Schema(description = "文件类型 参见 WxConsts.MediaFileType 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "image")
+    @Schema(
+            description = "文件类型 参见 WxConsts.MediaFileType 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "image")
     @NotEmpty(message = "文件类型不能为空")
     private String type;
 
@@ -33,21 +41,19 @@ public class MpMaterialUploadPermanentReqVO {
 
     @Schema(description = "视频素材的标题 文件类型为 video 时，必填", example = "视频素材的标题")
     private String title;
+
     @Schema(description = "视频素材的描述 文件类型为 video 时，必填", example = "视频素材的描述")
     private String introduction;
 
     @AssertTrue(message = "标题不能为空")
     public boolean isTitleValid() {
         // 生成场景为管理后台时，必须设置上级菜单，不然生成的菜单 SQL 是无父级菜单的
-        return ObjectUtil.notEqual(type, WxConsts.MediaFileType.VIDEO)
-                || title != null;
+        return ObjectUtil.notEqual(type, WxConsts.MediaFileType.VIDEO) || title != null;
     }
 
     @AssertTrue(message = "描述不能为空")
     public boolean isIntroductionValid() {
         // 生成场景为管理后台时，必须设置上级菜单，不然生成的菜单 SQL 是无父级菜单的
-        return ObjectUtil.notEqual(type, WxConsts.MediaFileType.VIDEO)
-                || introduction != null;
+        return ObjectUtil.notEqual(type, WxConsts.MediaFileType.VIDEO) || introduction != null;
     }
-
 }

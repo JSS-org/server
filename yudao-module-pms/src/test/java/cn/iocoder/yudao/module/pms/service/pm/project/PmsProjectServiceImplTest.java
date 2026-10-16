@@ -1,5 +1,22 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ADMIN_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_OWNER_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_STATUS_INVALID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -19,7 +36,9 @@ import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemStatusService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemWorkLogService;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,21 +46,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ADMIN_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_OWNER_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_STATUS_INVALID;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link PmsProjectServiceImpl} 的单元测试类
@@ -51,30 +55,19 @@ import static org.mockito.Mockito.when;
 @Import(PmsProjectServiceImpl.class)
 public class PmsProjectServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsProjectServiceImpl projectService;
+    @Resource private PmsProjectServiceImpl projectService;
 
-    @Resource
-    private PmsProjectMapper projectMapper;
+    @Resource private PmsProjectMapper projectMapper;
 
-    @MockitoBean
-    private PmsProjectMemberService projectMemberService;
-    @MockitoBean
-    private PmsProjectGroupService projectGroupService;
-    @MockitoBean
-    private PmsProjectFavoriteService projectFavoriteService;
-    @MockitoBean
-    private PmsProjectAnnouncementService projectAnnouncementService;
-    @MockitoBean
-    private PmsIterationService iterationService;
-    @MockitoBean
-    private PmsWorkItemService workItemService;
-    @MockitoBean
-    private PmsWorkItemStatusService workItemStatusService;
-    @MockitoBean
-    private PmsWorkItemWorkLogService workItemWorkLogService;
-    @MockitoBean
-    private PermissionApi permissionApi;
+    @MockitoBean private PmsProjectMemberService projectMemberService;
+    @MockitoBean private PmsProjectGroupService projectGroupService;
+    @MockitoBean private PmsProjectFavoriteService projectFavoriteService;
+    @MockitoBean private PmsProjectAnnouncementService projectAnnouncementService;
+    @MockitoBean private PmsIterationService iterationService;
+    @MockitoBean private PmsWorkItemService workItemService;
+    @MockitoBean private PmsWorkItemStatusService workItemStatusService;
+    @MockitoBean private PmsWorkItemWorkLogService workItemWorkLogService;
+    @MockitoBean private PermissionApi permissionApi;
 
     @Test
     public void testCreateProject_success() {
@@ -91,7 +84,8 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         assertNotNull(project);
         assertEquals(reqVO.getName(), project.getName());
         assertEquals(PmsProjectStatusEnum.ACTIVE.getStatus(), project.getStatus());
-        verify(projectMemberService).createProjectMemberList(projectId, userId, reqVO.getMemberUserIds());
+        verify(projectMemberService)
+                .createProjectMemberList(projectId, userId, reqVO.getMemberUserIds());
         verify(workItemStatusService).initProjectWorkItemStatuses(projectId, reqVO.getType());
     }
 
@@ -101,25 +95,29 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         PmsProjectDO project = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus());
         projectMapper.insert(project);
-        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId)).thenReturn(false);
+        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId))
+                .thenReturn(false);
         // 准备参数
         PmsProjectSaveReqVO reqVO = randomProjectSaveReqVO(project.getId());
 
         // 调用，并断言异常
-        assertServiceException(() -> projectService.updateProject(reqVO, userId), PROJECT_ADMIN_REQUIRED);
+        assertServiceException(
+                () -> projectService.updateProject(reqVO, userId), PROJECT_ADMIN_REQUIRED);
     }
 
     @Test
     public void testGetProjectPage_allIncludesOpenProject() {
         // mock 数据
         Long userId = randomLongId();
-        PmsProjectDO openProject = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus()).setOpenStatus(true);
+        PmsProjectDO openProject =
+                randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus()).setOpenStatus(true);
         projectMapper.insert(openProject);
         when(projectMemberService.getProjectIdListByUserId(userId)).thenReturn(emptyList());
         // 准备参数
-        PmsProjectPageReqVO reqVO = new PmsProjectPageReqVO()
-                .setSceneType(PmsProjectSceneTypeEnum.ALL.getType())
-                .setStatus(PmsProjectStatusEnum.ACTIVE.getStatus());
+        PmsProjectPageReqVO reqVO =
+                new PmsProjectPageReqVO()
+                        .setSceneType(PmsProjectSceneTypeEnum.ALL.getType())
+                        .setStatus(PmsProjectStatusEnum.ACTIVE.getStatus());
 
         // 调用
         PageResult<PmsProjectDO> pageResult = projectService.getProjectPage(reqVO, userId);
@@ -133,24 +131,28 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
     public void testGetProjectPage_createTimeAscending() {
         // mock 数据
         Long userId = randomLongId();
-        PmsProjectDO oldProject = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus()).setOpenStatus(true);
+        PmsProjectDO oldProject =
+                randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus()).setOpenStatus(true);
         oldProject.setCreateTime(LocalDateTime.now().minusDays(2));
-        PmsProjectDO newProject = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus()).setOpenStatus(true);
+        PmsProjectDO newProject =
+                randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus()).setOpenStatus(true);
         newProject.setCreateTime(LocalDateTime.now().minusDays(1));
         projectMapper.insert(oldProject);
         projectMapper.insert(newProject);
         when(projectMemberService.getProjectIdListByUserId(userId)).thenReturn(emptyList());
         // 准备参数
-        PmsProjectPageReqVO reqVO = new PmsProjectPageReqVO()
-                .setSceneType(PmsProjectSceneTypeEnum.ALL.getType())
-                .setStatus(PmsProjectStatusEnum.ACTIVE.getStatus())
-                .setSortType(PmsProjectSortTypeEnum.CREATE_TIME.getType());
+        PmsProjectPageReqVO reqVO =
+                new PmsProjectPageReqVO()
+                        .setSceneType(PmsProjectSceneTypeEnum.ALL.getType())
+                        .setStatus(PmsProjectStatusEnum.ACTIVE.getStatus())
+                        .setSortType(PmsProjectSortTypeEnum.CREATE_TIME.getType());
 
         // 调用
         PageResult<PmsProjectDO> pageResult = projectService.getProjectPage(reqVO, userId);
 
         // 断言：创建时间按升序，旧项目在前
-        assertEquals(Arrays.asList(oldProject.getId(), newProject.getId()),
+        assertEquals(
+                Arrays.asList(oldProject.getId(), newProject.getId()),
                 convertList(pageResult.getList(), PmsProjectDO::getId));
     }
 
@@ -165,7 +167,11 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         PmsProjectDO archivedProject = randomProjectDO(PmsProjectStatusEnum.ARCHIVED.getStatus());
         projectMapper.insert(archivedProject);
         when(projectFavoriteService.getFavoriteProjectIdListByUserId(userId))
-                .thenReturn(asList(favoriteProject.getId(), nonMemberProject.getId(), archivedProject.getId()));
+                .thenReturn(
+                        asList(
+                                favoriteProject.getId(),
+                                nonMemberProject.getId(),
+                                archivedProject.getId()));
         when(projectMemberService.getProjectIdListByUserId(userId))
                 .thenReturn(asList(favoriteProject.getId(), archivedProject.getId()));
 
@@ -183,8 +189,10 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         PmsProjectDO project = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus());
         projectMapper.insert(project);
-        when(projectMemberService.validateProjectReadable(project.getId(), userId)).thenReturn(project);
-        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId)).thenReturn(true);
+        when(projectMemberService.validateProjectReadable(project.getId(), userId))
+                .thenReturn(project);
+        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId))
+                .thenReturn(true);
 
         // 调用
         projectService.archiveProject(project.getId(), userId);
@@ -203,7 +211,8 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         PmsProjectDO project = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus());
         projectMapper.insert(project);
-        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId)).thenReturn(true);
+        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId))
+                .thenReturn(true);
 
         // 调用
         projectService.recycleProject(project.getId(), userId);
@@ -220,11 +229,14 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
     public void testRestoreProject_success() {
         // mock 数据
         Long userId = randomLongId();
-        PmsProjectDO project = randomProjectDO(PmsProjectStatusEnum.ARCHIVED.getStatus())
-                .setArchiveTime(LocalDateTime.now());
+        PmsProjectDO project =
+                randomProjectDO(PmsProjectStatusEnum.ARCHIVED.getStatus())
+                        .setArchiveTime(LocalDateTime.now());
         projectMapper.insert(project);
-        when(projectMemberService.validateProjectReadable(project.getId(), userId)).thenReturn(project);
-        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId)).thenReturn(true);
+        when(projectMemberService.validateProjectReadable(project.getId(), userId))
+                .thenReturn(project);
+        when(projectMemberService.hasProjectManagerPermission(project.getId(), userId))
+                .thenReturn(true);
 
         // 调用
         projectService.restoreProject(project.getId(), userId);
@@ -242,10 +254,13 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         PmsProjectDO project = randomProjectDO(PmsProjectStatusEnum.ACTIVE.getStatus());
         projectMapper.insert(project);
-        when(projectMemberService.hasProjectOwnerPermission(project.getId(), userId)).thenReturn(true);
+        when(projectMemberService.hasProjectOwnerPermission(project.getId(), userId))
+                .thenReturn(true);
 
         // 调用，并断言异常
-        assertServiceException(() -> projectService.deleteProject(project.getId(), userId), PROJECT_STATUS_INVALID);
+        assertServiceException(
+                () -> projectService.deleteProject(project.getId(), userId),
+                PROJECT_STATUS_INVALID);
     }
 
     @Test
@@ -254,10 +269,13 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         PmsProjectDO project = randomProjectDO(PmsProjectStatusEnum.RECYCLED.getStatus());
         projectMapper.insert(project);
-        when(projectMemberService.hasProjectOwnerPermission(project.getId(), userId)).thenReturn(false);
+        when(projectMemberService.hasProjectOwnerPermission(project.getId(), userId))
+                .thenReturn(false);
 
         // 调用，并断言异常
-        assertServiceException(() -> projectService.deleteProject(project.getId(), userId), PROJECT_OWNER_REQUIRED);
+        assertServiceException(
+                () -> projectService.deleteProject(project.getId(), userId),
+                PROJECT_OWNER_REQUIRED);
     }
 
     @Test
@@ -265,12 +283,24 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long projectId = randomLongId();
         Long userId = randomLongId();
-        PmsWorkItemDO pendingWorkItem = randomWorkItemDO(userId, PmsWorkItemTypeEnum.TASK.getType(),
-                PmsWorkItemStatusTypeEnum.PENDING.getType(), 1);
-        PmsWorkItemDO processingWorkItem = randomWorkItemDO(userId, PmsWorkItemTypeEnum.DEFECT.getType(),
-                PmsWorkItemStatusTypeEnum.PROCESSING.getType(), 2);
-        PmsWorkItemDO completedWorkItem = randomWorkItemDO(randomLongId(),
-                PmsWorkItemTypeEnum.REQUIREMENT.getType(), PmsWorkItemStatusTypeEnum.COMPLETED.getType(), 3);
+        PmsWorkItemDO pendingWorkItem =
+                randomWorkItemDO(
+                        userId,
+                        PmsWorkItemTypeEnum.TASK.getType(),
+                        PmsWorkItemStatusTypeEnum.PENDING.getType(),
+                        1);
+        PmsWorkItemDO processingWorkItem =
+                randomWorkItemDO(
+                        userId,
+                        PmsWorkItemTypeEnum.DEFECT.getType(),
+                        PmsWorkItemStatusTypeEnum.PROCESSING.getType(),
+                        2);
+        PmsWorkItemDO completedWorkItem =
+                randomWorkItemDO(
+                        randomLongId(),
+                        PmsWorkItemTypeEnum.REQUIREMENT.getType(),
+                        PmsWorkItemStatusTypeEnum.COMPLETED.getType(),
+                        3);
         when(workItemService.getActiveWorkItemListByProjectId(projectId))
                 .thenReturn(Arrays.asList(pendingWorkItem, processingWorkItem, completedWorkItem));
 
@@ -292,32 +322,66 @@ public class PmsProjectServiceImplTest extends BaseDbUnitTest {
 
     private static PmsProjectSaveReqVO randomProjectSaveReqVO() {
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
-        return randomPojo(PmsProjectSaveReqVO.class,
-                reqVO -> reqVO.setId(null).setType(1).setMemberUserIds(emptyList())
-                .setName("官网重构").setLevel(3).setDescription("测试项目").setOpenStatus(false)
-                .setIcon("ep:folder").setStartTime(startTime).setEndTime(startTime.plusMonths(1)));
+        return randomPojo(
+                PmsProjectSaveReqVO.class,
+                reqVO ->
+                        reqVO.setId(null)
+                                .setType(1)
+                                .setMemberUserIds(emptyList())
+                                .setName("官网重构")
+                                .setLevel(3)
+                                .setDescription("测试项目")
+                                .setOpenStatus(false)
+                                .setIcon("ep:folder")
+                                .setStartTime(startTime)
+                                .setEndTime(startTime.plusMonths(1)));
     }
 
     private static PmsProjectSaveReqVO randomProjectSaveReqVO(Long id) {
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
-        return randomPojo(PmsProjectSaveReqVO.class, reqVO -> reqVO.setId(id).setType(1)
-                .setMemberUserIds(emptyList()).setName("新项目名称").setLevel(3)
-                .setDescription("更新描述").setOpenStatus(true).setIcon("ep:folder")
-                .setStartTime(startTime).setEndTime(startTime.plusMonths(1)));
+        return randomPojo(
+                PmsProjectSaveReqVO.class,
+                reqVO ->
+                        reqVO.setId(id)
+                                .setType(1)
+                                .setMemberUserIds(emptyList())
+                                .setName("新项目名称")
+                                .setLevel(3)
+                                .setDescription("更新描述")
+                                .setOpenStatus(true)
+                                .setIcon("ep:folder")
+                                .setStartTime(startTime)
+                                .setEndTime(startTime.plusMonths(1)));
     }
 
     private static PmsProjectDO randomProjectDO(Integer status) {
-        return randomPojo(PmsProjectDO.class, project -> project.setName("测试项目").setStatus(status)
-                .setType(1).setLevel(3).setOpenStatus(false).setCreator(String.valueOf(randomLongId())));
+        return randomPojo(
+                PmsProjectDO.class,
+                project ->
+                        project.setName("测试项目")
+                                .setStatus(status)
+                                .setType(1)
+                                .setLevel(3)
+                                .setOpenStatus(false)
+                                .setCreator(String.valueOf(randomLongId())));
     }
 
-    private static PmsWorkItemDO randomWorkItemDO(Long assigneeUserId, Integer type, Integer status, Integer serial) {
-        PmsWorkItemDO workItem = randomPojo(PmsWorkItemDO.class,
-                item -> item.setId(randomLongId()).setAssigneeUserId(assigneeUserId)
-                        .setType(type).setStatus(status).setStatusId(randomLongId()).setSerialNumber(serial)
-                        .setName("测试工作项").setProgress(0).setSort(serial));
+    private static PmsWorkItemDO randomWorkItemDO(
+            Long assigneeUserId, Integer type, Integer status, Integer serial) {
+        PmsWorkItemDO workItem =
+                randomPojo(
+                        PmsWorkItemDO.class,
+                        item ->
+                                item.setId(randomLongId())
+                                        .setAssigneeUserId(assigneeUserId)
+                                        .setType(type)
+                                        .setStatus(status)
+                                        .setStatusId(randomLongId())
+                                        .setSerialNumber(serial)
+                                        .setName("测试工作项")
+                                        .setProgress(0)
+                                        .setSort(serial));
         workItem.setUpdateTime(LocalDateTime.now());
         return workItem;
     }
-
 }

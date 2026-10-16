@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.matcher.trigger;
 
+import static cn.hutool.core.util.RandomUtil.*;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
@@ -7,16 +13,12 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotBaseConditionMatcherTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.hutool.core.util.RandomUtil.*;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotDeviceServiceInvokeTriggerMatcher} 的单元测试
@@ -72,12 +74,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_serviceInvokeSuccess() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -92,14 +97,17 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_configServiceSuccess() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("interval", randomInt())
-                        .put("enabled", randomBoolean())
-                        .put("threshold", randomDouble())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("interval", randomInt())
+                                        .put("enabled", randomBoolean())
+                                        .put("threshold", randomDouble())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -114,13 +122,16 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_updateServiceSuccess() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("version", randomString())
-                        .put("url", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("version", randomString())
+                                        .put("url", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -136,12 +147,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
         // 准备参数
         String messageIdentifier = randomString();
         String triggerIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", messageIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", messageIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(triggerIdentifier); // 不匹配的服务标识符
 
@@ -156,12 +170,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_wrongMessageMethod() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = new IotDeviceMessage();
         message.setDeviceId(randomLongId());
         message.setMethod(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod()); // 错误的方法
@@ -179,12 +196,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_nullTriggerIdentifier() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -235,11 +255,14 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_missingServiceIdentifierInParams() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build()) // 缺少 identifier 字段
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build()) // 缺少 identifier 字段
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -254,12 +277,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_nullTrigger() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
 
         // 调用
@@ -273,12 +299,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_nullTriggerType() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(null);
@@ -295,10 +324,11 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_emptyInputDataSuccess() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.ofEntries()) // 空的输入数据
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put("inputData", MapUtil.ofEntries()) // 空的输入数据
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -313,10 +343,11 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_noInputDataSuccess() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                // 没有 inputData 字段
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        // 没有 inputData 字段
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -331,19 +362,28 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_complexInputDataSuccess() {
         // 准备参数
         String serviceIdentifier = randomString();
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("sensors", new String[]{randomString(), randomString(), randomString()})
-                        .put("precision", randomDouble())
-                        .put("duration", randomInt())
-                        .put("autoSave", randomBoolean())
-                        .put("config", MapUtil.builder(new HashMap<String, Object>())
-                                .put("mode", randomString())
-                                .put("level", randomString())
-                                .build())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put(
+                                                "sensors",
+                                                new String[] {
+                                                    randomString(), randomString(), randomString()
+                                                })
+                                        .put("precision", randomDouble())
+                                        .put("duration", randomInt())
+                                        .put("autoSave", randomBoolean())
+                                        .put(
+                                                "config",
+                                                MapUtil.builder(new HashMap<String, Object>())
+                                                        .put("mode", randomString())
+                                                        .put("level", randomString())
+                                                        .build())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(serviceIdentifier);
 
@@ -359,12 +399,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
         // 准备参数
         String serviceIdentifier = randomString().toUpperCase(); // 大写
         String triggerIdentifier = serviceIdentifier.toLowerCase(); // 小写
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", randomString())
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(triggerIdentifier);
 
@@ -377,7 +420,6 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
         assertFalse(result);
     }
 
-
     // ========== 参数条件匹配测试 ==========
 
     /**
@@ -389,12 +431,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_noParameterCondition_success() {
         // 准备参数
         String serviceIdentifier = "testService";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", 5)
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", 5)
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -418,12 +463,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_withParameterCondition_greaterThan_success() {
         // 准备参数
         String serviceIdentifier = "level";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", 5)
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", 5)
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -447,12 +495,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_withParameterCondition_greaterThan_failure() {
         // 准备参数
         String serviceIdentifier = "level";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", 2)
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", 2)
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -476,12 +527,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_withParameterCondition_equals_success() {
         // 准备参数
         String serviceIdentifier = "mode";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("mode", "auto")
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("mode", "auto")
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -505,10 +559,11 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_withParameterCondition_missingInputData() {
         // 准备参数
         String serviceIdentifier = "testService";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                // 缺少 inputData 字段
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        // 缺少 inputData 字段
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -532,12 +587,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_withParameterCondition_missingParam() {
         // 准备参数
         String serviceIdentifier = "level";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("otherParam", 5) // 不是 level 参数
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("otherParam", 5) // 不是 level 参数
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -561,12 +619,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_onlyOperator_noValue() {
         // 准备参数
         String serviceIdentifier = "testService";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", 5)
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", 5)
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -590,12 +651,15 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_onlyValue_noOperator() {
         // 准备参数
         String serviceIdentifier = "testService";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputData", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", 5)
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputData",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", 5)
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -619,12 +683,18 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
     public void testMatches_withInputParams_success() {
         // 准备参数
         String serviceIdentifier = "level";
-        Map<String, Object> serviceParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", serviceIdentifier)
-                .put("inputParams", MapUtil.builder(new HashMap<String, Object>()) // 使用 inputParams 而不是 inputData
-                        .put("level", 5)
-                        .build())
-                .build();
+        Map<String, Object> serviceParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", serviceIdentifier)
+                        .put(
+                                "inputParams",
+                                MapUtil.builder(
+                                                new HashMap<
+                                                        String,
+                                                        Object>()) // 使用 inputParams 而不是 inputData
+                                        .put("level", 5)
+                                        .build())
+                        .build();
         IotDeviceMessage message = createServiceInvokeMessage(serviceParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_SERVICE_INVOKE.getType());
@@ -661,5 +731,4 @@ public class IotDeviceServiceInvokeTriggerMatcherTest extends IotBaseConditionMa
         trigger.setIdentifier(identifier);
         return trigger;
     }
-
 }

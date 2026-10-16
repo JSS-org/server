@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.RULE_SCENE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -24,8 +28,11 @@ import cn.iocoder.yudao.module.iot.service.rule.scene.action.IotSceneRuleAction;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherManager;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotSceneRuleTimerHandler;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotTimerConditionEvaluator;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -34,10 +41,6 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.RULE_SCENE_NOT_EXISTS;
 
 /**
  * IoT 规则场景 Service 实现类
@@ -49,22 +52,15 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.RULE_SCENE_NO
 @Slf4j
 public class IotSceneRuleServiceImpl implements IotSceneRuleService {
 
-    @Resource
-    private IotSceneRuleMapper sceneRuleMapper;
+    @Resource private IotSceneRuleMapper sceneRuleMapper;
 
-    @Resource
-    private IotProductService productService;
-    @Resource
-    private IotDeviceService deviceService;
+    @Resource private IotProductService productService;
+    @Resource private IotDeviceService deviceService;
 
-    @Resource
-    private IotSceneRuleMatcherManager sceneRuleMatcherManager;
-    @Resource
-    private List<IotSceneRuleAction> sceneRuleActions;
-    @Resource
-    private IotSceneRuleTimerHandler timerHandler;
-    @Resource
-    private IotTimerConditionEvaluator timerConditionEvaluator;
+    @Resource private IotSceneRuleMatcherManager sceneRuleMatcherManager;
+    @Resource private List<IotSceneRuleAction> sceneRuleActions;
+    @Resource private IotSceneRuleTimerHandler timerHandler;
+    @Resource private IotTimerConditionEvaluator timerConditionEvaluator;
 
     @Override
     @CacheEvict(value = RedisKeyConstants.SCENE_RULE_LIST, allEntries = true)
@@ -163,53 +159,64 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
     @Override
     @Cacheable(value = RedisKeyConstants.SCENE_RULE_LIST, key = "#productId + '_' + #deviceId ")
     @TenantIgnore // 忽略租户隔离：因为 IotSceneRuleMessageHandler 调用时，一般未传递租户，所以需要忽略
-    public List<IotSceneRuleDO> getSceneRuleListByProductIdAndDeviceIdFromCache(Long productId, Long deviceId) {
+    public List<IotSceneRuleDO> getSceneRuleListByProductIdAndDeviceIdFromCache(
+            Long productId, Long deviceId) {
         // 1. 查询启用状态的规则场景
-        List<IotSceneRuleDO> enabledList = sceneRuleMapper.selectList(IotSceneRuleDO::getStatus, CommonStatusEnum.ENABLE.getStatus());
+        List<IotSceneRuleDO> enabledList =
+                sceneRuleMapper.selectList(
+                        IotSceneRuleDO::getStatus, CommonStatusEnum.ENABLE.getStatus());
 
         // 2. 根据 productKey 和 deviceName 进行匹配
-        return filterList(enabledList, sceneRule -> {
-            if (CollUtil.isEmpty(sceneRule.getTriggers())) {
-                return false;
-            }
-
-            for (IotSceneRuleDO.Trigger trigger : sceneRule.getTriggers()) {
-                // 检查触发器是否匹配指定的产品和设备
-                try {
-                    // 检查产品是否匹配
-                    if (trigger.getProductId() == null || trigger.getDeviceId() == null) {
+        return filterList(
+                enabledList,
+                sceneRule -> {
+                    if (CollUtil.isEmpty(sceneRule.getTriggers())) {
                         return false;
                     }
-                    // 检查是否是全部设备的特殊标识
-                    if (IotDeviceDO.DEVICE_ID_ALL.equals(trigger.getDeviceId())) {
-                        return true;
+
+                    for (IotSceneRuleDO.Trigger trigger : sceneRule.getTriggers()) {
+                        // 检查触发器是否匹配指定的产品和设备
+                        try {
+                            // 检查产品是否匹配
+                            if (trigger.getProductId() == null || trigger.getDeviceId() == null) {
+                                return false;
+                            }
+                            // 检查是否是全部设备的特殊标识
+                            if (IotDeviceDO.DEVICE_ID_ALL.equals(trigger.getDeviceId())) {
+                                return true;
+                            }
+                            // 检查具体设备 ID 是否匹配
+                            return ObjUtil.equal(productId, trigger.getProductId())
+                                    && ObjUtil.equal(deviceId, trigger.getDeviceId());
+                        } catch (Exception e) {
+                            log.warn(
+                                    "[getSceneRuleListByProductIdAndDeviceIdFromCache][产品({}) 设备({}) 匹配触发器异常]",
+                                    productId,
+                                    deviceId,
+                                    e);
+                            return false;
+                        }
                     }
-                    // 检查具体设备 ID 是否匹配
-                    return ObjUtil.equal(productId, trigger.getProductId()) && ObjUtil.equal(deviceId, trigger.getDeviceId());
-                } catch (Exception e) {
-                    log.warn("[getSceneRuleListByProductIdAndDeviceIdFromCache][产品({}) 设备({}) 匹配触发器异常]",
-                            productId, deviceId, e);
                     return false;
-                }
-            }
-            return false;
-        });
+                });
     }
 
     @Override
     public void executeSceneRuleByDevice(IotDeviceMessage message) {
         // 1.1 这里的 tenantId，通过设备获取；
         IotDeviceDO device = deviceService.getDeviceFromCache(message.getDeviceId());
-        TenantUtils.execute(device.getTenantId(), () -> {
-            // 1.2 获得设备匹配的规则场景
-            List<IotSceneRuleDO> sceneRules = getMatchedSceneRuleListByMessage(message);
-            if (CollUtil.isEmpty(sceneRules)) {
-                return;
-            }
+        TenantUtils.execute(
+                device.getTenantId(),
+                () -> {
+                    // 1.2 获得设备匹配的规则场景
+                    List<IotSceneRuleDO> sceneRules = getMatchedSceneRuleListByMessage(message);
+                    if (CollUtil.isEmpty(sceneRules)) {
+                        return;
+                    }
 
-            // 2. 执行规则场景
-            executeSceneRuleAction(message, sceneRules);
-        });
+                    // 2. 执行规则场景
+                    executeSceneRuleAction(message, sceneRules);
+                });
     }
 
     @Override
@@ -225,8 +232,13 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
             return;
         }
         // 1.2 判断是否有定时触发器，避免脏数据
-        IotSceneRuleDO.Trigger timerTrigger = CollUtil.findOne(scene.getTriggers(),
-                trigger -> ObjUtil.equals(trigger.getType(), IotSceneRuleTriggerTypeEnum.TIMER.getType()));
+        IotSceneRuleDO.Trigger timerTrigger =
+                CollUtil.findOne(
+                        scene.getTriggers(),
+                        trigger ->
+                                ObjUtil.equals(
+                                        trigger.getType(),
+                                        IotSceneRuleTriggerTypeEnum.TIMER.getType()));
         if (timerTrigger == null) {
             log.error("[executeSceneRuleByTimer][规则场景({}) 不存在定时触发器]", scene);
             return;
@@ -241,8 +253,8 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
         log.info("[executeSceneRuleByTimer][规则场景({}) 条件组评估通过，准备执行动作]", id);
 
         // 3. 执行规则场景
-        TenantUtils.execute(scene.getTenantId(),
-                () -> executeSceneRuleAction(null, ListUtil.toList(scene)));
+        TenantUtils.execute(
+                scene.getTenantId(), () -> executeSceneRuleAction(null, ListUtil.toList(scene)));
     }
 
     /**
@@ -252,7 +264,8 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      * @param trigger 定时触发器
      * @return 是否满足条件
      */
-    private boolean evaluateTimerConditionGroups(IotSceneRuleDO scene, IotSceneRuleDO.Trigger trigger) {
+    private boolean evaluateTimerConditionGroups(
+            IotSceneRuleDO scene, IotSceneRuleDO.Trigger trigger) {
         // 1. 如果没有条件组，直接返回 true（直接执行动作）
         if (CollUtil.isEmpty(trigger.getConditionGroups())) {
             log.debug("[evaluateTimerConditionGroups][规则场景({}) 无条件组配置，直接执行]", scene.getId());
@@ -279,8 +292,8 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      * @param conditionGroup 条件组
      * @return 是否满足条件
      */
-    private boolean evaluateSingleConditionGroup(IotSceneRuleDO scene,
-                                                 List<IotSceneRuleDO.TriggerCondition> conditionGroup) {
+    private boolean evaluateSingleConditionGroup(
+            IotSceneRuleDO scene, List<IotSceneRuleDO.TriggerCondition> conditionGroup) {
         // 1. 空条件组视为满足
         if (CollUtil.isEmpty(conditionGroup)) {
             return true;
@@ -289,8 +302,10 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
         // 2. 条件之间是 AND 关系，所有条件都必须满足
         for (IotSceneRuleDO.TriggerCondition condition : conditionGroup) {
             if (!evaluateTimerCondition(scene, condition)) {
-                log.debug("[evaluateSingleConditionGroup][规则场景({}) 条件({}) 不满足]",
-                        scene.getId(), condition);
+                log.debug(
+                        "[evaluateSingleConditionGroup][规则场景({}) 条件({}) 不满足]",
+                        scene.getId(),
+                        condition);
                 return false;
             }
         }
@@ -305,11 +320,15 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      * @param condition 条件
      * @return 是否满足条件
      */
-    private boolean evaluateTimerCondition(IotSceneRuleDO scene, IotSceneRuleDO.TriggerCondition condition) {
+    private boolean evaluateTimerCondition(
+            IotSceneRuleDO scene, IotSceneRuleDO.TriggerCondition condition) {
         try {
             boolean result = timerConditionEvaluator.evaluate(condition);
-            log.debug("[evaluateTimerCondition][规则场景({}) 条件类型({}) 评估结果: {}]",
-                    scene.getId(), condition.getType(), result);
+            log.debug(
+                    "[evaluateTimerCondition][规则场景({}) 条件类型({}) 评估结果: {}]",
+                    scene.getId(),
+                    condition.getType(),
+                    result);
             return result;
         } catch (Exception e) {
             log.error("[evaluateTimerCondition][规则场景({}) 条件评估异常]", scene.getId(), e);
@@ -337,8 +356,10 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
             return ListUtil.of();
         }
         // 1.3 获取匹配的规则场景
-        List<IotSceneRuleDO> sceneRules = getSelf().getSceneRuleListByProductIdAndDeviceIdFromCache(
-                product.getId(), device.getId());
+        List<IotSceneRuleDO> sceneRules =
+                getSelf()
+                        .getSceneRuleListByProductIdAndDeviceIdFromCache(
+                                product.getId(), device.getId());
         if (CollUtil.isEmpty(sceneRules)) {
             return sceneRules;
         }
@@ -362,8 +383,11 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
 
         for (IotSceneRuleDO.Trigger trigger : sceneRule.getTriggers()) {
             if (matchSingleTrigger(message, trigger, sceneRule)) {
-                log.info("[matchSceneRuleTriggers][消息({}) 匹配到规则场景编号({}) 的触发器({})]",
-                        message.getRequestId(), sceneRule.getId(), trigger.getType());
+                log.info(
+                        "[matchSceneRuleTriggers][消息({}) 匹配到规则场景编号({}) 的触发器({})]",
+                        message.getRequestId(),
+                        sceneRule.getId(),
+                        trigger.getType());
                 return true;
             }
         }
@@ -378,12 +402,18 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      * @param sceneRule 场景规则（用于日志）
      * @return 是否匹配
      */
-    private boolean matchSingleTrigger(IotDeviceMessage message, IotSceneRuleDO.Trigger trigger, IotSceneRuleDO sceneRule) {
+    private boolean matchSingleTrigger(
+            IotDeviceMessage message, IotSceneRuleDO.Trigger trigger, IotSceneRuleDO sceneRule) {
         try {
-            return sceneRuleMatcherManager.isMatched(message, trigger) && isTriggerConditionGroupsMatched(message, trigger, sceneRule);
+            return sceneRuleMatcherManager.isMatched(message, trigger)
+                    && isTriggerConditionGroupsMatched(message, trigger, sceneRule);
         } catch (Exception e) {
-            log.error("[matchSingleTrigger][触发器匹配异常] sceneRuleId: {}, triggerType: {}, message: {}",
-                    sceneRule.getId(), trigger.getType(), message, e);
+            log.error(
+                    "[matchSingleTrigger][触发器匹配异常] sceneRuleId: {}, triggerType: {}, message: {}",
+                    sceneRule.getId(),
+                    trigger.getType(),
+                    message,
+                    e);
             return false;
         }
     }
@@ -396,9 +426,8 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      * @param sceneRule 场景规则（用于日志）
      * @return 是否匹配
      */
-    private boolean isTriggerConditionGroupsMatched(IotDeviceMessage message,
-                                                    IotSceneRuleDO.Trigger trigger,
-                                                    IotSceneRuleDO sceneRule) {
+    private boolean isTriggerConditionGroupsMatched(
+            IotDeviceMessage message, IotSceneRuleDO.Trigger trigger, IotSceneRuleDO sceneRule) {
         // 1. 如果没有条件分组，则认为匹配成功（只依赖基础触发器匹配）
         if (CollUtil.isEmpty(trigger.getConditionGroups())) {
             return true;
@@ -436,13 +465,19 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      * @param trigger   触发器（用于日志，无其它作用）
      * @return 是否匹配
      */
-    private boolean isTriggerConditionMatched(IotDeviceMessage message, IotSceneRuleDO.TriggerCondition condition,
-                                              IotSceneRuleDO sceneRule, IotSceneRuleDO.Trigger trigger) {
+    private boolean isTriggerConditionMatched(
+            IotDeviceMessage message,
+            IotSceneRuleDO.TriggerCondition condition,
+            IotSceneRuleDO sceneRule,
+            IotSceneRuleDO.Trigger trigger) {
         try {
             return sceneRuleMatcherManager.isConditionMatched(message, condition);
         } catch (Exception e) {
-            log.error("[isTriggerConditionMatched][规则场景编号({}) 的触发器({}) 条件匹配异常]",
-                    sceneRule.getId(), trigger, e);
+            log.error(
+                    "[isTriggerConditionMatched][规则场景编号({}) 的触发器({}) 条件匹配异常]",
+                    sceneRule.getId(),
+                    trigger,
+                    e);
             return false;
         }
     }
@@ -455,31 +490,51 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      */
     private void executeSceneRuleAction(IotDeviceMessage message, List<IotSceneRuleDO> sceneRules) {
         // 1. 遍历规则场景
-        sceneRules.forEach(sceneRule -> {
-            // 2. 遍历规则场景的动作
-            sceneRule.getActions().forEach(actionConfig -> {
-                // 2.1 获取对应的动作 Action 数组
-                List<IotSceneRuleAction> actions = filterList(sceneRuleActions,
-                        action -> action.getType().getType().equals(actionConfig.getType()));
-                if (CollUtil.isEmpty(actions)) {
-                    return;
-                }
-                // 2.2 执行动作
-                actions.forEach(action -> {
-                    try {
-                        action.execute(message, sceneRule, actionConfig);
-                        log.info("[executeSceneRuleAction][消息({}) 规则场景编号({}) 的执行动作({}) 成功]",
-                                message, sceneRule.getId(), actionConfig);
-                    } catch (Exception e) {
-                        log.error("[executeSceneRuleAction][消息({}) 规则场景编号({}) 的执行动作({}) 执行异常]",
-                                message, sceneRule.getId(), actionConfig, e);
-                    }
-                });
-            });
+        sceneRules.forEach(
+                sceneRule -> {
+                    // 2. 遍历规则场景的动作
+                    sceneRule
+                            .getActions()
+                            .forEach(
+                                    actionConfig -> {
+                                        // 2.1 获取对应的动作 Action 数组
+                                        List<IotSceneRuleAction> actions =
+                                                filterList(
+                                                        sceneRuleActions,
+                                                        action ->
+                                                                action.getType()
+                                                                        .getType()
+                                                                        .equals(
+                                                                                actionConfig
+                                                                                        .getType()));
+                                        if (CollUtil.isEmpty(actions)) {
+                                            return;
+                                        }
+                                        // 2.2 执行动作
+                                        actions.forEach(
+                                                action -> {
+                                                    try {
+                                                        action.execute(
+                                                                message, sceneRule, actionConfig);
+                                                        log.info(
+                                                                "[executeSceneRuleAction][消息({}) 规则场景编号({}) 的执行动作({}) 成功]",
+                                                                message,
+                                                                sceneRule.getId(),
+                                                                actionConfig);
+                                                    } catch (Exception e) {
+                                                        log.error(
+                                                                "[executeSceneRuleAction][消息({}) 规则场景编号({}) 的执行动作({}) 执行异常]",
+                                                                message,
+                                                                sceneRule.getId(),
+                                                                actionConfig,
+                                                                e);
+                                                    }
+                                                });
+                                    });
 
-            // 3. 更新最后触发时间
-            updateLastTriggerTime(sceneRule.getId());
-        });
+                    // 3. 更新最后触发时间
+                    updateLastTriggerTime(sceneRule.getId());
+                });
     }
 
     /**
@@ -489,7 +544,8 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
      */
     private void updateLastTriggerTime(Long id) {
         try {
-            sceneRuleMapper.updateById(new IotSceneRuleDO().setId(id).setLastTriggerTime(LocalDateTime.now()));
+            sceneRuleMapper.updateById(
+                    new IotSceneRuleDO().setId(id).setLastTriggerTime(LocalDateTime.now()));
         } catch (Exception e) {
             log.error("[updateLastTriggerTime][规则场景编号({}) 更新最后触发时间异常]", id, e);
         }
@@ -498,5 +554,4 @@ public class IotSceneRuleServiceImpl implements IotSceneRuleService {
     private IotSceneRuleServiceImpl getSelf() {
         return SpringUtil.getBean(IotSceneRuleServiceImpl.class);
     }
-
 }

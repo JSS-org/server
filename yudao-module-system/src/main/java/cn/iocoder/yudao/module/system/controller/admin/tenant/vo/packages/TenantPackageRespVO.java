@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.tenant.vo.packages;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,10 @@ public class TenantPackageRespVO {
     @Schema(description = "套餐名", requiredMode = Schema.RequiredMode.REQUIRED, example = "VIP")
     private String name;
 
-    @Schema(description = "状态，参见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态，参见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Integer status;
 
     @Schema(description = "备注", example = "好")
@@ -27,5 +31,4 @@ public class TenantPackageRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

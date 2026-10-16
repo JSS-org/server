@@ -1,23 +1,27 @@
 package cn.iocoder.yudao.module.oa.service.discussion;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.oa.dal.dataobject.discussion.OaDiscussionLikeDO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.discussion.OaDiscussionReplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.discussion.OaDiscussionLikeMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Collections;
-import javax.sql.DataSource;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import javax.sql.DataSource;
 
 /**
  * {@link OaDiscussionLikeServiceImpl} 的单元测试类
@@ -27,18 +31,13 @@ import static org.mockito.Mockito.*;
 @Import(OaDiscussionLikeServiceImpl.class)
 public class OaDiscussionLikeServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaDiscussionLikeServiceImpl discussionLikeService;
+    @Resource private OaDiscussionLikeServiceImpl discussionLikeService;
 
-    @Resource
-    private OaDiscussionLikeMapper discussionLikeMapper;
-    @Resource
-    private DataSource dataSource;
+    @Resource private OaDiscussionLikeMapper discussionLikeMapper;
+    @Resource private DataSource dataSource;
 
-    @MockitoBean
-    private OaDiscussionService discussionService;
-    @MockitoBean
-    private OaDiscussionReplyService discussionReplyService;
+    @MockitoBean private OaDiscussionService discussionService;
+    @MockitoBean private OaDiscussionReplyService discussionReplyService;
 
     @Test
     public void testCreateAndDeleteDiscussionLike_reply() {
@@ -48,8 +47,10 @@ public class OaDiscussionLikeServiceImplTest extends BaseDbUnitTest {
 
         // mock 方法
         when(discussionReplyService.validateDiscussionReplyExists(replyId))
-                .thenReturn(new OaDiscussionReplyDO().setId(replyId)
-                        .setParentId(OaDiscussionReplyDO.PARENT_ID_ROOT));
+                .thenReturn(
+                        new OaDiscussionReplyDO()
+                                .setId(replyId)
+                                .setParentId(OaDiscussionReplyDO.PARENT_ID_ROOT));
 
         // 调用
         discussionLikeService.createDiscussionLike(null, replyId, userId);
@@ -66,7 +67,8 @@ public class OaDiscussionLikeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteDiscussionLikesByReplyIds_empty() {
         // mock 数据
-        OaDiscussionLikeDO like = new OaDiscussionLikeDO().setDiscussionId(randomLongId()).setUserId(randomLongId());
+        OaDiscussionLikeDO like =
+                new OaDiscussionLikeDO().setDiscussionId(randomLongId()).setUserId(randomLongId());
         discussionLikeMapper.insert(like);
 
         // 调用
@@ -84,8 +86,10 @@ public class OaDiscussionLikeServiceImplTest extends BaseDbUnitTest {
 
         // mock 方法
         when(discussionReplyService.validateDiscussionReplyExists(replyId))
-                .thenReturn(new OaDiscussionReplyDO().setId(replyId)
-                        .setParentId(OaDiscussionReplyDO.PARENT_ID_ROOT));
+                .thenReturn(
+                        new OaDiscussionReplyDO()
+                                .setId(replyId)
+                                .setParentId(OaDiscussionReplyDO.PARENT_ID_ROOT));
 
         // 调用：连续两轮点赞和取消，逻辑删除历史不应触发唯一键冲突
         for (int i = 0; i < 2; i++) {
@@ -95,8 +99,13 @@ public class OaDiscussionLikeServiceImplTest extends BaseDbUnitTest {
 
         // 断言：业务查询不可见，物理记录仍保留
         assertEquals(0L, discussionLikeMapper.selectCount());
-        assertEquals(2, new JdbcTemplate(dataSource).queryForObject(
-                "SELECT COUNT(*) FROM oa_discussion_like WHERE reply_id = ? AND deleted = TRUE", Integer.class, replyId));
+        assertEquals(
+                2,
+                new JdbcTemplate(dataSource)
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM oa_discussion_like WHERE reply_id = ? AND deleted = TRUE",
+                                Integer.class,
+                                replyId));
     }
 
     @Test
@@ -109,9 +118,9 @@ public class OaDiscussionLikeServiceImplTest extends BaseDbUnitTest {
                 .thenReturn(new OaDiscussionReplyDO().setId(replyId).setParentId(randomLongId()));
 
         // 调用，并断言异常
-        assertServiceException(() -> discussionLikeService.createDiscussionLike(null, replyId, randomLongId()),
+        assertServiceException(
+                () -> discussionLikeService.createDiscussionLike(null, replyId, randomLongId()),
                 DISCUSSION_LIKE_TARGET_INVALID);
         assertEquals(0L, discussionLikeMapper.selectCount());
     }
-
 }

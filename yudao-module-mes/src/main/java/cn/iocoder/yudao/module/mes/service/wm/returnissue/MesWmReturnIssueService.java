@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo.MesWmReturnIssuePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo.MesWmReturnIssueSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -100,5 +101,4 @@ public interface MesWmReturnIssueService {
      * @param status 目标状态
      */
     void updateReturnIssueStatus(Long id, Integer status);
-
 }

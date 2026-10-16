@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.statistics.controller.admin.member.vo.MemberRegis
 import cn.iocoder.yudao.module.statistics.controller.admin.member.vo.MemberSexStatisticsRespVO;
 import cn.iocoder.yudao.module.statistics.controller.admin.member.vo.MemberTerminalStatisticsRespVO;
 import cn.iocoder.yudao.module.statistics.service.member.bo.MemberAreaStatisticsRespBO;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -26,8 +27,8 @@ public interface MemberStatisticsMapper extends BaseMapperX {
 
     List<MemberTerminalStatisticsRespVO> selectSummaryListByRegisterTerminal();
 
-    Integer selectUserCount(@Param("beginTime") LocalDateTime beginTime,
-                            @Param("endTime") LocalDateTime endTime);
+    Integer selectUserCount(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
     /**
      * 获得用户的每天注册数量列表
@@ -36,7 +37,6 @@ public interface MemberStatisticsMapper extends BaseMapperX {
      * @param endTime 结束时间
      * @return 每天注册数量列表
      */
-    List<MemberRegisterCountRespVO> selectListByCreateTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                                                  @Param("endTime") LocalDateTime endTime);
-
+    List<MemberRegisterCountRespVO> selectListByCreateTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 }

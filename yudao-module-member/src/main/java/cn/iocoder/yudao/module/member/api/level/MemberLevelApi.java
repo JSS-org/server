@@ -37,5 +37,4 @@ public interface MemberLevelApi {
      * @param bizId      业务编号
      */
     void reduceExperience(Long userId, Integer experience, Integer bizType, String bizId);
-
 }

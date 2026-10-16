@@ -23,8 +23,8 @@ public interface ErrorCodeConstants {
     // ========== 项目成员 1-053-105-000 ==========
     ErrorCode PROJECT_MEMBER_NOT_EXISTS = new ErrorCode(1_053_105_000, "项目成员不存在");
     ErrorCode PROJECT_MEMBER_CREATOR_CANNOT_REMOVE = new ErrorCode(1_053_105_001, "项目创建人不能移出项目");
-    ErrorCode PROJECT_MEMBER_OWNER_LEVEL_CANNOT_ASSIGN = new ErrorCode(1_053_105_002,
-            "项目拥有者级别不能直接分配");
+    ErrorCode PROJECT_MEMBER_OWNER_LEVEL_CANNOT_ASSIGN =
+            new ErrorCode(1_053_105_002, "项目拥有者级别不能直接分配");
     ErrorCode PROJECT_MEMBER_OWNER_CANNOT_EXIT = new ErrorCode(1_053_105_003, "项目拥有者不能退出项目");
 
     // ========== 项目分组 1-053-110-000 ==========
@@ -64,7 +64,8 @@ public interface ErrorCodeConstants {
     ErrorCode WORK_ITEM_COMMENT_NOT_EXISTS = new ErrorCode(1_053_120_018, "工作项评论不存在");
     ErrorCode WORK_ITEM_COMMENT_REPLY_INVALID = new ErrorCode(1_053_120_019, "回复的评论与工作项不匹配");
     ErrorCode WORK_ITEM_COMMENT_ACCESS_DENIED = new ErrorCode(1_053_120_020, "只能修改或删除自己的评论");
-    ErrorCode WORK_ITEM_LIFECYCLE_STATUS_INVALID = new ErrorCode(1_053_120_021, "工作项当前生命周期状态不支持该操作");
+    ErrorCode WORK_ITEM_LIFECYCLE_STATUS_INVALID =
+            new ErrorCode(1_053_120_021, "工作项当前生命周期状态不支持该操作");
     ErrorCode WORK_ITEM_DELETE_STATUS_INVALID = new ErrorCode(1_053_120_022, "只有回收站中的工作项才能彻底删除");
 
     // ========== 知识库 1-053-130-000 ==========
@@ -72,7 +73,8 @@ public interface ErrorCodeConstants {
     ErrorCode KNOWLEDGE_LIBRARY_ACCESS_DENIED = new ErrorCode(1_053_130_001, "无权访问该知识库");
     ErrorCode KNOWLEDGE_LIBRARY_WRITE_ACCESS_DENIED = new ErrorCode(1_053_130_002, "无权编辑该知识库");
     ErrorCode KNOWLEDGE_LIBRARY_ADMIN_REQUIRED = new ErrorCode(1_053_130_003, "只有知识库管理员可以执行该操作");
-    ErrorCode KNOWLEDGE_LIBRARY_CREATOR_CANNOT_REMOVE = new ErrorCode(1_053_130_004, "知识库创建人不能移出知识库");
+    ErrorCode KNOWLEDGE_LIBRARY_CREATOR_CANNOT_REMOVE =
+            new ErrorCode(1_053_130_004, "知识库创建人不能移出知识库");
     ErrorCode KNOWLEDGE_LIBRARY_MEMBERS_INVALID = new ErrorCode(1_053_130_005, "知识库成员数据无效");
     ErrorCode KNOWLEDGE_FOLDER_NOT_EXISTS = new ErrorCode(1_053_130_006, "知识库文件夹不存在");
     ErrorCode KNOWLEDGE_FOLDER_PARENT_INVALID = new ErrorCode(1_053_130_007, "父文件夹与知识库不匹配");
@@ -83,7 +85,8 @@ public interface ErrorCodeConstants {
     ErrorCode KNOWLEDGE_DOCUMENT_MOVE_INVALID = new ErrorCode(1_053_130_012, "文档不能移动到自身或其子文档中");
     ErrorCode KNOWLEDGE_DOCUMENT_STATUS_INVALID = new ErrorCode(1_053_130_013, "文档状态无效");
     ErrorCode KNOWLEDGE_DOCUMENT_TYPE_INVALID = new ErrorCode(1_053_130_014, "文档类型无效");
-    ErrorCode KNOWLEDGE_DOCUMENT_MOVE_TARGET_INVALID = new ErrorCode(1_053_130_015, "文档移动目标只能选择文件夹或父文档之一");
+    ErrorCode KNOWLEDGE_DOCUMENT_MOVE_TARGET_INVALID =
+            new ErrorCode(1_053_130_015, "文档移动目标只能选择文件夹或父文档之一");
     ErrorCode KNOWLEDGE_GROUP_NOT_EXISTS = new ErrorCode(1_053_130_020, "知识库分组不存在");
     ErrorCode KNOWLEDGE_GROUP_NAME_DUPLICATE = new ErrorCode(1_053_130_021, "知识库分组名称已存在");
     ErrorCode KNOWLEDGE_GROUP_DEFAULT_CANNOT_MODIFY = new ErrorCode(1_053_130_022, "默认知识库分组不允许修改");
@@ -100,15 +103,17 @@ public interface ErrorCodeConstants {
     ErrorCode KNOWLEDGE_CONTENT_ACCESS_DENIED = new ErrorCode(1_053_130_071, "无权访问该知识内容");
     ErrorCode KNOWLEDGE_CONTENT_WRITE_ACCESS_DENIED = new ErrorCode(1_053_130_072, "无权编辑该知识内容");
     ErrorCode KNOWLEDGE_CONTENT_DELETE_ACCESS_DENIED = new ErrorCode(1_053_130_073, "无权删除该知识内容");
-    ErrorCode KNOWLEDGE_CONTENT_PERMISSION_MEMBERS_INVALID = new ErrorCode(1_053_130_074, "知识内容协作者数据无效");
+    ErrorCode KNOWLEDGE_CONTENT_PERMISSION_MEMBERS_INVALID =
+            new ErrorCode(1_053_130_074, "知识内容协作者数据无效");
     ErrorCode KNOWLEDGE_DOCUMENT_COMMENT_NOT_EXISTS = new ErrorCode(1_053_130_080, "知识库文档评论不存在");
-    ErrorCode KNOWLEDGE_DOCUMENT_COMMENT_REPLY_INVALID = new ErrorCode(1_053_130_081, "回复的评论与文档不匹配");
+    ErrorCode KNOWLEDGE_DOCUMENT_COMMENT_REPLY_INVALID =
+            new ErrorCode(1_053_130_081, "回复的评论与文档不匹配");
     ErrorCode KNOWLEDGE_DOCUMENT_COMMENT_ACCESS_DENIED = new ErrorCode(1_053_130_082, "只能删除自己的评论");
     ErrorCode KNOWLEDGE_DOCUMENT_COMMENT_TYPE_INVALID = new ErrorCode(1_053_130_083, "只有富文本文档支持评论");
     ErrorCode KNOWLEDGE_LIBRARY_TEMPLATE_NOT_EXISTS = new ErrorCode(1_053_130_084, "知识库模板不存在");
     ErrorCode KNOWLEDGE_LIBRARY_TEMPLATE_INVALID = new ErrorCode(1_053_130_085, "知识库模板配置无效");
-    ErrorCode KNOWLEDGE_LIBRARY_DIRECT_MEMBER_NOT_EXISTS = new ErrorCode(1_053_130_086,
-            "当前账号不是该知识库的直接成员");
-    ErrorCode KNOWLEDGE_LIBRARY_TEMPLATE_NAME_DUPLICATE = new ErrorCode(1_053_130_087, "知识库模板名称已存在");
-
+    ErrorCode KNOWLEDGE_LIBRARY_DIRECT_MEMBER_NOT_EXISTS =
+            new ErrorCode(1_053_130_086, "当前账号不是该知识库的直接成员");
+    ErrorCode KNOWLEDGE_LIBRARY_TEMPLATE_NAME_DUPLICATE =
+            new ErrorCode(1_053_130_087, "知识库模板名称已存在");
 }

@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenFrontTypeEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenTemplateTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.DbType;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -18,18 +20,21 @@ import java.util.Map;
  */
 public class CodegenEngineVben5AntdGeneralTest extends CodegenEngineAbstractTest {
 
-    private static final Integer FRONT_TYPE = CodegenFrontTypeEnum.VUE3_VBEN5_ANTD_GENERAL.getType();
+    private static final Integer FRONT_TYPE =
+            CodegenFrontTypeEnum.VUE3_VBEN5_ANTD_GENERAL.getType();
 
     @Test
     public void testExecute_one() {
         // 准备参数
-        CodegenTableDO table = getTable("student")
-                .setFrontType(FRONT_TYPE)
-                .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
+        CodegenTableDO table =
+                getTable("student")
+                        .setFrontType(FRONT_TYPE)
+                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
         List<CodegenColumnDO> columns = getColumnList("student");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
+        Map<String, String> result =
+                codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
         // 断言
         assertResult(result, "/vben5_antd_general_one");
     }
@@ -40,13 +45,15 @@ public class CodegenEngineVben5AntdGeneralTest extends CodegenEngineAbstractTest
         codegenProperties.setImportEnable(true);
         codegenEngine.initGlobalBindingMap();
         // 准备参数
-        CodegenTableDO table = getTable("student")
-                .setFrontType(FRONT_TYPE)
-                .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
+        CodegenTableDO table =
+                getTable("student")
+                        .setFrontType(FRONT_TYPE)
+                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
         List<CodegenColumnDO> columns = getColumnList("student");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
+        Map<String, String> result =
+                codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
         // 断言
         assertResult(result, "/vben5_antd_general_one_importEnable");
     }
@@ -54,20 +61,23 @@ public class CodegenEngineVben5AntdGeneralTest extends CodegenEngineAbstractTest
     @Test
     public void testExecute_tree() {
         // 准备参数
-        CodegenTableDO table = getTable("category")
-                .setFrontType(FRONT_TYPE)
-                .setTemplateType(CodegenTemplateTypeEnum.TREE.getType());
+        CodegenTableDO table =
+                getTable("category")
+                        .setFrontType(FRONT_TYPE)
+                        .setTemplateType(CodegenTemplateTypeEnum.TREE.getType());
         List<CodegenColumnDO> columns = getColumnList("category");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
+        Map<String, String> result =
+                codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
         // 断言
         assertResult(result, "/vben5_antd_general_tree");
     }
 
     @Test
     public void testExecute_master_normal() {
-        testExecute_master(CodegenTemplateTypeEnum.MASTER_NORMAL, "/vben5_antd_general_master_normal");
+        testExecute_master(
+                CodegenTemplateTypeEnum.MASTER_NORMAL, "/vben5_antd_general_master_normal");
     }
 
     @Test
@@ -77,33 +87,43 @@ public class CodegenEngineVben5AntdGeneralTest extends CodegenEngineAbstractTest
 
     @Test
     public void testExecute_master_inner() {
-        testExecute_master(CodegenTemplateTypeEnum.MASTER_INNER, "/vben5_antd_general_master_inner");
+        testExecute_master(
+                CodegenTemplateTypeEnum.MASTER_INNER, "/vben5_antd_general_master_inner");
     }
 
     private void testExecute_master(CodegenTemplateTypeEnum templateType, String path) {
         // 准备参数
-        CodegenTableDO table = getTable("student")
-                .setFrontType(FRONT_TYPE)
-                .setTemplateType(templateType.getType());
+        CodegenTableDO table =
+                getTable("student")
+                        .setFrontType(FRONT_TYPE)
+                        .setTemplateType(templateType.getType());
         List<CodegenColumnDO> columns = getColumnList("student");
         // 准备参数（子表）
-        CodegenTableDO contactTable = getTable("contact")
-                .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                .setFrontType(FRONT_TYPE)
-                .setSubJoinColumnId(100L).setSubJoinMany(true);
+        CodegenTableDO contactTable =
+                getTable("contact")
+                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                        .setFrontType(FRONT_TYPE)
+                        .setSubJoinColumnId(100L)
+                        .setSubJoinMany(true);
         List<CodegenColumnDO> contactColumns = getColumnList("contact");
         // 准备参数（班主任）
-        CodegenTableDO teacherTable = getTable("teacher")
-                .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                .setFrontType(FRONT_TYPE)
-                .setSubJoinColumnId(200L).setSubJoinMany(false);
+        CodegenTableDO teacherTable =
+                getTable("teacher")
+                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                        .setFrontType(FRONT_TYPE)
+                        .setSubJoinColumnId(200L)
+                        .setSubJoinMany(false);
         List<CodegenColumnDO> teacherColumns = getColumnList("teacher");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns,
-                Arrays.asList(contactTable, teacherTable), Arrays.asList(contactColumns, teacherColumns));
+        Map<String, String> result =
+                codegenEngine.execute(
+                        DbType.MYSQL,
+                        table,
+                        columns,
+                        Arrays.asList(contactTable, teacherTable),
+                        Arrays.asList(contactColumns, teacherColumns));
         // 断言
         assertResult(result, path);
     }
-
 }

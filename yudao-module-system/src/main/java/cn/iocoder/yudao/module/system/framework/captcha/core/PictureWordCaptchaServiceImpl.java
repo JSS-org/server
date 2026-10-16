@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.framework.captcha.core;
 
+import cn.hutool.core.util.RandomUtil;
+
 import com.anji.captcha.model.common.RepCodeEnum;
 import com.anji.captcha.model.common.ResponseModel;
 import com.anji.captcha.model.vo.CaptchaVO;
@@ -8,7 +10,7 @@ import com.anji.captcha.service.impl.CaptchaServiceFactory;
 import com.anji.captcha.util.AESUtil;
 import com.anji.captcha.util.ImageUtils;
 import com.anji.captcha.util.RandomUtils;
-import cn.hutool.core.util.RandomUtil;
+
 import org.apache.commons.lang3.Strings;
 
 import java.awt.*;
@@ -28,6 +30,7 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
      * 验证码的基础字符
      */
     private static final String CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
     /**
      * 验证码长度
      */
@@ -57,7 +60,7 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         String text = generateRandomText(LENGTH);
         CaptchaVO imageData = getImageData(text);
         // pointJson 不传到前端，只做后端校验，测试时放开
-//        imageData.setPointJson(text);
+        //        imageData.setPointJson(text);
         return ResponseModel.successData(imageData);
     }
 
@@ -90,14 +93,17 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         // 校验成功，将信息存入缓存
         String value;
         try {
-            value = AESUtil.aesEncrypt(captchaVO.getToken().concat("---").concat(userCode), secretKey);
+            value =
+                    AESUtil.aesEncrypt(
+                            captchaVO.getToken().concat("---").concat(userCode), secretKey);
         } catch (Exception e) {
             logger.error("AES 加密失败", e);
             afterValidateFail(captchaVO);
             return ResponseModel.errorMsg(e.getMessage());
         }
         String secondKey = String.format(REDIS_SECOND_CAPTCHA_KEY, value);
-        CaptchaServiceFactory.getCache(cacheType).set(secondKey, captchaVO.getToken(), EXPIRESIN_THREE);
+        CaptchaServiceFactory.getCache(cacheType)
+                .set(secondKey, captchaVO.getToken(), EXPIRESIN_THREE);
         captchaVO.setResult(true);
         captchaVO.resetClientFlag();
         return ResponseModel.successData(captchaVO);
@@ -110,7 +116,8 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
             return r;
         }
         try {
-            String codeKey = String.format(REDIS_SECOND_CAPTCHA_KEY, captchaVO.getCaptchaVerification());
+            String codeKey =
+                    String.format(REDIS_SECOND_CAPTCHA_KEY, captchaVO.getCaptchaVerification());
             if (!CaptchaServiceFactory.getCache(cacheType).exists(codeKey)) {
                 return ResponseModel.errorMsg(RepCodeEnum.API_CAPTCHA_INVALID);
             }
@@ -122,7 +129,6 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         }
         return ResponseModel.success();
     }
-
 
     private CaptchaVO getImageData(String text) {
         CaptchaVO dataVO = new CaptchaVO();
@@ -169,12 +175,14 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         }
         dataVO.setSecretKey(secretKey);
 
-        dataVO.setOriginalImageBase64(ImageUtils.getImageToBase64Str(image).replaceAll("\r|\n", ""));
+        dataVO.setOriginalImageBase64(
+                ImageUtils.getImageToBase64Str(image).replaceAll("\r|\n", ""));
         dataVO.setToken(RandomUtils.getUUID());
-//        dataVO.setSecretKey(secretKey);
+        //        dataVO.setSecretKey(secretKey);
         // 将坐标信息存入 redis 中
         String codeKey = String.format(REDIS_CAPTCHA_KEY, dataVO.getToken());
-        CaptchaServiceFactory.getCache(cacheType).set(codeKey, getCodeValue(text, secretKey), EXPIRESIN_SECONDS);
+        CaptchaServiceFactory.getCache(cacheType)
+                .set(codeKey, getCodeValue(text, secretKey), EXPIRESIN_SECONDS);
         return dataVO;
     }
 
@@ -208,5 +216,4 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
     public static String generateRandomText(int length) {
         return RandomUtil.randomString(CHARACTERS, length);
     }
-
 }

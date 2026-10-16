@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics;
 
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.clock.HrmAttendanceClockRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -34,7 +36,5 @@ public class HrmAttendanceDailyOverviewRespVO {
 
         @Schema(description = "考勤结果")
         private String text;
-
     }
-
 }

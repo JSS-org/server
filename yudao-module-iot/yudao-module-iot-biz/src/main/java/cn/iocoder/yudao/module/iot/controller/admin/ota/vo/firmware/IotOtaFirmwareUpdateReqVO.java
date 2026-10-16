@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.iot.controller.admin.ota.vo.firmware;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IoT OTA 固件更新 Request VO")
@@ -17,5 +19,4 @@ public class IotOtaFirmwareUpdateReqVO {
 
     @Schema(description = "固件描述", example = "某品牌型号固件，测试用")
     private String description;
-
 }

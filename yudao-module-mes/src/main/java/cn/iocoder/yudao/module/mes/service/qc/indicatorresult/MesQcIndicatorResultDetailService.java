@@ -39,5 +39,4 @@ public interface MesQcIndicatorResultDetailService {
      * @param resultId 检验结果 ID
      */
     void deleteDetailByResultId(Long resultId);
-
 }

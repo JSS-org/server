@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.MesMdItemPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -17,14 +18,17 @@ import java.util.Collection;
 @Mapper
 public interface MesMdItemMapper extends BaseMapperX<MesMdItemDO> {
 
-    default PageResult<MesMdItemDO> selectPage(MesMdItemPageReqVO reqVO, Collection<Long> itemTypeIds) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesMdItemDO>()
-                .likeIfPresent(MesMdItemDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesMdItemDO::getName, reqVO.getName())
-                .inIfPresent(MesMdItemDO::getItemTypeId, itemTypeIds)
-                .eqIfPresent(MesMdItemDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(MesMdItemDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(MesMdItemDO::getId));
+    default PageResult<MesMdItemDO> selectPage(
+            MesMdItemPageReqVO reqVO, Collection<Long> itemTypeIds) {
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesMdItemDO>()
+                        .likeIfPresent(MesMdItemDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesMdItemDO::getName, reqVO.getName())
+                        .inIfPresent(MesMdItemDO::getItemTypeId, itemTypeIds)
+                        .eqIfPresent(MesMdItemDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(MesMdItemDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(MesMdItemDO::getId));
     }
 
     default MesMdItemDO selectByCode(String code) {
@@ -42,5 +46,4 @@ public interface MesMdItemMapper extends BaseMapperX<MesMdItemDO> {
     default Long selectCountByUnitMeasureId(Long unitMeasureId) {
         return selectCount(MesMdItemDO::getUnitMeasureId, unitMeasureId);
     }
-
 }

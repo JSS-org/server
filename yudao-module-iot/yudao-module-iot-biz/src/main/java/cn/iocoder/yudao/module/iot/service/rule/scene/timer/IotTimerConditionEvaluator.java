@@ -11,8 +11,11 @@ import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
 import cn.iocoder.yudao.module.iot.service.rule.scene.IotSceneRuleTimeHelper;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherHelper;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -29,11 +32,9 @@ import java.util.Map;
 @Slf4j
 public class IotTimerConditionEvaluator {
 
-    @Resource
-    private IotDevicePropertyService devicePropertyService;
+    @Resource private IotDevicePropertyService devicePropertyService;
 
-    @Resource
-    private IotDeviceService deviceService;
+    @Resource private IotDeviceService deviceService;
 
     /**
      * 评估条件
@@ -101,17 +102,25 @@ public class IotTimerConditionEvaluator {
         // 2.2 获取指定属性
         IotDevicePropertyDO property = properties.get(condition.getIdentifier());
         if (property == null || property.getValue() == null) {
-            log.debug("[evaluateDevicePropertyCondition][设备({}) 属性({}) 不存在或值为空]",
-                    condition.getDeviceId(), condition.getIdentifier());
+            log.debug(
+                    "[evaluateDevicePropertyCondition][设备({}) 属性({}) 不存在或值为空]",
+                    condition.getDeviceId(),
+                    condition.getIdentifier());
             return false;
         }
 
         // 3. 使用现有的条件评估逻辑进行比较
-        boolean matched = IotSceneRuleMatcherHelper.evaluateCondition(
-                property.getValue(), condition.getOperator(), condition.getParam());
-        log.debug("[evaluateDevicePropertyCondition][设备({}) 属性({}) 值({}) 操作符({}) 参数({}) 匹配结果: {}]",
-                condition.getDeviceId(), condition.getIdentifier(), property.getValue(),
-                condition.getOperator(), condition.getParam(), matched);
+        boolean matched =
+                IotSceneRuleMatcherHelper.evaluateCondition(
+                        property.getValue(), condition.getOperator(), condition.getParam());
+        log.debug(
+                "[evaluateDevicePropertyCondition][设备({}) 属性({}) 值({}) 操作符({}) 参数({}) 匹配结果: {}]",
+                condition.getDeviceId(),
+                condition.getIdentifier(),
+                property.getValue(),
+                condition.getOperator(),
+                condition.getParam(),
+                matched);
         return matched;
     }
 
@@ -146,10 +155,16 @@ public class IotTimerConditionEvaluator {
         }
 
         // 3. 比较状态
-        boolean matched = IotSceneRuleMatcherHelper.evaluateCondition(
-                state.toString(), condition.getOperator(), condition.getParam());
-        log.debug("[evaluateDeviceStateCondition][设备({}) 状态({}) 操作符({}) 参数({}) 匹配结果: {}]",
-                condition.getDeviceId(), state, condition.getOperator(), condition.getParam(), matched);
+        boolean matched =
+                IotSceneRuleMatcherHelper.evaluateCondition(
+                        state.toString(), condition.getOperator(), condition.getParam());
+        log.debug(
+                "[evaluateDeviceStateCondition][设备({}) 状态({}) 操作符({}) 参数({}) 匹配结果: {}]",
+                condition.getDeviceId(),
+                state,
+                condition.getOperator(),
+                condition.getParam(),
+                matched);
         return matched;
     }
 
@@ -178,10 +193,13 @@ public class IotTimerConditionEvaluator {
         }
 
         // 2. 执行时间匹配
-        boolean matched = IotSceneRuleTimeHelper.executeTimeMatching(operatorEnum, condition.getParam());
-        log.debug("[evaluateCurrentTimeCondition][操作符({}) 参数({}) 匹配结果: {}]",
-                condition.getOperator(), condition.getParam(), matched);
+        boolean matched =
+                IotSceneRuleTimeHelper.executeTimeMatching(operatorEnum, condition.getParam());
+        log.debug(
+                "[evaluateCurrentTimeCondition][操作符({}) 参数({}) 匹配结果: {}]",
+                condition.getOperator(),
+                condition.getParam(),
+                matched);
         return matched;
     }
-
 }

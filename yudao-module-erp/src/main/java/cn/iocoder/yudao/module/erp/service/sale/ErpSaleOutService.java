@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.out.ErpSaleOutPageRe
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.out.ErpSaleOutSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOutDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOutItemDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -98,7 +99,6 @@ public interface ErpSaleOutService {
      */
     List<ErpSaleOutItemDO> getSaleOutItemListByOutIds(Collection<Long> outIds);
 
-
     /**
      * 获得引用指定产品的销售出库项数量
      *
@@ -106,5 +106,4 @@ public interface ErpSaleOutService {
      * @return 数量
      */
     Long getSaleOutItemCountByProductId(Long productId);
-
 }

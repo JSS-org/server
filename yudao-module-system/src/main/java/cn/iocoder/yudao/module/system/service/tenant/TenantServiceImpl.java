@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.system.service.tenant;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
+import static java.util.Collections.singleton;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
@@ -29,9 +34,13 @@ import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantInfoHandler;
 import cn.iocoder.yudao.module.system.service.tenant.handler.TenantMenuHandler;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -40,10 +49,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singleton;
 
 /**
  * 租户 Service 实现类
@@ -59,20 +64,14 @@ public class TenantServiceImpl implements TenantService {
     @Autowired(required = false) // 由于 yudao.tenant.enable 配置项，可以关闭多租户的功能，所以这里只能不强制注入
     private TenantProperties tenantProperties;
 
-    @Resource
-    private TenantMapper tenantMapper;
+    @Resource private TenantMapper tenantMapper;
 
-    @Resource
-    private TenantPackageService tenantPackageService;
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource private TenantPackageService tenantPackageService;
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private AdminUserService userService;
-    @Resource
-    private RoleService roleService;
-    @Resource
-    private MenuService menuService;
-    @Resource
-    private PermissionService permissionService;
+    @Resource private RoleService roleService;
+    @Resource private MenuService menuService;
+    @Resource private PermissionService permissionService;
 
     @Override
     public List<Long> getTenantIdList() {
@@ -96,27 +95,32 @@ public class TenantServiceImpl implements TenantService {
 
     @Override
     @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
-    @DataPermission(enable = false) // 参见 https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1154 说明
+    @DataPermission(
+            enable = false) // 参见 https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1154 说明
     public Long createTenant(TenantSaveReqVO createReqVO) {
         // 校验租户名称是否重复
         validTenantNameDuplicate(createReqVO.getName(), null);
         // 校验租户域名是否重复
         validTenantWebsiteDuplicate(createReqVO.getWebsites(), null);
         // 校验套餐被禁用
-        TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(createReqVO.getPackageId());
+        TenantPackageDO tenantPackage =
+                tenantPackageService.validTenantPackage(createReqVO.getPackageId());
 
         // 创建租户
         TenantDO tenant = BeanUtils.toBean(createReqVO, TenantDO.class);
         tenantMapper.insert(tenant);
         // 创建租户的管理员
-        TenantUtils.execute(tenant.getId(), () -> {
-            // 创建角色
-            Long roleId = createRole(tenantPackage);
-            // 创建用户，并分配角色
-            Long userId = createUser(roleId, createReqVO);
-            // 修改租户的管理员
-            tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
-        });
+        TenantUtils.execute(
+                tenant.getId(),
+                () -> {
+                    // 创建角色
+                    Long roleId = createRole(tenantPackage);
+                    // 创建用户，并分配角色
+                    Long userId = createUser(roleId, createReqVO);
+                    // 修改租户的管理员
+                    tenantMapper.updateById(
+                            new TenantDO().setId(tenant.getId()).setContactUserId(userId));
+                });
         return tenant.getId();
     }
 
@@ -131,8 +135,10 @@ public class TenantServiceImpl implements TenantService {
     private Long createRole(TenantPackageDO tenantPackage) {
         // 创建角色
         RoleSaveReqVO reqVO = new RoleSaveReqVO();
-        reqVO.setName(RoleCodeEnum.TENANT_ADMIN.getName()).setCode(RoleCodeEnum.TENANT_ADMIN.getCode())
-                .setSort(0).setRemark("系统自动生成");
+        reqVO.setName(RoleCodeEnum.TENANT_ADMIN.getName())
+                .setCode(RoleCodeEnum.TENANT_ADMIN.getCode())
+                .setSort(0)
+                .setRemark("系统自动生成");
         Long roleId = roleService.createRole(reqVO, RoleTypeEnum.SYSTEM.getType());
         // 分配权限
         permissionService.assignRoleMenu(roleId, tenantPackage.getMenuIds());
@@ -149,7 +155,8 @@ public class TenantServiceImpl implements TenantService {
         // 校验租户域名是否重复
         validTenantWebsiteDuplicate(updateReqVO.getWebsites(), updateReqVO.getId());
         // 校验套餐被禁用
-        TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(updateReqVO.getPackageId());
+        TenantPackageDO tenantPackage =
+                tenantPackageService.validTenantPackage(updateReqVO.getPackageId());
 
         // 更新租户
         TenantDO updateObj = BeanUtils.toBean(updateReqVO, TenantDO.class);
@@ -178,40 +185,60 @@ public class TenantServiceImpl implements TenantService {
         if (CollUtil.isEmpty(websites)) {
             return;
         }
-        websites.forEach(website -> {
-            List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
-            if (excludeId != null) {
-                tenants.removeIf(tenant -> tenant.getId().equals(excludeId));
-            }
-            if (CollUtil.isNotEmpty(tenants)) {
-                throw exception(TENANT_WEBSITE_DUPLICATE, website);
-            }
-        });
+        websites.forEach(
+                website -> {
+                    List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
+                    if (excludeId != null) {
+                        tenants.removeIf(tenant -> tenant.getId().equals(excludeId));
+                    }
+                    if (CollUtil.isNotEmpty(tenants)) {
+                        throw exception(TENANT_WEBSITE_DUPLICATE, website);
+                    }
+                });
     }
 
     @Override
     @DSTransactional
     public void updateTenantRoleMenu(Long tenantId, Set<Long> menuIds) {
-        TenantUtils.execute(tenantId, () -> {
-            // 获得所有角色
-            List<RoleDO> roles = roleService.getRoleList();
-            roles.forEach(role -> Assert.isTrue(tenantId.equals(role.getTenantId()), "角色({}/{}) 租户不匹配",
-                    role.getId(), role.getTenantId(), tenantId)); // 兜底校验
-            // 重新分配每个角色的权限
-            roles.forEach(role -> {
-                // 如果是租户管理员，重新分配其权限为租户套餐的权限
-                if (Objects.equals(role.getCode(), RoleCodeEnum.TENANT_ADMIN.getCode())) {
-                    permissionService.assignRoleMenu(role.getId(), menuIds);
-                    log.info("[updateTenantRoleMenu][租户管理员({}/{}) 的权限修改为({})]", role.getId(), role.getTenantId(), menuIds);
-                    return;
-                }
-                // 如果是其他角色，则去掉超过套餐的权限
-                Set<Long> roleMenuIds = permissionService.getRoleMenuListByRoleId(role.getId());
-                roleMenuIds = CollUtil.intersectionDistinct(roleMenuIds, menuIds);
-                permissionService.assignRoleMenu(role.getId(), roleMenuIds);
-                log.info("[updateTenantRoleMenu][角色({}/{}) 的权限修改为({})]", role.getId(), role.getTenantId(), roleMenuIds);
-            });
-        });
+        TenantUtils.execute(
+                tenantId,
+                () -> {
+                    // 获得所有角色
+                    List<RoleDO> roles = roleService.getRoleList();
+                    roles.forEach(
+                            role ->
+                                    Assert.isTrue(
+                                            tenantId.equals(role.getTenantId()),
+                                            "角色({}/{}) 租户不匹配",
+                                            role.getId(),
+                                            role.getTenantId(),
+                                            tenantId)); // 兜底校验
+                    // 重新分配每个角色的权限
+                    roles.forEach(
+                            role -> {
+                                // 如果是租户管理员，重新分配其权限为租户套餐的权限
+                                if (Objects.equals(
+                                        role.getCode(), RoleCodeEnum.TENANT_ADMIN.getCode())) {
+                                    permissionService.assignRoleMenu(role.getId(), menuIds);
+                                    log.info(
+                                            "[updateTenantRoleMenu][租户管理员({}/{}) 的权限修改为({})]",
+                                            role.getId(),
+                                            role.getTenantId(),
+                                            menuIds);
+                                    return;
+                                }
+                                // 如果是其他角色，则去掉超过套餐的权限
+                                Set<Long> roleMenuIds =
+                                        permissionService.getRoleMenuListByRoleId(role.getId());
+                                roleMenuIds = CollUtil.intersectionDistinct(roleMenuIds, menuIds);
+                                permissionService.assignRoleMenu(role.getId(), roleMenuIds);
+                                log.info(
+                                        "[updateTenantRoleMenu][角色({}/{}) 的权限修改为({})]",
+                                        role.getId(),
+                                        role.getTenantId(),
+                                        roleMenuIds);
+                            });
+                });
     }
 
     @Override
@@ -316,5 +343,4 @@ public class TenantServiceImpl implements TenantService {
     private boolean isTenantDisable() {
         return tenantProperties == null || Boolean.FALSE.equals(tenantProperties.getEnable());
     }
-
 }

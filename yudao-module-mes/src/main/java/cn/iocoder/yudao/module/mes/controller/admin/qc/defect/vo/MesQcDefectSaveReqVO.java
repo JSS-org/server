@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.mes.controller.admin.qc.defect.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcDefectLevelEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 缺陷类型新增/修改 Request VO")
@@ -33,5 +36,4 @@ public class MesQcDefectSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

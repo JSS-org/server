@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.framework.web.config;
 
 import cn.iocoder.yudao.framework.swagger.config.YudaoSwaggerAutoConfiguration;
+
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,5 +21,4 @@ public class PromotionWebConfiguration {
     public GroupedOpenApi promotionGroupedOpenApi() {
         return YudaoSwaggerAutoConfiguration.buildGroupedOpenApi("promotion");
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pay.service.app;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,7 +15,9 @@ import cn.iocoder.yudao.module.pay.dal.mysql.app.PayAppMapper;
 import cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants;
 import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -20,9 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
 
 /**
  * 支付应用 Service 实现类
@@ -33,14 +35,11 @@ import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
 @Validated
 public class PayAppServiceImpl implements PayAppService {
 
-    @Resource
-    private PayAppMapper appMapper;
+    @Resource private PayAppMapper appMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖报错
+    @Resource @Lazy // 延迟加载，避免循环依赖报错
     private PayOrderService orderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖报错
+    @Resource @Lazy // 延迟加载，避免循环依赖报错
     private PayRefundService refundService;
 
     @Override
@@ -163,5 +162,4 @@ public class PayAppServiceImpl implements PayAppService {
         }
         return app;
     }
-
 }

@@ -5,9 +5,11 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseAreaDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -30,14 +32,15 @@ public class MesWmStockTakingTaskResultDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 盘点任务编号
      *
      * 关联 {@link MesWmStockTakingTaskDO#getId()}
      */
     private Long taskId;
+
     /**
      * 盘点任务行编号
      *
@@ -49,6 +52,7 @@ public class MesWmStockTakingTaskResultDO extends BaseDO {
      * 库存编号
      */
     private Long materialStockId;
+
     /**
      * 物料编号
      *
@@ -60,6 +64,7 @@ public class MesWmStockTakingTaskResultDO extends BaseDO {
      * 批次编号
      */
     private Long batchId;
+
     /**
      * 批次编码
      */
@@ -71,12 +76,14 @@ public class MesWmStockTakingTaskResultDO extends BaseDO {
      * 关联 {@link MesWmWarehouseDO#getId()}
      */
     private Long warehouseId;
+
     /**
      * 库位编号
      *
      * 关联 {@link MesWmWarehouseLocationDO#getId()}
      */
     private Long locationId;
+
     /**
      * 库区编号
      *
@@ -88,6 +95,7 @@ public class MesWmStockTakingTaskResultDO extends BaseDO {
      * 在库数量
      */
     private BigDecimal quantity;
+
     /**
      * 盘点数量
      */
@@ -97,5 +105,4 @@ public class MesWmStockTakingTaskResultDO extends BaseDO {
      * 备注
      */
     private String remark;
-
 }

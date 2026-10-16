@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.mybatis.core.type;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
+
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedJdbcTypes;
 import org.apache.ibatis.type.MappedTypes;
@@ -25,7 +26,8 @@ public class IntegerListTypeHandler implements TypeHandler<List<Integer>> {
     private static final String COMMA = ",";
 
     @Override
-    public void setParameter(PreparedStatement ps, int i, List<Integer> strings, JdbcType jdbcType) throws SQLException {
+    public void setParameter(PreparedStatement ps, int i, List<Integer> strings, JdbcType jdbcType)
+            throws SQLException {
         ps.setString(i, CollUtil.join(strings, COMMA));
     }
 

@@ -71,5 +71,4 @@ public interface PmsKnowledgeDocumentShareService {
      * @param documentIds 文档编号集合
      */
     void deleteSharesByDocumentIds(Collection<Long> documentIds);
-
 }

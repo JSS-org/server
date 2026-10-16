@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.system.api.logger;
 
+import cn.iocoder.yudao.framework.common.biz.system.logger.dto.OperateLogCreateReqDTO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.framework.common.biz.system.logger.dto.OperateLogCreateReqDTO;
 import cn.iocoder.yudao.module.system.api.logger.dto.OperateLogPageReqDTO;
 import cn.iocoder.yudao.module.system.api.logger.dto.OperateLogRespDTO;
 import cn.iocoder.yudao.module.system.dal.dataobject.logger.OperateLogDO;
 import cn.iocoder.yudao.module.system.service.logger.OperateLogService;
-import org.dromara.core.trans.anno.TransMethodResult;
+
 import jakarta.annotation.Resource;
+
+import org.dromara.core.trans.anno.TransMethodResult;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,8 +23,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class OperateLogApiImpl implements OperateLogApi {
 
-    @Resource
-    private OperateLogService operateLogService;
+    @Resource private OperateLogService operateLogService;
 
     @Override
     public void createOperateLog(OperateLogCreateReqDTO createReqDTO) {
@@ -35,5 +36,4 @@ public class OperateLogApiImpl implements OperateLogApi {
         PageResult<OperateLogDO> operateLogPage = operateLogService.getOperateLogPage(pageReqDTO);
         return BeanUtils.toBean(operateLogPage, OperateLogRespDTO.class);
     }
-
 }

@@ -2,15 +2,19 @@ package cn.iocoder.yudao.module.ai.framework.ai.core.model.suno.api;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.StrPool;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -31,45 +35,59 @@ public class SunoApi {
 
     private final Predicate<HttpStatusCode> STATUS_PREDICATE = status -> !status.is2xxSuccessful();
 
-    private final Function<Object, Function<ClientResponse, Mono<? extends Throwable>>> EXCEPTION_FUNCTION =
-            reqParam -> response -> response.bodyToMono(String.class).handle((responseBody, sink) -> {
-                HttpRequest request = response.request();
-                log.error("[suno-api] 调用失败！请求方式:[{}]，请求地址:[{}]，请求参数:[{}]，响应数据: [{}]",
-                        request.getMethod(), request.getURI(), reqParam, responseBody);
-                sink.error(new IllegalStateException("[suno-api] 调用失败！"));
-            });
+    private final Function<Object, Function<ClientResponse, Mono<? extends Throwable>>>
+            EXCEPTION_FUNCTION =
+                    reqParam ->
+                            response ->
+                                    response.bodyToMono(String.class)
+                                            .handle(
+                                                    (responseBody, sink) -> {
+                                                        HttpRequest request = response.request();
+                                                        log.error(
+                                                                "[suno-api] 调用失败！请求方式:[{}]，请求地址:[{}]，请求参数:[{}]，响应数据: [{}]",
+                                                                request.getMethod(),
+                                                                request.getURI(),
+                                                                reqParam,
+                                                                responseBody);
+                                                        sink.error(
+                                                                new IllegalStateException(
+                                                                        "[suno-api] 调用失败！"));
+                                                    });
 
     public SunoApi(String baseUrl) {
-        this.webClient = WebClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeaders((headers) -> headers.setContentType(MediaType.APPLICATION_JSON))
-                .build();
+        this.webClient =
+                WebClient.builder()
+                        .baseUrl(baseUrl)
+                        .defaultHeaders(
+                                (headers) -> headers.setContentType(MediaType.APPLICATION_JSON))
+                        .build();
     }
 
     public List<MusicData> generate(MusicGenerateRequest request) {
-        return this.webClient.post()
+        return this.webClient
+                .post()
                 .uri("/api/generate")
                 .body(Mono.just(request), MusicGenerateRequest.class)
                 .retrieve()
                 .onStatus(STATUS_PREDICATE, EXCEPTION_FUNCTION.apply(request))
-                .bodyToMono(new ParameterizedTypeReference<List<MusicData>>() {
-                })
+                .bodyToMono(new ParameterizedTypeReference<List<MusicData>>() {})
                 .block();
     }
 
     public List<MusicData> customGenerate(MusicGenerateRequest request) {
-        return this.webClient.post()
+        return this.webClient
+                .post()
                 .uri("/api/custom_generate")
                 .body(Mono.just(request), MusicGenerateRequest.class)
                 .retrieve()
                 .onStatus(STATUS_PREDICATE, EXCEPTION_FUNCTION.apply(request))
-                .bodyToMono(new ParameterizedTypeReference<List<MusicData>>() {
-                })
+                .bodyToMono(new ParameterizedTypeReference<List<MusicData>>() {})
                 .block();
     }
 
     public LyricsData generateLyrics(String prompt) {
-        return this.webClient.post()
+        return this.webClient
+                .post()
                 .uri("/api/generate_lyrics")
                 .body(Mono.just(new MusicGenerateRequest(prompt)), MusicGenerateRequest.class)
                 .retrieve()
@@ -79,20 +97,23 @@ public class SunoApi {
     }
 
     public List<MusicData> getMusicList(List<String> ids) {
-        return this.webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/get")
-                        .queryParam("ids", CollUtil.join(ids, StrPool.COMMA))
-                        .build())
+        return this.webClient
+                .get()
+                .uri(
+                        uriBuilder ->
+                                uriBuilder
+                                        .path("/api/get")
+                                        .queryParam("ids", CollUtil.join(ids, StrPool.COMMA))
+                                        .build())
                 .retrieve()
                 .onStatus(STATUS_PREDICATE, EXCEPTION_FUNCTION.apply(ids))
-                .bodyToMono(new ParameterizedTypeReference<List<MusicData>>() {
-                })
+                .bodyToMono(new ParameterizedTypeReference<List<MusicData>>() {})
                 .block();
     }
 
     public LimitUsageData getLimitUsage() {
-        return this.webClient.get()
+        return this.webClient
+                .get()
                 .uri("/api/get_limit")
                 .retrieve()
                 .onStatus(STATUS_PREDICATE, EXCEPTION_FUNCTION.apply(null))
@@ -118,8 +139,7 @@ public class SunoApi {
             String title,
             String model,
             @JsonProperty("wait_audio") boolean waitAudio,
-            @JsonProperty("make_instrumental") boolean makeInstrumental
-    ) {
+            @JsonProperty("make_instrumental") boolean makeInstrumental) {
 
         public MusicGenerateRequest(String prompt) {
             this(prompt, null, null, null, false, false);
@@ -132,7 +152,6 @@ public class SunoApi {
         public MusicGenerateRequest(String prompt, String model, String tags, String title) {
             this(prompt, tags, title, model, false, false);
         }
-
     }
 
     /**
@@ -168,9 +187,7 @@ public class SunoApi {
             String prompt,
             String type,
             String tags,
-            Double duration
-    ) {
-    }
+            Double duration) {}
 
     /**
      * Suno API 响应的歌词数据。
@@ -179,12 +196,7 @@ public class SunoApi {
      * @param title  标题
      * @param status 状态
      */
-    public record LyricsData(
-            String text,
-            String title,
-            String status
-    ) {
-    }
+    public record LyricsData(String text, String title, String status) {}
 
     /**
      * Suno API 响应的限额数据，目前每日免费 50
@@ -193,8 +205,5 @@ public class SunoApi {
             @JsonProperty("credits_left") Long creditsLeft,
             String period,
             @JsonProperty("monthly_limit") Long monthlyLimit,
-            @JsonProperty("monthly_usage") Long monthlyUsage
-    ) {
-    }
-
+            @JsonProperty("monthly_usage") Long monthlyUsage) {}
 }

@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.crm.service.contract.CrmContractService;
 import cn.iocoder.yudao.module.crm.service.contract.CrmContractServiceImpl;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CrmContractStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private CrmContractService contractService;
+    @Resource private CrmContractService contractService;
 
     @Override
     public String getProcessDefinitionKey() {
@@ -25,7 +26,7 @@ public class CrmContractStatusListener extends BpmProcessInstanceStatusEventList
 
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
-        contractService.updateContractAuditStatus(Long.parseLong(event.getBusinessKey()), event.getStatus());
+        contractService.updateContractAuditStatus(
+                Long.parseLong(event.getBusinessKey()), event.getStatus());
     }
-
 }

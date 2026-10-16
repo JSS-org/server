@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplatePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplateSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.sms.SmsTemplateDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -94,5 +95,4 @@ public interface SmsTemplateService {
      * @return 格式化后的内容
      */
     String formatSmsTemplateContent(String content, Map<String, Object> params);
-
 }

@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.framework.excel.core.convert;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.idev.excel.metadata.data.ReadCellData;
 import cn.idev.excel.metadata.data.WriteCellData;
@@ -9,6 +19,7 @@ import cn.iocoder.yudao.framework.common.biz.system.dict.dto.DictDataRespDTO;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,15 +31,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link MultiDictConvert} 的单元测试
  *
@@ -38,8 +40,7 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
 
     private static final String DICT_TYPE = "test_dict";
 
-    @Mock
-    private DictDataCommonApi dictDataApi;
+    @Mock private DictDataCommonApi dictDataApi;
 
     private MultiDictConvert convert;
 
@@ -56,7 +57,8 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        WriteCellData<String> result = convert.convertToExcelData("1,2", mockContentProperty("stringValues"), null);
+        WriteCellData<String> result =
+                convert.convertToExcelData("1,2", mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("男、女", result.getStringValue());
     }
@@ -67,7 +69,8 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        WriteCellData<String> result = convert.convertToExcelData("1", mockContentProperty("stringValues"), null);
+        WriteCellData<String> result =
+                convert.convertToExcelData("1", mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("男", result.getStringValue());
     }
@@ -78,7 +81,8 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        WriteCellData<String> result = convert.convertToExcelData("2,1", mockContentProperty("stringValues"), null);
+        WriteCellData<String> result =
+                convert.convertToExcelData("2,1", mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("女、男", result.getStringValue());
     }
@@ -97,8 +101,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        WriteCellData<String> result = convert.convertToExcelData(ListUtil.of(1, 2),
-                mockContentProperty("listValues"), null);
+        WriteCellData<String> result =
+                convert.convertToExcelData(
+                        ListUtil.of(1, 2), mockContentProperty("listValues"), null);
         // 断言
         assertEquals("男、女", result.getStringValue());
     }
@@ -109,8 +114,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        WriteCellData<String> result = convert.convertToExcelData(new int[]{1, 2},
-                mockContentProperty("stringValues"), null);
+        WriteCellData<String> result =
+                convert.convertToExcelData(
+                        new int[] {1, 2}, mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("男、女", result.getStringValue());
     }
@@ -121,7 +127,8 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        WriteCellData<String> result = convert.convertToExcelData("1,3", mockContentProperty("stringValues"), null);
+        WriteCellData<String> result =
+                convert.convertToExcelData("1,3", mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("", result.getStringValue());
     }
@@ -132,8 +139,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男、女"),
-                mockContentProperty("stringValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男、女"), mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("1,2", result);
     }
@@ -144,8 +152,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男"),
-                mockContentProperty("stringValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男"), mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("1", result);
     }
@@ -153,8 +162,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
     @Test
     public void testConvertToJavaData_blank() throws NoSuchFieldException {
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData(""),
-                mockContentProperty("stringValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData(""), mockContentProperty("stringValues"), null);
         // 断言
         assertEquals("", result);
     }
@@ -162,8 +172,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
     @Test
     public void testConvertToJavaData_blankList() throws NoSuchFieldException {
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData(""),
-                mockContentProperty("listValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData(""), mockContentProperty("listValues"), null);
         // 断言
         assertTrue(result instanceof List);
         assertTrue(((List<?>) result).isEmpty());
@@ -172,8 +183,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
     @Test
     public void testConvertToJavaData_blankSet() throws NoSuchFieldException {
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData(""),
-                mockContentProperty("setValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData(""), mockContentProperty("setValues"), null);
         // 断言
         assertTrue(result instanceof LinkedHashSet);
         assertTrue(((Set<?>) result).isEmpty());
@@ -182,8 +194,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
     @Test
     public void testConvertToJavaData_blankArray() throws NoSuchFieldException {
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData(""),
-                mockContentProperty("arrayValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData(""), mockContentProperty("arrayValues"), null);
         // 断言
         assertArrayEquals(new Integer[0], (Integer[]) result);
     }
@@ -195,8 +208,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男、女"),
-                mockContentProperty("listValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男、女"), mockContentProperty("listValues"), null);
         // 断言
         assertEquals(ListUtil.of(1, 2), (List<Integer>) result);
     }
@@ -208,8 +222,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男，女"),
-                mockContentProperty("setValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男，女"), mockContentProperty("setValues"), null);
         // 断言
         assertEquals(new LinkedHashSet<>(Arrays.asList(1L, 2L)), (Set<Long>) result);
     }
@@ -221,8 +236,9 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男，女"),
-                mockContentProperty("hashSetValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男，女"), mockContentProperty("hashSetValues"), null);
         // 断言
         assertTrue(result instanceof HashSet);
         assertEquals(new HashSet<>(Arrays.asList(1L, 2L)), result);
@@ -234,10 +250,11 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男,女"),
-                mockContentProperty("arrayValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男,女"), mockContentProperty("arrayValues"), null);
         // 断言
-        assertArrayEquals(new Integer[]{1, 2}, (Integer[]) result);
+        assertArrayEquals(new Integer[] {1, 2}, (Integer[]) result);
     }
 
     @Test
@@ -246,17 +263,22 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         mockDictDatas();
 
         // 调用
-        Object result = convert.convertToJavaData(mockReadCellData("男、未知"),
-                mockContentProperty("stringValues"), null);
+        Object result =
+                convert.convertToJavaData(
+                        mockReadCellData("男、未知"), mockContentProperty("stringValues"), null);
         // 断言
         assertNull(result);
     }
 
     private void mockDictDatas() {
-        List<DictDataRespDTO> dictDatas = ListUtil.of(
-                randomPojo(DictDataRespDTO.class, o -> o.setDictType(DICT_TYPE).setValue("1").setLabel("男")),
-                randomPojo(DictDataRespDTO.class, o -> o.setDictType(DICT_TYPE).setValue("2").setLabel("女"))
-        );
+        List<DictDataRespDTO> dictDatas =
+                ListUtil.of(
+                        randomPojo(
+                                DictDataRespDTO.class,
+                                o -> o.setDictType(DICT_TYPE).setValue("1").setLabel("男")),
+                        randomPojo(
+                                DictDataRespDTO.class,
+                                o -> o.setDictType(DICT_TYPE).setValue("2").setLabel("女")));
         when(dictDataApi.getDictDataList(eq(DICT_TYPE))).thenReturn(dictDatas);
     }
 
@@ -266,7 +288,8 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
         return readCellData;
     }
 
-    private static ExcelContentProperty mockContentProperty(String fieldName) throws NoSuchFieldException {
+    private static ExcelContentProperty mockContentProperty(String fieldName)
+            throws NoSuchFieldException {
         Field field = TestExcelVO.class.getDeclaredField(fieldName);
         ExcelContentProperty contentProperty = mock(ExcelContentProperty.class);
         when(contentProperty.getField()).thenReturn(field);
@@ -289,7 +312,5 @@ public class MultiDictConvertTest extends BaseMockitoUnitTest {
 
         @DictFormat(DICT_TYPE)
         private Integer[] arrayValues;
-
     }
-
 }

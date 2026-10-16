@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.mes.service.md.workstation;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.MesMdWorkstationPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.MesMdWorkstationSaveReqVO;
@@ -14,12 +17,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.workstation.MesMdWorkstationMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
+import cn.iocoder.yudao.module.mes.service.pro.process.MesProProcessService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseLocationService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
-import cn.iocoder.yudao.module.mes.service.pro.process.MesProProcessService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +33,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工作站 Service 实现类
@@ -41,28 +43,17 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdWorkstationServiceImpl implements MesMdWorkstationService {
 
-    @Resource
-    private MesMdWorkstationMapper workstationMapper;
+    @Resource private MesMdWorkstationMapper workstationMapper;
 
-    @Resource
-    @Lazy
-    private MesMdWorkstationMachineService workstationMachineService;
-    @Resource
-    private MesMdWorkstationToolService workstationToolService;
-    @Resource
-    private MesMdWorkstationWorkerService workstationWorkerService;
-    @Resource
-    private MesMdWorkshopService workshopService;
-    @Resource
-    private MesWmWarehouseService warehouseService;
-    @Resource
-    private MesWmWarehouseLocationService locationService;
-    @Resource
-    private MesWmWarehouseAreaService areaService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
-    @Resource
-    private MesProProcessService processService;
+    @Resource @Lazy private MesMdWorkstationMachineService workstationMachineService;
+    @Resource private MesMdWorkstationToolService workstationToolService;
+    @Resource private MesMdWorkstationWorkerService workstationWorkerService;
+    @Resource private MesMdWorkshopService workshopService;
+    @Resource private MesWmWarehouseService warehouseService;
+    @Resource private MesWmWarehouseLocationService locationService;
+    @Resource private MesWmWarehouseAreaService areaService;
+    @Resource private MesWmBarcodeService barcodeService;
+    @Resource private MesProProcessService processService;
 
     @Override
     public Long createWorkstation(MesMdWorkstationSaveReqVO createReqVO) {
@@ -74,8 +65,11 @@ public class MesMdWorkstationServiceImpl implements MesMdWorkstationService {
         workstationMapper.insert(workstation);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.WORKSTATION.getValue(),
-                workstation.getId(), workstation.getCode(), workstation.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.WORKSTATION.getValue(),
+                workstation.getId(),
+                workstation.getCode(),
+                workstation.getName());
         return workstation.getId();
     }
 
@@ -161,11 +155,13 @@ public class MesMdWorkstationServiceImpl implements MesMdWorkstationService {
         Long areaId = reqVO.getAreaId();
         // 1.2 如果都为空，则自动设置虚拟线边库
         if (warehouseId == null && locationId == null && areaId == null) {
-            MesWmWarehouseDO warehouse = warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
-            MesWmWarehouseLocationDO location = locationService.getWarehouseLocationByCode(
-                    MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION);
-            MesWmWarehouseAreaDO area = areaService.getWarehouseAreaByCode(
-                    MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA);
+            MesWmWarehouseDO warehouse =
+                    warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
+            MesWmWarehouseLocationDO location =
+                    locationService.getWarehouseLocationByCode(
+                            MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION);
+            MesWmWarehouseAreaDO area =
+                    areaService.getWarehouseAreaByCode(MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA);
             reqVO.setWarehouseId(warehouse.getId());
             reqVO.setLocationId(location.getId());
             reqVO.setAreaId(area.getId());
@@ -270,5 +266,4 @@ public class MesMdWorkstationServiceImpl implements MesMdWorkstationService {
         }
         return workstationMapper.selectByIds(ids);
     }
-
 }

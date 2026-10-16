@@ -1,5 +1,17 @@
 package cn.iocoder.yudao.module.fms.service.report;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.LEDGER_PERIOD_INVALID;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EDITABLE;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_FORMULA_OPERATOR_INVALID;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_FORMULA_RULE_INVALID;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_FORMULA_SUBJECT_DUPLICATE;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.SUBJECT_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.ObjUtil;
@@ -25,7 +37,9 @@ import cn.iocoder.yudao.module.fms.service.closing.FmsClosingVoucherService;
 import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
 import cn.iocoder.yudao.module.fms.service.ledger.FmsLedgerService;
 import cn.iocoder.yudao.module.fms.service.voucher.FmsVoucherService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -46,18 +60,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.LEDGER_PERIOD_INVALID;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EDITABLE;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_FORMULA_OPERATOR_INVALID;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_FORMULA_RULE_INVALID;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_FORMULA_SUBJECT_DUPLICATE;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.SUBJECT_NOT_EXISTS;
-
 /**
  * FMS 报表共用 Service 实现类
  *
@@ -70,54 +72,61 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
     private static final DateTimeFormatter MONTH_FORMATTER = DatePattern.NORM_MONTH_FORMATTER;
     private static final Pattern LINE_FORMULA_PATTERN = Pattern.compile("([+-]?)(L\\d+)");
 
-    @Resource
-    private FmsSubjectService subjectService;
-    @Resource
-    private FmsLedgerService ledgerService;
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource private FmsSubjectService subjectService;
+    @Resource private FmsLedgerService ledgerService;
+    @Resource @Lazy // 避免循环依赖
     private FmsClosingSchemeService closingSchemeService;
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource @Lazy // 避免循环依赖
     private FmsClosingVoucherService closingVoucherService;
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource @Lazy // 避免循环依赖
     private FmsVoucherService voucherService;
 
     @Override
-    public Map<Long, FmsLedgerSubjectBalanceRespVO> getSubjectBalanceMap(Long accountSetId,
-            YearMonth startMonth, YearMonth endMonth, Long userId) {
+    public Map<Long, FmsLedgerSubjectBalanceRespVO> getSubjectBalanceMap(
+            Long accountSetId, YearMonth startMonth, YearMonth endMonth, Long userId) {
         // 1. 查询普通账簿科目余额
-        FmsLedgerListReqVO listReqVO = new FmsLedgerListReqVO().setAccountSetId(accountSetId)
-                .setStartMonth(startMonth.format(MONTH_FORMATTER))
-                .setEndMonth(endMonth.format(MONTH_FORMATTER));
-        List<FmsLedgerSubjectBalanceRespVO> balances = flattenBalances(ledgerService.getSubjectBalanceList(listReqVO, userId));
-        Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap = convertMap(
-                balances, FmsLedgerSubjectBalanceRespVO::getSubjectId, Function.identity(),
-                (first, second) -> first, LinkedHashMap::new);
+        FmsLedgerListReqVO listReqVO =
+                new FmsLedgerListReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setStartMonth(startMonth.format(MONTH_FORMATTER))
+                        .setEndMonth(endMonth.format(MONTH_FORMATTER));
+        List<FmsLedgerSubjectBalanceRespVO> balances =
+                flattenBalances(ledgerService.getSubjectBalanceList(listReqVO, userId));
+        Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap =
+                convertMap(
+                        balances,
+                        FmsLedgerSubjectBalanceRespVO::getSubjectId,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new);
 
         // 2. 查询结转损益凭证在期初、本期和本年的科目发生额
         LocalDateTime startTime = LocalDateTimeUtils.getMonthBeginTime(startMonth);
         LocalDateTime endTime = LocalDateTimeUtils.getNextMonthBeginTime(endMonth);
         LocalDateTime yearBeginTime = LocalDateTimeUtils.getMonthBeginTime(endMonth.getYear(), 1);
-        FmsClosingSchemeDO profitLossClosing = closingSchemeService.getClosingSchemeByAccountSetIdAndType(
-                accountSetId, FmsClosingTypeEnum.PROFIT_LOSS.getType());
+        FmsClosingSchemeDO profitLossClosing =
+                closingSchemeService.getClosingSchemeByAccountSetIdAndType(
+                        accountSetId, FmsClosingTypeEnum.PROFIT_LOSS.getType());
         if (profitLossClosing == null) {
             return balanceMap;
         }
-        List<FmsClosingVoucherDO> closingVouchers = closingVoucherService
-                .getClosingVoucherListByClosingIdAndPeriod(profitLossClosing.getId(), null, endTime);
-        List<FmsVoucherSubjectAmountVO> openingAmounts = getProfitLossClosingSubjectAmountList(
-                closingVouchers, null, startTime);
-        List<FmsVoucherSubjectAmountVO> periodAmounts = getProfitLossClosingSubjectAmountList(
-                closingVouchers, startTime, endTime);
-        List<FmsVoucherSubjectAmountVO> yearAmounts = getProfitLossClosingSubjectAmountList(
-                closingVouchers, yearBeginTime, endTime);
+        List<FmsClosingVoucherDO> closingVouchers =
+                closingVoucherService.getClosingVoucherListByClosingIdAndPeriod(
+                        profitLossClosing.getId(), null, endTime);
+        List<FmsVoucherSubjectAmountVO> openingAmounts =
+                getProfitLossClosingSubjectAmountList(closingVouchers, null, startTime);
+        List<FmsVoucherSubjectAmountVO> periodAmounts =
+                getProfitLossClosingSubjectAmountList(closingVouchers, startTime, endTime);
+        List<FmsVoucherSubjectAmountVO> yearAmounts =
+                getProfitLossClosingSubjectAmountList(closingVouchers, yearBeginTime, endTime);
 
         // 3. 从损益类科目及其父级余额中扣除结转损益凭证发生额
-        Map<Long, FmsSubjectDO> subjectMap = convertMap(
-                subjectService.getSubjectList(accountSetId, null, userId), FmsSubjectDO::getId);
-        adjustProfitLossClosingAmounts(balanceMap, subjectMap, openingAmounts, periodAmounts, yearAmounts);
+        Map<Long, FmsSubjectDO> subjectMap =
+                convertMap(
+                        subjectService.getSubjectList(accountSetId, null, userId),
+                        FmsSubjectDO::getId);
+        adjustProfitLossClosingAmounts(
+                balanceMap, subjectMap, openingAmounts, periodAmounts, yearAmounts);
         return balanceMap;
     }
 
@@ -130,11 +139,16 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
      * @return 科目发生额列表
      */
     private List<FmsVoucherSubjectAmountVO> getProfitLossClosingSubjectAmountList(
-            List<FmsClosingVoucherDO> closingVouchers, LocalDateTime beginTime, LocalDateTime endTime) {
+            List<FmsClosingVoucherDO> closingVouchers,
+            LocalDateTime beginTime,
+            LocalDateTime endTime) {
         // 1. 按期间筛选损益结转凭证编号
-        List<FmsClosingVoucherDO> periodClosingVouchers = filterList(closingVouchers,
-                item -> (beginTime == null || !item.getVoucherTime().isBefore(beginTime))
-                        && item.getVoucherTime().isBefore(endTime));
+        List<FmsClosingVoucherDO> periodClosingVouchers =
+                filterList(
+                        closingVouchers,
+                        item ->
+                                (beginTime == null || !item.getVoucherTime().isBefore(beginTime))
+                                        && item.getVoucherTime().isBefore(endTime));
         // 2. 按关联凭证编号聚合科目发生额
         return voucherService.getVoucherSubjectAmountList(
                 convertList(periodClosingVouchers, FmsClosingVoucherDO::getVoucherId));
@@ -151,13 +165,19 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
      * @param periodAmounts 本期发生额
      * @param yearAmounts 本年发生额
      */
-    private void adjustProfitLossClosingAmounts(Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap, Map<Long, FmsSubjectDO> subjectMap,
-                                                List<FmsVoucherSubjectAmountVO> openingAmounts, List<FmsVoucherSubjectAmountVO> periodAmounts,
-                                                List<FmsVoucherSubjectAmountVO> yearAmounts) {
+    private void adjustProfitLossClosingAmounts(
+            Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap,
+            Map<Long, FmsSubjectDO> subjectMap,
+            List<FmsVoucherSubjectAmountVO> openingAmounts,
+            List<FmsVoucherSubjectAmountVO> periodAmounts,
+            List<FmsVoucherSubjectAmountVO> yearAmounts) {
         // 1. 按科目编号建立各期间结转损益发生额索引
-        Map<Long, FmsVoucherSubjectAmountVO> openingAmountMap = convertMap(openingAmounts, FmsVoucherSubjectAmountVO::getSubjectId);
-        Map<Long, FmsVoucherSubjectAmountVO> periodAmountMap = convertMap(periodAmounts, FmsVoucherSubjectAmountVO::getSubjectId);
-        Map<Long, FmsVoucherSubjectAmountVO> yearAmountMap = convertMap(yearAmounts, FmsVoucherSubjectAmountVO::getSubjectId);
+        Map<Long, FmsVoucherSubjectAmountVO> openingAmountMap =
+                convertMap(openingAmounts, FmsVoucherSubjectAmountVO::getSubjectId);
+        Map<Long, FmsVoucherSubjectAmountVO> periodAmountMap =
+                convertMap(periodAmounts, FmsVoucherSubjectAmountVO::getSubjectId);
+        Map<Long, FmsVoucherSubjectAmountVO> yearAmountMap =
+                convertMap(yearAmounts, FmsVoucherSubjectAmountVO::getSubjectId);
         // 2. 从损益科目及其父级汇总余额中逐级扣除结转发生额
         for (FmsSubjectDO subject : subjectMap.values()) {
             if (ObjUtil.notEqual(subject.getType(), FmsSubjectTypeEnum.PROFIT_LOSS.getType())) {
@@ -171,7 +191,11 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
             }
             FmsSubjectDO currentSubject = subject;
             for (int level = 0; currentSubject != null && level < subjectMap.size(); level++) {
-                adjustSubjectBalance(balanceMap.get(currentSubject.getId()), openingAmount, periodAmount, yearAmount);
+                adjustSubjectBalance(
+                        balanceMap.get(currentSubject.getId()),
+                        openingAmount,
+                        periodAmount,
+                        yearAmount);
                 currentSubject = subjectMap.get(currentSubject.getParentId());
             }
         }
@@ -185,9 +209,11 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
      * @param periodAmount 本期发生额
      * @param yearAmount 本年发生额
      */
-    private void adjustSubjectBalance(FmsLedgerSubjectBalanceRespVO balance,
-                                      FmsVoucherSubjectAmountVO openingAmount, FmsVoucherSubjectAmountVO periodAmount,
-                                      FmsVoucherSubjectAmountVO yearAmount) {
+    private void adjustSubjectBalance(
+            FmsLedgerSubjectBalanceRespVO balance,
+            FmsVoucherSubjectAmountVO openingAmount,
+            FmsVoucherSubjectAmountVO periodAmount,
+            FmsVoucherSubjectAmountVO yearAmount) {
         // 1. 账簿中不存在的科目无需调整
         if (balance == null) {
             return;
@@ -197,20 +223,33 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         BigDecimal openingCreditAmount = getCreditAmount(openingAmount);
         BigDecimal periodDebitAmount = getDebitAmount(periodAmount);
         BigDecimal periodCreditAmount = getCreditAmount(periodAmount);
-        BigDecimal openingBalance = NumberUtils.zeroIfNull(balance.getOpeningDebitAmount())
-                .subtract(NumberUtils.zeroIfNull(balance.getOpeningCreditAmount()))
-                .subtract(openingDebitAmount).add(openingCreditAmount);
-        BigDecimal endingBalance = NumberUtils.zeroIfNull(balance.getEndingDebitAmount())
-                .subtract(NumberUtils.zeroIfNull(balance.getEndingCreditAmount()))
-                .subtract(openingDebitAmount).add(openingCreditAmount)
-                .subtract(periodDebitAmount).add(periodCreditAmount);
+        BigDecimal openingBalance =
+                NumberUtils.zeroIfNull(balance.getOpeningDebitAmount())
+                        .subtract(NumberUtils.zeroIfNull(balance.getOpeningCreditAmount()))
+                        .subtract(openingDebitAmount)
+                        .add(openingCreditAmount);
+        BigDecimal endingBalance =
+                NumberUtils.zeroIfNull(balance.getEndingDebitAmount())
+                        .subtract(NumberUtils.zeroIfNull(balance.getEndingCreditAmount()))
+                        .subtract(openingDebitAmount)
+                        .add(openingCreditAmount)
+                        .subtract(periodDebitAmount)
+                        .add(periodCreditAmount);
         // 3. 回写期初、本期、本年和期末借贷金额
         balance.setOpeningDebitAmount(openingBalance.max(BigDecimal.ZERO))
                 .setOpeningCreditAmount(openingBalance.min(BigDecimal.ZERO).abs())
-                .setPeriodDebitAmount(NumberUtils.zeroIfNull(balance.getPeriodDebitAmount()).subtract(periodDebitAmount))
-                .setPeriodCreditAmount(NumberUtils.zeroIfNull(balance.getPeriodCreditAmount()).subtract(periodCreditAmount))
-                .setYearDebitAmount(NumberUtils.zeroIfNull(balance.getYearDebitAmount()).subtract(getDebitAmount(yearAmount)))
-                .setYearCreditAmount(NumberUtils.zeroIfNull(balance.getYearCreditAmount()).subtract(getCreditAmount(yearAmount)))
+                .setPeriodDebitAmount(
+                        NumberUtils.zeroIfNull(balance.getPeriodDebitAmount())
+                                .subtract(periodDebitAmount))
+                .setPeriodCreditAmount(
+                        NumberUtils.zeroIfNull(balance.getPeriodCreditAmount())
+                                .subtract(periodCreditAmount))
+                .setYearDebitAmount(
+                        NumberUtils.zeroIfNull(balance.getYearDebitAmount())
+                                .subtract(getDebitAmount(yearAmount)))
+                .setYearCreditAmount(
+                        NumberUtils.zeroIfNull(balance.getYearCreditAmount())
+                                .subtract(getCreditAmount(yearAmount)))
                 .setEndingDebitAmount(endingBalance.max(BigDecimal.ZERO))
                 .setEndingCreditAmount(endingBalance.min(BigDecimal.ZERO).abs());
     }
@@ -224,23 +263,30 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
     }
 
     @Override
-    public List<FmsReportFormulaRespVO> buildReportFormulaList(FmsReportFormulaUpdateReqVO updateReqVO,
-            Integer minimumRule, Integer maximumRule, Long userId) {
+    public List<FmsReportFormulaRespVO> buildReportFormulaList(
+            FmsReportFormulaUpdateReqVO updateReqVO,
+            Integer minimumRule,
+            Integer maximumRule,
+            Long userId) {
         // 1. 校验科目不重复
         List<FmsReportFormulaUpdateReqVO.Formula> formulaReqVOs = updateReqVO.getFormulas();
-        List<Long> subjectIds = convertList(formulaReqVOs, FmsReportFormulaUpdateReqVO.Formula::getSubjectId);
+        List<Long> subjectIds =
+                convertList(formulaReqVOs, FmsReportFormulaUpdateReqVO.Formula::getSubjectId);
         if (new LinkedHashSet<>(subjectIds).size() != subjectIds.size()) {
             throw exception(REPORT_FORMULA_SUBJECT_DUPLICATE);
         }
-        Map<Long, FmsSubjectDO> subjectMap = convertMap(
-                subjectService.getSubjectList(updateReqVO.getAccountSetId(), null, userId), FmsSubjectDO::getId);
+        Map<Long, FmsSubjectDO> subjectMap =
+                convertMap(
+                        subjectService.getSubjectList(updateReqVO.getAccountSetId(), null, userId),
+                        FmsSubjectDO::getId);
         // 2. 校验运算符、取数规则和科目存在性，构造公式项
         List<FmsReportFormulaRespVO> formulas = new ArrayList<>();
         for (FmsReportFormulaUpdateReqVO.Formula formulaReqVO : formulaReqVOs) {
             if (!StrUtil.equalsAny(formulaReqVO.getOperator(), "+", "-")) {
                 throw exception(REPORT_FORMULA_OPERATOR_INVALID);
             }
-            if (formulaReqVO.getRules() == null || formulaReqVO.getRules() < minimumRule
+            if (formulaReqVO.getRules() == null
+                    || formulaReqVO.getRules() < minimumRule
                     || formulaReqVO.getRules() > maximumRule) {
                 throw exception(REPORT_FORMULA_RULE_INVALID);
             }
@@ -248,15 +294,20 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
             if (subject == null) {
                 throw exception(SUBJECT_NOT_EXISTS);
             }
-            formulas.add(new FmsReportFormulaRespVO().setSubjectId(subject.getId())
-                    .setSubjectName(subject.getName()).setSubjectNumber(subject.getCode())
-                    .setOperator(formulaReqVO.getOperator()).setRules(formulaReqVO.getRules()));
+            formulas.add(
+                    new FmsReportFormulaRespVO()
+                            .setSubjectId(subject.getId())
+                            .setSubjectName(subject.getName())
+                            .setSubjectNumber(subject.getCode())
+                            .setOperator(formulaReqVO.getOperator())
+                            .setRules(formulaReqVO.getRules()));
         }
         return formulas;
     }
 
     @Override
-    public void validateReportItemEditable(Long accountSetId, Long itemAccountSetId, Boolean editable) {
+    public void validateReportItemEditable(
+            Long accountSetId, Long itemAccountSetId, Boolean editable) {
         if (itemAccountSetId == null || ObjUtil.notEqual(accountSetId, itemAccountSetId)) {
             throw exception(REPORT_CONFIG_NOT_EXISTS);
         }
@@ -273,14 +324,17 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         }
         // 按科目编码绑定账套下的科目编号和名称，编码不存在时科目编号置空，由前端提示科目已失效
         List<FmsReportFormulaRespVO> formulas = parseSubjectFormula(formula);
-        formulas.forEach(item -> {
-            FmsSubjectDO subject = subjectMap.get(item.getSubjectNumber());
-            if (subject != null) {
-                item.setSubjectId(subject.getId()).setSubjectName(subject.getName()).setSubjectNumber(subject.getCode());
-            } else {
-                item.setSubjectId(null);
-            }
-        });
+        formulas.forEach(
+                item -> {
+                    FmsSubjectDO subject = subjectMap.get(item.getSubjectNumber());
+                    if (subject != null) {
+                        item.setSubjectId(subject.getId())
+                                .setSubjectName(subject.getName())
+                                .setSubjectNumber(subject.getCode());
+                    } else {
+                        item.setSubjectId(null);
+                    }
+                });
         return JsonUtils.toJsonString(formulas);
     }
 
@@ -307,7 +361,8 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
     }
 
     @Override
-    public boolean isSubjectTreeMapped(FmsSubjectDO rootSubject, List<FmsSubjectDO> subjects, Set<Long> formulaSubjectIds) {
+    public boolean isSubjectTreeMapped(
+            FmsSubjectDO rootSubject, List<FmsSubjectDO> subjects, Set<Long> formulaSubjectIds) {
         // 一级科目自身已纳入公式时直接命中，否则沿公式科目的父级链向上查找
         if (formulaSubjectIds.contains(rootSubject.getId())) {
             return true;
@@ -316,7 +371,8 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         Map<Long, FmsSubjectDO> subjectMap = convertMap(subjects, FmsSubjectDO::getId);
         for (Long subjectId : formulaSubjectIds) {
             FmsSubjectDO currentSubject = subjectMap.get(subjectId);
-            while (currentSubject != null && currentSubject.getParentId() != null
+            while (currentSubject != null
+                    && currentSubject.getParentId() != null
                     && currentSubject.getParentId() > 0) {
                 if (ObjUtil.equal(currentSubject.getParentId(), rootSubject.getId())) {
                     return true;
@@ -350,9 +406,12 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
     }
 
     @Override
-    public BigDecimal calculateBalanceAmount(Integer rule, FmsSubjectDO subject,
+    public BigDecimal calculateBalanceAmount(
+            Integer rule,
+            FmsSubjectDO subject,
             Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap,
-            Map<Long, FmsSubjectDO> subjectMap, boolean opening) {
+            Map<Long, FmsSubjectDO> subjectMap,
+            boolean opening) {
         // 科目缺失时按零处理
         if (subject == null) {
             return BigDecimal.ZERO;
@@ -360,21 +419,31 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         // 科目借/贷方余额按一级子科目分别判断后求和，避免父科目先净额抵销
         if (ObjUtil.equal(rule, FmsFormulaRuleEnum.SUBJECT_DEBIT_BALANCE.getRule())
                 || ObjUtil.equal(rule, FmsFormulaRuleEnum.SUBJECT_CREDIT_BALANCE.getRule())) {
-            List<Long> childSubjectIds = convertList(filterList(subjectMap.values(),
-                    item -> ObjUtil.equal(item.getParentId(), subject.getId())), FmsSubjectDO::getId);
+            List<Long> childSubjectIds =
+                    convertList(
+                            filterList(
+                                    subjectMap.values(),
+                                    item -> ObjUtil.equal(item.getParentId(), subject.getId())),
+                            FmsSubjectDO::getId);
             if (CollUtil.isEmpty(childSubjectIds)) {
                 childSubjectIds = Collections.singletonList(subject.getId());
             }
-            boolean debitRule = ObjUtil.equal(rule, FmsFormulaRuleEnum.SUBJECT_DEBIT_BALANCE.getRule());
+            boolean debitRule =
+                    ObjUtil.equal(rule, FmsFormulaRuleEnum.SUBJECT_DEBIT_BALANCE.getRule());
             BigDecimal amount = BigDecimal.ZERO;
             for (Long childSubjectId : childSubjectIds) {
                 FmsLedgerSubjectBalanceRespVO childBalance = balanceMap.get(childSubjectId);
                 if (childBalance == null) {
                     continue;
                 }
-                BigDecimal childAmount = opening
-                        ? (debitRule ? childBalance.getOpeningDebitAmount() : childBalance.getOpeningCreditAmount())
-                        : (debitRule ? childBalance.getEndingDebitAmount() : childBalance.getEndingCreditAmount());
+                BigDecimal childAmount =
+                        opening
+                                ? (debitRule
+                                        ? childBalance.getOpeningDebitAmount()
+                                        : childBalance.getOpeningCreditAmount())
+                                : (debitRule
+                                        ? childBalance.getEndingDebitAmount()
+                                        : childBalance.getEndingCreditAmount());
                 amount = amount.add(NumberUtils.zeroIfNull(childAmount));
             }
             return amount;
@@ -384,13 +453,18 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
             return BigDecimal.ZERO;
         }
         // 余额规则按科目余额方向决定借贷相减方向，借方、贷方余额规则直接取对应方向金额
-        BigDecimal debitAmount = opening ? NumberUtils.zeroIfNull(balance.getOpeningDebitAmount())
-                : NumberUtils.zeroIfNull(balance.getEndingDebitAmount());
-        BigDecimal creditAmount = opening ? NumberUtils.zeroIfNull(balance.getOpeningCreditAmount())
-                : NumberUtils.zeroIfNull(balance.getEndingCreditAmount());
+        BigDecimal debitAmount =
+                opening
+                        ? NumberUtils.zeroIfNull(balance.getOpeningDebitAmount())
+                        : NumberUtils.zeroIfNull(balance.getEndingDebitAmount());
+        BigDecimal creditAmount =
+                opening
+                        ? NumberUtils.zeroIfNull(balance.getOpeningCreditAmount())
+                        : NumberUtils.zeroIfNull(balance.getEndingCreditAmount());
         if (ObjUtil.equal(rule, FmsFormulaRuleEnum.BALANCE.getRule())) {
             return ObjUtil.equal(subject.getBalanceDirection(), 1)
-                    ? debitAmount.subtract(creditAmount) : creditAmount.subtract(debitAmount);
+                    ? debitAmount.subtract(creditAmount)
+                    : creditAmount.subtract(debitAmount);
         }
         if (ObjUtil.equal(rule, FmsFormulaRuleEnum.DEBIT_BALANCE.getRule())) {
             return debitAmount;
@@ -402,17 +476,24 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
     }
 
     @Override
-    public BigDecimal calculateOccurrenceAmount(Integer rule, FmsSubjectDO subject,
-            FmsLedgerSubjectBalanceRespVO balance, boolean current) {
+    public BigDecimal calculateOccurrenceAmount(
+            Integer rule,
+            FmsSubjectDO subject,
+            FmsLedgerSubjectBalanceRespVO balance,
+            boolean current) {
         // 余额或科目缺失时按零处理；按取数规则选择本期或本年累计的借贷方向金额
         if (balance == null || subject == null) {
             return BigDecimal.ZERO;
         }
         // 损益发生额按科目余额方向决定借贷相减方向，借方、贷方发生额规则直接取对应方向金额
-        BigDecimal debitAmount = current ? NumberUtils.zeroIfNull(balance.getPeriodDebitAmount())
-                : NumberUtils.zeroIfNull(balance.getYearDebitAmount());
-        BigDecimal creditAmount = current ? NumberUtils.zeroIfNull(balance.getPeriodCreditAmount())
-                : NumberUtils.zeroIfNull(balance.getYearCreditAmount());
+        BigDecimal debitAmount =
+                current
+                        ? NumberUtils.zeroIfNull(balance.getPeriodDebitAmount())
+                        : NumberUtils.zeroIfNull(balance.getYearDebitAmount());
+        BigDecimal creditAmount =
+                current
+                        ? NumberUtils.zeroIfNull(balance.getPeriodCreditAmount())
+                        : NumberUtils.zeroIfNull(balance.getYearCreditAmount());
         if (ObjUtil.equal(rule, FmsFormulaRuleEnum.DEBIT_AMOUNT.getRule())) {
             return debitAmount;
         }
@@ -421,22 +502,31 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         }
         if (ObjUtil.equal(rule, FmsFormulaRuleEnum.PROFIT_LOSS_AMOUNT.getRule())) {
             return ObjUtil.equal(subject.getBalanceDirection(), 1)
-                    ? debitAmount.subtract(creditAmount) : creditAmount.subtract(debitAmount);
+                    ? debitAmount.subtract(creditAmount)
+                    : creditAmount.subtract(debitAmount);
         }
         return BigDecimal.ZERO;
     }
 
     @Override
-    public BigDecimal calculateIncomeOccurrenceAmount(Integer rule, FmsSubjectDO subject,
-            FmsLedgerSubjectBalanceRespVO balance, boolean current, String operator) {
+    public BigDecimal calculateIncomeOccurrenceAmount(
+            Integer rule,
+            FmsSubjectDO subject,
+            FmsLedgerSubjectBalanceRespVO balance,
+            boolean current,
+            String operator) {
         BigDecimal amount = calculateOccurrenceAmount(rule, subject, balance, current);
         if (subject == null || balance == null || !StrUtil.equals(operator, "+")) {
             return amount;
         }
-        BigDecimal debitAmount = current ? NumberUtils.zeroIfNull(balance.getPeriodDebitAmount())
-                : NumberUtils.zeroIfNull(balance.getYearDebitAmount());
-        BigDecimal creditAmount = current ? NumberUtils.zeroIfNull(balance.getPeriodCreditAmount())
-                : NumberUtils.zeroIfNull(balance.getYearCreditAmount());
+        BigDecimal debitAmount =
+                current
+                        ? NumberUtils.zeroIfNull(balance.getPeriodDebitAmount())
+                        : NumberUtils.zeroIfNull(balance.getYearDebitAmount());
+        BigDecimal creditAmount =
+                current
+                        ? NumberUtils.zeroIfNull(balance.getPeriodCreditAmount())
+                        : NumberUtils.zeroIfNull(balance.getYearCreditAmount());
         if (ObjUtil.equal(rule, FmsFormulaRuleEnum.DEBIT_AMOUNT.getRule())) {
             return debitAmount.subtract(creditAmount);
         }
@@ -447,8 +537,11 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
     }
 
     @Override
-    public BigDecimal calculateItemLineFormula(String formula, Map<Integer, FmsReportItemRespVO> lineMap,
-            boolean opening, boolean current) {
+    public BigDecimal calculateItemLineFormula(
+            String formula,
+            Map<Integer, FmsReportItemRespVO> lineMap,
+            boolean opening,
+            boolean current) {
         // 逐个匹配 L 行次引用，按运算符累加对应行次金额
         String expression = CollUtil.getFirst(parseLineFormula(formula));
         if (StrUtil.isEmpty(expression)) {
@@ -460,11 +553,17 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         while (matcher.find()) {
             Integer rowNo = Integer.valueOf(matcher.group(2).substring(1));
             FmsReportItemRespVO item = lineMap.get(rowNo);
-            BigDecimal amount = item == null ? BigDecimal.ZERO : opening
-                    ? NumberUtils.zeroIfNull(item.getOpeningAmount())
-                    : current ? NumberUtils.zeroIfNull(item.getCurrentAmount())
-                    : item.getYearAmount() != null ? NumberUtils.zeroIfNull(item.getYearAmount())
-                    : NumberUtils.zeroIfNull(item.getClosingAmount());
+            BigDecimal amount =
+                    item == null
+                            ? BigDecimal.ZERO
+                            : opening
+                                    ? NumberUtils.zeroIfNull(item.getOpeningAmount())
+                                    : current
+                                            ? NumberUtils.zeroIfNull(item.getCurrentAmount())
+                                            : item.getYearAmount() != null
+                                                    ? NumberUtils.zeroIfNull(item.getYearAmount())
+                                                    : NumberUtils.zeroIfNull(
+                                                            item.getClosingAmount());
             result = applyOperator(result, amount, matcher.group(1));
         }
         return result;
@@ -480,7 +579,9 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
 
     @Override
     public Integer parsePeriod(String month) {
-        return Integer.valueOf(LocalDateTimeUtils.parseYearMonth(month).format(DatePattern.SIMPLE_MONTH_FORMATTER));
+        return Integer.valueOf(
+                LocalDateTimeUtils.parseYearMonth(month)
+                        .format(DatePattern.SIMPLE_MONTH_FORMATTER));
     }
 
     @Override
@@ -489,10 +590,12 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
             throw exception(LEDGER_PERIOD_INVALID);
         }
         return ObjUtil.equal(fromPeriod, toPeriod)
-                ? FmsReportPeriodTypeEnum.MONTH.getType() : FmsReportPeriodTypeEnum.QUARTER.getType();
+                ? FmsReportPeriodTypeEnum.MONTH.getType()
+                : FmsReportPeriodTypeEnum.QUARTER.getType();
     }
 
-    private List<FmsLedgerSubjectBalanceRespVO> flattenBalances(List<FmsLedgerSubjectBalanceRespVO> balances) {
+    private List<FmsLedgerSubjectBalanceRespVO> flattenBalances(
+            List<FmsLedgerSubjectBalanceRespVO> balances) {
         List<FmsLedgerSubjectBalanceRespVO> result = new ArrayList<>();
         for (FmsLedgerSubjectBalanceRespVO balance : balances) {
             result.add(balance);
@@ -500,5 +603,4 @@ public class FmsReportCommonServiceImpl implements FmsReportCommonService {
         }
         return result;
     }
-
 }

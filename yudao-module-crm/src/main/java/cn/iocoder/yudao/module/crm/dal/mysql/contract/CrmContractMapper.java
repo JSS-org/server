@@ -12,6 +12,7 @@ import cn.iocoder.yudao.module.crm.enums.common.CrmAuditStatusEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmSceneTypeEnum;
 import cn.iocoder.yudao.module.crm.util.CrmPermissionUtils;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -30,30 +31,39 @@ public interface CrmContractMapper extends BaseMapperX<CrmContractDO> {
     }
 
     default PageResult<CrmContractDO> selectPageByCustomerId(CrmContractPageReqVO pageReqVO) {
-        return selectPage(pageReqVO, new LambdaQueryWrapperX<CrmContractDO>()
-                .eq(CrmContractDO::getCustomerId, pageReqVO.getCustomerId())
-                .likeIfPresent(CrmContractDO::getNo, pageReqVO.getNo())
-                .likeIfPresent(CrmContractDO::getName, pageReqVO.getName())
-                .eqIfPresent(CrmContractDO::getCustomerId, pageReqVO.getCustomerId())
-                .eqIfPresent(CrmContractDO::getBusinessId, pageReqVO.getBusinessId())
-                .orderByDesc(CrmContractDO::getId));
+        return selectPage(
+                pageReqVO,
+                new LambdaQueryWrapperX<CrmContractDO>()
+                        .eq(CrmContractDO::getCustomerId, pageReqVO.getCustomerId())
+                        .likeIfPresent(CrmContractDO::getNo, pageReqVO.getNo())
+                        .likeIfPresent(CrmContractDO::getName, pageReqVO.getName())
+                        .eqIfPresent(CrmContractDO::getCustomerId, pageReqVO.getCustomerId())
+                        .eqIfPresent(CrmContractDO::getBusinessId, pageReqVO.getBusinessId())
+                        .orderByDesc(CrmContractDO::getId));
     }
 
     default PageResult<CrmContractDO> selectPageByBusinessId(CrmContractPageReqVO pageReqVO) {
-        return selectPage(pageReqVO, new LambdaQueryWrapperX<CrmContractDO>()
-                .eq(CrmContractDO::getBusinessId, pageReqVO.getBusinessId())
-                .likeIfPresent(CrmContractDO::getNo, pageReqVO.getNo())
-                .likeIfPresent(CrmContractDO::getName, pageReqVO.getName())
-                .eqIfPresent(CrmContractDO::getCustomerId, pageReqVO.getCustomerId())
-                .eqIfPresent(CrmContractDO::getBusinessId, pageReqVO.getBusinessId())
-                .orderByDesc(CrmContractDO::getId));
+        return selectPage(
+                pageReqVO,
+                new LambdaQueryWrapperX<CrmContractDO>()
+                        .eq(CrmContractDO::getBusinessId, pageReqVO.getBusinessId())
+                        .likeIfPresent(CrmContractDO::getNo, pageReqVO.getNo())
+                        .likeIfPresent(CrmContractDO::getName, pageReqVO.getName())
+                        .eqIfPresent(CrmContractDO::getCustomerId, pageReqVO.getCustomerId())
+                        .eqIfPresent(CrmContractDO::getBusinessId, pageReqVO.getBusinessId())
+                        .orderByDesc(CrmContractDO::getId));
     }
 
-    default PageResult<CrmContractDO> selectPage(CrmContractPageReqVO pageReqVO, Long userId, CrmContractConfigDO config) {
+    default PageResult<CrmContractDO> selectPage(
+            CrmContractPageReqVO pageReqVO, Long userId, CrmContractConfigDO config) {
         MPJLambdaWrapperX<CrmContractDO> query = new MPJLambdaWrapperX<>();
         // 拼接数据权限的查询条件
-        CrmPermissionUtils.appendPermissionCondition(query, CrmBizTypeEnum.CRM_CONTRACT.getType(),
-                CrmContractDO::getId, userId, pageReqVO.getSceneType());
+        CrmPermissionUtils.appendPermissionCondition(
+                query,
+                CrmBizTypeEnum.CRM_CONTRACT.getType(),
+                CrmContractDO::getId,
+                userId,
+                pageReqVO.getSceneType());
         // 拼接自身的查询条件
         query.selectAll(CrmContractDO.class)
                 .likeIfPresent(CrmContractDO::getNo, pageReqVO.getNo())
@@ -66,10 +76,15 @@ public interface CrmContractMapper extends BaseMapperX<CrmContractDO> {
         // Backlog: 即将到期的合同
         LocalDateTime beginOfToday = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
         LocalDateTime endOfToday = LocalDateTimeUtil.endOfDay(LocalDateTime.now());
-        if (CrmContractPageReqVO.EXPIRY_TYPE_ABOUT_TO_EXPIRE.equals(pageReqVO.getExpiryType())) { // 即将到期
+        if (CrmContractPageReqVO.EXPIRY_TYPE_ABOUT_TO_EXPIRE.equals(
+                pageReqVO.getExpiryType())) { // 即将到期
             query.eq(CrmContractDO::getAuditStatus, CrmAuditStatusEnum.APPROVE.getStatus())
-                    .between(CrmContractDO::getEndTime, beginOfToday, endOfToday.plusDays(config.getNotifyDays()));
-        } else if (CrmContractPageReqVO.EXPIRY_TYPE_EXPIRED.equals(pageReqVO.getExpiryType())) { // 已到期
+                    .between(
+                            CrmContractDO::getEndTime,
+                            beginOfToday,
+                            endOfToday.plusDays(config.getNotifyDays()));
+        } else if (CrmContractPageReqVO.EXPIRY_TYPE_EXPIRED.equals(
+                pageReqVO.getExpiryType())) { // 已到期
             query.eq(CrmContractDO::getAuditStatus, CrmAuditStatusEnum.APPROVE.getStatus())
                     .lt(CrmContractDO::getEndTime, endOfToday);
         }
@@ -87,8 +102,12 @@ public interface CrmContractMapper extends BaseMapperX<CrmContractDO> {
     default Long selectCountByAudit(Long userId) {
         MPJLambdaWrapperX<CrmContractDO> query = new MPJLambdaWrapperX<>();
         // 我负责的 + 非公海
-        CrmPermissionUtils.appendPermissionCondition(query, CrmBizTypeEnum.CRM_CONTRACT.getType(),
-                CrmContractDO::getId, userId, CrmSceneTypeEnum.OWNER.getType());
+        CrmPermissionUtils.appendPermissionCondition(
+                query,
+                CrmBizTypeEnum.CRM_CONTRACT.getType(),
+                CrmContractDO::getId,
+                userId,
+                CrmSceneTypeEnum.OWNER.getType());
         // 未审核
         query.eq(CrmContractDO::getAuditStatus, CrmAuditStatusEnum.PROCESS.getStatus());
         return selectCount(query);
@@ -97,20 +116,28 @@ public interface CrmContractMapper extends BaseMapperX<CrmContractDO> {
     default Long selectCountByRemind(Long userId, CrmContractConfigDO config) {
         MPJLambdaWrapperX<CrmContractDO> query = new MPJLambdaWrapperX<>();
         // 我负责的 + 非公海
-        CrmPermissionUtils.appendPermissionCondition(query, CrmBizTypeEnum.CRM_CONTRACT.getType(),
-                CrmContractDO::getId, userId, CrmSceneTypeEnum.OWNER.getType());
+        CrmPermissionUtils.appendPermissionCondition(
+                query,
+                CrmBizTypeEnum.CRM_CONTRACT.getType(),
+                CrmContractDO::getId,
+                userId,
+                CrmSceneTypeEnum.OWNER.getType());
         // 即将到期
         LocalDateTime beginOfToday = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
         LocalDateTime endOfToday = LocalDateTimeUtil.endOfDay(LocalDateTime.now());
         query.eq(CrmContractDO::getAuditStatus, CrmAuditStatusEnum.APPROVE.getStatus()) // 必须审批通过！
-                .between(CrmContractDO::getEndTime, beginOfToday, endOfToday.plusDays(config.getNotifyDays()));
+                .between(
+                        CrmContractDO::getEndTime,
+                        beginOfToday,
+                        endOfToday.plusDays(config.getNotifyDays()));
         return selectCount(query);
     }
 
-    default List<CrmContractDO> selectListByCustomerIdOwnerUserId(Long customerId, Long ownerUserId) {
-        return selectList(new LambdaQueryWrapperX<CrmContractDO>()
-                .eq(CrmContractDO::getCustomerId, customerId)
-                .eq(CrmContractDO::getOwnerUserId, ownerUserId));
+    default List<CrmContractDO> selectListByCustomerIdOwnerUserId(
+            Long customerId, Long ownerUserId) {
+        return selectList(
+                new LambdaQueryWrapperX<CrmContractDO>()
+                        .eq(CrmContractDO::getCustomerId, customerId)
+                        .eq(CrmContractDO::getOwnerUserId, ownerUserId));
     }
-
 }

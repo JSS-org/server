@@ -5,6 +5,9 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -13,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
 /**
@@ -38,8 +40,8 @@ public class SecurityFrameworkUtils {
      * @param parameterName 认证 Token 对应的 Parameter 名字
      * @return 认证 Token
      */
-    public static String obtainAuthorization(HttpServletRequest request,
-                                             String headerName, String parameterName) {
+    public static String obtainAuthorization(
+            HttpServletRequest request, String headerName, String parameterName) {
         // 1. 获得 Token。优先级：Header > Parameter
         String token = request.getHeader(headerName);
         if (StrUtil.isEmpty(token)) {
@@ -77,7 +79,9 @@ public class SecurityFrameworkUtils {
         if (authentication == null) {
             return null;
         }
-        return authentication.getPrincipal() instanceof LoginUser ? (LoginUser) authentication.getPrincipal() : null;
+        return authentication.getPrincipal() instanceof LoginUser
+                ? (LoginUser) authentication.getPrincipal()
+                : null;
     }
 
     /**
@@ -99,7 +103,9 @@ public class SecurityFrameworkUtils {
     @Nullable
     public static String getLoginUserNickname() {
         LoginUser loginUser = getLoginUser();
-        return loginUser != null ? MapUtil.getStr(loginUser.getInfo(), LoginUser.INFO_KEY_NICKNAME) : null;
+        return loginUser != null
+                ? MapUtil.getStr(loginUser.getInfo(), LoginUser.INFO_KEY_NICKNAME)
+                : null;
     }
 
     /**
@@ -110,7 +116,9 @@ public class SecurityFrameworkUtils {
     @Nullable
     public static Long getLoginUserDeptId() {
         LoginUser loginUser = getLoginUser();
-        return loginUser != null ? MapUtil.getLong(loginUser.getInfo(), LoginUser.INFO_KEY_DEPT_ID) : null;
+        return loginUser != null
+                ? MapUtil.getLong(loginUser.getInfo(), LoginUser.INFO_KEY_DEPT_ID)
+                : null;
     }
 
     /**
@@ -132,10 +140,11 @@ public class SecurityFrameworkUtils {
         }
     }
 
-    private static Authentication buildAuthentication(LoginUser loginUser, HttpServletRequest request) {
+    private static Authentication buildAuthentication(
+            LoginUser loginUser, HttpServletRequest request) {
         // 创建 UsernamePasswordAuthenticationToken 对象
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                loginUser, null, Collections.emptyList());
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(loginUser, null, Collections.emptyList());
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         return authenticationToken;
     }
@@ -156,5 +165,4 @@ public class SecurityFrameworkUtils {
         // 重点：跨租户访问时，无法进行权限校验
         return ObjUtil.notEqual(loginUser.getVisitTenantId(), loginUser.getTenantId());
     }
-
 }

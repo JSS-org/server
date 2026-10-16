@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.bpm.dal.dataobject.oa;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.bpm.enums.task.BpmTaskStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +23,8 @@ import java.time.LocalDateTime;
  * @author 芋道源码
  */
 @TableName("bpm_oa_leave")
-@KeySequence("bpm_oa_leave_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "bpm_oa_leave_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @Builder
 @NoArgsConstructor
@@ -31,34 +34,40 @@ public class BpmOALeaveDO extends BaseDO {
     /**
      * 请假表单主键
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 申请人的用户编号
      *
      * 关联 AdminUserDO 的 id 属性
      */
     private Long userId;
+
     /**
      * 请假类型
      */
     private Integer type;
+
     /**
      * 原因
      */
     private String reason;
+
     /**
      * 开始时间
      */
     private LocalDateTime startTime;
+
     /**
      * 结束时间
      */
     private LocalDateTime endTime;
+
     /**
      * 请假天数
      */
     private Long day;
+
     /**
      * 审批结果
      *
@@ -73,5 +82,4 @@ public class BpmOALeaveDO extends BaseDO {
      * 关联 ProcessInstance 的 id 属性
      */
     private String processInstanceId;
-
 }

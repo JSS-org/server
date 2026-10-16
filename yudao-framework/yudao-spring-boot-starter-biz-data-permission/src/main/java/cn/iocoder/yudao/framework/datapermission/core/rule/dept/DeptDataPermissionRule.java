@@ -13,9 +13,12 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
+
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
@@ -69,6 +72,7 @@ public class DeptDataPermissionRule implements DataPermissionRule {
      * value：字段名
      */
     private final Map<String, String> deptColumns = new HashMap<>();
+
     /**
      * 基于用户的表字段配置
      * 一般情况下，每个表的部门编号字段是 dept_id，通过该配置自定义。
@@ -77,6 +81,7 @@ public class DeptDataPermissionRule implements DataPermissionRule {
      * value：字段名
      */
     private final Map<String, String> userColumns = new HashMap<>();
+
     /**
      * 所有表名，是 {@link #deptColumns} 和 {@link #userColumns} 的合集
      */
@@ -100,14 +105,19 @@ public class DeptDataPermissionRule implements DataPermissionRule {
         }
 
         // 获得数据权限
-        DeptDataPermissionRespDTO deptDataPermission = loginUser.getContext(CONTEXT_KEY, DeptDataPermissionRespDTO.class);
+        DeptDataPermissionRespDTO deptDataPermission =
+                loginUser.getContext(CONTEXT_KEY, DeptDataPermissionRespDTO.class);
         // 从上下文中拿不到，则调用逻辑进行获取
         if (deptDataPermission == null) {
             deptDataPermission = permissionApi.getDeptDataPermission(loginUser.getId());
             if (deptDataPermission == null) {
-                log.error("[getExpression][LoginUser({}) 获取数据权限为 null]", JsonUtils.toJsonString(loginUser));
-                throw new NullPointerException(String.format("LoginUser(%d) Table(%s/%s) 未返回数据权限",
-                        loginUser.getId(), tableName, tableAlias.getName()));
+                log.error(
+                        "[getExpression][LoginUser({}) 获取数据权限为 null]",
+                        JsonUtils.toJsonString(loginUser));
+                throw new NullPointerException(
+                        String.format(
+                                "LoginUser(%d) Table(%s/%s) 未返回数据权限",
+                                loginUser.getId(), tableName, tableAlias.getName()));
             }
             // 添加到上下文中，避免重复计算
             loginUser.setContext(CONTEXT_KEY, deptDataPermission);
@@ -120,19 +130,27 @@ public class DeptDataPermissionRule implements DataPermissionRule {
 
         // 情况二，即不能查看部门，又不能查看自己，则说明 100% 无权限
         if (CollUtil.isEmpty(deptDataPermission.getDeptIds())
-            && Boolean.FALSE.equals(deptDataPermission.getSelf())) {
+                && Boolean.FALSE.equals(deptDataPermission.getSelf())) {
             return new EqualsTo(null, null); // WHERE null = null，可以保证返回的数据为空
         }
 
         // 情况三，拼接 Dept 和 User 的条件，最后组合
-        Expression deptExpression = buildDeptExpression(tableName,tableAlias, deptDataPermission.getDeptIds());
-        Expression userExpression = buildUserExpression(tableName, tableAlias, deptDataPermission.getSelf(), loginUser.getId());
+        Expression deptExpression =
+                buildDeptExpression(tableName, tableAlias, deptDataPermission.getDeptIds());
+        Expression userExpression =
+                buildUserExpression(
+                        tableName, tableAlias, deptDataPermission.getSelf(), loginUser.getId());
         if (deptExpression == null && userExpression == null) {
             // TODO 芋艿：获得不到条件的时候，暂时不抛出异常，而是不返回数据
-            log.warn("[getExpression][LoginUser({}) Table({}/{}) DeptDataPermission({}) 构建的条件为空]",
-                    JsonUtils.toJsonString(loginUser), tableName, tableAlias, JsonUtils.toJsonString(deptDataPermission));
-//            throw new NullPointerException(String.format("LoginUser(%d) Table(%s/%s) 构建的条件为空",
-//                    loginUser.getId(), tableName, tableAlias.getName()));
+            log.warn(
+                    "[getExpression][LoginUser({}) Table({}/{}) DeptDataPermission({}) 构建的条件为空]",
+                    JsonUtils.toJsonString(loginUser),
+                    tableName,
+                    tableAlias,
+                    JsonUtils.toJsonString(deptDataPermission));
+            //            throw new NullPointerException(String.format("LoginUser(%d) Table(%s/%s)
+            // 构建的条件为空",
+            //                    loginUser.getId(), tableName, tableAlias.getName()));
             return new EqualsTo(null, null); // WHERE null = null，可以保证返回的数据为空
         }
         if (deptExpression == null) {
@@ -156,12 +174,16 @@ public class DeptDataPermissionRule implements DataPermissionRule {
             return null;
         }
         // 拼接条件
-        return new InExpression(MyBatisUtils.buildColumn(tableName, tableAlias, columnName),
+        return new InExpression(
+                MyBatisUtils.buildColumn(tableName, tableAlias, columnName),
                 // Parenthesis 的目的，是提供 (1,2,3) 的 () 左右括号
-                new ParenthesedExpressionList(new ExpressionList<LongValue>(CollectionUtils.convertList(deptIds, LongValue::new))));
+                new ParenthesedExpressionList(
+                        new ExpressionList<LongValue>(
+                                CollectionUtils.convertList(deptIds, LongValue::new))));
     }
 
-    private Expression buildUserExpression(String tableName, Alias tableAlias, Boolean self, Long userId) {
+    private Expression buildUserExpression(
+            String tableName, Alias tableAlias, Boolean self, Long userId) {
         // 如果不查看自己，则无需作为条件
         if (Boolean.FALSE.equals(self)) {
             return null;
@@ -171,7 +193,8 @@ public class DeptDataPermissionRule implements DataPermissionRule {
             return null;
         }
         // 拼接条件
-        return new EqualsTo(MyBatisUtils.buildColumn(tableName, tableAlias, columnName), new LongValue(userId));
+        return new EqualsTo(
+                MyBatisUtils.buildColumn(tableName, tableAlias, columnName), new LongValue(userId));
     }
 
     // ==================== 添加配置 ====================
@@ -182,7 +205,7 @@ public class DeptDataPermissionRule implements DataPermissionRule {
 
     public void addDeptColumn(Class<? extends BaseDO> entityClass, String columnName) {
         String tableName = TableInfoHelper.getTableInfo(entityClass).getTableName();
-       addDeptColumn(tableName, columnName);
+        addDeptColumn(tableName, columnName);
     }
 
     public void addDeptColumn(String tableName, String columnName) {
@@ -203,5 +226,4 @@ public class DeptDataPermissionRule implements DataPermissionRule {
         userColumns.put(tableName, columnName);
         TABLE_NAMES.add(tableName);
     }
-
 }

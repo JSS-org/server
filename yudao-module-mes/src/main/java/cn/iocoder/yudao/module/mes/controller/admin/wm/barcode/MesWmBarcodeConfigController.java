@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.barcode;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,16 +10,17 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.config.MesWmBa
 import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.config.MesWmBarcodeConfigSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.barcode.MesWmBarcodeConfigDO;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeConfigService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - MES 条码配置")
 @RestController
@@ -25,20 +28,21 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MesWmBarcodeConfigController {
 
-    @Resource
-    private MesWmBarcodeConfigService barcodeConfigService;
+    @Resource private MesWmBarcodeConfigService barcodeConfigService;
 
     @PostMapping("/create")
     @Operation(summary = "创建条码配置")
     @PreAuthorize("@ss.hasPermission('mes:wm-barcode-config:create')")
-    public CommonResult<Long> createBarcodeConfig(@Valid @RequestBody MesWmBarcodeConfigSaveReqVO createReqVO) {
+    public CommonResult<Long> createBarcodeConfig(
+            @Valid @RequestBody MesWmBarcodeConfigSaveReqVO createReqVO) {
         return success(barcodeConfigService.createBarcodeConfig(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新条码配置")
     @PreAuthorize("@ss.hasPermission('mes:wm-barcode-config:update')")
-    public CommonResult<Boolean> updateBarcodeConfig(@Valid @RequestBody MesWmBarcodeConfigSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateBarcodeConfig(
+            @Valid @RequestBody MesWmBarcodeConfigSaveReqVO updateReqVO) {
         barcodeConfigService.updateBarcodeConfig(updateReqVO);
         return success(true);
     }
@@ -66,8 +70,8 @@ public class MesWmBarcodeConfigController {
     @PreAuthorize("@ss.hasPermission('mes:wm-barcode-config:query')")
     public CommonResult<PageResult<MesWmBarcodeConfigRespVO>> getBarcodeConfigPage(
             @Valid MesWmBarcodeConfigPageReqVO pageReqVO) {
-        PageResult<MesWmBarcodeConfigDO> pageResult = barcodeConfigService.getBarcodeConfigPage(pageReqVO);
+        PageResult<MesWmBarcodeConfigDO> pageResult =
+                barcodeConfigService.getBarcodeConfigPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesWmBarcodeConfigRespVO.class));
     }
-
 }

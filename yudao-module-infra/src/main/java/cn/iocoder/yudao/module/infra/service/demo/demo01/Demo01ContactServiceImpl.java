@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.infra.service.demo.demo01;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DEMO01_CONTACT_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,14 +10,13 @@ import cn.iocoder.yudao.module.infra.controller.admin.demo.demo01.vo.Demo01Conta
 import cn.iocoder.yudao.module.infra.controller.admin.demo.demo01.vo.Demo01ContactSaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo01.Demo01ContactDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo01.Demo01ContactMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DEMO01_CONTACT_NOT_EXISTS;
 
 /**
  * 示例联系人 Service 实现类
@@ -25,8 +27,7 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DEMO01_CONT
 @Validated
 public class Demo01ContactServiceImpl implements Demo01ContactService {
 
-    @Resource
-    private Demo01ContactMapper demo01ContactMapper;
+    @Resource private Demo01ContactMapper demo01ContactMapper;
 
     @Override
     public Long createDemo01Contact(Demo01ContactSaveReqVO createReqVO) {
@@ -84,5 +85,4 @@ public class Demo01ContactServiceImpl implements Demo01ContactService {
     public PageResult<Demo01ContactDO> getDemo01ContactPage(Demo01ContactPageReqVO pageReqVO) {
         return demo01ContactMapper.selectPage(pageReqVO);
     }
-
 }

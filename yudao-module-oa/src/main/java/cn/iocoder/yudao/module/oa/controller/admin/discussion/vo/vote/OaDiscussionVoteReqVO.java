@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.vote;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -15,8 +17,10 @@ public class OaDiscussionVoteReqVO {
     @NotNull(message = "讨论编号不能为空")
     private Long discussionId;
 
-    @Schema(description = "投票选项编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1, 2]")
+    @Schema(
+            description = "投票选项编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1, 2]")
     @NotEmpty(message = "投票选项不能为空")
     private List<@NotNull(message = "投票选项编号不能为空") Long> optionIds;
-
 }

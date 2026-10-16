@@ -65,5 +65,4 @@ public interface HrmEmployeeFieldConfigService {
      * @return 字段名集合
      */
     Set<String> getEditableArchiveFieldNames();
-
 }

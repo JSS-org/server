@@ -1,20 +1,23 @@
 package cn.iocoder.yudao.module.ai.tool.function;
 
+import static cn.hutool.core.date.DatePattern.NORM_DATETIME_PATTERN;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.function.Function;
-
-import static cn.hutool.core.date.DatePattern.NORM_DATETIME_PATTERN;
 
 /**
  * 工具：查询指定城市的天气信息
@@ -25,7 +28,9 @@ import static cn.hutool.core.date.DatePattern.NORM_DATETIME_PATTERN;
 public class WeatherQueryToolFunction
         implements Function<WeatherQueryToolFunction.Request, WeatherQueryToolFunction.Response> {
 
-    private static final String[] WEATHER_CONDITIONS = { "晴朗", "多云", "阴天", "小雨", "大雨", "雷雨", "小雪", "大雪" };
+    private static final String[] WEATHER_CONDITIONS = {
+        "晴朗", "多云", "阴天", "小雨", "大雨", "雷雨", "小雪", "大雪"
+    };
 
     @Data
     @JsonClassDescription("查询指定城市的天气信息")
@@ -37,7 +42,6 @@ public class WeatherQueryToolFunction
         @JsonProperty(required = true, value = "city")
         @JsonPropertyDescription("城市名称，例如：北京、上海、广州")
         private String city;
-
     }
 
     @Data
@@ -84,9 +88,7 @@ public class WeatherQueryToolFunction
              * 查询时间
              */
             private String queryTime;
-
         }
-
     }
 
     @Override
@@ -111,8 +113,11 @@ public class WeatherQueryToolFunction
         int humidity = RandomUtil.randomInt(1, 100);
         int windSpeed = RandomUtil.randomInt(1, 30);
         String condition = RandomUtil.randomEle(WEATHER_CONDITIONS);
-        return new Response.WeatherInfo(temperature, condition, humidity, windSpeed,
+        return new Response.WeatherInfo(
+                temperature,
+                condition,
+                humidity,
+                windSpeed,
                 LocalDateTimeUtil.format(LocalDateTime.now(), NORM_DATETIME_PATTERN));
     }
-
 }

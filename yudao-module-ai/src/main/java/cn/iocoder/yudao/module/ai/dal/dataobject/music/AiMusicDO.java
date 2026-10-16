@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.ai.dal.dataobject.music;
 
-import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.module.ai.enums.music.AiMusicGenerateModeEnum;
 import cn.iocoder.yudao.module.ai.enums.music.AiMusicStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 
 import java.util.List;
@@ -26,8 +28,7 @@ public class AiMusicDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 用户编号
@@ -50,10 +51,12 @@ public class AiMusicDO extends BaseDO {
      * 图片地址
      */
     private String imageUrl;
+
     /**
      * 音频地址
      */
     private String audioUrl;
+
     /**
      * 视频地址
      */
@@ -84,6 +87,7 @@ public class AiMusicDO extends BaseDO {
      * 枚举 {@link AiPlatformEnum}
      */
     private String platform;
+
     // TODO @芋艿：modelId？
     /**
      * 模型
@@ -115,5 +119,4 @@ public class AiMusicDO extends BaseDO {
      * 错误信息
      */
     private String errorMessage;
-
 }

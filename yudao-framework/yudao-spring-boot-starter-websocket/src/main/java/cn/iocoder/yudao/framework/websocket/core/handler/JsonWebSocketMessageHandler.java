@@ -7,7 +7,9 @@ import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
 import cn.iocoder.yudao.framework.websocket.core.listener.WebSocketMessageListener;
 import cn.iocoder.yudao.framework.websocket.core.message.JsonWebSocketMessage;
 import cn.iocoder.yudao.framework.websocket.core.util.WebSocketFrameworkUtils;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketSession;
@@ -37,12 +39,14 @@ public class JsonWebSocketMessageHandler extends TextWebSocketHandler {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public JsonWebSocketMessageHandler(List<? extends WebSocketMessageListener> listenersList) {
-        listenersList.forEach((Consumer<WebSocketMessageListener>)
-                listener -> listeners.put(listener.getType(), listener));
+        listenersList.forEach(
+                (Consumer<WebSocketMessageListener>)
+                        listener -> listeners.put(listener.getType(), listener));
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message)
+            throws Exception {
         // 1.1 空消息，跳过
         if (message.getPayloadLength() == 0) {
             return;
@@ -55,19 +59,29 @@ public class JsonWebSocketMessageHandler extends TextWebSocketHandler {
 
         // 2.1 解析消息
         try {
-            JsonWebSocketMessage jsonMessage = JsonUtils.parseObject(message.getPayload(), JsonWebSocketMessage.class);
+            JsonWebSocketMessage jsonMessage =
+                    JsonUtils.parseObject(message.getPayload(), JsonWebSocketMessage.class);
             if (jsonMessage == null) {
-                log.error("[handleTextMessage][session({}) message({}) 解析为空]", session.getId(), message.getPayload());
+                log.error(
+                        "[handleTextMessage][session({}) message({}) 解析为空]",
+                        session.getId(),
+                        message.getPayload());
                 return;
             }
             if (StrUtil.isEmpty(jsonMessage.getType())) {
-                log.error("[handleTextMessage][session({}) message({}) 类型为空]", session.getId(), message.getPayload());
+                log.error(
+                        "[handleTextMessage][session({}) message({}) 类型为空]",
+                        session.getId(),
+                        message.getPayload());
                 return;
             }
             // 2.2 获得对应的 WebSocketMessageListener
             WebSocketMessageListener<Object> messageListener = listeners.get(jsonMessage.getType());
             if (messageListener == null) {
-                log.error("[handleTextMessage][session({}) message({}) 监听器为空]", session.getId(), message.getPayload());
+                log.error(
+                        "[handleTextMessage][session({}) message({}) 监听器为空]",
+                        session.getId(),
+                        message.getPayload());
                 return;
             }
             // 2.3 处理消息
@@ -76,8 +90,11 @@ public class JsonWebSocketMessageHandler extends TextWebSocketHandler {
             Long tenantId = WebSocketFrameworkUtils.getTenantId(session);
             TenantUtils.execute(tenantId, () -> messageListener.onMessage(session, messageObj));
         } catch (Throwable ex) {
-            log.error("[handleTextMessage][session({}) message({}) 处理异常]", session.getId(), message.getPayload(), ex);
+            log.error(
+                    "[handleTextMessage][session({}) message({}) 处理异常]",
+                    session.getId(),
+                    message.getPayload(),
+                    ex);
         }
     }
-
 }

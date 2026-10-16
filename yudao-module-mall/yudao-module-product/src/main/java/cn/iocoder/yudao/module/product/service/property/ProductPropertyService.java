@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.product.controller.admin.property.vo.property.*;
 import cn.iocoder.yudao.module.product.dal.dataobject.property.ProductPropertyDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -68,5 +69,4 @@ public interface ProductPropertyService {
      * @return 属性项列表
      */
     List<ProductPropertyDO> getPropertyList();
-
 }

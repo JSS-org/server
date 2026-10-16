@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public enum GymFileMimeTypeEnum {
-
     PNG("image/png", "png"),
     JPEG("image/jpeg", "jpg"),
     GIF("image/gif", "gif"),
@@ -30,17 +29,29 @@ public enum GymFileMimeTypeEnum {
     QUICKTIME("video/quicktime", "mov");
 
     private final String mimeType;
+
     /** 规范扩展名，用于补全缺失后缀 */
     private final String extension;
 
-    private static final Map<String, GymFileMimeTypeEnum> BY_MIME_TYPE = Stream.of(values())
-            .collect(Collectors.toMap(GymFileMimeTypeEnum::getMimeType, e -> e));
+    private static final Map<String, GymFileMimeTypeEnum> BY_MIME_TYPE =
+            Stream.of(values()).collect(Collectors.toMap(GymFileMimeTypeEnum::getMimeType, e -> e));
 
     /** 扩展名 -> 类型；同一类型只登记规范扩展名与常见别名 */
-    private static final Map<String, GymFileMimeTypeEnum> BY_EXTENSION = Stream.of(new Object[][]{
-            {"png", PNG}, {"jpg", JPEG}, {"jpeg", JPEG}, {"gif", GIF}, {"webp", WEBP},
-            {"pdf", PDF}, {"mp4", MP4}, {"mov", QUICKTIME}
-    }).collect(Collectors.toMap(row -> (String) row[0], row -> (GymFileMimeTypeEnum) row[1]));
+    private static final Map<String, GymFileMimeTypeEnum> BY_EXTENSION =
+            Stream.of(
+                            new Object[][] {
+                                {"png", PNG},
+                                {"jpg", JPEG},
+                                {"jpeg", JPEG},
+                                {"gif", GIF},
+                                {"webp", WEBP},
+                                {"pdf", PDF},
+                                {"mp4", MP4},
+                                {"mov", QUICKTIME}
+                            })
+                    .collect(
+                            Collectors.toMap(
+                                    row -> (String) row[0], row -> (GymFileMimeTypeEnum) row[1]));
 
     public static GymFileMimeTypeEnum findByMimeType(String mimeType) {
         return mimeType == null ? null : BY_MIME_TYPE.get(mimeType.trim().toLowerCase());
@@ -64,5 +75,4 @@ public enum GymFileMimeTypeEnum {
     public static String allMimeTypes() {
         return Arrays.toString(Stream.of(values()).map(GymFileMimeTypeEnum::getMimeType).toArray());
     }
-
 }

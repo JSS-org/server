@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.library;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.group.PmsKnowledgeGroupRespVO;
@@ -8,11 +13,14 @@ import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.group.PmsKnowl
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.group.PmsKnowledgeLibraryMoveGroupReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.library.PmsKnowledgeGroupDO;
 import cn.iocoder.yudao.module.pms.service.kb.library.PmsKnowledgeGroupService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,31 +35,27 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 知识库分组")
 @RestController
 @RequestMapping("/pms/kb/group")
 @Validated
 public class PmsKnowledgeGroupController {
 
-    @Resource
-    private PmsKnowledgeGroupService knowledgeGroupService;
+    @Resource private PmsKnowledgeGroupService knowledgeGroupService;
 
     @PostMapping("/create")
     @Operation(summary = "创建知识库分组")
     @PreAuthorize("@ss.hasPermission('pms:kb:library:create')")
-    public CommonResult<Long> createGroup(@Valid @RequestBody PmsKnowledgeGroupSaveReqVO saveReqVO) {
+    public CommonResult<Long> createGroup(
+            @Valid @RequestBody PmsKnowledgeGroupSaveReqVO saveReqVO) {
         return success(knowledgeGroupService.createGroup(saveReqVO, getLoginUserId()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改知识库分组")
     @PreAuthorize("@ss.hasPermission('pms:kb:library:update')")
-    public CommonResult<Boolean> updateGroup(@Valid @RequestBody PmsKnowledgeGroupSaveReqVO saveReqVO) {
+    public CommonResult<Boolean> updateGroup(
+            @Valid @RequestBody PmsKnowledgeGroupSaveReqVO saveReqVO) {
         knowledgeGroupService.updateGroup(saveReqVO, getLoginUserId());
         return success(true);
     }
@@ -80,10 +84,16 @@ public class PmsKnowledgeGroupController {
     public CommonResult<List<PmsKnowledgeGroupRespVO>> getGroupList() {
         Long userId = getLoginUserId();
         List<PmsKnowledgeGroupDO> groups = knowledgeGroupService.getGroupList(userId);
-        Map<Long, Integer> groupCountMap = knowledgeGroupService.getGroupLibraryCountMap(userId,
-                convertSet(groups, PmsKnowledgeGroupDO::getId));
-        return success(convertList(groups, group -> BeanUtils.toBean(group, PmsKnowledgeGroupRespVO.class)
-                .setLibraryCount(groupCountMap.getOrDefault(group.getId(), 0))));
+        Map<Long, Integer> groupCountMap =
+                knowledgeGroupService.getGroupLibraryCountMap(
+                        userId, convertSet(groups, PmsKnowledgeGroupDO::getId));
+        return success(
+                convertList(
+                        groups,
+                        group ->
+                                BeanUtils.toBean(group, PmsKnowledgeGroupRespVO.class)
+                                        .setLibraryCount(
+                                                groupCountMap.getOrDefault(group.getId(), 0))));
     }
 
     @GetMapping("/get")
@@ -91,8 +101,10 @@ public class PmsKnowledgeGroupController {
     @Parameter(name = "id", description = "知识库分组编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pms:kb:library:query')")
     public CommonResult<PmsKnowledgeGroupRespVO> getGroup(@RequestParam("id") Long id) {
-        return success(BeanUtils.toBean(knowledgeGroupService.getGroup(id, getLoginUserId()),
-                PmsKnowledgeGroupRespVO.class));
+        return success(
+                BeanUtils.toBean(
+                        knowledgeGroupService.getGroup(id, getLoginUserId()),
+                        PmsKnowledgeGroupRespVO.class));
     }
 
     @PutMapping("/move")

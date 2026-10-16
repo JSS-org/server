@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.out;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -52,13 +54,14 @@ public class ErpStockOutSaveReqVO {
         @Schema(description = "产品单价", example = "100.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "产品数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "产品数量不能为空")
         private BigDecimal count;
 
         @Schema(description = "备注", example = "随便")
         private String remark;
-
     }
-
 }

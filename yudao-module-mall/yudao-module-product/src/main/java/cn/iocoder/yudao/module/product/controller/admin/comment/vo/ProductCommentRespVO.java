@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.product.controller.admin.comment.vo;
 
 import cn.iocoder.yudao.module.product.controller.admin.spu.vo.ProductSkuSaveReqVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,8 +22,12 @@ public class ProductCommentRespVO {
     @Schema(description = "评价人名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "小姑凉")
     private String userNickname;
 
-    @Schema(description = "评价人头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+    @Schema(
+            description = "评价人头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xx.png")
     private String userAvatar;
+
     @Schema(description = "是否匿名", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
     private Boolean anonymous;
 
@@ -31,7 +37,10 @@ public class ProductCommentRespVO {
     @Schema(description = "评价订单项", requiredMode = Schema.RequiredMode.REQUIRED, example = "19292")
     private Long orderItemId;
 
-    @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "清凉丝滑透气小短袖")
+    @Schema(
+            description = "商品 SPU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "清凉丝滑透气小短袖")
     private Long spuId;
 
     @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -58,10 +67,16 @@ public class ProductCommentRespVO {
     @Schema(description = "服务星级 1-5 分", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     private Integer benefitScores;
 
-    @Schema(description = "评论内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "穿起来非常丝滑凉快")
+    @Schema(
+            description = "评论内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "穿起来非常丝滑凉快")
     private String content;
 
-    @Schema(description = "评论图片地址数组，以逗号分隔最多上传 9 张", requiredMode = Schema.RequiredMode.REQUIRED, example = "[https://www.iocoder.cn/xx.png]")
+    @Schema(
+            description = "评论图片地址数组，以逗号分隔最多上传 9 张",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[https://www.iocoder.cn/xx.png]")
     private List<String> picUrls;
 
     @Schema(description = "商家是否回复", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -78,5 +93,4 @@ public class ProductCommentRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

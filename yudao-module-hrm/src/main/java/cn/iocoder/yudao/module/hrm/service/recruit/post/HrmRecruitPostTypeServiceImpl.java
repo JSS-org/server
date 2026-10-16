@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.post;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_POST_TYPE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostTypeDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.recruit.post.HrmRecruitPostTypeMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_POST_TYPE_NOT_EXISTS;
 
 /**
  * 招聘职位类型 Service 实现类
@@ -23,8 +25,7 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.RECRUIT_POST_
 @Validated
 public class HrmRecruitPostTypeServiceImpl implements HrmRecruitPostTypeService {
 
-    @Resource
-    private HrmRecruitPostTypeMapper recruitPostTypeMapper;
+    @Resource private HrmRecruitPostTypeMapper recruitPostTypeMapper;
 
     @Override
     public void validateRecruitPostTypeExists(Long id) {
@@ -48,5 +49,4 @@ public class HrmRecruitPostTypeServiceImpl implements HrmRecruitPostTypeService 
         }
         return recruitPostTypeMapper.selectByIds(ids);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.mqtt;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -25,5 +26,4 @@ public class IotMqttConfig {
     @NotNull(message = "连接超时时间不能为空")
     @Min(value = 1, message = "连接超时时间不能小于 1 秒")
     private Integer connectTimeoutSeconds = 60;
-
 }

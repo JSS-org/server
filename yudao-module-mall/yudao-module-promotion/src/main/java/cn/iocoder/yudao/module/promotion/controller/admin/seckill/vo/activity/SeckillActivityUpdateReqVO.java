@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.activity;
 
 import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.product.SeckillProductBaseVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,5 +21,4 @@ public class SeckillActivityUpdateReqVO extends SeckillActivityBaseVO {
 
     @Schema(description = "秒杀商品", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<SeckillProductBaseVO> products;
-
 }

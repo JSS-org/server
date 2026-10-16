@@ -1,16 +1,19 @@
 package cn.iocoder.yudao.module.member.controller.app.user.vo;
 
 import cn.iocoder.yudao.framework.common.validation.Mobile;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "用户 APP - 重置密码 Request VO")
 @Data
@@ -30,9 +33,11 @@ public class AppMemberUserResetPasswordReqVO {
     @Pattern(regexp = "^[0-9]+$", message = "手机验证码必须都是数字")
     private String code;
 
-    @Schema(description = "手机号",requiredMode = Schema.RequiredMode.REQUIRED,example = "15878962356")
+    @Schema(
+            description = "手机号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15878962356")
     @NotBlank(message = "手机号不能为空")
     @Mobile
     private String mobile;
-
 }

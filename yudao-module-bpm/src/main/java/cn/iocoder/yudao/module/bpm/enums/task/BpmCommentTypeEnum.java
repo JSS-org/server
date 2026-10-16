@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.enums.task;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,7 +13,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum BpmCommentTypeEnum {
-
     COMMENT("0", "评论", "{}"),
     APPROVE("1", "审批通过", "审批通过，原因是：{}"),
     REJECT("2", "不通过", "审批不通过：原因是：{}"),
@@ -31,10 +31,12 @@ public enum BpmCommentTypeEnum {
      * 由于 BPM Comment 类型为 String，所以这里就不使用 Integer
      */
     private final String type;
+
     /**
      * 操作名字
      */
     private final String name;
+
     /**
      * 操作描述
      */
@@ -43,5 +45,4 @@ public enum BpmCommentTypeEnum {
     public String formatComment(Object... params) {
         return StrUtil.format(comment, params);
     }
-
 }

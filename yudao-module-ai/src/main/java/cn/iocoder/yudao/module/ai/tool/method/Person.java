@@ -14,6 +14,4 @@ public record Person(
         String sex,
         String ipAddress,
         String jobTitle,
-        int age
-) {
-}
+        int age) {}

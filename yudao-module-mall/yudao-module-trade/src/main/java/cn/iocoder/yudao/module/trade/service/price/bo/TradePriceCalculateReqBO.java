@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.trade.service.price.bo;
 
 import cn.iocoder.yudao.module.trade.enums.delivery.DeliveryTypeEnum;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -42,12 +44,14 @@ public class TradePriceCalculateReqBO {
      * 枚举 {@link DeliveryTypeEnum}
      */
     private Integer deliveryType;
+
     /**
      * 收货地址编号
      *
      * 对应 MemberAddressDO 的 id 编号
      */
     private Long addressId;
+
     /**
      * 自提门店编号
      *
@@ -120,6 +124,5 @@ public class TradePriceCalculateReqBO {
          */
         @NotNull(message = "是否选中不能为空")
         private Boolean selected;
-
     }
 }

@@ -5,7 +5,9 @@ import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -141,7 +143,8 @@ public class HttpUtils {
      * @param fragment URL 的 fragment，即拼接到 # 中
      * @return 拼接后的 URL
      */
-    public static String append(String base, Map<String, ?> query, Map<String, String> keys, boolean fragment) {
+    public static String append(
+            String base, Map<String, ?> query, Map<String, String> keys, boolean fragment) {
         UriComponentsBuilder template = UriComponentsBuilder.newInstance();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(base);
         URI redirectUri;
@@ -153,8 +156,11 @@ public class HttpUtils {
             redirectUri = builder.build().toUri();
             builder = UriComponentsBuilder.fromUri(redirectUri);
         }
-        template.scheme(redirectUri.getScheme()).port(redirectUri.getPort()).host(redirectUri.getHost())
-                .userInfo(redirectUri.getUserInfo()).path(redirectUri.getPath());
+        template.scheme(redirectUri.getScheme())
+                .port(redirectUri.getPort())
+                .host(redirectUri.getHost())
+                .userInfo(redirectUri.getUserInfo())
+                .path(redirectUri.getPath());
 
         if (fragment) {
             StringBuilder values = new StringBuilder();
@@ -210,7 +216,7 @@ public class HttpUtils {
 
         // 如果两者非空，则返回
         if (StrUtil.isNotEmpty(clientId) && StrUtil.isNotEmpty(clientSecret)) {
-            return new String[]{clientId, clientSecret};
+            return new String[] {clientId, clientSecret};
         }
         return null;
     }
@@ -226,10 +232,8 @@ public class HttpUtils {
      * @return 请求结果
      */
     public static String post(String url, Map<String, String> headers, String requestBody) {
-        try (HttpResponse response = HttpRequest.post(url)
-                .addHeaders(headers)
-                .body(requestBody)
-                .execute()) {
+        try (HttpResponse response =
+                HttpRequest.post(url).addHeaders(headers).body(requestBody).execute()) {
             return response.body();
         }
     }
@@ -244,9 +248,7 @@ public class HttpUtils {
      * @return 请求结果
      */
     public static String get(String url, Map<String, String> headers) {
-        try (HttpResponse response = HttpRequest.get(url)
-                .addHeaders(headers)
-                .execute()) {
+        try (HttpResponse response = HttpRequest.get(url).addHeaders(headers).execute()) {
             return response.body();
         }
     }
@@ -260,5 +262,4 @@ public class HttpUtils {
     public static String wsUrlToHttp(String url) {
         return StrUtil.startWithIgnoreCase(url, "ws") ? "http" + url.substring(2) : url;
     }
-
 }

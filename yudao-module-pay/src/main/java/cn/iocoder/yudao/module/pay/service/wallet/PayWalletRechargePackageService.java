@@ -7,7 +7,7 @@ import cn.iocoder.yudao.module.pay.controller.admin.wallet.vo.rechargepackage.Wa
 import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletRechargePackageDO;
 
 import jakarta.validation.Valid;
-import java.util.Collection;
+
 import java.util.List;
 
 /**
@@ -58,7 +58,8 @@ public interface PayWalletRechargePackageService {
      * @param pageReqVO 分页查询
      * @return 充值套餐分页
      */
-    PageResult<PayWalletRechargePackageDO> getWalletRechargePackagePage(WalletRechargePackagePageReqVO pageReqVO);
+    PageResult<PayWalletRechargePackageDO> getWalletRechargePackagePage(
+            WalletRechargePackagePageReqVO pageReqVO);
 
     /**
      * 获得充值套餐列表
@@ -67,5 +68,4 @@ public interface PayWalletRechargePackageService {
      * @return 充值套餐列表
      */
     List<PayWalletRechargePackageDO> getWalletRechargePackageList(Integer status);
-
 }

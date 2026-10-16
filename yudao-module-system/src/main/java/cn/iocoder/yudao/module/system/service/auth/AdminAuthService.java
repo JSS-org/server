@@ -84,5 +84,4 @@ public interface AdminAuthService {
      * @param reqVO 验证码信息
      */
     void resetPassword(AuthResetPasswordReqVO reqVO);
-
 }

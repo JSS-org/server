@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.crm.service.receivable;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+import static cn.iocoder.yudao.module.crm.util.CrmAuditStatusUtils.convertBpmResultToAuditStatus;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
@@ -26,11 +31,15 @@ import cn.iocoder.yudao.module.crm.service.contract.CrmContractService;
 import cn.iocoder.yudao.module.crm.service.permission.CrmPermissionService;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionCreateReqBO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,11 +47,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
-import static cn.iocoder.yudao.module.crm.util.CrmAuditStatusUtils.convertBpmResultToAuditStatus;
 
 /**
  * CRM 回款 Service 实现类
@@ -59,28 +63,24 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
      */
     public static final String BPM_PROCESS_DEFINITION_KEY = "crm-receivable-audit";
 
-    @Resource
-    private CrmReceivableMapper receivableMapper;
+    @Resource private CrmReceivableMapper receivableMapper;
 
-    @Resource
-    private CrmNoRedisDAO noRedisDAO;
+    @Resource private CrmNoRedisDAO noRedisDAO;
 
-    @Resource
-    private CrmContractService contractService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private CrmContractService contractService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private CrmReceivablePlanService receivablePlanService;
-    @Resource
-    private CrmPermissionService permissionService;
+    @Resource private CrmPermissionService permissionService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi bpmProcessInstanceApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi bpmProcessInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_TYPE, subType = CRM_RECEIVABLE_CREATE_SUB_TYPE, bizNo = "{{#receivable.id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_TYPE,
+            subType = CRM_RECEIVABLE_CREATE_SUB_TYPE,
+            bizNo = "{{#receivable.id}}",
             success = CRM_RECEIVABLE_CREATE_SUCCESS)
     public Long createReceivable(CrmReceivableSaveReqVO createReqVO) {
         // 1.1 校验可回款金额超过上限
@@ -94,19 +94,25 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
         }
 
         // 2.1 插入回款
-        CrmReceivableDO receivable = BeanUtils.toBean(createReqVO, CrmReceivableDO.class)
-                .setNo(no).setAuditStatus(CrmAuditStatusEnum.DRAFT.getStatus());
+        CrmReceivableDO receivable =
+                BeanUtils.toBean(createReqVO, CrmReceivableDO.class)
+                        .setNo(no)
+                        .setAuditStatus(CrmAuditStatusEnum.DRAFT.getStatus());
         receivableMapper.insert(receivable);
         // 2.2
 
         // 3. 创建数据权限
-        permissionService.createPermission(new CrmPermissionCreateReqBO().setBizType(CrmBizTypeEnum.CRM_RECEIVABLE.getType())
-                .setBizId(receivable.getId()).setUserId(createReqVO.getOwnerUserId())
-                .setLevel(CrmPermissionLevelEnum.OWNER.getLevel())); // 设置当前操作的人为负责人
+        permissionService.createPermission(
+                new CrmPermissionCreateReqBO()
+                        .setBizType(CrmBizTypeEnum.CRM_RECEIVABLE.getType())
+                        .setBizId(receivable.getId())
+                        .setUserId(createReqVO.getOwnerUserId())
+                        .setLevel(CrmPermissionLevelEnum.OWNER.getLevel())); // 设置当前操作的人为负责人
 
         // 4. 更新关联的回款计划
         if (createReqVO.getPlanId() != null) {
-            receivablePlanService.updateReceivablePlanReceivableId(receivable.getPlanId(), receivable.getId());
+            receivablePlanService.updateReceivablePlanReceivableId(
+                    receivable.getPlanId(), receivable.getId());
         }
 
         // 5. 记录操作日志上下文
@@ -118,13 +124,23 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
     private void validateReceivablePriceExceedsLimit(CrmReceivableSaveReqVO reqVO) {
         // 1. 计算剩余可退款金额，不包括 reqVO 自身
         CrmContractDO contract = contractService.validateContract(reqVO.getContractId());
-        List<CrmReceivableDO> receivables = receivableMapper.selectListByContractIdAndStatus(reqVO.getContractId(),
-                Arrays.asList(CrmAuditStatusEnum.APPROVE.getStatus(), CrmAuditStatusEnum.PROCESS.getStatus()));
+        List<CrmReceivableDO> receivables =
+                receivableMapper.selectListByContractIdAndStatus(
+                        reqVO.getContractId(),
+                        Arrays.asList(
+                                CrmAuditStatusEnum.APPROVE.getStatus(),
+                                CrmAuditStatusEnum.PROCESS.getStatus()));
         if (reqVO.getId() != null) {
             receivables.removeIf(receivable -> ObjectUtil.equal(receivable.getId(), reqVO.getId()));
         }
-        BigDecimal notReceivablePrice = contract.getTotalPrice().subtract(
-                CollectionUtils.getSumValue(receivables, CrmReceivableDO::getPrice, BigDecimal::add, BigDecimal.ZERO));
+        BigDecimal notReceivablePrice =
+                contract.getTotalPrice()
+                        .subtract(
+                                CollectionUtils.getSumValue(
+                                        receivables,
+                                        CrmReceivableDO::getPrice,
+                                        BigDecimal::add,
+                                        BigDecimal.ZERO));
         // 2. 校验金额是否超过
         if (reqVO.getPrice().compareTo(notReceivablePrice) > 0) {
             throw exception(RECEIVABLE_CREATE_FAIL_PRICE_EXCEEDS_LIMIT, notReceivablePrice);
@@ -137,13 +153,15 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
         }
         if (reqVO.getContractId() != null) {
             CrmContractDO contract = contractService.validateContract(reqVO.getContractId());
-            if (ObjectUtil.notEqual(contract.getAuditStatus(), CrmAuditStatusEnum.APPROVE.getStatus())) {
+            if (ObjectUtil.notEqual(
+                    contract.getAuditStatus(), CrmAuditStatusEnum.APPROVE.getStatus())) {
                 throw exception(RECEIVABLE_CREATE_FAIL_CONTRACT_NOT_APPROVE);
             }
             reqVO.setCustomerId(contract.getCustomerId()); // 设置客户编号
         }
         if (reqVO.getPlanId() != null) {
-            CrmReceivablePlanDO receivablePlan = receivablePlanService.getReceivablePlan(reqVO.getPlanId());
+            CrmReceivablePlanDO receivablePlan =
+                    receivablePlanService.getReceivablePlan(reqVO.getPlanId());
             if (receivablePlan == null) {
                 throw exception(RECEIVABLE_PLAN_NOT_EXISTS);
             }
@@ -155,21 +173,36 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_TYPE, subType = CRM_RECEIVABLE_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_TYPE,
+            subType = CRM_RECEIVABLE_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
             success = CRM_RECEIVABLE_UPDATE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_RECEIVABLE, bizId = "#updateReqVO.id", level = CrmPermissionLevelEnum.WRITE)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE,
+            bizId = "#updateReqVO.id",
+            level = CrmPermissionLevelEnum.WRITE)
     public void updateReceivable(CrmReceivableSaveReqVO updateReqVO) {
         Assert.notNull(updateReqVO.getId(), "回款编号不能为空");
-        updateReqVO.setOwnerUserId(null).setCustomerId(null).setContractId(null).setPlanId(null); // 不允许修改的字段
+        updateReqVO
+                .setOwnerUserId(null)
+                .setCustomerId(null)
+                .setContractId(null)
+                .setPlanId(null); // 不允许修改的字段
         // 1.1 校验存在
         CrmReceivableDO oldReceivable = validateReceivableExists(updateReqVO.getId());
-        updateReqVO.setOwnerUserId(oldReceivable.getOwnerUserId()).setCustomerId(oldReceivable.getCustomerId())
-                .setContractId(oldReceivable.getContractId()).setPlanId(oldReceivable.getPlanId()); // 设置已存在的值
+        updateReqVO
+                .setOwnerUserId(oldReceivable.getOwnerUserId())
+                .setCustomerId(oldReceivable.getCustomerId())
+                .setContractId(oldReceivable.getContractId())
+                .setPlanId(oldReceivable.getPlanId()); // 设置已存在的值
         // 1.2 校验可回款金额超过上限
         validateReceivablePriceExceedsLimit(updateReqVO);
 
         // 1.3 只有草稿、审批中，可以编辑；
-        if (!ObjectUtils.equalsAny(oldReceivable.getAuditStatus(), CrmAuditStatusEnum.DRAFT.getStatus(),
+        if (!ObjectUtils.equalsAny(
+                oldReceivable.getAuditStatus(),
+                CrmAuditStatusEnum.DRAFT.getStatus(),
                 CrmAuditStatusEnum.PROCESS.getStatus())) {
             throw exception(RECEIVABLE_UPDATE_FAIL_EDITING_PROHIBITED);
         }
@@ -182,7 +215,9 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
         updateReqVO.setOwnerUserId(oldReceivable.getOwnerUserId()); // 避免操作日志出现“删除负责人”的情况
         LogRecordContext.putVariable("oldReceivable", oldReceivable);
         LogRecordContext.putVariable("period", getReceivablePeriod(oldReceivable.getPlanId()));
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(oldReceivable, CrmReceivableSaveReqVO.class));
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
+                BeanUtils.toBean(oldReceivable, CrmReceivableSaveReqVO.class));
     }
 
     private Integer getReceivablePeriod(Long planId) {
@@ -199,8 +234,10 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
         CrmReceivableDO receivable = validateReceivableExists(id);
         // 1.2 只有审批中，可以更新审批结果
         if (ObjUtil.notEqual(receivable.getAuditStatus(), CrmAuditStatusEnum.PROCESS.getStatus())) {
-            log.error("[updateReceivableAuditStatus][receivable({}) 不处于审批中，无法更新审批结果({})]",
-                    receivable.getId(), bpmResult);
+            log.error(
+                    "[updateReceivableAuditStatus][receivable({}) 不处于审批中，无法更新审批结果({})]",
+                    receivable.getId(),
+                    bpmResult);
             throw exception(RECEIVABLE_UPDATE_AUDIT_STATUS_FAIL_NOT_PROCESS);
         }
 
@@ -211,14 +248,21 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_TYPE, subType = CRM_RECEIVABLE_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_TYPE,
+            subType = CRM_RECEIVABLE_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_RECEIVABLE_DELETE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_RECEIVABLE, bizId = "#id", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.OWNER)
     public void deleteReceivable(Long id) {
         // 1.1 校验存在
         CrmReceivableDO receivable = validateReceivableExists(id);
         // 1.2 如果被 CrmReceivablePlanDO 所使用，则不允许删除
-        if (receivable.getPlanId() != null && receivablePlanService.getReceivablePlan(receivable.getPlanId()) != null) {
+        if (receivable.getPlanId() != null
+                && receivablePlanService.getReceivablePlan(receivable.getPlanId()) != null) {
             throw exception(RECEIVABLE_DELETE_FAIL);
         }
         // 1.3 审批通过时，不允许删除
@@ -238,7 +282,10 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_TYPE, subType = CRM_RECEIVABLE_SUBMIT_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_TYPE,
+            subType = CRM_RECEIVABLE_SUBMIT_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_RECEIVABLE_SUBMIT_SUCCESS)
     public void submitReceivable(Long id, Long userId) {
         // 1. 校验回款是否在审批
@@ -248,12 +295,19 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
         }
 
         // 2. 创建回款审批流程实例
-        String processInstanceId = bpmProcessInstanceApi.createProcessInstance(userId, new BpmProcessInstanceCreateReqDTO()
-                .setProcessDefinitionKey(BPM_PROCESS_DEFINITION_KEY).setBusinessKey(String.valueOf(id)));
+        String processInstanceId =
+                bpmProcessInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BPM_PROCESS_DEFINITION_KEY)
+                                .setBusinessKey(String.valueOf(id)));
 
         // 3. 更新回款工作流编号
-        receivableMapper.updateById(new CrmReceivableDO().setId(id).setProcessInstanceId(processInstanceId)
-                .setAuditStatus(CrmAuditStatusEnum.PROCESS.getStatus()));
+        receivableMapper.updateById(
+                new CrmReceivableDO()
+                        .setId(id)
+                        .setProcessInstanceId(processInstanceId)
+                        .setAuditStatus(CrmAuditStatusEnum.PROCESS.getStatus()));
 
         // 4. 记录日志
         LogRecordContext.putVariable("receivableNo", receivable.getNo());
@@ -268,7 +322,10 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_RECEIVABLE, bizId = "#id", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.READ)
     public CrmReceivableDO getReceivable(Long id) {
         return receivableMapper.selectById(id);
     }
@@ -282,13 +339,18 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
     }
 
     @Override
-    public PageResult<CrmReceivableDO> getReceivablePage(CrmReceivablePageReqVO pageReqVO, Long userId) {
+    public PageResult<CrmReceivableDO> getReceivablePage(
+            CrmReceivablePageReqVO pageReqVO, Long userId) {
         return receivableMapper.selectPage(pageReqVO, userId);
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CUSTOMER, bizId = "#pageReqVO.customerId", level = CrmPermissionLevelEnum.READ)
-    public PageResult<CrmReceivableDO> getReceivablePageByCustomerId(CrmReceivablePageReqVO pageReqVO) {
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CUSTOMER,
+            bizId = "#pageReqVO.customerId",
+            level = CrmPermissionLevelEnum.READ)
+    public PageResult<CrmReceivableDO> getReceivablePageByCustomerId(
+            CrmReceivablePageReqVO pageReqVO) {
         return receivableMapper.selectPageByCustomerId(pageReqVO);
     }
 
@@ -306,5 +368,4 @@ public class CrmReceivableServiceImpl implements CrmReceivableService {
     public Long getReceivableCountByContractId(Long contractId) {
         return receivableMapper.selectCountByContractId(contractId);
     }
-
 }

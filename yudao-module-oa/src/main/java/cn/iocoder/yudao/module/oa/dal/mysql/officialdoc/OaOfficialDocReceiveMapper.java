@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.receive.OaOfficialDocReceivePageReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.OaOfficialDocReceiveDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -21,16 +22,19 @@ public interface OaOfficialDocReceiveMapper extends BaseMapperX<OaOfficialDocRec
         return selectOne(OaOfficialDocReceiveDO::getNo, no);
     }
 
-    default PageResult<OaOfficialDocReceiveDO> selectPage(Long deptId, OaOfficialDocReceivePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<OaOfficialDocReceiveDO>()
-                .eq(OaOfficialDocReceiveDO::getReceiveDeptId, deptId)
-                .likeIfPresent(OaOfficialDocReceiveDO::getTitle, reqVO.getTitle())
-                .likeIfPresent(OaOfficialDocReceiveDO::getDocumentNo, reqVO.getDocumentNo())
-                .eqIfPresent(OaOfficialDocReceiveDO::getStatus, reqVO.getStatus()).orderByDesc(OaOfficialDocReceiveDO::getId));
+    default PageResult<OaOfficialDocReceiveDO> selectPage(
+            Long deptId, OaOfficialDocReceivePageReqVO reqVO) {
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<OaOfficialDocReceiveDO>()
+                        .eq(OaOfficialDocReceiveDO::getReceiveDeptId, deptId)
+                        .likeIfPresent(OaOfficialDocReceiveDO::getTitle, reqVO.getTitle())
+                        .likeIfPresent(OaOfficialDocReceiveDO::getDocumentNo, reqVO.getDocumentNo())
+                        .eqIfPresent(OaOfficialDocReceiveDO::getStatus, reqVO.getStatus())
+                        .orderByDesc(OaOfficialDocReceiveDO::getId));
     }
 
     default List<OaOfficialDocReceiveDO> selectListBySendId(Long sendId) {
         return selectList(OaOfficialDocReceiveDO::getSendId, sendId);
     }
-
 }

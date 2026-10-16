@@ -2,12 +2,14 @@ package cn.iocoder.yudao.module.system.controller.admin.dict.vo.data;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 字典数据创建/修改 Request VO")
 @Data
@@ -30,12 +32,18 @@ public class DictDataSaveReqVO {
     @Size(max = 100, message = "字典键值长度不能超过100个字符")
     private String value;
 
-    @Schema(description = "字典类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "sys_common_sex")
+    @Schema(
+            description = "字典类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "sys_common_sex")
     @NotBlank(message = "字典类型不能为空")
     @Size(max = 100, message = "字典类型长度不能超过100个字符")
     private String dictType;
 
-    @Schema(description = "状态,见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态,见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "状态不能为空")
     @InEnum(value = CommonStatusEnum.class, message = "修改状态必须是 {value}")
     private Integer status;
@@ -48,5 +56,4 @@ public class DictDataSaveReqVO {
 
     @Schema(description = "备注", example = "我是一个角色")
     private String remark;
-
 }

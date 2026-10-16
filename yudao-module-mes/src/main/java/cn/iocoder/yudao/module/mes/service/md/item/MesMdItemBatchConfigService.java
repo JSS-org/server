@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.md.item;
 
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.batchconfig.MesMdItemBatchConfigSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemBatchConfigDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -41,5 +42,4 @@ public interface MesMdItemBatchConfigService {
      * @param itemId 物料编号
      */
     void deleteItemBatchConfigByItemId(Long itemId);
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderPa
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderItemDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -114,5 +115,4 @@ public interface ErpSaleOrderService {
      * @return 数量
      */
     Long getSaleOrderItemCountByProductId(Long productId);
-
 }

@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.voucherword.FmsVoucherWordSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherWordDO;
 
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * FMS 凭证字 Service 接口
@@ -93,5 +93,4 @@ public interface FmsVoucherWordService {
      * @return 凭证字
      */
     FmsVoucherWordDO validateVoucherWordExists(Long accountSetId, Long id);
-
 }

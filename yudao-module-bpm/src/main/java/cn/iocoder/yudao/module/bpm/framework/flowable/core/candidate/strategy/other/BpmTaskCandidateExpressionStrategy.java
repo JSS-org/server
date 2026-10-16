@@ -4,8 +4,11 @@ import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.FlowableUtils;
+
 import com.google.common.collect.Sets;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.impl.javax.el.PropertyNotFoundException;
@@ -42,9 +45,15 @@ public class BpmTaskCandidateExpressionStrategy implements BpmTaskCandidateStrat
     }
 
     @Override
-    public Set<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId, String param,
-                                              Long startUserId, String processDefinitionId, Map<String, Object> processVariables) {
-        Map<String, Object> variables = processVariables == null ? new HashMap<>() : processVariables;
+    public Set<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
+        Map<String, Object> variables =
+                processVariables == null ? new HashMap<>() : processVariables;
         try {
             Object result = FlowableUtils.getExpressionValue(variables, param);
             return CollectionUtils.toLinkedHashSet(Long.class, result);
@@ -57,5 +66,4 @@ public class BpmTaskCandidateExpressionStrategy implements BpmTaskCandidateStrat
             throw ex;
         }
     }
-
 }

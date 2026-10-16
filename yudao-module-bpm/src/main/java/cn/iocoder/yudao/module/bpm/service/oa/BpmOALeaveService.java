@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.bpm.service.oa;
 
-
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.bpm.controller.admin.oa.vo.BpmOALeaveCreateReqVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.oa.vo.BpmOALeavePageReqVO;
@@ -49,5 +48,4 @@ public interface BpmOALeaveService {
      * @return 请假申请分页
      */
     PageResult<BpmOALeaveDO> getLeavePage(Long userId, BpmOALeavePageReqVO pageReqVO);
-
 }

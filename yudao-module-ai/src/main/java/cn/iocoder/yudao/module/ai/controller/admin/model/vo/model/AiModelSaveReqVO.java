@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model.vo.model;
 
-import cn.iocoder.yudao.module.ai.enums.model.AiModelTypeEnum;
-import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+import cn.iocoder.yudao.module.ai.enums.model.AiModelTypeEnum;
+import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - API 模型新增/修改 Request VO")
@@ -16,7 +19,10 @@ public class AiModelSaveReqVO {
     @Schema(description = "编号", example = "2630")
     private Long id;
 
-    @Schema(description = "API 秘钥编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "22042")
+    @Schema(
+            description = "API 秘钥编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "22042")
     @NotNull(message = "API 秘钥编号不能为空")
     private Long keyId;
 
@@ -24,7 +30,10 @@ public class AiModelSaveReqVO {
     @NotEmpty(message = "模型名字不能为空")
     private String name;
 
-    @Schema(description = "模型标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "gpt-3.5-turbo-0125")
+    @Schema(
+            description = "模型标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "gpt-3.5-turbo-0125")
     @NotEmpty(message = "模型标识不能为空")
     private String model;
 
@@ -55,5 +64,4 @@ public class AiModelSaveReqVO {
 
     @Schema(description = "上下文的最大 Message 数量", example = "8192")
     private Integer maxContexts;
-
 }

@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.service.wm.productproduce;
 
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productproduce.MesWmProductProduceDetailDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productproduce.MesWmProductProduceDetailMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -15,8 +17,7 @@ import java.util.List;
 @Validated
 public class MesWmProductProduceDetailServiceImpl implements MesWmProductProduceDetailService {
 
-    @Resource
-    private MesWmProductProduceDetailMapper productProduceDetailMapper;
+    @Resource private MesWmProductProduceDetailMapper productProduceDetailMapper;
 
     @Override
     public void createProductProduceDetail(MesWmProductProduceDetailDO detail) {
@@ -27,5 +28,4 @@ public class MesWmProductProduceDetailServiceImpl implements MesWmProductProduce
     public List<MesWmProductProduceDetailDO> getProductProduceDetailListByLineId(Long lineId) {
         return productProduceDetailMapper.selectListByLineId(lineId);
     }
-
 }

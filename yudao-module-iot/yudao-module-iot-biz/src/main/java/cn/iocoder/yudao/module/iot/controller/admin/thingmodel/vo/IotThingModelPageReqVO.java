@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.iot.controller.admin.thingmodel.vo;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.iot.enums.thingmodel.IotThingModelTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IoT 产品物模型分页 Request VO")
@@ -24,5 +27,4 @@ public class IotThingModelPageReqVO extends PageParam {
     @Schema(description = "功能类型", example = "1")
     @InEnum(IotThingModelTypeEnum.class)
     private Integer type;
-
 }

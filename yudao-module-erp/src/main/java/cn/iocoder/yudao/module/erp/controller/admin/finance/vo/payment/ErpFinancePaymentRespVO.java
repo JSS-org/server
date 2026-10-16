@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.erp.controller.admin.finance.vo.payment;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -29,26 +32,38 @@ public class ErpFinancePaymentRespVO {
 
     @Schema(description = "财务人员编号", example = "19690")
     private Long financeUserId;
+
     @Schema(description = "财务人员名称", example = "张三")
     private String financeUserName;
 
     @Schema(description = "供应商编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "29399")
     private Long supplierId;
+
     @Schema(description = "供应商名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "小番茄公司")
     private String supplierName;
 
     @Schema(description = "付款账户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "28989")
     private Long accountId;
+
     @Schema(description = "付款账户名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "张三")
     private String accountName;
 
-    @Schema(description = "合计价格，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "13832")
+    @Schema(
+            description = "合计价格，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "13832")
     private BigDecimal totalPrice;
 
-    @Schema(description = "优惠金额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "11600")
+    @Schema(
+            description = "优惠金额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "11600")
     private BigDecimal discountPrice;
 
-    @Schema(description = "实际价格，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000")
+    @Schema(
+            description = "实际价格，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "10000")
     private BigDecimal paymentPrice;
 
     @Schema(description = "备注", example = "你猜")
@@ -56,6 +71,7 @@ public class ErpFinancePaymentRespVO {
 
     @Schema(description = "创建人", example = "芋道")
     private String creator;
+
     @Schema(description = "创建人名称", example = "芋道")
     private String creatorName;
 
@@ -75,25 +91,38 @@ public class ErpFinancePaymentRespVO {
         @Schema(description = "业务类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
         private Integer bizType;
 
-        @Schema(description = "业务编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11756")
+        @Schema(
+                description = "业务编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "11756")
         private Long bizId;
 
-        @Schema(description = "业务单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11756")
+        @Schema(
+                description = "业务单号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "11756")
         private String bizNo;
 
-        @Schema(description = "应付金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000")
+        @Schema(
+                description = "应付金额，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10000")
         private BigDecimal totalPrice;
 
-        @Schema(description = "已付金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000")
+        @Schema(
+                description = "已付金额，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10000")
         private BigDecimal paidPrice;
 
-        @Schema(description = "本次付款，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000")
+        @Schema(
+                description = "本次付款，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10000")
         @NotNull(message = "本次付款不能为空")
         private BigDecimal paymentPrice;
 
         @Schema(description = "备注", example = "随便")
         private String remark;
-
     }
-
 }

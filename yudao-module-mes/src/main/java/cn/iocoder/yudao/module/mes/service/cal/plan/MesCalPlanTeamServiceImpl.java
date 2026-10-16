@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.mes.service.cal.plan;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo.team.MesCalPlanTeamSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.plan.MesCalPlanTeamDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.cal.plan.MesCalPlanTeamMapper;
 import cn.iocoder.yudao.module.mes.service.cal.team.MesCalTeamService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 计划班组关联 Service 实现类
@@ -24,15 +26,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesCalPlanTeamServiceImpl implements MesCalPlanTeamService {
 
-    @Resource
-    private MesCalPlanTeamMapper planTeamMapper;
+    @Resource private MesCalPlanTeamMapper planTeamMapper;
 
-    @Resource
-    @Lazy
-    private MesCalPlanService planService;
-    @Resource
-    @Lazy
-    private MesCalTeamService teamService;
+    @Resource @Lazy private MesCalPlanService planService;
+    @Resource @Lazy private MesCalTeamService teamService;
 
     @Override
     public Long createPlanTeam(MesCalPlanTeamSaveReqVO createReqVO) {
@@ -88,5 +85,4 @@ public class MesCalPlanTeamServiceImpl implements MesCalPlanTeamService {
     public void deleteByPlanId(Long planId) {
         planTeamMapper.deleteByPlanId(planId);
     }
-
 }

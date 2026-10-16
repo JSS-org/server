@@ -1,5 +1,17 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.record;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_GROUP_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_NON_MANUAL_MODIFY_FORBIDDEN;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_NOT_ALLOWED;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_POINT_INVALID;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_REST_DAY;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_TIME_INVALID;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_WIFI_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -24,7 +36,9 @@ import cn.iocoder.yudao.module.hrm.enums.attendance.record.HrmAttendanceClockSta
 import cn.iocoder.yudao.module.hrm.enums.attendance.record.HrmAttendanceClockTypeEnum;
 import cn.iocoder.yudao.module.hrm.service.attendance.config.HrmAttendanceGroupService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -38,18 +52,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_GROUP_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_NON_MANUAL_MODIFY_FORBIDDEN;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_NOT_ALLOWED;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_POINT_INVALID;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_REST_DAY;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_TIME_INVALID;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CLOCK_WIFI_INVALID;
-
 /**
  * HRM 考勤打卡 Service 实现类
  *
@@ -59,12 +61,9 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_CL
 @Validated
 public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService {
 
-    @Resource
-    private HrmAttendanceClockMapper attendanceClockMapper;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private HrmAttendanceGroupService attendanceGroupService;
+    @Resource private HrmAttendanceClockMapper attendanceClockMapper;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private HrmAttendanceGroupService attendanceGroupService;
 
     @Override
     public Long createAttendanceClock(HrmAttendanceClockSaveReqVO createReqVO) {
@@ -91,18 +90,22 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
 
         // 2. 解析当前班次日与班次窗口
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
-        HrmPortalAttendanceClockDetailRespVO detail = resolveAttendanceClockDetail(employee.getId(), now)
-                .setGroup(group);
+        HrmPortalAttendanceClockDetailRespVO detail =
+                resolveAttendanceClockDetail(employee.getId(), now).setGroup(group);
 
         // 3. 计算下一步动作和当日时间线
-        List<HrmAttendanceClockDO> dayClocks = getAttendanceClockListByAttendanceTime(
-                employee.getId(), detail.getOnDutyAttendanceTime(), detail.getOffDutyAttendanceTime());
+        List<HrmAttendanceClockDO> dayClocks =
+                getAttendanceClockListByAttendanceTime(
+                        employee.getId(),
+                        detail.getOnDutyAttendanceTime(),
+                        detail.getOffDutyAttendanceTime());
         return detail.setNextClock(buildNextClock(detail, dayClocks, now))
                 .setTimeline(buildTimeline(detail, dayClocks, now));
     }
 
     @Override
-    public Long createMyAttendanceClock(Long userId, HrmPortalAttendanceClockCreateReqVO createReqVO) {
+    public Long createMyAttendanceClock(
+            Long userId, HrmPortalAttendanceClockCreateReqVO createReqVO) {
         // 1.1 解析本人、考勤组和下一步打卡动作
         HrmEmployeeDO employee = employeeService.validateEmployeeBySelf(userId);
         HrmAttendanceGroupDO group = attendanceGroupService.getMyAttendanceGroup(employee.getId());
@@ -110,13 +113,18 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
             throw exception(ATTENDANCE_CLOCK_GROUP_NOT_EXISTS);
         }
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
-        HrmPortalAttendanceClockDetailRespVO detail = resolveAttendanceClockDetail(employee.getId(), now);
+        HrmPortalAttendanceClockDetailRespVO detail =
+                resolveAttendanceClockDetail(employee.getId(), now);
         if (detail.getShift() == null) {
             throw exception(ATTENDANCE_CLOCK_REST_DAY);
         }
-        List<HrmAttendanceClockDO> dayClocks = getAttendanceClockListByAttendanceTime(
-                employee.getId(), detail.getOnDutyAttendanceTime(), detail.getOffDutyAttendanceTime());
-        HrmPortalAttendanceClockDetailRespVO.NextClock nextClock = buildNextClock(detail, dayClocks, now);
+        List<HrmAttendanceClockDO> dayClocks =
+                getAttendanceClockListByAttendanceTime(
+                        employee.getId(),
+                        detail.getOnDutyAttendanceTime(),
+                        detail.getOffDutyAttendanceTime());
+        HrmPortalAttendanceClockDetailRespVO.NextClock nextClock =
+                buildNextClock(detail, dayClocks, now);
         HrmAttendanceClockButtonStatusEnum buttonStatus =
                 HrmAttendanceClockButtonStatusEnum.valueOf(nextClock.getButtonStatus());
         if (buttonStatus == null || !buttonStatus.isCanClock()) {
@@ -126,12 +134,17 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
         validateMobileClockLocationAndWifi(group, createReqVO);
 
         // 2. 写入手机端打卡
-        HrmAttendanceClockDO clock = new HrmAttendanceClockDO()
-                .setEmployeeId(employee.getId()).setType(nextClock.getType())
-                .setAttendanceTime(nextClock.getAttendanceTime()).setClockTime(now)
-                .setAddress(createReqVO.getAddress()).setLongitude(createReqVO.getLongitude())
-                .setLatitude(createReqVO.getLatitude())
-                .setSsid(createReqVO.getSsid()).setMac(createReqVO.getMac());
+        HrmAttendanceClockDO clock =
+                new HrmAttendanceClockDO()
+                        .setEmployeeId(employee.getId())
+                        .setType(nextClock.getType())
+                        .setAttendanceTime(nextClock.getAttendanceTime())
+                        .setClockTime(now)
+                        .setAddress(createReqVO.getAddress())
+                        .setLongitude(createReqVO.getLongitude())
+                        .setLatitude(createReqVO.getLatitude())
+                        .setSsid(createReqVO.getSsid())
+                        .setMac(createReqVO.getMac());
         fillAttendanceClockDefaultValue(clock, HrmAttendanceClockSourceEnum.MOBILE);
         attendanceClockMapper.insert(clock);
         return clock.getId();
@@ -202,7 +215,8 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
     }
 
     @Override
-    public PageResult<HrmAttendanceClockDO> getAttendanceClockPage(HrmAttendanceClockPageReqVO pageReqVO) {
+    public PageResult<HrmAttendanceClockDO> getAttendanceClockPage(
+            HrmAttendanceClockPageReqVO pageReqVO) {
         Collection<Long> employeeIds = getClockEmployeeIds(pageReqVO);
         if (employeeIds != null && CollUtil.isEmpty(employeeIds)) {
             return PageResult.empty();
@@ -230,13 +244,14 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
     }
 
     private void validateAttendanceClockManual(HrmAttendanceClockDO clock) {
-        if (ObjUtil.notEqual(clock.getSourceType(), HrmAttendanceClockSourceEnum.MANUAL.getSource())) {
+        if (ObjUtil.notEqual(
+                clock.getSourceType(), HrmAttendanceClockSourceEnum.MANUAL.getSource())) {
             throw exception(ATTENDANCE_CLOCK_NON_MANUAL_MODIFY_FORBIDDEN);
         }
     }
 
-    private void fillAttendanceClockDefaultValue(HrmAttendanceClockDO clock,
-                                                 HrmAttendanceClockSourceEnum sourceType) {
+    private void fillAttendanceClockDefaultValue(
+            HrmAttendanceClockDO clock, HrmAttendanceClockSourceEnum sourceType) {
         clock.setSourceType(sourceType.getSource())
                 .setStage(HrmAttendanceClockStageEnum.FIRST.getStage())
                 .setStatus(calculateClockStatus(clock));
@@ -250,8 +265,8 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
     private void validateAttendanceClockTime(HrmAttendanceClockSaveReqVO reqVO) {
         LocalDate attendanceDate = reqVO.getAttendanceTime().toLocalDate();
         List<LocalDate> candidateDates = Arrays.asList(attendanceDate, attendanceDate.minusDays(1));
-        if (candidateDates.stream().noneMatch(candidateDate ->
-                isAttendanceClockTimeValid(reqVO, candidateDate))) {
+        if (candidateDates.stream()
+                .noneMatch(candidateDate -> isAttendanceClockTimeValid(reqVO, candidateDate))) {
             throw exception(ATTENDANCE_CLOCK_TIME_INVALID);
         }
     }
@@ -266,28 +281,41 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
     private boolean isAttendanceClockTimeValid(
             HrmAttendanceClockSaveReqVO reqVO, LocalDate attendanceDate) {
         // 1. 解析员工当天班次，休息日或班次时间不完整时不允许补录
-        HrmAttendanceGroupDO.Shift shift = attendanceGroupService.getEmployeeAttendanceShift(
-                reqVO.getEmployeeId(), attendanceDate.atStartOfDay());
+        HrmAttendanceGroupDO.Shift shift =
+                attendanceGroupService.getEmployeeAttendanceShift(
+                        reqVO.getEmployeeId(), attendanceDate.atStartOfDay());
         if (shift == null || shift.getStartTime() == null || shift.getEndTime() == null) {
             return false;
         }
 
         // 2. 校验应打卡时间与班次的上班或下班时间一致
-        TimeRange shiftTimeRange = CollUtil.getFirst(LocalDateTimeUtils.buildDailyTimeRanges(
-                attendanceDate, attendanceDate, shift.getStartTime(), shift.getEndTime()));
-        boolean onDuty = ObjUtil.equals(reqVO.getType(), HrmAttendanceClockTypeEnum.ON_DUTY.getType());
-        LocalDateTime scheduledTime = onDuty ? shiftTimeRange.getStartTime() : shiftTimeRange.getEndTime();
+        TimeRange shiftTimeRange =
+                CollUtil.getFirst(
+                        LocalDateTimeUtils.buildDailyTimeRanges(
+                                attendanceDate,
+                                attendanceDate,
+                                shift.getStartTime(),
+                                shift.getEndTime()));
+        boolean onDuty =
+                ObjUtil.equals(reqVO.getType(), HrmAttendanceClockTypeEnum.ON_DUTY.getType());
+        LocalDateTime scheduledTime =
+                onDuty ? shiftTimeRange.getStartTime() : shiftTimeRange.getEndTime();
         if (ObjUtil.notEqual(reqVO.getAttendanceTime(), scheduledTime)) {
             return false;
         }
 
         // 3. 校验实际打卡时间位于对应的上班或下班打卡闭区间内
-        LocalTime clockBeginTime = onDuty ? shift.getClockInStartTime() : shift.getClockOutStartTime();
+        LocalTime clockBeginTime =
+                onDuty ? shift.getClockInStartTime() : shift.getClockOutStartTime();
         LocalTime clockEndTime = onDuty ? shift.getClockInEndTime() : shift.getClockOutEndTime();
-        TimeRange clockTimeRange = LocalDateTimeUtils.findDailyTimeRange(
-                attendanceDate, clockBeginTime, clockEndTime, scheduledTime);
-        return clockTimeRange != null && LocalDateTimeUtils.isBetween(
-                clockTimeRange.getStartTime(), clockTimeRange.getEndTime(), reqVO.getClockTime());
+        TimeRange clockTimeRange =
+                LocalDateTimeUtils.findDailyTimeRange(
+                        attendanceDate, clockBeginTime, clockEndTime, scheduledTime);
+        return clockTimeRange != null
+                && LocalDateTimeUtils.isBetween(
+                        clockTimeRange.getStartTime(),
+                        clockTimeRange.getEndTime(),
+                        reqVO.getClockTime());
     }
 
     /**
@@ -314,9 +342,14 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
         if (StrUtil.isBlank(reqVO.getSearch()) && CollUtil.isEmpty(reqVO.getDeptIds())) {
             return null;
         }
-        HrmEmployeeListReqVO listReqVO = new HrmEmployeeListReqVO()
-                .setIds(reqVO.getEmployeeId() == null ? null : Collections.singletonList(reqVO.getEmployeeId()))
-                .setSearch(reqVO.getSearch()).setDeptIds(reqVO.getDeptIds());
+        HrmEmployeeListReqVO listReqVO =
+                new HrmEmployeeListReqVO()
+                        .setIds(
+                                reqVO.getEmployeeId() == null
+                                        ? null
+                                        : Collections.singletonList(reqVO.getEmployeeId()))
+                        .setSearch(reqVO.getSearch())
+                        .setDeptIds(reqVO.getDeptIds());
         List<HrmEmployeeDO> list = employeeService.getEmployeeList(listReqVO);
         return convertList(list, HrmEmployeeDO::getId);
     }
@@ -330,11 +363,17 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
             Long employeeId, LocalDateTime now) {
         LocalDate today = now.toLocalDate();
         LocalDate yesterday = today.minusDays(1);
-        HrmPortalAttendanceClockDetailRespVO yesterdayDetail = buildAttendanceClockDetail(employeeId, yesterday);
+        HrmPortalAttendanceClockDetailRespVO yesterdayDetail =
+                buildAttendanceClockDetail(employeeId, yesterday);
         TimeRange yesterdayClockOutRange = yesterdayDetail.getClockOutRange();
-        if (yesterdayDetail.getShift() != null && yesterdayClockOutRange != null
-                && LocalDateTimeUtils.isBetween(yesterdayClockOutRange.getStartTime(), yesterdayClockOutRange.getEndTime(), now)
-                && (yesterdayDetail.getClockInRange() == null || now.isAfter(yesterdayDetail.getClockInRange().getEndTime()))) {
+        if (yesterdayDetail.getShift() != null
+                && yesterdayClockOutRange != null
+                && LocalDateTimeUtils.isBetween(
+                        yesterdayClockOutRange.getStartTime(),
+                        yesterdayClockOutRange.getEndTime(),
+                        now)
+                && (yesterdayDetail.getClockInRange() == null
+                        || now.isAfter(yesterdayDetail.getClockInRange().getEndTime()))) {
             return yesterdayDetail;
         }
         return buildAttendanceClockDetail(employeeId, today);
@@ -350,24 +389,47 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
     private HrmPortalAttendanceClockDetailRespVO buildAttendanceClockDetail(
             Long employeeId, LocalDate attendanceDate) {
         // 实际班次由考勤组、特殊日期和节假日共同确定
-        HrmAttendanceGroupDO.Shift shift = attendanceGroupService.getEmployeeAttendanceShift(
-                employeeId, attendanceDate.atStartOfDay());
-        HrmPortalAttendanceClockDetailRespVO detail = new HrmPortalAttendanceClockDetailRespVO()
-                .setAttendanceDate(attendanceDate).setShift(shift).setRestDay(shift == null);
-        if (shift == null || ObjUtil.hasEmpty(shift.getStartTime(), shift.getEndTime(),
-                shift.getClockInStartTime(), shift.getClockInEndTime(),
-                shift.getClockOutStartTime(), shift.getClockOutEndTime())) {
+        HrmAttendanceGroupDO.Shift shift =
+                attendanceGroupService.getEmployeeAttendanceShift(
+                        employeeId, attendanceDate.atStartOfDay());
+        HrmPortalAttendanceClockDetailRespVO detail =
+                new HrmPortalAttendanceClockDetailRespVO()
+                        .setAttendanceDate(attendanceDate)
+                        .setShift(shift)
+                        .setRestDay(shift == null);
+        if (shift == null
+                || ObjUtil.hasEmpty(
+                        shift.getStartTime(),
+                        shift.getEndTime(),
+                        shift.getClockInStartTime(),
+                        shift.getClockInEndTime(),
+                        shift.getClockOutStartTime(),
+                        shift.getClockOutEndTime())) {
             return detail;
         }
         // 将班次时分转换为当前考勤日对应的实际日期时间范围
-        TimeRange shiftRange = CollUtil.getFirst(LocalDateTimeUtils.buildDailyTimeRanges(
-                attendanceDate, attendanceDate, shift.getStartTime(), shift.getEndTime()));
+        TimeRange shiftRange =
+                CollUtil.getFirst(
+                        LocalDateTimeUtils.buildDailyTimeRanges(
+                                attendanceDate,
+                                attendanceDate,
+                                shift.getStartTime(),
+                                shift.getEndTime()));
         // 以上下班应打卡时间为锚点，分别解析可能跨日的打卡窗口
-        return detail.setOnDutyAttendanceTime(shiftRange.getStartTime()).setOffDutyAttendanceTime(shiftRange.getEndTime())
-                .setClockInRange(LocalDateTimeUtils.findDailyTimeRange(attendanceDate,
-                        shift.getClockInStartTime(), shift.getClockInEndTime(), shiftRange.getStartTime()))
-                .setClockOutRange(LocalDateTimeUtils.findDailyTimeRange(attendanceDate,
-                        shift.getClockOutStartTime(), shift.getClockOutEndTime(), shiftRange.getEndTime()));
+        return detail.setOnDutyAttendanceTime(shiftRange.getStartTime())
+                .setOffDutyAttendanceTime(shiftRange.getEndTime())
+                .setClockInRange(
+                        LocalDateTimeUtils.findDailyTimeRange(
+                                attendanceDate,
+                                shift.getClockInStartTime(),
+                                shift.getClockInEndTime(),
+                                shiftRange.getStartTime()))
+                .setClockOutRange(
+                        LocalDateTimeUtils.findDailyTimeRange(
+                                attendanceDate,
+                                shift.getClockOutStartTime(),
+                                shift.getClockOutEndTime(),
+                                shiftRange.getEndTime()));
     }
 
     private List<HrmAttendanceClockDO> getAttendanceClockListByAttendanceTime(
@@ -375,8 +437,10 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
         if (ObjUtil.hasEmpty(beginTime, endTime)) {
             return Collections.emptyList();
         }
-        return attendanceClockMapper.selectList(new HrmAttendanceClockPageReqVO().setEmployeeId(employeeId)
-                .setAttendanceTime(new LocalDateTime[]{beginTime, endTime}));
+        return attendanceClockMapper.selectList(
+                new HrmAttendanceClockPageReqVO()
+                        .setEmployeeId(employeeId)
+                        .setAttendanceTime(new LocalDateTime[] {beginTime, endTime}));
     }
 
     /**
@@ -389,21 +453,36 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
      */
     private HrmPortalAttendanceClockDetailRespVO.NextClock buildNextClock(
             HrmPortalAttendanceClockDetailRespVO detail,
-            List<HrmAttendanceClockDO> dayClocks, LocalDateTime now) {
+            List<HrmAttendanceClockDO> dayClocks,
+            LocalDateTime now) {
         // 员工端当前只使用第一打卡阶段；无有效班次时不可打卡
         HrmPortalAttendanceClockDetailRespVO.NextClock nextClock =
                 new HrmPortalAttendanceClockDetailRespVO.NextClock();
         nextClock.setStage(HrmAttendanceClockStageEnum.FIRST.getStage());
-        if (ObjUtil.hasEmpty(detail.getShift(), detail.getOnDutyAttendanceTime(), detail.getOffDutyAttendanceTime())) {
-            return nextClock.setType(HrmAttendanceClockTypeEnum.ON_DUTY.getType())
+        if (ObjUtil.hasEmpty(
+                detail.getShift(),
+                detail.getOnDutyAttendanceTime(),
+                detail.getOffDutyAttendanceTime())) {
+            return nextClock
+                    .setType(HrmAttendanceClockTypeEnum.ON_DUTY.getType())
                     .setButtonStatus(HrmAttendanceClockButtonStatusEnum.NOT_YET.getStatus());
         }
 
         // 根据已存在的上下班卡，判断下一步应上班、下班还是更新打卡
-        HrmAttendanceClockDO onDutyClock = CollUtil.findOne(dayClocks,
-                clock -> ObjUtil.equals(clock.getType(), HrmAttendanceClockTypeEnum.ON_DUTY.getType()));
-        HrmAttendanceClockDO offDutyClock = CollUtil.findOne(dayClocks,
-                clock -> ObjUtil.equals(clock.getType(), HrmAttendanceClockTypeEnum.OFF_DUTY.getType()));
+        HrmAttendanceClockDO onDutyClock =
+                CollUtil.findOne(
+                        dayClocks,
+                        clock ->
+                                ObjUtil.equals(
+                                        clock.getType(),
+                                        HrmAttendanceClockTypeEnum.ON_DUTY.getType()));
+        HrmAttendanceClockDO offDutyClock =
+                CollUtil.findOne(
+                        dayClocks,
+                        clock ->
+                                ObjUtil.equals(
+                                        clock.getType(),
+                                        HrmAttendanceClockTypeEnum.OFF_DUTY.getType()));
         TimeRange clockInRange = detail.getClockInRange();
         TimeRange clockOutRange = detail.getClockOutRange();
         LocalDateTime onDutyTime = detail.getOnDutyAttendanceTime();
@@ -413,30 +492,41 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
         if (onDutyClock == null) {
             nextClock.setType(HrmAttendanceClockTypeEnum.ON_DUTY.getType());
             nextClock.setAttendanceTime(onDutyTime);
-            if (clockInRange != null && LocalDateTimeUtils.isBetween(
-                    clockInRange.getStartTime(), clockInRange.getEndTime(), now)) {
+            if (clockInRange != null
+                    && LocalDateTimeUtils.isBetween(
+                            clockInRange.getStartTime(), clockInRange.getEndTime(), now)) {
                 if (LocalDateTimeUtils.isBeforeOrEqual(now, onDutyTime)) {
-                    return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.NORMAL.getStatus());
+                    return nextClock.setButtonStatus(
+                            HrmAttendanceClockButtonStatusEnum.NORMAL.getStatus());
                 }
-                return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.LATE.getStatus());
+                return nextClock.setButtonStatus(
+                        HrmAttendanceClockButtonStatusEnum.LATE.getStatus());
             }
             if (clockOutRange != null
-                    && LocalDateTimeUtils.isBetween(clockOutRange.getStartTime(), clockOutRange.getEndTime(), now)) {
-                nextClock.setType(HrmAttendanceClockTypeEnum.OFF_DUTY.getType()).setAttendanceTime(offDutyTime);
+                    && LocalDateTimeUtils.isBetween(
+                            clockOutRange.getStartTime(), clockOutRange.getEndTime(), now)) {
+                nextClock
+                        .setType(HrmAttendanceClockTypeEnum.OFF_DUTY.getType())
+                        .setAttendanceTime(offDutyTime);
                 if (now.isBefore(offDutyTime)) {
-                    return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.EARLY.getStatus());
+                    return nextClock.setButtonStatus(
+                            HrmAttendanceClockButtonStatusEnum.EARLY.getStatus());
                 }
-                return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.NORMAL.getStatus());
+                return nextClock.setButtonStatus(
+                        HrmAttendanceClockButtonStatusEnum.NORMAL.getStatus());
             }
-            return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.NOT_YET.getStatus());
+            return nextClock.setButtonStatus(
+                    HrmAttendanceClockButtonStatusEnum.NOT_YET.getStatus());
         }
 
         // 已打上班卡：引导下班；已打过下班卡时允许更新
         nextClock.setType(HrmAttendanceClockTypeEnum.OFF_DUTY.getType());
         nextClock.setAttendanceTime(offDutyTime);
-        if (clockOutRange == null || LocalDateTimeUtils.isNotBetween(
-                clockOutRange.getStartTime(), clockOutRange.getEndTime(), now)) {
-            return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.NOT_YET.getStatus());
+        if (clockOutRange == null
+                || LocalDateTimeUtils.isNotBetween(
+                        clockOutRange.getStartTime(), clockOutRange.getEndTime(), now)) {
+            return nextClock.setButtonStatus(
+                    HrmAttendanceClockButtonStatusEnum.NOT_YET.getStatus());
         }
         if (offDutyClock != null) {
             return nextClock.setButtonStatus(HrmAttendanceClockButtonStatusEnum.UPDATE.getStatus());
@@ -449,18 +539,36 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
 
     private List<HrmPortalAttendanceClockDetailRespVO.TimelineItem> buildTimeline(
             HrmPortalAttendanceClockDetailRespVO detail,
-            List<HrmAttendanceClockDO> dayClocks, LocalDateTime now) {
-        if (ObjUtil.hasEmpty(detail.getShift(), detail.getOnDutyAttendanceTime(), detail.getOffDutyAttendanceTime())) {
+            List<HrmAttendanceClockDO> dayClocks,
+            LocalDateTime now) {
+        if (ObjUtil.hasEmpty(
+                detail.getShift(),
+                detail.getOnDutyAttendanceTime(),
+                detail.getOffDutyAttendanceTime())) {
             return Collections.emptyList();
         }
-        HrmPortalAttendanceClockDetailRespVO.TimelineItem onDutyItem = buildTimelineItem(
-                HrmAttendanceClockTypeEnum.ON_DUTY.getType(), detail.getOnDutyAttendanceTime(),
-                CollUtil.findOne(dayClocks, clock -> ObjUtil.equals(
-                        clock.getType(), HrmAttendanceClockTypeEnum.ON_DUTY.getType())), now);
-        HrmPortalAttendanceClockDetailRespVO.TimelineItem offDutyItem = buildTimelineItem(
-                HrmAttendanceClockTypeEnum.OFF_DUTY.getType(), detail.getOffDutyAttendanceTime(),
-                CollUtil.findOne(dayClocks, clock -> ObjUtil.equals(
-                        clock.getType(), HrmAttendanceClockTypeEnum.OFF_DUTY.getType())), now);
+        HrmPortalAttendanceClockDetailRespVO.TimelineItem onDutyItem =
+                buildTimelineItem(
+                        HrmAttendanceClockTypeEnum.ON_DUTY.getType(),
+                        detail.getOnDutyAttendanceTime(),
+                        CollUtil.findOne(
+                                dayClocks,
+                                clock ->
+                                        ObjUtil.equals(
+                                                clock.getType(),
+                                                HrmAttendanceClockTypeEnum.ON_DUTY.getType())),
+                        now);
+        HrmPortalAttendanceClockDetailRespVO.TimelineItem offDutyItem =
+                buildTimelineItem(
+                        HrmAttendanceClockTypeEnum.OFF_DUTY.getType(),
+                        detail.getOffDutyAttendanceTime(),
+                        CollUtil.findOne(
+                                dayClocks,
+                                clock ->
+                                        ObjUtil.equals(
+                                                clock.getType(),
+                                                HrmAttendanceClockTypeEnum.OFF_DUTY.getType())),
+                        now);
         return Arrays.asList(onDutyItem, offDutyItem);
     }
 
@@ -474,12 +582,19 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
      * @return 打卡时间线条目
      */
     private HrmPortalAttendanceClockDetailRespVO.TimelineItem buildTimelineItem(
-            Integer type, LocalDateTime attendanceTime, HrmAttendanceClockDO clock, LocalDateTime now) {
-        HrmPortalAttendanceClockDetailRespVO.TimelineItem item = new HrmPortalAttendanceClockDetailRespVO.TimelineItem()
-                .setType(type).setAttendanceTime(attendanceTime);
+            Integer type,
+            LocalDateTime attendanceTime,
+            HrmAttendanceClockDO clock,
+            LocalDateTime now) {
+        HrmPortalAttendanceClockDetailRespVO.TimelineItem item =
+                new HrmPortalAttendanceClockDetailRespVO.TimelineItem()
+                        .setType(type)
+                        .setAttendanceTime(attendanceTime);
         if (clock != null) {
-            return item.setClockTime(clock.getClockTime()).setStatus(clock.getStatus())
-                    .setMissCard(false).setAddress(clock.getAddress());
+            return item.setClockTime(clock.getClockTime())
+                    .setStatus(clock.getStatus())
+                    .setMissCard(false)
+                    .setAddress(clock.getAddress());
         }
         // 应打卡时间已过后仍无记录，展示缺卡
         boolean missCard = LocalDateTimeUtils.isAfterOrEqual(now, attendanceTime);
@@ -509,30 +624,41 @@ public class HrmAttendanceClockServiceImpl implements HrmAttendanceClockService 
         throw exception(ATTENDANCE_CLOCK_WIFI_INVALID);
     }
 
-    private boolean isPointMatched(List<HrmAttendanceGroupDO.Point> points,
-                                   HrmPortalAttendanceClockCreateReqVO createReqVO) {
+    private boolean isPointMatched(
+            List<HrmAttendanceGroupDO.Point> points,
+            HrmPortalAttendanceClockCreateReqVO createReqVO) {
         if (ObjUtil.hasEmpty(points, createReqVO.getLatitude(), createReqVO.getLongitude())) {
             return false;
         }
         double latitude = createReqVO.getLatitude().doubleValue();
         double longitude = createReqVO.getLongitude().doubleValue();
-        return CollUtil.anyMatch(points, point -> {
-            // NumberUtils.getDistance 返回千米，考勤半径配置为米
-            double distanceMeter = NumberUtils.getDistance(latitude, longitude,
-                    point.getLatitude().doubleValue(), point.getLongitude().doubleValue()) * 1000;
-            return distanceMeter <= point.getRadius();
-        });
+        return CollUtil.anyMatch(
+                points,
+                point -> {
+                    // NumberUtils.getDistance 返回千米，考勤半径配置为米
+                    double distanceMeter =
+                            NumberUtils.getDistance(
+                                            latitude,
+                                            longitude,
+                                            point.getLatitude().doubleValue(),
+                                            point.getLongitude().doubleValue())
+                                    * 1000;
+                    return distanceMeter <= point.getRadius();
+                });
     }
 
-    private boolean isWifiMatched(List<HrmAttendanceGroupDO.Wifi> wifis,
-                                  HrmPortalAttendanceClockCreateReqVO createReqVO) {
+    private boolean isWifiMatched(
+            List<HrmAttendanceGroupDO.Wifi> wifis,
+            HrmPortalAttendanceClockCreateReqVO createReqVO) {
         String requestMac = createReqVO.getMac();
         String requestSsid = createReqVO.getSsid();
         if (CollUtil.isEmpty(wifis) || ObjUtil.isAllEmpty(requestMac, requestSsid)) {
             return false;
         }
-        return CollUtil.anyMatch(wifis, wifi -> ObjUtil.equals(requestMac, wifi.getMac())
-                || ObjUtil.equals(requestSsid, wifi.getSsid()));
+        return CollUtil.anyMatch(
+                wifis,
+                wifi ->
+                        ObjUtil.equals(requestMac, wifi.getMac())
+                                || ObjUtil.equals(requestSsid, wifi.getSsid()));
     }
-
 }

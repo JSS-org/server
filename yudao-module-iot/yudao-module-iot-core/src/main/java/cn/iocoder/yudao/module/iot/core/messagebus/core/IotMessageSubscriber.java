@@ -29,13 +29,10 @@ public interface IotMessageSubscriber<T> {
     /**
      * 启动订阅
      */
-    default void start() {
-    }
+    default void start() {}
 
     /**
      * 停止订阅
      */
-    default void stop() {
-    }
-
+    default void stop() {}
 }

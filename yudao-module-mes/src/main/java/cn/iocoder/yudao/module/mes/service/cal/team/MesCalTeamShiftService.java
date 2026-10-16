@@ -40,5 +40,4 @@ public interface MesCalTeamShiftService {
      * @param teamId 班组编号
      */
     void deleteByTeamId(Long teamId);
-
 }

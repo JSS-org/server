@@ -8,6 +8,7 @@ import cn.iocoder.yudao.framework.common.pojo.SortingField;
 import cn.iocoder.yudao.framework.common.util.object.PageUtils;
 import cn.iocoder.yudao.framework.mybatis.core.util.JdbcUtils;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
+
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,6 +20,7 @@ import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.github.yulichang.base.MPJBaseMapper;
 import com.github.yulichang.interfaces.MPJBaseJoin;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
+
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Collection;
@@ -32,7 +34,8 @@ import java.util.List;
  */
 public interface BaseMapperX<T> extends MPJBaseMapper<T> {
 
-    default PageResult<T> selectPage(SortablePageParam pageParam, @Param("ew") Wrapper<T> queryWrapper) {
+    default PageResult<T> selectPage(
+            SortablePageParam pageParam, @Param("ew") Wrapper<T> queryWrapper) {
         return selectPage(pageParam, pageParam.getSortingFields(), queryWrapper);
     }
 
@@ -40,7 +43,10 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return selectPage(pageParam, null, queryWrapper);
     }
 
-    default PageResult<T> selectPage(PageParam pageParam, Collection<SortingField> sortingFields, @Param("ew") Wrapper<T> queryWrapper) {
+    default PageResult<T> selectPage(
+            PageParam pageParam,
+            Collection<SortingField> sortingFields,
+            @Param("ew") Wrapper<T> queryWrapper) {
         // 特殊：不分页，直接查询全部
         if (PageParam.PAGE_SIZE_NONE.equals(pageParam.getPageSize())) {
             MyBatisUtils.addOrder(queryWrapper, sortingFields);
@@ -55,7 +61,8 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return new PageResult<>(mpPage.getRecords(), mpPage.getTotal());
     }
 
-    default <D> PageResult<D> selectJoinPage(PageParam pageParam, Class<D> clazz, MPJLambdaWrapper<T> lambdaWrapper) {
+    default <D> PageResult<D> selectJoinPage(
+            PageParam pageParam, Class<D> clazz, MPJLambdaWrapper<T> lambdaWrapper) {
         // 特殊：不分页，直接查询全部
         if (PageParam.PAGE_SIZE_NONE.equals(pageParam.getPageSize())) {
             List<D> list = selectJoinList(clazz, lambdaWrapper);
@@ -78,7 +85,8 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
      * @param <D>       结果集的泛型类型
      * @return 返回分页查询的结果，包括总记录数和当前页的数据列表
      */
-    default <D> PageResult<D> selectJoinPage(SortablePageParam pageParam, Class<D> clazz, MPJLambdaWrapper<T> lambdaWrapper) {
+    default <D> PageResult<D> selectJoinPage(
+            SortablePageParam pageParam, Class<D> clazz, MPJLambdaWrapper<T> lambdaWrapper) {
         // 特殊：不分页，直接查询全部
         if (PageParam.PAGE_SIZE_NONE.equals(pageParam.getPageSize())) {
             List<D> list = selectJoinList(clazz, lambdaWrapper);
@@ -92,7 +100,8 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return new PageResult<>(mpPage.getRecords(), mpPage.getTotal());
     }
 
-    default <DTO> PageResult<DTO> selectJoinPage(PageParam pageParam, Class<DTO> resultTypeClass, MPJBaseJoin<T> joinQueryWrapper) {
+    default <DTO> PageResult<DTO> selectJoinPage(
+            PageParam pageParam, Class<DTO> resultTypeClass, MPJBaseJoin<T> joinQueryWrapper) {
         IPage<DTO> mpPage = MyBatisUtils.buildPage(pageParam);
         selectJoinPage(mpPage, resultTypeClass, joinQueryWrapper);
         // 转换返回
@@ -111,13 +120,23 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return selectOne(new QueryWrapper<T>().eq(field1, value1).eq(field2, value2));
     }
 
-    default T selectOne(SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
+    default T selectOne(
+            SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
         return selectOne(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2));
     }
 
-    default T selectOne(SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2,
-                        SFunction<T, ?> field3, Object value3) {
-        return selectOne(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2).eq(field3, value3));
+    default T selectOne(
+            SFunction<T, ?> field1,
+            Object value1,
+            SFunction<T, ?> field2,
+            Object value2,
+            SFunction<T, ?> field3,
+            Object value3) {
+        return selectOne(
+                new LambdaQueryWrapper<T>()
+                        .eq(field1, value1)
+                        .eq(field2, value2)
+                        .eq(field3, value3));
     }
 
     /**
@@ -136,13 +155,24 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return selectOneForUpdate(new LambdaQueryWrapper<T>().eq(field, value));
     }
 
-    default T selectOneForUpdate(SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
-        return selectOneForUpdate(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2));
+    default T selectOneForUpdate(
+            SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
+        return selectOneForUpdate(
+                new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2));
     }
 
-    default T selectOneForUpdate(SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2,
-                                 SFunction<T, ?> field3, Object value3) {
-        return selectOneForUpdate(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2).eq(field3, value3));
+    default T selectOneForUpdate(
+            SFunction<T, ?> field1,
+            Object value1,
+            SFunction<T, ?> field2,
+            Object value2,
+            SFunction<T, ?> field3,
+            Object value3) {
+        return selectOneForUpdate(
+                new LambdaQueryWrapper<T>()
+                        .eq(field1, value1)
+                        .eq(field2, value2)
+                        .eq(field3, value3));
     }
 
     /**
@@ -172,14 +202,26 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return CollUtil.getFirst(list);
     }
 
-    default T selectFirstOne(SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
-        List<T> list = selectList(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2));
+    default T selectFirstOne(
+            SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
+        List<T> list =
+                selectList(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2));
         return CollUtil.getFirst(list);
     }
 
-    default T selectFirstOne(SFunction<T,?> field1, Object value1, SFunction<T,?> field2, Object value2,
-                             SFunction<T,?> field3, Object value3) {
-        List<T> list = selectList(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2).eq(field3, value3));
+    default T selectFirstOne(
+            SFunction<T, ?> field1,
+            Object value1,
+            SFunction<T, ?> field2,
+            Object value2,
+            SFunction<T, ?> field3,
+            Object value3) {
+        List<T> list =
+                selectList(
+                        new LambdaQueryWrapper<T>()
+                                .eq(field1, value1)
+                                .eq(field2, value2)
+                                .eq(field3, value3));
         return CollUtil.getFirst(list);
     }
 
@@ -233,7 +275,8 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         return selectList(new LambdaQueryWrapper<T>().in(field, values));
     }
 
-    default List<T> selectList(SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
+    default List<T> selectList(
+            SFunction<T, ?> field1, Object value1, SFunction<T, ?> field2, Object value2) {
         return selectList(new LambdaQueryWrapper<T>().eq(field1, value1).eq(field2, value2));
     }
 
@@ -294,5 +337,4 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
         }
         return delete(new LambdaQueryWrapper<T>().in(field, values));
     }
-
 }

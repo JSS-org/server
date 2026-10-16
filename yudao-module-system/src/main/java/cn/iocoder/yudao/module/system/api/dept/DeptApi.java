@@ -82,5 +82,4 @@ public interface DeptApi {
      * @return 父部门列表
      */
     List<DeptRespDTO> getParentDeptList(Long id);
-
 }

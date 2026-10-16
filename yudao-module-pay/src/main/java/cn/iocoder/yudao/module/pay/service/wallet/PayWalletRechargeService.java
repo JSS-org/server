@@ -21,8 +21,11 @@ public interface PayWalletRechargeService {
      * @param userIp  用户Ip
      * @return 钱包充值记录
      */
-    PayWalletRechargeDO createWalletRecharge(Long userId, Integer userType, String userIp,
-                                             AppPayWalletRechargeCreateReqVO createReqVO);
+    PayWalletRechargeDO createWalletRecharge(
+            Long userId,
+            Integer userType,
+            String userIp,
+            AppPayWalletRechargeCreateReqVO createReqVO);
 
     /**
      * 获得钱包充值记录分页
@@ -33,8 +36,8 @@ public interface PayWalletRechargeService {
      * @param payStatus 是否支付
      * @return 钱包充值记录分页
      */
-    PageResult<PayWalletRechargeDO> getWalletRechargePackagePage(Long userId, Integer userType,
-                                                                 PageParam pageReqVO, Boolean payStatus);
+    PageResult<PayWalletRechargeDO> getWalletRechargePackagePage(
+            Long userId, Integer userType, PageParam pageReqVO, Boolean payStatus);
 
     /**
      * 更新钱包充值成功
@@ -60,5 +63,4 @@ public interface PayWalletRechargeService {
      * @param payRefundId 退款单id
      */
     void updateWalletRechargeRefunded(Long id, String refundId, Long payRefundId);
-
 }

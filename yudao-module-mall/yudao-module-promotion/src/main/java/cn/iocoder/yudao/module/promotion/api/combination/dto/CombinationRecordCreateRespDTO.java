@@ -16,17 +16,18 @@ public class CombinationRecordCreateRespDTO {
      * 关联 CombinationActivityDO 的 id 字段
      */
     private Long combinationActivityId;
+
     /**
      * 拼团团长编号
      *
      * 关联 CombinationRecordDO 的 headId 字段
      */
     private Long combinationHeadId;
+
     /**
      * 拼团记录编号
      *
      * 关联 CombinationRecordDO 的 id 字段
      */
     private Long combinationRecordId;
-
 }

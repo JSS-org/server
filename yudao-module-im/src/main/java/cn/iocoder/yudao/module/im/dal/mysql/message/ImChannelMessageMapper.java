@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.module.im.controller.admin.manager.message.vo.channel.ImChannelMessagePageReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImChannelMessageDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -28,14 +29,22 @@ public interface ImChannelMessageMapper extends BaseMapperX<ImChannelMessageDO> 
      * @param size   返回条数
      * @return 频道消息列表；按 id 升序
      */
-    default List<ImChannelMessageDO> selectListByUserAndMinId(Long userId, Long minId, Integer size) {
-        return selectList(new LambdaQueryWrapperX<ImChannelMessageDO>()
-                .gt(ImChannelMessageDO::getId, minId)
-                .and(w -> w.isNull(ImChannelMessageDO::getReceiverUserIds)
-                        .or().eq(ImChannelMessageDO::getReceiverUserIds, "")
-                        .or().apply(MyBatisUtils.findInSet("receiver_user_ids"), userId))
-                .orderByAsc(ImChannelMessageDO::getId)
-                .last("LIMIT " + size));
+    default List<ImChannelMessageDO> selectListByUserAndMinId(
+            Long userId, Long minId, Integer size) {
+        return selectList(
+                new LambdaQueryWrapperX<ImChannelMessageDO>()
+                        .gt(ImChannelMessageDO::getId, minId)
+                        .and(
+                                w ->
+                                        w.isNull(ImChannelMessageDO::getReceiverUserIds)
+                                                .or()
+                                                .eq(ImChannelMessageDO::getReceiverUserIds, "")
+                                                .or()
+                                                .apply(
+                                                        MyBatisUtils.findInSet("receiver_user_ids"),
+                                                        userId))
+                        .orderByAsc(ImChannelMessageDO::getId)
+                        .last("LIMIT " + size));
     }
 
     default Long selectCountByMaterialId(Long materialId) {
@@ -43,11 +52,12 @@ public interface ImChannelMessageMapper extends BaseMapperX<ImChannelMessageDO> 
     }
 
     default PageResult<ImChannelMessageDO> selectPage(ImChannelMessagePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ImChannelMessageDO>()
-                .eqIfPresent(ImChannelMessageDO::getChannelId, reqVO.getChannelId())
-                .eqIfPresent(ImChannelMessageDO::getMaterialId, reqVO.getMaterialId())
-                .betweenIfPresent(ImChannelMessageDO::getSendTime, reqVO.getSendTime())
-                .orderByDesc(ImChannelMessageDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<ImChannelMessageDO>()
+                        .eqIfPresent(ImChannelMessageDO::getChannelId, reqVO.getChannelId())
+                        .eqIfPresent(ImChannelMessageDO::getMaterialId, reqVO.getMaterialId())
+                        .betweenIfPresent(ImChannelMessageDO::getSendTime, reqVO.getSendTime())
+                        .orderByDesc(ImChannelMessageDO::getId));
     }
-
 }

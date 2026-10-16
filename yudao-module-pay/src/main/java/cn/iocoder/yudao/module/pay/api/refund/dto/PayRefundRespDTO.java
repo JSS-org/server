@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.api.refund.dto;
 
 import cn.iocoder.yudao.module.pay.enums.refund.PayRefundStatusEnum;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class PayRefundRespDTO {
      * 枚举 {@link PayRefundStatusEnum}
      */
     private Integer status;
+
     /**
      * 退款金额，单位：分
      */
@@ -42,10 +44,12 @@ public class PayRefundRespDTO {
      * 商户订单编号
      */
     private String merchantOrderId;
+
     /**
      * 商户退款编号
      */
     private String merchantRefundId;
+
     /**
      * 退款成功时间
      */
@@ -57,9 +61,9 @@ public class PayRefundRespDTO {
      * 调用渠道的错误码
      */
     private String channelErrorCode;
+
     /**
      * 调用渠道的错误提示
      */
     private String channelErrorMsg;
-
 }

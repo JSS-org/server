@@ -5,10 +5,13 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelEve
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelProperty;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelService;
 import cn.iocoder.yudao.module.iot.enums.thingmodel.IotThingModelTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IoT 产品物模型新增/修改 Request VO")
@@ -22,11 +25,17 @@ public class IotThingModelSaveReqVO {
     @NotNull(message = "产品ID不能为空")
     private Long productId;
 
-    @Schema(description = "产品标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "temperature_001")
+    @Schema(
+            description = "产品标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "temperature_001")
     @NotEmpty(message = "产品标识不能为空")
     private String productKey;
 
-    @Schema(description = "功能标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "temp_monitor")
+    @Schema(
+            description = "功能标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "temp_monitor")
     @NotEmpty(message = "功能标识不能为空")
     private String identifier;
 
@@ -34,7 +43,10 @@ public class IotThingModelSaveReqVO {
     @NotEmpty(message = "功能名称不能为空")
     private String name;
 
-    @Schema(description = "功能描述", requiredMode = Schema.RequiredMode.REQUIRED, example = "用于监测环境温度的传感器")
+    @Schema(
+            description = "功能描述",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "用于监测环境温度的传感器")
     private String description;
 
     @Schema(description = "功能类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -53,5 +65,4 @@ public class IotThingModelSaveReqVO {
     @Schema(description = "事件", requiredMode = Schema.RequiredMode.REQUIRED)
     @Valid
     private ThingModelEvent event;
-
 }

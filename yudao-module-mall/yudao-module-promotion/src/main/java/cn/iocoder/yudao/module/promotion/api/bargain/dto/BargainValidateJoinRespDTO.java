@@ -12,6 +12,7 @@ public class BargainValidateJoinRespDTO {
      * 砍价活动编号
      */
     private Long activityId;
+
     /**
      * 砍价活动名称
      */
@@ -21,5 +22,4 @@ public class BargainValidateJoinRespDTO {
      * 砍价金额
      */
     private Integer bargainPrice;
-
 }

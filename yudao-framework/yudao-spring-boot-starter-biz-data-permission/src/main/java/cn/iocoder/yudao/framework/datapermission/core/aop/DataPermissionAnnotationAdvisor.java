@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.framework.datapermission.core.aop;
 
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+
 import org.aopalliance.aop.Advice;
 import org.springframework.aop.Pointcut;
 import org.springframework.aop.support.AbstractPointcutAdvisor;
@@ -32,5 +34,4 @@ public class DataPermissionAnnotationAdvisor extends AbstractPointcutAdvisor {
         Pointcut methodPointcut = new AnnotationMatchingPointcut(null, DataPermission.class, true);
         return new ComposablePointcut(classPointcut).union(methodPointcut);
     }
-
 }

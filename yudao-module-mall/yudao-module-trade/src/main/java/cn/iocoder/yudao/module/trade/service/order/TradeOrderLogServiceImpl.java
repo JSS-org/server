@@ -4,9 +4,11 @@ import cn.iocoder.yudao.module.trade.convert.order.TradeOrderLogConvert;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderLogDO;
 import cn.iocoder.yudao.module.trade.dal.mysql.order.TradeOrderLogMapper;
 import cn.iocoder.yudao.module.trade.service.order.bo.TradeOrderLogCreateReqBO;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 /**
@@ -18,8 +20,7 @@ import java.util.List;
 @Service
 public class TradeOrderLogServiceImpl implements TradeOrderLogService {
 
-    @Resource
-    private TradeOrderLogMapper tradeOrderLogMapper;
+    @Resource private TradeOrderLogMapper tradeOrderLogMapper;
 
     @Override
     public void createOrderLog(TradeOrderLogCreateReqBO createReqBO) {
@@ -30,5 +31,4 @@ public class TradeOrderLogServiceImpl implements TradeOrderLogService {
     public List<TradeOrderLogDO> getOrderLogListByOrderId(Long orderId) {
         return tradeOrderLogMapper.selectListByOrderId(orderId);
     }
-
 }

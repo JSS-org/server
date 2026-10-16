@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.coap;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -32,5 +33,4 @@ public class IotCoapConfig {
     @NotNull(message = "最大重传次数不能为空")
     @Min(value = 0, message = "最大重传次数必须大于等于 0")
     private Integer maxRetransmit = 4;
-
 }

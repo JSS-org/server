@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.enums.mail;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,15 +17,14 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaMailFolderKeyEnum implements ArrayValuable<String> {
-
     INBOX("INBOX"),
     UNREAD("UNREAD"),
     SENT("SENT"),
     DRAFTS("DRAFTS"),
     TRASH("TRASH");
 
-    public static final String[] ARRAYS = Arrays.stream(values())
-            .map(OaMailFolderKeyEnum::getKey).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(OaMailFolderKeyEnum::getKey).toArray(String[]::new);
 
     /**
      * 入口标识
@@ -35,5 +35,4 @@ public enum OaMailFolderKeyEnum implements ArrayValuable<String> {
     public String[] array() {
         return ARRAYS;
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.resign;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,16 +16,15 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.resign.OaResignApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.resign.OaResignApplyMapper;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 离职申请 Service 实现类
@@ -33,13 +35,10 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaResignApplyServiceImpl implements OaResignApplyService {
 
-    @Resource
-    private OaResignApplyMapper resignApplyMapper;
+    @Resource private OaResignApplyMapper resignApplyMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -48,8 +47,9 @@ public class OaResignApplyServiceImpl implements OaResignApplyService {
         adminUserApi.validateUser(saveReqVO.getHandoverUserId());
 
         // 2. 保存草稿
-        OaResignApplyDO resignApply = BeanUtils.toBean(saveReqVO, OaResignApplyDO.class)
-                .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
+        OaResignApplyDO resignApply =
+                BeanUtils.toBean(saveReqVO, OaResignApplyDO.class)
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
         resignApplyMapper.insert(resignApply);
         return resignApply.getId();
     }
@@ -73,18 +73,29 @@ public class OaResignApplyServiceImpl implements OaResignApplyService {
         OaResignApplyDO resignApply = validateResignApplyEditable(submitReqVO.getId(), userId);
 
         // 2. 更新为审批中
-        resignApplyMapper.updateById(new OaResignApplyDO().setId(resignApply.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        resignApplyMapper.updateById(
+                new OaResignApplyDO()
+                        .setId(resignApply.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
-        variables.put("hasPendingReimbursement", resignApply.getHasPendingReimbursement()); // 是否存在未完成报销
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.RESIGN_APPLY)
-                        .setBusinessKey(resignApply.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        variables.put(
+                "hasPendingReimbursement", resignApply.getHasPendingReimbursement()); // 是否存在未完成报销
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.RESIGN_APPLY)
+                                .setBusinessKey(resignApply.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        resignApplyMapper.updateById(new OaResignApplyDO().setId(resignApply.getId()).setProcessInstanceId(processInstanceId));
+        resignApplyMapper.updateById(
+                new OaResignApplyDO()
+                        .setId(resignApply.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -93,7 +104,8 @@ public class OaResignApplyServiceImpl implements OaResignApplyService {
     }
 
     @Override
-    public PageResult<OaResignApplyDO> getResignApplyPage(Long userId, OaResignApplyPageReqVO pageReqVO) {
+    public PageResult<OaResignApplyDO> getResignApplyPage(
+            Long userId, OaResignApplyPageReqVO pageReqVO) {
         return resignApplyMapper.selectPage(userId, pageReqVO);
     }
 
@@ -125,7 +137,8 @@ public class OaResignApplyServiceImpl implements OaResignApplyService {
             throw exception(APPLY_ACCESS_DENIED);
         }
         // 3. 只有未提交草稿允许修改或提交
-        if (ObjUtil.notEqual(resignApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                resignApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(APPLY_STATUS_INVALID);
         }
         return resignApply;
@@ -145,5 +158,4 @@ public class OaResignApplyServiceImpl implements OaResignApplyService {
         }
         return resignApply;
     }
-
 }

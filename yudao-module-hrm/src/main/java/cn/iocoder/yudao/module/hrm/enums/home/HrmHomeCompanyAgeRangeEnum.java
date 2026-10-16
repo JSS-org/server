@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.enums.home;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmHomeCompanyAgeRangeEnum implements ArrayValuable<Integer> {
-
     WITHIN_3_MONTHS(1, "3 个月内", 89L),
     MONTHS_3_TO_6(2, "3 至 6 个月", 179L),
     MONTHS_6_TO_1_YEAR(3, "6 个月至 1 年", 364L),
@@ -23,8 +23,10 @@ public enum HrmHomeCompanyAgeRangeEnum implements ArrayValuable<Integer> {
     YEARS_5_TO_10(6, "5 至 10 年", 3649L),
     YEARS_10_AND_ABOVE(7, "10 年以上", Long.MAX_VALUE);
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmHomeCompanyAgeRangeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmHomeCompanyAgeRangeEnum::getType)
+                    .toArray(Integer[]::new);
 
     private final Integer type;
     private final String name;
@@ -45,8 +47,10 @@ public enum HrmHomeCompanyAgeRangeEnum implements ArrayValuable<Integer> {
         if (companyAgeDays == null || companyAgeDays < 0) {
             return null;
         }
-        return Arrays.stream(values()).filter(item -> companyAgeDays <= item.maximumDays)
-                .findFirst().map(HrmHomeCompanyAgeRangeEnum::getType).orElse(null);
+        return Arrays.stream(values())
+                .filter(item -> companyAgeDays <= item.maximumDays)
+                .findFirst()
+                .map(HrmHomeCompanyAgeRangeEnum::getType)
+                .orElse(null);
     }
-
 }

@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI1 我的会话修改 Request VO")
@@ -18,5 +20,4 @@ public class Ai1SessionUpdateMyReqVO {
     @NotBlank(message = "标题不能为空")
     @Size(max = 50, message = "标题长度不能超过 50 个字符")
     private String title;
-
 }

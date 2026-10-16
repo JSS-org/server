@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.productsales;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,10 +13,10 @@ import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.MesWmProductSalesPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.MesWmProductSalesSaveReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.MesWmProductSalesShippingReqVO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDetailDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesLineDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productsales.MesWmProductSalesMapper;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmProductSalesStatusEnum;
@@ -23,17 +27,15 @@ import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
 import cn.iocoder.yudao.module.mes.service.wm.salesnotice.MesWmSalesNoticeService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSaveReqDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 销售出库单 Service 实现类
@@ -44,19 +46,13 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
 
-    @Resource
-    private MesWmProductSalesMapper productSalesMapper;
+    @Resource private MesWmProductSalesMapper productSalesMapper;
 
-    @Resource
-    private MesWmProductSalesLineService productSalesLineService;
-    @Resource
-    private MesWmProductSalesDetailService productSalesDetailService;
-    @Resource
-    private MesMdClientService clientService;
-    @Resource
-    private MesWmSalesNoticeService salesNoticeService;
-    @Resource
-    private MesWmTransactionService wmTransactionService;
+    @Resource private MesWmProductSalesLineService productSalesLineService;
+    @Resource private MesWmProductSalesDetailService productSalesDetailService;
+    @Resource private MesMdClientService clientService;
+    @Resource private MesWmSalesNoticeService salesNoticeService;
+    @Resource private MesWmTransactionService wmTransactionService;
 
     @Override
     public Long createProductSales(MesWmProductSalesSaveReqVO createReqVO) {
@@ -101,7 +97,8 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
     }
 
     @Override
-    public PageResult<MesWmProductSalesDO> getProductSalesPage(MesWmProductSalesPageReqVO pageReqVO) {
+    public PageResult<MesWmProductSalesDO> getProductSalesPage(
+            MesWmProductSalesPageReqVO pageReqVO) {
         return productSalesMapper.selectPage(pageReqVO);
     }
 
@@ -111,7 +108,8 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
         // 校验存在 + 草稿状态
         validateProductSalesExistsAndDraft(id);
         // 校验至少有一条行
-        List<MesWmProductSalesLineDO> lines = productSalesLineService.getProductSalesLineListBySalesId(id);
+        List<MesWmProductSalesLineDO> lines =
+                productSalesLineService.getProductSalesLineListBySalesId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(WM_PRODUCT_SALES_LINES_EMPTY);
         }
@@ -123,35 +121,49 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
         }
 
         // 检查所有行的 oqcCheckFlag：如果有需要 OQC 检验的行，进入待检测状态
-        boolean needOqc = CollectionUtils.anyMatch(lines,
-                line -> Boolean.TRUE.equals(line.getOqcCheckFlag()));
+        boolean needOqc =
+                CollectionUtils.anyMatch(
+                        lines, line -> Boolean.TRUE.equals(line.getOqcCheckFlag()));
         if (needOqc) {
             // 批量初始化 OQC 行的质量状态为"待检验"
-            List<Long> oqcLineIds = convertList(
-                    CollectionUtils.filterList(lines, line -> Boolean.TRUE.equals(line.getOqcCheckFlag())),
-                    MesWmProductSalesLineDO::getId);
-            productSalesLineService.updateProductSalesLineQualityStatus(oqcLineIds, MesWmQualityStatusEnum.PENDING.getStatus());
+            List<Long> oqcLineIds =
+                    convertList(
+                            CollectionUtils.filterList(
+                                    lines, line -> Boolean.TRUE.equals(line.getOqcCheckFlag())),
+                            MesWmProductSalesLineDO::getId);
+            productSalesLineService.updateProductSalesLineQualityStatus(
+                    oqcLineIds, MesWmQualityStatusEnum.PENDING.getStatus());
             // 需要检验，进入待检测
-            productSalesMapper.updateById(new MesWmProductSalesDO()
-                    .setId(id).setStatus(MesWmProductSalesStatusEnum.CONFIRMED.getStatus()));
+            productSalesMapper.updateById(
+                    new MesWmProductSalesDO()
+                            .setId(id)
+                            .setStatus(MesWmProductSalesStatusEnum.CONFIRMED.getStatus()));
             return;
         }
         // 不需要检验，直接进入待拣货
-        productSalesMapper.updateById(new MesWmProductSalesDO()
-                .setId(id).setStatus(MesWmProductSalesStatusEnum.APPROVING.getStatus()));
+        productSalesMapper.updateById(
+                new MesWmProductSalesDO()
+                        .setId(id)
+                        .setStatus(MesWmProductSalesStatusEnum.APPROVING.getStatus()));
     }
 
     @Override
     public boolean checkProductSalesQuantity(Long id) {
         // 校验每行明细数量之和是否等于行出库数量
-        List<MesWmProductSalesLineDO> lines = productSalesLineService.getProductSalesLineListBySalesId(id);
+        List<MesWmProductSalesLineDO> lines =
+                productSalesLineService.getProductSalesLineListBySalesId(id);
         for (MesWmProductSalesLineDO line : lines) {
-            List<MesWmProductSalesDetailDO> details = productSalesDetailService.getProductSalesDetailListByLineId(line.getId());
+            List<MesWmProductSalesDetailDO> details =
+                    productSalesDetailService.getProductSalesDetailListByLineId(line.getId());
             if (CollUtil.isEmpty(details)) {
                 return false;
             }
-            BigDecimal totalDetailQty = CollectionUtils.getSumValue(details,
-                    MesWmProductSalesDetailDO::getQuantity, BigDecimal::add, BigDecimal.ZERO);
+            BigDecimal totalDetailQty =
+                    CollectionUtils.getSumValue(
+                            details,
+                            MesWmProductSalesDetailDO::getQuantity,
+                            BigDecimal::add,
+                            BigDecimal.ZERO);
             if (line.getQuantity() != null && totalDetailQty.compareTo(line.getQuantity()) != 0) {
                 return false;
             }
@@ -164,21 +176,26 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
     public void stockProductSales(Long id) {
         // 校验存在
         MesWmProductSalesDO sales = validateProductSalesExists(id);
-        if (ObjUtil.notEqual(MesWmProductSalesStatusEnum.APPROVING.getStatus(), sales.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmProductSalesStatusEnum.APPROVING.getStatus(), sales.getStatus())) {
             throw exception(WM_PRODUCT_SALES_CANNOT_PICK);
         }
         // 校验每行至少有拣货明细
-        List<MesWmProductSalesLineDO> lines = productSalesLineService.getProductSalesLineListBySalesId(id);
+        List<MesWmProductSalesLineDO> lines =
+                productSalesLineService.getProductSalesLineListBySalesId(id);
         for (MesWmProductSalesLineDO line : lines) {
-            List<MesWmProductSalesDetailDO> details = productSalesDetailService.getProductSalesDetailListByLineId(line.getId());
+            List<MesWmProductSalesDetailDO> details =
+                    productSalesDetailService.getProductSalesDetailListByLineId(line.getId());
             if (CollUtil.isEmpty(details)) {
                 throw exception(WM_PRODUCT_SALES_DETAILS_EMPTY);
             }
         }
 
         // 执行拣货（待拣货 → 待填写运单）
-        productSalesMapper.updateById(new MesWmProductSalesDO()
-                .setId(id).setStatus(MesWmProductSalesStatusEnum.SHIPPING.getStatus()));
+        productSalesMapper.updateById(
+                new MesWmProductSalesDO()
+                        .setId(id)
+                        .setStatus(MesWmProductSalesStatusEnum.SHIPPING.getStatus()));
     }
 
     @Override
@@ -191,11 +208,12 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
         }
 
         // 填写运单（待填写运单 → 待执行出库）
-        productSalesMapper.updateById(new MesWmProductSalesDO()
-                .setId(reqVO.getId())
-                .setCarrier(reqVO.getCarrier())
-                .setShippingNumber(reqVO.getShippingNumber())
-                .setStatus(MesWmProductSalesStatusEnum.APPROVED.getStatus()));
+        productSalesMapper.updateById(
+                new MesWmProductSalesDO()
+                        .setId(reqVO.getId())
+                        .setCarrier(reqVO.getCarrier())
+                        .setShippingNumber(reqVO.getShippingNumber())
+                        .setStatus(MesWmProductSalesStatusEnum.APPROVED.getStatus()));
     }
 
     @Override
@@ -211,19 +229,32 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
         createTransactionList(sales);
 
         // 3. 更新出库单状态
-        productSalesMapper.updateById(new MesWmProductSalesDO()
-                .setId(id).setStatus(MesWmProductSalesStatusEnum.FINISHED.getStatus()));
+        productSalesMapper.updateById(
+                new MesWmProductSalesDO()
+                        .setId(id)
+                        .setStatus(MesWmProductSalesStatusEnum.FINISHED.getStatus()));
     }
 
     private void createTransactionList(MesWmProductSalesDO sales) {
-        List<MesWmProductSalesDetailDO> details = productSalesDetailService.getProductSalesDetailListBySalesId(sales.getId());
-        wmTransactionService.createTransactionList(convertList(details, detail -> new MesWmTransactionSaveReqDTO()
-                .setType(MesWmTransactionTypeEnum.OUT.getType()).setItemId(detail.getItemId())
-                .setQuantity(detail.getQuantity().negate()) // 出库数量为负数
-                .setBatchId(detail.getBatchId()).setBatchCode(detail.getBatchCode())
-                .setWarehouseId(detail.getWarehouseId()).setLocationId(detail.getLocationId()).setAreaId(detail.getAreaId())
-                .setBizType(MesBizTypeConstants.WM_PRODUCT_SALES).setBizId(sales.getId())
-                .setBizCode(sales.getCode()).setBizLineId(detail.getLineId())));
+        List<MesWmProductSalesDetailDO> details =
+                productSalesDetailService.getProductSalesDetailListBySalesId(sales.getId());
+        wmTransactionService.createTransactionList(
+                convertList(
+                        details,
+                        detail ->
+                                new MesWmTransactionSaveReqDTO()
+                                        .setType(MesWmTransactionTypeEnum.OUT.getType())
+                                        .setItemId(detail.getItemId())
+                                        .setQuantity(detail.getQuantity().negate()) // 出库数量为负数
+                                        .setBatchId(detail.getBatchId())
+                                        .setBatchCode(detail.getBatchCode())
+                                        .setWarehouseId(detail.getWarehouseId())
+                                        .setLocationId(detail.getLocationId())
+                                        .setAreaId(detail.getAreaId())
+                                        .setBizType(MesBizTypeConstants.WM_PRODUCT_SALES)
+                                        .setBizId(sales.getId())
+                                        .setBizCode(sales.getCode())
+                                        .setBizLineId(detail.getLineId())));
     }
 
     @Override
@@ -232,26 +263,32 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
         // 校验存在
         MesWmProductSalesDO sales = validateProductSalesExists(id);
         // 已完成和已取消不允许取消
-        if (ObjectUtils.equalsAny(sales.getStatus(),
+        if (ObjectUtils.equalsAny(
+                sales.getStatus(),
                 MesWmProductSalesStatusEnum.FINISHED.getStatus(),
                 MesWmProductSalesStatusEnum.CANCELED.getStatus())) {
             throw exception(WM_PRODUCT_SALES_CANNOT_CANCEL);
         }
         // 取消
-        productSalesMapper.updateById(new MesWmProductSalesDO()
-                .setId(id).setStatus(MesWmProductSalesStatusEnum.CANCELED.getStatus()));
+        productSalesMapper.updateById(
+                new MesWmProductSalesDO()
+                        .setId(id)
+                        .setStatus(MesWmProductSalesStatusEnum.CANCELED.getStatus()));
     }
 
     @Override
     public void confirmProductSales(Long id) {
         // 校验存在 + 待检测状态
         MesWmProductSalesDO sales = validateProductSalesExists(id);
-        if (ObjUtil.notEqual(MesWmProductSalesStatusEnum.CONFIRMED.getStatus(), sales.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmProductSalesStatusEnum.CONFIRMED.getStatus(), sales.getStatus())) {
             throw exception(WM_PRODUCT_SALES_CANNOT_CONFIRM);
         }
         // OQC 检验完成，流转到待拣货
-        productSalesMapper.updateById(new MesWmProductSalesDO()
-                .setId(id).setStatus(MesWmProductSalesStatusEnum.APPROVING.getStatus()));
+        productSalesMapper.updateById(
+                new MesWmProductSalesDO()
+                        .setId(id)
+                        .setStatus(MesWmProductSalesStatusEnum.APPROVING.getStatus()));
     }
 
     @Override
@@ -266,8 +303,10 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
         clientService.validateClientExistsAndEnable(reqVO.getClientId());
         // 校验发货通知单
         if (reqVO.getNoticeId() != null) {
-            MesWmSalesNoticeDO notice = salesNoticeService.validateSalesNoticeExists(reqVO.getNoticeId());
-            if (ObjUtil.notEqual(notice.getStatus(), MesWmSalesNoticeStatusEnum.APPROVED.getStatus())) {
+            MesWmSalesNoticeDO notice =
+                    salesNoticeService.validateSalesNoticeExists(reqVO.getNoticeId());
+            if (ObjUtil.notEqual(
+                    notice.getStatus(), MesWmSalesNoticeStatusEnum.APPROVED.getStatus())) {
                 throw exception(WM_SALES_NOTICE_STATUS_NOT_APPROVED);
             }
             if (ObjUtil.notEqual(notice.getClientId(), reqVO.getClientId())) {
@@ -305,5 +344,4 @@ public class MesWmProductSalesServiceImpl implements MesWmProductSalesService {
             throw exception(WM_PRODUCT_SALES_CODE_DUPLICATE);
         }
     }
-
 }

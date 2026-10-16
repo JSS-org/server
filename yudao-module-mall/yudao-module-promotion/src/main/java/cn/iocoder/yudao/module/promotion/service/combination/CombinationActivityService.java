@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activit
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationActivityDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationProductDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -71,7 +72,8 @@ public interface CombinationActivityService {
      * @param pageReqVO 分页查询
      * @return 拼团活动分页
      */
-    PageResult<CombinationActivityDO> getCombinationActivityPage(CombinationActivityPageReqVO pageReqVO);
+    PageResult<CombinationActivityDO> getCombinationActivityPage(
+            CombinationActivityPageReqVO pageReqVO);
 
     /**
      * 获得拼团活动商品列表
@@ -123,5 +125,4 @@ public interface CombinationActivityService {
      * @return 拼团活动
      */
     CombinationActivityDO getMatchCombinationActivityBySpuId(Long spuId);
-
 }

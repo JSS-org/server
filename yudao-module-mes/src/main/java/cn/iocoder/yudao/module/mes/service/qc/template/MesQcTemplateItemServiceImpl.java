@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.qc.template;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -10,18 +15,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.item.MesQcTem
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateItemDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.qc.template.MesQcTemplateItemMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 质检方案-产品关联 Service 实现类
@@ -32,12 +34,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcTemplateItemServiceImpl implements MesQcTemplateItemService {
 
-    @Resource
-    private MesQcTemplateItemMapper templateItemMapper;
+    @Resource private MesQcTemplateItemMapper templateItemMapper;
 
-    @Resource
-    @Lazy
-    private MesQcTemplateService templateService;
+    @Resource @Lazy private MesQcTemplateService templateService;
 
     @Override
     public Long createTemplateItem(MesQcTemplateItemSaveReqVO createReqVO) {
@@ -68,7 +67,8 @@ public class MesQcTemplateItemServiceImpl implements MesQcTemplateItemService {
         // 校验方案存在
         templateService.validateTemplateExists(saveReqVO.getTemplateId());
         // 校验产品在此方案中唯一
-        validateTemplateItemNotDuplicate(saveReqVO.getId(), saveReqVO.getTemplateId(), saveReqVO.getItemId());
+        validateTemplateItemNotDuplicate(
+                saveReqVO.getId(), saveReqVO.getTemplateId(), saveReqVO.getItemId());
     }
 
     @Override
@@ -86,7 +86,8 @@ public class MesQcTemplateItemServiceImpl implements MesQcTemplateItemService {
     }
 
     private void validateTemplateItemNotDuplicate(Long id, Long templateId, Long itemId) {
-        MesQcTemplateItemDO existing = templateItemMapper.selectByTemplateIdAndItemId(templateId, itemId);
+        MesQcTemplateItemDO existing =
+                templateItemMapper.selectByTemplateIdAndItemId(templateId, itemId);
         if (existing == null) {
             return;
         }
@@ -101,7 +102,8 @@ public class MesQcTemplateItemServiceImpl implements MesQcTemplateItemService {
     }
 
     @Override
-    public PageResult<MesQcTemplateItemDO> getTemplateItemPage(MesQcTemplateItemPageReqVO pageReqVO) {
+    public PageResult<MesQcTemplateItemDO> getTemplateItemPage(
+            MesQcTemplateItemPageReqVO pageReqVO) {
         return templateItemMapper.selectPage(pageReqVO);
     }
 
@@ -118,16 +120,21 @@ public class MesQcTemplateItemServiceImpl implements MesQcTemplateItemService {
             throw exception(QC_NO_TEMPLATE);
         }
         // 2. 筛选 types 包含 qcType 且状态为开启的模板
-        List<MesQcTemplateDO> templates = templateService.getTemplateList(
-                convertSet(templateItems, MesQcTemplateItemDO::getTemplateId));
-        MesQcTemplateDO matchedTemplate = findFirst(templates,
-                t -> CommonStatusEnum.isEnable(t.getStatus()) && CollUtil.contains(t.getTypes(), qcType));
+        List<MesQcTemplateDO> templates =
+                templateService.getTemplateList(
+                        convertSet(templateItems, MesQcTemplateItemDO::getTemplateId));
+        MesQcTemplateDO matchedTemplate =
+                findFirst(
+                        templates,
+                        t ->
+                                CommonStatusEnum.isEnable(t.getStatus())
+                                        && CollUtil.contains(t.getTypes(), qcType));
         if (matchedTemplate == null) {
             throw exception(QC_NO_TEMPLATE);
         }
         // 3. 返回对应的 templateItem
-        return findFirst(templateItems,
+        return findFirst(
+                templateItems,
                 item -> Objects.equals(item.getTemplateId(), matchedTemplate.getId()));
     }
-
 }

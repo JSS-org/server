@@ -3,10 +3,12 @@ package cn.iocoder.yudao.module.promotion.controller.admin.banner.vo;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.promotion.enums.banner.BannerPositionEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * Banner Base VO，提供给添加、修改、详细的子 VO 使用
@@ -44,5 +46,4 @@ public class BannerBaseVO {
 
     @Schema(description = "备注")
     private String memo;
-
 }

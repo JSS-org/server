@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.framework.web.config;
 
 import cn.iocoder.yudao.framework.swagger.config.YudaoSwaggerAutoConfiguration;
+
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,5 +23,4 @@ public class PmsWebConfiguration {
     public GroupedOpenApi pmsGroupedOpenApi() {
         return YudaoSwaggerAutoConfiguration.buildGroupedOpenApi("pms");
     }
-
 }

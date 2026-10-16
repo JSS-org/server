@@ -1,12 +1,17 @@
 package cn.iocoder.yudao.module.ai.service.music;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.IMAGE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.MUSIC_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.suno.api.SunoApi;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.music.vo.AiMusicPageReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.music.vo.AiMusicUpdateMyReqVO;
@@ -16,20 +21,18 @@ import cn.iocoder.yudao.module.ai.dal.dataobject.music.AiMusicDO;
 import cn.iocoder.yudao.module.ai.dal.mysql.music.AiMusicMapper;
 import cn.iocoder.yudao.module.ai.enums.music.AiMusicGenerateModeEnum;
 import cn.iocoder.yudao.module.ai.enums.music.AiMusicStatusEnum;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.suno.api.SunoApi;
 import cn.iocoder.yudao.module.ai.service.model.AiModelService;
 import cn.iocoder.yudao.module.infra.api.file.FileApi;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.IMAGE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.MUSIC_NOT_EXISTS;
 
 /**
  * AI 音乐 Service 实现类
@@ -40,14 +43,11 @@ import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.MUSIC_NOT_EXIS
 @Slf4j
 public class AiMusicServiceImpl implements AiMusicService {
 
-    @Resource
-    private AiModelService modelService;
+    @Resource private AiModelService modelService;
 
-    @Resource
-    private AiMusicMapper musicMapper;
+    @Resource private AiMusicMapper musicMapper;
 
-    @Resource
-    private FileApi fileApi;
+    @Resource private FileApi fileApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -55,15 +55,22 @@ public class AiMusicServiceImpl implements AiMusicService {
         // 1. 调用 Suno 生成音乐
         SunoApi sunoApi = modelService.getSunoApi();
         List<SunoApi.MusicData> musicDataList;
-        if (Objects.equals(AiMusicGenerateModeEnum.DESCRIPTION.getMode(), reqVO.getGenerateMode())) {
+        if (Objects.equals(
+                AiMusicGenerateModeEnum.DESCRIPTION.getMode(), reqVO.getGenerateMode())) {
             // 1.1 描述模式
-            SunoApi.MusicGenerateRequest generateRequest = new SunoApi.MusicGenerateRequest(
-                    reqVO.getPrompt(), reqVO.getModel(), reqVO.getMakeInstrumental());
+            SunoApi.MusicGenerateRequest generateRequest =
+                    new SunoApi.MusicGenerateRequest(
+                            reqVO.getPrompt(), reqVO.getModel(), reqVO.getMakeInstrumental());
             musicDataList = sunoApi.generate(generateRequest);
-        } else if (Objects.equals(AiMusicGenerateModeEnum.LYRIC.getMode(), reqVO.getGenerateMode())) {
+        } else if (Objects.equals(
+                AiMusicGenerateModeEnum.LYRIC.getMode(), reqVO.getGenerateMode())) {
             // 1.2 歌词模式
-            SunoApi.MusicGenerateRequest generateRequest = new SunoApi.MusicGenerateRequest(
-                    reqVO.getPrompt(), reqVO.getModel(), CollUtil.join(reqVO.getTags(), StrPool.COMMA), reqVO.getTitle());
+            SunoApi.MusicGenerateRequest generateRequest =
+                    new SunoApi.MusicGenerateRequest(
+                            reqVO.getPrompt(),
+                            reqVO.getModel(),
+                            CollUtil.join(reqVO.getTags(), StrPool.COMMA),
+                            reqVO.getTitle());
             musicDataList = sunoApi.customGenerate(generateRequest);
         } else {
             throw new IllegalArgumentException(StrUtil.format("未知生成模式({})", reqVO));
@@ -74,14 +81,19 @@ public class AiMusicServiceImpl implements AiMusicService {
             return Collections.emptyList();
         }
         List<AiMusicDO> musicList = buildMusicDOList(musicDataList);
-        musicList.forEach(music -> music.setUserId(userId).setPlatform(reqVO.getPlatform()).setGenerateMode(reqVO.getGenerateMode()));
+        musicList.forEach(
+                music ->
+                        music.setUserId(userId)
+                                .setPlatform(reqVO.getPlatform())
+                                .setGenerateMode(reqVO.getGenerateMode()));
         musicMapper.insertBatch(musicList);
         return convertList(musicList, AiMusicDO::getId);
     }
 
     @Override
     public Integer syncMusic() {
-        List<AiMusicDO> streamingTask = musicMapper.selectListByStatus(AiMusicStatusEnum.IN_PROGRESS.getStatus());
+        List<AiMusicDO> streamingTask =
+                musicMapper.selectListByStatus(AiMusicStatusEnum.IN_PROGRESS.getStatus());
         if (CollUtil.isEmpty(streamingTask)) {
             return 0;
         }
@@ -89,18 +101,23 @@ public class AiMusicServiceImpl implements AiMusicService {
 
         // GET 请求，为避免参数过长，分批次处理
         SunoApi sunoApi = modelService.getSunoApi();
-        CollUtil.split(streamingTask, 36).forEach(chunkList -> {
-            Map<String, Long> taskIdMap = convertMap(chunkList, AiMusicDO::getTaskId, AiMusicDO::getId);
-            List<SunoApi.MusicData> musicTaskList = sunoApi.getMusicList(new ArrayList<>(taskIdMap.keySet()));
-            if (CollUtil.isEmpty(musicTaskList)) {
-                log.warn("Suno 任务同步失败, 任务ID: [{}]", taskIdMap.keySet());
-                return;
-            }
-            // 更新进度
-            List<AiMusicDO> updateMusicList = buildMusicDOList(musicTaskList);
-            updateMusicList.forEach(music -> music.setId(taskIdMap.get(music.getTaskId())));
-            musicMapper.updateBatch(updateMusicList);
-        });
+        CollUtil.split(streamingTask, 36)
+                .forEach(
+                        chunkList -> {
+                            Map<String, Long> taskIdMap =
+                                    convertMap(chunkList, AiMusicDO::getTaskId, AiMusicDO::getId);
+                            List<SunoApi.MusicData> musicTaskList =
+                                    sunoApi.getMusicList(new ArrayList<>(taskIdMap.keySet()));
+                            if (CollUtil.isEmpty(musicTaskList)) {
+                                log.warn("Suno 任务同步失败, 任务ID: [{}]", taskIdMap.keySet());
+                                return;
+                            }
+                            // 更新进度
+                            List<AiMusicDO> updateMusicList = buildMusicDOList(musicTaskList);
+                            updateMusicList.forEach(
+                                    music -> music.setId(taskIdMap.get(music.getTaskId())));
+                            musicMapper.updateBatch(updateMusicList);
+                        });
         return streamingTask.size();
     }
 
@@ -109,7 +126,10 @@ public class AiMusicServiceImpl implements AiMusicService {
         // 校验存在
         validateMusicExists(updateReqVO.getId());
         // 更新
-        musicMapper.updateById(new AiMusicDO().setId(updateReqVO.getId()).setPublicStatus(updateReqVO.getPublicStatus()));
+        musicMapper.updateById(
+                new AiMusicDO()
+                        .setId(updateReqVO.getId())
+                        .setPublicStatus(updateReqVO.getPublicStatus()));
     }
 
     @Override
@@ -120,7 +140,8 @@ public class AiMusicServiceImpl implements AiMusicService {
             throw exception(MUSIC_NOT_EXISTS);
         }
         // 更新
-        musicMapper.updateById(new AiMusicDO().setId(updateReqVO.getId()).setTitle(updateReqVO.getTitle()));
+        musicMapper.updateById(
+                new AiMusicDO().setId(updateReqVO.getId()).setTitle(updateReqVO.getTitle()));
     }
 
     @Override
@@ -164,21 +185,29 @@ public class AiMusicServiceImpl implements AiMusicService {
      * @return AiMusicDO 集合
      */
     private List<AiMusicDO> buildMusicDOList(List<SunoApi.MusicData> musicList) {
-        return convertList(musicList, musicData -> {
-            Integer status = Objects.equals("complete", musicData.status()) ? AiMusicStatusEnum.SUCCESS.getStatus()
-                    : Objects.equals("error", musicData.status()) ? AiMusicStatusEnum.FAIL.getStatus()
-                    : AiMusicStatusEnum.IN_PROGRESS.getStatus();
-            return new AiMusicDO()
-                    .setTaskId(musicData.id()).setModel(musicData.modelName())
-                    .setDescription(musicData.gptDescriptionPrompt())
-                    .setAudioUrl(downloadFile(status, musicData.audioUrl()))
-                    .setVideoUrl(downloadFile(status, musicData.videoUrl()))
-                    .setImageUrl(downloadFile(status, musicData.imageUrl()))
-                    .setTitle(musicData.title()).setDuration(musicData.duration())
-                    .setLyric(musicData.lyric()).setTags(StrUtil.split(musicData.tags(), StrPool.COMMA))
-                    .setErrorMessage(musicData.errorMessage())
-                    .setStatus(status);
-        });
+        return convertList(
+                musicList,
+                musicData -> {
+                    Integer status =
+                            Objects.equals("complete", musicData.status())
+                                    ? AiMusicStatusEnum.SUCCESS.getStatus()
+                                    : Objects.equals("error", musicData.status())
+                                            ? AiMusicStatusEnum.FAIL.getStatus()
+                                            : AiMusicStatusEnum.IN_PROGRESS.getStatus();
+                    return new AiMusicDO()
+                            .setTaskId(musicData.id())
+                            .setModel(musicData.modelName())
+                            .setDescription(musicData.gptDescriptionPrompt())
+                            .setAudioUrl(downloadFile(status, musicData.audioUrl()))
+                            .setVideoUrl(downloadFile(status, musicData.videoUrl()))
+                            .setImageUrl(downloadFile(status, musicData.imageUrl()))
+                            .setTitle(musicData.title())
+                            .setDuration(musicData.duration())
+                            .setLyric(musicData.lyric())
+                            .setTags(StrUtil.split(musicData.tags(), StrPool.COMMA))
+                            .setErrorMessage(musicData.errorMessage())
+                            .setStatus(status);
+                });
     }
 
     /**
@@ -189,7 +218,8 @@ public class AiMusicServiceImpl implements AiMusicService {
      * @return 内部文件地址
      */
     private String downloadFile(Integer status, String url) {
-        if (StrUtil.isBlank(url) || ObjectUtil.notEqual(status, AiMusicStatusEnum.SUCCESS.getStatus())) {
+        if (StrUtil.isBlank(url)
+                || ObjectUtil.notEqual(status, AiMusicStatusEnum.SUCCESS.getStatus())) {
             return url;
         }
         try {
@@ -214,5 +244,4 @@ public class AiMusicServiceImpl implements AiMusicService {
         }
         return music;
     }
-
 }

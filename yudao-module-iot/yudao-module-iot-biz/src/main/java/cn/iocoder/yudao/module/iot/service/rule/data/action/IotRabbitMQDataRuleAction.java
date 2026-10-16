@@ -4,10 +4,13 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkRabbitMQConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +31,8 @@ public class IotRabbitMQDataRuleAction
     }
 
     @Override
-    public void execute(IotDeviceMessage message, IotDataSinkRabbitMQConfig config) throws Exception {
+    public void execute(IotDeviceMessage message, IotDataSinkRabbitMQConfig config)
+            throws Exception {
         try {
             // 1.1 获取或创建 Channel
             Channel channel = getProducer(config);
@@ -38,7 +42,10 @@ public class IotRabbitMQDataRuleAction
             channel.queueBind(config.getQueue(), config.getExchange(), config.getRoutingKey());
 
             // 2. 发送消息
-            channel.basicPublish(config.getExchange(), config.getRoutingKey(), null,
+            channel.basicPublish(
+                    config.getExchange(),
+                    config.getRoutingKey(),
+                    null,
                     JsonUtils.toJsonByte(message));
             log.info("[execute][message({}) config({}) 发送成功]", message, config);
         } catch (Exception e) {
@@ -73,5 +80,4 @@ public class IotRabbitMQDataRuleAction
             connection.close();
         }
     }
-
 }

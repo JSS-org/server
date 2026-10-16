@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.app.dict.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +21,9 @@ public class AppDictDataRespVO {
     @Schema(description = "字典值", requiredMode = Schema.RequiredMode.REQUIRED, example = "iocoder")
     private String value;
 
-    @Schema(description = "字典类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "sys_common_sex")
+    @Schema(
+            description = "字典类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "sys_common_sex")
     private String dictType;
-
 }

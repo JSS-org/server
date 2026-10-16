@@ -23,8 +23,8 @@ public interface SmsSendService {
      * @param templateParams 短信模板参数
      * @return 发送日志编号
      */
-    Long sendSingleSmsToAdmin(String mobile, Long userId,
-                              String templateCode, Map<String, Object> templateParams);
+    Long sendSingleSmsToAdmin(
+            String mobile, Long userId, String templateCode, Map<String, Object> templateParams);
 
     /**
      * 发送单条短信给用户 APP 的用户
@@ -37,8 +37,8 @@ public interface SmsSendService {
      * @param templateParams 短信模板参数
      * @return 发送日志编号
      */
-    Long sendSingleSmsToMember(String mobile, Long userId,
-                               String templateCode, Map<String, Object> templateParams);
+    Long sendSingleSmsToMember(
+            String mobile, Long userId, String templateCode, Map<String, Object> templateParams);
 
     /**
      * 发送单条短信给用户
@@ -50,11 +50,19 @@ public interface SmsSendService {
      * @param templateParams 短信模板参数
      * @return 发送日志编号
      */
-    Long sendSingleSms(String mobile, Long userId, Integer userType,
-                       String templateCode, Map<String, Object> templateParams);
+    Long sendSingleSms(
+            String mobile,
+            Long userId,
+            Integer userType,
+            String templateCode,
+            Map<String, Object> templateParams);
 
-    default void sendBatchSms(List<String> mobiles, List<Long> userIds, Integer userType,
-                              String templateCode, Map<String, Object> templateParams) {
+    default void sendBatchSms(
+            List<String> mobiles,
+            List<Long> userIds,
+            Integer userType,
+            String templateCode,
+            Map<String, Object> templateParams) {
         throw new UnsupportedOperationException("暂时不支持该操作，感兴趣可以实现该功能哟！");
     }
 
@@ -74,5 +82,4 @@ public interface SmsSendService {
      * @throws Throwable 处理失败时，抛出异常
      */
     void receiveSmsStatus(String channelCode, String text) throws Throwable;
-
 }

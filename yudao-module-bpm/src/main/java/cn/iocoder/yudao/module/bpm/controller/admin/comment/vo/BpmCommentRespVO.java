@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.comment.vo;
 
 import cn.iocoder.yudao.module.bpm.controller.admin.base.user.UserSimpleBaseVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,7 +27,10 @@ public class BpmCommentRespVO {
     @Schema(description = "评论类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     private String type;
 
-    @Schema(description = "评论内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "请关注报销发票附件")
+    @Schema(
+            description = "评论内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "请关注报销发票附件")
     private String message;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -44,9 +49,10 @@ public class BpmCommentRespVO {
         @Schema(description = "任务名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "经理审批")
         private String name;
 
-        @Schema(description = "任务定义的标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "Activity_one")
+        @Schema(
+                description = "任务定义的标识",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "Activity_one")
         private String taskDefinitionKey;
-
     }
-
 }

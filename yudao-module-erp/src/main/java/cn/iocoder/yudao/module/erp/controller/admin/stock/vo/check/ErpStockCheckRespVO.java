@@ -1,18 +1,21 @@
 package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.check;
 
-import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
-import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
+import static cn.iocoder.yudao.module.erp.enums.DictTypeConstants.AUDIT_STATUS;
+
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
+import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.module.erp.enums.DictTypeConstants.AUDIT_STATUS;
 
 @Schema(description = "管理后台 - ERP 库存盘点单 Response VO")
 @Data
@@ -35,7 +38,10 @@ public class ErpStockCheckRespVO {
     @ExcelProperty("合计数量")
     private BigDecimal totalCount;
 
-    @Schema(description = "合计金额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "24906")
+    @Schema(
+            description = "合计金额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "24906")
     @ExcelProperty("合计金额")
     private BigDecimal totalPrice;
 
@@ -53,6 +59,7 @@ public class ErpStockCheckRespVO {
 
     @Schema(description = "创建人", example = "芋道")
     private String creator;
+
     @Schema(description = "创建人名称", example = "芋道")
     private String creatorName;
 
@@ -79,18 +86,30 @@ public class ErpStockCheckRespVO {
         @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
         private Long productId;
 
-        @Schema(description = "产品单价", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "产品单价",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "账面数量（当前库存）", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "账面数量（当前库存）",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "账面数量不能为空")
         private BigDecimal stockCount;
 
-        @Schema(description = "实际数量（实际库存）", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "实际数量（实际库存）",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "实际数量不能为空")
         private BigDecimal actualCount;
 
-        @Schema(description = "盈亏数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "盈亏数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "盈亏数量不能为空")
         private BigDecimal count;
 
@@ -101,11 +120,14 @@ public class ErpStockCheckRespVO {
 
         @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "巧克力")
         private String productName;
-        @Schema(description = "产品条码", requiredMode = Schema.RequiredMode.REQUIRED, example = "A9985")
+
+        @Schema(
+                description = "产品条码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "A9985")
         private String productBarCode;
+
         @Schema(description = "产品单位名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "盒")
         private String productUnitName;
-
     }
-
 }

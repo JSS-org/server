@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.oa.service.overtime.OaOvertimeApplyService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OaOvertimeApplyStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private OaOvertimeApplyService overtimeApplyService;
+    @Resource private OaOvertimeApplyService overtimeApplyService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -25,7 +26,7 @@ public class OaOvertimeApplyStatusListener extends BpmProcessInstanceStatusEvent
 
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
-        overtimeApplyService.updateOvertimeApplyStatus(Long.valueOf(event.getBusinessKey()), event.getStatus());
+        overtimeApplyService.updateOvertimeApplyStatus(
+                Long.valueOf(event.getBusinessKey()), event.getStatus());
     }
-
 }

@@ -61,5 +61,4 @@ public interface WmsInventoryService {
      * @param reqDTO 库存变更请求
      */
     void changeInventory(WmsInventoryChangeReqDTO reqDTO);
-
 }

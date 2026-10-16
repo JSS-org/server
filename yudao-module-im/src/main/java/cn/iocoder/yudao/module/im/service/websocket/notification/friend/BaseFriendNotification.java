@@ -16,9 +16,9 @@ public abstract class BaseFriendNotification {
      * 操作人用户编号
      */
     private Long operatorUserId;
+
     /**
      * 好友用户编号
      */
     private Long friendUserId;
-
 }

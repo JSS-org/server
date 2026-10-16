@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.crm.controller.admin.clue.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_CUSTOMER_INDUSTRY;
+
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.common.validation.Mobile;
 import cn.iocoder.yudao.framework.common.validation.Telephone;
@@ -9,19 +12,21 @@ import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmCustomerIndustry
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmCustomerLevelParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmCustomerSourceParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.SysAreaParseFunction;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_CUSTOMER_INDUSTRY;
 
 @Schema(description = "管理后台 - CRM 线索创建/更新 Request VO")
 @Data
@@ -105,5 +110,4 @@ public class CrmClueSaveReqVO {
     @Schema(description = "备注", example = "随便")
     @DiffLogField(name = "备注")
     private String remark;
-
 }

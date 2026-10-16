@@ -61,5 +61,4 @@ public interface OaResignApplyService {
      * @param status 审批状态
      */
     void updateResignApplyStatus(Long id, Integer status);
-
 }

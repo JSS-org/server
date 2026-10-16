@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.salesnotice;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,11 +17,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNotic
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.wm.salesnotice.MesWmSalesNoticeLineService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,33 +33,29 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 发货通知单行")
 @RestController
 @RequestMapping("/mes/wm/sales-notice-line")
 @Validated
 public class MesWmSalesNoticeLineController {
 
-    @Resource
-    private MesWmSalesNoticeLineService salesNoticeLineService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesWmSalesNoticeLineService salesNoticeLineService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
 
     @PostMapping("/create")
     @Operation(summary = "创建发货通知单行")
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:create')")
-    public CommonResult<Long> createSalesNoticeLine(@Valid @RequestBody MesWmSalesNoticeLineSaveReqVO createReqVO) {
+    public CommonResult<Long> createSalesNoticeLine(
+            @Valid @RequestBody MesWmSalesNoticeLineSaveReqVO createReqVO) {
         return success(salesNoticeLineService.createSalesNoticeLine(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改发货通知单行")
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:update')")
-    public CommonResult<Boolean> updateSalesNoticeLine(@Valid @RequestBody MesWmSalesNoticeLineSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSalesNoticeLine(
+            @Valid @RequestBody MesWmSalesNoticeLineSaveReqVO updateReqVO) {
         salesNoticeLineService.updateSalesNoticeLine(updateReqVO);
         return success(true);
     }
@@ -71,7 +73,8 @@ public class MesWmSalesNoticeLineController {
     @Operation(summary = "获得发货通知单行")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:query')")
-    public CommonResult<MesWmSalesNoticeLineRespVO> getSalesNoticeLine(@RequestParam("id") Long id) {
+    public CommonResult<MesWmSalesNoticeLineRespVO> getSalesNoticeLine(
+            @RequestParam("id") Long id) {
         MesWmSalesNoticeLineDO line = salesNoticeLineService.getSalesNoticeLine(id);
         if (line == null) {
             return success(null);
@@ -84,8 +87,10 @@ public class MesWmSalesNoticeLineController {
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:query')")
     public CommonResult<PageResult<MesWmSalesNoticeLineRespVO>> getSalesNoticeLinePage(
             @Valid MesWmSalesNoticeLinePageReqVO pageReqVO) {
-        PageResult<MesWmSalesNoticeLineDO> pageResult = salesNoticeLineService.getSalesNoticeLinePage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmSalesNoticeLineDO> pageResult =
+                salesNoticeLineService.getSalesNoticeLinePage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -95,18 +100,29 @@ public class MesWmSalesNoticeLineController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesWmSalesNoticeLineDO::getItemId));
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesWmSalesNoticeLineDO::getItemId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmSalesNoticeLineRespVO.class, vo -> {
-            MapUtils.findAndThen(itemMap, vo.getItemId(), item -> {
-                vo.setItemCode(item.getCode()).setItemName(item.getName()).setSpecification(item.getSpecification());
-                MapUtils.findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unitMeasure -> vo.setUnitMeasureName(unitMeasure.getName()));
-            });
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmSalesNoticeLineRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            itemMap,
+                            vo.getItemId(),
+                            item -> {
+                                vo.setItemCode(item.getCode())
+                                        .setItemName(item.getName())
+                                        .setSpecification(item.getSpecification());
+                                MapUtils.findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unitMeasure ->
+                                                vo.setUnitMeasureName(unitMeasure.getName()));
+                            });
+                });
     }
-
 }

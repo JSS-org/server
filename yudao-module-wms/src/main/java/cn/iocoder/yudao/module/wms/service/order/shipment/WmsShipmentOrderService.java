@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.order.shipment.vo.order.WmsShipmentOrderPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.order.shipment.vo.order.WmsShipmentOrderSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.shipment.WmsShipmentOrderDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -80,5 +81,4 @@ public interface WmsShipmentOrderService {
      * @return 出库单数量
      */
     long getShipmentOrderCountByWarehouseId(Long warehouseId);
-
 }

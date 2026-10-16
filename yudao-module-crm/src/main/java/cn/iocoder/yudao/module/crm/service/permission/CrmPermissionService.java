@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.crm.service.permission;
 
-
 import cn.iocoder.yudao.module.crm.controller.admin.permission.vo.CrmPermissionSaveReqVO;
 import cn.iocoder.yudao.module.crm.controller.admin.permission.vo.CrmPermissionUpdateReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.permission.CrmPermissionDO;
@@ -8,6 +7,7 @@ import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
 import cn.iocoder.yudao.module.crm.enums.permission.CrmPermissionLevelEnum;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionCreateReqBO;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionTransferReqBO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -127,5 +127,4 @@ public interface CrmPermissionService {
      * @return 是否有权限
      */
     boolean hasPermission(Integer bizType, Long bizId, Long userId, CrmPermissionLevelEnum level);
-
 }

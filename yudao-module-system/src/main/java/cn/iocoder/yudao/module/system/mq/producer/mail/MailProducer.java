@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.system.mq.producer.mail;
 
 import cn.iocoder.yudao.module.system.mq.message.mail.MailSendMessage;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +22,7 @@ import java.util.Collection;
 @Component
 public class MailProducer {
 
-    @Resource
-    private ApplicationContext applicationContext;
+    @Resource private ApplicationContext applicationContext;
 
     /**
      * 发送 {@link MailSendMessage} 消息
@@ -35,16 +37,27 @@ public class MailProducer {
      * @param content     邮件内容
      * @param attachments 附件
      */
-    public void sendMailSendMessage(Long sendLogId,
-                                    Collection<String> toMails, Collection<String> ccMails, Collection<String> bccMails,
-                                    Long accountId, String nickname, String title, String content,
-                                    File[] attachments) {
-        MailSendMessage message = new MailSendMessage()
-                .setLogId(sendLogId)
-                .setToMails(toMails).setCcMails(ccMails).setBccMails(bccMails)
-                .setAccountId(accountId).setNickname(nickname)
-                .setTitle(title).setContent(content).setAttachments(attachments);
+    public void sendMailSendMessage(
+            Long sendLogId,
+            Collection<String> toMails,
+            Collection<String> ccMails,
+            Collection<String> bccMails,
+            Long accountId,
+            String nickname,
+            String title,
+            String content,
+            File[] attachments) {
+        MailSendMessage message =
+                new MailSendMessage()
+                        .setLogId(sendLogId)
+                        .setToMails(toMails)
+                        .setCcMails(ccMails)
+                        .setBccMails(bccMails)
+                        .setAccountId(accountId)
+                        .setNickname(nickname)
+                        .setTitle(title)
+                        .setContent(content)
+                        .setAttachments(attachments);
         applicationContext.publishEvent(message);
     }
-
 }

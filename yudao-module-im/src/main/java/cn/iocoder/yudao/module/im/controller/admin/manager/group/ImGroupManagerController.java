@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.group;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,20 +17,19 @@ import cn.iocoder.yudao.module.im.service.group.ImGroupMemberService;
 import cn.iocoder.yudao.module.im.service.group.ImGroupService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - IM 群聊管理")
 @RestController
@@ -34,34 +37,41 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class ImGroupManagerController {
 
-    @Resource
-    private ImGroupService groupService;
-    @Resource
-    private ImGroupMemberService groupMemberService;
+    @Resource private ImGroupService groupService;
+    @Resource private ImGroupMemberService groupMemberService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @GetMapping("/page")
     @Operation(summary = "获得群分页")
     @PreAuthorize("@ss.hasPermission('im:manager:group:query')")
-    public CommonResult<PageResult<ImGroupManagerRespVO>> getGroupPage(@Valid ImGroupManagerPageReqVO pageReqVO) {
+    public CommonResult<PageResult<ImGroupManagerRespVO>> getGroupPage(
+            @Valid ImGroupManagerPageReqVO pageReqVO) {
         // 1. 分页查询群
         PageResult<ImGroupDO> pageResult = groupService.getGroupPage(pageReqVO);
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(PageResult.empty(pageResult.getTotal()));
         }
         // 2.1 批量查询相关数据
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), ImGroupDO::getOwnerUserId));
-        Map<Long, Long> memberCountMap = groupMemberService.getActiveMemberCountMap(
-                convertSet(pageResult.getList(), ImGroupDO::getId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(pageResult.getList(), ImGroupDO::getOwnerUserId));
+        Map<Long, Long> memberCountMap =
+                groupMemberService.getActiveMemberCountMap(
+                        convertSet(pageResult.getList(), ImGroupDO::getId));
         // 2.2 转换为 VO，填充群主昵称、群成员数量
-        return success(BeanUtils.toBean(pageResult, ImGroupManagerRespVO.class, vo -> {
-            MapUtils.findAndThen(userMap, vo.getOwnerUserId(),
-                    user -> vo.setOwnerNickname(user.getNickname()));
-            vo.setMemberCount(memberCountMap.getOrDefault(vo.getId(), 0L).intValue());
-        }));
+        return success(
+                BeanUtils.toBean(
+                        pageResult,
+                        ImGroupManagerRespVO.class,
+                        vo -> {
+                            MapUtils.findAndThen(
+                                    userMap,
+                                    vo.getOwnerUserId(),
+                                    user -> vo.setOwnerNickname(user.getNickname()));
+                            vo.setMemberCount(
+                                    memberCountMap.getOrDefault(vo.getId(), 0L).intValue());
+                        }));
     }
 
     @GetMapping("/get")
@@ -98,5 +108,4 @@ public class ImGroupManagerController {
         groupService.dissolveGroupByManager(getLoginUserId(), id);
         return success(true);
     }
-
 }

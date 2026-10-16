@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.plan;
 
-import cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.receivable.CrmReceivableRespVO;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+import cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.receivable.CrmReceivableRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -25,6 +27,7 @@ public class CrmReceivablePlanRespVO {
     @Schema(description = "客户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @ExcelProperty("客户编号")
     private Long customerId;
+
     @Schema(description = "客户名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "test")
     @ExcelProperty("客户名字")
     private String customerName;
@@ -32,6 +35,7 @@ public class CrmReceivablePlanRespVO {
     @Schema(description = "合同编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @ExcelProperty("合同编号")
     private Long contractId;
+
     @Schema(description = "合同编号", example = "Q110")
     @ExcelProperty("合同编号")
     private String contractNo;
@@ -39,11 +43,15 @@ public class CrmReceivablePlanRespVO {
     @Schema(description = "负责人编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @ExcelProperty("负责人编号")
     private Long ownerUserId;
+
     @Schema(description = "负责人", example = "test")
     @ExcelProperty("负责人")
     private String ownerUserName;
 
-    @Schema(description = "计划回款日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-02-02")
+    @Schema(
+            description = "计划回款日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-02-02")
     @ExcelProperty("计划回款日期")
     private LocalDateTime returnTime;
 
@@ -58,6 +66,7 @@ public class CrmReceivablePlanRespVO {
     @Schema(description = "回款编号", example = "19852")
     @ExcelProperty("回款编号")
     private Long receivableId;
+
     @Schema(description = "回款信息")
     private CrmReceivableRespVO receivable;
 
@@ -65,7 +74,10 @@ public class CrmReceivablePlanRespVO {
     @ExcelProperty("提前几天提醒")
     private Integer remindDays;
 
-    @Schema(description = "提醒日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-02-02")
+    @Schema(
+            description = "提醒日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-02-02")
     @ExcelProperty("提醒日期")
     private LocalDateTime remindTime;
 
@@ -84,8 +96,8 @@ public class CrmReceivablePlanRespVO {
     @Schema(description = "创建人", example = "1024")
     @ExcelProperty("创建人")
     private String creator;
+
     @Schema(description = "创建人名字", example = "芋道源码")
     @ExcelProperty("创建人名字")
     private String creatorName;
-
 }

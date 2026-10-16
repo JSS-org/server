@@ -12,5 +12,4 @@ public interface DictTypeConstants {
     String ORDER_TYPE = "wms_order_type";
     String RECEIPT_ORDER_TYPE = "wms_receipt_order_type";
     String SHIPMENT_ORDER_TYPE = "wms_shipment_order_type";
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IoT 设备分组新增/修改 Request VO")
@@ -22,5 +24,4 @@ public class IotDeviceGroupSaveReqVO {
 
     @Schema(description = "分组描述", example = "你说的对")
     private String description;
-
 }

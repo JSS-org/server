@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.voucherword;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 /**
@@ -34,5 +36,4 @@ public class FmsVoucherWordSaveReqVO {
     @Schema(description = "是否默认凭证字", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "是否默认凭证字不能为空")
     private Boolean defaultStatus;
-
 }

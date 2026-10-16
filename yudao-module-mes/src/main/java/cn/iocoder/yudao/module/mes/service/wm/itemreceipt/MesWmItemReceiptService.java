@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.wm.itemreceipt;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt.vo.MesWmItemReceiptPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt.vo.MesWmItemReceiptSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDO;
+
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 采购入库单 Service 接口
@@ -123,5 +125,4 @@ public interface MesWmItemReceiptService {
     default Map<Long, MesWmItemReceiptDO> getItemReceiptMap(Collection<Long> ids) {
         return convertMap(getItemReceiptList(ids), MesWmItemReceiptDO::getId);
     }
-
 }

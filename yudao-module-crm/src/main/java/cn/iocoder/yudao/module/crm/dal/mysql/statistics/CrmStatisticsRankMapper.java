@@ -1,7 +1,8 @@
 package cn.iocoder.yudao.module.crm.dal.mysql.statistics;
 
-import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankReqVO;
+import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankRespVO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -77,5 +78,4 @@ public interface CrmStatisticsRankMapper {
      * @return 跟进客户数排行榜
      */
     List<CrmStatisticsRankRespVO> selectFollowCustomerCountRank(CrmStatisticsRankReqVO rankReqVO);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.qc.oqc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,11 +11,13 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.oqc.vo.MesQcOqcSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.defectrecord.MesQcDefectRecordDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.oqc.MesQcOqcDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateItemDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.qc.oqc.MesQcOqcMapper;
+import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcDefectLevelEnum;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcTypeEnum;
-import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
 import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.qc.defectrecord.MesQcDefectRecordService;
@@ -20,10 +25,10 @@ import cn.iocoder.yudao.module.mes.service.qc.indicatorresult.MesQcIndicatorResu
 import cn.iocoder.yudao.module.mes.service.qc.template.MesQcTemplateItemService;
 import cn.iocoder.yudao.module.mes.service.wm.productsales.MesWmProductSalesLineService;
 import cn.iocoder.yudao.module.mes.service.wm.productsales.MesWmProductSalesService;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesLineDO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +39,6 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 出货检验单（OQC） Service 实现类
  *
@@ -46,34 +48,18 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcOqcServiceImpl implements MesQcOqcService {
 
-    @Resource
-    private MesQcOqcMapper oqcMapper;
+    @Resource private MesQcOqcMapper oqcMapper;
 
-    @Resource
-    private MesQcTemplateItemService templateItemService;
-    @Resource
-    private MesQcOqcLineService oqcLineService;
-    @Resource
-    @Lazy
-    private MesQcDefectRecordService defectRecordService;
-    @Resource
-    @Lazy
-    private MesMdClientService clientService;
-    @Resource
-    @Lazy
-    private MesMdItemService itemService;
-    @Resource
-    @Lazy
-    private MesWmProductSalesLineService productSalesLineService;
-    @Resource
-    @Lazy
-    private MesWmProductSalesService productSalesService;
-    @Resource
-    @Lazy
-    private MesQcIndicatorResultService indicatorResultService;
+    @Resource private MesQcTemplateItemService templateItemService;
+    @Resource private MesQcOqcLineService oqcLineService;
+    @Resource @Lazy private MesQcDefectRecordService defectRecordService;
+    @Resource @Lazy private MesMdClientService clientService;
+    @Resource @Lazy private MesMdItemService itemService;
+    @Resource @Lazy private MesWmProductSalesLineService productSalesLineService;
+    @Resource @Lazy private MesWmProductSalesService productSalesService;
+    @Resource @Lazy private MesQcIndicatorResultService indicatorResultService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -81,18 +67,21 @@ public class MesQcOqcServiceImpl implements MesQcOqcService {
         // 1.1 校验数据
         validateOqcSaveData(createReqVO);
         // 1.2 校验来源单据参数，并验证数据存在
-        String sourceDocCode = validateAndGetSourceDocCode(
-                createReqVO.getSourceDocType(), createReqVO.getSourceLineId());
+        String sourceDocCode =
+                validateAndGetSourceDocCode(
+                        createReqVO.getSourceDocType(), createReqVO.getSourceLineId());
         // 1.3 根据产品 + 检验类型自动匹配模板
-        MesQcTemplateItemDO templateItem = templateItemService.getRequiredTemplateByItemIdAndType(
-                createReqVO.getItemId(), MesQcTypeEnum.OQC.getType());
+        MesQcTemplateItemDO templateItem =
+                templateItemService.getRequiredTemplateByItemIdAndType(
+                        createReqVO.getItemId(), MesQcTypeEnum.OQC.getType());
         Long templateId = templateItem.getTemplateId();
 
         // 2. 插入主表
-        MesQcOqcDO oqc = BeanUtils.toBean(createReqVO, MesQcOqcDO.class)
-                .setTemplateId(templateId)
-                .setSourceDocCode(sourceDocCode)
-                .setStatus(MesQcStatusEnum.DRAFT.getStatus());
+        MesQcOqcDO oqc =
+                BeanUtils.toBean(createReqVO, MesQcOqcDO.class)
+                        .setTemplateId(templateId)
+                        .setSourceDocCode(sourceDocCode)
+                        .setStatus(MesQcStatusEnum.DRAFT.getStatus());
         oqcMapper.insert(oqc);
 
         // 3. 从模板指标自动生成检验行
@@ -134,11 +123,12 @@ public class MesQcOqcServiceImpl implements MesQcOqcService {
             throw exception(QC_OQC_CHECK_RESULT_EMPTY);
         }
         // 1.3 校验至少存在一条检测结果
-        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(id, MesQcTypeEnum.OQC.getType());
+        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(
+                id, MesQcTypeEnum.OQC.getType());
 
         // 2. 更新状态为已完成
-        MesQcOqcDO updateObj = new MesQcOqcDO()
-                .setId(id).setStatus(MesQcStatusEnum.FINISHED.getStatus());
+        MesQcOqcDO updateObj =
+                new MesQcOqcDO().setId(id).setStatus(MesQcStatusEnum.FINISHED.getStatus());
         oqcMapper.updateById(updateObj);
 
         // 3. 回写来源单据
@@ -168,7 +158,11 @@ public class MesQcOqcServiceImpl implements MesQcOqcService {
                     oqc.getSourceLineId(), oqc.getId(), oqc.getCheckResult());
         } else {
             throw new IllegalArgumentException(
-                    "OQC 单[" + oqc.getId() + "] sourceDocType=" + oqc.getSourceDocType() + " 无法识别，无法回写来源单据");
+                    "OQC 单["
+                            + oqc.getId()
+                            + "] sourceDocType="
+                            + oqc.getSourceDocType()
+                            + " 无法识别，无法回写来源单据");
         }
     }
 
@@ -228,9 +222,11 @@ public class MesQcOqcServiceImpl implements MesQcOqcService {
             return null;
         }
         if (Objects.equals(sourceDocType, MesBizTypeConstants.WM_PRODUCT_SALES)) {
-            MesWmProductSalesLineDO salesLine = productSalesLineService.validateProductSalesLineExists(sourceLineId);
+            MesWmProductSalesLineDO salesLine =
+                    productSalesLineService.validateProductSalesLineExists(sourceLineId);
             if (salesLine.getSalesId() != null) {
-                MesWmProductSalesDO sales = productSalesService.getProductSales(salesLine.getSalesId());
+                MesWmProductSalesDO sales =
+                        productSalesService.getProductSales(salesLine.getSalesId());
                 return sales != null ? sales.getCode() : null;
             }
             return null;
@@ -273,20 +269,32 @@ public class MesQcOqcServiceImpl implements MesQcOqcService {
         BigDecimal criticalRate = BigDecimal.ZERO;
         BigDecimal majorRate = BigDecimal.ZERO;
         BigDecimal minorRate = BigDecimal.ZERO;
-        if (oqc.getCheckQuantity() != null && oqc.getCheckQuantity().compareTo(BigDecimal.ZERO) > 0) {
+        if (oqc.getCheckQuantity() != null
+                && oqc.getCheckQuantity().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal checkQty = oqc.getCheckQuantity();
-            criticalRate = BigDecimal.valueOf(totalCritical).multiply(BigDecimal.valueOf(100))
-                    .divide(checkQty, 2, RoundingMode.HALF_UP);
-            majorRate = BigDecimal.valueOf(totalMajor).multiply(BigDecimal.valueOf(100))
-                    .divide(checkQty, 2, RoundingMode.HALF_UP);
-            minorRate = BigDecimal.valueOf(totalMinor).multiply(BigDecimal.valueOf(100))
-                    .divide(checkQty, 2, RoundingMode.HALF_UP);
+            criticalRate =
+                    BigDecimal.valueOf(totalCritical)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(checkQty, 2, RoundingMode.HALF_UP);
+            majorRate =
+                    BigDecimal.valueOf(totalMajor)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(checkQty, 2, RoundingMode.HALF_UP);
+            minorRate =
+                    BigDecimal.valueOf(totalMinor)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(checkQty, 2, RoundingMode.HALF_UP);
         }
         // 2.3 更新主表
-        MesQcOqcDO updateOqc = new MesQcOqcDO().setId(oqcId)
-                .setCriticalQuantity(totalCritical).setMajorQuantity(totalMajor).setMinorQuantity(totalMinor)
-                .setCriticalRate(criticalRate).setMajorRate(majorRate).setMinorRate(minorRate);
+        MesQcOqcDO updateOqc =
+                new MesQcOqcDO()
+                        .setId(oqcId)
+                        .setCriticalQuantity(totalCritical)
+                        .setMajorQuantity(totalMajor)
+                        .setMinorQuantity(totalMinor)
+                        .setCriticalRate(criticalRate)
+                        .setMajorRate(majorRate)
+                        .setMinorRate(minorRate);
         oqcMapper.updateById(updateOqc);
     }
-
 }

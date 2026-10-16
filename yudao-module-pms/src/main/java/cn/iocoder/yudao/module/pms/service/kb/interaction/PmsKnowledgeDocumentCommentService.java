@@ -45,5 +45,4 @@ public interface PmsKnowledgeDocumentCommentService {
      * @param documentIds 文档编号集合
      */
     void deleteCommentsByDocumentIds(Collection<Long> documentIds);
-
 }

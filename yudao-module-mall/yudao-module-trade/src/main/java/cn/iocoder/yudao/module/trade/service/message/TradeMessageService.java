@@ -15,5 +15,4 @@ public interface TradeMessageService {
      * @param reqBO 发送消息
      */
     void sendMessageWhenDeliveryOrder(TradeOrderMessageWhenDeliveryOrderReqBO reqBO);
-
 }

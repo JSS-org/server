@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.framework.security.core.service;
 
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.skipPermissionCheck;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.biz.system.permission.PermissionCommonApi;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
+
 import lombok.AllArgsConstructor;
 
 import java.util.Arrays;
-
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.skipPermissionCheck;
 
 /**
  * 默认的 {@link SecurityFrameworkService} 实现类
@@ -80,5 +81,4 @@ public class SecurityFrameworkServiceImpl implements SecurityFrameworkService {
         }
         return CollUtil.containsAny(user.getScopes(), Arrays.asList(scope));
     }
-
 }

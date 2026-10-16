@@ -4,9 +4,12 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeQuitReasonEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeQuitTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -48,5 +51,4 @@ public class HrmEmployeeQuitInfoSaveReqVO {
     @NotNull(message = "离职前员工状态不能为空")
     @InEnum(value = HrmEmployeeStatusEnum.class, message = "离职前员工状态必须是 {value}")
     private Integer oldEmployeeStatus;
-
 }

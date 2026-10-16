@@ -7,7 +7,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.home.vo.MesHomeWorkOrderStat
 import cn.iocoder.yudao.module.mes.dal.mysql.home.MesHomeStatisticsMapper;
 import cn.iocoder.yudao.module.mes.enums.dv.MesDvMachineryStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.pro.MesProWorkOrderStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,15 +26,15 @@ import java.util.*;
 @Service
 public class MesHomeStatisticsServiceImpl implements MesHomeStatisticsService {
 
-    @Resource
-    private MesHomeStatisticsMapper homeStatisticsMapper;
+    @Resource private MesHomeStatisticsMapper homeStatisticsMapper;
 
     @Override
     public MesHomeSummaryRespVO getHomeSummary() {
         MesHomeSummaryRespVO summary = new MesHomeSummaryRespVO();
 
         // 1. 工单统计
-        List<Map<String, Object>> workOrderStats = homeStatisticsMapper.selectWorkOrderCountGroupByStatus();
+        List<Map<String, Object>> workOrderStats =
+                homeStatisticsMapper.selectWorkOrderCountGroupByStatus();
         long activeCount = 0L;
         long prepareCount = 0L;
         long finishedCount = 0L;
@@ -54,17 +56,20 @@ public class MesHomeStatisticsServiceImpl implements MesHomeStatisticsService {
         // 2. 今日产量
         LocalDateTime today = LocalDateTimeUtils.getToday();
         LocalDateTime yesterday = LocalDateTimeUtils.getYesterday();
-        Map<String, BigDecimal> todayFeedback = homeStatisticsMapper.selectFeedbackSummary(today, null);
+        Map<String, BigDecimal> todayFeedback =
+                homeStatisticsMapper.selectFeedbackSummary(today, null);
         summary.setTodayOutput(getDecimal(todayFeedback, "feedbackQuantity"));
         summary.setTodayQualifiedQuantity(getDecimal(todayFeedback, "qualifiedQuantity"));
         summary.setTodayUnqualifiedQuantity(getDecimal(todayFeedback, "unqualifiedQuantity"));
 
         // 3. 昨日产量
-        Map<String, BigDecimal> yesterdayFeedback = homeStatisticsMapper.selectFeedbackSummary(yesterday, today);
+        Map<String, BigDecimal> yesterdayFeedback =
+                homeStatisticsMapper.selectFeedbackSummary(yesterday, today);
         summary.setYesterdayOutput(getDecimal(yesterdayFeedback, "feedbackQuantity"));
 
         // 4. 设备统计
-        List<Map<String, Object>> machineryStats = homeStatisticsMapper.selectMachineryCountGroupByStatus();
+        List<Map<String, Object>> machineryStats =
+                homeStatisticsMapper.selectMachineryCountGroupByStatus();
         long total = 0L;
         long producing = 0L;
         long stop = 0L;
@@ -105,7 +110,9 @@ public class MesHomeStatisticsServiceImpl implements MesHomeStatisticsService {
                     break;
                 }
             }
-            result.add(new MesHomeWorkOrderStatusRespVO(statusEnum.getStatus(), statusEnum.getName(), count));
+            result.add(
+                    new MesHomeWorkOrderStatusRespVO(
+                            statusEnum.getStatus(), statusEnum.getName(), count));
         }
         return result;
     }
@@ -118,7 +125,8 @@ public class MesHomeStatisticsServiceImpl implements MesHomeStatisticsService {
         LocalDateTime endTime = endDate.atStartOfDay();
 
         // 查询数据库
-        List<Map<String, Object>> dbData = homeStatisticsMapper.selectDailyFeedbackTrend(beginTime, endTime);
+        List<Map<String, Object>> dbData =
+                homeStatisticsMapper.selectDailyFeedbackTrend(beginTime, endTime);
         Map<String, Map<String, Object>> dateMap = new LinkedHashMap<>();
         for (Map<String, Object> row : dbData) {
             dateMap.put((String) row.get("date"), row);
@@ -164,5 +172,4 @@ public class MesHomeStatisticsServiceImpl implements MesHomeStatisticsService {
         }
         return new BigDecimal(obj.toString());
     }
-
 }

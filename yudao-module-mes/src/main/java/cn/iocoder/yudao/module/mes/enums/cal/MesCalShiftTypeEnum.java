@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.mes.enums.cal;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Pair;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,30 +18,34 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public enum MesCalShiftTypeEnum implements ArrayValuable<Integer> {
+    SINGLE(1, "单白班", ListUtil.of(Pair.of("白班", new String[] {"08:00", "18:00"}))),
+    TWO(
+            2,
+            "两班倒",
+            ListUtil.of(
+                    Pair.of("白班", new String[] {"08:00", "20:00"}),
+                    Pair.of("夜班", new String[] {"20:00", "08:00"}))),
+    THREE(
+            3,
+            "三班倒",
+            ListUtil.of(
+                    Pair.of("白班", new String[] {"08:00", "16:00"}),
+                    Pair.of("中班", new String[] {"16:00", "00:00"}),
+                    Pair.of("夜班", new String[] {"00:00", "08:00"})));
 
-    SINGLE(1, "单白班", ListUtil.of(
-            Pair.of("白班", new String[]{"08:00", "18:00"})
-    )),
-    TWO(2, "两班倒", ListUtil.of(
-            Pair.of("白班", new String[]{"08:00", "20:00"}),
-            Pair.of("夜班", new String[]{"20:00", "08:00"})
-    )),
-    THREE(3, "三班倒", ListUtil.of(
-            Pair.of("白班", new String[]{"08:00", "16:00"}),
-            Pair.of("中班", new String[]{"16:00", "00:00"}),
-            Pair.of("夜班", new String[]{"00:00", "08:00"})
-    ));
-
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(MesCalShiftTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(MesCalShiftTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型值
      */
     private final Integer type;
+
     /**
      * 类型名
      */
     private final String name;
+
     /**
      * 班次配置列表
      *
@@ -79,5 +84,4 @@ public enum MesCalShiftTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

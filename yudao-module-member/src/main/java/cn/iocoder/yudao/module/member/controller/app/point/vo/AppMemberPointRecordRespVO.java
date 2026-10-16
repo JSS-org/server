@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.app.point.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -23,5 +24,4 @@ public class AppMemberPointRecordRespVO {
 
     @Schema(description = "发生时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

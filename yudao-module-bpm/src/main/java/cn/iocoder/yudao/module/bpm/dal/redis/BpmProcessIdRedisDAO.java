@@ -1,16 +1,18 @@
 package cn.iocoder.yudao.module.bpm.dal.redis;
 
+import static cn.hutool.core.date.DatePattern.*;
+
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.BpmModelMetaInfoVO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-
-import static cn.hutool.core.date.DatePattern.*;
 
 /**
  * BPM 流程 Id 编码的 Redis DAO
@@ -20,8 +22,7 @@ import static cn.hutool.core.date.DatePattern.*;
 @Repository
 public class BpmProcessIdRedisDAO {
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Resource private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 生成序号，使用定义的 processIdRule 规则生成
@@ -57,5 +58,4 @@ public class BpmProcessIdRedisDAO {
         }
         return noPrefix + String.format("%0" + processIdRule.getLength() + "d", no);
     }
-
 }

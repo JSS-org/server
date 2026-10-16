@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.infra.controller.admin.config.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 参数配置创建/修改 Request VO")
@@ -24,7 +26,10 @@ public class ConfigSaveReqVO {
     @Size(max = 100, message = "参数名称不能超过 100 个字符")
     private String name;
 
-    @Schema(description = "参数键名", requiredMode = Schema.RequiredMode.REQUIRED, example = "yunai.db.username")
+    @Schema(
+            description = "参数键名",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "yunai.db.username")
     @NotBlank(message = "参数键名长度不能为空")
     @Size(max = 100, message = "参数键名长度不能超过 100 个字符")
     private String key;
@@ -40,5 +45,4 @@ public class ConfigSaveReqVO {
 
     @Schema(description = "备注", example = "备注一下很帅气！")
     private String remark;
-
 }

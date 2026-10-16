@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.product.controller.app.spu;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_ENABLE;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,12 +19,15 @@ import cn.iocoder.yudao.module.product.enums.spu.ProductSpuStatusEnum;
 import cn.iocoder.yudao.module.product.service.history.ProductBrowseHistoryService;
 import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
 import cn.iocoder.yudao.module.product.service.spu.ProductSpuService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,24 +38,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_ENABLE;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_EXISTS;
-
 @Tag(name = "用户 APP - 商品 SPU")
 @RestController
 @RequestMapping("/product/spu")
 @Validated
 public class AppProductSpuController {
 
-    @Resource
-    private ProductSpuService productSpuService;
-    @Resource
-    private ProductSkuService productSkuService;
-    @Resource
-    private ProductBrowseHistoryService productBrowseHistoryService;
+    @Resource private ProductSpuService productSpuService;
+    @Resource private ProductSkuService productSkuService;
+    @Resource private ProductBrowseHistoryService productBrowseHistoryService;
 
     @GetMapping("/list-by-ids")
     @Operation(summary = "获得商品 SPU 列表")
@@ -67,15 +67,20 @@ public class AppProductSpuController {
     @GetMapping("/page")
     @Operation(summary = "获得商品 SPU 分页")
     @PermitAll
-    public CommonResult<PageResult<AppProductSpuRespVO>> getSpuPage(@Valid AppProductSpuPageReqVO pageVO) {
+    public CommonResult<PageResult<AppProductSpuRespVO>> getSpuPage(
+            @Valid AppProductSpuPageReqVO pageVO) {
         PageResult<ProductSpuDO> pageResult = productSpuService.getSpuPage(pageVO);
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(PageResult.empty(pageResult.getTotal()));
         }
 
         // 拼接返回
-        pageResult.getList().forEach(spu -> spu.setSalesCount(spu.getSalesCount() + spu.getVirtualSalesCount()));
-        PageResult<AppProductSpuRespVO> voPageResult = BeanUtils.toBean(pageResult, AppProductSpuRespVO.class);
+        pageResult
+                .getList()
+                .forEach(
+                        spu -> spu.setSalesCount(spu.getSalesCount() + spu.getVirtualSalesCount()));
+        PageResult<AppProductSpuRespVO> voPageResult =
+                BeanUtils.toBean(pageResult, AppProductSpuRespVO.class);
         return success(voPageResult);
     }
 
@@ -102,9 +107,9 @@ public class AppProductSpuController {
 
         // 拼接返回
         spu.setSalesCount(spu.getSalesCount() + spu.getVirtualSalesCount());
-        AppProductSpuDetailRespVO spuVO = BeanUtils.toBean(spu, AppProductSpuDetailRespVO.class)
-                .setSkus(BeanUtils.toBean(skus, AppProductSpuDetailRespVO.Sku.class));
+        AppProductSpuDetailRespVO spuVO =
+                BeanUtils.toBean(spu, AppProductSpuDetailRespVO.class)
+                        .setSkus(BeanUtils.toBean(skus, AppProductSpuDetailRespVO.Sku.class));
         return success(spuVO);
     }
-
 }

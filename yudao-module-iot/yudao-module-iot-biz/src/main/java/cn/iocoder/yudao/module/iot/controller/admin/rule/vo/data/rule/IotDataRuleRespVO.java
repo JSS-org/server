@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.rule;
 
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataRuleDO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,5 +33,4 @@ public class IotDataRuleRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

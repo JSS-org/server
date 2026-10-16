@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplatecategory;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - FMS 凭证模板分类保存 Request VO")
@@ -21,5 +23,4 @@ public class FmsVoucherTemplateCategorySaveReqVO {
     @NotBlank(message = "分类名称不能为空")
     @Size(max = 255, message = "分类名称长度不能超过 255 个字符")
     private String name;
-
 }

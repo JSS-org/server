@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -40,5 +41,4 @@ public class IotModbusTcpServerConfig {
      */
     @NotNull(message = "请求清理间隔不能为空")
     private Integer requestCleanupInterval = 10000;
-
 }

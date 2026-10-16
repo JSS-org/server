@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.indicator.MesQcTemplateIndicatorPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.indicator.MesQcTemplateIndicatorSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateIndicatorDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -51,7 +52,8 @@ public interface MesQcTemplateIndicatorService {
      * @param pageReqVO 分页查询
      * @return 检测指标项分页
      */
-    PageResult<MesQcTemplateIndicatorDO> getTemplateIndicatorPage(MesQcTemplateIndicatorPageReqVO pageReqVO);
+    PageResult<MesQcTemplateIndicatorDO> getTemplateIndicatorPage(
+            MesQcTemplateIndicatorPageReqVO pageReqVO);
 
     /**
      * 根据方案编号删除所有检测指标项
@@ -75,5 +77,4 @@ public interface MesQcTemplateIndicatorService {
      * @return 检测指标项数量
      */
     Long getTemplateIndicatorCountByUnitMeasureId(Long unitMeasureId);
-
 }

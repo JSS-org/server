@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.trade.service.aftersale;
 
-
 import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.AfterSaleLogDO;
 import cn.iocoder.yudao.module.trade.service.aftersale.bo.AfterSaleLogCreateReqBO;
 
@@ -30,5 +29,4 @@ public interface AfterSaleLogService {
      * @return 售后日志
      */
     List<AfterSaleLogDO> getAfterSaleLogList(Long afterSaleId);
-
 }

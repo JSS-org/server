@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,7 +18,10 @@ public class MesProRouteRespVO {
     @ExcelProperty("编号")
     private Long id;
 
-    @Schema(description = "工艺路线编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "ROUTE001")
+    @Schema(
+            description = "工艺路线编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ROUTE001")
     @ExcelProperty("工艺路线编码")
     private String code;
 
@@ -39,5 +44,4 @@ public class MesProRouteRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

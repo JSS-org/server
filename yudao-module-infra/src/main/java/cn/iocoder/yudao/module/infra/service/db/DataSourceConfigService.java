@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.infra.service.db;
 
 import cn.iocoder.yudao.module.infra.controller.admin.db.vo.DataSourceConfigSaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.db.DataSourceConfigDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -56,5 +57,4 @@ public interface DataSourceConfigService {
      * @return 数据源配置列表
      */
     List<DataSourceConfigDO> getDataSourceConfigList();
-
 }

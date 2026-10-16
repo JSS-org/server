@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.template.*;
 import cn.iocoder.yudao.module.promotion.controller.app.diy.vo.AppDiyTemplatePropertyRespVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyPageDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyTemplateDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -32,8 +33,8 @@ public interface DiyTemplateConvert {
 
     DiyTemplatePropertyRespVO convertPropertyVo(DiyTemplateDO diyTemplate, List<DiyPageDO> pages);
 
-    AppDiyTemplatePropertyRespVO convertPropertyVo2(DiyTemplateDO diyTemplate, String home, String user);
+    AppDiyTemplatePropertyRespVO convertPropertyVo2(
+            DiyTemplateDO diyTemplate, String home, String user);
 
     DiyTemplateDO convert(DiyTemplatePropertyUpdateRequestVO updateReqVO);
-
 }

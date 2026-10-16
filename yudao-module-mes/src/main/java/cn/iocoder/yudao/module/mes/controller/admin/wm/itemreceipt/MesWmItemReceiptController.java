@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -19,12 +23,15 @@ import cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService;
 import cn.iocoder.yudao.module.mes.service.qc.iqc.MesQcIqcService;
 import cn.iocoder.yudao.module.mes.service.wm.arrivalnotice.MesWmArrivalNoticeService;
 import cn.iocoder.yudao.module.mes.service.wm.itemreceipt.MesWmItemReceiptService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,36 +41,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 采购入库单")
 @RestController
 @RequestMapping("/mes/wm/item-receipt")
 @Validated
 public class MesWmItemReceiptController {
 
-    @Resource
-    private MesWmItemReceiptService itemReceiptService;
-    @Resource
-    private MesMdVendorService vendorService;
-    @Resource
-    private MesQcIqcService iqcService;
-    @Resource
-    private MesWmArrivalNoticeService arrivalNoticeService;
+    @Resource private MesWmItemReceiptService itemReceiptService;
+    @Resource private MesMdVendorService vendorService;
+    @Resource private MesQcIqcService iqcService;
+    @Resource private MesWmArrivalNoticeService arrivalNoticeService;
 
     @PostMapping("/create")
     @Operation(summary = "创建采购入库单")
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:create')")
-    public CommonResult<Long> createItemReceipt(@Valid @RequestBody MesWmItemReceiptSaveReqVO createReqVO) {
+    public CommonResult<Long> createItemReceipt(
+            @Valid @RequestBody MesWmItemReceiptSaveReqVO createReqVO) {
         return success(itemReceiptService.createItemReceipt(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改采购入库单")
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:update')")
-    public CommonResult<Boolean> updateItemReceipt(@Valid @RequestBody MesWmItemReceiptSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateItemReceipt(
+            @Valid @RequestBody MesWmItemReceiptSaveReqVO updateReqVO) {
         itemReceiptService.updateItemReceipt(updateReqVO);
         return success(true);
     }
@@ -94,19 +95,27 @@ public class MesWmItemReceiptController {
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:query')")
     public CommonResult<PageResult<MesWmItemReceiptRespVO>> getItemReceiptPage(
             @Valid MesWmItemReceiptPageReqVO pageReqVO) {
-        PageResult<MesWmItemReceiptDO> pageResult = itemReceiptService.getItemReceiptPage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmItemReceiptDO> pageResult =
+                itemReceiptService.getItemReceiptPage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出采购入库单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportItemReceiptExcel(@Valid MesWmItemReceiptPageReqVO pageReqVO,
-                                        HttpServletResponse response) throws IOException {
+    public void exportItemReceiptExcel(
+            @Valid MesWmItemReceiptPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmItemReceiptDO> pageResult = itemReceiptService.getItemReceiptPage(pageReqVO);
-        ExcelUtils.write(response, "采购入库单.xls", "数据", MesWmItemReceiptRespVO.class,
+        PageResult<MesWmItemReceiptDO> pageResult =
+                itemReceiptService.getItemReceiptPage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "采购入库单.xls",
+                "数据",
+                MesWmItemReceiptRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -153,21 +162,30 @@ public class MesWmItemReceiptController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdVendorDO> vendorMap = vendorService.getVendorMap(
-                convertSet(list, MesWmItemReceiptDO::getVendorId));
-        Map<Long, MesQcIqcDO> iqcMap = iqcService.getIqcMap(
-                convertSet(list, MesWmItemReceiptDO::getIqcId));
-        Map<Long, MesWmArrivalNoticeDO> noticeMap = arrivalNoticeService.getArrivalNoticeMap(
-                convertSet(list, MesWmItemReceiptDO::getNoticeId));
+        Map<Long, MesMdVendorDO> vendorMap =
+                vendorService.getVendorMap(convertSet(list, MesWmItemReceiptDO::getVendorId));
+        Map<Long, MesQcIqcDO> iqcMap =
+                iqcService.getIqcMap(convertSet(list, MesWmItemReceiptDO::getIqcId));
+        Map<Long, MesWmArrivalNoticeDO> noticeMap =
+                arrivalNoticeService.getArrivalNoticeMap(
+                        convertSet(list, MesWmItemReceiptDO::getNoticeId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmItemReceiptRespVO.class, vo -> {
-            MapUtils.findAndThen(vendorMap, vo.getVendorId(),
-                    vendor -> vo.setVendorName(vendor.getName()));
-            MapUtils.findAndThen(iqcMap, vo.getIqcId(),
-                    iqc -> vo.setIqcCode(iqc.getCode()));
-            MapUtils.findAndThen(noticeMap, vo.getNoticeId(), notice ->
-                    vo.setNoticeCode(notice.getCode()).setPurchaseOrderCode(notice.getPurchaseOrderCode()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmItemReceiptRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            vendorMap,
+                            vo.getVendorId(),
+                            vendor -> vo.setVendorName(vendor.getName()));
+                    MapUtils.findAndThen(
+                            iqcMap, vo.getIqcId(), iqc -> vo.setIqcCode(iqc.getCode()));
+                    MapUtils.findAndThen(
+                            noticeMap,
+                            vo.getNoticeId(),
+                            notice ->
+                                    vo.setNoticeCode(notice.getCode())
+                                            .setPurchaseOrderCode(notice.getPurchaseOrderCode()));
+                });
     }
-
 }

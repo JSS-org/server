@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.defect.vo.MesQcDefectPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.defect.MesQcDefectDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,12 +19,14 @@ import java.util.List;
 public interface MesQcDefectMapper extends BaseMapperX<MesQcDefectDO> {
 
     default PageResult<MesQcDefectDO> selectPage(MesQcDefectPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesQcDefectDO>()
-                .likeIfPresent(MesQcDefectDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesQcDefectDO::getName, reqVO.getName())
-                .eqIfPresent(MesQcDefectDO::getType, reqVO.getType())
-                .eqIfPresent(MesQcDefectDO::getLevel, reqVO.getLevel())
-                .orderByDesc(MesQcDefectDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesQcDefectDO>()
+                        .likeIfPresent(MesQcDefectDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesQcDefectDO::getName, reqVO.getName())
+                        .eqIfPresent(MesQcDefectDO::getType, reqVO.getType())
+                        .eqIfPresent(MesQcDefectDO::getLevel, reqVO.getLevel())
+                        .orderByDesc(MesQcDefectDO::getId));
     }
 
     default MesQcDefectDO selectByCode(String code) {
@@ -35,8 +38,7 @@ public interface MesQcDefectMapper extends BaseMapperX<MesQcDefectDO> {
     }
 
     default List<MesQcDefectDO> selectList() {
-        return selectList(new LambdaQueryWrapperX<MesQcDefectDO>()
-                .orderByDesc(MesQcDefectDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<MesQcDefectDO>().orderByDesc(MesQcDefectDO::getId));
     }
-
 }

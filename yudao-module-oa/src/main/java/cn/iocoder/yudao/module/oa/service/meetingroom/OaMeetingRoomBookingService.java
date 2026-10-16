@@ -1,13 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.meetingroom;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
 import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.booking.*;
+import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.meetingroom.*;
+
 import jakarta.validation.Valid;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -98,7 +97,8 @@ public interface OaMeetingRoomBookingService {
      * @param pageReqVO 查询条件
      * @return 分页结果
      */
-    PageResult<OaMeetingRoomBookingDO> getMeetingRoomBookingPage(Long userId, OaMeetingRoomBookingPageReqVO pageReqVO);
+    PageResult<OaMeetingRoomBookingDO> getMeetingRoomBookingPage(
+            Long userId, OaMeetingRoomBookingPageReqVO pageReqVO);
 
     /**
      * 获得会议室占用时段
@@ -106,7 +106,8 @@ public interface OaMeetingRoomBookingService {
      * @param reqVO 房间和查询区间
      * @return 有效预约列表
      */
-    List<OaMeetingRoomBookingDO> getMeetingRoomBookingListBySchedule(OaMeetingRoomBookingScheduleReqVO reqVO);
+    List<OaMeetingRoomBookingDO> getMeetingRoomBookingListBySchedule(
+            OaMeetingRoomBookingScheduleReqVO reqVO);
 
     /**
      * 取消已过结束时间、审批通过但尚未开始的会议预定
@@ -129,5 +130,4 @@ public interface OaMeetingRoomBookingService {
      * @return 是否存在
      */
     boolean hasActiveMeetingRoomBooking(Long roomId);
-
 }

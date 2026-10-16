@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.ai.job.image;
 
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.module.ai.service.image.AiImageService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class AiMidjourneySyncJob implements JobHandler {
 
-    @Resource
-    private AiImageService imageService;
+    @Resource private AiImageService imageService;
 
     @Override
     public String execute(String param) {
@@ -24,5 +26,4 @@ public class AiMidjourneySyncJob implements JobHandler {
         log.info("[execute][同步 Midjourney ({}) 个]", count);
         return String.format("同步 Midjourney %s 个", count);
     }
-
 }

@@ -2,10 +2,12 @@ package cn.iocoder.yudao.module.ai.framework.ai.core.model.hunyuan;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+
 import reactor.core.publisher.Flux;
 
 /**
@@ -50,5 +52,4 @@ public class HunYuanChatModel implements ChatModel {
     public ChatOptions getDefaultOptions() {
         return getOptions();
     }
-
 }

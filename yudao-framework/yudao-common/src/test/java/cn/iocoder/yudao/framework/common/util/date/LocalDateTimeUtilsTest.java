@@ -1,7 +1,14 @@
 package cn.iocoder.yudao.framework.common.util.date;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.TimeRange;
+
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -12,12 +19,6 @@ import java.time.YearMonth;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link LocalDateTimeUtils} 的单元测试
@@ -32,13 +33,26 @@ public class LocalDateTimeUtilsTest {
         LocalDateTime beginTime = LocalDateTime.of(2026, 12, 31, 23, 0);
 
         // 调用，并断言：按时长四舍五入，跨日不改变计算规则
-        assertEquals(new BigDecimal("0.0"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime, 1));
-        assertEquals(new BigDecimal("0.5"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusHours(12), 1));
-        assertEquals(new BigDecimal("0.1"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusMinutes(72), 1));
-        assertEquals(new BigDecimal("0.0"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusMinutes(71), 1));
-        assertEquals(new BigDecimal("1.1"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusHours(26), 1));
-        assertEquals(new BigDecimal("-0.5"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.minusHours(12), 1));
-        assertEquals(new BigDecimal("0.50"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusHours(12), 2));
+        assertEquals(
+                new BigDecimal("0.0"), LocalDateTimeUtils.getDaysBetween(beginTime, beginTime, 1));
+        assertEquals(
+                new BigDecimal("0.5"),
+                LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusHours(12), 1));
+        assertEquals(
+                new BigDecimal("0.1"),
+                LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusMinutes(72), 1));
+        assertEquals(
+                new BigDecimal("0.0"),
+                LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusMinutes(71), 1));
+        assertEquals(
+                new BigDecimal("1.1"),
+                LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusHours(26), 1));
+        assertEquals(
+                new BigDecimal("-0.5"),
+                LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.minusHours(12), 1));
+        assertEquals(
+                new BigDecimal("0.50"),
+                LocalDateTimeUtils.getDaysBetween(beginTime, beginTime.plusHours(12), 2));
         assertNull(LocalDateTimeUtils.getDaysBetween(null, beginTime, 1));
         assertNull(LocalDateTimeUtils.getDaysBetween(beginTime, null, 1));
     }
@@ -50,12 +64,19 @@ public class LocalDateTimeUtilsTest {
 
         // 调用，并断言：按时长取整，不因跨午夜额外增加一天
         assertEquals(0, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime));
-        assertEquals(1, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.plusHours(2)));
+        assertEquals(
+                1, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.plusHours(2)));
         assertEquals(1, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.plusDays(1)));
-        assertEquals(2, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.plusDays(1).plusNanos(1_000_000)));
-        assertEquals(2, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.plusHours(26)));
-        assertEquals(0, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.minusHours(2)));
-        assertEquals(-1, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.minusHours(26)));
+        assertEquals(
+                2,
+                LocalDateTimeUtils.getDaysBetweenCeiling(
+                        beginTime, beginTime.plusDays(1).plusNanos(1_000_000)));
+        assertEquals(
+                2, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.plusHours(26)));
+        assertEquals(
+                0, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.minusHours(2)));
+        assertEquals(
+                -1, LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, beginTime.minusHours(26)));
         assertNull(LocalDateTimeUtils.getDaysBetweenCeiling(null, beginTime));
         assertNull(LocalDateTimeUtils.getDaysBetweenCeiling(beginTime, null));
     }
@@ -68,12 +89,15 @@ public class LocalDateTimeUtilsTest {
 
         // 调用，并断言：按自然日计算，包含首尾日期
         assertEquals(3, LocalDateTimeUtils.getDaysBetweenInclusive(beginTime, endTime));
-        assertEquals(1, LocalDateTimeUtils.getDaysBetweenInclusive(beginTime, beginTime.minusHours(1)));
+        assertEquals(
+                1, LocalDateTimeUtils.getDaysBetweenInclusive(beginTime, beginTime.minusHours(1)));
         assertEquals(-1, LocalDateTimeUtils.getDaysBetweenInclusive(endTime, beginTime));
         assertNull(LocalDateTimeUtils.getDaysBetweenInclusive(null, endTime));
         assertNull(LocalDateTimeUtils.getDaysBetweenInclusive(beginTime, null));
-        assertEquals(3, LocalDateTimeUtils.getDaysBetweenInclusive(
-                LocalDateTime.of(2024, 2, 28, 0, 0), LocalDateTime.of(2024, 3, 1, 0, 0)));
+        assertEquals(
+                3,
+                LocalDateTimeUtils.getDaysBetweenInclusive(
+                        LocalDateTime.of(2024, 2, 28, 0, 0), LocalDateTime.of(2024, 3, 1, 0, 0)));
     }
 
     @Test
@@ -128,12 +152,14 @@ public class LocalDateTimeUtilsTest {
         // 调用，并断言：空数组和双空边界都不是有效范围
         assertFalse(LocalDateTimeUtils.isTimeRangePresent(null));
         assertFalse(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[0]));
-        assertFalse(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[]{null, null}));
+        assertFalse(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[] {null, null}));
 
         // 调用，并断言：单边或双边存在即为有效范围
-        assertTrue(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[]{time}));
-        assertTrue(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[]{null, time}));
-        assertTrue(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[]{time, time.plusHours(1)}));
+        assertTrue(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[] {time}));
+        assertTrue(LocalDateTimeUtils.isTimeRangePresent(new LocalDateTime[] {null, time}));
+        assertTrue(
+                LocalDateTimeUtils.isTimeRangePresent(
+                        new LocalDateTime[] {time, time.plusHours(1)}));
     }
 
     @Test
@@ -143,15 +169,11 @@ public class LocalDateTimeUtilsTest {
         LocalDateTime time = date.atTime(15, 30);
 
         // 调用，并断言
-        assertEquals(LocalDateTime.of(2026, 7, 24, 0, 0),
-                LocalDateTimeUtils.getDayBeginTime(date));
-        assertEquals(LocalDateTime.of(2026, 7, 24, 0, 0),
-                LocalDateTimeUtils.getDayBeginTime(time));
+        assertEquals(LocalDateTime.of(2026, 7, 24, 0, 0), LocalDateTimeUtils.getDayBeginTime(date));
+        assertEquals(LocalDateTime.of(2026, 7, 24, 0, 0), LocalDateTimeUtils.getDayBeginTime(time));
         assertNull(LocalDateTimeUtils.getDayBeginTime((LocalDateTime) null));
-        assertEquals(LocalDateTime.of(date, LocalTime.MAX),
-                LocalDateTimeUtils.getDayEndTime(date));
-        assertEquals(LocalDateTime.of(date, LocalTime.MAX),
-                LocalDateTimeUtils.getDayEndTime(time));
+        assertEquals(LocalDateTime.of(date, LocalTime.MAX), LocalDateTimeUtils.getDayEndTime(date));
+        assertEquals(LocalDateTime.of(date, LocalTime.MAX), LocalDateTimeUtils.getDayEndTime(time));
         assertNull(LocalDateTimeUtils.getDayEndTime((LocalDateTime) null));
         assertNull(LocalDateTimeUtils.getDayEndTime((LocalDate) null));
     }
@@ -195,9 +217,10 @@ public class LocalDateTimeUtilsTest {
         YearMonth month = YearMonth.of(2026, 12);
 
         // 调用，并断言
-        assertEquals(LocalDateTime.of(2026, 12, 1, 0, 0),
-                LocalDateTimeUtils.getMonthBeginTime(month));
-        assertEquals(LocalDateTime.of(2027, 1, 1, 0, 0),
+        assertEquals(
+                LocalDateTime.of(2026, 12, 1, 0, 0), LocalDateTimeUtils.getMonthBeginTime(month));
+        assertEquals(
+                LocalDateTime.of(2027, 1, 1, 0, 0),
                 LocalDateTimeUtils.getNextMonthBeginTime(month));
     }
 
@@ -237,14 +260,24 @@ public class LocalDateTimeUtilsTest {
         LocalDateTime firstEndTime = LocalDateTime.of(2026, 7, 24, 12, 0);
 
         // 调用，并断言：首尾相接属于闭区间重叠
-        assertTrue(LocalDateTimeUtils.isClosedRangeOverlap(
-                firstBeginTime, firstEndTime, firstEndTime, firstEndTime.plusHours(1)));
-        assertTrue(LocalDateTimeUtils.isClosedRangeOverlap(
-                firstBeginTime, firstEndTime, firstBeginTime.minusHours(1), firstBeginTime));
-        assertFalse(LocalDateTimeUtils.isClosedRangeOverlap(
-                firstBeginTime, firstEndTime, firstEndTime.plusNanos(1), firstEndTime.plusHours(1)));
-        assertFalse(LocalDateTimeUtils.isClosedRangeOverlap(
-                firstBeginTime, firstEndTime, null, firstEndTime));
+        assertTrue(
+                LocalDateTimeUtils.isClosedRangeOverlap(
+                        firstBeginTime, firstEndTime, firstEndTime, firstEndTime.plusHours(1)));
+        assertTrue(
+                LocalDateTimeUtils.isClosedRangeOverlap(
+                        firstBeginTime,
+                        firstEndTime,
+                        firstBeginTime.minusHours(1),
+                        firstBeginTime));
+        assertFalse(
+                LocalDateTimeUtils.isClosedRangeOverlap(
+                        firstBeginTime,
+                        firstEndTime,
+                        firstEndTime.plusNanos(1),
+                        firstEndTime.plusHours(1)));
+        assertFalse(
+                LocalDateTimeUtils.isClosedRangeOverlap(
+                        firstBeginTime, firstEndTime, null, firstEndTime));
     }
 
     @Test
@@ -254,9 +287,10 @@ public class LocalDateTimeUtilsTest {
         TimeRange sourceRange = new TimeRange(date.atTime(9, 0), date.atTime(18, 0));
 
         // 调用：扣除原时段中间的一段
-        List<TimeRange> result = LocalDateTimeUtils.subtractTimeRanges(
-                Collections.singletonList(sourceRange),
-                new TimeRange(date.atTime(12, 0), date.atTime(13, 0)));
+        List<TimeRange> result =
+                LocalDateTimeUtils.subtractTimeRanges(
+                        Collections.singletonList(sourceRange),
+                        new TimeRange(date.atTime(12, 0), date.atTime(13, 0)));
 
         // 断言：原时段被拆分为两段
         assertEquals(2, result.size());
@@ -264,15 +298,17 @@ public class LocalDateTimeUtilsTest {
         assertTimeRange(result.get(1), date.atTime(13, 0), date.atTime(18, 0));
 
         // 调用，并断言：扣除时段完整覆盖原时段
-        result = LocalDateTimeUtils.subtractTimeRanges(
-                Collections.singletonList(sourceRange),
-                new TimeRange(date.atTime(8, 0), date.atTime(19, 0)));
+        result =
+                LocalDateTimeUtils.subtractTimeRanges(
+                        Collections.singletonList(sourceRange),
+                        new TimeRange(date.atTime(8, 0), date.atTime(19, 0)));
         assertTrue(result.isEmpty());
 
         // 调用：扣除时段与原时段首尾相接
-        result = LocalDateTimeUtils.subtractTimeRanges(
-                Collections.singletonList(sourceRange),
-                new TimeRange(date.atTime(18, 0), date.atTime(19, 0)));
+        result =
+                LocalDateTimeUtils.subtractTimeRanges(
+                        Collections.singletonList(sourceRange),
+                        new TimeRange(date.atTime(18, 0), date.atTime(19, 0)));
         // 断言：两个时段仅首尾相接，没有正时长交集，原时段保持不变
         assertEquals(1, result.size());
         assertTimeRange(CollUtil.getFirst(result), date.atTime(9, 0), date.atTime(18, 0));
@@ -282,11 +318,12 @@ public class LocalDateTimeUtilsTest {
     public void testMergeTimeRanges() {
         // 准备参数
         LocalDate date = LocalDate.of(2026, 7, 24);
-        List<TimeRange> timeRanges = Arrays.asList(
-                new TimeRange(date.atTime(13, 0), date.atTime(14, 0)),
-                new TimeRange(date.atTime(9, 0), date.atTime(11, 0)),
-                new TimeRange(date.atTime(10, 0), date.atTime(13, 0)),
-                new TimeRange(date.atTime(16, 0), date.atTime(17, 0)));
+        List<TimeRange> timeRanges =
+                Arrays.asList(
+                        new TimeRange(date.atTime(13, 0), date.atTime(14, 0)),
+                        new TimeRange(date.atTime(9, 0), date.atTime(11, 0)),
+                        new TimeRange(date.atTime(10, 0), date.atTime(13, 0)),
+                        new TimeRange(date.atTime(16, 0), date.atTime(17, 0)));
 
         // 调用
         List<TimeRange> result = LocalDateTimeUtils.mergeTimeRanges(timeRanges);
@@ -303,12 +340,14 @@ public class LocalDateTimeUtilsTest {
     public void testIntersectTimeRanges() {
         // 准备参数
         LocalDate date = LocalDate.of(2026, 7, 24);
-        List<TimeRange> firstRanges = Arrays.asList(
-                new TimeRange(date.atTime(9, 0), date.atTime(12, 0)),
-                new TimeRange(date.atTime(13, 0), date.atTime(18, 0)));
-        List<TimeRange> secondRanges = Arrays.asList(
-                new TimeRange(date.atTime(10, 0), date.atTime(14, 0)),
-                new TimeRange(date.atTime(17, 0), date.atTime(19, 0)));
+        List<TimeRange> firstRanges =
+                Arrays.asList(
+                        new TimeRange(date.atTime(9, 0), date.atTime(12, 0)),
+                        new TimeRange(date.atTime(13, 0), date.atTime(18, 0)));
+        List<TimeRange> secondRanges =
+                Arrays.asList(
+                        new TimeRange(date.atTime(10, 0), date.atTime(14, 0)),
+                        new TimeRange(date.atTime(17, 0), date.atTime(19, 0)));
 
         // 调用
         List<TimeRange> result = LocalDateTimeUtils.intersectTimeRanges(firstRanges, secondRanges);
@@ -319,18 +358,20 @@ public class LocalDateTimeUtilsTest {
         assertTimeRange(result.get(1), date.atTime(13, 0), date.atTime(14, 0));
         assertTimeRange(result.get(2), date.atTime(17, 0), date.atTime(18, 0));
         // 调用，并断言：两个时段仅首尾相接时不生成零时长交集
-        assertNull(LocalDateTimeUtils.intersectTimeRange(
-                new TimeRange(date.atTime(9, 0), date.atTime(10, 0)),
-                new TimeRange(date.atTime(10, 0), date.atTime(11, 0))));
+        assertNull(
+                LocalDateTimeUtils.intersectTimeRange(
+                        new TimeRange(date.atTime(9, 0), date.atTime(10, 0)),
+                        new TimeRange(date.atTime(10, 0), date.atTime(11, 0))));
     }
 
     @Test
     public void testCalculateDurationMinutes() {
         // 准备参数
         LocalDate date = LocalDate.of(2026, 7, 24);
-        List<TimeRange> timeRanges = Arrays.asList(
-                new TimeRange(date.atTime(9, 0), date.atTime(10, 0)),
-                new TimeRange(date.atTime(13, 0), date.atTime(14, 30)));
+        List<TimeRange> timeRanges =
+                Arrays.asList(
+                        new TimeRange(date.atTime(9, 0), date.atTime(10, 0)),
+                        new TimeRange(date.atTime(13, 0), date.atTime(14, 30)));
 
         // 调用，并断言
         assertEquals(150, LocalDateTimeUtils.calculateDurationMinutes(timeRanges));
@@ -345,24 +386,34 @@ public class LocalDateTimeUtilsTest {
         LocalDate endDate = LocalDate.of(2026, 7, 25);
 
         // 调用：构建跨天时间范围
-        List<TimeRange> result = LocalDateTimeUtils.buildDailyTimeRanges(
-                beginDate, endDate, LocalTime.of(22, 0), LocalTime.of(6, 0));
+        List<TimeRange> result =
+                LocalDateTimeUtils.buildDailyTimeRanges(
+                        beginDate, endDate, LocalTime.of(22, 0), LocalTime.of(6, 0));
 
         // 断言
         assertEquals(2, result.size());
-        assertTimeRange(CollUtil.getFirst(result), beginDate.atTime(22, 0), beginDate.plusDays(1).atTime(6, 0));
+        assertTimeRange(
+                CollUtil.getFirst(result),
+                beginDate.atTime(22, 0),
+                beginDate.plusDays(1).atTime(6, 0));
         assertTimeRange(result.get(1), endDate.atTime(22, 0), endDate.plusDays(1).atTime(6, 0));
 
         // 调用：每日开始和结束时刻相同
-        result = LocalDateTimeUtils.buildDailyTimeRanges(
-                beginDate, beginDate, LocalTime.of(9, 0), LocalTime.of(9, 0));
+        result =
+                LocalDateTimeUtils.buildDailyTimeRanges(
+                        beginDate, beginDate, LocalTime.of(9, 0), LocalTime.of(9, 0));
         // 断言：按完整一天处理
         assertEquals(1, result.size());
-        assertTimeRange(CollUtil.getFirst(result), beginDate.atTime(9, 0), beginDate.plusDays(1).atTime(9, 0));
+        assertTimeRange(
+                CollUtil.getFirst(result),
+                beginDate.atTime(9, 0),
+                beginDate.plusDays(1).atTime(9, 0));
 
         // 调用，并断言：开始日期晚于结束日期
-        assertTrue(LocalDateTimeUtils.buildDailyTimeRanges(
-                endDate, beginDate, LocalTime.of(9, 0), LocalTime.of(18, 0)).isEmpty());
+        assertTrue(
+                LocalDateTimeUtils.buildDailyTimeRanges(
+                                endDate, beginDate, LocalTime.of(9, 0), LocalTime.of(18, 0))
+                        .isEmpty());
     }
 
     @Test
@@ -371,27 +422,32 @@ public class LocalDateTimeUtilsTest {
         LocalDate date = LocalDate.of(2026, 7, 8);
 
         // 调用，并断言普通时间范围的左右边界
-        TimeRange result = LocalDateTimeUtils.findDailyTimeRange(
-                date, LocalTime.of(8, 0), LocalTime.of(10, 0), date.atTime(8, 0));
+        TimeRange result =
+                LocalDateTimeUtils.findDailyTimeRange(
+                        date, LocalTime.of(8, 0), LocalTime.of(10, 0), date.atTime(8, 0));
         assertEquals(date.atTime(8, 0), result.getStartTime());
         assertEquals(date.atTime(10, 0), result.getEndTime());
-        assertNotNull(LocalDateTimeUtils.findDailyTimeRange(
-                date, LocalTime.of(8, 0), LocalTime.of(10, 0), date.atTime(10, 0)));
+        assertNotNull(
+                LocalDateTimeUtils.findDailyTimeRange(
+                        date, LocalTime.of(8, 0), LocalTime.of(10, 0), date.atTime(10, 0)));
 
         // 调用，并断言跨日时间范围
-        result = LocalDateTimeUtils.findDailyTimeRange(
-                date, LocalTime.of(20, 0), LocalTime.of(6, 0), date.plusDays(1).atTime(5, 0));
+        result =
+                LocalDateTimeUtils.findDailyTimeRange(
+                        date,
+                        LocalTime.of(20, 0),
+                        LocalTime.of(6, 0),
+                        date.plusDays(1).atTime(5, 0));
         assertEquals(date.atTime(20, 0), result.getStartTime());
         assertEquals(date.plusDays(1).atTime(6, 0), result.getEndTime());
-        assertNull(LocalDateTimeUtils.findDailyTimeRange(
-                date, LocalTime.of(8, 0), LocalTime.of(10, 0), date.atTime(12, 0)));
+        assertNull(
+                LocalDateTimeUtils.findDailyTimeRange(
+                        date, LocalTime.of(8, 0), LocalTime.of(10, 0), date.atTime(12, 0)));
     }
 
-    private static void assertTimeRange(TimeRange timeRange,
-                                        LocalDateTime expectedStartTime,
-                                        LocalDateTime expectedEndTime) {
+    private static void assertTimeRange(
+            TimeRange timeRange, LocalDateTime expectedStartTime, LocalDateTime expectedEndTime) {
         assertEquals(expectedStartTime, timeRange.getStartTime());
         assertEquals(expectedEndTime, timeRange.getEndTime());
     }
-
 }

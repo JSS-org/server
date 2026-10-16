@@ -35,5 +35,4 @@ public interface Ai1HomeService {
      * @return 各 Agent 消息数量
      */
     List<Ai1HomeMessageSummaryByAgentRespVO> getMessageSummaryByAgent(Integer days);
-
 }

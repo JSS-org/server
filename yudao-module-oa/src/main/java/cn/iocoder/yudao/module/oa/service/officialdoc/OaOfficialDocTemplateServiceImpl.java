@@ -1,22 +1,24 @@
 package cn.iocoder.yudao.module.oa.service.officialdoc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_TEMPLATE_DISABLED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_TEMPLATE_IN_USE;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_TEMPLATE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.template.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.OaOfficialDocTemplateDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.officialdoc.OaOfficialDocTemplateMapper;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_TEMPLATE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_TEMPLATE_DISABLED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_TEMPLATE_IN_USE;
 
 /**
  * 套红模板 Service 实现类
@@ -27,17 +29,16 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.OFFICIAL_DOC_T
 @Validated
 public class OaOfficialDocTemplateServiceImpl implements OaOfficialDocTemplateService {
 
-    @Resource
-    private OaOfficialDocTemplateMapper officialDocTemplateMapper;
+    @Resource private OaOfficialDocTemplateMapper officialDocTemplateMapper;
 
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private OaOfficialDocSendService officialDocSendService;
 
     @Override
     public Long createOfficialDocTemplate(OaOfficialDocTemplateSaveReqVO reqVO) {
         // 1. 转换套红模板内容
-        OaOfficialDocTemplateDO template = BeanUtils.toBean(reqVO, OaOfficialDocTemplateDO.class).setId(null);
+        OaOfficialDocTemplateDO template =
+                BeanUtils.toBean(reqVO, OaOfficialDocTemplateDO.class).setId(null);
 
         // 2. 保存记录
         officialDocTemplateMapper.insert(template);
@@ -50,7 +51,8 @@ public class OaOfficialDocTemplateServiceImpl implements OaOfficialDocTemplateSe
         validateOfficialDocTemplateExists(reqVO.getId());
 
         // 2. 更新模板
-        officialDocTemplateMapper.updateById(BeanUtils.toBean(reqVO, OaOfficialDocTemplateDO.class));
+        officialDocTemplateMapper.updateById(
+                BeanUtils.toBean(reqVO, OaOfficialDocTemplateDO.class));
     }
 
     @Override
@@ -83,7 +85,8 @@ public class OaOfficialDocTemplateServiceImpl implements OaOfficialDocTemplateSe
     }
 
     @Override
-    public PageResult<OaOfficialDocTemplateDO> getOfficialDocTemplatePage(OaOfficialDocTemplatePageReqVO reqVO) {
+    public PageResult<OaOfficialDocTemplateDO> getOfficialDocTemplatePage(
+            OaOfficialDocTemplatePageReqVO reqVO) {
         return officialDocTemplateMapper.selectPage(reqVO);
     }
 
@@ -105,5 +108,4 @@ public class OaOfficialDocTemplateServiceImpl implements OaOfficialDocTemplateSe
         }
         return template;
     }
-
 }

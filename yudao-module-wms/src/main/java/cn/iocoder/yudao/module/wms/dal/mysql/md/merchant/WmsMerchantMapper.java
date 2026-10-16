@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.wms.controller.admin.md.merchant.vo.WmsMerchantListReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.merchant.vo.WmsMerchantPageReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.merchant.WmsMerchantDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -19,21 +20,24 @@ import java.util.List;
 public interface WmsMerchantMapper extends BaseMapperX<WmsMerchantDO> {
 
     default PageResult<WmsMerchantDO> selectPage(WmsMerchantPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<WmsMerchantDO>()
-                .eqIfPresent(WmsMerchantDO::getCode, reqVO.getCode())
-                .likeIfPresent(WmsMerchantDO::getName, reqVO.getName())
-                .eqIfPresent(WmsMerchantDO::getType, reqVO.getType())
-                .inIfPresent(WmsMerchantDO::getType, reqVO.getTypes())
-                .orderByDesc(WmsMerchantDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<WmsMerchantDO>()
+                        .eqIfPresent(WmsMerchantDO::getCode, reqVO.getCode())
+                        .likeIfPresent(WmsMerchantDO::getName, reqVO.getName())
+                        .eqIfPresent(WmsMerchantDO::getType, reqVO.getType())
+                        .inIfPresent(WmsMerchantDO::getType, reqVO.getTypes())
+                        .orderByDesc(WmsMerchantDO::getId));
     }
 
     default List<WmsMerchantDO> selectList(WmsMerchantListReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<WmsMerchantDO>()
-                .eqIfPresent(WmsMerchantDO::getCode, reqVO.getCode())
-                .likeIfPresent(WmsMerchantDO::getName, reqVO.getName())
-                .eqIfPresent(WmsMerchantDO::getType, reqVO.getType())
-                .inIfPresent(WmsMerchantDO::getType, reqVO.getTypes())
-                .orderByDesc(WmsMerchantDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<WmsMerchantDO>()
+                        .eqIfPresent(WmsMerchantDO::getCode, reqVO.getCode())
+                        .likeIfPresent(WmsMerchantDO::getName, reqVO.getName())
+                        .eqIfPresent(WmsMerchantDO::getType, reqVO.getType())
+                        .inIfPresent(WmsMerchantDO::getType, reqVO.getTypes())
+                        .orderByDesc(WmsMerchantDO::getId));
     }
 
     default WmsMerchantDO selectByCode(String code) {
@@ -43,5 +47,4 @@ public interface WmsMerchantMapper extends BaseMapperX<WmsMerchantDO> {
     default WmsMerchantDO selectByName(String name) {
         return selectOne(WmsMerchantDO::getName, name);
     }
-
 }

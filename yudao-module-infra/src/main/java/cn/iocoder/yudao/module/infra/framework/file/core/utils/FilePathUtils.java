@@ -1,13 +1,13 @@
 package cn.iocoder.yudao.module.infra.framework.file.core.utils;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_PATH_INVALID;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_PATH_INVALID;
 
 /**
  * 文件路径工具类
@@ -16,8 +16,7 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_PATH_I
  */
 public class FilePathUtils {
 
-    private FilePathUtils() {
-    }
+    private FilePathUtils() {}
 
     /**
      * 校验文件名是否合法，禁止携带目录路径。
@@ -29,7 +28,9 @@ public class FilePathUtils {
         if (StrUtil.isEmpty(name)) {
             return name;
         }
-        if (!isPathValid(name) || StrUtil.contains(name, StrUtil.SLASH) || !StrUtil.equals(name, FileUtil.getName(name))) {
+        if (!isPathValid(name)
+                || StrUtil.contains(name, StrUtil.SLASH)
+                || !StrUtil.equals(name, FileUtil.getName(name))) {
             throw exception(FILE_PATH_INVALID);
         }
         return name;
@@ -102,5 +103,4 @@ public class FilePathUtils {
         }
         return true;
     }
-
 }

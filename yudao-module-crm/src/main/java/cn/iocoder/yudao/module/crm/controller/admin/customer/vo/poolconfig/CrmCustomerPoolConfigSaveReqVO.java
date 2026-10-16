@@ -1,11 +1,15 @@
 package cn.iocoder.yudao.module.crm.controller.admin.customer.vo.poolconfig;
 
 import cn.hutool.core.util.BooleanUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.Objects;
@@ -61,5 +65,4 @@ public class CrmCustomerPoolConfigSaveReqVO {
         }
         return Objects.nonNull(getNotifyDays());
     }
-
 }

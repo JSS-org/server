@@ -1,16 +1,21 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.changetemplate.HrmSalaryChangeTemplateRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.changetemplate.HrmSalaryChangeTemplateSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryChangeTemplateDO;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryChangeTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,16 +29,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - HRM 调薪模板")
 @RestController
 @RequestMapping("/hrm/salary/change-template")
 @Validated
 public class HrmSalaryChangeTemplateController {
 
-    @Resource
-    private HrmSalaryChangeTemplateService salaryChangeTemplateService;
+    @Resource private HrmSalaryChangeTemplateService salaryChangeTemplateService;
 
     @PostMapping("/create")
     @Operation(summary = "创建调薪模板")
@@ -65,18 +67,21 @@ public class HrmSalaryChangeTemplateController {
     @Operation(summary = "获得调薪模板")
     @Parameter(name = "id", description = "调薪模板编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('hrm:salary:change-template:query')")
-    public CommonResult<HrmSalaryChangeTemplateRespVO> getSalaryChangeTemplate(@RequestParam("id") Long id) {
-        HrmSalaryChangeTemplateDO template = salaryChangeTemplateService.getSalaryChangeTemplate(id);
+    public CommonResult<HrmSalaryChangeTemplateRespVO> getSalaryChangeTemplate(
+            @RequestParam("id") Long id) {
+        HrmSalaryChangeTemplateDO template =
+                salaryChangeTemplateService.getSalaryChangeTemplate(id);
         return success(BeanUtils.toBean(template, HrmSalaryChangeTemplateRespVO.class));
     }
 
     @GetMapping("/list")
     @Operation(summary = "获得调薪模板列表")
-    @PreAuthorize("@ss.hasPermission('hrm:salary:change-template:query') "
-            + "or @ss.hasPermission('hrm:salary:employee-info:query')")
+    @PreAuthorize(
+            "@ss.hasPermission('hrm:salary:change-template:query') "
+                    + "or @ss.hasPermission('hrm:salary:employee-info:query')")
     public CommonResult<List<HrmSalaryChangeTemplateRespVO>> getSalaryChangeTemplateList() {
-        List<HrmSalaryChangeTemplateDO> list = salaryChangeTemplateService.getSalaryChangeTemplateList();
+        List<HrmSalaryChangeTemplateDO> list =
+                salaryChangeTemplateService.getSalaryChangeTemplateList();
         return success(BeanUtils.toBean(list, HrmSalaryChangeTemplateRespVO.class));
     }
-
 }

@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.category;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - WMS 商品分类新增/修改 Request VO")
@@ -19,7 +22,10 @@ public class WmsItemCategorySaveReqVO {
     @NotNull(message = "父级编号不能为空")
     private Long parentId;
 
-    @Schema(description = "分类编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "C00000001")
+    @Schema(
+            description = "分类编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "C00000001")
     @NotEmpty(message = "分类编号不能为空")
     @Size(max = 20, message = "分类编号长度不能超过 20 个字符")
     private String code;
@@ -37,5 +43,4 @@ public class WmsItemCategorySaveReqVO {
     @NotNull(message = "状态不能为空")
     @InEnum(value = CommonStatusEnum.class, message = "状态必须是 {value}")
     private Integer status;
-
 }

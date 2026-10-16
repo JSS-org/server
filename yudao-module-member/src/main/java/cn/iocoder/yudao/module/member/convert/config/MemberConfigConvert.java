@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.member.api.config.dto.MemberConfigRespDTO;
 import cn.iocoder.yudao.module.member.controller.admin.config.vo.MemberConfigRespVO;
 import cn.iocoder.yudao.module.member.controller.admin.config.vo.MemberConfigSaveReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.config.MemberConfigDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

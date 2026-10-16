@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class MesWmMiscIssueSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "出库单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "MI20260302001")
+    @Schema(
+            description = "出库单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "MI20260302001")
     @NotBlank(message = "出库单编号不能为空")
     private String code;
 
@@ -28,6 +33,7 @@ public class MesWmMiscIssueSaveReqVO {
 
     @Schema(description = "来源单据类型", example = "PURCHASE_ORDER")
     private String sourceDocType;
+
     @Schema(description = "来源单据ID", example = "1")
     private Long sourceDocId;
 
@@ -40,5 +46,4 @@ public class MesWmMiscIssueSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

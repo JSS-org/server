@@ -38,6 +38,6 @@ public interface WmsHomeStatisticsService {
      * @param warehouseLimit 仓库排行数量
      * @return 库存汇总统计
      */
-    WmsHomeInventorySummaryRespVO getInventorySummary(Long warehouseId, Integer goodsLimit, Integer warehouseLimit);
-
+    WmsHomeInventorySummaryRespVO getInventorySummary(
+            Long warehouseId, Integer goodsLimit, Integer warehouseLimit);
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.controller.admin.thingmodel.vo.IotThingModelL
 import cn.iocoder.yudao.module.iot.controller.admin.thingmodel.vo.IotThingModelPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.thingmodel.vo.IotThingModelSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.IotThingModelDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -63,7 +64,8 @@ public interface IotThingModelService {
      * @param identifiers 功能标识列表
      * @return 产品物模型列表
      */
-    List<IotThingModelDO> getThingModelListByProductIdAndIdentifiers(Long productId, Collection<String> identifiers);
+    List<IotThingModelDO> getThingModelListByProductIdAndIdentifiers(
+            Long productId, Collection<String> identifiers);
 
     /**
      * 获得产品物模型列表
@@ -116,5 +118,4 @@ public interface IotThingModelService {
      * @return 转换后的值；无法转换时返回 null
      */
     Object convertThingModelPropertyValue(IotThingModelDO thingModel, Object value);
-
 }

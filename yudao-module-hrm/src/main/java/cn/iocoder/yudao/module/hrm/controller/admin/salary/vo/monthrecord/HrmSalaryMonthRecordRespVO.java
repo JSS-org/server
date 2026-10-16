@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord;
 
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionNodeRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -21,7 +23,10 @@ public class HrmSalaryMonthRecordRespVO {
     @Schema(description = "月份", requiredMode = Schema.RequiredMode.REQUIRED, example = "7")
     private Integer month;
 
-    @Schema(description = "标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026 年 7 月工资表")
+    @Schema(
+            description = "标题",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2026 年 7 月工资表")
     private String title;
 
     @Schema(description = "开始日期")
@@ -62,5 +67,4 @@ public class HrmSalaryMonthRecordRespVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
-
 }

@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.ai1.service.model;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.normalizeHeaders;
+import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholders;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,7 +16,9 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ProviderDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.model.Ai1ProviderMapper;
 import cn.iocoder.yudao.module.ai1.harness.llm.Ai1LlmModelFactory;
 import cn.iocoder.yudao.module.ai1.harness.model.Ai1ProviderTool;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +27,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.normalizeHeaders;
-import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholders;
 
 /**
  * AI1 供应商 Service 实现类
@@ -35,18 +37,14 @@ import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholder
 @Validated
 public class Ai1ProviderServiceImpl implements Ai1ProviderService {
 
-    @Resource
-    private Ai1ProviderMapper providerMapper;
+    @Resource private Ai1ProviderMapper providerMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1ModelService modelService;
 
-    @Resource
-    private Ai1LlmModelFactory llmModelFactory;
+    @Resource private Ai1LlmModelFactory llmModelFactory;
 
-    @Resource
-    private Ai1ProviderTool providerTool;
+    @Resource private Ai1ProviderTool providerTool;
 
     @Override
     public Long createProvider(Ai1ProviderSaveReqVO createReqVO) {
@@ -133,8 +131,9 @@ public class Ai1ProviderServiceImpl implements Ai1ProviderService {
         Ai1ProviderDO provider = validateProviderExists(id);
 
         // 2. 连通测试：调用前解析 ${ENV} 占位符，库中的原文不改
-        return providerTool.testConnect(resolveSpringPlaceholders(provider.getBaseUrl()),
-                resolveSpringPlaceholders(provider.getApiKey()), resolveSpringPlaceholders(provider.getHeaders()));
+        return providerTool.testConnect(
+                resolveSpringPlaceholders(provider.getBaseUrl()),
+                resolveSpringPlaceholders(provider.getApiKey()),
+                resolveSpringPlaceholders(provider.getHeaders()));
     }
-
 }

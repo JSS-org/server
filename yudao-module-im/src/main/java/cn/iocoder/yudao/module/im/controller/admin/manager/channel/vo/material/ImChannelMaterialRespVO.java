@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.material;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,5 +39,4 @@ public class ImChannelMaterialRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

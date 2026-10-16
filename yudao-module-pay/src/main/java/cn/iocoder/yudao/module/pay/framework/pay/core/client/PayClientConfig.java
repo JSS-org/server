@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.pay.framework.pay.core.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import jakarta.validation.Validator;
 
 /**
@@ -23,5 +24,4 @@ public interface PayClientConfig {
      * @param validator 校验对象
      */
     void validate(Validator validator);
-
 }

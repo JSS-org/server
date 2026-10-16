@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.trade.service.brokerage;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMapByFilter;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
@@ -27,18 +31,17 @@ import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageEnabledConditionEn
 import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageRecordBizTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageRecordStatusEnum;
 import cn.iocoder.yudao.module.trade.service.config.TradeConfigService;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMapByFilter;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 
 /**
  * 分销用户 Service 实现类
@@ -49,14 +52,11 @@ import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 @Validated
 public class BrokerageUserServiceImpl implements BrokerageUserService {
 
-    @Resource
-    private BrokerageUserMapper brokerageUserMapper;
+    @Resource private BrokerageUserMapper brokerageUserMapper;
 
-    @Resource
-    private TradeConfigService tradeConfigService;
+    @Resource private TradeConfigService tradeConfigService;
 
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private MemberUserApi memberUserApi;
 
     @Override
     public BrokerageUserDO getBrokerageUser(Long id) {
@@ -65,7 +65,8 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
 
     @Override
     public PageResult<BrokerageUserDO> getBrokerageUserPage(BrokerageUserPageReqVO pageReqVO) {
-        List<Long> childIds = getChildUserIdsByLevel(pageReqVO.getBindUserId(), pageReqVO.getLevel());
+        List<Long> childIds =
+                getChildUserIdsByLevel(pageReqVO.getBindUserId(), pageReqVO.getLevel());
         // 有”绑定用户编号“查询条件时，没有查到下级会员，直接返回空
         if (pageReqVO.getBindUserId() != null && CollUtil.isEmpty(childIds)) {
             return PageResult.empty();
@@ -91,7 +92,8 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
 
         // 情况二：修改推广员
         validateCanBindUser(brokerageUser, bindUserId);
-        brokerageUserMapper.updateById(fillBindUserData(bindUserId, new BrokerageUserDO().setId(id)));
+        brokerageUserMapper.updateById(
+                fillBindUserData(bindUserId, new BrokerageUserDO().setId(id)));
     }
 
     @Override
@@ -100,8 +102,11 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
         validateBrokerageUserExists(id);
         if (BooleanUtil.isTrue(enabled)) {
             // 开通推广资格
-            brokerageUserMapper.updateById(new BrokerageUserDO().setId(id)
-                    .setBrokerageEnabled(true).setBrokerageTime(LocalDateTime.now()));
+            brokerageUserMapper.updateById(
+                    new BrokerageUserDO()
+                            .setId(id)
+                            .setBrokerageEnabled(true)
+                            .setBrokerageTime(LocalDateTime.now()));
         } else {
             // 取消推广资格
             brokerageUserMapper.updateEnabledFalseAndBrokerageTimeToNull(id);
@@ -129,10 +134,17 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
     public BrokerageUserDO getOrCreateBrokerageUser(Long id) {
         BrokerageUserDO brokerageUser = brokerageUserMapper.selectById(id);
         // 特殊：人人分销的情况下，如果分销人为空则创建分销人
-        if (brokerageUser == null && ObjUtil.equal(BrokerageEnabledConditionEnum.ALL.getCondition(),
-                tradeConfigService.getTradeConfig().getBrokerageEnabledCondition())) {
-            brokerageUser = new BrokerageUserDO().setId(id).setBrokerageEnabled(true).setBrokeragePrice(0)
-                    .setBrokerageTime(LocalDateTime.now()).setFrozenPrice(0);
+        if (brokerageUser == null
+                && ObjUtil.equal(
+                        BrokerageEnabledConditionEnum.ALL.getCondition(),
+                        tradeConfigService.getTradeConfig().getBrokerageEnabledCondition())) {
+            brokerageUser =
+                    new BrokerageUserDO()
+                            .setId(id)
+                            .setBrokerageEnabled(true)
+                            .setBrokeragePrice(0)
+                            .setBrokerageTime(LocalDateTime.now())
+                            .setFrozenPrice(0);
             brokerageUserMapper.insert(brokerageUser);
         }
         return brokerageUser;
@@ -179,7 +191,12 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
         BrokerageUserDO brokerageUser = brokerageUserMapper.selectById(userId);
         if (brokerageUser == null) { // 分销用户不存在的情况：1. 新注册；2. 旧数据；3. 分销功能关闭后又打开
             isNewBrokerageUser = true;
-            brokerageUser = new BrokerageUserDO().setId(userId).setBrokerageEnabled(false).setBrokeragePrice(0).setFrozenPrice(0);
+            brokerageUser =
+                    new BrokerageUserDO()
+                            .setId(userId)
+                            .setBrokerageEnabled(false)
+                            .setBrokeragePrice(0)
+                            .setFrozenPrice(0);
         }
 
         // 2.1 校验是否能绑定用户
@@ -191,15 +208,19 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
         validateCanBindUser(brokerageUser, bindUserId);
         // 2.3 绑定用户
         if (isNewBrokerageUser) {
-            Integer enabledCondition = tradeConfigService.getTradeConfig().getBrokerageEnabledCondition();
-            if (BrokerageEnabledConditionEnum.ALL.getCondition().equals(enabledCondition)) { // 人人分销：用户默认就有分销资格
+            Integer enabledCondition =
+                    tradeConfigService.getTradeConfig().getBrokerageEnabledCondition();
+            if (BrokerageEnabledConditionEnum.ALL
+                    .getCondition()
+                    .equals(enabledCondition)) { // 人人分销：用户默认就有分销资格
                 brokerageUser.setBrokerageEnabled(true).setBrokerageTime(LocalDateTime.now());
             } else {
                 brokerageUser.setBrokerageEnabled(false).setBrokerageTime(LocalDateTime.now());
             }
             brokerageUserMapper.insert(fillBindUserData(bindUserId, brokerageUser));
         } else {
-            brokerageUserMapper.updateById(fillBindUserData(bindUserId, new BrokerageUserDO().setId(userId)));
+            brokerageUserMapper.updateById(
+                    fillBindUserData(bindUserId, new BrokerageUserDO().setId(userId)));
         }
         return true;
     }
@@ -213,8 +234,10 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
             throw exception(BROKERAGE_CREATE_USER_EXISTS);
         }
         // 1.2 校验是否能绑定用户
-        brokerageUser = BeanUtils.toBean(createReqVO, BrokerageUserDO.class).setId(createReqVO.getUserId())
-                .setBrokerageTime(LocalDateTime.now());
+        brokerageUser =
+                BeanUtils.toBean(createReqVO, BrokerageUserDO.class)
+                        .setId(createReqVO.getUserId())
+                        .setBrokerageTime(LocalDateTime.now());
         validateCanBindUser(brokerageUser, createReqVO.getBindUserId());
 
         // 2. 创建分销人
@@ -248,14 +271,19 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
     }
 
     @Override
-    public PageResult<AppBrokerageUserRankByUserCountRespVO> getBrokerageUserRankPageByUserCount(AppBrokerageUserRankPageReqVO pageReqVO) {
-        IPage<AppBrokerageUserRankByUserCountRespVO> pageResult = brokerageUserMapper.selectCountPageGroupByBindUserId(MyBatisUtils.buildPage(pageReqVO),
-                ArrayUtil.get(pageReqVO.getTimes(), 0), ArrayUtil.get(pageReqVO.getTimes(), 1));
+    public PageResult<AppBrokerageUserRankByUserCountRespVO> getBrokerageUserRankPageByUserCount(
+            AppBrokerageUserRankPageReqVO pageReqVO) {
+        IPage<AppBrokerageUserRankByUserCountRespVO> pageResult =
+                brokerageUserMapper.selectCountPageGroupByBindUserId(
+                        MyBatisUtils.buildPage(pageReqVO),
+                        ArrayUtil.get(pageReqVO.getTimes(), 0),
+                        ArrayUtil.get(pageReqVO.getTimes(), 1));
         return new PageResult<>(pageResult.getRecords(), pageResult.getTotal());
     }
 
     @Override
-    public PageResult<AppBrokerageUserChildSummaryRespVO> getBrokerageUserChildSummaryPage(AppBrokerageUserChildSummaryPageReqVO pageReqVO, Long userId) {
+    public PageResult<AppBrokerageUserChildSummaryRespVO> getBrokerageUserChildSummaryPage(
+            AppBrokerageUserChildSummaryPageReqVO pageReqVO, Long userId) {
         // 1.1 查询下级用户编号列表
         List<Long> childIds = getChildUserIdsByLevel(userId, pageReqVO.getLevel());
         if (CollUtil.isEmpty(childIds)) {
@@ -263,18 +291,23 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
         }
         // 1.2 根据昵称过滤下级用户
         List<MemberUserRespDTO> users = memberUserApi.getUserList(childIds);
-        Map<Long, MemberUserRespDTO> userMap = convertMapByFilter(users,
-                user -> StrUtil.contains(user.getNickname(), pageReqVO.getNickname()),
-                MemberUserRespDTO::getId);
+        Map<Long, MemberUserRespDTO> userMap =
+                convertMapByFilter(
+                        users,
+                        user -> StrUtil.contains(user.getNickname(), pageReqVO.getNickname()),
+                        MemberUserRespDTO::getId);
         if (CollUtil.isEmpty(userMap)) {
             return PageResult.empty();
         }
 
         // 2. 分页查询
-        IPage<AppBrokerageUserChildSummaryRespVO> pageResult = brokerageUserMapper.selectSummaryPageByUserId(
-                MyBatisUtils.buildPage(pageReqVO), BrokerageRecordBizTypeEnum.ORDER.getType(),
-                BrokerageRecordStatusEnum.SETTLEMENT.getStatus(), userMap.keySet(), pageReqVO.getSortingField()
-        );
+        IPage<AppBrokerageUserChildSummaryRespVO> pageResult =
+                brokerageUserMapper.selectSummaryPageByUserId(
+                        MyBatisUtils.buildPage(pageReqVO),
+                        BrokerageRecordBizTypeEnum.ORDER.getType(),
+                        BrokerageRecordStatusEnum.SETTLEMENT.getStatus(),
+                        userMap.keySet(),
+                        pageReqVO.getSortingField());
 
         // 3. 拼接数据并返回
         BrokerageUserConvert.INSTANCE.copyTo(pageResult.getRecords(), userMap);
@@ -294,7 +327,9 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
             if (!isNewRegisterUser(user.getId())) {
                 throw exception(BROKERAGE_BIND_MODE_REGISTER); // 只有在注册时可以绑定
             }
-        } else if (BrokerageBindModeEnum.ANYTIME.getMode().equals(tradeConfig.getBrokerageBindMode())) {
+        } else if (BrokerageBindModeEnum.ANYTIME
+                .getMode()
+                .equals(tradeConfig.getBrokerageBindMode())) {
             if (user.getBindUserId() != null) {
                 throw exception(BROKERAGE_BIND_OVERRIDE); // 已绑定了推广人
             }
@@ -361,7 +396,8 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
             return Collections.emptyList();
         }
         // 先查第 1 级
-        List<Long> bindUserIds = brokerageUserMapper.selectIdListByBindUserIdIn(Collections.singleton(bindUserId));
+        List<Long> bindUserIds =
+                brokerageUserMapper.selectIdListByBindUserIdIn(Collections.singleton(bindUserId));
         if (CollUtil.isEmpty(bindUserIds)) {
             return Collections.emptyList();
         }
@@ -382,5 +418,4 @@ public class BrokerageUserServiceImpl implements BrokerageUserService {
         }
         throw exception(BROKERAGE_USER_LEVEL_NOT_SUPPORT);
     }
-
 }

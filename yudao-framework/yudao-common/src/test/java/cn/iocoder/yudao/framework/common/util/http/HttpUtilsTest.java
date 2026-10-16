@@ -1,8 +1,8 @@
 package cn.iocoder.yudao.framework.common.util.http;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * {@link HttpUtils} 的单元测试
@@ -35,8 +35,12 @@ public class HttpUtilsTest {
 
     @Test
     public void testRemoveUrlPathQueryAndFragment() {
-        assertEquals("avatar/test.jpg", HttpUtils.removeUrlPathQueryAndFragment("avatar/test.jpg?token=1#preview"));
-        assertEquals("avatar/test.jpg", HttpUtils.removeUrlPathQueryAndFragment("avatar/test.jpg#preview?token=1"));
+        assertEquals(
+                "avatar/test.jpg",
+                HttpUtils.removeUrlPathQueryAndFragment("avatar/test.jpg?token=1#preview"));
+        assertEquals(
+                "avatar/test.jpg",
+                HttpUtils.removeUrlPathQueryAndFragment("avatar/test.jpg#preview?token=1"));
     }
 
     @Test
@@ -78,5 +82,4 @@ public class HttpUtilsTest {
         // 断言：保留 key，value 为空
         assertEquals("https://www.iocoder.cn/path?a=", result);
     }
-
 }

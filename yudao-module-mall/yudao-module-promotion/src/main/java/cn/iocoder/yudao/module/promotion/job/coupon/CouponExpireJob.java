@@ -4,9 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.promotion.service.coupon.CouponService;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
  * 优惠券过期 Job
@@ -16,8 +17,7 @@ import jakarta.annotation.Resource;
 @Component
 public class CouponExpireJob implements JobHandler {
 
-    @Resource
-    private CouponService couponService;
+    @Resource private CouponService couponService;
 
     @Override
     @TenantJob
@@ -25,5 +25,4 @@ public class CouponExpireJob implements JobHandler {
         int count = couponService.expireCoupon();
         return StrUtil.format("过期优惠券 {} 个", count);
     }
-
 }

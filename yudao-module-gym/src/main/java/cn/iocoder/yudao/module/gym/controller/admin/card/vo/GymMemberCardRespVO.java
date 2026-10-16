@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.gym.controller.admin.card.vo;
+
 import lombok.Data;
+
 import java.time.Instant;
 import java.util.List;
+
 @Data
 public class GymMemberCardRespVO {
     private String id;

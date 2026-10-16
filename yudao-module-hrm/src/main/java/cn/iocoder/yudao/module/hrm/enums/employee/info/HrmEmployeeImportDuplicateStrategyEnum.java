@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.employee.info;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,13 +16,14 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeImportDuplicateStrategyEnum implements ArrayValuable<Integer> {
-
     SKIP(1, "跳过"),
     UPDATE(2, "覆盖"),
     FAIL(3, "判失败");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmEmployeeImportDuplicateStrategyEnum::getStrategy).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmEmployeeImportDuplicateStrategyEnum::getStrategy)
+                    .toArray(Integer[]::new);
 
     private final Integer strategy;
     private final String name;
@@ -34,5 +36,4 @@ public enum HrmEmployeeImportDuplicateStrategyEnum implements ArrayValuable<Inte
     public static HrmEmployeeImportDuplicateStrategyEnum valueOf(Integer strategy) {
         return ArrayUtil.firstMatch(item -> item.getStrategy().equals(strategy), values());
     }
-
 }

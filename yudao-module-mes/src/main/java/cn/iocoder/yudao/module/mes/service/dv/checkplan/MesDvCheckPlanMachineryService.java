@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.dv.checkplan;
 
 import cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.machinery.MesDvCheckPlanMachinerySaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkplan.MesDvCheckPlanMachineryDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -66,5 +67,4 @@ public interface MesDvCheckPlanMachineryService {
      * @return 方案设备列表
      */
     List<MesDvCheckPlanMachineryDO> getCheckPlanMachineryListByMachineryId(Long machineryId);
-
 }

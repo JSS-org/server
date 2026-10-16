@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.plan;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,13 +16,12 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaPlanStatusEnum implements ArrayValuable<Integer> {
-
     UNFINISHED(1, "未完成"),
     FINISHED(2, "已完成"),
     CANCELED(3, "已取消");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaPlanStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaPlanStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 状态
@@ -41,5 +41,4 @@ public enum OaPlanStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

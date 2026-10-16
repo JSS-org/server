@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.im.service.channel;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.channel.ImChannelPageReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.channel.ImChannelSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.channel.ImChannelDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * IM 频道 Service 接口
@@ -95,5 +96,4 @@ public interface ImChannelService {
      * @param id 频道编号
      */
     void deleteChannel(Long id);
-
 }

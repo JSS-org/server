@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.oa.service.seal;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.seal.vo.apply.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.seal.OaSealApplyDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -86,5 +87,4 @@ public interface OaSealApplyService {
      * @return 单据数量
      */
     Long getSealApplyCountBySealId(Long id);
-
 }

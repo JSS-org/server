@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.config.Seck
 import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.config.SeckillConfigUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.controller.app.seckill.vo.config.AppSeckillConfigRespVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillConfigDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

@@ -1,12 +1,13 @@
 package cn.iocoder.yudao.framework.datapermission.core.aop;
 
-import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
+
+import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * {@link DataPermissionContextHolder} 的单元测试
@@ -62,5 +63,4 @@ class DataPermissionContextHolderTest {
         assertSame(result, dataPermission02);
         assertEquals(1, DataPermissionContextHolder.getAll().size());
     }
-
 }

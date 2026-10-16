@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.outsourceissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo.detail.MesWmOutsourceIssueDetailSaveReqVO;
@@ -9,15 +12,14 @@ import cn.iocoder.yudao.module.mes.dal.mysql.wm.outsourceissue.MesWmOutsourceIss
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 外协发料单明细 Service 实现类
@@ -28,18 +30,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmOutsourceIssueDetailServiceImpl implements MesWmOutsourceIssueDetailService {
 
-    @Resource
-    private MesWmOutsourceIssueDetailMapper outsourceIssueDetailMapper;
+    @Resource private MesWmOutsourceIssueDetailMapper outsourceIssueDetailMapper;
 
-    @Resource
-    @Lazy
-    private MesWmOutsourceIssueLineService outsourceIssueLineService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
+    @Resource @Lazy private MesWmOutsourceIssueLineService outsourceIssueLineService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource private MesWmMaterialStockService materialStockService;
 
     @Override
     public Long createOutsourceIssueDetail(MesWmOutsourceIssueDetailSaveReqVO createReqVO) {
@@ -47,7 +43,8 @@ public class MesWmOutsourceIssueDetailServiceImpl implements MesWmOutsourceIssue
         validateOutsourceIssueDetailSaveData(createReqVO);
 
         // 插入
-        MesWmOutsourceIssueDetailDO detail = BeanUtils.toBean(createReqVO, MesWmOutsourceIssueDetailDO.class);
+        MesWmOutsourceIssueDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmOutsourceIssueDetailDO.class);
         outsourceIssueDetailMapper.insert(detail);
         return detail.getId();
     }
@@ -60,7 +57,8 @@ public class MesWmOutsourceIssueDetailServiceImpl implements MesWmOutsourceIssue
         validateOutsourceIssueDetailSaveData(updateReqVO);
 
         // 更新
-        MesWmOutsourceIssueDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmOutsourceIssueDetailDO.class);
+        MesWmOutsourceIssueDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmOutsourceIssueDetailDO.class);
         outsourceIssueDetailMapper.updateById(updateObj);
     }
 
@@ -103,9 +101,11 @@ public class MesWmOutsourceIssueDetailServiceImpl implements MesWmOutsourceIssue
         }
     }
 
-    private void validateOutsourceIssueDetailSaveData(MesWmOutsourceIssueDetailSaveReqVO saveReqVO) {
+    private void validateOutsourceIssueDetailSaveData(
+            MesWmOutsourceIssueDetailSaveReqVO saveReqVO) {
         // 校验父数据（行）存在
-        MesWmOutsourceIssueLineDO line = outsourceIssueLineService.getOutsourceIssueLine(saveReqVO.getLineId());
+        MesWmOutsourceIssueLineDO line =
+                outsourceIssueLineService.getOutsourceIssueLine(saveReqVO.getLineId());
         if (line == null) {
             throw exception(WM_OUTSOURCE_ISSUE_LINE_NOT_EXISTS);
         }
@@ -122,8 +122,13 @@ public class MesWmOutsourceIssueDetailServiceImpl implements MesWmOutsourceIssue
                 saveReqVO.getWarehouseId(), saveReqVO.getLocationId(), saveReqVO.getAreaId());
         // 校验库存记录存在且物料一致
         materialStockService.validateSelectedStock(
-                saveReqVO.getMaterialStockId(), saveReqVO.getItemId(), saveReqVO.getBatchId(), null,
-                saveReqVO.getWarehouseId(), saveReqVO.getLocationId(), saveReqVO.getAreaId(), saveReqVO.getQuantity());
+                saveReqVO.getMaterialStockId(),
+                saveReqVO.getItemId(),
+                saveReqVO.getBatchId(),
+                null,
+                saveReqVO.getWarehouseId(),
+                saveReqVO.getLocationId(),
+                saveReqVO.getAreaId(),
+                saveReqVO.getQuantity());
     }
-
 }

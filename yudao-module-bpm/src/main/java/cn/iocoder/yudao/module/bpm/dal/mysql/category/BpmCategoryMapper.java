@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.category.BpmCategoryPageReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmCategoryDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -19,12 +20,14 @@ import java.util.List;
 public interface BpmCategoryMapper extends BaseMapperX<BpmCategoryDO> {
 
     default PageResult<BpmCategoryDO> selectPage(BpmCategoryPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<BpmCategoryDO>()
-                .likeIfPresent(BpmCategoryDO::getName, reqVO.getName())
-                .likeIfPresent(BpmCategoryDO::getCode, reqVO.getCode())
-                .eqIfPresent(BpmCategoryDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(BpmCategoryDO::getCreateTime, reqVO.getCreateTime())
-                .orderByAsc(BpmCategoryDO::getSort));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<BpmCategoryDO>()
+                        .likeIfPresent(BpmCategoryDO::getName, reqVO.getName())
+                        .likeIfPresent(BpmCategoryDO::getCode, reqVO.getCode())
+                        .eqIfPresent(BpmCategoryDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(BpmCategoryDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByAsc(BpmCategoryDO::getSort));
     }
 
     default BpmCategoryDO selectByName(String name) {
@@ -42,5 +45,4 @@ public interface BpmCategoryMapper extends BaseMapperX<BpmCategoryDO> {
     default List<BpmCategoryDO> selectListByStatus(Integer status) {
         return selectList(BpmCategoryDO::getStatus, status);
     }
-
 }

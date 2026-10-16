@@ -7,15 +7,18 @@ import cn.iocoder.yudao.module.bpm.enums.definition.BpmAutoApproveTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmModelFormTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmModelTypeEnum;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.flowable.engine.repository.Model;
 import org.flowable.engine.repository.ProcessDefinition;
 
@@ -28,7 +31,8 @@ import java.util.List;
  * @author 芋道源码
  */
 @TableName(value = "bpm_process_definition_info", autoResultMap = true)
-@KeySequence("bpm_process_definition_info_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence("bpm_process_definition_info_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是
+// MySQL 等数据库，可不写。
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,20 +42,22 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 流程定义的编号
      *
      * 关联 {@link ProcessDefinition#getId()} 属性
      */
     private String processDefinitionId;
+
     /**
      * 流程模型的编号
      *
      * 关联 {@link Model#getId()} 属性
      */
     private String modelId;
+
     /**
      * 流程模型的类型
      *
@@ -67,10 +73,12 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      * 为什么要存储？原因是，{@link ProcessDefinition#getCategory()} 无法设置
      */
     private String category;
+
     /**
      * 图标
      */
     private String icon;
+
     /**
      * 描述
      */
@@ -82,6 +90,7 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      * 枚举 {@link BpmModelFormTypeEnum}
      */
     private Integer formType;
+
     /**
      * 动态表单编号
      *
@@ -90,6 +99,7 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      * 关联 {@link BpmFormDO#getId()}
      */
     private Long formId;
+
     /**
      * 表单的配置
      *
@@ -98,6 +108,7 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      * 冗余 {@link BpmFormDO#getConf()}
      */
     private String formConf;
+
     /**
      * 表单项的数组
      *
@@ -107,12 +118,14 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<String> formFields;
+
     /**
      * 自定义表单的提交路径，使用 Vue 的路由地址
      *
      * 在表单类型为 {@link BpmModelFormTypeEnum#CUSTOM} 时
      */
     private String formCustomCreatePath;
+
     /**
      * 自定义表单的查看路径，使用 Vue 的路由地址
      *
@@ -126,12 +139,14 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      * 目的：当使用仿钉钉设计器时。流程模型发布的时候，需要保存流程模型设计器的快照数据。
      */
     private String simpleModel;
+
     /**
      * 是否可见
      *
      * 目的：如果 false 不可见，则不展示在“发起流程”的列表里
      */
     private Boolean visible;
+
     /**
      * 排序值
      */
@@ -195,6 +210,7 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private BpmModelMetaInfoVO.TitleSetting titleSetting;
+
     /**
      * 摘要设置
      */
@@ -206,6 +222,7 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private BpmModelMetaInfoVO.HttpRequestSetting processBeforeTriggerSetting;
+
     /**
      * 流程后置通知设置
      */
@@ -229,5 +246,4 @@ public class BpmProcessDefinitionInfoDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private BpmModelMetaInfoVO.PrintTemplateSetting printTemplateSetting;
-
 }

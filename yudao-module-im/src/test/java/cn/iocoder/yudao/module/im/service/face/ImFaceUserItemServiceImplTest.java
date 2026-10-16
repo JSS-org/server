@@ -1,22 +1,10 @@
 package cn.iocoder.yudao.module.im.service.face;
 
-import cn.iocoder.yudao.framework.common.exception.ServiceException;
-import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
-import cn.iocoder.yudao.module.im.controller.admin.face.vo.useritem.ImFaceUserItemSaveReqVO;
-import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFaceUserItemDO;
-import cn.iocoder.yudao.module.im.dal.mysql.face.ImFaceUserItemMapper;
-import cn.iocoder.yudao.module.im.framework.config.ImProperties;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.springframework.dao.DuplicateKeyException;
-
 import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_DUPLICATED;
 import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_MAX_LIMIT;
 import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_NOT_EXISTS;
 import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_NOT_OWN;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,6 +13,20 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
+import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+import cn.iocoder.yudao.module.im.controller.admin.face.vo.useritem.ImFaceUserItemSaveReqVO;
+import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFaceUserItemDO;
+import cn.iocoder.yudao.module.im.dal.mysql.face.ImFaceUserItemMapper;
+import cn.iocoder.yudao.module.im.framework.config.ImProperties;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.springframework.dao.DuplicateKeyException;
+
 /**
  * {@link ImFaceUserItemServiceImpl} 的单元测试
  *
@@ -32,13 +34,10 @@ import static org.mockito.Mockito.when;
  */
 public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private ImFaceUserItemServiceImpl service;
+    @InjectMocks private ImFaceUserItemServiceImpl service;
 
-    @Mock
-    private ImFaceUserItemMapper faceUserItemMapper;
-    @Spy
-    private ImProperties imProperties = new ImProperties();
+    @Mock private ImFaceUserItemMapper faceUserItemMapper;
+    @Spy private ImProperties imProperties = new ImProperties();
 
     // ========== createFaceUserItem ==========
 
@@ -69,8 +68,8 @@ public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
                 .thenReturn(new ImFaceUserItemDO().setUserId(1L));
 
         // 调用 + 断言：抛重复异常，不落库
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.createFaceUserItem(1L, reqVO));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.createFaceUserItem(1L, reqVO));
         assertEquals(FACE_USER_ITEM_DUPLICATED.getCode(), exception.getCode());
         verify(faceUserItemMapper, never()).insert(any(ImFaceUserItemDO.class));
     }
@@ -85,8 +84,8 @@ public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
         when(faceUserItemMapper.selectCountByUserId(1L)).thenReturn(20L);
 
         // 调用 + 断言：抛上限异常，不落库
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.createFaceUserItem(1L, reqVO));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.createFaceUserItem(1L, reqVO));
         assertEquals(FACE_USER_ITEM_MAX_LIMIT.getCode(), exception.getCode());
         verify(faceUserItemMapper, never()).insert(any(ImFaceUserItemDO.class));
     }
@@ -98,11 +97,12 @@ public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
         reqVO.setUrl("a.png").setWidth(100).setHeight(100);
         when(faceUserItemMapper.selectByUserIdAndUrl(1L, "a.png")).thenReturn(null);
         when(faceUserItemMapper.selectCountByUserId(1L)).thenReturn(10L);
-        when(faceUserItemMapper.insert(any(ImFaceUserItemDO.class))).thenThrow(new DuplicateKeyException("duplicate"));
+        when(faceUserItemMapper.insert(any(ImFaceUserItemDO.class)))
+                .thenThrow(new DuplicateKeyException("duplicate"));
 
         // 调用 + 断言：数据库唯一约束冲突转业务重复异常
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.createFaceUserItem(1L, reqVO));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.createFaceUserItem(1L, reqVO));
         assertEquals(FACE_USER_ITEM_DUPLICATED.getCode(), exception.getCode());
     }
 
@@ -124,8 +124,8 @@ public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
     public void testDeleteFaceUserItem_notExists() {
         when(faceUserItemMapper.selectById(99L)).thenReturn(null);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.deleteFaceUserItem(1L, 99L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.deleteFaceUserItem(1L, 99L));
         assertEquals(FACE_USER_ITEM_NOT_EXISTS.getCode(), exception.getCode());
         verify(faceUserItemMapper, never()).deleteById(anyLong());
     }
@@ -135,8 +135,8 @@ public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
         // 准备：表情归属 user 2，但 user 1 来删
         when(faceUserItemMapper.selectById(10L)).thenReturn(new ImFaceUserItemDO().setUserId(2L));
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.deleteFaceUserItem(1L, 10L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.deleteFaceUserItem(1L, 10L));
         assertEquals(FACE_USER_ITEM_NOT_OWN.getCode(), exception.getCode());
         verify(faceUserItemMapper, never()).deleteById(anyLong());
     }
@@ -156,9 +156,8 @@ public class ImFaceUserItemServiceImplTest extends BaseMockitoUnitTest {
     public void testDeleteFaceUserItemAdmin_notExists() {
         when(faceUserItemMapper.selectById(99L)).thenReturn(null);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.deleteFaceUserItem(99L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.deleteFaceUserItem(99L));
         assertEquals(FACE_USER_ITEM_NOT_EXISTS.getCode(), exception.getCode());
     }
-
 }

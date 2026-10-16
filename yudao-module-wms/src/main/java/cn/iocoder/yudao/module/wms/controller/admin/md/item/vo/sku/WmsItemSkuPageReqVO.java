@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.sku;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -32,5 +34,4 @@ public class WmsItemSkuPageReqVO extends PageParam {
 
     @Schema(description = "条码", example = "12345678")
     private String barCode;
-
 }

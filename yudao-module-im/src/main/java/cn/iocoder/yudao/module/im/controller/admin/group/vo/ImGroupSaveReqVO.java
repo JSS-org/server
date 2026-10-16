@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.im.controller.admin.group.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+
 import jakarta.validation.constraints.*;
+
+import lombok.*;
 
 @Schema(description = "管理后台 - 群新增/修改 Request VO")
 @Data
@@ -23,5 +25,4 @@ public class ImGroupSaveReqVO {
 
     @Schema(description = "群公告")
     private String notice;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.attendance.vo.clock;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -51,5 +52,4 @@ public class HrmPortalAttendanceRecordRespVO {
 
     @Schema(description = "备注")
     private String remark;
-
 }

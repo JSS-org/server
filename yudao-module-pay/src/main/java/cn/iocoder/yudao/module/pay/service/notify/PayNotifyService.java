@@ -53,5 +53,4 @@ public interface PayNotifyService {
      * @return 日志列表
      */
     List<PayNotifyLogDO> getNotifyLogList(Long taskId);
-
 }

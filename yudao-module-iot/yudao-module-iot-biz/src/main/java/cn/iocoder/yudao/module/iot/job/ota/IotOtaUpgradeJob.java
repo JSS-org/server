@@ -12,8 +12,11 @@ import cn.iocoder.yudao.module.iot.enums.ota.IotOtaTaskRecordStatusEnum;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.ota.IotOtaFirmwareService;
 import cn.iocoder.yudao.module.iot.service.ota.IotOtaTaskRecordService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -29,19 +32,17 @@ import java.util.Map;
 @Slf4j
 public class IotOtaUpgradeJob implements JobHandler {
 
-    @Resource
-    private IotOtaTaskRecordService otaTaskRecordService;
-    @Resource
-    private IotOtaFirmwareService otaFirmwareService;
-    @Resource
-    private IotDeviceService deviceService;
+    @Resource private IotOtaTaskRecordService otaTaskRecordService;
+    @Resource private IotOtaFirmwareService otaFirmwareService;
+    @Resource private IotDeviceService deviceService;
 
     @Override
     @TenantJob
     public String execute(String param) throws Exception {
         // 1. 查询待推送的 OTA 升级记录
-        List<IotOtaTaskRecordDO> records = otaTaskRecordService.getOtaRecordListByStatus(
-                IotOtaTaskRecordStatusEnum.PENDING.getStatus());
+        List<IotOtaTaskRecordDO> records =
+                otaTaskRecordService.getOtaRecordListByStatus(
+                        IotOtaTaskRecordStatusEnum.PENDING.getStatus());
         if (CollUtil.isEmpty(records)) {
             return null;
         }
@@ -82,5 +83,4 @@ public class IotOtaUpgradeJob implements JobHandler {
         }
         return StrUtil.format("升级任务推送成功：{} 条，送失败：{} 条", successCount, failureCount);
     }
-
 }

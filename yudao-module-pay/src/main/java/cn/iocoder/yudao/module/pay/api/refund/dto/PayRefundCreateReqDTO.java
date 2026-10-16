@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.pay.api.refund.dto;
 
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.Length;
 
 /**
@@ -32,6 +35,7 @@ public class PayRefundCreateReqDTO {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -66,5 +70,4 @@ public class PayRefundCreateReqDTO {
     @NotNull(message = "退款金额不能为空")
     @Min(value = 1, message = "退款金额必须大于零")
     private Integer price;
-
 }

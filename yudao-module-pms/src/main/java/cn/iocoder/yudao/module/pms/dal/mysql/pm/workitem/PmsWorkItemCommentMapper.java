@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemCommentDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -12,10 +13,11 @@ import java.util.List;
 public interface PmsWorkItemCommentMapper extends BaseMapperX<PmsWorkItemCommentDO> {
 
     default List<PmsWorkItemCommentDO> selectListByWorkItemId(Long workItemId) {
-        return selectList(new LambdaQueryWrapperX<PmsWorkItemCommentDO>()
-                .eq(PmsWorkItemCommentDO::getWorkItemId, workItemId)
-                .orderByAsc(PmsWorkItemCommentDO::getCreateTime)
-                .orderByAsc(PmsWorkItemCommentDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<PmsWorkItemCommentDO>()
+                        .eq(PmsWorkItemCommentDO::getWorkItemId, workItemId)
+                        .orderByAsc(PmsWorkItemCommentDO::getCreateTime)
+                        .orderByAsc(PmsWorkItemCommentDO::getId));
     }
 
     default void deleteByMainId(Long mainId) {
@@ -27,8 +29,8 @@ public interface PmsWorkItemCommentMapper extends BaseMapperX<PmsWorkItemComment
     }
 
     default void deleteByWorkItemIds(Collection<Long> workItemIds) {
-        delete(new LambdaQueryWrapperX<PmsWorkItemCommentDO>()
-                .in(PmsWorkItemCommentDO::getWorkItemId, workItemIds));
+        delete(
+                new LambdaQueryWrapperX<PmsWorkItemCommentDO>()
+                        .in(PmsWorkItemCommentDO::getWorkItemId, workItemIds));
     }
-
 }

@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum BpmAttachmentTypeEnum {
-
     TASK_ATTACHMENT("1", "用户任务附件");
 
     /**
@@ -20,6 +19,7 @@ public enum BpmAttachmentTypeEnum {
      * 由于 BPM attachment 类型为 String，所以这里就不使用 Integer
      */
     private final String type;
+
     /**
      * 操作名字
      */

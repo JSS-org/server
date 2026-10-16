@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.im.dal.redis;
 
-
 /**
  * IM Redis Key 枚举类
  *
@@ -44,5 +43,4 @@ public interface RedisKeyConstants {
      * 过期时间：不固定（lock 时显式传 timeoutMillis）
      */
     String IM_RTC_CALL_LOCK = "im_rtc_call:%d:%s";
-
 }

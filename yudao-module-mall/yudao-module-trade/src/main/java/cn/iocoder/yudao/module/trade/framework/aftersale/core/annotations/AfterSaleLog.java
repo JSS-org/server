@@ -23,5 +23,4 @@ public @interface AfterSaleLog {
      * 操作类型
      */
     AfterSaleOperateTypeEnum operateType();
-
 }

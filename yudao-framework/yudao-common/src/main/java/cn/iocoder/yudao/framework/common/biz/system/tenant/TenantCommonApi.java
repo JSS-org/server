@@ -22,5 +22,4 @@ public interface TenantCommonApi {
      * @param id 租户编号
      */
     void validateTenant(Long id);
-
 }

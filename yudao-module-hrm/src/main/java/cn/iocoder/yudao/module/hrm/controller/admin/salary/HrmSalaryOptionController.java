@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionRespVO;
@@ -8,11 +11,14 @@ import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOp
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionUpdateVisibleReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryOptionService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,22 +32,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @Tag(name = "管理后台 - HRM 薪资项")
 @RestController
 @RequestMapping("/hrm/salary/option")
 @Validated
 public class HrmSalaryOptionController {
 
-    @Resource
-    private HrmSalaryOptionService salaryOptionService;
+    @Resource private HrmSalaryOptionService salaryOptionService;
 
     @PostMapping("/create")
     @Operation(summary = "创建薪资项")
     @PreAuthorize("@ss.hasPermission('hrm:salary:option:create')")
-    public CommonResult<Long> createSalaryOption(@Valid @RequestBody HrmSalaryOptionSaveReqVO reqVO) {
+    public CommonResult<Long> createSalaryOption(
+            @Valid @RequestBody HrmSalaryOptionSaveReqVO reqVO) {
         return success(salaryOptionService.createSalaryOption(reqVO));
     }
 
@@ -95,9 +98,14 @@ public class HrmSalaryOptionController {
     public CommonResult<List<HrmSalaryOptionRespVO>> getSalaryOptionSimpleList(
             @RequestParam(value = "adjustable", required = false) Boolean adjustable) {
         List<HrmSalaryOptionDO> list = salaryOptionService.getSalaryOptionList(adjustable);
-        return success(convertList(list, option -> new HrmSalaryOptionRespVO()
-                .setCode(option.getCode()).setParentCode(option.getParentCode())
-                .setName(option.getName()).setCalculateEnabled(option.getCalculateEnabled())));
+        return success(
+                convertList(
+                        list,
+                        option ->
+                                new HrmSalaryOptionRespVO()
+                                        .setCode(option.getCode())
+                                        .setParentCode(option.getParentCode())
+                                        .setName(option.getName())
+                                        .setCalculateEnabled(option.getCalculateEnabled())));
     }
-
 }

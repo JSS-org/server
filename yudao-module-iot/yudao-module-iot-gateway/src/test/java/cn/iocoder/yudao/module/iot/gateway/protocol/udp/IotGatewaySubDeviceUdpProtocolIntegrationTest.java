@@ -9,7 +9,9 @@ import cn.iocoder.yudao.module.iot.core.topic.property.IotDevicePropertyPostReqD
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.json.IotJsonSerializer;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +70,8 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
     /**
      * 网关子设备 Token：从 {@link #testAuth()} 方法获取后，粘贴到这里
      */
-    private static final String TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiakF1ZkVNVEYxVzZ3blBobiIsImV4cCI6MTc2OTk1NDY3OSwiZGV2aWNlTmFtZSI6ImNoYXp1by1pdCJ9.jfbUAoU0xkJl4UvO-NUvcJ6yITPRgUjQ4MKATPuwneg";
+    private static final String TOKEN =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiakF1ZkVNVEYxVzZ3blBobiIsImV4cCI6MTc2OTk1NDY3OSwiZGV2aWNlTmFtZSI6ImNoYXp1by1pdCJ9.jfbUAoU0xkJl4UvO-NUvcJ6yITPRgUjQ4MKATPuwneg";
 
     // ===================== 认证测试 =====================
 
@@ -78,11 +81,13 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
     @Test
     public void testAuth() throws Exception {
         // 1. 构建认证消息
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
         IotDeviceMessage request = IotDeviceMessage.requestOf("auth", authReqDTO);
 
         // 2. 发送并接收响应
@@ -99,13 +104,16 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
     @Test
     public void testPropertyPost() throws Exception {
         // 1. 构建属性上报消息
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
-                withToken(IotDevicePropertyPostReqDTO.of(MapUtil.<String, Object>builder()
-                        .put("power", 100)
-                        .put("status", "online")
-                        .put("temperature", 36.5)
-                        .build())));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
+                        withToken(
+                                IotDevicePropertyPostReqDTO.of(
+                                        MapUtil.<String, Object>builder()
+                                                .put("power", 100)
+                                                .put("status", "online")
+                                                .put("temperature", 36.5)
+                                                .build())));
         log.info("[testPropertyPost][子设备属性上报 - 请求实际由 Gateway 代为转发]");
 
         // 2. 发送并接收响应
@@ -121,17 +129,19 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
     @Test
     public void testEventPost() throws Exception {
         // 1. 构建事件上报消息
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
-                withToken(IotDeviceEventPostReqDTO.of(
-                        "alarm",
-                        MapUtil.<String, Object>builder()
-                                .put("level", "warning")
-                                .put("message", "temperature too high")
-                                .put("threshold", 40)
-                                .put("current", 42)
-                                .build(),
-                        System.currentTimeMillis())));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
+                        withToken(
+                                IotDeviceEventPostReqDTO.of(
+                                        "alarm",
+                                        MapUtil.<String, Object>builder()
+                                                .put("level", "warning")
+                                                .put("message", "temperature too high")
+                                                .put("threshold", 40)
+                                                .put("current", 42)
+                                                .build(),
+                                        System.currentTimeMillis())));
         log.info("[testEventPost][子设备事件上报 - 请求实际由 Gateway 代为转发]");
 
         // 2. 发送并接收响应
@@ -161,7 +171,8 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setSoTimeout(TIMEOUT_MS);
             InetAddress address = InetAddress.getByName(SERVER_HOST);
-            DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, address, SERVER_PORT);
+            DatagramPacket sendPacket =
+                    new DatagramPacket(payload, payload.length, address, SERVER_PORT);
             socket.send(sendPacket);
 
             byte[] receiveData = new byte[4096];
@@ -169,7 +180,8 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
             try {
                 socket.receive(receivePacket);
                 byte[] responseBytes = new byte[receivePacket.getLength()];
-                System.arraycopy(receivePacket.getData(), 0, responseBytes, 0, receivePacket.getLength());
+                System.arraycopy(
+                        receivePacket.getData(), 0, responseBytes, 0, receivePacket.getLength());
                 return SERIALIZER.deserialize(responseBytes);
             } catch (java.net.SocketTimeoutException e) {
                 log.warn("[sendAndReceive][接收响应超时]");
@@ -177,5 +189,4 @@ public class IotGatewaySubDeviceUdpProtocolIntegrationTest {
             }
         }
     }
-
 }

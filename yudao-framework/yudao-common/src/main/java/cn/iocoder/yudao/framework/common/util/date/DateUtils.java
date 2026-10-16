@@ -93,8 +93,7 @@ public class DateUtils {
      * @param second 秒
      * @return 指定时间
      */
-    public static Date buildTime(int year, int month, int day,
-                                 int hour, int minute, int second) {
+    public static Date buildTime(int year, int month, int day, int hour, int minute, int second) {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, month - 1);
@@ -145,5 +144,4 @@ public class DateUtils {
     public static boolean isYesterday(LocalDateTime date) {
         return LocalDateTimeUtil.isSameDay(date, LocalDateTime.now().minusDays(1));
     }
-
 }

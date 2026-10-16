@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 员工字段配置 Response VO")
@@ -27,5 +28,4 @@ public class HrmEmployeeFieldConfigRespVO {
 
     @Schema(description = "是否锁定编辑", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
     private Boolean editableLocked;
-
 }

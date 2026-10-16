@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.trade.controller.admin.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 订单备注 Request VO")
 @Data
@@ -17,5 +18,4 @@ public class TradeOrderRemarkReqVO {
     @Schema(description = "商家备注", example = "你猜一下")
     @NotEmpty(message = "订单备注不能为空")
     private String remark;
-
 }

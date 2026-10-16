@@ -1,7 +1,13 @@
 package cn.iocoder.yudao.module.iot.service.rule.data.action;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import com.zaxxer.hikari.HikariDataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -9,10 +15,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotDatabaseDataRuleAction} 的单元测试
@@ -23,8 +25,7 @@ class IotDatabaseDataRuleActionTest {
 
     private IotDatabaseDataRuleAction databaseDataRuleAction;
 
-    @Mock
-    private JdbcTemplate jdbcTemplate;
+    @Mock private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     public void setUp() {
@@ -61,5 +62,4 @@ class IotDatabaseDataRuleActionTest {
         assertDoesNotThrow(() -> databaseDataRuleAction.closeProducer(jdbcTemplate));
         verifyNoInteractions(other);
     }
-
 }

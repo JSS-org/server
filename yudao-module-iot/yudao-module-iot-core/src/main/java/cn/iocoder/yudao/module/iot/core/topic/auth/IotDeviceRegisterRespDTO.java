@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.auth;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,5 +33,4 @@ public class IotDeviceRegisterRespDTO {
      * 设备密钥
      */
     private String deviceSecret;
-
 }

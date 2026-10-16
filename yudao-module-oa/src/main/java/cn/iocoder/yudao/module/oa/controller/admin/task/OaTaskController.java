@@ -1,18 +1,24 @@
 package cn.iocoder.yudao.module.oa.controller.admin.task;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskFeedbackReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskLogRespVO;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskPageReqVO;
+import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskRankingRespVO;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskReceiverRespVO;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskRespVO;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskSaveReqVO;
-import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskRankingRespVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.task.OaTaskDO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.task.OaTaskLogDO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.task.OaTaskReceiverDO;
@@ -21,11 +27,14 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,25 +55,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - OA 任务")
 @RestController
 @RequestMapping("/oa/task")
 @Validated
 public class OaTaskController {
 
-    @Resource
-    private OaTaskService taskService;
+    @Resource private OaTaskService taskService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     // ==================== 我发布的 ====================
 
@@ -95,11 +95,14 @@ public class OaTaskController {
     @GetMapping("/published-page")
     @Operation(summary = "获得我发布的任务分页")
     @PreAuthorize("@ss.hasPermission('oa:task:query')")
-    public CommonResult<PageResult<OaTaskRespVO>> getPublishedTaskPage(@Valid OaTaskPageReqVO pageReqVO) {
+    public CommonResult<PageResult<OaTaskRespVO>> getPublishedTaskPage(
+            @Valid OaTaskPageReqVO pageReqVO) {
         Long userId = getLoginUserId();
         PageResult<OaTaskDO> pageResult = taskService.getPublishedTaskPage(pageReqVO, userId);
-        return success(new PageResult<>(buildTaskRespVOList(pageResult.getList(), Collections.emptyList(), userId),
-                pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildTaskRespVOList(pageResult.getList(), Collections.emptyList(), userId),
+                        pageResult.getTotal()));
     }
 
     // ==================== 我的任务 ====================
@@ -115,19 +118,21 @@ public class OaTaskController {
     @GetMapping("/received-page")
     @Operation(summary = "获得我的任务分页")
     @PreAuthorize("@ss.hasPermission('oa:task:query')")
-    public CommonResult<PageResult<OaTaskRespVO>> getReceivedTaskPage(@Valid OaTaskPageReqVO pageReqVO) {
+    public CommonResult<PageResult<OaTaskRespVO>> getReceivedTaskPage(
+            @Valid OaTaskPageReqVO pageReqVO) {
         Long userId = getLoginUserId();
         PageResult<OaTaskDO> pageResult = taskService.getReceivedTaskPage(pageReqVO, userId);
-        return success(new PageResult<>(buildTaskRespVOList(pageResult.getList(), Collections.emptyList(), userId),
-                pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildTaskRespVOList(pageResult.getList(), Collections.emptyList(), userId),
+                        pageResult.getTotal()));
     }
 
     // ==================== 公共操作 ====================
 
     @PostMapping("/feedback")
     @Operation(summary = "创建任务反馈")
-    public CommonResult<Boolean> feedbackTask(
-            @Valid @RequestBody OaTaskFeedbackReqVO createReqVO) {
+    public CommonResult<Boolean> feedbackTask(@Valid @RequestBody OaTaskFeedbackReqVO createReqVO) {
         taskService.feedbackTask(createReqVO, getLoginUserId());
         return success(true);
     }
@@ -161,12 +166,20 @@ public class OaTaskController {
         }
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(countMap.keySet());
         // 2. 拼接排行展示字段，保留 Service 返回的排行顺序
-        return success(convertList(countMap.entrySet(), entry -> {
-            OaTaskRankingRespVO ranking = new OaTaskRankingRespVO()
-                    .setUserId(entry.getKey()).setCompletedCount(entry.getValue());
-            MapUtils.findAndThen(userMap, entry.getKey(), user -> ranking.setUserName(user.getNickname()));
-            return ranking;
-        }));
+        return success(
+                convertList(
+                        countMap.entrySet(),
+                        entry -> {
+                            OaTaskRankingRespVO ranking =
+                                    new OaTaskRankingRespVO()
+                                            .setUserId(entry.getKey())
+                                            .setCompletedCount(entry.getValue());
+                            MapUtils.findAndThen(
+                                    userMap,
+                                    entry.getKey(),
+                                    user -> ranking.setUserName(user.getNickname()));
+                            return ranking;
+                        }));
     }
 
     // ==================== 拼接 VO ====================
@@ -183,7 +196,8 @@ public class OaTaskController {
         if (task == null) {
             return null;
         }
-        return CollUtil.getFirst(buildTaskRespVOList(Collections.singletonList(task), logs, loginUserId));
+        return CollUtil.getFirst(
+                buildTaskRespVOList(Collections.singletonList(task), logs, loginUserId));
     }
 
     /**
@@ -194,47 +208,98 @@ public class OaTaskController {
      * @param loginUserId 当前登录用户编号
      * @return 任务响应列表
      */
-    private List<OaTaskRespVO> buildTaskRespVOList(List<OaTaskDO> tasks, List<OaTaskLogDO> logs,
-                                                 Long loginUserId) {
+    private List<OaTaskRespVO> buildTaskRespVOList(
+            List<OaTaskDO> tasks, List<OaTaskLogDO> logs, Long loginUserId) {
         if (CollUtil.isEmpty(tasks)) {
             return Collections.emptyList();
         }
         // 1. 查询接收人、发布人和反馈人信息
         Map<Long, List<OaTaskReceiverDO>> receiverListMap =
                 taskService.getTaskReceiverListMap(convertSet(tasks, OaTaskDO::getId));
-        Set<Long> userIds = Stream.of(
-                tasks.stream().map(task -> NumberUtils.parseLong(task.getCreator())),
-                receiverListMap.values().stream().flatMap(Collection::stream).map(OaTaskReceiverDO::getUserId),
-                logs.stream().map(OaTaskLogDO::getUserId))
-                .flatMap(stream -> stream).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> userIds =
+                Stream.of(
+                                tasks.stream()
+                                        .map(task -> NumberUtils.parseLong(task.getCreator())),
+                                receiverListMap.values().stream()
+                                        .flatMap(Collection::stream)
+                                        .map(OaTaskReceiverDO::getUserId),
+                                logs.stream().map(OaTaskLogDO::getUserId))
+                        .flatMap(stream -> stream)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
         // 2. 拼接任务、接收人和反馈信息
         Map<Long, List<OaTaskLogDO>> logListMap = convertMultiMap(logs, OaTaskLogDO::getTaskId);
-        return convertList(tasks, taskDO -> {
-            OaTaskRespVO task = BeanUtils.toBean(taskDO, OaTaskRespVO.class)
-                    .setPublisherUserId(NumberUtils.parseLong(taskDO.getCreator()))
-                    .setReceivers(Collections.emptyList()).setLogs(Collections.emptyList());
-            MapUtils.findAndThen(userMap, task.getPublisherUserId(), user -> {
-                task.setPublisherUserName(user.getNickname());
-                MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> task.setPublisherDeptName(dept.getName()));
-            });
-            MapUtils.findAndThen(receiverListMap, task.getId(), receivers -> {
-                task.setReceivers(BeanUtils.toBean(receivers, OaTaskReceiverRespVO.class, receiver ->
-                        MapUtils.findAndThen(userMap, receiver.getUserId(), user -> {
-                            receiver.setUserName(user.getNickname());
-                            MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> receiver.setDeptName(dept.getName()));
-                        })));
-                OaTaskReceiverDO loginUserReceiver = CollUtil.findOne(receivers, receiver -> receiver.getUserId().equals(loginUserId));
-                if (loginUserReceiver != null) {
-                    task.setReceiverStatus(loginUserReceiver.getStatus());
-                }
-            });
-            MapUtils.findAndThen(logListMap, task.getId(), taskLogs ->
-                    task.setLogs(BeanUtils.toBean(taskLogs, OaTaskLogRespVO.class, log ->
-                            MapUtils.findAndThen(userMap, log.getUserId(), user -> log.setUserName(user.getNickname())))));
-            return task;
-        });
+        return convertList(
+                tasks,
+                taskDO -> {
+                    OaTaskRespVO task =
+                            BeanUtils.toBean(taskDO, OaTaskRespVO.class)
+                                    .setPublisherUserId(NumberUtils.parseLong(taskDO.getCreator()))
+                                    .setReceivers(Collections.emptyList())
+                                    .setLogs(Collections.emptyList());
+                    MapUtils.findAndThen(
+                            userMap,
+                            task.getPublisherUserId(),
+                            user -> {
+                                task.setPublisherUserName(user.getNickname());
+                                MapUtils.findAndThen(
+                                        deptMap,
+                                        user.getDeptId(),
+                                        dept -> task.setPublisherDeptName(dept.getName()));
+                            });
+                    MapUtils.findAndThen(
+                            receiverListMap,
+                            task.getId(),
+                            receivers -> {
+                                task.setReceivers(
+                                        BeanUtils.toBean(
+                                                receivers,
+                                                OaTaskReceiverRespVO.class,
+                                                receiver ->
+                                                        MapUtils.findAndThen(
+                                                                userMap,
+                                                                receiver.getUserId(),
+                                                                user -> {
+                                                                    receiver.setUserName(
+                                                                            user.getNickname());
+                                                                    MapUtils.findAndThen(
+                                                                            deptMap,
+                                                                            user.getDeptId(),
+                                                                            dept ->
+                                                                                    receiver
+                                                                                            .setDeptName(
+                                                                                                    dept
+                                                                                                            .getName()));
+                                                                })));
+                                OaTaskReceiverDO loginUserReceiver =
+                                        CollUtil.findOne(
+                                                receivers,
+                                                receiver ->
+                                                        receiver.getUserId().equals(loginUserId));
+                                if (loginUserReceiver != null) {
+                                    task.setReceiverStatus(loginUserReceiver.getStatus());
+                                }
+                            });
+                    MapUtils.findAndThen(
+                            logListMap,
+                            task.getId(),
+                            taskLogs ->
+                                    task.setLogs(
+                                            BeanUtils.toBean(
+                                                    taskLogs,
+                                                    OaTaskLogRespVO.class,
+                                                    log ->
+                                                            MapUtils.findAndThen(
+                                                                    userMap,
+                                                                    log.getUserId(),
+                                                                    user ->
+                                                                            log.setUserName(
+                                                                                    user
+                                                                                            .getNickname())))));
+                    return task;
+                });
     }
-
 }

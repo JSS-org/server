@@ -8,7 +8,9 @@ import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.protocol.http.IotHttpProtocol;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
+
 import io.vertx.ext.web.RoutingContext;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,11 +44,9 @@ public class IotHttpUpstreamHandler extends IotHttpAbstractHandler {
         Assert.equals(method, message.getMethod(), "method 不匹配");
 
         // 2. 发送消息
-        deviceMessageService.sendDeviceMessage(message,
-                productKey, deviceName, serverId);
+        deviceMessageService.sendDeviceMessage(message, productKey, deviceName, serverId);
 
         // 3. 返回结果
         return CommonResult.success(MapUtil.of("messageId", message.getId()));
     }
-
 }

@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.crm.controller.admin.contact.vo;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmSceneTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -41,5 +43,4 @@ public class CrmContactPageReqVO extends PageParam {
 
     @Schema(description = "商机编号", example = "10430")
     private Long businessId;
-
 }

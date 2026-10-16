@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.vehicle;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,20 +20,19 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 用车申请")
 @RestController
@@ -37,20 +40,17 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaVehicleApplyController {
 
-    @Resource
-    private OaVehicleApplyService vehicleApplyService;
-    @Resource
-    private OaVehicleService vehicleService;
+    @Resource private OaVehicleApplyService vehicleApplyService;
+    @Resource private OaVehicleService vehicleService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @GetMapping("/vehicle-page")
     @Operation(summary = "获得用车申请可选的车辆分页")
     @PreAuthorize("@ss.hasPermission('oa:vehicle-apply:create')")
-    public CommonResult<PageResult<OaVehicleRespVO>> getAvailableVehiclePage(@Valid OaVehiclePageReqVO pageReqVO) {
+    public CommonResult<PageResult<OaVehicleRespVO>> getAvailableVehiclePage(
+            @Valid OaVehiclePageReqVO pageReqVO) {
         PageResult<OaVehicleDO> pageResult = vehicleService.getVehiclePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, OaVehicleRespVO.class));
     }
@@ -58,14 +58,16 @@ public class OaVehicleApplyController {
     @PostMapping("/create")
     @Operation(summary = "创建用车申请草稿")
     @PreAuthorize("@ss.hasPermission('oa:vehicle-apply:create')")
-    public CommonResult<Long> createVehicleApply(@Valid @RequestBody OaVehicleApplySaveReqVO reqVO) {
+    public CommonResult<Long> createVehicleApply(
+            @Valid @RequestBody OaVehicleApplySaveReqVO reqVO) {
         return success(vehicleApplyService.createVehicleApply(reqVO, getLoginUserId()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新用车申请草稿")
     @PreAuthorize("@ss.hasPermission('oa:vehicle-apply:update')")
-    public CommonResult<Boolean> updateVehicleApply(@Valid @RequestBody OaVehicleApplySaveReqVO reqVO) {
+    public CommonResult<Boolean> updateVehicleApply(
+            @Valid @RequestBody OaVehicleApplySaveReqVO reqVO) {
         vehicleApplyService.updateVehicleApply(reqVO, getLoginUserId());
         return success(true);
     }
@@ -109,9 +111,13 @@ public class OaVehicleApplyController {
     @GetMapping("/page")
     @Operation(summary = "获得本人的用车申请分页")
     @PreAuthorize("@ss.hasPermission('oa:vehicle-apply:query')")
-    public CommonResult<PageResult<OaVehicleApplyRespVO>> getVehicleApplyPage(@Valid OaVehicleApplyPageReqVO pageReqVO) {
-        PageResult<OaVehicleApplyDO> pageResult = vehicleApplyService.getVehicleApplyPage(getLoginUserId(), pageReqVO);
-        return success(new PageResult<>(buildVehicleApplyRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<OaVehicleApplyRespVO>> getVehicleApplyPage(
+            @Valid OaVehicleApplyPageReqVO pageReqVO) {
+        PageResult<OaVehicleApplyDO> pageResult =
+                vehicleApplyService.getVehicleApplyPage(getLoginUserId(), pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildVehicleApplyRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -142,14 +148,18 @@ public class OaVehicleApplyController {
         // 1. 批量查询申请人、申请部门和关联业务信息
         Set<Long> userIds = convertSet(applies, OaVehicleApplyDO::getUserId);
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(convertSet(applies, OaVehicleApplyDO::getDeptId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(applies, OaVehicleApplyDO::getDeptId));
         // 2. 转换并拼接展示字段
-        return convertList(applies, item -> {
-            OaVehicleApplyRespVO vo = BeanUtils.toBean(item, OaVehicleApplyRespVO.class);
-            MapUtils.findAndThen(userMap, item.getUserId(), user -> vo.setUserName(user.getNickname()));
-            MapUtils.findAndThen(deptMap, item.getDeptId(), dept -> vo.setDeptName(dept.getName()));
-            return vo;
-        });
+        return convertList(
+                applies,
+                item -> {
+                    OaVehicleApplyRespVO vo = BeanUtils.toBean(item, OaVehicleApplyRespVO.class);
+                    MapUtils.findAndThen(
+                            userMap, item.getUserId(), user -> vo.setUserName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            deptMap, item.getDeptId(), dept -> vo.setDeptName(dept.getName()));
+                    return vo;
+                });
     }
-
 }

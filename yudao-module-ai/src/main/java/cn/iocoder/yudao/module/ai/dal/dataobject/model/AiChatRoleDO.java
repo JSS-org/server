@@ -5,10 +5,12 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.type.LongListTypeHandler;
 import cn.iocoder.yudao.framework.mybatis.core.type.StringListTypeHandler;
 import cn.iocoder.yudao.module.ai.dal.dataobject.knowledge.AiKnowledgeDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.util.List;
@@ -20,7 +22,8 @@ import java.util.List;
  * @since 2024/4/24 19:39
  */
 @TableName(value = "ai_chat_role", autoResultMap = true)
-@KeySequence("ai_chat_role_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "ai_chat_role_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,24 +33,28 @@ public class AiChatRoleDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 角色名称
      */
     private String name;
+
     /**
      * 角色头像
      */
     private String avatar;
+
     /**
      * 角色分类
      */
     private String category;
+
     /**
      * 角色描述
      */
     private String description;
+
     /**
      * 角色设定
      */
@@ -74,6 +81,7 @@ public class AiChatRoleDO extends BaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> knowledgeIds;
+
     /**
      * 引用的工具编号列表
      *
@@ -81,6 +89,7 @@ public class AiChatRoleDO extends BaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> toolIds;
+
     /**
      * 引用的 MCP Client 名字列表
      *
@@ -101,11 +110,11 @@ public class AiChatRoleDO extends BaseDO {
      * 排序值
      */
     private Integer sort;
+
     /**
      * 状态
      *
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
-
 }

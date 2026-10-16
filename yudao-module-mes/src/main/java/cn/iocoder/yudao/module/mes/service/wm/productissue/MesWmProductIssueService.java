@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productissue.vo.MesWmProductIssuePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productissue.vo.MesWmProductIssueSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -100,5 +101,4 @@ public interface MesWmProductIssueService {
      * @return 是否全部一致
      */
     Boolean checkProductIssueQuantity(Long id);
-
 }

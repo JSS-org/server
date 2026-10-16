@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.framework.excel.core.convert;
 
 import cn.hutool.core.convert.Convert;
-import cn.iocoder.yudao.framework.ip.core.Area;
-import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
 import cn.idev.excel.converters.Converter;
 import cn.idev.excel.enums.CellDataTypeEnum;
 import cn.idev.excel.metadata.GlobalConfiguration;
 import cn.idev.excel.metadata.data.ReadCellData;
 import cn.idev.excel.metadata.data.WriteCellData;
 import cn.idev.excel.metadata.property.ExcelContentProperty;
+import cn.iocoder.yudao.framework.ip.core.Area;
+import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,8 +31,10 @@ public class AreaConvert implements Converter<Object> {
     }
 
     @Override
-    public Object convertToJavaData(ReadCellData readCellData, ExcelContentProperty contentProperty,
-                                    GlobalConfiguration globalConfiguration) {
+    public Object convertToJavaData(
+            ReadCellData readCellData,
+            ExcelContentProperty contentProperty,
+            GlobalConfiguration globalConfiguration) {
         // 解析地区编号
         String label = readCellData.getStringValue();
         Area area = AreaUtils.parseArea(label);
@@ -45,8 +48,10 @@ public class AreaConvert implements Converter<Object> {
     }
 
     @Override
-    public WriteCellData<String> convertToExcelData(Object object, ExcelContentProperty contentProperty,
-                                                    GlobalConfiguration globalConfiguration) {
+    public WriteCellData<String> convertToExcelData(
+            Object object,
+            ExcelContentProperty contentProperty,
+            GlobalConfiguration globalConfiguration) {
         // 空时，返回空
         if (object == null) {
             return new WriteCellData<>("");
@@ -60,5 +65,4 @@ public class AreaConvert implements Converter<Object> {
         }
         return new WriteCellData<>(path);
     }
-
 }

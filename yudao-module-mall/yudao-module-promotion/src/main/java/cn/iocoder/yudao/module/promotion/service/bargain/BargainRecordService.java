@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.promotion.service.bargain;
 
-
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.api.bargain.dto.BargainValidateJoinRespDTO;
@@ -9,6 +8,7 @@ import cn.iocoder.yudao.module.promotion.controller.app.bargain.vo.record.AppBar
 import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainRecordDO;
 
 import jakarta.annotation.Nullable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +40,8 @@ public interface BargainRecordService {
      * @param success 是否砍价成功
      * @return 是否更新成功。注意，如果并发更新时，会更新失败
      */
-    Boolean updateBargainRecordBargainPrice(Long id, Integer whereBargainPrice,
-                                            Integer reducePrice, Boolean success);
+    Boolean updateBargainRecordBargainPrice(
+            Long id, Integer whereBargainPrice, Integer reducePrice, Boolean success);
 
     /**
      * 【下单前】校验是否参与砍价活动
@@ -89,7 +89,8 @@ public interface BargainRecordService {
      * @param status 砍价记录状态
      * @return 砍价人数 Map
      */
-    Map<Long, Integer> getBargainRecordUserCountMap(Collection<Long> activityIds, @Nullable Integer status);
+    Map<Long, Integer> getBargainRecordUserCountMap(
+            Collection<Long> activityIds, @Nullable Integer status);
 
     /**
      * 获得砍价人数
@@ -133,5 +134,4 @@ public interface BargainRecordService {
      * @return 砍价记录列表
      */
     List<BargainRecordDO> getBargainRecordList(Integer status, Integer count);
-
 }

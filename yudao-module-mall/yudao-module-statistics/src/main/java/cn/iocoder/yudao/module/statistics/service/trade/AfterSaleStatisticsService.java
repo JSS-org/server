@@ -28,5 +28,4 @@ public interface AfterSaleStatisticsService {
      * @return 售后订单数量
      */
     Long getCountByStatus(AfterSaleStatusEnum status);
-
 }

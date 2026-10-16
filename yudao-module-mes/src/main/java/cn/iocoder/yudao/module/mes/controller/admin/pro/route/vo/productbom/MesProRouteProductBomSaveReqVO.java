@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.productbom;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -34,5 +36,4 @@ public class MesProRouteProductBomSaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
 }

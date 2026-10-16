@@ -4,12 +4,14 @@ import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.github.binarywang.wxpay.bean.order.WxPayMwebOrderResult;
 import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderRequest;
 import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderV3Request;
 import com.github.binarywang.wxpay.bean.result.enums.TradeTypeEnum;
 import com.github.binarywang.wxpay.constant.WxPayConstants;
 import com.github.binarywang.wxpay.exception.WxPayException;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -43,8 +45,11 @@ public class WxWapPayClient extends AbstractWxPayClient {
         WxPayMwebOrderResult response = client.createOrder(request);
 
         // 转换结果
-        return PayOrderRespDTO.waitingOf(PayOrderDisplayModeEnum.URL.getMode(), response.getMwebUrl(),
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                PayOrderDisplayModeEnum.URL.getMode(),
+                response.getMwebUrl(),
+                reqDTO.getOutTradeNo(),
+                response);
     }
 
     @Override
@@ -55,8 +60,7 @@ public class WxWapPayClient extends AbstractWxPayClient {
         String response = client.createOrderV3(TradeTypeEnum.H5, request);
 
         // 转换结果
-        return PayOrderRespDTO.waitingOf(PayOrderDisplayModeEnum.URL.getMode(), response,
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                PayOrderDisplayModeEnum.URL.getMode(), response, reqDTO.getOutTradeNo(), response);
     }
-
 }

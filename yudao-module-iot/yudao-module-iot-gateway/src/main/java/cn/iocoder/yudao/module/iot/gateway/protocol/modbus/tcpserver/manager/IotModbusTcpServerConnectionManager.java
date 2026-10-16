@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.manager;
 
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusFrameFormatEnum;
+
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetSocket;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -46,14 +48,17 @@ public class IotModbusTcpServerConnectionManager {
          * 设备编号
          */
         private Long deviceId;
+
         /**
          * 产品标识
          */
         private String productKey;
+
         /**
          * 设备名称
          */
         private String deviceName;
+
         /**
          * 从站地址
          */
@@ -63,7 +68,6 @@ public class IotModbusTcpServerConnectionManager {
          * 帧格式（首帧自动检测得到）
          */
         private IotModbusFrameFormatEnum frameFormat;
-
     }
 
     /**
@@ -73,22 +77,30 @@ public class IotModbusTcpServerConnectionManager {
         // 先检查该设备是否有旧连接，若有且不是同一个 socket，关闭旧 socket
         NetSocket oldSocket = deviceSocketMap.get(info.getDeviceId());
         if (oldSocket != null && oldSocket != socket) {
-            log.info("[registerConnection][设备 {} 存在旧连接, 关闭旧 socket, oldRemote={}, newRemote={}]",
-                    info.getDeviceId(), oldSocket.remoteAddress(), socket.remoteAddress());
+            log.info(
+                    "[registerConnection][设备 {} 存在旧连接, 关闭旧 socket, oldRemote={}, newRemote={}]",
+                    info.getDeviceId(),
+                    oldSocket.remoteAddress(),
+                    socket.remoteAddress());
             connectionMap.remove(oldSocket);
             try {
                 oldSocket.close();
             } catch (Exception e) {
-                log.warn("[registerConnection][关闭旧 socket 失败, deviceId={}, oldRemote={}]",
-                        info.getDeviceId(), oldSocket.remoteAddress(), e);
+                log.warn(
+                        "[registerConnection][关闭旧 socket 失败, deviceId={}, oldRemote={}]",
+                        info.getDeviceId(),
+                        oldSocket.remoteAddress(),
+                        e);
             }
         }
 
         // 注册新连接
         connectionMap.put(socket, info);
         deviceSocketMap.put(info.getDeviceId(), socket);
-        log.info("[registerConnection][设备 {} 连接已注册, remoteAddress={}]",
-                info.getDeviceId(), socket.remoteAddress());
+        log.info(
+                "[registerConnection][设备 {} 连接已注册, remoteAddress={}]",
+                info.getDeviceId(),
+                socket.remoteAddress());
     }
 
     /**
@@ -144,8 +156,11 @@ public class IotModbusTcpServerConnectionManager {
             socket.close();
             log.info("[closeConnection][设备 {} 连接已关闭]", deviceId);
         } catch (Exception e) {
-            log.warn("[closeConnection][关闭设备连接失败, deviceId={}, remoteAddress={}]",
-                    deviceId, socket.remoteAddress(), e);
+            log.warn(
+                    "[closeConnection][关闭设备连接失败, deviceId={}, remoteAddress={}]",
+                    deviceId,
+                    socket.remoteAddress(),
+                    e);
         }
     }
 
@@ -189,5 +204,4 @@ public class IotModbusTcpServerConnectionManager {
             }
         }
     }
-
 }

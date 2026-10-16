@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.oa.dal.redis.no;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.iocoder.yudao.module.oa.dal.redis.RedisKeyConstants;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -27,6 +29,7 @@ public class OaNoRedisDAO {
      * 出差申请 {@link cn.iocoder.yudao.module.oa.dal.dataobject.travel.OaTravelApplyDO}
      */
     public static final String TRAVEL_APPLY_NO_PREFIX = "CC";
+
     /**
      * 出差报销 {@link cn.iocoder.yudao.module.oa.dal.dataobject.travel.OaTravelReimbursementDO}
      */
@@ -36,14 +39,17 @@ public class OaNoRedisDAO {
      * 用车申请 {@link cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleApplyDO}
      */
     public static final String VEHICLE_APPLY_NO_PREFIX = "YC";
+
     /**
      * 还车申请 {@link cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleReturnDO}
      */
     public static final String VEHICLE_RETURN_NO_PREFIX = "HC";
+
     /**
      * 印章编号 {@link cn.iocoder.yudao.module.oa.dal.dataobject.seal.OaSealDO}
      */
     public static final String SEAL_NO_PREFIX = "YZ";
+
     /**
      * 用印申请 {@link cn.iocoder.yudao.module.oa.dal.dataobject.seal.OaSealApplyDO}
      */
@@ -63,13 +69,13 @@ public class OaNoRedisDAO {
      * 公文发文 {@link cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.OaOfficialDocSendDO}
      */
     public static final String OFFICIAL_DOC_SEND_NO_PREFIX = "FW";
+
     /**
      * 公文收文 {@link cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.OaOfficialDocReceiveDO}
      */
     public static final String OFFICIAL_DOC_RECEIVE_NO_PREFIX = "SW";
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Resource private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 生成序号，使用当前日期，格式为 {PREFIX} + yyyyMMdd + 6 位自增
@@ -80,12 +86,12 @@ public class OaNoRedisDAO {
      */
     public String generate(String prefix) {
         // 递增序号
-        String noPrefix = prefix + DateUtil.format(LocalDateTime.now(), DatePattern.PURE_DATE_PATTERN);
+        String noPrefix =
+                prefix + DateUtil.format(LocalDateTime.now(), DatePattern.PURE_DATE_PATTERN);
         String key = RedisKeyConstants.NO + noPrefix;
         Long no = stringRedisTemplate.opsForValue().increment(key);
         // 设置过期时间
         stringRedisTemplate.expire(key, Duration.ofDays(1L));
         return noPrefix + String.format("%06d", no);
     }
-
 }

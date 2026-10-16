@@ -16,5 +16,4 @@ public interface ProductCommentApi {
      * @return 返回评论创建后的 id
      */
     Long createComment(ProductCommentCreateReqDTO createReqDTO);
-
 }

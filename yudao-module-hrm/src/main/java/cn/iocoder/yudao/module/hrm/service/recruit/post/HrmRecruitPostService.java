@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.post;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.post.HrmRecruitPostPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.post.HrmRecruitPostSaveReqVO;
@@ -9,8 +11,6 @@ import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 招聘职位 Service 接口
@@ -97,5 +97,4 @@ public interface HrmRecruitPostService {
      * @return 状态与数量的映射
      */
     Map<Integer, Long> getRecruitPostStatusCount(HrmRecruitPostPageReqVO pageReqVO);
-
 }

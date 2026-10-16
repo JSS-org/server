@@ -1,16 +1,19 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.product;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - CRM 产品分析 Request VO")
 @Data
@@ -20,7 +23,10 @@ public class CrmStatisticsProductReqVO {
     @NotNull(message = "部门 id 不能为空")
     private Long deptId;
 
-    @Schema(description = "负责人用户 id", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1")
+    @Schema(
+            description = "负责人用户 id",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+            example = "1")
     private Long userId;
 
     @Schema(description = "负责人用户 id 集合", hidden = true, example = "2")
@@ -40,5 +46,4 @@ public class CrmStatisticsProductReqVO {
 
     @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "20")
     private Long productId;
-
 }

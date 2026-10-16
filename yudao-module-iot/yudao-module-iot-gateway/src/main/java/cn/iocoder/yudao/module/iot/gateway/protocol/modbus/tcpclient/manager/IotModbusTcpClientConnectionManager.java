@@ -4,12 +4,16 @@ import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigRespDTO;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
+
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
+
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
@@ -50,10 +54,12 @@ public class IotModbusTcpClientConnectionManager {
      */
     private final Map<Long, String> deviceConnectionMap = new ConcurrentHashMap<>();
 
-    public IotModbusTcpClientConnectionManager(RedissonClient redissonClient, Vertx vertx,
-                                                IotDeviceMessageService messageService,
-                                                IotModbusTcpClientConfigCacheService configCacheService,
-                                                String serverId) {
+    public IotModbusTcpClientConnectionManager(
+            RedissonClient redissonClient,
+            Vertx vertx,
+            IotDeviceMessageService messageService,
+            IotModbusTcpClientConfigCacheService configCacheService,
+            String serverId) {
         this.redissonClient = redissonClient;
         this.vertx = vertx;
         this.messageService = messageService;
@@ -73,8 +79,11 @@ public class IotModbusTcpClientConnectionManager {
         String connectionKey = buildConnectionKey(config.getIp(), config.getPort());
         String oldConnectionKey = deviceConnectionMap.get(config.getDeviceId());
         if (oldConnectionKey != null && ObjUtil.notEqual(oldConnectionKey, connectionKey)) {
-            log.info("[ensureConnection][设备 {} IP/端口变更: {} -> {}, 清理旧连接]",
-                    config.getDeviceId(), oldConnectionKey, connectionKey);
+            log.info(
+                    "[ensureConnection][设备 {} IP/端口变更: {} -> {}, 清理旧连接]",
+                    config.getDeviceId(),
+                    oldConnectionKey,
+                    connectionKey);
             removeDevice(config.getDeviceId());
         }
         // 1.2 记录设备与连接的映射
@@ -118,9 +127,11 @@ public class IotModbusTcpClientConnectionManager {
     /**
      * 创建 Modbus TCP 连接
      */
-    private ModbusConnection createConnection(IotModbusDeviceConfigRespDTO config) throws Exception {
+    private ModbusConnection createConnection(IotModbusDeviceConfigRespDTO config)
+            throws Exception {
         // 1. 创建 TCP 连接
-        TCPMasterConnection tcpConnection = new TCPMasterConnection(InetAddress.getByName(config.getIp()));
+        TCPMasterConnection tcpConnection =
+                new TCPMasterConnection(InetAddress.getByName(config.getIp()));
         tcpConnection.setPort(config.getPort());
         tcpConnection.setTimeout(config.getTimeout());
         tcpConnection.connect();
@@ -128,8 +139,10 @@ public class IotModbusTcpClientConnectionManager {
         // 2. 创建 Modbus 连接对象
         return new ModbusConnection()
                 .setConnectionKey(buildConnectionKey(config.getIp(), config.getPort()))
-                .setTcpConnection(tcpConnection).setContext(vertx.getOrCreateContext())
-                .setTimeout(config.getTimeout()).setRetryInterval(config.getRetryInterval());
+                .setTcpConnection(tcpConnection)
+                .setContext(vertx.getOrCreateContext())
+                .setTimeout(config.getTimeout())
+                .setRetryInterval(config.getRetryInterval());
     }
 
     /**
@@ -185,8 +198,8 @@ public class IotModbusTcpClientConnectionManager {
     /**
      * 注册设备到连接，并发送上线消息
      */
-    private void addDeviceAndOnline(ModbusConnection connection,
-                                    IotModbusDeviceConfigRespDTO config) {
+    private void addDeviceAndOnline(
+            ModbusConnection connection, IotModbusDeviceConfigRespDTO config) {
         Integer previous = connection.addDevice(config.getDeviceId(), config.getSlaveId());
         // 首次注册，发送上线消息
         if (previous == null) {
@@ -200,8 +213,8 @@ public class IotModbusTcpClientConnectionManager {
     private void sendOnlineMessage(IotModbusDeviceConfigRespDTO config) {
         try {
             IotDeviceMessage onlineMessage = IotDeviceMessage.buildStateUpdateOnline();
-            messageService.sendDeviceMessage(onlineMessage,
-                    config.getProductKey(), config.getDeviceName(), serverId);
+            messageService.sendDeviceMessage(
+                    onlineMessage, config.getProductKey(), config.getDeviceName(), serverId);
         } catch (Exception ex) {
             log.error("[sendOnlineMessage][发送设备上线消息失败, deviceId={}]", config.getDeviceId(), ex);
         }
@@ -217,8 +230,8 @@ public class IotModbusTcpClientConnectionManager {
         }
         try {
             IotDeviceMessage offlineMessage = IotDeviceMessage.buildStateOffline();
-            messageService.sendDeviceMessage(offlineMessage,
-                    config.getProductKey(), config.getDeviceName(), serverId);
+            messageService.sendDeviceMessage(
+                    offlineMessage, config.getProductKey(), config.getDeviceName(), serverId);
         } catch (Exception ex) {
             log.error("[sendOfflineMessage][发送设备下线消息失败, deviceId={}]", deviceId, ex);
         }
@@ -274,6 +287,7 @@ public class IotModbusTcpClientConnectionManager {
         private TCPMasterConnection tcpConnection;
         private Integer timeout;
         private Integer retryInterval;
+
         /**
          * 设备 ID 到 slave ID 的映射
          */
@@ -308,10 +322,10 @@ public class IotModbusTcpClientConnectionManager {
         /**
          * 执行 Modbus 读取操作（阻塞方式，在 Vert.x worker 线程执行）
          */
-        public <T> Future<T> executeBlocking(java.util.function.Function<TCPMasterConnection, T> operation) {
+        public <T> Future<T> executeBlocking(
+                java.util.function.Function<TCPMasterConnection, T> operation) {
             // ordered=true 保证同一 Context 的操作串行执行，不同连接之间可并行
             return context.executeBlocking(() -> operation.apply(tcpConnection), true);
         }
     }
-
 }

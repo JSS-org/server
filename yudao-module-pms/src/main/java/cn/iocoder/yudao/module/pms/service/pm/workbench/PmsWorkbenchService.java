@@ -20,7 +20,8 @@ public interface PmsWorkbenchService {
      * @param userId 用户编号
      * @return 工作项分页
      */
-    PageResult<PmsWorkItemDO> getWorkbenchWorkItemPage(PmsWorkbenchPageReqVO pageReqVO, Long userId);
+    PageResult<PmsWorkItemDO> getWorkbenchWorkItemPage(
+            PmsWorkbenchPageReqVO pageReqVO, Long userId);
 
     /**
      * 获得当前用户参与的活跃项目的未完成迭代分页
@@ -29,7 +30,8 @@ public interface PmsWorkbenchService {
      * @param userId 用户编号
      * @return 迭代分页
      */
-    PageResult<PmsIterationDO> getWorkbenchIterationPage(PmsWorkbenchPageReqVO pageReqVO, Long userId);
+    PageResult<PmsIterationDO> getWorkbenchIterationPage(
+            PmsWorkbenchPageReqVO pageReqVO, Long userId);
 
     /**
      * 获得工作台待办数量，按工作项类型和迭代统计
@@ -39,5 +41,4 @@ public interface PmsWorkbenchService {
      * @return 工作台数量
      */
     PmsWorkbenchCountRespVO getWorkbenchCount(PmsWorkbenchPageReqVO pageReqVO, Long userId);
-
 }

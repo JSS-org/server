@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.returning.OaVehicleReturnPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.returning.OaVehicleReturnSaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleReturnDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -78,6 +79,6 @@ public interface OaVehicleReturnService {
      * @param pageReqVO 分页条件
      * @return 还车申请分页
      */
-    PageResult<OaVehicleReturnDO> getVehicleReturnPage(Long userId, OaVehicleReturnPageReqVO pageReqVO);
-
+    PageResult<OaVehicleReturnDO> getVehicleReturnPage(
+            Long userId, OaVehicleReturnPageReqVO pageReqVO);
 }

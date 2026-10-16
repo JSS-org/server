@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.admin.app.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -20,7 +21,9 @@ public class PayAppPageItemRespVO extends PayAppBaseVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
 
-    @Schema(description = "已配置的支付渠道编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "[alipay_pc, alipay_wap]")
+    @Schema(
+            description = "已配置的支付渠道编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[alipay_pc, alipay_wap]")
     private Set<String> channelCodes;
-
 }

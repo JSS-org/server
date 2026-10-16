@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.record;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_STATUS_INVALID;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_TIME_CONFLICT;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -16,7 +22,9 @@ import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.record.HrmAttendanc
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.attendance.record.HrmAttendanceLeaveMapper;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -29,12 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_STATUS_INVALID;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_TIME_CONFLICT;
-
 /**
  * HRM 考勤请假 Service 实现类
  *
@@ -46,12 +48,9 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
 
     public static final String LEAVE_PROCESS_KEY = "hrm_attendance_leave";
 
-    @Resource
-    private HrmAttendanceLeaveMapper attendanceLeaveMapper;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private HrmAttendanceLeaveMapper attendanceLeaveMapper;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @SuppressWarnings("ExtractMethodRecommender")
@@ -62,16 +61,22 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
         // 1.2 锁定员工，避免同一员工并发创建重叠请假
         employeeService.validateEmployeeExistsForUpdate(employee.getId());
         // 1.3 校验请假时间未与审批中、已通过的申请重叠
-        Long conflictCount = attendanceLeaveMapper.selectCountByEmployeeIdAndTimeRangeAndApprovalStatusIn(
-                employee.getId(), new LocalDateTime[]{reqVO.getStartTime(), reqVO.getEndTime()},
-                Arrays.asList(BpmProcessInstanceStatusEnum.RUNNING.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
+        Long conflictCount =
+                attendanceLeaveMapper.selectCountByEmployeeIdAndTimeRangeAndApprovalStatusIn(
+                        employee.getId(),
+                        new LocalDateTime[] {reqVO.getStartTime(), reqVO.getEndTime()},
+                        Arrays.asList(
+                                BpmProcessInstanceStatusEnum.RUNNING.getStatus(),
+                                BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
         if (conflictCount > 0) {
             throw exception(ATTENDANCE_LEAVE_TIME_CONFLICT);
         }
 
         // 2. 创建请假记录
-        HrmAttendanceLeaveDO attendanceLeave = BeanUtils.toBean(reqVO, HrmAttendanceLeaveDO.class)
-                .setEmployeeId(employee.getId()).setApprovalStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus());
+        HrmAttendanceLeaveDO attendanceLeave =
+                BeanUtils.toBean(reqVO, HrmAttendanceLeaveDO.class)
+                        .setEmployeeId(employee.getId())
+                        .setApprovalStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus());
         attendanceLeaveMapper.insert(attendanceLeave);
 
         // 3. 构建流程变量并发起审批流程
@@ -84,13 +89,17 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
         variables.put("endTime", reqVO.getEndTime().toString());
         variables.put("day", reqVO.getDay());
         variables.put("reason", reqVO.getReason());
-        BpmProcessInstanceCreateReqDTO processInstanceCreateReqDTO = new BpmProcessInstanceCreateReqDTO();
+        BpmProcessInstanceCreateReqDTO processInstanceCreateReqDTO =
+                new BpmProcessInstanceCreateReqDTO();
         processInstanceCreateReqDTO.setProcessDefinitionKey(LEAVE_PROCESS_KEY);
         processInstanceCreateReqDTO.setBusinessKey(String.valueOf(attendanceLeave.getId()));
         processInstanceCreateReqDTO.setVariables(variables);
-        String processInstanceId = processInstanceApi.createProcessInstance(userId, processInstanceCreateReqDTO);
-        attendanceLeaveMapper.updateById(new HrmAttendanceLeaveDO().setId(attendanceLeave.getId())
-                .setProcessInstanceId(processInstanceId));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(userId, processInstanceCreateReqDTO);
+        attendanceLeaveMapper.updateById(
+                new HrmAttendanceLeaveDO()
+                        .setId(attendanceLeave.getId())
+                        .setProcessInstanceId(processInstanceId));
         return attendanceLeave.getId();
     }
 
@@ -103,7 +112,9 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
         if (ObjUtil.notEqual(attendanceLeave.getEmployeeId(), employee.getId())) {
             throw exception(ATTENDANCE_LEAVE_NOT_EXISTS);
         }
-        if (ObjUtil.notEqual(attendanceLeave.getApprovalStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())
+        if (ObjUtil.notEqual(
+                        attendanceLeave.getApprovalStatus(),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus())
                 || StrUtil.isBlank(attendanceLeave.getProcessInstanceId())) {
             throw exception(ATTENDANCE_LEAVE_STATUS_INVALID);
         }
@@ -111,13 +122,17 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
         // 2. 取消审批流程并更新请假审批状态
         processInstanceApi.cancelProcessInstanceByStartUser(
                 userId, attendanceLeave.getProcessInstanceId(), reqVO.getReason());
-        updateLeaveApprovalStatus(attendanceLeave.getId(), attendanceLeave.getProcessInstanceId(),
-                BpmProcessInstanceStatusEnum.CANCEL.getStatus(), reqVO.getReason());
+        updateLeaveApprovalStatus(
+                attendanceLeave.getId(),
+                attendanceLeave.getProcessInstanceId(),
+                BpmProcessInstanceStatusEnum.CANCEL.getStatus(),
+                reqVO.getReason());
     }
 
     @Override
     public List<HrmAttendanceLeaveDO> getMyAttendanceLeaveList(Long userId) {
-        return attendanceLeaveMapper.selectListByEmployeeId(employeeService.validateEmployeeBySelf(userId).getId());
+        return attendanceLeaveMapper.selectListByEmployeeId(
+                employeeService.validateEmployeeBySelf(userId).getId());
     }
 
     @Override
@@ -126,10 +141,12 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
     }
 
     @Override
-    public PageResult<HrmAttendanceLeaveDO> getAttendanceLeavePage(HrmAttendanceLeavePageReqVO reqVO) {
+    public PageResult<HrmAttendanceLeaveDO> getAttendanceLeavePage(
+            HrmAttendanceLeavePageReqVO reqVO) {
         // 1. 解析员工筛选条件
-        Collection<Long> employeeIds = resolveEmployeeIds(reqVO.getEmployeeId(), reqVO.getDeptIds(),
-                reqVO.getEmployeeKeyword());
+        Collection<Long> employeeIds =
+                resolveEmployeeIds(
+                        reqVO.getEmployeeId(), reqVO.getDeptIds(), reqVO.getEmployeeKeyword());
         if (employeeIds != null && CollUtil.isEmpty(employeeIds)) {
             return PageResult.empty();
         }
@@ -142,8 +159,9 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
     @Override
     public List<HrmAttendanceLeaveDO> getAttendanceLeaveList(HrmAttendanceLeavePageReqVO reqVO) {
         // 1. 解析员工筛选条件
-        Collection<Long> employeeIds = resolveEmployeeIds(reqVO.getEmployeeId(), reqVO.getDeptIds(),
-                reqVO.getEmployeeKeyword());
+        Collection<Long> employeeIds =
+                resolveEmployeeIds(
+                        reqVO.getEmployeeId(), reqVO.getDeptIds(), reqVO.getEmployeeKeyword());
         if (employeeIds != null && CollUtil.isEmpty(employeeIds)) {
             return Collections.emptyList();
         }
@@ -160,7 +178,8 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
 
     @Override
     public List<HrmAttendanceLeaveDO> getEffectiveAttendanceLeaveListByEmployeeId(Long employeeId) {
-        return attendanceLeaveMapper.selectListByEmployeeIdAndApprovalStatus(employeeId, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        return attendanceLeaveMapper.selectListByEmployeeIdAndApprovalStatus(
+                employeeId, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
     }
 
     @Override
@@ -182,16 +201,24 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
         }
         HrmAttendanceLeaveDO attendanceLeave = validateAttendanceLeaveExists(id);
         if ((attendanceLeave.getProcessInstanceId() != null
-                && ObjUtil.notEqual(attendanceLeave.getProcessInstanceId(), processInstanceId))
-                || ObjUtil.notEqual(attendanceLeave.getApprovalStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
+                        && ObjUtil.notEqual(
+                                attendanceLeave.getProcessInstanceId(), processInstanceId))
+                || ObjUtil.notEqual(
+                        attendanceLeave.getApprovalStatus(),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
             return;
         }
 
         // 2. 仅允许当前审批中的流程写入一次终态
         attendanceLeaveMapper.updateApprovalResultByIdAndProcessInstanceIdAndApprovalStatus(
-                id, processInstanceId, BpmProcessInstanceStatusEnum.RUNNING.getStatus(),
-                new HrmAttendanceLeaveDO().setProcessInstanceId(processInstanceId)
-                        .setApprovalStatus(status).setApprovalTime(LocalDateTime.now()).setApprovalReason(reason));
+                id,
+                processInstanceId,
+                BpmProcessInstanceStatusEnum.RUNNING.getStatus(),
+                new HrmAttendanceLeaveDO()
+                        .setProcessInstanceId(processInstanceId)
+                        .setApprovalStatus(status)
+                        .setApprovalTime(LocalDateTime.now())
+                        .setApprovalReason(reason));
     }
 
     private HrmAttendanceLeaveDO validateAttendanceLeaveExists(Long id) {
@@ -207,10 +234,11 @@ public class HrmAttendanceLeaveServiceImpl implements HrmAttendanceLeaveService 
         if (employeeId == null && CollUtil.isEmpty(deptIds) && StrUtil.isBlank(employeeKeyword)) {
             return null;
         }
-        HrmEmployeeListReqVO employeeReqVO = new HrmEmployeeListReqVO()
-                .setIds(employeeId == null ? null : Collections.singletonList(employeeId))
-                .setSearch(employeeKeyword).setDeptIds(deptIds);
+        HrmEmployeeListReqVO employeeReqVO =
+                new HrmEmployeeListReqVO()
+                        .setIds(employeeId == null ? null : Collections.singletonList(employeeId))
+                        .setSearch(employeeKeyword)
+                        .setDeptIds(deptIds);
         return convertList(employeeService.getEmployeeList(employeeReqVO), HrmEmployeeDO::getId);
     }
-
 }

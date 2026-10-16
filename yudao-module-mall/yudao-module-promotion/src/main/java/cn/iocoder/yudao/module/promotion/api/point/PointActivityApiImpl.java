@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.promotion.api.point;
 
 import cn.iocoder.yudao.module.promotion.api.point.dto.PointValidateJoinRespDTO;
 import cn.iocoder.yudao.module.promotion.service.point.PointActivityService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -15,11 +17,11 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class PointActivityApiImpl implements PointActivityApi {
 
-    @Resource
-    private PointActivityService pointActivityService;
+    @Resource private PointActivityService pointActivityService;
 
     @Override
-    public PointValidateJoinRespDTO validateJoinPointActivity(Long activityId, Long skuId, Integer count) {
+    public PointValidateJoinRespDTO validateJoinPointActivity(
+            Long activityId, Long skuId, Integer count) {
         return pointActivityService.validateJoinPointActivity(activityId, skuId, count);
     }
 
@@ -32,5 +34,4 @@ public class PointActivityApiImpl implements PointActivityApi {
     public void updatePointStockIncr(Long id, Long skuId, Integer count) {
         pointActivityService.updatePointStockIncr(id, skuId, count);
     }
-
 }

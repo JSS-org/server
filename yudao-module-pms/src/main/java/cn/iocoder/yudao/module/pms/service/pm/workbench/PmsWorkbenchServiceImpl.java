@@ -10,7 +10,9 @@ import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
 import cn.iocoder.yudao.module.pms.service.pm.iteration.PmsIterationService;
 import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectMemberService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -26,20 +28,19 @@ import java.util.Map;
 @Validated
 public class PmsWorkbenchServiceImpl implements PmsWorkbenchService {
 
-    @Resource
-    private PmsWorkItemService workItemService;
-    @Resource
-    private PmsIterationService iterationService;
+    @Resource private PmsWorkItemService workItemService;
+    @Resource private PmsIterationService iterationService;
 
-    @Resource
-    private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectMemberService projectMemberService;
 
     @Override
-    public PageResult<PmsWorkItemDO> getWorkbenchWorkItemPage(PmsWorkbenchPageReqVO pageReqVO, Long userId) {
+    public PageResult<PmsWorkItemDO> getWorkbenchWorkItemPage(
+            PmsWorkbenchPageReqVO pageReqVO, Long userId) {
         // 1. 获得当前用户参与的活跃项目
         List<Long> projectIds = projectMemberService.getActiveProjectIdListByUserId(userId);
-        if (CollUtil.isEmpty(projectIds) || pageReqVO.getProjectId() != null
-                && !projectIds.contains(pageReqVO.getProjectId())) {
+        if (CollUtil.isEmpty(projectIds)
+                || pageReqVO.getProjectId() != null
+                        && !projectIds.contains(pageReqVO.getProjectId())) {
             return PageResult.empty();
         }
 
@@ -48,11 +49,13 @@ public class PmsWorkbenchServiceImpl implements PmsWorkbenchService {
     }
 
     @Override
-    public PageResult<PmsIterationDO> getWorkbenchIterationPage(PmsWorkbenchPageReqVO pageReqVO, Long userId) {
+    public PageResult<PmsIterationDO> getWorkbenchIterationPage(
+            PmsWorkbenchPageReqVO pageReqVO, Long userId) {
         // 1. 获得当前用户参与的活跃项目
         List<Long> projectIds = projectMemberService.getActiveProjectIdListByUserId(userId);
-        if (CollUtil.isEmpty(projectIds) || pageReqVO.getProjectId() != null
-                && !projectIds.contains(pageReqVO.getProjectId())) {
+        if (CollUtil.isEmpty(projectIds)
+                || pageReqVO.getProjectId() != null
+                        && !projectIds.contains(pageReqVO.getProjectId())) {
             return PageResult.empty();
         }
 
@@ -64,20 +67,36 @@ public class PmsWorkbenchServiceImpl implements PmsWorkbenchService {
     public PmsWorkbenchCountRespVO getWorkbenchCount(PmsWorkbenchPageReqVO pageReqVO, Long userId) {
         // 1. 获得当前用户参与的活跃项目
         List<Long> projectIds = projectMemberService.getActiveProjectIdListByUserId(userId);
-        if (CollUtil.isEmpty(projectIds) || pageReqVO.getProjectId() != null
-                && !projectIds.contains(pageReqVO.getProjectId())) {
-            return new PmsWorkbenchCountRespVO().setRequirementCount(0).setTaskCount(0)
-                    .setDefectCount(0).setIterationCount(0);
+        if (CollUtil.isEmpty(projectIds)
+                || pageReqVO.getProjectId() != null
+                        && !projectIds.contains(pageReqVO.getProjectId())) {
+            return new PmsWorkbenchCountRespVO()
+                    .setRequirementCount(0)
+                    .setTaskCount(0)
+                    .setDefectCount(0)
+                    .setIterationCount(0);
         }
 
         // 2. 按工作项类型和迭代统计当前用户的待办数量
-        Map<Integer, Long> typeCountMap = workItemService.getAssignedWorkItemTypeCountMap(pageReqVO, projectIds, userId);
-        int iterationCount = iterationService.getUncompletedIterationCount(pageReqVO, projectIds, userId).intValue();
+        Map<Integer, Long> typeCountMap =
+                workItemService.getAssignedWorkItemTypeCountMap(pageReqVO, projectIds, userId);
+        int iterationCount =
+                iterationService
+                        .getUncompletedIterationCount(pageReqVO, projectIds, userId)
+                        .intValue();
         return new PmsWorkbenchCountRespVO()
-                .setRequirementCount(typeCountMap.getOrDefault(PmsWorkItemTypeEnum.REQUIREMENT.getType(), 0L).intValue())
-                .setTaskCount(typeCountMap.getOrDefault(PmsWorkItemTypeEnum.TASK.getType(), 0L).intValue())
-                .setDefectCount(typeCountMap.getOrDefault(PmsWorkItemTypeEnum.DEFECT.getType(), 0L).intValue())
+                .setRequirementCount(
+                        typeCountMap
+                                .getOrDefault(PmsWorkItemTypeEnum.REQUIREMENT.getType(), 0L)
+                                .intValue())
+                .setTaskCount(
+                        typeCountMap
+                                .getOrDefault(PmsWorkItemTypeEnum.TASK.getType(), 0L)
+                                .intValue())
+                .setDefectCount(
+                        typeCountMap
+                                .getOrDefault(PmsWorkItemTypeEnum.DEFECT.getType(), 0L)
+                                .intValue())
                 .setIterationCount(iterationCount);
     }
-
 }

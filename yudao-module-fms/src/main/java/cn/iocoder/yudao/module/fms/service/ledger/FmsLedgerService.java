@@ -36,8 +36,8 @@ public interface FmsLedgerService {
      * @param userId 用户编号
      * @return 凭证分录列表
      */
-    List<FmsLedgerEntryVO> getEntryList(Long accountSetId, LocalDateTime beginTime,
-            LocalDateTime endTime, Long userId);
+    List<FmsLedgerEntryVO> getEntryList(
+            Long accountSetId, LocalDateTime beginTime, LocalDateTime endTime, Long userId);
 
     /**
      * 获得指定辅助核算组合的余额
@@ -49,8 +49,12 @@ public interface FmsLedgerService {
      * @param userId 用户编号
      * @return 借方为正、贷方为负的余额
      */
-    BigDecimal getAuxiliaryCombinationBalance(Long accountSetId, String month, Long subjectId,
-            Collection<Long> auxiliaryItemIds, Long userId);
+    BigDecimal getAuxiliaryCombinationBalance(
+            Long accountSetId,
+            String month,
+            Long subjectId,
+            Collection<Long> auxiliaryItemIds,
+            Long userId);
 
     // ==================== 明细账 ====================
 
@@ -139,7 +143,8 @@ public interface FmsLedgerService {
      * @param userId 用户编号
      * @return 数量金额明细账列表
      */
-    List<FmsLedgerQuantityDetailRespVO> getQuantityDetailList(FmsLedgerListReqVO listReqVO, Long userId);
+    List<FmsLedgerQuantityDetailRespVO> getQuantityDetailList(
+            FmsLedgerListReqVO listReqVO, Long userId);
 
     // ==================== 数量金额总账 ====================
 
@@ -150,6 +155,6 @@ public interface FmsLedgerService {
      * @param userId 用户编号
      * @return 数量金额总账列表
      */
-    List<FmsLedgerQuantityGeneralRespVO> getQuantityGeneralList(FmsLedgerListReqVO listReqVO, Long userId);
-
+    List<FmsLedgerQuantityGeneralRespVO> getQuantityGeneralList(
+            FmsLedgerListReqVO listReqVO, Long userId);
 }

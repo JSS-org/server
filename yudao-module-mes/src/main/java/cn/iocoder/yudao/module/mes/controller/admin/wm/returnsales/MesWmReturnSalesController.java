@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnsales;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -15,12 +19,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.client.MesMdClientDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnsales.MesWmReturnSalesDO;
 import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
 import cn.iocoder.yudao.module.mes.service.wm.returnsales.MesWmReturnSalesService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,32 +37,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 销售退货单")
 @RestController
 @RequestMapping("/mes/wm/return-sales")
 @Validated
 public class MesWmReturnSalesController {
 
-    @Resource
-    private MesWmReturnSalesService returnSalesService;
-    @Resource
-    private MesMdClientService clientService;
+    @Resource private MesWmReturnSalesService returnSalesService;
+    @Resource private MesMdClientService clientService;
 
     @PostMapping("/create")
     @Operation(summary = "创建销售退货单")
     @PreAuthorize("@ss.hasPermission('mes:wm-return-sales:create')")
-    public CommonResult<Long> createReturnSales(@Valid @RequestBody MesWmReturnSalesSaveReqVO createReqVO) {
+    public CommonResult<Long> createReturnSales(
+            @Valid @RequestBody MesWmReturnSalesSaveReqVO createReqVO) {
         return success(returnSalesService.createReturnSales(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改销售退货单")
     @PreAuthorize("@ss.hasPermission('mes:wm-return-sales:update')")
-    public CommonResult<Boolean> updateReturnSales(@Valid @RequestBody MesWmReturnSalesSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateReturnSales(
+            @Valid @RequestBody MesWmReturnSalesSaveReqVO updateReqVO) {
         returnSalesService.updateReturnSales(updateReqVO);
         return success(true);
     }
@@ -86,19 +89,27 @@ public class MesWmReturnSalesController {
     @PreAuthorize("@ss.hasPermission('mes:wm-return-sales:query')")
     public CommonResult<PageResult<MesWmReturnSalesRespVO>> getReturnSalesPage(
             @Valid MesWmReturnSalesPageReqVO pageReqVO) {
-        PageResult<MesWmReturnSalesDO> pageResult = returnSalesService.getReturnSalesPage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmReturnSalesDO> pageResult =
+                returnSalesService.getReturnSalesPage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出销售退货单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-return-sales:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportReturnSalesExcel(@Valid MesWmReturnSalesPageReqVO pageReqVO,
-                                       HttpServletResponse response) throws IOException {
+    public void exportReturnSalesExcel(
+            @Valid MesWmReturnSalesPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmReturnSalesDO> pageResult = returnSalesService.getReturnSalesPage(pageReqVO);
-        ExcelUtils.write(response, "销售退货单.xls", "数据", MesWmReturnSalesRespVO.class,
+        PageResult<MesWmReturnSalesDO> pageResult =
+                returnSalesService.getReturnSalesPage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "销售退货单.xls",
+                "数据",
+                MesWmReturnSalesRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -153,12 +164,19 @@ public class MesWmReturnSalesController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdClientDO> clientMap = clientService.getClientMap(
-                convertSet(list, MesWmReturnSalesDO::getClientId));
+        Map<Long, MesMdClientDO> clientMap =
+                clientService.getClientMap(convertSet(list, MesWmReturnSalesDO::getClientId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmReturnSalesRespVO.class, vo ->
-                MapUtils.findAndThen(clientMap, vo.getClientId(), client ->
-                        vo.setClientCode(client.getCode()).setClientName(client.getName()).setClientNickname(client.getNickname())));
+        return BeanUtils.toBean(
+                list,
+                MesWmReturnSalesRespVO.class,
+                vo ->
+                        MapUtils.findAndThen(
+                                clientMap,
+                                vo.getClientId(),
+                                client ->
+                                        vo.setClientCode(client.getCode())
+                                                .setClientName(client.getName())
+                                                .setClientNickname(client.getNickname())));
     }
-
 }

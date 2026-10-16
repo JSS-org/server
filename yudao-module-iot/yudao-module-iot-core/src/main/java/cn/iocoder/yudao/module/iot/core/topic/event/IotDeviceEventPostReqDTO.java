@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.event;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.Data;
 
 /**
@@ -49,7 +50,9 @@ public class IotDeviceEventPostReqDTO {
      * @return DTO 对象
      */
     public static IotDeviceEventPostReqDTO of(String identifier, Object value, Long time) {
-        return new IotDeviceEventPostReqDTO().setIdentifier(identifier).setValue(value).setTime(time);
+        return new IotDeviceEventPostReqDTO()
+                .setIdentifier(identifier)
+                .setValue(value)
+                .setTime(time);
     }
-
 }

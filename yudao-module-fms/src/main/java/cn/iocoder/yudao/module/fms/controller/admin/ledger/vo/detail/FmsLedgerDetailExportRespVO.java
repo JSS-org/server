@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.detail;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -39,5 +40,4 @@ public class FmsLedgerDetailExportRespVO {
 
     @ExcelProperty("余额")
     private BigDecimal balance;
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.materialstock.vo.MesWmMat
 import cn.iocoder.yudao.module.mes.controller.admin.wm.materialstock.vo.MesWmMaterialStockListReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.materialstock.vo.MesWmMaterialStockPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.materialstock.MesWmMaterialStockDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -109,8 +110,15 @@ public interface MesWmMaterialStockService {
      * @param receiptTime    入库时间（为空则默认当前时间）
      * @return 库存记录
      */
-    MesWmMaterialStockDO getOrCreateMaterialStock(Long itemId, Long warehouseId, Long locationId, Long areaId,
-                                                  Long batchId, String batchCode, Long vendorId, LocalDateTime receiptTime);
+    MesWmMaterialStockDO getOrCreateMaterialStock(
+            Long itemId,
+            Long warehouseId,
+            Long locationId,
+            Long areaId,
+            Long batchId,
+            String batchCode,
+            Long vendorId,
+            LocalDateTime receiptTime);
 
     /**
      * 更新库存数量
@@ -145,7 +153,13 @@ public interface MesWmMaterialStockService {
      * @param quantity        数量（可选，校验库存充足）
      * @return 校验通过的库存记录
      */
-    MesWmMaterialStockDO validateSelectedStock(Long materialStockId, Long itemId, Long batchId, String batchCode,
-                                               Long warehouseId, Long locationId, Long areaId, BigDecimal quantity);
-
+    MesWmMaterialStockDO validateSelectedStock(
+            Long materialStockId,
+            Long itemId,
+            Long batchId,
+            String batchCode,
+            Long warehouseId,
+            Long locationId,
+            Long areaId,
+            BigDecimal quantity);
 }

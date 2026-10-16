@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.mes.service.md.autocode.strategy.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePartDO;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodeContext;
-import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 /**
  * {@link MesMdAutoCodeInputCharPartStrategy} 的单元测试
@@ -13,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class MesMdAutoCodeInputCharPartStrategyTest {
 
-    private final MesMdAutoCodeInputCharPartStrategy strategy = new MesMdAutoCodeInputCharPartStrategy();
+    private final MesMdAutoCodeInputCharPartStrategy strategy =
+            new MesMdAutoCodeInputCharPartStrategy();
 
     @Test
     public void testGenerate_withInputChar() {
@@ -50,5 +52,4 @@ public class MesMdAutoCodeInputCharPartStrategyTest {
         // 断言
         assertEquals("", result);
     }
-
 }

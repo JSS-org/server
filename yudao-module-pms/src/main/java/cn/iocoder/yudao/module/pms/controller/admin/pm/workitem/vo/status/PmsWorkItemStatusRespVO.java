@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 工作项看板状态 Response VO")
@@ -33,5 +34,4 @@ public class PmsWorkItemStatusRespVO {
 
     @Schema(description = "显示顺序", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer sort;
-
 }

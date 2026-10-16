@@ -118,5 +118,4 @@ public interface PmsKnowledgeFolderService {
      * @return 被引用的内容权限编号集合
      */
     Set<Long> getExistingContentPermissionIdSet(Collection<Long> permissionIds);
-
 }

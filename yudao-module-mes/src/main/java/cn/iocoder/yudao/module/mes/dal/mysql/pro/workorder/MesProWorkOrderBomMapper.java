@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo.bom.MesProWorkOrderBomPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.workorder.MesProWorkOrderBomDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.List;
 public interface MesProWorkOrderBomMapper extends BaseMapperX<MesProWorkOrderBomDO> {
 
     default PageResult<MesProWorkOrderBomDO> selectPage(MesProWorkOrderBomPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesProWorkOrderBomDO>()
-                .eqIfPresent(MesProWorkOrderBomDO::getWorkOrderId, reqVO.getWorkOrderId())
-                .orderByDesc(MesProWorkOrderBomDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesProWorkOrderBomDO>()
+                        .eqIfPresent(MesProWorkOrderBomDO::getWorkOrderId, reqVO.getWorkOrderId())
+                        .orderByDesc(MesProWorkOrderBomDO::getId));
     }
 
     default List<MesProWorkOrderBomDO> selectListByWorkOrderId(Long workOrderId) {
@@ -30,5 +33,4 @@ public interface MesProWorkOrderBomMapper extends BaseMapperX<MesProWorkOrderBom
     default void deleteByWorkOrderId(Long workOrderId) {
         delete(MesProWorkOrderBomDO::getWorkOrderId, workOrderId);
     }
-
 }

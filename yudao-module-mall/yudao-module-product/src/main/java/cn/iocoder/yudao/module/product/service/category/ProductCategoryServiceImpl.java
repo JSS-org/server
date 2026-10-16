@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.product.service.category;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO.CATEGORY_LEVEL;
+import static cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO.PARENT_ID_NULL;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
@@ -9,7 +14,9 @@ import cn.iocoder.yudao.module.product.controller.admin.category.vo.ProductCateg
 import cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO;
 import cn.iocoder.yudao.module.product.dal.mysql.category.ProductCategoryMapper;
 import cn.iocoder.yudao.module.product.service.spu.ProductSpuService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -18,11 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO.CATEGORY_LEVEL;
-import static cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO.PARENT_ID_NULL;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 
 /**
  * 商品分类 Service 实现类
@@ -33,10 +35,8 @@ import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 @Validated
 public class ProductCategoryServiceImpl implements ProductCategoryService {
 
-    @Resource
-    private ProductCategoryMapper productCategoryMapper;
-    @Resource
-    @Lazy // 循环依赖，避免报错
+    @Resource private ProductCategoryMapper productCategoryMapper;
+    @Resource @Lazy // 循环依赖，避免报错
     private ProductSpuService productSpuService;
 
     @Override
@@ -114,23 +114,25 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         }
         // 获得商品分类信息
         List<ProductCategoryDO> list = productCategoryMapper.selectByIds(ids);
-        Map<Long, ProductCategoryDO> categoryMap = CollectionUtils.convertMap(list, ProductCategoryDO::getId);
+        Map<Long, ProductCategoryDO> categoryMap =
+                CollectionUtils.convertMap(list, ProductCategoryDO::getId);
         // 校验
-        ids.forEach(id -> {
-            // 校验分类是否存在
-            ProductCategoryDO category = categoryMap.get(id);
-            if (category == null) {
-                throw exception(CATEGORY_NOT_EXISTS);
-            }
-            // 校验分类是否启用
-            if (!CommonStatusEnum.ENABLE.getStatus().equals(category.getStatus())) {
-                throw exception(CATEGORY_DISABLED, category.getName());
-            }
-            // 商品分类层级校验，必须使用第二级的商品分类
-            if (getCategoryLevel(id) < CATEGORY_LEVEL) {
-                throw exception(SPU_SAVE_FAIL_CATEGORY_LEVEL_ERROR);
-            }
-        });
+        ids.forEach(
+                id -> {
+                    // 校验分类是否存在
+                    ProductCategoryDO category = categoryMap.get(id);
+                    if (category == null) {
+                        throw exception(CATEGORY_NOT_EXISTS);
+                    }
+                    // 校验分类是否启用
+                    if (!CommonStatusEnum.ENABLE.getStatus().equals(category.getStatus())) {
+                        throw exception(CATEGORY_DISABLED, category.getName());
+                    }
+                    // 商品分类层级校验，必须使用第二级的商品分类
+                    if (getCategoryLevel(id) < CATEGORY_LEVEL) {
+                        throw exception(SPU_SAVE_FAIL_CATEGORY_LEVEL_ERROR);
+                    }
+                });
     }
 
     @Override
@@ -159,8 +161,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
         for (int i = 0; i < Byte.MAX_VALUE; i++) {
             // 如果没有父节点，break 结束
             ProductCategoryDO category = productCategoryMapper.selectById(id);
-            if (category == null
-                    || Objects.equals(category.getParentId(), PARENT_ID_NULL)) {
+            if (category == null || Objects.equals(category.getParentId(), PARENT_ID_NULL)) {
                 break;
             }
             // 继续递归父节点
@@ -182,7 +183,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
 
     @Override
     public List<ProductCategoryDO> getEnableCategoryList(List<Long> ids) {
-        return productCategoryMapper.selectListByIdAndStatus(ids, CommonStatusEnum.ENABLE.getStatus());
+        return productCategoryMapper.selectListByIdAndStatus(
+                ids, CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

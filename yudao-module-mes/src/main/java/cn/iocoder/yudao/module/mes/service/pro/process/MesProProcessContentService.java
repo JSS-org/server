@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.pro.process.vo.content.MesPr
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.process.MesProProcessContentDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -57,5 +58,4 @@ public interface MesProProcessContentService {
      * @param processId 工序编号
      */
     void deleteProcessContentByProcessId(Long processId);
-
 }

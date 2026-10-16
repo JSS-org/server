@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item;
 
 import cn.iocoder.yudao.module.oa.enums.supply.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - 办公用品 Response VO")
 @Data
@@ -62,7 +63,11 @@ public class OaSupplyItemRespVO {
     @Schema(description = "所属部门", example = "行政部")
     private String deptName;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

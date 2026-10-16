@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.pay.controller.admin.refund.vo;
 
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.framework.excel.core.convert.MoneyConvert;
 import cn.iocoder.yudao.module.pay.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,13 +32,16 @@ public class PayRefundExcelVO {
 
     @ExcelProperty("商户退款单号")
     private String merchantRefundId;
+
     @ExcelProperty("退款单号")
     private String no;
+
     @ExcelProperty("渠道退款单号")
     private String channelRefundNo;
 
     @ExcelProperty("商户支付单号")
     private String merchantOrderId;
+
     @ExcelProperty("渠道支付单号")
     private String channelOrderNo;
 
@@ -57,5 +61,4 @@ public class PayRefundExcelVO {
 
     @ExcelProperty("退款原因")
     private String reason;
-
 }

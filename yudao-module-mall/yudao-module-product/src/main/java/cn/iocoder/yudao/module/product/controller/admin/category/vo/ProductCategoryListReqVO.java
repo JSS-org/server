@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.controller.admin.category.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.Collection;
@@ -20,5 +21,4 @@ public class ProductCategoryListReqVO {
 
     @Schema(description = "父分类编号数组", example = "1,2,3")
     private Collection<Long> parentIds;
-
 }

@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,11 +22,10 @@ import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryItemDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryTypeDO;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsAuxiliaryItemMapper;
 import cn.iocoder.yudao.module.fms.enums.config.FmsAuxiliaryTypeEnum;
-import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
-import cn.iocoder.yudao.module.fms.service.config.FmsInitialBalanceService;
 import cn.iocoder.yudao.module.fms.service.voucher.FmsVoucherService;
-import cn.iocoder.yudao.module.fms.service.config.FmsVoucherTemplateService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -25,34 +34,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @Import(FmsAuxiliaryItemServiceImpl.class)
 public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FmsAuxiliaryItemServiceImpl auxiliaryItemService;
-    @Resource
-    private FmsAuxiliaryItemMapper auxiliaryItemMapper;
-    @MockitoBean
-    private FmsAccountSetService accountSetService;
-    @MockitoBean
-    private FmsAuxiliaryTypeService auxiliaryTypeService;
-    @MockitoBean
-    private FmsAuxiliaryCombinationService auxiliaryCombinationService;
-    @MockitoBean
-    private FmsVoucherService voucherService;
-    @MockitoBean
-    private FmsVoucherTemplateService voucherTemplateService;
-    @MockitoBean
-    private FmsInitialBalanceService initialBalanceService;
+    @Resource private FmsAuxiliaryItemServiceImpl auxiliaryItemService;
+    @Resource private FmsAuxiliaryItemMapper auxiliaryItemMapper;
+    @MockitoBean private FmsAccountSetService accountSetService;
+    @MockitoBean private FmsAuxiliaryTypeService auxiliaryTypeService;
+    @MockitoBean private FmsAuxiliaryCombinationService auxiliaryCombinationService;
+    @MockitoBean private FmsVoucherService voucherService;
+    @MockitoBean private FmsVoucherTemplateService voucherTemplateService;
+    @MockitoBean private FmsInitialBalanceService initialBalanceService;
 
     @Test
     public void testCreateAuxiliaryItem_success() {
@@ -82,7 +74,8 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
         FmsAuxiliaryItemSaveReqVO reqVO = buildSaveReqVO(1L, 11L, "KH001", "新客户");
 
         // 调用，并断言
-        assertServiceException(() -> auxiliaryItemService.createAuxiliaryItem(reqVO, 10L),
+        assertServiceException(
+                () -> auxiliaryItemService.createAuxiliaryItem(reqVO, 10L),
                 AUXILIARY_ITEM_CODE_DUPLICATE);
     }
 
@@ -98,8 +91,8 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertNull(auxiliaryItemMapper.selectById(auxiliaryItem.getId()));
-        verify(auxiliaryCombinationService).deleteAuxiliaryCombinationByAuxiliaryItemIds(
-                eq(1L), anyCollection());
+        verify(auxiliaryCombinationService)
+                .deleteAuxiliaryCombinationByAuxiliaryItemIds(eq(1L), anyCollection());
     }
 
     @Test
@@ -109,12 +102,16 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
         auxiliaryItemMapper.insert(auxiliaryItem);
         // mock 方法
         when(voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
-                eq(1L), anyCollection())).thenReturn(1L);
+                        eq(1L), anyCollection()))
+                .thenReturn(1L);
 
         // 调用，并断言
-        assertServiceException(() -> auxiliaryItemService.deleteAuxiliaryItemList(
-                1L, Collections.singletonList(auxiliaryItem.getId()), 10L),
-                AUXILIARY_ITEM_VOUCHER_TEMPLATE_IN_USE, 1L);
+        assertServiceException(
+                () ->
+                        auxiliaryItemService.deleteAuxiliaryItemList(
+                                1L, Collections.singletonList(auxiliaryItem.getId()), 10L),
+                AUXILIARY_ITEM_VOUCHER_TEMPLATE_IN_USE,
+                1L);
     }
 
     @Test
@@ -124,11 +121,12 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
         auxiliaryItemMapper.insert(auxiliaryItem);
 
         // 调用
-        auxiliaryItemService.updateAuxiliaryItemStatus(1L, auxiliaryItem.getId(),
-                CommonStatusEnum.DISABLE.getStatus(), 10L);
+        auxiliaryItemService.updateAuxiliaryItemStatus(
+                1L, auxiliaryItem.getId(), CommonStatusEnum.DISABLE.getStatus(), 10L);
 
         // 断言
-        assertEquals(CommonStatusEnum.DISABLE.getStatus(),
+        assertEquals(
+                CommonStatusEnum.DISABLE.getStatus(),
                 auxiliaryItemMapper.selectById(auxiliaryItem.getId()).getStatus());
         verify(accountSetService).validateAccountSetWritePermission(1L, 10L);
     }
@@ -146,8 +144,8 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
         reqVO.setSearch("测试");
 
         // 调用
-        PageResult<FmsAuxiliaryItemDO> pageResult = auxiliaryItemService
-                .getAuxiliaryItemPage(reqVO, 10L);
+        PageResult<FmsAuxiliaryItemDO> pageResult =
+                auxiliaryItemService.getAuxiliaryItemPage(reqVO, 10L);
 
         // 断言
         assertEquals(1L, pageResult.getTotal());
@@ -160,12 +158,13 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
         mockAuxiliaryType(1L, 11L);
         auxiliaryItemMapper.insert(buildAuxiliaryItem(1L, 11L, "KH002", "北京客户"));
         auxiliaryItemMapper.insert(buildAuxiliaryItem(1L, 11L, "KH001", "上海客户"));
-        auxiliaryItemMapper.insert(buildAuxiliaryItem(1L, 11L, "KH003", "停用客户")
-                .setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        auxiliaryItemMapper.insert(
+                buildAuxiliaryItem(1L, 11L, "KH003", "停用客户")
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus()));
 
         // 调用
-        List<FmsAuxiliaryItemDO> result = auxiliaryItemService
-                .getAuxiliaryItemListByAccountSetIdAndAuxiliaryTypeIdAndStatus(
+        List<FmsAuxiliaryItemDO> result =
+                auxiliaryItemService.getAuxiliaryItemListByAccountSetIdAndAuxiliaryTypeIdAndStatus(
                         1L, 11L, CommonStatusEnum.ENABLE.getStatus(), 10L);
 
         // 断言
@@ -177,8 +176,11 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testImportAuxiliaryItemList_empty() {
         // 调用，并断言
-        assertServiceException(() -> auxiliaryItemService.importAuxiliaryItemList(
-                1L, 11L, Collections.emptyList(), 10L), AUXILIARY_ITEM_IMPORT_LIST_IS_EMPTY);
+        assertServiceException(
+                () ->
+                        auxiliaryItemService.importAuxiliaryItemList(
+                                1L, 11L, Collections.emptyList(), 10L),
+                AUXILIARY_ITEM_IMPORT_LIST_IS_EMPTY);
     }
 
     @Test
@@ -192,8 +194,9 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
         FmsAuxiliaryItemImportExcelVO duplicateRow = buildImportRow("KH002", "文件内重复");
 
         // 调用
-        FmsAuxiliaryItemImportRespVO result = auxiliaryItemService.importAuxiliaryItemList(
-                1L, 11L, Arrays.asList(successRow, existRow, duplicateRow), 10L);
+        FmsAuxiliaryItemImportRespVO result =
+                auxiliaryItemService.importAuxiliaryItemList(
+                        1L, 11L, Arrays.asList(successRow, existRow, duplicateRow), 10L);
 
         // 断言
         assertEquals(3, result.getTotalCount());
@@ -209,17 +212,21 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
     public void testImportAuxiliaryItemList_inventory() {
         // mock 数据
         when(auxiliaryTypeService.validateAuxiliaryTypeList(eq(1L), anyCollection()))
-                .thenReturn(Collections.singletonList(new FmsAuxiliaryTypeDO()
-                        .setId(16L).setAccountSetId(1L).setName("存货").setSystemPreset(true)
-                        .setType(FmsAuxiliaryTypeEnum.INVENTORY.getType())));
+                .thenReturn(
+                        Collections.singletonList(
+                                new FmsAuxiliaryTypeDO()
+                                        .setId(16L)
+                                        .setAccountSetId(1L)
+                                        .setName("存货")
+                                        .setSystemPreset(true)
+                                        .setType(FmsAuxiliaryTypeEnum.INVENTORY.getType())));
         FmsAuxiliaryItemImportExcelVO row = buildImportRow("SP001", "测试商品");
         row.setRemark("库存备注");
         row.setSpecification("标准版");
         row.setUnit("台");
 
         // 调用
-        auxiliaryItemService.importAuxiliaryItemList(
-                1L, 16L, Collections.singletonList(row), 10L);
+        auxiliaryItemService.importAuxiliaryItemList(1L, 16L, Collections.singletonList(row), 10L);
 
         // 断言
         FmsAuxiliaryItemDO item = auxiliaryItemMapper.selectByTypeIdAndCode(1L, 16L, "SP001");
@@ -232,10 +239,14 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
 
     private void mockAuxiliaryType(Long accountSetId, Long auxiliaryTypeId) {
         when(auxiliaryTypeService.validateAuxiliaryTypeList(eq(accountSetId), anyCollection()))
-                .thenReturn(Collections.singletonList(new FmsAuxiliaryTypeDO()
-                        .setId(auxiliaryTypeId).setAccountSetId(accountSetId)
-                        .setName("客户").setSystemPreset(true)
-                        .setType(FmsAuxiliaryTypeEnum.CUSTOMER.getType())));
+                .thenReturn(
+                        Collections.singletonList(
+                                new FmsAuxiliaryTypeDO()
+                                        .setId(auxiliaryTypeId)
+                                        .setAccountSetId(accountSetId)
+                                        .setName("客户")
+                                        .setSystemPreset(true)
+                                        .setType(FmsAuxiliaryTypeEnum.CUSTOMER.getType())));
     }
 
     private FmsAuxiliaryItemSaveReqVO buildSaveReqVO(
@@ -257,9 +268,15 @@ public class FmsAuxiliaryItemServiceImplTest extends BaseDbUnitTest {
 
     private FmsAuxiliaryItemDO buildAuxiliaryItem(
             Long accountSetId, Long auxiliaryTypeId, String code, String name) {
-        return randomPojo(FmsAuxiliaryItemDO.class, auxiliaryItem -> auxiliaryItem.setId(null)
-                .setAccountSetId(accountSetId).setAuxiliaryTypeId(auxiliaryTypeId)
-                .setCode(code).setName(name).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        return randomPojo(
+                FmsAuxiliaryItemDO.class,
+                auxiliaryItem ->
+                        auxiliaryItem
+                                .setId(null)
+                                .setAccountSetId(accountSetId)
+                                .setAuxiliaryTypeId(auxiliaryTypeId)
+                                .setCode(code)
+                                .setName(name)
+                                .setStatus(CommonStatusEnum.ENABLE.getStatus()));
     }
-
 }

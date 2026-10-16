@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,5 +20,4 @@ public class AppOrderExpressTrackRespDTO {
 
     @Schema(description = "快递状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "已签收")
     private String content;
-
 }

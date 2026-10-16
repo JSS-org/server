@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 
@@ -29,5 +30,4 @@ public class IotCoapAuthResource extends CoapResource {
         log.debug("[handlePOST][收到 /auth POST 请求]");
         authHandler.handle(exchange);
     }
-
 }

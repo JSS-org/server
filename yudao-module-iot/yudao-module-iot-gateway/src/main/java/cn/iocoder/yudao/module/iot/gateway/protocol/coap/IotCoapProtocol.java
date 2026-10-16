@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.coap;
 
+import cn.hutool.core.lang.Assert;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.module.iot.core.enums.IotProtocolTypeEnum;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
@@ -15,13 +16,14 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream.IotCoa
 import cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream.IotCoapRegisterSubResource;
 import cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream.IotCoapUpstreamHandler;
 import cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream.IotCoapUpstreamTopicResource;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.elements.config.Configuration;
-import cn.hutool.core.lang.Assert;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,17 +46,16 @@ public class IotCoapProtocol implements IotProtocol {
      * 协议配置
      */
     private final ProtocolProperties properties;
+
     /**
      * 服务器 ID（用于消息追踪，全局唯一）
      */
-    @Getter
-    private final String serverId;
+    @Getter private final String serverId;
 
     /**
      * 运行状态
      */
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     /**
      * CoAP 服务器
@@ -110,21 +111,29 @@ public class IotCoapProtocol implements IotProtocol {
             IotCoapRegisterResource registerResource = new IotCoapRegisterResource(registerHandler);
             // 2.3 添加 /auth/register/sub-device/{productKey}/{deviceName} 子设备动态注册资源
             IotCoapRegisterSubHandler registerSubHandler = new IotCoapRegisterSubHandler();
-            IotCoapRegisterSubResource registerSubResource = new IotCoapRegisterSubResource(registerSubHandler);
-            authResource.add(new CoapResource("register") {{
-                add(registerResource);
-                add(registerSubResource);
-            }});
+            IotCoapRegisterSubResource registerSubResource =
+                    new IotCoapRegisterSubResource(registerSubHandler);
+            authResource.add(
+                    new CoapResource("register") {
+                        {
+                            add(registerResource);
+                            add(registerSubResource);
+                        }
+                    });
             // 2.4 添加 /topic 根资源（用于上行消息）
             IotCoapUpstreamHandler upstreamHandler = new IotCoapUpstreamHandler(serverId);
-            IotCoapUpstreamTopicResource topicResource = new IotCoapUpstreamTopicResource(serverId, upstreamHandler);
+            IotCoapUpstreamTopicResource topicResource =
+                    new IotCoapUpstreamTopicResource(serverId, upstreamHandler);
             coapServer.add(topicResource);
 
             // 3. 启动服务器
             coapServer.start();
             running = true;
-            log.info("[start][IoT CoAP 协议 {} 启动成功，端口：{}，serverId：{}]",
-                    getId(), properties.getPort(), serverId);
+            log.info(
+                    "[start][IoT CoAP 协议 {} 启动成功，端口：{}，serverId：{}]",
+                    getId(),
+                    properties.getPort(),
+                    serverId);
 
             // 4. 启动下行消息订阅者
             IotMessageBus messageBus = SpringUtil.getBean(IotMessageBus.class);
@@ -171,5 +180,4 @@ public class IotCoapProtocol implements IotProtocol {
         running = false;
         log.info("[stop][IoT CoAP 协议 {} 已停止]", getId());
     }
-
 }

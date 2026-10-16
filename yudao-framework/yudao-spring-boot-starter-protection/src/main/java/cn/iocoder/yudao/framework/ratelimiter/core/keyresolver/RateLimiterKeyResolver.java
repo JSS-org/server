@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.ratelimiter.core.keyresolver;
 
 import cn.iocoder.yudao.framework.ratelimiter.core.annotation.RateLimiter;
+
 import org.aspectj.lang.JoinPoint;
 
 /**
@@ -18,5 +19,4 @@ public interface RateLimiterKeyResolver {
      * @return Key
      */
     String resolver(JoinPoint joinPoint, RateLimiter rateLimiter);
-
 }

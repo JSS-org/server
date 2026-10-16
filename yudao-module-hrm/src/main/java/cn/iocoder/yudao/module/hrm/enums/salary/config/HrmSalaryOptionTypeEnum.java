@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.salary.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,18 +16,18 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmSalaryOptionTypeEnum implements ArrayValuable<Integer> {
-
     MINUS(0, "减项"),
     ADD(1, "加项"),
     CALCULATED(2, "计算项");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmSalaryOptionTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(HrmSalaryOptionTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -40,5 +41,4 @@ public enum HrmSalaryOptionTypeEnum implements ArrayValuable<Integer> {
     public static HrmSalaryOptionTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

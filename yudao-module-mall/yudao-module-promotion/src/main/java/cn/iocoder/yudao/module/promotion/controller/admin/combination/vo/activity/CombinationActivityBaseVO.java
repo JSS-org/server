@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 
 /**
  * 拼团活动 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -34,12 +37,18 @@ public class CombinationActivityBaseVO {
     @NotNull(message = "单次限购数量不能为空")
     private Integer singleLimitCount;
 
-    @Schema(description = "活动时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "[2022-07-01 23:59:59]")
+    @Schema(
+            description = "活动时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[2022-07-01 23:59:59]")
     @NotNull(message = "活动时间不能为空")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime startTime;
 
-    @Schema(description = "活动时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "[2022-07-01 23:59:59]")
+    @Schema(
+            description = "活动时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[2022-07-01 23:59:59]")
     @NotNull(message = "活动时间不能为空")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime endTime;
@@ -55,5 +64,4 @@ public class CombinationActivityBaseVO {
     @Schema(description = "限制时长（小时）", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @NotNull(message = "限制时长不能为空")
     private Integer limitDuration;
-
 }

@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.mes.service.wm.itemconsume;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_FEEDBACK_ROUTE_PROCESS_INVALID;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_ROUTE_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil;
@@ -27,7 +36,9 @@ import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSa
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseLocationService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -40,14 +51,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_FEEDBACK_ROUTE_PROCESS_INVALID;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_ROUTE_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link MesWmItemConsumeServiceImpl} 的单元测试
  *
@@ -56,30 +59,19 @@ import static org.mockito.Mockito.*;
 @Import(MesWmItemConsumeServiceImpl.class)
 public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesWmItemConsumeServiceImpl itemConsumeService;
+    @Resource private MesWmItemConsumeServiceImpl itemConsumeService;
 
-    @Resource
-    private MesWmItemConsumeMapper itemConsumeMapper;
+    @Resource private MesWmItemConsumeMapper itemConsumeMapper;
 
-    @MockitoBean
-    private MesWmItemConsumeLineService itemConsumeLineService;
-    @MockitoBean
-    private MesWmItemConsumeDetailService itemConsumeDetailService;
-    @MockitoBean
-    private MesProRouteProductBomService routeProductBomService;
-    @MockitoBean
-    private MesProRouteService routeService;
-    @MockitoBean
-    private MesWmTransactionService wmTransactionService;
-    @MockitoBean
-    private MesWmWarehouseService warehouseService;
-    @MockitoBean
-    private MesWmWarehouseLocationService locationService;
-    @MockitoBean
-    private MesWmWarehouseAreaService areaService;
-    @MockitoBean
-    private MesWmMaterialStockService materialStockService;
+    @MockitoBean private MesWmItemConsumeLineService itemConsumeLineService;
+    @MockitoBean private MesWmItemConsumeDetailService itemConsumeDetailService;
+    @MockitoBean private MesProRouteProductBomService routeProductBomService;
+    @MockitoBean private MesProRouteService routeService;
+    @MockitoBean private MesWmTransactionService wmTransactionService;
+    @MockitoBean private MesWmWarehouseService warehouseService;
+    @MockitoBean private MesWmWarehouseLocationService locationService;
+    @MockitoBean private MesWmWarehouseAreaService areaService;
+    @MockitoBean private MesWmMaterialStockService materialStockService;
 
     // ========== 公共 mock 数据 ==========
 
@@ -107,32 +99,44 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
 
         when(warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE))
                 .thenReturn(virtualWarehouse);
-        when(locationService.getWarehouseLocationByCode(MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION))
+        when(locationService.getWarehouseLocationByCode(
+                        MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION))
                 .thenReturn(virtualLocation);
         when(areaService.getWarehouseAreaByCode(MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA))
                 .thenReturn(virtualArea);
 
-        lenient().when(routeService.validateRouteExists(anyLong())).thenAnswer(invocation -> {
-            Long routeId = invocation.getArgument(0);
-            return new MesProRouteDO().setId(routeId);
-        });
+        lenient()
+                .when(routeService.validateRouteExists(anyLong()))
+                .thenAnswer(
+                        invocation -> {
+                            Long routeId = invocation.getArgument(0);
+                            return new MesProRouteDO().setId(routeId);
+                        });
 
         // mock createItemConsumeLineBatch：模拟 insertBatch 后填充 ID
         AtomicLong lineIdSeq = new AtomicLong(1000L);
-        doAnswer(invocation -> {
-            List<MesWmItemConsumeLineDO> lines = invocation.getArgument(0);
-            for (MesWmItemConsumeLineDO line : lines) {
-                line.setId(lineIdSeq.getAndIncrement());
-            }
-            return null;
-        }).when(itemConsumeLineService).createItemConsumeLineBatch(any());
+        doAnswer(
+                        invocation -> {
+                            List<MesWmItemConsumeLineDO> lines = invocation.getArgument(0);
+                            for (MesWmItemConsumeLineDO line : lines) {
+                                line.setId(lineIdSeq.getAndIncrement());
+                            }
+                            return null;
+                        })
+                .when(itemConsumeLineService)
+                .createItemConsumeLineBatch(any());
     }
 
     private MesProFeedbackDO buildFeedback() {
         return MesProFeedbackDO.builder()
-                .id(randomLongId()).workOrderId(randomLongId()).taskId(randomLongId())
-                .workstationId(randomLongId()).processId(randomLongId()).routeId(randomLongId())
-                .itemId(randomLongId()).feedbackQuantity(BigDecimal.TEN)
+                .id(randomLongId())
+                .workOrderId(randomLongId())
+                .taskId(randomLongId())
+                .workstationId(randomLongId())
+                .processId(randomLongId())
+                .routeId(randomLongId())
+                .itemId(randomLongId())
+                .feedbackQuantity(BigDecimal.TEN)
                 .build();
     }
 
@@ -142,16 +146,20 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
     public void testGenerateItemConsume_routeContextIncomplete() {
         MesProFeedbackDO feedback = buildFeedback();
         feedback.setRouteId(null);
-        assertServiceException(() -> itemConsumeService.generateItemConsume(feedback), PRO_FEEDBACK_ROUTE_PROCESS_INVALID);
+        assertServiceException(
+                () -> itemConsumeService.generateItemConsume(feedback),
+                PRO_FEEDBACK_ROUTE_PROCESS_INVALID);
         verify(routeProductBomService, never()).getRouteProductBomList(any(), any(), any());
     }
 
     @Test
     public void testGenerateItemConsume_routeNotExists() {
         MesProFeedbackDO feedback = buildFeedback();
-        doThrow(ServiceExceptionUtil.exception(PRO_ROUTE_NOT_EXISTS)).when(routeService)
+        doThrow(ServiceExceptionUtil.exception(PRO_ROUTE_NOT_EXISTS))
+                .when(routeService)
                 .validateRouteExists(feedback.getRouteId());
-        assertServiceException(() -> itemConsumeService.generateItemConsume(feedback), PRO_ROUTE_NOT_EXISTS);
+        assertServiceException(
+                () -> itemConsumeService.generateItemConsume(feedback), PRO_ROUTE_NOT_EXISTS);
         verify(routeProductBomService, never()).getRouteProductBomList(any(), any(), any());
     }
 
@@ -160,7 +168,7 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         // 准备
         MesProFeedbackDO feedback = buildFeedback();
         when(routeProductBomService.getRouteProductBomList(
-                feedback.getRouteId(), feedback.getProcessId(), feedback.getItemId()))
+                        feedback.getRouteId(), feedback.getProcessId(), feedback.getItemId()))
                 .thenReturn(Collections.emptyList());
 
         // 调用
@@ -196,7 +204,8 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
 
         // 断言 2：消耗行正确
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeLineDO>> lineCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeLineDO>> lineCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeLineService).createItemConsumeLineBatch(lineCaptor.capture());
         List<MesWmItemConsumeLineDO> lines = lineCaptor.getValue();
         assertEquals(1, lines.size());
@@ -206,7 +215,8 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
 
         // 断言 3：生成 1 条无批次的 detail
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeDetailService).createItemConsumeDetailBatch(detailCaptor.capture());
         List<MesWmItemConsumeDetailDO> details = detailCaptor.getValue();
         assertEquals(1, details.size());
@@ -248,7 +258,8 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         // 断言：生成 1 条带批次的 detail
         assertNotNull(result);
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeDetailService).createItemConsumeDetailBatch(detailCaptor.capture());
         List<MesWmItemConsumeDetailDO> details = detailCaptor.getValue();
         assertEquals(1, details.size());
@@ -296,7 +307,8 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         // 断言：生成 2 条带批次的 detail（20 + 10）
         assertNotNull(result);
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeDetailService).createItemConsumeDetailBatch(detailCaptor.capture());
         List<MesWmItemConsumeDetailDO> details = detailCaptor.getValue();
         assertEquals(2, details.size());
@@ -339,7 +351,8 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         // 断言：2 条 detail（18 带批次 + 12 无批次）
         assertNotNull(result);
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeDetailService).createItemConsumeDetailBatch(detailCaptor.capture());
         List<MesWmItemConsumeDetailDO> details = detailCaptor.getValue();
         assertEquals(2, details.size());
@@ -381,11 +394,15 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         stockA.setBatchId(1L);
         stockA.setBatchCode("BATCH-A");
 
-        when(materialStockService.getMaterialStockList(argThat((MesWmMaterialStockListReqVO req) ->
-                req != null && itemA.equals(req.getItemId()))))
+        when(materialStockService.getMaterialStockList(
+                        argThat(
+                                (MesWmMaterialStockListReqVO req) ->
+                                        req != null && itemA.equals(req.getItemId()))))
                 .thenReturn(ListUtil.of(stockA));
-        when(materialStockService.getMaterialStockList(argThat((MesWmMaterialStockListReqVO req) ->
-                req != null && itemB.equals(req.getItemId()))))
+        when(materialStockService.getMaterialStockList(
+                        argThat(
+                                (MesWmMaterialStockListReqVO req) ->
+                                        req != null && itemB.equals(req.getItemId()))))
                 .thenReturn(Collections.emptyList());
 
         // 调用
@@ -395,26 +412,28 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         assertNotNull(result);
 
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeLineDO>> lineCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeLineDO>> lineCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeLineService).createItemConsumeLineBatch(lineCaptor.capture());
         assertEquals(2, lineCaptor.getValue().size());
 
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<MesWmItemConsumeDetailDO>> detailCaptor =
+                ArgumentCaptor.forClass(List.class);
         verify(itemConsumeDetailService).createItemConsumeDetailBatch(detailCaptor.capture());
         List<MesWmItemConsumeDetailDO> details = detailCaptor.getValue();
         assertEquals(2, details.size());
 
         // 物料 A：有批次
-        MesWmItemConsumeDetailDO detailA = CollUtil.findOne(details,
-                d -> itemA.equals(d.getItemId()));
+        MesWmItemConsumeDetailDO detailA =
+                CollUtil.findOne(details, d -> itemA.equals(d.getItemId()));
         assertEquals(0, new BigDecimal("10").compareTo(detailA.getQuantity()));
         assertNotNull(detailA.getMaterialStockId());
         assertEquals("BATCH-A", detailA.getBatchCode());
 
         // 物料 B：无批次
-        MesWmItemConsumeDetailDO detailB = CollUtil.findOne(details,
-                d -> itemB.equals(d.getItemId()));
+        MesWmItemConsumeDetailDO detailB =
+                CollUtil.findOne(details, d -> itemB.equals(d.getItemId()));
         assertEquals(0, new BigDecimal("20").compareTo(detailB.getQuantity()));
         assertNull(detailB.getMaterialStockId());
     }
@@ -424,24 +443,43 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishItemConsume_withDetails() {
         // 准备：插入一条消耗记录
-        MesWmItemConsumeDO consume = MesWmItemConsumeDO.builder()
-                .workOrderId(randomLongId()).taskId(randomLongId())
-                .workstationId(randomLongId()).processId(randomLongId())
-                .feedbackId(randomLongId()).consumeDate(java.time.LocalDateTime.now())
-                .status(MesWmItemConsumeStatusEnum.PREPARE.getStatus()).build();
+        MesWmItemConsumeDO consume =
+                MesWmItemConsumeDO.builder()
+                        .workOrderId(randomLongId())
+                        .taskId(randomLongId())
+                        .workstationId(randomLongId())
+                        .processId(randomLongId())
+                        .feedbackId(randomLongId())
+                        .consumeDate(java.time.LocalDateTime.now())
+                        .status(MesWmItemConsumeStatusEnum.PREPARE.getStatus())
+                        .build();
         itemConsumeMapper.insert(consume);
 
         // mock detail 列表
         Long lineId1 = randomLongId();
         Long lineId2 = randomLongId();
-        MesWmItemConsumeDetailDO detail1 = MesWmItemConsumeDetailDO.builder()
-                .consumeId(consume.getId()).lineId(lineId1).itemId(randomLongId())
-                .quantity(new BigDecimal("20")).batchId(1L).batchCode("BATCH-001")
-                .warehouseId(WAREHOUSE_ID).locationId(LOCATION_ID).areaId(AREA_ID).build();
-        MesWmItemConsumeDetailDO detail2 = MesWmItemConsumeDetailDO.builder()
-                .consumeId(consume.getId()).lineId(lineId2).itemId(randomLongId())
-                .quantity(new BigDecimal("12"))
-                .warehouseId(WAREHOUSE_ID).locationId(LOCATION_ID).areaId(AREA_ID).build();
+        MesWmItemConsumeDetailDO detail1 =
+                MesWmItemConsumeDetailDO.builder()
+                        .consumeId(consume.getId())
+                        .lineId(lineId1)
+                        .itemId(randomLongId())
+                        .quantity(new BigDecimal("20"))
+                        .batchId(1L)
+                        .batchCode("BATCH-001")
+                        .warehouseId(WAREHOUSE_ID)
+                        .locationId(LOCATION_ID)
+                        .areaId(AREA_ID)
+                        .build();
+        MesWmItemConsumeDetailDO detail2 =
+                MesWmItemConsumeDetailDO.builder()
+                        .consumeId(consume.getId())
+                        .lineId(lineId2)
+                        .itemId(randomLongId())
+                        .quantity(new BigDecimal("12"))
+                        .warehouseId(WAREHOUSE_ID)
+                        .locationId(LOCATION_ID)
+                        .areaId(AREA_ID)
+                        .build();
         when(itemConsumeDetailService.getItemConsumeDetailListByConsumeId(consume.getId()))
                 .thenReturn(Arrays.asList(detail1, detail2));
 
@@ -453,7 +491,8 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         assertEquals(MesWmItemConsumeStatusEnum.FINISHED.getStatus(), updated.getStatus());
 
         // 断言 2：创建了 2 次库存事务
-        ArgumentCaptor<MesWmTransactionSaveReqDTO> txCaptor = ArgumentCaptor.forClass(MesWmTransactionSaveReqDTO.class);
+        ArgumentCaptor<MesWmTransactionSaveReqDTO> txCaptor =
+                ArgumentCaptor.forClass(MesWmTransactionSaveReqDTO.class);
         verify(wmTransactionService, times(2)).createTransaction(txCaptor.capture());
         List<MesWmTransactionSaveReqDTO> txList = txCaptor.getAllValues();
 
@@ -480,11 +519,16 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishItemConsume_emptyDetails() {
         // 准备：插入一条消耗记录，但没有 detail
-        MesWmItemConsumeDO consume = MesWmItemConsumeDO.builder()
-                .workOrderId(randomLongId()).taskId(randomLongId())
-                .workstationId(randomLongId()).processId(randomLongId())
-                .feedbackId(randomLongId()).consumeDate(java.time.LocalDateTime.now())
-                .status(MesWmItemConsumeStatusEnum.PREPARE.getStatus()).build();
+        MesWmItemConsumeDO consume =
+                MesWmItemConsumeDO.builder()
+                        .workOrderId(randomLongId())
+                        .taskId(randomLongId())
+                        .workstationId(randomLongId())
+                        .processId(randomLongId())
+                        .feedbackId(randomLongId())
+                        .consumeDate(java.time.LocalDateTime.now())
+                        .status(MesWmItemConsumeStatusEnum.PREPARE.getStatus())
+                        .build();
         itemConsumeMapper.insert(consume);
 
         when(itemConsumeDetailService.getItemConsumeDetailListByConsumeId(consume.getId()))
@@ -504,11 +548,16 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetByFeedbackId_exists() {
         Long feedbackId = randomLongId();
-        MesWmItemConsumeDO consume = MesWmItemConsumeDO.builder()
-                .workOrderId(randomLongId()).taskId(randomLongId())
-                .workstationId(randomLongId()).processId(randomLongId())
-                .feedbackId(feedbackId).consumeDate(java.time.LocalDateTime.now())
-                .status(MesWmItemConsumeStatusEnum.PREPARE.getStatus()).build();
+        MesWmItemConsumeDO consume =
+                MesWmItemConsumeDO.builder()
+                        .workOrderId(randomLongId())
+                        .taskId(randomLongId())
+                        .workstationId(randomLongId())
+                        .processId(randomLongId())
+                        .feedbackId(feedbackId)
+                        .consumeDate(java.time.LocalDateTime.now())
+                        .status(MesWmItemConsumeStatusEnum.PREPARE.getStatus())
+                        .build();
         itemConsumeMapper.insert(consume);
 
         MesWmItemConsumeDO result = itemConsumeService.getByFeedbackId(feedbackId);
@@ -521,5 +570,4 @@ public class MesWmItemConsumeServiceImplTest extends BaseDbUnitTest {
         MesWmItemConsumeDO result = itemConsumeService.getByFeedbackId(randomLongId());
         assertNull(result);
     }
-
 }

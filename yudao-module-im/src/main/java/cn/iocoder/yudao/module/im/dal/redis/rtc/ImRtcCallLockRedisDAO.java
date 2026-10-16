@@ -1,18 +1,21 @@
 package cn.iocoder.yudao.module.im.dal.redis.rtc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.dal.redis.RedisKeyConstants.IM_RTC_CALL_LOCK;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.RTC_INVITE_BUSY;
+
 import cn.iocoder.yudao.module.im.enums.ImConversationTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.dal.redis.RedisKeyConstants.IM_RTC_CALL_LOCK;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.RTC_INVITE_BUSY;
 
 /**
  * IM 通话同对 / 同群活跃唯一性的锁 Redis DAO
@@ -29,20 +32,23 @@ public class ImRtcCallLockRedisDAO {
      * 等待获取锁的最长时间；超时抛 RTC_INVITE_BUSY
      */
     private static final long LOCK_WAIT_MS = 5_000L;
+
     /**
      * 持有锁的最长时间；自动释放兜底；给 LiveKit / DB / 推送偶发慢留余地
      */
     private static final long LOCK_LEASE_MS = 30_000L;
 
-    @Resource
-    private RedissonClient redissonClient;
+    @Resource private RedissonClient redissonClient;
 
     /**
      * 私聊通话锁；按 userId 排序拼 key 保对称（同对呼叫和反向呼叫共用一把锁）
      */
     public <V> V lockPrivate(Long userIdA, Long userIdB, Callable<V> callable) throws Exception {
-        String key = String.format(IM_RTC_CALL_LOCK, ImConversationTypeEnum.PRIVATE.getType(),
-                Math.min(userIdA, userIdB)+ "_" + Math.max(userIdA, userIdB));
+        String key =
+                String.format(
+                        IM_RTC_CALL_LOCK,
+                        ImConversationTypeEnum.PRIVATE.getType(),
+                        Math.min(userIdA, userIdB) + "_" + Math.max(userIdA, userIdB));
         return doLock(key, callable);
     }
 
@@ -50,7 +56,8 @@ public class ImRtcCallLockRedisDAO {
      * 群通话锁；同群所有 invite 串行
      */
     public <V> V lockGroup(Long groupId, Callable<V> callable) throws Exception {
-        String key = String.format(IM_RTC_CALL_LOCK, ImConversationTypeEnum.GROUP.getType(), groupId);
+        String key =
+                String.format(IM_RTC_CALL_LOCK, ImConversationTypeEnum.GROUP.getType(), groupId);
         return doLock(key, callable);
     }
 
@@ -72,9 +79,11 @@ public class ImRtcCallLockRedisDAO {
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             } else {
-                log.error("[doLock][lockKey={} 业务超过 leaseTime={}ms，锁已被 Redisson 自动释放]", lockKey, LOCK_LEASE_MS);
+                log.error(
+                        "[doLock][lockKey={} 业务超过 leaseTime={}ms，锁已被 Redisson 自动释放]",
+                        lockKey,
+                        LOCK_LEASE_MS);
             }
         }
     }
-
 }

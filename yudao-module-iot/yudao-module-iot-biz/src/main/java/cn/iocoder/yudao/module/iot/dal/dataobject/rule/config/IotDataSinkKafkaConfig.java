@@ -14,14 +14,17 @@ public class IotDataSinkKafkaConfig extends IotAbstractDataSinkConfig {
      * Kafka 服务器地址
      */
     private String bootstrapServers;
+
     /**
      * 用户名
      */
     private String username;
+
     /**
      * 密码
      */
     private String password;
+
     /**
      * 是否启用 SSL
      */
@@ -31,5 +34,4 @@ public class IotDataSinkKafkaConfig extends IotAbstractDataSinkConfig {
      * 主题
      */
     private String topic;
-
 }

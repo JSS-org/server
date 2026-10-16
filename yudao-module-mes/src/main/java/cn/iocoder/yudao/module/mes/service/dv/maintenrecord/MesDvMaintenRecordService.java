@@ -81,5 +81,4 @@ public interface MesDvMaintenRecordService {
      * @return 设备保养记录分页
      */
     PageResult<MesDvMaintenRecordDO> getMaintenRecordPage(MesDvMaintenRecordPageReqVO pageReqVO);
-
 }

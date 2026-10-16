@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.infra.controller.admin.file.vo.config.FileConfigP
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.config.FileConfigSaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileConfigDO;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClient;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -90,5 +91,4 @@ public interface FileConfigService {
      * @return 文件客户端
      */
     FileClient getMasterFileClient();
-
 }

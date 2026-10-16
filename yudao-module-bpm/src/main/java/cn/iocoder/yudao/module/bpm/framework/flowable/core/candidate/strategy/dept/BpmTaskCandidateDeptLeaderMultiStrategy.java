@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
+
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,7 +16,8 @@ import java.util.Set;
  * @author jason
  */
 @Component
-public class BpmTaskCandidateDeptLeaderMultiStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {
+public class BpmTaskCandidateDeptLeaderMultiStrategy
+        extends AbstractBpmTaskCandidateDeptLeaderStrategy {
 
     @Override
     public BpmTaskCandidateStrategyEnum getStrategy() {
@@ -41,5 +43,4 @@ public class BpmTaskCandidateDeptLeaderMultiStrategy extends AbstractBpmTaskCand
         int level = Integer.parseInt(params[1]);
         return super.getMultiLevelDeptLeaderIds(deptIds, level);
     }
-
 }

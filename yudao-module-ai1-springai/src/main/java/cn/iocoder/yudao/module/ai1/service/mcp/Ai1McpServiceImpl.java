@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.service.mcp;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,14 +16,13 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.mcp.Ai1McpMapper;
 import cn.iocoder.yudao.module.ai1.enums.mcp.Ai1McpTransportEnum;
 import cn.iocoder.yudao.module.ai1.harness.mcp.Ai1McpClientTool;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
 
 /**
  * AI1 MCP 服务 Service 实现类
@@ -31,11 +33,9 @@ import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
 @Validated
 public class Ai1McpServiceImpl implements Ai1McpService {
 
-    @Resource
-    private Ai1McpMapper mcpMapper;
+    @Resource private Ai1McpMapper mcpMapper;
 
-    @Resource
-    private Ai1McpClientTool mcpClientTool;
+    @Resource private Ai1McpClientTool mcpClientTool;
 
     @Override
     public Long createMcp(Ai1McpSaveReqVO createReqVO) {
@@ -152,8 +152,9 @@ public class Ai1McpServiceImpl implements Ai1McpService {
         }
 
         // 3. 构建
-        return BeanUtils.toBean(reqVO, Ai1McpDO.class).setUrl(url).setHeaders(headers)
+        return BeanUtils.toBean(reqVO, Ai1McpDO.class)
+                .setUrl(url)
+                .setHeaders(headers)
                 .setConfig(JsonUtils.toJsonString(config));
     }
-
 }

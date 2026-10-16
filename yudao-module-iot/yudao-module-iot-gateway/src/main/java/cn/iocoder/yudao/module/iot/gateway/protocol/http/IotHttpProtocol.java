@@ -12,12 +12,14 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream.IotHtt
 import cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream.IotHttpRegisterHandler;
 import cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream.IotHttpRegisterSubHandler;
 import cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream.IotHttpUpstreamHandler;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,22 +37,22 @@ public class IotHttpProtocol implements IotProtocol {
      * 协议配置
      */
     private final ProtocolProperties properties;
+
     /**
      * 服务器 ID（用于消息追踪，全局唯一）
      */
-    @Getter
-    private final String serverId;
+    @Getter private final String serverId;
 
     /**
      * 运行状态
      */
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     /**
      * Vert.x 实例
      */
     private Vertx vertx;
+
     /**
      * HTTP 服务器
      */
@@ -104,19 +106,20 @@ public class IotHttpProtocol implements IotProtocol {
         HttpServerOptions options = new HttpServerOptions().setPort(properties.getPort());
         IotGatewayProperties.SslConfig sslConfig = properties.getSsl();
         if (sslConfig != null && Boolean.TRUE.equals(sslConfig.getSsl())) {
-            PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions()
-                    .setKeyPath(sslConfig.getSslKeyPath())
-                    .setCertPath(sslConfig.getSslCertPath());
+            PemKeyCertOptions pemKeyCertOptions =
+                    new PemKeyCertOptions()
+                            .setKeyPath(sslConfig.getSslKeyPath())
+                            .setCertPath(sslConfig.getSslCertPath());
             options = options.setSsl(true).setKeyCertOptions(pemKeyCertOptions);
         }
         try {
-            httpServer = vertx.createHttpServer(options)
-                    .requestHandler(router)
-                    .listen()
-                    .result();
+            httpServer = vertx.createHttpServer(options).requestHandler(router).listen().result();
             running = true;
-            log.info("[start][IoT HTTP 协议 {} 启动成功，端口：{}，serverId：{}]",
-                    getId(), properties.getPort(), serverId);
+            log.info(
+                    "[start][IoT HTTP 协议 {} 启动成功，端口：{}，serverId：{}]",
+                    getId(),
+                    properties.getPort(),
+                    serverId);
 
             // 2. 启动下行消息订阅者
             IotMessageBus messageBus = SpringUtil.getBean(IotMessageBus.class);
@@ -172,5 +175,4 @@ public class IotHttpProtocol implements IotProtocol {
         running = false;
         log.info("[stop][IoT HTTP 协议 {} 已停止]", getId());
     }
-
 }

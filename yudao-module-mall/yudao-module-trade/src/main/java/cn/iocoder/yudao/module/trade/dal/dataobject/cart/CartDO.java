@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.trade.dal.dataobject.cart;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 /**
@@ -39,19 +41,21 @@ public class CartDO extends BaseDO {
      * 关联 ProductSpuDO 的 id 编号
      */
     private Long spuId;
+
     /**
      * 商品 SKU 编号
      *
      * 关联 ProductSkuDO 的 id 编号
      */
     private Long skuId;
+
     /**
      * 商品购买数量
      */
     private Integer count;
+
     /**
      * 是否选中
      */
     private Boolean selected;
-
 }

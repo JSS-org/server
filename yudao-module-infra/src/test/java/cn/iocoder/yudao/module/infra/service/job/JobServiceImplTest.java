@@ -1,5 +1,17 @@
 package cn.iocoder.yudao.module.infra.service.job;
 
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.quartz.core.scheduler.SchedulerManager;
@@ -10,36 +22,23 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.job.JobDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.job.JobMapper;
 import cn.iocoder.yudao.module.infra.enums.job.JobStatusEnum;
 import cn.iocoder.yudao.module.infra.job.job.JobLogCleanJob;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.quartz.SchedulerException;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-
 @Import(JobServiceImpl.class)
 public class JobServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private JobServiceImpl jobService;
-    @Resource
-    private JobMapper jobMapper;
-    @MockitoBean
-    private SchedulerManager schedulerManager;
+    @Resource private JobServiceImpl jobService;
+    @Resource private JobMapper jobMapper;
+    @MockitoBean private SchedulerManager schedulerManager;
 
-    @MockitoBean
-    private JobLogCleanJob jobLogCleanJob;
+    @MockitoBean private JobLogCleanJob jobLogCleanJob;
 
     @Test
     public void testCreateJob_cronExpressionValid() {
@@ -53,9 +52,11 @@ public class JobServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateJob_jobHandlerExists() throws SchedulerException {
         // 准备参数 指定 Cron 表达式
-        JobSaveReqVO reqVO = randomPojo(JobSaveReqVO.class, o -> o.setCronExpression("0 0/1 * * * ? *"));
+        JobSaveReqVO reqVO =
+                randomPojo(JobSaveReqVO.class, o -> o.setCronExpression("0 0/1 * * * ? *"));
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(reqVO.getHandlerName())))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(reqVO.getHandlerName())))
                     .thenReturn(jobLogCleanJob);
 
             // 调用
@@ -68,10 +69,12 @@ public class JobServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateJob_success() throws SchedulerException {
         // 准备参数 指定 Cron 表达式
-        JobSaveReqVO reqVO = randomPojo(JobSaveReqVO.class, o -> o.setCronExpression("0 0/1 * * * ? *"))
-                .setId(null);
+        JobSaveReqVO reqVO =
+                randomPojo(JobSaveReqVO.class, o -> o.setCronExpression("0 0/1 * * * ? *"))
+                        .setId(null);
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(reqVO.getHandlerName())))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(reqVO.getHandlerName())))
                     .thenReturn(jobLogCleanJob);
 
             // 调用
@@ -83,34 +86,44 @@ public class JobServiceImplTest extends BaseDbUnitTest {
             assertPojoEquals(reqVO, job, "id");
             assertEquals(JobStatusEnum.NORMAL.getStatus(), job.getStatus());
             // 校验调用
-            verify(schedulerManager).addJob(eq(job.getId()), eq(job.getHandlerName()), eq(job.getHandlerParam()),
-                    eq(job.getCronExpression()), eq(reqVO.getRetryCount()), eq(reqVO.getRetryInterval()));
+            verify(schedulerManager)
+                    .addJob(
+                            eq(job.getId()),
+                            eq(job.getHandlerName()),
+                            eq(job.getHandlerParam()),
+                            eq(job.getCronExpression()),
+                            eq(reqVO.getRetryCount()),
+                            eq(reqVO.getRetryInterval()));
         }
     }
 
     @Test
-    public void testUpdateJob_jobNotExists(){
+    public void testUpdateJob_jobNotExists() {
         // 准备参数
-        JobSaveReqVO reqVO = randomPojo(JobSaveReqVO.class, o -> o.setCronExpression("0 0/1 * * * ? *"));
+        JobSaveReqVO reqVO =
+                randomPojo(JobSaveReqVO.class, o -> o.setCronExpression("0 0/1 * * * ? *"));
 
         // 调用，并断言异常
         assertServiceException(() -> jobService.updateJob(reqVO), JOB_NOT_EXISTS);
     }
 
     @Test
-    public void testUpdateJob_onlyNormalStatus(){
+    public void testUpdateJob_onlyNormalStatus() {
         // mock 数据
         JobDO job = randomPojo(JobDO.class, o -> o.setStatus(JobStatusEnum.INIT.getStatus()));
         jobMapper.insert(job);
         // 准备参数
-        JobSaveReqVO updateReqVO = randomPojo(JobSaveReqVO.class, o -> {
-            o.setId(job.getId());
-            o.setCronExpression("0 0/1 * * * ? *");
-        });
+        JobSaveReqVO updateReqVO =
+                randomPojo(
+                        JobSaveReqVO.class,
+                        o -> {
+                            o.setId(job.getId());
+                            o.setCronExpression("0 0/1 * * * ? *");
+                        });
 
         // 调用，并断言异常
-        assertServiceException(() -> jobService.updateJob(updateReqVO),
-                JOB_UPDATE_ONLY_NORMAL_STATUS);
+        assertServiceException(
+                () -> jobService.updateJob(updateReqVO), JOB_UPDATE_ONLY_NORMAL_STATUS);
     }
 
     @Test
@@ -119,12 +132,16 @@ public class JobServiceImplTest extends BaseDbUnitTest {
         JobDO job = randomPojo(JobDO.class, o -> o.setStatus(JobStatusEnum.NORMAL.getStatus()));
         jobMapper.insert(job);
         // 准备参数
-        JobSaveReqVO updateReqVO = randomPojo(JobSaveReqVO.class, o -> {
-            o.setId(job.getId());
-            o.setCronExpression("0 0/1 * * * ? *");
-        });
+        JobSaveReqVO updateReqVO =
+                randomPojo(
+                        JobSaveReqVO.class,
+                        o -> {
+                            o.setId(job.getId());
+                            o.setCronExpression("0 0/1 * * * ? *");
+                        });
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(updateReqVO.getHandlerName())))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(updateReqVO.getHandlerName())))
                     .thenReturn(jobLogCleanJob);
 
             // 调用
@@ -133,15 +150,21 @@ public class JobServiceImplTest extends BaseDbUnitTest {
             JobDO updateJob = jobMapper.selectById(updateReqVO.getId());
             assertPojoEquals(updateReqVO, updateJob);
             // 校验调用
-            verify(schedulerManager).updateJob(eq(job.getHandlerName()), eq(updateReqVO.getHandlerParam()),
-                    eq(updateReqVO.getCronExpression()), eq(updateReqVO.getRetryCount()), eq(updateReqVO.getRetryInterval()));
+            verify(schedulerManager)
+                    .updateJob(
+                            eq(job.getHandlerName()),
+                            eq(updateReqVO.getHandlerParam()),
+                            eq(updateReqVO.getCronExpression()),
+                            eq(updateReqVO.getRetryCount()),
+                            eq(updateReqVO.getRetryInterval()));
         }
     }
 
     @Test
     public void testUpdateJobStatus_changeStatusInvalid() {
         // 调用，并断言异常
-        assertServiceException(() -> jobService.updateJobStatus(1L, JobStatusEnum.INIT.getStatus()),
+        assertServiceException(
+                () -> jobService.updateJobStatus(1L, JobStatusEnum.INIT.getStatus()),
                 JOB_CHANGE_STATUS_INVALID);
     }
 
@@ -152,7 +175,8 @@ public class JobServiceImplTest extends BaseDbUnitTest {
         jobMapper.insert(job);
 
         // 调用，并断言异常
-        assertServiceException(() -> jobService.updateJobStatus(job.getId(), job.getStatus()),
+        assertServiceException(
+                () -> jobService.updateJobStatus(job.getId(), job.getStatus()),
                 JOB_CHANGE_STATUS_EQUALS);
     }
 
@@ -195,8 +219,8 @@ public class JobServiceImplTest extends BaseDbUnitTest {
         // 调用
         jobService.triggerJob(job.getId());
         // 校验调用
-        verify(schedulerManager).triggerJob(eq(job.getId()),
-                eq(job.getHandlerName()), eq(job.getHandlerParam()));
+        verify(schedulerManager)
+                .triggerJob(eq(job.getId()), eq(job.getHandlerName()), eq(job.getHandlerParam()));
     }
 
     @Test
@@ -216,11 +240,14 @@ public class JobServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetJobPage() {
         // mock 数据
-        JobDO dbJob = randomPojo(JobDO.class, o -> {
-            o.setName("定时任务测试");
-            o.setHandlerName("handlerName 单元测试");
-            o.setStatus(JobStatusEnum.INIT.getStatus());
-        });
+        JobDO dbJob =
+                randomPojo(
+                        JobDO.class,
+                        o -> {
+                            o.setName("定时任务测试");
+                            o.setHandlerName("handlerName 单元测试");
+                            o.setStatus(JobStatusEnum.INIT.getStatus());
+                        });
         jobMapper.insert(dbJob);
         // 测试 name 不匹配
         jobMapper.insert(cloneIgnoreId(dbJob, o -> o.setName("土豆")));
@@ -252,5 +279,4 @@ public class JobServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertPojoEquals(dbJob, job);
     }
-
 }

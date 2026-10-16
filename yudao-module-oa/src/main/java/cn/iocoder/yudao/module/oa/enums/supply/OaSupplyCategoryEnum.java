@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.supply;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaSupplyCategoryEnum implements ArrayValuable<Integer> {
-
     STATIONERY(1, "文具类"),
     PRINTING_CONSUMABLE(2, "打印耗材"),
     DAILY_NECESSITY(3, "生活用品"),
@@ -24,13 +24,14 @@ public enum OaSupplyCategoryEnum implements ArrayValuable<Integer> {
     ELECTRICAL_APPLIANCE(7, "电器"),
     FINANCIAL_SUPPLY(6, "财务用品");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaSupplyCategoryEnum::getCategory).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaSupplyCategoryEnum::getCategory).toArray(Integer[]::new);
 
     /**
      * 分类
      */
     private final Integer category;
+
     /**
      * 名称
      */
@@ -50,5 +51,4 @@ public enum OaSupplyCategoryEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

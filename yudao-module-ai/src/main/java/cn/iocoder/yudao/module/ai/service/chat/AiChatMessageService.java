@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.ai.controller.admin.chat.vo.message.AiChatMessage
 import cn.iocoder.yudao.module.ai.controller.admin.chat.vo.message.AiChatMessageSendReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.chat.vo.message.AiChatMessageSendRespVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.chat.AiChatMessageDO;
+
 import reactor.core.publisher.Flux;
 
 import java.util.Collection;
@@ -35,7 +36,8 @@ public interface AiChatMessageService {
      * @param userId 用户编号
      * @return 发送结果
      */
-    Flux<CommonResult<AiChatMessageSendRespVO>> sendChatMessageStream(AiChatMessageSendReqVO sendReqVO, Long userId);
+    Flux<CommonResult<AiChatMessageSendRespVO>> sendChatMessageStream(
+            AiChatMessageSendReqVO sendReqVO, Long userId);
 
     /**
      * 获得指定对话的消息列表
@@ -99,5 +101,4 @@ public interface AiChatMessageService {
      * @return 聊天消息的分页
      */
     PageResult<AiChatMessageDO> getChatMessagePage(AiChatMessagePageReqVO pageReqVO);
-
 }

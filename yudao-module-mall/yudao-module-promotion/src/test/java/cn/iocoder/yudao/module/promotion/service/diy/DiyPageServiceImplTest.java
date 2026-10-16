@@ -1,18 +1,5 @@
 package cn.iocoder.yudao.module.promotion.service.diy;
 
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPageCreateReqVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPagePageReqVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPageUpdateReqVO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyPageDO;
-import cn.iocoder.yudao.module.promotion.dal.mysql.diy.DiyPageMapper;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-
-import jakarta.annotation.Resource;
-
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
 import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
@@ -20,7 +7,22 @@ import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServic
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.DIY_PAGE_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPageCreateReqVO;
+import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPagePageReqVO;
+import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPageUpdateReqVO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyPageDO;
+import cn.iocoder.yudao.module.promotion.dal.mysql.diy.DiyPageMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
 
 /**
  * {@link DiyPageServiceImpl} 的单元测试类
@@ -31,11 +33,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(DiyPageServiceImpl.class)
 public class DiyPageServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private DiyPageServiceImpl diyPageService;
+    @Resource private DiyPageServiceImpl diyPageService;
 
-    @Resource
-    private DiyPageMapper diyPageMapper;
+    @Resource private DiyPageMapper diyPageMapper;
 
     @Test
     public void testCreateDiyPage_success() {
@@ -55,11 +55,14 @@ public class DiyPageServiceImplTest extends BaseDbUnitTest {
     public void testUpdateDiyPage_success() {
         // mock 数据
         DiyPageDO dbDiyPage = randomPojo(DiyPageDO.class);
-        diyPageMapper.insert(dbDiyPage);// @Sql: 先插入出一条存在的数据
+        diyPageMapper.insert(dbDiyPage); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        DiyPageUpdateReqVO reqVO = randomPojo(DiyPageUpdateReqVO.class, o -> {
-            o.setId(dbDiyPage.getId()); // 设置更新的 ID
-        });
+        DiyPageUpdateReqVO reqVO =
+                randomPojo(
+                        DiyPageUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbDiyPage.getId()); // 设置更新的 ID
+                        });
 
         // 调用
         diyPageService.updateDiyPage(reqVO);
@@ -81,7 +84,7 @@ public class DiyPageServiceImplTest extends BaseDbUnitTest {
     public void testDeleteDiyPage_success() {
         // mock 数据
         DiyPageDO dbDiyPage = randomPojo(DiyPageDO.class);
-        diyPageMapper.insert(dbDiyPage);// @Sql: 先插入出一条存在的数据
+        diyPageMapper.insert(dbDiyPage); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbDiyPage.getId();
 
@@ -101,13 +104,16 @@ public class DiyPageServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
-    @Disabled  // TODO 请修改 null 为需要的值，然后删除 @Disabled 注解
+    @Disabled // TODO 请修改 null 为需要的值，然后删除 @Disabled 注解
     public void testGetDiyPagePage() {
         // mock 数据
-        DiyPageDO dbDiyPage = randomPojo(DiyPageDO.class, o -> { // 等会查询到
-            o.setName(null);
-            o.setCreateTime(null);
-        });
+        DiyPageDO dbDiyPage =
+                randomPojo(
+                        DiyPageDO.class,
+                        o -> { // 等会查询到
+                            o.setName(null);
+                            o.setCreateTime(null);
+                        });
         diyPageMapper.insert(dbDiyPage);
         // 测试 name 不匹配
         diyPageMapper.insert(cloneIgnoreId(dbDiyPage, o -> o.setName(null)));
@@ -125,5 +131,4 @@ public class DiyPageServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, pageResult.getList().size());
         assertPojoEquals(dbDiyPage, pageResult.getList().get(0));
     }
-
 }

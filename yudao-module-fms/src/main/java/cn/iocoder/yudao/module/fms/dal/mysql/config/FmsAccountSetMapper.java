@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.dal.mysql.config;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -19,5 +20,4 @@ public interface FmsAccountSetMapper extends BaseMapperX<FmsAccountSetDO> {
     default FmsAccountSetDO selectByIdForUpdate(Long id) {
         return selectOneForUpdate(FmsAccountSetDO::getId, id);
     }
-
 }

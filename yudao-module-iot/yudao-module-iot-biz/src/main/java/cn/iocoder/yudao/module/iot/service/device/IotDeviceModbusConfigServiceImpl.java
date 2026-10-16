@@ -6,12 +6,14 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus.IotDeviceModbusConfigSaveReqVO;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigListReqDTO;
 import cn.iocoder.yudao.module.iot.core.enums.IotProtocolTypeEnum;
-import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceModbusConfigDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
+import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceModbusConfigDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductDO;
 import cn.iocoder.yudao.module.iot.dal.mysql.device.IotDeviceModbusConfigMapper;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -26,13 +28,10 @@ import java.util.List;
 @Validated
 public class IotDeviceModbusConfigServiceImpl implements IotDeviceModbusConfigService {
 
-    @Resource
-    private IotDeviceModbusConfigMapper modbusConfigMapper;
+    @Resource private IotDeviceModbusConfigMapper modbusConfigMapper;
 
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    private IotProductService productService;
+    @Resource private IotDeviceService deviceService;
+    @Resource private IotProductService productService;
 
     @Override
     public void saveDeviceModbusConfig(IotDeviceModbusConfigSaveReqVO saveReqVO) {
@@ -44,13 +43,18 @@ public class IotDeviceModbusConfigServiceImpl implements IotDeviceModbusConfigSe
         validateModbusConfigByProtocolType(saveReqVO, product.getProtocolType());
 
         // 2. 根据数据库中是否已有配置，决定是新增还是更新
-        IotDeviceModbusConfigDO existConfig = modbusConfigMapper.selectByDeviceId(saveReqVO.getDeviceId());
+        IotDeviceModbusConfigDO existConfig =
+                modbusConfigMapper.selectByDeviceId(saveReqVO.getDeviceId());
         if (existConfig == null) {
-            IotDeviceModbusConfigDO modbusConfig = BeanUtils.toBean(saveReqVO, IotDeviceModbusConfigDO.class);
+            IotDeviceModbusConfigDO modbusConfig =
+                    BeanUtils.toBean(saveReqVO, IotDeviceModbusConfigDO.class);
             modbusConfigMapper.insert(modbusConfig);
         } else {
-            IotDeviceModbusConfigDO updateObj = BeanUtils.toBean(saveReqVO, IotDeviceModbusConfigDO.class,
-                    o -> o.setId(existConfig.getId()));
+            IotDeviceModbusConfigDO updateObj =
+                    BeanUtils.toBean(
+                            saveReqVO,
+                            IotDeviceModbusConfigDO.class,
+                            o -> o.setId(existConfig.getId()));
             modbusConfigMapper.updateById(updateObj);
         }
     }
@@ -66,11 +70,13 @@ public class IotDeviceModbusConfigServiceImpl implements IotDeviceModbusConfigSe
     }
 
     @Override
-    public List<IotDeviceModbusConfigDO> getDeviceModbusConfigList(IotModbusDeviceConfigListReqDTO listReqDTO) {
+    public List<IotDeviceModbusConfigDO> getDeviceModbusConfigList(
+            IotModbusDeviceConfigListReqDTO listReqDTO) {
         return modbusConfigMapper.selectList(listReqDTO);
     }
 
-    private void validateModbusConfigByProtocolType(IotDeviceModbusConfigSaveReqVO saveReqVO, String protocolType) {
+    private void validateModbusConfigByProtocolType(
+            IotDeviceModbusConfigSaveReqVO saveReqVO, String protocolType) {
         IotProtocolTypeEnum protocolTypeEnum = IotProtocolTypeEnum.of(protocolType);
         if (protocolTypeEnum == null) {
             return;
@@ -85,5 +91,4 @@ public class IotDeviceModbusConfigServiceImpl implements IotDeviceModbusConfigSe
             Assert.notNull(saveReqVO.getFrameFormat(), "Server 模式下，数据帧格式不能为空");
         }
     }
-
 }

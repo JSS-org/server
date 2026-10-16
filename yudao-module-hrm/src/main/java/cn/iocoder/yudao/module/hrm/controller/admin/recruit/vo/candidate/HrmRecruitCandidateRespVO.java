@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.candidate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -131,5 +132,4 @@ public class HrmRecruitCandidateRespVO {
 
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
-
 }

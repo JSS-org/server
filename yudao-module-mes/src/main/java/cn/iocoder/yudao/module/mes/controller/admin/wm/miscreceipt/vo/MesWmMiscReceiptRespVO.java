@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class MesWmMiscReceiptRespVO {
 
     @Schema(description = "来源单据类型", example = "WORK_ORDER")
     private String sourceDocType;
+
     @Schema(description = "来源单据 ID", example = "1")
     private Long sourceDocId;
 
@@ -40,5 +42,4 @@ public class MesWmMiscReceiptRespVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
-
 }

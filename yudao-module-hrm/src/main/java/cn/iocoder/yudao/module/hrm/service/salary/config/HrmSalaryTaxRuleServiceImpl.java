@@ -1,15 +1,24 @@
 package cn.iocoder.yudao.module.hrm.service.salary.config;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_TAX_RULE_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_TAX_RULE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_TAX_RULE_USED;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.taxrule.HrmSalaryTaxRuleSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryTaxRuleDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryTaxRuleMapper;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +27,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_TAX_RULE_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_TAX_RULE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_TAX_RULE_USED;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
 
 /**
  * HRM 计税规则 Service 实现类
@@ -34,17 +37,18 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
 @Validated
 public class HrmSalaryTaxRuleServiceImpl implements HrmSalaryTaxRuleService {
 
-    @Resource
-    private HrmSalaryTaxRuleMapper salaryTaxRuleMapper;
+    @Resource private HrmSalaryTaxRuleMapper salaryTaxRuleMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private HrmSalaryGroupService salaryGroupService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_TAX_RULE_TYPE, subType = HRM_SALARY_TAX_RULE_CREATE_SUB_TYPE,
-            bizNo = "{{#salaryTaxRule.id}}", success = HRM_SALARY_TAX_RULE_CREATE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_TAX_RULE_TYPE,
+            subType = HRM_SALARY_TAX_RULE_CREATE_SUB_TYPE,
+            bizNo = "{{#salaryTaxRule.id}}",
+            success = HRM_SALARY_TAX_RULE_CREATE_SUCCESS)
     public Long createSalaryTaxRule(HrmSalaryTaxRuleSaveReqVO createReqVO) {
         // 1. 校验计税规则名称唯一
         validateSalaryTaxRuleNameUnique(null, createReqVO.getName());
@@ -60,8 +64,11 @@ public class HrmSalaryTaxRuleServiceImpl implements HrmSalaryTaxRuleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_TAX_RULE_TYPE, subType = HRM_SALARY_TAX_RULE_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.id}}", success = HRM_SALARY_TAX_RULE_UPDATE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_TAX_RULE_TYPE,
+            subType = HRM_SALARY_TAX_RULE_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
+            success = HRM_SALARY_TAX_RULE_UPDATE_SUCCESS)
     public void updateSalaryTaxRule(HrmSalaryTaxRuleSaveReqVO updateReqVO) {
         // 1. 校验计税规则
         HrmSalaryTaxRuleDO oldSalaryTaxRule = validateSalaryTaxRuleExists(updateReqVO.getId());
@@ -72,14 +79,18 @@ public class HrmSalaryTaxRuleServiceImpl implements HrmSalaryTaxRuleService {
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("salaryTaxRule", oldSalaryTaxRule);
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT,
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
                 BeanUtils.toBean(oldSalaryTaxRule, HrmSalaryTaxRuleSaveReqVO.class));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_TAX_RULE_TYPE, subType = HRM_SALARY_TAX_RULE_DELETE_SUB_TYPE,
-            bizNo = "{{#salaryTaxRule.id}}", success = HRM_SALARY_TAX_RULE_DELETE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_TAX_RULE_TYPE,
+            subType = HRM_SALARY_TAX_RULE_DELETE_SUB_TYPE,
+            bizNo = "{{#salaryTaxRule.id}}",
+            success = HRM_SALARY_TAX_RULE_DELETE_SUCCESS)
     public void deleteSalaryTaxRule(Long id) {
         // 1. 校验计税规则存在且未被薪资组使用
         HrmSalaryTaxRuleDO salaryTaxRule = validateSalaryTaxRuleExists(id);
@@ -127,5 +138,4 @@ public class HrmSalaryTaxRuleServiceImpl implements HrmSalaryTaxRuleService {
             throw exception(SALARY_TAX_RULE_NAME_DUPLICATE);
         }
     }
-
 }

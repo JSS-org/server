@@ -23,5 +23,4 @@ public @interface ExcelColumnSelect {
      * @return 获取下拉数据源的方法名称
      */
     String functionName() default "";
-
 }

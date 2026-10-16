@@ -4,13 +4,17 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageBindModeEnum;
 import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageEnabledConditionEnum;
 import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageWithdrawTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.Range;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.Range;
+
 import java.util.List;
 
 /**
@@ -39,7 +43,10 @@ public class TradeConfigBaseVO {
     @NotNull(message = "是否启用全场包邮不能为空")
     private Boolean deliveryExpressFreeEnabled;
 
-    @Schema(description = "全场包邮的最小金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "1000")
+    @Schema(
+            description = "全场包邮的最小金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1000")
     @NotNull(message = "全场包邮的最小金额不能为空")
     @PositiveOrZero(message = "全场包邮的最小金额不能是负数")
     private Integer deliveryExpressFreePrice;
@@ -64,7 +71,10 @@ public class TradeConfigBaseVO {
     @InEnum(value = BrokerageBindModeEnum.class, message = "分销关系绑定模式必须是 {value}")
     private Integer brokerageBindMode;
 
-    @Schema(description = "分销海报图地址数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "[https://www.iocoder.cn/yudao.jpg]")
+    @Schema(
+            description = "分销海报图地址数组",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[https://www.iocoder.cn/yudao.jpg]")
     private List<String> brokeragePosterUrls;
 
     @Schema(description = "一级返佣比例", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
@@ -82,7 +92,10 @@ public class TradeConfigBaseVO {
     @PositiveOrZero(message = "用户提现最低金额不能是负数")
     private Integer brokerageWithdrawMinPrice;
 
-    @Schema(description = "用户提现手续费百分比", requiredMode = Schema.RequiredMode.REQUIRED, example = "1000")
+    @Schema(
+            description = "用户提现手续费百分比",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1000")
     @NotNull(message = "用户提现手续费百分比不能为空")
     @PositiveOrZero(message = "用户提现手续费百分比不能是负数")
     private Integer brokerageWithdrawFeePercent;
@@ -96,5 +109,4 @@ public class TradeConfigBaseVO {
     @NotEmpty(message = "提现方式不能为空")
     @InEnum(value = BrokerageWithdrawTypeEnum.class, message = "提现方式必须是 {value}")
     private List<Integer> brokerageWithdrawTypes;
-
 }

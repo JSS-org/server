@@ -1,16 +1,19 @@
 package cn.iocoder.yudao.module.crm.controller.admin.product.vo.product;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.crm.dal.dataobject.product.CrmProductCategoryDO;
 import cn.iocoder.yudao.module.crm.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.Data;
+
 import org.dromara.core.trans.anno.Trans;
 import org.dromara.core.trans.constant.TransType;
 import org.dromara.core.trans.vo.VO;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -47,8 +50,13 @@ public class CrmProductRespVO implements VO {
     private Integer status;
 
     @Schema(description = "产品分类编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
-    @Trans(type = TransType.SIMPLE, target = CrmProductCategoryDO.class, fields = "name", ref = "categoryName")
+    @Trans(
+            type = TransType.SIMPLE,
+            target = CrmProductCategoryDO.class,
+            fields = "name",
+            ref = "categoryName")
     private Long categoryId;
+
     @Schema(description = "产品分类名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "衣服")
     @ExcelProperty("产品分类")
     private String categoryName;
@@ -57,18 +65,29 @@ public class CrmProductRespVO implements VO {
     @ExcelProperty("产品描述")
     private String description;
 
-    @Schema(description = "负责人的用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "31926")
-    @Trans(type = TransType.SIMPLE, targetClassName = "cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO",
-            fields = "nickname", ref = "ownerUserName")
+    @Schema(
+            description = "负责人的用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "31926")
+    @Trans(
+            type = TransType.SIMPLE,
+            targetClassName = "cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO",
+            fields = "nickname",
+            ref = "ownerUserName")
     private Long ownerUserId;
+
     @Schema(description = "负责人的用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码")
     @ExcelProperty("负责人")
     private String ownerUserName;
 
     @Schema(description = "创建人编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
-    @Trans(type = TransType.SIMPLE, targetClassName = "cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO",
-            fields = "nickname", ref = "creatorName")
+    @Trans(
+            type = TransType.SIMPLE,
+            targetClassName = "cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO",
+            fields = "nickname",
+            ref = "creatorName")
     private String creator;
+
     @Schema(description = "创建人名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码")
     @ExcelProperty("创建人")
     private String creatorName;
@@ -80,5 +99,4 @@ public class CrmProductRespVO implements VO {
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("更新时间")
     private LocalDateTime updateTime;
-
 }

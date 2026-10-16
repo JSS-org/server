@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.stock;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -45,5 +47,4 @@ public class ErpStockRespVO {
     @Schema(description = "仓库名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
     @ExcelProperty("仓库名称")
     private String warehouseName;
-
 }

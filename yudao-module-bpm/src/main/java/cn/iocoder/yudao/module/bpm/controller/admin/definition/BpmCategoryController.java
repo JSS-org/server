@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,11 +12,14 @@ import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.category.BpmCa
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.category.BpmCategorySaveReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmCategoryDO;
 import cn.iocoder.yudao.module.bpm.service.definition.BpmCategoryService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,17 +27,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @Tag(name = "管理后台 - BPM 流程分类")
 @RestController
 @RequestMapping("/bpm/category")
 @Validated
 public class BpmCategoryController {
 
-    @Resource
-    private BpmCategoryService categoryService;
+    @Resource private BpmCategoryService categoryService;
 
     @PostMapping("/create")
     @Operation(summary = "创建流程分类")
@@ -43,7 +45,8 @@ public class BpmCategoryController {
     @PutMapping("/update")
     @Operation(summary = "更新流程分类")
     @PreAuthorize("@ss.hasPermission('bpm:category:update')")
-    public CommonResult<Boolean> updateCategory(@Valid @RequestBody BpmCategorySaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateCategory(
+            @Valid @RequestBody BpmCategorySaveReqVO updateReqVO) {
         categoryService.updateCategory(updateReqVO);
         return success(true);
     }
@@ -78,7 +81,8 @@ public class BpmCategoryController {
     @GetMapping("/page")
     @Operation(summary = "获得流程分类分页")
     @PreAuthorize("@ss.hasPermission('bpm:category:query')")
-    public CommonResult<PageResult<BpmCategoryRespVO>> getCategoryPage(@Valid BpmCategoryPageReqVO pageReqVO) {
+    public CommonResult<PageResult<BpmCategoryRespVO>> getCategoryPage(
+            @Valid BpmCategoryPageReqVO pageReqVO) {
         PageResult<BpmCategoryDO> pageResult = categoryService.getCategoryPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, BpmCategoryRespVO.class));
     }
@@ -86,10 +90,16 @@ public class BpmCategoryController {
     @GetMapping("/simple-list")
     @Operation(summary = "获取流程分类的精简信息列表", description = "只包含被开启的分类，主要用于前端的下拉选项")
     public CommonResult<List<BpmCategoryRespVO>> getCategorySimpleList() {
-        List<BpmCategoryDO> list = categoryService.getCategoryListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        List<BpmCategoryDO> list =
+                categoryService.getCategoryListByStatus(CommonStatusEnum.ENABLE.getStatus());
         list.sort(Comparator.comparingInt(BpmCategoryDO::getSort));
-        return success(convertList(list, category -> new BpmCategoryRespVO().setId(category.getId())
-                .setName(category.getName()).setCode(category.getCode())));
+        return success(
+                convertList(
+                        list,
+                        category ->
+                                new BpmCategoryRespVO()
+                                        .setId(category.getId())
+                                        .setName(category.getName())
+                                        .setCode(category.getCode())));
     }
-
 }

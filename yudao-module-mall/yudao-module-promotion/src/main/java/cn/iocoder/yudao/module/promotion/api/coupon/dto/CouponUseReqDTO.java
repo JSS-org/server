@@ -1,8 +1,8 @@
 package cn.iocoder.yudao.module.promotion.api.coupon.dto;
 
-import lombok.Data;
-
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 优惠劵使用 Request DTO
@@ -29,5 +29,4 @@ public class CouponUseReqDTO {
      */
     @NotNull(message = "订单编号不能为空")
     private Long orderId;
-
 }

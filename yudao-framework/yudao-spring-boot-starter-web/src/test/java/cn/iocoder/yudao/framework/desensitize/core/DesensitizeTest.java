@@ -1,17 +1,19 @@
 package cn.iocoder.yudao.framework.desensitize.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.desensitize.core.annotation.Address;
 import cn.iocoder.yudao.framework.desensitize.core.regex.annotation.EmailDesensitize;
 import cn.iocoder.yudao.framework.desensitize.core.regex.annotation.RegexDesensitize;
 import cn.iocoder.yudao.framework.desensitize.core.slider.annotation.*;
+
 import lombok.Data;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * {@link DesensitizeTest} 的单元测试
@@ -39,7 +41,9 @@ public class DesensitizeTest {
         desensitizeDemo.setOrigin("芋道源码");
 
         // 调用
-        DesensitizeDemo d = JsonUtils.parseObject(JsonUtils.toJsonString(desensitizeDemo), DesensitizeDemo.class);
+        DesensitizeDemo d =
+                JsonUtils.parseObject(
+                        JsonUtils.toJsonString(desensitizeDemo), DesensitizeDemo.class);
         // 断言
         assertNotNull(d);
         assertEquals("芋***", d.getNickname());
@@ -61,34 +65,29 @@ public class DesensitizeTest {
     @Data
     public static class DesensitizeDemo {
 
-        @ChineseNameDesensitize
-        private String nickname;
-        @BankCardDesensitize
-        private String bankCard;
-        @CarLicenseDesensitize
-        private String carLicense;
-        @FixedPhoneDesensitize
-        private String fixedPhone;
-        @IdCardDesensitize
-        private String idCard;
-        @PasswordDesensitize
-        private String password;
-        @MobileDesensitize
-        private String phoneNumber;
+        @ChineseNameDesensitize private String nickname;
+        @BankCardDesensitize private String bankCard;
+        @CarLicenseDesensitize private String carLicense;
+        @FixedPhoneDesensitize private String fixedPhone;
+        @IdCardDesensitize private String idCard;
+        @PasswordDesensitize private String password;
+        @MobileDesensitize private String phoneNumber;
+
         @SliderDesensitize(prefixKeep = 6, suffixKeep = 1, replacer = "#")
         private String slider1;
+
         @SliderDesensitize(prefixKeep = 3, suffixKeep = 3)
         private String slider2;
+
         @SliderDesensitize(prefixKeep = 10)
         private String slider3;
-        @EmailDesensitize
-        private String email;
+
+        @EmailDesensitize private String email;
+
         @RegexDesensitize(regex = "芋道源码", replacer = "*")
         private String regex;
-        @Address
-        private String address;
+
+        @Address private String address;
         private String origin;
-
     }
-
 }

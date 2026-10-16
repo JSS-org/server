@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.hrm.framework.operatelog.core;
 
 import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.StrUtil;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,5 +29,4 @@ public class HrmBankCardNumberParseFunction implements IParseFunction {
         }
         return DesensitizedUtil.bankCard(value.toString());
     }
-
 }

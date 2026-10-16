@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.trade.framework.delivery.core.client.impl.kd100;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_ERROR;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_FAILED;
+import static cn.iocoder.yudao.module.trade.framework.delivery.core.client.convert.ExpressQueryConvert.INSTANCE;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -10,8 +15,10 @@ import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressT
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressTrackRespDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kd100.Kd100ExpressQueryReqDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kd100.Kd100ExpressQueryRespDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -20,11 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_ERROR;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_FAILED;
-import static cn.iocoder.yudao.module.trade.framework.delivery.core.client.convert.ExpressQueryConvert.INSTANCE;
 
 /**
  * 快递 100 客户端
@@ -51,10 +53,10 @@ public class Kd100ExpressClient implements ExpressClient {
     @Override
     public List<ExpressTrackRespDTO> getExpressTrackList(ExpressTrackQueryReqDTO reqDTO) {
         // 发起请求
-        Kd100ExpressQueryReqDTO requestDTO = INSTANCE.convert2(reqDTO)
-                .setExpressCode(reqDTO.getExpressCode().toLowerCase());
-        Kd100ExpressQueryRespDTO respDTO = httpRequest(REAL_TIME_QUERY_URL, requestDTO,
-                Kd100ExpressQueryRespDTO.class);
+        Kd100ExpressQueryReqDTO requestDTO =
+                INSTANCE.convert2(reqDTO).setExpressCode(reqDTO.getExpressCode().toLowerCase());
+        Kd100ExpressQueryRespDTO respDTO =
+                httpRequest(REAL_TIME_QUERY_URL, requestDTO, Kd100ExpressQueryRespDTO.class);
 
         // 处理结果
         if (Objects.equals("false", respDTO.getResult())) {
@@ -89,8 +91,10 @@ public class Kd100ExpressClient implements ExpressClient {
         log.debug("[httpRequest][请求参数({})]", requestBody);
 
         // 发送请求
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        HttpEntity<MultiValueMap<String, String>> requestEntity =
+                new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> responseEntity =
+                restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
         log.debug("[httpRequest][的响应结果({})]", responseEntity);
         // 处理响应
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -103,5 +107,4 @@ public class Kd100ExpressClient implements ExpressClient {
         String plainText = String.format("%s%s%s", param, key, customer);
         return HexUtil.encodeHexStr(DigestUtil.md5(plainText), false);
     }
-
 }

@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -23,5 +26,4 @@ public class HrmSalarySlipSendEmployeeReqVO extends PageParam {
 
     @Schema(description = "是否已发送", example = "false")
     private Boolean sent;
-
 }

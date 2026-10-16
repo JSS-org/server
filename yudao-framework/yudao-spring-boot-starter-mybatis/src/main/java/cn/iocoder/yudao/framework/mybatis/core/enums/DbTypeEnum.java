@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.mybatis.core.enums;
 
 import cn.hutool.core.util.StrUtil;
+
 import com.baomidou.mybatisplus.annotation.DbType;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -21,7 +23,10 @@ public enum DbTypeEnum {
     /**
      * H2
      */
-    H2(DbType.H2, "H2", "POSITION(',' || CAST(#{value} AS VARCHAR) || ',' IN ',' || #{column} || ',') > 0"),
+    H2(
+            DbType.H2,
+            "H2",
+            "POSITION(',' || CAST(#{value} AS VARCHAR) || ',' IN ',' || #{column} || ',') > 0"),
 
     /**
      * MySQL
@@ -38,16 +43,25 @@ public enum DbTypeEnum {
      *
      * 华为 openGauss 使用 ProductName 与 PostgreSQL 相同
      */
-    POSTGRE_SQL(DbType.POSTGRE_SQL, "PostgreSQL", "POSITION(',' || CAST(#{value} AS VARCHAR) || ',' IN ',' || #{column} || ',') > 0"),
+    POSTGRE_SQL(
+            DbType.POSTGRE_SQL,
+            "PostgreSQL",
+            "POSITION(',' || CAST(#{value} AS VARCHAR) || ',' IN ',' || #{column} || ',') > 0"),
 
     /**
      * SQL Server
      */
-    SQL_SERVER(DbType.SQL_SERVER, "Microsoft SQL Server", "CHARINDEX(',' + CAST(#{value} AS varchar(255)) + ',', ',' + #{column} + ',') > 0"),
+    SQL_SERVER(
+            DbType.SQL_SERVER,
+            "Microsoft SQL Server",
+            "CHARINDEX(',' + CAST(#{value} AS varchar(255)) + ',', ',' + #{column} + ',') > 0"),
     /**
      * SQL Server 2005
      */
-    SQL_SERVER2005(DbType.SQL_SERVER2005, "Microsoft SQL Server 2005", "CHARINDEX(',' + CAST(#{value} AS varchar(255)) + ',', ',' + #{column} + ',') > 0"),
+    SQL_SERVER2005(
+            DbType.SQL_SERVER2005,
+            "Microsoft SQL Server 2005",
+            "CHARINDEX(',' + CAST(#{value} AS varchar(255)) + ',', ',' + #{column} + ',') > 0"),
 
     /**
      * 达梦
@@ -57,29 +71,34 @@ public enum DbTypeEnum {
     /**
      * 人大金仓
      */
-    KINGBASE_ES(DbType.KINGBASE_ES, "KingbaseES", "POSITION(',' || CAST(#{value} AS VARCHAR) || ',' IN ',' || #{column} || ',') > 0"),
+    KINGBASE_ES(
+            DbType.KINGBASE_ES,
+            "KingbaseES",
+            "POSITION(',' || CAST(#{value} AS VARCHAR) || ',' IN ',' || #{column} || ',') > 0"),
 
     /**
      * OceanBase
      */
-    OCEAN_BASE(DbType.OCEAN_BASE, "OceanBase", "FIND_IN_SET(#{value}, #{column}) <> 0")
+    OCEAN_BASE(DbType.OCEAN_BASE, "OceanBase", "FIND_IN_SET(#{value}, #{column}) <> 0");
 
-    ;
+    public static final Map<String, DbTypeEnum> MAP_BY_NAME =
+            Arrays.stream(values())
+                    .collect(Collectors.toMap(DbTypeEnum::getProductName, Function.identity()));
 
-    public static final Map<String, DbTypeEnum> MAP_BY_NAME = Arrays.stream(values())
-            .collect(Collectors.toMap(DbTypeEnum::getProductName, Function.identity()));
-
-    public static final Map<DbType, DbTypeEnum> MAP_BY_MP = Arrays.stream(values())
-            .collect(Collectors.toMap(DbTypeEnum::getMpDbType, Function.identity()));
+    public static final Map<DbType, DbTypeEnum> MAP_BY_MP =
+            Arrays.stream(values())
+                    .collect(Collectors.toMap(DbTypeEnum::getMpDbType, Function.identity()));
 
     /**
      * MyBatis Plus 类型
      */
     private final DbType mpDbType;
+
     /**
      * 数据库产品名
      */
     private final String productName;
+
     /**
      * SQL FIND_IN_SET 模板
      */

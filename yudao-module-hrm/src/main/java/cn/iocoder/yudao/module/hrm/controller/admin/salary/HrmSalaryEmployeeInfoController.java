@@ -1,7 +1,13 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
+import cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
@@ -9,30 +15,32 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeListReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeStatusCountRespVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoImportRespVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoPageReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoUpdateListReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoUpdateListRespVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoUpdateReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoRespVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.employeeinfo.HrmSalaryEmployeeInfoImportRespVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.employee.HrmSalaryEmployeeInfoDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthRecordDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusTabEnum;
+import cn.iocoder.yudao.module.hrm.enums.salary.employee.HrmSalaryEmployeeInfoChangeTypeEnum;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.hrm.service.salary.employee.HrmSalaryEmployeeInfoService;
 import cn.iocoder.yudao.module.hrm.service.salary.monthrecord.HrmSalaryMonthRecordService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
-import cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum;
-import cn.iocoder.yudao.module.hrm.enums.salary.employee.HrmSalaryEmployeeInfoChangeTypeEnum;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,33 +62,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - HRM 员工薪资信息")
 @RestController
 @RequestMapping("/hrm/salary/employee-info")
 @Validated
 public class HrmSalaryEmployeeInfoController {
 
-    @Resource
-    private HrmSalaryEmployeeInfoService salaryEmployeeInfoService;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private HrmSalaryMonthRecordService salaryMonthRecordService;
+    @Resource private HrmSalaryEmployeeInfoService salaryEmployeeInfoService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private HrmSalaryMonthRecordService salaryMonthRecordService;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
     @GetMapping("/page")
     @Operation(summary = "获得员工薪资信息分页")
     @PreAuthorize("@ss.hasPermission('hrm:salary:employee-info:query')")
     public CommonResult<PageResult<HrmSalaryEmployeeInfoRespVO>> getSalaryEmployeeInfoPage(
             @Validated HrmSalaryEmployeeInfoPageReqVO reqVO) {
-        PageResult<HrmEmployeeDO> pageResult = salaryEmployeeInfoService.getSalaryEmployeeInfoPage(reqVO);
+        PageResult<HrmEmployeeDO> pageResult =
+                salaryEmployeeInfoService.getSalaryEmployeeInfoPage(reqVO);
         return success(buildSalaryEmployeeInfoRespVOPageResult(pageResult));
     }
 
@@ -89,10 +89,15 @@ public class HrmSalaryEmployeeInfoController {
     @PreAuthorize("@ss.hasPermission('hrm:salary:employee-info:query')")
     public CommonResult<List<HrmEmployeeStatusCountRespVO>> getSalaryEmployeeInfoStatusCount(
             @Validated HrmSalaryEmployeeInfoPageReqVO reqVO) {
-        Map<Integer, Long> countMap = salaryEmployeeInfoService.getSalaryEmployeeInfoStatusCount(reqVO);
-        return success(convertList(Arrays.asList(HrmEmployeeStatusTabEnum.values()),
-                status -> new HrmEmployeeStatusCountRespVO(status.getStatus(),
-                        countMap.getOrDefault(status.getStatus(), 0L))));
+        Map<Integer, Long> countMap =
+                salaryEmployeeInfoService.getSalaryEmployeeInfoStatusCount(reqVO);
+        return success(
+                convertList(
+                        Arrays.asList(HrmEmployeeStatusTabEnum.values()),
+                        status ->
+                                new HrmEmployeeStatusCountRespVO(
+                                        status.getStatus(),
+                                        countMap.getOrDefault(status.getStatus(), 0L))));
     }
 
     @GetMapping("/get")
@@ -107,7 +112,8 @@ public class HrmSalaryEmployeeInfoController {
         }
         HrmSalaryEmployeeInfoDO salaryEmployeeInfo =
                 salaryEmployeeInfoService.getSalaryEmployeeInfoByEmployeeId(employeeId);
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(Collections.singleton(employee.getDeptId()));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(Collections.singleton(employee.getDeptId()));
         return success(buildSalaryEmployeeInfoRespVO(employee, salaryEmployeeInfo, deptMap));
     }
 
@@ -120,7 +126,9 @@ public class HrmSalaryEmployeeInfoController {
 
     private LocalDate getSalaryAdjustmentMinEffectDateValue() {
         HrmSalaryMonthRecordDO monthRecord = salaryMonthRecordService.getLastMonthRecord();
-        if (monthRecord == null || monthRecord.getYear() == null || monthRecord.getMonth() == null) {
+        if (monthRecord == null
+                || monthRecord.getYear() == null
+                || monthRecord.getMonth() == null) {
             return null;
         }
         return YearMonth.of(monthRecord.getYear(), monthRecord.getMonth()).atDay(1);
@@ -158,8 +166,8 @@ public class HrmSalaryEmployeeInfoController {
     @Parameter(name = "file", description = "Excel 文件", required = true)
     @PreAuthorize("@ss.hasPermission('hrm:salary:employee-info:import')")
     @ApiAccessLog(operateType = OperateTypeEnum.IMPORT)
-    public CommonResult<HrmSalaryEmployeeInfoImportRespVO> importFixExcel(@RequestParam("file") MultipartFile file)
-            throws IOException {
+    public CommonResult<HrmSalaryEmployeeInfoImportRespVO> importFixExcel(
+            @RequestParam("file") MultipartFile file) throws IOException {
         return success(salaryEmployeeInfoService.importFixSalaryList(ExcelUtils.read(file)));
     }
 
@@ -179,8 +187,8 @@ public class HrmSalaryEmployeeInfoController {
     @Parameter(name = "file", description = "Excel 文件", required = true)
     @PreAuthorize("@ss.hasPermission('hrm:salary:employee-info:import')")
     @ApiAccessLog(operateType = OperateTypeEnum.IMPORT)
-    public CommonResult<HrmSalaryEmployeeInfoImportRespVO> importChangeExcel(@RequestParam("file") MultipartFile file)
-            throws IOException {
+    public CommonResult<HrmSalaryEmployeeInfoImportRespVO> importChangeExcel(
+            @RequestParam("file") MultipartFile file) throws IOException {
         return success(salaryEmployeeInfoService.importChangeSalaryList(ExcelUtils.read(file)));
     }
 
@@ -195,32 +203,48 @@ public class HrmSalaryEmployeeInfoController {
         Map<Long, HrmSalaryEmployeeInfoDO> salaryEmployeeInfoMap =
                 salaryEmployeeInfoService.getSalaryEmployeeInfoMap(
                         convertSet(pageResult.getList(), HrmEmployeeDO::getId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSet(pageResult.getList(), HrmEmployeeDO::getDeptId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(pageResult.getList(), HrmEmployeeDO::getDeptId));
 
         // 2. 拼接响应
-        return new PageResult<>(convertList(pageResult.getList(), employee -> buildSalaryEmployeeInfoRespVO(
-                employee, salaryEmployeeInfoMap.get(employee.getId()), deptMap)), pageResult.getTotal());
+        return new PageResult<>(
+                convertList(
+                        pageResult.getList(),
+                        employee ->
+                                buildSalaryEmployeeInfoRespVO(
+                                        employee,
+                                        salaryEmployeeInfoMap.get(employee.getId()),
+                                        deptMap)),
+                pageResult.getTotal());
     }
 
     private HrmSalaryEmployeeInfoRespVO buildSalaryEmployeeInfoRespVO(
-            HrmEmployeeDO employee, HrmSalaryEmployeeInfoDO salaryEmployeeInfo, Map<Long, DeptRespDTO> deptMap) {
+            HrmEmployeeDO employee,
+            HrmSalaryEmployeeInfoDO salaryEmployeeInfo,
+            Map<Long, DeptRespDTO> deptMap) {
         // 1. 拼接员工基础信息
-        HrmSalaryEmployeeInfoRespVO respVO = salaryEmployeeInfo == null
-                ? new HrmSalaryEmployeeInfoRespVO()
-                : BeanUtils.toBean(salaryEmployeeInfo, HrmSalaryEmployeeInfoRespVO.class);
-        respVO.setEmployeeId(employee.getId()).setEmployeeName(employee.getName())
-                .setJobNumber(employee.getJobNumber()).setMobile(employee.getMobile())
-                .setDeptId(employee.getDeptId()).setPostName(employee.getPostName())
-                .setEntryStatus(employee.getEntryStatus()).setStatus(employee.getStatus())
-                .setEntryTime(employee.getEntryTime()).setRegularTime(employee.getRegularTime());
-        MapUtils.findAndThen(deptMap, employee.getDeptId(),
-                dept -> respVO.setDeptName(dept.getName()));
+        HrmSalaryEmployeeInfoRespVO respVO =
+                salaryEmployeeInfo == null
+                        ? new HrmSalaryEmployeeInfoRespVO()
+                        : BeanUtils.toBean(salaryEmployeeInfo, HrmSalaryEmployeeInfoRespVO.class);
+        respVO.setEmployeeId(employee.getId())
+                .setEmployeeName(employee.getName())
+                .setJobNumber(employee.getJobNumber())
+                .setMobile(employee.getMobile())
+                .setDeptId(employee.getDeptId())
+                .setPostName(employee.getPostName())
+                .setEntryStatus(employee.getEntryStatus())
+                .setStatus(employee.getStatus())
+                .setEntryTime(employee.getEntryTime())
+                .setRegularTime(employee.getRegularTime());
+        MapUtils.findAndThen(
+                deptMap, employee.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
 
         // 2. 拼接当前薪资信息
         if (salaryEmployeeInfo == null) {
             respVO.setChangeType(HrmSalaryEmployeeInfoChangeTypeEnum.UNSET.getType())
-                    .setSalaryOptions(Collections.emptyList()).setProbationSalaryOptions(Collections.emptyList());
+                    .setSalaryOptions(Collections.emptyList())
+                    .setProbationSalaryOptions(Collections.emptyList());
             return respVO;
         }
         return respVO;
@@ -238,16 +262,18 @@ public class HrmSalaryEmployeeInfoController {
 
     private List<List<Object>> buildFixSalaryImportTemplateData(List<HrmSalaryOptionDO> options) {
         List<HrmEmployeeDO> employees = getActiveEmployeeList();
-        List<List<Object>> rows = convertList(employees, employee -> {
-            List<Object> row = buildSalaryImportEmployeeRow(employee);
-            options.forEach(option -> row.add(BigDecimal.ZERO));
-            options.forEach(option -> row.add(BigDecimal.ZERO));
-            row.add("");
-            return row;
-        });
+        List<List<Object>> rows =
+                convertList(
+                        employees,
+                        employee -> {
+                            List<Object> row = buildSalaryImportEmployeeRow(employee);
+                            options.forEach(option -> row.add(BigDecimal.ZERO));
+                            options.forEach(option -> row.add(BigDecimal.ZERO));
+                            row.add("");
+                            return row;
+                        });
         if (CollUtil.isEmpty(rows)) {
-            List<Object> row = new ArrayList<>(Arrays.asList(
-                    "张三", "HRM001", 100L, "Java 工程师"));
+            List<Object> row = new ArrayList<>(Arrays.asList("张三", "HRM001", 100L, "Java 工程师"));
             options.forEach(option -> row.add(BigDecimal.ZERO));
             options.forEach(option -> row.add(BigDecimal.ZERO));
             row.add("示例定薪");
@@ -258,44 +284,60 @@ public class HrmSalaryEmployeeInfoController {
 
     private List<List<String>> buildChangeSalaryImportHead(List<HrmSalaryOptionDO> options) {
         List<List<String>> head = buildSalaryImportBaseHead("调薪原因");
-        options.forEach(option -> {
-            head.add(Collections.singletonList("试用期-" + option.getName() + "-调整前"));
-            head.add(Collections.singletonList("试用期-" + option.getName() + "-调整后"));
-        });
-        options.forEach(option -> {
-            head.add(Collections.singletonList("正式-" + option.getName() + "-调整前"));
-            head.add(Collections.singletonList("正式-" + option.getName() + "-调整后"));
-        });
+        options.forEach(
+                option -> {
+                    head.add(Collections.singletonList("试用期-" + option.getName() + "-调整前"));
+                    head.add(Collections.singletonList("试用期-" + option.getName() + "-调整后"));
+                });
+        options.forEach(
+                option -> {
+                    head.add(Collections.singletonList("正式-" + option.getName() + "-调整前"));
+                    head.add(Collections.singletonList("正式-" + option.getName() + "-调整后"));
+                });
         head.add(Collections.singletonList("备注"));
         return head;
     }
 
-    private List<List<Object>> buildChangeSalaryImportTemplateData(List<HrmSalaryOptionDO> options) {
+    private List<List<Object>> buildChangeSalaryImportTemplateData(
+            List<HrmSalaryOptionDO> options) {
         List<HrmEmployeeDO> employees = getActiveEmployeeList();
         Map<Long, HrmSalaryEmployeeInfoDO> salaryEmployeeInfoMap =
-                salaryEmployeeInfoService.getSalaryEmployeeInfoMap(convertSet(employees, HrmEmployeeDO::getId));
+                salaryEmployeeInfoService.getSalaryEmployeeInfoMap(
+                        convertSet(employees, HrmEmployeeDO::getId));
         LocalDate effectDate = getSalaryAdjustmentMinEffectDateValue();
         if (effectDate == null || effectDate.isBefore(LocalDate.now())) {
             effectDate = LocalDate.now();
         }
         LocalDate finalEffectDate = effectDate;
-        return convertList(employees, employee -> {
-            HrmSalaryEmployeeInfoDO salaryEmployeeInfo = salaryEmployeeInfoMap.get(employee.getId());
-            List<Object> row = buildSalaryImportBaseRow(employee, finalEffectDate, "转正");
-            appendChangeOptionTemplateValues(row, options,
-                    buildSalaryOptionValueMap(salaryEmployeeInfo == null
-                            ? Collections.emptyList() : salaryEmployeeInfo.getProbationSalaryOptions()));
-            appendChangeOptionTemplateValues(row, options,
-                    buildSalaryOptionValueMap(salaryEmployeeInfo == null
-                            ? Collections.emptyList() : salaryEmployeeInfo.getSalaryOptions()));
-            row.add("");
-            return row;
-        });
+        return convertList(
+                employees,
+                employee -> {
+                    HrmSalaryEmployeeInfoDO salaryEmployeeInfo =
+                            salaryEmployeeInfoMap.get(employee.getId());
+                    List<Object> row = buildSalaryImportBaseRow(employee, finalEffectDate, "转正");
+                    appendChangeOptionTemplateValues(
+                            row,
+                            options,
+                            buildSalaryOptionValueMap(
+                                    salaryEmployeeInfo == null
+                                            ? Collections.emptyList()
+                                            : salaryEmployeeInfo.getProbationSalaryOptions()));
+                    appendChangeOptionTemplateValues(
+                            row,
+                            options,
+                            buildSalaryOptionValueMap(
+                                    salaryEmployeeInfo == null
+                                            ? Collections.emptyList()
+                                            : salaryEmployeeInfo.getSalaryOptions()));
+                    row.add("");
+                    return row;
+                });
     }
 
     private List<HrmEmployeeDO> getActiveEmployeeList() {
-        return employeeService.getEmployeeList(new HrmEmployeeListReqVO()
-                .setStatusCategory(HrmEmployeeStatusTabEnum.ACTIVE.getStatus()));
+        return employeeService.getEmployeeList(
+                new HrmEmployeeListReqVO()
+                        .setStatusCategory(HrmEmployeeStatusTabEnum.ACTIVE.getStatus()));
     }
 
     private List<List<String>> buildSalaryImportBaseHead(String reasonName) {
@@ -306,19 +348,25 @@ public class HrmSalaryEmployeeInfoController {
     }
 
     private List<List<String>> buildSalaryImportEmployeeHead() {
-        return new ArrayList<>(Arrays.asList(
-                Collections.singletonList("员工姓名"),
-                Collections.singletonList("工号"),
-                Collections.singletonList("部门编号"),
-                Collections.singletonList("岗位")));
+        return new ArrayList<>(
+                Arrays.asList(
+                        Collections.singletonList("员工姓名"),
+                        Collections.singletonList("工号"),
+                        Collections.singletonList("部门编号"),
+                        Collections.singletonList("岗位")));
     }
 
     private List<Object> buildSalaryImportEmployeeRow(HrmEmployeeDO employee) {
-        return new ArrayList<>(Arrays.asList(
-                employee.getName(), employee.getJobNumber(), employee.getDeptId(), employee.getPostName()));
+        return new ArrayList<>(
+                Arrays.asList(
+                        employee.getName(),
+                        employee.getJobNumber(),
+                        employee.getDeptId(),
+                        employee.getPostName()));
     }
 
-    private List<Object> buildSalaryImportBaseRow(HrmEmployeeDO employee, LocalDate effectDate, String changeReason) {
+    private List<Object> buildSalaryImportBaseRow(
+            HrmEmployeeDO employee, LocalDate effectDate, String changeReason) {
         List<Object> row = buildSalaryImportEmployeeRow(employee);
         row.add(effectDate.toString());
         row.add(changeReason);
@@ -327,17 +375,18 @@ public class HrmSalaryEmployeeInfoController {
 
     private Map<Integer, BigDecimal> buildSalaryOptionValueMap(
             List<HrmSalaryEmployeeInfoDO.SalaryOption> options) {
-        return convertMap(options, HrmSalaryEmployeeInfoDO.SalaryOption::getCode,
+        return convertMap(
+                options,
+                HrmSalaryEmployeeInfoDO.SalaryOption::getCode,
                 option -> option.getValue() == null ? BigDecimal.ZERO : option.getValue());
     }
 
-    private void appendChangeOptionTemplateValues(List<Object> row, List<HrmSalaryOptionDO> options,
-                                                  Map<Integer, BigDecimal> valueMap) {
+    private void appendChangeOptionTemplateValues(
+            List<Object> row, List<HrmSalaryOptionDO> options, Map<Integer, BigDecimal> valueMap) {
         for (HrmSalaryOptionDO option : options) {
             BigDecimal value = valueMap.getOrDefault(option.getCode(), BigDecimal.ZERO);
             row.add(value);
             row.add(value);
         }
     }
-
 }

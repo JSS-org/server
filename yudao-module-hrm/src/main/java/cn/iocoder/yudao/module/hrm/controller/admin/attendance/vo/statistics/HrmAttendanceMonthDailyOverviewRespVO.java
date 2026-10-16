@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -36,5 +37,4 @@ public class HrmAttendanceMonthDailyOverviewRespVO {
 
     @Schema(description = "每日打卡概况，Key 为日期")
     private Map<LocalDate, HrmAttendanceDailyOverviewRespVO> dailyClockMap;
-
 }

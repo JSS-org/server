@@ -5,11 +5,13 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.category.IotProductCategoryPageReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductCategoryDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * IoT 产品分类 Mapper
@@ -20,10 +22,13 @@ import java.util.List;
 public interface IotProductCategoryMapper extends BaseMapperX<IotProductCategoryDO> {
 
     default PageResult<IotProductCategoryDO> selectPage(IotProductCategoryPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<IotProductCategoryDO>()
-                .likeIfPresent(IotProductCategoryDO::getName, reqVO.getName())
-                .betweenIfPresent(IotProductCategoryDO::getCreateTime, reqVO.getCreateTime())
-                .orderByAsc(IotProductCategoryDO::getSort));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<IotProductCategoryDO>()
+                        .likeIfPresent(IotProductCategoryDO::getName, reqVO.getName())
+                        .betweenIfPresent(
+                                IotProductCategoryDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByAsc(IotProductCategoryDO::getSort));
     }
 
     default List<IotProductCategoryDO> selectListByStatus(Integer status) {
@@ -31,8 +36,8 @@ public interface IotProductCategoryMapper extends BaseMapperX<IotProductCategory
     }
 
     default Long selectCountByCreateTime(@Nullable LocalDateTime createTime) {
-        return selectCount(new LambdaQueryWrapperX<IotProductCategoryDO>()
-                .geIfPresent(IotProductCategoryDO::getCreateTime, createTime));
+        return selectCount(
+                new LambdaQueryWrapperX<IotProductCategoryDO>()
+                        .geIfPresent(IotProductCategoryDO::getCreateTime, createTime));
     }
-
 }

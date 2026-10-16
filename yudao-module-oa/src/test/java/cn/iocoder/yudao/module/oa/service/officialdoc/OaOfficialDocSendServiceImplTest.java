@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.oa.service.officialdoc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.object.BeanUtils.toBean;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -9,7 +18,9 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.*;
 import cn.iocoder.yudao.module.oa.dal.mysql.officialdoc.*;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -17,14 +28,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.object.BeanUtils.toBean;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link OaOfficialDocSendServiceImpl} 的单元测试类
@@ -34,23 +37,15 @@ import static org.mockito.Mockito.*;
 @Import(OaOfficialDocSendServiceImpl.class)
 public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaOfficialDocSendService officialDocSendService;
+    @Resource private OaOfficialDocSendService officialDocSendService;
 
-    @Resource
-    private OaOfficialDocSendMapper officialDocSendMapper;
+    @Resource private OaOfficialDocSendMapper officialDocSendMapper;
 
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
-    @MockitoBean
-    private OaNoRedisDAO noRedisDAO;
-    @MockitoBean
-    private DeptApi deptApi;
-    @MockitoBean
-    private OaOfficialDocTemplateService officialDocTemplateService;
-    @MockitoBean
-    private OaOfficialDocReceiveService officialDocReceiveService;
-
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private OaNoRedisDAO noRedisDAO;
+    @MockitoBean private DeptApi deptApi;
+    @MockitoBean private OaOfficialDocTemplateService officialDocTemplateService;
+    @MockitoBean private OaOfficialDocReceiveService officialDocReceiveService;
 
     @ParameterizedTest
     @ValueSource(ints = {-1, 3, 4})
@@ -60,7 +55,9 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(send);
 
         // 调用，并断言：其他人不能删除
-        assertServiceException(() -> officialDocSendService.deleteOfficialDocSend(send.getId(), 2L), OFFICIAL_DOC_ACCESS_DENIED);
+        assertServiceException(
+                () -> officialDocSendService.deleteOfficialDocSend(send.getId(), 2L),
+                OFFICIAL_DOC_ACCESS_DENIED);
         officialDocSendService.deleteOfficialDocSend(send.getId(), 1L);
         assertNull(officialDocSendMapper.selectById(send.getId()));
     }
@@ -73,7 +70,9 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(send);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.deleteOfficialDocSend(send.getId(), 1L), OFFICIAL_DOC_STATUS_INVALID);
+        assertServiceException(
+                () -> officialDocSendService.deleteOfficialDocSend(send.getId(), 1L),
+                OFFICIAL_DOC_STATUS_INVALID);
         assertNotNull(officialDocSendMapper.selectById(send.getId()));
     }
 
@@ -83,12 +82,15 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendDO send = randomOfficialDocSendDO().setNo("FW20260916000001");
         officialDocSendMapper.insert(send);
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(send, OaOfficialDocSendSaveReqVO.class).setId(null);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(send, OaOfficialDocSendSaveReqVO.class).setId(null);
         // mock 方法
-        when(noRedisDAO.generate(OaNoRedisDAO.OFFICIAL_DOC_SEND_NO_PREFIX)).thenReturn(send.getNo());
+        when(noRedisDAO.generate(OaNoRedisDAO.OFFICIAL_DOC_SEND_NO_PREFIX))
+                .thenReturn(send.getNo());
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.createOfficialDocSend(reqVO, 1L),
+        assertServiceException(
+                () -> officialDocSendService.createOfficialDocSend(reqVO, 1L),
                 OFFICIAL_DOC_SEND_NO_DUPLICATE);
         assertEquals(1L, officialDocSendMapper.selectCount());
     }
@@ -100,7 +102,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(send);
 
         // 调用
-        Map<Long, OaOfficialDocSendDO> result = officialDocSendService.getOfficialDocSendMap(Collections.singleton(send.getId()));
+        Map<Long, OaOfficialDocSendDO> result =
+                officialDocSendService.getOfficialDocSendMap(Collections.singleton(send.getId()));
         // 断言
         assertEquals(1, result.size());
         assertEquals(send.getTitle(), result.get(send.getId()).getTitle());
@@ -112,7 +115,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendService service = mock(OaOfficialDocSendService.class, CALLS_REAL_METHODS);
 
         // 调用
-        Map<Long, OaOfficialDocSendDO> result = service.getOfficialDocSendMap(Collections.emptyList());
+        Map<Long, OaOfficialDocSendDO> result =
+                service.getOfficialDocSendMap(Collections.emptyList());
         // 断言
         assertTrue(result.isEmpty());
         verify(service, never()).getOfficialDocSendList(any());
@@ -127,7 +131,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(otherSend);
 
         // 调用
-        List<OaOfficialDocSendDO> result = officialDocSendService.getOfficialDocSendList(Collections.singleton(send.getId()));
+        List<OaOfficialDocSendDO> result =
+                officialDocSendService.getOfficialDocSendList(Collections.singleton(send.getId()));
         // 断言
         assertEquals(1, result.size());
         assertEquals(send.getId(), CollUtil.getFirst(result).getId());
@@ -140,7 +145,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(randomOfficialDocSendDO());
 
         // 调用
-        List<OaOfficialDocSendDO> result = officialDocSendService.getOfficialDocSendList(Collections.emptyList());
+        List<OaOfficialDocSendDO> result =
+                officialDocSendService.getOfficialDocSendList(Collections.emptyList());
         // 断言
         assertTrue(CollUtil.isEmpty(result));
     }
@@ -148,7 +154,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateOfficialDocSend() {
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class).setId(null);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class).setId(null);
         // mock 方法
         when(noRedisDAO.generate("FW")).thenReturn("FW20260913000001");
 
@@ -167,13 +174,16 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateOfficialDocSend_disabledTemplate() {
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class);
         // mock 方法
         when(officialDocTemplateService.validateOfficialDocTemplate(reqVO.getTemplateId()))
                 .thenThrow(exception(OFFICIAL_DOC_TEMPLATE_DISABLED));
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.createOfficialDocSend(reqVO, 1L), OFFICIAL_DOC_TEMPLATE_DISABLED);
+        assertServiceException(
+                () -> officialDocSendService.createOfficialDocSend(reqVO, 1L),
+                OFFICIAL_DOC_TEMPLATE_DISABLED);
         verifyNoInteractions(noRedisDAO);
     }
 
@@ -184,7 +194,10 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(send);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.updateOfficialDocSend(toBean(send, OaOfficialDocSendSaveReqVO.class), 2L),
+        assertServiceException(
+                () ->
+                        officialDocSendService.updateOfficialDocSend(
+                                toBean(send, OaOfficialDocSendSaveReqVO.class), 2L),
                 OFFICIAL_DOC_ACCESS_DENIED);
     }
 
@@ -195,7 +208,9 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(send);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.deleteOfficialDocSend(send.getId(), 1L), OFFICIAL_DOC_STATUS_INVALID);
+        assertServiceException(
+                () -> officialDocSendService.deleteOfficialDocSend(send.getId(), 1L),
+                OFFICIAL_DOC_STATUS_INVALID);
         assertNotNull(officialDocSendMapper.selectById(send.getId()));
     }
 
@@ -211,7 +226,9 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         String processId = officialDocSendService.submitOfficialDocSend(send.getId(), 1L);
         // 断言
         assertEquals("process-1", processId);
-        assertServiceException(() -> officialDocSendService.submitOfficialDocSend(send.getId(), 1L), OFFICIAL_DOC_STATUS_INVALID);
+        assertServiceException(
+                () -> officialDocSendService.submitOfficialDocSend(send.getId(), 1L),
+                OFFICIAL_DOC_STATUS_INVALID);
         assertEquals(1, officialDocSendMapper.selectById(send.getId()).getStatus());
         verify(processInstanceApi, times(1)).createProcessInstance(eq(1L), any());
     }
@@ -222,16 +239,21 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendDO send = randomOfficialDocSendDO();
         officialDocSendMapper.insert(send);
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(1L), any())).thenAnswer(invocation -> {
-            officialDocSendService.updateOfficialDocSendStatus(send.getId(), "auto-process", 2);
-            return "auto-process";
-        });
+        when(processInstanceApi.createProcessInstance(eq(1L), any()))
+                .thenAnswer(
+                        invocation -> {
+                            officialDocSendService.updateOfficialDocSendStatus(
+                                    send.getId(), "auto-process", 2);
+                            return "auto-process";
+                        });
 
         // 调用
         officialDocSendService.submitOfficialDocSend(send.getId(), 1L);
         // 断言
         assertEquals(2, officialDocSendMapper.selectById(send.getId()).getStatus());
-        assertEquals("auto-process", officialDocSendMapper.selectById(send.getId()).getProcessInstanceId());
+        assertEquals(
+                "auto-process",
+                officialDocSendMapper.selectById(send.getId()).getProcessInstanceId());
         verify(officialDocReceiveService).createOfficialDocReceiveListByOfficialDocSend(any());
     }
 
@@ -241,17 +263,21 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendDO send = randomOfficialDocSendDO();
         officialDocSendMapper.insert(send);
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(1L), any())).thenThrow(new IllegalStateException("未配置流程"));
+        when(processInstanceApi.createProcessInstance(eq(1L), any()))
+                .thenThrow(new IllegalStateException("未配置流程"));
 
         // 调用，并断言
-        assertThrows(IllegalStateException.class, () -> officialDocSendService.submitOfficialDocSend(send.getId(), 1L));
+        assertThrows(
+                IllegalStateException.class,
+                () -> officialDocSendService.submitOfficialDocSend(send.getId(), 1L));
         assertEquals(-1, officialDocSendMapper.selectById(send.getId()).getStatus());
     }
 
     @Test
     public void testUpdateOfficialDocSendStatus_duplicate() {
         // mock 数据
-        OaOfficialDocSendDO send = randomOfficialDocSendDO().setStatus(1).setProcessInstanceId("process-1");
+        OaOfficialDocSendDO send =
+                randomOfficialDocSendDO().setStatus(1).setProcessInstanceId("process-1");
         officialDocSendMapper.insert(send);
 
         // 调用
@@ -260,17 +286,22 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendService.updateOfficialDocSendStatus(send.getId(), "process-1", 3);
         // 断言
         assertEquals(2, officialDocSendMapper.selectById(send.getId()).getStatus());
-        verify(officialDocReceiveService, times(1)).createOfficialDocReceiveListByOfficialDocSend(any());
+        verify(officialDocReceiveService, times(1))
+                .createOfficialDocReceiveListByOfficialDocSend(any());
     }
 
     @Test
     public void testUpdateOfficialDocSendStatus_wrongProcess() {
         // mock 数据
-        OaOfficialDocSendDO send = randomOfficialDocSendDO().setStatus(1).setProcessInstanceId("process-1");
+        OaOfficialDocSendDO send =
+                randomOfficialDocSendDO().setStatus(1).setProcessInstanceId("process-1");
         officialDocSendMapper.insert(send);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.updateOfficialDocSendStatus(send.getId(), "process-other", 2),
+        assertServiceException(
+                () ->
+                        officialDocSendService.updateOfficialDocSendStatus(
+                                send.getId(), "process-other", 2),
                 OFFICIAL_DOC_PROCESS_MISMATCH);
         verifyNoInteractions(officialDocReceiveService);
     }
@@ -300,15 +331,16 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
     public void testGetOfficialDocSendPage() {
         // mock 数据
         officialDocSendMapper.insert(randomOfficialDocSendDO().setTitle("当前用户"));
-        officialDocSendMapper.insert((OaOfficialDocSendDO) randomOfficialDocSendDO().setTitle("其他用户").setCreator("2"));
+        officialDocSendMapper.insert(
+                (OaOfficialDocSendDO) randomOfficialDocSendDO().setTitle("其他用户").setCreator("2"));
 
         // 调用
-        PageResult<OaOfficialDocSendDO> result = officialDocSendService.getOfficialDocSendPage(new OaOfficialDocSendPageReqVO(), 1L);
+        PageResult<OaOfficialDocSendDO> result =
+                officialDocSendService.getOfficialDocSendPage(new OaOfficialDocSendPageReqVO(), 1L);
         // 断言
         assertEquals(1L, result.getTotal());
         assertEquals("当前用户", CollUtil.getFirst(result.getList()).getTitle());
     }
-
 
     @Test
     public void testUpdateOfficialDocSend_ignoreNullFields() {
@@ -316,8 +348,12 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendDO send = randomOfficialDocSendDO();
         officialDocSendMapper.insert(send);
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(send, OaOfficialDocSendSaveReqVO.class)
-                .setTitle("修改后的标题").setContent(null).setRemark(null).setCopyDeptIds(null);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(send, OaOfficialDocSendSaveReqVO.class)
+                        .setTitle("修改后的标题")
+                        .setContent(null)
+                        .setRemark(null)
+                        .setCopyDeptIds(null);
 
         // 调用
         officialDocSendService.updateOfficialDocSend(reqVO, 1L);
@@ -341,7 +377,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendSaveReqVO reqVO = toBean(existing, OaOfficialDocSendSaveReqVO.class);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.createOfficialDocSend(reqVO, 1L),
+        assertServiceException(
+                () -> officialDocSendService.createOfficialDocSend(reqVO, 1L),
                 OFFICIAL_DOC_SEND_DOCUMENT_NO_DUPLICATE);
         assertEquals(1L, officialDocSendMapper.selectCount());
         verifyNoInteractions(noRedisDAO, processInstanceApi);
@@ -351,13 +388,16 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
     public void testUpdateOfficialDocSend_documentNoDuplicate() {
         // mock 数据
         officialDocSendMapper.insert(randomOfficialDocSendDO().setDocumentNo("测试〔2026〕1号"));
-        OaOfficialDocSendDO send = randomOfficialDocSendDO().setSequence(2).setDocumentNo("测试〔2026〕2号");
+        OaOfficialDocSendDO send =
+                randomOfficialDocSendDO().setSequence(2).setDocumentNo("测试〔2026〕2号");
         officialDocSendMapper.insert(send);
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(send, OaOfficialDocSendSaveReqVO.class).setSequence(1);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(send, OaOfficialDocSendSaveReqVO.class).setSequence(1);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.updateOfficialDocSend(reqVO, 1L),
+        assertServiceException(
+                () -> officialDocSendService.updateOfficialDocSend(reqVO, 1L),
                 OFFICIAL_DOC_SEND_DOCUMENT_NO_DUPLICATE);
         assertEquals("测试〔2026〕2号", officialDocSendMapper.selectById(send.getId()).getDocumentNo());
     }
@@ -368,13 +408,16 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         OaOfficialDocSendDO send = randomOfficialDocSendDO().setDocumentNo("测试〔2026〕1号");
         officialDocSendMapper.insert(send);
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(send, OaOfficialDocSendSaveReqVO.class).setTitle("修改标题");
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(send, OaOfficialDocSendSaveReqVO.class).setTitle("修改标题");
 
         // 调用
         officialDocSendService.updateOfficialDocSend(reqVO, 1L);
         // 断言
         assertEquals("修改标题", officialDocSendMapper.selectById(send.getId()).getTitle());
-        assertEquals(send.getDocumentNo(), officialDocSendMapper.selectById(send.getId()).getDocumentNo());
+        assertEquals(
+                send.getDocumentNo(),
+                officialDocSendMapper.selectById(send.getId()).getDocumentNo());
     }
 
     @Test
@@ -385,7 +428,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(send);
 
         // 调用，并断言异常
-        assertServiceException(() -> officialDocSendService.submitOfficialDocSend(send.getId(), 1L),
+        assertServiceException(
+                () -> officialDocSendService.submitOfficialDocSend(send.getId(), 1L),
                 OFFICIAL_DOC_SEND_DOCUMENT_NO_DUPLICATE);
         assertEquals(-1, officialDocSendMapper.selectById(send.getId()).getStatus());
         verifyNoInteractions(processInstanceApi);
@@ -394,9 +438,12 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateOfficialDocSend_withoutSequence() {
         // mock 数据
-        officialDocSendMapper.insert(randomOfficialDocSendDO().setSequence(null).setDocumentNo("测试〔2026〕"));
+        officialDocSendMapper.insert(
+                randomOfficialDocSendDO().setSequence(null).setDocumentNo("测试〔2026〕"));
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class).setSequence(null);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class)
+                        .setSequence(null);
         // mock 方法
         when(noRedisDAO.generate("FW")).thenReturn("FW20260918000001");
 
@@ -414,7 +461,8 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
         officialDocSendMapper.insert(deleted);
         officialDocSendMapper.deleteById(deleted.getId());
         // 准备参数
-        OaOfficialDocSendSaveReqVO reqVO = toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class);
+        OaOfficialDocSendSaveReqVO reqVO =
+                toBean(randomOfficialDocSendDO(), OaOfficialDocSendSaveReqVO.class);
         // mock 方法
         when(noRedisDAO.generate("FW")).thenReturn("FW20260918000001");
 
@@ -433,11 +481,24 @@ public class OaOfficialDocSendServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaOfficialDocSendDO randomOfficialDocSendDO() {
-        return randomPojo(OaOfficialDocSendDO.class, o -> o.setId(null)
-                .setNoPrefix("测试").setYear(2026).setSequence(1).setSecrecyLevel(0).setUrgencyLevel(0)
-                .setDisclosureType(0).setStatus(-1).setProcessInstanceId(null).setSignerUserId(null)
-                .setMainDeptIds(Arrays.asList(10L, 11L)).setCopyDeptIds(Collections.singletonList(12L))
-                .setFileUrls(Collections.singletonList("https://example.com/attachment.pdf")).setCreator("1"));
+        return randomPojo(
+                OaOfficialDocSendDO.class,
+                o ->
+                        o.setId(null)
+                                .setNoPrefix("测试")
+                                .setYear(2026)
+                                .setSequence(1)
+                                .setSecrecyLevel(0)
+                                .setUrgencyLevel(0)
+                                .setDisclosureType(0)
+                                .setStatus(-1)
+                                .setProcessInstanceId(null)
+                                .setSignerUserId(null)
+                                .setMainDeptIds(Arrays.asList(10L, 11L))
+                                .setCopyDeptIds(Collections.singletonList(12L))
+                                .setFileUrls(
+                                        Collections.singletonList(
+                                                "https://example.com/attachment.pdf"))
+                                .setCreator("1"));
     }
-
 }

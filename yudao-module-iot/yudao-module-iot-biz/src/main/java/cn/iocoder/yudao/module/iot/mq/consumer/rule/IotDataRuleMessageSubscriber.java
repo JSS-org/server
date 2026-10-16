@@ -5,9 +5,12 @@ import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageSubscriber;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.service.rule.data.IotDataRuleService;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,11 +22,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class IotDataRuleMessageSubscriber implements IotMessageSubscriber<IotDeviceMessage> {
 
-    @Resource
-    private IotDataRuleService dataRuleService;
+    @Resource private IotDataRuleService dataRuleService;
 
-    @Resource
-    private IotMessageBus messageBus;
+    @Resource private IotMessageBus messageBus;
 
     @PostConstruct
     public void init() {
@@ -44,5 +45,4 @@ public class IotDataRuleMessageSubscriber implements IotMessageSubscriber<IotDev
     public void onMessage(IotDeviceMessage message) {
         TenantUtils.execute(message.getTenantId(), () -> dataRuleService.executeDataRule(message));
     }
-
 }

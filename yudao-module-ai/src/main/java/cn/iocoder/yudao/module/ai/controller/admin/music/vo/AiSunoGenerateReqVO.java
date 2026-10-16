@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.ai.controller.admin.music.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -24,8 +26,10 @@ public class AiSunoGenerateReqVO {
     @NotNull(message = "生成模式不能为空")
     private Integer generateMode; // 参见 AiMusicGenerateModeEnum 枚举
 
-    @Schema(description = "用于生成音乐音频的歌词提示",
-            example = """
+    @Schema(
+            description = "用于生成音乐音频的歌词提示",
+            example =
+                    """
                     1.描述模式：创作一首带有轻松吉他旋律的流行歌曲，[verse] 描述夏日海滩的宁静，[chorus] 节奏加快，表达对自由的向往。
                     2.歌词模式：
                     [Verse]
@@ -53,5 +57,4 @@ public class AiSunoGenerateReqVO {
 
     @Schema(description = "音乐/歌曲名称", example = "夜空中最亮的星")
     private String title;
-
 }

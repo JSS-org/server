@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.salesnotice.vo.line.MesWmSalesNoticeLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.salesnotice.vo.line.MesWmSalesNoticeLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -49,7 +50,8 @@ public interface MesWmSalesNoticeLineService {
      * @param pageReqVO 分页参数
      * @return 发货通知单行分页
      */
-    PageResult<MesWmSalesNoticeLineDO> getSalesNoticeLinePage(MesWmSalesNoticeLinePageReqVO pageReqVO);
+    PageResult<MesWmSalesNoticeLineDO> getSalesNoticeLinePage(
+            MesWmSalesNoticeLinePageReqVO pageReqVO);
 
     /**
      * 按通知单编号获得行列表
@@ -82,5 +84,4 @@ public interface MesWmSalesNoticeLineService {
      * @return 发货通知单行
      */
     MesWmSalesNoticeLineDO validateSalesNoticeLineExists(Long lineId, Long noticeId);
-
 }

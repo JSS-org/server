@@ -1,22 +1,25 @@
 package cn.iocoder.yudao.module.oa.service.seal;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static java.util.Collections.singleton;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.seal.vo.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.seal.OaSealDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.seal.OaSealMapper;
+import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
-import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singleton;
 
 /**
  * 印章 Service 实现类
@@ -27,19 +30,14 @@ import static java.util.Collections.singleton;
 @Validated
 public class OaSealServiceImpl implements OaSealService {
 
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
-    @Resource
-    private OaSealMapper sealMapper;
+    @Resource private OaSealMapper sealMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private OaSealApplyService sealApplyService;
 
     @Override
@@ -116,5 +114,4 @@ public class OaSealServiceImpl implements OaSealService {
             throw exception(SEAL_NO_DUPLICATE);
         }
     }
-
 }

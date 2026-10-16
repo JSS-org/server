@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.system.controller.admin.user;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
@@ -15,14 +20,16 @@ import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.common.SexEnum;
 import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.util.Collections;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,21 +41,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - 用户")
 @RestController
 @RequestMapping("/system/user")
 @Validated
 public class UserController {
 
-    @Resource
-    private AdminUserService userService;
-    @Resource
-    private DeptService deptService;
+    @Resource private AdminUserService userService;
+    @Resource private DeptService deptService;
 
     @PostMapping("/create")
     @Operation(summary = "新增用户")
@@ -87,7 +87,8 @@ public class UserController {
     @PutMapping("/update-password")
     @Operation(summary = "重置用户密码")
     @PreAuthorize("@ss.hasPermission('system:user:update-password')")
-    public CommonResult<Boolean> updateUserPassword(@Valid @RequestBody UserUpdatePasswordReqVO reqVO) {
+    public CommonResult<Boolean> updateUserPassword(
+            @Valid @RequestBody UserUpdatePasswordReqVO reqVO) {
         userService.updateUserPassword(reqVO.getId(), reqVO.getPassword());
         return success(true);
     }
@@ -110,10 +111,12 @@ public class UserController {
             return success(new PageResult<>(pageResult.getTotal()));
         }
         // 拼接数据
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(
-                convertList(pageResult.getList(), AdminUserDO::getDeptId));
-        return success(new PageResult<>(UserConvert.INSTANCE.convertList(pageResult.getList(), deptMap),
-                pageResult.getTotal()));
+        Map<Long, DeptDO> deptMap =
+                deptService.getDeptMap(convertList(pageResult.getList(), AdminUserDO::getDeptId));
+        return success(
+                new PageResult<>(
+                        UserConvert.INSTANCE.convertList(pageResult.getList(), deptMap),
+                        pageResult.getTotal()));
     }
 
     @GetMapping("/list")
@@ -126,7 +129,8 @@ public class UserController {
             return success(Collections.emptyList());
         }
         // 拼接数据
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertSet(list, AdminUserDO::getDeptId));
+        Map<Long, DeptDO> deptMap =
+                deptService.getDeptMap(convertSet(list, AdminUserDO::getDeptId));
         return success(UserConvert.INSTANCE.convertList(list, deptMap));
     }
 
@@ -134,12 +138,12 @@ public class UserController {
     @Operation(summary = "获取用户精简信息列表", description = "只包含被开启的用户，主要用于前端的下拉选项")
     public CommonResult<List<UserSimpleRespVO>> getSimpleUserList(
             @RequestParam(value = "deptId", required = false) Long deptId) {
-        List<AdminUserDO> list = userService.getUserListByStatus(
-                CommonStatusEnum.ENABLE.getStatus(), deptId);
+        List<AdminUserDO> list =
+                userService.getUserListByStatus(CommonStatusEnum.ENABLE.getStatus(), deptId);
 
         // 拼接数据
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(
-                convertList(list, AdminUserDO::getDeptId));
+        Map<Long, DeptDO> deptMap =
+                deptService.getDeptMap(convertList(list, AdminUserDO::getDeptId));
         return success(UserConvert.INSTANCE.convertSimpleList(list, deptMap));
     }
 
@@ -161,14 +165,18 @@ public class UserController {
     @Operation(summary = "导出用户")
     @PreAuthorize("@ss.hasPermission('system:user:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportUserList(@Validated UserPageReqVO exportReqVO,
-                               HttpServletResponse response) throws IOException {
+    public void exportUserList(@Validated UserPageReqVO exportReqVO, HttpServletResponse response)
+            throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<AdminUserDO> list = userService.getUserPage(exportReqVO).getList();
         // 输出 Excel
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(
-                convertList(list, AdminUserDO::getDeptId));
-        ExcelUtils.write(response, "用户数据.xls", "数据", UserRespVO.class,
+        Map<Long, DeptDO> deptMap =
+                deptService.getDeptMap(convertList(list, AdminUserDO::getDeptId));
+        ExcelUtils.write(
+                response,
+                "用户数据.xls",
+                "数据",
+                UserRespVO.class,
                 UserConvert.INSTANCE.convertList(list, deptMap));
     }
 
@@ -176,12 +184,26 @@ public class UserController {
     @Operation(summary = "获得导入用户模板")
     public void importTemplate(HttpServletResponse response) throws IOException {
         // 手动创建导出 demo
-        List<UserImportExcelVO> list = Arrays.asList(
-                UserImportExcelVO.builder().username("yunai").deptId(1L).email("yunai@iocoder.cn").mobile("15601691300")
-                        .nickname("芋道").status(CommonStatusEnum.ENABLE.getStatus()).sex(SexEnum.MALE.getSex()).build(),
-                UserImportExcelVO.builder().username("yuanma").deptId(2L).email("yuanma@iocoder.cn").mobile("15601701300")
-                        .nickname("源码").status(CommonStatusEnum.DISABLE.getStatus()).sex(SexEnum.FEMALE.getSex()).build()
-        );
+        List<UserImportExcelVO> list =
+                Arrays.asList(
+                        UserImportExcelVO.builder()
+                                .username("yunai")
+                                .deptId(1L)
+                                .email("yunai@iocoder.cn")
+                                .mobile("15601691300")
+                                .nickname("芋道")
+                                .status(CommonStatusEnum.ENABLE.getStatus())
+                                .sex(SexEnum.MALE.getSex())
+                                .build(),
+                        UserImportExcelVO.builder()
+                                .username("yuanma")
+                                .deptId(2L)
+                                .email("yuanma@iocoder.cn")
+                                .mobile("15601701300")
+                                .nickname("源码")
+                                .status(CommonStatusEnum.DISABLE.getStatus())
+                                .sex(SexEnum.FEMALE.getSex())
+                                .build());
         // 输出
         ExcelUtils.write(response, "用户导入模板.xls", "用户列表", UserImportExcelVO.class, list);
     }
@@ -189,12 +211,15 @@ public class UserController {
     @PostMapping("/import")
     @Operation(summary = "导入用户")
     @Parameters({
-            @Parameter(name = "file", description = "Excel 文件", required = true),
-            @Parameter(name = "updateSupport", description = "是否支持更新，默认为 false", example = "true")
+        @Parameter(name = "file", description = "Excel 文件", required = true),
+        @Parameter(name = "updateSupport", description = "是否支持更新，默认为 false", example = "true")
     })
     @PreAuthorize("@ss.hasPermission('system:user:import')")
-    public CommonResult<UserImportRespVO> importExcel(@RequestParam("file") MultipartFile file,
-                                                      @RequestParam(value = "updateSupport", required = false, defaultValue = "false") Boolean updateSupport) throws Exception {
+    public CommonResult<UserImportRespVO> importExcel(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "updateSupport", required = false, defaultValue = "false")
+                    Boolean updateSupport)
+            throws Exception {
         List<UserImportExcelVO> list = ExcelUtils.read(file, UserImportExcelVO.class);
         return success(userService.importUserList(list, updateSupport));
     }
@@ -211,22 +236,28 @@ public class UserController {
         }
         // 拼接数据
         DeptDO dept = user.getDeptId() != null ? deptService.getDept(user.getDeptId()) : null;
-        Map<Long, DeptDO> deptMap = dept != null ? Collections.singletonMap(dept.getId(), dept) : Collections.emptyMap();
-        return success(CollUtil.getFirst(UserConvert.INSTANCE.convertSimpleList(
-                Collections.singletonList(user), deptMap)));
+        Map<Long, DeptDO> deptMap =
+                dept != null
+                        ? Collections.singletonMap(dept.getId(), dept)
+                        : Collections.emptyMap();
+        return success(
+                CollUtil.getFirst(
+                        UserConvert.INSTANCE.convertSimpleList(
+                                Collections.singletonList(user), deptMap)));
     }
 
     @GetMapping("/list-by-nickname")
     @Operation(summary = "按昵称模糊搜索用户精简信息", description = "用于加好友等场景；免鉴权；当前仅按昵称匹配")
     @Parameter(name = "nickname", description = "昵称关键词", required = true, example = "芋道")
-    public CommonResult<List<UserSimpleRespVO>> getSimpleUserListByNickname(@RequestParam("nickname") String nickname) {
+    public CommonResult<List<UserSimpleRespVO>> getSimpleUserListByNickname(
+            @RequestParam("nickname") String nickname) {
         if (StrUtil.isBlank(nickname)) {
             return success(Collections.emptyList());
         }
         // 拼接数据
         List<AdminUserDO> list = userService.getUserListByNickname(nickname.trim());
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertList(list, AdminUserDO::getDeptId));
+        Map<Long, DeptDO> deptMap =
+                deptService.getDeptMap(convertList(list, AdminUserDO::getDeptId));
         return success(UserConvert.INSTANCE.convertSimpleList(list, deptMap));
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.common.exception;
 
 import cn.iocoder.yudao.framework.common.exception.enums.ServiceErrorCodeRange;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,6 +18,7 @@ public final class ServiceException extends RuntimeException {
      * @see ServiceErrorCodeRange
      */
     private Integer code;
+
     /**
      * 错误提示
      */
@@ -25,8 +27,7 @@ public final class ServiceException extends RuntimeException {
     /**
      * 空构造方法，避免反序列化问题
      */
-    public ServiceException() {
-    }
+    public ServiceException() {}
 
     public ServiceException(ErrorCode errorCode) {
         this.code = errorCode.getCode();
@@ -56,5 +57,4 @@ public final class ServiceException extends RuntimeException {
         this.message = message;
         return this;
     }
-
 }

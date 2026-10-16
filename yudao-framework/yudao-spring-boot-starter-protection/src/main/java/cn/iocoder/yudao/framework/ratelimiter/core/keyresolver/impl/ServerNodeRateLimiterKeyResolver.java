@@ -5,6 +5,7 @@ import cn.hutool.system.SystemUtil;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.framework.ratelimiter.core.annotation.RateLimiter;
 import cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.RateLimiterKeyResolver;
+
 import org.aspectj.lang.JoinPoint;
 
 /**
@@ -20,8 +21,9 @@ public class ServerNodeRateLimiterKeyResolver implements RateLimiterKeyResolver 
     public String resolver(JoinPoint joinPoint, RateLimiter rateLimiter) {
         String methodName = joinPoint.getSignature().toString();
         String argsStr = StrUtils.joinMethodArgs(joinPoint);
-        String serverNode = String.format("%s@%d", SystemUtil.getHostInfo().getAddress(), SystemUtil.getCurrentPID());
+        String serverNode =
+                String.format(
+                        "%s@%d", SystemUtil.getHostInfo().getAddress(), SystemUtil.getCurrentPID());
         return SecureUtil.md5(methodName + argsStr + serverNode);
     }
-
 }

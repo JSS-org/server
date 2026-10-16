@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.statistics.enums;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -33,7 +34,8 @@ public enum TimeRangeTypeEnum implements ArrayValuable<Integer> {
     YEAR(365),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(TimeRangeTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(TimeRangeTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
@@ -44,5 +46,4 @@ public enum TimeRangeTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

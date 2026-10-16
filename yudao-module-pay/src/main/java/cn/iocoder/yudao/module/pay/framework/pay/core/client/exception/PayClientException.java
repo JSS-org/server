@@ -13,5 +13,4 @@ public class PayClientException extends RuntimeException {
     public PayClientException(Throwable cause) {
         super(cause);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.enums.rule;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -37,16 +38,17 @@ public enum IotSceneRuleActionTypeEnum implements ArrayValuable<Integer> {
      * 告警恢复
      */
     ALERT_RECOVER(101),
-
     ;
 
     private final Integer type;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(IotSceneRuleActionTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(IotSceneRuleActionTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

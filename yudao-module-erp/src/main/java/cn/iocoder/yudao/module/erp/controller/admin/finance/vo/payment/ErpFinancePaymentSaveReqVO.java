@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.erp.controller.admin.finance.vo.payment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -32,7 +34,10 @@ public class ErpFinancePaymentSaveReqVO {
     @NotNull(message = "付款账户编号不能为空")
     private Long accountId;
 
-    @Schema(description = "优惠金额，单位：元", requiredMode = Schema.RequiredMode.REQUIRED, example = "11600")
+    @Schema(
+            description = "优惠金额，单位：元",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "11600")
     @NotNull(message = "优惠金额不能为空")
     private BigDecimal discountPrice;
 
@@ -54,21 +59,28 @@ public class ErpFinancePaymentSaveReqVO {
         @NotNull(message = "业务类型不能为空")
         private Integer bizType;
 
-        @Schema(description = "业务编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11756")
+        @Schema(
+                description = "业务编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "11756")
         @NotNull(message = "业务编号不能为空")
         private Long bizId;
 
-        @Schema(description = "已付金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000")
+        @Schema(
+                description = "已付金额，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10000")
         @NotNull(message = "已付金额不能为空")
         private BigDecimal paidPrice;
 
-        @Schema(description = "本次付款，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "10000")
+        @Schema(
+                description = "本次付款，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10000")
         @NotNull(message = "本次付款不能为空")
         private BigDecimal paymentPrice;
 
         @Schema(description = "备注", example = "随便")
         private String remark;
-
     }
-
 }

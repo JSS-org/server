@@ -1,20 +1,21 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
+import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay.AlipayPayClientConfig.MODE_CERTIFICATE;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradeCreateModel;
 import com.alipay.api.request.AlipayTradeCreateRequest;
 import com.alipay.api.response.AlipayTradeCreateResponse;
 
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
-import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay.AlipayPayClientConfig.MODE_CERTIFICATE;
 
 /**
  * 支付宝【小程序】的 PayClient 实现类
@@ -57,8 +58,11 @@ public class AlipayLitePayClient extends AbstractAlipayPayClient {
         if (!response.isSuccess()) {
             return buildClosedPayOrderRespDTO(reqDTO, response);
         }
-        return PayOrderRespDTO.waitingOf(PayOrderDisplayModeEnum.APP.getMode(), response.getTradeNo(),
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                PayOrderDisplayModeEnum.APP.getMode(),
+                response.getTradeNo(),
+                reqDTO.getOutTradeNo(),
+                response);
     }
 
     static void applyBuyerIdentity(AlipayTradeCreateModel model, PayOrderUnifiedReqDTO reqDTO) {
@@ -79,8 +83,9 @@ public class AlipayLitePayClient extends AbstractAlipayPayClient {
     }
 
     static boolean isAlipayUserId(String value) {
-        return StrUtil.isNotBlank(value) && value.startsWith("2088") && value.length() <= 28
+        return StrUtil.isNotBlank(value)
+                && value.startsWith("2088")
+                && value.length() <= 28
                 && StrUtil.isNumeric(value);
     }
-
 }

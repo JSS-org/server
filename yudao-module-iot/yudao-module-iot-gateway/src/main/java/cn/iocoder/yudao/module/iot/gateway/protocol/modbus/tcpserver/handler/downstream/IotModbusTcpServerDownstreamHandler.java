@@ -12,6 +12,7 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.codec.IotMo
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.manager.IotModbusTcpServerConfigCacheService;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.manager.IotModbusTcpServerConnectionManager;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.manager.IotModbusTcpServerConnectionManager.ConnectionInfo;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -38,10 +39,11 @@ public class IotModbusTcpServerDownstreamHandler {
      */
     private final AtomicInteger transactionIdCounter;
 
-    public IotModbusTcpServerDownstreamHandler(IotModbusTcpServerConnectionManager connectionManager,
-                                              IotModbusTcpServerConfigCacheService configCacheService,
-                                              IotModbusFrameEncoder frameEncoder,
-                                              AtomicInteger transactionIdCounter) {
+    public IotModbusTcpServerDownstreamHandler(
+            IotModbusTcpServerConnectionManager connectionManager,
+            IotModbusTcpServerConfigCacheService configCacheService,
+            IotModbusFrameEncoder frameEncoder,
+            AtomicInteger transactionIdCounter) {
         this.connectionManager = connectionManager;
         this.configCacheService = configCacheService;
         this.frameEncoder = frameEncoder;
@@ -54,10 +56,12 @@ public class IotModbusTcpServerDownstreamHandler {
     @SuppressWarnings({"unchecked", "DuplicatedCode"})
     public void handle(IotDeviceMessage message) {
         // 1.1 检查是否是属性设置消息
-        if (ObjUtil.equals(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(), message.getMethod())) {
+        if (ObjUtil.equals(
+                IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(), message.getMethod())) {
             return;
         }
-        if (ObjUtil.notEqual(IotDeviceMessageMethodEnum.PROPERTY_SET.getMethod(), message.getMethod())) {
+        if (ObjUtil.notEqual(
+                IotDeviceMessageMethodEnum.PROPERTY_SET.getMethod(), message.getMethod())) {
             log.debug("[handle][忽略非属性设置消息: {}]", message.getMethod());
             return;
         }
@@ -68,7 +72,8 @@ public class IotModbusTcpServerDownstreamHandler {
             return;
         }
         // 1.3 获取连接信息
-        ConnectionInfo connInfo = connectionManager.getConnectionInfoByDeviceId(message.getDeviceId());
+        ConnectionInfo connInfo =
+                connectionManager.getConnectionInfoByDeviceId(message.getDeviceId());
         if (connInfo == null) {
             log.warn("[handle][设备 {} 没有连接]", message.getDeviceId());
             return;
@@ -104,49 +109,79 @@ public class IotModbusTcpServerDownstreamHandler {
     /**
      * 写入属性值
      */
-    private void writeProperty(Long deviceId, ConnectionInfo connInfo,
-                                IotModbusPointRespDTO point, Object value) {
+    private void writeProperty(
+            Long deviceId, ConnectionInfo connInfo, IotModbusPointRespDTO point, Object value) {
         // 1.1 转换属性值为原始值
         int[] rawValues = IotModbusCommonUtils.convertToRawValues(value, point);
 
         // 1.2 确定帧格式和事务 ID
         IotModbusFrameFormatEnum frameFormat = connInfo.getFrameFormat();
         Assert.notNull(frameFormat, "连接帧格式不能为空");
-        Integer transactionId = frameFormat == IotModbusFrameFormatEnum.MODBUS_TCP
-                ? (transactionIdCounter.incrementAndGet() & 0xFFFF)
-                : null;
+        Integer transactionId =
+                frameFormat == IotModbusFrameFormatEnum.MODBUS_TCP
+                        ? (transactionIdCounter.incrementAndGet() & 0xFFFF)
+                        : null;
         int slaveId = connInfo.getSlaveId() != null ? connInfo.getSlaveId() : 1;
         // 1.3 编码写请求
         byte[] data;
         int readFunctionCode = point.getFunctionCode();
         Integer writeSingleCode = IotModbusCommonUtils.getWriteSingleFunctionCode(readFunctionCode);
-        Integer writeMultipleCode = IotModbusCommonUtils.getWriteMultipleFunctionCode(readFunctionCode);
+        Integer writeMultipleCode =
+                IotModbusCommonUtils.getWriteMultipleFunctionCode(readFunctionCode);
         if (rawValues.length == 1 && writeSingleCode != null) {
             // 单个值：使用单写功能码（FC05/FC06）
-            data = frameEncoder.encodeWriteSingleRequest(slaveId, writeSingleCode,
-                    point.getRegisterAddress(), rawValues[0], frameFormat, transactionId);
+            data =
+                    frameEncoder.encodeWriteSingleRequest(
+                            slaveId,
+                            writeSingleCode,
+                            point.getRegisterAddress(),
+                            rawValues[0],
+                            frameFormat,
+                            transactionId);
         } else if (writeMultipleCode != null) {
             // 多个值：使用多写功能码（FC15/FC16）
             if (writeMultipleCode == IotModbusCommonUtils.FC_WRITE_MULTIPLE_COILS) {
-                data = frameEncoder.encodeWriteMultipleCoilsRequest(slaveId,
-                        point.getRegisterAddress(), rawValues, frameFormat, transactionId);
+                data =
+                        frameEncoder.encodeWriteMultipleCoilsRequest(
+                                slaveId,
+                                point.getRegisterAddress(),
+                                rawValues,
+                                frameFormat,
+                                transactionId);
             } else {
-                data = frameEncoder.encodeWriteMultipleRegistersRequest(slaveId,
-                        point.getRegisterAddress(), rawValues, frameFormat, transactionId);
+                data =
+                        frameEncoder.encodeWriteMultipleRegistersRequest(
+                                slaveId,
+                                point.getRegisterAddress(),
+                                rawValues,
+                                frameFormat,
+                                transactionId);
             }
         } else {
-            log.warn("[writeProperty][点位 {} 不支持写操作, 功能码={}]", point.getIdentifier(), readFunctionCode);
+            log.warn(
+                    "[writeProperty][点位 {} 不支持写操作, 功能码={}]",
+                    point.getIdentifier(),
+                    readFunctionCode);
             return;
         }
 
         // 2. 发送消息
-        connectionManager.sendToDevice(deviceId, data).onSuccess(v ->
-                log.info("[writeProperty][写入成功, deviceId={}, identifier={}, value={}]",
-                        deviceId, point.getIdentifier(), value)
-        ).onFailure(e ->
-                log.error("[writeProperty][写入失败, deviceId={}, identifier={}, value={}]",
-                        deviceId, point.getIdentifier(), value, e)
-        );
+        connectionManager
+                .sendToDevice(deviceId, data)
+                .onSuccess(
+                        v ->
+                                log.info(
+                                        "[writeProperty][写入成功, deviceId={}, identifier={}, value={}]",
+                                        deviceId,
+                                        point.getIdentifier(),
+                                        value))
+                .onFailure(
+                        e ->
+                                log.error(
+                                        "[writeProperty][写入失败, deviceId={}, identifier={}, value={}]",
+                                        deviceId,
+                                        point.getIdentifier(),
+                                        value,
+                                        e));
     }
-
 }

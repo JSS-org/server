@@ -4,8 +4,10 @@ import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.product.dal.dataobject.sku.ProductSkuDO;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import org.apache.ibatis.annotations.*;
 
 import java.util.Collection;
@@ -20,7 +22,10 @@ public interface ProductSkuMapper extends BaseMapperX<ProductSkuDO> {
      */
     @Select("SELECT * FROM product_sku WHERE id = #{id}")
     @Results({
-            @Result(column = "properties", property = "properties", typeHandler = Jackson3TypeHandler.class),
+        @Result(
+                column = "properties",
+                property = "properties",
+                typeHandler = Jackson3TypeHandler.class),
     })
     ProductSkuDO selectByIdIncludeDeleted(@Param("id") Long id);
 
@@ -44,10 +49,14 @@ public interface ProductSkuMapper extends BaseMapperX<ProductSkuDO> {
      */
     default void updateStockIncr(Long id, Integer incrCount) {
         Assert.isTrue(incrCount > 0);
-        LambdaUpdateWrapper<ProductSkuDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<ProductSkuDO>()
-                .setSql(" stock = stock + " + incrCount
-                    + ", sales_count = sales_count - " + incrCount)
-                .eq(ProductSkuDO::getId, id);
+        LambdaUpdateWrapper<ProductSkuDO> lambdaUpdateWrapper =
+                new LambdaUpdateWrapper<ProductSkuDO>()
+                        .setSql(
+                                " stock = stock + "
+                                        + incrCount
+                                        + ", sales_count = sales_count - "
+                                        + incrCount)
+                        .eq(ProductSkuDO::getId, id);
         update(null, lambdaUpdateWrapper);
     }
 
@@ -60,13 +69,16 @@ public interface ProductSkuMapper extends BaseMapperX<ProductSkuDO> {
      */
     default int updateStockDecr(Long id, Integer incrCount) {
         Assert.isTrue(incrCount < 0);
-        incrCount = - incrCount; // 取正
-        LambdaUpdateWrapper<ProductSkuDO> updateWrapper = new LambdaUpdateWrapper<ProductSkuDO>()
-                .setSql(" stock = stock - " + incrCount
-                    + ", sales_count = sales_count + " + incrCount)
-                .eq(ProductSkuDO::getId, id)
-                .ge(ProductSkuDO::getStock, incrCount);
+        incrCount = -incrCount; // 取正
+        LambdaUpdateWrapper<ProductSkuDO> updateWrapper =
+                new LambdaUpdateWrapper<ProductSkuDO>()
+                        .setSql(
+                                " stock = stock - "
+                                        + incrCount
+                                        + ", sales_count = sales_count + "
+                                        + incrCount)
+                        .eq(ProductSkuDO::getId, id)
+                        .ge(ProductSkuDO::getStock, incrCount);
         return update(null, updateWrapper);
     }
-
 }

@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.config;
 
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -16,5 +19,4 @@ public class HrmRecruitEliminateReasonSaveReqVO {
     @NotNull(message = "淘汰原因不能为空")
     @DiffLogField(name = "淘汰原因")
     private List<@NotBlank(message = "淘汰原因不能为空") String> reasons;
-
 }

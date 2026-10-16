@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.crm.controller.admin.contact.vo;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.ToString;
 
@@ -26,6 +28,7 @@ public class CrmContactRespVO {
 
     @Schema(description = "客户编号", example = "10795")
     private Long customerId;
+
     @ExcelProperty(value = "客户名称", order = 2)
     @Schema(description = "客户名字", example = "test")
     private String customerName;
@@ -44,9 +47,11 @@ public class CrmContactRespVO {
 
     @Schema(description = "负责人编号")
     private Long ownerUserId;
+
     @Schema(description = "负责人名字", example = "25682")
     @ExcelProperty("负责人名字")
     private String ownerUserName;
+
     @Schema(description = "负责人部门")
     @ExcelProperty("负责人部门")
     private String ownerUserDeptName;
@@ -73,6 +78,7 @@ public class CrmContactRespVO {
 
     @Schema(description = "地区编号", example = "20158")
     private Integer areaId;
+
     @Schema(description = "地区名", example = "上海上海市浦东新区")
     @ExcelProperty(value = "地区", order = 5)
     private String areaName;
@@ -97,6 +103,7 @@ public class CrmContactRespVO {
 
     @Schema(description = "直属上级", example = "23457")
     private Long parentId;
+
     @Schema(description = "直属上级名", example = "芋头")
     @ExcelProperty(value = "直属上级", order = 4)
     private String parentName;
@@ -107,6 +114,7 @@ public class CrmContactRespVO {
 
     @Schema(description = "创建人", example = "25682")
     private String creator;
+
     @Schema(description = "创建人名字", example = "test")
     @ExcelProperty(value = "创建人", order = 8)
     private String creatorName;
@@ -118,5 +126,4 @@ public class CrmContactRespVO {
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("更新时间")
     private LocalDateTime updateTime;
-
 }

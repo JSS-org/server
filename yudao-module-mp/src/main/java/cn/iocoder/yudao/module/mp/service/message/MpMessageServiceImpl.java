@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mp.service.message;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.MESSAGE_SEND_FAIL;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
@@ -18,10 +21,13 @@ import cn.iocoder.yudao.module.mp.service.account.MpAccountService;
 import cn.iocoder.yudao.module.mp.service.material.MpMaterialService;
 import cn.iocoder.yudao.module.mp.service.message.bo.MpMessageSendOutReqBO;
 import cn.iocoder.yudao.module.mp.service.user.MpUserService;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Validator;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -29,14 +35,12 @@ import me.chanjar.weixin.mp.bean.kefu.WxMpKefuMessage;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlOutMessage;
 import me.chanjar.weixin.mp.bean.result.WxMpUser;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.concurrent.TimeUnit;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.MESSAGE_SEND_FAIL;
 
 /**
  * 粉丝消息 Service 实现类
@@ -48,23 +52,17 @@ import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.MESSAGE_SEND_F
 @Slf4j
 public class MpMessageServiceImpl implements MpMessageService {
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private MpAccountService mpAccountService;
-    @Resource
-    private MpUserService mpUserService;
-    @Resource
-    private MpMaterialService mpMaterialService;
+    @Resource private MpUserService mpUserService;
+    @Resource private MpMaterialService mpMaterialService;
 
-    @Resource
-    private MpMessageMapper mpMessageMapper;
+    @Resource private MpMessageMapper mpMessageMapper;
 
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖的问题
+    @Resource @Lazy // 延迟加载，解决循环依赖的问题
     private MpServiceFactory mpServiceFactory;
 
-    @Resource
-    private Validator validator;
+    @Resource private Validator validator;
 
     @Override
     public PageResult<MpMessageDO> getMessagePage(MpMessagePageReqVO pageReqVO) {
@@ -88,7 +86,11 @@ public class MpMessageServiceImpl implements MpMessageService {
                 if (user != null) {
                     break;
                 }
-                log.warn("[receiveMessage][粉丝({}/{}) 不存在，第 {} 次重试失败]", appId, wxMessage.getFromUser(), i + 1);
+                log.warn(
+                        "[receiveMessage][粉丝({}/{}) 不存在，第 {} 次重试失败]",
+                        appId,
+                        wxMessage.getFromUser(),
+                        i + 1);
             }
         }
         // 特殊情况：可能 SubscribeHandler 没处理正确（例如说发生异常），则主动创建
@@ -100,8 +102,10 @@ public class MpMessageServiceImpl implements MpMessageService {
         Assert.notNull(user, "公众号粉丝({}/{}) 不存在", appId, wxMessage.getFromUser());
 
         // 记录消息
-        MpMessageDO message = MpMessageConvert.INSTANCE.convert(wxMessage, account, user)
-                .setSendFrom(MpMessageSendFromEnum.USER_TO_MP.getFrom());
+        MpMessageDO message =
+                MpMessageConvert.INSTANCE
+                        .convert(wxMessage, account, user)
+                        .setSendFrom(MpMessageSendFromEnum.USER_TO_MP.getFrom());
         downloadMessageMedia(message);
         mpMessageMapper.insert(message);
     }
@@ -118,8 +122,10 @@ public class MpMessageServiceImpl implements MpMessageService {
         Assert.notNull(user, "公众号粉丝({}/{}) 不存在", sendReqBO.getAppId(), sendReqBO.getOpenid());
 
         // 记录消息
-        MpMessageDO message = MpMessageConvert.INSTANCE.convert(sendReqBO, account, user).
-                setSendFrom(MpMessageSendFromEnum.MP_TO_USER.getFrom());
+        MpMessageDO message =
+                MpMessageConvert.INSTANCE
+                        .convert(sendReqBO, account, user)
+                        .setSendFrom(MpMessageSendFromEnum.MP_TO_USER.getFrom());
         downloadMessageMedia(message);
         mpMessageMapper.insert(message);
 
@@ -146,8 +152,10 @@ public class MpMessageServiceImpl implements MpMessageService {
         }
 
         // 记录消息
-        MpMessageDO message = MpMessageConvert.INSTANCE.convert(wxMessage, account, user)
-                .setSendFrom(MpMessageSendFromEnum.MP_TO_USER.getFrom());
+        MpMessageDO message =
+                MpMessageConvert.INSTANCE
+                        .convert(wxMessage, account, user)
+                        .setSendFrom(MpMessageSendFromEnum.MP_TO_USER.getFrom());
         downloadMessageMedia(message);
         mpMessageMapper.insert(message);
         return message;
@@ -160,13 +168,18 @@ public class MpMessageServiceImpl implements MpMessageService {
      */
     private void downloadMessageMedia(MpMessageDO message) {
         if (StrUtil.isNotEmpty(message.getMediaId())) {
-            message.setMediaUrl(mpMaterialService.downloadMaterialUrl(message.getAccountId(),
-                    message.getMediaId(), MpUtils.getMediaFileType(message.getType())));
+            message.setMediaUrl(
+                    mpMaterialService.downloadMaterialUrl(
+                            message.getAccountId(),
+                            message.getMediaId(),
+                            MpUtils.getMediaFileType(message.getType())));
         }
         if (StrUtil.isNotEmpty(message.getThumbMediaId())) {
-            message.setThumbMediaUrl(mpMaterialService.downloadMaterialUrl(message.getAccountId(),
-                    message.getThumbMediaId(), WxConsts.MediaFileType.THUMB));
+            message.setThumbMediaUrl(
+                    mpMaterialService.downloadMaterialUrl(
+                            message.getAccountId(),
+                            message.getThumbMediaId(),
+                            WxConsts.MediaFileType.THUMB));
         }
     }
-
 }

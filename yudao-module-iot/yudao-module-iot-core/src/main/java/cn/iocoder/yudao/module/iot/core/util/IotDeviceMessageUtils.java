@@ -62,10 +62,13 @@ public class IotDeviceMessageUtils {
             return null;
         }
         Object params = message.getParams();
-        if (StrUtil.equalsAny(message.getMethod(), IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
+        if (StrUtil.equalsAny(
+                message.getMethod(),
+                IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
                 IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod())) {
             return StrUtil.toStringOrNull(readField(params, "identifier"));
-        } else if (StrUtil.equalsAny(message.getMethod(), IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod())) {
+        } else if (StrUtil.equalsAny(
+                message.getMethod(), IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod())) {
             return StrUtil.toStringOrNull(readField(params, "state"));
         }
         return null;
@@ -137,7 +140,8 @@ public class IotDeviceMessageUtils {
             return identifier.equals(messageIdentifier);
         }
         // PROPERTY_POST：检查 params 中是否包含该属性 key（支持扁平和嵌套 properties 结构）
-        if (StrUtil.equals(message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())) {
+        if (StrUtil.equals(
+                message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())) {
             Map<String, Object> params = parseParamsToMap(message.getParams());
             if (params == null) {
                 return false;
@@ -146,7 +150,8 @@ public class IotDeviceMessageUtils {
                 return true;
             }
             Object properties = params.get("properties");
-            return properties instanceof Map && ((Map<String, Object>) properties).containsKey(identifier);
+            return properties instanceof Map
+                    && ((Map<String, Object>) properties).containsKey(identifier);
         }
         return false;
     }
@@ -315,5 +320,4 @@ public class IotDeviceMessageUtils {
         // 避免一些场景无法使用 . 符号，例如说 RocketMQ Topic
         return serverId.replaceAll("\\.", "_");
     }
-
 }

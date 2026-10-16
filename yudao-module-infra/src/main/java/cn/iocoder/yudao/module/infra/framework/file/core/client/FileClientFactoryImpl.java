@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.infra.framework.file.core.client;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ReflectUtil;
 import cn.iocoder.yudao.module.infra.framework.file.core.enums.FileStorageEnum;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +34,8 @@ public class FileClientFactoryImpl implements FileClientFactory {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <Config extends FileClientConfig> void createOrUpdateFileClient(Long configId, Integer storage, Config config) {
+    public <Config extends FileClientConfig> void createOrUpdateFileClient(
+            Long configId, Integer storage, Config config) {
         AbstractFileClient<Config> client = (AbstractFileClient<Config>) clients.get(configId);
         if (client == null) {
             client = this.createFileClient(configId, storage, config);
@@ -50,7 +52,7 @@ public class FileClientFactoryImpl implements FileClientFactory {
         FileStorageEnum storageEnum = FileStorageEnum.getByStorage(storage);
         Assert.notNull(storageEnum, String.format("文件配置(%s) 为空", storageEnum));
         // 创建客户端
-        return (AbstractFileClient<Config>) ReflectUtil.newInstance(storageEnum.getClientClass(), configId, config);
+        return (AbstractFileClient<Config>)
+                ReflectUtil.newInstance(storageEnum.getClientClass(), configId, config);
     }
-
 }

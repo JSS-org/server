@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.matcher.trigger;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.enums.device.IotDeviceStateEnum;
@@ -8,11 +12,9 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotBaseConditionMatcherTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotDeviceStateUpdateTriggerMatcher} 的单元测试
@@ -68,10 +70,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
     public void testMatches_onlineStateSuccess() {
         // 准备参数
         IotDeviceMessage message = createStateUpdateMessage(IotDeviceStateEnum.ONLINE.getState());
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                IotDeviceStateEnum.ONLINE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        IotDeviceStateEnum.ONLINE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -84,10 +86,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
     public void testMatches_offlineStateSuccess() {
         // 准备参数
         IotDeviceMessage message = createStateUpdateMessage(IotDeviceStateEnum.OFFLINE.getState());
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                IotDeviceStateEnum.OFFLINE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        IotDeviceStateEnum.OFFLINE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -100,10 +102,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
     public void testMatches_stateMismatch() {
         // 准备参数
         IotDeviceMessage message = createStateUpdateMessage(IotDeviceStateEnum.ONLINE.getState());
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                IotDeviceStateEnum.OFFLINE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        IotDeviceStateEnum.OFFLINE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -145,10 +147,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
         message.setDeviceId(randomLongId());
         message.setMethod(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
         message.setParams(IotDeviceStateEnum.ONLINE.getState());
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                IotDeviceStateEnum.ONLINE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        IotDeviceStateEnum.ONLINE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -196,10 +198,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
         message.setDeviceId(randomLongId());
         message.setMethod(IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod());
         message.setParams(null);
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                IotDeviceStateEnum.ONLINE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                        IotDeviceStateEnum.ONLINE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -212,10 +214,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
     public void testMatches_greaterThanOperatorSuccess() {
         // 准备参数
         IotDeviceMessage message = createStateUpdateMessage(IotDeviceStateEnum.ONLINE.getState());
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
-                IotDeviceStateEnum.INACTIVE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                        IotDeviceStateEnum.INACTIVE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -228,10 +230,10 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
     public void testMatches_notEqualsOperatorSuccess() {
         // 准备参数
         IotDeviceMessage message = createStateUpdateMessage(IotDeviceStateEnum.ONLINE.getState());
-        IotSceneRuleDO.Trigger trigger = createValidTrigger(
-                IotSceneRuleConditionOperatorEnum.NOT_EQUALS.getOperator(),
-                IotDeviceStateEnum.OFFLINE.getState().toString()
-        );
+        IotSceneRuleDO.Trigger trigger =
+                createValidTrigger(
+                        IotSceneRuleConditionOperatorEnum.NOT_EQUALS.getOperator(),
+                        IotDeviceStateEnum.OFFLINE.getState().toString());
 
         // 调用
         boolean result = matcher.matches(message, trigger);
@@ -263,5 +265,4 @@ public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatc
         trigger.setValue(value);
         return trigger;
     }
-
 }

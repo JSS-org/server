@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.pay.controller.admin.order;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserType;
+
 import cn.hutool.core.collection.CollectionUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -18,14 +25,18 @@ import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.wallet.WalletP
 import cn.iocoder.yudao.module.pay.service.app.PayAppService;
 import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
 import cn.iocoder.yudao.module.pay.service.wallet.PayWalletService;
+
 import com.google.common.collect.Maps;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,35 +47,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserType;
-
 @Tag(name = "管理后台 - 支付订单")
 @RestController
 @RequestMapping("/pay/order")
 @Validated
 public class PayOrderController {
 
-    @Resource
-    private PayOrderService orderService;
-    @Resource
-    private PayAppService appService;
-    @Resource
-    private PayWalletService payWalletService;
+    @Resource private PayOrderService orderService;
+    @Resource private PayAppService appService;
+    @Resource private PayWalletService payWalletService;
 
     @GetMapping("/get")
     @Operation(summary = "获得支付订单")
     @Parameters({
-            @Parameter(name = "id", description = "编号", required = true, example = "1024"),
-            @Parameter(name = "sync", description = "是否同步", example = "true")
+        @Parameter(name = "id", description = "编号", required = true, example = "1024"),
+        @Parameter(name = "sync", description = "是否同步", example = "true")
     })
     @PreAuthorize("@ss.hasPermission('pay:order:query')")
-    public CommonResult<PayOrderRespVO> getOrder(@RequestParam("id") Long id,
-                                                 @RequestParam(value = "sync", required = false) Boolean sync) {
+    public CommonResult<PayOrderRespVO> getOrder(
+            @RequestParam("id") Long id,
+            @RequestParam(value = "sync", required = false) Boolean sync) {
         PayOrderDO order = orderService.getOrder(id);
         // sync 仅在等待支付
         if (Boolean.TRUE.equals(sync) && PayOrderStatusEnum.isWaiting(order.getStatus())) {
@@ -93,14 +95,17 @@ public class PayOrderController {
 
     @PostMapping("/submit")
     @Operation(summary = "提交支付订单")
-    public CommonResult<PayOrderSubmitRespVO> submitPayOrder(@RequestBody PayOrderSubmitReqVO reqVO) {
+    public CommonResult<PayOrderSubmitRespVO> submitPayOrder(
+            @RequestBody PayOrderSubmitReqVO reqVO) {
         // 1. 钱包支付事，需要额外传 user_id 和 user_type
         if (Objects.equals(reqVO.getChannelCode(), PayChannelEnum.WALLET.getCode())) {
             if (reqVO.getChannelExtras() == null) {
                 reqVO.setChannelExtras(Maps.newHashMapWithExpectedSize(1));
             }
-            PayWalletDO wallet = payWalletService.getOrCreateWallet(getLoginUserId(), getLoginUserType());
-            reqVO.getChannelExtras().put(WalletPayClient.WALLET_ID_KEY, String.valueOf(wallet.getId()));
+            PayWalletDO wallet =
+                    payWalletService.getOrCreateWallet(getLoginUserId(), getLoginUserType());
+            reqVO.getChannelExtras()
+                    .put(WalletPayClient.WALLET_ID_KEY, String.valueOf(wallet.getId()));
         }
 
         // 2. 提交支付
@@ -111,14 +116,16 @@ public class PayOrderController {
     @GetMapping("/page")
     @Operation(summary = "获得支付订单分页")
     @PreAuthorize("@ss.hasPermission('pay:order:query')")
-    public CommonResult<PageResult<PayOrderPageItemRespVO>> getOrderPage(@Valid PayOrderPageReqVO pageVO) {
+    public CommonResult<PageResult<PayOrderPageItemRespVO>> getOrderPage(
+            @Valid PayOrderPageReqVO pageVO) {
         PageResult<PayOrderDO> pageResult = orderService.getOrderPage(pageVO);
         if (CollectionUtil.isEmpty(pageResult.getList())) {
             return success(new PageResult<>(pageResult.getTotal()));
         }
 
         // 拼接返回
-        Map<Long, PayAppDO> appMap = appService.getAppMap(convertList(pageResult.getList(), PayOrderDO::getAppId));
+        Map<Long, PayAppDO> appMap =
+                appService.getAppMap(convertList(pageResult.getList(), PayOrderDO::getAppId));
         return success(PayOrderConvert.INSTANCE.convertPage(pageResult, appMap));
     }
 
@@ -126,12 +133,12 @@ public class PayOrderController {
     @Operation(summary = "导出支付订单 Excel")
     @PreAuthorize("@ss.hasPermission('pay:order:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportOrderExcel(@Valid PayOrderExportReqVO exportReqVO,
-            HttpServletResponse response) throws IOException {
+    public void exportOrderExcel(
+            @Valid PayOrderExportReqVO exportReqVO, HttpServletResponse response)
+            throws IOException {
         List<PayOrderDO> list = orderService.getOrderList(exportReqVO);
         if (CollectionUtil.isEmpty(list)) {
-            ExcelUtils.write(response, "支付订单.xls", "数据",
-                    PayOrderExcelVO.class, new ArrayList<>());
+            ExcelUtils.write(response, "支付订单.xls", "数据", PayOrderExcelVO.class, new ArrayList<>());
             return;
         }
 
@@ -141,5 +148,4 @@ public class PayOrderController {
         // 导出 Excel
         ExcelUtils.write(response, "支付订单.xls", "数据", PayOrderExcelVO.class, excelList);
     }
-
 }

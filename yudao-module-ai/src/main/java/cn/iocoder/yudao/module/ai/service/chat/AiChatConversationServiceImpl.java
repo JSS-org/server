@@ -1,35 +1,38 @@
 package cn.iocoder.yudao.module.ai.service.chat;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_CONVERSATION_MODEL_ERROR;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_CONVERSATION_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.iocoder.yudao.module.ai.enums.model.AiModelTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.ai.controller.admin.chat.vo.conversation.AiChatConversationCreateMyReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.chat.vo.conversation.AiChatConversationPageReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.chat.vo.conversation.AiChatConversationUpdateMyReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.chat.AiChatConversationDO;
-import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiChatRoleDO;
+import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.dal.mysql.chat.AiChatConversationMapper;
+import cn.iocoder.yudao.module.ai.enums.model.AiModelTypeEnum;
 import cn.iocoder.yudao.module.ai.service.knowledge.AiKnowledgeService;
-import cn.iocoder.yudao.module.ai.service.model.AiModelService;
 import cn.iocoder.yudao.module.ai.service.model.AiChatRoleService;
+import cn.iocoder.yudao.module.ai.service.model.AiModelService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_CONVERSATION_MODEL_ERROR;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_CONVERSATION_NOT_EXISTS;
 
 /**
  * AI 聊天对话 Service 实现类
@@ -41,23 +44,24 @@ import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_CONVERSAT
 @Slf4j
 public class AiChatConversationServiceImpl implements AiChatConversationService {
 
-    @Resource
-    private AiChatConversationMapper chatConversationMapper;
+    @Resource private AiChatConversationMapper chatConversationMapper;
 
-    @Resource
-    private AiModelService modalService;
-    @Resource
-    private AiChatRoleService chatRoleService;
-    @Resource
-    private AiKnowledgeService knowledgeService;
+    @Resource private AiModelService modalService;
+    @Resource private AiChatRoleService chatRoleService;
+    @Resource private AiKnowledgeService knowledgeService;
 
     @Override
     public Long createChatConversationMy(AiChatConversationCreateMyReqVO createReqVO, Long userId) {
         // 1.1 获得 AiChatRoleDO 聊天角色
-        AiChatRoleDO role = createReqVO.getRoleId() != null ? chatRoleService.validateChatRole(createReqVO.getRoleId()) : null;
+        AiChatRoleDO role =
+                createReqVO.getRoleId() != null
+                        ? chatRoleService.validateChatRole(createReqVO.getRoleId())
+                        : null;
         // 1.2 获得 AiModelDO 聊天模型
-        AiModelDO model = role != null && role.getModelId() != null ? modalService.validateModel(role.getModelId())
-                : modalService.getRequiredDefaultModel(AiModelTypeEnum.CHAT.getType());
+        AiModelDO model =
+                role != null && role.getModelId() != null
+                        ? modalService.validateModel(role.getModelId())
+                        : modalService.getRequiredDefaultModel(AiModelTypeEnum.CHAT.getType());
         Assert.notNull(model, "必须找到默认模型");
         validateChatModel(model);
 
@@ -67,11 +71,20 @@ public class AiChatConversationServiceImpl implements AiChatConversationService 
         }
 
         // 2. 创建 AiChatConversationDO 聊天对话
-        AiChatConversationDO conversation = new AiChatConversationDO().setUserId(userId).setPinned(false)
-                .setModelId(model.getId()).setModel(model.getModel())
-                .setTemperature(model.getTemperature()).setMaxTokens(model.getMaxTokens()).setMaxContexts(model.getMaxContexts());
+        AiChatConversationDO conversation =
+                new AiChatConversationDO()
+                        .setUserId(userId)
+                        .setPinned(false)
+                        .setModelId(model.getId())
+                        .setModel(model.getModel())
+                        .setTemperature(model.getTemperature())
+                        .setMaxTokens(model.getMaxTokens())
+                        .setMaxContexts(model.getMaxContexts());
         if (role != null) {
-            conversation.setTitle(role.getName()).setRoleId(role.getId()).setSystemMessage(role.getSystemMessage());
+            conversation
+                    .setTitle(role.getName())
+                    .setRoleId(role.getId())
+                    .setSystemMessage(role.getSystemMessage());
         } else {
             conversation.setTitle(AiChatConversationDO.TITLE_DEFAULT);
         }
@@ -141,7 +154,8 @@ public class AiChatConversationServiceImpl implements AiChatConversationService 
     }
 
     private void validateChatModel(AiModelDO model) {
-        if (ObjectUtil.isAllNotEmpty(model.getTemperature(), model.getMaxTokens(), model.getMaxContexts())) {
+        if (ObjectUtil.isAllNotEmpty(
+                model.getTemperature(), model.getMaxTokens(), model.getMaxContexts())) {
             return;
         }
         Assert.equals(model.getType(), AiModelTypeEnum.CHAT.getType(), "模型类型不正确：" + model);
@@ -158,7 +172,8 @@ public class AiChatConversationServiceImpl implements AiChatConversationService 
 
     @Override
     public void deleteChatConversationMyByUnpinned(Long userId) {
-        List<AiChatConversationDO> list = chatConversationMapper.selectListByUserIdAndPinned(userId, false);
+        List<AiChatConversationDO> list =
+                chatConversationMapper.selectListByUserIdAndPinned(userId, false);
         if (CollUtil.isEmpty(list)) {
             return;
         }
@@ -166,8 +181,8 @@ public class AiChatConversationServiceImpl implements AiChatConversationService 
     }
 
     @Override
-    public PageResult<AiChatConversationDO> getChatConversationPage(AiChatConversationPageReqVO pageReqVO) {
+    public PageResult<AiChatConversationDO> getChatConversationPage(
+            AiChatConversationPageReqVO pageReqVO) {
         return chatConversationMapper.selectChatConversationPage(pageReqVO);
     }
-
 }

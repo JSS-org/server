@@ -15,21 +15,25 @@ import org.springframework.ai.openai.OpenAiImageOptions;
  */
 public class OpenAiImageModelTests {
 
-    private final OpenAiImageModel imageModel = OpenAiImageModel.builder()
-            .options(OpenAiImageOptions.builder()
-                    .baseUrl("https://api.holdai.top") // apiKey
-                    .apiKey("sk-xxx")
-                    .build())
-            .build();
+    private final OpenAiImageModel imageModel =
+            OpenAiImageModel.builder()
+                    .options(
+                            OpenAiImageOptions.builder()
+                                    .baseUrl("https://api.holdai.top") // apiKey
+                                    .apiKey("sk-xxx")
+                                    .build())
+                    .build();
 
     @Test
     @Disabled
     public void testCall() {
         // 准备参数
-        ImageOptions options = OpenAiImageOptions.builder()
-                .model("dall-e-2") // 这个模型比较便宜
-                .height(256).width(256)
-                .build();
+        ImageOptions options =
+                OpenAiImageOptions.builder()
+                        .model("dall-e-2") // 这个模型比较便宜
+                        .height(256)
+                        .width(256)
+                        .build();
         ImagePrompt prompt = new ImagePrompt("中国长城!", options);
 
         // 方法调用
@@ -37,5 +41,4 @@ public class OpenAiImageModelTests {
         // 打印结果
         System.out.println(response);
     }
-
 }

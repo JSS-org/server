@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.route;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.process.MesProRouteProcessSaveReqVO;
@@ -7,7 +10,9 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProcessDO
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.route.MesProRouteProcessMapper;
 import cn.iocoder.yudao.module.mes.service.pro.process.MesProProcessService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +23,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 工艺路线工序 Service 实现类
  *
@@ -30,18 +32,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProRouteProcessServiceImpl implements MesProRouteProcessService {
 
-    @Resource
-    private MesProRouteProcessMapper routeProcessMapper;
+    @Resource private MesProRouteProcessMapper routeProcessMapper;
 
-    @Resource
-    @Lazy
-    private MesProRouteProductService routeProductService;
-    @Resource
-    @Lazy
-    private MesProProcessService processService;
-    @Resource
-    @Lazy
-    private MesProRouteService routeService;
+    @Resource @Lazy private MesProRouteProductService routeProductService;
+    @Resource @Lazy private MesProProcessService processService;
+    @Resource @Lazy private MesProRouteService routeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -56,7 +51,8 @@ public class MesProRouteProcessServiceImpl implements MesProRouteProcessService 
         validateKeyProcessUnique(null, createReqVO.getRouteId(), createReqVO.getKeyFlag());
 
         // 2. 插入
-        MesProRouteProcessDO routeProcess = BeanUtils.toBean(createReqVO, MesProRouteProcessDO.class);
+        MesProRouteProcessDO routeProcess =
+                BeanUtils.toBean(createReqVO, MesProRouteProcessDO.class);
         routeProcessMapper.insert(routeProcess);
 
         // 3. 更新工序链
@@ -75,8 +71,10 @@ public class MesProRouteProcessServiceImpl implements MesProRouteProcessService 
         validateRouteAndProcessExists(updateReqVO.getRouteId(), updateReqVO.getProcessId());
         // 1.3 校验唯一性
         validateSortUnique(updateReqVO.getId(), updateReqVO.getRouteId(), updateReqVO.getSort());
-        validateProcessUnique(updateReqVO.getId(), updateReqVO.getRouteId(), updateReqVO.getProcessId());
-        validateKeyProcessUnique(updateReqVO.getId(), updateReqVO.getRouteId(), updateReqVO.getKeyFlag());
+        validateProcessUnique(
+                updateReqVO.getId(), updateReqVO.getRouteId(), updateReqVO.getProcessId());
+        validateKeyProcessUnique(
+                updateReqVO.getId(), updateReqVO.getRouteId(), updateReqVO.getKeyFlag());
 
         // 2. 更新
         MesProRouteProcessDO updateObj = BeanUtils.toBean(updateReqVO, MesProRouteProcessDO.class);
@@ -147,7 +145,8 @@ public class MesProRouteProcessServiceImpl implements MesProRouteProcessService 
     }
 
     private void validateProcessUnique(Long id, Long routeId, Long processId) {
-        MesProRouteProcessDO existing = routeProcessMapper.selectByRouteIdAndProcessId(routeId, processId);
+        MesProRouteProcessDO existing =
+                routeProcessMapper.selectByRouteIdAndProcessId(routeId, processId);
         if (existing != null && !existing.getId().equals(id)) {
             throw exception(PRO_ROUTE_PROCESS_DUPLICATE);
         }
@@ -206,5 +205,4 @@ public class MesProRouteProcessServiceImpl implements MesProRouteProcessService 
     public void deleteRouteProcessByRouteId(Long routeId) {
         routeProcessMapper.deleteByRouteId(routeId);
     }
-
 }

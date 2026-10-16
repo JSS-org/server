@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.listener;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,10 @@ public class BpmProcessListenerRespVO {
     @Schema(description = "监听器名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "赵六")
     private String name;
 
-    @Schema(description = "监听器类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "execution")
+    @Schema(
+            description = "监听器类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "execution")
     private String type;
 
     @Schema(description = "监听器状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -32,5 +36,4 @@ public class BpmProcessListenerRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

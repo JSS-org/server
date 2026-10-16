@@ -1,16 +1,20 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.interview;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - HRM 招聘面试新增/修改 Request VO")
 @Data
@@ -55,5 +59,4 @@ public class HrmRecruitInterviewSaveReqVO {
     @Size(max = 255, message = "备注长度不能超过 255 个字符")
     @DiffLogField(name = "备注")
     private String remark;
-
 }

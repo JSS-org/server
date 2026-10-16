@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.oa.dal.dataobject.file.OaFileFavoriteDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.file.OaFileFavoriteMapper;
 import cn.iocoder.yudao.module.oa.enums.file.OaFilePermissionLevelEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +23,9 @@ import java.util.List;
 @Service
 public class OaFileFavoriteServiceImpl implements OaFileFavoriteService {
 
-    @Resource
-    private OaFileFavoriteMapper fileFavoriteMapper;
+    @Resource private OaFileFavoriteMapper fileFavoriteMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaFileNodeService fileNodeService;
 
     @Override
@@ -34,7 +34,8 @@ public class OaFileFavoriteServiceImpl implements OaFileFavoriteService {
     }
 
     @Override
-    public List<OaFileFavoriteDO> getFileFavoriteListByUserIdAndNodeIds(Long userId, Collection<Long> nodeIds) {
+    public List<OaFileFavoriteDO> getFileFavoriteListByUserIdAndNodeIds(
+            Long userId, Collection<Long> nodeIds) {
         if (CollUtil.isEmpty(nodeIds)) {
             return Collections.emptyList();
         }
@@ -46,7 +47,8 @@ public class OaFileFavoriteServiceImpl implements OaFileFavoriteService {
     public void createFileFavorite(Long nodeId, Long userId) {
         // 1.1 锁定节点并校验可见权限
         fileNodeService.lockFileNode(nodeId);
-        fileNodeService.validateFileNodePermission(nodeId, userId, OaFilePermissionLevelEnum.READ.getLevel());
+        fileNodeService.validateFileNodePermission(
+                nodeId, userId, OaFilePermissionLevelEnum.READ.getLevel());
         // 1.2 已收藏时直接返回，保证重复请求不会新增多条记录
         if (fileFavoriteMapper.selectByUserIdAndNodeId(userId, nodeId) != null) {
             return;
@@ -68,5 +70,4 @@ public class OaFileFavoriteServiceImpl implements OaFileFavoriteService {
         }
         fileFavoriteMapper.deleteByNodeIds(nodeIds);
     }
-
 }

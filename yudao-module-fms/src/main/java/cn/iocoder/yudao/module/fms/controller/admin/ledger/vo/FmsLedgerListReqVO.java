@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - FMS 账簿列表查询 Request VO")
@@ -15,12 +17,18 @@ public class FmsLedgerListReqVO {
     @NotNull(message = "账套编号不能为空")
     private Long accountSetId;
 
-    @Schema(description = "开始会计期间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-08")
+    @Schema(
+            description = "开始会计期间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2026-08")
     @NotNull(message = "开始会计期间不能为空")
     @Pattern(regexp = "\\d{4}-(0[1-9]|1[0-2])", message = "开始会计期间格式不正确")
     private String startMonth;
 
-    @Schema(description = "结束会计期间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-12")
+    @Schema(
+            description = "结束会计期间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2026-12")
     @NotNull(message = "结束会计期间不能为空")
     @Pattern(regexp = "\\d{4}-(0[1-9]|1[0-2])", message = "结束会计期间格式不正确")
     private String endMonth;
@@ -43,5 +51,4 @@ public class FmsLedgerListReqVO {
     @Min(value = 1, message = "最大科目级次不能小于 1")
     @Max(value = 10, message = "最大科目级次不能大于 10")
     private Integer maxLevel;
-
 }

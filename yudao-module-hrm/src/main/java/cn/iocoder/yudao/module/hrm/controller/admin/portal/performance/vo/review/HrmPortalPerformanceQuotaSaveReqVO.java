@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -57,5 +59,4 @@ public class HrmPortalPerformanceQuotaSaveReqVO {
 
     @Schema(description = "排序", example = "1")
     private Integer sort;
-
 }

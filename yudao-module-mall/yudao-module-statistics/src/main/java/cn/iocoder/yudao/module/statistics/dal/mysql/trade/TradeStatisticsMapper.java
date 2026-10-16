@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.statistics.controller.admin.trade.vo.TradeTrendSummaryRespVO;
 import cn.iocoder.yudao.module.statistics.dal.dataobject.trade.TradeStatisticsDO;
 import cn.iocoder.yudao.module.statistics.service.trade.bo.TradeSummaryRespBO;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -19,23 +20,25 @@ import java.util.List;
 @Mapper
 public interface TradeStatisticsMapper extends BaseMapperX<TradeStatisticsDO> {
 
-    TradeSummaryRespBO selectOrderCreateCountSumAndOrderPayPriceSumByTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                                                                 @Param("endTime") LocalDateTime endTime);
+    TradeSummaryRespBO selectOrderCreateCountSumAndOrderPayPriceSumByTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    TradeTrendSummaryRespVO selectVoByTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                                  @Param("endTime") LocalDateTime endTime);
+    TradeTrendSummaryRespVO selectVoByTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    default List<TradeStatisticsDO> selectListByTimeBetween(LocalDateTime beginTime, LocalDateTime endTime) {
-        return selectList(new LambdaQueryWrapperX<TradeStatisticsDO>()
-                .between(TradeStatisticsDO::getTime, beginTime, endTime));
+    default List<TradeStatisticsDO> selectListByTimeBetween(
+            LocalDateTime beginTime, LocalDateTime endTime) {
+        return selectList(
+                new LambdaQueryWrapperX<TradeStatisticsDO>()
+                        .between(TradeStatisticsDO::getTime, beginTime, endTime));
     }
 
-    Integer selectExpensePriceByTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                            @Param("endTime") LocalDateTime endTime);
+    Integer selectExpensePriceByTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
     default TradeStatisticsDO selectByTimeBetween(LocalDateTime beginTime, LocalDateTime endTime) {
-        return selectOne(new LambdaQueryWrapperX<TradeStatisticsDO>()
-                .between(TradeStatisticsDO::getTime, beginTime, endTime));
+        return selectOne(
+                new LambdaQueryWrapperX<TradeStatisticsDO>()
+                        .between(TradeStatisticsDO::getTime, beginTime, endTime));
     }
-
 }

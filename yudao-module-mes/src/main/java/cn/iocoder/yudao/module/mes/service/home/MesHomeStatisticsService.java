@@ -34,5 +34,4 @@ public interface MesHomeStatisticsService {
      * @return 每天的产量数据
      */
     List<MesHomeProductionTrendRespVO> getProductionTrend(Integer days);
-
 }

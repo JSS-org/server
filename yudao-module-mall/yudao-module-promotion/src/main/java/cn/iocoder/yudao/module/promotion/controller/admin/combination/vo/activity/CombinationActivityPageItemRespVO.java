@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity;
 
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.product.CombinationProductRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -29,13 +31,21 @@ public class CombinationActivityPageItemRespVO extends CombinationActivityBaseVO
 
     // ========== 商品字段 ==========
 
-    @Schema(description = "商品名称", requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 name 读取
+    @Schema(
+            description = "商品名称",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 name 读取
             example = "618大促")
     private String spuName;
-    @Schema(description = "商品主图", requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 picUrl 读取
+
+    @Schema(
+            description = "商品主图",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 picUrl 读取
             example = "https://www.iocoder.cn/xx.png")
     private String picUrl;
-    @Schema(description = "商品市场价，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 marketPrice 读取
+
+    @Schema(
+            description = "商品市场价，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 marketPrice 读取
             example = "50")
     private Integer marketPrice;
 
@@ -49,5 +59,4 @@ public class CombinationActivityPageItemRespVO extends CombinationActivityBaseVO
 
     @Schema(description = "购买次数", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer recordCount;
-
 }

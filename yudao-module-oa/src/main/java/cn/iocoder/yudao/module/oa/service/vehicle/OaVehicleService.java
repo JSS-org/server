@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.oa.service.vehicle;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -49,5 +50,4 @@ public interface OaVehicleService {
      * @return 车辆
      */
     OaVehicleDO validateVehicleExists(Long id);
-
 }

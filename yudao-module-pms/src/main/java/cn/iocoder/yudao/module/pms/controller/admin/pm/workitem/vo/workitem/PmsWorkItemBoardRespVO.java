@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.workitem;
 
 import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status.PmsWorkItemStatusRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -21,5 +23,4 @@ public class PmsWorkItemBoardRespVO {
 
     @Schema(description = "工作项列表", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<PmsWorkItemRespVO> items;
-
 }

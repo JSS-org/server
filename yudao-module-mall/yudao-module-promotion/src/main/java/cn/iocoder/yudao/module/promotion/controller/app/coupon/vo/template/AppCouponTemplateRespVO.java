@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.app.coupon.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Min;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,13 +22,22 @@ public class AppCouponTemplateRespVO {
     @Schema(description = "优惠券说明", example = "优惠券使用说明")
     private String description;
 
-    @Schema(description = "发行总量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024") // -1 - 则表示不限制发放数量
+    @Schema(
+            description = "发行总量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024") // -1 - 则表示不限制发放数量
     private Integer totalCount;
 
-    @Schema(description = "每人限领个数", requiredMode = Schema.RequiredMode.REQUIRED, example = "66") // -1 - 则表示不限制
+    @Schema(
+            description = "每人限领个数",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "66") // -1 - 则表示不限制
     private Integer takeLimitCount;
 
-    @Schema(description = "是否设置满多少金额可用", requiredMode = Schema.RequiredMode.REQUIRED, example = "100") // 单位：分；0 - 不限制
+    @Schema(
+            description = "是否设置满多少金额可用",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100") // 单位：分；0 - 不限制
     private Integer usePrice;
 
     @Schema(description = "商品范围", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -72,5 +83,4 @@ public class AppCouponTemplateRespVO {
 
     @Schema(description = "是否可以领取", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
     private Boolean canTake;
-
 }

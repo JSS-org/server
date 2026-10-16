@@ -4,9 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.pay.service.transfer.PayTransferService;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
  * 转账订单的同步 Job
@@ -18,8 +19,7 @@ import jakarta.annotation.Resource;
 @Component
 public class PayTransferSyncJob implements JobHandler {
 
-    @Resource
-    private PayTransferService transferService;
+    @Resource private PayTransferService transferService;
 
     @Override
     @TenantJob

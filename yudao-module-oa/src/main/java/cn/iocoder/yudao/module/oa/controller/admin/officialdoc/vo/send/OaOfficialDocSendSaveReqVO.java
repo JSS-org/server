@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.send;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import java.time.LocalDateTime;
-import java.util.List;
-import jakarta.validation.constraints.*;
 import cn.iocoder.yudao.framework.dict.validation.InDict;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.*;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "管理后台 - 公文发文新增/修改 Request VO")
 @Data
@@ -19,7 +23,10 @@ public class OaOfficialDocSendSaveReqVO {
     @NotNull(message = "套红模板不能为空")
     private Long templateId;
 
-    @Schema(description = "公文标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "关于开展办公用品盘点的通知")
+    @Schema(
+            description = "公文标题",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "关于开展办公用品盘点的通知")
     @NotBlank(message = "标题不能为空")
     @Size(max = 255, message = "公文标题长度不能超过 {max} 个字符")
     private String title;
@@ -52,7 +59,12 @@ public class OaOfficialDocSendSaveReqVO {
     @InDict(type = DictTypeConstants.OFFICIAL_DOC_PUBLIC_CATEGORY, message = "公开类别必须是 {value}")
     private Integer disclosureType;
 
-    @Schema(description = "发文日期", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "发文日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "发文日期不能为空")
     private LocalDateTime issueTime;
 
@@ -60,7 +72,10 @@ public class OaOfficialDocSendSaveReqVO {
     @NotNull(message = "发文部门不能为空")
     private Long sendDeptId;
 
-    @Schema(description = "主送部门编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1, 2]")
+    @Schema(
+            description = "主送部门编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1, 2]")
     @NotEmpty(message = "主送部门不能为空")
     private List<@NotNull(message = "主送部门编号不能为空") Long> mainDeptIds;
 
@@ -80,5 +95,4 @@ public class OaOfficialDocSendSaveReqVO {
     @Schema(description = "附注", example = "请按要求办理并反馈结果")
     @Size(max = 500, message = "附注长度不能超过 {max} 个字符")
     private String remark;
-
 }

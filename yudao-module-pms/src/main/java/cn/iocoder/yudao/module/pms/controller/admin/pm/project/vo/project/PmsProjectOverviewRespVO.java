@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.project;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -41,14 +42,16 @@ public class PmsProjectOverviewRespVO {
 
         @Schema(description = "当日完成数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
         private Long count;
-
     }
 
     @Schema(description = "PMS 项目概况 - 分配给我的工作项")
     @Data
     public static class AssignedWorkItem {
 
-        @Schema(description = "工作项编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "工作项编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long id;
 
         @Schema(description = "项目内序号", requiredMode = Schema.RequiredMode.REQUIRED, example = "12")
@@ -68,7 +71,5 @@ public class PmsProjectOverviewRespVO {
 
         @Schema(description = "完成进度", requiredMode = Schema.RequiredMode.REQUIRED, example = "60")
         private Integer progress;
-
     }
-
 }

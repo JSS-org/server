@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.service.wm.transaction.dto;
 
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -33,16 +34,19 @@ public class MesWmTransactionSaveReqDTO {
      */
     @NotNull(message = "业务类型不能为空")
     private Integer bizType;
+
     /**
      * 业务主单 ID
      */
     @NotNull(message = "业务主单 ID 不能为空")
     private Long bizId;
+
     /**
      * 业务单号
      */
     @NotNull(message = "业务单号不能为空")
     private String bizCode;
+
     /**
      * 业务行 ID
      */
@@ -56,15 +60,18 @@ public class MesWmTransactionSaveReqDTO {
      */
     @NotNull(message = "物料 ID 不能为空")
     private Long itemId;
+
     /**
      * 变动数量（入库为正数，出库为负数）
      */
     @NotNull(message = "变动数量不能为空")
     private BigDecimal quantity;
+
     /**
      * 批次 ID
      */
     private Long batchId;
+
     /**
      * 批次号
      */
@@ -77,11 +84,13 @@ public class MesWmTransactionSaveReqDTO {
      */
     @NotNull(message = "仓库 ID 不能为空")
     private Long warehouseId;
+
     /**
      * 库区 ID
      */
     @NotNull(message = "库区 ID 不能为空")
     private Long locationId;
+
     /**
      * 库位 ID
      */
@@ -94,6 +103,7 @@ public class MesWmTransactionSaveReqDTO {
      * 供应商 ID（采购入库场景）
      */
     private Long vendorId;
+
     /**
      * 入库时间（为空默认当前时间）
      */
@@ -112,5 +122,4 @@ public class MesWmTransactionSaveReqDTO {
      * 是否校验库存充足（默认 true；线边库消耗等场景设 false 允许负库存）
      */
     private Boolean checkFlag;
-
 }

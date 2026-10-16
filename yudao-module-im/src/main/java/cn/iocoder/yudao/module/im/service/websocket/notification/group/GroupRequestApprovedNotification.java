@@ -16,13 +16,14 @@ public class GroupRequestApprovedNotification extends BaseGroupNotification {
      * 已处理的申请记录编号
      */
     private Long requestId;
+
     /**
      * 群编号
      */
     private Long groupId;
+
     /**
      * 申请人 / 被邀请人用户编号
      */
     private Long userId;
-
 }

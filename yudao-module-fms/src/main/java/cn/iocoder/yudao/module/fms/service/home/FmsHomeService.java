@@ -28,5 +28,4 @@ public interface FmsHomeService {
      * @return 财务指标明细
      */
     FmsHomeMetricDetailRespVO getMetricDetail(Long accountSetId, String metricKey, Long userId);
-
 }

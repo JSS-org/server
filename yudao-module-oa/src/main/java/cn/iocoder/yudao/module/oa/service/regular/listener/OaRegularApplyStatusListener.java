@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.oa.service.regular.OaRegularApplyService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OaRegularApplyStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private OaRegularApplyService regularApplyService;
+    @Resource private OaRegularApplyService regularApplyService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -25,7 +26,7 @@ public class OaRegularApplyStatusListener extends BpmProcessInstanceStatusEventL
 
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
-        regularApplyService.updateRegularApplyStatus(Long.valueOf(event.getBusinessKey()), event.getStatus());
+        regularApplyService.updateRegularApplyStatus(
+                Long.valueOf(event.getBusinessKey()), event.getStatus());
     }
-
 }

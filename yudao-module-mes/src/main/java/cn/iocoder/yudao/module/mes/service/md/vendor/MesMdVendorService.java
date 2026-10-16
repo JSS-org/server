@@ -1,18 +1,19 @@
 package cn.iocoder.yudao.module.mes.service.md.vendor;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorImportExcelVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorImportRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.vendor.MesMdVendorDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 供应商 Service 接口
@@ -100,6 +101,6 @@ public interface MesMdVendorService {
      * @param updateSupport 是否支持更新
      * @return 导入结果
      */
-    MesMdVendorImportRespVO importVendorList(List<MesMdVendorImportExcelVO> importVendors, boolean updateSupport);
-
+    MesMdVendorImportRespVO importVendorList(
+            List<MesMdVendorImportExcelVO> importVendors, boolean updateSupport);
 }

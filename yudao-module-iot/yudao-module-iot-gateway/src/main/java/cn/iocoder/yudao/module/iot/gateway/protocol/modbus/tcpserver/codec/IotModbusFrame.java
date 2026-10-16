@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.codec;
 
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusFrameFormatEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -18,14 +19,17 @@ public class IotModbusFrame {
      * 从站地址
      */
     private int slaveId;
+
     /**
      * 功能码
      */
     private int functionCode;
+
     /**
      * PDU 数据（不含 slaveId）
      */
     private byte[] pdu;
+
     /**
      * 事务标识符
      * <p>
@@ -53,5 +57,4 @@ public class IotModbusFrame {
     public boolean isException() {
         return exceptionCode != null;
     }
-
 }

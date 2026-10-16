@@ -1,18 +1,21 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.coupon.vo.coupon;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.promotion.enums.coupon.CouponStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - 优惠劵分页 Request VO")
 @Data
@@ -36,5 +39,4 @@ public class CouponPageReqVO extends PageParam {
 
     @Schema(description = "用户编号", example = "1")
     private Collection<Long> userIds;
-
 }

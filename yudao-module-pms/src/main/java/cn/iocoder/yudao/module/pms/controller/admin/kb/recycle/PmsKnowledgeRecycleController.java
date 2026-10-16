@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.recycle;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.recycle.vo.PmsKnowledgeRecycleDetailRespVO;
@@ -12,10 +18,13 @@ import cn.iocoder.yudao.module.pms.service.kb.content.PmsKnowledgeDocumentServic
 import cn.iocoder.yudao.module.pms.service.kb.recycle.PmsKnowledgeRecycleService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,32 +37,24 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 知识库回收站")
 @RestController
 @RequestMapping("/pms/kb/recycle")
 @Validated
 public class PmsKnowledgeRecycleController {
 
-    @Resource
-    private PmsKnowledgeRecycleService recycleService;
+    @Resource private PmsKnowledgeRecycleService recycleService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
-    @Resource
-    private PmsKnowledgeDocumentService documentService;
+    @Resource private PmsKnowledgeDocumentService documentService;
 
     @GetMapping("/library-list")
     @Operation(summary = "获得已删除知识库列表")
     @PreAuthorize("@ss.hasPermission('pms:kb:library:delete')")
     public CommonResult<List<PmsKnowledgeRecycleRespVO>> getLibraryRecycleList() {
-        List<PmsKnowledgeRecycleRecordDO> records = recycleService.getLibraryRecycleList(getLoginUserId());
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleService.getLibraryRecycleList(getLoginUserId());
         return success(buildRecycleRespVOList(records));
     }
 
@@ -63,8 +64,8 @@ public class PmsKnowledgeRecycleController {
     @PreAuthorize("@ss.hasPermission('pms:kb:library:delete')")
     public CommonResult<List<PmsKnowledgeRecycleRespVO>> getContentRecycleList(
             @RequestParam("libraryId") Long libraryId) {
-        List<PmsKnowledgeRecycleRecordDO> records = recycleService.getContentRecycleList(
-                libraryId, getLoginUserId());
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleService.getContentRecycleList(libraryId, getLoginUserId());
         return success(buildRecycleRespVOList(records));
     }
 
@@ -84,9 +85,13 @@ public class PmsKnowledgeRecycleController {
     public CommonResult<PmsKnowledgeRecyclePreviewRespVO> getContentRecyclePreview(
             @RequestParam("id") Long id,
             @RequestParam(value = "entityId", required = false) Long entityId) {
-        PmsKnowledgeDocumentDO document = recycleService.getContentRecyclePreview(id, entityId, getLoginUserId());
-        return success(BeanUtils.toBean(document, PmsKnowledgeRecyclePreviewRespVO.class,
-                o -> o.setName(document.getTitle())));
+        PmsKnowledgeDocumentDO document =
+                recycleService.getContentRecyclePreview(id, entityId, getLoginUserId());
+        return success(
+                BeanUtils.toBean(
+                        document,
+                        PmsKnowledgeRecyclePreviewRespVO.class,
+                        o -> o.setName(document.getTitle())));
     }
 
     @PutMapping("/restore")
@@ -109,17 +114,35 @@ public class PmsKnowledgeRecycleController {
 
     // ==================== 拼接 VO ====================
 
-    private List<PmsKnowledgeRecycleRespVO> buildRecycleRespVOList(List<PmsKnowledgeRecycleRecordDO> records) {
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(records, PmsKnowledgeRecycleRecordDO::getDeleteUserId));
-        Map<Long, PmsKnowledgeDocumentDO> documentMap = documentService.getDocumentMap(convertSet(records, record ->
-                PmsKnowledgeObjectTypeEnum.FILE.getType().equals(record.getType()) ? record.getEntityId() : null));
-        return convertList(records, record -> {
-            PmsKnowledgeRecycleRespVO recordVO = BeanUtils.toBean(record, PmsKnowledgeRecycleRespVO.class);
-            findAndThen(documentMap, record.getEntityId(), document -> recordVO.setFileSize(document.getFileSize()));
-            findAndThen(userMap, record.getDeleteUserId(), user -> recordVO.setDeleteUserName(user.getNickname()));
-            return recordVO;
-        });
+    private List<PmsKnowledgeRecycleRespVO> buildRecycleRespVOList(
+            List<PmsKnowledgeRecycleRecordDO> records) {
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(records, PmsKnowledgeRecycleRecordDO::getDeleteUserId));
+        Map<Long, PmsKnowledgeDocumentDO> documentMap =
+                documentService.getDocumentMap(
+                        convertSet(
+                                records,
+                                record ->
+                                        PmsKnowledgeObjectTypeEnum.FILE
+                                                        .getType()
+                                                        .equals(record.getType())
+                                                ? record.getEntityId()
+                                                : null));
+        return convertList(
+                records,
+                record -> {
+                    PmsKnowledgeRecycleRespVO recordVO =
+                            BeanUtils.toBean(record, PmsKnowledgeRecycleRespVO.class);
+                    findAndThen(
+                            documentMap,
+                            record.getEntityId(),
+                            document -> recordVO.setFileSize(document.getFileSize()));
+                    findAndThen(
+                            userMap,
+                            record.getDeleteUserId(),
+                            user -> recordVO.setDeleteUserName(user.getNickname()));
+                    return recordVO;
+                });
     }
-
 }

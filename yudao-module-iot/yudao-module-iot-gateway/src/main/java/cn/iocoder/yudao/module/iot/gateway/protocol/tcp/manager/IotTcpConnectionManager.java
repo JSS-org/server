@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.tcp.manager;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetSocket;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,7 +50,8 @@ public class IotTcpConnectionManager {
      * @param deviceId       设备 ID
      * @param connectionInfo 连接信息
      */
-    public synchronized void registerConnection(NetSocket socket, Long deviceId, ConnectionInfo connectionInfo) {
+    public synchronized void registerConnection(
+            NetSocket socket, Long deviceId, ConnectionInfo connectionInfo) {
         // 检查连接数是否已达上限（同步方法确保检查和注册的原子性）
         if (connectionMap.size() >= maxConnections) {
             throw new IllegalStateException("连接数已达上限: " + maxConnections);
@@ -57,8 +59,10 @@ public class IotTcpConnectionManager {
         // 如果设备已有其他连接，先清理旧连接
         NetSocket oldSocket = deviceSocketMap.get(deviceId);
         if (oldSocket != null && oldSocket != socket) {
-            log.info("[registerConnection][设备已有其他连接，断开旧连接，设备 ID: {}，旧连接: {}]",
-                    deviceId, oldSocket.remoteAddress());
+            log.info(
+                    "[registerConnection][设备已有其他连接，断开旧连接，设备 ID: {}，旧连接: {}]",
+                    deviceId,
+                    oldSocket.remoteAddress());
             // 先清理映射，再关闭连接
             connectionMap.remove(oldSocket);
             try {
@@ -71,8 +75,12 @@ public class IotTcpConnectionManager {
         // 注册新连接
         connectionMap.put(socket, connectionInfo);
         deviceSocketMap.put(deviceId, socket);
-        log.info("[registerConnection][注册设备连接，设备 ID: {}，连接: {}，product key: {}，device name: {}]",
-                deviceId, socket.remoteAddress(), connectionInfo.getProductKey(), connectionInfo.getDeviceName());
+        log.info(
+                "[registerConnection][注册设备连接，设备 ID: {}，连接: {}，product key: {}，device name: {}]",
+                deviceId,
+                socket.remoteAddress(),
+                connectionInfo.getProductKey(),
+                connectionInfo.getDeviceName());
     }
 
     /**
@@ -88,7 +96,10 @@ public class IotTcpConnectionManager {
         Long deviceId = connectionInfo.getDeviceId();
         // 仅当 deviceSocketMap 中的 socket 是当前 socket 时才移除，避免误删新连接
         deviceSocketMap.remove(deviceId, socket);
-        log.info("[unregisterConnection][注销设备连接，设备 ID: {}，连接: {}]", deviceId, socket.remoteAddress());
+        log.info(
+                "[unregisterConnection][注销设备连接，设备 ID: {}，连接: {}]",
+                deviceId,
+                socket.remoteAddress());
     }
 
     /**
@@ -156,15 +167,15 @@ public class IotTcpConnectionManager {
          * 设备 ID
          */
         private Long deviceId;
+
         /**
          * 产品 Key
          */
         private String productKey;
+
         /**
          * 设备名称
          */
         private String deviceName;
-
     }
-
 }

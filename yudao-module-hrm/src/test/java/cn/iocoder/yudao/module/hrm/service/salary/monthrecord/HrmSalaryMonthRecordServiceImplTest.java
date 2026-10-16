@@ -1,5 +1,24 @@
 package cn.iocoder.yudao.module.hrm.service.salary.monthrecord;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_CONFIG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_CANNOT_DELETE_ONLY;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_NOT_LATEST;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_STATUS_INVALID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
@@ -12,29 +31,31 @@ import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOp
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeChangeRecordDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryConfigDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.employee.HrmSalaryEmployeeInfoDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryGroupDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthRecordDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryTaxRuleDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.employee.HrmSalaryEmployeeInfoDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthRecordDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.salary.monthrecord.HrmSalaryMonthRecordMapper;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeChangeTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.config.HrmSalaryOptionCodeEnum;
+import cn.iocoder.yudao.module.hrm.enums.salary.monthrecord.HrmSalaryMonthRecordStatusEnum;
 import cn.iocoder.yudao.module.hrm.service.attendance.statistics.HrmAttendanceStatisticsService;
 import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeChangeRecordService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.hrm.service.insurance.monthrecord.HrmInsuranceMonthEmployeeRecordService;
 import cn.iocoder.yudao.module.hrm.service.insurance.monthrecord.HrmInsuranceMonthRecordService;
-import cn.iocoder.yudao.module.hrm.enums.salary.monthrecord.HrmSalaryMonthRecordStatusEnum;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryConfigService;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryGroupService;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryOptionService;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryTaxRuleService;
 import cn.iocoder.yudao.module.hrm.service.salary.employee.HrmSalaryEmployeeInfoService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.annotation.Import;
@@ -50,25 +71,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_CONFIG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_CANNOT_DELETE_ONLY;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_NOT_LATEST;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_MONTH_RECORD_STATUS_INVALID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link HrmSalaryMonthRecordServiceImpl} 的单元测试类
  *
@@ -77,34 +79,21 @@ import static org.mockito.Mockito.when;
 @Import(HrmSalaryMonthRecordServiceImpl.class)
 public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmSalaryMonthRecordServiceImpl monthRecordService;
+    @Resource private HrmSalaryMonthRecordServiceImpl monthRecordService;
 
-    @Resource
-    private HrmSalaryMonthRecordMapper monthRecordMapper;
+    @Resource private HrmSalaryMonthRecordMapper monthRecordMapper;
 
-    @MockitoBean
-    private HrmSalaryOptionService salaryOptionService;
-    @MockitoBean
-    private HrmSalaryConfigService salaryConfigService;
-    @MockitoBean
-    private HrmSalaryEmployeeInfoService salaryEmployeeInfoService;
-    @MockitoBean
-    private HrmSalaryGroupService salaryGroupService;
-    @MockitoBean
-    private HrmSalaryTaxRuleService salaryTaxRuleService;
-    @MockitoBean
-    private HrmSalaryMonthEmployeeRecordService monthEmployeeRecordService;
-    @MockitoBean
-    private HrmEmployeeService employeeService;
-    @MockitoBean
-    private HrmEmployeeChangeRecordService employeeChangeRecordService;
-    @MockitoBean
-    private HrmAttendanceStatisticsService attendanceStatisticsService;
-    @MockitoBean
-    private HrmInsuranceMonthEmployeeRecordService insuranceMonthEmployeeRecordService;
-    @MockitoBean
-    private HrmInsuranceMonthRecordService insuranceMonthRecordService;
+    @MockitoBean private HrmSalaryOptionService salaryOptionService;
+    @MockitoBean private HrmSalaryConfigService salaryConfigService;
+    @MockitoBean private HrmSalaryEmployeeInfoService salaryEmployeeInfoService;
+    @MockitoBean private HrmSalaryGroupService salaryGroupService;
+    @MockitoBean private HrmSalaryTaxRuleService salaryTaxRuleService;
+    @MockitoBean private HrmSalaryMonthEmployeeRecordService monthEmployeeRecordService;
+    @MockitoBean private HrmEmployeeService employeeService;
+    @MockitoBean private HrmEmployeeChangeRecordService employeeChangeRecordService;
+    @MockitoBean private HrmAttendanceStatisticsService attendanceStatisticsService;
+    @MockitoBean private HrmInsuranceMonthEmployeeRecordService insuranceMonthEmployeeRecordService;
+    @MockitoBean private HrmInsuranceMonthRecordService insuranceMonthRecordService;
 
     @Test
     public void testCreateMonthRecord_success() {
@@ -123,17 +112,32 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         assertEquals("2026年7月工资表", monthRecord.getTitle());
         assertEquals(LocalDate.of(2026, 7, 1).atStartOfDay(), monthRecord.getStartTime());
         assertEquals(LocalDate.of(2026, 7, 31).atStartOfDay(), monthRecord.getEndTime());
-        assertEquals(HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus(), monthRecord.getStatus());
+        assertEquals(
+                HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus(), monthRecord.getStatus());
         assertEquals(0, monthRecord.getEmployeeCount());
     }
 
     @Test
     public void testCreateMonthRecord_emptyOptionCategory() {
         // mock 数据：加班工资明细已隐藏，基本工资明细仍可见
-        when(salaryOptionService.getSalaryOptionList(false, true)).thenReturn(Arrays.asList(
-                HrmSalaryOptionDO.builder().code(10).parentCode(0).name("基本工资").build(),
-                HrmSalaryOptionDO.builder().code(10101).parentCode(10).name("岗位工资").build(),
-                HrmSalaryOptionDO.builder().code(180).parentCode(0).name("加班工资").build()));
+        when(salaryOptionService.getSalaryOptionList(false, true))
+                .thenReturn(
+                        Arrays.asList(
+                                HrmSalaryOptionDO.builder()
+                                        .code(10)
+                                        .parentCode(0)
+                                        .name("基本工资")
+                                        .build(),
+                                HrmSalaryOptionDO.builder()
+                                        .code(10101)
+                                        .parentCode(10)
+                                        .name("岗位工资")
+                                        .build(),
+                                HrmSalaryOptionDO.builder()
+                                        .code(180)
+                                        .parentCode(0)
+                                        .name("加班工资")
+                                        .build()));
         HrmSalaryMonthRecordCreateReqVO reqVO =
                 new HrmSalaryMonthRecordCreateReqVO().setYear(2026).setMonth(7);
 
@@ -141,7 +145,8 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         Long id = monthRecordService.createMonthRecord(reqVO);
 
         // 断言：不生成空分类，避免前端把分类当成工资项
-        List<HrmSalaryMonthRecordDO.OptionHeader> headers = monthRecordMapper.selectById(id).getOptionHeaders();
+        List<HrmSalaryMonthRecordDO.OptionHeader> headers =
+                monthRecordMapper.selectById(id).getOptionHeaders();
         assertEquals(1, headers.size());
         assertEquals(Integer.valueOf(10), headers.get(0).getCode());
         assertEquals(1, headers.get(0).getChildren().size());
@@ -151,8 +156,8 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMonthRecord_salaryConfigCycle() {
         // mock 数据
-        when(salaryConfigService.getSalaryConfig()).thenReturn(
-                HrmSalaryConfigDO.builder().cycleStartDay(26).cycleEndDay(25).build());
+        when(salaryConfigService.getSalaryConfig())
+                .thenReturn(HrmSalaryConfigDO.builder().cycleStartDay(26).cycleEndDay(25).build());
         when(salaryOptionService.getSalaryOptionList(false, true))
                 .thenReturn(Collections.emptyList());
         // 准备参数
@@ -171,14 +176,15 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMonthRecord_exists() {
         // mock 数据
-        monthRecordMapper.insert(buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
+        monthRecordMapper.insert(
+                buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
         // 准备参数
         HrmSalaryMonthRecordCreateReqVO reqVO =
                 new HrmSalaryMonthRecordCreateReqVO().setYear(2026).setMonth(7);
 
         // 调用，并断言异常
-        assertServiceException(() -> monthRecordService.createMonthRecord(reqVO),
-                SALARY_MONTH_RECORD_EXISTS);
+        assertServiceException(
+                () -> monthRecordService.createMonthRecord(reqVO), SALARY_MONTH_RECORD_EXISTS);
     }
 
     @Test
@@ -206,8 +212,8 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateNextMonthRecord_firstMonth() {
         // mock 数据
-        when(salaryConfigService.getSalaryConfig()).thenReturn(
-                HrmSalaryConfigDO.builder().startYear(2026).startMonth(7).build());
+        when(salaryConfigService.getSalaryConfig())
+                .thenReturn(HrmSalaryConfigDO.builder().startYear(2026).startMonth(7).build());
         when(salaryOptionService.getSalaryOptionList(false, true))
                 .thenReturn(Collections.emptyList());
 
@@ -223,8 +229,8 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateNextMonthRecord_salaryConfigNotExists() {
         // 调用，并断言异常
-        assertServiceException(() -> monthRecordService.createNextMonthRecord(),
-                SALARY_CONFIG_NOT_EXISTS);
+        assertServiceException(
+                () -> monthRecordService.createNextMonthRecord(), SALARY_CONFIG_NOT_EXISTS);
     }
 
     @Test
@@ -240,7 +246,8 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         Long monthRecordId = monthRecordService.createNextMonthRecord();
 
         // 断言
-        assertEquals(HrmSalaryMonthRecordStatusEnum.HISTORY.getStatus(),
+        assertEquals(
+                HrmSalaryMonthRecordStatusEnum.HISTORY.getStatus(),
                 monthRecordMapper.selectById(previousMonthRecord.getId()).getStatus());
         HrmSalaryMonthRecordDO monthRecord = monthRecordMapper.selectById(monthRecordId);
         assertEquals(2026, monthRecord.getYear());
@@ -254,10 +261,14 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
                 buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus());
         monthRecordMapper.insert(monthRecord);
         HrmEmployeeDO employee = buildActiveEmployee(1L, "NO-001");
-        when(employeeService.getEmployeeList(any())).thenReturn(
-                Collections.singletonList(employee));
-        HrmSalaryGroupDO salaryGroup = HrmSalaryGroupDO.builder()
-                .id(10L).taxRuleId(20L).salaryStandard(new BigDecimal("21.75")).build();
+        when(employeeService.getEmployeeList(any()))
+                .thenReturn(Collections.singletonList(employee));
+        HrmSalaryGroupDO salaryGroup =
+                HrmSalaryGroupDO.builder()
+                        .id(10L)
+                        .taxRuleId(20L)
+                        .salaryStandard(new BigDecimal("21.75"))
+                        .build();
         when(salaryGroupService.getEmployeeSalaryGroupMap(any()))
                 .thenReturn(Collections.singletonMap(employee.getId(), salaryGroup));
         HrmSalaryTaxRuleDO taxRule = HrmSalaryTaxRuleDO.builder().id(20L).name("默认计税").build();
@@ -265,37 +276,53 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
                 .thenReturn(Collections.singletonMap(taxRule.getId(), taxRule));
         when(salaryTaxRuleService.getSalaryTaxRuleList())
                 .thenReturn(Collections.singletonList(taxRule));
-        HrmSalaryOptionDO basicSalaryOption = new HrmSalaryOptionDO()
-                .setCode(10101).setName("基本工资").setParentCode(10)
-                .setType(1).setCalculateEnabled(true).setEnabled(true);
+        HrmSalaryOptionDO basicSalaryOption =
+                new HrmSalaryOptionDO()
+                        .setCode(10101)
+                        .setName("基本工资")
+                        .setParentCode(10)
+                        .setType(1)
+                        .setCalculateEnabled(true)
+                        .setEnabled(true);
         when(salaryOptionService.getSalaryOptionList(false))
                 .thenReturn(Collections.singletonList(basicSalaryOption));
         when(salaryOptionService.getSalaryOptionList(false, true))
                 .thenReturn(Collections.singletonList(basicSalaryOption));
         when(salaryEmployeeInfoService.getEffectiveSalaryOptionList(
-                eq(employee), any(LocalDateTime[].class)))
-                .thenReturn(Collections.singletonList(
-                        HrmSalaryEmployeeInfoDO.SalaryOption.builder()
-                                .code(10101).name("基本工资")
-                                .value(new BigDecimal("10000")).build()));
-        when(monthEmployeeRecordService.calculateMonthEmployeeRecordList(
-                any(), any(), any())).thenAnswer(invocation -> {
-            List<HrmSalaryMonthEmployeeRecordDO> records = invocation.getArgument(0);
-            records.forEach(record -> record
-                    .setExpectedPaySalary(new BigDecimal("10000"))
-                    .setPersonalTax(new BigDecimal("500"))
-                    .setRealPaySalary(new BigDecimal("9500"))
-                    .setOptionValues(Collections.emptyList()));
-            return records;
-        });
+                        eq(employee), any(LocalDateTime[].class)))
+                .thenReturn(
+                        Collections.singletonList(
+                                HrmSalaryEmployeeInfoDO.SalaryOption.builder()
+                                        .code(10101)
+                                        .name("基本工资")
+                                        .value(new BigDecimal("10000"))
+                                        .build()));
+        when(monthEmployeeRecordService.calculateMonthEmployeeRecordList(any(), any(), any()))
+                .thenAnswer(
+                        invocation -> {
+                            List<HrmSalaryMonthEmployeeRecordDO> records =
+                                    invocation.getArgument(0);
+                            records.forEach(
+                                    record ->
+                                            record.setExpectedPaySalary(new BigDecimal("10000"))
+                                                    .setPersonalTax(new BigDecimal("500"))
+                                                    .setRealPaySalary(new BigDecimal("9500"))
+                                                    .setOptionValues(Collections.emptyList()));
+                            return records;
+                        });
         when(monthEmployeeRecordService.getMonthEmployeeRecordListByMonthRecordId(
-                monthRecord.getId())).thenAnswer(invocation -> Collections.singletonList(
-                HrmSalaryMonthEmployeeRecordDO.builder()
-                        .monthRecordId(monthRecord.getId()).employeeId(employee.getId())
-                        .expectedPaySalary(new BigDecimal("10000"))
-                        .personalTax(new BigDecimal("500"))
-                        .realPaySalary(new BigDecimal("9500"))
-                        .optionValues(Collections.emptyList()).build()));
+                        monthRecord.getId()))
+                .thenAnswer(
+                        invocation ->
+                                Collections.singletonList(
+                                        HrmSalaryMonthEmployeeRecordDO.builder()
+                                                .monthRecordId(monthRecord.getId())
+                                                .employeeId(employee.getId())
+                                                .expectedPaySalary(new BigDecimal("10000"))
+                                                .personalTax(new BigDecimal("500"))
+                                                .realPaySalary(new BigDecimal("9500"))
+                                                .optionValues(Collections.emptyList())
+                                                .build()));
         when(monthEmployeeRecordService.getMonthOptionSummary(any()))
                 .thenReturn(Collections.emptyList());
 
@@ -303,11 +330,16 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         monthRecordService.computeMonthRecord(monthRecord.getId());
 
         // 断言
-        ArgumentCaptor<LocalDateTime[]> salaryTimesCaptor = ArgumentCaptor.forClass(LocalDateTime[].class);
-        verify(salaryEmployeeInfoService).getEffectiveSalaryOptionList(eq(employee), salaryTimesCaptor.capture());
+        ArgumentCaptor<LocalDateTime[]> salaryTimesCaptor =
+                ArgumentCaptor.forClass(LocalDateTime[].class);
+        verify(salaryEmployeeInfoService)
+                .getEffectiveSalaryOptionList(eq(employee), salaryTimesCaptor.capture());
         LocalDateTime[] salaryTimes = salaryTimesCaptor.getValue();
-        assertTrue(LocalDateTimeUtils.isBetween(salaryTimes[0], salaryTimes[1],
-                monthRecord.getEndTime().toLocalDate().atTime(12, 0)));
+        assertTrue(
+                LocalDateTimeUtils.isBetween(
+                        salaryTimes[0],
+                        salaryTimes[1],
+                        monthRecord.getEndTime().toLocalDate().atTime(12, 0)));
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<HrmSalaryMonthEmployeeRecordDO>> recordCaptor =
                 ArgumentCaptor.forClass(Collection.class);
@@ -329,36 +361,53 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
                 buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus());
         monthRecordMapper.insert(monthRecord);
         HrmEmployeeDO employee = buildActiveEmployee(1L, "NO-001");
-        when(employeeService.getEmployeeList(any())).thenReturn(Collections.singletonList(employee));
-        HrmSalaryGroupDO salaryGroup = HrmSalaryGroupDO.builder()
-                .id(10L).taxRuleId(20L).salaryStandard(new BigDecimal("21.75")).build();
+        when(employeeService.getEmployeeList(any()))
+                .thenReturn(Collections.singletonList(employee));
+        HrmSalaryGroupDO salaryGroup =
+                HrmSalaryGroupDO.builder()
+                        .id(10L)
+                        .taxRuleId(20L)
+                        .salaryStandard(new BigDecimal("21.75"))
+                        .build();
         when(salaryGroupService.getEmployeeSalaryGroupMap(any()))
                 .thenReturn(Collections.singletonMap(employee.getId(), salaryGroup));
-        when(salaryTaxRuleService.getSalaryTaxRuleMap(anyCollection())).thenReturn(Collections.emptyMap());
+        when(salaryTaxRuleService.getSalaryTaxRuleMap(anyCollection()))
+                .thenReturn(Collections.emptyMap());
         when(salaryTaxRuleService.getSalaryTaxRuleList()).thenReturn(Collections.emptyList());
         when(salaryOptionService.getSalaryOptionList(false)).thenReturn(Collections.emptyList());
-        when(salaryOptionService.getSalaryOptionList(false, true)).thenReturn(Collections.emptyList());
+        when(salaryOptionService.getSalaryOptionList(false, true))
+                .thenReturn(Collections.emptyList());
         when(salaryEmployeeInfoService.getEffectiveSalaryOptionList(
-                eq(employee), any(LocalDateTime[].class))).thenReturn(Collections.emptyList());
-        HrmAttendanceMonthRecordRespVO attendance = new HrmAttendanceMonthRecordRespVO()
-                .setEmployeeId(employee.getId()).setActualDays(new BigDecimal("20.50"))
-                .setLateDeductAmount(new BigDecimal("10.00"))
-                .setEarlyDeductAmount(new BigDecimal("20.00"))
-                .setAbsenteeismDeductAmount(new BigDecimal("30.00"))
-                .setMisscardDeductAmount(new BigDecimal("40.00"))
-                .setAttendanceDeductAmount(new BigDecimal("100.00"));
+                        eq(employee), any(LocalDateTime[].class)))
+                .thenReturn(Collections.emptyList());
+        HrmAttendanceMonthRecordRespVO attendance =
+                new HrmAttendanceMonthRecordRespVO()
+                        .setEmployeeId(employee.getId())
+                        .setActualDays(new BigDecimal("20.50"))
+                        .setLateDeductAmount(new BigDecimal("10.00"))
+                        .setEarlyDeductAmount(new BigDecimal("20.00"))
+                        .setAbsenteeismDeductAmount(new BigDecimal("30.00"))
+                        .setMisscardDeductAmount(new BigDecimal("40.00"))
+                        .setAttendanceDeductAmount(new BigDecimal("100.00"));
         when(attendanceStatisticsService.getAttendanceMonthRecordMap(
-                2026, 7, Collections.singletonList(employee.getId())))
+                        2026, 7, Collections.singletonList(employee.getId())))
                 .thenReturn(Collections.singletonMap(employee.getId(), attendance));
         when(monthEmployeeRecordService.calculateMonthEmployeeRecordList(any(), any(), any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(monthEmployeeRecordService.getMonthEmployeeRecordListByMonthRecordId(monthRecord.getId()))
+        when(monthEmployeeRecordService.getMonthEmployeeRecordListByMonthRecordId(
+                        monthRecord.getId()))
                 .thenReturn(Collections.emptyList());
-        when(monthEmployeeRecordService.getMonthOptionSummary(any())).thenReturn(Collections.emptyList());
+        when(monthEmployeeRecordService.getMonthOptionSummary(any()))
+                .thenReturn(Collections.emptyList());
 
         // 调用
-        monthRecordService.computeMonthRecord(monthRecord.getId(), false, true,
-                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        monthRecordService.computeMonthRecord(
+                monthRecord.getId(),
+                false,
+                true,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList());
 
         // 断言
         @SuppressWarnings("unchecked")
@@ -367,16 +416,20 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<Long, List<HrmSalaryOptionValueVO>>> optionValueMapCaptor =
                 ArgumentCaptor.forClass(Map.class);
-        verify(monthEmployeeRecordService).calculateMonthEmployeeRecordList(
-                employeeRecordsCaptor.capture(), optionValueMapCaptor.capture(), any());
-        assertAmount("20.50", CollUtil.getFirst(employeeRecordsCaptor.getValue()).getActualWorkDay());
-        List<HrmSalaryOptionValueVO> optionValues = optionValueMapCaptor.getValue().get(employee.getId());
+        verify(monthEmployeeRecordService)
+                .calculateMonthEmployeeRecordList(
+                        employeeRecordsCaptor.capture(), optionValueMapCaptor.capture(), any());
+        assertAmount(
+                "20.50", CollUtil.getFirst(employeeRecordsCaptor.getValue()).getActualWorkDay());
+        List<HrmSalaryOptionValueVO> optionValues =
+                optionValueMapCaptor.getValue().get(employee.getId());
         assertOptionAmount("10.00", optionValues, HrmSalaryOptionCodeEnum.LATE_DEDUCTION);
         assertOptionAmount("20.00", optionValues, HrmSalaryOptionCodeEnum.EARLY_DEDUCTION);
         assertOptionAmount("30.00", optionValues, HrmSalaryOptionCodeEnum.ABSENTEEISM_DEDUCTION);
         assertOptionAmount("0.00", optionValues, HrmSalaryOptionCodeEnum.LEAVE_DEDUCTION);
         assertOptionAmount("40.00", optionValues, HrmSalaryOptionCodeEnum.MISSING_CARD_DEDUCTION);
-        assertOptionAmount("100.00", optionValues, HrmSalaryOptionCodeEnum.ATTENDANCE_DEDUCTION_TOTAL);
+        assertOptionAmount(
+                "100.00", optionValues, HrmSalaryOptionCodeEnum.ATTENDANCE_DEDUCTION_TOTAL);
     }
 
     @Test
@@ -385,23 +438,31 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         HrmSalaryMonthRecordDO monthRecord =
                 buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus());
         HrmEmployeeDO activeEmployee = buildActiveEmployee(3L, "NO-003");
-        HrmEmployeeDO pendingEntryEmployee = buildActiveEmployee(1L, "NO-001")
-                .setEntryStatus(HrmEmployeeEntryStatusEnum.PENDING_ENTRY.getStatus());
-        HrmEmployeeDO leftBeforeCycleEmployee = buildActiveEmployee(2L, "NO-002")
-                .setEntryStatus(HrmEmployeeEntryStatusEnum.LEFT.getStatus())
-                .setLeaveTime(monthRecord.getStartTime().minusDays(1));
-        HrmEmployeeDO leftInCycleEmployee = buildActiveEmployee(4L, "NO-004")
-                .setEntryStatus(HrmEmployeeEntryStatusEnum.LEFT.getStatus())
-                .setLeaveTime(monthRecord.getStartTime());
-        when(employeeService.getEmployeeList(any())).thenReturn(Arrays.asList(
-                activeEmployee, pendingEntryEmployee, leftBeforeCycleEmployee, leftInCycleEmployee));
+        HrmEmployeeDO pendingEntryEmployee =
+                buildActiveEmployee(1L, "NO-001")
+                        .setEntryStatus(HrmEmployeeEntryStatusEnum.PENDING_ENTRY.getStatus());
+        HrmEmployeeDO leftBeforeCycleEmployee =
+                buildActiveEmployee(2L, "NO-002")
+                        .setEntryStatus(HrmEmployeeEntryStatusEnum.LEFT.getStatus())
+                        .setLeaveTime(monthRecord.getStartTime().minusDays(1));
+        HrmEmployeeDO leftInCycleEmployee =
+                buildActiveEmployee(4L, "NO-004")
+                        .setEntryStatus(HrmEmployeeEntryStatusEnum.LEFT.getStatus())
+                        .setLeaveTime(monthRecord.getStartTime());
+        when(employeeService.getEmployeeList(any()))
+                .thenReturn(
+                        Arrays.asList(
+                                activeEmployee,
+                                pendingEntryEmployee,
+                                leftBeforeCycleEmployee,
+                                leftInCycleEmployee));
 
         // 调用
-        List<HrmEmployeeDO> employees =
-                monthRecordService.getPayrollEmployeeList(monthRecord);
+        List<HrmEmployeeDO> employees = monthRecordService.getPayrollEmployeeList(monthRecord);
 
         // 断言
-        assertEquals(Arrays.asList(activeEmployee.getId(), leftInCycleEmployee.getId()),
+        assertEquals(
+                Arrays.asList(activeEmployee.getId(), leftInCycleEmployee.getId()),
                 Arrays.asList(employees.get(0).getId(), employees.get(1).getId()));
     }
 
@@ -420,7 +481,8 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertNull(monthRecordMapper.selectById(currentMonthRecord.getId()));
-        assertEquals(HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus(),
+        assertEquals(
+                HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus(),
                 monthRecordMapper.selectById(previousMonthRecord.getId()).getStatus());
         verify(monthEmployeeRecordService)
                 .deleteMonthEmployeeRecordListByMonthRecordId(currentMonthRecord.getId());
@@ -432,11 +494,13 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         HrmSalaryMonthRecordDO previousMonthRecord =
                 buildMonthRecord(2026, 6, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus());
         monthRecordMapper.insert(previousMonthRecord);
-        monthRecordMapper.insert(buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
+        monthRecordMapper.insert(
+                buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
 
         // 调用，并断言异常
-        assertServiceException(() -> monthRecordService.deleteMonthRecord(
-                previousMonthRecord.getId()), SALARY_MONTH_RECORD_NOT_LATEST);
+        assertServiceException(
+                () -> monthRecordService.deleteMonthRecord(previousMonthRecord.getId()),
+                SALARY_MONTH_RECORD_NOT_LATEST);
     }
 
     @Test
@@ -447,8 +511,9 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         monthRecordMapper.insert(monthRecord);
 
         // 调用，并断言异常
-        assertServiceException(() -> monthRecordService.deleteMonthRecord(
-                monthRecord.getId()), SALARY_MONTH_RECORD_CANNOT_DELETE_ONLY);
+        assertServiceException(
+                () -> monthRecordService.deleteMonthRecord(monthRecord.getId()),
+                SALARY_MONTH_RECORD_CANNOT_DELETE_ONLY);
     }
 
     @Test
@@ -459,20 +524,24 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         monthRecordMapper.insert(monthRecord);
         HrmEmployeeDO salaryMissingEmployee = buildActiveEmployee(1L, "NO-001");
         HrmEmployeeDO groupMissingEmployee = buildActiveEmployee(2L, "NO-002");
-        List<HrmEmployeeDO> employees =
-                Arrays.asList(salaryMissingEmployee, groupMissingEmployee);
+        List<HrmEmployeeDO> employees = Arrays.asList(salaryMissingEmployee, groupMissingEmployee);
         when(employeeService.getEmployeeList(any())).thenReturn(employees);
-        when(salaryGroupService.getEmployeeSalaryGroupMap(employees)).thenReturn(
-                Collections.singletonMap(salaryMissingEmployee.getId(),
-                        HrmSalaryGroupDO.builder().id(10L).taxRuleId(20L).build()));
+        when(salaryGroupService.getEmployeeSalaryGroupMap(employees))
+                .thenReturn(
+                        Collections.singletonMap(
+                                salaryMissingEmployee.getId(),
+                                HrmSalaryGroupDO.builder().id(10L).taxRuleId(20L).build()));
         when(salaryEmployeeInfoService.getSalaryEmployeeInfoMap(
-                Collections.singleton(salaryMissingEmployee.getId())))
+                        Collections.singleton(salaryMissingEmployee.getId())))
                 .thenReturn(Collections.emptyMap());
-        HrmEmployeeChangeRecordDO changeRecord = HrmEmployeeChangeRecordDO.builder()
-                .employeeId(salaryMissingEmployee.getId())
-                .type(HrmEmployeeChangeTypeEnum.TRANSFER.getType()).build();
-        when(employeeChangeRecordService.getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
-                anyCollection(), any(LocalDateTime[].class)))
+        HrmEmployeeChangeRecordDO changeRecord =
+                HrmEmployeeChangeRecordDO.builder()
+                        .employeeId(salaryMissingEmployee.getId())
+                        .type(HrmEmployeeChangeTypeEnum.TRANSFER.getType())
+                        .build();
+        when(employeeChangeRecordService
+                        .getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
+                                anyCollection(), any(LocalDateTime[].class)))
                 .thenReturn(Collections.singletonList(changeRecord));
 
         // 调用
@@ -485,12 +554,17 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         assertEquals(1L, result.getNoSalaryEmployeeCount());
         assertEquals(1L, result.getNoSalaryGroupEmployeeCount());
         assertEquals(1L, result.getChangeEmployeeCount());
-        ArgumentCaptor<LocalDateTime[]> effectTimesCaptor = ArgumentCaptor.forClass(LocalDateTime[].class);
-        verify(employeeChangeRecordService).getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
-                anyCollection(), effectTimesCaptor.capture());
+        ArgumentCaptor<LocalDateTime[]> effectTimesCaptor =
+                ArgumentCaptor.forClass(LocalDateTime[].class);
+        verify(employeeChangeRecordService)
+                .getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
+                        anyCollection(), effectTimesCaptor.capture());
         LocalDateTime[] effectTimes = effectTimesCaptor.getValue();
-        assertTrue(LocalDateTimeUtils.isBetween(effectTimes[0], effectTimes[1],
-                monthRecord.getEndTime().toLocalDate().atTime(12, 0)));
+        assertTrue(
+                LocalDateTimeUtils.isBetween(
+                        effectTimes[0],
+                        effectTimes[1],
+                        monthRecord.getEndTime().toLocalDate().atTime(12, 0)));
     }
 
     @Test
@@ -510,8 +584,9 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         monthRecordMapper.insert(monthRecord);
 
         // 调用，并断言异常
-        assertServiceException(() -> monthRecordService.validateMonthRecordEditable(
-                monthRecord.getId()), SALARY_MONTH_RECORD_STATUS_INVALID);
+        assertServiceException(
+                () -> monthRecordService.validateMonthRecordEditable(monthRecord.getId()),
+                SALARY_MONTH_RECORD_STATUS_INVALID);
     }
 
     @Test
@@ -521,14 +596,14 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
                 buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus());
         monthRecordMapper.insert(monthRecord);
         // 测试 status 不匹配
-        monthRecordMapper.insert(buildMonthRecord(2026, 8, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
+        monthRecordMapper.insert(
+                buildMonthRecord(2026, 8, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
         // 准备参数
         HrmSalaryMonthRecordPageReqVO reqVO = new HrmSalaryMonthRecordPageReqVO();
         reqVO.setStatus(HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus());
 
         // 调用
-        PageResult<HrmSalaryMonthRecordDO> result =
-                monthRecordService.getMonthRecordPage(reqVO);
+        PageResult<HrmSalaryMonthRecordDO> result = monthRecordService.getMonthRecordPage(reqVO);
 
         // 断言
         assertEquals(1L, result.getTotal());
@@ -542,11 +617,13 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
                 buildMonthRecord(2026, 7, HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus());
         monthRecordMapper.insert(monthRecord);
         // 测试 status 不匹配
-        monthRecordMapper.insert(buildMonthRecord(2026, 8, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
+        monthRecordMapper.insert(
+                buildMonthRecord(2026, 8, HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()));
 
         // 调用
         List<HrmSalaryMonthRecordDO> result =
-                monthRecordService.getMonthRecordListByStatus(HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus());
+                monthRecordService.getMonthRecordListByStatus(
+                        HrmSalaryMonthRecordStatusEnum.COMPUTED.getStatus());
 
         // 断言
         assertEquals(1, result.size());
@@ -560,19 +637,28 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
         YearMonth yearMonth = YearMonth.of(year, month);
         return HrmSalaryMonthRecordDO.builder()
                 .title(year + "年" + month + "月工资表")
-                .year(year).month(month).employeeCount(0)
+                .year(year)
+                .month(month)
+                .employeeCount(0)
                 .startTime(yearMonth.atDay(1).atStartOfDay())
                 .endTime(yearMonth.atEndOfMonth().atStartOfDay())
                 .expectedPaySalary(BigDecimal.ZERO)
-                .personalTax(BigDecimal.ZERO).realPaySalary(BigDecimal.ZERO)
-                .optionHeaders(Collections.emptyList()).status(status).build();
+                .personalTax(BigDecimal.ZERO)
+                .realPaySalary(BigDecimal.ZERO)
+                .optionHeaders(Collections.emptyList())
+                .status(status)
+                .build();
     }
 
     private static HrmEmployeeDO buildActiveEmployee(Long id, String jobNumber) {
-        return HrmEmployeeDO.builder().id(id).name("员工" + id).jobNumber(jobNumber)
+        return HrmEmployeeDO.builder()
+                .id(id)
+                .name("员工" + id)
+                .jobNumber(jobNumber)
                 .entryStatus(HrmEmployeeEntryStatusEnum.ACTIVE.getStatus())
                 .status(HrmEmployeeStatusEnum.REGULAR.getStatus())
-                .entryTime(LocalDate.of(2026, 1, 1).atStartOfDay()).build();
+                .entryTime(LocalDate.of(2026, 1, 1).atStartOfDay())
+                .build();
     }
 
     private static void assertAmount(String expected, BigDecimal actual) {
@@ -580,11 +666,13 @@ public class HrmSalaryMonthRecordServiceImplTest extends BaseDbUnitTest {
     }
 
     private static void assertOptionAmount(
-            String expected, List<HrmSalaryOptionValueVO> optionValues, HrmSalaryOptionCodeEnum optionCode) {
-        HrmSalaryOptionValueVO optionValue = CollUtil.findOne(optionValues,
-                value -> optionCode.getCode().equals(value.getCode()));
+            String expected,
+            List<HrmSalaryOptionValueVO> optionValues,
+            HrmSalaryOptionCodeEnum optionCode) {
+        HrmSalaryOptionValueVO optionValue =
+                CollUtil.findOne(
+                        optionValues, value -> optionCode.getCode().equals(value.getCode()));
         assertNotNull(optionValue);
         assertAmount(expected, optionValue.getValue());
     }
-
 }

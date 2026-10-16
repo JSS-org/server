@@ -5,6 +5,4 @@ package cn.iocoder.yudao.module.promotion.enums;
  *
  * @author HUIHUI
  */
-public class DictTypeConstants {
-
-}
+public class DictTypeConstants {}

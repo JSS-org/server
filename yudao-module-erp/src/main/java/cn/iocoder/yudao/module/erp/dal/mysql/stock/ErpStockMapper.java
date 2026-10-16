@@ -7,8 +7,10 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.erp.controller.admin.stock.vo.stock.ErpStockPageReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpStockDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.math.BigDecimal;
@@ -24,20 +26,22 @@ import java.util.Map;
 public interface ErpStockMapper extends BaseMapperX<ErpStockDO> {
 
     default PageResult<ErpStockDO> selectPage(ErpStockPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ErpStockDO>()
-                .eqIfPresent(ErpStockDO::getProductId, reqVO.getProductId())
-                .eqIfPresent(ErpStockDO::getWarehouseId, reqVO.getWarehouseId())
-                .orderByDesc(ErpStockDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<ErpStockDO>()
+                        .eqIfPresent(ErpStockDO::getProductId, reqVO.getProductId())
+                        .eqIfPresent(ErpStockDO::getWarehouseId, reqVO.getWarehouseId())
+                        .orderByDesc(ErpStockDO::getId));
     }
 
     default ErpStockDO selectByProductIdAndWarehouseId(Long productId, Long warehouseId) {
-        return selectOne(ErpStockDO::getProductId, productId,
-                ErpStockDO::getWarehouseId, warehouseId);
+        return selectOne(
+                ErpStockDO::getProductId, productId, ErpStockDO::getWarehouseId, warehouseId);
     }
 
     default int updateCountIncrement(Long id, BigDecimal count, boolean negativeEnable) {
-        LambdaUpdateWrapper<ErpStockDO> updateWrapper = new LambdaUpdateWrapper<ErpStockDO>()
-                .eq(ErpStockDO::getId, id);
+        LambdaUpdateWrapper<ErpStockDO> updateWrapper =
+                new LambdaUpdateWrapper<ErpStockDO>().eq(ErpStockDO::getId, id);
         if (count.compareTo(BigDecimal.ZERO) > 0) {
             updateWrapper.setSql("count = count + " + count);
         } else if (count.compareTo(BigDecimal.ZERO) < 0) {
@@ -51,14 +55,15 @@ public interface ErpStockMapper extends BaseMapperX<ErpStockDO> {
 
     default BigDecimal selectSumByProductId(Long productId) {
         // SQL sum 查询
-        List<Map<String, Object>> result = selectMaps(new QueryWrapper<ErpStockDO>()
-                .select("SUM(count) AS sum_count")
-                .eq("product_id", productId));
+        List<Map<String, Object>> result =
+                selectMaps(
+                        new QueryWrapper<ErpStockDO>()
+                                .select("SUM(count) AS sum_count")
+                                .eq("product_id", productId));
         // 获得数量
         if (CollUtil.isEmpty(result)) {
             return BigDecimal.ZERO;
         }
         return BigDecimal.valueOf(MapUtil.getDouble(result.get(0), "sum_count", 0D));
     }
-
 }

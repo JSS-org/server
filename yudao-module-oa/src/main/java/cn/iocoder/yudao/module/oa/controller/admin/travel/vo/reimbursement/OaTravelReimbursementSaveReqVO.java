@@ -1,16 +1,21 @@
 package cn.iocoder.yudao.module.oa.controller.admin.travel.vo.reimbursement;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import cn.iocoder.yudao.framework.dict.validation.InDict;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.AssertTrue;
+
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,15 +27,28 @@ public class OaTravelReimbursementSaveReqVO {
     @Schema(description = "编号，新建时不传", example = "1024")
     private Long id;
 
-    @Schema(description = "出差事由", requiredMode = Schema.RequiredMode.REQUIRED, example = "赴北京参加客户项目验收")
+    @Schema(
+            description = "出差事由",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "赴北京参加客户项目验收")
     @NotBlank(message = "出差事由不能为空")
     private String reason;
 
-    @Schema(description = "开始日期", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "开始日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "开始日期不能为空")
     private LocalDateTime startTime;
 
-    @Schema(description = "结束日期", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "结束日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     @NotNull(message = "结束日期不能为空")
     private LocalDateTime endTime;
 
@@ -44,15 +62,17 @@ public class OaTravelReimbursementSaveReqVO {
     @NotEmpty(message = "请添加有效明细")
     private List<@NotNull(message = "明细不能为空") @Valid Item> items;
 
-    @Schema(description = "附件地址列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[\"https://example.com/file.pdf\"]")
+    @Schema(
+            description = "附件地址列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[\"https://example.com/file.pdf\"]")
     @NotEmpty(message = "请上传报销附件")
     private List<@NotBlank(message = "附件地址不能为空") String> fileUrls;
 
     @AssertTrue(message = "结束日期不能早于开始日期")
     @JsonIgnore
     public boolean isTimeRangeValid() {
-        return startTime == null || endTime == null
-                || !endTime.isBefore(startTime);
+        return startTime == null || endTime == null || !endTime.isBefore(startTime);
     }
 
     @Schema(description = "管理后台 - 出差报销明细 Request VO")
@@ -79,7 +99,5 @@ public class OaTravelReimbursementSaveReqVO {
 
         @Schema(description = "费用说明", example = "客户项目验收往返交通费")
         private String description;
-
     }
-
 }

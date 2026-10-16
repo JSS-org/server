@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.payment.ErpFinanc
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.payment.ErpFinancePaymentSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinancePaymentDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinancePaymentItemDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -79,6 +80,6 @@ public interface ErpFinancePaymentService {
      * @param paymentIds 付款单编号数组
      * @return 付款单项 List
      */
-    List<ErpFinancePaymentItemDO> getFinancePaymentItemListByPaymentIds(Collection<Long> paymentIds);
-
+    List<ErpFinancePaymentItemDO> getFinancePaymentItemListByPaymentIds(
+            Collection<Long> paymentIds);
 }

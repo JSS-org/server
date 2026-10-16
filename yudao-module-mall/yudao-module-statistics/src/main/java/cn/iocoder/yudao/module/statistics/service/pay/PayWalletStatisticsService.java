@@ -36,5 +36,4 @@ public interface PayWalletStatisticsService {
      * @return 充值金额合计
      */
     Integer getRechargePriceSummary();
-
 }

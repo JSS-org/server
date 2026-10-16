@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.member.service.point;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_POINT_NOT_ENOUGH;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,8 +14,11 @@ import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.point.MemberPointRecordMapper;
 import cn.iocoder.yudao.module.member.enums.point.MemberPointBizTypeEnum;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +27,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_POINT_NOT_ENOUGH;
-
 
 /**
  * 积分记录 Service 实现类
@@ -36,18 +38,18 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_POINT
 @Validated
 public class MemberPointRecordServiceImpl implements MemberPointRecordService {
 
-    @Resource
-    private MemberPointRecordMapper memberPointRecordMapper;
+    @Resource private MemberPointRecordMapper memberPointRecordMapper;
 
-    @Resource
-    private MemberUserService memberUserService;
+    @Resource private MemberUserService memberUserService;
 
     @Override
-    public PageResult<MemberPointRecordDO> getPointRecordPage(MemberPointRecordPageReqVO pageReqVO) {
+    public PageResult<MemberPointRecordDO> getPointRecordPage(
+            MemberPointRecordPageReqVO pageReqVO) {
         // 根据用户昵称查询出用户 ids
         Set<Long> userIds = null;
         if (StringUtils.isNotBlank(pageReqVO.getNickname())) {
-            List<MemberUserDO> users = memberUserService.getUserListByNickname(pageReqVO.getNickname());
+            List<MemberUserDO> users =
+                    memberUserService.getUserListByNickname(pageReqVO.getNickname());
             // 如果查询用户结果为空直接返回无需继续查询
             if (CollectionUtils.isEmpty(users)) {
                 return PageResult.empty();
@@ -59,13 +61,15 @@ public class MemberPointRecordServiceImpl implements MemberPointRecordService {
     }
 
     @Override
-    public PageResult<MemberPointRecordDO> getPointRecordPage(Long userId, AppMemberPointRecordPageReqVO pageReqVO) {
+    public PageResult<MemberPointRecordDO> getPointRecordPage(
+            Long userId, AppMemberPointRecordPageReqVO pageReqVO) {
         return memberPointRecordMapper.selectPage(userId, pageReqVO);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createPointRecord(Long userId, Integer point, MemberPointBizTypeEnum bizType, String bizId) {
+    public void createPointRecord(
+            Long userId, Integer point, MemberPointBizTypeEnum bizType, String bizId) {
         if (point == 0) {
             return;
         }
@@ -74,7 +78,12 @@ public class MemberPointRecordServiceImpl implements MemberPointRecordService {
         Integer userPoint = ObjectUtil.defaultIfNull(user.getPoint(), 0);
         int totalPoint = userPoint + point; // 用户变动后的积分
         if (totalPoint < 0) {
-            log.error("[createPointRecord][userId({}) point({}) bizType({}) bizId({}) {}]", userId, point, bizType, bizId,
+            log.error(
+                    "[createPointRecord][userId({}) point({}) bizType({}) bizId({}) {}]",
+                    userId,
+                    point,
+                    bizType,
+                    bizId,
                     USER_POINT_NOT_ENOUGH);
             return;
         }
@@ -86,11 +95,15 @@ public class MemberPointRecordServiceImpl implements MemberPointRecordService {
         }
 
         // 3. 增加积分记录
-        MemberPointRecordDO record = new MemberPointRecordDO()
-                .setUserId(userId).setBizId(bizId).setBizType(bizType.getType())
-                .setTitle(bizType.getName()).setDescription(StrUtil.format(bizType.getDescription(), point))
-                .setPoint(point).setTotalPoint(totalPoint);
+        MemberPointRecordDO record =
+                new MemberPointRecordDO()
+                        .setUserId(userId)
+                        .setBizId(bizId)
+                        .setBizType(bizType.getType())
+                        .setTitle(bizType.getName())
+                        .setDescription(StrUtil.format(bizType.getDescription(), point))
+                        .setPoint(point)
+                        .setTotalPoint(totalPoint);
         memberPointRecordMapper.insert(record);
     }
-
 }

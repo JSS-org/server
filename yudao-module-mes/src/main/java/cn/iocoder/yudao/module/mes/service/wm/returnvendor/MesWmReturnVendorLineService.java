@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo.line.MesWmReturnVendorLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo.line.MesWmReturnVendorLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnvendor.MesWmReturnVendorLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -49,7 +50,8 @@ public interface MesWmReturnVendorLineService {
      * @param pageReqVO 分页查询
      * @return 供应商退货单行分页
      */
-    PageResult<MesWmReturnVendorLineDO> getReturnVendorLinePage(MesWmReturnVendorLinePageReqVO pageReqVO);
+    PageResult<MesWmReturnVendorLineDO> getReturnVendorLinePage(
+            MesWmReturnVendorLinePageReqVO pageReqVO);
 
     /**
      * 根据退货单ID获取行列表
@@ -73,5 +75,4 @@ public interface MesWmReturnVendorLineService {
      * @return 供应商退货单行
      */
     MesWmReturnVendorLineDO validateReturnVendorLineExists(Long id);
-
 }

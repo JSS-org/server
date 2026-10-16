@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.module.trade.service.aftersale.bo;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * 售后日志的创建 Request BO
@@ -23,6 +23,7 @@ public class AfterSaleLogCreateReqBO {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -34,10 +35,12 @@ public class AfterSaleLogCreateReqBO {
      */
     @NotNull(message = "售后编号不能为空")
     private Long afterSaleId;
+
     /**
      * 操作前状态
      */
     private Integer beforeStatus;
+
     /**
      * 操作后状态
      */
@@ -49,6 +52,7 @@ public class AfterSaleLogCreateReqBO {
      */
     @NotNull(message = "操作类型不能为空")
     private Integer operateType;
+
     /**
      * 操作明细
      */

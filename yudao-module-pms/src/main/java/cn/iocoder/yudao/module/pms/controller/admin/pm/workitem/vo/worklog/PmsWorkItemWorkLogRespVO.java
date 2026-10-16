@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.worklog;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,10 +19,15 @@ public class PmsWorkItemWorkLogRespVO {
     @Schema(description = "工作项标题", example = "完成登录接口")
     private String workItemName;
 
-    @Schema(description = "实际投入工时，单位：小时", requiredMode = Schema.RequiredMode.REQUIRED, example = "4")
+    @Schema(
+            description = "实际投入工时，单位：小时",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "4")
     private Integer actualHours;
 
-    @Schema(description = "本次登记后的剩余工时，单位：小时", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "本次登记后的剩余工时，单位：小时",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "8")
     private Integer remainingHours;
 
@@ -39,5 +45,4 @@ public class PmsWorkItemWorkLogRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

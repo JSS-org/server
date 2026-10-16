@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.returning;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,10 @@ public class OaVehicleReturnRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "还车申请单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "HC202609140001")
+    @Schema(
+            description = "还车申请单号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "HC202609140001")
     private String no;
 
     @Schema(description = "用车申请编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
@@ -46,9 +50,6 @@ public class OaVehicleReturnRespVO {
     @Schema(description = "实际回车地点", example = "公司停车场")
     private String returnLocation;
 
-
-
-
     @Schema(description = "审批状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "-1")
     private Integer status;
 
@@ -58,7 +59,12 @@ public class OaVehicleReturnRespVO {
     @Schema(description = "还车说明", example = "车辆已停放到公司停车场")
     private String remark;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
@@ -75,5 +81,4 @@ public class OaVehicleReturnRespVO {
 
     @Schema(description = "车牌号", example = "沪A12345")
     private String vehicleNo;
-
 }

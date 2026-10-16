@@ -1,24 +1,29 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.discount.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionDiscountTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDateTime;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-
 /**
-* 限时折扣活动 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 限时折扣活动 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class DiscountActivityBaseVO {
 
@@ -43,11 +48,17 @@ public class DiscountActivityBaseVO {
     @Data
     public static class Product {
 
-        @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+        @Schema(
+                description = "商品 SPU 编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1")
         @NotNull(message = "商品 SPU 编号不能为空")
         private Long spuId;
 
-        @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+        @Schema(
+                description = "商品 SKU 编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1")
         @NotNull(message = "商品 SKU 编号不能为空")
         private Long skuId;
 
@@ -76,6 +87,5 @@ public class DiscountActivityBaseVO {
             return ObjectUtil.notEqual(discountType, PromotionDiscountTypeEnum.PRICE.getType())
                     || discountPrice != null;
         }
-
     }
 }

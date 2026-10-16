@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.mp.controller.admin.material;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.material.vo.*;
 import cn.iocoder.yudao.module.mp.convert.material.MpMaterialConvert;
 import cn.iocoder.yudao.module.mp.dal.dataobject.material.MpMaterialDO;
 import cn.iocoder.yudao.module.mp.service.material.MpMaterialService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.io.IOException;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 公众号素材")
 @RestController
@@ -25,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MpMaterialController {
 
-    @Resource
-    private MpMaterialService mpMaterialService;
+    @Resource private MpMaterialService mpMaterialService;
 
     @Operation(summary = "上传临时素材")
     @PostMapping("/upload-temporary")
@@ -66,9 +68,9 @@ public class MpMaterialController {
     @Operation(summary = "获得素材分页")
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPermission('mp:material:query')")
-    public CommonResult<PageResult<MpMaterialRespVO>> getMaterialPage(@Valid MpMaterialPageReqVO pageReqVO) {
+    public CommonResult<PageResult<MpMaterialRespVO>> getMaterialPage(
+            @Valid MpMaterialPageReqVO pageReqVO) {
         PageResult<MpMaterialDO> pageResult = mpMaterialService.getMaterialPage(pageReqVO);
         return success(MpMaterialConvert.INSTANCE.convertPage(pageResult));
     }
-
 }

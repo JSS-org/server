@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.contact.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -73,17 +74,28 @@ public class OaContactRespVO {
     @Schema(description = "当前接收人的分类名称", example = "客户联系人")
     private String sharedCategoryName;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
     @Schema(description = "管理后台 - OA 联系人共享 Response VO")
     @Data
     public static class Share {
 
-        @Schema(description = "共享记录编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "共享记录编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long id;
 
-        @Schema(description = "共享接收人用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "共享接收人用户编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long userId;
 
         @Schema(description = "实际共享人昵称", example = "张三")
@@ -101,12 +113,16 @@ public class OaContactRespVO {
         @Schema(description = "接收人的分类名称", example = "客户")
         private String categoryName;
 
-        @Schema(description = "处理状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+        @Schema(
+                description = "处理状态",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "false")
         private Boolean handleStatus;
 
-        @Schema(description = "共享时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "1789347600000")
+        @Schema(
+                description = "共享时间",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1789347600000")
         private LocalDateTime createTime;
-
     }
-
 }

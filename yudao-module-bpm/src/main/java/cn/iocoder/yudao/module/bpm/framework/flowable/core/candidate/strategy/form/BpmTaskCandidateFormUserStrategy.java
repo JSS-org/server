@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.strategy.user.BpmTaskCandidateUserStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.springframework.stereotype.Component;
@@ -37,11 +38,14 @@ public class BpmTaskCandidateFormUserStrategy implements BpmTaskCandidateStrateg
     }
 
     @Override
-    public Set<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId,
-                                              String param, Long startUserId, String processDefinitionId,
-                                              Map<String, Object> processVariables) {
+    public Set<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
         Object result = processVariables == null ? null : processVariables.get(param);
         return CollectionUtils.toLinkedHashSet(Long.class, result);
     }
-
 }

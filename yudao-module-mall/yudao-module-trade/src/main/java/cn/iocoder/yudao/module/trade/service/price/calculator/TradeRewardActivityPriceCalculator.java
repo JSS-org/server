@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.trade.service.price.calculator;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.trade.service.price.calculator.TradePriceCalculatorHelper.formatPrice;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -10,16 +14,14 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.trade.service.price.calculator.TradePriceCalculatorHelper.formatPrice;
 
 // TODO @puhui999：相关的单测，建议改一改
 
@@ -32,8 +34,7 @@ import static cn.iocoder.yudao.module.trade.service.price.calculator.TradePriceC
 @Order(TradePriceCalculator.ORDER_REWARD_ACTIVITY)
 public class TradeRewardActivityPriceCalculator implements TradePriceCalculator {
 
-    @Resource
-    private RewardActivityApi rewardActivityApi;
+    @Resource private RewardActivityApi rewardActivityApi;
 
     @Override
     public void calculate(TradePriceCalculateReqBO param, TradePriceCalculateRespBO result) {
@@ -42,8 +43,10 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
             return;
         }
         // 获得 SKU 对应的满减送活动
-        List<RewardActivityMatchRespDTO> rewardActivities = rewardActivityApi.getMatchRewardActivityListBySpuIds(
-                convertSet(result.getItems(), TradePriceCalculateRespBO.OrderItem::getSpuId));
+        List<RewardActivityMatchRespDTO> rewardActivities =
+                rewardActivityApi.getMatchRewardActivityListBySpuIds(
+                        convertSet(
+                                result.getItems(), TradePriceCalculateRespBO.OrderItem::getSpuId));
         if (CollUtil.isEmpty(rewardActivities)) {
             return;
         }
@@ -53,18 +56,26 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
         }
     }
 
-    private void calculate(TradePriceCalculateReqBO param, TradePriceCalculateRespBO result,
-                           RewardActivityMatchRespDTO rewardActivity) {
+    private void calculate(
+            TradePriceCalculateReqBO param,
+            TradePriceCalculateRespBO result,
+            RewardActivityMatchRespDTO rewardActivity) {
         // 1.1 获得满减送的订单项（商品）列表
-        List<TradePriceCalculateRespBO.OrderItem> orderItems = filterMatchActivityOrderItems(result, rewardActivity);
+        List<TradePriceCalculateRespBO.OrderItem> orderItems =
+                filterMatchActivityOrderItems(result, rewardActivity);
         if (CollUtil.isEmpty(orderItems)) {
             return;
         }
         // 1.2 获得最大匹配的满减送活动的规则
-        RewardActivityMatchRespDTO.Rule rule = getMaxMatchRewardActivityRule(rewardActivity, orderItems);
+        RewardActivityMatchRespDTO.Rule rule =
+                getMaxMatchRewardActivityRule(rewardActivity, orderItems);
         if (rule == null) {
-            TradePriceCalculatorHelper.addNotMatchPromotion(result, orderItems,
-                    rewardActivity.getId(), rewardActivity.getName(), PromotionTypeEnum.REWARD_ACTIVITY.getType(),
+            TradePriceCalculatorHelper.addNotMatchPromotion(
+                    result,
+                    orderItems,
+                    rewardActivity.getId(),
+                    rewardActivity.getName(),
+                    PromotionTypeEnum.REWARD_ACTIVITY.getType(),
                     "满减送：" + rewardActivity.getRules().get(0).getDescription());
             return;
         }
@@ -72,7 +83,8 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
         // 2.1 计算可以优惠的金额
         Integer newDiscountPrice = rule.getDiscountPrice();
         // 2.2 计算分摊的优惠金额
-        List<Integer> divideDiscountPrices = TradePriceCalculatorHelper.dividePrice(orderItems, newDiscountPrice);
+        List<Integer> divideDiscountPrices =
+                TradePriceCalculatorHelper.dividePrice(orderItems, newDiscountPrice);
         // 2.3 计算是否包邮
         if (Boolean.TRUE.equals(rule.getFreeDelivery())) {
             result.setFreeDelivery(true);
@@ -81,8 +93,12 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
         // 3.1 记录使用的优惠劵
         result.setCouponId(param.getCouponId());
         // 3.2 记录优惠明细
-        TradePriceCalculatorHelper.addPromotion(result, orderItems,
-                rewardActivity.getId(), rewardActivity.getName(), PromotionTypeEnum.REWARD_ACTIVITY.getType(),
+        TradePriceCalculatorHelper.addPromotion(
+                result,
+                orderItems,
+                rewardActivity.getId(),
+                rewardActivity.getName(),
+                PromotionTypeEnum.REWARD_ACTIVITY.getType(),
                 StrUtil.format("满减送：省 {} 元", formatPrice(rule.getDiscountPrice())),
                 divideDiscountPrices);
         // 3.3 更新 SKU 优惠金额
@@ -95,7 +111,8 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
 
         // 4.1 记录赠送的积分
         if (rule.getPoint() != null && rule.getPoint() > 0) {
-            List<Integer> dividePoints = TradePriceCalculatorHelper.dividePrice(orderItems, rule.getPoint());
+            List<Integer> dividePoints =
+                    TradePriceCalculatorHelper.dividePrice(orderItems, rule.getPoint());
             for (int i = 0; i < orderItems.size(); i++) {
                 // 商品可能赠送了积分，所以这里要加上
                 TradePriceCalculateRespBO.OrderItem orderItem = orderItems.get(i);
@@ -110,8 +127,11 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
         // 4.3 记录赠送的优惠券
         if (CollUtil.isNotEmpty(rule.getGiveCouponTemplateCounts())) {
             for (Map.Entry<Long, Integer> entry : rule.getGiveCouponTemplateCounts().entrySet()) {
-                result.getGiveCouponTemplateCounts().put(entry.getKey(),
-                        result.getGiveCouponTemplateCounts().getOrDefault(entry.getKey(), 0) + entry.getValue());
+                result.getGiveCouponTemplateCounts()
+                        .put(
+                                entry.getKey(),
+                                result.getGiveCouponTemplateCounts().getOrDefault(entry.getKey(), 0)
+                                        + entry.getValue());
             }
         }
     }
@@ -123,9 +143,11 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
      * @param rewardActivity 满减送活动
      * @return 订单项（商品）列表
      */
-    private List<TradePriceCalculateRespBO.OrderItem> filterMatchActivityOrderItems(TradePriceCalculateRespBO result,
-                                                                                    RewardActivityMatchRespDTO rewardActivity) {
-        return filterList(result.getItems(), orderItem -> CollUtil.contains(rewardActivity.getSpuIds(), orderItem.getSpuId()));
+    private List<TradePriceCalculateRespBO.OrderItem> filterMatchActivityOrderItems(
+            TradePriceCalculateRespBO result, RewardActivityMatchRespDTO rewardActivity) {
+        return filterList(
+                result.getItems(),
+                orderItem -> CollUtil.contains(rewardActivity.getSpuIds(), orderItem.getSpuId()));
     }
 
     /**
@@ -135,8 +157,9 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
      * @param orderItems     商品项
      * @return 匹配的活动规则
      */
-    private RewardActivityMatchRespDTO.Rule getMaxMatchRewardActivityRule(RewardActivityMatchRespDTO rewardActivity,
-                                                                          List<TradePriceCalculateRespBO.OrderItem> orderItems) {
+    private RewardActivityMatchRespDTO.Rule getMaxMatchRewardActivityRule(
+            RewardActivityMatchRespDTO rewardActivity,
+            List<TradePriceCalculateRespBO.OrderItem> orderItems) {
         // 1. 计算数量和价格
         Integer count = TradePriceCalculatorHelper.calculateTotalCount(orderItems);
         Integer price = TradePriceCalculatorHelper.calculateTotalPayPrice(orderItems);
@@ -156,5 +179,4 @@ public class TradeRewardActivityPriceCalculator implements TradePriceCalculator 
         }
         return null;
     }
-
 }

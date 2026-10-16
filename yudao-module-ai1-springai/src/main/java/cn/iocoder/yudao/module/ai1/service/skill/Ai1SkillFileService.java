@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.file.Ai1SkillFileMo
 import cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.file.Ai1SkillFileRenameReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillFileDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -83,5 +84,4 @@ public interface Ai1SkillFileService {
      * @return 节点列表
      */
     List<Ai1SkillFileDO> getSkillFileListBySkillId(Long skillId);
-
 }

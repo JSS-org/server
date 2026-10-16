@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class MesWmMiscReceiptSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "入库单编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "MR2026030001")
+    @Schema(
+            description = "入库单编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "MR2026030001")
     @NotEmpty(message = "入库单编码不能为空")
     private String code;
 
@@ -28,6 +33,7 @@ public class MesWmMiscReceiptSaveReqVO {
 
     @Schema(description = "来源单据类型", example = "WORK_ORDER")
     private String sourceDocType;
+
     @Schema(description = "来源单据 ID", example = "1")
     private Long sourceDocId;
 
@@ -40,5 +46,4 @@ public class MesWmMiscReceiptSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

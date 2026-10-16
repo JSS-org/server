@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.expresstemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -13,7 +15,10 @@ import java.util.List;
 @Data
 public class DeliveryExpressTemplateFreeBaseVO {
 
-    @Schema(description = "区域编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1,120000]")
+    @Schema(
+            description = "区域编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1,120000]")
     @NotEmpty(message = "区域编号列表不能为空")
     private List<Integer> areaIds;
 
@@ -24,5 +29,4 @@ public class DeliveryExpressTemplateFreeBaseVO {
     @Schema(description = "包邮件数", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     @NotNull(message = "包邮件数不能为空")
     private Integer freeCount;
-
 }

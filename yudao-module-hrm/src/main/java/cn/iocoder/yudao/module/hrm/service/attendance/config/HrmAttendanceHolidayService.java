@@ -61,8 +61,7 @@ public interface HrmAttendanceHolidayService {
      * @param dateTimes 日期时间闭区间
      * @return 节假日列表
      */
-    List<HrmAttendanceHolidayDO> getAttendanceHolidayListByDateRange(
-            LocalDateTime[] dateTimes);
+    List<HrmAttendanceHolidayDO> getAttendanceHolidayListByDateRange(LocalDateTime[] dateTimes);
 
     /**
      * 获得日期范围内的考勤节假日 Map
@@ -78,6 +77,6 @@ public interface HrmAttendanceHolidayService {
      * @param pageReqVO 分页查询条件
      * @return 节假日分页
      */
-    PageResult<HrmAttendanceHolidayDO> getAttendanceHolidayPage(HrmAttendanceHolidayPageReqVO pageReqVO);
-
+    PageResult<HrmAttendanceHolidayDO> getAttendanceHolidayPage(
+            HrmAttendanceHolidayPageReqVO pageReqVO);
 }

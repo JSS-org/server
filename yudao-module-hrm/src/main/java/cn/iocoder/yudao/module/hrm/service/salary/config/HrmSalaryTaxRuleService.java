@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.hrm.service.salary.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.taxrule.HrmSalaryTaxRuleSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryTaxRuleDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 计税规则 Service 接口
@@ -79,5 +80,4 @@ public interface HrmSalaryTaxRuleService {
      * @return 计税规则
      */
     HrmSalaryTaxRuleDO validateSalaryTaxRuleExists(Long id);
-
 }

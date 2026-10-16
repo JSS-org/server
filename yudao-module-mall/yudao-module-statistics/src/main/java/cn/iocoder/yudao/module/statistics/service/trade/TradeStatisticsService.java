@@ -63,5 +63,4 @@ public interface TradeStatisticsService {
      * @return 交易数据
      */
     TradeSummaryRespBO getTradeSummaryByMonths(int months);
-
 }

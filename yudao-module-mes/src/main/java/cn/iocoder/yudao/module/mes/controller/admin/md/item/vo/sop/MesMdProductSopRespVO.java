@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sop;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -41,5 +42,4 @@ public class MesMdProductSopRespVO {
 
     @Schema(description = "工序名称", example = "焊接工序")
     private String processName;
-
 }

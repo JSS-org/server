@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenFrontTypeEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenTemplateTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.DbType;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -21,15 +23,17 @@ public class CodegenEngineVue2Test extends CodegenEngineAbstractTest {
     @Test
     public void testExecute_vue2_one() {
         // 准备参数
-        CodegenTableDO table = getTable("student")
-                .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
-                .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
+        CodegenTableDO table =
+                getTable("student")
+                        .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
+                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
         List<CodegenColumnDO> columns = getColumnList("student");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
+        Map<String, String> result =
+                codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
         // 生成测试文件
-        //writeResult(result, resourcesPath + "/vue2_one");
+        // writeResult(result, resourcesPath + "/vue2_one");
         // 断言
         assertResult(result, "/vue2_one");
     }
@@ -40,13 +44,15 @@ public class CodegenEngineVue2Test extends CodegenEngineAbstractTest {
         codegenProperties.setImportEnable(true);
         codegenEngine.initGlobalBindingMap();
         // 准备参数
-        CodegenTableDO table = getTable("student")
-                .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
-                .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
+        CodegenTableDO table =
+                getTable("student")
+                        .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
+                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType());
         List<CodegenColumnDO> columns = getColumnList("student");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
+        Map<String, String> result =
+                codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
         // 断言
         assertResult(result, "/vue2_one_importEnable");
     }
@@ -54,18 +60,20 @@ public class CodegenEngineVue2Test extends CodegenEngineAbstractTest {
     @Test
     public void testExecute_vue2_tree() {
         // 准备参数
-        CodegenTableDO table = getTable("category")
-                .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
-                .setTemplateType(CodegenTemplateTypeEnum.TREE.getType());
+        CodegenTableDO table =
+                getTable("category")
+                        .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
+                        .setTemplateType(CodegenTemplateTypeEnum.TREE.getType());
         List<CodegenColumnDO> columns = getColumnList("category");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
+        Map<String, String> result =
+                codegenEngine.execute(DbType.MYSQL, table, columns, null, null);
         // 生成测试文件
-        //writeResult(result, resourcesPath + "/vue2_tree");
+        // writeResult(result, resourcesPath + "/vue2_tree");
         // 断言
         assertResult(result, "/vue2_tree");
-//        writeFile(result, "/Users/yunai/test/demo66.zip");
+        //        writeFile(result, "/Users/yunai/test/demo66.zip");
     }
 
     @Test
@@ -83,34 +91,42 @@ public class CodegenEngineVue2Test extends CodegenEngineAbstractTest {
         testExecute_vue2_master(CodegenTemplateTypeEnum.MASTER_INNER, "/vue2_master_inner");
     }
 
-    private void testExecute_vue2_master(CodegenTemplateTypeEnum templateType,
-                                         String path) {
+    private void testExecute_vue2_master(CodegenTemplateTypeEnum templateType, String path) {
         // 准备参数
-        CodegenTableDO table = getTable("student")
-                .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
-                .setTemplateType(templateType.getType());
+        CodegenTableDO table =
+                getTable("student")
+                        .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
+                        .setTemplateType(templateType.getType());
         List<CodegenColumnDO> columns = getColumnList("student");
         // 准备参数（子表）
-        CodegenTableDO contactTable = getTable("contact")
-                .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
-                .setSubJoinColumnId(100L).setSubJoinMany(true);
+        CodegenTableDO contactTable =
+                getTable("contact")
+                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                        .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
+                        .setSubJoinColumnId(100L)
+                        .setSubJoinMany(true);
         List<CodegenColumnDO> contactColumns = getColumnList("contact");
         // 准备参数（班主任）
-        CodegenTableDO teacherTable = getTable("teacher")
-                .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
-                .setSubJoinColumnId(200L).setSubJoinMany(false);
+        CodegenTableDO teacherTable =
+                getTable("teacher")
+                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                        .setFrontType(CodegenFrontTypeEnum.VUE2_ELEMENT_UI.getType())
+                        .setSubJoinColumnId(200L)
+                        .setSubJoinMany(false);
         List<CodegenColumnDO> teacherColumns = getColumnList("teacher");
 
         // 调用
-        Map<String, String> result = codegenEngine.execute(DbType.MYSQL, table, columns,
-                Arrays.asList(contactTable, teacherTable), Arrays.asList(contactColumns, teacherColumns));
+        Map<String, String> result =
+                codegenEngine.execute(
+                        DbType.MYSQL,
+                        table,
+                        columns,
+                        Arrays.asList(contactTable, teacherTable),
+                        Arrays.asList(contactColumns, teacherColumns));
         // 生成测试文件
-        //writeResult(result, resourcesPath + path);
+        // writeResult(result, resourcesPath + path);
         // 断言
         assertResult(result, path);
-//        writeFile(result, "/Users/yunai/test/demo11.zip");
+        //        writeFile(result, "/Users/yunai/test/demo11.zip");
     }
-
 }

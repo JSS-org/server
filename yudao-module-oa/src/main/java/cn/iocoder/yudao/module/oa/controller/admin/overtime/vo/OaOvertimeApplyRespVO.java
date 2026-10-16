@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.overtime.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -46,6 +47,11 @@ public class OaOvertimeApplyRespVO {
     @Schema(description = "申请人昵称", example = "张三")
     private String creatorName;
 
-    @Schema(description = "申请时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "申请时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 }

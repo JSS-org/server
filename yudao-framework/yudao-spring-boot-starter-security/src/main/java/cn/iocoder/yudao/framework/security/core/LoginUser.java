@@ -2,7 +2,9 @@ package cn.iocoder.yudao.framework.security.core;
 
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,24 +27,29 @@ public class LoginUser {
      * 用户编号
      */
     private Long id;
+
     /**
      * 用户类型
      *
      * 关联 {@link UserTypeEnum}
      */
     private Integer userType;
+
     /**
      * 额外的用户信息
      */
     private Map<String, String> info;
+
     /**
      * 租户编号
      */
     private Long tenantId;
+
     /**
      * 授权范围
      */
     private List<String> scopes;
+
     /**
      * 过期时间
      */
@@ -54,8 +61,8 @@ public class LoginUser {
      *
      * 1. 用于基于 LoginUser 维度的临时缓存
      */
-    @JsonIgnore
-    private Map<String, Object> context;
+    @JsonIgnore private Map<String, Object> context;
+
     /**
      * 访问的租户编号
      */
@@ -71,5 +78,4 @@ public class LoginUser {
     public <T> T getContext(String key, Class<T> type) {
         return MapUtil.get(context, key, type);
     }
-
 }

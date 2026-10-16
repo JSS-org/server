@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherHelper;
+
 import org.quartz.CronExpression;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +41,8 @@ public class IotTimerTriggerMatcher implements IotSceneRuleTriggerMatcher {
         // 1.3 定时触发器通常不依赖具体的设备消息
         // 它是通过定时任务调度器触发的，这里主要是验证配置的有效性
         if (!CronExpression.isValidExpression(trigger.getCronExpression())) {
-            IotSceneRuleMatcherHelper.logTriggerMatchFailure(message, trigger, "CRON 表达式格式无效: " + trigger.getCronExpression());
+            IotSceneRuleMatcherHelper.logTriggerMatchFailure(
+                    message, trigger, "CRON 表达式格式无效: " + trigger.getCronExpression());
             return false;
         }
 
@@ -52,5 +54,4 @@ public class IotTimerTriggerMatcher implements IotSceneRuleTriggerMatcher {
     public int getPriority() {
         return 50; // 最低优先级，因为定时触发器不依赖消息
     }
-
 }

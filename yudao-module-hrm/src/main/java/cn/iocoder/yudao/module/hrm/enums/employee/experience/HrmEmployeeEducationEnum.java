@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.employee.experience;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeEducationEnum implements ArrayValuable<Integer> {
-
     PRIMARY_SCHOOL(1, "小学"),
     JUNIOR_HIGH_SCHOOL(2, "初中"),
     SECONDARY_TECHNICAL_SCHOOL(3, "中专"),
@@ -29,13 +29,16 @@ public enum HrmEmployeeEducationEnum implements ArrayValuable<Integer> {
     POSTDOCTORAL(11, "博士后"),
     OTHER(12, "其他");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmEmployeeEducationEnum::getEducation).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmEmployeeEducationEnum::getEducation)
+                    .toArray(Integer[]::new);
 
     /**
      * 学历
      */
     private final Integer education;
+
     /**
      * 名字
      */
@@ -49,5 +52,4 @@ public enum HrmEmployeeEducationEnum implements ArrayValuable<Integer> {
     public static HrmEmployeeEducationEnum valueOf(Integer education) {
         return ArrayUtil.firstMatch(item -> item.getEducation().equals(education), values());
     }
-
 }

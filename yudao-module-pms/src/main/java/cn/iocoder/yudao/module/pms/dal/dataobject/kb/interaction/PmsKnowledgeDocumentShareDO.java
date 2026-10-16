@@ -4,11 +4,13 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.content.PmsKnowledgeDocumentDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -31,14 +33,15 @@ public class PmsKnowledgeDocumentShareDO extends BaseDO {
     /**
      * 分享编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 文档编号
      *
      * 关联 {@link PmsKnowledgeDocumentDO#getId()}
      */
     private Long documentId;
+
     /**
      * 内部分享成员用户编号列表
      *
@@ -46,25 +49,28 @@ public class PmsKnowledgeDocumentShareDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<Long> shareUserIds;
+
     /**
      * 外部查看令牌
      */
     private String token;
+
     /**
      * 分享状态
      *
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+
     /**
      * 关闭人用户编号
      *
      * 关联 {@link AdminUserDO#getId()}
      */
     private Long closeUserId;
+
     /**
      * 关闭时间
      */
     private LocalDateTime closeTime;
-
 }

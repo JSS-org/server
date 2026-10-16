@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.oa.controller.admin.attendance.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.attendance.OaAttendanceStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - OA 考勤修改 Request VO")
@@ -23,5 +26,4 @@ public class OaAttendanceUpdateReqVO {
     @Schema(description = "考勤备注", example = "因交通拥堵迟到")
     @Size(max = 500, message = "考勤备注不能超过 500 个字符")
     private String remark;
-
 }

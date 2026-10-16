@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.trade.framework.delivery.core.client.impl.kdniao;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_ERROR;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_FAILED;
+import static cn.iocoder.yudao.module.trade.framework.delivery.core.client.convert.ExpressQueryConvert.INSTANCE;
+
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.net.URLEncodeUtil;
@@ -13,8 +18,10 @@ import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressT
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressTrackRespDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kdniao.KdNiaoExpressQueryReqDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kdniao.KdNiaoExpressQueryRespDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -22,11 +29,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_FAILED;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_API_QUERY_ERROR;
-import static cn.iocoder.yudao.module.trade.framework.delivery.core.client.convert.ExpressQueryConvert.INSTANCE;
 
 /**
  * 快递鸟客户端
@@ -37,7 +39,8 @@ import static cn.iocoder.yudao.module.trade.framework.delivery.core.client.conve
 @AllArgsConstructor
 public class KdNiaoExpressClient implements ExpressClient {
 
-    private static final String REAL_TIME_QUERY_URL = "https://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx";
+    private static final String REAL_TIME_QUERY_URL =
+            "https://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx";
 
     private final RestTemplate restTemplate;
     private final TradeExpressProperties.KdNiaoConfig config;
@@ -55,15 +58,19 @@ public class KdNiaoExpressClient implements ExpressClient {
     @Override
     public List<ExpressTrackRespDTO> getExpressTrackList(ExpressTrackQueryReqDTO reqDTO) {
         // 发起请求
-        KdNiaoExpressQueryReqDTO requestDTO = INSTANCE.convert(reqDTO)
-                .setExpressCode(reqDTO.getExpressCode().toUpperCase());
+        KdNiaoExpressQueryReqDTO requestDTO =
+                INSTANCE.convert(reqDTO).setExpressCode(reqDTO.getExpressCode().toUpperCase());
         if (ObjUtil.equal(requestDTO.getExpressCode(), "SF")
                 && StrUtil.isBlank(reqDTO.getCustomerName())
                 && StrUtil.length(reqDTO.getPhone()) >= 4) {
             requestDTO.setCustomerName(StrUtil.subSufByLength(reqDTO.getPhone(), 4));
         }
-        KdNiaoExpressQueryRespDTO respDTO = httpRequest(REAL_TIME_QUERY_URL, config.getRequestType(),
-                requestDTO, KdNiaoExpressQueryRespDTO.class);
+        KdNiaoExpressQueryRespDTO respDTO =
+                httpRequest(
+                        REAL_TIME_QUERY_URL,
+                        config.getRequestType(),
+                        requestDTO,
+                        KdNiaoExpressQueryRespDTO.class);
 
         // 处理结果
         if (respDTO == null || !respDTO.getSuccess()) {
@@ -85,7 +92,8 @@ public class KdNiaoExpressClient implements ExpressClient {
      * @param <Req> 每个请求的请求结构 Req DTO
      * @param <Resp> 每个请求的响应结构 Resp DTO
      */
-    private <Req, Resp> Resp httpRequest(String url, String requestType, Req req, Class<Resp> respClass) {
+    private <Req, Resp> Resp httpRequest(
+            String url, String requestType, Req req, Class<Resp> respClass) {
         // 请求头
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -101,8 +109,10 @@ public class KdNiaoExpressClient implements ExpressClient {
         log.debug("[httpRequest][RequestType({}) 的请求参数({})]", requestType, requestBody);
 
         // 发送请求
-        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        HttpEntity<MultiValueMap<String, String>> requestEntity =
+                new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> responseEntity =
+                restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
         log.debug("[httpRequest][RequestType({}) 的响应结果({})", requestType, responseEntity);
         // 处理响应
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -123,5 +133,4 @@ public class KdNiaoExpressClient implements ExpressClient {
         String plainText = String.format("%s%s", reqData, apiKey);
         return URLEncodeUtil.encode(Base64.encode(DigestUtil.md5Hex(plainText)));
     }
-
 }

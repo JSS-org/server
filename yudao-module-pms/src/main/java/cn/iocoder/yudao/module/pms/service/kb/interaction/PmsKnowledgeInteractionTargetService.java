@@ -31,5 +31,4 @@ public interface PmsKnowledgeInteractionTargetService {
      */
     List<PmsKnowledgeInteractionItemRespVO> getReadableItemList(
             Collection<PmsKnowledgeInteractionItemRespVO> targets, Long userId);
-
 }

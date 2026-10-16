@@ -44,7 +44,8 @@ public interface ErrorCodeConstants {
     ErrorCode GROUP_ADMIN_TARGET_IS_OWNER = new ErrorCode(1_040_500_008, "群主无法被设为或撤销管理员");
     ErrorCode GROUP_ADMIN_MAX_LIMIT = new ErrorCode(1_040_500_009, "群管理员数量不能超过 {} 人");
     ErrorCode GROUP_REMOVE_OWNER_DENIED = new ErrorCode(1_040_500_010, "群主无法被移出群聊");
-    ErrorCode GROUP_REMOVE_ADMIN_DENIED = new ErrorCode(1_040_500_011, "管理员无法移出其他管理员，请先由群主撤销其管理员身份");
+    ErrorCode GROUP_REMOVE_ADMIN_DENIED =
+            new ErrorCode(1_040_500_011, "管理员无法移出其他管理员，请先由群主撤销其管理员身份");
     ErrorCode GROUP_MUTED_CANNOT_SEND = new ErrorCode(1_040_500_012, "群已全局禁言，仅群主和管理员可发送消息");
     ErrorCode GROUP_MEMBER_MUTED_CANNOT_SEND = new ErrorCode(1_040_500_013, "您已被禁言，解除时间：{}");
     ErrorCode GROUP_MUTE_MEMBER_SELF = new ErrorCode(1_040_500_014, "不能禁言自己");
@@ -104,5 +105,4 @@ public interface ErrorCodeConstants {
     ErrorCode RTC_GROUP_CALL_ACTIVE = new ErrorCode(1_040_900_009, "该群已有进行中通话，请通过胶囊条加入");
     ErrorCode RTC_GROUP_INVITEE_OVER_LIMIT = new ErrorCode(1_040_900_010, "群通话邀请人数超过最大值");
     ErrorCode RTC_GROUP_INVITEE_REQUIRED = new ErrorCode(1_040_900_011, "群通话必须选择被邀请人");
-
 }

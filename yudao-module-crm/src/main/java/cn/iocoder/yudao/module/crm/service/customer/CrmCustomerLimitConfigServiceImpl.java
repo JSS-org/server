@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.crm.service.customer;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CUSTOMER_LIMIT_CONFIG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -11,19 +15,18 @@ import cn.iocoder.yudao.module.crm.enums.customer.CrmCustomerLimitConfigTypeEnum
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CUSTOMER_LIMIT_CONFIG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 
 /**
  * 客户限制配置 Service 实现类
@@ -34,46 +37,58 @@ import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 @Validated
 public class CrmCustomerLimitConfigServiceImpl implements CrmCustomerLimitConfigService {
 
-    @Resource
-    private CrmCustomerLimitConfigMapper customerLimitConfigMapper;
+    @Resource private CrmCustomerLimitConfigMapper customerLimitConfigMapper;
 
-    @Resource
-    private DeptApi deptApi;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
-    @LogRecord(type = CRM_CUSTOMER_LIMIT_CONFIG_TYPE, subType = CRM_CUSTOMER_LIMIT_CONFIG_CREATE_SUB_TYPE, bizNo = "{{#limitId}}",
+    @LogRecord(
+            type = CRM_CUSTOMER_LIMIT_CONFIG_TYPE,
+            subType = CRM_CUSTOMER_LIMIT_CONFIG_CREATE_SUB_TYPE,
+            bizNo = "{{#limitId}}",
             success = CRM_CUSTOMER_LIMIT_CONFIG_CREATE_SUCCESS)
     public Long createCustomerLimitConfig(CrmCustomerLimitConfigSaveReqVO createReqVO) {
         validateUserAndDept(createReqVO.getUserIds(), createReqVO.getDeptIds());
         // 插入
-        CrmCustomerLimitConfigDO limitConfig = BeanUtils.toBean(createReqVO, CrmCustomerLimitConfigDO.class);
+        CrmCustomerLimitConfigDO limitConfig =
+                BeanUtils.toBean(createReqVO, CrmCustomerLimitConfigDO.class);
         customerLimitConfigMapper.insert(limitConfig);
 
         // 记录操作日志上下文
-        LogRecordContext.putVariable("limitType", CrmCustomerLimitConfigTypeEnum.getNameByType(limitConfig.getType()));
+        LogRecordContext.putVariable(
+                "limitType", CrmCustomerLimitConfigTypeEnum.getNameByType(limitConfig.getType()));
         LogRecordContext.putVariable("limitId", limitConfig.getId());
         return limitConfig.getId();
     }
 
     @Override
-    @LogRecord(type = CRM_CUSTOMER_LIMIT_CONFIG_TYPE, subType = CRM_CUSTOMER_LIMIT_CONFIG_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+    @LogRecord(
+            type = CRM_CUSTOMER_LIMIT_CONFIG_TYPE,
+            subType = CRM_CUSTOMER_LIMIT_CONFIG_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
             success = CRM_CUSTOMER_LIMIT_CONFIG_UPDATE_SUCCESS)
     public void updateCustomerLimitConfig(CrmCustomerLimitConfigSaveReqVO updateReqVO) {
         // 校验存在
-        CrmCustomerLimitConfigDO oldLimitConfig = validateCustomerLimitConfigExists(updateReqVO.getId());
+        CrmCustomerLimitConfigDO oldLimitConfig =
+                validateCustomerLimitConfigExists(updateReqVO.getId());
         validateUserAndDept(updateReqVO.getUserIds(), updateReqVO.getDeptIds());
         // 更新
-        CrmCustomerLimitConfigDO updateObj = BeanUtils.toBean(updateReqVO, CrmCustomerLimitConfigDO.class);
+        CrmCustomerLimitConfigDO updateObj =
+                BeanUtils.toBean(updateReqVO, CrmCustomerLimitConfigDO.class);
         customerLimitConfigMapper.updateById(updateObj);
 
         // 记录操作日志上下文
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(oldLimitConfig, CrmCustomerLimitConfigSaveReqVO.class));
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
+                BeanUtils.toBean(oldLimitConfig, CrmCustomerLimitConfigSaveReqVO.class));
     }
 
     @Override
-    @LogRecord(type = CRM_CUSTOMER_LIMIT_CONFIG_TYPE, subType = CRM_CUSTOMER_LIMIT_CONFIG_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_CUSTOMER_LIMIT_CONFIG_TYPE,
+            subType = CRM_CUSTOMER_LIMIT_CONFIG_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_CUSTOMER_LIMIT_CONFIG_DELETE_SUCCESS)
     public void deleteCustomerLimitConfig(Long id) {
         // 校验存在
@@ -82,7 +97,8 @@ public class CrmCustomerLimitConfigServiceImpl implements CrmCustomerLimitConfig
         customerLimitConfigMapper.deleteById(id);
 
         // 记录操作日志上下文
-        LogRecordContext.putVariable("limitType", CrmCustomerLimitConfigTypeEnum.getNameByType(limitConfig.getType()));
+        LogRecordContext.putVariable(
+                "limitType", CrmCustomerLimitConfigTypeEnum.getNameByType(limitConfig.getType()));
     }
 
     @Override
@@ -91,7 +107,8 @@ public class CrmCustomerLimitConfigServiceImpl implements CrmCustomerLimitConfig
     }
 
     @Override
-    public PageResult<CrmCustomerLimitConfigDO> getCustomerLimitConfigPage(CrmCustomerLimitConfigPageReqVO pageReqVO) {
+    public PageResult<CrmCustomerLimitConfigDO> getCustomerLimitConfigPage(
+            CrmCustomerLimitConfigPageReqVO pageReqVO) {
         return customerLimitConfigMapper.selectPage(pageReqVO);
     }
 
@@ -115,10 +132,11 @@ public class CrmCustomerLimitConfigServiceImpl implements CrmCustomerLimitConfig
     }
 
     @Override
-    public List<CrmCustomerLimitConfigDO> getCustomerLimitConfigListByUserId(Integer type, Long userId) {
+    public List<CrmCustomerLimitConfigDO> getCustomerLimitConfigListByUserId(
+            Integer type, Long userId) {
         AdminUserRespDTO user = adminUserApi.getUser(userId);
         Assert.notNull(user, "用户({})不存在", userId);
-        return customerLimitConfigMapper.selectListByTypeAndUserIdAndDeptId(type, userId, user.getDeptId());
+        return customerLimitConfigMapper.selectListByTypeAndUserIdAndDeptId(
+                type, userId, user.getDeptId());
     }
-
 }

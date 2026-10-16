@@ -2,10 +2,11 @@ package cn.iocoder.yudao.module.system.api.mail;
 
 import cn.iocoder.yudao.module.system.api.mail.dto.MailSendSingleToUserReqDTO;
 import cn.iocoder.yudao.module.system.service.mail.MailSendService;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * 邮件发送 API 实现类
@@ -16,21 +17,29 @@ import jakarta.annotation.Resource;
 @Validated
 public class MailSendApiImpl implements MailSendApi {
 
-    @Resource
-    private MailSendService mailSendService;
+    @Resource private MailSendService mailSendService;
 
     @Override
     public Long sendSingleMailToAdmin(MailSendSingleToUserReqDTO reqDTO) {
-        return mailSendService.sendSingleMailToAdmin(reqDTO.getUserId(),
-                reqDTO.getToMails(), reqDTO.getCcMails(), reqDTO.getBccMails(),
-                reqDTO.getTemplateCode(), reqDTO.getTemplateParams(), reqDTO.getAttachments());
+        return mailSendService.sendSingleMailToAdmin(
+                reqDTO.getUserId(),
+                reqDTO.getToMails(),
+                reqDTO.getCcMails(),
+                reqDTO.getBccMails(),
+                reqDTO.getTemplateCode(),
+                reqDTO.getTemplateParams(),
+                reqDTO.getAttachments());
     }
 
     @Override
     public Long sendSingleMailToMember(MailSendSingleToUserReqDTO reqDTO) {
-        return mailSendService.sendSingleMailToMember(reqDTO.getUserId(),
-                reqDTO.getToMails(), reqDTO.getCcMails(), reqDTO.getBccMails(),
-                reqDTO.getTemplateCode(), reqDTO.getTemplateParams(), reqDTO.getAttachments());
+        return mailSendService.sendSingleMailToMember(
+                reqDTO.getUserId(),
+                reqDTO.getToMails(),
+                reqDTO.getCcMails(),
+                reqDTO.getBccMails(),
+                reqDTO.getTemplateCode(),
+                reqDTO.getTemplateParams(),
+                reqDTO.getAttachments());
     }
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.im.controller.admin.group.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -21,5 +23,4 @@ public class ImGroupCreateReqVO {
 
     @Schema(description = "进群是否需群主 / 管理员审批；不传默认 false 自由进群", example = "false")
     private Boolean joinApproval;
-
 }

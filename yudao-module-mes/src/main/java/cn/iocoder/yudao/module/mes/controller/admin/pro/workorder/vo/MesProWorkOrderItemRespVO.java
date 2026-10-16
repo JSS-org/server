@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.workorder.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -29,5 +30,4 @@ public class MesProWorkOrderItemRespVO {
 
     @Schema(description = "物料/产品标识", example = "ITEM")
     private String itemOrProduct;
-
 }

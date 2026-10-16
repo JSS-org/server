@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.im.enums.rtc;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -19,22 +20,24 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImRtcCallStatusEnum implements ArrayValuable<Integer> {
-
     CREATED(10, "创建"), // 通话已创建；私聊：等被叫接听；群聊：发起人已进房，等其他人加入
     RUNNING(20, "进行中"), // 第一个非发起人接通后进入
     ENDED(30, "已结束"); // 任一方挂断 / 主叫 cancel / Webhook 兜底
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImRtcCallStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImRtcCallStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 活跃状态集合；通话未结束（CREATED / RUNNING）
      */
-    public static final List<Integer> ACTIVE_STATUSES = ListUtil.of(CREATED.getStatus(), RUNNING.getStatus());
+    public static final List<Integer> ACTIVE_STATUSES =
+            ListUtil.of(CREATED.getStatus(), RUNNING.getStatus());
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -56,5 +59,4 @@ public enum ImRtcCallStatusEnum implements ArrayValuable<Integer> {
     public static boolean isEnded(Integer status) {
         return Objects.equals(ENDED.status, status);
     }
-
 }

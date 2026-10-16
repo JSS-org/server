@@ -12,9 +12,12 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -30,15 +33,11 @@ import java.util.Objects;
 @Slf4j
 public class IotDeviceMessageSubscriber implements IotMessageSubscriber<IotDeviceMessage> {
 
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    private IotDevicePropertyService devicePropertyService;
-    @Resource
-    private IotDeviceMessageService deviceMessageService;
+    @Resource private IotDeviceService deviceService;
+    @Resource private IotDevicePropertyService devicePropertyService;
+    @Resource private IotDeviceMessageService deviceMessageService;
 
-    @Resource
-    private IotMessageBus messageBus;
+    @Resource private IotMessageBus messageBus;
 
     @PostConstruct
     public void init() {
@@ -62,19 +61,24 @@ public class IotDeviceMessageSubscriber implements IotMessageSubscriber<IotDevic
             return;
         }
 
-        TenantUtils.execute(message.getTenantId(), () -> {
-            // 1.1 更新设备的最后时间
-            IotDeviceDO device = deviceService.validateDeviceExistsFromCache(message.getDeviceId());
-            devicePropertyService.updateDeviceReportTimeAsync(device.getId(), LocalDateTime.now());
-            // 1.2 更新设备的连接 server
-            devicePropertyService.updateDeviceServerIdAsync(device.getId(), message.getServerId());
+        TenantUtils.execute(
+                message.getTenantId(),
+                () -> {
+                    // 1.1 更新设备的最后时间
+                    IotDeviceDO device =
+                            deviceService.validateDeviceExistsFromCache(message.getDeviceId());
+                    devicePropertyService.updateDeviceReportTimeAsync(
+                            device.getId(), LocalDateTime.now());
+                    // 1.2 更新设备的连接 server
+                    devicePropertyService.updateDeviceServerIdAsync(
+                            device.getId(), message.getServerId());
 
-            // 2. 未上线的设备，强制上线
-            forceDeviceOnline(message, device);
+                    // 2. 未上线的设备，强制上线
+                    forceDeviceOnline(message, device);
 
-            // 3. 核心：处理消息
-            deviceMessageService.handleUpstreamDeviceMessage(message, device);
-        });
+                    // 3. 核心：处理消息
+                    deviceMessageService.handleUpstreamDeviceMessage(message, device);
+                });
     }
 
     private void forceDeviceOnline(IotDeviceMessage message, IotDeviceDO device) {
@@ -83,18 +87,19 @@ public class IotDeviceMessageSubscriber implements IotMessageSubscriber<IotDevic
             return;
         }
         // 如果是 STATE 相关的消息，无需处理，不然就重复处理状态了
-        if (Objects.equals(message.getMethod(), IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod())) {
+        if (Objects.equals(
+                message.getMethod(), IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod())) {
             return;
         }
 
         // 特殊：设备非在线时，主动标记设备为在线
         // 为什么不直接更新状态呢？因为通过 IotDeviceMessage 可以经过一系列的处理，例如说记录日志、规则引擎等等
         try {
-            deviceMessageService.sendDeviceMessage(IotDeviceMessage.buildStateUpdateOnline().setDeviceId(device.getId()));
+            deviceMessageService.sendDeviceMessage(
+                    IotDeviceMessage.buildStateUpdateOnline().setDeviceId(device.getId()));
         } catch (Exception e) {
             // 注意：即使执行失败，也不影响主流程
             log.error("[forceDeviceOnline][message({}) device({}) 强制设备上线失败]", message, device, e);
         }
     }
-
 }

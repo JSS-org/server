@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.segment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI 知识库段落向量进度 Response VO")
@@ -15,5 +16,4 @@ public class AiKnowledgeSegmentProcessRespVO {
 
     @Schema(description = "已向量化段落数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     private Long embeddingCount;
-
 }

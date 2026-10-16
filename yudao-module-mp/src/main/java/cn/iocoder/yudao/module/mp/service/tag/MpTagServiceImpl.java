@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mp.service.tag;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.tag.vo.MpTagCreateReqVO;
@@ -11,23 +16,22 @@ import cn.iocoder.yudao.module.mp.dal.dataobject.tag.MpTagDO;
 import cn.iocoder.yudao.module.mp.dal.mysql.tag.MpTagMapper;
 import cn.iocoder.yudao.module.mp.framework.mp.core.MpServiceFactory;
 import cn.iocoder.yudao.module.mp.service.account.MpAccountService;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.tag.WxUserTag;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.*;
 
 /**
  * 公众号标签 Service 实现类
@@ -39,14 +43,11 @@ import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.*;
 @Validated
 public class MpTagServiceImpl implements MpTagService {
 
-    @Resource
-    private MpTagMapper mpTagMapper;
+    @Resource private MpTagMapper mpTagMapper;
 
-    @Resource
-    private MpAccountService mpAccountService;
+    @Resource private MpAccountService mpAccountService;
 
-    @Resource
-    @Lazy // 延迟加载，为了解决延迟加载
+    @Resource @Lazy // 延迟加载，为了解决延迟加载
     private MpServiceFactory mpServiceFactory;
 
     @Override
@@ -141,24 +142,27 @@ public class MpTagServiceImpl implements MpTagService {
         }
 
         // 第二步，合并更新回自己的数据库；由于标签只有 100 个，所以直接 for 循环操作
-        Map<Long, MpTagDO> tagMap = convertMap(mpTagMapper.selectListByAccountId(accountId),
-                MpTagDO::getTagId);
-        wxTags.forEach(wxTag -> {
-            MpTagDO tag = tagMap.remove(wxTag.getId());
-            // 情况一，不存在，新增
-            if (tag == null) {
-                tag = MpTagConvert.INSTANCE.convert(wxTag, account);
-                mpTagMapper.insert(tag);
-                return;
-            }
-            // 情况二，存在，则更新
-            mpTagMapper.updateById(new MpTagDO().setId(tag.getId())
-                    .setName(wxTag.getName()).setCount(wxTag.getCount()));
-        });
+        Map<Long, MpTagDO> tagMap =
+                convertMap(mpTagMapper.selectListByAccountId(accountId), MpTagDO::getTagId);
+        wxTags.forEach(
+                wxTag -> {
+                    MpTagDO tag = tagMap.remove(wxTag.getId());
+                    // 情况一，不存在，新增
+                    if (tag == null) {
+                        tag = MpTagConvert.INSTANCE.convert(wxTag, account);
+                        mpTagMapper.insert(tag);
+                        return;
+                    }
+                    // 情况二，存在，则更新
+                    mpTagMapper.updateById(
+                            new MpTagDO()
+                                    .setId(tag.getId())
+                                    .setName(wxTag.getName())
+                                    .setCount(wxTag.getCount()));
+                });
         // 情况三，部分标签已经不存在了，删除
         if (CollUtil.isNotEmpty(tagMap)) {
             mpTagMapper.deleteByIds(convertList(tagMap.values(), MpTagDO::getId));
         }
     }
-
 }

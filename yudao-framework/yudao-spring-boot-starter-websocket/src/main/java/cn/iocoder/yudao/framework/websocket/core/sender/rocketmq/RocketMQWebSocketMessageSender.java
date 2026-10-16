@@ -3,7 +3,9 @@ package cn.iocoder.yudao.framework.websocket.core.sender.rocketmq;
 import cn.iocoder.yudao.framework.websocket.core.sender.AbstractWebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 
 /**
@@ -18,9 +20,10 @@ public class RocketMQWebSocketMessageSender extends AbstractWebSocketMessageSend
 
     private final String topic;
 
-    public RocketMQWebSocketMessageSender(WebSocketSessionManager sessionManager,
-                                          RocketMQTemplate rocketMQTemplate,
-                                          String topic) {
+    public RocketMQWebSocketMessageSender(
+            WebSocketSessionManager sessionManager,
+            RocketMQTemplate rocketMQTemplate,
+            String topic) {
         super(sessionManager);
         this.rocketMQTemplate = rocketMQTemplate;
         this.topic = topic;
@@ -50,12 +53,19 @@ public class RocketMQWebSocketMessageSender extends AbstractWebSocketMessageSend
      * @param messageType 消息类型
      * @param messageContent 消息内容
      */
-    private void sendRocketMQMessage(String sessionId, Long userId, Integer userType,
-                                     String messageType, String messageContent) {
-        RocketMQWebSocketMessage mqMessage = new RocketMQWebSocketMessage()
-                .setSessionId(sessionId).setUserId(userId).setUserType(userType)
-                .setMessageType(messageType).setMessageContent(messageContent);
+    private void sendRocketMQMessage(
+            String sessionId,
+            Long userId,
+            Integer userType,
+            String messageType,
+            String messageContent) {
+        RocketMQWebSocketMessage mqMessage =
+                new RocketMQWebSocketMessage()
+                        .setSessionId(sessionId)
+                        .setUserId(userId)
+                        .setUserType(userType)
+                        .setMessageType(messageType)
+                        .setMessageContent(messageContent);
         rocketMQTemplate.syncSend(topic, mqMessage);
     }
-
 }

@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.trade.controller.app.cart.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "用户 App - 购物车更新数量 Request VO")
 @Data
@@ -18,5 +19,4 @@ public class AppCartUpdateCountReqVO {
     @NotNull(message = "数量不能为空")
     @Min(message = "数量必须大于 0", value = 1L)
     private Integer count;
-
 }

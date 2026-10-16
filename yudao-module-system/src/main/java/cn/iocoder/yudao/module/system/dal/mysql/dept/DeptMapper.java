@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptListReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -13,9 +14,10 @@ import java.util.List;
 public interface DeptMapper extends BaseMapperX<DeptDO> {
 
     default List<DeptDO> selectList(DeptListReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<DeptDO>()
-                .likeIfPresent(DeptDO::getName, reqVO.getName())
-                .eqIfPresent(DeptDO::getStatus, reqVO.getStatus()));
+        return selectList(
+                new LambdaQueryWrapperX<DeptDO>()
+                        .likeIfPresent(DeptDO::getName, reqVO.getName())
+                        .eqIfPresent(DeptDO::getStatus, reqVO.getStatus()));
     }
 
     default DeptDO selectByParentIdAndName(Long parentId, String name) {
@@ -33,5 +35,4 @@ public interface DeptMapper extends BaseMapperX<DeptDO> {
     default List<DeptDO> selectListByLeaderUserId(Long id) {
         return selectList(DeptDO::getLeaderUserId, id);
     }
-
 }

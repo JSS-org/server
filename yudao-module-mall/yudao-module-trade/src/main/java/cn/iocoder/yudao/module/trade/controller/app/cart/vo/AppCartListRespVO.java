@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.trade.controller.app.cart.vo;
 
 import cn.iocoder.yudao.module.trade.controller.app.base.sku.AppProductSkuBaseRespVO;
 import cn.iocoder.yudao.module.trade.controller.app.base.spu.AppProductSpuBaseRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -25,7 +27,10 @@ public class AppCartListRespVO {
     @Data
     public static class Cart {
 
-        @Schema(description = "购物项的编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "购物项的编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long id;
 
         @Schema(description = "商品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -38,11 +43,10 @@ public class AppCartListRespVO {
          * 商品 SPU
          */
         private AppProductSpuBaseRespVO spu;
+
         /**
          * 商品 SKU
          */
         private AppProductSkuBaseRespVO sku;
-
     }
-
 }

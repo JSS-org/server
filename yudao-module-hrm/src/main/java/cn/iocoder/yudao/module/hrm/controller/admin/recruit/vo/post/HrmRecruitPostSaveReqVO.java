@@ -1,24 +1,28 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.post;
 
+import static cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO.AGE_UNLIMITED_VALUE;
+import static cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO.SALARY_NEGOTIABLE_UNIT_VALUE;
+import static cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO.SALARY_NEGOTIABLE_VALUE;
+
 import cn.iocoder.yudao.module.hrm.framework.operatelog.core.HrmAreaParseFunction;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO.AGE_UNLIMITED_VALUE;
-import static cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO.SALARY_NEGOTIABLE_UNIT_VALUE;
-import static cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostDO.SALARY_NEGOTIABLE_VALUE;
 
 @Schema(description = "管理后台 - HRM 招聘职位新增/修改 Request VO")
 @Data
@@ -27,7 +31,10 @@ public class HrmRecruitPostSaveReqVO {
     @Schema(description = "招聘职位编号", example = "1024")
     private Long id;
 
-    @Schema(description = "职位名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "Java 开发工程师")
+    @Schema(
+            description = "职位名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "Java 开发工程师")
     @NotBlank(message = "职位名称不能为空")
     @Size(max = 255, message = "职位名称不能超过 255 个字符")
     @DiffLogField(name = "职位名称")
@@ -114,8 +121,10 @@ public class HrmRecruitPostSaveReqVO {
     @AssertTrue(message = "薪资范围不正确")
     @JsonIgnore
     public boolean isSalaryRangeValid() {
-        boolean hasNegotiableValue = SALARY_NEGOTIABLE_VALUE.equals(getMinSalary())
-                || SALARY_NEGOTIABLE_VALUE.equals(getMaxSalary()) || SALARY_NEGOTIABLE_UNIT_VALUE.equals(getSalaryUnit());
+        boolean hasNegotiableValue =
+                SALARY_NEGOTIABLE_VALUE.equals(getMinSalary())
+                        || SALARY_NEGOTIABLE_VALUE.equals(getMaxSalary())
+                        || SALARY_NEGOTIABLE_UNIT_VALUE.equals(getSalaryUnit());
         if (hasNegotiableValue) {
             return SALARY_NEGOTIABLE_VALUE.equals(getMinSalary())
                     && SALARY_NEGOTIABLE_VALUE.equals(getMaxSalary())
@@ -125,20 +134,23 @@ public class HrmRecruitPostSaveReqVO {
                 || (getMaxSalary() != null && getMaxSalary().signum() < 0)) {
             return false;
         }
-        return getMinSalary() == null || getMaxSalary() == null || getMinSalary().compareTo(getMaxSalary()) <= 0;
+        return getMinSalary() == null
+                || getMaxSalary() == null
+                || getMinSalary().compareTo(getMaxSalary()) <= 0;
     }
 
     @AssertTrue(message = "年龄范围不正确")
     @JsonIgnore
     public boolean isAgeRangeValid() {
-        boolean hasUnlimitedValue = AGE_UNLIMITED_VALUE.equals(getMinAge()) || AGE_UNLIMITED_VALUE.equals(getMaxAge());
+        boolean hasUnlimitedValue =
+                AGE_UNLIMITED_VALUE.equals(getMinAge()) || AGE_UNLIMITED_VALUE.equals(getMaxAge());
         if (hasUnlimitedValue) {
-            return AGE_UNLIMITED_VALUE.equals(getMinAge()) && AGE_UNLIMITED_VALUE.equals(getMaxAge());
+            return AGE_UNLIMITED_VALUE.equals(getMinAge())
+                    && AGE_UNLIMITED_VALUE.equals(getMaxAge());
         }
         if ((getMinAge() != null && getMinAge() < 0) || (getMaxAge() != null && getMaxAge() < 0)) {
             return false;
         }
         return getMinAge() == null || getMaxAge() == null || getMinAge() <= getMaxAge();
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.ota;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,5 +38,4 @@ public class IotDeviceOtaProgressReqDTO {
      * 升级进度（0-100）
      */
     private Integer progress;
-
 }

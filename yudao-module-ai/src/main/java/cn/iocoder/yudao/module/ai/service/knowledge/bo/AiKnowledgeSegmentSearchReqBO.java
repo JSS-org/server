@@ -1,10 +1,10 @@
 package cn.iocoder.yudao.module.ai.service.knowledge.bo;
 
+import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
 
 /**
  * AI 知识库段落搜索 Request BO
@@ -35,5 +35,4 @@ public class AiKnowledgeSegmentSearchReqBO {
      * 相似度阈值
      */
     private Double similarityThreshold;
-
 }

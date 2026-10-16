@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.member.controller.admin.point.vo.recrod;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -23,5 +25,4 @@ public class MemberPointRecordPageReqVO extends PageParam {
 
     @Schema(description = "积分标题", example = "呵呵")
     private String title;
-
 }

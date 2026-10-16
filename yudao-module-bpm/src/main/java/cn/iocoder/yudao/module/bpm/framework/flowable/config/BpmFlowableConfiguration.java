@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCand
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.event.BpmProcessInstanceEventPublisher;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import org.flowable.common.engine.api.delegate.FlowableFunctionDelegate;
 import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.spring.SpringProcessEngineConfiguration;
@@ -55,24 +56,27 @@ public class BpmFlowableConfiguration {
      * 2. 设置自定义的 ActivityBehaviorFactory 实现
      */
     @Bean
-    public EngineConfigurationConfigurer<SpringProcessEngineConfiguration> bpmProcessEngineConfigurationConfigurer(
-            ObjectProvider<FlowableEventListener> listeners,
-            ObjectProvider<FlowableFunctionDelegate> customFlowableFunctionDelegates,
-            BpmActivityBehaviorFactory bpmActivityBehaviorFactory) {
+    public EngineConfigurationConfigurer<SpringProcessEngineConfiguration>
+            bpmProcessEngineConfigurationConfigurer(
+                    ObjectProvider<FlowableEventListener> listeners,
+                    ObjectProvider<FlowableFunctionDelegate> customFlowableFunctionDelegates,
+                    BpmActivityBehaviorFactory bpmActivityBehaviorFactory) {
         return configuration -> {
             // 注册监听器，例如说 BpmActivityEventListener
             configuration.setEventListeners(ListUtil.toList(listeners.iterator()));
             // 设置 ActivityBehaviorFactory 实现类，用于流程任务的审核人的自定义
             configuration.setActivityBehaviorFactory(bpmActivityBehaviorFactory);
             // 设置自定义的函数
-            configuration.setCustomFlowableFunctionDelegates(ListUtil.toList(customFlowableFunctionDelegates.stream().iterator()));
+            configuration.setCustomFlowableFunctionDelegates(
+                    ListUtil.toList(customFlowableFunctionDelegates.stream().iterator()));
         };
     }
 
     // =========== 审批人相关的 Bean ==========
 
     @Bean
-    public BpmActivityBehaviorFactory bpmActivityBehaviorFactory(BpmTaskCandidateInvoker bpmTaskCandidateInvoker) {
+    public BpmActivityBehaviorFactory bpmActivityBehaviorFactory(
+            BpmTaskCandidateInvoker bpmTaskCandidateInvoker) {
         BpmActivityBehaviorFactory bpmActivityBehaviorFactory = new BpmActivityBehaviorFactory();
         bpmActivityBehaviorFactory.setTaskCandidateInvoker(bpmTaskCandidateInvoker);
         return bpmActivityBehaviorFactory;
@@ -80,16 +84,16 @@ public class BpmFlowableConfiguration {
 
     @Bean
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") // adminUserApi 可以注入成功
-    public BpmTaskCandidateInvoker bpmTaskCandidateInvoker(List<BpmTaskCandidateStrategy> strategyList,
-                                                           AdminUserApi adminUserApi) {
+    public BpmTaskCandidateInvoker bpmTaskCandidateInvoker(
+            List<BpmTaskCandidateStrategy> strategyList, AdminUserApi adminUserApi) {
         return new BpmTaskCandidateInvoker(strategyList, adminUserApi);
     }
 
     // =========== 自己拓展的 Bean ==========
 
     @Bean
-    public BpmProcessInstanceEventPublisher processInstanceEventPublisher(ApplicationEventPublisher publisher) {
+    public BpmProcessInstanceEventPublisher processInstanceEventPublisher(
+            ApplicationEventPublisher publisher) {
         return new BpmProcessInstanceEventPublisher(publisher);
     }
-
 }

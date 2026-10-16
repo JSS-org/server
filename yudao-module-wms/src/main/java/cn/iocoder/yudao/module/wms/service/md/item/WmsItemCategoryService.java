@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.category.WmsItemCategoryListReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.category.WmsItemCategorySaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemCategoryDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * WMS 商品分类 Service 接口
@@ -90,5 +91,4 @@ public interface WmsItemCategoryService {
     default Map<Long, WmsItemCategoryDO> getItemCategoryMap(Collection<Long> ids) {
         return convertMap(getItemCategoryList(ids), WmsItemCategoryDO::getId);
     }
-
 }

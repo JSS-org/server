@@ -7,11 +7,14 @@ import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.IotThingModelDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,7 +30,8 @@ import java.util.List;
  * @author 芋道源码
  */
 @TableName(value = "iot_data_rule", autoResultMap = true)
-@KeySequence("iot_data_rule_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "iot_data_rule_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,14 +42,17 @@ public class IotDataRuleDO extends BaseDO {
      * 数据流转规格编号
      */
     private Long id;
+
     /**
      * 数据流转规格名称
      */
     private String name;
+
     /**
      * 数据流转规格描述
      */
     private String description;
+
     /**
      * 数据流转规格状态
      *
@@ -58,6 +65,7 @@ public class IotDataRuleDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<SourceConfig> sourceConfigs;
+
     /**
      * 数据目的编号数组
      *
@@ -88,6 +96,7 @@ public class IotDataRuleDO extends BaseDO {
          * 关联 {@link IotProductDO#getId()}
          */
         private Long productId;
+
         /**
          * 设备编号
          *
@@ -103,7 +112,5 @@ public class IotDataRuleDO extends BaseDO {
          * 1. 物模型时，对应：{@link IotThingModelDO#getIdentifier()}
          */
         private String identifier;
-
     }
-
 }

@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmAuditStatusEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmSceneTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,10 +21,11 @@ public class CrmContractPageReqVO extends PageParam {
      * 过期类型 - 即将过期
      */
     public static final Integer EXPIRY_TYPE_ABOUT_TO_EXPIRE = 1;
+
     /**
      * 过期类型 - 已过期
      */
-    public static  final Integer EXPIRY_TYPE_EXPIRED = 2;
+    public static final Integer EXPIRY_TYPE_EXPIRED = 2;
 
     @Schema(description = "合同编号", example = "XYZ008")
     private String no;
@@ -46,5 +49,4 @@ public class CrmContractPageReqVO extends PageParam {
 
     @Schema(description = "过期类型", example = "1")
     private Integer expiryType; // 过期类型，为 null 时则表示全部
-
 }

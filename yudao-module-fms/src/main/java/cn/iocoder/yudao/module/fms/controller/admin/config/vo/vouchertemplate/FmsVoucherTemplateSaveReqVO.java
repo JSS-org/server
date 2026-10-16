@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -35,5 +37,4 @@ public class FmsVoucherTemplateSaveReqVO {
     @NotEmpty(message = "凭证模板分录不能为空")
     @Size(min = 2, message = "凭证模板至少需要两条分录")
     private List<FmsVoucherTemplateEntryVO> entries;
-
 }

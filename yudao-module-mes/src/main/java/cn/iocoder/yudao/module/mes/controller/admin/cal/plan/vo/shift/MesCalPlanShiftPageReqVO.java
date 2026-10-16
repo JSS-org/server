@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo.shift;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class MesCalPlanShiftPageReqVO extends PageParam {
 
     @Schema(description = "班次名称", example = "白班")
     private String name;
-
 }

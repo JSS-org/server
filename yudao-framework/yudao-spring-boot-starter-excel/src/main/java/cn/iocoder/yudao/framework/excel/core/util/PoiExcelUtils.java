@@ -2,7 +2,9 @@ package cn.iocoder.yudao.framework.excel.core.util;
 
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+
 import lombok.experimental.UtilityClass;
+
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -79,7 +81,8 @@ public class PoiExcelUtils {
      * @param columns 列数组
      * @return 是否全部为空
      */
-    public static boolean isEmptyRow(Row row, FormulaEvaluator evaluator, Collection<Integer> columns) {
+    public static boolean isEmptyRow(
+            Row row, FormulaEvaluator evaluator, Collection<Integer> columns) {
         if (row == null) {
             return true;
         }
@@ -125,10 +128,17 @@ public class PoiExcelUtils {
     /**
      * 写入跨两行的合并表头
      */
-    public static void mergeHeader(Sheet sheet, Row firstRow, Row secondRow,
-                                   int beginColumn, int endColumn, String title, CellStyle style) {
-        sheet.addMergedRegion(new CellRangeAddress(firstRow.getRowNum(), secondRow.getRowNum(),
-                beginColumn, endColumn));
+    public static void mergeHeader(
+            Sheet sheet,
+            Row firstRow,
+            Row secondRow,
+            int beginColumn,
+            int endColumn,
+            String title,
+            CellStyle style) {
+        sheet.addMergedRegion(
+                new CellRangeAddress(
+                        firstRow.getRowNum(), secondRow.getRowNum(), beginColumn, endColumn));
         Cell cell = firstRow.createCell(beginColumn);
         cell.setCellValue(title);
         cell.setCellStyle(style);
@@ -174,7 +184,8 @@ public class PoiExcelUtils {
      * @param locked 是否锁定，配合 protectSheet 使用
      * @param fillColor 填充色，传 null 时不填充
      */
-    public static CellStyle createDataStyle(Workbook workbook, boolean locked, IndexedColors fillColor) {
+    public static CellStyle createDataStyle(
+            Workbook workbook, boolean locked, IndexedColors fillColor) {
         CellStyle style = createBorderStyle(workbook);
         style.setLocked(locked);
         if (fillColor != null) {
@@ -222,5 +233,4 @@ public class PoiExcelUtils {
         style.setFont(font);
         return style;
     }
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.mes.service.wm.sn;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,16 +16,17 @@ import cn.iocoder.yudao.module.mes.service.md.autocode.MesMdAutoCodeRecordServic
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 /**
  * MES SN 码 Service 实现类
@@ -35,17 +38,12 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Slf4j
 public class MesWmSnServiceImpl implements MesWmSnService {
 
-    @Resource
-    private MesWmSnMapper snMapper;
+    @Resource private MesWmSnMapper snMapper;
 
-    @Resource
-    private MesMdAutoCodeRecordService autoCodeRecordService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource private MesMdAutoCodeRecordService autoCodeRecordService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -62,16 +60,27 @@ public class MesWmSnServiceImpl implements MesWmSnService {
         String uuid = IdUtil.fastSimpleUUID();
         // 批量生成 SN 码
         for (int i = 0; i < reqVO.getCount(); i++) {
-            String snCode = autoCodeRecordService.generateAutoCode(MesMdAutoCodeRuleCodeEnum.WM_SN_CODE.getCode());
-            sns.add(new MesWmSnDO().setUuid(uuid).setCode(snCode)
-                    .setItemId(reqVO.getItemId()).setBatchCode(reqVO.getBatchCode())
-                    .setWorkOrderId(reqVO.getWorkOrderId()));
+            String snCode =
+                    autoCodeRecordService.generateAutoCode(
+                            MesMdAutoCodeRuleCodeEnum.WM_SN_CODE.getCode());
+            sns.add(
+                    new MesWmSnDO()
+                            .setUuid(uuid)
+                            .setCode(snCode)
+                            .setItemId(reqVO.getItemId())
+                            .setBatchCode(reqVO.getBatchCode())
+                            .setWorkOrderId(reqVO.getWorkOrderId()));
         }
         // 批量插入
         snMapper.insertBatch(sns);
         // 自动生成条码
-        sns.forEach(sn -> barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.SN.getValue(),
-                sn.getId(), sn.getCode(), sn.getCode()));
+        sns.forEach(
+                sn ->
+                        barcodeService.autoGenerateBarcode(
+                                BarcodeBizTypeEnum.SN.getValue(),
+                                sn.getId(),
+                                sn.getCode(),
+                                sn.getCode()));
     }
 
     @Override
@@ -93,10 +102,9 @@ public class MesWmSnServiceImpl implements MesWmSnService {
         }
 
         // 删除 SN 码关联的条码记录
-        barcodeService.deleteBarcodeByBizTypeAndBizIds(BarcodeBizTypeEnum.SN.getValue(),
-                convertList(sns, MesWmSnDO::getId));
+        barcodeService.deleteBarcodeByBizTypeAndBizIds(
+                BarcodeBizTypeEnum.SN.getValue(), convertList(sns, MesWmSnDO::getId));
         // 删除 SN 码
         snMapper.deleteByUuid(uuid);
     }
-
 }

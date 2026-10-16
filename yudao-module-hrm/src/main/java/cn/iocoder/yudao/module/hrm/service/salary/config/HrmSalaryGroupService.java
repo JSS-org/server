@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.group.HrmSalaryGro
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.group.HrmSalaryGroupSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryGroupDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -92,5 +93,4 @@ public interface HrmSalaryGroupService {
      * @return 计税规则编号与薪资组数量的映射
      */
     Map<Long, Long> getSalaryGroupCountMapByTaxRuleIds(Collection<Long> taxRuleIds);
-
 }

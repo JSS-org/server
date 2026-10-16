@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.trade.service.price.bo;
 import cn.iocoder.yudao.module.product.api.property.dto.ProductPropertyValueDetailRespDTO;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -49,6 +50,7 @@ public class TradePriceCalculateRespBO {
      * 使用的优惠劵编号
      */
     private Long couponId;
+
     /**
      * 用户的优惠劵列表（可用 + 不可用）
      */
@@ -58,6 +60,7 @@ public class TradePriceCalculateRespBO {
      * 会员剩余积分
      */
     private Integer totalPoint;
+
     /**
      * 使用的积分
      */
@@ -102,32 +105,38 @@ public class TradePriceCalculateRespBO {
          * 对应 taobao 的 trade.total_fee 字段
          */
         private Integer totalPrice;
+
         /**
          * 订单优惠（总），单位：分
          *
          * 对应 taobao 的 order.discount_fee 字段
          */
         private Integer discountPrice;
+
         /**
          * 运费金额，单位：分
          */
         private Integer deliveryPrice;
+
         /**
          * 优惠劵减免金额（总），单位：分
          *
          * 对应 taobao 的 trade.coupon_fee 字段
          */
         private Integer couponPrice;
+
         /**
          * 积分抵扣的金额，单位：分
          *
          * 对应 taobao 的 trade.point_fee 字段
          */
         private Integer pointPrice;
+
         /**
          * VIP 减免金额，单位：分
          */
         private Integer vipPrice;
+
         /**
          * 最终购买金额（总），单位：分
          *
@@ -139,7 +148,6 @@ public class TradePriceCalculateRespBO {
          * - {@link #vipPrice}
          */
         private Integer payPrice;
-
     }
 
     /**
@@ -152,18 +160,22 @@ public class TradePriceCalculateRespBO {
          * SPU 编号
          */
         private Long spuId;
+
         /**
          * SKU 编号
          */
         private Long skuId;
+
         /**
          * 购买数量
          */
         private Integer count;
+
         /**
          * 购物车项的编号
          */
         private Long cartId;
+
         /**
          * 是否选中
          */
@@ -176,36 +188,43 @@ public class TradePriceCalculateRespBO {
          * 对应 taobao 的 order.price 字段
          */
         private Integer price;
+
         /**
          * 优惠金额（总），单位：分
          *
          * 对应 taobao 的 order.discount_fee 字段
          */
         private Integer discountPrice;
+
         /**
          * 运费金额（总），单位：分
          */
         private Integer deliveryPrice;
+
         /**
          * 优惠劵减免金额，单位：分
          *
          * 对应 taobao 的 trade.coupon_fee 字段
          */
         private Integer couponPrice;
+
         /**
          * 积分抵扣的金额，单位：分
          *
          * 对应 taobao 的 trade.point_fee 字段
          */
         private Integer pointPrice;
+
         /**
          * 使用的积分
          */
         private Integer usePoint;
+
         /**
          * VIP 减免金额，单位：分
          */
         private Integer vipPrice;
+
         /**
          * 应付金额（总），单位：分
          *
@@ -223,12 +242,14 @@ public class TradePriceCalculateRespBO {
          * 商品名
          */
         private String spuName;
+
         /**
          * 商品图片
          *
          * 优先级：SKU.picUrl > SPU.picUrl
          */
         private String picUrl;
+
         /**
          * 分类编号
          */
@@ -255,6 +276,7 @@ public class TradePriceCalculateRespBO {
          * 商品重量，单位：kg 千克
          */
         private Double weight;
+
         /**
          * 商品体积，单位：m^3 平米
          */
@@ -269,7 +291,6 @@ public class TradePriceCalculateRespBO {
          * 赠送的积分
          */
         private Integer givePoint;
-
     }
 
     /**
@@ -284,24 +305,29 @@ public class TradePriceCalculateRespBO {
          * 例如说：营销活动的编号、优惠劵的编号
          */
         private Long id;
+
         /**
          * 营销名字
          */
         private String name;
+
         /**
          * 营销类型
          *
          * 枚举 {@link PromotionTypeEnum}
          */
         private Integer type;
+
         /**
          * 计算时的原价（总），单位：分
          */
         private Integer totalPrice;
+
         /**
          * 计算时的优惠（总），单位：分
          */
         private Integer discountPrice;
+
         /**
          * 匹配的商品 SKU 数组
          */
@@ -313,6 +339,7 @@ public class TradePriceCalculateRespBO {
          * 是否满足优惠条件
          */
         private Boolean match;
+
         /**
          * 满足条件的提示
          *
@@ -320,7 +347,6 @@ public class TradePriceCalculateRespBO {
          * 如果 {@link #match} = false 不满足，则提示“购满 85 元，可减 40 元”
          */
         private String description;
-
     }
 
     /**
@@ -333,15 +359,16 @@ public class TradePriceCalculateRespBO {
          * 商品 SKU 编号
          */
         private Long skuId;
+
         /**
          * 计算时的原价（总），单位：分
          */
         private Integer totalPrice;
+
         /**
          * 计算时的优惠（总），单位：分
          */
         private Integer discountPrice;
-
     }
 
     /**
@@ -354,6 +381,7 @@ public class TradePriceCalculateRespBO {
          * 优惠劵编号
          */
         private Long id;
+
         /**
          * 优惠劵名
          */
@@ -368,6 +396,7 @@ public class TradePriceCalculateRespBO {
          * 生效开始时间
          */
         private LocalDateTime validStartTime;
+
         /**
          * 生效结束时间
          */
@@ -377,14 +406,17 @@ public class TradePriceCalculateRespBO {
          * 优惠类型
          */
         private Integer discountType;
+
         /**
          * 折扣百分比
          */
         private Integer discountPercent;
+
         /**
          * 优惠金额，单位：分
          */
         private Integer discountPrice;
+
         /**
          * 折扣上限，单位：分
          */
@@ -394,12 +426,10 @@ public class TradePriceCalculateRespBO {
          * 是否匹配
          */
         private Boolean match;
+
         /**
          * 不匹配的原因
          */
         private String mismatchReason;
-
     }
-
-
 }

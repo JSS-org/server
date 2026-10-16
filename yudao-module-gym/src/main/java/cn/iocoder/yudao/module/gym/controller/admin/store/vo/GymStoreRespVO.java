@@ -1,8 +1,12 @@
 package cn.iocoder.yudao.module.gym.controller.admin.store.vo;
-import lombok.Data;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.util.List;
+
 @Data
 @Schema(description = "门店资料，id 等于 system_dept.id，以字符串返回")
 public class GymStoreRespVO {
@@ -20,9 +24,10 @@ public class GymStoreRespVO {
     private String status;
     private GymStoreSaveReqVO.BusinessHours businessHours;
     private List<Media> media;
+
     @Data
     @io.swagger.v3.oas.annotations.media.Schema(name = "GymStoreRespVOMedia")
- public static class Media {
+    public static class Media {
         private String id;
         private String fileId;
         private String category;

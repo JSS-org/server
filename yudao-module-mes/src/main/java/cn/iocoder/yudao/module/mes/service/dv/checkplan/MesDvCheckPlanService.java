@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.dv.checkplan;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.MesDvCheckPlanPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.MesDvCheckPlanSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkplan.MesDvCheckPlanDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 点检保养方案 Service 接口
@@ -112,5 +113,4 @@ public interface MesDvCheckPlanService {
     default Map<Long, MesDvCheckPlanDO> getCheckPlanMap(Collection<Long> ids) {
         return convertMap(getCheckPlanList(ids), MesDvCheckPlanDO::getId);
     }
-
 }

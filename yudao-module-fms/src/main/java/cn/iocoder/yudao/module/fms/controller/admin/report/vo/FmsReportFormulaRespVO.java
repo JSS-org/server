@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.report.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -35,5 +36,4 @@ public class FmsReportFormulaRespVO {
 
     @Schema(description = "本年累计金额", example = "200.00")
     private BigDecimal yearAmount;
-
 }

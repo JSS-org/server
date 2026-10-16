@@ -62,5 +62,4 @@ public interface FileClient {
     default String presignGetUrl(String url, Integer expirationSeconds) {
         throw new UnsupportedOperationException("不支持的操作");
     }
-
 }

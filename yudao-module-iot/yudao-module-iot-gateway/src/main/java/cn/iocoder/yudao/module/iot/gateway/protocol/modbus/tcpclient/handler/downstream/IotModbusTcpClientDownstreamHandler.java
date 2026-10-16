@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbu
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusTcpClientUtils;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.IotModbusTcpClientConfigCacheService;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.manager.IotModbusTcpClientConnectionManager;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,10 +37,12 @@ public class IotModbusTcpClientDownstreamHandler {
     @SuppressWarnings({"unchecked", "DuplicatedCode"})
     public void handle(IotDeviceMessage message) {
         // 1.1 检查是否是属性设置消息
-        if (ObjUtil.equals(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(), message.getMethod())) {
+        if (ObjUtil.equals(
+                IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(), message.getMethod())) {
             return;
         }
-        if (ObjUtil.notEqual(IotDeviceMessageMethodEnum.PROPERTY_SET.getMethod(), message.getMethod())) {
+        if (ObjUtil.notEqual(
+                IotDeviceMessageMethodEnum.PROPERTY_SET.getMethod(), message.getMethod())) {
             log.warn("[handle][忽略非属性设置消息: {}]", message.getMethod());
             return;
         }
@@ -80,9 +83,11 @@ public class IotModbusTcpClientDownstreamHandler {
     /**
      * 写入属性值
      */
-    private void writeProperty(IotModbusDeviceConfigRespDTO config, IotModbusPointRespDTO point, Object value) {
+    private void writeProperty(
+            IotModbusDeviceConfigRespDTO config, IotModbusPointRespDTO point, Object value) {
         // 1.1 获取连接
-        IotModbusTcpClientConnectionManager.ModbusConnection connection = connectionManager.getConnection(config.getDeviceId());
+        IotModbusTcpClientConnectionManager.ModbusConnection connection =
+                connectionManager.getConnection(config.getDeviceId());
         if (connection == null) {
             log.warn("[writeProperty][设备 {} 没有连接]", config.getDeviceId());
             return;
@@ -98,10 +103,19 @@ public class IotModbusTcpClientDownstreamHandler {
         int[] rawValues = IotModbusCommonUtils.convertToRawValues(value, point);
         // 2.2 执行 Modbus 写入
         IotModbusTcpClientUtils.write(connection, slaveId, point, rawValues)
-                .onSuccess(success -> log.info("[writeProperty][写入成功, deviceId={}, identifier={}, value={}]",
-                        config.getDeviceId(), point.getIdentifier(), value))
-                .onFailure(e -> log.error("[writeProperty][写入失败, deviceId={}, identifier={}]",
-                        config.getDeviceId(), point.getIdentifier(), e));
+                .onSuccess(
+                        success ->
+                                log.info(
+                                        "[writeProperty][写入成功, deviceId={}, identifier={}, value={}]",
+                                        config.getDeviceId(),
+                                        point.getIdentifier(),
+                                        value))
+                .onFailure(
+                        e ->
+                                log.error(
+                                        "[writeProperty][写入失败, deviceId={}, identifier={}]",
+                                        config.getDeviceId(),
+                                        point.getIdentifier(),
+                                        e));
     }
-
 }

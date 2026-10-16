@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.system.service.social;
 
+import static cn.hutool.core.util.RandomUtil.randomEle;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.binarywang.wx.miniapp.api.WxMaOrderShippingService;
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.api.WxMaUserService;
@@ -18,9 +28,12 @@ import cn.iocoder.yudao.module.system.dal.dataobject.social.SocialClientDO;
 import cn.iocoder.yudao.module.system.dal.mysql.social.SocialClientMapper;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
 import cn.iocoder.yudao.module.system.framework.justauth.core.AuthRequestFactory;
+
 import com.binarywang.spring.starter.wxjava.miniapp.properties.WxMaProperties;
 import com.binarywang.spring.starter.wxjava.mp.properties.WxMpProperties;
+
 import jakarta.annotation.Resource;
+
 import me.chanjar.weixin.common.bean.WxJsapiSignature;
 import me.chanjar.weixin.common.error.WxError;
 import me.chanjar.weixin.common.error.WxErrorException;
@@ -31,21 +44,13 @@ import me.zhyd.oauth.model.AuthUser;
 import me.zhyd.oauth.request.AuthDefaultRequest;
 import me.zhyd.oauth.request.AuthRequest;
 import me.zhyd.oauth.utils.AuthStateUtils;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import static cn.hutool.core.util.RandomUtil.randomEle;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link SocialClientServiceImpl} 的单元测试类
@@ -55,25 +60,17 @@ import static org.mockito.Mockito.*;
 @Import(SocialClientServiceImpl.class)
 public class SocialClientServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private SocialClientServiceImpl socialClientService;
+    @Resource private SocialClientServiceImpl socialClientService;
 
-    @Resource
-    private SocialClientMapper socialClientMapper;
+    @Resource private SocialClientMapper socialClientMapper;
 
-    @MockitoBean
-    private AuthRequestFactory authRequestFactory;
+    @MockitoBean private AuthRequestFactory authRequestFactory;
 
-    @MockitoBean
-    private WxMpService wxMpService;
-    @MockitoBean
-    private WxMpProperties wxMpProperties;
-    @MockitoBean
-    private StringRedisTemplate stringRedisTemplate;
-    @MockitoBean
-    private WxMaService wxMaService;
-    @MockitoBean
-    private WxMaProperties wxMaProperties;
+    @MockitoBean private WxMpService wxMpService;
+    @MockitoBean private WxMpProperties wxMpProperties;
+    @MockitoBean private StringRedisTemplate stringRedisTemplate;
+    @MockitoBean private WxMaService wxMaService;
+    @MockitoBean private WxMaProperties wxMaProperties;
 
     @Test
     public void testGetAuthorizeUrl() {
@@ -87,7 +84,8 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
             when(authRequestFactory.get(eq("WECHAT_MP"))).thenReturn(authRequest);
             // mock 方法
             authStateUtilsMock.when(AuthStateUtils::createState).thenReturn("aoteman");
-            when(authRequest.authorize(eq("aoteman"))).thenReturn("https://www.iocoder.cn?redirect_uri=yyy");
+            when(authRequest.authorize(eq("aoteman")))
+                    .thenReturn("https://www.iocoder.cn?redirect_uri=yyy");
 
             // 调用
             String url = socialClientService.getAuthorizeUrl(socialType, userType, redirectUri);
@@ -109,11 +107,14 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         // mock 方法（AuthResponse）
         AuthUser authUser = randomPojo(AuthUser.class);
         AuthResponse<AuthUser> authResponse = new AuthResponse<>(2000, null, authUser);
-        when(authRequest.login(argThat(authCallback -> {
-            assertEquals(code, authCallback.getCode());
-            assertEquals(state, authCallback.getState());
-            return true;
-        }))).thenReturn(authResponse);
+        when(authRequest.login(
+                        argThat(
+                                authCallback -> {
+                                    assertEquals(code, authCallback.getCode());
+                                    assertEquals(state, authCallback.getState());
+                                    return true;
+                                })))
+                .thenReturn(authResponse);
 
         // 调用
         AuthUser result = socialClientService.getAuthUser(socialType, userType, code, state);
@@ -133,16 +134,20 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         when(authRequestFactory.get(eq("WECHAT_MP"))).thenReturn(authRequest);
         // mock 方法（AuthResponse）
         AuthResponse<AuthUser> authResponse = new AuthResponse<>(0, "模拟失败", null);
-        when(authRequest.login(argThat(authCallback -> {
-            assertEquals(code, authCallback.getCode());
-            assertEquals(state, authCallback.getState());
-            return true;
-        }))).thenReturn(authResponse);
+        when(authRequest.login(
+                        argThat(
+                                authCallback -> {
+                                    assertEquals(code, authCallback.getCode());
+                                    assertEquals(state, authCallback.getState());
+                                    return true;
+                                })))
+                .thenReturn(authResponse);
 
         // 调用并断言
         assertServiceException(
                 () -> socialClientService.getAuthUser(socialType, userType, code, state),
-                SOCIAL_USER_AUTH_FAILURE, "模拟失败");
+                SOCIAL_USER_AUTH_FAILURE,
+                "模拟失败");
     }
 
     @Test
@@ -172,8 +177,13 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         AuthConfig authConfig = (AuthConfig) ReflectUtil.getFieldValue(authRequest, "config");
         when(authRequestFactory.get(eq("WECHAT_MP"))).thenReturn(authRequest);
         // mock 数据
-        SocialClientDO client = randomPojo(SocialClientDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())
-                .setUserType(userType).setSocialType(socialType));
+        SocialClientDO client =
+                randomPojo(
+                        SocialClientDO.class,
+                        o ->
+                                o.setStatus(CommonStatusEnum.DISABLE.getStatus())
+                                        .setUserType(userType)
+                                        .setSocialType(socialType));
         socialClientMapper.insert(client);
 
         // 调用
@@ -194,8 +204,13 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         ReflectUtil.setFieldValue(authRequest, "config", authConfig);
         when(authRequestFactory.get(eq("WECHAT_MP"))).thenReturn(authRequest);
         // mock 数据
-        SocialClientDO client = randomPojo(SocialClientDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus())
-                .setUserType(userType).setSocialType(socialType));
+        SocialClientDO client =
+                randomPojo(
+                        SocialClientDO.class,
+                        o ->
+                                o.setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setUserType(userType)
+                                        .setSocialType(socialType));
         socialClientMapper.insert(client);
 
         // 调用
@@ -239,8 +254,13 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         Integer userType = randomPojo(UserTypeEnum.class).getValue();
         // mock 数据
-        SocialClientDO client = randomPojo(SocialClientDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())
-                .setUserType(userType).setSocialType(SocialTypeEnum.WECHAT_MP.getType()));
+        SocialClientDO client =
+                randomPojo(
+                        SocialClientDO.class,
+                        o ->
+                                o.setStatus(CommonStatusEnum.DISABLE.getStatus())
+                                        .setUserType(userType)
+                                        .setSocialType(SocialTypeEnum.WECHAT_MP.getType()));
         socialClientMapper.insert(client);
 
         // 调用
@@ -254,8 +274,13 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         Integer userType = randomPojo(UserTypeEnum.class).getValue();
         // mock 数据
-        SocialClientDO client = randomPojo(SocialClientDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus())
-                .setUserType(userType).setSocialType(SocialTypeEnum.WECHAT_MP.getType()));
+        SocialClientDO client =
+                randomPojo(
+                        SocialClientDO.class,
+                        o ->
+                                o.setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setUserType(userType)
+                                        .setSocialType(SocialTypeEnum.WECHAT_MP.getType()));
         socialClientMapper.insert(client);
         // mock 方法
         WxMpProperties.ConfigStorage configStorage = mock(WxMpProperties.ConfigStorage.class);
@@ -283,7 +308,8 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         when(userService.getPhoneNumber(eq(phoneCode))).thenReturn(phoneNumber);
 
         // 调用
-        WxMaPhoneNumberInfo result = socialClientService.getWxMaPhoneNumberInfo(userType, phoneCode);
+        WxMaPhoneNumberInfo result =
+                socialClientService.getWxMaPhoneNumberInfo(userType, phoneCode);
         // 断言
         assertSame(phoneNumber, result);
     }
@@ -300,7 +326,8 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         when(userService.getPhoneNumber(eq(phoneCode))).thenThrow(wxErrorException);
 
         // 调用并断言异常
-        assertServiceException(() -> socialClientService.getWxMaPhoneNumberInfo(userType, phoneCode),
+        assertServiceException(
+                () -> socialClientService.getWxMaPhoneNumberInfo(userType, phoneCode),
                 SOCIAL_CLIENT_WEIXIN_MINI_APP_PHONE_CODE_ERROR);
     }
 
@@ -321,8 +348,14 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         Integer userType = randomPojo(UserTypeEnum.class).getValue();
         // mock 数据
-        SocialClientDO client = randomPojo(SocialClientDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())
-                .setUserType(userType).setSocialType(SocialTypeEnum.WECHAT_MINI_PROGRAM.getType()));
+        SocialClientDO client =
+                randomPojo(
+                        SocialClientDO.class,
+                        o ->
+                                o.setStatus(CommonStatusEnum.DISABLE.getStatus())
+                                        .setUserType(userType)
+                                        .setSocialType(
+                                                SocialTypeEnum.WECHAT_MINI_PROGRAM.getType()));
         socialClientMapper.insert(client);
 
         // 调用
@@ -336,8 +369,14 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         Integer userType = randomPojo(UserTypeEnum.class).getValue();
         // mock 数据
-        SocialClientDO client = randomPojo(SocialClientDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus())
-                .setUserType(userType).setSocialType(SocialTypeEnum.WECHAT_MINI_PROGRAM.getType()));
+        SocialClientDO client =
+                randomPojo(
+                        SocialClientDO.class,
+                        o ->
+                                o.setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setUserType(userType)
+                                        .setSocialType(
+                                                SocialTypeEnum.WECHAT_MINI_PROGRAM.getType()));
         socialClientMapper.insert(client);
         // mock 方法
         WxMaProperties.ConfigStorage configStorage = mock(WxMaProperties.ConfigStorage.class);
@@ -356,11 +395,17 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateSocialClient_success() {
         // 准备参数
-        SocialClientSaveReqVO reqVO = randomPojo(SocialClientSaveReqVO.class,
-                o -> o.setSocialType(randomEle(SocialTypeEnum.values()).getType())
-                        .setUserType(randomEle(UserTypeEnum.values()).getValue())
-                        .setStatus(randomCommonStatus()))
-                .setId(null); // 防止 id 被赋值
+        SocialClientSaveReqVO reqVO =
+                randomPojo(
+                                SocialClientSaveReqVO.class,
+                                o ->
+                                        o.setSocialType(
+                                                        randomEle(SocialTypeEnum.values())
+                                                                .getType())
+                                                .setUserType(
+                                                        randomEle(UserTypeEnum.values()).getValue())
+                                                .setStatus(randomCommonStatus()))
+                        .setId(null); // 防止 id 被赋值
 
         // 调用
         Long socialClientId = socialClientService.createSocialClient(reqVO);
@@ -375,14 +420,17 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
     public void testUpdateSocialClient_success() {
         // mock 数据
         SocialClientDO dbSocialClient = randomPojo(SocialClientDO.class);
-        socialClientMapper.insert(dbSocialClient);// @Sql: 先插入出一条存在的数据
+        socialClientMapper.insert(dbSocialClient); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        SocialClientSaveReqVO reqVO = randomPojo(SocialClientSaveReqVO.class, o -> {
-            o.setId(dbSocialClient.getId()); // 设置更新的 ID
-            o.setSocialType(randomEle(SocialTypeEnum.values()).getType())
-                    .setUserType(randomEle(UserTypeEnum.values()).getValue())
-                    .setStatus(randomCommonStatus());
-        });
+        SocialClientSaveReqVO reqVO =
+                randomPojo(
+                        SocialClientSaveReqVO.class,
+                        o -> {
+                            o.setId(dbSocialClient.getId()); // 设置更新的 ID
+                            o.setSocialType(randomEle(SocialTypeEnum.values()).getType())
+                                    .setUserType(randomEle(UserTypeEnum.values()).getValue())
+                                    .setStatus(randomCommonStatus());
+                        });
 
         // 调用
         socialClientService.updateSocialClient(reqVO);
@@ -397,14 +445,15 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         SocialClientSaveReqVO reqVO = randomPojo(SocialClientSaveReqVO.class);
 
         // 调用, 并断言异常
-        assertServiceException(() -> socialClientService.updateSocialClient(reqVO), SOCIAL_CLIENT_NOT_EXISTS);
+        assertServiceException(
+                () -> socialClientService.updateSocialClient(reqVO), SOCIAL_CLIENT_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteSocialClient_success() {
         // mock 数据
         SocialClientDO dbSocialClient = randomPojo(SocialClientDO.class);
-        socialClientMapper.insert(dbSocialClient);// @Sql: 先插入出一条存在的数据
+        socialClientMapper.insert(dbSocialClient); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbSocialClient.getId();
 
@@ -420,14 +469,15 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> socialClientService.deleteSocialClient(id), SOCIAL_CLIENT_NOT_EXISTS);
+        assertServiceException(
+                () -> socialClientService.deleteSocialClient(id), SOCIAL_CLIENT_NOT_EXISTS);
     }
 
     @Test
     public void testGetSocialClient() {
         // mock 数据
         SocialClientDO dbSocialClient = randomPojo(SocialClientDO.class);
-        socialClientMapper.insert(dbSocialClient);// @Sql: 先插入出一条存在的数据
+        socialClientMapper.insert(dbSocialClient); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbSocialClient.getId();
 
@@ -440,24 +490,32 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetSocialClientPage() {
         // mock 数据
-        SocialClientDO dbSocialClient = randomPojo(SocialClientDO.class, o -> { // 等会查询到
-            o.setName("芋头");
-            o.setSocialType(SocialTypeEnum.GITEE.getType());
-            o.setUserType(UserTypeEnum.ADMIN.getValue());
-            o.setClientId("yudao");
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-        });
+        SocialClientDO dbSocialClient =
+                randomPojo(
+                        SocialClientDO.class,
+                        o -> { // 等会查询到
+                            o.setName("芋头");
+                            o.setSocialType(SocialTypeEnum.GITEE.getType());
+                            o.setUserType(UserTypeEnum.ADMIN.getValue());
+                            o.setClientId("yudao");
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                        });
         socialClientMapper.insert(dbSocialClient);
         // 测试 name 不匹配
         socialClientMapper.insert(cloneIgnoreId(dbSocialClient, o -> o.setName(randomString())));
         // 测试 socialType 不匹配
-        socialClientMapper.insert(cloneIgnoreId(dbSocialClient, o -> o.setSocialType(SocialTypeEnum.DINGTALK.getType())));
+        socialClientMapper.insert(
+                cloneIgnoreId(
+                        dbSocialClient, o -> o.setSocialType(SocialTypeEnum.DINGTALK.getType())));
         // 测试 userType 不匹配
-        socialClientMapper.insert(cloneIgnoreId(dbSocialClient, o -> o.setUserType(UserTypeEnum.MEMBER.getValue())));
+        socialClientMapper.insert(
+                cloneIgnoreId(dbSocialClient, o -> o.setUserType(UserTypeEnum.MEMBER.getValue())));
         // 测试 clientId 不匹配
         socialClientMapper.insert(cloneIgnoreId(dbSocialClient, o -> o.setClientId("dao")));
         // 测试 status 不匹配
-        socialClientMapper.insert(cloneIgnoreId(dbSocialClient, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        socialClientMapper.insert(
+                cloneIgnoreId(
+                        dbSocialClient, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
         // 准备参数
         SocialClientPageReqVO reqVO = new SocialClientPageReqVO();
         reqVO.setName("芋");
@@ -479,8 +537,11 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
     @BeforeAll
     public static void setUpUploadShippingBackoff() {
         // 测试场景下把退避数组的每一项改为 1ms，避免拖慢用例（数组引用是 final 但元素可改）
-        long[] backoff = (long[]) ReflectUtil.getFieldValue(SocialClientServiceImpl.class,
-                "UPLOAD_SHIPPING_INFO_RETRY_BACKOFF_MILLIS");
+        long[] backoff =
+                (long[])
+                        ReflectUtil.getFieldValue(
+                                SocialClientServiceImpl.class,
+                                "UPLOAD_SHIPPING_INFO_RETRY_BACKOFF_MILLIS");
         for (int i = 0; i < backoff.length; i++) {
             backoff[i] = 1L;
         }
@@ -530,7 +591,8 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
                 .thenThrow(buildWxErrorException(10060001));
 
         // 调用并断言：重试用尽抛业务异常
-        assertServiceException(() -> socialClientService.uploadWxaOrderShippingInfo(userType, reqDTO),
+        assertServiceException(
+                () -> socialClientService.uploadWxaOrderShippingInfo(userType, reqDTO),
                 SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_UPLOAD_SHIPPING_INFO_ERROR);
         // 断言：共 4 次尝试（1 次首发 + 3 次重试）
         verify(shippingService, times(4)).upload(any(WxMaOrderShippingInfoUploadRequest.class));
@@ -547,15 +609,19 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
                 .thenThrow(buildWxErrorException(40001));
 
         // 调用并断言：立即抛业务异常，无重试
-        assertServiceException(() -> socialClientService.uploadWxaOrderShippingInfo(userType, reqDTO),
+        assertServiceException(
+                () -> socialClientService.uploadWxaOrderShippingInfo(userType, reqDTO),
                 SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_UPLOAD_SHIPPING_INFO_ERROR);
         verify(shippingService, times(1)).upload(any(WxMaOrderShippingInfoUploadRequest.class));
     }
 
     /** 构造一个发货上传请求 */
     private SocialWxaOrderUploadShippingInfoReqDTO randomUploadShippingReqDTO() {
-        return randomPojo(SocialWxaOrderUploadShippingInfoReqDTO.class,
-                o -> o.setLogisticsType(SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_EXPRESS));
+        return randomPojo(
+                SocialWxaOrderUploadShippingInfoReqDTO.class,
+                o ->
+                        o.setLogisticsType(
+                                SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_EXPRESS));
     }
 
     /** mock 出 wxMaService.getWxMaOrderShippingService() 的返回值并返回该 mock */
@@ -567,7 +633,7 @@ public class SocialClientServiceImplTest extends BaseDbUnitTest {
 
     /** 构造指定 errorCode 的 WxErrorException */
     private WxErrorException buildWxErrorException(int errorCode) {
-        return new WxErrorException(WxError.builder().errorCode(errorCode).errorMsg("mock error").build());
+        return new WxErrorException(
+                WxError.builder().errorCode(errorCode).errorMsg("mock error").build());
     }
-
 }

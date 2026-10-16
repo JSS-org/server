@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.framework.aftersale.config;
 
 import cn.iocoder.yudao.module.trade.framework.aftersale.core.aop.AfterSaleLogAspect;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,5 +19,4 @@ public class AfterSaleLogConfiguration {
     public AfterSaleLogAspect afterSaleLogAspect() {
         return new AfterSaleLogAspect();
     }
-
 }

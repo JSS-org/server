@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.trade.controller.admin.brokerage.vo.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.ToString;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+import lombok.ToString;
 
 @Schema(description = "管理后台 - 分销用户 - 修改推广员 Request VO")
 @Data
@@ -18,5 +19,4 @@ public class BrokerageUserUpdateBrokerageEnabledReqVO {
     @Schema(description = "推广资格", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "推广资格不能为空")
     private Boolean enabled;
-
 }

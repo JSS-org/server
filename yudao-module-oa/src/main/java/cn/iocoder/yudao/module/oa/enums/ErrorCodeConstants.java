@@ -81,14 +81,16 @@ public interface ErrorCodeConstants {
     ErrorCode MAIL_PROVIDER_IN_USE = new ErrorCode(1_054_190_002, "邮箱服务配置已被账号引用");
     ErrorCode MAIL_ACCOUNT_NOT_EXISTS = new ErrorCode(1_054_190_003, "邮箱账号不存在或无权访问");
     ErrorCode MAIL_ACCOUNT_DISABLED = new ErrorCode(1_054_190_004, "邮箱账号未启用");
-    ErrorCode MAIL_ACCOUNT_IDENTITY_IMMUTABLE = new ErrorCode(1_054_190_033, "邮箱绑定后不能修改地址、登录名或服务，请新增绑定");
+    ErrorCode MAIL_ACCOUNT_IDENTITY_IMMUTABLE =
+            new ErrorCode(1_054_190_033, "邮箱绑定后不能修改地址、登录名或服务，请新增绑定");
     ErrorCode MAIL_ACCOUNT_PASSWORD_REQUIRED = new ErrorCode(1_054_190_005, "请输入邮箱密码或授权码");
     ErrorCode MAIL_MESSAGE_NOT_EXISTS = new ErrorCode(1_054_190_006, "邮件不存在或已移动，请先同步");
     ErrorCode MAIL_FOLDER_NOT_AVAILABLE = new ErrorCode(1_054_190_007, "文件夹不可用，请先同步");
     ErrorCode MAIL_SYNC_COUNT_EXCEEDED = new ErrorCode(1_054_190_008, "单文件夹超过 {} 封，请先缩小邮箱范围后同步");
     ErrorCode MAIL_SYNC_CHANGED = new ErrorCode(1_054_190_009, "同步期间邮箱发生变化，请重新同步");
     ErrorCode MAIL_UID_EXPIRED = new ErrorCode(1_054_190_010, "邮件标识已变化，请先同步");
-    ErrorCode MAIL_PERMANENT_DELETE_UNSUPPORTED = new ErrorCode(1_054_190_011, "服务商不支持安全的单封彻底删除，请使用原邮箱客户端");
+    ErrorCode MAIL_PERMANENT_DELETE_UNSUPPORTED =
+            new ErrorCode(1_054_190_011, "服务商不支持安全的单封彻底删除，请使用原邮箱客户端");
     ErrorCode MAIL_TRASH_NOT_EXISTS = new ErrorCode(1_054_190_012, "未识别到已删除文件夹，请使用原邮箱客户端");
     ErrorCode MAIL_MOVE_UNSUPPORTED = new ErrorCode(1_054_190_013, "服务商不支持安全移动，请使用原邮箱客户端操作");
     ErrorCode MAIL_RECIPIENT_REQUIRED = new ErrorCode(1_054_190_014, "请填写收件人");
@@ -100,8 +102,10 @@ public interface ErrorCodeConstants {
     ErrorCode MAIL_READ_STATUS_FAILED = new ErrorCode(1_054_190_020, "已读状态更新失败，请同步确认远端状态");
     ErrorCode MAIL_DELETE_UNCONFIRMED = new ErrorCode(1_054_190_021, "删除结果未确认，请先同步核实，勿重复操作");
     ErrorCode MAIL_DRAFT_FOLDER_NOT_EXISTS = new ErrorCode(1_054_190_022, "未识别到草稿箱，请先在原邮箱配置草稿文件夹");
-    ErrorCode MAIL_DRAFT_REPLACE_UNSUPPORTED = new ErrorCode(1_054_190_023, "服务商不支持草稿安全替换，请使用原邮箱客户端");
-    ErrorCode MAIL_DRAFT_SAVE_UNCONFIRMED = new ErrorCode(1_054_190_024, "草稿保存结果未确认，请同步草稿箱后核实，勿重复保存");
+    ErrorCode MAIL_DRAFT_REPLACE_UNSUPPORTED =
+            new ErrorCode(1_054_190_023, "服务商不支持草稿安全替换，请使用原邮箱客户端");
+    ErrorCode MAIL_DRAFT_SAVE_UNCONFIRMED =
+            new ErrorCode(1_054_190_024, "草稿保存结果未确认，请同步草稿箱后核实，勿重复保存");
     ErrorCode MAIL_DRAFT_INDEX_NOT_FOUND = new ErrorCode(1_054_190_025, "草稿已保存，请同步后查看");
     ErrorCode MAIL_SOURCE_NOT_OWNED = new ErrorCode(1_054_190_026, "原邮件不属于当前邮箱");
     ErrorCode MAIL_SEND_UNCONFIRMED = new ErrorCode(1_054_190_027, "发送失败或结果未知，请先在原邮箱确认，勿直接重发");
@@ -151,7 +155,8 @@ public interface ErrorCodeConstants {
     ErrorCode VEHICLE_RETURN_NOT_EXISTS = new ErrorCode(1_054_220_009, "还车申请不存在");
     ErrorCode VEHICLE_RETURN_NOT_OWNER = new ErrorCode(1_054_220_010, "只能操作本人的还车申请");
     ErrorCode VEHICLE_RETURN_STATUS_INVALID = new ErrorCode(1_054_220_011, "当前申请状态不允许还车操作");
-    ErrorCode VEHICLE_RETURN_TIME_INVALID = new ErrorCode(1_054_220_014, "请填写实际出车时间，回车时间不能早于实际出车时间或晚于当前时间");
+    ErrorCode VEHICLE_RETURN_TIME_INVALID =
+            new ErrorCode(1_054_220_014, "请填写实际出车时间，回车时间不能早于实际出车时间或晚于当前时间");
 
     ErrorCode VEHICLE_APPLY_NO_DUPLICATE = new ErrorCode(1_054_220_017, "用车申请单号已存在");
 
@@ -197,5 +202,4 @@ public interface ErrorCodeConstants {
     ErrorCode OFFICIAL_DOC_RECEIVE_NO_DUPLICATE = new ErrorCode(1_054_260_006, "收文单据编号已存在");
     ErrorCode OFFICIAL_DOC_TEMPLATE_IN_USE = new ErrorCode(1_054_260_008, "套红模板已有业务单据引用，不能删除");
     ErrorCode OFFICIAL_DOC_SEND_DOCUMENT_NO_DUPLICATE = new ErrorCode(1_054_260_009, "发文字号已存在");
-
 }

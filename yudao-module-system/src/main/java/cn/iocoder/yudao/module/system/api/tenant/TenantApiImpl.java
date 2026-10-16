@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.system.api.tenant;
 
 import cn.iocoder.yudao.framework.common.biz.system.tenant.TenantCommonApi;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 /**
@@ -15,8 +17,7 @@ import java.util.List;
 @Service
 public class TenantApiImpl implements TenantCommonApi {
 
-    @Resource
-    private TenantService tenantService;
+    @Resource private TenantService tenantService;
 
     @Override
     public List<Long> getTenantIdList() {
@@ -27,5 +28,4 @@ public class TenantApiImpl implements TenantCommonApi {
     public void validateTenant(Long id) {
         tenantService.validTenant(id);
     }
-
 }

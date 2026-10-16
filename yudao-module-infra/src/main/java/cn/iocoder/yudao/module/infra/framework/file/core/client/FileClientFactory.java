@@ -19,6 +19,6 @@ public interface FileClientFactory {
      * @param storage 存储器的枚举 {@link FileStorageEnum}
      * @param config 文件配置
      */
-    <Config extends FileClientConfig> void createOrUpdateFileClient(Long configId, Integer storage, Config config);
-
+    <Config extends FileClientConfig> void createOrUpdateFileClient(
+            Long configId, Integer storage, Config config);
 }

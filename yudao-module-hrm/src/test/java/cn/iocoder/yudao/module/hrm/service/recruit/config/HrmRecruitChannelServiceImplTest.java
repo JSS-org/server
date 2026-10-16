@@ -1,6 +1,20 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.config;
 
-import cn.iocoder.yudao.module.hrm.service.recruit.candidate.HrmRecruitCandidateService;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
@@ -12,7 +26,10 @@ import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.channel.HrmRecrui
 import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.config.HrmRecruitChannelDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.recruit.config.HrmRecruitChannelMapper;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
+import cn.iocoder.yudao.module.hrm.service.recruit.candidate.HrmRecruitCandidateService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,19 +37,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.*;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * {@link HrmRecruitChannelServiceImpl} 的单元测试类
@@ -42,16 +46,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Import(HrmRecruitChannelServiceImpl.class)
 public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmRecruitChannelServiceImpl recruitChannelService;
+    @Resource private HrmRecruitChannelServiceImpl recruitChannelService;
 
-    @Resource
-    private HrmRecruitChannelMapper recruitChannelMapper;
+    @Resource private HrmRecruitChannelMapper recruitChannelMapper;
 
-    @MockitoBean
-    private HrmEmployeeService employeeService;
-    @MockitoBean
-    private HrmRecruitCandidateService recruitCandidateService;
+    @MockitoBean private HrmEmployeeService employeeService;
+    @MockitoBean private HrmRecruitCandidateService recruitCandidateService;
 
     @Test
     public void testCreateRecruitChannel_success() {
@@ -75,7 +75,8 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
         HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o.setSystemFlag(false));
         recruitChannelMapper.insert(dbChannel);
         // 准备参数
-        HrmRecruitChannelSaveReqVO reqVO = randomRecruitChannelSaveReqVO(o -> o.setId(dbChannel.getId()));
+        HrmRecruitChannelSaveReqVO reqVO =
+                randomRecruitChannelSaveReqVO(o -> o.setId(dbChannel.getId()));
 
         // 调用
         recruitChannelService.updateRecruitChannel(reqVO);
@@ -89,43 +90,51 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateRecruitChannel_systemNameUpdateForbidden() {
         // mock 数据
-        HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o
-                .setName("人才招聘会").setSystemFlag(true));
+        HrmRecruitChannelDO dbChannel =
+                randomRecruitChannelDO(o -> o.setName("人才招聘会").setSystemFlag(true));
         recruitChannelMapper.insert(dbChannel);
         // 准备参数
-        HrmRecruitChannelSaveReqVO reqVO = randomRecruitChannelSaveReqVO(o -> o
-                .setId(dbChannel.getId()).setName("招聘会"));
+        HrmRecruitChannelSaveReqVO reqVO =
+                randomRecruitChannelSaveReqVO(o -> o.setId(dbChannel.getId()).setName("招聘会"));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitChannelService.updateRecruitChannel(reqVO),
+        assertServiceException(
+                () -> recruitChannelService.updateRecruitChannel(reqVO),
                 RECRUIT_CHANNEL_SYSTEM_NAME_UPDATE_FORBIDDEN);
     }
 
     @Test
     public void testUpdateRecruitChannel_notExists() {
         // 准备参数
-        HrmRecruitChannelSaveReqVO reqVO = randomRecruitChannelSaveReqVO(o -> o.setId(randomLongId()));
+        HrmRecruitChannelSaveReqVO reqVO =
+                randomRecruitChannelSaveReqVO(o -> o.setId(randomLongId()));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitChannelService.updateRecruitChannel(reqVO),
+        assertServiceException(
+                () -> recruitChannelService.updateRecruitChannel(reqVO),
                 RECRUIT_CHANNEL_NOT_EXISTS);
     }
 
     @Test
     public void testUpdateRecruitChannelStatus_success() {
         // mock 数据
-        HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o
-                .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        HrmRecruitChannelDO dbChannel =
+                randomRecruitChannelDO(o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
         recruitChannelMapper.insert(dbChannel);
         // 准备参数
-        HrmRecruitChannelStatusReqVO reqVO = randomPojo(HrmRecruitChannelStatusReqVO.class, o -> o
-                .setId(dbChannel.getId()).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        HrmRecruitChannelStatusReqVO reqVO =
+                randomPojo(
+                        HrmRecruitChannelStatusReqVO.class,
+                        o ->
+                                o.setId(dbChannel.getId())
+                                        .setStatus(CommonStatusEnum.DISABLE.getStatus()));
 
         // 调用
         recruitChannelService.updateRecruitChannelStatus(reqVO);
 
         // 断言
-        assertEquals(reqVO.getStatus(), recruitChannelMapper.selectById(dbChannel.getId()).getStatus());
+        assertEquals(
+                reqVO.getStatus(), recruitChannelMapper.selectById(dbChannel.getId()).getStatus());
     }
 
     @Test
@@ -133,12 +142,17 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o.setSystemFlag(false));
         recruitChannelMapper.insert(dbChannel);
-        HrmRecruitChannelDO transferChannel = randomRecruitChannelDO(o -> o
-                .setSystemFlag(true).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        HrmRecruitChannelDO transferChannel =
+                randomRecruitChannelDO(
+                        o -> o.setSystemFlag(true).setStatus(CommonStatusEnum.ENABLE.getStatus()));
         recruitChannelMapper.insert(transferChannel);
         // 准备参数
-        HrmRecruitChannelDeleteReqVO reqVO = randomPojo(HrmRecruitChannelDeleteReqVO.class, o -> o
-                .setId(dbChannel.getId()).setTransferChannelId(transferChannel.getId()));
+        HrmRecruitChannelDeleteReqVO reqVO =
+                randomPojo(
+                        HrmRecruitChannelDeleteReqVO.class,
+                        o ->
+                                o.setId(dbChannel.getId())
+                                        .setTransferChannelId(transferChannel.getId()));
 
         // 调用
         recruitChannelService.deleteRecruitChannel(reqVO);
@@ -146,9 +160,11 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertNull(recruitChannelMapper.selectById(dbChannel.getId()));
         assertNotNull(recruitChannelMapper.selectById(transferChannel.getId()));
-        verify(employeeService).updateEmployeeChannelByChannelId(dbChannel.getId(), transferChannel.getId());
-        verify(recruitCandidateService).updateRecruitCandidateChannelByChannelId(
-                dbChannel.getId(), transferChannel.getId());
+        verify(employeeService)
+                .updateEmployeeChannelByChannelId(dbChannel.getId(), transferChannel.getId());
+        verify(recruitCandidateService)
+                .updateRecruitCandidateChannelByChannelId(
+                        dbChannel.getId(), transferChannel.getId());
     }
 
     @Test
@@ -157,11 +173,14 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
         HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o.setSystemFlag(true));
         recruitChannelMapper.insert(dbChannel);
         // 准备参数
-        HrmRecruitChannelDeleteReqVO reqVO = randomPojo(HrmRecruitChannelDeleteReqVO.class, o -> o
-                .setId(dbChannel.getId()).setTransferChannelId(randomLongId()));
+        HrmRecruitChannelDeleteReqVO reqVO =
+                randomPojo(
+                        HrmRecruitChannelDeleteReqVO.class,
+                        o -> o.setId(dbChannel.getId()).setTransferChannelId(randomLongId()));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitChannelService.deleteRecruitChannel(reqVO),
+        assertServiceException(
+                () -> recruitChannelService.deleteRecruitChannel(reqVO),
                 RECRUIT_CHANNEL_SYSTEM_DELETE_FORBIDDEN);
         verifyNoInteractions(employeeService, recruitCandidateService);
     }
@@ -172,11 +191,14 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
         HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o.setSystemFlag(false));
         recruitChannelMapper.insert(dbChannel);
         // 准备参数
-        HrmRecruitChannelDeleteReqVO reqVO = randomPojo(HrmRecruitChannelDeleteReqVO.class, o -> o
-                .setId(dbChannel.getId()).setTransferChannelId(dbChannel.getId()));
+        HrmRecruitChannelDeleteReqVO reqVO =
+                randomPojo(
+                        HrmRecruitChannelDeleteReqVO.class,
+                        o -> o.setId(dbChannel.getId()).setTransferChannelId(dbChannel.getId()));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitChannelService.deleteRecruitChannel(reqVO),
+        assertServiceException(
+                () -> recruitChannelService.deleteRecruitChannel(reqVO),
                 RECRUIT_CHANNEL_TRANSFER_SELF);
         verifyNoInteractions(employeeService, recruitCandidateService);
     }
@@ -186,15 +208,20 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o.setSystemFlag(false));
         recruitChannelMapper.insert(dbChannel);
-        HrmRecruitChannelDO transferChannel = randomRecruitChannelDO(o -> o
-                .setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        HrmRecruitChannelDO transferChannel =
+                randomRecruitChannelDO(o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
         recruitChannelMapper.insert(transferChannel);
         // 准备参数
-        HrmRecruitChannelDeleteReqVO reqVO = randomPojo(HrmRecruitChannelDeleteReqVO.class, o -> o
-                .setId(dbChannel.getId()).setTransferChannelId(transferChannel.getId()));
+        HrmRecruitChannelDeleteReqVO reqVO =
+                randomPojo(
+                        HrmRecruitChannelDeleteReqVO.class,
+                        o ->
+                                o.setId(dbChannel.getId())
+                                        .setTransferChannelId(transferChannel.getId()));
 
         // 调用，并断言异常
-        assertServiceException(() -> recruitChannelService.deleteRecruitChannel(reqVO),
+        assertServiceException(
+                () -> recruitChannelService.deleteRecruitChannel(reqVO),
                 RECRUIT_CHANNEL_TRANSFER_DISABLED);
         verifyNoInteractions(employeeService, recruitCandidateService);
     }
@@ -235,7 +262,8 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRecruitChannelList_empty() {
         // 调用
-        List<HrmRecruitChannelDO> channels = recruitChannelService.getRecruitChannelList(emptyList());
+        List<HrmRecruitChannelDO> channels =
+                recruitChannelService.getRecruitChannelList(emptyList());
 
         // 断言
         assertTrue(channels.isEmpty());
@@ -244,21 +272,23 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRecruitChannelPage() {
         // mock 数据
-        HrmRecruitChannelDO dbChannel = randomRecruitChannelDO(o -> o
-                .setName("BOSS 直聘").setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        HrmRecruitChannelDO dbChannel =
+                randomRecruitChannelDO(
+                        o -> o.setName("BOSS 直聘").setStatus(CommonStatusEnum.ENABLE.getStatus()));
         recruitChannelMapper.insert(dbChannel);
         // 测试 name 不匹配
         recruitChannelMapper.insert(cloneIgnoreId(dbChannel, o -> o.setName("猎聘网")));
         // 测试 status 不匹配
-        recruitChannelMapper.insert(cloneIgnoreId(dbChannel,
-                o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        recruitChannelMapper.insert(
+                cloneIgnoreId(dbChannel, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
         // 准备参数
         HrmRecruitChannelPageReqVO reqVO = new HrmRecruitChannelPageReqVO();
         reqVO.setName("BOSS");
         reqVO.setStatus(CommonStatusEnum.ENABLE.getStatus());
 
         // 调用
-        PageResult<HrmRecruitChannelDO> pageResult = recruitChannelService.getRecruitChannelPage(reqVO);
+        PageResult<HrmRecruitChannelDO> pageResult =
+                recruitChannelService.getRecruitChannelPage(reqVO);
 
         // 断言
         assertEquals(1L, pageResult.getTotal());
@@ -269,39 +299,47 @@ public class HrmRecruitChannelServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRecruitChannelSimpleList() {
         // mock 数据
-        HrmRecruitChannelDO secondChannel = randomRecruitChannelDO(o -> o
-                .setSort(20).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        HrmRecruitChannelDO secondChannel =
+                randomRecruitChannelDO(
+                        o -> o.setSort(20).setStatus(CommonStatusEnum.ENABLE.getStatus()));
         recruitChannelMapper.insert(secondChannel);
-        HrmRecruitChannelDO firstChannel = randomRecruitChannelDO(o -> o
-                .setSort(10).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        HrmRecruitChannelDO firstChannel =
+                randomRecruitChannelDO(
+                        o -> o.setSort(10).setStatus(CommonStatusEnum.ENABLE.getStatus()));
         recruitChannelMapper.insert(firstChannel);
         // 测试 status 不匹配
-        recruitChannelMapper.insert(randomRecruitChannelDO(o -> o
-                .setSort(1).setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        recruitChannelMapper.insert(
+                randomRecruitChannelDO(
+                        o -> o.setSort(1).setStatus(CommonStatusEnum.DISABLE.getStatus())));
 
         // 调用
         List<HrmRecruitChannelDO> channels = recruitChannelService.getRecruitChannelSimpleList();
 
         // 断言
-        assertEquals(asList(firstChannel.getId(), secondChannel.getId()),
+        assertEquals(
+                asList(firstChannel.getId(), secondChannel.getId()),
                 convertList(channels, HrmRecruitChannelDO::getId));
     }
 
     // ========== 随机对象 ==========
 
     @SafeVarargs
-    private static HrmRecruitChannelDO randomRecruitChannelDO(Consumer<HrmRecruitChannelDO>... consumers) {
-        Consumer<HrmRecruitChannelDO> consumer = o -> o.setName(randomString()).setSort(randomInteger())
-                .setStatus(randomCommonStatus()).setSystemFlag(false);
+    private static HrmRecruitChannelDO randomRecruitChannelDO(
+            Consumer<HrmRecruitChannelDO>... consumers) {
+        Consumer<HrmRecruitChannelDO> consumer =
+                o ->
+                        o.setName(randomString())
+                                .setSort(randomInteger())
+                                .setStatus(randomCommonStatus())
+                                .setSystemFlag(false);
         return randomPojo(HrmRecruitChannelDO.class, ArrayUtils.append(consumer, consumers));
     }
 
     @SafeVarargs
     private static HrmRecruitChannelSaveReqVO randomRecruitChannelSaveReqVO(
             Consumer<HrmRecruitChannelSaveReqVO>... consumers) {
-        Consumer<HrmRecruitChannelSaveReqVO> consumer = o -> o.setId(null)
-                .setName(randomString()).setSort(randomInteger());
+        Consumer<HrmRecruitChannelSaveReqVO> consumer =
+                o -> o.setId(null).setName(randomString()).setSort(randomInteger());
         return randomPojo(HrmRecruitChannelSaveReqVO.class, ArrayUtils.append(consumer, consumers));
     }
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.md.unitmeasure.vo.MesMdUnitMeasurePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.unitmeasure.MesMdUnitMeasureDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,11 +19,13 @@ import java.util.List;
 public interface MesMdUnitMeasureMapper extends BaseMapperX<MesMdUnitMeasureDO> {
 
     default PageResult<MesMdUnitMeasureDO> selectPage(MesMdUnitMeasurePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesMdUnitMeasureDO>()
-                .likeIfPresent(MesMdUnitMeasureDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesMdUnitMeasureDO::getName, reqVO.getName())
-                .eqIfPresent(MesMdUnitMeasureDO::getStatus, reqVO.getStatus())
-                .orderByDesc(MesMdUnitMeasureDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesMdUnitMeasureDO>()
+                        .likeIfPresent(MesMdUnitMeasureDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesMdUnitMeasureDO::getName, reqVO.getName())
+                        .eqIfPresent(MesMdUnitMeasureDO::getStatus, reqVO.getStatus())
+                        .orderByDesc(MesMdUnitMeasureDO::getId));
     }
 
     default MesMdUnitMeasureDO selectByCode(String code) {
@@ -36,5 +39,4 @@ public interface MesMdUnitMeasureMapper extends BaseMapperX<MesMdUnitMeasureDO> 
     default Long selectCountByPrimaryId(Long primaryId) {
         return selectCount(MesMdUnitMeasureDO::getPrimaryId, primaryId);
     }
-
 }

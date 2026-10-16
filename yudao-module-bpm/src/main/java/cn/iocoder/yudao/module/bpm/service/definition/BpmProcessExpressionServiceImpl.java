@@ -1,19 +1,19 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
-import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.expression.BpmProcessExpressionPageReqVO;
-import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.expression.BpmProcessExpressionSaveReqVO;
-import org.springframework.stereotype.Service;
-import jakarta.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-
-import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessExpressionDO;
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-
-import cn.iocoder.yudao.module.bpm.dal.mysql.definition.BpmProcessExpressionMapper;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
+
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.expression.BpmProcessExpressionPageReqVO;
+import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.expression.BpmProcessExpressionSaveReqVO;
+import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessExpressionDO;
+import cn.iocoder.yudao.module.bpm.dal.mysql.definition.BpmProcessExpressionMapper;
+
+import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * BPM 流程表达式 Service 实现类
@@ -24,13 +24,13 @@ import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
 @Validated
 public class BpmProcessExpressionServiceImpl implements BpmProcessExpressionService {
 
-    @Resource
-    private BpmProcessExpressionMapper processExpressionMapper;
+    @Resource private BpmProcessExpressionMapper processExpressionMapper;
 
     @Override
     public Long createProcessExpression(BpmProcessExpressionSaveReqVO createReqVO) {
         // 插入
-        BpmProcessExpressionDO processExpression = BeanUtils.toBean(createReqVO, BpmProcessExpressionDO.class);
+        BpmProcessExpressionDO processExpression =
+                BeanUtils.toBean(createReqVO, BpmProcessExpressionDO.class);
         processExpressionMapper.insert(processExpression);
         // 返回
         return processExpression.getId();
@@ -41,7 +41,8 @@ public class BpmProcessExpressionServiceImpl implements BpmProcessExpressionServ
         // 校验存在
         validateProcessExpressionExists(updateReqVO.getId());
         // 更新
-        BpmProcessExpressionDO updateObj = BeanUtils.toBean(updateReqVO, BpmProcessExpressionDO.class);
+        BpmProcessExpressionDO updateObj =
+                BeanUtils.toBean(updateReqVO, BpmProcessExpressionDO.class);
         processExpressionMapper.updateById(updateObj);
     }
 
@@ -65,8 +66,8 @@ public class BpmProcessExpressionServiceImpl implements BpmProcessExpressionServ
     }
 
     @Override
-    public PageResult<BpmProcessExpressionDO> getProcessExpressionPage(BpmProcessExpressionPageReqVO pageReqVO) {
+    public PageResult<BpmProcessExpressionDO> getProcessExpressionPage(
+            BpmProcessExpressionPageReqVO pageReqVO) {
         return processExpressionMapper.selectPage(pageReqVO);
     }
-
 }

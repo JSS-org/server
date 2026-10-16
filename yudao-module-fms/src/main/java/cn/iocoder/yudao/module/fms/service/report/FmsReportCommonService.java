@@ -30,8 +30,8 @@ public interface FmsReportCommonService {
      * @param userId 用户编号
      * @return 科目编号到余额的 Map
      */
-    Map<Long, FmsLedgerSubjectBalanceRespVO> getSubjectBalanceMap(Long accountSetId,
-            YearMonth startMonth, YearMonth endMonth, Long userId);
+    Map<Long, FmsLedgerSubjectBalanceRespVO> getSubjectBalanceMap(
+            Long accountSetId, YearMonth startMonth, YearMonth endMonth, Long userId);
 
     /**
      * 校验并构造报表公式项，公式项中的科目必须存在且不重复
@@ -42,8 +42,11 @@ public interface FmsReportCommonService {
      * @param userId 用户编号
      * @return 报表公式项
      */
-    List<FmsReportFormulaRespVO> buildReportFormulaList(FmsReportFormulaUpdateReqVO updateReqVO,
-            Integer minimumRule, Integer maximumRule, Long userId);
+    List<FmsReportFormulaRespVO> buildReportFormulaList(
+            FmsReportFormulaUpdateReqVO updateReqVO,
+            Integer minimumRule,
+            Integer maximumRule,
+            Long userId);
 
     /**
      * 校验报表项目属于当前账套且允许编辑公式
@@ -87,8 +90,8 @@ public interface FmsReportCommonService {
      * @param formulaSubjectIds 公式中的科目编号集合
      * @return 是否已纳入报表公式
      */
-    boolean isSubjectTreeMapped(FmsSubjectDO rootSubject, List<FmsSubjectDO> subjects,
-            Set<Long> formulaSubjectIds);
+    boolean isSubjectTreeMapped(
+            FmsSubjectDO rootSubject, List<FmsSubjectDO> subjects, Set<Long> formulaSubjectIds);
 
     /**
      * 判断是否为一级科目
@@ -134,9 +137,12 @@ public interface FmsReportCommonService {
      * @param opening 是否取期初余额，否则取期末余额
      * @return 金额
      */
-    BigDecimal calculateBalanceAmount(Integer rule, FmsSubjectDO subject,
+    BigDecimal calculateBalanceAmount(
+            Integer rule,
+            FmsSubjectDO subject,
             Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap,
-            Map<Long, FmsSubjectDO> subjectMap, boolean opening);
+            Map<Long, FmsSubjectDO> subjectMap,
+            boolean opening);
 
     /**
      * 计算发生额类取数规则的金额，损益发生额按科目余额方向决定借贷相减的方向
@@ -147,8 +153,11 @@ public interface FmsReportCommonService {
      * @param current 是否取本期发生额，否则取本年累计发生额
      * @return 金额
      */
-    BigDecimal calculateOccurrenceAmount(Integer rule, FmsSubjectDO subject,
-            FmsLedgerSubjectBalanceRespVO balance, boolean current);
+    BigDecimal calculateOccurrenceAmount(
+            Integer rule,
+            FmsSubjectDO subject,
+            FmsLedgerSubjectBalanceRespVO balance,
+            boolean current);
 
     /**
      * 计算利润表发生额，正向公式项按既有业务语义抵减反方向发生额
@@ -160,8 +169,12 @@ public interface FmsReportCommonService {
      * @param operator 运算符
      * @return 金额
      */
-    BigDecimal calculateIncomeOccurrenceAmount(Integer rule, FmsSubjectDO subject,
-            FmsLedgerSubjectBalanceRespVO balance, boolean current, String operator);
+    BigDecimal calculateIncomeOccurrenceAmount(
+            Integer rule,
+            FmsSubjectDO subject,
+            FmsLedgerSubjectBalanceRespVO balance,
+            boolean current,
+            String operator);
 
     /**
      * 计算报表项目的行次公式金额，例如 ["L1-L2"]
@@ -172,8 +185,11 @@ public interface FmsReportCommonService {
      * @param current 非期初时是否取本期金额，否则取本年累计或期末金额
      * @return 金额
      */
-    BigDecimal calculateItemLineFormula(String formula, Map<Integer, FmsReportItemRespVO> lineMap,
-            boolean opening, boolean current);
+    BigDecimal calculateItemLineFormula(
+            String formula,
+            Map<Integer, FmsReportItemRespVO> lineMap,
+            boolean opening,
+            boolean current);
 
     /**
      * 解析行次公式表达式数组
@@ -199,5 +215,4 @@ public interface FmsReportCommonService {
      * @return 报表期间类型
      */
     Integer getPeriodType(Integer fromPeriod, Integer toPeriod);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.qc.template;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,7 +11,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.MesQcTemplate
 import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.MesQcTemplateSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.qc.template.MesQcTemplateMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +22,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 质检方案 Service 实现类
@@ -30,15 +32,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcTemplateServiceImpl implements MesQcTemplateService {
 
-    @Resource
-    private MesQcTemplateMapper templateMapper;
+    @Resource private MesQcTemplateMapper templateMapper;
 
-    @Resource
-    @Lazy
-    private MesQcTemplateIndicatorService templateIndicatorService;
-    @Resource
-    @Lazy
-    private MesQcTemplateItemService templateItemService;
+    @Resource @Lazy private MesQcTemplateIndicatorService templateIndicatorService;
+    @Resource @Lazy private MesQcTemplateItemService templateItemService;
 
     @Override
     public Long createTemplate(MesQcTemplateSaveReqVO createReqVO) {
@@ -118,6 +115,4 @@ public class MesQcTemplateServiceImpl implements MesQcTemplateService {
         }
         return templateMapper.selectByIds(ids);
     }
-
 }
-

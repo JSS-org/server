@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.fms.service.report;
 
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.income.FmsIncomeStatementCheckRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaUpdateReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportItemRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportListReqVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.income.FmsIncomeStatementCheckRespVO;
 
 import java.util.List;
 
@@ -39,5 +39,4 @@ public interface FmsIncomeStatementService {
      * @param userId 用户编号
      */
     void updateIncomeStatementFormula(FmsReportFormulaUpdateReqVO updateReqVO, Long userId);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.report.service.goview;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.report.enums.ErrorCodeConstants.GO_VIEW_PROJECT_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,13 +11,11 @@ import cn.iocoder.yudao.module.report.controller.admin.goview.vo.project.GoViewP
 import cn.iocoder.yudao.module.report.convert.goview.GoViewProjectConvert;
 import cn.iocoder.yudao.module.report.dal.dataobject.goview.GoViewProjectDO;
 import cn.iocoder.yudao.module.report.dal.mysql.goview.GoViewProjectMapper;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import jakarta.annotation.Resource;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.report.enums.ErrorCodeConstants.GO_VIEW_PROJECT_NOT_EXISTS;
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * GoView 项目 Service 实现类
@@ -25,14 +26,15 @@ import static cn.iocoder.yudao.module.report.enums.ErrorCodeConstants.GO_VIEW_PR
 @Validated
 public class GoViewProjectServiceImpl implements GoViewProjectService {
 
-    @Resource
-    private GoViewProjectMapper goViewProjectMapper;
+    @Resource private GoViewProjectMapper goViewProjectMapper;
 
     @Override
     public Long createProject(GoViewProjectCreateReqVO createReqVO) {
         // 插入
-        GoViewProjectDO goViewProject = GoViewProjectConvert.INSTANCE.convert(createReqVO)
-                .setStatus(CommonStatusEnum.DISABLE.getStatus());
+        GoViewProjectDO goViewProject =
+                GoViewProjectConvert.INSTANCE
+                        .convert(createReqVO)
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus());
         goViewProjectMapper.insert(goViewProject);
         // 返回
         return goViewProject.getId();
@@ -70,5 +72,4 @@ public class GoViewProjectServiceImpl implements GoViewProjectService {
     public PageResult<GoViewProjectDO> getMyProjectPage(PageParam pageReqVO, Long userId) {
         return goViewProjectMapper.selectPage(pageReqVO, userId);
     }
-
 }

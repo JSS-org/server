@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.xinghuo;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -9,6 +11,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.deepseek.DeepSeekChatOptions;
 import org.springframework.ai.deepseek.api.DeepSeekApi;
+
 import reactor.core.publisher.Flux;
 
 /**
@@ -108,10 +111,8 @@ public class XingHuoChatModel implements ChatModel {
 
     private ChatModel buildChatModel(String model) {
         return DeepSeekChatModel.builder()
-                .deepSeekApi(DeepSeekApi.builder()
-                        .baseUrl(getBaseUrl(model))
-                        .apiKey(apiKey)
-                        .build())
+                .deepSeekApi(
+                        DeepSeekApi.builder().baseUrl(getBaseUrl(model)).apiKey(apiKey).build())
                 .options(options.mutate().model("spark-x").build())
                 .build();
     }
@@ -148,13 +149,12 @@ public class XingHuoChatModel implements ChatModel {
         }
 
         public XingHuoChatModel build() {
-            DeepSeekChatOptions options = this.options != null ? this.options : DeepSeekChatOptions.builder().build();
+            DeepSeekChatOptions options =
+                    this.options != null ? this.options : DeepSeekChatOptions.builder().build();
             if (StrUtil.isEmpty(options.getModel())) {
                 options = options.mutate().model(MODEL_DEFAULT).build();
             }
             return new XingHuoChatModel(apiKey, options);
         }
-
     }
-
 }

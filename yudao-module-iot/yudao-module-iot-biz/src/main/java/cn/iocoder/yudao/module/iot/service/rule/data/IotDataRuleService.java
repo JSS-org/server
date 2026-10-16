@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.rule.IotDataRul
 import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.rule.IotDataRuleSaveReqVO;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataRuleDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -68,5 +69,4 @@ public interface IotDataRuleService {
      * @param message 消息
      */
     void executeDataRule(IotDeviceMessage message);
-
 }

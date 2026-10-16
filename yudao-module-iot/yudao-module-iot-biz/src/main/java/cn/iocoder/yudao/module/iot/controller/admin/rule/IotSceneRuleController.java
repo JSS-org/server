@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.iot.controller.admin.rule;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,19 +13,19 @@ import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.scene.IotSceneRuleSa
 import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.scene.IotSceneRuleUpdateStatusReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.service.rule.scene.IotSceneRuleService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - IoT 场景联动")
 @RestController
@@ -30,20 +33,21 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class IotSceneRuleController {
 
-    @Resource
-    private IotSceneRuleService sceneRuleService;
+    @Resource private IotSceneRuleService sceneRuleService;
 
     @PostMapping("/create")
     @Operation(summary = "创建场景联动")
     @PreAuthorize("@ss.hasPermission('iot:scene-rule:create')")
-    public CommonResult<Long> createSceneRule(@Valid @RequestBody IotSceneRuleSaveReqVO createReqVO) {
+    public CommonResult<Long> createSceneRule(
+            @Valid @RequestBody IotSceneRuleSaveReqVO createReqVO) {
         return success(sceneRuleService.createSceneRule(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新场景联动")
     @PreAuthorize("@ss.hasPermission('iot:scene-rule:update')")
-    public CommonResult<Boolean> updateSceneRule(@Valid @RequestBody IotSceneRuleSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSceneRule(
+            @Valid @RequestBody IotSceneRuleSaveReqVO updateReqVO) {
         sceneRuleService.updateSceneRule(updateReqVO);
         return success(true);
     }
@@ -51,7 +55,8 @@ public class IotSceneRuleController {
     @PutMapping("/update-status")
     @Operation(summary = "更新场景联动状态")
     @PreAuthorize("@ss.hasPermission('iot:scene-rule:update')")
-    public CommonResult<Boolean> updateSceneRuleStatus(@Valid @RequestBody IotSceneRuleUpdateStatusReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSceneRuleStatus(
+            @Valid @RequestBody IotSceneRuleUpdateStatusReqVO updateReqVO) {
         sceneRuleService.updateSceneRuleStatus(updateReqVO.getId(), updateReqVO.getStatus());
         return success(true);
     }
@@ -77,7 +82,8 @@ public class IotSceneRuleController {
     @GetMapping("/page")
     @Operation(summary = "获得场景联动分页")
     @PreAuthorize("@ss.hasPermission('iot:scene-rule:query')")
-    public CommonResult<PageResult<IotSceneRuleRespVO>> getSceneRulePage(@Valid IotSceneRulePageReqVO pageReqVO) {
+    public CommonResult<PageResult<IotSceneRuleRespVO>> getSceneRulePage(
+            @Valid IotSceneRulePageReqVO pageReqVO) {
         PageResult<IotSceneRuleDO> pageResult = sceneRuleService.getSceneRulePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, IotSceneRuleRespVO.class));
     }
@@ -85,9 +91,12 @@ public class IotSceneRuleController {
     @GetMapping("/simple-list")
     @Operation(summary = "获取场景联动的精简信息列表", description = "主要用于前端的下拉选项")
     public CommonResult<List<IotSceneRuleRespVO>> getSceneRuleSimpleList() {
-        List<IotSceneRuleDO> list = sceneRuleService.getSceneRuleListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, scene -> // 只返回 id、name 字段
-                new IotSceneRuleRespVO().setId(scene.getId()).setName(scene.getName())));
+        List<IotSceneRuleDO> list =
+                sceneRuleService.getSceneRuleListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return success(
+                convertList(
+                        list,
+                        scene -> // 只返回 id、name 字段
+                        new IotSceneRuleRespVO().setId(scene.getId()).setName(scene.getName())));
     }
-
 }

@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PayOrderDisplayModeEnum {
-
     URL("url"), // Redirect 跳转链接的方式
     IFRAME("iframe"), // IFrame 内嵌链接的方式【目前暂时用不到】
     FORM("form"), // HTML 表单提交
@@ -25,5 +24,4 @@ public enum PayOrderDisplayModeEnum {
      * 展示模式
      */
     private final String mode;
-
 }

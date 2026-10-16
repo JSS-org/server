@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo.line.MesWmReturnIssueLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo.line.MesWmReturnIssueLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueLineDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -50,7 +51,8 @@ public interface MesWmReturnIssueLineService {
      * @param pageReqVO 分页查询
      * @return 生产退料单行分页
      */
-    PageResult<MesWmReturnIssueLineDO> getReturnIssueLinePage(MesWmReturnIssueLinePageReqVO pageReqVO);
+    PageResult<MesWmReturnIssueLineDO> getReturnIssueLinePage(
+            MesWmReturnIssueLinePageReqVO pageReqVO);
 
     /**
      * 根据退料单 ID 获取行列表
@@ -100,7 +102,10 @@ public interface MesWmReturnIssueLineService {
      * @param qualifiedQuantity   合格品数量
      * @param unqualifiedQuantity 不合格品数量
      */
-    void updateReturnIssueLineWhenRqcFinish(Long sourceLineId, Long sourceDocId, Integer checkResult,
-                                            BigDecimal qualifiedQuantity, BigDecimal unqualifiedQuantity);
-
+    void updateReturnIssueLineWhenRqcFinish(
+            Long sourceLineId,
+            Long sourceDocId,
+            Integer checkResult,
+            BigDecimal qualifiedQuantity,
+            BigDecimal unqualifiedQuantity);
 }

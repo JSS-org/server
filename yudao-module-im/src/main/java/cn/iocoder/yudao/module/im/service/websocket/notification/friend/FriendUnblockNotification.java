@@ -8,6 +8,4 @@ import lombok.Data;
  * A 把 B 移出黑名单后仅推 A 多端
  */
 @Data
-public class FriendUnblockNotification extends BaseFriendNotification {
-
-}
+public class FriendUnblockNotification extends BaseFriendNotification {}

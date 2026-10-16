@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.salary.slip;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,17 +16,19 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmSalarySlipTemplateOptionTypeEnum implements ArrayValuable<Integer> {
-
     CATEGORY(1, "分类"),
     ITEM(2, "薪资项");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmSalarySlipTemplateOptionTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmSalarySlipTemplateOptionTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -39,5 +42,4 @@ public enum HrmSalarySlipTemplateOptionTypeEnum implements ArrayValuable<Integer
     public static HrmSalarySlipTemplateOptionTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

@@ -18,7 +18,8 @@ public class TenantRocketMQInitializer implements BeanPostProcessor {
 
     @Override
     @SuppressWarnings("PatternVariableCanBeUsed")
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName)
+            throws BeansException {
         if (bean instanceof DefaultRocketMQListenerContainer) {
             DefaultRocketMQListenerContainer container = (DefaultRocketMQListenerContainer) bean;
             initTenantConsumer(container.getConsumer());
@@ -50,5 +51,4 @@ public class TenantRocketMQInitializer implements BeanPostProcessor {
         }
         consumerImpl.registerConsumeMessageHook(new TenantRocketMQConsumeMessageHook());
     }
-
 }

@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.service.wm.itemconsume;
 
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemconsume.MesWmItemConsumeDetailDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.itemconsume.MesWmItemConsumeDetailMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -17,8 +19,7 @@ import java.util.List;
 @Validated
 public class MesWmItemConsumeDetailServiceImpl implements MesWmItemConsumeDetailService {
 
-    @Resource
-    private MesWmItemConsumeDetailMapper itemConsumeDetailMapper;
+    @Resource private MesWmItemConsumeDetailMapper itemConsumeDetailMapper;
 
     @Override
     public void createItemConsumeDetailBatch(List<MesWmItemConsumeDetailDO> details) {
@@ -29,5 +30,4 @@ public class MesWmItemConsumeDetailServiceImpl implements MesWmItemConsumeDetail
     public List<MesWmItemConsumeDetailDO> getItemConsumeDetailListByConsumeId(Long consumeId) {
         return itemConsumeDetailMapper.selectListByConsumeId(consumeId);
     }
-
 }

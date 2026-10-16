@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.enums.dv;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -28,12 +29,16 @@ public enum MesDvCheckPlanStatusEnum implements ArrayValuable<Integer> {
      */
     ENABLED(1, "已启用");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(MesDvCheckPlanStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(MesDvCheckPlanStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -43,5 +48,4 @@ public enum MesDvCheckPlanStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

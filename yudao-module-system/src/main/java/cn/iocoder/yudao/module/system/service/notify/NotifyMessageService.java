@@ -27,8 +27,12 @@ public interface NotifyMessageService {
      * @param templateParams 模版参数
      * @return 站内信编号
      */
-    Long createNotifyMessage(Long userId, Integer userType,
-                             NotifyTemplateDO template, String templateContent, Map<String, Object> templateParams);
+    Long createNotifyMessage(
+            Long userId,
+            Integer userType,
+            NotifyTemplateDO template,
+            String templateContent,
+            Map<String, Object> templateParams);
 
     /**
      * 获得站内信分页
@@ -46,7 +50,8 @@ public interface NotifyMessageService {
      * @param userType 用户类型
      * @return 站内信分页
      */
-    PageResult<NotifyMessageDO> getMyMyNotifyMessagePage(NotifyMessageMyPageReqVO pageReqVO, Long userId, Integer userType);
+    PageResult<NotifyMessageDO> getMyMyNotifyMessagePage(
+            NotifyMessageMyPageReqVO pageReqVO, Long userId, Integer userType);
 
     /**
      * 获得站内信
@@ -93,5 +98,4 @@ public interface NotifyMessageService {
      * @return 更新到的条数
      */
     int updateAllNotifyMessageRead(Long userId, Integer userType);
-
 }

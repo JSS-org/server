@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.bargain.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,9 +13,16 @@ public class AppBargainRecordRespVO {
     @Schema(description = "砍价记录编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
+    @Schema(
+            description = "商品 SPU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2048")
     private Long spuId;
-    @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
+
+    @Schema(
+            description = "商品 SKU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2048")
     private Long skuId;
 
     @Schema(description = "活动编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "22901")
@@ -34,7 +42,9 @@ public class AppBargainRecordRespVO {
     @Schema(description = "活动结束时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime endTime;
 
-    @Schema(description = "商品图片", requiredMode = Schema.RequiredMode.REQUIRED,  // 从 SPU 的 picUrl 读取
+    @Schema(
+            description = "商品图片",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 picUrl 读取
             example = "https://www.iocoder.cn/xx.png")
     private String picUrl;
 
@@ -48,5 +58,4 @@ public class AppBargainRecordRespVO {
 
     @Schema(description = "支付订单编号", example = "1024")
     private Long payOrderId;
-
 }

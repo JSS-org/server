@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -20,5 +22,4 @@ public class HrmPerformanceArchivePageReqVO extends PageParam {
 
     @Schema(description = "员工编号列表", example = "[2048, 2049]")
     private List<Long> employeeIds;
-
 }

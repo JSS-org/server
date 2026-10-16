@@ -12,7 +12,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum SmsSendStatusEnum {
-
     INIT(0), // 初始化
     SUCCESS(10), // 发送成功
     FAILURE(20), // 发送失败
@@ -20,5 +19,4 @@ public enum SmsSendStatusEnum {
     ;
 
     private final int status;
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.promotion.service.diy;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.DIY_PAGE_NAME_USED;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.DIY_PAGE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,16 +15,14 @@ import cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page.DiyPageUpd
 import cn.iocoder.yudao.module.promotion.convert.diy.DiyPageConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyPageDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.diy.DiyPageMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.DIY_PAGE_NAME_USED;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.DIY_PAGE_NOT_EXISTS;
 
 /**
  * 装修页面 Service 实现类
@@ -31,8 +33,7 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.DIY_PAG
 @Validated
 public class DiyPageServiceImpl implements DiyPageService {
 
-    @Resource
-    private DiyPageMapper diyPageMapper;
+    @Resource private DiyPageMapper diyPageMapper;
 
     @Override
     public Long createDiyPage(DiyPageCreateReqVO createReqVO) {
@@ -125,5 +126,4 @@ public class DiyPageServiceImpl implements DiyPageService {
         DiyPageDO updateObj = DiyPageConvert.INSTANCE.convert(updateReqVO);
         diyPageMapper.updateById(updateObj);
     }
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.returning;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -36,7 +38,12 @@ public class OaVehicleReturnSaveReqVO {
     @Size(max = 500, message = "随行人长度不能超过 {max} 个字符")
     private String passenger;
 
-    @Schema(description = "实际回车时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "实际回车时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     @NotNull(message = "实际回车时间不能为空")
     @PastOrPresent(message = "实际回车时间不能晚于当前时间")
     private LocalDateTime actualReturnTime;
@@ -52,6 +59,8 @@ public class OaVehicleReturnSaveReqVO {
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
     @Size(max = 5, message = "附件最多上传 5 个")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 2048, message = "附件地址长度不能超过 {max} 个字符") String> fileUrls;
-
+    private List<
+                    @NotBlank(message = "附件地址不能为空")
+                    @Size(max = 2048, message = "附件地址长度不能超过 {max} 个字符") String>
+            fileUrls;
 }

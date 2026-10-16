@@ -2,16 +2,17 @@ package cn.iocoder.yudao.module.oa.enums.workreport;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.time.DayOfWeek;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Arrays;
 
 /**
  * 工作汇报类型枚举
@@ -21,18 +22,18 @@ import java.time.temporal.TemporalAdjusters;
 @Getter
 @AllArgsConstructor
 public enum OaWorkReportTypeEnum implements ArrayValuable<Integer> {
-
     DAILY(1, "日报"),
     WEEKLY(2, "周报"),
     MONTHLY(3, "月报");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaWorkReportTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaWorkReportTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -64,15 +65,18 @@ public enum OaWorkReportTypeEnum implements ArrayValuable<Integer> {
             return startTime.toLocalDate().toString();
         }
         if (this == WEEKLY) {
-            LocalDateTime mondayTime = startTime.with(LocalTime.MIN)
-                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            LocalDateTime mondayTime =
+                    startTime
+                            .with(LocalTime.MIN)
+                            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
             // 跨年同一周统一归到包含 1 月 1 日的年份，避免一周被统计两次
             int year = mondayTime.plusDays(6).getYear();
-            LocalDateTime firstMondayTime = LocalDateTime.of(year, 1, 1, 0, 0)
-                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-            return String.format("%d-%02d", year, ChronoUnit.WEEKS.between(firstMondayTime, mondayTime) + 1);
+            LocalDateTime firstMondayTime =
+                    LocalDateTime.of(year, 1, 1, 0, 0)
+                            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            return String.format(
+                    "%d-%02d", year, ChronoUnit.WEEKS.between(firstMondayTime, mondayTime) + 1);
         }
         return YearMonth.from(startTime).toString();
     }
-
 }

@@ -1,6 +1,23 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.subject.FmsSubjectDeleteReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.subject.FmsSubjectImportExcelVO;
@@ -19,19 +36,13 @@ import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectTemplateDO;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsSubjectMapper;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsSubjectTemplateMapper;
 import cn.iocoder.yudao.module.fms.enums.common.FmsDebitCreditDirectionEnum;
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.module.fms.enums.config.FmsSubjectTypeEnum;
 import cn.iocoder.yudao.module.fms.service.closing.FmsClosingSchemeService;
 import cn.iocoder.yudao.module.fms.service.closing.FmsClosingTemplateService;
-import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
-import cn.iocoder.yudao.module.fms.service.config.FmsAuxiliaryCombinationService;
-import cn.iocoder.yudao.module.fms.service.config.FmsAuxiliaryTypeService;
-import cn.iocoder.yudao.module.fms.service.config.FmsCurrencyService;
-import cn.iocoder.yudao.module.fms.service.config.FmsInitialBalanceService;
-import cn.iocoder.yudao.module.fms.service.config.FmsFinanceParameterService;
 import cn.iocoder.yudao.module.fms.service.voucher.FmsVoucherService;
-import cn.iocoder.yudao.module.fms.service.config.FmsVoucherTemplateService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,63 +51,37 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @Import(FmsSubjectServiceImpl.class)
 public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FmsSubjectServiceImpl subjectService;
-    @Resource
-    private FmsSubjectMapper subjectMapper;
-    @Resource
-    private FmsSubjectTemplateMapper subjectTemplateMapper;
+    @Resource private FmsSubjectServiceImpl subjectService;
+    @Resource private FmsSubjectMapper subjectMapper;
+    @Resource private FmsSubjectTemplateMapper subjectTemplateMapper;
 
-    @MockitoBean
-    private FmsAccountSetService accountSetService;
-    @MockitoBean
-    private FmsFinanceParameterService financeParameterService;
-    @MockitoBean
-    private FmsAuxiliaryTypeService auxiliaryTypeService;
-    @MockitoBean
-    private FmsAuxiliaryItemService auxiliaryItemService;
-    @MockitoBean
-    private FmsCurrencyService currencyService;
-    @MockitoBean
-    private FmsVoucherService voucherService;
-    @MockitoBean
-    private FmsVoucherTemplateService voucherTemplateService;
-    @MockitoBean
-    private FmsInitialBalanceService initialBalanceService;
-    @MockitoBean
-    private FmsAuxiliaryCombinationService auxiliaryCombinationService;
-    @MockitoBean
-    private FmsClosingSchemeService closingSchemeService;
-    @MockitoBean
-    private FmsClosingTemplateService closingTemplateService;
+    @MockitoBean private FmsAccountSetService accountSetService;
+    @MockitoBean private FmsFinanceParameterService financeParameterService;
+    @MockitoBean private FmsAuxiliaryTypeService auxiliaryTypeService;
+    @MockitoBean private FmsAuxiliaryItemService auxiliaryItemService;
+    @MockitoBean private FmsCurrencyService currencyService;
+    @MockitoBean private FmsVoucherService voucherService;
+    @MockitoBean private FmsVoucherTemplateService voucherTemplateService;
+    @MockitoBean private FmsInitialBalanceService initialBalanceService;
+    @MockitoBean private FmsAuxiliaryCombinationService auxiliaryCombinationService;
+    @MockitoBean private FmsClosingSchemeService closingSchemeService;
+    @MockitoBean private FmsClosingTemplateService closingTemplateService;
 
     @Test
     public void testInitializeDefaultSubjects_success() {
         // mock 数据
-        when(financeParameterService.getFinanceParameter(10L)).thenReturn(new FmsFinanceParameterDO()
-                .setSubjectCodeRule(FmsFinanceParameterDO.DEFAULT_SUBJECT_CODE_RULE));
+        when(financeParameterService.getFinanceParameter(10L))
+                .thenReturn(
+                        new FmsFinanceParameterDO()
+                                .setSubjectCodeRule(
+                                        FmsFinanceParameterDO.DEFAULT_SUBJECT_CODE_RULE));
         when(financeParameterService.convertStandardSubjectCode(anyString(), anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        FmsSubjectTemplateDO parent = buildSubjectTemplate(
-                "1001", "库存现金", FmsSubjectTemplateDO.PARENT_ID_ROOT, 1);
+        FmsSubjectTemplateDO parent =
+                buildSubjectTemplate("1001", "库存现金", FmsSubjectTemplateDO.PARENT_ID_ROOT, 1);
         subjectTemplateMapper.insert(parent);
         FmsSubjectTemplateDO child = buildSubjectTemplate("100101", "人民币现金", parent.getId(), 2);
         subjectTemplateMapper.insert(child);
@@ -107,8 +92,9 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         subjectService.initializeDefaultSubjects(accountSetId);
 
         // 断言
-        List<FmsSubjectDO> subjects = subjectMapper.selectListByAccountSetIdAndType(
-                accountSetId, FmsSubjectTypeEnum.ASSET.getType());
+        List<FmsSubjectDO> subjects =
+                subjectMapper.selectListByAccountSetIdAndType(
+                        accountSetId, FmsSubjectTypeEnum.ASSET.getType());
         assertEquals(2, subjects.size());
         assertEquals(FmsSubjectDO.PARENT_ID_ROOT, subjects.get(0).getParentId());
         assertEquals(subjects.get(0).getId(), subjects.get(1).getParentId());
@@ -122,7 +108,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(1L, "1001", "库存现金");
 
         // 调用，并断言异常
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), ACCOUNT_SET_NOT_INITIALIZED);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), ACCOUNT_SET_NOT_INITIALIZED);
         // 断言未写入科目
         assertEquals(0, subjectMapper.selectCount());
     }
@@ -134,7 +121,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         reqVO.setId(1L);
 
         // 调用，并断言异常
-        assertServiceException(() -> subjectService.updateSubject(reqVO, 10L), ACCOUNT_SET_NOT_INITIALIZED);
+        assertServiceException(
+                () -> subjectService.updateSubject(reqVO, 10L), ACCOUNT_SET_NOT_INITIALIZED);
     }
 
     @Test
@@ -145,7 +133,10 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         importVO.setName("库存现金");
 
         // 调用，并断言异常
-        assertServiceException(() -> subjectService.importSubjectList(1L, Collections.singletonList(importVO), 10L),
+        assertServiceException(
+                () ->
+                        subjectService.importSubjectList(
+                                1L, Collections.singletonList(importVO), 10L),
                 ACCOUNT_SET_NOT_INITIALIZED);
         // 断言未写入科目
         assertEquals(0, subjectMapper.selectCount());
@@ -177,9 +168,15 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
-        FmsCurrencyDO currency = new FmsCurrencyDO().setId(20L).setAccountSetId(accountSetId)
-                .setCode("USD").setName("美元").setStandard(false);
-        when(currencyService.validateCurrencyList(accountSetId, Arrays.asList(currency.getId(), currency.getId())))
+        FmsCurrencyDO currency =
+                new FmsCurrencyDO()
+                        .setId(20L)
+                        .setAccountSetId(accountSetId)
+                        .setCode("USD")
+                        .setName("美元")
+                        .setStandard(false);
+        when(currencyService.validateCurrencyList(
+                        accountSetId, Arrays.asList(currency.getId(), currency.getId())))
                 .thenReturn(Collections.singletonList(currency));
         // 准备参数
         FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "1001", "库存现金");
@@ -189,7 +186,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         Long subjectId = subjectService.createSubject(reqVO, 10L);
 
         // 断言
-        assertEquals(Arrays.asList(currency.getId(), currency.getId()),
+        assertEquals(
+                Arrays.asList(currency.getId(), currency.getId()),
                 subjectMapper.selectById(subjectId).getCurrencyIds());
     }
 
@@ -199,14 +197,18 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         Long accountSetId = 1L;
         Long auxiliaryTypeId = 20L;
         mockAccountSetAccess(accountSetId);
-        doThrow(exception(AUXILIARY_TYPE_NOT_EXISTS)).when(auxiliaryTypeService)
-                .validateAuxiliaryTypeList(accountSetId, Collections.singletonList(auxiliaryTypeId));
+        doThrow(exception(AUXILIARY_TYPE_NOT_EXISTS))
+                .when(auxiliaryTypeService)
+                .validateAuxiliaryTypeList(
+                        accountSetId, Collections.singletonList(auxiliaryTypeId));
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "1001", "库存现金")
-                .setAuxiliaryTypeIds(Collections.singletonList(auxiliaryTypeId));
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "1001", "库存现金")
+                        .setAuxiliaryTypeIds(Collections.singletonList(auxiliaryTypeId));
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), AUXILIARY_TYPE_NOT_EXISTS);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), AUXILIARY_TYPE_NOT_EXISTS);
         assertNull(subjectMapper.selectByAccountSetIdAndCode(accountSetId, reqVO.getCode()));
     }
 
@@ -215,16 +217,23 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
-        FmsCurrencyDO currency = new FmsCurrencyDO().setId(20L).setAccountSetId(accountSetId)
-                .setCode("RMB").setName("人民币").setStandard(true);
-        when(currencyService.validateCurrencyList(accountSetId, Collections.singletonList(currency.getId())))
+        FmsCurrencyDO currency =
+                new FmsCurrencyDO()
+                        .setId(20L)
+                        .setAccountSetId(accountSetId)
+                        .setCode("RMB")
+                        .setName("人民币")
+                        .setStandard(true);
+        when(currencyService.validateCurrencyList(
+                        accountSetId, Collections.singletonList(currency.getId())))
                 .thenReturn(Collections.singletonList(currency));
         // 准备参数
         FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "1001", "库存现金");
         reqVO.setCurrencyIds(Collections.singletonList(currency.getId()));
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), SUBJECT_CURRENCY_INVALID);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), SUBJECT_CURRENCY_INVALID);
     }
 
     @Test
@@ -237,7 +246,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "1001", "库存现金");
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), SUBJECT_CODE_DUPLICATE);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), SUBJECT_CODE_DUPLICATE);
     }
 
     @Test
@@ -252,7 +262,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         reqVO.setParentId(parent.getId());
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), SUBJECT_CODE_RULE_INVALID);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), SUBJECT_CODE_RULE_INVALID);
     }
 
     @Test
@@ -263,11 +274,14 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(parent);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
-                .setParentId(parent.getId()).setCategory(2);
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
+                        .setParentId(parent.getId())
+                        .setCategory(2);
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), SUBJECT_PARENT_INVALID);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), SUBJECT_PARENT_INVALID);
     }
 
     @Test
@@ -276,20 +290,23 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         Long accountSetId = 1L;
         Long auxiliaryTypeId = 20L;
         mockAccountSetAccess(accountSetId);
-        FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setAuxiliaryTypeIds(Collections.singletonList(auxiliaryTypeId));
+        FmsSubjectDO parent =
+                buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setAuxiliaryTypeIds(Collections.singletonList(auxiliaryTypeId));
         subjectMapper.insert(parent);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
-                .setParentId(parent.getId())
-                .setAuxiliaryTypeIds(Collections.singletonList(auxiliaryTypeId));
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
+                        .setParentId(parent.getId())
+                        .setAuxiliaryTypeIds(Collections.singletonList(auxiliaryTypeId));
 
         // 调用
         Long subjectId = subjectService.createSubject(reqVO, 10L);
 
         // 断言
         assertTrue(subjectMapper.selectById(parent.getId()).getAuxiliaryTypeIds().isEmpty());
-        assertEquals(Collections.singletonList(auxiliaryTypeId),
+        assertEquals(
+                Collections.singletonList(auxiliaryTypeId),
                 subjectMapper.selectById(subjectId).getAuxiliaryTypeIds());
     }
 
@@ -301,13 +318,15 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(parent);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(parent.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(parent.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
-                .setParentId(parent.getId());
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金").setParentId(parent.getId());
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L), SUBJECT_PARENT_IN_USE);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), SUBJECT_PARENT_IN_USE);
     }
 
     @Test
@@ -318,27 +337,38 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(parent);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(parent.getId()))).thenReturn(2L);
+                        accountSetId, Collections.singletonList(parent.getId())))
+                .thenReturn(2L);
         when(initialBalanceService.getInitialBalanceCountBySubjectIds(
-                accountSetId, Collections.singletonList(parent.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(parent.getId())))
+                .thenReturn(1L);
         when(auxiliaryCombinationService.getAuxiliaryCombinationCountBySubjectIds(
-                accountSetId, Collections.singletonList(parent.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(parent.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
-                .setParentId(parent.getId()).setMigrateParentData(true);
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
+                        .setParentId(parent.getId())
+                        .setMigrateParentData(true);
 
         // 调用
         Long subjectId = subjectService.createSubject(reqVO, 10L);
 
         // 断言
         FmsSubjectDO subject = subjectMapper.selectById(subjectId);
-        verify(voucherService).updateVoucherEntrySubject(eq(accountSetId), eq(parent.getId()),
-                argThat(target -> target.getId().equals(subjectId)
-                        && target.getCode().equals(subject.getCode())
-                        && target.getParentId().equals(parent.getId())));
-        verify(initialBalanceService).updateInitialBalanceSubject(accountSetId, parent.getId(), subjectId);
-        verify(auxiliaryCombinationService).updateAuxiliaryCombinationSubject(
-                accountSetId, parent.getId(), subjectId);
+        verify(voucherService)
+                .updateVoucherEntrySubject(
+                        eq(accountSetId),
+                        eq(parent.getId()),
+                        argThat(
+                                target ->
+                                        target.getId().equals(subjectId)
+                                                && target.getCode().equals(subject.getCode())
+                                                && target.getParentId().equals(parent.getId())));
+        verify(initialBalanceService)
+                .updateInitialBalanceSubject(accountSetId, parent.getId(), subjectId);
+        verify(auxiliaryCombinationService)
+                .updateAuxiliaryCombinationSubject(accountSetId, parent.getId(), subjectId);
     }
 
     @Test
@@ -349,15 +379,18 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(parent);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(parent.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(parent.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
-                .setParentId(parent.getId()).setMigrateParentData(true)
-                .setBalanceDirection(FmsDebitCreditDirectionEnum.CREDIT.getType());
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
+                        .setParentId(parent.getId())
+                        .setMigrateParentData(true)
+                        .setBalanceDirection(FmsDebitCreditDirectionEnum.CREDIT.getType());
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.createSubject(reqVO, 10L),
-                SUBJECT_PARENT_CONFIG_INCOMPATIBLE);
+        assertServiceException(
+                () -> subjectService.createSubject(reqVO, 10L), SUBJECT_PARENT_CONFIG_INCOMPATIBLE);
         assertNull(subjectMapper.selectByAccountSetIdAndCode(accountSetId, reqVO.getCode()));
     }
 
@@ -369,12 +402,16 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(parent);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(parent.getId()))).thenReturn(1L);
-        doThrow(new IllegalStateException("迁移失败")).when(initialBalanceService)
+                        accountSetId, Collections.singletonList(parent.getId())))
+                .thenReturn(1L);
+        doThrow(new IllegalStateException("迁移失败"))
+                .when(initialBalanceService)
                 .updateInitialBalanceSubject(eq(accountSetId), eq(parent.getId()), anyLong());
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
-                .setParentId(parent.getId()).setMigrateParentData(true);
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, "100101", "人民币现金")
+                        .setParentId(parent.getId())
+                        .setMigrateParentData(true);
 
         // 调用，并断言
         assertThrows(IllegalStateException.class, () -> subjectService.createSubject(reqVO, 10L));
@@ -389,15 +426,21 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(subject);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
-                .setId(subject.getId()).setBalanceDirection(FmsDebitCreditDirectionEnum.CREDIT.getType());
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
+                        .setId(subject.getId())
+                        .setBalanceDirection(FmsDebitCreditDirectionEnum.CREDIT.getType());
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.updateSubject(reqVO, 10L),
+        assertServiceException(
+                () -> subjectService.updateSubject(reqVO, 10L),
                 SUBJECT_USED_BALANCE_DIRECTION_IMMUTABLE);
-        assertEquals(subject.getBalanceDirection(), subjectMapper.selectById(subject.getId()).getBalanceDirection());
+        assertEquals(
+                subject.getBalanceDirection(),
+                subjectMapper.selectById(subject.getId()).getBalanceDirection());
     }
 
     @Test
@@ -405,19 +448,24 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
-        FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setAuxiliaryTypeIds(Collections.singletonList(20L));
+        FmsSubjectDO subject =
+                buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setAuxiliaryTypeIds(Collections.singletonList(20L));
         subjectMapper.insert(subject);
         when(initialBalanceService.getInitialBalanceCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
-                .setId(subject.getId()).setAuxiliaryTypeIds(Collections.singletonList(30L));
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
+                        .setId(subject.getId())
+                        .setAuxiliaryTypeIds(Collections.singletonList(30L));
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.updateSubject(reqVO, 10L),
-                SUBJECT_USED_AUXILIARY_IMMUTABLE);
-        assertEquals(Collections.singletonList(20L),
+        assertServiceException(
+                () -> subjectService.updateSubject(reqVO, 10L), SUBJECT_USED_AUXILIARY_IMMUTABLE);
+        assertEquals(
+                Collections.singletonList(20L),
                 subjectMapper.selectById(subject.getId()).getAuxiliaryTypeIds());
     }
 
@@ -430,35 +478,52 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         mockAccountSetAccess(accountSetId);
         FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(subject);
-        FmsAuxiliaryTypeDO auxiliaryType = new FmsAuxiliaryTypeDO().setId(typeId)
-                .setAccountSetId(accountSetId).setType(1).setName("客户");
-        FmsAuxiliaryItemDO auxiliaryItem = new FmsAuxiliaryItemDO().setId(itemId)
-                .setAccountSetId(accountSetId).setAuxiliaryTypeId(typeId).setName("测试客户")
-                .setStatus(CommonStatusEnum.ENABLE.getStatus());
-        FmsAuxiliaryCombinationDO combination = new FmsAuxiliaryCombinationDO().setId(40L)
-                .setAccountSetId(accountSetId).setSubjectId(subject.getId());
+        FmsAuxiliaryTypeDO auxiliaryType =
+                new FmsAuxiliaryTypeDO()
+                        .setId(typeId)
+                        .setAccountSetId(accountSetId)
+                        .setType(1)
+                        .setName("客户");
+        FmsAuxiliaryItemDO auxiliaryItem =
+                new FmsAuxiliaryItemDO()
+                        .setId(itemId)
+                        .setAccountSetId(accountSetId)
+                        .setAuxiliaryTypeId(typeId)
+                        .setName("测试客户")
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        FmsAuxiliaryCombinationDO combination =
+                new FmsAuxiliaryCombinationDO()
+                        .setId(40L)
+                        .setAccountSetId(accountSetId)
+                        .setSubjectId(subject.getId());
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
-        when(auxiliaryTypeService.validateAuxiliaryTypeList(accountSetId, Collections.singletonList(typeId)))
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
+        when(auxiliaryTypeService.validateAuxiliaryTypeList(
+                        accountSetId, Collections.singletonList(typeId)))
                 .thenReturn(Collections.singletonList(auxiliaryType));
         when(auxiliaryItemService.validateAuxiliaryItemList(eq(accountSetId), anyCollection()))
                 .thenReturn(Collections.singletonList(auxiliaryItem));
-        when(auxiliaryCombinationService.saveAuxiliaryCombination(
-                anyLong(), anyLong(), anyList())).thenReturn(combination);
+        when(auxiliaryCombinationService.saveAuxiliaryCombination(anyLong(), anyLong(), anyList()))
+                .thenReturn(combination);
         // 准备参数
-        FmsSubjectSaveReqVO.AuxiliaryMapping mapping = new FmsSubjectSaveReqVO.AuxiliaryMapping()
-                .setTypeId(typeId).setItemId(itemId);
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
-                .setId(subject.getId()).setAuxiliaryTypeIds(Collections.singletonList(typeId))
-                .setAuxiliaryMappings(Collections.singletonList(mapping));
+        FmsSubjectSaveReqVO.AuxiliaryMapping mapping =
+                new FmsSubjectSaveReqVO.AuxiliaryMapping().setTypeId(typeId).setItemId(itemId);
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
+                        .setId(subject.getId())
+                        .setAuxiliaryTypeIds(Collections.singletonList(typeId))
+                        .setAuxiliaryMappings(Collections.singletonList(mapping));
 
         // 调用
         subjectService.updateSubject(reqVO, 10L);
 
         // 断言
-        assertEquals(Collections.singletonList(typeId),
+        assertEquals(
+                Collections.singletonList(typeId),
                 subjectMapper.selectById(subject.getId()).getAuxiliaryTypeIds());
-        verify(voucherService).migrateVoucherEntryAuxiliaries(accountSetId, subject.getId(), combination);
+        verify(voucherService)
+                .migrateVoucherEntryAuxiliaries(accountSetId, subject.getId(), combination);
     }
 
     @Test
@@ -470,15 +535,20 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(subject);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
-        when(auxiliaryTypeService.validateAuxiliaryTypeList(accountSetId, Collections.singletonList(typeId)))
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
+        when(auxiliaryTypeService.validateAuxiliaryTypeList(
+                        accountSetId, Collections.singletonList(typeId)))
                 .thenReturn(Collections.singletonList(new FmsAuxiliaryTypeDO().setId(typeId)));
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
-                .setId(subject.getId()).setAuxiliaryTypeIds(Collections.singletonList(typeId));
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
+                        .setId(subject.getId())
+                        .setAuxiliaryTypeIds(Collections.singletonList(typeId));
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.updateSubject(reqVO, 10L),
+        assertServiceException(
+                () -> subjectService.updateSubject(reqVO, 10L),
                 SUBJECT_AUXILIARY_MIGRATION_INVALID);
         assertTrue(subjectMapper.selectById(subject.getId()).getAuxiliaryTypeIds().isEmpty());
     }
@@ -492,12 +562,14 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         subjectMapper.insert(parent);
         subjectMapper.insert(buildSubjectDO(accountSetId, "100101", parent.getId(), 2));
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, parent.getCode(), parent.getName())
-                .setId(parent.getId()).setCategory(2);
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, parent.getCode(), parent.getName())
+                        .setId(parent.getId())
+                        .setCategory(2);
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.updateSubject(reqVO, 10L),
-                SUBJECT_NON_LEAF_CONFIG_IMMUTABLE);
+        assertServiceException(
+                () -> subjectService.updateSubject(reqVO, 10L), SUBJECT_NON_LEAF_CONFIG_IMMUTABLE);
     }
 
     @Test
@@ -505,18 +577,23 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
-        FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setQuantityAccounting(true).setQuantityUnit("件");
+        FmsSubjectDO subject =
+                buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setQuantityAccounting(true)
+                        .setQuantityUnit("件");
         subjectMapper.insert(subject);
         when(voucherService.getVoucherEntryQuantityCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectSaveReqVO reqVO = buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
-                .setId(subject.getId()).setQuantityAccounting(false);
+        FmsSubjectSaveReqVO reqVO =
+                buildSubjectSaveReqVO(accountSetId, subject.getCode(), subject.getName())
+                        .setId(subject.getId())
+                        .setQuantityAccounting(false);
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.updateSubject(reqVO, 10L),
-                SUBJECT_QUANTITY_ACCOUNTING_IN_USE);
+        assertServiceException(
+                () -> subjectService.updateSubject(reqVO, 10L), SUBJECT_QUANTITY_ACCOUNTING_IN_USE);
     }
 
     @Test
@@ -528,18 +605,24 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         subjectMapper.insert(subject);
         subjectMapper.insert(buildSubjectDO(accountSetId, "100101", subject.getId(), 2));
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(2L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(2L);
         when(initialBalanceService.getInitialBalanceCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
         when(auxiliaryCombinationService.getAuxiliaryCombinationCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(3L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(3L);
         when(voucherService.getVoucherEntryQuantityCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
         when(initialBalanceService.getInitialBalanceQuantityCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(2L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(2L);
 
         // 调用
-        FmsSubjectUsageRespVO usage = subjectService.getSubjectUsage(accountSetId, subject.getId(), 10L);
+        FmsSubjectUsageRespVO usage =
+                subjectService.getSubjectUsage(accountSetId, subject.getId(), 10L);
 
         // 断言
         assertEquals(1L, usage.getChildCount());
@@ -559,11 +642,14 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         subjectMapper.insert(parent);
         subjectMapper.insert(buildSubjectDO(accountSetId, "100101", parent.getId(), 2));
         // 准备参数
-        FmsSubjectDeleteReqVO deleteReqVO = new FmsSubjectDeleteReqVO()
-                .setAccountSetId(accountSetId).setIds(Collections.singletonList(parent.getId()));
+        FmsSubjectDeleteReqVO deleteReqVO =
+                new FmsSubjectDeleteReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setIds(Collections.singletonList(parent.getId()));
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.deleteSubjectList(deleteReqVO, 10L), SUBJECT_HAS_CHILDREN);
+        assertServiceException(
+                () -> subjectService.deleteSubjectList(deleteReqVO, 10L), SUBJECT_HAS_CHILDREN);
     }
 
     @Test
@@ -574,14 +660,19 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(subject);
         when(voucherService.getVoucherEntryCountBySubjectIds(
-                accountSetId, Collections.singletonList(subject.getId()))).thenReturn(1L);
+                        accountSetId, Collections.singletonList(subject.getId())))
+                .thenReturn(1L);
         // 准备参数
-        FmsSubjectDeleteReqVO deleteReqVO = new FmsSubjectDeleteReqVO()
-                .setAccountSetId(accountSetId).setIds(Collections.singletonList(subject.getId()));
+        FmsSubjectDeleteReqVO deleteReqVO =
+                new FmsSubjectDeleteReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setIds(Collections.singletonList(subject.getId()));
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.deleteSubjectList(deleteReqVO, 10L),
-                SUBJECT_VOUCHER_ENTRY_IN_USE, 1L);
+        assertServiceException(
+                () -> subjectService.deleteSubjectList(deleteReqVO, 10L),
+                SUBJECT_VOUCHER_ENTRY_IN_USE,
+                1L);
         assertNotNull(subjectMapper.selectById(subject.getId()));
     }
 
@@ -593,8 +684,10 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO subject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(subject);
         // 准备参数
-        FmsSubjectDeleteReqVO deleteReqVO = new FmsSubjectDeleteReqVO()
-                .setAccountSetId(accountSetId).setIds(Collections.singletonList(subject.getId()));
+        FmsSubjectDeleteReqVO deleteReqVO =
+                new FmsSubjectDeleteReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setIds(Collections.singletonList(subject.getId()));
 
         // 调用
         subjectService.deleteSubjectList(deleteReqVO, 10L);
@@ -608,18 +701,24 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
-        FmsSubjectDO firstSubject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
+        FmsSubjectDO firstSubject =
+                buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(firstSubject);
         // 准备参数
-        FmsSubjectDeleteReqVO firstDeleteReqVO = new FmsSubjectDeleteReqVO()
-                .setAccountSetId(accountSetId).setIds(Collections.singletonList(firstSubject.getId()));
+        FmsSubjectDeleteReqVO firstDeleteReqVO =
+                new FmsSubjectDeleteReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setIds(Collections.singletonList(firstSubject.getId()));
 
         // 删除后使用相同编码重新创建
         subjectService.deleteSubjectList(firstDeleteReqVO, 10L);
-        FmsSubjectDO secondSubject = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
+        FmsSubjectDO secondSubject =
+                buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(secondSubject);
-        FmsSubjectDeleteReqVO secondDeleteReqVO = new FmsSubjectDeleteReqVO()
-                .setAccountSetId(accountSetId).setIds(Collections.singletonList(secondSubject.getId()));
+        FmsSubjectDeleteReqVO secondDeleteReqVO =
+                new FmsSubjectDeleteReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setIds(Collections.singletonList(secondSubject.getId()));
         subjectService.deleteSubjectList(secondDeleteReqVO, 10L);
 
         // 断言
@@ -641,21 +740,27 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         FmsSubjectDO grandchild = buildSubjectDO(accountSetId, "10010101", child.getId(), 3);
         subjectMapper.insert(grandchild);
         // 准备参数
-        FmsSubjectStatusReqVO statusReqVO = new FmsSubjectStatusReqVO().setAccountSetId(accountSetId)
-                .setIds(Arrays.asList(first.getId(), second.getId()))
-                .setStatus(CommonStatusEnum.DISABLE.getStatus());
+        FmsSubjectStatusReqVO statusReqVO =
+                new FmsSubjectStatusReqVO()
+                        .setAccountSetId(accountSetId)
+                        .setIds(Arrays.asList(first.getId(), second.getId()))
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus());
 
         // 调用
         subjectService.updateSubjectStatus(statusReqVO, 10L);
 
         // 断言
-        assertEquals(CommonStatusEnum.DISABLE.getStatus(),
+        assertEquals(
+                CommonStatusEnum.DISABLE.getStatus(),
                 subjectMapper.selectById(first.getId()).getStatus());
-        assertEquals(CommonStatusEnum.DISABLE.getStatus(),
+        assertEquals(
+                CommonStatusEnum.DISABLE.getStatus(),
                 subjectMapper.selectById(second.getId()).getStatus());
-        assertEquals(CommonStatusEnum.DISABLE.getStatus(),
+        assertEquals(
+                CommonStatusEnum.DISABLE.getStatus(),
                 subjectMapper.selectById(child.getId()).getStatus());
-        assertEquals(CommonStatusEnum.DISABLE.getStatus(),
+        assertEquals(
+                CommonStatusEnum.DISABLE.getStatus(),
                 subjectMapper.selectById(grandchild.getId()).getStatus());
     }
 
@@ -666,15 +771,17 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         mockAccountSetAccess(accountSetId);
         FmsSubjectDO parent = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(parent);
-        FmsSubjectDO child = buildSubjectDO(accountSetId, "100101", parent.getId(), 2)
-                .setStatus(CommonStatusEnum.DISABLE.getStatus());
+        FmsSubjectDO child =
+                buildSubjectDO(accountSetId, "100101", parent.getId(), 2)
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus());
         subjectMapper.insert(child);
         FmsSubjectDO grandchild = buildSubjectDO(accountSetId, "10010101", child.getId(), 3);
         subjectMapper.insert(grandchild);
         subjectMapper.insert(buildSubjectDO(accountSetId, "1002", FmsSubjectDO.PARENT_ID_ROOT, 1));
 
         // 调用
-        List<Long> subjectIds = subjectService.getSubjectIdListWithChildren(accountSetId, parent.getId());
+        List<Long> subjectIds =
+                subjectService.getSubjectIdListWithChildren(accountSetId, parent.getId());
 
         // 断言
         assertEquals(Arrays.asList(parent.getId(), child.getId(), grandchild.getId()), subjectIds);
@@ -683,10 +790,12 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetSubjectCountByAuxiliaryTypeId() {
         // mock 数据
-        subjectMapper.insert(buildSubjectDO(1L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setAuxiliaryTypeIds(Collections.singletonList(20L)));
-        subjectMapper.insert(buildSubjectDO(2L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setAuxiliaryTypeIds(Collections.singletonList(30L)));
+        subjectMapper.insert(
+                buildSubjectDO(1L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setAuxiliaryTypeIds(Collections.singletonList(20L)));
+        subjectMapper.insert(
+                buildSubjectDO(2L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setAuxiliaryTypeIds(Collections.singletonList(30L)));
 
         // 调用，并断言
         assertEquals(1L, subjectService.getSubjectCountByAuxiliaryTypeId(1L, 20L));
@@ -697,10 +806,12 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetSubjectCountByCurrencyId() {
         // mock 数据
-        subjectMapper.insert(buildSubjectDO(1L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setCurrencyIds(Collections.singletonList(20L)));
-        subjectMapper.insert(buildSubjectDO(2L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
-                .setCurrencyIds(Collections.singletonList(30L)));
+        subjectMapper.insert(
+                buildSubjectDO(1L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setCurrencyIds(Collections.singletonList(20L)));
+        subjectMapper.insert(
+                buildSubjectDO(2L, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1)
+                        .setCurrencyIds(Collections.singletonList(30L)));
 
         // 调用，并断言
         assertEquals(1L, subjectService.getSubjectCountByCurrencyId(1L, 20L));
@@ -712,7 +823,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
     public void testExpandSubjectCodes() {
         // mock 数据
         Long accountSetId = 1L;
-        FmsSubjectDO levelOne = buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
+        FmsSubjectDO levelOne =
+                buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1);
         subjectMapper.insert(levelOne);
         FmsSubjectDO levelTwo = buildSubjectDO(accountSetId, "100101", levelOne.getId(), 2);
         subjectMapper.insert(levelTwo);
@@ -720,8 +832,8 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         subjectMapper.insert(levelThree);
 
         // 调用
-        subjectService.expandSubjectCodes(accountSetId,
-                Arrays.asList(4, 2, 2, 2), Arrays.asList(5, 3, 2, 2));
+        subjectService.expandSubjectCodes(
+                accountSetId, Arrays.asList(4, 2, 2, 2), Arrays.asList(5, 3, 2, 2));
 
         // 断言
         assertEquals("10001", subjectMapper.selectById(levelOne.getId()).getCode());
@@ -735,14 +847,26 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
         // 准备参数
-        List<FmsSubjectImportExcelVO> importSubjects = Arrays.asList(
-                FmsSubjectImportExcelVO.builder().code("100101").name("人民币现金")
-                        .parentSubjectCode("1001").balanceDirection("借").categoryName("流动资产").build(),
-                FmsSubjectImportExcelVO.builder().code("1001").name("库存现金")
-                        .parentSubjectCode("0").balanceDirection("借").categoryName("流动资产").build());
+        List<FmsSubjectImportExcelVO> importSubjects =
+                Arrays.asList(
+                        FmsSubjectImportExcelVO.builder()
+                                .code("100101")
+                                .name("人民币现金")
+                                .parentSubjectCode("1001")
+                                .balanceDirection("借")
+                                .categoryName("流动资产")
+                                .build(),
+                        FmsSubjectImportExcelVO.builder()
+                                .code("1001")
+                                .name("库存现金")
+                                .parentSubjectCode("0")
+                                .balanceDirection("借")
+                                .categoryName("流动资产")
+                                .build());
 
         // 调用
-        FmsSubjectImportRespVO result = subjectService.importSubjectList(accountSetId, importSubjects, 10L);
+        FmsSubjectImportRespVO result =
+                subjectService.importSubjectList(accountSetId, importSubjects, 10L);
 
         // 断言
         assertEquals(2, result.getTotalCount());
@@ -760,8 +884,9 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         Long accountSetId = 1L;
 
         // 调用，并断言
-        assertServiceException(() -> subjectService.importSubjectList(
-                accountSetId, Collections.emptyList(), 10L), SUBJECT_IMPORT_LIST_IS_EMPTY);
+        assertServiceException(
+                () -> subjectService.importSubjectList(accountSetId, Collections.emptyList(), 10L),
+                SUBJECT_IMPORT_LIST_IS_EMPTY);
     }
 
     @Test
@@ -770,13 +895,19 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         Long accountSetId = 1L;
         mockAccountSetAccess(accountSetId);
         // 准备参数
-        FmsSubjectImportExcelVO importSubject = FmsSubjectImportExcelVO.builder()
-                .code(" ").name("测试科目").parentSubjectCode("0")
-                .balanceDirection("借").categoryName("流动资产").build();
+        FmsSubjectImportExcelVO importSubject =
+                FmsSubjectImportExcelVO.builder()
+                        .code(" ")
+                        .name("测试科目")
+                        .parentSubjectCode("0")
+                        .balanceDirection("借")
+                        .categoryName("流动资产")
+                        .build();
 
         // 调用
-        FmsSubjectImportRespVO result = subjectService.importSubjectList(
-                accountSetId, Collections.singletonList(importSubject), 10L);
+        FmsSubjectImportRespVO result =
+                subjectService.importSubjectList(
+                        accountSetId, Collections.singletonList(importSubject), 10L);
 
         // 断言
         assertTrue(result.getSuccessSubjectCodes().isEmpty());
@@ -791,56 +922,99 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         mockAccountSetAccess(accountSetId);
         subjectMapper.insert(buildSubjectDO(accountSetId, "1001", FmsSubjectDO.PARENT_ID_ROOT, 1));
         // 准备参数
-        List<FmsSubjectImportExcelVO> importSubjects = Arrays.asList(
-                FmsSubjectImportExcelVO.builder().code("1001").name("重复科目")
-                        .parentSubjectCode("0").balanceDirection("借").categoryName("流动资产").build(),
-                FmsSubjectImportExcelVO.builder().code("1002").name("银行存款")
-                        .parentSubjectCode("0").balanceDirection("错误方向").categoryName("流动资产").build(),
-                FmsSubjectImportExcelVO.builder().code("1003").name("其他货币资金")
-                        .parentSubjectCode("0").balanceDirection("借").categoryName("流动资产").build());
+        List<FmsSubjectImportExcelVO> importSubjects =
+                Arrays.asList(
+                        FmsSubjectImportExcelVO.builder()
+                                .code("1001")
+                                .name("重复科目")
+                                .parentSubjectCode("0")
+                                .balanceDirection("借")
+                                .categoryName("流动资产")
+                                .build(),
+                        FmsSubjectImportExcelVO.builder()
+                                .code("1002")
+                                .name("银行存款")
+                                .parentSubjectCode("0")
+                                .balanceDirection("错误方向")
+                                .categoryName("流动资产")
+                                .build(),
+                        FmsSubjectImportExcelVO.builder()
+                                .code("1003")
+                                .name("其他货币资金")
+                                .parentSubjectCode("0")
+                                .balanceDirection("借")
+                                .categoryName("流动资产")
+                                .build());
 
         // 调用
-        FmsSubjectImportRespVO result = subjectService.importSubjectList(accountSetId, importSubjects, 10L);
+        FmsSubjectImportRespVO result =
+                subjectService.importSubjectList(accountSetId, importSubjects, 10L);
 
         // 断言
         assertEquals(Arrays.asList("1001", "1003"), result.getSuccessSubjectCodes());
         assertEquals(1, result.getFailureReasons().size());
         assertTrue(result.getFailureReasons().values().contains("余额方向只能填写借或贷"));
-        assertEquals("重复科目", subjectMapper.selectByAccountSetIdAndCode(accountSetId, "1001").getName());
+        assertEquals(
+                "重复科目", subjectMapper.selectByAccountSetIdAndCode(accountSetId, "1001").getName());
         assertNotNull(subjectMapper.selectByAccountSetIdAndCode(accountSetId, "1003"));
     }
 
     // ========== 随机对象 ==========
 
-    private FmsSubjectSaveReqVO buildSubjectSaveReqVO(Long accountSetId, String subjectCode, String name) {
+    private FmsSubjectSaveReqVO buildSubjectSaveReqVO(
+            Long accountSetId, String subjectCode, String name) {
         FmsSubjectSaveReqVO reqVO = new FmsSubjectSaveReqVO();
-        reqVO.setAccountSetId(accountSetId).setCode(subjectCode).setName(name)
+        reqVO.setAccountSetId(accountSetId)
+                .setCode(subjectCode)
+                .setName(name)
                 .setParentId(FmsSubjectDO.PARENT_ID_ROOT)
-                .setType(FmsSubjectTypeEnum.ASSET.getType()).setCategory(1)
+                .setType(FmsSubjectTypeEnum.ASSET.getType())
+                .setCategory(1)
                 .setBalanceDirection(FmsDebitCreditDirectionEnum.DEBIT.getType())
-                .setAuxiliaryTypeIds(Collections.emptyList()).setCurrencyIds(Collections.emptyList())
-                .setQuantityAccounting(false).setCash(false);
+                .setAuxiliaryTypeIds(Collections.emptyList())
+                .setCurrencyIds(Collections.emptyList())
+                .setQuantityAccounting(false)
+                .setCash(false);
         return reqVO;
     }
 
-    private FmsSubjectDO buildSubjectDO(Long accountSetId, String subjectCode, Long parentId, int level) {
-        return randomPojo(FmsSubjectDO.class, subject -> subject.setId(null)
-                .setCode(subjectCode).setName("测试科目").setParentId(parentId)
-                .setType(FmsSubjectTypeEnum.ASSET.getType()).setCategory(1)
-                .setBalanceDirection(FmsDebitCreditDirectionEnum.DEBIT.getType())
-                .setCash(false).setStatus(CommonStatusEnum.ENABLE.getStatus()).setLevel(level)
-                .setQuantityAccounting(false).setAccountSetId(accountSetId)
-                .setAuxiliaryTypeIds(Collections.emptyList()).setCurrencyIds(Collections.emptyList()));
+    private FmsSubjectDO buildSubjectDO(
+            Long accountSetId, String subjectCode, Long parentId, int level) {
+        return randomPojo(
+                FmsSubjectDO.class,
+                subject ->
+                        subject.setId(null)
+                                .setCode(subjectCode)
+                                .setName("测试科目")
+                                .setParentId(parentId)
+                                .setType(FmsSubjectTypeEnum.ASSET.getType())
+                                .setCategory(1)
+                                .setBalanceDirection(FmsDebitCreditDirectionEnum.DEBIT.getType())
+                                .setCash(false)
+                                .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                .setLevel(level)
+                                .setQuantityAccounting(false)
+                                .setAccountSetId(accountSetId)
+                                .setAuxiliaryTypeIds(Collections.emptyList())
+                                .setCurrencyIds(Collections.emptyList()));
     }
 
     private FmsSubjectTemplateDO buildSubjectTemplate(
             String subjectCode, String name, Long parentId, int level) {
-        return randomPojo(FmsSubjectTemplateDO.class, subject -> subject.setId(null)
-                .setCode(subjectCode).setName(name).setParentId(parentId)
-                .setType(FmsSubjectTypeEnum.ASSET.getType()).setCategory(1)
-                .setBalanceDirection(FmsDebitCreditDirectionEnum.DEBIT.getType())
-                .setCash(true).setStatus(CommonStatusEnum.ENABLE.getStatus()).setLevel(level)
-                .setQuantityAccounting(false));
+        return randomPojo(
+                FmsSubjectTemplateDO.class,
+                subject ->
+                        subject.setId(null)
+                                .setCode(subjectCode)
+                                .setName(name)
+                                .setParentId(parentId)
+                                .setType(FmsSubjectTypeEnum.ASSET.getType())
+                                .setCategory(1)
+                                .setBalanceDirection(FmsDebitCreditDirectionEnum.DEBIT.getType())
+                                .setCash(true)
+                                .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                .setLevel(level)
+                                .setQuantityAccounting(false));
     }
 
     private void mockAccountSetAccess(Long accountSetId) {
@@ -850,9 +1024,10 @@ public class FmsSubjectServiceImplTest extends BaseDbUnitTest {
         when(accountSetService.validateAccountSetWritePermission(accountSetId, 10L))
                 .thenReturn(accountSet);
         when(financeParameterService.getFinanceParameter(accountSetId))
-                .thenReturn(new FmsFinanceParameterDO()
-                        .setLevel(FmsFinanceParameterDO.DEFAULT_LEVEL)
-                        .setSubjectCodeRule(FmsFinanceParameterDO.DEFAULT_SUBJECT_CODE_RULE));
+                .thenReturn(
+                        new FmsFinanceParameterDO()
+                                .setLevel(FmsFinanceParameterDO.DEFAULT_LEVEL)
+                                .setSubjectCodeRule(
+                                        FmsFinanceParameterDO.DEFAULT_SUBJECT_CODE_RULE));
     }
-
 }

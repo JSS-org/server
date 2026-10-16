@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.leave;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -51,5 +54,4 @@ public class HrmAttendanceLeaveCreateReqVO {
     public boolean isTimeRangeValid() {
         return startTime == null || endTime == null || endTime.isAfter(startTime);
     }
-
 }

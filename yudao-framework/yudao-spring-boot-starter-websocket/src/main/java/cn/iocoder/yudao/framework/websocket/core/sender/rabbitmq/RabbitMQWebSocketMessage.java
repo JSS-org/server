@@ -16,10 +16,12 @@ public class RabbitMQWebSocketMessage implements Serializable {
      * Session 编号
      */
     private String sessionId;
+
     /**
      * 用户类型
      */
     private Integer userType;
+
     /**
      * 用户编号
      */
@@ -29,9 +31,9 @@ public class RabbitMQWebSocketMessage implements Serializable {
      * 消息类型
      */
     private String messageType;
+
     /**
      * 消息内容
      */
     private String messageContent;
-
 }

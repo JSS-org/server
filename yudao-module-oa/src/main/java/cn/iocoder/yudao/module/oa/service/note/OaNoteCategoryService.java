@@ -1,13 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.note;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.category.OaNoteCategorySaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteCategoryDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * OA 笔记目录 Service 接口
@@ -85,5 +85,4 @@ public interface OaNoteCategoryService {
         List<OaNoteCategoryDO> categories = getNoteCategoryList(ids);
         return convertMap(categories, OaNoteCategoryDO::getId);
     }
-
 }

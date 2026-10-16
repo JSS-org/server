@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.web.core.filter;
 
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
+
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,8 +71,6 @@ public class CacheRequestBodyWrapper extends HttpServletRequestWrapper {
             public int available() {
                 return body.length;
             }
-
         };
     }
-
 }

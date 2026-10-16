@@ -2,12 +2,15 @@ package cn.iocoder.yudao.module.infra.framework.codegen.config;
 
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenFrontTypeEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenVOTypeEnum;
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
+
 import java.util.Collection;
 
 @ConfigurationProperties(prefix = "yudao.codegen")
@@ -60,5 +63,4 @@ public class CodegenProperties {
      */
     @NotNull(message = "是否生成 Excel 导入接口不能为空")
     private Boolean importEnable;
-
 }

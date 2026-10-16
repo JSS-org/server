@@ -1,6 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.cal.plan;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo.MesCalPlanPageReqVO;
@@ -11,8 +15,9 @@ import cn.iocoder.yudao.module.mes.enums.cal.MesCalPlanStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.cal.MesCalShiftMethodEnum;
 import cn.iocoder.yudao.module.mes.enums.cal.MesCalShiftTypeEnum;
 import cn.iocoder.yudao.module.mes.service.cal.team.MesCalTeamShiftService;
-import cn.hutool.core.util.ObjUtil;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +26,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 排班计划 Service 实现类
@@ -34,18 +36,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesCalPlanServiceImpl implements MesCalPlanService {
 
-    @Resource
-    private MesCalPlanMapper planMapper;
+    @Resource private MesCalPlanMapper planMapper;
 
-    @Resource
-    @Lazy
-    private MesCalPlanShiftService planShiftService;
-    @Resource
-    @Lazy
-    private MesCalPlanTeamService planTeamService;
-    @Resource
-    @Lazy
-    private MesCalTeamShiftService teamShiftService;
+    @Resource @Lazy private MesCalPlanShiftService planShiftService;
+    @Resource @Lazy private MesCalPlanTeamService planTeamService;
+    @Resource @Lazy private MesCalTeamShiftService teamShiftService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -79,9 +74,14 @@ public class MesCalPlanServiceImpl implements MesCalPlanService {
 
         // 2.1 倒班字段联动清理：单白班不倒班，倒班方式非按天时不需要倒班天数
         updateReqVO.setStatus(null); // 不允许通过 update 修改状态，状态变更走专用接口
-        boolean clearShiftMethod = MesCalShiftTypeEnum.SINGLE.getType().equals(updateReqVO.getShiftType());
-        boolean clearShiftCount = clearShiftMethod || updateReqVO.getShiftMethod() == null
-                || !MesCalShiftMethodEnum.DAY.getMethod().equals(updateReqVO.getShiftMethod());
+        boolean clearShiftMethod =
+                MesCalShiftTypeEnum.SINGLE.getType().equals(updateReqVO.getShiftType());
+        boolean clearShiftCount =
+                clearShiftMethod
+                        || updateReqVO.getShiftMethod() == null
+                        || !MesCalShiftMethodEnum.DAY
+                                .getMethod()
+                                .equals(updateReqVO.getShiftMethod());
         if (clearShiftMethod) {
             updateReqVO.setShiftMethod(null);
         }
@@ -179,5 +179,4 @@ public class MesCalPlanServiceImpl implements MesCalPlanService {
             throw exception(CAL_PLAN_TEAM_COUNT_NOT_MATCH);
         }
     }
-
 }

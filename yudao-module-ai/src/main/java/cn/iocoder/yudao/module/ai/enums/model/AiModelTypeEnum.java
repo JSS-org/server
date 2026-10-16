@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.enums.model;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @Getter
 @RequiredArgsConstructor
 public enum AiModelTypeEnum implements ArrayValuable<Integer> {
-
     CHAT(1, "对话"),
     IMAGE(2, "图片"),
     VOICE(3, "语音"),
@@ -26,16 +26,17 @@ public enum AiModelTypeEnum implements ArrayValuable<Integer> {
      * 类型
      */
     private final Integer type;
+
     /**
      * 类型名
      */
     private final String name;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(AiModelTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(AiModelTypeEnum::getType).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

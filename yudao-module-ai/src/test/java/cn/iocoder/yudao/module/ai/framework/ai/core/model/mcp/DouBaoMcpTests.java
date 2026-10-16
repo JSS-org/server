@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.mcp;
 
+import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
+
 import cn.hutool.system.SystemUtil;
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.doubao.DouBaoChatModel;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
@@ -10,79 +13,58 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
-import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
-
 @Disabled
 public class DouBaoMcpTests {
 
-    private static final String API_KEY = SystemUtil.get("DOUBAO_API_KEY",
-            "sk-xxxx"); // 按需改成你的豆包 API Key
+    private static final String API_KEY =
+            SystemUtil.get("DOUBAO_API_KEY", "sk-xxxx"); // 按需改成你的豆包 API Key
 
-    private final OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-            .options(OpenAiChatOptions.builder()
-                    .baseUrl(DouBaoChatModel.BASE_URL)
-                    .apiKey(API_KEY)
-                    .model(DouBaoChatModel.MODEL_DEFAULT) // 模型（doubao）
-                    .temperature(0.7)
-                    .build())
-            .build();
+    private final OpenAiChatModel openAiChatModel =
+            OpenAiChatModel.builder()
+                    .options(
+                            OpenAiChatOptions.builder()
+                                    .baseUrl(DouBaoChatModel.BASE_URL)
+                                    .apiKey(API_KEY)
+                                    .model(DouBaoChatModel.MODEL_DEFAULT) // 模型（doubao）
+                                    .temperature(0.7)
+                                    .build())
+                    .build();
 
     private final DouBaoChatModel chatModel = new DouBaoChatModel(openAiChatModel);
 
-    private final MethodToolCallbackProvider provider = MethodToolCallbackProvider.builder()
-            .toolObjects(new UserService())
-            .build();
+    private final MethodToolCallbackProvider provider =
+            MethodToolCallbackProvider.builder().toolObjects(new UserService()).build();
 
-    private final ChatClient chatClient = ChatClient.builder(chatModel)
-            .defaultTools(provider)
-            .build();
+    private final ChatClient chatClient =
+            ChatClient.builder(chatModel).defaultTools(provider).build();
 
     @Test
     public void testMcpGetUserInfo() {
         validateApiKey(API_KEY);
         // 打印结果
-        System.out.println(chatClient.prompt()
-                .user("目前有哪些工具可以使用")
-                .call()
-                .content());
+        System.out.println(chatClient.prompt().user("目前有哪些工具可以使用").call().content());
         System.out.println("====================================");
 
         // 打印结果
-        System.out.println(chatClient.prompt()
-                .user("小新的年龄是多少")
-                .call()
-                .content());
+        System.out.println(chatClient.prompt().user("小新的年龄是多少").call().content());
         System.out.println("====================================");
 
         // 打印结果
-        System.out.println(chatClient.prompt()
-                .user("获取小新的基本信息")
-                .call()
-                .content());
+        System.out.println(chatClient.prompt().user("获取小新的基本信息").call().content());
         System.out.println("====================================");
 
         // 打印结果
-        System.out.println(chatClient.prompt()
-                .user("小新是什么职业的")
-                .call()
-                .content());
+        System.out.println(chatClient.prompt().user("小新是什么职业的").call().content());
         System.out.println("====================================");
 
         // 打印结果
-        System.out.println(chatClient.prompt()
-                .user("小新的教育背景")
-                .call()
-                .content());
+        System.out.println(chatClient.prompt().user("小新的教育背景").call().content());
         System.out.println("====================================");
 
         // 打印结果
-        System.out.println(chatClient.prompt()
-                .user("小新的兴趣爱好是什么")
-                .call()
-                .content());
+        System.out.println(chatClient.prompt().user("小新的兴趣爱好是什么").call().content());
         System.out.println("====================================");
     }
-
 
     static class UserService {
 
@@ -103,7 +85,11 @@ public class DouBaoMcpTests {
 
         @Tool(name = "getUserContact", description = "获取用户联系方式，包括电话、邮箱等")
         public String getUserContact(String userName) {
-            return "《" + userName + "》的联系方式：\n电话：138****1234\n邮箱：" + userName.toLowerCase() + "@example.com\nQQ：123456789";
+            return "《"
+                    + userName
+                    + "》的联系方式：\n电话：138****1234\n邮箱："
+                    + userName.toLowerCase()
+                    + "@example.com\nQQ：123456789";
         }
 
         @Tool(name = "getUserAddress", description = "获取用户地址信息")
@@ -125,7 +111,5 @@ public class DouBaoMcpTests {
         public String getUserEducation(String userName) {
             return "《" + userName + "》的教育背景：\n本科：计算机科学与技术专业，北京大学\n硕士：软件工程专业，清华大学";
         }
-
     }
-
 }

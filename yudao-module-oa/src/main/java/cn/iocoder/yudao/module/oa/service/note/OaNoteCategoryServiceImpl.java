@@ -1,12 +1,18 @@
 package cn.iocoder.yudao.module.oa.service.note;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.category.OaNoteCategorySaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteCategoryDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.note.OaNoteCategoryMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_NOT_EXISTS;
 
 /**
  * OA 笔记目录 Service 实现类
@@ -29,11 +31,9 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_
 @Validated
 public class OaNoteCategoryServiceImpl implements OaNoteCategoryService {
 
-    @Resource
-    private OaNoteCategoryMapper noteCategoryMapper;
+    @Resource private OaNoteCategoryMapper noteCategoryMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaNoteService noteService;
 
     @Override
@@ -42,7 +42,8 @@ public class OaNoteCategoryServiceImpl implements OaNoteCategoryService {
         validateNoteCategoryNameUnique(null, userId, createReqVO.getName());
 
         // 2. 新增笔记目录
-        OaNoteCategoryDO category = BeanUtils.toBean(createReqVO, OaNoteCategoryDO.class).setUserId(userId);
+        OaNoteCategoryDO category =
+                BeanUtils.toBean(createReqVO, OaNoteCategoryDO.class).setUserId(userId);
         noteCategoryMapper.insert(category);
         return category.getId();
     }
@@ -95,7 +96,9 @@ public class OaNoteCategoryServiceImpl implements OaNoteCategoryService {
 
     @Override
     public List<OaNoteCategoryDO> getNoteCategoryList(Collection<Long> ids) {
-        return CollUtil.isEmpty(ids) ? Collections.emptyList() : noteCategoryMapper.selectByIds(ids);
+        return CollUtil.isEmpty(ids)
+                ? Collections.emptyList()
+                : noteCategoryMapper.selectByIds(ids);
     }
 
     /**
@@ -111,5 +114,4 @@ public class OaNoteCategoryServiceImpl implements OaNoteCategoryService {
             throw exception(NOTE_CATEGORY_NAME_DUPLICATE);
         }
     }
-
 }

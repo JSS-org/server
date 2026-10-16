@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.mindmap.vo.AiMindMapGenerateReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.mindmap.vo.AiMindMapPageReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.mindmap.AiMindMapDO;
+
 import reactor.core.publisher.Flux;
 
 /**
@@ -45,5 +46,4 @@ public interface AiMindMapService {
      * @return 思维导图分页
      */
     PageResult<AiMindMapDO> getMindMapPage(AiMindMapPageReqVO pageReqVO);
-
 }

@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay.AlipayPayClientConfig.MODE_PUBLIC_KEY;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
@@ -11,27 +18,25 @@ import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderU
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefundRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefundUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.exception.PayClientException;
+
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.DefaultSigner;
 import com.alipay.api.domain.AlipayTradeRefundModel;
 import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.response.AlipayTradeRefundResponse;
+
+import jakarta.validation.ConstraintViolationException;
+
 import lombok.Setter;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
-import jakarta.validation.ConstraintViolationException;
 import java.util.Date;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.alipay.AlipayPayClientConfig.MODE_PUBLIC_KEY;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.when;
 
 /**
  * 支付宝 Client 的测试基类
@@ -40,21 +45,22 @@ import static org.mockito.Mockito.when;
  */
 public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
 
-    protected AlipayPayClientConfig config = randomPojo(AlipayPayClientConfig.class, o -> {
-        o.setServerUrl(randomURL());
-        o.setPrivateKey(randomString());
-        o.setMode(MODE_PUBLIC_KEY);
-        o.setSignType(AlipayPayClientConfig.SIGN_TYPE_DEFAULT);
-        o.setAppCertContent("");
-        o.setAlipayPublicCertContent("");
-        o.setRootCertContent("");
-    });
+    protected AlipayPayClientConfig config =
+            randomPojo(
+                    AlipayPayClientConfig.class,
+                    o -> {
+                        o.setServerUrl(randomURL());
+                        o.setPrivateKey(randomString());
+                        o.setMode(MODE_PUBLIC_KEY);
+                        o.setSignType(AlipayPayClientConfig.SIGN_TYPE_DEFAULT);
+                        o.setAppCertContent("");
+                        o.setAlipayPublicCertContent("");
+                        o.setRootCertContent("");
+                    });
 
-    @Mock
-    protected DefaultAlipayClient defaultAlipayClient;
+    @Mock protected DefaultAlipayClient defaultAlipayClient;
 
-    @Setter
-    private AbstractAlipayPayClient client;
+    @Setter private AbstractAlipayPayClient client;
 
     /**
      * 子类需要实现该方法. 设置 client 的具体实现
@@ -71,7 +77,8 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
         DefaultAlipayClient realClient = client.getClient();
         assertNotSame(defaultAlipayClient, realClient);
         assertInstanceOf(DefaultSigner.class, realClient.getSigner());
-        assertEquals(config.getPrivateKey(), ((DefaultSigner) realClient.getSigner()).getPrivateKey());
+        assertEquals(
+                config.getPrivateKey(), ((DefaultSigner) realClient.getSigner()).getPrivateKey());
     }
 
     @Test
@@ -83,25 +90,40 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
         String outRefundNo = randomString();
         String outTradeNo = randomString();
         Integer refundAmount = randomInteger();
-        AlipayTradeRefundResponse response = randomPojo(AlipayTradeRefundResponse.class, o -> {
-            o.setSubCode("");
-            o.setGmtRefundPay(refundTime);
-        });
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradeRefundRequest>) request -> {
-            assertInstanceOf(AlipayTradeRefundModel.class, request.getBizModel());
-            AlipayTradeRefundModel bizModel = (AlipayTradeRefundModel) request.getBizModel();
-            assertEquals(outRefundNo, bizModel.getOutRequestNo());
-            assertEquals(outTradeNo, bizModel.getOutTradeNo());
-            assertEquals(String.valueOf(refundAmount / 100.0), bizModel.getRefundAmount());
-            return true;
-        }))).thenReturn(response);
+        AlipayTradeRefundResponse response =
+                randomPojo(
+                        AlipayTradeRefundResponse.class,
+                        o -> {
+                            o.setSubCode("");
+                            o.setGmtRefundPay(refundTime);
+                        });
+        when(defaultAlipayClient.execute(
+                        argThat(
+                                (ArgumentMatcher<AlipayTradeRefundRequest>)
+                                        request -> {
+                                            assertInstanceOf(
+                                                    AlipayTradeRefundModel.class,
+                                                    request.getBizModel());
+                                            AlipayTradeRefundModel bizModel =
+                                                    (AlipayTradeRefundModel) request.getBizModel();
+                                            assertEquals(outRefundNo, bizModel.getOutRequestNo());
+                                            assertEquals(outTradeNo, bizModel.getOutTradeNo());
+                                            assertEquals(
+                                                    String.valueOf(refundAmount / 100.0),
+                                                    bizModel.getRefundAmount());
+                                            return true;
+                                        })))
+                .thenReturn(response);
         // 准备请求参数
-        PayRefundUnifiedReqDTO refundReqDTO = randomPojo(PayRefundUnifiedReqDTO.class, o -> {
-            o.setOutRefundNo(outRefundNo);
-            o.setOutTradeNo(outTradeNo);
-            o.setNotifyUrl(notifyUrl);
-            o.setRefundPrice(refundAmount);
-        });
+        PayRefundUnifiedReqDTO refundReqDTO =
+                randomPojo(
+                        PayRefundUnifiedReqDTO.class,
+                        o -> {
+                            o.setOutRefundNo(outRefundNo);
+                            o.setOutTradeNo(outTradeNo);
+                            o.setNotifyUrl(notifyUrl);
+                            o.setRefundPrice(refundAmount);
+                        });
 
         // 调用
         PayRefundRespDTO resp = client.unifiedRefund(refundReqDTO);
@@ -122,22 +144,34 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
         String notifyUrl = randomURL();
         String subCode = randomString();
         String subMsg = randomString();
-        AlipayTradeRefundResponse response = randomPojo(AlipayTradeRefundResponse.class, o -> {
-            o.setSubCode(subCode);
-            o.setSubMsg(subMsg);
-        });
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradeRefundRequest>) request -> {
-            assertInstanceOf(AlipayTradeRefundModel.class, request.getBizModel());
-            return true;
-        }))).thenReturn(response);
+        AlipayTradeRefundResponse response =
+                randomPojo(
+                        AlipayTradeRefundResponse.class,
+                        o -> {
+                            o.setSubCode(subCode);
+                            o.setSubMsg(subMsg);
+                        });
+        when(defaultAlipayClient.execute(
+                        argThat(
+                                (ArgumentMatcher<AlipayTradeRefundRequest>)
+                                        request -> {
+                                            assertInstanceOf(
+                                                    AlipayTradeRefundModel.class,
+                                                    request.getBizModel());
+                                            return true;
+                                        })))
+                .thenReturn(response);
         // 准备请求参数
         String outRefundNo = randomString();
         String outTradeNo = randomString();
-        PayRefundUnifiedReqDTO refundReqDTO = randomPojo(PayRefundUnifiedReqDTO.class, o -> {
-            o.setOutRefundNo(outRefundNo);
-            o.setOutTradeNo(outTradeNo);
-            o.setNotifyUrl(notifyUrl);
-        });
+        PayRefundUnifiedReqDTO refundReqDTO =
+                randomPojo(
+                        PayRefundUnifiedReqDTO.class,
+                        o -> {
+                            o.setOutRefundNo(outRefundNo);
+                            o.setOutTradeNo(outTradeNo);
+                            o.setNotifyUrl(notifyUrl);
+                        });
 
         // 调用
         PayRefundRespDTO resp = client.unifiedRefund(refundReqDTO);
@@ -156,10 +190,13 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
     public void testUnifiedRefund_paramInvalidate() {
         // 准备请求参数
         String notifyUrl = randomURL();
-        PayRefundUnifiedReqDTO refundReqDTO = randomPojo(PayRefundUnifiedReqDTO.class, o -> {
-            o.setOutTradeNo("");
-            o.setNotifyUrl(notifyUrl);
-        });
+        PayRefundUnifiedReqDTO refundReqDTO =
+                randomPojo(
+                        PayRefundUnifiedReqDTO.class,
+                        o -> {
+                            o.setOutTradeNo("");
+                            o.setNotifyUrl(notifyUrl);
+                        });
 
         // 调用，并断言
         assertThrows(ConstraintViolationException.class, () -> client.unifiedRefund(refundReqDTO));
@@ -169,11 +206,15 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
     @DisplayName("支付宝 Client 统一退款：抛出业务异常")
     public void testUnifiedRefund_throwServiceException() throws AlipayApiException {
         // mock 方法
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradeRefundRequest>) request -> true)))
-                .thenThrow(ServiceExceptionUtil.exception(GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR));
+        when(defaultAlipayClient.execute(
+                        argThat((ArgumentMatcher<AlipayTradeRefundRequest>) request -> true)))
+                .thenThrow(
+                        ServiceExceptionUtil.exception(
+                                GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR));
         // 准备请求参数
         String notifyUrl = randomURL();
-        PayRefundUnifiedReqDTO refundReqDTO = randomPojo(PayRefundUnifiedReqDTO.class, o -> o.setNotifyUrl(notifyUrl));
+        PayRefundUnifiedReqDTO refundReqDTO =
+                randomPojo(PayRefundUnifiedReqDTO.class, o -> o.setNotifyUrl(notifyUrl));
 
         // 调用，并断言
         assertThrows(ServiceException.class, () -> client.unifiedRefund(refundReqDTO));
@@ -183,11 +224,13 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
     @DisplayName("支付宝 Client 统一退款：抛出系统异常")
     public void testUnifiedRefund_throwPayException() throws AlipayApiException {
         // mock 方法
-        when(defaultAlipayClient.execute(argThat((ArgumentMatcher<AlipayTradeRefundRequest>) request -> true)))
+        when(defaultAlipayClient.execute(
+                        argThat((ArgumentMatcher<AlipayTradeRefundRequest>) request -> true)))
                 .thenThrow(new RuntimeException("系统异常"));
         // 准备请求参数
         String notifyUrl = randomURL();
-        PayRefundUnifiedReqDTO refundReqDTO = randomPojo(PayRefundUnifiedReqDTO.class, o -> o.setNotifyUrl(notifyUrl));
+        PayRefundUnifiedReqDTO refundReqDTO =
+                randomPojo(PayRefundUnifiedReqDTO.class, o -> o.setNotifyUrl(notifyUrl));
 
         // 调用，并断言
         assertThrows(PayClientException.class, () -> client.unifiedRefund(refundReqDTO));
@@ -199,23 +242,28 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
         // 准备请求参数
         String outTradeNo = randomString();
         String notifyUrl = randomURL();
-        PayOrderUnifiedReqDTO reqDTO = randomPojo(PayOrderUnifiedReqDTO.class, o -> {
-            o.setOutTradeNo(outTradeNo);
-            o.setNotifyUrl(notifyUrl);
-        });
+        PayOrderUnifiedReqDTO reqDTO =
+                randomPojo(
+                        PayOrderUnifiedReqDTO.class,
+                        o -> {
+                            o.setOutTradeNo(outTradeNo);
+                            o.setNotifyUrl(notifyUrl);
+                        });
 
         // 调用，并断言
         assertThrows(ConstraintViolationException.class, () -> client.unifiedOrder(reqDTO));
     }
 
-    protected PayOrderUnifiedReqDTO buildOrderUnifiedReqDTO(String notifyUrl, String outTradeNo, Integer price) {
-        return randomPojo(PayOrderUnifiedReqDTO.class, o -> {
-            o.setOutTradeNo(outTradeNo);
-            o.setNotifyUrl(notifyUrl);
-            o.setPrice(price);
-            o.setSubject(RandomUtil.randomString(32));
-            o.setBody(RandomUtil.randomString(32));
-        });
+    protected PayOrderUnifiedReqDTO buildOrderUnifiedReqDTO(
+            String notifyUrl, String outTradeNo, Integer price) {
+        return randomPojo(
+                PayOrderUnifiedReqDTO.class,
+                o -> {
+                    o.setOutTradeNo(outTradeNo);
+                    o.setNotifyUrl(notifyUrl);
+                    o.setPrice(price);
+                    o.setSubject(RandomUtil.randomString(32));
+                    o.setBody(RandomUtil.randomString(32));
+                });
     }
-
 }

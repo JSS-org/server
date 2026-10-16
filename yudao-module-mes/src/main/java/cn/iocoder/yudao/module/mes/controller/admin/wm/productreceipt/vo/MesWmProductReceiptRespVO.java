@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,7 +18,10 @@ public class MesWmProductReceiptRespVO {
     @ExcelProperty("编号")
     private Long id;
 
-    @Schema(description = "收货单编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "PR202603010001")
+    @Schema(
+            description = "收货单编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "PR202603010001")
     @ExcelProperty("收货单编码")
     private String code;
 
@@ -65,5 +70,4 @@ public class MesWmProductReceiptRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

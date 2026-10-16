@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Min;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -43,5 +45,4 @@ public class FmsVoucherSaveReqVO {
     @Valid
     @Size(min = 2, message = "凭证至少需要两条分录")
     private List<FmsVoucherEntrySaveReqVO> entries;
-
 }

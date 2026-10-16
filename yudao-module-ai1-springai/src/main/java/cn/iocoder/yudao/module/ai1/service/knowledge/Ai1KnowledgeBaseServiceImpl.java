@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.service.knowledge;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
@@ -11,12 +14,15 @@ import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base.Ai1Knowled
 import cn.iocoder.yudao.module.ai1.dal.dataobject.knowledge.Ai1KnowledgeBaseDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.knowledge.Ai1KnowledgeBaseMapper;
 import cn.iocoder.yudao.module.ai1.enums.model.Ai1ModelTypeEnum;
+import cn.iocoder.yudao.module.ai1.harness.rag.Ai1RagTool;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
-import cn.iocoder.yudao.module.ai1.harness.rag.Ai1RagTool;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
-
 /**
  * AI1 知识库 Service 实现类
  *
@@ -41,25 +44,21 @@ import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
 @Slf4j
 public class Ai1KnowledgeBaseServiceImpl implements Ai1KnowledgeBaseService {
 
-    @Resource
-    private Ai1KnowledgeBaseMapper knowledgeBaseMapper;
+    @Resource private Ai1KnowledgeBaseMapper knowledgeBaseMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1KnowledgeDocumentService knowledgeDocumentService;
-    @Resource
-    private Ai1ModelService modelService;
+    @Resource private Ai1ModelService modelService;
 
-    @Resource
-    private Ai1RagTool ragTool;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private Ai1RagTool ragTool;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1AgentService agentService;
 
     @Override
     public Long createKnowledgeBase(Ai1KnowledgeBaseSaveReqVO createReqVO) {
         // 1. 校验向量化模型
-        validateEmbeddingModel(createReqVO.getEmbeddingProviderId(), createReqVO.getEmbeddingModelId());
+        validateEmbeddingModel(
+                createReqVO.getEmbeddingProviderId(), createReqVO.getEmbeddingModelId());
 
         // 2. 插入
         Ai1KnowledgeBaseDO knowledgeBase = BeanUtils.toBean(createReqVO, Ai1KnowledgeBaseDO.class);
@@ -71,15 +70,18 @@ public class Ai1KnowledgeBaseServiceImpl implements Ai1KnowledgeBaseService {
     public void updateKnowledgeBase(Ai1KnowledgeBaseSaveReqVO updateReqVO) {
         // 1. 校验存在、向量化模型
         Ai1KnowledgeBaseDO knowledgeBase = validateKnowledgeBaseExists(updateReqVO.getId());
-        validateEmbeddingModel(updateReqVO.getEmbeddingProviderId(), updateReqVO.getEmbeddingModelId());
+        validateEmbeddingModel(
+                updateReqVO.getEmbeddingProviderId(), updateReqVO.getEmbeddingModelId());
 
         // 2. 更新
         Ai1KnowledgeBaseDO updateObj = BeanUtils.toBean(updateReqVO, Ai1KnowledgeBaseDO.class);
         knowledgeBaseMapper.updateById(updateObj);
 
         // 3. 向量化模型变更时，失效向量存储缓存，保证后续按新模型重建
-        if (ObjUtil.notEqual(knowledgeBase.getEmbeddingProviderId(), updateObj.getEmbeddingProviderId())
-                || ObjUtil.notEqual(knowledgeBase.getEmbeddingModelId(), updateObj.getEmbeddingModelId())) {
+        if (ObjUtil.notEqual(
+                        knowledgeBase.getEmbeddingProviderId(), updateObj.getEmbeddingProviderId())
+                || ObjUtil.notEqual(
+                        knowledgeBase.getEmbeddingModelId(), updateObj.getEmbeddingModelId())) {
             ragTool.evict(updateObj.getId());
         }
     }
@@ -105,12 +107,13 @@ public class Ai1KnowledgeBaseServiceImpl implements Ai1KnowledgeBaseService {
         knowledgeDocumentService.deleteKnowledgeDocumentListByKnowledgeBaseIds(ids);
 
         // 3. 删除 Milvus 向量集合：外部资源无法回滚，事务提交后再执行，失败仅记录日志
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                ids.forEach(ragTool::dropCollection);
-            }
-        });
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        ids.forEach(ragTool::dropCollection);
+                    }
+                });
     }
 
     @Override
@@ -128,7 +131,8 @@ public class Ai1KnowledgeBaseServiceImpl implements Ai1KnowledgeBaseService {
     }
 
     @Override
-    public PageResult<Ai1KnowledgeBaseDO> getKnowledgeBasePage(Ai1KnowledgeBasePageReqVO pageReqVO) {
+    public PageResult<Ai1KnowledgeBaseDO> getKnowledgeBasePage(
+            Ai1KnowledgeBasePageReqVO pageReqVO) {
         return knowledgeBaseMapper.selectPage(pageReqVO);
     }
 
@@ -164,7 +168,8 @@ public class Ai1KnowledgeBaseServiceImpl implements Ai1KnowledgeBaseService {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("[searchKnowledgeBase][知识库({}) query({}) topK({}) 向量检索失败]", id, query, topK, e);
+            log.warn(
+                    "[searchKnowledgeBase][知识库({}) query({}) topK({}) 向量检索失败]", id, query, topK, e);
             throw exception(KNOWLEDGE_BASE_SEARCH_FAIL, e.getMessage());
         }
     }
@@ -178,5 +183,4 @@ public class Ai1KnowledgeBaseServiceImpl implements Ai1KnowledgeBaseService {
             throw exception(MODEL_TYPE_NOT_EMBEDDING);
         }
     }
-
 }

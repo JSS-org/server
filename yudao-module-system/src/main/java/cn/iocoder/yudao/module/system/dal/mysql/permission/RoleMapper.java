@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.jspecify.annotations.Nullable;
 
@@ -16,12 +17,14 @@ import java.util.List;
 public interface RoleMapper extends BaseMapperX<RoleDO> {
 
     default PageResult<RoleDO> selectPage(RolePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<RoleDO>()
-                .likeIfPresent(RoleDO::getName, reqVO.getName())
-                .likeIfPresent(RoleDO::getCode, reqVO.getCode())
-                .eqIfPresent(RoleDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(BaseDO::getCreateTime, reqVO.getCreateTime())
-                .orderByAsc(RoleDO::getSort));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<RoleDO>()
+                        .likeIfPresent(RoleDO::getName, reqVO.getName())
+                        .likeIfPresent(RoleDO::getCode, reqVO.getCode())
+                        .eqIfPresent(RoleDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(BaseDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByAsc(RoleDO::getSort));
     }
 
     default RoleDO selectByName(String name) {
@@ -35,5 +38,4 @@ public interface RoleMapper extends BaseMapperX<RoleDO> {
     default List<RoleDO> selectListByStatus(@Nullable Collection<Integer> statuses) {
         return selectList(RoleDO::getStatus, statuses);
     }
-
 }

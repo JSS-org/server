@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.service.employee.info;
 
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.contact.HrmEmployeeContactSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeContactDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -50,5 +51,4 @@ public interface HrmEmployeeContactService {
      * @return 联系人列表
      */
     List<HrmEmployeeContactDO> getContactListByEmployeeId(Long employeeId);
-
 }

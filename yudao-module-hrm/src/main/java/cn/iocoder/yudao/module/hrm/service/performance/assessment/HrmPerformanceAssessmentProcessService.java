@@ -37,8 +37,7 @@ public interface HrmPerformanceAssessmentProcessService {
      * @param assessment 员工绩效考核
      * @return 激活的绩效考核阶段
      */
-    HrmPerformanceAssessmentStageDO activateFirstReviewStage(
-            HrmPerformanceAssessmentDO assessment);
+    HrmPerformanceAssessmentStageDO activateFirstReviewStage(HrmPerformanceAssessmentDO assessment);
 
     /**
      * 激活指定类型的绩效考核阶段
@@ -107,8 +106,7 @@ public interface HrmPerformanceAssessmentProcessService {
      * @param stageId 绩效考核阶段编号
      * @return 绩效考核阶段
      */
-    HrmPerformanceAssessmentStageDO validateTaskStage(
-            Long userId, Long assessmentId, Long stageId);
+    HrmPerformanceAssessmentStageDO validateTaskStage(Long userId, Long assessmentId, Long stageId);
 
     /**
      * 通知待处理绩效阶段的处理人
@@ -127,8 +125,11 @@ public interface HrmPerformanceAssessmentProcessService {
      * @param actionName 处理动作名称
      * @param result 处理结果
      */
-    void notifyProcessResult(HrmPerformanceAssessmentDO assessment,
-                             Collection<Long> employeeIds, String actionName, String result);
+    void notifyProcessResult(
+            HrmPerformanceAssessmentDO assessment,
+            Collection<Long> employeeIds,
+            String actionName,
+            String result);
 
     /**
      * 确认绩效目标
@@ -153,7 +154,8 @@ public interface HrmPerformanceAssessmentProcessService {
      * @param reqVO 申诉信息
      * @return 流程处理结果
      */
-    HrmPortalPerformanceProcessRespVO submitAppeal(Long userId, HrmPortalPerformanceAppealReqVO reqVO);
+    HrmPortalPerformanceProcessRespVO submitAppeal(
+            Long userId, HrmPortalPerformanceAppealReqVO reqVO);
 
     /**
      * 启动绩效结果审核
@@ -201,5 +203,4 @@ public interface HrmPerformanceAssessmentProcessService {
      * @return 是否处理成功
      */
     boolean processAppealTimeout(Long stageId);
-
 }

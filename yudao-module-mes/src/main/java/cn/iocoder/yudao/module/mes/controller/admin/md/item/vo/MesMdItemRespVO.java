@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.item.vo;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -34,12 +36,14 @@ public class MesMdItemRespVO {
 
     @Schema(description = "计量单位编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "202")
     private Long unitMeasureId;
+
     @Schema(description = "计量单位名称", example = "个")
     @ExcelProperty("计量单位")
     private String unitMeasureName;
 
     @Schema(description = "物料分类编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long itemTypeId;
+
     @Schema(description = "物料分类名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "原材料")
     @ExcelProperty("物料分类")
     private String itemTypeName;
@@ -80,5 +84,4 @@ public class MesMdItemRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

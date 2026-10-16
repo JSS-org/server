@@ -3,9 +3,13 @@ package cn.iocoder.yudao.module.crm.framework.operatelog.core;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,8 +23,7 @@ public class SysAdminUserParseFunction implements IParseFunction {
 
     public static final String NAME = "getAdminUserById";
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public String functionName() {
@@ -46,5 +49,4 @@ public class SysAdminUserParseFunction implements IParseFunction {
         }
         return StrUtil.format("{}({})", nickname, user.getMobile());
     }
-
 }

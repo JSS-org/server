@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.pm.workitem;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.workbench.vo.PmsWorkbenchPageReqVO;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status.PmsWorkItemStatusUpdateReqVO;
@@ -18,8 +20,6 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemDO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 工作项 Service 接口
@@ -232,8 +232,8 @@ public interface PmsWorkItemService {
      * @param userId 用户编号
      * @return 工作项分页
      */
-    PageResult<PmsWorkItemDO> getAssignedWorkItemPage(PmsWorkbenchPageReqVO pageReqVO,
-                                                       Collection<Long> projectIds, Long userId);
+    PageResult<PmsWorkItemDO> getAssignedWorkItemPage(
+            PmsWorkbenchPageReqVO pageReqVO, Collection<Long> projectIds, Long userId);
 
     /**
      * 获得分配给用户的未完成工作项类型数量 Map
@@ -243,8 +243,8 @@ public interface PmsWorkItemService {
      * @param userId 用户编号
      * @return 工作项类型与数量 Map
      */
-    Map<Integer, Long> getAssignedWorkItemTypeCountMap(PmsWorkbenchPageReqVO pageReqVO,
-                                                       Collection<Long> projectIds, Long userId);
+    Map<Integer, Long> getAssignedWorkItemTypeCountMap(
+            PmsWorkbenchPageReqVO pageReqVO, Collection<Long> projectIds, Long userId);
 
     /**
      * 导入工作项
@@ -255,8 +255,11 @@ public interface PmsWorkItemService {
      * @param userId 用户编号
      * @return 导入结果
      */
-    PmsWorkItemImportRespVO importWorkItemList(Long projectId, Integer workItemType,
-                                               List<PmsWorkItemImportExcelVO> importRows, Long userId);
+    PmsWorkItemImportRespVO importWorkItemList(
+            Long projectId,
+            Integer workItemType,
+            List<PmsWorkItemImportExcelVO> importRows,
+            Long userId);
 
     /**
      * 获得工作项看板
@@ -292,5 +295,4 @@ public interface PmsWorkItemService {
     default Map<Long, PmsWorkItemDO> getWorkItemMap(Collection<Long> ids) {
         return convertMap(getWorkItemList(ids), PmsWorkItemDO::getId);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsSubjectTypeEnum implements ArrayValuable<Integer> {
-
     ASSET(1, "资产"),
     LIABILITY(2, "负债"),
     EQUITY(3, "所有者权益"),
@@ -23,13 +23,14 @@ public enum FmsSubjectTypeEnum implements ArrayValuable<Integer> {
     PROFIT_LOSS(5, "损益"),
     COMMON(6, "共同");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsSubjectTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(FmsSubjectTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -43,5 +44,4 @@ public enum FmsSubjectTypeEnum implements ArrayValuable<Integer> {
     public static FmsSubjectTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountset;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -91,5 +92,4 @@ public class FmsAccountSetRespVO {
 
     @Schema(description = "当前用户的成员权限级别", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
     private Integer level;
-
 }

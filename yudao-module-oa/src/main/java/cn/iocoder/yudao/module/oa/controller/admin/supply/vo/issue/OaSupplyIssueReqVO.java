@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply.vo.issue;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 用品发放 Request VO")
@@ -20,5 +22,4 @@ public class OaSupplyIssueReqVO {
     @Schema(description = "发放备注", example = "已按申请明细发放")
     @Size(max = 500, message = "发放备注长度不能超过 {max} 个字符")
     private String issueRemark;
-
 }

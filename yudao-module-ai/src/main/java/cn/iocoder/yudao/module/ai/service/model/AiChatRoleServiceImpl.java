@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.ai.service.model;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_ROLE_DISABLE;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_ROLE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -12,18 +17,16 @@ import cn.iocoder.yudao.module.ai.controller.admin.model.vo.chatRole.AiChatRoleS
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiChatRoleDO;
 import cn.iocoder.yudao.module.ai.dal.mysql.model.AiChatRoleMapper;
 import cn.iocoder.yudao.module.ai.service.knowledge.AiKnowledgeService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_ROLE_DISABLE;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_ROLE_NOT_EXISTS;
 
 /**
  * AI 聊天角色 Service 实现类
@@ -34,13 +37,10 @@ import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.CHAT_ROLE_NOT_
 @Slf4j
 public class AiChatRoleServiceImpl implements AiChatRoleService {
 
-    @Resource
-    private AiChatRoleMapper chatRoleMapper;
+    @Resource private AiChatRoleMapper chatRoleMapper;
 
-    @Resource
-    private AiKnowledgeService knowledgeService;
-    @Resource
-    private AiToolService toolService;
+    @Resource private AiKnowledgeService knowledgeService;
+    @Resource private AiToolService toolService;
 
     @Override
     public Long createChatRole(AiChatRoleSaveReqVO createReqVO) {
@@ -63,8 +63,11 @@ public class AiChatRoleServiceImpl implements AiChatRoleService {
         validateTools(createReqVO.getToolIds());
 
         // 保存角色
-        AiChatRoleDO chatRole = BeanUtils.toBean(createReqVO, AiChatRoleDO.class).setUserId(userId)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus()).setPublicStatus(false);
+        AiChatRoleDO chatRole =
+                BeanUtils.toBean(createReqVO, AiChatRoleDO.class)
+                        .setUserId(userId)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                        .setPublicStatus(false);
         chatRoleMapper.insert(chatRole);
         return chatRole.getId();
     }
@@ -187,8 +190,11 @@ public class AiChatRoleServiceImpl implements AiChatRoleService {
 
     @Override
     public List<String> getChatRoleCategoryList() {
-        List<AiChatRoleDO> list = chatRoleMapper.selectListGroupByCategory(CommonStatusEnum.ENABLE.getStatus());
-        return convertList(list, AiChatRoleDO::getCategory,
+        List<AiChatRoleDO> list =
+                chatRoleMapper.selectListGroupByCategory(CommonStatusEnum.ENABLE.getStatus());
+        return convertList(
+                list,
+                AiChatRoleDO::getCategory,
                 role -> role != null && StrUtil.isNotBlank(role.getCategory()));
     }
 
@@ -196,5 +202,4 @@ public class AiChatRoleServiceImpl implements AiChatRoleService {
     public List<AiChatRoleDO> getChatRoleListByName(String name) {
         return chatRoleMapper.selectListByName(name);
     }
-
 }

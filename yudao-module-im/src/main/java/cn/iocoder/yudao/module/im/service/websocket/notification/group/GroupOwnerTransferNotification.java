@@ -12,5 +12,4 @@ public class GroupOwnerTransferNotification extends BaseGroupNotification {
      * 新群主用户编号
      */
     private Long newOwnerUserId;
-
 }

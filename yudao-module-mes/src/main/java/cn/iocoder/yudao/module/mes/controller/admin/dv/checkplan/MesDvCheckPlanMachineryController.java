@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
@@ -10,11 +13,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkplan.MesDvCheckPlanMac
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.machinery.MesDvMachineryDO;
 import cn.iocoder.yudao.module.mes.service.dv.checkplan.MesDvCheckPlanMachineryService;
 import cn.iocoder.yudao.module.mes.service.dv.machinery.MesDvMachineryService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,24 +29,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 点检保养方案设备")
 @RestController
 @RequestMapping("/mes/dv/check-plan-machinery")
 @Validated
 public class MesDvCheckPlanMachineryController {
 
-    @Resource
-    private MesDvCheckPlanMachineryService checkPlanMachineryService;
-    @Resource
-    private MesDvMachineryService machineryService;
+    @Resource private MesDvCheckPlanMachineryService checkPlanMachineryService;
+    @Resource private MesDvMachineryService machineryService;
 
     @PostMapping("/create")
     @Operation(summary = "创建方案设备关联")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-plan:update')")
-    public CommonResult<Long> createCheckPlanMachinery(@Valid @RequestBody MesDvCheckPlanMachinerySaveReqVO createReqVO) {
+    public CommonResult<Long> createCheckPlanMachinery(
+            @Valid @RequestBody MesDvCheckPlanMachinerySaveReqVO createReqVO) {
         return success(checkPlanMachineryService.createCheckPlanMachinery(createReqVO));
     }
 
@@ -59,7 +61,8 @@ public class MesDvCheckPlanMachineryController {
     @PreAuthorize("@ss.hasPermission('mes:dv-check-plan:query')")
     public CommonResult<List<MesDvCheckPlanMachineryRespVO>> getCheckPlanMachineryListByPlan(
             @RequestParam("planId") Long planId) {
-        List<MesDvCheckPlanMachineryDO> list = checkPlanMachineryService.getCheckPlanMachineryListByPlanId(planId);
+        List<MesDvCheckPlanMachineryDO> list =
+                checkPlanMachineryService.getCheckPlanMachineryListByPlanId(planId);
         return success(buildCheckPlanMachineryRespVOList(list));
     }
 
@@ -70,14 +73,21 @@ public class MesDvCheckPlanMachineryController {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        Map<Long, MesDvMachineryDO> machineryMap = machineryService.getMachineryMap(
-                convertSet(list, MesDvCheckPlanMachineryDO::getMachineryId));
-        return BeanUtils.toBean(list, MesDvCheckPlanMachineryRespVO.class, vo ->
-            MapUtils.findAndThen(machineryMap, vo.getMachineryId(), machinery ->
-                vo.setMachineryCode(machinery.getCode()).setMachineryName(machinery.getName())
-                  .setMachineryBrand(machinery.getBrand()).setMachinerySpecification(machinery.getSpecification())
-            )
-        );
+        Map<Long, MesDvMachineryDO> machineryMap =
+                machineryService.getMachineryMap(
+                        convertSet(list, MesDvCheckPlanMachineryDO::getMachineryId));
+        return BeanUtils.toBean(
+                list,
+                MesDvCheckPlanMachineryRespVO.class,
+                vo ->
+                        MapUtils.findAndThen(
+                                machineryMap,
+                                vo.getMachineryId(),
+                                machinery ->
+                                        vo.setMachineryCode(machinery.getCode())
+                                                .setMachineryName(machinery.getName())
+                                                .setMachineryBrand(machinery.getBrand())
+                                                .setMachinerySpecification(
+                                                        machinery.getSpecification())));
     }
-
 }

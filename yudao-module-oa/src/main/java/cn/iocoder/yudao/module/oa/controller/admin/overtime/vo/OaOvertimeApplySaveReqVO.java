@@ -2,9 +2,13 @@ package cn.iocoder.yudao.module.oa.controller.admin.overtime.vo;
 
 import cn.iocoder.yudao.framework.dict.validation.InDict;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,15 +35,28 @@ public class OaOvertimeApplySaveReqVO {
     @InDict(type = DictTypeConstants.OVERTIME_TYPE, message = "加班类型必须是 {value}")
     private Integer type;
 
-    @Schema(description = "开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "开始时间不能为空")
     private LocalDateTime startTime;
 
-    @Schema(description = "结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     @NotNull(message = "结束时间不能为空")
     private LocalDateTime endTime;
 
-    @Schema(description = "申请原因", requiredMode = Schema.RequiredMode.REQUIRED, example = "完成项目上线前的联调工作")
+    @Schema(
+            description = "申请原因",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "完成项目上线前的联调工作")
     @NotBlank(message = "申请原因不能为空")
     @Size(max = 5000, message = "申请原因不能超过 5000 个字符")
     private String reason;
@@ -49,5 +66,4 @@ public class OaOvertimeApplySaveReqVO {
     public boolean isTimeRangeValid() {
         return startTime == null || endTime == null || !endTime.isBefore(startTime);
     }
-
 }

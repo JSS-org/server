@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.framework.excel.core.convert;
 
-import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.idev.excel.converters.Converter;
 import cn.idev.excel.enums.CellDataTypeEnum;
 import cn.idev.excel.metadata.GlobalConfiguration;
 import cn.idev.excel.metadata.data.WriteCellData;
 import cn.idev.excel.metadata.property.ExcelContentProperty;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 
 /**
  * Excel Json 转换器
@@ -25,10 +25,11 @@ public class JsonConvert implements Converter<Object> {
     }
 
     @Override
-    public WriteCellData<String> convertToExcelData(Object value, ExcelContentProperty contentProperty,
-                                                    GlobalConfiguration globalConfiguration) {
+    public WriteCellData<String> convertToExcelData(
+            Object value,
+            ExcelContentProperty contentProperty,
+            GlobalConfiguration globalConfiguration) {
         // 生成 Excel 小表格
         return new WriteCellData<>(JsonUtils.toJsonString(value));
     }
-
 }

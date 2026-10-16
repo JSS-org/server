@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.qc.indicatorresult;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -22,7 +26,9 @@ import cn.iocoder.yudao.module.mes.service.qc.iqc.MesQcIqcService;
 import cn.iocoder.yudao.module.mes.service.qc.oqc.MesQcOqcService;
 import cn.iocoder.yudao.module.mes.service.qc.rqc.MesQcRqcService;
 import cn.iocoder.yudao.module.system.api.dict.DictDataApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +37,6 @@ import org.springframework.validation.annotation.Validated;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 检验结果 Service 实现类
@@ -45,27 +47,16 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultService {
 
-    @Resource
-    private MesQcIndicatorResultMapper resultMapper;
+    @Resource private MesQcIndicatorResultMapper resultMapper;
 
-    @Resource
-    private MesQcIndicatorResultDetailService resultDetailService;
-    @Resource
-    private MesQcIndicatorService indicatorService;
-    @Resource
-    private MesQcIqcService iqcService;
-    @Resource
-    @Lazy
-    private MesQcIpqcService ipqcService;
-    @Resource
-    @Lazy
-    private MesQcOqcService oqcService;
-    @Resource
-    @Lazy
-    private MesQcRqcService rqcService;
+    @Resource private MesQcIndicatorResultDetailService resultDetailService;
+    @Resource private MesQcIndicatorService indicatorService;
+    @Resource private MesQcIqcService iqcService;
+    @Resource @Lazy private MesQcIpqcService ipqcService;
+    @Resource @Lazy private MesQcOqcService oqcService;
+    @Resource @Lazy private MesQcRqcService rqcService;
 
-    @Resource
-    private DictDataApi dictDataApi;
+    @Resource private DictDataApi dictDataApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -80,8 +71,8 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
         result.setItemId(itemId);
         resultMapper.insert(result);
         // 2.2 批量插入明细
-        List<MesQcIndicatorResultDetailDO> details = BeanUtils.toBean(createReqVO.getItems(),
-                MesQcIndicatorResultDetailDO.class);
+        List<MesQcIndicatorResultDetailDO> details =
+                BeanUtils.toBean(createReqVO.getItems(), MesQcIndicatorResultDetailDO.class);
         details.forEach(detail -> detail.setResultId(result.getId()));
         resultDetailService.createDetailList(details);
         return result.getId();
@@ -96,12 +87,13 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
         validateItemsSaveData(updateReqVO.getItems());
 
         // 2.1 更新主表（锁定 qcId/qcType/itemId，不允许改挂到其他质检单）
-        MesQcIndicatorResultDO updateObj = BeanUtils.toBean(updateReqVO, MesQcIndicatorResultDO.class);
+        MesQcIndicatorResultDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesQcIndicatorResultDO.class);
         updateObj.setQcId(null).setQcType(null).setItemId(null);
         resultMapper.updateById(updateObj);
         // 2.2 批量更新明细
-        List<MesQcIndicatorResultDetailDO> details = BeanUtils.toBean(updateReqVO.getItems(),
-                MesQcIndicatorResultDetailDO.class);
+        List<MesQcIndicatorResultDetailDO> details =
+                BeanUtils.toBean(updateReqVO.getItems(), MesQcIndicatorResultDetailDO.class);
         resultDetailService.createOrUpdateDetailList(details);
     }
 
@@ -123,12 +115,14 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
     }
 
     @Override
-    public PageResult<MesQcIndicatorResultDO> getIndicatorResultPage(MesQcIndicatorResultPageReqVO pageReqVO) {
+    public PageResult<MesQcIndicatorResultDO> getIndicatorResultPage(
+            MesQcIndicatorResultPageReqVO pageReqVO) {
         return resultMapper.selectPage(pageReqVO);
     }
 
     @Override
-    public List<MesQcIndicatorResultDetailDO> getIndicatorResultDetailListByResultId(Long resultId) {
+    public List<MesQcIndicatorResultDetailDO> getIndicatorResultDetailListByResultId(
+            Long resultId) {
         return resultDetailService.getDetailListByResultId(resultId);
     }
 
@@ -170,11 +164,13 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
      *
      * @return indicatorId -> MesQcIndicatorDO 映射，供后续值格式校验使用
      */
-    private Map<Long, MesQcIndicatorDO> validateIndicatorIds(List<MesQcIndicatorResultSaveReqVO.Item> items) {
+    private Map<Long, MesQcIndicatorDO> validateIndicatorIds(
+            List<MesQcIndicatorResultSaveReqVO.Item> items) {
         if (CollUtil.isEmpty(items)) {
             return Collections.emptyMap();
         }
-        Set<Long> indicatorIds = convertSet(items, MesQcIndicatorResultSaveReqVO.Item::getIndicatorId);
+        Set<Long> indicatorIds =
+                convertSet(items, MesQcIndicatorResultSaveReqVO.Item::getIndicatorId);
         return indicatorService.validateIndicatorListExists(indicatorIds);
     }
 
@@ -184,8 +180,9 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
      * <p>FLOAT → 必须可解析为 BigDecimal；INTEGER → 必须可解析为整数；
      * DICT → 必须属于字典值域；FILE → 必须为 http/https URL；TEXT → 放行
      */
-    private void validateDetailValues(List<MesQcIndicatorResultSaveReqVO.Item> items,
-                                      Map<Long, MesQcIndicatorDO> indicatorMap) {
+    private void validateDetailValues(
+            List<MesQcIndicatorResultSaveReqVO.Item> items,
+            Map<Long, MesQcIndicatorDO> indicatorMap) {
         if (CollUtil.isEmpty(items)) {
             return;
         }
@@ -202,14 +199,16 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
                 try {
                     new BigDecimal(item.getValue());
                 } catch (NumberFormatException e) {
-                    throw exception(QC_RESULT_VALUE_FORMAT_INVALID,
+                    throw exception(
+                            QC_RESULT_VALUE_FORMAT_INVALID,
                             "检测项[" + indicator.getName() + "]要求浮点数，实际值=" + item.getValue());
                 }
             } else if (Objects.equals(resultType, MesQcResultValueTypeEnum.INTEGER.getType())) {
                 try {
                     Long.parseLong(item.getValue());
                 } catch (NumberFormatException e) {
-                    throw exception(QC_RESULT_VALUE_FORMAT_INVALID,
+                    throw exception(
+                            QC_RESULT_VALUE_FORMAT_INVALID,
                             "检测项[" + indicator.getName() + "]要求整数，实际值=" + item.getValue());
                 }
             }
@@ -217,12 +216,14 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
             if (Objects.equals(resultType, MesQcResultValueTypeEnum.DICT.getType())) {
                 String dictType = indicator.getResultSpecification();
                 if (StrUtil.isNotBlank(dictType)) {
-                    dictDataApi.validateDictDataList(dictType, Collections.singleton(item.getValue()));
+                    dictDataApi.validateDictDataList(
+                            dictType, Collections.singleton(item.getValue()));
                 }
             }
             if (Objects.equals(resultType, MesQcResultValueTypeEnum.FILE.getType())
                     && !isHttpUrl(item.getValue())) {
-                throw exception(QC_RESULT_VALUE_FORMAT_INVALID,
+                throw exception(
+                        QC_RESULT_VALUE_FORMAT_INVALID,
                         "检测项[" + indicator.getName() + "]要求文件 URL，实际值=" + item.getValue());
             }
             // TEXT 不做格式校验
@@ -259,5 +260,4 @@ public class MesQcIndicatorResultServiceImpl implements MesQcIndicatorResultServ
         }
         throw new IllegalArgumentException("暂不支持 qcType=" + qcType);
     }
-
 }

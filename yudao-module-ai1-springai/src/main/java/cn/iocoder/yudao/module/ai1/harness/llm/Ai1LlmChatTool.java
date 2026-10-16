@@ -4,9 +4,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.ai1.enums.session.Ai1SessionMessageRoleEnum;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
+
 import jakarta.annotation.Resource;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -37,8 +40,7 @@ public class Ai1LlmChatTool {
      */
     private static final String METADATA_REASONING = "reasoningContent";
 
-    @Resource
-    private Ai1LlmModelFactory llmModelFactory;
+    @Resource private Ai1LlmModelFactory llmModelFactory;
 
     /**
      * 流式会话：装配消息 → 附加工具、Advisor → 增量输出
@@ -54,12 +56,22 @@ public class Ai1LlmChatTool {
      * @param onContent      回复内容增量回调，可为空
      * @return 完整回复（内容 + 思考过程）
      */
-    public ChatText chat(Ai1ModelRespBO model, String systemPrompt, List<String[]> histories, String content,
-                         List<Object> tools, List<Advisor> advisors, Long sessionId,
-                         Consumer<String> onThinking, Consumer<String> onContent) {
+    public ChatText chat(
+            Ai1ModelRespBO model,
+            String systemPrompt,
+            List<String[]> histories,
+            String content,
+            List<Object> tools,
+            List<Advisor> advisors,
+            Long sessionId,
+            Consumer<String> onThinking,
+            Consumer<String> onContent) {
         // 1. 装配会话请求：消息（系统指令 + 历史 + 当前）+ 工具 + Advisor
-        ChatClient.ChatClientRequestSpec spec = llmModelFactory.buildChatClient(model, sessionId).prompt()
-                .messages(buildMessages(systemPrompt, histories, content));
+        ChatClient.ChatClientRequestSpec spec =
+                llmModelFactory
+                        .buildChatClient(model, sessionId)
+                        .prompt()
+                        .messages(buildMessages(systemPrompt, histories, content));
         if (CollUtil.isNotEmpty(tools)) {
             spec = spec.tools(tools.toArray());
         }
@@ -103,7 +115,8 @@ public class Ai1LlmChatTool {
     /**
      * 消息装配：系统指令 + 历史 + 当前用户消息；推理模型的思考过程不进入上下文
      */
-    private static List<Message> buildMessages(String systemPrompt, List<String[]> histories, String content) {
+    private static List<Message> buildMessages(
+            String systemPrompt, List<String[]> histories, String content) {
         List<Message> messages = new ArrayList<>();
         if (StrUtil.isNotBlank(systemPrompt)) {
             messages.add(new SystemMessage(systemPrompt));
@@ -129,7 +142,9 @@ public class Ai1LlmChatTool {
         if (StrUtil.isBlank(reasoning) || reasoning.equals(previousReasoning)) {
             return null;
         }
-        return reasoning.startsWith(previousReasoning) ? reasoning.substring(previousReasoning.length()) : reasoning;
+        return reasoning.startsWith(previousReasoning)
+                ? reasoning.substring(previousReasoning.length())
+                : reasoning;
     }
 
     /**
@@ -143,11 +158,10 @@ public class Ai1LlmChatTool {
          * 回复内容
          */
         private String content;
+
         /**
          * 思考过程，推理模型才有
          */
         private String thinking;
-
     }
-
 }

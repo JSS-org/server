@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.crm.controller.admin.business.vo.business;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,11 +28,12 @@ public class CrmBusinessRespVO {
 
     @Schema(description = "客户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "10299")
     private Long customerId;
+
     @Schema(description = "客户名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
     @ExcelProperty("客户名称")
     private String customerName;
 
-    @Schema(description = "跟进状态", requiredMode = Schema.RequiredMode.REQUIRED, example ="true")
+    @Schema(description = "跟进状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
     @ExcelProperty("跟进状态")
     private Boolean followUpStatus;
 
@@ -45,21 +48,25 @@ public class CrmBusinessRespVO {
     @Schema(description = "负责人的用户编号", example = "25682")
     @ExcelProperty("负责人的用户编号")
     private Long ownerUserId;
+
     @Schema(description = "负责人名字", example = "25682")
     @ExcelProperty("负责人名字")
     private String ownerUserName;
+
     @Schema(description = "负责人部门")
     @ExcelProperty("负责人部门")
     private String ownerUserDeptName;
 
     @Schema(description = "商机状态组编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "25714")
     private Long statusTypeId;
+
     @Schema(description = "商机状组名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "进行中")
     @ExcelProperty("商机状态组")
     private String statusTypeName;
 
     @Schema(description = "商机状态编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "30320")
     private Long statusId;
+
     @Schema(description = "状态名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "跟进中")
     @ExcelProperty("商机状态")
     private String statusName;
@@ -94,6 +101,7 @@ public class CrmBusinessRespVO {
     @Schema(description = "创建人", example = "1024")
     @ExcelProperty("创建人")
     private String creator;
+
     @Schema(description = "创建人名字", example = "芋道源码")
     @ExcelProperty("创建人名字")
     private String creatorName;
@@ -118,27 +126,43 @@ public class CrmBusinessRespVO {
         @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "888")
         private Long id;
 
-        @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "20529")
+        @Schema(
+                description = "产品编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "20529")
         private Long productId;
+
         @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
         private String productName;
-        @Schema(description = "产品条码", requiredMode = Schema.RequiredMode.REQUIRED, example = "20529")
+
+        @Schema(
+                description = "产品条码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "20529")
         private String productNo;
+
         @Schema(description = "产品单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")
         private int productUnit;
 
-        @Schema(description = "产品单价", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "产品单价",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "商机价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "商机价格",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         private BigDecimal businessPrice;
 
         @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "8911")
         private BigDecimal count;
 
-        @Schema(description = "总计价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "总计价格",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         private BigDecimal totalPrice;
-
     }
-
 }

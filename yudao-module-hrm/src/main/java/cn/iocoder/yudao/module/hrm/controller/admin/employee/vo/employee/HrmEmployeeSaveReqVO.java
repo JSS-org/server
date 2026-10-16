@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBeforeOrEqual;
+
 import cn.hutool.core.util.IdcardUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -10,8 +12,11 @@ import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnu
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeIdTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
@@ -20,11 +25,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBeforeOrEqual;
 
 @Schema(description = "管理后台 - HRM 员工档案新增/修改 Request VO")
 @Data
@@ -45,7 +49,10 @@ public class HrmEmployeeSaveReqVO {
     @Schema(description = "系统用户编号", example = "1024")
     private Long userId;
 
-    @Schema(description = "手机号", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601691300")
+    @Schema(
+            description = "手机号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601691300")
     @NotBlank(message = "手机号不能为空")
     @Mobile
     private String mobile;
@@ -168,14 +175,16 @@ public class HrmEmployeeSaveReqVO {
     @JsonIgnore
     public boolean isIdNumberValid() {
         return ObjUtil.notEqual(HrmEmployeeIdTypeEnum.ID_CARD.getType(), idType)
-                || StrUtil.isBlank(idNumber) || IdcardUtil.isValidCard(idNumber);
+                || StrUtil.isBlank(idNumber)
+                || IdcardUtil.isValidCard(idNumber);
     }
 
     @AssertTrue(message = "员工状态与聘用形式不匹配")
     @JsonIgnore
     public boolean isStatusValid() {
         return ObjUtil.notEqual(HrmEmployeeTypeEnum.INFORMAL.getType(), type)
-                || status == null || HrmEmployeeStatusEnum.INFORMAL_STATUSES.contains(status);
+                || status == null
+                || HrmEmployeeStatusEnum.INFORMAL_STATUSES.contains(status);
     }
 
     @AssertTrue(message = "非正式员工状态不能为空")
@@ -200,8 +209,8 @@ public class HrmEmployeeSaveReqVO {
     @AssertTrue(message = "司龄起算时间不能晚于入职时间")
     @JsonIgnore
     public boolean isCompanyAgeStartTimeValid() {
-        return entryTime == null || companyAgeStartTime == null
+        return entryTime == null
+                || companyAgeStartTime == null
                 || isBeforeOrEqual(companyAgeStartTime, entryTime);
     }
-
 }

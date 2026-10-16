@@ -5,7 +5,9 @@ import cn.iocoder.yudao.framework.common.exception.ErrorCode;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
 import cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 import java.io.Serializable;
@@ -25,12 +27,14 @@ public class CommonResult<T> implements Serializable {
      * @see ErrorCode#getCode()
      */
     private Integer code;
+
     /**
      * 错误提示，用户可阅读
      *
      * @see ErrorCode#getMsg() ()
      */
     private String msg;
+
     /**
      * 返回数据
      */
@@ -58,7 +62,8 @@ public class CommonResult<T> implements Serializable {
     }
 
     public static <T> CommonResult<T> error(ErrorCode errorCode, Object... params) {
-        Assert.notEquals(GlobalErrorCodeConstants.SUCCESS.getCode(), errorCode.getCode(), "code 必须是错误的！");
+        Assert.notEquals(
+                GlobalErrorCodeConstants.SUCCESS.getCode(), errorCode.getCode(), "code 必须是错误的！");
         CommonResult<T> result = new CommonResult<>();
         result.code = errorCode.getCode();
         result.msg = ServiceExceptionUtil.doFormat(errorCode.getCode(), errorCode.getMsg(), params);
@@ -117,5 +122,4 @@ public class CommonResult<T> implements Serializable {
     public static <T> CommonResult<T> error(ServiceException serviceException) {
         return error(serviceException.getCode(), serviceException.getMessage());
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.report;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsFormulaRuleEnum implements ArrayValuable<Integer> {
-
     BALANCE(0, "余额"),
     DEBIT_BALANCE(1, "借方余额"),
     CREDIT_BALANCE(2, "贷方余额"),
@@ -25,13 +25,14 @@ public enum FmsFormulaRuleEnum implements ArrayValuable<Integer> {
     CREDIT_AMOUNT(6, "贷方发生额"),
     PROFIT_LOSS_AMOUNT(7, "损益发生额");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsFormulaRuleEnum::getRule).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(FmsFormulaRuleEnum::getRule).toArray(Integer[]::new);
 
     /**
      * 规则
      */
     private final Integer rule;
+
     /**
      * 名字
      */
@@ -45,5 +46,4 @@ public enum FmsFormulaRuleEnum implements ArrayValuable<Integer> {
     public static FmsFormulaRuleEnum valueOf(Integer rule) {
         return ArrayUtil.firstMatch(item -> item.getRule().equals(rule), values());
     }
-
 }

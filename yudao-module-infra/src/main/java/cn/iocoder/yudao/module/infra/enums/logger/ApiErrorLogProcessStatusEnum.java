@@ -11,7 +11,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum ApiErrorLogProcessStatusEnum {
-
     INIT(0, "未处理"),
     DONE(1, "已处理"),
     IGNORE(2, "已忽略");
@@ -20,9 +19,9 @@ public enum ApiErrorLogProcessStatusEnum {
      * 状态
      */
     private final Integer status;
+
     /**
      * 资源类型名
      */
     private final String name;
-
 }

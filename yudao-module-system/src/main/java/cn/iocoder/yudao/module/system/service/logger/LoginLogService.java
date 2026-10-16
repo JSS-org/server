@@ -34,5 +34,4 @@ public interface LoginLogService {
      * @param reqDTO 日志信息
      */
     void createLoginLog(@Valid LoginLogCreateReqDTO reqDTO);
-
 }

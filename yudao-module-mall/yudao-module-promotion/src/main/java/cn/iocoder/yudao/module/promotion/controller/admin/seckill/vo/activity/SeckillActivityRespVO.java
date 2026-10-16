@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.activity;
 
 import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.product.SeckillProductRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -24,7 +26,10 @@ public class SeckillActivityRespVO extends SeckillActivityBaseVO {
     @Schema(description = "活动状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     private Integer status;
 
-    @Schema(description = "订单实付金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "22354")
+    @Schema(
+            description = "订单实付金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "22354")
     private Integer totalPrice;
 
     @Schema(description = "秒杀库存", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
@@ -44,17 +49,24 @@ public class SeckillActivityRespVO extends SeckillActivityBaseVO {
 
     // ========== 商品字段 ==========
 
-    @Schema(description = "商品名称", requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 name 读取
+    @Schema(
+            description = "商品名称",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 name 读取
             example = "618大促")
     private String spuName;
-    @Schema(description = "商品主图", requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 picUrl 读取
+
+    @Schema(
+            description = "商品主图",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 picUrl 读取
             example = "https://www.iocoder.cn/xx.png")
     private String picUrl;
-    @Schema(description = "商品市场价，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 marketPrice 读取
+
+    @Schema(
+            description = "商品市场价，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED, // 从 SPU 的 marketPrice 读取
             example = "50")
     private Integer marketPrice;
 
     @Schema(description = "秒杀金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer seckillPrice; // 从 products 获取最小 price 读取
-
 }

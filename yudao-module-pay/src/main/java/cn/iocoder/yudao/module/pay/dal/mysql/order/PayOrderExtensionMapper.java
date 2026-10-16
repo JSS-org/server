@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.pay.dal.mysql.order;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderExtensionDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -16,8 +18,11 @@ public interface PayOrderExtensionMapper extends BaseMapperX<PayOrderExtensionDO
     }
 
     default int updateByIdAndStatus(Long id, Integer status, PayOrderExtensionDO update) {
-        return update(update, new LambdaQueryWrapper<PayOrderExtensionDO>()
-                .eq(PayOrderExtensionDO::getId, id).eq(PayOrderExtensionDO::getStatus, status));
+        return update(
+                update,
+                new LambdaQueryWrapper<PayOrderExtensionDO>()
+                        .eq(PayOrderExtensionDO::getId, id)
+                        .eq(PayOrderExtensionDO::getStatus, status));
     }
 
     default List<PayOrderExtensionDO> selectListByOrderId(Long orderId) {
@@ -25,22 +30,25 @@ public interface PayOrderExtensionMapper extends BaseMapperX<PayOrderExtensionDO
     }
 
     default List<PayOrderExtensionDO> selectListByOrderIdAndStatus(Long orderId, Integer status) {
-        return selectList(PayOrderExtensionDO::getOrderId, orderId,
-                PayOrderExtensionDO::getStatus, status);
+        return selectList(
+                PayOrderExtensionDO::getOrderId, orderId, PayOrderExtensionDO::getStatus, status);
     }
 
-    default PayOrderExtensionDO selectLastByOrderIdAndChannelIdAndStatus(Long orderId, Long channelId, Integer status) {
-        return selectLastOne(new LambdaQueryWrapper<PayOrderExtensionDO>()
-                .eq(PayOrderExtensionDO::getOrderId, orderId)
-                .eq(PayOrderExtensionDO::getChannelId, channelId)
-                .eq(PayOrderExtensionDO::getStatus, status)
-                .orderByAsc(PayOrderExtensionDO::getId));
+    default PayOrderExtensionDO selectLastByOrderIdAndChannelIdAndStatus(
+            Long orderId, Long channelId, Integer status) {
+        return selectLastOne(
+                new LambdaQueryWrapper<PayOrderExtensionDO>()
+                        .eq(PayOrderExtensionDO::getOrderId, orderId)
+                        .eq(PayOrderExtensionDO::getChannelId, channelId)
+                        .eq(PayOrderExtensionDO::getStatus, status)
+                        .orderByAsc(PayOrderExtensionDO::getId));
     }
 
-    default List<PayOrderExtensionDO> selectListByStatusAndCreateTimeGe(Integer status, LocalDateTime minCreateTime) {
-        return selectList(new LambdaQueryWrapper<PayOrderExtensionDO>()
-                .eq(PayOrderExtensionDO::getStatus, status)
-                .ge(PayOrderExtensionDO::getCreateTime, minCreateTime));
+    default List<PayOrderExtensionDO> selectListByStatusAndCreateTimeGe(
+            Integer status, LocalDateTime minCreateTime) {
+        return selectList(
+                new LambdaQueryWrapper<PayOrderExtensionDO>()
+                        .eq(PayOrderExtensionDO::getStatus, status)
+                        .ge(PayOrderExtensionDO::getCreateTime, minCreateTime));
     }
-
 }

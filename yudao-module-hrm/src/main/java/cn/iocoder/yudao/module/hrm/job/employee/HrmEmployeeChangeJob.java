@@ -5,13 +5,16 @@ import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeChangeRecordDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeQuitInfoDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeChangeRecordService;
 import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeQuitInfoService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -29,18 +32,17 @@ import java.util.Set;
 @Slf4j
 public class HrmEmployeeChangeJob implements JobHandler {
 
-    @Resource
-    private HrmEmployeeChangeRecordService employeeChangeRecordService;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private HrmEmployeeQuitInfoService employeeQuitInfoService;
+    @Resource private HrmEmployeeChangeRecordService employeeChangeRecordService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeeQuitInfoService employeeQuitInfoService;
 
     @Override
     @TenantJob
     public String execute(String param) {
-        LocalDateTime deadlineTime = StrUtil.isBlank(param) ? LocalDateTime.now()
-                : LocalDateTimeUtils.getDayEndTime(LocalDate.parse(param));
+        LocalDateTime deadlineTime =
+                StrUtil.isBlank(param)
+                        ? LocalDateTime.now()
+                        : LocalDateTimeUtils.getDayEndTime(LocalDate.parse(param));
         Set<Long> affectedEmployeeIds = new HashSet<>();
 
         // 1. 逐条应用到期且尚未生效的员工异动记录
@@ -61,7 +63,8 @@ public class HrmEmployeeChangeJob implements JobHandler {
         }
 
         // 2. 逐个应用到期转正
-        List<HrmEmployeeDO> regularEmployees = employeeService.getDueRegularEmployeeList(deadlineTime);
+        List<HrmEmployeeDO> regularEmployees =
+                employeeService.getDueRegularEmployeeList(deadlineTime);
         int regularEmployeeCount = 0;
         for (HrmEmployeeDO employee : regularEmployees) {
             try {
@@ -92,11 +95,16 @@ public class HrmEmployeeChangeJob implements JobHandler {
         }
 
         // 4. 返回执行结果
-        return String.format("HRM 员工异动生效：截止 %s，异动 %s/%s 条，转正 %s/%s 人，离职 %s/%s 人，"
-                        + "失败 %s 条，影响员工 %s 人",
-                deadlineTime, changeSuccessCount, changeRecords.size(), regularEmployeeCount,
-                regularEmployees.size(), quitEmployeeCount, quitInfos.size(), failureCount,
+        return String.format(
+                "HRM 员工异动生效：截止 %s，异动 %s/%s 条，转正 %s/%s 人，离职 %s/%s 人，" + "失败 %s 条，影响员工 %s 人",
+                deadlineTime,
+                changeSuccessCount,
+                changeRecords.size(),
+                regularEmployeeCount,
+                regularEmployees.size(),
+                quitEmployeeCount,
+                quitInfos.size(),
+                failureCount,
                 affectedEmployeeIds.size());
     }
-
 }

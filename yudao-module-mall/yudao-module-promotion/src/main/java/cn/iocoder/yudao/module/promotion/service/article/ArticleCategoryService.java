@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.category.Ar
 import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleCategoryDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -61,5 +62,4 @@ public interface ArticleCategoryService {
      * @return 文章分类列表
      */
     List<ArticleCategoryDO> getArticleCategoryListByStatus(Integer status);
-
 }

@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 加签任务的删除（减签） Request VO")
 @Data
@@ -16,5 +17,4 @@ public class BpmTaskSignDeleteReqVO {
     @Schema(description = "加签原因", requiredMode = Schema.RequiredMode.REQUIRED, example = "需要减签")
     @NotEmpty(message = "加签原因不能为空")
     private String reason;
-
 }

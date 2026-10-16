@@ -2,8 +2,10 @@ package cn.iocoder.yudao.framework.mq.redis.core.job;
 
 import cn.iocoder.yudao.framework.mq.redis.core.RedisMQTemplate;
 import cn.iocoder.yudao.framework.mq.redis.core.stream.AbstractRedisStreamMessageListener;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StreamOperations;
@@ -42,6 +44,7 @@ public class RedisStreamMessageCleanupJob {
     private final List<AbstractRedisStreamMessageListener<?>> listeners;
     private final RedisMQTemplate redisTemplate;
     private final RedissonClient redissonClient;
+
     /**
      * Redisson 锁键（多 Bean 注册清理任务时必须各不相同）
      */
@@ -72,17 +75,22 @@ public class RedisStreamMessageCleanupJob {
      * 执行清理逻辑
      */
     private void execute() {
-        StreamOperations<String, Object, Object> ops = redisTemplate.getRedisTemplate().opsForStream();
-        listeners.forEach(listener -> {
-            try {
-                // 使用 XTRIM MAXLEN 精确裁剪（approximate=false），避免 ~ 模式下长期明显高于上限
-                Long trimCount = ops.trim(listener.getStreamKey(), MAX_COUNT, false);
-                if (trimCount != null && trimCount > 0) {
-                    log.info("[execute][Stream({}) 清理消息数量({})]", listener.getStreamKey(), trimCount);
-                }
-            } catch (Exception ex) {
-                log.error("[execute][Stream({}) 清理异常]", listener.getStreamKey(), ex);
-            }
-        });
+        StreamOperations<String, Object, Object> ops =
+                redisTemplate.getRedisTemplate().opsForStream();
+        listeners.forEach(
+                listener -> {
+                    try {
+                        // 使用 XTRIM MAXLEN 精确裁剪（approximate=false），避免 ~ 模式下长期明显高于上限
+                        Long trimCount = ops.trim(listener.getStreamKey(), MAX_COUNT, false);
+                        if (trimCount != null && trimCount > 0) {
+                            log.info(
+                                    "[execute][Stream({}) 清理消息数量({})]",
+                                    listener.getStreamKey(),
+                                    trimCount);
+                        }
+                    } catch (Exception ex) {
+                        log.error("[execute][Stream({}) 清理异常]", listener.getStreamKey(), ex);
+                    }
+                });
     }
 }

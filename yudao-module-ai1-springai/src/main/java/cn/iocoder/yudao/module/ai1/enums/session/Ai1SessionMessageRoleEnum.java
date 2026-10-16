@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.enums.session;
 
 import cn.hutool.core.util.ObjUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,7 +13,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum Ai1SessionMessageRoleEnum {
-
     USER("user", "用户"),
     ASSISTANT("assistant", "助手");
 
@@ -20,6 +20,7 @@ public enum Ai1SessionMessageRoleEnum {
      * 角色
      */
     private final String role;
+
     /**
      * 名称
      */
@@ -32,5 +33,4 @@ public enum Ai1SessionMessageRoleEnum {
     public static boolean isAssistant(String role) {
         return ObjUtil.equal(ASSISTANT.role, role);
     }
-
 }

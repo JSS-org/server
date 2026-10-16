@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.controller.admin.seal;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,11 +15,14 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,21 +30,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-
 @Tag(name = "管理后台 - 印章")
 @RestController
 @RequestMapping("/oa/seal")
 @Validated
 public class OaSealController {
 
-    @Resource
-    private OaSealService sealService;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private OaSealService sealService;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建印章")
@@ -78,7 +78,8 @@ public class OaSealController {
     @PreAuthorize("@ss.hasPermission('oa:seal:query')")
     public CommonResult<PageResult<OaSealRespVO>> getSealPage(@Valid OaSealPageReqVO pageReqVO) {
         PageResult<OaSealDO> pageResult = sealService.getSealPage(pageReqVO);
-        return success(new PageResult<>(buildSealRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildSealRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -107,16 +108,29 @@ public class OaSealController {
             return Collections.emptyList();
         }
         // 1. 批量查询保管人及部门
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertSet(seals, OaSealDO::getKeeperUserId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSetByFlatMap(seals, seal -> Stream.of(seal.getDeptId(), seal.getKeeperDeptId())));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(seals, OaSealDO::getKeeperUserId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(
+                        convertSetByFlatMap(
+                                seals,
+                                seal -> Stream.of(seal.getDeptId(), seal.getKeeperDeptId())));
         // 2. 转换台账并拼接展示字段
-        return convertList(seals, seal -> {
-            OaSealRespVO respVO = BeanUtils.toBean(seal, OaSealRespVO.class);
-            MapUtils.findAndThen(deptMap, seal.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
-            MapUtils.findAndThen(userMap, seal.getKeeperUserId(), user -> respVO.setKeeperName(user.getNickname()));
-            MapUtils.findAndThen(deptMap, seal.getKeeperDeptId(), dept -> respVO.setKeeperDeptName(dept.getName()));
-            return respVO;
-        });
+        return convertList(
+                seals,
+                seal -> {
+                    OaSealRespVO respVO = BeanUtils.toBean(seal, OaSealRespVO.class);
+                    MapUtils.findAndThen(
+                            deptMap, seal.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            seal.getKeeperUserId(),
+                            user -> respVO.setKeeperName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            deptMap,
+                            seal.getKeeperDeptId(),
+                            dept -> respVO.setKeeperDeptName(dept.getName()));
+                    return respVO;
+                });
     }
 }

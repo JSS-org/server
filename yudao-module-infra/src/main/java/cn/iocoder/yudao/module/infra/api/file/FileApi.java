@@ -39,11 +39,15 @@ public interface FileApi {
      * @param type 文件的 MIME 类型，允许空
      * @return 文件路径
      */
-    String createFile(@NotEmpty(message = "文件内容不能为空") byte[] content,
-                      String name, String directory, String type);
+    String createFile(
+            @NotEmpty(message = "文件内容不能为空") byte[] content,
+            String name,
+            String directory,
+            String type);
 
     /** Explicit backend-selected storage; null retains the existing master-storage behavior. */
-    default String createFile(byte[] content, String name, String directory, String type, Long configId) {
+    default String createFile(
+            byte[] content, String name, String directory, String type, Long configId) {
         if (configId == null) return createFile(content, name, directory, type);
         throw new UnsupportedOperationException("Explicit file storage is not implemented");
     }
@@ -55,8 +59,7 @@ public interface FileApi {
      * @param expirationSeconds 访问有效期，单位秒
      * @return 文件预签名地址
      */
-    String presignGetUrl(@NotEmpty(message = "URL 不能为空") String url,
-                         Integer expirationSeconds);
+    String presignGetUrl(@NotEmpty(message = "URL 不能为空") String url, Integer expirationSeconds);
 
     /**
      * 读取文件内容
@@ -68,5 +71,4 @@ public interface FileApi {
      * @return 文件内容；文件不存在时返回 null
      */
     byte[] getFileContentByUrl(String url);
-
 }

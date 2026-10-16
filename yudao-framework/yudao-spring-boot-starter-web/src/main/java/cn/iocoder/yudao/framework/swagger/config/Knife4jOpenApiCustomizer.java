@@ -6,9 +6,12 @@ import com.github.xiaoymin.knife4j.core.conf.GlobalConstants;
 import com.github.xiaoymin.knife4j.spring.configuration.Knife4jProperties;
 import com.github.xiaoymin.knife4j.spring.configuration.Knife4jSetting;
 import com.github.xiaoymin.knife4j.spring.extension.OpenApiExtensionResolver;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.OpenAPI;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
 import org.springdoc.core.properties.SpringDocConfigProperties;
@@ -36,14 +39,16 @@ import java.util.stream.Collectors;
 @Primary
 @Configuration
 @Slf4j
-public class Knife4jOpenApiCustomizer extends com.github.xiaoymin.knife4j.spring.extension.Knife4jOpenApiCustomizer
+public class Knife4jOpenApiCustomizer
+        extends com.github.xiaoymin.knife4j.spring.extension.Knife4jOpenApiCustomizer
         implements GlobalOpenApiCustomizer {
 
     final Knife4jProperties knife4jProperties;
     final SpringDocConfigProperties properties;
 
-    public Knife4jOpenApiCustomizer(Knife4jProperties knife4jProperties, SpringDocConfigProperties properties) {
-        super(knife4jProperties,properties);
+    public Knife4jOpenApiCustomizer(
+            Knife4jProperties knife4jProperties, SpringDocConfigProperties properties) {
+        super(knife4jProperties, properties);
         this.knife4jProperties = knife4jProperties;
         this.properties = properties;
     }
@@ -52,12 +57,15 @@ public class Knife4jOpenApiCustomizer extends com.github.xiaoymin.knife4j.spring
     public void customise(OpenAPI openApi) {
         if (knife4jProperties.isEnable()) {
             Knife4jSetting setting = knife4jProperties.getSetting();
-            OpenApiExtensionResolver openApiExtensionResolver = new OpenApiExtensionResolver(setting, knife4jProperties.getDocuments());
+            OpenApiExtensionResolver openApiExtensionResolver =
+                    new OpenApiExtensionResolver(setting, knife4jProperties.getDocuments());
             // 解析初始化
             openApiExtensionResolver.start();
             Map<String, Object> objectMap = new HashMap<>();
             objectMap.put(GlobalConstants.EXTENSION_OPEN_SETTING_NAME, setting);
-            objectMap.put(GlobalConstants.EXTENSION_OPEN_MARKDOWN_NAME, openApiExtensionResolver.getMarkdownFiles());
+            objectMap.put(
+                    GlobalConstants.EXTENSION_OPEN_MARKDOWN_NAME,
+                    openApiExtensionResolver.getMarkdownFiles());
             openApi.addExtension(GlobalConstants.EXTENSION_OPEN_API_NAME, objectMap);
             addOrderExtension(openApi);
         }
@@ -83,28 +91,37 @@ public class Knife4jOpenApiCustomizer extends com.github.xiaoymin.knife4j.spring
             return;
         }
         // 扫描包下被 ApiSupport 注解的 RestController Class
-        Set<Class<?>> classes = packagesToScan.stream()
-                .map(packageToScan -> scanPackageByAnnotation(packageToScan, RestController.class))
-                .flatMap(Set::stream)
-                .filter(clazz -> clazz.isAnnotationPresent(ApiSupport.class))
-                .collect(Collectors.toSet());
+        Set<Class<?>> classes =
+                packagesToScan.stream()
+                        .map(
+                                packageToScan ->
+                                        scanPackageByAnnotation(
+                                                packageToScan, RestController.class))
+                        .flatMap(Set::stream)
+                        .filter(clazz -> clazz.isAnnotationPresent(ApiSupport.class))
+                        .collect(Collectors.toSet());
         if (!CollectionUtils.isEmpty(classes)) {
             // ApiSupport oder 值存入 tagSortMap<Tag.name,ApiSupport.order>
             Map<String, Integer> tagOrderMap = new HashMap<>();
-            classes.forEach(clazz -> {
-                Tag tag = getTag(clazz);
-                if (Objects.nonNull(tag)) {
-                    ApiSupport apiSupport = clazz.getAnnotation(ApiSupport.class);
-                    tagOrderMap.putIfAbsent(tag.name(), apiSupport.order());
-                }
-            });
+            classes.forEach(
+                    clazz -> {
+                        Tag tag = getTag(clazz);
+                        if (Objects.nonNull(tag)) {
+                            ApiSupport apiSupport = clazz.getAnnotation(ApiSupport.class);
+                            tagOrderMap.putIfAbsent(tag.name(), apiSupport.order());
+                        }
+                    });
             // 往 openApi tags 字段添加 x-order 增强属性
             if (openApi.getTags() != null) {
-                openApi.getTags().forEach(tag -> {
-                    if (tagOrderMap.containsKey(tag.getName())) {
-                        tag.addExtension(ExtensionsConstants.EXTENSION_ORDER, tagOrderMap.get(tag.getName()));
-                    }
-                });
+                openApi.getTags()
+                        .forEach(
+                                tag -> {
+                                    if (tagOrderMap.containsKey(tag.getName())) {
+                                        tag.addExtension(
+                                                ExtensionsConstants.EXTENSION_ORDER,
+                                                tagOrderMap.get(tag.getName()));
+                                    }
+                                });
             }
         }
     }
@@ -128,7 +145,8 @@ public class Knife4jOpenApiCustomizer extends com.github.xiaoymin.knife4j.spring
         return tag;
     }
 
-    private Set<Class<?>> scanPackageByAnnotation(String packageName, final Class<? extends Annotation> annotationClass) {
+    private Set<Class<?>> scanPackageByAnnotation(
+            String packageName, final Class<? extends Annotation> annotationClass) {
         ClassPathScanningCandidateComponentProvider scanner =
                 new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(annotationClass));
@@ -142,5 +160,4 @@ public class Knife4jOpenApiCustomizer extends com.github.xiaoymin.knife4j.spring
         }
         return classes;
     }
-
 }

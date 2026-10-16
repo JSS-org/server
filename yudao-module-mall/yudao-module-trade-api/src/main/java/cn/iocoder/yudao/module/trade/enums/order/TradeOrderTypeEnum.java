@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.enums.order;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum TradeOrderTypeEnum implements ArrayValuable<Integer> {
-
     NORMAL(0, "普通订单"),
     SECKILL(1, "秒杀订单"),
     BARGAIN(2, "砍价订单"),
@@ -23,12 +23,14 @@ public enum TradeOrderTypeEnum implements ArrayValuable<Integer> {
     POINT(4, "积分商城"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(TradeOrderTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(TradeOrderTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 类型名
      */
@@ -58,5 +60,4 @@ public enum TradeOrderTypeEnum implements ArrayValuable<Integer> {
     public static boolean isPoint(Integer type) {
         return ObjectUtil.equal(type, POINT.getType());
     }
-
 }

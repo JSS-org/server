@@ -1,5 +1,22 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import static cn.hutool.core.util.RandomUtil.randomEle;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,7 +27,9 @@ import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.mysql.permission.RoleMapper;
 import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
 import cn.iocoder.yudao.module.system.enums.permission.RoleTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.springframework.context.annotation.Import;
@@ -20,39 +39,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static cn.hutool.core.util.RandomUtil.randomEle;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-
 @Import(RoleServiceImpl.class)
 public class RoleServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private RoleServiceImpl roleService;
+    @Resource private RoleServiceImpl roleService;
 
-    @Resource
-    private RoleMapper roleMapper;
+    @Resource private RoleMapper roleMapper;
 
-    @MockitoBean
-    private PermissionService permissionService;
+    @MockitoBean private PermissionService permissionService;
 
     @Test
     public void testCreateRole() {
         // 准备参数
-        RoleSaveReqVO reqVO = randomPojo(RoleSaveReqVO.class)
-                .setId(null)  // 防止 id 被赋值
-                .setStatus(randomCommonStatus());
+        RoleSaveReqVO reqVO =
+                randomPojo(RoleSaveReqVO.class)
+                        .setId(null) // 防止 id 被赋值
+                        .setStatus(randomCommonStatus());
 
         // 调用
         Long roleId = roleService.createRole(reqVO, null);
@@ -70,8 +72,8 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
         roleMapper.insert(roleDO);
         // 准备参数
         Long id = roleDO.getId();
-        RoleSaveReqVO reqVO = randomPojo(RoleSaveReqVO.class, o -> o.setId(id)
-                .setStatus(randomCommonStatus()));
+        RoleSaveReqVO reqVO =
+                randomPojo(RoleSaveReqVO.class, o -> o.setId(id).setStatus(randomCommonStatus()));
 
         // 调用
         roleService.updateRole(reqVO);
@@ -129,8 +131,10 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
         String name = "role_name";
 
         // 调用，并断言异常
-        assertServiceException(() -> roleService.validateRoleDuplicate(name, randomString(), null),
-                ROLE_NAME_DUPLICATE, name);
+        assertServiceException(
+                () -> roleService.validateRoleDuplicate(name, randomString(), null),
+                ROLE_NAME_DUPLICATE,
+                name);
     }
 
     @Test
@@ -142,8 +146,10 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
         String code = "code";
 
         // 调用，并断言异常
-        assertServiceException(() -> roleService.validateRoleDuplicate(randomString(), code, null),
-                ROLE_CODE_DUPLICATE, code);
+        assertServiceException(
+                () -> roleService.validateRoleDuplicate(randomString(), code, null),
+                ROLE_CODE_DUPLICATE,
+                code);
     }
 
     @Test
@@ -159,7 +165,8 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testValidateUpdateRole_roleIdNotExist() {
-        assertServiceException(() -> roleService.validateRoleForUpdate(randomLongId()), ROLE_NOT_EXISTS);
+        assertServiceException(
+                () -> roleService.validateRoleForUpdate(randomLongId()), ROLE_NOT_EXISTS);
     }
 
     @Test
@@ -169,8 +176,8 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         Long id = roleDO.getId();
 
-        assertServiceException(() -> roleService.validateRoleForUpdate(id),
-                ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE);
+        assertServiceException(
+                () -> roleService.validateRoleForUpdate(id), ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE);
     }
 
     @Test
@@ -204,14 +211,16 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRoleListByStatus() {
         // mock 数据
-        RoleDO dbRole01 = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        RoleDO dbRole01 =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
         roleMapper.insert(dbRole01);
-        RoleDO dbRole02 = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        RoleDO dbRole02 =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
         roleMapper.insert(dbRole02);
 
         // 调用
-        List<RoleDO> list = roleService.getRoleListByStatus(
-                singleton(CommonStatusEnum.ENABLE.getStatus()));
+        List<RoleDO> list =
+                roleService.getRoleListByStatus(singleton(CommonStatusEnum.ENABLE.getStatus()));
         // 断言
         assertEquals(1, list.size());
         assertPojoEquals(dbRole01, list.get(0));
@@ -220,9 +229,11 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRoleList() {
         // mock 数据
-        RoleDO dbRole01 = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        RoleDO dbRole01 =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
         roleMapper.insert(dbRole01);
-        RoleDO dbRole02 = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        RoleDO dbRole02 =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
         roleMapper.insert(dbRole02);
 
         // 调用
@@ -236,9 +247,11 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRoleList_ids() {
         // mock 数据
-        RoleDO dbRole01 = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        RoleDO dbRole01 =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
         roleMapper.insert(dbRole01);
-        RoleDO dbRole02 = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        RoleDO dbRole02 =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
         roleMapper.insert(dbRole02);
         // 准备参数
         Collection<Long> ids = singleton(dbRole01.getId());
@@ -253,11 +266,13 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRoleListFromCache() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(RoleServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(RoleServiceImpl.class)))
                     .thenReturn(roleService);
 
             // mock 数据
-            RoleDO dbRole = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO dbRole =
+                    randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
             roleMapper.insert(dbRole);
             // 测试 id 不匹配
             roleMapper.insert(cloneIgnoreId(dbRole, o -> {}));
@@ -275,12 +290,15 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetRolePage() {
         // mock 数据
-        RoleDO dbRole = randomPojo(RoleDO.class, o -> { // 等会查询到
-            o.setName("土豆");
-            o.setCode("tudou");
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-            o.setCreateTime(buildTime(2022, 2, 8));
-        });
+        RoleDO dbRole =
+                randomPojo(
+                        RoleDO.class,
+                        o -> { // 等会查询到
+                            o.setName("土豆");
+                            o.setCode("tudou");
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                            o.setCreateTime(buildTime(2022, 2, 8));
+                        });
         roleMapper.insert(dbRole);
         // 测试 name 不匹配
         roleMapper.insert(cloneIgnoreId(dbRole, o -> o.setName("红薯")));
@@ -306,7 +324,8 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testHasAnySuperAdmin_true() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(RoleServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(RoleServiceImpl.class)))
                     .thenReturn(roleService);
 
             // mock 数据
@@ -323,7 +342,8 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testHasAnySuperAdmin_false() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(RoleServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(RoleServiceImpl.class)))
                     .thenReturn(roleService);
 
             // mock 数据
@@ -340,7 +360,8 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testValidateRoleList_success() {
         // mock 数据
-        RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        RoleDO roleDO =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
         roleMapper.insert(roleDO);
         // 准备参数
         List<Long> ids = singletonList(roleDO.getId());
@@ -361,12 +382,14 @@ public class RoleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testValidateRoleList_notEnable() {
         // mock 数据
-        RoleDO RoleDO = randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        RoleDO RoleDO =
+                randomPojo(RoleDO.class, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus()));
         roleMapper.insert(RoleDO);
         // 准备参数
         List<Long> ids = singletonList(RoleDO.getId());
 
         // 调用, 并断言异常
-        assertServiceException(() -> roleService.validateRoleList(ids), ROLE_IS_DISABLE, RoleDO.getName());
+        assertServiceException(
+                () -> roleService.validateRoleList(ids), ROLE_IS_DISABLE, RoleDO.getName());
     }
 }

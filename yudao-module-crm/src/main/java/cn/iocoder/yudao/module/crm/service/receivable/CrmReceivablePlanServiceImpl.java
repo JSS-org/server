@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.crm.service.receivable;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.RECEIVABLE_PLAN_NOT_EXISTS;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.RECEIVABLE_PLAN_UPDATE_FAIL;
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,10 +21,13 @@ import cn.iocoder.yudao.module.crm.service.contract.CrmContractService;
 import cn.iocoder.yudao.module.crm.service.permission.CrmPermissionService;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionCreateReqBO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -27,11 +35,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.RECEIVABLE_PLAN_NOT_EXISTS;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.RECEIVABLE_PLAN_UPDATE_FAIL;
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 
 /**
  * 回款计划 Service 实现类
@@ -42,38 +45,43 @@ import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 @Validated
 public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
 
-    @Resource
-    private CrmReceivablePlanMapper receivablePlanMapper;
+    @Resource private CrmReceivablePlanMapper receivablePlanMapper;
 
-    @Resource
-    private CrmContractService contractService;
-    @Resource
-    private CrmPermissionService permissionService;
+    @Resource private CrmContractService contractService;
+    @Resource private CrmPermissionService permissionService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_PLAN_TYPE, subType = CRM_RECEIVABLE_PLAN_CREATE_SUB_TYPE, bizNo = "{{#receivablePlan.id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_PLAN_TYPE,
+            subType = CRM_RECEIVABLE_PLAN_CREATE_SUB_TYPE,
+            bizNo = "{{#receivablePlan.id}}",
             success = CRM_RECEIVABLE_PLAN_CREATE_SUCCESS)
     public Long createReceivablePlan(CrmReceivablePlanSaveReqVO createReqVO) {
         // 1. 校验关联数据是否存在
         validateRelationDataExists(createReqVO);
 
         // 2. 插入回款计划
-        CrmReceivablePlanDO maxPeriodReceivablePlan = receivablePlanMapper.selectMaxPeriodByContractId(createReqVO.getContractId());
+        CrmReceivablePlanDO maxPeriodReceivablePlan =
+                receivablePlanMapper.selectMaxPeriodByContractId(createReqVO.getContractId());
         int period = maxPeriodReceivablePlan == null ? 1 : maxPeriodReceivablePlan.getPeriod() + 1;
-        CrmReceivablePlanDO receivablePlan = BeanUtils.toBean(createReqVO, CrmReceivablePlanDO.class).setPeriod(period);
+        CrmReceivablePlanDO receivablePlan =
+                BeanUtils.toBean(createReqVO, CrmReceivablePlanDO.class).setPeriod(period);
         if (createReqVO.getReturnTime() != null && createReqVO.getRemindDays() != null) {
-            receivablePlan.setRemindTime(createReqVO.getReturnTime().minusDays(createReqVO.getRemindDays()));
+            receivablePlan.setRemindTime(
+                    createReqVO.getReturnTime().minusDays(createReqVO.getRemindDays()));
         }
         receivablePlanMapper.insert(receivablePlan);
 
         // 3. 创建数据权限
-        permissionService.createPermission(new CrmPermissionCreateReqBO().setUserId(createReqVO.getOwnerUserId())
-                .setBizType(CrmBizTypeEnum.CRM_RECEIVABLE_PLAN.getType()).setBizId(receivablePlan.getId())
-                .setLevel(CrmPermissionLevelEnum.OWNER.getLevel()));
+        permissionService.createPermission(
+                new CrmPermissionCreateReqBO()
+                        .setUserId(createReqVO.getOwnerUserId())
+                        .setBizType(CrmBizTypeEnum.CRM_RECEIVABLE_PLAN.getType())
+                        .setBizId(receivablePlan.getId())
+                        .setLevel(CrmPermissionLevelEnum.OWNER.getLevel()));
 
         // 4. 记录操作日志上下文
         LogRecordContext.putVariable("receivablePlan", receivablePlan);
@@ -82,9 +90,15 @@ public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_PLAN_TYPE, subType = CRM_RECEIVABLE_PLAN_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_PLAN_TYPE,
+            subType = CRM_RECEIVABLE_PLAN_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
             success = CRM_RECEIVABLE_PLAN_UPDATE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_RECEIVABLE_PLAN, bizId = "#updateReqVO.id", level = CrmPermissionLevelEnum.WRITE)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE_PLAN,
+            bizId = "#updateReqVO.id",
+            level = CrmPermissionLevelEnum.WRITE)
     public void updateReceivablePlan(CrmReceivablePlanSaveReqVO updateReqVO) {
         updateReqVO.setOwnerUserId(null).setCustomerId(null).setContractId(null); // 防止修改这些字段
         // 1.1 校验存在
@@ -99,13 +113,16 @@ public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
         // 2. 更新回款计划
         CrmReceivablePlanDO updateObj = BeanUtils.toBean(updateReqVO, CrmReceivablePlanDO.class);
         if (updateReqVO.getReturnTime() != null && updateReqVO.getRemindDays() != null) {
-            updateObj.setRemindTime(updateReqVO.getReturnTime().minusDays(updateReqVO.getRemindDays()));
+            updateObj.setRemindTime(
+                    updateReqVO.getReturnTime().minusDays(updateReqVO.getRemindDays()));
         }
         receivablePlanMapper.updateById(updateObj);
 
         // 3. 记录操作日志上下文
         updateReqVO.setOwnerUserId(oldReceivablePlan.getOwnerUserId()); // 避免操作日志出现“删除负责人”的情况
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(oldReceivablePlan, CrmReceivablePlanSaveReqVO.class));
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
+                BeanUtils.toBean(oldReceivablePlan, CrmReceivablePlanSaveReqVO.class));
         LogRecordContext.putVariable("receivablePlan", oldReceivablePlan);
     }
 
@@ -126,14 +143,21 @@ public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
         // 校验存在
         validateReceivablePlanExists(id);
         // 更新回款计划
-        receivablePlanMapper.updateById(new CrmReceivablePlanDO().setId(id).setReceivableId(receivableId));
+        receivablePlanMapper.updateById(
+                new CrmReceivablePlanDO().setId(id).setReceivableId(receivableId));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_RECEIVABLE_PLAN_TYPE, subType = CRM_RECEIVABLE_PLAN_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_RECEIVABLE_PLAN_TYPE,
+            subType = CRM_RECEIVABLE_PLAN_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_RECEIVABLE_PLAN_DELETE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_RECEIVABLE_PLAN, bizId = "#id", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE_PLAN,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.OWNER)
     public void deleteReceivablePlan(Long id) {
         // 1. 校验存在
         CrmReceivablePlanDO receivablePlan = validateReceivablePlanExists(id);
@@ -156,7 +180,10 @@ public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_RECEIVABLE_PLAN, bizId = "#id", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_RECEIVABLE_PLAN,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.READ)
     public CrmReceivablePlanDO getReceivablePlan(Long id) {
         return receivablePlanMapper.selectById(id);
     }
@@ -170,13 +197,18 @@ public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
     }
 
     @Override
-    public PageResult<CrmReceivablePlanDO> getReceivablePlanPage(CrmReceivablePlanPageReqVO pageReqVO, Long userId) {
+    public PageResult<CrmReceivablePlanDO> getReceivablePlanPage(
+            CrmReceivablePlanPageReqVO pageReqVO, Long userId) {
         return receivablePlanMapper.selectPage(pageReqVO, userId);
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CUSTOMER, bizId = "#pageReqVO.customerId", level = CrmPermissionLevelEnum.READ)
-    public PageResult<CrmReceivablePlanDO> getReceivablePlanPageByCustomerId(CrmReceivablePlanPageReqVO pageReqVO) {
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CUSTOMER,
+            bizId = "#pageReqVO.customerId",
+            level = CrmPermissionLevelEnum.READ)
+    public PageResult<CrmReceivablePlanDO> getReceivablePlanPageByCustomerId(
+            CrmReceivablePlanPageReqVO pageReqVO) {
         return receivablePlanMapper.selectPageByCustomerId(pageReqVO);
     }
 
@@ -184,5 +216,4 @@ public class CrmReceivablePlanServiceImpl implements CrmReceivablePlanService {
     public Long getReceivablePlanRemindCount(Long userId) {
         return receivablePlanMapper.selectReceivablePlanCountByRemind(userId);
     }
-
 }

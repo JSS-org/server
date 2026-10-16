@@ -1,23 +1,29 @@
 package cn.iocoder.yudao.module.trade.controller.admin.aftersale.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-
 /**
-* 交易售后 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 交易售后 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class AfterSaleBaseVO {
 
-    @Schema(description = "售后流水号", requiredMode = Schema.RequiredMode.REQUIRED, example = "202211190847450020500077")
+    @Schema(
+            description = "售后流水号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "202211190847450020500077")
     @NotNull(message = "售后流水号不能为空")
     private String no;
 
@@ -51,7 +57,10 @@ public class AfterSaleBaseVO {
     @NotNull(message = "订单编号不能为空")
     private Long orderId;
 
-    @Schema(description = "订单流水号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2022111917190001")
+    @Schema(
+            description = "订单流水号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2022111917190001")
     @NotNull(message = "订单流水号不能为空")
     private String orderNo;
 
@@ -59,7 +68,10 @@ public class AfterSaleBaseVO {
     @NotNull(message = "订单项编号不能为空")
     private Long orderItemId;
 
-    @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2888")
+    @Schema(
+            description = "商品 SPU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2888")
     @NotNull(message = "商品 SPU 编号不能为空")
     private Long spuId;
 
@@ -67,7 +79,10 @@ public class AfterSaleBaseVO {
     @NotNull(message = "商品 SPU 名称不能为空")
     private String spuName;
 
-    @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "15657")
+    @Schema(
+            description = "商品 SKU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15657")
     @NotNull(message = "商品 SKU 编号不能为空")
     private Long skuId;
 
@@ -88,7 +103,10 @@ public class AfterSaleBaseVO {
     @Schema(description = "审批备注", example = "不香")
     private String auditReason;
 
-    @Schema(description = "退款金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "18077")
+    @Schema(
+            description = "退款金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "18077")
     @NotNull(message = "退款金额，单位：分不能为空")
     private Integer refundPrice;
 
@@ -115,5 +133,4 @@ public class AfterSaleBaseVO {
 
     @Schema(description = "收货备注", example = "不喜欢")
     private String receiveReason;
-
 }

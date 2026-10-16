@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagCreateReq
 import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagRespVO;
 import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagUpdateReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -29,5 +30,4 @@ public interface MemberTagConvert {
     List<MemberTagRespVO> convertList(List<MemberTagDO> list);
 
     PageResult<MemberTagRespVO> convertPage(PageResult<MemberTagDO> page);
-
 }

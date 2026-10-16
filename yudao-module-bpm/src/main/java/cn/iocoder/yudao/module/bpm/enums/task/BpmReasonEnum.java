@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.enums.task;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -50,5 +51,4 @@ public enum BpmReasonEnum {
     public String format(Object... args) {
         return StrUtil.format(reason, args);
     }
-
 }

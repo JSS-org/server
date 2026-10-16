@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.length;
 
+import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.IotTcpConfig;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpCodecTypeEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpFrameCodec;
+
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.parsetools.RecordParser;
+
 import lombok.extern.slf4j.Slf4j;
-import cn.hutool.core.lang.Assert;
 
 /**
  * IoT TCP 定长帧编解码器
@@ -38,9 +40,10 @@ public class IotTcpFixedLengthFrameCodec implements IotTcpFrameCodec {
     public RecordParser createDecodeParser(Handler<Buffer> handler) {
         RecordParser parser = RecordParser.newFixed(fixedLength);
         parser.handler(handler);
-        parser.exceptionHandler(ex -> {
-            throw new RuntimeException("[createDecodeParser][解析异常]", ex);
-        });
+        parser.exceptionHandler(
+                ex -> {
+                    throw new RuntimeException("[createDecodeParser][解析异常]", ex);
+                });
         return parser;
     }
 
@@ -48,8 +51,8 @@ public class IotTcpFixedLengthFrameCodec implements IotTcpFrameCodec {
     public Buffer encode(byte[] data) {
         // 校验数据长度不能超过固定长度
         if (data.length > fixedLength) {
-            throw new IllegalArgumentException(String.format(
-                    "数据长度 %d 超过固定长度 %d", data.length, fixedLength));
+            throw new IllegalArgumentException(
+                    String.format("数据长度 %d 超过固定长度 %d", data.length, fixedLength));
         }
         Buffer buffer = Buffer.buffer(fixedLength);
         buffer.appendBytes(data);
@@ -60,5 +63,4 @@ public class IotTcpFixedLengthFrameCodec implements IotTcpFrameCodec {
         }
         return buffer;
     }
-
 }

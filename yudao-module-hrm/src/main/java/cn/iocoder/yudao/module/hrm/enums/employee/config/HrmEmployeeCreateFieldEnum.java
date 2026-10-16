@@ -1,7 +1,8 @@
 package cn.iocoder.yudao.module.hrm.enums.employee.config;
 
-import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnum;
 import cn.hutool.core.util.ArrayUtil;
+import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,7 +14,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeCreateFieldEnum {
-
     NAME("name", "员工姓名", "个人信息", true, true, true, true),
     USER_ID("userId", "绑定用户", "个人信息", true, false, true, false),
     MOBILE("mobile", "手机号", "个人信息", true, true, true, true),
@@ -42,13 +42,11 @@ public enum HrmEmployeeCreateFieldEnum {
     PROBATION("probation", "试用期（月）", "入职信息", true, true, true, true),
     REGULAR_TIME("regularTime", "转正时间", "入职信息", false, false, false, false),
     LEAVE_TIME("leaveTime", "离职时间", "入职信息", false, false, false, false),
-    COMPANY_AGE_START_TIME("companyAgeStartTime", "司龄起算时间", "入职信息",
-            false, false, false, false),
+    COMPANY_AGE_START_TIME("companyAgeStartTime", "司龄起算时间", "入职信息", false, false, false, false),
     COMPANY_AGE("companyAge", "司龄（年）", "入职信息", false, false, false, false),
     WORK_CITY("workCity", "工作城市", "入职信息", true, false, true, false),
     WORK_ADDRESS("workAddress", "工作地点", "入职信息", false, false, false, false),
-    WORK_DETAIL_ADDRESS("workDetailAddress", "工作详细地址", "入职信息",
-            false, false, false, false),
+    WORK_DETAIL_ADDRESS("workDetailAddress", "工作详细地址", "入职信息", false, false, false, false),
     CANDIDATE_ID("candidateId", "招聘候选人", "入职信息", false, false, false, false),
     REMARK("remark", "备注", "入职信息", true, false, true, false);
 
@@ -56,26 +54,32 @@ public enum HrmEmployeeCreateFieldEnum {
      * 字段名称
      */
     private final String name;
+
     /**
      * 字段标题
      */
     private final String title;
+
     /**
      * 字段分组名称
      */
     private final String groupName;
+
     /**
      * 在职办理时默认是否显示
      */
     private final Boolean activeDefaultVisible;
+
     /**
      * 在职办理时是否锁定显示
      */
     private final Boolean activeVisibleLocked;
+
     /**
      * 待入职办理时默认是否显示
      */
     private final Boolean pendingEntryDefaultVisible;
+
     /**
      * 待入职办理时是否锁定显示
      */
@@ -93,7 +97,8 @@ public enum HrmEmployeeCreateFieldEnum {
      */
     public Boolean getDefaultVisible(Integer entryStatus) {
         return HrmEmployeeEntryStatusEnum.ACTIVE.getStatus().equals(entryStatus)
-                ? activeDefaultVisible : pendingEntryDefaultVisible;
+                ? activeDefaultVisible
+                : pendingEntryDefaultVisible;
     }
 
     /**
@@ -104,7 +109,7 @@ public enum HrmEmployeeCreateFieldEnum {
      */
     public Boolean getVisibleLocked(Integer entryStatus) {
         return HrmEmployeeEntryStatusEnum.ACTIVE.getStatus().equals(entryStatus)
-                ? activeVisibleLocked : pendingEntryVisibleLocked;
+                ? activeVisibleLocked
+                : pendingEntryVisibleLocked;
     }
-
 }

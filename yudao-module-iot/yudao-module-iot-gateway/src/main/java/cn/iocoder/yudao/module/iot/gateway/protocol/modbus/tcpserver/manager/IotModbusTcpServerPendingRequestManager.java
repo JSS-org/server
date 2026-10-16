@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusFrameFormatEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.codec.IotModbusFrame;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -47,14 +48,14 @@ public class IotModbusTcpServerPendingRequestManager {
         private int registerCount;
         private Integer transactionId;
         private long expireAt;
-
     }
 
     /**
      * 添加待响应请求
      */
     public void addRequest(PendingRequest request) {
-        pendingRequests.computeIfAbsent(request.getDeviceId(), k -> new ConcurrentLinkedDeque<>())
+        pendingRequests
+                .computeIfAbsent(request.getDeviceId(), k -> new ConcurrentLinkedDeque<>())
                 .addLast(request);
     }
 
@@ -66,20 +67,22 @@ public class IotModbusTcpServerPendingRequestManager {
      * @param frameFormat 帧格式
      * @return 匹配到的 PendingRequest，没有匹配返回 null
      */
-    public PendingRequest matchResponse(Long deviceId, IotModbusFrame frame,
-                                        IotModbusFrameFormatEnum frameFormat) {
+    public PendingRequest matchResponse(
+            Long deviceId, IotModbusFrame frame, IotModbusFrameFormatEnum frameFormat) {
         Deque<PendingRequest> queue = pendingRequests.get(deviceId);
         if (CollUtil.isEmpty(queue)) {
             return null;
         }
 
         // TCP 模式：按 transactionId 精确匹配
-        if (frameFormat == IotModbusFrameFormatEnum.MODBUS_TCP && frame.getTransactionId() != null) {
+        if (frameFormat == IotModbusFrameFormatEnum.MODBUS_TCP
+                && frame.getTransactionId() != null) {
             return matchByTransactionId(queue, frame.getTransactionId());
         }
         // RTU 模式：FIFO，匹配 slaveId + functionCode + registerCount
         int responseRegisterCount = IotModbusCommonUtils.extractRegisterCountFromResponse(frame);
-        return matchByFifo(queue, frame.getSlaveId(), frame.getFunctionCode(), responseRegisterCount);
+        return matchByFifo(
+                queue, frame.getSlaveId(), frame.getFunctionCode(), responseRegisterCount);
     }
 
     /**
@@ -100,14 +103,15 @@ public class IotModbusTcpServerPendingRequestManager {
     /**
      * 按 FIFO 匹配（slaveId + functionCode + registerCount）
      */
-    private PendingRequest matchByFifo(Deque<PendingRequest> queue, int slaveId, int functionCode,
-                                        int responseRegisterCount) {
+    private PendingRequest matchByFifo(
+            Deque<PendingRequest> queue, int slaveId, int functionCode, int responseRegisterCount) {
         Iterator<PendingRequest> it = queue.iterator();
         while (it.hasNext()) {
             PendingRequest req = it.next();
             if (req.getSlaveId() == slaveId
                     && req.getFunctionCode() == functionCode
-                    && (responseRegisterCount <= 0 || req.getRegisterCount() == responseRegisterCount)) {
+                    && (responseRegisterCount <= 0
+                            || req.getRegisterCount() == responseRegisterCount)) {
                 it.remove();
                 return req;
             }
@@ -150,5 +154,4 @@ public class IotModbusTcpServerPendingRequestManager {
     public void clear() {
         pendingRequests.clear();
     }
-
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.hrm.service.recruit.config;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.config.HrmRecruitEliminateReasonSaveReqVO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -25,5 +26,4 @@ public interface HrmRecruitConfigService {
      * @return 淘汰原因列表
      */
     List<String> getRecruitEliminateReasonList();
-
 }

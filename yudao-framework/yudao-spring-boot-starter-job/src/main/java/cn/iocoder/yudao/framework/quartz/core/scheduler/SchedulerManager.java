@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.framework.quartz.core.scheduler;
 
-import cn.iocoder.yudao.framework.quartz.core.enums.JobDataKeyEnum;
-import cn.iocoder.yudao.framework.quartz.core.handler.JobHandlerInvoker;
-import org.quartz.*;
-
 import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.NOT_IMPLEMENTED;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception0;
+
+import cn.iocoder.yudao.framework.quartz.core.enums.JobDataKeyEnum;
+import cn.iocoder.yudao.framework.quartz.core.handler.JobHandlerInvoker;
+
+import org.quartz.*;
 
 /**
  * {@link org.quartz.Scheduler} 的管理器，负责创建任务
@@ -37,17 +38,26 @@ public class SchedulerManager {
      * @param retryInterval 重试间隔
      * @throws SchedulerException 添加异常
      */
-    public void addJob(Long jobId, String jobHandlerName, String jobHandlerParam, String cronExpression,
-                       Integer retryCount, Integer retryInterval)
+    public void addJob(
+            Long jobId,
+            String jobHandlerName,
+            String jobHandlerParam,
+            String cronExpression,
+            Integer retryCount,
+            Integer retryInterval)
             throws SchedulerException {
         validateScheduler();
         // 创建 JobDetail 对象
-        JobDetail jobDetail = JobBuilder.newJob(JobHandlerInvoker.class)
-                .usingJobData(JobDataKeyEnum.JOB_ID.name(), jobId)
-                .usingJobData(JobDataKeyEnum.JOB_HANDLER_NAME.name(), jobHandlerName)
-                .withIdentity(jobHandlerName).build();
+        JobDetail jobDetail =
+                JobBuilder.newJob(JobHandlerInvoker.class)
+                        .usingJobData(JobDataKeyEnum.JOB_ID.name(), jobId)
+                        .usingJobData(JobDataKeyEnum.JOB_HANDLER_NAME.name(), jobHandlerName)
+                        .withIdentity(jobHandlerName)
+                        .build();
         // 创建 Trigger 对象
-        Trigger trigger = this.buildTrigger(jobHandlerName, jobHandlerParam, cronExpression, retryCount, retryInterval);
+        Trigger trigger =
+                this.buildTrigger(
+                        jobHandlerName, jobHandlerParam, cronExpression, retryCount, retryInterval);
         // 新增 Job 调度
         scheduler.scheduleJob(jobDetail, trigger);
     }
@@ -62,12 +72,18 @@ public class SchedulerManager {
      * @param retryInterval 重试间隔
      * @throws SchedulerException 更新异常
      */
-    public void updateJob(String jobHandlerName, String jobHandlerParam, String cronExpression,
-                          Integer retryCount, Integer retryInterval)
+    public void updateJob(
+            String jobHandlerName,
+            String jobHandlerParam,
+            String cronExpression,
+            Integer retryCount,
+            Integer retryInterval)
             throws SchedulerException {
         validateScheduler();
         // 创建新 Trigger 对象
-        Trigger newTrigger = this.buildTrigger(jobHandlerName, jobHandlerParam, cronExpression, retryCount, retryInterval);
+        Trigger newTrigger =
+                this.buildTrigger(
+                        jobHandlerName, jobHandlerParam, cronExpression, retryCount, retryInterval);
         // 修改调度
         scheduler.rescheduleJob(new TriggerKey(jobHandlerName), newTrigger);
     }
@@ -129,8 +145,12 @@ public class SchedulerManager {
         scheduler.triggerJob(new JobKey(jobHandlerName), data);
     }
 
-    private Trigger buildTrigger(String jobHandlerName, String jobHandlerParam, String cronExpression,
-                                 Integer retryCount, Integer retryInterval) {
+    private Trigger buildTrigger(
+            String jobHandlerName,
+            String jobHandlerParam,
+            String cronExpression,
+            Integer retryCount,
+            Integer retryInterval) {
         return TriggerBuilder.newTrigger()
                 .withIdentity(jobHandlerName)
                 .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
@@ -142,9 +162,8 @@ public class SchedulerManager {
 
     private void validateScheduler() {
         if (scheduler == null) {
-            throw exception0(NOT_IMPLEMENTED.getCode(),
-                    "[定时任务 - 已禁用][参考 https://doc.iocoder.cn/job/ 开启]");
+            throw exception0(
+                    NOT_IMPLEMENTED.getCode(), "[定时任务 - 已禁用][参考 https://doc.iocoder.cn/job/ 开启]");
         }
     }
-
 }

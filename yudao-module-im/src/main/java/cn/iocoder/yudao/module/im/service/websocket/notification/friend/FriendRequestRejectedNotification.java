@@ -14,9 +14,9 @@ public class FriendRequestRejectedNotification extends BaseFriendNotification {
      * 已处理的申请记录编号
      */
     private Long requestId;
+
     /**
      * 拒绝理由（可选）
      */
     private String handleContent;
-
 }

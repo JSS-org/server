@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.enums.kefu;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum KeFuMessageContentTypeEnum implements ArrayValuable<Integer> {
-
     TEXT(1, "文本消息"),
     IMAGE(2, "图片消息"),
     VOICE(3, "语音消息"),
@@ -25,7 +25,10 @@ public enum KeFuMessageContentTypeEnum implements ArrayValuable<Integer> {
     PRODUCT(10, "商品消息"),
     ORDER(11, "订单消息");
 
-    private static final Integer[] ARRAYS = Arrays.stream(values()).map(KeFuMessageContentTypeEnum::getType).toArray(Integer[]::new);
+    private static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(KeFuMessageContentTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 类型
@@ -41,5 +44,4 @@ public enum KeFuMessageContentTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

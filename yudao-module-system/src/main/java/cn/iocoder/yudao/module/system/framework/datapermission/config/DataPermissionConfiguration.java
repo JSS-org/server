@@ -1,8 +1,9 @@
 package cn.iocoder.yudao.module.system.framework.datapermission.config;
 
+import cn.iocoder.yudao.framework.datapermission.core.rule.dept.DeptDataPermissionRuleCustomizer;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
-import cn.iocoder.yudao.framework.datapermission.core.rule.dept.DeptDataPermissionRuleCustomizer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,5 +25,4 @@ public class DataPermissionConfiguration {
             rule.addUserColumn(AdminUserDO.class, "id");
         };
     }
-
 }

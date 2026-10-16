@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,15 +10,14 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.type.MesMdItemTyp
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.type.MesMdItemTypeSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemTypeDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.item.MesMdItemTypeMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 物料产品分类 Service 实现类
@@ -26,11 +28,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdItemTypeServiceImpl implements MesMdItemTypeService {
 
-    @Resource
-    private MesMdItemTypeMapper itemTypeMapper;
+    @Resource private MesMdItemTypeMapper itemTypeMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private MesMdItemService itemService;
 
     @Override
@@ -172,7 +172,8 @@ public class MesMdItemTypeServiceImpl implements MesMdItemTypeService {
     /**
      * 递归收集所有子分类
      */
-    private void collectItemTypeChildren(List<MesMdItemTypeDO> result, Long parentId, List<MesMdItemTypeDO> allList) {
+    private void collectItemTypeChildren(
+            List<MesMdItemTypeDO> result, Long parentId, List<MesMdItemTypeDO> allList) {
         for (MesMdItemTypeDO itemType : allList) {
             if (Objects.equals(itemType.getParentId(), parentId)) {
                 result.add(itemType);
@@ -180,5 +181,4 @@ public class MesMdItemTypeServiceImpl implements MesMdItemTypeService {
             }
         }
     }
-
 }

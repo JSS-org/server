@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.erp.dal.dataobject.finance;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -24,33 +26,37 @@ public class ErpAccountDO extends BaseDO {
     /**
      * 结算账户编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 账户名称
      */
     private String name;
+
     /**
      * 账户编码
      */
     private String no;
+
     /**
      * 备注
      */
     private String remark;
+
     /**
      * 开启状态
      *
      * 枚举 {@link cn.iocoder.yudao.framework.common.enums.CommonStatusEnum}
      */
     private Integer status;
+
     /**
      * 排序
      */
     private Integer sort;
+
     /**
      * 是否默认
      */
     private Boolean defaultStatus;
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.controller.admin.dept;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -13,12 +16,15 @@ import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostSaveReqV
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostSimpleRespVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
 import cn.iocoder.yudao.module.system.service.dept.PostService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,17 +34,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - 岗位")
 @RestController
 @RequestMapping("/system/post")
 @Validated
 public class PostController {
 
-    @Resource
-    private PostService postService;
+    @Resource private PostService postService;
 
     @PostMapping("/create")
     @Operation(summary = "创建岗位")
@@ -85,7 +87,9 @@ public class PostController {
     @Operation(summary = "获取岗位全列表", description = "只包含被开启的岗位，主要用于前端的下拉选项")
     public CommonResult<List<PostSimpleRespVO>> getSimplePostList() {
         // 获得岗位列表，只要开启状态的
-        List<PostDO> list = postService.getPostList(null, Collections.singleton(CommonStatusEnum.ENABLE.getStatus()));
+        List<PostDO> list =
+                postService.getPostList(
+                        null, Collections.singleton(CommonStatusEnum.ENABLE.getStatus()));
         // 排序后，返回给前端
         list.sort(Comparator.comparing(PostDO::getSort));
         return success(BeanUtils.toBean(list, PostSimpleRespVO.class));
@@ -103,12 +107,16 @@ public class PostController {
     @Operation(summary = "岗位管理")
     @PreAuthorize("@ss.hasPermission('system:post:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void export(HttpServletResponse response, @Validated PostPageReqVO reqVO) throws IOException {
+    public void export(HttpServletResponse response, @Validated PostPageReqVO reqVO)
+            throws IOException {
         reqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<PostDO> list = postService.getPostPage(reqVO).getList();
         // 输出
-        ExcelUtils.write(response, "岗位数据.xls", "岗位列表", PostRespVO.class,
+        ExcelUtils.write(
+                response,
+                "岗位数据.xls",
+                "岗位列表",
+                PostRespVO.class,
                 BeanUtils.toBean(list, PostRespVO.class));
     }
-
 }

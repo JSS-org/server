@@ -139,5 +139,4 @@ public interface OaContactService {
      * @param categoryId 分类编号
      */
     void clearContactCategoryId(Long categoryId);
-
 }

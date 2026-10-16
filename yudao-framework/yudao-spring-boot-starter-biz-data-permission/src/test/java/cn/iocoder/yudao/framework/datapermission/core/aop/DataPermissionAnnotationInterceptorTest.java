@@ -1,8 +1,12 @@
 package cn.iocoder.yudao.framework.datapermission.core.aop;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+
 import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,9 +15,6 @@ import org.mockito.Mock;
 
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link DataPermissionAnnotationInterceptor} 的单元测试
  *
@@ -21,11 +22,9 @@ import static org.mockito.Mockito.when;
  */
 public class DataPermissionAnnotationInterceptorTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private DataPermissionAnnotationInterceptor interceptor;
+    @InjectMocks private DataPermissionAnnotationInterceptor interceptor;
 
-    @Mock
-    private MethodInvocation methodInvocation;
+    @Mock private MethodInvocation methodInvocation;
 
     @BeforeEach
     public void setUp() {
@@ -85,7 +84,6 @@ public class DataPermissionAnnotationInterceptorTest extends BaseMockitoUnitTest
         public String echo() {
             return "method";
         }
-
     }
 
     @DataPermission(enable = false)
@@ -94,7 +92,6 @@ public class DataPermissionAnnotationInterceptorTest extends BaseMockitoUnitTest
         public String echo() {
             return "class";
         }
-
     }
 
     static class TestNone {
@@ -102,7 +99,5 @@ public class DataPermissionAnnotationInterceptorTest extends BaseMockitoUnitTest
         public String echo() {
             return "none";
         }
-
     }
-
 }

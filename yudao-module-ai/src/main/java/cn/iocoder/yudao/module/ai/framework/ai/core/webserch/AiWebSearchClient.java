@@ -14,5 +14,4 @@ public interface AiWebSearchClient {
      * @return 搜索结果
      */
     AiWebSearchResponse search(AiWebSearchRequest request);
-
 }

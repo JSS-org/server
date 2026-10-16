@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.trade.controller.admin.aftersale;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -17,24 +22,23 @@ import cn.iocoder.yudao.module.trade.service.aftersale.AfterSaleLogService;
 import cn.iocoder.yudao.module.trade.service.aftersale.AfterSaleService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderQueryService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderUpdateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 售后订单")
 @RestController
@@ -43,21 +47,17 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Slf4j
 public class AfterSaleController {
 
-    @Resource
-    private AfterSaleService afterSaleService;
-    @Resource
-    private TradeOrderQueryService tradeOrderQueryService;
-    @Resource
-    private TradeOrderUpdateService tradeOrderUpdateService;
-    @Resource
-    private AfterSaleLogService afterSaleLogService;
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private AfterSaleService afterSaleService;
+    @Resource private TradeOrderQueryService tradeOrderQueryService;
+    @Resource private TradeOrderUpdateService tradeOrderUpdateService;
+    @Resource private AfterSaleLogService afterSaleLogService;
+    @Resource private MemberUserApi memberUserApi;
 
     @GetMapping("/page")
     @Operation(summary = "获得售后订单分页")
     @PreAuthorize("@ss.hasPermission('trade:after-sale:query')")
-    public CommonResult<PageResult<AfterSaleRespPageItemVO>> getAfterSalePage(@Valid AfterSalePageReqVO pageVO) {
+    public CommonResult<PageResult<AfterSaleRespPageItemVO>> getAfterSalePage(
+            @Valid AfterSalePageReqVO pageVO) {
         // 查询售后
         PageResult<AfterSaleDO> pageResult = afterSaleService.getAfterSalePage(pageVO);
         if (CollUtil.isEmpty(pageResult.getList())) {
@@ -65,8 +65,8 @@ public class AfterSaleController {
         }
 
         // 查询会员
-        Map<Long, MemberUserRespDTO> memberUsers = memberUserApi.getUserMap(
-                convertSet(pageResult.getList(), AfterSaleDO::getUserId));
+        Map<Long, MemberUserRespDTO> memberUsers =
+                memberUserApi.getUserMap(convertSet(pageResult.getList(), AfterSaleDO::getUserId));
         return success(AfterSaleConvert.INSTANCE.convertPage(pageResult, memberUsers));
     }
 
@@ -84,7 +84,8 @@ public class AfterSaleController {
         // 查询订单
         TradeOrderDO order = tradeOrderQueryService.getOrder(afterSale.getOrderId());
         // 查询订单项
-        TradeOrderItemDO orderItem = tradeOrderQueryService.getOrderItem(afterSale.getOrderItemId());
+        TradeOrderItemDO orderItem =
+                tradeOrderQueryService.getOrderItem(afterSale.getOrderItemId());
         // 拼接数据
         MemberUserRespDTO user = memberUserApi.getUser(afterSale.getUserId());
         List<AfterSaleLogDO> logs = afterSaleLogService.getAfterSaleLogList(afterSale.getId());
@@ -103,7 +104,8 @@ public class AfterSaleController {
     @PutMapping("/disagree")
     @Operation(summary = "拒绝售后")
     @PreAuthorize("@ss.hasPermission('trade:after-sale:disagree')")
-    public CommonResult<Boolean> disagreeAfterSale(@RequestBody AfterSaleDisagreeReqVO confirmReqVO) {
+    public CommonResult<Boolean> disagreeAfterSale(
+            @RequestBody AfterSaleDisagreeReqVO confirmReqVO) {
         afterSaleService.disagreeAfterSale(getLoginUserId(), confirmReqVO);
         return success(true);
     }
@@ -138,10 +140,13 @@ public class AfterSaleController {
     @PostMapping("/update-refunded")
     @Operation(summary = "更新售后订单为已退款") // 由 pay-module 支付服务，进行回调，可见 PayNotifyJob
     @PermitAll // 无需登录，安全由 AfterSaleService 内部校验实现
-    public CommonResult<Boolean> updateAfterSaleRefunded(@RequestBody PayRefundNotifyReqDTO notifyReqDTO) {
+    public CommonResult<Boolean> updateAfterSaleRefunded(
+            @RequestBody PayRefundNotifyReqDTO notifyReqDTO) {
         log.info("[updateAfterRefund][notifyReqDTO({})]", notifyReqDTO);
         if (StrUtil.startWithAny(notifyReqDTO.getMerchantRefundId(), "order-")) {
-            Long orderId = Long.parseLong(StrUtil.subAfter(notifyReqDTO.getMerchantRefundId(), "order-", true));
+            Long orderId =
+                    Long.parseLong(
+                            StrUtil.subAfter(notifyReqDTO.getMerchantRefundId(), "order-", true));
             tradeOrderUpdateService.updatePaidOrderRefunded(orderId, notifyReqDTO.getPayRefundId());
         } else {
             afterSaleService.updateAfterSaleRefunded(
@@ -151,5 +156,4 @@ public class AfterSaleController {
         }
         return success(true);
     }
-
 }

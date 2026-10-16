@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.taxrule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -13,7 +14,10 @@ public class HrmSalaryTaxRuleRespVO {
     @Schema(description = "计税规则编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "计税规则名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "工资薪金所得税")
+    @Schema(
+            description = "计税规则名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "工资薪金所得税")
     private String name;
 
     @Schema(description = "计税类型", example = "1")
@@ -36,5 +40,4 @@ public class HrmSalaryTaxRuleRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

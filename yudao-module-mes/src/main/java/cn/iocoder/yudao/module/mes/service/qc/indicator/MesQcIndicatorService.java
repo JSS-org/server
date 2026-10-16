@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.qc.indicator;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.indicator.vo.MesQcIndicatorPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.indicator.vo.MesQcIndicatorSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.indicator.MesQcIndicatorDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 质检指标 Service 接口
@@ -89,5 +90,4 @@ public interface MesQcIndicatorService {
      * @return 质检指标 Map
      */
     Map<Long, MesQcIndicatorDO> validateIndicatorListExists(Collection<Long> ids);
-
 }

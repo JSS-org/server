@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.datapermission.core.aop;
 
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
+
 import lombok.Getter;
+
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.core.MethodClassKey;
@@ -24,10 +26,12 @@ public class DataPermissionAnnotationInterceptor implements MethodInterceptor {
     /**
      * DataPermission 空对象，用于方法无 {@link DataPermission} 注解时，使用 DATA_PERMISSION_NULL 进行占位
      */
-    static final DataPermission DATA_PERMISSION_NULL = DataPermissionAnnotationInterceptor.class.getAnnotation(DataPermission.class);
+    static final DataPermission DATA_PERMISSION_NULL =
+            DataPermissionAnnotationInterceptor.class.getAnnotation(DataPermission.class);
 
     @Getter
-    private final Map<MethodClassKey, DataPermission> dataPermissionCache = new ConcurrentHashMap<>();
+    private final Map<MethodClassKey, DataPermission> dataPermissionCache =
+            new ConcurrentHashMap<>();
 
     @Override
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
@@ -51,7 +55,8 @@ public class DataPermissionAnnotationInterceptor implements MethodInterceptor {
         // 1. 从缓存中获取
         Method method = methodInvocation.getMethod();
         Object targetObject = methodInvocation.getThis();
-        Class<?> clazz = targetObject != null ? targetObject.getClass() : method.getDeclaringClass();
+        Class<?> clazz =
+                targetObject != null ? targetObject.getClass() : method.getDeclaringClass();
         MethodClassKey methodClassKey = new MethodClassKey(method, clazz);
         DataPermission dataPermission = dataPermissionCache.get(methodClassKey);
         if (dataPermission != null) {
@@ -65,8 +70,8 @@ public class DataPermissionAnnotationInterceptor implements MethodInterceptor {
             dataPermission = AnnotationUtils.findAnnotation(clazz, DataPermission.class);
         }
         // 2.3 添加到缓存中
-        dataPermissionCache.put(methodClassKey, dataPermission != null ? dataPermission : DATA_PERMISSION_NULL);
+        dataPermissionCache.put(
+                methodClassKey, dataPermission != null ? dataPermission : DATA_PERMISSION_NULL);
         return dataPermission;
     }
-
 }

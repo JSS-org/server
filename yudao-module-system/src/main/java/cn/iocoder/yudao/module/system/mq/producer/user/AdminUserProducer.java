@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.system.mq.producer.user;
 
 import cn.iocoder.yudao.module.system.api.message.user.AdminUserProfileUpdateMessage;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -15,8 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AdminUserProducer {
 
-    @Resource
-    private ApplicationContext applicationContext;
+    @Resource private ApplicationContext applicationContext;
 
     /**
      * 发送 {@link AdminUserProfileUpdateMessage} 消息
@@ -26,8 +28,10 @@ public class AdminUserProducer {
      * @param avatar   变更后的头像（无变更传 null）
      */
     public void sendUserProfileUpdateMessage(Long userId, String nickname, String avatar) {
-        applicationContext.publishEvent(new AdminUserProfileUpdateMessage()
-                .setUserId(userId).setNickname(nickname).setAvatar(avatar));
+        applicationContext.publishEvent(
+                new AdminUserProfileUpdateMessage()
+                        .setUserId(userId)
+                        .setNickname(nickname)
+                        .setAvatar(avatar));
     }
-
 }

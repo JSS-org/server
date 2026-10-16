@@ -1,7 +1,5 @@
 package cn.iocoder.yudao.module.crm.service.statistics;
 
-
-
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceReqVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceSummaryRespVO;
@@ -21,7 +19,8 @@ public interface CrmStatisticsPerformanceService {
      * @param performanceReqVO 排行参数
      * @return 员工签约合同数量排行分析
      */
-    List<CrmStatisticsPerformanceRespVO> getContractCountPerformance(CrmStatisticsPerformanceReqVO performanceReqVO);
+    List<CrmStatisticsPerformanceRespVO> getContractCountPerformance(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 
     /**
      * 员工签约合同金额分析
@@ -29,7 +28,8 @@ public interface CrmStatisticsPerformanceService {
      * @param performanceReqVO 排行参数
      * @return 员工签约合同金额分析
      */
-    List<CrmStatisticsPerformanceRespVO> getContractPricePerformance(CrmStatisticsPerformanceReqVO performanceReqVO);
+    List<CrmStatisticsPerformanceRespVO> getContractPricePerformance(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 
     /**
      * 员工获得回款金额分析
@@ -37,7 +37,8 @@ public interface CrmStatisticsPerformanceService {
      * @param performanceReqVO 排行参数
      * @return 员工获得回款金额分析
      */
-    List<CrmStatisticsPerformanceRespVO> getReceivablePricePerformance(CrmStatisticsPerformanceReqVO performanceReqVO);
+    List<CrmStatisticsPerformanceRespVO> getReceivablePricePerformance(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 
     /**
      * 员工合同汇总表
@@ -45,6 +46,6 @@ public interface CrmStatisticsPerformanceService {
      * @param performanceReqVO 排行参数
      * @return 员工合同汇总表
      */
-    List<CrmStatisticsPerformanceSummaryRespVO> getContractSummary(CrmStatisticsPerformanceReqVO performanceReqVO);
-
+    List<CrmStatisticsPerformanceSummaryRespVO> getContractSummary(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 }

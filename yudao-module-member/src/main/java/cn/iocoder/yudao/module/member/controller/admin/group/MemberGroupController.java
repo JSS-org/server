@@ -1,24 +1,26 @@
 package cn.iocoder.yudao.module.member.controller.admin.group;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.group.vo.*;
 import cn.iocoder.yudao.module.member.convert.group.MemberGroupConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.service.group.MemberGroupService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 
 @Tag(name = "管理后台 - 用户分组")
 @RestController
@@ -26,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MemberGroupController {
 
-    @Resource
-    private MemberGroupService groupService;
+    @Resource private MemberGroupService groupService;
 
     @PostMapping("/create")
     @Operation(summary = "创建用户分组")
@@ -39,7 +40,8 @@ public class MemberGroupController {
     @PutMapping("/update")
     @Operation(summary = "更新用户分组")
     @PreAuthorize("@ss.hasPermission('member:group:update')")
-    public CommonResult<Boolean> updateGroup(@Valid @RequestBody MemberGroupUpdateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateGroup(
+            @Valid @RequestBody MemberGroupUpdateReqVO updateReqVO) {
         groupService.updateGroup(updateReqVO);
         return success(true);
     }
@@ -73,9 +75,9 @@ public class MemberGroupController {
     @GetMapping("/page")
     @Operation(summary = "获得用户分组分页")
     @PreAuthorize("@ss.hasPermission('member:group:query')")
-    public CommonResult<PageResult<MemberGroupRespVO>> getGroupPage(@Valid MemberGroupPageReqVO pageVO) {
+    public CommonResult<PageResult<MemberGroupRespVO>> getGroupPage(
+            @Valid MemberGroupPageReqVO pageVO) {
         PageResult<MemberGroupDO> pageResult = groupService.getGroupPage(pageVO);
         return success(MemberGroupConvert.INSTANCE.convertPage(pageResult));
     }
-
 }

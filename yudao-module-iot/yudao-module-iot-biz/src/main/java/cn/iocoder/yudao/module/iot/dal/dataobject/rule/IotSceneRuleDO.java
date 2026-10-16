@@ -11,11 +11,13 @@ import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleActionTypeEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionTypeEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +32,8 @@ import java.util.List;
  * @author 芋道源码
  */
 @TableName(value = "iot_scene_rule", autoResultMap = true)
-@KeySequence("iot_scene_rule_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "iot_scene_rule_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @Builder
 @NoArgsConstructor
@@ -40,16 +43,18 @@ public class IotSceneRuleDO extends TenantBaseDO {
     /**
      * 场景联动编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 场景联动名称
      */
     private String name;
+
     /**
      * 场景联动描述
      */
     private String description;
+
     /**
      * 场景联动状态
      *
@@ -101,6 +106,7 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 关联 {@link IotProductDO#getId()}
          */
         private Long productId;
+
         /**
          * 设备编号
          *
@@ -108,18 +114,21 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 特殊：如果为 {@link IotDeviceDO#DEVICE_ID_ALL} 时，则是全部设备
          */
         private Long deviceId;
+
         /**
          * 物模型标识符
          *
          * 对应：{@link IotThingModelDO#getIdentifier()}
          */
         private String identifier;
+
         /**
          * 操作符
          *
          * 枚举 {@link IotSceneRuleConditionOperatorEnum}
          */
         private String operator;
+
         /**
          * 参数（属性值、在线状态）
          * <p>
@@ -142,7 +151,6 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 第二层 List：条件与条件之间，是“且”的关系
          */
         private List<List<TriggerCondition>> conditionGroups;
-
     }
 
     /**
@@ -167,24 +175,28 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 关联 {@link IotProductDO#getId()}
          */
         private Long productId;
+
         /**
          * 设备编号
          *
          * 关联 {@link IotDeviceDO#getId()}
          */
         private Long deviceId;
+
         /**
          * 标识符（属性）
          *
          * 关联 {@link IotThingModelDO#getIdentifier()}
          */
         private String identifier;
+
         /**
          * 操作符
          *
          * 枚举 {@link IotSceneRuleConditionOperatorEnum}
          */
         private String operator;
+
         /**
          * 参数
          *
@@ -192,7 +204,6 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 例如说，{@link IotSceneRuleConditionOperatorEnum#IN}、{@link IotSceneRuleConditionOperatorEnum#BETWEEN}
          */
         private String param;
-
     }
 
     /**
@@ -218,6 +229,7 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 关联 {@link IotProductDO#getId()}
          */
         private Long productId;
+
         /**
          * 设备编号
          *
@@ -245,7 +257,5 @@ public class IotSceneRuleDO extends TenantBaseDO {
          * 关联 {@link IotAlertConfigDO#getId()}
          */
         private Long alertConfigId;
-
     }
-
 }

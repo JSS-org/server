@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.meetingroom;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,17 +16,19 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaMeetingRoomBookingScopeEnum implements ArrayValuable<Integer> {
-
     ALL(0, "全部成员"),
     SPECIFIED(1, "指定成员");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaMeetingRoomBookingScopeEnum::getScope).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(OaMeetingRoomBookingScopeEnum::getScope)
+                    .toArray(Integer[]::new);
 
     /**
      * 会议室可预定范围
      */
     private final Integer scope;
+
     /**
      * 名称
      */
@@ -39,5 +42,4 @@ public enum OaMeetingRoomBookingScopeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

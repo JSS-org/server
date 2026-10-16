@@ -1,23 +1,28 @@
 package cn.iocoder.yudao.module.crm.controller.admin.contract.vo.contract;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmBusinessParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmContactParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmCustomerParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.SysAdminUserParseFunction;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - CRM 合同创建/更新 Request VO")
 @Data
@@ -40,7 +45,10 @@ public class CrmContractSaveReqVO {
     @DiffLogField(name = "商机", function = CrmBusinessParseFunction.NAME)
     private Long businessId;
 
-    @Schema(description = "负责人的用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "17144")
+    @Schema(
+            description = "负责人的用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "17144")
     @DiffLogField(name = "负责人", function = SysAdminUserParseFunction.NAME)
     @NotNull(message = "负责人不能为空")
     private Long ownerUserId;
@@ -92,22 +100,29 @@ public class CrmContractSaveReqVO {
     @AllArgsConstructor
     public static class Product {
 
-        @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "20529")
+        @Schema(
+                description = "产品编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "20529")
         @NotNull(message = "产品编号不能为空")
         private Long productId;
 
-        @Schema(description = "产品单价", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "产品单价",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         @NotNull(message = "产品单价不能为空")
         private BigDecimal productPrice;
 
-        @Schema(description = "合同价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "合同价格",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         @NotNull(message = "合同价格不能为空")
         private BigDecimal contractPrice;
 
         @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "8911")
         @NotNull(message = "产品数量不能为空")
         private Integer count;
-
     }
-
 }

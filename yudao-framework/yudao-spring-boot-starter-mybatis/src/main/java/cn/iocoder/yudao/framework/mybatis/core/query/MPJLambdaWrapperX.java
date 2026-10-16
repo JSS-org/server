@@ -3,8 +3,10 @@ package cn.iocoder.yudao.framework.mybatis.core.query;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
+
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.github.yulichang.wrapper.MPJLambdaWrapper;
+
 import org.springframework.util.StringUtils;
 
 import java.util.Collection;
@@ -96,7 +98,8 @@ public class MPJLambdaWrapperX<T> extends MPJLambdaWrapper<T> {
         return betweenIfPresent(column, val1, val2);
     }
 
-    public <S> MPJLambdaWrapperX<T> betweenIfPresent(SFunction<S, ?> column, Object val1, Object val2) {
+    public <S> MPJLambdaWrapperX<T> betweenIfPresent(
+            SFunction<S, ?> column, Object val1, Object val2) {
         if (val1 != null && val2 != null) {
             return (MPJLambdaWrapperX<T>) super.between(column, val1, val2);
         }
@@ -178,7 +181,8 @@ public class MPJLambdaWrapperX<T> extends MPJLambdaWrapper<T> {
     }
 
     @Override
-    public <E, X> MPJLambdaWrapperX<T> selectAs(String index, SFunction<E, ?> column, SFunction<X, ?> alias) {
+    public <E, X> MPJLambdaWrapperX<T> selectAs(
+            String index, SFunction<E, ?> column, SFunction<X, ?> alias) {
         super.selectAs(index, column, alias);
         return this;
     }
@@ -190,13 +194,18 @@ public class MPJLambdaWrapperX<T> extends MPJLambdaWrapper<T> {
     }
 
     @Override
-    public <E, F> MPJLambdaWrapperX<T> selectSub(Class<E> clazz, Consumer<MPJLambdaWrapper<E>> consumer, SFunction<F, ?> alias) {
+    public <E, F> MPJLambdaWrapperX<T> selectSub(
+            Class<E> clazz, Consumer<MPJLambdaWrapper<E>> consumer, SFunction<F, ?> alias) {
         super.selectSub(clazz, consumer, alias);
         return this;
     }
 
     @Override
-    public <E, F> MPJLambdaWrapperX<T> selectSub(Class<E> clazz, String st, Consumer<MPJLambdaWrapper<E>> consumer, SFunction<F, ?> alias) {
+    public <E, F> MPJLambdaWrapperX<T> selectSub(
+            Class<E> clazz,
+            String st,
+            Consumer<MPJLambdaWrapper<E>> consumer,
+            SFunction<F, ?> alias) {
         super.selectSub(clazz, st, consumer, alias);
         return this;
     }
@@ -323,37 +332,52 @@ public class MPJLambdaWrapperX<T> extends MPJLambdaWrapper<T> {
 
     // ========== 关键重写：使 leftJoin 返回当前类型 this ==========
     @Override
-    public <A, B> MPJLambdaWrapperX<T> leftJoin(Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right) {
+    public <A, B> MPJLambdaWrapperX<T> leftJoin(
+            Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right) {
         super.leftJoin(clazz, left, right);
         return this;
     }
 
     @Override
-    public <A, B> MPJLambdaWrapperX<T> rightJoin(Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right) {
+    public <A, B> MPJLambdaWrapperX<T> rightJoin(
+            Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right) {
         super.rightJoin(clazz, left, right);
         return this;
     }
 
     @Override
-    public <A, B> MPJLambdaWrapperX<T> innerJoin(Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right) {
+    public <A, B> MPJLambdaWrapperX<T> innerJoin(
+            Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right) {
         super.innerJoin(clazz, left, right);
         return this;
     }
 
     // ========== 添加扩展 Join 支持 ext 函数式参数 ==========
-    public <A, B> MPJLambdaWrapperX<T> leftJoin(Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right, Consumer<MPJLambdaWrapperX<T>> ext) {
+    public <A, B> MPJLambdaWrapperX<T> leftJoin(
+            Class<A> clazz,
+            SFunction<A, ?> left,
+            SFunction<B, ?> right,
+            Consumer<MPJLambdaWrapperX<T>> ext) {
         super.leftJoin(clazz, left, right);
         if (ext != null) ext.accept(this);
         return this;
     }
 
-    public <A, B> MPJLambdaWrapperX<T> rightJoin(Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right, Consumer<MPJLambdaWrapperX<T>> ext) {
+    public <A, B> MPJLambdaWrapperX<T> rightJoin(
+            Class<A> clazz,
+            SFunction<A, ?> left,
+            SFunction<B, ?> right,
+            Consumer<MPJLambdaWrapperX<T>> ext) {
         super.rightJoin(clazz, left, right);
         if (ext != null) ext.accept(this);
         return this;
     }
 
-    public <A, B> MPJLambdaWrapperX<T> innerJoin(Class<A> clazz, SFunction<A, ?> left, SFunction<B, ?> right, Consumer<MPJLambdaWrapperX<T>> ext) {
+    public <A, B> MPJLambdaWrapperX<T> innerJoin(
+            Class<A> clazz,
+            SFunction<A, ?> left,
+            SFunction<B, ?> right,
+            Consumer<MPJLambdaWrapperX<T>> ext) {
         super.innerJoin(clazz, left, right);
         if (ext != null) ext.accept(this);
         return this;

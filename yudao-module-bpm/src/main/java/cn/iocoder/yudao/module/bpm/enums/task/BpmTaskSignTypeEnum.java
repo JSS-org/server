@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.enums.task;
 
 import cn.hutool.core.util.ArrayUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -26,6 +27,7 @@ public enum BpmTaskSignTypeEnum {
      * 类型
      */
     private final String type;
+
     /**
      * 名字
      */
@@ -43,5 +45,4 @@ public enum BpmTaskSignTypeEnum {
     public static BpmTaskSignTypeEnum of(String type) {
         return ArrayUtil.firstMatch(value -> value.getType().equals(type), values());
     }
-
 }

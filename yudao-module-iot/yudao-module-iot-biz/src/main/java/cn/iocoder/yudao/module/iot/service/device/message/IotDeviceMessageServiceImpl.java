@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.service.device.message;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_DOWNSTREAM_FAILED_SERVER_ID_NULL;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
@@ -29,11 +33,15 @@ import cn.iocoder.yudao.module.iot.dal.tdengine.IotDeviceMessageMapper;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
 import cn.iocoder.yudao.module.iot.service.ota.IotOtaTaskRecordService;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.base.Objects;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -43,10 +51,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_DOWNSTREAM_FAILED_SERVER_ID_NULL;
 
 /**
  * IoT 设备消息 Service 实现类
@@ -58,19 +62,14 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_DOWNST
 @Slf4j
 public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
 
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    private IotDevicePropertyService devicePropertyService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private IotDeviceService deviceService;
+    @Resource private IotDevicePropertyService devicePropertyService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private IotOtaTaskRecordService otaTaskRecordService;
 
-    @Resource
-    private IotDeviceMessageMapper deviceMessageMapper;
+    @Resource private IotDeviceMessageMapper deviceMessageMapper;
 
-    @Resource
-    private IotDeviceMessageProducer deviceMessageProducer;
+    @Resource private IotDeviceMessageProducer deviceMessageProducer;
 
     @Override
     public void defineDeviceMessageStable() {
@@ -85,10 +84,11 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
 
     @Async
     void createDeviceLogAsync(IotDeviceMessage message) {
-        IotDeviceMessageDO messageDO = BeanUtils.toBean(message, IotDeviceMessageDO.class)
-                .setUpstream(IotDeviceMessageUtils.isUpstreamMessage(message))
-                .setReply(IotDeviceMessageUtils.isReplyMessage(message))
-                .setIdentifier(IotDeviceMessageUtils.getIdentifier(message));
+        IotDeviceMessageDO messageDO =
+                BeanUtils.toBean(message, IotDeviceMessageDO.class)
+                        .setUpstream(IotDeviceMessageUtils.isUpstreamMessage(message))
+                        .setReply(IotDeviceMessageUtils.isReplyMessage(message))
+                        .setIdentifier(IotDeviceMessageUtils.getIdentifier(message));
         if (message.getParams() != null) {
             messageDO.setParams(JsonUtils.toJsonString(messageDO.getParams()));
         }
@@ -105,10 +105,13 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
             deviceMessageMapper.insert(messageDO);
         } catch (Exception ex) {
             // 特殊：@Async 方法的异常默认会被 handler 吞掉，这里显式记录便于排查
-            log.error("[createDeviceLogAsync][消息日志写入失败 deviceId({}) messageId({}) paramsLen({}) dataLen({})]",
-                    messageDO.getDeviceId(), messageDO.getId(),
+            log.error(
+                    "[createDeviceLogAsync][消息日志写入失败 deviceId({}) messageId({}) paramsLen({}) dataLen({})]",
+                    messageDO.getDeviceId(),
+                    messageDO.getId(),
                     StrUtil.length((String) messageDO.getParams()),
-                    StrUtil.length((String) messageDO.getData()), ex);
+                    StrUtil.length((String) messageDO.getData()),
+                    ex);
         }
     }
 
@@ -123,7 +126,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
         return sendDeviceMessage(message, device, null);
     }
 
-    private IotDeviceMessage sendDeviceMessage(IotDeviceMessage message, IotDeviceDO device, String serverId) {
+    private IotDeviceMessage sendDeviceMessage(
+            IotDeviceMessage message, IotDeviceDO device, String serverId) {
         // 1. 补充信息
         appendDeviceMessage(message, device);
 
@@ -161,8 +165,10 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
      * @param device  设备信息
      */
     private void appendDeviceMessage(IotDeviceMessage message, IotDeviceDO device) {
-        message.setId(IotDeviceMessageUtils.generateMessageId()).setReportTime(LocalDateTime.now())
-                .setDeviceId(device.getId()).setTenantId(device.getTenantId());
+        message.setId(IotDeviceMessageUtils.generateMessageId())
+                .setReportTime(LocalDateTime.now())
+                .setDeviceId(device.getId())
+                .setTenantId(device.getTenantId());
         // 特殊：如果设备没有指定 requestId，则使用 messageId
         if (StrUtil.isEmpty(message.getRequestId())) {
             message.setRequestId(message.getId());
@@ -194,9 +200,13 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
             return;
         }
         try {
-            IotDeviceMessage replyMessage = IotDeviceMessage.replyOf(message.getRequestId(), message.getMethod(), replyData,
-                    serviceException != null ? serviceException.getCode() : null,
-                    serviceException != null ? serviceException.getMessage() : null);
+            IotDeviceMessage replyMessage =
+                    IotDeviceMessage.replyOf(
+                            message.getRequestId(),
+                            message.getMethod(),
+                            replyData,
+                            serviceException != null ? serviceException.getCode() : null,
+                            serviceException != null ? serviceException.getMessage() : null);
             sendDeviceMessage(replyMessage, device, message.getServerId());
         } catch (Exception ex) {
             log.error("[handleUpstreamDeviceMessage][message({}) 回复消息失败]", message, ex);
@@ -206,7 +216,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     // TODO @芋艿：可优化：未来逻辑复杂后，可以独立拆除 Processor 处理器
     private Object handleUpstreamDeviceMessage0(IotDeviceMessage message, IotDeviceDO device) {
         // 设备上下线
-        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod())) {
+        if (Objects.equal(
+                message.getMethod(), IotDeviceMessageMethodEnum.STATE_UPDATE.getMethod())) {
             String stateStr = IotDeviceMessageUtils.getIdentifier(message);
             assert stateStr != null;
             Assert.notEmpty(stateStr, "设备状态不能为空");
@@ -216,18 +227,21 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
         }
 
         // 属性上报
-        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())) {
+        if (Objects.equal(
+                message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())) {
             devicePropertyService.saveDeviceProperty(device, message);
             return null;
         }
         // 批量上报（属性+事件+子设备）
-        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_PACK_POST.getMethod())) {
+        if (Objects.equal(
+                message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_PACK_POST.getMethod())) {
             handlePackMessage(message, device);
             return null;
         }
 
         // OTA 上报升级进度
-        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.OTA_PROGRESS.getMethod())) {
+        if (Objects.equal(
+                message.getMethod(), IotDeviceMessageMethodEnum.OTA_PROGRESS.getMethod())) {
             otaTaskRecordService.updateOtaRecordProgress(device, message);
             return null;
         }
@@ -237,7 +251,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
             return deviceService.handleTopoAddMessage(message, device);
         }
         // 删除拓扑关系
-        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.TOPO_DELETE.getMethod())) {
+        if (Objects.equal(
+                message.getMethod(), IotDeviceMessageMethodEnum.TOPO_DELETE.getMethod())) {
             return deviceService.handleTopoDeleteMessage(message, device);
         }
         // 获取拓扑关系
@@ -246,7 +261,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
         }
 
         // 子设备动态注册
-        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.SUB_DEVICE_REGISTER.getMethod())) {
+        if (Objects.equal(
+                message.getMethod(), IotDeviceMessageMethodEnum.SUB_DEVICE_REGISTER.getMethod())) {
             return deviceService.handleSubDeviceRegisterMessage(message, device);
         }
 
@@ -265,15 +281,20 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
      */
     private void handlePackMessage(IotDeviceMessage packMessage, IotDeviceDO gatewayDevice) {
         // 1. 解析参数
-        IotDevicePropertyPackPostReqDTO params = JsonUtils.convertObject(
-                packMessage.getParams(), IotDevicePropertyPackPostReqDTO.class);
+        IotDevicePropertyPackPostReqDTO params =
+                JsonUtils.convertObject(
+                        packMessage.getParams(), IotDevicePropertyPackPostReqDTO.class);
         if (params == null) {
             log.warn("[handlePackMessage][消息({}) 参数解析失败]", packMessage);
             return;
         }
 
         // 2. 处理网关设备（自身）的数据
-        sendDevicePackData(gatewayDevice, packMessage.getServerId(), params.getProperties(), params.getEvents());
+        sendDevicePackData(
+                gatewayDevice,
+                packMessage.getServerId(),
+                params.getProperties(),
+                params.getEvents());
 
         // 3. 处理子设备的数据
         if (CollUtil.isEmpty(params.getSubDevices())) {
@@ -282,16 +303,25 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
         for (IotDevicePropertyPackPostReqDTO.SubDeviceData subDeviceData : params.getSubDevices()) {
             try {
                 IotDeviceIdentity identity = subDeviceData.getIdentity();
-                IotDeviceDO subDevice = deviceService.getDeviceFromCache(identity.getProductKey(), identity.getDeviceName());
+                IotDeviceDO subDevice =
+                        deviceService.getDeviceFromCache(
+                                identity.getProductKey(), identity.getDeviceName());
                 if (subDevice == null) {
-                    log.warn("[handlePackMessage][子设备({}/{}) 不存在]", identity.getProductKey(), identity.getDeviceName());
+                    log.warn(
+                            "[handlePackMessage][子设备({}/{}) 不存在]",
+                            identity.getProductKey(),
+                            identity.getDeviceName());
                     continue;
                 }
                 // 特殊：子设备不需要指定 serverId，因为子设备实际可能连接在不同的 gateway-server 上，导致 serverId 不同
-                sendDevicePackData(subDevice, null, subDeviceData.getProperties(), subDeviceData.getEvents());
+                sendDevicePackData(
+                        subDevice, null, subDeviceData.getProperties(), subDeviceData.getEvents());
             } catch (Exception ex) {
-                log.error("[handlePackMessage][子设备({}/{}) 数据处理失败]", subDeviceData.getIdentity().getProductKey(),
-                        subDeviceData.getIdentity().getDeviceName(), ex);
+                log.error(
+                        "[handlePackMessage][子设备({}/{}) 数据处理失败]",
+                        subDeviceData.getIdentity().getProductKey(),
+                        subDeviceData.getIdentity().getDeviceName(),
+                        ex);
             }
         }
     }
@@ -304,30 +334,40 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
      * @param properties 属性数据
      * @param events     事件数据
      */
-    private void sendDevicePackData(IotDeviceDO device, String serverId,
-                                    Map<String, Object> properties,
-                                    Map<String, IotDevicePropertyPackPostReqDTO.EventValue> events) {
+    private void sendDevicePackData(
+            IotDeviceDO device,
+            String serverId,
+            Map<String, Object> properties,
+            Map<String, IotDevicePropertyPackPostReqDTO.EventValue> events) {
         // 1. 发送属性消息
         if (MapUtil.isNotEmpty(properties)) {
-            IotDeviceMessage propertyMsg = IotDeviceMessage.requestOf(
-                    device.getId(), device.getTenantId(), serverId,
-                    IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
-                    IotDevicePropertyPostReqDTO.of(properties));
+            IotDeviceMessage propertyMsg =
+                    IotDeviceMessage.requestOf(
+                            device.getId(),
+                            device.getTenantId(),
+                            serverId,
+                            IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
+                            IotDevicePropertyPostReqDTO.of(properties));
             deviceMessageProducer.sendDeviceMessage(propertyMsg);
         }
 
         // 2. 发送事件消息
         if (MapUtil.isNotEmpty(events)) {
-            for (Map.Entry<String, IotDevicePropertyPackPostReqDTO.EventValue> eventEntry : events.entrySet()) {
+            for (Map.Entry<String, IotDevicePropertyPackPostReqDTO.EventValue> eventEntry :
+                    events.entrySet()) {
                 String eventId = eventEntry.getKey();
                 IotDevicePropertyPackPostReqDTO.EventValue eventValue = eventEntry.getValue();
                 if (eventValue == null) {
                     continue;
                 }
-                IotDeviceMessage eventMsg = IotDeviceMessage.requestOf(
-                        device.getId(), device.getTenantId(), serverId,
-                        IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
-                        IotDeviceEventPostReqDTO.of(eventId, eventValue.getValue(), eventValue.getTime()));
+                IotDeviceMessage eventMsg =
+                        IotDeviceMessage.requestOf(
+                                device.getId(),
+                                device.getTenantId(),
+                                serverId,
+                                IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
+                                IotDeviceEventPostReqDTO.of(
+                                        eventId, eventValue.getValue(), eventValue.getTime()));
                 deviceMessageProducer.sendDeviceMessage(eventMsg);
             }
         }
@@ -336,10 +376,12 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     // ========= 设备消息查询 ==========
 
     @Override
-    public PageResult<IotDeviceMessageDO> getDeviceMessagePage(IotDeviceMessagePageReqVO pageReqVO) {
+    public PageResult<IotDeviceMessageDO> getDeviceMessagePage(
+            IotDeviceMessagePageReqVO pageReqVO) {
         try {
-            IPage<IotDeviceMessageDO> page = deviceMessageMapper.selectPage(
-                    new Page<>(pageReqVO.getPageNo(), pageReqVO.getPageSize()), pageReqVO);
+            IPage<IotDeviceMessageDO> page =
+                    deviceMessageMapper.selectPage(
+                            new Page<>(pageReqVO.getPageNo(), pageReqVO.getPageSize()), pageReqVO);
             return new PageResult<>(page.getRecords(), page.getTotal());
         } catch (Exception exception) {
             if (exception.getMessage().contains("Table does not exist")) {
@@ -350,7 +392,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     }
 
     @Override
-    public List<IotDeviceMessageDO> getDeviceMessageListByRequestIdsAndReply(Long deviceId, List<String> requestIds, Boolean reply) {
+    public List<IotDeviceMessageDO> getDeviceMessageListByRequestIdsAndReply(
+            Long deviceId, List<String> requestIds, Boolean reply) {
         if (CollUtil.isEmpty(requestIds)) {
             return ListUtil.of();
         }
@@ -367,28 +410,48 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     public List<IotStatisticsDeviceMessageSummaryByDateRespVO> getDeviceMessageSummaryByDate(
             IotStatisticsDeviceMessageReqVO reqVO) {
         // 1. 按小时统计，获取分项统计数据
-        List<Map<String, Object>> countList = deviceMessageMapper.selectDeviceMessageCountGroupByDate(
-                LocalDateTimeUtil.toEpochMilli(reqVO.getTimes()[0]),
-                LocalDateTimeUtil.toEpochMilli(reqVO.getTimes()[1]));
+        List<Map<String, Object>> countList =
+                deviceMessageMapper.selectDeviceMessageCountGroupByDate(
+                        LocalDateTimeUtil.toEpochMilli(reqVO.getTimes()[0]),
+                        LocalDateTimeUtil.toEpochMilli(reqVO.getTimes()[1]));
 
         // 2. 按照日期间隔，合并数据
-        List<LocalDateTime[]> timeRanges = LocalDateTimeUtils.getDateRangeList(reqVO.getTimes()[0], reqVO.getTimes()[1],
-                reqVO.getInterval());
-        return convertList(timeRanges, times -> {
-            Integer upstreamCount = countList.stream()
-                    .filter(vo -> LocalDateTimeUtils.isBetween(times[0], times[1], (Timestamp) vo.get("time")))
-                    .mapToInt(value -> MapUtil.getInt(value, "upstream_count")).sum();
-            Integer downstreamCount = countList.stream()
-                    .filter(vo -> LocalDateTimeUtils.isBetween(times[0], times[1], (Timestamp) vo.get("time")))
-                    .mapToInt(value -> MapUtil.getInt(value, "downstream_count")).sum();
-            return new IotStatisticsDeviceMessageSummaryByDateRespVO()
-                    .setTime(LocalDateTimeUtils.formatDateRange(times[0], times[1], reqVO.getInterval()))
-                    .setUpstreamCount(upstreamCount).setDownstreamCount(downstreamCount);
-        });
+        List<LocalDateTime[]> timeRanges =
+                LocalDateTimeUtils.getDateRangeList(
+                        reqVO.getTimes()[0], reqVO.getTimes()[1], reqVO.getInterval());
+        return convertList(
+                timeRanges,
+                times -> {
+                    Integer upstreamCount =
+                            countList.stream()
+                                    .filter(
+                                            vo ->
+                                                    LocalDateTimeUtils.isBetween(
+                                                            times[0],
+                                                            times[1],
+                                                            (Timestamp) vo.get("time")))
+                                    .mapToInt(value -> MapUtil.getInt(value, "upstream_count"))
+                                    .sum();
+                    Integer downstreamCount =
+                            countList.stream()
+                                    .filter(
+                                            vo ->
+                                                    LocalDateTimeUtils.isBetween(
+                                                            times[0],
+                                                            times[1],
+                                                            (Timestamp) vo.get("time")))
+                                    .mapToInt(value -> MapUtil.getInt(value, "downstream_count"))
+                                    .sum();
+                    return new IotStatisticsDeviceMessageSummaryByDateRespVO()
+                            .setTime(
+                                    LocalDateTimeUtils.formatDateRange(
+                                            times[0], times[1], reqVO.getInterval()))
+                            .setUpstreamCount(upstreamCount)
+                            .setDownstreamCount(downstreamCount);
+                });
     }
 
     private IotDeviceMessageServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.kb.interaction;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.PmsKnowledgeInteractionItemRespVO;
@@ -8,7 +10,9 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.kb.interaction.PmsKnowledgeVie
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.interaction.PmsKnowledgeViewRecordMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.PmsKnowledgeObjectTypeEnum;
 import cn.iocoder.yudao.module.pms.service.kb.library.PmsKnowledgeLibraryMemberService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -22,8 +26,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 /**
  * PMS 知识浏览记录 Service 实现类
@@ -39,13 +41,10 @@ public class PmsKnowledgeViewRecordServiceImpl implements PmsKnowledgeViewRecord
      */
     private static final long RECENT_HISTORY_DAYS = 31L;
 
-    @Resource
-    private PmsKnowledgeViewRecordMapper viewRecordMapper;
+    @Resource private PmsKnowledgeViewRecordMapper viewRecordMapper;
 
-    @Resource
-    private PmsKnowledgeInteractionTargetService interactionTargetService;
-    @Resource
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @Resource private PmsKnowledgeInteractionTargetService interactionTargetService;
+    @Resource private PmsKnowledgeLibraryMemberService libraryMemberService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -53,14 +52,18 @@ public class PmsKnowledgeViewRecordServiceImpl implements PmsKnowledgeViewRecord
         // 1. 已浏览过同一对象时，更新当前归属和最后访问时间
         LocalDateTime viewTime = LocalDateTime.now();
         if (viewRecordMapper.updateLibraryIdAndCreateTimeByUserIdAndTypeAndEntityId(
-                libraryId, viewTime, userId, type, entityId) > 0) {
+                        libraryId, viewTime, userId, type, entityId)
+                > 0) {
             return;
         }
 
         // 2. 首次浏览时创建最近访问记录
-        PmsKnowledgeViewRecordDO record = new PmsKnowledgeViewRecordDO()
-                .setLibraryId(libraryId).setType(type)
-                .setEntityId(entityId).setUserId(userId);
+        PmsKnowledgeViewRecordDO record =
+                new PmsKnowledgeViewRecordDO()
+                        .setLibraryId(libraryId)
+                        .setType(type)
+                        .setEntityId(entityId)
+                        .setUserId(userId);
         record.setCreateTime(viewTime);
         viewRecordMapper.insert(record);
     }
@@ -75,15 +78,24 @@ public class PmsKnowledgeViewRecordServiceImpl implements PmsKnowledgeViewRecord
         // 2. 查询今天、昨天及此前 30 个自然日的浏览记录（从当天零点回溯 31 天）
         LocalDateTime todayBeginTime = LocalDate.now().atStartOfDay();
         LocalDateTime yesterdayBeginTime = todayBeginTime.minusDays(1);
-        List<PmsKnowledgeViewRecordDO> records = viewRecordMapper.selectListByUserIdAndCreateTimeAfter(
-                userId, todayBeginTime.minusDays(RECENT_HISTORY_DAYS));
+        List<PmsKnowledgeViewRecordDO> records =
+                viewRecordMapper.selectListByUserIdAndCreateTimeAfter(
+                        userId, todayBeginTime.minusDays(RECENT_HISTORY_DAYS));
         if (libraryId != null) {
             records.removeIf(record -> ObjectUtil.notEqual(libraryId, record.getLibraryId()));
         }
-        List<PmsKnowledgeInteractionItemRespVO> items = interactionTargetService.getReadableItemList(
-                convertList(records, record -> new PmsKnowledgeInteractionItemRespVO().setId(record.getId())
-                        .setType(record.getType()).setEntityId(record.getEntityId())
-                        .setLibraryId(record.getLibraryId()).setCreateTime(record.getCreateTime())), userId);
+        List<PmsKnowledgeInteractionItemRespVO> items =
+                interactionTargetService.getReadableItemList(
+                        convertList(
+                                records,
+                                record ->
+                                        new PmsKnowledgeInteractionItemRespVO()
+                                                .setId(record.getId())
+                                                .setType(record.getType())
+                                                .setEntityId(record.getEntityId())
+                                                .setLibraryId(record.getLibraryId())
+                                                .setCreateTime(record.getCreateTime())),
+                        userId);
 
         // 3. 按今天、昨天和此前 30 天分组，同一分组内每个对象只保留最近一次访问
         List<PmsKnowledgeInteractionItemRespVO> todayItems = new ArrayList<>();
@@ -102,7 +114,9 @@ public class PmsKnowledgeViewRecordServiceImpl implements PmsKnowledgeViewRecord
                 addRecentItem(recent30DayItems, recentKeys, key, item);
             }
         }
-        return new PmsKnowledgeRecentListRespVO().setTodayItems(todayItems).setYesterdayItems(yesterdayItems)
+        return new PmsKnowledgeRecentListRespVO()
+                .setTodayItems(todayItems)
+                .setYesterdayItems(yesterdayItems)
                 .setRecent30DayItems(recent30DayItems);
     }
 
@@ -112,35 +126,47 @@ public class PmsKnowledgeViewRecordServiceImpl implements PmsKnowledgeViewRecord
     }
 
     @Override
-    public void deleteViewRecordsByEntityIds(Collection<Long> folderIds, Collection<Long> documentIds) {
+    public void deleteViewRecordsByEntityIds(
+            Collection<Long> folderIds, Collection<Long> documentIds) {
         if (CollUtil.isNotEmpty(folderIds)) {
-            viewRecordMapper.deleteByTypeAndEntityIds(Collections.singleton(
-                    PmsKnowledgeObjectTypeEnum.FOLDER.getType()), folderIds);
+            viewRecordMapper.deleteByTypeAndEntityIds(
+                    Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()), folderIds);
         }
         if (CollUtil.isNotEmpty(documentIds)) {
-            viewRecordMapper.deleteByTypeAndEntityIds(Arrays.asList(PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
-                    PmsKnowledgeObjectTypeEnum.FILE.getType()), documentIds);
+            viewRecordMapper.deleteByTypeAndEntityIds(
+                    Arrays.asList(
+                            PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+                            PmsKnowledgeObjectTypeEnum.FILE.getType()),
+                    documentIds);
         }
     }
 
     @Override
-    public void updateViewRecordLibraryIdByEntityIds(Collection<Long> folderIds, Collection<Long> documentIds,
-                                                     Long libraryId) {
+    public void updateViewRecordLibraryIdByEntityIds(
+            Collection<Long> folderIds, Collection<Long> documentIds, Long libraryId) {
         if (CollUtil.isNotEmpty(folderIds)) {
-            viewRecordMapper.updateLibraryIdByTypeAndEntityIds(libraryId,
-                    Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()), folderIds);
+            viewRecordMapper.updateLibraryIdByTypeAndEntityIds(
+                    libraryId,
+                    Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()),
+                    folderIds);
         }
         if (CollUtil.isNotEmpty(documentIds)) {
-            viewRecordMapper.updateLibraryIdByTypeAndEntityIds(libraryId,
-                    Arrays.asList(PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), PmsKnowledgeObjectTypeEnum.FILE.getType()), documentIds);
+            viewRecordMapper.updateLibraryIdByTypeAndEntityIds(
+                    libraryId,
+                    Arrays.asList(
+                            PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+                            PmsKnowledgeObjectTypeEnum.FILE.getType()),
+                    documentIds);
         }
     }
 
-    private void addRecentItem(List<PmsKnowledgeInteractionItemRespVO> items, Set<String> keys,
-                               String key, PmsKnowledgeInteractionItemRespVO item) {
+    private void addRecentItem(
+            List<PmsKnowledgeInteractionItemRespVO> items,
+            Set<String> keys,
+            String key,
+            PmsKnowledgeInteractionItemRespVO item) {
         if (keys.add(key)) {
             items.add(item);
         }
     }
-
 }

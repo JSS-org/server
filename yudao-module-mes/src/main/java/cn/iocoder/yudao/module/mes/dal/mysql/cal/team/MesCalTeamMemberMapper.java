@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.team.vo.member.MesCalTeamMemberPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.team.MesCalTeamMemberDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -19,9 +20,11 @@ import java.util.List;
 public interface MesCalTeamMemberMapper extends BaseMapperX<MesCalTeamMemberDO> {
 
     default PageResult<MesCalTeamMemberDO> selectPage(MesCalTeamMemberPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesCalTeamMemberDO>()
-                .eqIfPresent(MesCalTeamMemberDO::getTeamId, reqVO.getTeamId())
-                .orderByDesc(MesCalTeamMemberDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesCalTeamMemberDO>()
+                        .eqIfPresent(MesCalTeamMemberDO::getTeamId, reqVO.getTeamId())
+                        .orderByDesc(MesCalTeamMemberDO::getId));
     }
 
     default List<MesCalTeamMemberDO> selectListByTeamId(Long teamId) {
@@ -39,5 +42,4 @@ public interface MesCalTeamMemberMapper extends BaseMapperX<MesCalTeamMemberDO> 
     default void deleteByTeamId(Long teamId) {
         delete(MesCalTeamMemberDO::getTeamId, teamId);
     }
-
 }

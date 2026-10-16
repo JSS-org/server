@@ -1,27 +1,31 @@
 package cn.iocoder.yudao.module.oa.controller.admin.vehicle;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleDO;
 import cn.iocoder.yudao.module.oa.service.vehicle.OaVehicleService;
+import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
-import cn.iocoder.yudao.module.system.api.dept.DeptApi;
-import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
-import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
-import java.util.*;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import java.util.*;
 
 @Tag(name = "管理后台 - 车辆")
 @RestController
@@ -29,11 +33,9 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class OaVehicleController {
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
-    @Resource
-    private OaVehicleService vehicleService;
+    @Resource private OaVehicleService vehicleService;
 
     @PostMapping("/create")
     @Operation(summary = "创建车辆")
@@ -71,9 +73,12 @@ public class OaVehicleController {
     @GetMapping("/page")
     @Operation(summary = "获得车辆分页")
     @PreAuthorize("@ss.hasPermission('oa:vehicle:query')")
-    public CommonResult<PageResult<OaVehicleRespVO>> getVehiclePage(@Valid OaVehiclePageReqVO pageReqVO) {
+    public CommonResult<PageResult<OaVehicleRespVO>> getVehiclePage(
+            @Valid OaVehiclePageReqVO pageReqVO) {
         PageResult<OaVehicleDO> pageResult = vehicleService.getVehiclePage(pageReqVO);
-        return success(new PageResult<>(buildVehicleRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildVehicleRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -102,13 +107,18 @@ public class OaVehicleController {
             return Collections.emptyList();
         }
         // 1. 批量查询所属部门
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(convertSet(vehicles, OaVehicleDO::getDeptId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(vehicles, OaVehicleDO::getDeptId));
         // 2. 转换并拼接部门名称
-        return convertList(vehicles, vehicle -> {
-            OaVehicleRespVO respVO = BeanUtils.toBean(vehicle, OaVehicleRespVO.class);
-            MapUtils.findAndThen(deptMap, vehicle.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
-            return respVO;
-        });
+        return convertList(
+                vehicles,
+                vehicle -> {
+                    OaVehicleRespVO respVO = BeanUtils.toBean(vehicle, OaVehicleRespVO.class);
+                    MapUtils.findAndThen(
+                            deptMap,
+                            vehicle.getDeptId(),
+                            dept -> respVO.setDeptName(dept.getName()));
+                    return respVO;
+                });
     }
-
 }

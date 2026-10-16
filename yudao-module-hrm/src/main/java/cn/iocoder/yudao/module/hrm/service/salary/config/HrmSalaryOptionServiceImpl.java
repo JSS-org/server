@@ -1,24 +1,5 @@
 package cn.iocoder.yudao.module.hrm.service.salary.config;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionSaveReqVO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionTemplateDO;
-import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryOptionMapper;
-import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryOptionTemplateMapper;
-import com.mzt.logapi.context.LogRecordContext;
-import com.mzt.logapi.starter.annotation.LogRecord;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
@@ -32,6 +13,28 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_OPTION
 import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_OPTION_STANDARD_CANNOT_MODIFY;
 import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionSaveReqVO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionTemplateDO;
+import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryOptionMapper;
+import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryOptionTemplateMapper;
+
+import com.mzt.logapi.context.LogRecordContext;
+import com.mzt.logapi.starter.annotation.LogRecord;
+
+import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * HRM 工资表薪资项 Service 实现类
  *
@@ -41,25 +44,33 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
 @Validated
 public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
 
-    @Resource
-    private HrmSalaryOptionMapper salaryOptionMapper;
-    @Resource
-    private HrmSalaryOptionTemplateMapper salaryOptionTemplateMapper;
+    @Resource private HrmSalaryOptionMapper salaryOptionMapper;
+    @Resource private HrmSalaryOptionTemplateMapper salaryOptionTemplateMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_OPTION_TYPE, subType = HRM_SALARY_OPTION_CREATE_SUB_TYPE,
-            bizNo = "{{#salaryOption.id}}", success = HRM_SALARY_OPTION_CREATE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_OPTION_TYPE,
+            subType = HRM_SALARY_OPTION_CREATE_SUB_TYPE,
+            bizNo = "{{#salaryOption.id}}",
+            success = HRM_SALARY_OPTION_CREATE_SUCCESS)
     public Long createSalaryOption(HrmSalaryOptionSaveReqVO createReqVO) {
         // 1. 校验薪资项分类
         HrmSalaryOptionDO category = validateSalaryOptionCategory(createReqVO.getParentCode());
 
         // 2. 创建薪资项
-        HrmSalaryOptionDO option = new HrmSalaryOptionDO()
-                .setCode(generateCustomSalaryOptionCode(category.getCode())).setParentCode(category.getCode())
-                .setName(createReqVO.getName()).setRemark(createReqVO.getRemark())
-                .setSystemFlag(false).setType(category.getType()).setTaxEnabled(category.getTaxEnabled())
-                .setVisible(true).setCalculateEnabled(category.getCalculateEnabled()).setEnabled(true);
+        HrmSalaryOptionDO option =
+                new HrmSalaryOptionDO()
+                        .setCode(generateCustomSalaryOptionCode(category.getCode()))
+                        .setParentCode(category.getCode())
+                        .setName(createReqVO.getName())
+                        .setRemark(createReqVO.getRemark())
+                        .setSystemFlag(false)
+                        .setType(category.getType())
+                        .setTaxEnabled(category.getTaxEnabled())
+                        .setVisible(true)
+                        .setCalculateEnabled(category.getCalculateEnabled())
+                        .setEnabled(true);
         salaryOptionMapper.insert(option);
 
         // 3. 记录操作日志上下文
@@ -69,8 +80,11 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_OPTION_TYPE, subType = HRM_SALARY_OPTION_UPDATE_ENABLED_SUB_TYPE,
-            bizNo = "{{#salaryOption.id}}", success = HRM_SALARY_OPTION_UPDATE_ENABLED_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_OPTION_TYPE,
+            subType = HRM_SALARY_OPTION_UPDATE_ENABLED_SUB_TYPE,
+            bizNo = "{{#salaryOption.id}}",
+            success = HRM_SALARY_OPTION_UPDATE_ENABLED_SUCCESS)
     public void updateSalaryOptionEnabled(Long id, Boolean enabled) {
         // 1. 校验薪资项
         HrmSalaryOptionDO option = validateSalaryOptionExists(id);
@@ -88,8 +102,11 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_OPTION_TYPE, subType = HRM_SALARY_OPTION_UPDATE_VISIBLE_SUB_TYPE,
-            bizNo = "{{#salaryOption.id}}", success = HRM_SALARY_OPTION_UPDATE_VISIBLE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_OPTION_TYPE,
+            subType = HRM_SALARY_OPTION_UPDATE_VISIBLE_SUB_TYPE,
+            bizNo = "{{#salaryOption.id}}",
+            success = HRM_SALARY_OPTION_UPDATE_VISIBLE_SUCCESS)
     public void updateSalaryOptionVisible(Long id, Boolean visible) {
         // 1. 校验薪资项
         HrmSalaryOptionDO option = validateSalaryOptionExists(id);
@@ -107,8 +124,11 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_SALARY_OPTION_TYPE, subType = HRM_SALARY_OPTION_DELETE_SUB_TYPE,
-            bizNo = "{{#salaryOption.id}}", success = HRM_SALARY_OPTION_DELETE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_OPTION_TYPE,
+            subType = HRM_SALARY_OPTION_DELETE_SUB_TYPE,
+            bizNo = "{{#salaryOption.id}}",
+            success = HRM_SALARY_OPTION_DELETE_SUCCESS)
     public void deleteSalaryOption(Long id) {
         // 1. 校验薪资项允许删除
         HrmSalaryOptionDO option = validateSalaryOptionExists(id);
@@ -125,24 +145,31 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
     @Transactional(rollbackFor = Exception.class)
     public synchronized void syncSalaryOption() {
         // 1. 查询标准薪资项目录
-        List<HrmSalaryOptionTemplateDO> templates = salaryOptionTemplateMapper.selectListOrderByCode();
+        List<HrmSalaryOptionTemplateDO> templates =
+                salaryOptionTemplateMapper.selectListOrderByCode();
         if (CollUtil.isEmpty(templates)) {
             return;
         }
 
         // 2. 计算待新增和待更新的标准薪资项
-        Map<Integer, HrmSalaryOptionDO> optionMap = convertMap(
-                salaryOptionMapper.selectListByEnabledAndVisible(null, null), HrmSalaryOptionDO::getCode);
+        Map<Integer, HrmSalaryOptionDO> optionMap =
+                convertMap(
+                        salaryOptionMapper.selectListByEnabledAndVisible(null, null),
+                        HrmSalaryOptionDO::getCode);
         List<HrmSalaryOptionDO> createOptions = new ArrayList<>();
         List<HrmSalaryOptionDO> updateOptions = new ArrayList<>();
         for (HrmSalaryOptionTemplateDO template : templates) {
             HrmSalaryOptionDO option = optionMap.get(template.getCode());
             if (option == null) {
-                HrmSalaryOptionDO occupiedOption = salaryOptionMapper.selectByCodeIncludeDeleted(template.getCode());
+                HrmSalaryOptionDO occupiedOption =
+                        salaryOptionMapper.selectByCodeIncludeDeleted(template.getCode());
                 if (occupiedOption != null) {
                     throw exception(SALARY_OPTION_CODE_OCCUPIED, template.getCode());
                 }
-                createOptions.add(buildSalaryOption(template).setEnabled(true).setVisible(template.getVisible()));
+                createOptions.add(
+                        buildSalaryOption(template)
+                                .setEnabled(true)
+                                .setVisible(template.getVisible()));
                 continue;
             }
             if (option.getTemplateId() == null && Boolean.FALSE.equals(option.getSystemFlag())) {
@@ -162,17 +189,25 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
 
     @Override
     public List<HrmSalaryOptionDO> getSalaryOptionList(Boolean adjustable, Boolean visible) {
-        List<HrmSalaryOptionDO> options = salaryOptionMapper.selectListByEnabledAndVisible(true, visible);
+        List<HrmSalaryOptionDO> options =
+                salaryOptionMapper.selectListByEnabledAndVisible(true, visible);
         // 过滤所属分类已停用的薪资项
-        Set<Integer> enabledCategoryCodes = convertSet(options, HrmSalaryOptionDO::getCode,
-                option -> ObjectUtil.equal(option.getParentCode(), ROOT_PARENT_CODE));
-        options.removeIf(option -> ObjectUtil.notEqual(option.getParentCode(), ROOT_PARENT_CODE)
-                && !enabledCategoryCodes.contains(option.getParentCode()));
+        Set<Integer> enabledCategoryCodes =
+                convertSet(
+                        options,
+                        HrmSalaryOptionDO::getCode,
+                        option -> ObjectUtil.equal(option.getParentCode(), ROOT_PARENT_CODE));
+        options.removeIf(
+                option ->
+                        ObjectUtil.notEqual(option.getParentCode(), ROOT_PARENT_CODE)
+                                && !enabledCategoryCodes.contains(option.getParentCode()));
         // 调薪场景额外只保留可调薪分类下的薪资项
         if (Boolean.TRUE.equals(adjustable)) {
-            options.removeIf(option -> option.getParentCode() == null
-                    || option.getParentCode() < ADJUSTABLE_CATEGORY_MIN_CODE
-                    || option.getParentCode() > ADJUSTABLE_CATEGORY_MAX_CODE);
+            options.removeIf(
+                    option ->
+                            option.getParentCode() == null
+                                    || option.getParentCode() < ADJUSTABLE_CATEGORY_MIN_CODE
+                                    || option.getParentCode() > ADJUSTABLE_CATEGORY_MAX_CODE);
         }
         return options;
     }
@@ -183,9 +218,14 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
     }
 
     private HrmSalaryOptionDO buildSalaryOption(HrmSalaryOptionTemplateDO template) {
-        return new HrmSalaryOptionDO().setCode(template.getCode()).setParentCode(template.getParentCode())
-                .setName(template.getName()).setRemark(template.getRemark())
-                .setSystemFlag(template.getSystemFlag()).setTemplateId(template.getId()).setType(template.getType())
+        return new HrmSalaryOptionDO()
+                .setCode(template.getCode())
+                .setParentCode(template.getParentCode())
+                .setName(template.getName())
+                .setRemark(template.getRemark())
+                .setSystemFlag(template.getSystemFlag())
+                .setTemplateId(template.getId())
+                .setType(template.getType())
                 .setTaxEnabled(Boolean.TRUE.equals(template.getTaxEnabled()))
                 .setCalculateEnabled(template.getCalculateEnabled());
     }
@@ -201,8 +241,9 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
      */
     private Integer generateCustomSalaryOptionCode(Integer parentCode) {
         int firstCode = CUSTOM_OPTION_CODE_BASE + parentCode * 10_000 + 1;
-        Integer maxCode = salaryOptionMapper.selectMaxCodeByParentCodeAndCodeGreaterThanOrEqual(
-                parentCode, firstCode);
+        Integer maxCode =
+                salaryOptionMapper.selectMaxCodeByParentCodeAndCodeGreaterThanOrEqual(
+                        parentCode, firstCode);
         return maxCode == null ? firstCode : Math.max(firstCode, maxCode + 1);
     }
 
@@ -244,5 +285,4 @@ public class HrmSalaryOptionServiceImpl implements HrmSalaryOptionService {
             throw exception(SALARY_OPTION_STANDARD_CANNOT_MODIFY);
         }
     }
-
 }

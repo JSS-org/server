@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sip.MesMdProductSipPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sip.MesMdProductSipSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdProductSipDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -67,5 +68,4 @@ public interface MesMdProductSipService {
      * @param itemId 物料产品编号
      */
     void deleteProductSipByItemId(Long itemId);
-
 }

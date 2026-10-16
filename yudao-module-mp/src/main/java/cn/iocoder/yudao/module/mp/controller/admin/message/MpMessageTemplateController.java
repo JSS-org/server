@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.mp.controller.admin.message;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mp.controller.admin.message.vo.template.MpMessageTemplateListReqVO;
@@ -7,18 +9,19 @@ import cn.iocoder.yudao.module.mp.controller.admin.message.vo.template.MpMessage
 import cn.iocoder.yudao.module.mp.controller.admin.message.vo.template.MpMessageTemplateSendReqVO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.message.MpMessageTemplateDO;
 import cn.iocoder.yudao.module.mp.service.message.MpMessageTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 公众号模版消息")
 @RestController
@@ -26,8 +29,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MpMessageTemplateController {
 
-    @Resource
-    private MpMessageTemplateService messageTemplateService;
+    @Resource private MpMessageTemplateService messageTemplateService;
 
     @DeleteMapping("/delete")
     @Operation(summary = "删除模版消息")
@@ -51,7 +53,8 @@ public class MpMessageTemplateController {
     @Operation(summary = "获得模版消息列表")
     @Parameter(name = "accountId", description = "公众号账号的编号", required = true, example = "2048")
     @PreAuthorize("@ss.hasPermission('mp:message-template:query')")
-    public CommonResult<List<MpMessageTemplateRespVO>> getMessageTemplateList(MpMessageTemplateListReqVO listReqVO) {
+    public CommonResult<List<MpMessageTemplateRespVO>> getMessageTemplateList(
+            MpMessageTemplateListReqVO listReqVO) {
         List<MpMessageTemplateDO> list = messageTemplateService.getMessageTemplateList(listReqVO);
         return success(BeanUtils.toBean(list, MpMessageTemplateRespVO.class));
     }
@@ -68,9 +71,9 @@ public class MpMessageTemplateController {
     @PostMapping("/send")
     @Operation(summary = "给粉丝发送模版消息")
     @PreAuthorize("@ss.hasPermission('mp:message-template:send')")
-    public CommonResult<Boolean> sendMessageTemplate(@Valid @RequestBody MpMessageTemplateSendReqVO sendReqVO) {
+    public CommonResult<Boolean> sendMessageTemplate(
+            @Valid @RequestBody MpMessageTemplateSendReqVO sendReqVO) {
         messageTemplateService.sendMessageTempalte(sendReqVO);
         return success(true);
     }
-
 }

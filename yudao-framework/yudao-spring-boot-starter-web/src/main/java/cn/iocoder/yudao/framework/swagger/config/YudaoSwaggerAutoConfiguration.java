@@ -1,6 +1,9 @@
 package cn.iocoder.yudao.framework.swagger.config;
 
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
+
 import com.github.xiaoymin.knife4j.spring.configuration.Knife4jAutoConfiguration;
+
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -11,6 +14,7 @@ import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+
 import org.springdoc.core.customizers.OpenApiBuilderCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.customizers.ServerBaseUrlCustomizer;
@@ -34,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
-
 /**
  * Swagger 自动配置类，基于 OpenAPI + Springdoc 实现。
  *
@@ -45,10 +47,16 @@ import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_
  *
  * @author 芋道源码
  */
-@AutoConfiguration(before = Knife4jAutoConfiguration.class) // before 原因，保证覆写的 Knife4jOpenApiCustomizer 先生效！相关 https://github.com/YunaiV/ruoyi-vue-pro/issues/954 讨论
+@AutoConfiguration(
+        before = Knife4jAutoConfiguration.class) // before 原因，保证覆写的 Knife4jOpenApiCustomizer 先生效！相关
+// https://github.com/YunaiV/ruoyi-vue-pro/issues/954 讨论
 @ConditionalOnClass({OpenAPI.class})
 @EnableConfigurationProperties(SwaggerProperties.class)
-@ConditionalOnProperty(prefix = "springdoc.api-docs", name = "enabled", havingValue = "true", matchIfMissing = true) // 设置为 false 时，禁用
+@ConditionalOnProperty(
+        prefix = "springdoc.api-docs",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = true) // 设置为 false 时，禁用
 @Import(Knife4jOpenApiCustomizer.class)
 public class YudaoSwaggerAutoConfiguration {
 
@@ -57,13 +65,17 @@ public class YudaoSwaggerAutoConfiguration {
     @Bean
     public OpenAPI createApi(SwaggerProperties properties) {
         Map<String, SecurityScheme> securitySchemas = buildSecuritySchemes();
-        OpenAPI openAPI = new OpenAPI()
-                // 接口信息
-                .info(buildInfo(properties))
-                // 接口安全配置
-                .components(new Components().securitySchemes(securitySchemas))
-                .addSecurityItem(new SecurityRequirement().addList(HttpHeaders.AUTHORIZATION));
-        securitySchemas.keySet().forEach(key -> openAPI.addSecurityItem(new SecurityRequirement().addList(key)));
+        OpenAPI openAPI =
+                new OpenAPI()
+                        // 接口信息
+                        .info(buildInfo(properties))
+                        // 接口安全配置
+                        .components(new Components().securitySchemes(securitySchemas))
+                        .addSecurityItem(
+                                new SecurityRequirement().addList(HttpHeaders.AUTHORIZATION));
+        securitySchemas
+                .keySet()
+                .forEach(key -> openAPI.addSecurityItem(new SecurityRequirement().addList(key)));
         return openAPI;
     }
 
@@ -75,8 +87,15 @@ public class YudaoSwaggerAutoConfiguration {
                 .title(properties.getTitle())
                 .description(properties.getDescription())
                 .version(properties.getVersion())
-                .contact(new Contact().name(properties.getAuthor()).url(properties.getUrl()).email(properties.getEmail()))
-                .license(new License().name(properties.getLicense()).url(properties.getLicenseUrl()));
+                .contact(
+                        new Contact()
+                                .name(properties.getAuthor())
+                                .url(properties.getUrl())
+                                .email(properties.getEmail()))
+                .license(
+                        new License()
+                                .name(properties.getLicense())
+                                .url(properties.getLicenseUrl()));
     }
 
     /**
@@ -84,10 +103,11 @@ public class YudaoSwaggerAutoConfiguration {
      */
     private Map<String, SecurityScheme> buildSecuritySchemes() {
         Map<String, SecurityScheme> securitySchemes = new HashMap<>();
-        SecurityScheme securityScheme = new SecurityScheme()
-                .type(SecurityScheme.Type.APIKEY) // 类型
-                .name(HttpHeaders.AUTHORIZATION) // 请求头的 name
-                .in(SecurityScheme.In.HEADER); // token 所在位置
+        SecurityScheme securityScheme =
+                new SecurityScheme()
+                        .type(SecurityScheme.Type.APIKEY) // 类型
+                        .name(HttpHeaders.AUTHORIZATION) // 请求头的 name
+                        .in(SecurityScheme.In.HEADER); // token 所在位置
         securitySchemes.put(HttpHeaders.AUTHORIZATION, securityScheme);
         return securitySchemes;
     }
@@ -97,15 +117,22 @@ public class YudaoSwaggerAutoConfiguration {
      */
     @Bean
     @Primary // 目的：以我们创建的 OpenAPIService Bean 为主，避免一键改包后，启动报错！
-    public OpenAPIService openApiBuilder(Optional<OpenAPI> openAPI,
-                                         SecurityService securityParser,
-                                         SpringDocConfigProperties springDocConfigProperties,
-                                         PropertyResolverUtils propertyResolverUtils,
-                                         Optional<List<OpenApiBuilderCustomizer>> openApiBuilderCustomizers,
-                                         Optional<List<ServerBaseUrlCustomizer>> serverBaseUrlCustomizers,
-                                         Optional<JavadocProvider> javadocProvider) {
-        return new OpenAPIService(openAPI, securityParser, springDocConfigProperties,
-                propertyResolverUtils, openApiBuilderCustomizers, serverBaseUrlCustomizers, javadocProvider);
+    public OpenAPIService openApiBuilder(
+            Optional<OpenAPI> openAPI,
+            SecurityService securityParser,
+            SpringDocConfigProperties springDocConfigProperties,
+            PropertyResolverUtils propertyResolverUtils,
+            Optional<List<OpenApiBuilderCustomizer>> openApiBuilderCustomizers,
+            Optional<List<ServerBaseUrlCustomizer>> serverBaseUrlCustomizers,
+            Optional<JavadocProvider> javadocProvider) {
+        return new OpenAPIService(
+                openAPI,
+                securityParser,
+                springDocConfigProperties,
+                propertyResolverUtils,
+                openApiBuilderCustomizers,
+                serverBaseUrlCustomizers,
+                javadocProvider);
     }
 
     // ========== 分组 OpenAPI 配置 ==========
@@ -126,9 +153,11 @@ public class YudaoSwaggerAutoConfiguration {
         return GroupedOpenApi.builder()
                 .group(group)
                 .pathsToMatch("/admin-api/" + path + "/**", "/app-api/" + path + "/**")
-                .addOperationCustomizer((operation, handlerMethod) -> operation
-                        .addParametersItem(buildTenantHeaderParameter())
-                        .addParametersItem(buildSecurityHeaderParameter()))
+                .addOperationCustomizer(
+                        (operation, handlerMethod) ->
+                                operation
+                                        .addParametersItem(buildTenantHeaderParameter())
+                                        .addParametersItem(buildSecurityHeaderParameter()))
                 .addOperationCustomizer(buildOperationIdCustomizer())
                 .build();
     }
@@ -143,7 +172,11 @@ public class YudaoSwaggerAutoConfiguration {
                 .name(HEADER_TENANT_ID) // header 名
                 .description("租户编号") // 描述
                 .in(String.valueOf(SecurityScheme.In.HEADER)) // 请求 header
-                .schema(new IntegerSchema()._default(1L).name(HEADER_TENANT_ID).description("租户编号")); // 默认：使用租户编号为 1
+                .schema(
+                        new IntegerSchema()
+                                ._default(1L)
+                                .name(HEADER_TENANT_ID)
+                                .description("租户编号")); // 默认：使用租户编号为 1
     }
 
     /**
@@ -158,7 +191,11 @@ public class YudaoSwaggerAutoConfiguration {
                 .name(HttpHeaders.AUTHORIZATION) // header 名
                 .description("认证 Token") // 描述
                 .in(String.valueOf(SecurityScheme.In.HEADER)) // 请求 header
-                .schema(new StringSchema()._default("Bearer test1").name(HEADER_TENANT_ID).description("认证 Token")); // 默认：使用用户编号为 1
+                .schema(
+                        new StringSchema()
+                                ._default("Bearer test1")
+                                .name(HEADER_TENANT_ID)
+                                .description("认证 Token")); // 默认：使用用户编号为 1
     }
 
     /**
@@ -181,6 +218,4 @@ public class YudaoSwaggerAutoConfiguration {
             return operation;
         };
     }
-
 }
-

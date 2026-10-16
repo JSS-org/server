@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.ai1.service.mcp;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -8,11 +15,13 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.mcp.Ai1McpMapper;
 import cn.iocoder.yudao.module.ai1.enums.mcp.Ai1McpTransportEnum;
 import cn.iocoder.yudao.module.ai1.harness.mcp.Ai1McpClientTool;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -20,12 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * {@link Ai1McpServiceImpl} 的单元测试
@@ -35,20 +38,19 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Import(Ai1McpServiceImpl.class)
 public class Ai1McpServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private Ai1McpServiceImpl mcpService;
+    @Resource private Ai1McpServiceImpl mcpService;
 
-    @Resource
-    private Ai1McpMapper mcpMapper;
+    @Resource private Ai1McpMapper mcpMapper;
 
-    @MockitoBean
-    private Ai1McpClientTool mcpClientTool;
+    @MockitoBean private Ai1McpClientTool mcpClientTool;
 
     @Test
     public void testCreateMcp_httpGenerateConfig() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp").setHeaders(Collections.singletonMap("Authorization", "Bearer x"));
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setUrl("http://127.0.0.1:8081/mcp")
+                        .setHeaders(Collections.singletonMap("Authorization", "Bearer x"));
 
         // 调用
         Long id = mcpService.createMcp(reqVO);
@@ -64,8 +66,11 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMcp_transportColumnWins() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport()).setUrl("http://ignored")
-                .setConfig("{\"transport\":\"http\",\"command\":\"npx\",\"args\":[\"-y\",\"server\"]}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
+                        .setUrl("http://ignored")
+                        .setConfig(
+                                "{\"transport\":\"http\",\"command\":\"npx\",\"args\":[\"-y\",\"server\"]}");
 
         // 调用
         Long id = mcpService.createMcp(reqVO);
@@ -79,7 +84,9 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMcp_stdioWithoutCommand() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport()).setConfig("{\"args\":[]}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
+                        .setConfig("{\"args\":[]}");
 
         // 调用，并断言异常
         assertServiceException(() -> mcpService.createMcp(reqVO), MCP_COMMAND_REQUIRED);
@@ -97,7 +104,8 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMcp_configInvalid() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport()).setConfig("[1,2]");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport()).setConfig("[1,2]");
 
         // 调用，并断言异常
         assertServiceException(() -> mcpService.createMcp(reqVO), MCP_CONFIG_INVALID);
@@ -106,10 +114,15 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateMcp_switchToStdioClearsUrl() {
         // mock 数据
-        Long id = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport()).setUrl("http://127.0.0.1:8081/mcp"));
+        Long id =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                                .setUrl("http://127.0.0.1:8081/mcp"));
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport()).setId(id)
-                .setConfig("{\"command\":\"uvx\"}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
+                        .setId(id)
+                        .setConfig("{\"command\":\"uvx\"}");
 
         // 调用
         mcpService.updateMcp(reqVO);
@@ -123,12 +136,18 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateMcp_httpEvictCache() {
         // mock 数据
-        Long id = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp"));
+        Long id =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                                .setUrl("http://127.0.0.1:8081/mcp"));
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport()).setId(id)
-                .setUrl("http://127.0.0.1:8082/mcp").setHeaders(Map.of("Authorization", "Bearer new"))
-                .setConfig("{\"url\":\"http://127.0.0.1:8081/mcp\",\"headers\":{\"Authorization\":\"Bearer old\"}}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setId(id)
+                        .setUrl("http://127.0.0.1:8082/mcp")
+                        .setHeaders(Map.of("Authorization", "Bearer new"))
+                        .setConfig(
+                                "{\"url\":\"http://127.0.0.1:8081/mcp\",\"headers\":{\"Authorization\":\"Bearer old\"}}");
 
         // 调用
         mcpService.updateMcp(reqVO);
@@ -147,13 +166,20 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @MethodSource("emptyHeaders")
     public void testUpdateMcp_clearHeaders(Map<String, String> headers) {
         // mock 数据
-        Long id = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp").setHeaders(Map.of("Authorization", "Bearer old")));
+        Long id =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                                .setUrl("http://127.0.0.1:8081/mcp")
+                                .setHeaders(Map.of("Authorization", "Bearer old")));
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport()).setId(id)
-                .setUrl("http://127.0.0.1:8081/mcp").setHeaders(headers)
-                .setConfig("{\"transport\":\"http\",\"url\":\"http://127.0.0.1:8081/mcp\","
-                        + "\"headers\":{\"Authorization\":\"Bearer old\"}}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setId(id)
+                        .setUrl("http://127.0.0.1:8081/mcp")
+                        .setHeaders(headers)
+                        .setConfig(
+                                "{\"transport\":\"http\",\"url\":\"http://127.0.0.1:8081/mcp\","
+                                        + "\"headers\":{\"Authorization\":\"Bearer old\"}}");
 
         // 调用
         mcpService.updateMcp(reqVO);
@@ -167,9 +193,11 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMcp_headersColumnWins() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp").setHeaders(Map.of("Authorization", "Bearer column"))
-                .setConfig("{\"headers\":{\"Authorization\":\"Bearer config\"}}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setUrl("http://127.0.0.1:8081/mcp")
+                        .setHeaders(Map.of("Authorization", "Bearer column"))
+                        .setConfig("{\"headers\":{\"Authorization\":\"Bearer config\"}}");
 
         // 调用
         Long id = mcpService.createMcp(reqVO);
@@ -184,9 +212,11 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @MethodSource("emptyHeaders")
     public void testCreateMcp_emptyHeadersRemoveConfigHeaders(Map<String, String> headers) {
         // 准备参数：平铺请求头为空，config 中仍有旧鉴权
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp").setHeaders(headers)
-                .setConfig("{\"headers\":{\"Authorization\":\"Bearer old\"}}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setUrl("http://127.0.0.1:8081/mcp")
+                        .setHeaders(headers)
+                        .setConfig("{\"headers\":{\"Authorization\":\"Bearer old\"}}");
 
         // 调用
         Long id = mcpService.createMcp(reqVO);
@@ -199,8 +229,9 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMcp_configUrlFallback() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setConfig("{\"url\":\"http://127.0.0.1:8081/mcp\"}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setConfig("{\"url\":\"http://127.0.0.1:8081/mcp\"}");
 
         // 调用
         Long id = mcpService.createMcp(reqVO);
@@ -213,9 +244,10 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateMcp_conflictingUrls() {
         // 准备参数
-        Ai1McpSaveReqVO reqVO = buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp")
-                .setConfig("{\"url\":\"http://127.0.0.1:8082/mcp\"}");
+        Ai1McpSaveReqVO reqVO =
+                buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                        .setUrl("http://127.0.0.1:8081/mcp")
+                        .setConfig("{\"url\":\"http://127.0.0.1:8082/mcp\"}");
 
         // 调用
         Long id = mcpService.createMcp(reqVO);
@@ -228,8 +260,10 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteMcp_success() {
         // mock 数据
-        Long id = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
-                .setConfig("{\"command\":\"npx\"}"));
+        Long id =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
+                                .setConfig("{\"command\":\"npx\"}"));
 
         // 调用
         mcpService.deleteMcp(id);
@@ -241,12 +275,18 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteMcpListByIds_success() {
         // mock 数据
-        Long id1 = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp"));
-        Long id2 = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
-                .setConfig("{\"command\":\"npx\"}"));
-        Long otherId = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8082/mcp"));
+        Long id1 =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                                .setUrl("http://127.0.0.1:8081/mcp"));
+        Long id2 =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.STDIO.getTransport())
+                                .setConfig("{\"command\":\"npx\"}"));
+        Long otherId =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                                .setUrl("http://127.0.0.1:8082/mcp"));
         // 准备参数
         List<Long> ids = List.of(id1, id2);
 
@@ -263,8 +303,10 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteMcpListByIds_notExists() {
         // mock 数据
-        Long id = mcpService.createMcp(buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
-                .setUrl("http://127.0.0.1:8081/mcp"));
+        Long id =
+                mcpService.createMcp(
+                        buildMcpSaveReqVO(Ai1McpTransportEnum.HTTP.getTransport())
+                                .setUrl("http://127.0.0.1:8081/mcp"));
         // 准备参数
         List<Long> ids = List.of(id, Long.MAX_VALUE);
 
@@ -282,7 +324,9 @@ public class Ai1McpServiceImplTest extends BaseDbUnitTest {
     }
 
     private static Ai1McpSaveReqVO buildMcpSaveReqVO(String transport) {
-        return new Ai1McpSaveReqVO().setName("天气查询").setTransport(transport).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        return new Ai1McpSaveReqVO()
+                .setName("天气查询")
+                .setTransport(transport)
+                .setStatus(CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

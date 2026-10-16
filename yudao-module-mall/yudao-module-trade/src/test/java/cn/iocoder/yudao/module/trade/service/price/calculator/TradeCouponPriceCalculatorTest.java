@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.trade.service.price.calculator;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.addTime;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import static java.util.Arrays.asList;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.promotion.api.coupon.CouponApi;
@@ -11,20 +21,13 @@ import cn.iocoder.yudao.module.promotion.enums.coupon.CouponStatusEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.time.Duration;
 import java.util.ArrayList;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.addTime;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link TradeCouponPriceCalculator} 的单元测试类
@@ -33,47 +36,88 @@ import static org.mockito.Mockito.when;
  */
 public class TradeCouponPriceCalculatorTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private TradeCouponPriceCalculator tradeCouponPriceCalculator;
+    @InjectMocks private TradeCouponPriceCalculator tradeCouponPriceCalculator;
 
-    @Mock
-    private CouponApi couponApi;
+    @Mock private CouponApi couponApi;
 
     @Test
     public void testCalculate() {
         // 准备参数
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setUserId(233L).setCouponId(1024L)
-                .setItems(asList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(2).setSelected(true), // 匹配优惠劵
-                        new TradePriceCalculateReqBO.Item().setSkuId(20L).setCount(3).setSelected(true), // 匹配优惠劵
-                        new TradePriceCalculateReqBO.Item().setSkuId(30L).setCount(4).setSelected(true), // 不匹配优惠劵
-                        new TradePriceCalculateReqBO.Item().setSkuId(40L).setCount(5).setSelected(false) // 匹配优惠劵，但是未选中
-                    ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(asList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(2).setSelected(true)
-                                .setPrice(100).setSpuId(1L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(20L).setCount(3).setSelected(true)
-                                .setPrice(50).setSpuId(2L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(30L).setCount(4).setSelected(true)
-                                .setPrice(30).setSpuId(3L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(40L).setCount(5).setSelected(false)
-                                .setPrice(60).setSpuId(1L)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setUserId(233L)
+                        .setCouponId(1024L)
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true), // 匹配优惠劵
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true), // 匹配优惠劵
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(30L)
+                                                .setCount(4)
+                                                .setSelected(true), // 不匹配优惠劵
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(40L)
+                                                .setCount(5)
+                                                .setSelected(false) // 匹配优惠劵，但是未选中
+                                        ));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true)
+                                                .setPrice(50)
+                                                .setSpuId(2L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(30L)
+                                                .setCount(4)
+                                                .setSelected(true)
+                                                .setPrice(30)
+                                                .setSpuId(3L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(40L)
+                                                .setCount(5)
+                                                .setSelected(false)
+                                                .setPrice(60)
+                                                .setSpuId(1L)));
         // 保证价格被初始化上
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法（优惠劵 Coupon 信息）
-        CouponRespDTO coupon = randomPojo(CouponRespDTO.class, o -> o.setId(1024L).setName("程序员节")
-                .setProductScope(PromotionProductScopeEnum.SPU.getScope()).setProductScopeValues(asList(1L, 2L))
-                .setUsePrice(350).setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType())
-                .setDiscountPercent(50).setDiscountLimitPrice(70))
-                .setValidStartTime(addTime(Duration.ofDays(-1))).setValidEndTime(addTime(Duration.ofDays(1)));
+        CouponRespDTO coupon =
+                randomPojo(
+                                CouponRespDTO.class,
+                                o ->
+                                        o.setId(1024L)
+                                                .setName("程序员节")
+                                                .setProductScope(
+                                                        PromotionProductScopeEnum.SPU.getScope())
+                                                .setProductScopeValues(asList(1L, 2L))
+                                                .setUsePrice(350)
+                                                .setDiscountType(
+                                                        PromotionDiscountTypeEnum.PERCENT.getType())
+                                                .setDiscountPercent(50)
+                                                .setDiscountLimitPrice(70))
+                        .setValidStartTime(addTime(Duration.ofDays(-1)))
+                        .setValidEndTime(addTime(Duration.ofDays(1)));
         when(couponApi.getCouponListByUserId(eq(233L), eq(CouponStatusEnum.UNUSED.getStatus())))
                 .thenReturn(ListUtil.toList(coupon));
 
@@ -147,5 +191,4 @@ public class TradeCouponPriceCalculatorTest extends BaseMockitoUnitTest {
         assertEquals(promotionItem012.getTotalPrice(), 150);
         assertEquals(promotionItem012.getDiscountPrice(), 30);
     }
-
 }

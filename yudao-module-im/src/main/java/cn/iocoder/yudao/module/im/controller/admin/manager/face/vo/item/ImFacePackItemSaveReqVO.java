@@ -2,12 +2,15 @@ package cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.item;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IM 表情包项新增 / 修改 Request VO")
@@ -21,7 +24,9 @@ public class ImFacePackItemSaveReqVO {
     @NotNull(message = "表情包编号不能为空")
     private Long packId;
 
-    @Schema(description = "表情图 URL", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "表情图 URL",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "https://cdn.example.com/face/pack/cat-001.png")
     @NotBlank(message = "表情图 URL 不能为空")
     @Size(max = 512, message = "表情图 URL 长度不能超过 512")
@@ -51,5 +56,4 @@ public class ImFacePackItemSaveReqVO {
     @NotNull(message = "状态不能为空")
     @InEnum(value = CommonStatusEnum.class, message = "状态必须是 {value}")
     private Integer status; // 参见 CommonStatusEnum 枚举类（0 启用 / 1 禁用）
-
 }

@@ -12,5 +12,4 @@ public interface XssCleaner {
      * @return 清理后的 html
      */
     String clean(String html);
-
 }

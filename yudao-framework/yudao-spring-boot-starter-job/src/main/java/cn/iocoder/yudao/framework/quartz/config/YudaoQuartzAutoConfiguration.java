@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.quartz.config;
 
 import cn.iocoder.yudao.framework.quartz.core.scheduler.SchedulerManager;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.quartz.Scheduler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -25,5 +27,4 @@ public class YudaoQuartzAutoConfiguration {
         }
         return new SchedulerManager(scheduler.get());
     }
-
 }

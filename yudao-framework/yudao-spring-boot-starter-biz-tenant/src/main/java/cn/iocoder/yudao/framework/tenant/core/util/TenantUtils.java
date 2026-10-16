@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.framework.tenant.core.util;
 
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
+
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
-
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
 
 /**
  * 多租户 Util
@@ -109,5 +109,4 @@ public class TenantUtils {
             headers.put(HEADER_TENANT_ID, tenantId.toString());
         }
     }
-
 }

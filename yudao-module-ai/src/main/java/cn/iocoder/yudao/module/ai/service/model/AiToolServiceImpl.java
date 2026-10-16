@@ -1,12 +1,18 @@
 package cn.iocoder.yudao.module.ai.service.model;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.TOOL_NAME_NOT_EXISTS;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.TOOL_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.tool.AiToolPageReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.tool.AiToolSaveReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiToolDO;
 import cn.iocoder.yudao.module.ai.dal.mysql.model.AiToolMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.stereotype.Service;
@@ -14,10 +20,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.TOOL_NAME_NOT_EXISTS;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.TOOL_NOT_EXISTS;
 
 /**
  * AI 工具 Service 实现类
@@ -28,11 +30,9 @@ import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.TOOL_NOT_EXIST
 @Validated
 public class AiToolServiceImpl implements AiToolService {
 
-    @Resource
-    private AiToolMapper toolMapper;
+    @Resource private AiToolMapper toolMapper;
 
-    @Resource
-    private ToolCallbackResolver toolCallbackResolver;
+    @Resource private ToolCallbackResolver toolCallbackResolver;
 
     @Override
     public Long createTool(AiToolSaveReqVO createReqVO) {
@@ -98,5 +98,4 @@ public class AiToolServiceImpl implements AiToolService {
     public List<AiToolDO> getToolListByStatus(Integer status) {
         return toolMapper.selectListByStatus(status);
     }
-
 }

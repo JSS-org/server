@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.wm.itemconsume;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemconsume.MesWmItemConsumeDetailDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -21,5 +22,4 @@ public interface MesWmItemConsumeDetailMapper extends BaseMapperX<MesWmItemConsu
     default List<MesWmItemConsumeDetailDO> selectListByLineId(Long lineId) {
         return selectList(MesWmItemConsumeDetailDO::getLineId, lineId);
     }
-
 }

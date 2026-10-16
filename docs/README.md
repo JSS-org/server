@@ -47,6 +47,8 @@
 
 | 目的 | 命令 |
 | --- | --- |
+| 格式化全部后端 Java 源码/测试（根目录执行） | `mvn -N spotless:apply` |
+| 仅检查 Java 格式 | `mvn -N spotless:check` |
 | 编译 | `mvn -T 1C -DskipTests -pl yudao-server -am package` |
 | 单测（gym 模块） | `mvn -T 1C -pl yudao-module-gym -am test -Dtest='GymFile*Test' -Dsurefire.failIfNoSpecifiedTests=false` |
 | 初始化数据库（幂等） | `bash script/gym/seed.sh` |
@@ -59,3 +61,12 @@
 
 
 2026-10-15 18:20交付入口：[gym-full-api-progress.md最终审计](gym-full-api-progress.md)逐项列出35业务页、后端闭环、301测试及review修复。SQL47已获用户明确授权并应用；SELF课程产品入口和黑名单浏览器闭环已验证。现行管理端后端工作完成，第三方按授权暂缓、前端自身及旧外部存储限制仍明示，不能等同全客户端/厂商合同验收。
+
+
+## Java 格式化（2026-10-16）
+
+根 `pom.xml` 使用构建插件 Spotless 3.10.4，格式引擎 google-java-format 1.36.1，AOSP 四空格、UTF-8/LF，关闭长字符串重写与 Javadoc 重排，按 AOSP 整理 import（引擎同时清理未使用 import）。这是构建工具，不加入应用运行依赖。
+
+在 server 根目录运行 `mvn -N spotless:apply` 自动修正，`mvn -N spotless:check` 只检查。统一包含所有 `**/src/main/java/**/*.java` 与 `**/src/test/java/**/*.java`，也覆盖尚未启用的后端模块及 sql/dm 下的 Java 源码补丁，排除 `**/target/**`。插件只在根项目执行，不向子模块重复继承；根项目参与的 `mvn verify` 会自动检查，若仅用 `-pl` 选择子模块且未包含根项目，应单独运行上述检查命令。前端、SQL脚本、Python脚本不作为格式化输入。
+
+本轮检查7,723个Java文件，最终修改7,504个，219个已规范；相关301测试和当前启用服务端依赖链的test-compile通过，未启用模块只做格式化/语法解析及差异核对，未宣称全部功能编译/测试。权限审查脚本另做最小修改以兼容换行注解，150方法权限表达式前后比对一致。详细证据见CHANGELOG最新条目。

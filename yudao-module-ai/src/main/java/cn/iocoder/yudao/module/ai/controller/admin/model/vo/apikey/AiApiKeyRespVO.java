@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model.vo.apikey;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.*;
 
 @Schema(description = "管理后台 - AI API 密钥 Response VO")
@@ -24,5 +25,4 @@ public class AiApiKeyRespVO {
 
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer status;
-
 }

@@ -15,5 +15,4 @@ public interface JobHandler {
      * @throws Exception 异常
      */
     String execute(String param) throws Exception;
-
 }

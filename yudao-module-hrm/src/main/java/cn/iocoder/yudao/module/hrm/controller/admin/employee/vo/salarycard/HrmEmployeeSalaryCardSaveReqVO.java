@@ -1,11 +1,15 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.salarycard;
 
 import cn.iocoder.yudao.module.hrm.framework.operatelog.core.HrmBankCardNumberParseFunction;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 员工工资卡保存 Request VO")
@@ -19,7 +23,10 @@ public class HrmEmployeeSalaryCardSaveReqVO {
     @NotNull(message = "员工不能为空")
     private Long employeeId;
 
-    @Schema(description = "银行卡号", requiredMode = Schema.RequiredMode.REQUIRED, example = "622202600001")
+    @Schema(
+            description = "银行卡号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "622202600001")
     @NotBlank(message = "银行卡号不能为空")
     @Size(max = 64, message = "银行卡号不能超过 64 个字符")
     @DiffLogField(name = "银行卡号", function = HrmBankCardNumberParseFunction.NAME)
@@ -38,5 +45,4 @@ public class HrmEmployeeSalaryCardSaveReqVO {
     @Size(max = 128, message = "开户支行名称不能超过 128 个字符")
     @DiffLogField(name = "开户支行名称")
     private String bankBranchName;
-
 }

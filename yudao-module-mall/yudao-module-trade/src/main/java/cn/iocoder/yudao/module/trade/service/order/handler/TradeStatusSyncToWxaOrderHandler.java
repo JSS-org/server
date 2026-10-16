@@ -12,8 +12,11 @@ import cn.iocoder.yudao.module.system.api.social.dto.SocialWxaOrderUploadShippin
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
 import cn.iocoder.yudao.module.trade.enums.delivery.DeliveryTypeEnum;
 import cn.iocoder.yudao.module.trade.service.delivery.DeliveryExpressService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -28,13 +31,10 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(prefix = "yudao.trade.order", value = "status-sync-to-wxa-enable")
 public class TradeStatusSyncToWxaOrderHandler implements TradeOrderHandler {
 
-    @Resource
-    private PayOrderApi payOrderApi;
-    @Resource
-    private SocialClientApi socialClientApi;
+    @Resource private PayOrderApi payOrderApi;
+    @Resource private SocialClientApi socialClientApi;
 
-    @Resource
-    private DeliveryExpressService expressService;
+    @Resource private DeliveryExpressService expressService;
 
     @Override
     public void afterDeliveryOrder(TradeOrderDO order) {
@@ -54,9 +54,10 @@ public class TradeStatusSyncToWxaOrderHandler implements TradeOrderHandler {
             return;
         }
         PayOrderRespDTO payOrder = payOrderApi.getOrder(order.getPayOrderId());
-        SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO = new SocialWxaOrderNotifyConfirmReceiveReqDTO()
-                .setTransactionId(payOrder.getChannelOrderNo())
-                .setReceivedTime(order.getReceiveTime());
+        SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO =
+                new SocialWxaOrderNotifyConfirmReceiveReqDTO()
+                        .setTransactionId(payOrder.getChannelOrderNo())
+                        .setReceivedTime(order.getReceiveTime());
         try {
             socialClientApi.notifyWxaOrderConfirmReceive(UserTypeEnum.MEMBER.getValue(), reqDTO);
         } catch (Exception ex) {
@@ -77,14 +78,17 @@ public class TradeStatusSyncToWxaOrderHandler implements TradeOrderHandler {
      */
     private void uploadWxaOrderShippingInfo(TradeOrderDO order) {
         PayOrderRespDTO payOrder = payOrderApi.getOrder(order.getPayOrderId());
-        SocialWxaOrderUploadShippingInfoReqDTO reqDTO = new SocialWxaOrderUploadShippingInfoReqDTO()
-                .setTransactionId(payOrder.getChannelOrderNo())
-                .setOpenid(payOrder.getChannelUserId())
-                .setItemDesc(payOrder.getSubject())
-                .setReceiverContact(order.getReceiverMobile());
-        if (DeliveryTypeEnum.EXPRESS.getType().equals(order.getDeliveryType()) && StrUtil.isNotEmpty(order.getLogisticsNo())) {
+        SocialWxaOrderUploadShippingInfoReqDTO reqDTO =
+                new SocialWxaOrderUploadShippingInfoReqDTO()
+                        .setTransactionId(payOrder.getChannelOrderNo())
+                        .setOpenid(payOrder.getChannelUserId())
+                        .setItemDesc(payOrder.getSubject())
+                        .setReceiverContact(order.getReceiverMobile());
+        if (DeliveryTypeEnum.EXPRESS.getType().equals(order.getDeliveryType())
+                && StrUtil.isNotEmpty(order.getLogisticsNo())) {
             reqDTO.setLogisticsType(SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_EXPRESS)
-                    .setExpressCompany(expressService.getDeliveryExpress(order.getLogisticsId()).getCode())
+                    .setExpressCompany(
+                            expressService.getDeliveryExpress(order.getLogisticsId()).getCode())
                     .setLogisticsNo(order.getLogisticsNo());
         } else if (DeliveryTypeEnum.PICK_UP.getType().equals(order.getDeliveryType())) {
             reqDTO.setLogisticsType(SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_PICK_UP);
@@ -98,6 +102,7 @@ public class TradeStatusSyncToWxaOrderHandler implements TradeOrderHandler {
         }
     }
 
-    // TODO @芋艿：【设置路径】 https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/business-capabilities/order-shipping/order-shipping.html#%E5%85%AD%E3%80%81%E6%B6%88%E6%81%AF%E8%B7%B3%E8%BD%AC%E8%B7%AF%E5%BE%84%E8%AE%BE%E7%BD%AE%E6%8E%A5%E5%8F%A3
+    // TODO @芋艿：【设置路径】
+    // https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/business-capabilities/order-shipping/order-shipping.html#%E5%85%AD%E3%80%81%E6%B6%88%E6%81%AF%E8%B7%B3%E8%BD%AC%E8%B7%AF%E5%BE%84%E8%AE%BE%E7%BD%AE%E6%8E%A5%E5%8F%A3
 
 }

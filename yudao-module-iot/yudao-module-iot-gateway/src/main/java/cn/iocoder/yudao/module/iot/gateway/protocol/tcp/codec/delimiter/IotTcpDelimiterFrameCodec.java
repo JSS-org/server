@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.delimiter;
 
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.IotTcpConfig;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpCodecTypeEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpFrameCodec;
+
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.parsetools.RecordParser;
+
 import lombok.extern.slf4j.Slf4j;
-import cn.hutool.core.lang.Assert;
 
 /**
  * IoT TCP 分隔符帧编解码器
@@ -54,9 +56,10 @@ public class IotTcpDelimiterFrameCodec implements IotTcpFrameCodec {
         parser.maxRecordSize(MAX_RECORD_SIZE); // 设置最大记录大小，防止 DoS 攻击
         // 处理完整消息（不包含分隔符）
         parser.handler(handler);
-        parser.exceptionHandler(ex -> {
-            throw new RuntimeException("[createDecodeParser][解析异常]", ex);
-        });
+        parser.exceptionHandler(
+                ex -> {
+                    throw new RuntimeException("[createDecodeParser][解析异常]", ex);
+                });
         return parser;
     }
 
@@ -78,12 +81,12 @@ public class IotTcpDelimiterFrameCodec implements IotTcpFrameCodec {
      */
     private byte[] parseDelimiter(String delimiter) {
         // 处理转义字符
-        String parsed = delimiter
-                .replace("\\r\\n", "\r\n")
-                .replace("\\r", "\r")
-                .replace("\\n", "\n")
-                .replace("\\t", "\t");
+        String parsed =
+                delimiter
+                        .replace("\\r\\n", "\r\n")
+                        .replace("\\r", "\r")
+                        .replace("\\n", "\n")
+                        .replace("\\t", "\t");
         return StrUtil.utf8Bytes(parsed);
     }
-
 }

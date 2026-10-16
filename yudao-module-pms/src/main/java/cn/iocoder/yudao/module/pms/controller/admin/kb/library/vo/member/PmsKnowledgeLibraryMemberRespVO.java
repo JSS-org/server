@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.member;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 知识库成员 Response VO")
@@ -33,5 +34,4 @@ public class PmsKnowledgeLibraryMemberRespVO {
 
     @Schema(description = "成员等级", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
     private Integer level;
-
 }

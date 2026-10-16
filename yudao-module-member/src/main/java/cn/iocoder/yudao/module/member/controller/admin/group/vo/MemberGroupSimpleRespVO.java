@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.group.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.ToString;
 
@@ -14,5 +15,4 @@ public class MemberGroupSimpleRespVO {
 
     @Schema(description = "等级名称", example = "芋艿")
     private String name;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,5 +20,4 @@ public class HrmEmployeeFieldConfigValueVO {
 
     @Schema(description = "是否允许员工编辑", example = "true")
     private Boolean editable;
-
 }

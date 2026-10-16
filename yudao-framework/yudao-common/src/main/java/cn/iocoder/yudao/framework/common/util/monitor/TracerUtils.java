@@ -15,8 +15,7 @@ public class TracerUtils {
     /**
      * 私有化构造方法
      */
-    private TracerUtils() {
-    }
+    private TracerUtils() {}
 
     /**
      * 获得链路追踪编号，直接返回 OpenTelemetry 的 TraceId。
@@ -28,5 +27,4 @@ public class TracerUtils {
         SpanContext context = Span.current().getSpanContext();
         return context.isValid() ? context.getTraceId() : "";
     }
-
 }

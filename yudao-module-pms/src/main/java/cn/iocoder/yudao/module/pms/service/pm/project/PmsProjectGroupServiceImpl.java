@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_DEFAULT_CANNOT_DELETE;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_DEFAULT_CANNOT_MODIFY;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -11,7 +19,9 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectGroupRela
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectGroupMapper;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectGroupRelationMapper;
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectGroupTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -26,14 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_DEFAULT_CANNOT_DELETE;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_DEFAULT_CANNOT_MODIFY;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP_NOT_EXISTS;
-
 /**
  * PMS 项目分组 Service 实现类
  *
@@ -43,12 +45,9 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_GROUP
 @Validated
 public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
 
-    @Resource
-    private PmsProjectGroupMapper projectGroupMapper;
-    @Resource
-    private PmsProjectGroupRelationMapper projectGroupRelationMapper;
-    @Resource
-    private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectGroupMapper projectGroupMapper;
+    @Resource private PmsProjectGroupRelationMapper projectGroupRelationMapper;
+    @Resource private PmsProjectMemberService projectMemberService;
 
     @Override
     public Long createProjectGroup(PmsProjectGroupSaveReqVO createReqVO, Long userId) {
@@ -57,10 +56,11 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
 
         // 2. 创建自定义分组，并追加到现有分组末尾
         PmsProjectGroupDO lastGroup = projectGroupMapper.selectLastByUserId(userId);
-        PmsProjectGroupDO group = BeanUtils.toBean(createReqVO, PmsProjectGroupDO.class)
-                .setUserId(userId)
-                .setSort(lastGroup == null ? 2 : lastGroup.getSort() + 1)
-                .setType(PmsProjectGroupTypeEnum.CUSTOM.getType());
+        PmsProjectGroupDO group =
+                BeanUtils.toBean(createReqVO, PmsProjectGroupDO.class)
+                        .setUserId(userId)
+                        .setSort(lastGroup == null ? 2 : lastGroup.getSort() + 1)
+                        .setType(PmsProjectGroupTypeEnum.CUSTOM.getType());
         projectGroupMapper.insert(group);
         return group.getId();
     }
@@ -77,8 +77,11 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
         validateProjectGroupNameDuplicate(userId, updateReqVO.getName(), updateReqVO.getId());
 
         // 2. 更新分组名称
-        projectGroupMapper.updateById(BeanUtils.toBean(updateReqVO, PmsProjectGroupDO.class)
-                .setUserId(null).setSort(null).setType(null));
+        projectGroupMapper.updateById(
+                BeanUtils.toBean(updateReqVO, PmsProjectGroupDO.class)
+                        .setUserId(null)
+                        .setSort(null)
+                        .setType(null));
     }
 
     @Override
@@ -86,13 +89,19 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
     public void updateProjectGroupSort(PmsProjectGroupSortReqVO sortReqVO, Long userId) {
         // 1. 校验排序列表中的分组都属于当前用户
         Set<Long> groupIds = convertSet(sortReqVO.getItems(), PmsProjectGroupSortReqVO.Item::getId);
-        if (projectGroupMapper.selectListByIdsAndUserId(groupIds, userId).size() != groupIds.size()) {
+        if (projectGroupMapper.selectListByIdsAndUserId(groupIds, userId).size()
+                != groupIds.size()) {
             throw exception(PROJECT_GROUP_NOT_EXISTS);
         }
 
         // 2. 更新全部分组的显示顺序
-        projectGroupMapper.updateBatch(convertList(sortReqVO.getItems(),
-                item -> new PmsProjectGroupDO().setId(item.getId()).setSort(item.getSort())));
+        projectGroupMapper.updateBatch(
+                convertList(
+                        sortReqVO.getItems(),
+                        item ->
+                                new PmsProjectGroupDO()
+                                        .setId(item.getId())
+                                        .setSort(item.getSort())));
     }
 
     @Override
@@ -122,16 +131,22 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
     }
 
     @Override
-    public Map<Long, Integer> getProjectGroupCountMap(Long userId, Collection<PmsProjectGroupDO> groups,
-                                                      Collection<Long> projectIds) {
+    public Map<Long, Integer> getProjectGroupCountMap(
+            Long userId, Collection<PmsProjectGroupDO> groups, Collection<Long> projectIds) {
         if (CollUtil.isEmpty(groups)) {
             return Collections.emptyMap();
         }
         // 1. 聚合统计各自定义分组的进行中项目数量
-        Map<Long, Integer> groupCountMap = CollUtil.isEmpty(projectIds) ? new LinkedHashMap<>()
-                : projectGroupRelationMapper.selectGroupCountMapByUserIdAndProjectIds(userId, projectIds);
-        int groupedProjectCount = CollUtil.isEmpty(projectIds) ? 0
-                : projectGroupRelationMapper.selectProjectCountByUserIdAndProjectIds(userId, projectIds);
+        Map<Long, Integer> groupCountMap =
+                CollUtil.isEmpty(projectIds)
+                        ? new LinkedHashMap<>()
+                        : projectGroupRelationMapper.selectGroupCountMapByUserIdAndProjectIds(
+                                userId, projectIds);
+        int groupedProjectCount =
+                CollUtil.isEmpty(projectIds)
+                        ? 0
+                        : projectGroupRelationMapper.selectProjectCountByUserIdAndProjectIds(
+                                userId, projectIds);
         // 2. 补充“全部项目”和“未分组”的项目数量
         int projectCount = CollUtil.size(projectIds);
         for (PmsProjectGroupDO group : groups) {
@@ -167,21 +182,30 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
         }
 
         // 4. 新增或更新个人项目分组关系
-        PmsProjectGroupRelationDO relation = projectGroupRelationMapper.selectByUserIdAndProjectId(
-                userId, moveReqVO.getProjectId());
+        PmsProjectGroupRelationDO relation =
+                projectGroupRelationMapper.selectByUserIdAndProjectId(
+                        userId, moveReqVO.getProjectId());
         if (relation == null) {
-            projectGroupRelationMapper.insert(BeanUtils.toBean(moveReqVO, PmsProjectGroupRelationDO.class)
-                    .setUserId(userId).setSort(0));
+            projectGroupRelationMapper.insert(
+                    BeanUtils.toBean(moveReqVO, PmsProjectGroupRelationDO.class)
+                            .setUserId(userId)
+                            .setSort(0));
             return;
         }
-        projectGroupRelationMapper.updateById(BeanUtils.toBean(moveReqVO, PmsProjectGroupRelationDO.class)
-                .setId(relation.getId()).setUserId(null).setProjectId(null).setSort(null));
+        projectGroupRelationMapper.updateById(
+                BeanUtils.toBean(moveReqVO, PmsProjectGroupRelationDO.class)
+                        .setId(relation.getId())
+                        .setUserId(null)
+                        .setProjectId(null)
+                        .setSort(null));
     }
 
     @Override
-    public List<Long> filterProjectIdListByGroupId(Long groupId, Long userId, Collection<Long> projectIds) {
+    public List<Long> filterProjectIdListByGroupId(
+            Long groupId, Long userId, Collection<Long> projectIds) {
         if (CollUtil.isEmpty(projectIds) || groupId == null) {
-            return CollUtil.isEmpty(projectIds) ? Collections.emptyList()
+            return CollUtil.isEmpty(projectIds)
+                    ? Collections.emptyList()
                     : new ArrayList<>(new LinkedHashSet<>(projectIds));
         }
 
@@ -195,14 +219,18 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
         Set<Long> candidateProjectIds = new LinkedHashSet<>(projectIds);
         // 情况二：“未分组”排除已经加入任意自定义分组的项目
         if (PmsProjectGroupTypeEnum.UNGROUPED.getType().equals(group.getType())) {
-            List<PmsProjectGroupRelationDO> relations = projectGroupRelationMapper.selectListByUserIdAndProjectIds(
-                    userId, candidateProjectIds);
-            candidateProjectIds.removeAll(convertSet(relations, PmsProjectGroupRelationDO::getProjectId));
+            List<PmsProjectGroupRelationDO> relations =
+                    projectGroupRelationMapper.selectListByUserIdAndProjectIds(
+                            userId, candidateProjectIds);
+            candidateProjectIds.removeAll(
+                    convertSet(relations, PmsProjectGroupRelationDO::getProjectId));
             return new ArrayList<>(candidateProjectIds);
         }
         // 情况三：自定义分组只保留属于该分组的项目
-        List<PmsProjectGroupRelationDO> relations = projectGroupRelationMapper.selectListByUserIdAndGroupId(userId, groupId);
-        candidateProjectIds.retainAll(convertSet(relations, PmsProjectGroupRelationDO::getProjectId));
+        List<PmsProjectGroupRelationDO> relations =
+                projectGroupRelationMapper.selectListByUserIdAndGroupId(userId, groupId);
+        candidateProjectIds.retainAll(
+                convertSet(relations, PmsProjectGroupRelationDO::getProjectId));
         return new ArrayList<>(candidateProjectIds);
     }
 
@@ -219,10 +247,22 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
      */
     private void ensureDefaultProjectGroupList(Long userId, List<PmsProjectGroupDO> groups) {
         // 1. 检查两个系统分组是否已经存在
-        boolean hasAllGroup = CollUtil.findOne(groups,
-                group -> PmsProjectGroupTypeEnum.ALL.getType().equals(group.getType())) != null;
-        boolean hasUngroupedGroup = CollUtil.findOne(groups,
-                group -> PmsProjectGroupTypeEnum.UNGROUPED.getType().equals(group.getType())) != null;
+        boolean hasAllGroup =
+                CollUtil.findOne(
+                                groups,
+                                group ->
+                                        PmsProjectGroupTypeEnum.ALL
+                                                .getType()
+                                                .equals(group.getType()))
+                        != null;
+        boolean hasUngroupedGroup =
+                CollUtil.findOne(
+                                groups,
+                                group ->
+                                        PmsProjectGroupTypeEnum.UNGROUPED
+                                                .getType()
+                                                .equals(group.getType()))
+                        != null;
         if (hasAllGroup && hasUngroupedGroup) {
             return;
         }
@@ -230,21 +270,30 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
         // 2. 构造并插入缺失的系统分组
         List<PmsProjectGroupDO> defaultGroups = new ArrayList<>();
         if (!hasAllGroup) {
-            defaultGroups.add(new PmsProjectGroupDO().setUserId(userId)
-                    .setName(PmsProjectGroupTypeEnum.ALL.getName()).setSort(0)
-                    .setType(PmsProjectGroupTypeEnum.ALL.getType()));
+            defaultGroups.add(
+                    new PmsProjectGroupDO()
+                            .setUserId(userId)
+                            .setName(PmsProjectGroupTypeEnum.ALL.getName())
+                            .setSort(0)
+                            .setType(PmsProjectGroupTypeEnum.ALL.getType()));
         }
         if (!hasUngroupedGroup) {
-            defaultGroups.add(new PmsProjectGroupDO().setUserId(userId)
-                    .setName(PmsProjectGroupTypeEnum.UNGROUPED.getName()).setSort(1)
-                    .setType(PmsProjectGroupTypeEnum.UNGROUPED.getType()));
+            defaultGroups.add(
+                    new PmsProjectGroupDO()
+                            .setUserId(userId)
+                            .setName(PmsProjectGroupTypeEnum.UNGROUPED.getName())
+                            .setSort(1)
+                            .setType(PmsProjectGroupTypeEnum.UNGROUPED.getType()));
         }
         projectGroupMapper.insertBatch(defaultGroups);
 
         // 3. 合并本次新增记录并保持稳定排序
         groups.addAll(defaultGroups);
-        groups.sort(Comparator.comparing(PmsProjectGroupDO::getSort,
-                Comparator.nullsLast(Integer::compareTo)).thenComparing(PmsProjectGroupDO::getId));
+        groups.sort(
+                Comparator.comparing(
+                                PmsProjectGroupDO::getSort,
+                                Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(PmsProjectGroupDO::getId));
     }
 
     /**
@@ -275,5 +324,4 @@ public class PmsProjectGroupServiceImpl implements PmsProjectGroupService {
             throw exception(PROJECT_GROUP_NAME_DUPLICATE);
         }
     }
-
 }

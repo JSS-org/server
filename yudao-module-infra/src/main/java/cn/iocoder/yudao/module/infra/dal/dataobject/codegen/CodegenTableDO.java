@@ -6,10 +6,12 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.db.DataSourceConfigDO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenFrontTypeEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenSceneEnum;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenTemplateTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+
 import lombok.Data;
 
 /**
@@ -18,7 +20,8 @@ import lombok.Data;
  * @author 芋道源码
  */
 @TableName(value = "infra_codegen_table", autoResultMap = true)
-@KeySequence("infra_codegen_table_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence("infra_codegen_table_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL
+// 等数据库，可不写。
 @Data
 @TenantIgnore
 public class CodegenTableDO extends BaseDO {
@@ -26,8 +29,7 @@ public class CodegenTableDO extends BaseDO {
     /**
      * ID 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 数据源编号
@@ -35,6 +37,7 @@ public class CodegenTableDO extends BaseDO {
      * 关联 {@link DataSourceConfigDO#getId()}
      */
     private Long dataSourceConfigId;
+
     /**
      * 生成场景
      *
@@ -50,12 +53,14 @@ public class CodegenTableDO extends BaseDO {
      * 关联 {@link TableInfo#getName()}
      */
     private String tableName;
+
     /**
      * 表描述
      *
      * 关联 {@link TableInfo#getComment()}
      */
     private String tableComment;
+
     /**
      * 备注
      */
@@ -69,22 +74,26 @@ public class CodegenTableDO extends BaseDO {
      * 例如说，system、infra、tool 等等
      */
     private String moduleName;
+
     /**
      * 业务名，即二级目录
      *
      * 例如说，user、permission、dict 等等
      */
     private String businessName;
+
     /**
      * 类名称（首字母大写）
      *
      * 例如说，SysUser、SysMenu、SysDictData 等等
      */
     private String className;
+
     /**
      * 类描述
      */
     private String classComment;
+
     /**
      * 作者
      */
@@ -98,6 +107,7 @@ public class CodegenTableDO extends BaseDO {
      * 枚举 {@link CodegenTemplateTypeEnum}
      */
     private Integer templateType;
+
     /**
      * 代码生成的前端类型
      *
@@ -122,12 +132,14 @@ public class CodegenTableDO extends BaseDO {
      * 关联 {@link CodegenTableDO#getId()}
      */
     private Long masterTableId;
+
     /**
      * 【自己】子表关联主表的字段编号
      *
      * 关联 {@link CodegenColumnDO#getId()}
      */
     private Long subJoinColumnId;
+
     /**
      * 主表与子表是否一对多
      *
@@ -144,6 +156,7 @@ public class CodegenTableDO extends BaseDO {
      * 关联 {@link CodegenColumnDO#getId()}
      */
     private Long treeParentColumnId;
+
     /**
      * 树表的名字字段编号
      *
@@ -152,5 +165,4 @@ public class CodegenTableDO extends BaseDO {
      * 关联 {@link CodegenColumnDO#getId()}
      */
     private Long treeNameColumnId;
-
 }

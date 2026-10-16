@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.group;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -174,5 +176,4 @@ public class HrmAttendanceGroupRespVO {
         @Schema(description = "缺卡扣款金额", example = "20.00")
         private BigDecimal misscardDeductMoney;
     }
-
 }

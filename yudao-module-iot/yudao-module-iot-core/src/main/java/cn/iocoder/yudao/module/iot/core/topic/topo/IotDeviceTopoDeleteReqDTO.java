@@ -2,8 +2,10 @@ package cn.iocoder.yudao.module.iot.core.topic.topo;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 
 import java.util.List;
@@ -25,5 +27,4 @@ public class IotDeviceTopoDeleteReqDTO {
     @Valid
     @NotEmpty(message = "子设备标识列表不能为空")
     private List<IotDeviceIdentity> subDevices;
-
 }

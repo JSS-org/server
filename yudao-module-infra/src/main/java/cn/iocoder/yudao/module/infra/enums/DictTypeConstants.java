@@ -18,5 +18,4 @@ public interface DictTypeConstants {
     String BOOLEAN_STRING = "infra_boolean_string"; // Boolean 是否类型
 
     String OPERATE_TYPE = "infra_operate_type"; // 操作类型
-
 }

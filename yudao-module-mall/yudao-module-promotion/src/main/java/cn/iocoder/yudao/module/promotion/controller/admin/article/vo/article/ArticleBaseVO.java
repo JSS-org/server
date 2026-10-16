@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 文章管理 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -27,7 +28,10 @@ public class ArticleBaseVO {
     @Schema(description = "文章作者", requiredMode = Schema.RequiredMode.REQUIRED, example = "张三")
     private String author;
 
-    @Schema(description = "文章封面图片地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn")
+    @Schema(
+            description = "文章封面图片地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn")
     @NotNull(message = "文章封面图片地址不能为空")
     private String picUrl;
 
@@ -42,16 +46,21 @@ public class ArticleBaseVO {
     @NotNull(message = "状态不能为空")
     private Integer status;
 
-    @Schema(description = "是否热门(小程序)", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否热门(小程序)",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     @NotNull(message = "是否热门(小程序)不能为空")
     private Boolean recommendHot;
 
-    @Schema(description = "是否轮播图(小程序)", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否轮播图(小程序)",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     @NotNull(message = "是否轮播图(小程序)不能为空")
     private Boolean recommendBanner;
 
     @Schema(description = "文章内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "这是文章内容")
     @NotNull(message = "文章内容不能为空")
     private String content;
-
 }

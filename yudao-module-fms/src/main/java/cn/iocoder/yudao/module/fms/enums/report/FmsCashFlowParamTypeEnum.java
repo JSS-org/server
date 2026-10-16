@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.enums.report;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,7 +13,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FmsCashFlowParamTypeEnum {
-
     BALANCE("BA", "资产负债取数"),
     INCOME("IN", "利润表取数"),
     EXTEND("EX", "辅助数据取数"),
@@ -22,6 +22,7 @@ public enum FmsCashFlowParamTypeEnum {
      * 参数前缀
      */
     private final String prefix;
+
     /**
      * 名称
      */
@@ -41,5 +42,4 @@ public enum FmsCashFlowParamTypeEnum {
         }
         return null;
     }
-
 }

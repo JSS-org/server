@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.iot.job.rule;
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.IotSceneRuleService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.quartz.JobExecutionContext;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
@@ -23,8 +26,7 @@ public class IotSceneRuleJob extends QuartzJobBean {
      */
     public static final String JOB_DATA_KEY_RULE_SCENE_ID = "sceneRuleId";
 
-    @Resource
-    private IotSceneRuleService sceneRuleService;
+    @Resource private IotSceneRuleService sceneRuleService;
 
     @Override
     protected void executeInternal(JobExecutionContext context) {
@@ -54,5 +56,4 @@ public class IotSceneRuleJob extends QuartzJobBean {
     public static String buildJobName(Long sceneRuleId) {
         return String.format("%s_%d", IotSceneRuleJob.class.getSimpleName(), sceneRuleId);
     }
-
 }

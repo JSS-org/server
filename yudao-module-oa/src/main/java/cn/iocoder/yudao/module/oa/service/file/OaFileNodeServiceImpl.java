@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.service.file;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -21,7 +25,9 @@ import cn.iocoder.yudao.module.oa.enums.file.OaFileScopeEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileSubjectTypeEnum;
 import cn.iocoder.yudao.module.oa.framework.config.OaProperties;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +35,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 云盘文件节点 Service 实现类
@@ -43,37 +45,45 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaFileNodeServiceImpl implements OaFileNodeService {
 
-    @Resource
-    private OaProperties properties;
+    @Resource private OaProperties properties;
 
-    @Resource
-    private OaFileNodeMapper fileNodeMapper;
+    @Resource private OaFileNodeMapper fileNodeMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaFilePermissionService filePermissionService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaFileFavoriteService fileFavoriteService;
 
-    @Resource
-    private FileApi fileApi;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private FileApi fileApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public OaFileStorageRespVO getFileStorage(Long userId) {
         // 1.1 数据库汇总本人文件容量，回收站文件仍占用容量
-        Long usedSize = fileNodeMapper.selectSumSizeByCreatorAndType(userId.toString(), OaFileNodeTypeEnum.FILE.getType());
+        Long usedSize =
+                fileNodeMapper.selectSumSizeByCreatorAndType(
+                        userId.toString(), OaFileNodeTypeEnum.FILE.getType());
         // 1.2 数量统计只查询本人正常节点及共享给本人的候选节点
         Long deptId = adminUserApi.getUser(userId).getDeptId();
-        List<OaFileNodeDO> candidates = fileNodeMapper.selectListByCreatorAndStatus(userId.toString(), OaFileNodeStatusEnum.NORMAL.getStatus());
-        candidates.addAll(getSharedFileNodeList(new OaFileNodePageReqVO().setScope(OaFileScopeEnum.SHARED.getScope()), userId, deptId));
+        List<OaFileNodeDO> candidates =
+                fileNodeMapper.selectListByCreatorAndStatus(
+                        userId.toString(), OaFileNodeStatusEnum.NORMAL.getStatus());
+        candidates.addAll(
+                getSharedFileNodeList(
+                        new OaFileNodePageReqVO().setScope(OaFileScopeEnum.SHARED.getScope()),
+                        userId,
+                        deptId));
         // 1.3 按需补齐祖先，并查询这些节点的授权
         Map<Long, OaFileNodeDO> nodes = getFileNodeMap(candidates);
-        List<OaFilePermissionDO> permissions = filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
-        Set<Long> sharedNodeIds = convertSet(permissions, OaFilePermissionDO::getNodeId,
-                permission -> permission.getExpireTime() == null || permission.getExpireTime().isAfter(LocalDateTime.now()));
+        List<OaFilePermissionDO> permissions =
+                filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
+        Set<Long> sharedNodeIds =
+                convertSet(
+                        permissions,
+                        OaFilePermissionDO::getNodeId,
+                        permission ->
+                                permission.getExpireTime() == null
+                                        || permission.getExpireTime().isAfter(LocalDateTime.now()));
 
         // 2. 文件数量和共享数量仅统计可用节点，保留祖先状态及授权有效期校验
         long fileCount = 0;
@@ -92,16 +102,23 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
                 if (sharedNodeIds.contains(node.getId())) {
                     sharedCount++;
                 }
-            } else if (getLevel(node, nodes, permissions, userId, deptId) > OaFilePermissionLevelEnum.LEVEL_NONE) {
+            } else if (getLevel(node, nodes, permissions, userId, deptId)
+                    > OaFilePermissionLevelEnum.LEVEL_NONE) {
                 // 共享目录及继承权限的子节点只统计一个入口，与共享列表保持一致
                 OaFileNodeDO parent = nodes.get(node.getParentId());
-                if (parent == null || getLevel(parent, nodes, permissions, userId, deptId) == OaFilePermissionLevelEnum.LEVEL_NONE) {
+                if (parent == null
+                        || getLevel(parent, nodes, permissions, userId, deptId)
+                                == OaFilePermissionLevelEnum.LEVEL_NONE) {
                     receivedCount++;
                 }
             }
         }
-        return new OaFileStorageRespVO().setUsedSize(usedSize).setTotalSize(properties.getFile().getStorageSize())
-                .setFileCount(fileCount).setSharedCount(sharedCount).setReceivedCount(receivedCount);
+        return new OaFileStorageRespVO()
+                .setUsedSize(usedSize)
+                .setTotalSize(properties.getFile().getStorageSize())
+                .setFileCount(fileCount)
+                .setSharedCount(sharedCount)
+                .setReceivedCount(receivedCount);
     }
 
     @Override
@@ -117,8 +134,11 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         OaFileNodeDO node = validateFileNodeAvailable(id);
         // 2. 计算本人、用户共享和部门共享权限
         Map<Long, OaFileNodeDO> nodes = getFileNodeMap(Collections.singletonList(node));
-        List<OaFilePermissionDO> permissions = filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
-        int currentLevel = getLevel(node, nodes, permissions, userId, adminUserApi.getUser(userId).getDeptId());
+        List<OaFilePermissionDO> permissions =
+                filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
+        int currentLevel =
+                getLevel(
+                        node, nodes, permissions, userId, adminUserApi.getUser(userId).getDeptId());
         if (currentLevel < level) {
             throw exception(FILE_NODE_ACCESS_DENIED);
         }
@@ -129,39 +149,63 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
     public PageResult<OaFileNodeRespVO> getFileNodePage(OaFileNodePageReqVO reqVO, Long userId) {
         // 1.1 校验指定目录及祖先可见，回收站仍按原有范围筛选
         OaFileNodeDO parent = null;
-        if (reqVO.getParentId() != null && ObjUtil.notEqual(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
-            parent = validateFileNodePermission(reqVO.getParentId(), userId, OaFilePermissionLevelEnum.READ.getLevel());
+        if (reqVO.getParentId() != null
+                && ObjUtil.notEqual(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
+            parent =
+                    validateFileNodePermission(
+                            reqVO.getParentId(), userId, OaFilePermissionLevelEnum.READ.getLevel());
         }
         Long deptId = adminUserApi.getUser(userId).getDeptId();
         // 1.2 本人根目录和已校验的本人目录，正常子节点均可见，直接使用数据库分页
-        boolean ownRootQuery = OaFileScopeEnum.MY.getScope().equals(reqVO.getScope())
-                && ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT);
-        boolean ownDirectoryQuery = parent != null && userId.toString().equals(parent.getCreator())
-                && ObjUtil.equal(parent.getType(), OaFileNodeTypeEnum.FOLDER.getType())
-                && !OaFileScopeEnum.RECYCLE.getScope().equals(reqVO.getScope());
+        boolean ownRootQuery =
+                OaFileScopeEnum.MY.getScope().equals(reqVO.getScope())
+                        && ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT);
+        boolean ownDirectoryQuery =
+                parent != null
+                        && userId.toString().equals(parent.getCreator())
+                        && ObjUtil.equal(parent.getType(), OaFileNodeTypeEnum.FOLDER.getType())
+                        && !OaFileScopeEnum.RECYCLE.getScope().equals(reqVO.getScope());
         if (ownRootQuery || ownDirectoryQuery) {
-            PageResult<OaFileNodeDO> pageResult = fileNodeMapper.selectPageByParentIdAndCreatorAndStatus(reqVO,
-                    ownRootQuery ? userId.toString() : null, OaFileNodeStatusEnum.NORMAL.getStatus());
-            return buildFileNodePageRespVO(pageResult, parent == null ? Collections.emptyMap()
-                    : Collections.singletonMap(parent.getId(), parent), Collections.emptyList(), userId, deptId);
+            PageResult<OaFileNodeDO> pageResult =
+                    fileNodeMapper.selectPageByParentIdAndCreatorAndStatus(
+                            reqVO,
+                            ownRootQuery ? userId.toString() : null,
+                            OaFileNodeStatusEnum.NORMAL.getStatus());
+            return buildFileNodePageRespVO(
+                    pageResult,
+                    parent == null
+                            ? Collections.emptyMap()
+                            : Collections.singletonMap(parent.getId(), parent),
+                    Collections.emptyList(),
+                    userId,
+                    deptId);
         }
         // 1.3 仅收藏入口需要提前查询收藏编号，用于筛选；普通列表分页后再补收藏状态
         Set<Long> favorites = Collections.emptySet();
         if (OaFileScopeEnum.FAVORITE.getScope().equals(reqVO.getScope())
-                && (reqVO.getParentId() == null || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))) {
-            favorites = convertSet(fileFavoriteService.getFileFavoriteList(userId), OaFileFavoriteDO::getNodeId);
+                && (reqVO.getParentId() == null
+                        || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))) {
+            favorites =
+                    convertSet(
+                            fileFavoriteService.getFileFavoriteList(userId),
+                            OaFileFavoriteDO::getNodeId);
             if (CollUtil.isEmpty(favorites)) {
                 return PageResult.empty();
             }
         }
         // 1.4 数据库筛选候选节点，再批量补齐祖先；祖先仅用于判权，不加入分页结果
         // 共享跨层级入口仍需候选集判权后分页，不能先截取一页再过滤权限
-        boolean sharedRootQuery = OaFileScopeEnum.SHARED.getScope().equals(reqVO.getScope())
-                && (reqVO.getParentId() == null || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT));
-        List<OaFileNodeDO> candidates = sharedRootQuery ? getSharedFileNodeList(reqVO, userId, deptId)
-                : fileNodeMapper.selectCandidateList(reqVO, userId, favorites);
+        boolean sharedRootQuery =
+                OaFileScopeEnum.SHARED.getScope().equals(reqVO.getScope())
+                        && (reqVO.getParentId() == null
+                                || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT));
+        List<OaFileNodeDO> candidates =
+                sharedRootQuery
+                        ? getSharedFileNodeList(reqVO, userId, deptId)
+                        : fileNodeMapper.selectCandidateList(reqVO, userId, favorites);
         Map<Long, OaFileNodeDO> nodes = getFileNodeMap(candidates);
-        List<OaFilePermissionDO> permissions = filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
+        List<OaFilePermissionDO> permissions =
+                filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
 
         // 2. 按可见范围筛选，回收站只展示回收根节点，不重复展示被其遮蔽的子节点
         List<OaFileNodeDO> result = new ArrayList<>();
@@ -169,7 +213,9 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
             boolean isOwner = userId.toString().equals(node.getCreator());
             boolean isRecycledScope = OaFileScopeEnum.RECYCLE.getScope().equals(reqVO.getScope());
             if (isRecycledScope) {
-                if (!isOwner || ObjUtil.notEqual(node.getStatus(), OaFileNodeStatusEnum.RECYCLED.getStatus())
+                if (!isOwner
+                        || ObjUtil.notEqual(
+                                node.getStatus(), OaFileNodeStatusEnum.RECYCLED.getStatus())
                         || !isAvailableParent(node, nodes)) {
                     continue;
                 }
@@ -180,23 +226,31 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
             if (!isRecycledScope && level == OaFilePermissionLevelEnum.LEVEL_NONE) {
                 continue;
             }
-            if (OaFileScopeEnum.MY.getScope().equals(reqVO.getScope()) && !isOwner
-                    && (reqVO.getParentId() == null || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))) {
+            if (OaFileScopeEnum.MY.getScope().equals(reqVO.getScope())
+                    && !isOwner
+                    && (reqVO.getParentId() == null
+                            || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))) {
                 continue;
             }
-            if (OaFileScopeEnum.SHARED.getScope().equals(reqVO.getScope()) && isOwner
-                    && (reqVO.getParentId() == null || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))) {
+            if (OaFileScopeEnum.SHARED.getScope().equals(reqVO.getScope())
+                    && isOwner
+                    && (reqVO.getParentId() == null
+                            || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))) {
                 continue;
             }
             if (OaFileScopeEnum.FAVORITE.getScope().equals(reqVO.getScope())
-                    && (reqVO.getParentId() == null || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))
+                    && (reqVO.getParentId() == null
+                            || ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT))
                     && !favorites.contains(node.getId())) {
                 continue;
             }
             if (reqVO.getParentId() != null && !isRecycledScope) {
-                if (OaFileScopeEnum.SHARED.getScope().equals(reqVO.getScope()) && ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
+                if (OaFileScopeEnum.SHARED.getScope().equals(reqVO.getScope())
+                        && ObjUtil.equal(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
                     OaFileNodeDO parentNode = nodes.get(node.getParentId());
-                    if (parentNode != null && getLevel(parentNode, nodes, permissions, userId, deptId) > OaFilePermissionLevelEnum.LEVEL_NONE) {
+                    if (parentNode != null
+                            && getLevel(parentNode, nodes, permissions, userId, deptId)
+                                    > OaFilePermissionLevelEnum.LEVEL_NONE) {
                         continue;
                     }
                 } else if (ObjUtil.notEqual(node.getParentId(), reqVO.getParentId())) {
@@ -207,11 +261,14 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         }
 
         // 3. 文件夹优先，同类型按创建时间及编号倒序，分页结果保持稳定
-        result.sort(Comparator.comparing(OaFileNodeDO::getType)
-                .thenComparing(OaFileNodeDO::getCreateTime, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparing(OaFileNodeDO::getId, Comparator.reverseOrder()));
-        return buildFileNodePageRespVO(PageUtils.buildPageResult(reqVO, result),
-                nodes, permissions, userId, deptId);
+        result.sort(
+                Comparator.comparing(OaFileNodeDO::getType)
+                        .thenComparing(
+                                OaFileNodeDO::getCreateTime,
+                                Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(OaFileNodeDO::getId, Comparator.reverseOrder()));
+        return buildFileNodePageRespVO(
+                PageUtils.buildPageResult(reqVO, result), nodes, permissions, userId, deptId);
     }
 
     /**
@@ -224,36 +281,51 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
      * @param deptId 当前用户部门编号
      * @return 文件分页响应
      */
-    private PageResult<OaFileNodeRespVO> buildFileNodePageRespVO(PageResult<OaFileNodeDO> pageResult,
-            Map<Long, OaFileNodeDO> nodes, List<OaFilePermissionDO> permissions, Long userId, Long deptId) {
+    private PageResult<OaFileNodeRespVO> buildFileNodePageRespVO(
+            PageResult<OaFileNodeDO> pageResult,
+            Map<Long, OaFileNodeDO> nodes,
+            List<OaFilePermissionDO> permissions,
+            Long userId,
+            Long deptId) {
         if (CollUtil.isEmpty(pageResult.getList())) {
             return PageResult.empty(pageResult.getTotal());
         }
         // 1. 仅查询当前页节点的本人收藏
-        List<OaFileFavoriteDO> favorites = fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(userId,
-                convertSet(pageResult.getList(), OaFileNodeDO::getId));
+        List<OaFileFavoriteDO> favorites =
+                fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(
+                        userId, convertSet(pageResult.getList(), OaFileNodeDO::getId));
         Set<Long> favoriteNodeIds = convertSet(favorites, OaFileFavoriteDO::getNodeId);
         // 2. 转换当前页并补充权限与收藏状态，保留查询总数
-        List<OaFileNodeRespVO> list = convertList(pageResult.getList(), node -> {
-            OaFileNodeRespVO respVO = BeanUtils.toBean(node, OaFileNodeRespVO.class);
-            respVO.setUrl(null); // 列表不暴露原始地址，预览和下载统一通过详情接口授权
-            respVO.setLevel(getLevel(node, nodes, permissions, userId, deptId));
-            respVO.setFavorite(favoriteNodeIds.contains(node.getId()));
-            return respVO;
-        });
+        List<OaFileNodeRespVO> list =
+                convertList(
+                        pageResult.getList(),
+                        node -> {
+                            OaFileNodeRespVO respVO =
+                                    BeanUtils.toBean(node, OaFileNodeRespVO.class);
+                            respVO.setUrl(null); // 列表不暴露原始地址，预览和下载统一通过详情接口授权
+                            respVO.setLevel(getLevel(node, nodes, permissions, userId, deptId));
+                            respVO.setFavorite(favoriteNodeIds.contains(node.getId()));
+                            return respVO;
+                        });
         return new PageResult<>(list, pageResult.getTotal());
     }
 
     @Override
     public List<OaFileNodeRespVO> getFileDirectoryList(Long userId) {
         // 1. 只查询本人正常目录及其祖先，不加载文件
-        List<OaFileNodeDO> candidates = fileNodeMapper.selectListByCreatorAndTypeAndStatus(userId.toString(),
-                OaFileNodeTypeEnum.FOLDER.getType(), OaFileNodeStatusEnum.NORMAL.getStatus());
+        List<OaFileNodeDO> candidates =
+                fileNodeMapper.selectListByCreatorAndTypeAndStatus(
+                        userId.toString(),
+                        OaFileNodeTypeEnum.FOLDER.getType(),
+                        OaFileNodeStatusEnum.NORMAL.getStatus());
         Map<Long, OaFileNodeDO> nodes = getFileNodeMap(candidates);
         // 2. 筛选可用目录并转换响应
-        return convertList(candidates,
+        return convertList(
+                candidates,
                 node -> BeanUtils.toBean(node, OaFileNodeRespVO.class).setUrl(null),
-                node -> ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FOLDER.getType()) && isAvailable(node, nodes));
+                node ->
+                        ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FOLDER.getType())
+                                && isAvailable(node, nodes));
     }
 
     @Override
@@ -262,25 +334,34 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         // 1.1 校验目标目录编辑权限
         if (ObjUtil.notEqual(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
             lockFileNode(reqVO.getParentId());
-            OaFileNodeDO parent = validateFileNodePermission(reqVO.getParentId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
+            OaFileNodeDO parent =
+                    validateFileNodePermission(
+                            reqVO.getParentId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
             if (ObjUtil.notEqual(parent.getType(), OaFileNodeTypeEnum.FOLDER.getType())) {
                 throw exception(FILE_NODE_PATH_INVALID);
             }
         }
         // 1.2 文件登记前校验本人剩余容量，回收站文件仍计入占用
         if (ObjUtil.equal(reqVO.getType(), OaFileNodeTypeEnum.FILE.getType())) {
-            Long usedSize = fileNodeMapper.selectSumSizeByCreatorAndType(userId.toString(), OaFileNodeTypeEnum.FILE.getType());
+            Long usedSize =
+                    fileNodeMapper.selectSumSizeByCreatorAndType(
+                            userId.toString(), OaFileNodeTypeEnum.FILE.getType());
             if (reqVO.getSize() > properties.getFile().getStorageSize() - usedSize) {
                 throw exception(FILE_STORAGE_NOT_ENOUGH);
             }
         }
 
         // 2. 保存前端上传后的文件信息，文件分类由扩展名计算
-        OaFileNodeDO node = BeanUtils.toBean(reqVO, OaFileNodeDO.class)
-                .setStatus(OaFileNodeStatusEnum.NORMAL.getStatus()).setSize(0L).setUrl(null);
+        OaFileNodeDO node =
+                BeanUtils.toBean(reqVO, OaFileNodeDO.class)
+                        .setStatus(OaFileNodeStatusEnum.NORMAL.getStatus())
+                        .setSize(0L)
+                        .setUrl(null);
         if (ObjUtil.equal(reqVO.getType(), OaFileNodeTypeEnum.FILE.getType())) {
             String extension = FileUtil.extName(reqVO.getName()).toLowerCase(Locale.ROOT);
-            node.setUrl(reqVO.getUrl()).setSize(reqVO.getSize()).setExtension(extension)
+            node.setUrl(reqVO.getUrl())
+                    .setSize(reqVO.getSize())
+                    .setExtension(extension)
                     .setCategory(OaFileCategoryEnum.getByExtension(extension).getCategory());
         }
         node.setName(getAvailableFileNodeName(node, reqVO.getParentId(), userId, null));
@@ -294,16 +375,21 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
     public void updateFileNodeName(OaFileNodeRenameReqVO reqVO, Long userId) {
         // 1.1 锁定节点并校验编辑权限
         lockFileNode(reqVO.getId());
-        OaFileNodeDO node = validateFileNodePermission(reqVO.getId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
+        OaFileNodeDO node =
+                validateFileNodePermission(
+                        reqVO.getId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
         // 1.2 排除自身，同名时自动追加序号
         node.setName(reqVO.getName());
-        String name = getAvailableFileNodeName(node, node.getParentId(), Long.valueOf(node.getCreator()), node.getId());
+        String name =
+                getAvailableFileNodeName(
+                        node, node.getParentId(), Long.valueOf(node.getCreator()), node.getId());
 
         // 2. 更新名称，文件分类随新扩展名更新
         OaFileNodeDO update = new OaFileNodeDO().setId(node.getId()).setName(name);
         if (ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FILE.getType())) {
             String extension = FileUtil.extName(reqVO.getName()).toLowerCase(Locale.ROOT);
-            update.setExtension(extension).setCategory(OaFileCategoryEnum.getByExtension(extension).getCategory());
+            update.setExtension(extension)
+                    .setCategory(OaFileCategoryEnum.getByExtension(extension).getCategory());
         }
         fileNodeMapper.updateById(update);
     }
@@ -312,16 +398,23 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
     @Transactional(rollbackFor = Exception.class)
     public void updateFileNodeParent(OaFileNodeMoveReqVO reqVO, Long userId) {
         // 1.1 按编号锁定本人目录，串行校验目录移动，防止两个目录并发互移形成环
-        Map<Long, OaFileNodeDO> folders = convertMap(fileNodeMapper.selectListByCreatorAndTypeForUpdate(
-                userId.toString(), OaFileNodeTypeEnum.FOLDER.getType()), OaFileNodeDO::getId);
+        Map<Long, OaFileNodeDO> folders =
+                convertMap(
+                        fileNodeMapper.selectListByCreatorAndTypeForUpdate(
+                                userId.toString(), OaFileNodeTypeEnum.FOLDER.getType()),
+                        OaFileNodeDO::getId);
         // 1.2 锁定节点并校验编辑权限
         lockFileNode(reqVO.getId());
-        OaFileNodeDO node = validateFileNodePermission(reqVO.getId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
+        OaFileNodeDO node =
+                validateFileNodePermission(
+                        reqVO.getId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
         // 1.3 校验节点归属，只允许移动本人节点
         validateOwner(node, userId);
         // 1.4 校验目标目录权限、归属及目录层级
         if (ObjUtil.notEqual(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
-            OaFileNodeDO parent = validateFileNodePermission(reqVO.getParentId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
+            OaFileNodeDO parent =
+                    validateFileNodePermission(
+                            reqVO.getParentId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
             validateOwner(parent, userId);
             if (ObjUtil.notEqual(parent.getType(), OaFileNodeTypeEnum.FOLDER.getType())) {
                 throw exception(FILE_NODE_PATH_INVALID);
@@ -344,38 +437,60 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         String name = getAvailableFileNodeName(node, reqVO.getParentId(), userId, node.getId());
 
         // 2. 更新父目录和名称，子树保持原有结构
-        fileNodeMapper.updateById(new OaFileNodeDO().setId(node.getId()).setParentId(reqVO.getParentId()).setName(name));
+        fileNodeMapper.updateById(
+                new OaFileNodeDO()
+                        .setId(node.getId())
+                        .setParentId(reqVO.getParentId())
+                        .setName(name));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long copyFileNode(OaFileNodeCopyReqVO reqVO, Long userId) {
         // 1.1 校验源节点下载权限，只复制正常节点
-        OaFileNodeDO root = validateFileNodePermission(reqVO.getId(), userId, OaFilePermissionLevelEnum.DOWNLOAD.getLevel());
+        OaFileNodeDO root =
+                validateFileNodePermission(
+                        reqVO.getId(), userId, OaFilePermissionLevelEnum.DOWNLOAD.getLevel());
         // 1.2 目标必须是本人目录，不能复制到源目录自身或下级目录
         if (ObjUtil.notEqual(reqVO.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)) {
             lockFileNode(reqVO.getParentId());
-            OaFileNodeDO parent = validateFileNodePermission(reqVO.getParentId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
+            OaFileNodeDO parent =
+                    validateFileNodePermission(
+                            reqVO.getParentId(), userId, OaFilePermissionLevelEnum.EDIT.getLevel());
             validateOwner(parent, userId);
             if (ObjUtil.notEqual(parent.getType(), OaFileNodeTypeEnum.FOLDER.getType())
-                    || getFileNodeMap(Collections.singletonList(parent)).containsKey(root.getId())) {
+                    || getFileNodeMap(Collections.singletonList(parent))
+                            .containsKey(root.getId())) {
                 throw exception(FILE_NODE_PATH_INVALID);
             }
         }
 
         // 2. 按层读取源子树，跳过回收节点，复制前校验每个节点的下载权限
         List<OaFileNodeDO> sources = new ArrayList<>(Collections.singletonList(root));
-        Collection<Long> parentIds = ObjUtil.equal(root.getType(), OaFileNodeTypeEnum.FOLDER.getType())
-                ? Collections.singleton(root.getId()) : Collections.emptyList();
+        Collection<Long> parentIds =
+                ObjUtil.equal(root.getType(), OaFileNodeTypeEnum.FOLDER.getType())
+                        ? Collections.singleton(root.getId())
+                        : Collections.emptyList();
         while (CollUtil.isNotEmpty(parentIds)) {
-            List<OaFileNodeDO> children = filterList(fileNodeMapper.selectListByParentIds(parentIds),
-                    node -> ObjUtil.equal(node.getStatus(), OaFileNodeStatusEnum.NORMAL.getStatus()));
+            List<OaFileNodeDO> children =
+                    filterList(
+                            fileNodeMapper.selectListByParentIds(parentIds),
+                            node ->
+                                    ObjUtil.equal(
+                                            node.getStatus(),
+                                            OaFileNodeStatusEnum.NORMAL.getStatus()));
             for (OaFileNodeDO child : children) {
-                validateFileNodePermission(child.getId(), userId, OaFilePermissionLevelEnum.DOWNLOAD.getLevel());
+                validateFileNodePermission(
+                        child.getId(), userId, OaFilePermissionLevelEnum.DOWNLOAD.getLevel());
             }
             sources.addAll(children);
-            parentIds = convertList(children, OaFileNodeDO::getId,
-                    node -> ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FOLDER.getType()));
+            parentIds =
+                    convertList(
+                            children,
+                            OaFileNodeDO::getId,
+                            node ->
+                                    ObjUtil.equal(
+                                            node.getType(), OaFileNodeTypeEnum.FOLDER.getType()));
         }
 
         // 3. 为副本根节点生成不重名的名称，保留文件扩展名
@@ -384,15 +499,27 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         // 4. 保存新的节点树，底层文件由 Infra 复用；不继承原创建人、共享或收藏
         Long deptId = adminUserApi.getUser(userId).getDeptId();
         Map<Long, Long> copiedIds = new HashMap<>();
-        Map<Long, List<OaFileNodeDO>> childrenMap = convertMultiMap(sources, OaFileNodeDO::getParentId);
+        Map<Long, List<OaFileNodeDO>> childrenMap =
+                convertMultiMap(sources, OaFileNodeDO::getParentId);
         List<OaFileNodeDO> sourceNodes = Collections.singletonList(root);
         while (CollUtil.isNotEmpty(sourceNodes)) {
-            List<OaFileNodeDO> copies = convertList(sourceNodes, source -> new OaFileNodeDO()
-                    .setParentId(source == root ? reqVO.getParentId() : copiedIds.get(source.getParentId()))
-                    .setName(source == root ? name : source.getName()).setType(source.getType())
-                    .setExtension(source.getExtension()).setCategory(source.getCategory())
-                    .setSize(source.getSize()).setUrl(source.getUrl()).setDeptId(deptId)
-                    .setStatus(OaFileNodeStatusEnum.NORMAL.getStatus()));
+            List<OaFileNodeDO> copies =
+                    convertList(
+                            sourceNodes,
+                            source ->
+                                    new OaFileNodeDO()
+                                            .setParentId(
+                                                    source == root
+                                                            ? reqVO.getParentId()
+                                                            : copiedIds.get(source.getParentId()))
+                                            .setName(source == root ? name : source.getName())
+                                            .setType(source.getType())
+                                            .setExtension(source.getExtension())
+                                            .setCategory(source.getCategory())
+                                            .setSize(source.getSize())
+                                            .setUrl(source.getUrl())
+                                            .setDeptId(deptId)
+                                            .setStatus(OaFileNodeStatusEnum.NORMAL.getStatus()));
             fileNodeMapper.insertBatch(copies);
             List<OaFileNodeDO> children = new ArrayList<>();
             for (int i = 0; i < sourceNodes.size(); i++) {
@@ -415,7 +542,8 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         validateOwner(node, userId);
 
         // 2. 仅回收当前节点，保留子节点原有状态
-        fileNodeMapper.updateById(new OaFileNodeDO().setId(id).setStatus(OaFileNodeStatusEnum.RECYCLED.getStatus()));
+        fileNodeMapper.updateById(
+                new OaFileNodeDO().setId(id).setStatus(OaFileNodeStatusEnum.RECYCLED.getStatus()));
     }
 
     @Override
@@ -432,9 +560,14 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         }
 
         // 2. 恢复到个人根目录，同名时在扩展名前追加序号
-        String name = getAvailableFileNodeName(node, OaFileNodeDO.PARENT_ID_ROOT, userId, node.getId());
-        fileNodeMapper.updateById(new OaFileNodeDO().setId(id).setParentId(OaFileNodeDO.PARENT_ID_ROOT)
-                .setName(name).setStatus(OaFileNodeStatusEnum.NORMAL.getStatus()));
+        String name =
+                getAvailableFileNodeName(node, OaFileNodeDO.PARENT_ID_ROOT, userId, node.getId());
+        fileNodeMapper.updateById(
+                new OaFileNodeDO()
+                        .setId(id)
+                        .setParentId(OaFileNodeDO.PARENT_ID_ROOT)
+                        .setName(name)
+                        .setStatus(OaFileNodeStatusEnum.NORMAL.getStatus()));
     }
 
     @Override
@@ -462,24 +595,31 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         OaFileNodeDO node = validateFileNodeAvailable(id);
         // 1.2 校验当前用户具有查看权限
         Map<Long, OaFileNodeDO> nodes = getFileNodeMap(Collections.singletonList(node));
-        List<OaFilePermissionDO> permissions = filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
-        int level = getLevel(node, nodes, permissions, userId, adminUserApi.getUser(userId).getDeptId());
+        List<OaFilePermissionDO> permissions =
+                filePermissionService.getFilePermissionListByNodeIds(nodes.keySet());
+        int level =
+                getLevel(
+                        node, nodes, permissions, userId, adminUserApi.getUser(userId).getDeptId());
         if (level < OaFilePermissionLevelEnum.READ.getLevel()) {
             throw exception(FILE_NODE_ACCESS_DENIED);
         }
 
         // 2. 查询当前用户的收藏状态
-        List<OaFileFavoriteDO> favorites = fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(userId,
-                Collections.singleton(id));
+        List<OaFileFavoriteDO> favorites =
+                fileFavoriteService.getFileFavoriteListByUserIdAndNodeIds(
+                        userId, Collections.singleton(id));
 
         // 3. 拼接详情，仅为具有下载权限的文件签发临时地址
-        OaFileNodeRespVO respVO = BeanUtils.toBean(node, OaFileNodeRespVO.class)
-                .setLevel(level)
-                .setFavorite(CollUtil.isNotEmpty(favorites))
-                .setUrl(null);
+        OaFileNodeRespVO respVO =
+                BeanUtils.toBean(node, OaFileNodeRespVO.class)
+                        .setLevel(level)
+                        .setFavorite(CollUtil.isNotEmpty(favorites))
+                        .setUrl(null);
         if (ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FILE.getType())
                 && level >= OaFilePermissionLevelEnum.DOWNLOAD.getLevel()) {
-            respVO.setUrl(fileApi.presignGetUrl(node.getUrl(), properties.getFile().getDownloadUrlExpireSeconds()));
+            respVO.setUrl(
+                    fileApi.presignGetUrl(
+                            node.getUrl(), properties.getFile().getDownloadUrlExpireSeconds()));
         }
         return respVO;
     }
@@ -494,21 +634,38 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
      * @param deptId 当前用户部门编号
      * @return 直接共享及目录继承范围内的候选节点，祖先状态和最终权限由调用方校验
      */
-    private List<OaFileNodeDO> getSharedFileNodeList(OaFileNodePageReqVO reqVO, Long userId, Long deptId) {
+    private List<OaFileNodeDO> getSharedFileNodeList(
+            OaFileNodePageReqVO reqVO, Long userId, Long deptId) {
         // 1. 查询本人、部门授权，以及本人创建且可向子节点传递管理权限的目录
-        List<OaFilePermissionDO> permissions = filePermissionService.getValidFilePermissionList(userId, deptId);
+        List<OaFilePermissionDO> permissions =
+                filePermissionService.getValidFilePermissionList(userId, deptId);
         Set<Long> sharedNodeIds = convertSet(permissions, OaFilePermissionDO::getNodeId);
-        Set<Long> inheritedParentIds = convertSet(fileNodeMapper.selectListByCreatorAndTypeAndStatus(userId.toString(),
-                OaFileNodeTypeEnum.FOLDER.getType(), OaFileNodeStatusEnum.NORMAL.getStatus()), OaFileNodeDO::getId);
-        inheritedParentIds.addAll(convertSet(permissions, OaFilePermissionDO::getNodeId,
-                permission -> Boolean.TRUE.equals(permission.getInherit())));
+        Set<Long> inheritedParentIds =
+                convertSet(
+                        fileNodeMapper.selectListByCreatorAndTypeAndStatus(
+                                userId.toString(),
+                                OaFileNodeTypeEnum.FOLDER.getType(),
+                                OaFileNodeStatusEnum.NORMAL.getStatus()),
+                        OaFileNodeDO::getId);
+        inheritedParentIds.addAll(
+                convertSet(
+                        permissions,
+                        OaFilePermissionDO::getNodeId,
+                        permission -> Boolean.TRUE.equals(permission.getInherit())));
 
         // 2. 按层批量补齐可继承的子目录，只查询目录，不拉取整棵文件树
         Collection<Long> parentIds = inheritedParentIds;
         for (int i = 0; i < Short.MAX_VALUE && CollUtil.isNotEmpty(parentIds); i++) {
-            List<OaFileNodeDO> children = fileNodeMapper.selectListByParentIdsAndTypeAndStatus(parentIds,
-                    OaFileNodeTypeEnum.FOLDER.getType(), OaFileNodeStatusEnum.NORMAL.getStatus());
-            parentIds = convertSet(children, OaFileNodeDO::getId, node -> !inheritedParentIds.contains(node.getId()));
+            List<OaFileNodeDO> children =
+                    fileNodeMapper.selectListByParentIdsAndTypeAndStatus(
+                            parentIds,
+                            OaFileNodeTypeEnum.FOLDER.getType(),
+                            OaFileNodeStatusEnum.NORMAL.getStatus());
+            parentIds =
+                    convertSet(
+                            children,
+                            OaFileNodeDO::getId,
+                            node -> !inheritedParentIds.contains(node.getId()));
             inheritedParentIds.addAll(parentIds);
         }
         if (CollUtil.isEmpty(sharedNodeIds) && CollUtil.isEmpty(inheritedParentIds)) {
@@ -516,7 +673,8 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         }
 
         // 3. 将授权编号、可继承目录和搜索条件交给 Mapper，进一步缩小文件候选集
-        return fileNodeMapper.selectListBySharedNodeIdsOrParentIdsAndCreatorNot(reqVO, userId, sharedNodeIds, inheritedParentIds);
+        return fileNodeMapper.selectListBySharedNodeIdsOrParentIdsAndCreatorNot(
+                reqVO, userId, sharedNodeIds, inheritedParentIds);
     }
 
     /**
@@ -529,10 +687,15 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
         Map<Long, OaFileNodeDO> nodes = convertMap(candidates, OaFileNodeDO::getId);
         Collection<OaFileNodeDO> currentNodes = candidates;
         for (int i = 0; i < Short.MAX_VALUE; i++) {
-            Set<Long> parentIds = convertSet(currentNodes, OaFileNodeDO::getParentId,
-                    node -> node.getParentId() != null
-                            && ObjUtil.notEqual(node.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)
-                            && !nodes.containsKey(node.getParentId()));
+            Set<Long> parentIds =
+                    convertSet(
+                            currentNodes,
+                            OaFileNodeDO::getParentId,
+                            node ->
+                                    node.getParentId() != null
+                                            && ObjUtil.notEqual(
+                                                    node.getParentId(), OaFileNodeDO.PARENT_ID_ROOT)
+                                            && !nodes.containsKey(node.getParentId()));
             if (CollUtil.isEmpty(parentIds)) {
                 return nodes;
             }
@@ -563,20 +726,32 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
      * @param excludeId 排除的节点编号，新增或复制时为空
      * @return 不与目标目录正常节点重名的名称
      */
-    private String getAvailableFileNodeName(OaFileNodeDO node, Long parentId, Long userId, Long excludeId) {
+    private String getAvailableFileNodeName(
+            OaFileNodeDO node, Long parentId, Long userId, Long excludeId) {
         List<OaFileNodeDO> siblings = fileNodeMapper.selectListByParentId(parentId);
-        Set<String> names = convertSet(siblings, item -> item.getName().toLowerCase(Locale.ROOT),
-                item -> ObjUtil.equal(item.getStatus(), OaFileNodeStatusEnum.NORMAL.getStatus())
-                        && ObjUtil.notEqual(item.getId(), excludeId)
-                        && (ObjUtil.notEqual(parentId, OaFileNodeDO.PARENT_ID_ROOT)
-                        || userId.toString().equals(item.getCreator())));
+        Set<String> names =
+                convertSet(
+                        siblings,
+                        item -> item.getName().toLowerCase(Locale.ROOT),
+                        item ->
+                                ObjUtil.equal(
+                                                item.getStatus(),
+                                                OaFileNodeStatusEnum.NORMAL.getStatus())
+                                        && ObjUtil.notEqual(item.getId(), excludeId)
+                                        && (ObjUtil.notEqual(parentId, OaFileNodeDO.PARENT_ID_ROOT)
+                                                || userId.toString().equals(item.getCreator())));
         String name = node.getName();
-        String baseName = ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FILE.getType())
-                ? StrUtil.blankToDefault(FileUtil.mainName(name), name) : name;
+        String baseName =
+                ObjUtil.equal(node.getType(), OaFileNodeTypeEnum.FILE.getType())
+                        ? StrUtil.blankToDefault(FileUtil.mainName(name), name)
+                        : name;
         String suffix = StrUtil.removePrefix(name, baseName);
         for (int index = 1; names.contains(name.toLowerCase(Locale.ROOT)); index++) {
             String number = "(" + index + ")";
-            name = StrUtil.subPre(baseName, Math.max(0, 255 - suffix.length() - number.length())) + number + suffix;
+            name =
+                    StrUtil.subPre(baseName, Math.max(0, 255 - suffix.length() - number.length()))
+                            + number
+                            + suffix;
         }
         return name;
     }
@@ -610,7 +785,8 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
                 return true;
             }
             node = nodes.get(node.getParentId());
-            if (node != null && ObjUtil.notEqual(node.getType(), OaFileNodeTypeEnum.FOLDER.getType())) {
+            if (node != null
+                    && ObjUtil.notEqual(node.getType(), OaFileNodeTypeEnum.FOLDER.getType())) {
                 return false;
             }
         }
@@ -627,8 +803,12 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
      * @param deptId 当前用户部门编号
      * @return 有效权限等级，无授权时返回 LEVEL_NONE
      */
-    private int getLevel(OaFileNodeDO node, Map<Long, OaFileNodeDO> nodes,
-                         List<OaFilePermissionDO> permissions, Long userId, Long deptId) {
+    private int getLevel(
+            OaFileNodeDO node,
+            Map<Long, OaFileNodeDO> nodes,
+            List<OaFilePermissionDO> permissions,
+            Long userId,
+            Long deptId) {
         // 本人创建的节点直接拥有管理权限
         if (userId.toString().equals(node.getCreator())) {
             return OaFilePermissionLevelEnum.MANAGE.getLevel();
@@ -640,14 +820,21 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
             // 仅计算当前节点授权，以及祖先允许继承且尚未过期的授权
             for (OaFilePermissionDO permission : permissions) {
                 if (ObjUtil.notEqual(permission.getNodeId(), node.getId())
-                        || (permission.getExpireTime() != null && !permission.getExpireTime().isAfter(LocalDateTime.now()))
-                        || (ObjUtil.notEqual(nodeId, node.getId()) && !Boolean.TRUE.equals(permission.getInherit()))) {
+                        || (permission.getExpireTime() != null
+                                && !permission.getExpireTime().isAfter(LocalDateTime.now()))
+                        || (ObjUtil.notEqual(nodeId, node.getId())
+                                && !Boolean.TRUE.equals(permission.getInherit()))) {
                     continue;
                 }
-                if ((ObjUtil.equal(permission.getSubjectType(), OaFileSubjectTypeEnum.USER.getType())
-                        && ObjUtil.equal(permission.getSubjectId(), userId))
-                        || (ObjUtil.equal(permission.getSubjectType(), OaFileSubjectTypeEnum.DEPT.getType())
-                        && deptId != null && ObjUtil.equal(permission.getSubjectId(), deptId))) {
+                if ((ObjUtil.equal(
+                                        permission.getSubjectType(),
+                                        OaFileSubjectTypeEnum.USER.getType())
+                                && ObjUtil.equal(permission.getSubjectId(), userId))
+                        || (ObjUtil.equal(
+                                        permission.getSubjectType(),
+                                        OaFileSubjectTypeEnum.DEPT.getType())
+                                && deptId != null
+                                && ObjUtil.equal(permission.getSubjectId(), deptId))) {
                     level = Math.max(level, permission.getLevel());
                 }
             }
@@ -699,11 +886,11 @@ public class OaFileNodeServiceImpl implements OaFileNodeService {
                 throw exception(FILE_NODE_PATH_INVALID);
             }
             current = fileNodeMapper.selectById(current.getParentId());
-            if (current == null || ObjUtil.notEqual(current.getType(), OaFileNodeTypeEnum.FOLDER.getType())) {
+            if (current == null
+                    || ObjUtil.notEqual(current.getType(), OaFileNodeTypeEnum.FOLDER.getType())) {
                 throw exception(FILE_NODE_PATH_INVALID);
             }
         }
         throw exception(FILE_NODE_PATH_INVALID);
     }
-
 }

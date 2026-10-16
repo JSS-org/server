@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.tenant.core.web;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception0;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
@@ -8,13 +10,14 @@ import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.servlet.HandlerInterceptor;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception0;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -27,7 +30,8 @@ public class TenantVisitContextInterceptor implements HandlerInterceptor {
     private final SecurityFrameworkService securityFrameworkService;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(
+            HttpServletRequest request, HttpServletResponse response, Object handler) {
         // 如果和当前租户编号一致，则直接跳过
         Long visitTenantId = WebFrameworkUtils.getVisitTenantId(request);
         if (visitTenantId == null) {
@@ -54,12 +58,15 @@ public class TenantVisitContextInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Object handler,
+            Exception ex) {
         // 【重点】清理切换，换回原租户编号
         LoginUser loginUser = SecurityFrameworkUtils.getLoginUser();
         if (loginUser != null && loginUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(loginUser.getTenantId());
         }
     }
-
 }

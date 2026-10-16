@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.cal.plan;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo.MesCalPlanSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.plan.MesCalPlanDO;
@@ -8,17 +13,14 @@ import cn.iocoder.yudao.module.mes.enums.cal.MesCalPlanStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.cal.MesCalShiftMethodEnum;
 import cn.iocoder.yudao.module.mes.enums.cal.MesCalShiftTypeEnum;
 import cn.iocoder.yudao.module.mes.service.cal.team.MesCalTeamShiftService;
+
+import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import jakarta.annotation.Resource;
-
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link MesCalPlanServiceImpl} 的单元测试
@@ -28,18 +30,13 @@ import static org.mockito.Mockito.*;
 @Import(MesCalPlanServiceImpl.class)
 public class MesCalPlanServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesCalPlanServiceImpl planService;
+    @Resource private MesCalPlanServiceImpl planService;
 
-    @Resource
-    private MesCalPlanMapper planMapper;
+    @Resource private MesCalPlanMapper planMapper;
 
-    @MockitoBean
-    private MesCalPlanShiftService planShiftService;
-    @MockitoBean
-    private MesCalPlanTeamService planTeamService;
-    @MockitoBean
-    private MesCalTeamShiftService teamShiftService;
+    @MockitoBean private MesCalPlanShiftService planShiftService;
+    @MockitoBean private MesCalPlanTeamService planTeamService;
+    @MockitoBean private MesCalTeamShiftService teamShiftService;
 
     @Test
     public void testCreatePlan_singleShift_addDefaultShift() {
@@ -67,15 +64,18 @@ public class MesCalPlanServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testConfirmPlan_syncGenerateTeamShiftRecords() {
         // mock 数据：插入一条草稿状态的排班计划
-        MesCalPlanDO plan = randomPojo(MesCalPlanDO.class, o -> {
-            o.setCalendarType(1);
-            o.setStartDate(LocalDateTime.of(2026, 4, 1, 0, 0));
-            o.setEndDate(LocalDateTime.of(2026, 4, 3, 0, 0));
-            o.setStatus(MesCalPlanStatusEnum.PREPARE.getStatus());
-            o.setShiftType(MesCalShiftTypeEnum.SINGLE.getType());
-            o.setShiftMethod(MesCalShiftMethodEnum.DAY.getMethod());
-            o.setShiftCount(1);
-        });
+        MesCalPlanDO plan =
+                randomPojo(
+                        MesCalPlanDO.class,
+                        o -> {
+                            o.setCalendarType(1);
+                            o.setStartDate(LocalDateTime.of(2026, 4, 1, 0, 0));
+                            o.setEndDate(LocalDateTime.of(2026, 4, 3, 0, 0));
+                            o.setStatus(MesCalPlanStatusEnum.PREPARE.getStatus());
+                            o.setShiftType(MesCalShiftTypeEnum.SINGLE.getType());
+                            o.setShiftMethod(MesCalShiftMethodEnum.DAY.getMethod());
+                            o.setShiftCount(1);
+                        });
         planMapper.insert(plan);
         // mock 方法：班组数量满足要求
         when(planTeamService.getPlanTeamCountByPlanId(plan.getId())).thenReturn(1L);
@@ -93,15 +93,18 @@ public class MesCalPlanServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeletePlan_notCascadeDeleteTeamShift() {
         // mock 数据：插入一条草稿状态的排班计划
-        MesCalPlanDO plan = randomPojo(MesCalPlanDO.class, o -> {
-            o.setCalendarType(1);
-            o.setStartDate(LocalDateTime.of(2026, 4, 1, 0, 0));
-            o.setEndDate(LocalDateTime.of(2026, 4, 3, 0, 0));
-            o.setStatus(MesCalPlanStatusEnum.PREPARE.getStatus());
-            o.setShiftType(MesCalShiftTypeEnum.SINGLE.getType());
-            o.setShiftMethod(MesCalShiftMethodEnum.DAY.getMethod());
-            o.setShiftCount(1);
-        });
+        MesCalPlanDO plan =
+                randomPojo(
+                        MesCalPlanDO.class,
+                        o -> {
+                            o.setCalendarType(1);
+                            o.setStartDate(LocalDateTime.of(2026, 4, 1, 0, 0));
+                            o.setEndDate(LocalDateTime.of(2026, 4, 3, 0, 0));
+                            o.setStatus(MesCalPlanStatusEnum.PREPARE.getStatus());
+                            o.setShiftType(MesCalShiftTypeEnum.SINGLE.getType());
+                            o.setShiftMethod(MesCalShiftMethodEnum.DAY.getMethod());
+                            o.setShiftCount(1);
+                        });
         planMapper.insert(plan);
 
         // 调用
@@ -115,5 +118,4 @@ public class MesCalPlanServiceImplTest extends BaseDbUnitTest {
         // 断言 3：不级联删除班组排班记录
         verify(teamShiftService, never()).deleteByPlanId(plan.getId());
     }
-
 }

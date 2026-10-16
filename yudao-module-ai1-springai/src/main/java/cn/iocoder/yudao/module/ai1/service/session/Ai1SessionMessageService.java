@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.ai1.service.session;
 
 import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.message.Ai1SessionMessageSendReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionMessageDO;
+
 import jakarta.validation.Valid;
+
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Collection;
@@ -31,7 +33,8 @@ public interface Ai1SessionMessageService {
      * @param limit          数量上限
      * @return 消息列表
      */
-    List<Ai1SessionMessageDO> getSessionMessageListBySessionIdAndIdLessThan(Long sessionId, Long id, Integer limit);
+    List<Ai1SessionMessageDO> getSessionMessageListBySessionIdAndIdLessThan(
+            Long sessionId, Long id, Integer limit);
 
     /**
      * 发送消息（SSE 流式）：校验会话归属 → 落库用户消息与助手占位 → 投递生成任务 → 打开 SSE 连接
@@ -75,5 +78,4 @@ public interface Ai1SessionMessageService {
      * @param sessionIds 会话编号集合
      */
     void deleteSessionMessageListBySessionIds(Collection<Long> sessionIds);
-
 }

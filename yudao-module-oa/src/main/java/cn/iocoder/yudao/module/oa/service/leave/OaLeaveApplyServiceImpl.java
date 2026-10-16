@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.leave;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,11 +17,13 @@ import cn.iocoder.yudao.module.oa.controller.admin.leave.vo.OaLeaveApplySubmitRe
 import cn.iocoder.yudao.module.oa.dal.dataobject.leave.OaLeaveApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.leave.OaLeaveApplyMapper;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
-import cn.iocoder.yudao.module.oa.enums.leave.OaLeaveTypeEnum;
-import jakarta.annotation.Resource;
-import org.springframework.context.annotation.Lazy;
-import cn.iocoder.yudao.module.oa.service.attendance.OaAttendanceService;
 import cn.iocoder.yudao.module.oa.enums.attendance.OaAttendanceTypeEnum;
+import cn.iocoder.yudao.module.oa.enums.leave.OaLeaveTypeEnum;
+import cn.iocoder.yudao.module.oa.service.attendance.OaAttendanceService;
+
+import jakarta.annotation.Resource;
+
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -29,9 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-
 /**
  * 请假申请 Service 实现类
  *
@@ -41,27 +43,28 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
 
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private OaAttendanceService attendanceService;
 
-    @Resource
-    private OaLeaveApplyMapper leaveApplyMapper;
+    @Resource private OaLeaveApplyMapper leaveApplyMapper;
 
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createLeaveApply(OaLeaveApplySaveReqVO saveReqVO) {
         // 1. 计算并校验单次请假天数
-        Integer days = LocalDateTimeUtils.getDaysBetweenCeiling(saveReqVO.getStartTime(), saveReqVO.getEndTime());
+        Integer days =
+                LocalDateTimeUtils.getDaysBetweenCeiling(
+                        saveReqVO.getStartTime(), saveReqVO.getEndTime());
         validateLeaveApplyDays(saveReqVO.getType(), days);
 
         // 2. 转换请假内容，保存草稿
-        OaLeaveApplyDO leaveApply = BeanUtils.toBean(saveReqVO, OaLeaveApplyDO.class)
-                .setId(null).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
-                .setDays(days);
+        OaLeaveApplyDO leaveApply =
+                BeanUtils.toBean(saveReqVO, OaLeaveApplyDO.class)
+                        .setId(null)
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
+                        .setDays(days);
         leaveApplyMapper.insert(leaveApply);
         return leaveApply.getId();
     }
@@ -72,12 +75,13 @@ public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
         // 1.1 校验申请可修改
         validateLeaveApplyEditable(saveReqVO.getId(), userId);
         // 1.2 计算并校验单次请假天数
-        Integer days = LocalDateTimeUtils.getDaysBetweenCeiling(saveReqVO.getStartTime(), saveReqVO.getEndTime());
+        Integer days =
+                LocalDateTimeUtils.getDaysBetweenCeiling(
+                        saveReqVO.getStartTime(), saveReqVO.getEndTime());
         validateLeaveApplyDays(saveReqVO.getType(), days);
 
         // 2. 更新请假申请
-        OaLeaveApplyDO leaveApply = BeanUtils.toBean(saveReqVO, OaLeaveApplyDO.class)
-                .setDays(days);
+        OaLeaveApplyDO leaveApply = BeanUtils.toBean(saveReqVO, OaLeaveApplyDO.class).setDays(days);
         leaveApplyMapper.updateById(leaveApply);
     }
 
@@ -90,18 +94,28 @@ public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
         validateLeaveApplyDays(leaveApply.getType(), leaveApply.getDays());
 
         // 2. 更新为审批中
-        leaveApplyMapper.updateById(new OaLeaveApplyDO().setId(leaveApply.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        leaveApplyMapper.updateById(
+                new OaLeaveApplyDO()
+                        .setId(leaveApply.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
         variables.put("days", leaveApply.getDays());
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.LEAVE_APPLY)
-                        .setBusinessKey(leaveApply.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.LEAVE_APPLY)
+                                .setBusinessKey(leaveApply.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        leaveApplyMapper.updateById(new OaLeaveApplyDO().setId(leaveApply.getId()).setProcessInstanceId(processInstanceId));
+        leaveApplyMapper.updateById(
+                new OaLeaveApplyDO()
+                        .setId(leaveApply.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -110,12 +124,14 @@ public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
     }
 
     @Override
-    public PageResult<OaLeaveApplyDO> getLeaveApplyPage(Long userId, OaLeaveApplyPageReqVO pageReqVO) {
+    public PageResult<OaLeaveApplyDO> getLeaveApplyPage(
+            Long userId, OaLeaveApplyPageReqVO pageReqVO) {
         return leaveApplyMapper.selectPage(userId, pageReqVO);
     }
 
     @Override
-    public Map<Long, Integer> getApprovedLeaveDaysMap(Collection<Long> userIds, LocalDateTime[] startTime) {
+    public Map<Long, Integer> getApprovedLeaveDaysMap(
+            Collection<Long> userIds, LocalDateTime[] startTime) {
         if (CollUtil.isEmpty(userIds)) {
             return Collections.emptyMap();
         }
@@ -147,8 +163,10 @@ public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
 
         // 3. 审批通过后生成考勤明细
         if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())) {
-            attendanceService.createApplyAttendance(Long.valueOf(apply.getCreator()),
-                    OaAttendanceTypeEnum.LEAVE, apply.getStartTime());
+            attendanceService.createApplyAttendance(
+                    Long.valueOf(apply.getCreator()),
+                    OaAttendanceTypeEnum.LEAVE,
+                    apply.getStartTime());
         }
     }
 
@@ -170,7 +188,8 @@ public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
             throw exception(APPLY_ACCESS_DENIED);
         }
         // 3. 只有未提交草稿允许修改或提交
-        if (ObjUtil.notEqual(leaveApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                leaveApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(APPLY_STATUS_INVALID);
         }
         return leaveApply;
@@ -190,5 +209,4 @@ public class OaLeaveApplyServiceImpl implements OaLeaveApplyService {
         }
         return leaveApply;
     }
-
 }

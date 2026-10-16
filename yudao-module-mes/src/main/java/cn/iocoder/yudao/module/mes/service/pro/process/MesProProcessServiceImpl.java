@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.process;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -10,7 +13,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.pro.process.vo.MesProProcess
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.process.MesProProcessDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.process.MesProProcessMapper;
 import cn.iocoder.yudao.module.mes.service.pro.route.MesProRouteProcessService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +24,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 生产工序 Service 实现类
@@ -32,14 +34,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProProcessServiceImpl implements MesProProcessService {
 
-    @Resource
-    private MesProProcessMapper processMapper;
+    @Resource private MesProProcessMapper processMapper;
 
-    @Resource
-    private MesProProcessContentService processContentService;
-    @Resource
-    @Lazy
-    private MesProRouteProcessService routeProcessService;
+    @Resource private MesProProcessContentService processContentService;
+    @Resource @Lazy private MesProRouteProcessService routeProcessService;
 
     @Override
     public Long createProcess(MesProProcessSaveReqVO createReqVO) {
@@ -153,5 +151,4 @@ public class MesProProcessServiceImpl implements MesProProcessService {
     public List<MesProProcessDO> getProcessListByStatus(Integer status) {
         return processMapper.selectListByStatus(status);
     }
-
 }

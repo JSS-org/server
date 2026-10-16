@@ -55,6 +55,6 @@ public interface MesWmProductProduceLineService {
      * @param pageReqVO 分页查询参数
      * @return 行分页列表
      */
-    PageResult<MesWmProductProduceLineDO> getProductProduceLinePage(MesWmProductProduceLinePageReqVO pageReqVO);
-
+    PageResult<MesWmProductProduceLineDO> getProductProduceLinePage(
+            MesWmProductProduceLinePageReqVO pageReqVO);
 }

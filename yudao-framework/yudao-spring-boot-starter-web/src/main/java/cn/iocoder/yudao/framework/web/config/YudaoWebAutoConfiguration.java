@@ -8,16 +8,19 @@ import cn.iocoder.yudao.framework.web.core.filter.DemoFilter;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalResponseBodyHandler;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
+
 import com.google.common.collect.Maps;
+
 import jakarta.servlet.Filter;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.webmvc.autoconfigure.WebMvcRegistrations;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcRegistrations;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.AntPathMatcher;
@@ -56,9 +59,11 @@ public class YudaoWebAutoConfiguration {
             /**
              * 构建 prefix → 匹配条件的映射
              */
-            private Map<String, Predicate<Class<?>>> buildPathPrefixes(WebProperties webProperties) {
+            private Map<String, Predicate<Class<?>>> buildPathPrefixes(
+                    WebProperties webProperties) {
                 AntPathMatcher antPathMatcher = new AntPathMatcher(".");
-                Map<String, Predicate<Class<?>>> pathPrefixes = Maps.newLinkedHashMapWithExpectedSize(2);
+                Map<String, Predicate<Class<?>>> pathPrefixes =
+                        Maps.newLinkedHashMapWithExpectedSize(2);
                 putPathPrefix(pathPrefixes, webProperties.getAdminApi(), antPathMatcher);
                 putPathPrefix(pathPrefixes, webProperties.getAppApi(), antPathMatcher);
                 return pathPrefixes;
@@ -67,15 +72,20 @@ public class YudaoWebAutoConfiguration {
             /**
              * 设置 API 前缀，仅仅匹配 controller 包下的
              */
-            private void putPathPrefix(Map<String, Predicate<Class<?>>> pathPrefixes, WebProperties.Api api, AntPathMatcher matcher) {
+            private void putPathPrefix(
+                    Map<String, Predicate<Class<?>>> pathPrefixes,
+                    WebProperties.Api api,
+                    AntPathMatcher matcher) {
                 if (api == null || StrUtil.isEmpty(api.getPrefix())) {
                     return;
                 }
-                pathPrefixes.put(api.getPrefix(), // api 前缀
-                        clazz -> clazz.isAnnotationPresent(RestController.class)
-                                && matcher.match(api.getController(), clazz.getPackage().getName()));
+                pathPrefixes.put(
+                        api.getPrefix(), // api 前缀
+                        clazz ->
+                                clazz.isAnnotationPresent(RestController.class)
+                                        && matcher.match(
+                                                api.getController(), clazz.getPackage().getName()));
             }
-
         };
     }
 
@@ -122,7 +132,8 @@ public class YudaoWebAutoConfiguration {
      */
     @Bean
     public FilterRegistrationBean<CacheRequestBodyFilter> requestBodyCacheFilter() {
-        return createFilterBean(new CacheRequestBodyFilter(), WebFilterOrderEnum.REQUEST_BODY_CACHE_FILTER);
+        return createFilterBean(
+                new CacheRequestBodyFilter(), WebFilterOrderEnum.REQUEST_BODY_CACHE_FILTER);
     }
 
     /**
@@ -134,7 +145,8 @@ public class YudaoWebAutoConfiguration {
         return createFilterBean(new DemoFilter(), WebFilterOrderEnum.DEMO_FILTER);
     }
 
-    public static <T extends Filter> FilterRegistrationBean<T> createFilterBean(T filter, Integer order) {
+    public static <T extends Filter> FilterRegistrationBean<T> createFilterBean(
+            T filter, Integer order) {
         FilterRegistrationBean<T> bean = new FilterRegistrationBean<>(filter);
         bean.setOrder(order);
         return bean;
@@ -150,5 +162,4 @@ public class YudaoWebAutoConfiguration {
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder.build();
     }
-
 }

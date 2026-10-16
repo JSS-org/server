@@ -6,8 +6,10 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.pay.controller.admin.refund.vo.PayRefundExportReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.refund.vo.PayRefundPageReqVO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -19,23 +21,26 @@ public interface PayRefundMapper extends BaseMapperX<PayRefundDO> {
         return selectCount(PayRefundDO::getAppId, appId);
     }
 
-    default  PayRefundDO selectByAppIdAndMerchantRefundId(Long appId, String merchantRefundId) {
-        return selectOne(new LambdaQueryWrapperX<PayRefundDO>()
-                .eq(PayRefundDO::getAppId, appId)
-                .eq(PayRefundDO::getMerchantRefundId, merchantRefundId));
+    default PayRefundDO selectByAppIdAndMerchantRefundId(Long appId, String merchantRefundId) {
+        return selectOne(
+                new LambdaQueryWrapperX<PayRefundDO>()
+                        .eq(PayRefundDO::getAppId, appId)
+                        .eq(PayRefundDO::getMerchantRefundId, merchantRefundId));
     }
 
     default Long selectCountByAppIdAndOrderId(Long appId, Long orderId, Integer status) {
-        return selectCount(new LambdaQueryWrapperX<PayRefundDO>()
-                .eq(PayRefundDO::getAppId, appId)
-                .eq(PayRefundDO::getOrderId, orderId)
-                .eq(PayRefundDO::getStatus, status));
+        return selectCount(
+                new LambdaQueryWrapperX<PayRefundDO>()
+                        .eq(PayRefundDO::getAppId, appId)
+                        .eq(PayRefundDO::getOrderId, orderId)
+                        .eq(PayRefundDO::getStatus, status));
     }
 
-    default  PayRefundDO selectByAppIdAndNo(Long appId, String no) {
-        return selectOne(new LambdaQueryWrapperX<PayRefundDO>()
-                .eq(PayRefundDO::getAppId, appId)
-                .eq(PayRefundDO::getNo, no));
+    default PayRefundDO selectByAppIdAndNo(Long appId, String no) {
+        return selectOne(
+                new LambdaQueryWrapperX<PayRefundDO>()
+                        .eq(PayRefundDO::getAppId, appId)
+                        .eq(PayRefundDO::getNo, no));
     }
 
     default PayRefundDO selectByNo(String no) {
@@ -43,8 +48,11 @@ public interface PayRefundMapper extends BaseMapperX<PayRefundDO> {
     }
 
     default int updateByIdAndStatus(Long id, Integer status, PayRefundDO update) {
-        return update(update, new LambdaQueryWrapper<PayRefundDO>()
-                .eq(PayRefundDO::getId, id).eq(PayRefundDO::getStatus, status));
+        return update(
+                update,
+                new LambdaQueryWrapper<PayRefundDO>()
+                        .eq(PayRefundDO::getId, id)
+                        .eq(PayRefundDO::getStatus, status));
     }
 
     /**
@@ -57,38 +65,49 @@ public interface PayRefundMapper extends BaseMapperX<PayRefundDO> {
      * @param update 更新对象
      * @return 更新数量
      */
-    default int updateByIdAndStatusAndClearChannelResult(Long id, Integer status, PayRefundDO update) {
-        return update(update, new LambdaUpdateWrapper<PayRefundDO>()
-                .eq(PayRefundDO::getId, id).eq(PayRefundDO::getStatus, status)
-                .set(PayRefundDO::getChannelRefundNo, null).set(PayRefundDO::getSuccessTime, null)
-                .set(PayRefundDO::getChannelErrorCode, null).set(PayRefundDO::getChannelErrorMsg, null)
-                .set(PayRefundDO::getChannelNotifyData, null));
+    default int updateByIdAndStatusAndClearChannelResult(
+            Long id, Integer status, PayRefundDO update) {
+        return update(
+                update,
+                new LambdaUpdateWrapper<PayRefundDO>()
+                        .eq(PayRefundDO::getId, id)
+                        .eq(PayRefundDO::getStatus, status)
+                        .set(PayRefundDO::getChannelRefundNo, null)
+                        .set(PayRefundDO::getSuccessTime, null)
+                        .set(PayRefundDO::getChannelErrorCode, null)
+                        .set(PayRefundDO::getChannelErrorMsg, null)
+                        .set(PayRefundDO::getChannelNotifyData, null));
     }
 
     default PageResult<PayRefundDO> selectPage(PayRefundPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<PayRefundDO>()
-                .eqIfPresent(PayRefundDO::getAppId, reqVO.getAppId())
-                .eqIfPresent(PayRefundDO::getChannelCode, reqVO.getChannelCode())
-                .likeIfPresent(PayRefundDO::getMerchantOrderId, reqVO.getMerchantOrderId())
-                .likeIfPresent(PayRefundDO::getMerchantRefundId, reqVO.getMerchantRefundId())
-                .likeIfPresent(PayRefundDO::getChannelOrderNo, reqVO.getChannelOrderNo())
-                .likeIfPresent(PayRefundDO::getChannelRefundNo, reqVO.getChannelRefundNo())
-                .eqIfPresent(PayRefundDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(PayRefundDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(PayRefundDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<PayRefundDO>()
+                        .eqIfPresent(PayRefundDO::getAppId, reqVO.getAppId())
+                        .eqIfPresent(PayRefundDO::getChannelCode, reqVO.getChannelCode())
+                        .likeIfPresent(PayRefundDO::getMerchantOrderId, reqVO.getMerchantOrderId())
+                        .likeIfPresent(
+                                PayRefundDO::getMerchantRefundId, reqVO.getMerchantRefundId())
+                        .likeIfPresent(PayRefundDO::getChannelOrderNo, reqVO.getChannelOrderNo())
+                        .likeIfPresent(PayRefundDO::getChannelRefundNo, reqVO.getChannelRefundNo())
+                        .eqIfPresent(PayRefundDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(PayRefundDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(PayRefundDO::getId));
     }
 
     default List<PayRefundDO> selectList(PayRefundExportReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<PayRefundDO>()
-                .eqIfPresent(PayRefundDO::getAppId, reqVO.getAppId())
-                .eqIfPresent(PayRefundDO::getChannelCode, reqVO.getChannelCode())
-                .likeIfPresent(PayRefundDO::getMerchantOrderId, reqVO.getMerchantOrderId())
-                .likeIfPresent(PayRefundDO::getMerchantRefundId, reqVO.getMerchantRefundId())
-                .likeIfPresent(PayRefundDO::getChannelOrderNo, reqVO.getChannelOrderNo())
-                .likeIfPresent(PayRefundDO::getChannelRefundNo, reqVO.getChannelRefundNo())
-                .eqIfPresent(PayRefundDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(PayRefundDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(PayRefundDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<PayRefundDO>()
+                        .eqIfPresent(PayRefundDO::getAppId, reqVO.getAppId())
+                        .eqIfPresent(PayRefundDO::getChannelCode, reqVO.getChannelCode())
+                        .likeIfPresent(PayRefundDO::getMerchantOrderId, reqVO.getMerchantOrderId())
+                        .likeIfPresent(
+                                PayRefundDO::getMerchantRefundId, reqVO.getMerchantRefundId())
+                        .likeIfPresent(PayRefundDO::getChannelOrderNo, reqVO.getChannelOrderNo())
+                        .likeIfPresent(PayRefundDO::getChannelRefundNo, reqVO.getChannelRefundNo())
+                        .eqIfPresent(PayRefundDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(PayRefundDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(PayRefundDO::getId));
     }
 
     default List<PayRefundDO> selectListByStatus(Integer status) {

@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.oa.service.vehicle;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.apply.OaVehicleApplyPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.apply.OaVehicleApplySaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleApplyDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 用车申请 Service 接口
@@ -68,7 +69,8 @@ public interface OaVehicleApplyService {
      * @param expectedReturnStatus 原还车状态
      * @param returnStatus 新还车状态
      */
-    void updateVehicleApplyReturnStatus(Long id, Integer expectedReturnStatus, Integer returnStatus);
+    void updateVehicleApplyReturnStatus(
+            Long id, Integer expectedReturnStatus, Integer returnStatus);
 
     /**
      * 回写用车申请审批结果
@@ -93,7 +95,8 @@ public interface OaVehicleApplyService {
      * @param pageReqVO 分页条件
      * @return 用车申请分页
      */
-    PageResult<OaVehicleApplyDO> getVehicleApplyPage(Long userId, OaVehicleApplyPageReqVO pageReqVO);
+    PageResult<OaVehicleApplyDO> getVehicleApplyPage(
+            Long userId, OaVehicleApplyPageReqVO pageReqVO);
 
     /**
      * 获得指定编号的用车申请列表
@@ -129,5 +132,4 @@ public interface OaVehicleApplyService {
      * @return 单据数量
      */
     Long getVehicleApplyCountByVehicleId(Long id);
-
 }

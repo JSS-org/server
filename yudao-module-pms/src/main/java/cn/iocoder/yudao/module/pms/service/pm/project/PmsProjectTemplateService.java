@@ -49,5 +49,4 @@ public interface PmsProjectTemplateService {
      * @return 项目模板分页
      */
     PageResult<PmsProjectTemplateDO> getProjectTemplatePage(PmsProjectTemplatePageReqVO pageReqVO);
-
 }

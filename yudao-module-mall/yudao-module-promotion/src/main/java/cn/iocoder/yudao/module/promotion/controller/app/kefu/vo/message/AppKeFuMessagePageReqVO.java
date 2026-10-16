@@ -1,15 +1,18 @@
 package cn.iocoder.yudao.module.promotion.controller.app.kefu.vo.message;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "用户 App - 客服消息 Request VO")
 @Data
@@ -24,10 +27,12 @@ public class AppKeFuMessagePageReqVO {
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime createTime;
 
-    @Schema(description = "每次查询条数，最大值为 100", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
+    @Schema(
+            description = "每次查询条数，最大值为 100",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "10")
     @NotNull(message = "每次查询条数不能为空")
     @Min(value = 1, message = "每次查询条数最小值为 1")
     @Max(value = 200, message = "每次查询最大值为 200")
     private Integer limit = LIMIT;
-
 }

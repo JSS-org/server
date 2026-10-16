@@ -1,14 +1,18 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.interview;
 
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
+
 import cn.iocoder.yudao.module.hrm.enums.recruit.candidate.HrmRecruitInterviewResultEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
+import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 招聘面试结果 Request VO")
 @Data
@@ -33,8 +37,11 @@ public class HrmRecruitInterviewResultReqVO {
     @AssertTrue(message = "面试结果必须是通过、未通过或取消")
     @JsonIgnore
     public boolean isResultValid() {
-        return equalsAny(result, null, HrmRecruitInterviewResultEnum.PASS.getResult(),
-                HrmRecruitInterviewResultEnum.NOT_PASS.getResult(), HrmRecruitInterviewResultEnum.CANCEL.getResult());
+        return equalsAny(
+                result,
+                null,
+                HrmRecruitInterviewResultEnum.PASS.getResult(),
+                HrmRecruitInterviewResultEnum.NOT_PASS.getResult(),
+                HrmRecruitInterviewResultEnum.CANCEL.getResult());
     }
-
 }

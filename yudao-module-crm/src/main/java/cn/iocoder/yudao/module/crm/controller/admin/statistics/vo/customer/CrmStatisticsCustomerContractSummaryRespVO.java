@@ -1,7 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer;
 
-
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -31,18 +31,25 @@ public class CrmStatisticsCustomerContractSummaryRespVO {
 
     @Schema(description = "负责人编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long ownerUserId;
+
     @Schema(description = "负责人", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码")
     private String ownerUserName;
 
     @Schema(description = "创建人编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private String creator;
+
     @Schema(description = "创建人", requiredMode = Schema.RequiredMode.REQUIRED, example = "源码")
     private String creatorUserName;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-02-01 13:24:26")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-02-01 13:24:26")
     private LocalDateTime createTime;
 
-    @Schema(description = "下单日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-02-02 00:00:00")
+    @Schema(
+            description = "下单日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-02-02 00:00:00")
     private LocalDateTime orderDate;
-
 }

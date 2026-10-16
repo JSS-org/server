@@ -13,8 +13,11 @@ import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
+
 import org.jeecg.modules.jmreport.api.JmReportTokenServiceI;
 import org.springframework.http.HttpHeaders;
 
@@ -32,10 +35,12 @@ public class JmReportTokenServiceImpl implements JmReportTokenServiceI {
      * 积木 token head 头
      */
     private static final String JM_TOKEN_HEADER = "X-Access-Token";
+
     /**
      * auth 相关格式
      */
-    private static final String AUTHORIZATION_FORMAT = SecurityFrameworkUtils.AUTHORIZATION_BEARER + " %s";
+    private static final String AUTHORIZATION_FORMAT =
+            SecurityFrameworkUtils.AUTHORIZATION_BEARER + " %s";
 
     private final OAuth2TokenCommonApi oauth2TokenApi;
     private final PermissionCommonApi permissionApi;
@@ -56,7 +61,8 @@ public class JmReportTokenServiceImpl implements JmReportTokenServiceI {
 
         // 设置到 yudao 系统的 token
         HttpHeaders headers = new HttpHeaders();
-        headers.add(securityProperties.getTokenHeader(), String.format(AUTHORIZATION_FORMAT, token));
+        headers.add(
+                securityProperties.getTokenHeader(), String.format(AUTHORIZATION_FORMAT, token));
         return headers;
     }
 
@@ -114,8 +120,12 @@ public class JmReportTokenServiceImpl implements JmReportTokenServiceI {
             if (accessToken == null) {
                 return null;
             }
-            user = new LoginUser().setId(accessToken.getUserId()).setUserType(accessToken.getUserType())
-                    .setTenantId(accessToken.getTenantId()).setScopes(accessToken.getScopes());
+            user =
+                    new LoginUser()
+                            .setId(accessToken.getUserId())
+                            .setUserType(accessToken.getUserType())
+                            .setTenantId(accessToken.getTenantId())
+                            .setScopes(accessToken.getScopes());
         } catch (ServiceException ignored) {
             // do nothing：如果报错，说明认证失败，则返回 false 即可
         }
@@ -144,7 +154,8 @@ public class JmReportTokenServiceImpl implements JmReportTokenServiceI {
         // 适配：如果是本系统的管理员，则转换成 jimu 报表的管理员
         Long userId = SecurityFrameworkUtils.getLoginUserId();
         return permissionApi.hasAnyRoles(userId, RoleCodeEnum.SUPER_ADMIN.getCode())
-                ? new String[]{"admin"} : null;
+                ? new String[] {"admin"}
+                : null;
     }
 
     @Override
@@ -171,19 +182,18 @@ public class JmReportTokenServiceImpl implements JmReportTokenServiceI {
         // 如果不处理，会碰到 https://t.zsxq.com/yzlkA 反馈的问题
         Long userId = SecurityFrameworkUtils.getLoginUserId();
         if (permissionApi.hasAnyRoles(userId, RoleCodeEnum.SUPER_ADMIN.getCode())) {
-            return new String[]{
-                    "drag:datasource:testConnection",  // 数据库连接测试
-                    "drag:datasource:saveOrUpate",     // 数据源保存
-                    "drag:datasource:delete",          // 数据源删除
-                    "drag:analysis:sql",               // SQL解析
-                    "drag:design:getTotalData",        // 展示Online表单数据
-                    "drag:dataset:save",               // 数据集保存
-                    "drag:dataset:delete",             // 数据集删除
-                    "onl:drag:clear:recovery",         // 清空回收站
-                    "onl:drag:page:delete"             // 数据删除
+            return new String[] {
+                "drag:datasource:testConnection", // 数据库连接测试
+                "drag:datasource:saveOrUpate", // 数据源保存
+                "drag:datasource:delete", // 数据源删除
+                "drag:analysis:sql", // SQL解析
+                "drag:design:getTotalData", // 展示Online表单数据
+                "drag:dataset:save", // 数据集保存
+                "drag:dataset:delete", // 数据集删除
+                "onl:drag:clear:recovery", // 清空回收站
+                "onl:drag:page:delete" // 数据删除
             };
         }
         return null;
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.enums.spu;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,17 +15,18 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum ProductSpuStatusEnum implements ArrayValuable<Integer> {
-
     RECYCLE(-1, "回收站"),
     DISABLE(0, "下架"),
     ENABLE(1, "上架");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ProductSpuStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ProductSpuStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 状态
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -44,5 +46,4 @@ public enum ProductSpuStatusEnum implements ArrayValuable<Integer> {
     public static boolean isEnable(Integer status) {
         return ENABLE.getStatus().equals(status);
     }
-
 }

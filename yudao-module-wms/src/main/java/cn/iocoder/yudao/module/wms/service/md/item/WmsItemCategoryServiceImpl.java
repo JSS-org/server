@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,7 +11,9 @@ import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.category.WmsItemC
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.category.WmsItemCategorySaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemCategoryDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.md.item.WmsItemCategoryMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -16,10 +22,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 商品分类 Service 实现类
@@ -30,11 +32,9 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsItemCategoryServiceImpl implements WmsItemCategoryService {
 
-    @Resource
-    private WmsItemCategoryMapper categoryMapper;
+    @Resource private WmsItemCategoryMapper categoryMapper;
 
-    @Resource
-    private WmsItemService itemService;
+    @Resource private WmsItemService itemService;
 
     @Override
     public Long createItemCategory(WmsItemCategorySaveReqVO createReqVO) {
@@ -189,5 +189,4 @@ public class WmsItemCategoryServiceImpl implements WmsItemCategoryService {
         }
         return ids;
     }
-
 }

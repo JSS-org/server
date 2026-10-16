@@ -7,6 +7,7 @@ import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.condition.IotCurrentTimeConditionMatcher;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotTimerConditionEvaluator;
+
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +35,8 @@ public class IotSceneRuleTimeHelper {
     /**
      * 时间格式化器 - HH:mm
      */
-    private static final DateTimeFormatter TIME_FORMATTER_SHORT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FORMATTER_SHORT =
+            DateTimeFormatter.ofPattern("HH:mm");
 
     /**
      * 判断是否为日期时间操作符
@@ -68,7 +70,8 @@ public class IotSceneRuleTimeHelper {
      * @param param        参数值
      * @return 是否匹配
      */
-    public static boolean executeTimeMatching(IotSceneRuleConditionOperatorEnum operatorEnum, String param) {
+    public static boolean executeTimeMatching(
+            IotSceneRuleConditionOperatorEnum operatorEnum, String param) {
         try {
             LocalDateTime now = LocalDateTime.now();
             if (isDateTimeOperator(operatorEnum)) {
@@ -80,7 +83,11 @@ public class IotSceneRuleTimeHelper {
                 return matchTime(now.toLocalTime(), operatorEnum, param);
             }
         } catch (Exception e) {
-            log.error("[executeTimeMatching][operatorEnum({}) param({}) 时间匹配异常]", operatorEnum, param, e);
+            log.error(
+                    "[executeTimeMatching][operatorEnum({}) param({}) 时间匹配异常]",
+                    operatorEnum,
+                    param,
+                    e);
             return false;
         }
     }
@@ -94,8 +101,8 @@ public class IotSceneRuleTimeHelper {
      * @return 是否匹配
      */
     @SuppressWarnings("EnhancedSwitchMigration")
-    public static boolean matchDateTime(long currentTimestamp, IotSceneRuleConditionOperatorEnum operatorEnum,
-                                        String param) {
+    public static boolean matchDateTime(
+            long currentTimestamp, IotSceneRuleConditionOperatorEnum operatorEnum, String param) {
         try {
             // DATE_TIME_BETWEEN 需要解析两个时间戳，单独处理
             if (operatorEnum == IotSceneRuleConditionOperatorEnum.DATE_TIME_BETWEEN) {
@@ -113,7 +120,8 @@ public class IotSceneRuleTimeHelper {
                     return false;
             }
         } catch (Exception e) {
-            log.error("[matchDateTime][operatorEnum({}) param({}) 日期时间匹配异常]", operatorEnum, param, e);
+            log.error(
+                    "[matchDateTime][operatorEnum({}) param({}) 日期时间匹配异常]", operatorEnum, param, e);
             return false;
         }
     }
@@ -145,8 +153,8 @@ public class IotSceneRuleTimeHelper {
      * @return 是否匹配
      */
     @SuppressWarnings("EnhancedSwitchMigration")
-    public static boolean matchTime(LocalTime currentTime, IotSceneRuleConditionOperatorEnum operatorEnum,
-                                    String param) {
+    public static boolean matchTime(
+            LocalTime currentTime, IotSceneRuleConditionOperatorEnum operatorEnum, String param) {
         try {
             // TIME_BETWEEN 需要解析两个时间，单独处理
             if (operatorEnum == IotSceneRuleConditionOperatorEnum.TIME_BETWEEN) {
@@ -210,5 +218,4 @@ public class IotSceneRuleTimeHelper {
             throw new IllegalArgumentException("时间格式无效: " + timeStr, e);
         }
     }
-
 }

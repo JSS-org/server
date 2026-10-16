@@ -8,6 +8,4 @@ import lombok.Data;
  * 双向建立好友关系后，推送给 A、B 双方多端；前端拉取好友信息入库
  */
 @Data
-public class FriendAddNotification extends BaseFriendNotification {
-
-}
+public class FriendAddNotification extends BaseFriendNotification {}

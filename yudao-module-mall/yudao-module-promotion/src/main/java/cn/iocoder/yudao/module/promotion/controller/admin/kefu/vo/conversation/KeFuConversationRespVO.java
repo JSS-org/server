@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.kefu.vo.conversation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,8 +15,13 @@ public class KeFuConversationRespVO {
 
     @Schema(description = "会话所属用户", requiredMode = Schema.RequiredMode.REQUIRED, example = "8300")
     private Long userId;
-    @Schema(description = "会话所属用户头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://yudao.com/images/avatar.jpg")
+
+    @Schema(
+            description = "会话所属用户头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://yudao.com/images/avatar.jpg")
     private String userAvatar;
+
     @Schema(description = "会话所属用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
     private String userNickname;
 
@@ -42,5 +48,4 @@ public class KeFuConversationRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

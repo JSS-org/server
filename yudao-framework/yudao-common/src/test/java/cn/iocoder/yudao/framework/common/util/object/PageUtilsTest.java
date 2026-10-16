@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.framework.common.util.object;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link PageUtils} 的单元测试
@@ -64,5 +65,4 @@ public class PageUtilsTest {
         assertEquals(3L, result.getTotal());
         assertEquals(Arrays.asList(1, 2, 3), result.getList());
     }
-
 }

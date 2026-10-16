@@ -6,12 +6,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.qc.ipqc.MesQcIpqcDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.iqc.MesQcIqcDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.oqc.MesQcOqcDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.rqc.MesQcRqcDO;
+import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
-import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
 
 /**
  * MES 检验结果记录 DO
@@ -31,12 +33,13 @@ public class MesQcIndicatorResultDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 样品编号
      */
     private String code;
+
     /**
      * 关联质检单 ID（IQC/IPQC/OQC/RQC 的 id）
      *
@@ -46,6 +49,7 @@ public class MesQcIndicatorResultDO extends BaseDO {
      * 关联 RQC {@link MesQcRqcDO#getId()}
      */
     private Long qcId;
+
     /**
      * 质检类型
      *
@@ -53,19 +57,21 @@ public class MesQcIndicatorResultDO extends BaseDO {
      * 枚举 {@link MesQcTypeEnum}
      */
     private Integer qcType;
+
     /**
      * 产品物料 ID
      *
      * 关联 {@link MesMdItemDO#getId()}
      */
     private Long itemId;
+
     /**
      * 物资 SN
      */
     private String sn;
+
     /**
      * 备注
      */
     private String remark;
-
 }

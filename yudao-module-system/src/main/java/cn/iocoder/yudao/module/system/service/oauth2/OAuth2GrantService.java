@@ -29,8 +29,8 @@ public interface OAuth2GrantService {
      * @param scopes 授权范围
      * @return 访问令牌
      */
-    OAuth2AccessTokenDO grantImplicit(Long userId, Integer userType,
-                                      String clientId, List<String> scopes);
+    OAuth2AccessTokenDO grantImplicit(
+            Long userId, Integer userType, String clientId, List<String> scopes);
 
     /**
      * 授权码模式，第一阶段，获得 code 授权码
@@ -45,9 +45,13 @@ public interface OAuth2GrantService {
      * @param state 状态
      * @return 授权码
      */
-    String grantAuthorizationCodeForCode(Long userId, Integer userType,
-                                         String clientId, List<String> scopes,
-                                         String redirectUri, String state);
+    String grantAuthorizationCodeForCode(
+            Long userId,
+            Integer userType,
+            String clientId,
+            List<String> scopes,
+            String redirectUri,
+            String state);
 
     /**
      * 授权码模式，第二阶段，获得 accessToken 访问令牌
@@ -60,8 +64,8 @@ public interface OAuth2GrantService {
      * @param state 状态
      * @return 访问令牌
      */
-    OAuth2AccessTokenDO grantAuthorizationCodeForAccessToken(String clientId, String code,
-                                                             String redirectUri, String state);
+    OAuth2AccessTokenDO grantAuthorizationCodeForAccessToken(
+            String clientId, String code, String redirectUri, String state);
 
     /**
      * 密码模式
@@ -74,8 +78,8 @@ public interface OAuth2GrantService {
      * @param scopes 授权范围
      * @return 访问令牌
      */
-    OAuth2AccessTokenDO grantPassword(String username, String password,
-                                      String clientId, List<String> scopes);
+    OAuth2AccessTokenDO grantPassword(
+            String username, String password, String clientId, List<String> scopes);
 
     /**
      * 刷新模式
@@ -109,5 +113,4 @@ public interface OAuth2GrantService {
      * @return 是否移除到
      */
     boolean revokeToken(String clientId, String accessToken);
-
 }

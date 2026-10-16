@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sop.MesMdProductSopPageReqVO;
@@ -7,14 +10,13 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sop.MesMdProductS
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdProductSopDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.item.MesMdProductSopMapper;
 import cn.iocoder.yudao.module.mes.service.pro.process.MesProProcessService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 产品SOP Service 实现类
@@ -25,11 +27,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdProductSopServiceImpl implements MesMdProductSopService {
 
-    @Resource
-    private MesMdProductSopMapper productSopMapper;
+    @Resource private MesMdProductSopMapper productSopMapper;
 
-    @Resource
-    private MesProProcessService processService;
+    @Resource private MesProProcessService processService;
 
     @Override
     public Long createProductSop(MesMdProductSopSaveReqVO createReqVO) {
@@ -103,5 +103,4 @@ public class MesMdProductSopServiceImpl implements MesMdProductSopService {
     public void deleteProductSopByItemId(Long itemId) {
         productSopMapper.deleteByItemId(itemId);
     }
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.trade.service.order.handler;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
@@ -16,13 +18,13 @@ import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageRecordBizTypeEnum;
 import cn.iocoder.yudao.module.trade.service.brokerage.BrokerageRecordService;
 import cn.iocoder.yudao.module.trade.service.brokerage.BrokerageUserService;
 import cn.iocoder.yudao.module.trade.service.brokerage.bo.BrokerageAddReqBO;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 /**
  * 订单分销的 {@link TradeOrderHandler} 实现类
@@ -32,17 +34,12 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Component
 public class TradeBrokerageOrderHandler implements TradeOrderHandler {
 
-    @Resource
-    private MemberUserApi memberUserApi;
-    @Resource
-    private ProductSpuApi productSpuApi;
-    @Resource
-    private ProductSkuApi productSkuApi;
+    @Resource private MemberUserApi memberUserApi;
+    @Resource private ProductSpuApi productSpuApi;
+    @Resource private ProductSkuApi productSkuApi;
 
-    @Resource
-    private BrokerageRecordService brokerageRecordService;
-    @Resource
-    private BrokerageUserService brokerageUserService;
+    @Resource private BrokerageRecordService brokerageRecordService;
+    @Resource private BrokerageUserService brokerageUserService;
 
     @Override
     public void beforeOrderCreate(TradeOrderDO order, List<TradeOrderItemDO> orderItems) {
@@ -84,7 +81,8 @@ public class TradeBrokerageOrderHandler implements TradeOrderHandler {
         if (order.getBrokerageUserId() == null) {
             return;
         }
-        brokerageRecordService.cancelBrokerage(BrokerageRecordBizTypeEnum.ORDER, String.valueOf(orderItem.getId()));
+        brokerageRecordService.cancelBrokerage(
+                BrokerageRecordBizTypeEnum.ORDER, String.valueOf(orderItem.getId()));
     }
 
     /**
@@ -100,21 +98,27 @@ public class TradeBrokerageOrderHandler implements TradeOrderHandler {
      * @param brokerageUserId 订单推广人
      * @param orderItems 订单项
      */
-    protected void addBrokerage(Long userId, Long brokerageUserId, List<TradeOrderItemDO> orderItems) {
+    protected void addBrokerage(
+            Long userId, Long brokerageUserId, List<TradeOrderItemDO> orderItems) {
         MemberUserRespDTO user = memberUserApi.getUser(userId);
         Assert.notNull(user);
-        Map<Long, ProductSpuRespDTO> spusMap = productSpuApi.getSpuMap(convertList(orderItems, TradeOrderItemDO::getSpuId));
-        Map<Long, ProductSkuRespDTO> skusMap = productSkuApi.getSkuMap(convertList(orderItems, TradeOrderItemDO::getSkuId));
+        Map<Long, ProductSpuRespDTO> spusMap =
+                productSpuApi.getSpuMap(convertList(orderItems, TradeOrderItemDO::getSpuId));
+        Map<Long, ProductSkuRespDTO> skusMap =
+                productSkuApi.getSkuMap(convertList(orderItems, TradeOrderItemDO::getSkuId));
 
         // 每一个订单项，都会去生成分销记录
-        List<BrokerageAddReqBO> addList = convertList(orderItems, item -> {
-            ProductSpuRespDTO spu = spusMap.get(item.getSpuId());
-            Assert.notNull(spu);
-            ProductSkuRespDTO sku = skusMap.get(item.getSkuId());
-            Assert.notNull(sku);
-            return TradeOrderConvert.INSTANCE.convert(user, item, spu, sku);
-        });
-        brokerageRecordService.addBrokerage(userId, brokerageUserId, BrokerageRecordBizTypeEnum.ORDER, addList);
+        List<BrokerageAddReqBO> addList =
+                convertList(
+                        orderItems,
+                        item -> {
+                            ProductSpuRespDTO spu = spusMap.get(item.getSpuId());
+                            Assert.notNull(spu);
+                            ProductSkuRespDTO sku = skusMap.get(item.getSkuId());
+                            Assert.notNull(sku);
+                            return TradeOrderConvert.INSTANCE.convert(user, item, spu, sku);
+                        });
+        brokerageRecordService.addBrokerage(
+                userId, brokerageUserId, BrokerageRecordBizTypeEnum.ORDER, addList);
     }
-
 }

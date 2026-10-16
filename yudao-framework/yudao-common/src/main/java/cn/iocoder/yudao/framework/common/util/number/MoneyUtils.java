@@ -69,8 +69,10 @@ public class MoneyUtils {
      * @param scale        保留小数位数
      * @param roundingMode 舍入模式
      */
-    public static BigDecimal calculateRatePrice(Number price, Number rate, int scale, RoundingMode roundingMode) {
-        return NumberUtil.toBigDecimal(price).multiply(NumberUtil.toBigDecimal(rate)) // 乘以
+    public static BigDecimal calculateRatePrice(
+            Number price, Number rate, int scale, RoundingMode roundingMode) {
+        return NumberUtil.toBigDecimal(price)
+                .multiply(NumberUtil.toBigDecimal(rate)) // 乘以
                 .divide(BigDecimal.valueOf(100), scale, roundingMode); // 除以 100
     }
 
@@ -105,7 +107,8 @@ public class MoneyUtils {
      * @return 格式化后的金额
      */
     public static BigDecimal priceScale(BigDecimal price) {
-        return (price == null ? BigDecimal.ZERO : price).setScale(PRICE_SCALE, RoundingMode.HALF_UP);
+        return (price == null ? BigDecimal.ZERO : price)
+                .setScale(PRICE_SCALE, RoundingMode.HALF_UP);
     }
 
     /**
@@ -160,5 +163,4 @@ public class MoneyUtils {
         }
         return price.multiply(percent).divide(PERCENT_100, PRICE_SCALE, RoundingMode.HALF_UP);
     }
-
 }

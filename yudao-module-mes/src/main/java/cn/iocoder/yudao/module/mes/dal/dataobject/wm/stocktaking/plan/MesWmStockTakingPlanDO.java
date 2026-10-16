@@ -2,14 +2,16 @@ package cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.plan;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmStockTakingTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
-import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
 
 /**
  * MES 盘点方案 DO
@@ -29,8 +31,7 @@ public class MesWmStockTakingPlanDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 方案编码
@@ -49,10 +50,12 @@ public class MesWmStockTakingPlanDO extends BaseDO {
      * 枚举 {@link MesWmStockTakingTypeEnum}
      */
     private Integer type;
+
     /**
      * 计划开始时间
      */
     private LocalDateTime startTime;
+
     /**
      * 计划结束时间
      */
@@ -62,6 +65,7 @@ public class MesWmStockTakingPlanDO extends BaseDO {
      * 是否盲盘
      */
     private Boolean blindFlag;
+
     /**
      * 是否冻结库存
      */
@@ -78,5 +82,4 @@ public class MesWmStockTakingPlanDO extends BaseDO {
      * 备注
      */
     private String remark;
-
 }

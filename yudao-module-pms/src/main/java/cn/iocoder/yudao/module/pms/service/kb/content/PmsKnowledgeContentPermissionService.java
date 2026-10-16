@@ -100,7 +100,8 @@ public interface PmsKnowledgeContentPermissionService {
      * @param userId 用户编号
      * @return 协作者列表
      */
-    List<PmsKnowledgeContentPermissionMemberDO> getContentPermissionMemberList(Long permissionId, Long userId);
+    List<PmsKnowledgeContentPermissionMemberDO> getContentPermissionMemberList(
+            Long permissionId, Long userId);
 
     /**
      * 获得当前用户对内容的协作等级，无权限时返回 {@code null}
@@ -120,7 +121,8 @@ public interface PmsKnowledgeContentPermissionService {
      * @param userId 用户编号
      * @return 内容权限编号到等级的映射
      */
-    Map<Long, Integer> getCurrentUserContentPermissionLevelMap(Collection<Long> permissionIds, Long libraryId, Long userId);
+    Map<Long, Integer> getCurrentUserContentPermissionLevelMap(
+            Collection<Long> permissionIds, Long libraryId, Long userId);
 
     /**
      * 获得当前用户在知识库中可读的内容权限编号集合
@@ -160,6 +162,6 @@ public interface PmsKnowledgeContentPermissionService {
      * @param userIds 用户编号集合
      * @param deptIds 部门编号集合
      */
-    void deleteContentPermissionMembersByLibraryId(Long libraryId, Collection<Long> userIds, Collection<Long> deptIds);
-
+    void deleteContentPermissionMembersByLibraryId(
+            Long libraryId, Collection<Long> userIds, Collection<Long> deptIds);
 }

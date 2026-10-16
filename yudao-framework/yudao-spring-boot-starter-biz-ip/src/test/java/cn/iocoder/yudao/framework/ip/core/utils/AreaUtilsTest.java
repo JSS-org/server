@@ -1,16 +1,16 @@
 package cn.iocoder.yudao.framework.ip.core.utils;
 
-
-import cn.iocoder.yudao.framework.ip.core.Area;
-import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import cn.iocoder.yudao.framework.ip.core.Area;
+import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 /**
  * {@link AreaUtils} 的单元测试
@@ -77,5 +77,4 @@ public class AreaUtilsTest {
         assertTrue(provinces.stream().anyMatch(area -> "香港特别行政区".equals(area.getName())));
         assertTrue(provinces.stream().anyMatch(area -> "澳门特别行政区".equals(area.getName())));
     }
-
 }

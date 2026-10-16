@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.ai1.service.agent;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai1.controller.admin.agent.vo.Ai1AgentPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.agent.vo.Ai1AgentSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI1 Agent Service 接口
@@ -137,5 +138,4 @@ public interface Ai1AgentService {
      * @param status 状态
      */
     void updateAgentStatus(Long id, Integer status);
-
 }

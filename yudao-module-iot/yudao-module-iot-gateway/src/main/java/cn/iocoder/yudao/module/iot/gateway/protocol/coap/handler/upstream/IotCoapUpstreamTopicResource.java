@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
@@ -25,8 +26,7 @@ public class IotCoapUpstreamTopicResource extends CoapResource {
     /**
      * 创建根资源（/topic）
      */
-    public IotCoapUpstreamTopicResource(String serverId,
-                                         IotCoapUpstreamHandler upstreamHandler) {
+    public IotCoapUpstreamTopicResource(String serverId, IotCoapUpstreamHandler upstreamHandler) {
         this(PATH, serverId, upstreamHandler);
         log.info("[IotCoapUpstreamTopicResource][创建 CoAP 上行 Topic 资源: /{}]", PATH);
     }
@@ -34,9 +34,8 @@ public class IotCoapUpstreamTopicResource extends CoapResource {
     /**
      * 创建子资源（动态路径）
      */
-    private IotCoapUpstreamTopicResource(String name,
-                                          String serverId,
-                                          IotCoapUpstreamHandler upstreamHandler) {
+    private IotCoapUpstreamTopicResource(
+            String name, String serverId, IotCoapUpstreamHandler upstreamHandler) {
         super(name);
         this.serverId = serverId;
         this.upstreamHandler = upstreamHandler;
@@ -62,5 +61,4 @@ public class IotCoapUpstreamTopicResource extends CoapResource {
     public void handlePUT(CoapExchange exchange) {
         upstreamHandler.handle(exchange);
     }
-
 }

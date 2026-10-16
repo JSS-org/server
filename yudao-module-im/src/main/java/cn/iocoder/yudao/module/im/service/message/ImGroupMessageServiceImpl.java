@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.im.service.message;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.BooleanUtil;
@@ -15,12 +19,14 @@ import cn.iocoder.yudao.module.im.controller.admin.message.vo.group.ImGroupMessa
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupDO;
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupMemberDO;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImGroupMessageDO;
+import cn.iocoder.yudao.module.im.dal.dataobject.message.content.QuoteMessage;
+import cn.iocoder.yudao.module.im.dal.dataobject.message.content.RecallMessage;
 import cn.iocoder.yudao.module.im.dal.mysql.message.ImGroupMessageMapper;
+import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
 import cn.iocoder.yudao.module.im.enums.ImConversationTypeEnum;
 import cn.iocoder.yudao.module.im.enums.group.ImGroupMemberRoleEnum;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageReceiptStatusEnum;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
-import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
 import cn.iocoder.yudao.module.im.framework.config.ImProperties;
 import cn.iocoder.yudao.module.im.service.conversation.ImConversationReadService;
 import cn.iocoder.yudao.module.im.service.group.ImGroupMemberService;
@@ -31,11 +37,12 @@ import cn.iocoder.yudao.module.im.service.websocket.ImWebSocketService;
 import cn.iocoder.yudao.module.im.service.websocket.notification.message.ImGroupMessageNotification;
 import cn.iocoder.yudao.module.im.service.websocket.notification.message.ImMessageReadNotification;
 import cn.iocoder.yudao.module.im.service.websocket.notification.message.ImMessageReceiptNotification;
-import cn.iocoder.yudao.module.im.dal.dataobject.message.content.QuoteMessage;
-import cn.iocoder.yudao.module.im.dal.dataobject.message.content.RecallMessage;
 import cn.iocoder.yudao.module.im.util.ImMessageUtils;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -44,10 +51,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
 
 /**
  * IM 群聊消息 Service 实现类
@@ -59,39 +62,37 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
 @Slf4j
 public class ImGroupMessageServiceImpl implements ImGroupMessageService {
 
-    @Resource
-    private ImGroupMessageMapper groupMessageMapper;
+    @Resource private ImGroupMessageMapper groupMessageMapper;
 
-    @Resource
-    private ImGroupService groupService;
-    @Resource
-    private ImGroupMemberService groupMemberService;
-    @Resource
-    private ImSensitiveWordService sensitiveWordService;
-    @Resource
-    private ImConversationReadService conversationReadService;
+    @Resource private ImGroupService groupService;
+    @Resource private ImGroupMemberService groupMemberService;
+    @Resource private ImSensitiveWordService sensitiveWordService;
+    @Resource private ImConversationReadService conversationReadService;
 
-    @Resource
-    private ImWebSocketService imWebSocketService;
+    @Resource private ImWebSocketService imWebSocketService;
 
-    @Resource
-    private ImProperties imProperties;
+    @Resource private ImProperties imProperties;
 
     @Override
     public ImGroupMessageDO sendGroupMessage(Long senderId, ImGroupMessageSendReqVO reqVO) {
         // 1.1 幂等校验：根据 senderId + clientMessageId 查重
-        ImGroupMessageDO existing = groupMessageMapper.selectBySenderIdAndClientMessageId(
-                senderId, reqVO.getClientMessageId());
+        ImGroupMessageDO existing =
+                groupMessageMapper.selectBySenderIdAndClientMessageId(
+                        senderId, reqVO.getClientMessageId());
         if (existing != null) {
-            log.info("[sendGroupMessage][幂等命中 senderId({}) clientMessageId({}) 已存在消息({})]",
-                    senderId, reqVO.getClientMessageId(), existing.getId());
+            log.info(
+                    "[sendGroupMessage][幂等命中 senderId({}) clientMessageId({}) 已存在消息({})]",
+                    senderId,
+                    reqVO.getClientMessageId(),
+                    existing.getId());
             return existing;
         }
         // 1.2 消息内容校验
         ImMessageUtils.validateUserMessageContent(reqVO.getType(), reqVO.getContent());
         // 1.3 校验群存在、发送人仍在群中
         ImGroupDO group = groupService.validateGroupExists(reqVO.getGroupId());
-        ImGroupMemberDO senderMember = groupMemberService.validateMemberInGroup(reqVO.getGroupId(), senderId);
+        ImGroupMemberDO senderMember =
+                groupMemberService.validateMemberInGroup(reqVO.getGroupId(), senderId);
         // 1.4 禁言校验
         validateMuteStatus(group, senderMember);
         // 1.5 文本消息敏感词过滤
@@ -100,51 +101,75 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         }
 
         // 2.1 固化发送当时可见成员快照：用户发送均为全员广播；getReceiverUserIds 兜底纳入发送者，钉死发送者必可见
-        List<Long> memberUserIds = groupMemberService.getActiveGroupMemberUserIdsByGroupId(reqVO.getGroupId());
+        List<Long> memberUserIds =
+                groupMemberService.getActiveGroupMemberUserIdsByGroupId(reqVO.getGroupId());
         Set<Long> receiverUserIds = getReceiverUserIds(null, senderId, memberUserIds);
         // 2.2 引用 quote 消息规范化（含可见性子集校验，防止定向消息内容被广播引用泄漏）
         reqVO.setContent(normalizeQuoteContent(reqVO, senderMember, receiverUserIds));
         // 2.3 构建并保存消息；唯一键冲突时回查已存在消息返回
-        ImGroupMessageDO message = BeanUtils.toBean(reqVO, ImGroupMessageDO.class, m -> m
-                .setSenderId(senderId).setStatus(ImMessageStatusEnum.NORMAL.getStatus()).setSendTime(LocalDateTime.now())
-                .setReceiverUserIds(new ArrayList<>(receiverUserIds))
-                .setReceiptStatus(resolveReceiptStatus(reqVO.getReceipt())));
+        ImGroupMessageDO message =
+                BeanUtils.toBean(
+                        reqVO,
+                        ImGroupMessageDO.class,
+                        m ->
+                                m.setSenderId(senderId)
+                                        .setStatus(ImMessageStatusEnum.NORMAL.getStatus())
+                                        .setSendTime(LocalDateTime.now())
+                                        .setReceiverUserIds(new ArrayList<>(receiverUserIds))
+                                        .setReceiptStatus(
+                                                resolveReceiptStatus(reqVO.getReceipt())));
         try {
             groupMessageMapper.insert(message);
         } catch (DuplicateKeyException e) {
-            log.warn("[sendGroupMessage][senderId({}) clientMessageId({}) 并发插入冲突，回查返回]",
+            log.warn(
+                    "[sendGroupMessage][senderId({}) clientMessageId({}) 并发插入冲突，回查返回]",
+                    senderId,
+                    reqVO.getClientMessageId());
+            return groupMessageMapper.selectBySenderIdAndClientMessageId(
                     senderId, reqVO.getClientMessageId());
-            return groupMessageMapper.selectBySenderIdAndClientMessageId(senderId, reqVO.getClientMessageId());
         }
 
         // 3. WebSocket 异步推送（快照内可见成员 + 发送方多端同步）
         ImGroupMessageNotification notification = ImGroupMessageNotification.ofSend(message);
-        imWebSocketService.sendNotificationAsync(receiverUserIds, ImConversationTypeEnum.GROUP.getType(),
-                notification.getType(), notification);
+        imWebSocketService.sendNotificationAsync(
+                receiverUserIds,
+                ImConversationTypeEnum.GROUP.getType(),
+                notification.getType(),
+                notification);
         return message;
     }
 
     @Override
     public ImGroupMessageDO sendGroupMessage(Long senderId, ImGroupMessageSendDTO dto) {
-        List<Long> memberUserIds = groupMemberService.getActiveGroupMemberUserIdsByGroupId(dto.getGroupId());
-        Set<Long> receiverUserIds = getReceiverUserIds(dto.getReceiverUserIds(), senderId, memberUserIds);
+        List<Long> memberUserIds =
+                groupMemberService.getActiveGroupMemberUserIdsByGroupId(dto.getGroupId());
+        Set<Long> receiverUserIds =
+                getReceiverUserIds(dto.getReceiverUserIds(), senderId, memberUserIds);
         return sendGroupMessage(senderId, receiverUserIds, dto);
     }
 
     @Override
-    public ImGroupMessageDO sendGroupMessage(Long senderId, Collection<Long> receiverUserIds, ImGroupMessageSendDTO dto) {
+    public ImGroupMessageDO sendGroupMessage(
+            Long senderId, Collection<Long> receiverUserIds, ImGroupMessageSendDTO dto) {
         // 1.1 content 序列化：null / String 透传，POJO 走 JSON
         Object payload = dto.getContent();
-        String contentString = payload == null || payload instanceof String
-                ? (String) payload
-                : JsonUtils.toJsonString(payload);
+        String contentString =
+                payload == null || payload instanceof String
+                        ? (String) payload
+                        : JsonUtils.toJsonString(payload);
         // 1.2 构建并保存消息
-        ImGroupMessageDO message = new ImGroupMessageDO().setClientMessageId(IdUtil.fastSimpleUUID())
-                .setSenderId(senderId).setGroupId(dto.getGroupId())
-                .setType(dto.getType()).setContent(contentString)
-                .setStatus(ImMessageStatusEnum.NORMAL.getStatus()).setSendTime(LocalDateTime.now())
-                .setAtUserIds(dto.getAtUserIds()).setReceiverUserIds(new ArrayList<>(receiverUserIds))
-                .setReceiptStatus(resolveReceiptStatus(dto.getReceipt()));
+        ImGroupMessageDO message =
+                new ImGroupMessageDO()
+                        .setClientMessageId(IdUtil.fastSimpleUUID())
+                        .setSenderId(senderId)
+                        .setGroupId(dto.getGroupId())
+                        .setType(dto.getType())
+                        .setContent(contentString)
+                        .setStatus(ImMessageStatusEnum.NORMAL.getStatus())
+                        .setSendTime(LocalDateTime.now())
+                        .setAtUserIds(dto.getAtUserIds())
+                        .setReceiverUserIds(new ArrayList<>(receiverUserIds))
+                        .setReceiptStatus(resolveReceiptStatus(dto.getReceipt()));
         // 1.3 按 type.persistent 决定是否入库
         if (ImContentTypeEnum.validate(dto.getType()).isPersistent()) {
             groupMessageMapper.insert(message);
@@ -152,8 +177,11 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
 
         // 2. WebSocket 异步推送
         ImGroupMessageNotification notification = ImGroupMessageNotification.ofSend(message);
-        imWebSocketService.sendNotificationAsync(receiverUserIds, ImConversationTypeEnum.GROUP.getType(),
-                notification.getType(), notification);
+        imWebSocketService.sendNotificationAsync(
+                receiverUserIds,
+                ImConversationTypeEnum.GROUP.getType(),
+                notification.getType(),
+                notification);
         return message;
     }
 
@@ -163,7 +191,8 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         // 1.1 校验消息存在
         ImGroupMessageDO message = validateGroupMessageExists(messageId);
         // 1.2 校验撤回人仍在群中，并取角色用于权限判断
-        ImGroupMemberDO operator = groupMemberService.validateMemberInGroup(message.getGroupId(), userId);
+        ImGroupMemberDO operator =
+                groupMemberService.validateMemberInGroup(message.getGroupId(), userId);
         boolean isOwnerOrAdmin = ImGroupMemberRoleEnum.isOwnerOrAdmin(operator.getRole());
         // 1.3 普通成员只能撤回自己发的消息；群主 / 管理员可撤回他人违规消息
         if (ObjUtil.notEqual(message.getSenderId(), userId) && !isOwnerOrAdmin) {
@@ -176,20 +205,27 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         // 1.5 撤回时间窗仅约束撤回自己的消息；群主 / 管理员治理他人违规消息不受时间限制
         if (ObjUtil.equal(message.getSenderId(), userId)) {
             int recallTimeoutMinutes = imProperties.getMessage().getRecallTimeoutMinutes();
-            if (message.getSendTime().plusMinutes(recallTimeoutMinutes).isBefore(LocalDateTime.now())) {
+            if (message.getSendTime()
+                    .plusMinutes(recallTimeoutMinutes)
+                    .isBefore(LocalDateTime.now())) {
                 throw exception(MESSAGE_RECALL_TIMEOUT, recallTimeoutMinutes);
             }
         }
 
         // 2. 更新原消息状态为撤回
-        groupMessageMapper.updateById(new ImGroupMessageDO().setId(messageId)
-                .setStatus(ImMessageStatusEnum.RECALL.getStatus()));
+        groupMessageMapper.updateById(
+                new ImGroupMessageDO()
+                        .setId(messageId)
+                        .setStatus(ImMessageStatusEnum.RECALL.getStatus()));
 
         // 3. 发送撤回事件
-        return sendGroupMessage(userId, new ImGroupMessageSendDTO().setGroupId(message.getGroupId())
-                .setType(ImContentTypeEnum.RECALL.getType())
-                .setReceiverUserIds(message.getReceiverUserIds())
-                .setContent(new RecallMessage().setMessageId(messageId)));
+        return sendGroupMessage(
+                userId,
+                new ImGroupMessageSendDTO()
+                        .setGroupId(message.getGroupId())
+                        .setType(ImContentTypeEnum.RECALL.getType())
+                        .setReceiverUserIds(message.getReceiverUserIds())
+                        .setContent(new RecallMessage().setMessageId(messageId)));
     }
 
     @Override
@@ -200,21 +236,30 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         }
 
         // 0. 拉取时间窗；超过窗口的老消息不再通过离线通道推送
-        LocalDateTime minSendTime = LocalDateTime.now().minusDays(imProperties.getMessage().getGroupPullMaxDays());
+        LocalDateTime minSendTime =
+                LocalDateTime.now().minusDays(imProperties.getMessage().getGroupPullMaxDays());
 
         // 1. 候选群 = 用户曾经加入的所有群（含退群）；可见性与时间窗都交给 SQL，退群群最多贡献 0 条
-        Set<Long> groupIds = convertSet(groupMemberService.getGroupMemberListByUserId(userId),
-                ImGroupMemberDO::getGroupId);
+        Set<Long> groupIds =
+                convertSet(
+                        groupMemberService.getGroupMemberListByUserId(userId),
+                        ImGroupMemberDO::getGroupId);
         if (CollUtil.isEmpty(groupIds)) {
             return Collections.emptyList();
         }
 
         // 2. 按 receiver_user_ids 快照过滤可见性，结果按 id 升序
-        List<ImGroupMessageDO> messages = groupMessageMapper.selectListByMinId(userId, groupIds, minId, minSendTime, size);
+        List<ImGroupMessageDO> messages =
+                groupMessageMapper.selectListByMinId(userId, groupIds, minId, minSendTime, size);
 
         // 3. 补齐本人发送的回执消息的已读人数
         appendMessageReceipt(userId, messages);
-        log.info("[pullGroupMessageList][userId({}) minId({}) size({}) result({})]", userId, minId, size, messages.size());
+        log.info(
+                "[pullGroupMessageList][userId({}) minId({}) size({}) result({})]",
+                userId,
+                minId,
+                size,
+                messages.size());
         return messages;
     }
 
@@ -237,20 +282,30 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         for (ImGroupMessageDO message : messages) {
             // 仅补本人发送、且需要回执（非 NO_RECEIPT）的消息
             if (ObjUtil.notEqual(message.getSenderId(), userId)
-                    || ImMessageReceiptStatusEnum.NO_RECEIPT.getStatus().equals(message.getReceiptStatus())) {
+                    || ImMessageReceiptStatusEnum.NO_RECEIPT
+                            .getStatus()
+                            .equals(message.getReceiptStatus())) {
                 continue;
             }
             Long groupId = message.getGroupId();
-            Map<Long, Long> positions = readPositionsByGroup.computeIfAbsent(groupId,
-                    gid -> conversationReadService.getUserReadMessageIdMap(ImConversationTypeEnum.GROUP.getType(), gid));
+            Map<Long, Long> positions =
+                    readPositionsByGroup.computeIfAbsent(
+                            groupId,
+                            gid ->
+                                    conversationReadService.getUserReadMessageIdMap(
+                                            ImConversationTypeEnum.GROUP.getType(), gid));
             // 应读分母取当前有效成员（剔除已退群），与异步回执刷新、前端已读弹层口径一致
-            List<ImGroupMemberDO> activeMembers = membersByGroup.computeIfAbsent(groupId,
-                    groupMemberService::getActiveGroupMemberListByGroupId);
+            List<ImGroupMemberDO> activeMembers =
+                    membersByGroup.computeIfAbsent(
+                            groupId, groupMemberService::getActiveGroupMemberListByGroupId);
             Set<Long> receiverUserIds = getReceiverUserIds(message, activeMembers);
             receiverUserIds.remove(message.getSenderId());
-            int readCount = getSumValue(receiverUserIds,
-                    uid -> positions.getOrDefault(uid, -1L) >= message.getId() ? 1 : null,
-                    Integer::sum, 0);
+            int readCount =
+                    getSumValue(
+                            receiverUserIds,
+                            uid -> positions.getOrDefault(uid, -1L) >= message.getId() ? 1 : null,
+                            Integer::sum,
+                            0);
             message.setReadCount(readCount);
         }
     }
@@ -271,10 +326,12 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         }
 
         // 2. 取旧读位置（用于回执刷新区间），再更新群已读位置；读位置未前进则不推
-        Long prevMaxMessageId = conversationReadService.getConversationReadMessageId(
-                userId, ImConversationTypeEnum.GROUP.getType(), groupId);
-        boolean advanced = conversationReadService.updateConversationReadPosition(
-                userId, ImConversationTypeEnum.GROUP.getType(), groupId, messageId);
+        Long prevMaxMessageId =
+                conversationReadService.getConversationReadMessageId(
+                        userId, ImConversationTypeEnum.GROUP.getType(), groupId);
+        boolean advanced =
+                conversationReadService.updateConversationReadPosition(
+                        userId, ImConversationTypeEnum.GROUP.getType(), groupId, messageId);
         if (!advanced) {
             return;
         }
@@ -305,9 +362,11 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
         }
 
         // 2. 获取当前有效成员和已读位置（剔除已退群，与回执分母口径一致）
-        List<ImGroupMemberDO> activeMembers = groupMemberService.getActiveGroupMemberListByGroupId(groupId);
-        Map<Long, Long> allPositions = conversationReadService.getUserReadMessageIdMap(
-                ImConversationTypeEnum.GROUP.getType(), groupId);
+        List<ImGroupMemberDO> activeMembers =
+                groupMemberService.getActiveGroupMemberListByGroupId(groupId);
+        Map<Long, Long> allPositions =
+                conversationReadService.getUserReadMessageIdMap(
+                        ImConversationTypeEnum.GROUP.getType(), groupId);
 
         // 3. 计算该消息的可见成员集合（排除发送者自己）
         Set<Long> receiverUserIds = getReceiverUserIds(message, activeMembers);
@@ -315,11 +374,12 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
 
         // 4. 只返回在可见范围内且已读位置 >= messageId 的用户
         List<Long> readUserIds = new ArrayList<>();
-        allPositions.forEach((uid, readMaxMessageId) -> {
-            if (receiverUserIds.contains(uid) && readMaxMessageId >= messageId) {
-                readUserIds.add(uid);
-            }
-        });
+        allPositions.forEach(
+                (uid, readMaxMessageId) -> {
+                    if (receiverUserIds.contains(uid) && readMaxMessageId >= messageId) {
+                        readUserIds.add(uid);
+                    }
+                });
         return readUserIds;
     }
 
@@ -347,21 +407,27 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
      */
     @Async
     @SuppressWarnings("DataFlowIssue")
-    public void readGroupMessageEvent(Long userId, Long groupId, Long prevMaxMessageId, Long newMaxMessageId) {
+    public void readGroupMessageEvent(
+            Long userId, Long groupId, Long prevMaxMessageId, Long newMaxMessageId) {
         // 1. 发送 READ 事件给自己的其他终端（多端同步）
-        imWebSocketService.sendNotificationAsync(userId, ImConversationTypeEnum.GROUP.getType(),
+        imWebSocketService.sendNotificationAsync(
+                userId,
+                ImConversationTypeEnum.GROUP.getType(),
                 ImContentTypeEnum.READ.getType(),
                 ImMessageReadNotification.ofGroup(userId, groupId, newMaxMessageId));
 
         // 2. 刷新 (prevMaxMessageId, newMaxMessageId] 区间内的待回执消息
-        List<ImGroupMessageDO> pendingMessages = groupMessageMapper.selectListByGroupIdAndPendingReceipt(
-                groupId, prevMaxMessageId, newMaxMessageId);
+        List<ImGroupMessageDO> pendingMessages =
+                groupMessageMapper.selectListByGroupIdAndPendingReceipt(
+                        groupId, prevMaxMessageId, newMaxMessageId);
         if (CollUtil.isEmpty(pendingMessages)) {
             return;
         }
-        List<ImGroupMemberDO> activeMembers = groupMemberService.getActiveGroupMemberListByGroupId(groupId);
-        Map<Long, Long> allPositions = conversationReadService.getUserReadMessageIdMap(
-                ImConversationTypeEnum.GROUP.getType(), groupId);
+        List<ImGroupMemberDO> activeMembers =
+                groupMemberService.getActiveGroupMemberListByGroupId(groupId);
+        Map<Long, Long> allPositions =
+                conversationReadService.getUserReadMessageIdMap(
+                        ImConversationTypeEnum.GROUP.getType(), groupId);
         for (ImGroupMessageDO message : pendingMessages) {
             // 2.1.1 统计可见成员中的已读人数（应读分母 = 快照 ∩ 当前有效成员 - sender）
             Set<Long> receiverUserIds = getReceiverUserIds(message, activeMembers);
@@ -369,21 +435,32 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
             if (CollUtil.isEmpty(receiverUserIds)) {
                 continue;
             }
-            int readCount = getSumValue(receiverUserIds,
-                    uid -> allPositions.getOrDefault(uid, -1L) >= message.getId() ? 1 : null,
-                    Integer::sum, 0);
+            int readCount =
+                    getSumValue(
+                            receiverUserIds,
+                            uid ->
+                                    allPositions.getOrDefault(uid, -1L) >= message.getId()
+                                            ? 1
+                                            : null,
+                            Integer::sum,
+                            0);
             // 2.1.2 全部已读 → 标记回执完成
             Integer newReceiptStatus = ImMessageReceiptStatusEnum.PENDING.getStatus();
             if (readCount >= receiverUserIds.size()) {
                 newReceiptStatus = ImMessageReceiptStatusEnum.DONE.getStatus();
-                groupMessageMapper.updateById(new ImGroupMessageDO().setId(message.getId())
-                        .setReceiptStatus(newReceiptStatus));
+                groupMessageMapper.updateById(
+                        new ImGroupMessageDO()
+                                .setId(message.getId())
+                                .setReceiptStatus(newReceiptStatus));
             }
 
             // 2.2 发送 RECEIPT 事件给消息发送方（只有 ta 关心已读进度）
-            imWebSocketService.sendNotificationAsync(message.getSenderId(), ImConversationTypeEnum.GROUP.getType(),
+            imWebSocketService.sendNotificationAsync(
+                    message.getSenderId(),
+                    ImConversationTypeEnum.GROUP.getType(),
                     ImContentTypeEnum.RECEIPT.getType(),
-                    ImMessageReceiptNotification.ofGroup(message.getId(), groupId, readCount, newReceiptStatus));
+                    ImMessageReceiptNotification.ofGroup(
+                            message.getId(), groupId, readCount, newReceiptStatus));
         }
     }
 
@@ -397,8 +474,8 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
      * @param newAudience 新消息可见成员集合（发送当时快照）
      * @return 规范化后的 content
      */
-    private String normalizeQuoteContent(ImGroupMessageSendReqVO reqVO, ImGroupMemberDO senderMember,
-                                         Set<Long> newAudience) {
+    private String normalizeQuoteContent(
+            ImGroupMessageSendReqVO reqVO, ImGroupMemberDO senderMember, Set<Long> newAudience) {
         // 解析客户端 content 里的 quote.messageId
         Long quoteMessageId = ImMessageUtils.parseQuoteMessageId(reqVO.getContent());
 
@@ -427,8 +504,12 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
             throw exception(MESSAGE_QUOTE_INVALID);
         }
         // 构建 quote 对象并注入 content
-        QuoteMessage quote = ImMessageUtils.buildQuote(original.getId(),
-                original.getSenderId(), original.getType(), original.getContent());
+        QuoteMessage quote =
+                ImMessageUtils.buildQuote(
+                        original.getId(),
+                        original.getSenderId(),
+                        original.getType(),
+                        original.getContent());
         return ImMessageUtils.appendQuote(reqVO.getContent(), quote);
     }
 
@@ -468,7 +549,10 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
             return new HashSet<>();
         }
         Set<Long> snapshot = new HashSet<>(message.getReceiverUserIds());
-        return convertSet(members, ImGroupMemberDO::getUserId, member -> snapshot.contains(member.getUserId()));
+        return convertSet(
+                members,
+                ImGroupMemberDO::getUserId,
+                member -> snapshot.contains(member.getUserId()));
     }
 
     /**
@@ -477,11 +561,13 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
      * 仅适用于「新消息」发送场景：无定向接收列表则全员可见，否则取定向用户与当前成员的交集；
      * 发送者始终纳入快照，保证 receiver_user_ids 非空且发送方可见。
      */
-    private Set<Long> getReceiverUserIds(List<Long> directedUserIds, Long senderId, Collection<Long> memberUserIds) {
+    private Set<Long> getReceiverUserIds(
+            List<Long> directedUserIds, Long senderId, Collection<Long> memberUserIds) {
         // 无定向接收列表 → 全员可见；否则取定向用户与当前成员的交集
-        Set<Long> result = CollUtil.isEmpty(directedUserIds)
-                ? new HashSet<>(memberUserIds)
-                : new HashSet<>(CollUtil.intersection(memberUserIds, directedUserIds));
+        Set<Long> result =
+                CollUtil.isEmpty(directedUserIds)
+                        ? new HashSet<>(memberUserIds)
+                        : new HashSet<>(CollUtil.intersection(memberUserIds, directedUserIds));
         // 发送者始终可见（多端同步），即便成员缓存暂未包含
         if (senderId != null) {
             result.add(senderId);
@@ -540,9 +626,9 @@ public class ImGroupMessageServiceImpl implements ImGroupMessageService {
             throw exception(GROUP_MUTED_CANNOT_SEND);
         }
         // 2. 成员禁言
-        if (senderMember.getMuteEndTime() != null && senderMember.getMuteEndTime().isAfter(LocalDateTime.now())) {
+        if (senderMember.getMuteEndTime() != null
+                && senderMember.getMuteEndTime().isAfter(LocalDateTime.now())) {
             throw exception(GROUP_MEMBER_MUTED_CANNOT_SEND, senderMember.getMuteEndTime());
         }
     }
-
 }

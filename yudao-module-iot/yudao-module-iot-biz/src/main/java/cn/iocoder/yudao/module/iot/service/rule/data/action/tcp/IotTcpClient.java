@@ -4,9 +4,9 @@ import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkTcpConfig;
+
 import lombok.extern.slf4j.Slf4j;
 
-import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,6 +15,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * IoT TCP 客户端
@@ -39,14 +41,26 @@ public class IotTcpClient {
     private BufferedReader reader;
     private final AtomicBoolean connected = new AtomicBoolean(false);
 
-    public IotTcpClient(String host, Integer port, Integer connectTimeoutMs, Integer readTimeoutMs,
-                        Boolean ssl, String dataFormat) {
+    public IotTcpClient(
+            String host,
+            Integer port,
+            Integer connectTimeoutMs,
+            Integer readTimeoutMs,
+            Boolean ssl,
+            String dataFormat) {
         this.host = host;
         this.port = port;
-        this.connectTimeoutMs = connectTimeoutMs != null ? connectTimeoutMs : IotDataSinkTcpConfig.DEFAULT_CONNECT_TIMEOUT_MS;
-        this.readTimeoutMs = readTimeoutMs != null ? readTimeoutMs : IotDataSinkTcpConfig.DEFAULT_READ_TIMEOUT_MS;
+        this.connectTimeoutMs =
+                connectTimeoutMs != null
+                        ? connectTimeoutMs
+                        : IotDataSinkTcpConfig.DEFAULT_CONNECT_TIMEOUT_MS;
+        this.readTimeoutMs =
+                readTimeoutMs != null
+                        ? readTimeoutMs
+                        : IotDataSinkTcpConfig.DEFAULT_READ_TIMEOUT_MS;
         this.ssl = ssl != null ? ssl : IotDataSinkTcpConfig.DEFAULT_SSL;
-        this.dataFormat = ObjUtil.defaultIfBlank(dataFormat, IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT);
+        this.dataFormat =
+                ObjUtil.defaultIfBlank(dataFormat, IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT);
     }
 
     /**
@@ -61,7 +75,8 @@ public class IotTcpClient {
         try {
             if (ssl) {
                 // SSL 连接
-                SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                SSLSocketFactory sslSocketFactory =
+                        (SSLSocketFactory) SSLSocketFactory.getDefault();
                 socket = sslSocketFactory.createSocket();
             } else {
                 // 普通连接
@@ -74,7 +89,9 @@ public class IotTcpClient {
 
             // 获取输入输出流
             outputStream = socket.getOutputStream();
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            reader =
+                    new BufferedReader(
+                            new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
             // 更新状态
             connected.set(true);
@@ -111,8 +128,10 @@ public class IotTcpClient {
             outputStream.write(messageData.getBytes(StandardCharsets.UTF_8));
             outputStream.write('\n'); // 添加换行符作为消息分隔符
             outputStream.flush();
-            log.debug("[sendMessage][发送消息成功，设备 ID: {}，消息长度: {}]",
-                    message.getDeviceId(), messageData.length());
+            log.debug(
+                    "[sendMessage][发送消息成功，设备 ID: {}，消息长度: {}]",
+                    message.getDeviceId(),
+                    messageData.length());
         } catch (Exception e) {
             log.error("[sendMessage][发送消息失败，设备 ID: {}]", message.getDeviceId(), e);
             throw e;
@@ -170,13 +189,19 @@ public class IotTcpClient {
 
     @Override
     public String toString() {
-        return "IotTcpClient{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", ssl=" + ssl +
-                ", dataFormat='" + dataFormat + '\'' +
-                ", connected=" + connected.get() +
-                '}';
+        return "IotTcpClient{"
+                + "host='"
+                + host
+                + '\''
+                + ", port="
+                + port
+                + ", ssl="
+                + ssl
+                + ", dataFormat='"
+                + dataFormat
+                + '\''
+                + ", connected="
+                + connected.get()
+                + '}';
     }
-
 }

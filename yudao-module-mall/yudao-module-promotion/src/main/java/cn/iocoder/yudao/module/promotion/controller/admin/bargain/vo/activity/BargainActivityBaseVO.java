@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.bargain.vo.activity;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 
 /**
  * 砍价活动 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -18,7 +21,10 @@ import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_
 @Data
 public class BargainActivityBaseVO {
 
-    @Schema(description = "砍价活动名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "砍得越多省得越多，是兄弟就来砍我")
+    @Schema(
+            description = "砍价活动名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "砍得越多省得越多，是兄弟就来砍我")
     @NotNull(message = "砍价名称不能为空")
     private String name;
 
@@ -46,12 +52,18 @@ public class BargainActivityBaseVO {
     @NotNull(message = "总限购数量不能为空")
     private Integer totalLimitCount;
 
-    @Schema(description = "活动开始时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "[2022-07-01 23:59:59]")
+    @Schema(
+            description = "活动开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[2022-07-01 23:59:59]")
     @NotNull(message = "活动开始时间不能为空")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime startTime;
 
-    @Schema(description = "活动结束时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "[2022-07-01 23:59:59]")
+    @Schema(
+            description = "活动结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[2022-07-01 23:59:59]")
     @NotNull(message = "活动结束时间不能为空")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime endTime;
@@ -64,12 +76,17 @@ public class BargainActivityBaseVO {
     @NotNull(message = "最大帮砍次数不能为空")
     private Integer bargainCount;
 
-    @Schema(description = "用户每次砍价的最小金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "25222")
+    @Schema(
+            description = "用户每次砍价的最小金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "25222")
     @NotNull(message = "用户每次砍价的最小金额不能为空")
     private Integer randomMinPrice;
 
-    @Schema(description = "用户每次砍价的最大金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "25222")
+    @Schema(
+            description = "用户每次砍价的最大金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "25222")
     @NotNull(message = "用户每次砍价的最大金额不能为空")
     private Integer randomMaxPrice;
-
 }

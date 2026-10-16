@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.article.vo.category;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 文章分类 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -16,7 +17,10 @@ public class ArticleCategoryBaseVO {
     @NotNull(message = "文章分类名称不能为空")
     private String name;
 
-    @Schema(description = "图标地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn")
+    @Schema(
+            description = "图标地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn")
     private String picUrl;
 
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -26,5 +30,4 @@ public class ArticleCategoryBaseVO {
     @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "排序不能为空")
     private Integer sort;
-
 }

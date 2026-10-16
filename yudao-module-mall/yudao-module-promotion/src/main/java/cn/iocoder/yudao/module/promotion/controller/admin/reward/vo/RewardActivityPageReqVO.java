@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.reward.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class RewardActivityPageReqVO extends PageParam {
 
     @Schema(description = "活动状态", example = "1")
     private Integer status;
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.enums.wm;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.module.mes.enums.MesOrderStatusConstants;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -41,13 +42,16 @@ public enum MesWmStockTakingTaskStatusEnum implements ArrayValuable<Integer> {
      */
     CANCELED(MesOrderStatusConstants.CANCELLED, "已取消");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(MesWmStockTakingTaskStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(MesWmStockTakingTaskStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态
      */
     private final Integer status;
+
     /**
      * 状态名称
      */
@@ -57,5 +61,4 @@ public enum MesWmStockTakingTaskStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

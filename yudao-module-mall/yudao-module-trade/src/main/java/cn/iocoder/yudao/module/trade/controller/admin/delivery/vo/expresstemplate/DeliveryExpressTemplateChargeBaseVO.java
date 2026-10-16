@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.expresstemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -13,10 +15,16 @@ import java.util.List;
 @Data
 public class DeliveryExpressTemplateChargeBaseVO {
 
-    @Schema(description = "编号", example = "6592", hidden = true) // 由于想简单一点，复用这个 VO 在更新操作，所以 hidden 为 false
+    @Schema(
+            description = "编号",
+            example = "6592",
+            hidden = true) // 由于想简单一点，复用这个 VO 在更新操作，所以 hidden 为 false
     private Long id;
 
-    @Schema(description = "区域编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1,120000]")
+    @Schema(
+            description = "区域编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1,120000]")
     @NotEmpty(message = "区域编号列表不能为空")
     private List<Integer> areaIds;
 

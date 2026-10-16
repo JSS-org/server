@@ -27,6 +27,6 @@ public interface CrmStatisticsProductService {
      * @param reqVO 请求参数
      * @return 产品分类销售分析
      */
-    List<CrmStatisticsProductCategoryRespVO> getProductCategorySummary(CrmStatisticsProductReqVO reqVO);
-
+    List<CrmStatisticsProductCategoryRespVO> getProductCategorySummary(
+            CrmStatisticsProductReqVO reqVO);
 }

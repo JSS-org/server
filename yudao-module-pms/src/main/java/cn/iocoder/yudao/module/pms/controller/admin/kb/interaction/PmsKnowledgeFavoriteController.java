@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.interaction;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
@@ -8,11 +11,14 @@ import cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.favorite.P
 import cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.favorite.PmsKnowledgeFavoriteSaveReqVO;
 import cn.iocoder.yudao.module.pms.enums.kb.PmsKnowledgeObjectTypeEnum;
 import cn.iocoder.yudao.module.pms.service.kb.interaction.PmsKnowledgeFavoriteService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,22 +31,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 知识关注")
 @RestController
 @RequestMapping("/pms/kb/favorite")
 @Validated
 public class PmsKnowledgeFavoriteController {
 
-    @Resource
-    private PmsKnowledgeFavoriteService favoriteService;
+    @Resource private PmsKnowledgeFavoriteService favoriteService;
 
     @PostMapping("/create")
     @Operation(summary = "关注知识对象")
     @PreAuthorize("@ss.hasPermission('pms:kb:library:query')")
-    public CommonResult<Boolean> createFavorite(@Valid @RequestBody PmsKnowledgeFavoriteSaveReqVO saveReqVO) {
+    public CommonResult<Boolean> createFavorite(
+            @Valid @RequestBody PmsKnowledgeFavoriteSaveReqVO saveReqVO) {
         favoriteService.createFavorite(saveReqVO, getLoginUserId());
         return success(true);
     }
@@ -73,5 +76,4 @@ public class PmsKnowledgeFavoriteController {
             @RequestParam("libraryId") Long libraryId) {
         return success(favoriteService.getFavoriteListByLibraryId(libraryId, getLoginUserId()));
     }
-
 }

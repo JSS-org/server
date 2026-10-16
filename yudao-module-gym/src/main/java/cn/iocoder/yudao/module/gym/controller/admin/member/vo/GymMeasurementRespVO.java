@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.gym.controller.admin.member.vo;
+
 import lombok.Data;
-import java.time.Instant;
+
 import java.math.BigDecimal;
+import java.time.Instant;
+
 @Data
 public class GymMeasurementRespVO {
     private String id;
@@ -16,5 +19,4 @@ public class GymMeasurementRespVO {
     private BigDecimal muscleMassKg;
     private String note;
     private String reportFileId;
-
 }

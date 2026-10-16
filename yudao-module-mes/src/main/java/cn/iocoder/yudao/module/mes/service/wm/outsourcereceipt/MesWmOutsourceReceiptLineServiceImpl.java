@@ -1,29 +1,31 @@
 package cn.iocoder.yudao.module.mes.service.wm.outsourcereceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_OUTSOURCE_RECEIPT_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.batch.vo.MesWmBatchGenerateReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourcereceipt.vo.line.MesWmOutsourceReceiptLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourcereceipt.vo.line.MesWmOutsourceReceiptLineSaveReqVO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.pro.workorder.MesProWorkOrderDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.batch.MesWmBatchDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.outsourcereceipt.MesWmOutsourceReceiptDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.outsourcereceipt.MesWmOutsourceReceiptLineDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.pro.workorder.MesProWorkOrderDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.outsourcereceipt.MesWmOutsourceReceiptLineMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmQualityStatusEnum;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_OUTSOURCE_RECEIPT_LINE_NOT_EXISTS;
 
 /**
  * MES 委外收货单行 Service 实现类
@@ -32,22 +34,13 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_OUTSOURCE_
 @Validated
 public class MesWmOutsourceReceiptLineServiceImpl implements MesWmOutsourceReceiptLineService {
 
-    @Resource
-    private MesWmOutsourceReceiptLineMapper lineMapper;
+    @Resource private MesWmOutsourceReceiptLineMapper lineMapper;
 
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    @Lazy
-    private MesWmOutsourceReceiptDetailService outsourceReceiptDetailService;
-    @Resource
-    @Lazy
-    private MesWmOutsourceReceiptService outsourceReceiptService;
-    @Resource
-    @Lazy
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesWmBatchService batchService;
+    @Resource private MesMdItemService itemService;
+    @Resource @Lazy private MesWmOutsourceReceiptDetailService outsourceReceiptDetailService;
+    @Resource @Lazy private MesWmOutsourceReceiptService outsourceReceiptService;
+    @Resource @Lazy private MesProWorkOrderService workOrderService;
+    @Resource private MesWmBatchService batchService;
 
     @Override
     public Long createOutsourceReceiptLine(MesWmOutsourceReceiptLineSaveReqVO createReqVO) {
@@ -55,7 +48,8 @@ public class MesWmOutsourceReceiptLineServiceImpl implements MesWmOutsourceRecei
         itemService.validateItemExistsAndEnable(createReqVO.getItemId());
 
         // 插入
-        MesWmOutsourceReceiptLineDO line = BeanUtils.toBean(createReqVO, MesWmOutsourceReceiptLineDO.class);
+        MesWmOutsourceReceiptLineDO line =
+                BeanUtils.toBean(createReqVO, MesWmOutsourceReceiptLineDO.class);
         line.setQualityStatus(calculateQualityStatus(line.getIqcCheckFlag())); // 质量状态自动赋值
         // 生成或获取批次
         MesWmBatchDO batch = generateOrGetBatch(createReqVO);
@@ -75,7 +69,8 @@ public class MesWmOutsourceReceiptLineServiceImpl implements MesWmOutsourceRecei
         itemService.validateItemExistsAndEnable(updateReqVO.getItemId());
 
         // 更新
-        MesWmOutsourceReceiptLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmOutsourceReceiptLineDO.class);
+        MesWmOutsourceReceiptLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmOutsourceReceiptLineDO.class);
         updateObj.setQualityStatus(calculateQualityStatus(updateObj.getIqcCheckFlag())); // 质量状态自动赋值
         // 生成或获取批次
         MesWmBatchDO batch = generateOrGetBatch(updateReqVO);
@@ -104,12 +99,14 @@ public class MesWmOutsourceReceiptLineServiceImpl implements MesWmOutsourceRecei
     }
 
     @Override
-    public PageResult<MesWmOutsourceReceiptLineDO> getOutsourceReceiptLinePage(MesWmOutsourceReceiptLinePageReqVO pageReqVO) {
+    public PageResult<MesWmOutsourceReceiptLineDO> getOutsourceReceiptLinePage(
+            MesWmOutsourceReceiptLinePageReqVO pageReqVO) {
         return lineMapper.selectPage(pageReqVO);
     }
 
     @Override
-    public List<MesWmOutsourceReceiptLineDO> getOutsourceReceiptLineListByReceiptId(Long receiptId) {
+    public List<MesWmOutsourceReceiptLineDO> getOutsourceReceiptLineListByReceiptId(
+            Long receiptId) {
         return lineMapper.selectListByReceiptId(receiptId);
     }
 
@@ -155,15 +152,21 @@ public class MesWmOutsourceReceiptLineServiceImpl implements MesWmOutsourceRecei
      */
     private MesWmBatchDO generateOrGetBatch(MesWmOutsourceReceiptLineSaveReqVO reqVO) {
         MesWmBatchGenerateReqVO batchReqVO = new MesWmBatchGenerateReqVO();
-        batchReqVO.setItemId(reqVO.getItemId()).setProduceDate(reqVO.getProductionDate())
-                .setExpireDate(reqVO.getExpireDate()).setLotNumber(reqVO.getLotNumber());
-        MesWmOutsourceReceiptDO receipt = outsourceReceiptService.getOutsourceReceipt(reqVO.getReceiptId());
+        batchReqVO
+                .setItemId(reqVO.getItemId())
+                .setProduceDate(reqVO.getProductionDate())
+                .setExpireDate(reqVO.getExpireDate())
+                .setLotNumber(reqVO.getLotNumber());
+        MesWmOutsourceReceiptDO receipt =
+                outsourceReceiptService.getOutsourceReceipt(reqVO.getReceiptId());
         if (receipt != null) {
-            batchReqVO.setVendorId(receipt.getVendorId())
+            batchReqVO
+                    .setVendorId(receipt.getVendorId())
                     .setWorkOrderId(receipt.getWorkOrderId())
                     .setReceiptDate(receipt.getReceiptDate());
             if (receipt.getWorkOrderId() != null) {
-                MesProWorkOrderDO workOrder = workOrderService.getWorkOrder(receipt.getWorkOrderId());
+                MesProWorkOrderDO workOrder =
+                        workOrderService.getWorkOrder(receipt.getWorkOrderId());
                 if (workOrder != null) {
                     batchReqVO.setClientId(workOrder.getClientId());
                 }
@@ -172,5 +175,4 @@ public class MesWmOutsourceReceiptLineServiceImpl implements MesWmOutsourceRecei
         // 调用批次服务生成或获取批次
         return batchService.getOrGenerateBatchCode(batchReqVO);
     }
-
 }

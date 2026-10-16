@@ -18,5 +18,4 @@ public interface DictDataCommonApi {
      * @return 字典数据列表
      */
     List<DictDataRespDTO> getDictDataList(String dictType);
-
 }

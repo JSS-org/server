@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.attendance.vo.clock;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -33,5 +35,4 @@ public class HrmPortalAttendanceClockCreateReqVO {
     @Schema(description = "WiFi MAC 地址", example = "00:11:22:33:44:55")
     @Size(max = 50, message = "WiFi MAC 地址不能超过 50 个字符")
     private String mac;
-
 }

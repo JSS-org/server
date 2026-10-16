@@ -28,7 +28,8 @@ public interface MemberPointRecordService {
      * @param pageReqVO 分页查询
      * @return 签到记录分页
      */
-    PageResult<MemberPointRecordDO> getPointRecordPage(Long userId, AppMemberPointRecordPageReqVO pageReqVO);
+    PageResult<MemberPointRecordDO> getPointRecordPage(
+            Long userId, AppMemberPointRecordPageReqVO pageReqVO);
 
     /**
      * 创建用户积分记录
@@ -38,5 +39,6 @@ public interface MemberPointRecordService {
      * @param bizType 业务类型
      * @param bizId   业务编号
      */
-    void createPointRecord(Long userId, Integer point, MemberPointBizTypeEnum bizType, String bizId);
+    void createPointRecord(
+            Long userId, Integer point, MemberPointBizTypeEnum bizType, String bizId);
 }

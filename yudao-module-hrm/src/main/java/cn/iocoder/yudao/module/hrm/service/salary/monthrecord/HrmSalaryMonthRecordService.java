@@ -47,9 +47,11 @@ public interface HrmSalaryMonthRecordService {
      * @param additionalDeductionRows 专项附加扣除导入数据
      * @param cumulativeTaxRows 累计个税导入数据
      */
-    void computeMonthRecord(Long id, List<Map<Integer, String>> attendanceRows,
-                            List<Map<Integer, String>> additionalDeductionRows,
-                            List<Map<Integer, String>> cumulativeTaxRows);
+    void computeMonthRecord(
+            Long id,
+            List<Map<Integer, String>> attendanceRows,
+            List<Map<Integer, String>> additionalDeductionRows,
+            List<Map<Integer, String>> cumulativeTaxRows);
 
     /**
      * 核算月度工资表
@@ -61,10 +63,13 @@ public interface HrmSalaryMonthRecordService {
      * @param additionalDeductionRows 专项附加扣除导入数据
      * @param cumulativeTaxRows 累计个税导入数据
      */
-    void computeMonthRecord(Long id, boolean syncInsuranceData, boolean syncAttendanceData,
-                            List<Map<Integer, String>> attendanceRows,
-                            List<Map<Integer, String>> additionalDeductionRows,
-                            List<Map<Integer, String>> cumulativeTaxRows);
+    void computeMonthRecord(
+            Long id,
+            boolean syncInsuranceData,
+            boolean syncAttendanceData,
+            List<Map<Integer, String>> attendanceRows,
+            List<Map<Integer, String>> additionalDeductionRows,
+            List<Map<Integer, String>> cumulativeTaxRows);
 
     /**
      * 删除月度工资表
@@ -167,5 +172,4 @@ public interface HrmSalaryMonthRecordService {
      * @param id 月度工资表编号
      */
     void updateMonthRecordSummary(Long id);
-
 }

@@ -18,10 +18,12 @@ public class SocialUserRespDTO {
      * 社交用户的 openid
      */
     private String openid;
+
     /**
      * 社交用户的昵称
      */
     private String nickname;
+
     /**
      * 社交用户的头像
      */
@@ -31,5 +33,4 @@ public class SocialUserRespDTO {
      * 关联的用户编号
      */
     private Long userId;
-
 }

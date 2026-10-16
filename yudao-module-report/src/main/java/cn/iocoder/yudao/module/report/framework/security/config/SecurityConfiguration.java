@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.report.framework.security.config;
 
 import cn.iocoder.yudao.framework.security.config.AuthorizeRequestsCustomizer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,15 +18,16 @@ public class SecurityConfiguration {
         return new AuthorizeRequestsCustomizer() {
 
             @Override
-            public void customize(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
+            public void customize(
+                    AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                                    .AuthorizationManagerRequestMatcherRegistry
+                            registry) {
                 // 积木报表
                 registry.requestMatchers("/jmreport/**").permitAll();
                 // 积木仪表盘
                 registry.requestMatchers("/drag/**").permitAll();
                 registry.requestMatchers("/jimubi/**").permitAll();
             }
-
         };
     }
-
 }

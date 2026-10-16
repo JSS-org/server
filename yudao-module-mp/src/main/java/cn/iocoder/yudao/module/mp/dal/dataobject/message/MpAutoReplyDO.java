@@ -5,14 +5,17 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
 import cn.iocoder.yudao.module.mp.enums.message.MpAutoReplyMatchEnum;
 import cn.iocoder.yudao.module.mp.enums.message.MpAutoReplyTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.common.api.WxConsts.XmlMsgType;
 
@@ -25,27 +28,35 @@ import java.util.Set;
  * @author 芋道源码
  */
 @TableName(value = "mp_auto_reply", autoResultMap = true)
-@KeySequence("mp_auto_reply_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "mp_auto_reply_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class MpAutoReplyDO extends BaseDO {
 
-    public static Set<String> REQUEST_MESSAGE_TYPE = SetUtils.asSet(WxConsts.XmlMsgType.TEXT, WxConsts.XmlMsgType.IMAGE,
-            WxConsts.XmlMsgType.VOICE, WxConsts.XmlMsgType.VIDEO, WxConsts.XmlMsgType.SHORTVIDEO,
-            WxConsts.XmlMsgType.LOCATION, WxConsts.XmlMsgType.LINK);
+    public static Set<String> REQUEST_MESSAGE_TYPE =
+            SetUtils.asSet(
+                    WxConsts.XmlMsgType.TEXT,
+                    WxConsts.XmlMsgType.IMAGE,
+                    WxConsts.XmlMsgType.VOICE,
+                    WxConsts.XmlMsgType.VIDEO,
+                    WxConsts.XmlMsgType.SHORTVIDEO,
+                    WxConsts.XmlMsgType.LOCATION,
+                    WxConsts.XmlMsgType.LINK);
 
     /**
      * 主键
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 公众号账号的编号
      *
      * 关联 {@link MpAccountDO#getId()}
      */
     private Long accountId;
+
     /**
      * 公众号 appId
      *
@@ -68,6 +79,7 @@ public class MpAutoReplyDO extends BaseDO {
      * 当 {@link #type} 为 {@link MpAutoReplyTypeEnum#KEYWORD}
      */
     private String requestKeyword;
+
     /**
      * 请求的关键字的匹配
      *
@@ -108,6 +120,7 @@ public class MpAutoReplyDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 IMAGE、VOICE、VIDEO
      */
     private String responseMediaId;
+
     /**
      * 回复的媒体 URL
      */
@@ -119,6 +132,7 @@ public class MpAutoReplyDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 VIDEO
      */
     private String responseTitle;
+
     /**
      * 回复的描述
      *
@@ -132,6 +146,7 @@ public class MpAutoReplyDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 MUSIC、VIDEO
      */
     private String responseThumbMediaId;
+
     /**
      * 回复的缩略图的媒体 URL
      *
@@ -153,6 +168,7 @@ public class MpAutoReplyDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 MUSIC
      */
     private String responseMusicUrl;
+
     /**
      * 回复的高质量音乐链接
      *
@@ -161,5 +177,4 @@ public class MpAutoReplyDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 MUSIC
      */
     private String responseHqMusicUrl;
-
 }

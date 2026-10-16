@@ -3,9 +3,11 @@ package cn.iocoder.yudao.module.ai.dal.dataobject.model;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.ai.tool.function.DirectoryListToolFunction;
 import cn.iocoder.yudao.module.ai.tool.function.WeatherQueryToolFunction;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -24,8 +26,8 @@ public class AiToolDO extends BaseDO {
     /**
      * 工具编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 工具名称
      *
@@ -34,15 +36,16 @@ public class AiToolDO extends BaseDO {
      * 2. {@link WeatherQueryToolFunction} 的 Bean 名字是 weather_query
      */
     private String name;
+
     /**
      * 工具描述
      */
     private String description;
+
     /**
      * 状态
      *
      * 枚举 {@link cn.iocoder.yudao.framework.common.enums.CommonStatusEnum}
      */
     private Integer status;
-
 }

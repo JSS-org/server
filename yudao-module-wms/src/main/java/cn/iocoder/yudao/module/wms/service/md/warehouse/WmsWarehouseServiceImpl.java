@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.wms.service.md.warehouse;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,7 +17,9 @@ import cn.iocoder.yudao.module.wms.service.order.check.WmsCheckOrderService;
 import cn.iocoder.yudao.module.wms.service.order.movement.WmsMovementOrderService;
 import cn.iocoder.yudao.module.wms.service.order.receipt.WmsReceiptOrderService;
 import cn.iocoder.yudao.module.wms.service.order.shipment.WmsShipmentOrderService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -22,9 +27,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 仓库 Service 实现类
@@ -35,23 +37,17 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsWarehouseServiceImpl implements WmsWarehouseService {
 
-    @Resource
-    private WmsWarehouseMapper warehouseMapper;
+    @Resource private WmsWarehouseMapper warehouseMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsInventoryService inventoryService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsReceiptOrderService receiptOrderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsShipmentOrderService shipmentOrderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsMovementOrderService movementOrderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsCheckOrderService checkOrderService;
 
     @Override
@@ -162,5 +158,4 @@ public class WmsWarehouseServiceImpl implements WmsWarehouseService {
         }
         return warehouseMapper.selectByIds(ids);
     }
-
 }

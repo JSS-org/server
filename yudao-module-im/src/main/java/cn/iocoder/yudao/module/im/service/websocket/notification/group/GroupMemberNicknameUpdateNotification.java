@@ -12,5 +12,4 @@ public class GroupMemberNicknameUpdateNotification extends BaseGroupNotification
      * 群内昵称
      */
     private String displayUserName;
-
 }

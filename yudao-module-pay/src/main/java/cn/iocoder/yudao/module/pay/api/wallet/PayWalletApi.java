@@ -25,5 +25,4 @@ public interface PayWalletApi {
      * @return 钱包信息
      */
     PayWalletRespDTO getOrCreateWallet(Long userId, Integer userType);
-
 }

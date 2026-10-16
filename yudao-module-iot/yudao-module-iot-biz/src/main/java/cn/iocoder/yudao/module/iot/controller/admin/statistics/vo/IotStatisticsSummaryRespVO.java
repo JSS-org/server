@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.statistics.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.Map;
@@ -47,5 +48,4 @@ public class IotStatisticsSummaryRespVO {
 
     @Schema(description = "按品类统计的设备数量")
     private Map<String, Integer> productCategoryDeviceCounts;
-
 }

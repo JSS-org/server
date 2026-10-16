@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.MesWmProductReceiptPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.MesWmProductReceiptSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productreceipt.MesWmProductReceiptDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -92,5 +93,4 @@ public interface MesWmProductReceiptService {
      * @return 是否匹配
      */
     Boolean checkProductReceiptQuantity(Long id);
-
 }

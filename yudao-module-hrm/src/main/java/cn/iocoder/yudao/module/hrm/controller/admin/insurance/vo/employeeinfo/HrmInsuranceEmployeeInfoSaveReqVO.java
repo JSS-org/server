@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.employeeinfo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,11 +20,17 @@ public class HrmInsuranceEmployeeInfoSaveReqVO {
     @NotNull(message = "员工不能为空")
     private Long employeeId;
 
-    @Schema(description = "是否本地首次缴纳社保", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否本地首次缴纳社保",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     @NotNull(message = "是否本地首次缴纳社保不能为空")
     private Boolean firstSocialSecurity;
 
-    @Schema(description = "是否本地首次缴纳公积金", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "是否本地首次缴纳公积金",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     @NotNull(message = "是否本地首次缴纳公积金不能为空")
     private Boolean firstAccumulationFund;
 
@@ -39,5 +47,4 @@ public class HrmInsuranceEmployeeInfoSaveReqVO {
 
     @Schema(description = "社保方案编号", example = "1024")
     private Long schemeId;
-
 }

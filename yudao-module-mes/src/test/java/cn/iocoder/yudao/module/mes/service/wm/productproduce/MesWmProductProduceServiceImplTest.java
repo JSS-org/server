@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.mes.service.wm.productproduce;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -18,19 +25,15 @@ import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionServic
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseLocationService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link MesWmProductProduceServiceImpl} 的单元测试
@@ -40,28 +43,18 @@ import static org.mockito.Mockito.*;
 @Import(MesWmProductProduceServiceImpl.class)
 public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesWmProductProduceServiceImpl productProduceService;
+    @Resource private MesWmProductProduceServiceImpl productProduceService;
 
-    @Resource
-    private MesWmProductProduceMapper productProduceMapper;
+    @Resource private MesWmProductProduceMapper productProduceMapper;
 
-    @MockitoBean
-    private MesWmProductProduceLineService productProduceLineService;
-    @MockitoBean
-    private MesWmProductProduceDetailService productProduceDetailService;
-    @MockitoBean
-    private MesProWorkOrderService workOrderService;
-    @MockitoBean
-    private MesWmBatchService batchService;
-    @MockitoBean
-    private MesWmTransactionService wmTransactionService;
-    @MockitoBean
-    private MesWmWarehouseService warehouseService;
-    @MockitoBean
-    private MesWmWarehouseLocationService locationService;
-    @MockitoBean
-    private MesWmWarehouseAreaService areaService;
+    @MockitoBean private MesWmProductProduceLineService productProduceLineService;
+    @MockitoBean private MesWmProductProduceDetailService productProduceDetailService;
+    @MockitoBean private MesProWorkOrderService workOrderService;
+    @MockitoBean private MesWmBatchService batchService;
+    @MockitoBean private MesWmTransactionService wmTransactionService;
+    @MockitoBean private MesWmWarehouseService warehouseService;
+    @MockitoBean private MesWmWarehouseLocationService locationService;
+    @MockitoBean private MesWmWarehouseAreaService areaService;
 
     @Test
     public void testSplitPendingAndFinishProduce_withUnqualified() {
@@ -72,61 +65,89 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
         Long batchId = randomLongId();
         String batchCode = "BATCH-001";
 
-        MesWmProductProduceDO produce = randomPojo(MesWmProductProduceDO.class, o -> {
-            o.setFeedbackId(feedbackId);
-            o.setStatus(MesWmProductProduceStatusEnum.PREPARE.getStatus());
-        });
+        MesWmProductProduceDO produce =
+                randomPojo(
+                        MesWmProductProduceDO.class,
+                        o -> {
+                            o.setFeedbackId(feedbackId);
+                            o.setStatus(MesWmProductProduceStatusEnum.PREPARE.getStatus());
+                        });
         productProduceMapper.insert(produce);
 
         // mock: 虚拟线边库
         Long whId = randomLongId(), locId = randomLongId(), areaId = randomLongId();
-        MesWmWarehouseDO wh = new MesWmWarehouseDO(); wh.setId(whId);
-        MesWmWarehouseLocationDO loc = new MesWmWarehouseLocationDO(); loc.setId(locId);
-        MesWmWarehouseAreaDO area = new MesWmWarehouseAreaDO(); area.setId(areaId);
-        when(warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE)).thenReturn(wh);
-        when(locationService.getWarehouseLocationByCode(MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION)).thenReturn(loc);
-        when(areaService.getWarehouseAreaByCode(MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA)).thenReturn(area);
+        MesWmWarehouseDO wh = new MesWmWarehouseDO();
+        wh.setId(whId);
+        MesWmWarehouseLocationDO loc = new MesWmWarehouseLocationDO();
+        loc.setId(locId);
+        MesWmWarehouseAreaDO area = new MesWmWarehouseAreaDO();
+        area.setId(areaId);
+        when(warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE))
+                .thenReturn(wh);
+        when(locationService.getWarehouseLocationByCode(
+                        MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION))
+                .thenReturn(loc);
+        when(areaService.getWarehouseAreaByCode(MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA))
+                .thenReturn(area);
 
         // mock: 通过 sourceLineId 直接定位 PENDING 产出行
-        MesWmProductProduceLineDO pendingLine = MesWmProductProduceLineDO.builder()
-                .id(sourceLineId).produceId(produce.getId()).feedbackId(feedbackId)
-                .itemId(itemId).quantity(BigDecimal.valueOf(100))
-                .batchId(batchId).batchCode(batchCode)
-                .qualityStatus(MesWmQualityStatusEnum.PENDING.getStatus())
-                .build();
+        MesWmProductProduceLineDO pendingLine =
+                MesWmProductProduceLineDO.builder()
+                        .id(sourceLineId)
+                        .produceId(produce.getId())
+                        .feedbackId(feedbackId)
+                        .itemId(itemId)
+                        .quantity(BigDecimal.valueOf(100))
+                        .batchId(batchId)
+                        .batchCode(batchCode)
+                        .qualityStatus(MesWmQualityStatusEnum.PENDING.getStatus())
+                        .build();
         when(productProduceLineService.validateProductProduceLineExists(sourceLineId))
                 .thenReturn(pendingLine);
 
         // mock: finishProductProduce 内部查行和明细（用于创建库存事务）
-        MesWmProductProduceLineDO qualifiedLine = MesWmProductProduceLineDO.builder()
-                .id(100L).produceId(produce.getId()).itemId(itemId)
-                .quantity(BigDecimal.valueOf(80))
-                .qualityStatus(MesWmQualityStatusEnum.PASS.getStatus())
-                .build();
-        MesWmProductProduceLineDO unqualifiedLine = MesWmProductProduceLineDO.builder()
-                .id(101L).produceId(produce.getId()).itemId(itemId)
-                .quantity(BigDecimal.valueOf(20))
-                .qualityStatus(MesWmQualityStatusEnum.FAIL.getStatus())
-                .build();
+        MesWmProductProduceLineDO qualifiedLine =
+                MesWmProductProduceLineDO.builder()
+                        .id(100L)
+                        .produceId(produce.getId())
+                        .itemId(itemId)
+                        .quantity(BigDecimal.valueOf(80))
+                        .qualityStatus(MesWmQualityStatusEnum.PASS.getStatus())
+                        .build();
+        MesWmProductProduceLineDO unqualifiedLine =
+                MesWmProductProduceLineDO.builder()
+                        .id(101L)
+                        .produceId(produce.getId())
+                        .itemId(itemId)
+                        .quantity(BigDecimal.valueOf(20))
+                        .qualityStatus(MesWmQualityStatusEnum.FAIL.getStatus())
+                        .build();
         when(productProduceLineService.getProductProduceLineListByProduceId(produce.getId()))
                 .thenReturn(ListUtil.of(qualifiedLine, unqualifiedLine));
 
         // mock: finishProductProduce 中按行查明细
-        MesWmProductProduceDetailDO qualifiedDetail = MesWmProductProduceDetailDO.builder()
-                .lineId(100L).quantity(BigDecimal.valueOf(80)).build();
-        MesWmProductProduceDetailDO unqualifiedDetail = MesWmProductProduceDetailDO.builder()
-                .lineId(101L).quantity(BigDecimal.valueOf(20)).build();
+        MesWmProductProduceDetailDO qualifiedDetail =
+                MesWmProductProduceDetailDO.builder()
+                        .lineId(100L)
+                        .quantity(BigDecimal.valueOf(80))
+                        .build();
+        MesWmProductProduceDetailDO unqualifiedDetail =
+                MesWmProductProduceDetailDO.builder()
+                        .lineId(101L)
+                        .quantity(BigDecimal.valueOf(20))
+                        .build();
         when(productProduceDetailService.getProductProduceDetailListByLineId(100L))
                 .thenReturn(ListUtil.of(qualifiedDetail));
         when(productProduceDetailService.getProductProduceDetailListByLineId(101L))
                 .thenReturn(ListUtil.of(unqualifiedDetail));
 
         // 调用
-        productProduceService.splitPendingAndFinishProduce(feedbackId, sourceLineId,
-                BigDecimal.valueOf(80), BigDecimal.valueOf(20));
+        productProduceService.splitPendingAndFinishProduce(
+                feedbackId, sourceLineId, BigDecimal.valueOf(80), BigDecimal.valueOf(20));
 
         // 断言 1：不合格品行 - 新建了一行
-        ArgumentCaptor<MesWmProductProduceLineDO> lineCaptor = ArgumentCaptor.forClass(MesWmProductProduceLineDO.class);
+        ArgumentCaptor<MesWmProductProduceLineDO> lineCaptor =
+                ArgumentCaptor.forClass(MesWmProductProduceLineDO.class);
         verify(productProduceLineService).createProductProduceLine(lineCaptor.capture());
         MesWmProductProduceLineDO createdLine = lineCaptor.getValue();
         assertEquals(MesWmQualityStatusEnum.FAIL.getStatus(), createdLine.getQualityStatus());
@@ -134,7 +155,8 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
         assertEquals(itemId, createdLine.getItemId());
 
         // 断言 2：原待检行 - 更新为合格品
-        ArgumentCaptor<MesWmProductProduceLineDO> updateCaptor = ArgumentCaptor.forClass(MesWmProductProduceLineDO.class);
+        ArgumentCaptor<MesWmProductProduceLineDO> updateCaptor =
+                ArgumentCaptor.forClass(MesWmProductProduceLineDO.class);
         verify(productProduceLineService).updateProductProduceLine(updateCaptor.capture());
         MesWmProductProduceLineDO updatedLine = updateCaptor.getValue();
         assertEquals(MesWmQualityStatusEnum.PASS.getStatus(), updatedLine.getQualityStatus());
@@ -145,7 +167,8 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
 
         // 断言 4：产出单状态更新为已完成
         MesWmProductProduceDO updatedProduce = productProduceMapper.selectById(produce.getId());
-        assertEquals(MesWmProductProduceStatusEnum.FINISHED.getStatus(), updatedProduce.getStatus());
+        assertEquals(
+                MesWmProductProduceStatusEnum.FINISHED.getStatus(), updatedProduce.getStatus());
 
         // 断言 5：创建了库存事务
         verify(wmTransactionService, times(2)).createTransaction(any());
@@ -158,61 +181,81 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
         Long sourceLineId = 200L;
         Long itemId = randomLongId();
 
-        MesWmProductProduceDO produce = randomPojo(MesWmProductProduceDO.class, o -> {
-            o.setFeedbackId(feedbackId);
-            o.setStatus(MesWmProductProduceStatusEnum.PREPARE.getStatus());
-        });
+        MesWmProductProduceDO produce =
+                randomPojo(
+                        MesWmProductProduceDO.class,
+                        o -> {
+                            o.setFeedbackId(feedbackId);
+                            o.setStatus(MesWmProductProduceStatusEnum.PREPARE.getStatus());
+                        });
         productProduceMapper.insert(produce);
 
         // mock: 虚拟线边库
         Long whId = randomLongId(), locId = randomLongId(), areaId = randomLongId();
-        MesWmWarehouseDO wh = new MesWmWarehouseDO(); wh.setId(whId);
-        MesWmWarehouseLocationDO loc = new MesWmWarehouseLocationDO(); loc.setId(locId);
-        MesWmWarehouseAreaDO area = new MesWmWarehouseAreaDO(); area.setId(areaId);
+        MesWmWarehouseDO wh = new MesWmWarehouseDO();
+        wh.setId(whId);
+        MesWmWarehouseLocationDO loc = new MesWmWarehouseLocationDO();
+        loc.setId(locId);
+        MesWmWarehouseAreaDO area = new MesWmWarehouseAreaDO();
+        area.setId(areaId);
         when(warehouseService.getWarehouseByCode(any())).thenReturn(wh);
         when(locationService.getWarehouseLocationByCode(any())).thenReturn(loc);
         when(areaService.getWarehouseAreaByCode(any())).thenReturn(area);
 
         // mock: 通过 sourceLineId 直接定位 PENDING 产出行
-        MesWmProductProduceLineDO pendingLine = MesWmProductProduceLineDO.builder()
-                .id(sourceLineId).produceId(produce.getId()).feedbackId(feedbackId)
-                .itemId(itemId).quantity(BigDecimal.valueOf(50))
-                .qualityStatus(MesWmQualityStatusEnum.PENDING.getStatus())
-                .build();
+        MesWmProductProduceLineDO pendingLine =
+                MesWmProductProduceLineDO.builder()
+                        .id(sourceLineId)
+                        .produceId(produce.getId())
+                        .feedbackId(feedbackId)
+                        .itemId(itemId)
+                        .quantity(BigDecimal.valueOf(50))
+                        .qualityStatus(MesWmQualityStatusEnum.PENDING.getStatus())
+                        .build();
         when(productProduceLineService.validateProductProduceLineExists(sourceLineId))
                 .thenReturn(pendingLine);
 
         // mock: finishProductProduce 查行和明细
-        MesWmProductProduceLineDO qualifiedLine = MesWmProductProduceLineDO.builder()
-                .id(200L).produceId(produce.getId()).itemId(itemId)
-                .quantity(BigDecimal.valueOf(50))
-                .qualityStatus(MesWmQualityStatusEnum.PASS.getStatus())
-                .build();
+        MesWmProductProduceLineDO qualifiedLine =
+                MesWmProductProduceLineDO.builder()
+                        .id(200L)
+                        .produceId(produce.getId())
+                        .itemId(itemId)
+                        .quantity(BigDecimal.valueOf(50))
+                        .qualityStatus(MesWmQualityStatusEnum.PASS.getStatus())
+                        .build();
         when(productProduceLineService.getProductProduceLineListByProduceId(produce.getId()))
                 .thenReturn(ListUtil.of(qualifiedLine));
-        MesWmProductProduceDetailDO detail = MesWmProductProduceDetailDO.builder()
-                .lineId(200L).quantity(BigDecimal.valueOf(50)).build();
+        MesWmProductProduceDetailDO detail =
+                MesWmProductProduceDetailDO.builder()
+                        .lineId(200L)
+                        .quantity(BigDecimal.valueOf(50))
+                        .build();
         when(productProduceDetailService.getProductProduceDetailListByLineId(200L))
                 .thenReturn(ListUtil.of(detail));
 
         // 调用：不合格品数量 = 0
-        productProduceService.splitPendingAndFinishProduce(feedbackId, sourceLineId,
-                BigDecimal.valueOf(50), BigDecimal.ZERO);
+        productProduceService.splitPendingAndFinishProduce(
+                feedbackId, sourceLineId, BigDecimal.valueOf(50), BigDecimal.ZERO);
 
         // 断言 1：没有新建行（不合格品数量为 0）
         verify(productProduceLineService, never()).createProductProduceLine(any());
 
         // 断言 2：更新了原待检行为合格
-        ArgumentCaptor<MesWmProductProduceLineDO> updateCaptor = ArgumentCaptor.forClass(MesWmProductProduceLineDO.class);
+        ArgumentCaptor<MesWmProductProduceLineDO> updateCaptor =
+                ArgumentCaptor.forClass(MesWmProductProduceLineDO.class);
         verify(productProduceLineService).updateProductProduceLine(updateCaptor.capture());
-        assertEquals(MesWmQualityStatusEnum.PASS.getStatus(), updateCaptor.getValue().getQualityStatus());
+        assertEquals(
+                MesWmQualityStatusEnum.PASS.getStatus(),
+                updateCaptor.getValue().getQualityStatus());
 
         // 断言 3：只生成了 1 条明细（全部合格品）
         verify(productProduceDetailService, times(1)).createProductProduceDetail(any());
 
         // 断言 4：产出单状态更新为已完成
         MesWmProductProduceDO updatedProduce = productProduceMapper.selectById(produce.getId());
-        assertEquals(MesWmProductProduceStatusEnum.FINISHED.getStatus(), updatedProduce.getStatus());
+        assertEquals(
+                MesWmProductProduceStatusEnum.FINISHED.getStatus(), updatedProduce.getStatus());
     }
 
     @Test
@@ -220,9 +263,12 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
         // 调用不存在的 feedbackId，应该抛异常
         Long feedbackId = randomLongId();
         Long sourceLineId = randomLongId();
-        ServiceException ex = assertThrows(ServiceException.class, () ->
-                productProduceService.splitPendingAndFinishProduce(feedbackId, sourceLineId,
-                        BigDecimal.TEN, BigDecimal.ZERO));
+        ServiceException ex =
+                assertThrows(
+                        ServiceException.class,
+                        () ->
+                                productProduceService.splitPendingAndFinishProduce(
+                                        feedbackId, sourceLineId, BigDecimal.TEN, BigDecimal.ZERO));
         assertEquals(WM_PRODUCT_PRODUCE_NOT_EXISTS.getCode(), ex.getCode());
     }
 
@@ -231,16 +277,22 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
         // 准备数据：产出单存在，但 sourceLineId 对应的行不存在
         Long feedbackId = randomLongId();
         Long sourceLineId = randomLongId();
-        MesWmProductProduceDO produce = randomPojo(MesWmProductProduceDO.class, o -> {
-            o.setFeedbackId(feedbackId);
-            o.setStatus(MesWmProductProduceStatusEnum.PREPARE.getStatus());
-        });
+        MesWmProductProduceDO produce =
+                randomPojo(
+                        MesWmProductProduceDO.class,
+                        o -> {
+                            o.setFeedbackId(feedbackId);
+                            o.setStatus(MesWmProductProduceStatusEnum.PREPARE.getStatus());
+                        });
         productProduceMapper.insert(produce);
 
         // mock: 虚拟线边库
-        MesWmWarehouseDO wh = new MesWmWarehouseDO(); wh.setId(1L);
-        MesWmWarehouseLocationDO loc = new MesWmWarehouseLocationDO(); loc.setId(1L);
-        MesWmWarehouseAreaDO area = new MesWmWarehouseAreaDO(); area.setId(1L);
+        MesWmWarehouseDO wh = new MesWmWarehouseDO();
+        wh.setId(1L);
+        MesWmWarehouseLocationDO loc = new MesWmWarehouseLocationDO();
+        loc.setId(1L);
+        MesWmWarehouseAreaDO area = new MesWmWarehouseAreaDO();
+        area.setId(1L);
         when(warehouseService.getWarehouseByCode(any())).thenReturn(wh);
         when(locationService.getWarehouseLocationByCode(any())).thenReturn(loc);
         when(areaService.getWarehouseAreaByCode(any())).thenReturn(area);
@@ -250,10 +302,12 @@ public class MesWmProductProduceServiceImplTest extends BaseDbUnitTest {
                 .thenThrow(new ServiceException(WM_PRODUCT_PRODUCE_LINE_NOT_EXISTS));
 
         // 调用，应该抛异常
-        ServiceException ex = assertThrows(ServiceException.class, () ->
-                productProduceService.splitPendingAndFinishProduce(feedbackId, sourceLineId,
-                        BigDecimal.TEN, BigDecimal.ZERO));
+        ServiceException ex =
+                assertThrows(
+                        ServiceException.class,
+                        () ->
+                                productProduceService.splitPendingAndFinishProduce(
+                                        feedbackId, sourceLineId, BigDecimal.TEN, BigDecimal.ZERO));
         assertEquals(WM_PRODUCT_PRODUCE_LINE_NOT_EXISTS.getCode(), ex.getCode());
     }
-
 }

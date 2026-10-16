@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.trade.service.order.handler;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_CREATE_FAIL_INSUFFICIENT_USER_POINTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
@@ -9,14 +12,13 @@ import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderItemDO;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderStatusEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_CREATE_FAIL_INSUFFICIENT_USER_POINTS;
 
 /**
  * 积分商城活动订单的 {@link TradeOrderHandler} 实现类
@@ -26,10 +28,8 @@ import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_CREAT
 @Component
 public class TradePointOrderHandler implements TradeOrderHandler {
 
-    @Resource
-    private PointActivityApi pointActivityApi;
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private PointActivityApi pointActivityApi;
+    @Resource private MemberUserApi memberUserApi;
 
     @Override
     public void beforeOrderCreate(TradeOrderDO order, List<TradeOrderItemDO> orderItems) {
@@ -45,8 +45,10 @@ public class TradePointOrderHandler implements TradeOrderHandler {
         }
 
         // 扣减积分商城活动的库存
-        pointActivityApi.updatePointStockDecr(order.getPointActivityId(),
-                orderItems.get(0).getSkuId(), orderItems.get(0).getCount());
+        pointActivityApi.updatePointStockDecr(
+                order.getPointActivityId(),
+                orderItems.get(0).getSkuId(),
+                orderItems.get(0).getCount());
 
         // 如果支付金额为 0，则直接设置为已支付
         if (Objects.equals(order.getPayPrice(), 0)) {
@@ -76,8 +78,7 @@ public class TradePointOrderHandler implements TradeOrderHandler {
             return;
         }
         // 恢复积分商城活动的库存
-        pointActivityApi.updatePointStockIncr(order.getPointActivityId(),
-                orderItem.getSkuId(), orderItem.getCount());
+        pointActivityApi.updatePointStockIncr(
+                order.getPointActivityId(), orderItem.getSkuId(), orderItem.getCount());
     }
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.model.vo.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -15,8 +17,10 @@ public class Ai1ModelImportReqVO {
     @NotNull(message = "供应商编号不能为空")
     private Long providerId;
 
-    @Schema(description = "模型标识列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[\"deepseek-chat\"]")
+    @Schema(
+            description = "模型标识列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[\"deepseek-chat\"]")
     @NotEmpty(message = "请选择要导入的模型")
     private List<String> models;
-
 }

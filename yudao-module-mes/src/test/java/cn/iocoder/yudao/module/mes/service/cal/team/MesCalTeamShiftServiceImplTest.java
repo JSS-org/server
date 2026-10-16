@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.cal.team;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.plan.MesCalPlanDO;
@@ -12,18 +15,16 @@ import cn.iocoder.yudao.module.mes.enums.cal.MesCalShiftTypeEnum;
 import cn.iocoder.yudao.module.mes.service.cal.plan.MesCalPlanService;
 import cn.iocoder.yudao.module.mes.service.cal.plan.MesCalPlanShiftService;
 import cn.iocoder.yudao.module.mes.service.cal.plan.MesCalPlanTeamService;
+
+import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import jakarta.annotation.Resource;
-
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link MesCalTeamShiftServiceImpl} 的单元测试
@@ -33,45 +34,62 @@ import static org.mockito.Mockito.*;
 @Import(MesCalTeamShiftServiceImpl.class)
 public class MesCalTeamShiftServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesCalTeamShiftServiceImpl teamShiftService;
+    @Resource private MesCalTeamShiftServiceImpl teamShiftService;
 
-    @Resource
-    private MesCalTeamShiftMapper teamShiftMapper;
+    @Resource private MesCalTeamShiftMapper teamShiftMapper;
 
-    @MockitoBean
-    private MesCalPlanService planService;
-    @MockitoBean
-    private MesCalPlanShiftService planShiftService;
-    @MockitoBean
-    private MesCalPlanTeamService planTeamService;
+    @MockitoBean private MesCalPlanService planService;
+    @MockitoBean private MesCalPlanShiftService planShiftService;
+    @MockitoBean private MesCalPlanTeamService planTeamService;
 
     @Test
     public void testGenerateTeamShiftRecords_threeShift_rotateThreeStates() {
         // 准备参数
         Long planId = 3001L;
         // mock 方法：排班计划（三班倒、按天轮班、3 天）
-        MesCalPlanDO plan = MesCalPlanDO.builder()
-                .id(planId)
-                .code("PLAN-THREE-001")
-                .name("三班倒轮转")
-                .calendarType(1)
-                .startDate(LocalDateTime.of(2026, 4, 1, 0, 0))
-                .endDate(LocalDateTime.of(2026, 4, 3, 0, 0))
-                .shiftType(MesCalShiftTypeEnum.THREE.getType())
-                .shiftMethod(MesCalShiftMethodEnum.DAY.getMethod())
-                .shiftCount(1)
-                .build();
-        List<MesCalPlanShiftDO> shifts = ListUtil.of(
-                MesCalPlanShiftDO.builder().id(11L).planId(planId).sort(1).name("白班").startTime("08:00").endTime("16:00").build(),
-                MesCalPlanShiftDO.builder().id(12L).planId(planId).sort(2).name("中班").startTime("16:00").endTime("00:00").build(),
-                MesCalPlanShiftDO.builder().id(13L).planId(planId).sort(3).name("夜班").startTime("00:00").endTime("08:00").build()
-        );
-        List<MesCalPlanTeamDO> teams = ListUtil.of(
-                MesCalPlanTeamDO.builder().id(21L).planId(planId).teamId(101L).build(),
-                MesCalPlanTeamDO.builder().id(22L).planId(planId).teamId(102L).build(),
-                MesCalPlanTeamDO.builder().id(23L).planId(planId).teamId(103L).build()
-        );
+        MesCalPlanDO plan =
+                MesCalPlanDO.builder()
+                        .id(planId)
+                        .code("PLAN-THREE-001")
+                        .name("三班倒轮转")
+                        .calendarType(1)
+                        .startDate(LocalDateTime.of(2026, 4, 1, 0, 0))
+                        .endDate(LocalDateTime.of(2026, 4, 3, 0, 0))
+                        .shiftType(MesCalShiftTypeEnum.THREE.getType())
+                        .shiftMethod(MesCalShiftMethodEnum.DAY.getMethod())
+                        .shiftCount(1)
+                        .build();
+        List<MesCalPlanShiftDO> shifts =
+                ListUtil.of(
+                        MesCalPlanShiftDO.builder()
+                                .id(11L)
+                                .planId(planId)
+                                .sort(1)
+                                .name("白班")
+                                .startTime("08:00")
+                                .endTime("16:00")
+                                .build(),
+                        MesCalPlanShiftDO.builder()
+                                .id(12L)
+                                .planId(planId)
+                                .sort(2)
+                                .name("中班")
+                                .startTime("16:00")
+                                .endTime("00:00")
+                                .build(),
+                        MesCalPlanShiftDO.builder()
+                                .id(13L)
+                                .planId(planId)
+                                .sort(3)
+                                .name("夜班")
+                                .startTime("00:00")
+                                .endTime("08:00")
+                                .build());
+        List<MesCalPlanTeamDO> teams =
+                ListUtil.of(
+                        MesCalPlanTeamDO.builder().id(21L).planId(planId).teamId(101L).build(),
+                        MesCalPlanTeamDO.builder().id(22L).planId(planId).teamId(102L).build(),
+                        MesCalPlanTeamDO.builder().id(23L).planId(planId).teamId(103L).build());
         when(planService.getPlan(planId)).thenReturn(plan);
         when(planShiftService.getPlanShiftListByPlanId(planId)).thenReturn(shifts);
         when(planTeamService.getPlanTeamListByPlanId(planId)).thenReturn(teams);
@@ -81,7 +99,9 @@ public class MesCalTeamShiftServiceImplTest extends BaseDbUnitTest {
 
         // 断言：3 天 × 3 班次 = 9 条排班记录，班组按天轮转
         List<MesCalTeamShiftDO> records = teamShiftMapper.selectListByPlanId(planId);
-        records.sort(Comparator.comparing(MesCalTeamShiftDO::getDay).thenComparing(MesCalTeamShiftDO::getSort));
+        records.sort(
+                Comparator.comparing(MesCalTeamShiftDO::getDay)
+                        .thenComparing(MesCalTeamShiftDO::getSort));
         assertEquals(9, records.size());
         // 断言：第 1 天（shiftIndex=0）：A 白班、B 中班、C 夜班
         assertRecord(records.get(0), LocalDateTime.of(2026, 4, 1, 0, 0), 1, 101L, 11L);
@@ -101,16 +121,38 @@ public class MesCalTeamShiftServiceImplTest extends BaseDbUnitTest {
     public void testGenerateTeamShiftRecords_singleWithoutRotation() {
         Long planId = 3002L;
         LocalDateTime start = LocalDateTime.of(2026, 9, 21, 0, 0);
-        when(planService.getPlan(planId)).thenReturn(MesCalPlanDO.builder()
-                .id(planId).code("SINGLE-001").name("单白班")
-                .calendarType(1).startDate(start).endDate(start.plusDays(1))
-                .shiftType(MesCalShiftTypeEnum.SINGLE.getType())
-                .shiftMethod(null).shiftCount(null).build());
-        when(planShiftService.getPlanShiftListByPlanId(planId)).thenReturn(ListUtil.of(
-                MesCalPlanShiftDO.builder().id(11L).planId(planId).sort(1).name("白班")
-                        .startTime("08:00").endTime("16:00").build()));
-        when(planTeamService.getPlanTeamListByPlanId(planId)).thenReturn(ListUtil.of(
-                MesCalPlanTeamDO.builder().id(21L).planId(planId).teamId(101L).build()));
+        when(planService.getPlan(planId))
+                .thenReturn(
+                        MesCalPlanDO.builder()
+                                .id(planId)
+                                .code("SINGLE-001")
+                                .name("单白班")
+                                .calendarType(1)
+                                .startDate(start)
+                                .endDate(start.plusDays(1))
+                                .shiftType(MesCalShiftTypeEnum.SINGLE.getType())
+                                .shiftMethod(null)
+                                .shiftCount(null)
+                                .build());
+        when(planShiftService.getPlanShiftListByPlanId(planId))
+                .thenReturn(
+                        ListUtil.of(
+                                MesCalPlanShiftDO.builder()
+                                        .id(11L)
+                                        .planId(planId)
+                                        .sort(1)
+                                        .name("白班")
+                                        .startTime("08:00")
+                                        .endTime("16:00")
+                                        .build()));
+        when(planTeamService.getPlanTeamListByPlanId(planId))
+                .thenReturn(
+                        ListUtil.of(
+                                MesCalPlanTeamDO.builder()
+                                        .id(21L)
+                                        .planId(planId)
+                                        .teamId(101L)
+                                        .build()));
 
         teamShiftService.generateTeamShiftRecords(planId);
 
@@ -121,12 +163,11 @@ public class MesCalTeamShiftServiceImplTest extends BaseDbUnitTest {
         assertRecord(records.get(1), start.plusDays(1), 1, 101L, 11L);
     }
 
-    private static void assertRecord(MesCalTeamShiftDO actual, LocalDateTime day, Integer sort,
-                                     Long teamId, Long shiftId) {
+    private static void assertRecord(
+            MesCalTeamShiftDO actual, LocalDateTime day, Integer sort, Long teamId, Long shiftId) {
         assertEquals(day, actual.getDay());
         assertEquals(sort, actual.getSort());
         assertEquals(teamId, actual.getTeamId());
         assertEquals(shiftId, actual.getShiftId());
     }
-
 }

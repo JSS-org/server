@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountuser;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - FMS 账套用户 Response VO")
@@ -33,5 +34,4 @@ public class FmsAccountUserRespVO {
 
     @Schema(description = "成员权限级别", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private Integer level;
-
 }

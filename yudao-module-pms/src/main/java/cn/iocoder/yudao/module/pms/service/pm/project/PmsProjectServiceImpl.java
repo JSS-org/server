@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ADMIN_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_OWNER_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_STATUS_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -19,7 +26,9 @@ import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemStatusService;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemWorkLogService;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -34,13 +43,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ADMIN_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_OWNER_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_STATUS_INVALID;
-
 /**
  * PMS 项目 Service 实现类
  *
@@ -54,44 +56,39 @@ public class PmsProjectServiceImpl implements PmsProjectService {
      * 项目完成趋势统计天数
      */
     private static final int TREND_DAYS = 14;
+
     /**
      * 项目概况展示的待办工作项数量上限
      */
     private static final int ASSIGNED_WORK_ITEM_LIMIT = 10;
 
-    @Resource
-    private PmsProjectMapper projectMapper;
+    @Resource private PmsProjectMapper projectMapper;
 
-    @Resource
-    private PmsProjectMemberService projectMemberService;
-    @Resource
-    private PmsProjectGroupService projectGroupService;
-    @Resource
-    private PmsProjectFavoriteService projectFavoriteService;
-    @Resource
-    private PmsProjectAnnouncementService projectAnnouncementService;
-    @Resource
-    private PmsIterationService iterationService;
-    @Resource
-    private PmsWorkItemService workItemService;
-    @Resource
-    private PmsWorkItemStatusService workItemStatusService;
-    @Resource
-    private PmsWorkItemWorkLogService workItemWorkLogService;
+    @Resource private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectGroupService projectGroupService;
+    @Resource private PmsProjectFavoriteService projectFavoriteService;
+    @Resource private PmsProjectAnnouncementService projectAnnouncementService;
+    @Resource private PmsIterationService iterationService;
+    @Resource private PmsWorkItemService workItemService;
+    @Resource private PmsWorkItemStatusService workItemStatusService;
+    @Resource private PmsWorkItemWorkLogService workItemWorkLogService;
 
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private PermissionApi permissionApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createProject(PmsProjectSaveReqVO saveReqVO, Long userId) {
         // 1. 创建进行中的项目
-        PmsProjectDO project = BeanUtils.toBean(saveReqVO, PmsProjectDO.class)
-                .setStatus(PmsProjectStatusEnum.ACTIVE.getStatus()).setSort(0).setAccessTime(LocalDateTime.now());
+        PmsProjectDO project =
+                BeanUtils.toBean(saveReqVO, PmsProjectDO.class)
+                        .setStatus(PmsProjectStatusEnum.ACTIVE.getStatus())
+                        .setSort(0)
+                        .setAccessTime(LocalDateTime.now());
         projectMapper.insert(project);
 
         // 2.1 创建人作为项目管理员，并初始化其他项目成员
-        projectMemberService.createProjectMemberList(project.getId(), userId, saveReqVO.getMemberUserIds());
+        projectMemberService.createProjectMemberList(
+                project.getId(), userId, saveReqVO.getMemberUserIds());
         // 2.2 初始化项目支持的工作项看板状态
         workItemStatusService.initProjectWorkItemStatuses(project.getId(), project.getType());
         return project.getId();
@@ -107,8 +104,7 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         validateProjectManagerPermission(saveReqVO.getId(), userId);
 
         // 2. 更新项目基本信息
-        PmsProjectDO updateObj = BeanUtils.toBean(saveReqVO, PmsProjectDO.class)
-                .setType(null);
+        PmsProjectDO updateObj = BeanUtils.toBean(saveReqVO, PmsProjectDO.class).setType(null);
         projectMapper.updateById(updateObj);
     }
 
@@ -141,32 +137,40 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         } else if (PmsProjectSceneTypeEnum.ALL.getType().equals(pageReqVO.getSceneType())) {
             projectIds = projectMemberService.getProjectIdListByUserId(userId);
             includeOpenProject = true;
-            includeAllProject = permissionApi.hasAnyRoles(userId, RoleCodeEnum.SUPER_ADMIN.getCode());
+            includeAllProject =
+                    permissionApi.hasAnyRoles(userId, RoleCodeEnum.SUPER_ADMIN.getCode());
         } else if (PmsProjectSceneTypeEnum.MANAGED.getType().equals(pageReqVO.getSceneType())) {
             projectIds = projectMemberService.getManagedProjectIdListByUserId(userId);
         } else {
-            projectIds = projectGroupService.filterProjectIdListByGroupId(pageReqVO.getGroupId(), userId,
-                    projectMemberService.getProjectIdListByUserId(userId));
+            projectIds =
+                    projectGroupService.filterProjectIdListByGroupId(
+                            pageReqVO.getGroupId(),
+                            userId,
+                            projectMemberService.getProjectIdListByUserId(userId));
         }
         if (!includeOpenProject && CollUtil.isEmpty(projectIds)) {
             return PageResult.empty();
         }
 
         // 2. 查询项目分页
-        return projectMapper.selectPage(pageReqVO, projectIds, includeOpenProject, includeAllProject);
+        return projectMapper.selectPage(
+                pageReqVO, projectIds, includeOpenProject, includeAllProject);
     }
 
     @Override
     public List<PmsProjectDO> getFavoriteProjectList(Long userId) {
         // 1. 查询当前用户参与且已星标的项目编号
-        List<Long> favoriteProjectIds = projectFavoriteService.getFavoriteProjectIdListByUserId(userId);
+        List<Long> favoriteProjectIds =
+                projectFavoriteService.getFavoriteProjectIdListByUserId(userId);
         List<Long> memberProjectIds = projectMemberService.getProjectIdListByUserId(userId);
-        List<Long> readableFavoriteProjectIds = filterList(favoriteProjectIds, memberProjectIds::contains);
+        List<Long> readableFavoriteProjectIds =
+                filterList(favoriteProjectIds, memberProjectIds::contains);
         if (CollUtil.isEmpty(readableFavoriteProjectIds)) {
             return Collections.emptyList();
         }
         // 2. 查询进行中的星标项目列表
-        return projectMapper.selectListByIdsAndStatus(readableFavoriteProjectIds, PmsProjectStatusEnum.ACTIVE.getStatus());
+        return projectMapper.selectListByIdsAndStatus(
+                readableFavoriteProjectIds, PmsProjectStatusEnum.ACTIVE.getStatus());
     }
 
     @Override
@@ -190,10 +194,13 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         long completedCount = 0L;
         Map<Integer, Long> typeCountMap = new LinkedHashMap<>();
         for (PmsWorkItemDO workItem : workItems) {
-            typeCountMap.put(workItem.getType(), typeCountMap.getOrDefault(workItem.getType(), 0L) + 1);
+            typeCountMap.put(
+                    workItem.getType(), typeCountMap.getOrDefault(workItem.getType(), 0L) + 1);
             if (PmsWorkItemStatusTypeEnum.PENDING.getType().equals(workItem.getStatus())) {
                 pendingCount++;
-            } else if (PmsWorkItemStatusTypeEnum.PROCESSING.getType().equals(workItem.getStatus())) {
+            } else if (PmsWorkItemStatusTypeEnum.PROCESSING
+                    .getType()
+                    .equals(workItem.getStatus())) {
                 processingCount++;
             } else if (PmsWorkItemStatusTypeEnum.COMPLETED.getType().equals(workItem.getStatus())) {
                 completedCount++;
@@ -215,35 +222,52 @@ public class PmsProjectServiceImpl implements PmsProjectService {
             }
         }
         List<PmsProjectOverviewRespVO.TrendPoint> completedTrends = new ArrayList<>();
-        completedCountMap.forEach((date, count) -> completedTrends.add(
-                new PmsProjectOverviewRespVO.TrendPoint().setDate(date.toString()).setCount(count)));
+        completedCountMap.forEach(
+                (date, count) ->
+                        completedTrends.add(
+                                new PmsProjectOverviewRespVO.TrendPoint()
+                                        .setDate(date.toString())
+                                        .setCount(count)));
 
         // 4. 查询分配给当前用户的未完成工作项
         List<PmsWorkItemDO> assignedWorkItems = new ArrayList<>();
         for (PmsWorkItemDO workItem : workItems) {
             if (userId.equals(workItem.getAssigneeUserId())
-                    && ObjectUtil.notEqual(PmsWorkItemStatusTypeEnum.COMPLETED.getType(), workItem.getStatus())) {
+                    && ObjectUtil.notEqual(
+                            PmsWorkItemStatusTypeEnum.COMPLETED.getType(), workItem.getStatus())) {
                 assignedWorkItems.add(workItem);
             }
         }
-        assignedWorkItems.sort(Comparator.comparing(PmsWorkItemDO::getEndTime,
-                Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(PmsWorkItemDO::getId));
+        assignedWorkItems.sort(
+                Comparator.comparing(
+                                PmsWorkItemDO::getEndTime,
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(PmsWorkItemDO::getId));
         if (assignedWorkItems.size() > ASSIGNED_WORK_ITEM_LIMIT) {
             assignedWorkItems = assignedWorkItems.subList(0, ASSIGNED_WORK_ITEM_LIMIT);
         }
         List<PmsProjectOverviewRespVO.AssignedWorkItem> assignedWorkItemVOs = new ArrayList<>();
         for (PmsWorkItemDO workItem : assignedWorkItems) {
-            assignedWorkItemVOs.add(new PmsProjectOverviewRespVO.AssignedWorkItem().setId(workItem.getId())
-                    .setSerialNumber(workItem.getSerialNumber()).setType(workItem.getType())
-                    .setName(workItem.getName()).setStatus(workItem.getStatus()).setEndTime(workItem.getEndTime())
-                    .setProgress(workItem.getProgress()));
+            assignedWorkItemVOs.add(
+                    new PmsProjectOverviewRespVO.AssignedWorkItem()
+                            .setId(workItem.getId())
+                            .setSerialNumber(workItem.getSerialNumber())
+                            .setType(workItem.getType())
+                            .setName(workItem.getName())
+                            .setStatus(workItem.getStatus())
+                            .setEndTime(workItem.getEndTime())
+                            .setProgress(workItem.getProgress()));
         }
 
         // 5. 组装项目概况
-        return new PmsProjectOverviewRespVO().setTotalCount((long) workItems.size())
-                .setPendingCount(pendingCount).setProcessingCount(processingCount)
-                .setCompletedCount(completedCount).setTypeCountMap(typeCountMap)
-                .setCompletedTrends(completedTrends).setAssignedWorkItems(assignedWorkItemVOs);
+        return new PmsProjectOverviewRespVO()
+                .setTotalCount((long) workItems.size())
+                .setPendingCount(pendingCount)
+                .setProcessingCount(processingCount)
+                .setCompletedCount(completedCount)
+                .setTypeCountMap(typeCountMap)
+                .setCompletedTrends(completedTrends)
+                .setAssignedWorkItems(assignedWorkItemVOs);
     }
 
     @Override
@@ -257,8 +281,12 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         validateProjectManagerPermission(id, userId);
 
         // 2. 归档项目，并清除个人项目分组和星标关系
-        int updateCount = projectMapper.updateStatusAndArchiveTimeById(id, PmsProjectStatusEnum.ACTIVE.getStatus(),
-                PmsProjectStatusEnum.ARCHIVED.getStatus(), LocalDateTime.now());
+        int updateCount =
+                projectMapper.updateStatusAndArchiveTimeById(
+                        id,
+                        PmsProjectStatusEnum.ACTIVE.getStatus(),
+                        PmsProjectStatusEnum.ARCHIVED.getStatus(),
+                        LocalDateTime.now());
         if (updateCount == 0) {
             throw exception(PROJECT_STATUS_INVALID);
         }
@@ -277,8 +305,12 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         validateProjectManagerPermission(id, userId);
 
         // 2. 将项目移入回收站，并清除个人项目分组和星标关系
-        int updateCount = projectMapper.updateStatusAndRecycleTimeById(id, PmsProjectStatusEnum.ACTIVE.getStatus(),
-                PmsProjectStatusEnum.RECYCLED.getStatus(), LocalDateTime.now());
+        int updateCount =
+                projectMapper.updateStatusAndRecycleTimeById(
+                        id,
+                        PmsProjectStatusEnum.ACTIVE.getStatus(),
+                        PmsProjectStatusEnum.RECYCLED.getStatus(),
+                        LocalDateTime.now());
         if (updateCount == 0) {
             throw exception(PROJECT_STATUS_INVALID);
         }
@@ -298,7 +330,8 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         validateProjectManagerPermission(id, userId);
 
         // 2. 恢复为进行中的项目，并清空生命周期时间
-        int updateCount = projectMapper.updateToRestoreById(id, PmsProjectStatusEnum.ACTIVE.getStatus());
+        int updateCount =
+                projectMapper.updateToRestoreById(id, PmsProjectStatusEnum.ACTIVE.getStatus());
         if (updateCount == 0) {
             throw exception(PROJECT_STATUS_INVALID);
         }
@@ -375,5 +408,4 @@ public class PmsProjectServiceImpl implements PmsProjectService {
         }
         return project;
     }
-
 }

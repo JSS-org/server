@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.ipqc.vo;
 
 import cn.hutool.core.util.ObjUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -19,11 +23,17 @@ public class MesQcIpqcSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "检验单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "IPQC20250101001")
+    @Schema(
+            description = "检验单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "IPQC20250101001")
     @NotEmpty(message = "检验单编号不能为空")
     private String code;
 
-    @Schema(description = "检验单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "XX工单过程检验")
+    @Schema(
+            description = "检验单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "XX工单过程检验")
     @NotEmpty(message = "检验单名称不能为空")
     private String name;
 
@@ -121,11 +131,14 @@ public class MesQcIpqcSaveReqVO {
     @AssertTrue(message = "工废、料废、其他废品数量之和不能超过不合格品数量")
     @JsonIgnore
     public boolean isScrapQuantityValid() {
-        if (ObjUtil.hasNull(unqualifiedQuantity, laborScrapQuantity, materialScrapQuantity, otherScrapQuantity)) {
+        if (ObjUtil.hasNull(
+                unqualifiedQuantity,
+                laborScrapQuantity,
+                materialScrapQuantity,
+                otherScrapQuantity)) {
             return true; // @NotNull 会处理 null
         }
         BigDecimal scrapSum = laborScrapQuantity.add(materialScrapQuantity).add(otherScrapQuantity);
         return scrapSum.compareTo(unqualifiedQuantity) <= 0;
     }
-
 }

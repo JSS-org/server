@@ -5,10 +5,12 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.type.StringListTypeHandler;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.system.enums.mail.MailSendStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.*;
 
 import java.io.Serializable;
@@ -24,7 +26,8 @@ import java.util.Map;
  * @since 2022-03-21
  */
 @TableName(value = "system_mail_log", autoResultMap = true)
-@KeySequence("system_mail_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "system_mail_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -43,6 +46,7 @@ public class MailLogDO extends BaseDO implements Serializable {
      * 用户编码
      */
     private Long userId;
+
     /**
      * 用户类型
      *
@@ -55,11 +59,13 @@ public class MailLogDO extends BaseDO implements Serializable {
      */
     @TableField(typeHandler = StringListTypeHandler.class)
     private List<String> toMails;
+
     /**
      * 接收邮箱地址
      */
     @TableField(typeHandler = StringListTypeHandler.class)
     private List<String> ccMails;
+
     /**
      * 密送邮箱地址
      */
@@ -72,6 +78,7 @@ public class MailLogDO extends BaseDO implements Serializable {
      * 关联 {@link MailAccountDO#getId()}
      */
     private Long accountId;
+
     /**
      * 发送邮箱地址
      *
@@ -86,28 +93,33 @@ public class MailLogDO extends BaseDO implements Serializable {
      * 关联 {@link MailTemplateDO#getId()}
      */
     private Long templateId;
+
     /**
      * 模版编码
      *
      * 冗余 {@link MailTemplateDO#getCode()}
      */
     private String templateCode;
+
     /**
      * 模版发送人名称
      *
      * 冗余 {@link MailTemplateDO#getNickname()}
      */
     private String templateNickname;
+
     /**
      * 模版标题
      */
     private String templateTitle;
+
     /**
      * 模版内容
      *
      * 基于 {@link MailTemplateDO#getContent()} 格式化后的内容
      */
     private String templateContent;
+
     /**
      * 模版参数
      *
@@ -123,17 +135,19 @@ public class MailLogDO extends BaseDO implements Serializable {
      * 枚举 {@link MailSendStatusEnum}
      */
     private Integer sendStatus;
+
     /**
      * 发送时间
      */
     private LocalDateTime sendTime;
+
     /**
      * 发送返回的消息 ID
      */
     private String sendMessageId;
+
     /**
      * 发送异常
      */
     private String sendException;
-
 }

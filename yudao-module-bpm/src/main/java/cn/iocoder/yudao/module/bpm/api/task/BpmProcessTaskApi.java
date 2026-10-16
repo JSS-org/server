@@ -15,7 +15,7 @@ public interface BpmProcessTaskApi {
      * @param processInstanceId 流程实例编号
      * @param taskDefineKey 任务 Key
      */
-    void triggerTask(@NotEmpty(message = "流程实例的编号不能为空") String processInstanceId,
-                     @NotEmpty(message = "任务 Key 不能为空") String taskDefineKey);
-
+    void triggerTask(
+            @NotEmpty(message = "流程实例的编号不能为空") String processInstanceId,
+            @NotEmpty(message = "任务 Key 不能为空") String taskDefineKey);
 }

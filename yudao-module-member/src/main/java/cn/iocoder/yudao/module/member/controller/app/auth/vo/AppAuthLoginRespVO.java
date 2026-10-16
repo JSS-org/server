@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.app.auth.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,5 +35,4 @@ public class AppAuthLoginRespVO {
      */
     @Schema(description = "社交用户 openid", example = "qq768")
     private String openid;
-
 }

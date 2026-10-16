@@ -3,9 +3,11 @@ package cn.iocoder.yudao.module.im.dal.dataobject.channel;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImChannelMessageDO;
 import cn.iocoder.yudao.module.im.enums.channel.ImChannelMaterialTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -31,39 +33,44 @@ public class ImChannelMaterialDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 频道编号
      * <p>
      * 关联 {@link ImChannelDO#getId()}
      */
     private Long channelId;
+
     /**
      * 素材内容类型
      * <p>
      * 枚举 {@link ImChannelMaterialTypeEnum}
      */
     private Integer type;
+
     /**
      * 标题
      */
     private String title;
+
     /**
      * 封面图
      */
     private String coverUrl;
+
     /**
      * 摘要
      */
     private String summary;
+
     /**
      * 富文本 HTML；在 {@link ImChannelMaterialTypeEnum#CONTENT} 使用
      */
     private String content;
+
     /**
      * 跳转链接；在 {@link ImChannelMaterialTypeEnum#LINK} 使用
      */
     private String url;
-
 }

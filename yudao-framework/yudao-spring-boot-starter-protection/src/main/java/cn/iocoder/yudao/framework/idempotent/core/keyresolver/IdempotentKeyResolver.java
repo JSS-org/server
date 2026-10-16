@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.idempotent.core.keyresolver;
 
 import cn.iocoder.yudao.framework.idempotent.core.annotation.Idempotent;
+
 import org.aspectj.lang.JoinPoint;
 
 /**
@@ -18,5 +19,4 @@ public interface IdempotentKeyResolver {
      * @return Key
      */
     String resolver(JoinPoint joinPoint, Idempotent idempotent);
-
 }

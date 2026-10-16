@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.api.wallet.dto;
 
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
+
 import lombok.Data;
 
 /**
@@ -23,6 +24,7 @@ public class PayWalletRespDTO {
      * 关联 AdminUserDO 的 id 编号
      */
     private Long userId;
+
     /**
      * 用户类型, 预留 多商户转帐可能需要用到
      *
@@ -44,9 +46,9 @@ public class PayWalletRespDTO {
      * 累计支出，单位分
      */
     private Integer totalExpense;
+
     /**
      * 累计充值，单位分
      */
     private Integer totalRecharge;
-
 }

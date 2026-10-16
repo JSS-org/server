@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.note.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -49,7 +50,11 @@ public class OaNoteRespVO {
     @Schema(description = "接收人用户昵称列表", example = "[\"张三\", \"李四\"]")
     private List<String> receiverUserNames;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

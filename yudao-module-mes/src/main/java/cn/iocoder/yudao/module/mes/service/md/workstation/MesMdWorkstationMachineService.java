@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.md.workstation;
 
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.machine.MesMdWorkstationMachineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationMachineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -42,5 +43,4 @@ public interface MesMdWorkstationMachineService {
      * @param workstationId 工作站编号
      */
     void deleteWorkstationMachineByWorkstationId(Long workstationId);
-
 }

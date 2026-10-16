@@ -22,5 +22,4 @@ public class IdCardDesensitization extends AbstractSliderDesensitizationHandler<
     String getReplacer(IdCardDesensitize annotation) {
         return annotation.replacer();
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.task;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_TASK_ISSUE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.task.vo.MesProTaskIssuePageReqVO;
@@ -7,14 +10,13 @@ import cn.iocoder.yudao.module.mes.controller.admin.pro.task.vo.MesProTaskIssueS
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.task.MesProTaskIssueDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.task.MesProTaskIssueMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_TASK_ISSUE_NOT_EXISTS;
 
 /**
  * MES 生产任务投料 Service 实现类
@@ -25,13 +27,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_TASK_ISSU
 @Validated
 public class MesProTaskIssueServiceImpl implements MesProTaskIssueService {
 
-    @Resource
-    private MesProTaskIssueMapper taskIssueMapper;
+    @Resource private MesProTaskIssueMapper taskIssueMapper;
 
-    @Resource
-    private MesProTaskService taskService;
-    @Resource
-    private MesMdItemService itemService;
+    @Resource private MesProTaskService taskService;
+    @Resource private MesMdItemService itemService;
 
     @Override
     public Long createTaskIssue(MesProTaskIssueSaveReqVO createReqVO) {
@@ -93,5 +92,4 @@ public class MesProTaskIssueServiceImpl implements MesProTaskIssueService {
             throw exception(PRO_TASK_ISSUE_NOT_EXISTS);
         }
     }
-
 }

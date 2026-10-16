@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.erp.service.finance;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,15 +10,14 @@ import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.account.ErpAccoun
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.account.ErpAccountSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpAccountDO;
 import cn.iocoder.yudao.module.erp.dal.mysql.finance.ErpAccountMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 /**
  * ERP 结算账户 Service 实现类
@@ -26,8 +28,7 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 @Validated
 public class ErpAccountServiceImpl implements ErpAccountService {
 
-    @Resource
-    private ErpAccountMapper accountMapper;
+    @Resource private ErpAccountMapper accountMapper;
 
     @Override
     public Long createAccount(ErpAccountSaveReqVO createReqVO) {
@@ -56,7 +57,8 @@ public class ErpAccountServiceImpl implements ErpAccountService {
         if (defaultStatus) {
             ErpAccountDO account = accountMapper.selectByDefaultStatus();
             if (account != null) {
-                accountMapper.updateById(new ErpAccountDO().setId(account.getId()).setDefaultStatus(false));
+                accountMapper.updateById(
+                        new ErpAccountDO().setId(account.getId()).setDefaultStatus(false));
             }
         }
         // 2.2 更新对应的默认状态
@@ -108,5 +110,4 @@ public class ErpAccountServiceImpl implements ErpAccountService {
     public PageResult<ErpAccountDO> getAccountPage(ErpAccountPageReqVO pageReqVO) {
         return accountMapper.selectPage(pageReqVO);
     }
-
 }

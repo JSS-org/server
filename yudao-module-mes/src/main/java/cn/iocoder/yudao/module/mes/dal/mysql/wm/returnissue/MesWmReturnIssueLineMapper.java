@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnissue.vo.line.MesWmReturnIssueLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueLineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -16,9 +17,11 @@ import java.util.List;
 public interface MesWmReturnIssueLineMapper extends BaseMapperX<MesWmReturnIssueLineDO> {
 
     default PageResult<MesWmReturnIssueLineDO> selectPage(MesWmReturnIssueLinePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesWmReturnIssueLineDO>()
-                .eqIfPresent(MesWmReturnIssueLineDO::getIssueId, reqVO.getIssueId())
-                .orderByDesc(MesWmReturnIssueLineDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesWmReturnIssueLineDO>()
+                        .eqIfPresent(MesWmReturnIssueLineDO::getIssueId, reqVO.getIssueId())
+                        .orderByDesc(MesWmReturnIssueLineDO::getId));
     }
 
     default List<MesWmReturnIssueLineDO> selectListByIssueId(Long issueId) {
@@ -28,5 +31,4 @@ public interface MesWmReturnIssueLineMapper extends BaseMapperX<MesWmReturnIssue
     default void deleteByIssueId(Long issueId) {
         delete(MesWmReturnIssueLineDO::getIssueId, issueId);
     }
-
 }

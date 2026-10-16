@@ -19,25 +19,29 @@ public class OAuth2AccessTokenCheckRespDTO implements Serializable {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 用户类型
      */
     private Integer userType;
+
     /**
      * 用户信息
      */
     private Map<String, String> userInfo;
+
     /**
      * 租户编号
      */
     private Long tenantId;
+
     /**
      * 授权范围的数组
      */
     private List<String> scopes;
+
     /**
      * 过期时间
      */
     private LocalDateTime expiresTime;
-
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.gym.service.file;
 import cn.iocoder.yudao.module.gym.controller.admin.file.vo.GymFileUploadReqVO;
 import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
 import cn.iocoder.yudao.module.gym.service.file.dto.GymFileContentDTO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -40,5 +41,4 @@ public interface GymFileService {
      * @return 文件内容 + 下载所需元数据
      */
     GymFileContentDTO getFileContent(Long id);
-
 }

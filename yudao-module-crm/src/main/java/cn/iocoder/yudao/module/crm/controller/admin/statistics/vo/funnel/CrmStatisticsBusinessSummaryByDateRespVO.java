@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.funnel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -17,5 +18,4 @@ public class CrmStatisticsBusinessSummaryByDateRespVO {
 
     @Schema(description = "新增商机金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private BigDecimal totalPrice;
-
 }

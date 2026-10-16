@@ -57,8 +57,7 @@ public class JsoupXssCleaner implements XssCleaner {
 
     @Override
     public String clean(String html) {
-        return Jsoup.clean(html, baseUri, safelist, new Document.OutputSettings().prettyPrint(false));
+        return Jsoup.clean(
+                html, baseUri, safelist, new Document.OutputSettings().prettyPrint(false));
     }
-
 }
-

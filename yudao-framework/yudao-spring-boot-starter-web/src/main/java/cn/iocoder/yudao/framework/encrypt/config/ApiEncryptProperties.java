@@ -2,7 +2,9 @@ package cn.iocoder.yudao.framework.encrypt.config;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -66,5 +68,4 @@ public class ApiEncryptProperties {
      */
     @NotEmpty(message = "响应的加密密钥不能为空")
     private String responseKey;
-
 }

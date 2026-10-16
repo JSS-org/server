@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -125,5 +126,4 @@ public class FmsVoucherRespVO {
             private String name;
         }
     }
-
 }

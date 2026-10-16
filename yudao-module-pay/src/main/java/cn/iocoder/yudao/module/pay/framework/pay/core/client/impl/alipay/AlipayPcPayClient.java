@@ -6,10 +6,12 @@ import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradePagePayModel;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.alipay.api.response.AlipayTradePagePayResponse;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
@@ -38,13 +40,16 @@ public class AlipayPcPayClient extends AbstractAlipayPayClient {
         model.setBody(reqDTO.getBody());
         model.setTotalAmount(formatAmount(reqDTO.getPrice()));
         model.setTimeExpire(formatTime(reqDTO.getExpireTime()));
-        model.setProductCode("FAST_INSTANT_TRADE_PAY"); // 销售产品码. 目前 PC 支付场景下仅支持 FAST_INSTANT_TRADE_PAY
+        model.setProductCode(
+                "FAST_INSTANT_TRADE_PAY"); // 销售产品码. 目前 PC 支付场景下仅支持 FAST_INSTANT_TRADE_PAY
         // ② 个性化的参数
-        // 如果想弄更多个性化的参数，可参考 https://www.pingxx.com/api/支付渠道 extra 参数说明.html 的 alipay_pc_direct 部分进行拓展
+        // 如果想弄更多个性化的参数，可参考 https://www.pingxx.com/api/支付渠道 extra 参数说明.html 的 alipay_pc_direct
+        // 部分进行拓展
         model.setQrPayMode("2"); // 跳转模式 - 订单码，效果参见：https://help.pingxx.com/article/1137360/
         // ③ 支付宝 PC 支付有两种展示模式：FORM、URL
-        String displayMode = ObjectUtil.defaultIfNull(reqDTO.getDisplayMode(),
-                PayOrderDisplayModeEnum.URL.getMode());
+        String displayMode =
+                ObjectUtil.defaultIfNull(
+                        reqDTO.getDisplayMode(), PayOrderDisplayModeEnum.URL.getMode());
 
         // 1.2 构建 AlipayTradePagePayRequest 请求
         AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
@@ -63,8 +68,7 @@ public class AlipayPcPayClient extends AbstractAlipayPayClient {
         if (!response.isSuccess()) {
             return buildClosedPayOrderRespDTO(reqDTO, response);
         }
-        return PayOrderRespDTO.waitingOf(displayMode, response.getBody(),
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                displayMode, response.getBody(), reqDTO.getOutTradeNo(), response);
     }
-
 }

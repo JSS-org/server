@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.schedule.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,10 +35,20 @@ public class OaScheduleRespVO {
     @Schema(description = "描述", example = "下周完成盘点差异核实")
     private String description;
 
-    @Schema(description = "开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime startTime;
 
-    @Schema(description = "结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     private LocalDateTime endTime;
 
     @Schema(description = "是否提醒", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
@@ -49,7 +60,12 @@ public class OaScheduleRespVO {
     @Schema(description = "参与人用户昵称列表", example = "[\"张三\", \"李四\"]")
     private List<String> participantUserNames;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
     @Schema(description = "参与人阅读信息，仅详情返回")
@@ -68,9 +84,11 @@ public class OaScheduleRespVO {
         @Schema(description = "是否已读", example = "false")
         private Boolean readStatus;
 
-        @Schema(description = "首次阅读时间", type = "integer", format = "int64", example = "1789347600000")
+        @Schema(
+                description = "首次阅读时间",
+                type = "integer",
+                format = "int64",
+                example = "1789347600000")
         private LocalDateTime readTime;
-
     }
-
 }

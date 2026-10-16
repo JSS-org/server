@@ -21,13 +21,14 @@ public class ImNotificationWebSocketDTO {
      * 会话类型，参见 ImConversationTypeEnum 枚举类
      */
     private Integer conversationType;
+
     /**
      * 内容类型，参见 ImContentTypeEnum 枚举类
      */
     private Integer contentType;
+
     /**
      * 负载数据
      */
     private Object payload;
-
 }

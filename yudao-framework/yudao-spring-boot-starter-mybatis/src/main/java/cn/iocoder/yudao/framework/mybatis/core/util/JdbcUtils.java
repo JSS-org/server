@@ -3,14 +3,17 @@ package cn.iocoder.yudao.framework.mybatis.core.util;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.framework.common.util.spring.SpringUtils;
 import cn.iocoder.yudao.framework.mybatis.core.enums.DbTypeEnum;
+
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.baomidou.mybatisplus.annotation.DbType;
+
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import javax.sql.DataSource;
 
 /**
  * JDBC 工具类
@@ -53,7 +56,8 @@ public class JdbcUtils {
     public static DbType getDbType() {
         DataSource dataSource;
         try {
-            DynamicRoutingDataSource dynamicRoutingDataSource = SpringUtils.getBean(DynamicRoutingDataSource.class);
+            DynamicRoutingDataSource dynamicRoutingDataSource =
+                    SpringUtils.getBean(DynamicRoutingDataSource.class);
             dataSource = dynamicRoutingDataSource.determineDataSource();
         } catch (NoSuchBeanDefinitionException e) {
             dataSource = SpringUtils.getBean(DataSource.class);
@@ -85,5 +89,4 @@ public class JdbcUtils {
     public static boolean isSQLServer(DbType dbType) {
         return ObjectUtils.equalsAny(dbType, DbType.SQL_SERVER, DbType.SQL_SERVER2005);
     }
-
 }

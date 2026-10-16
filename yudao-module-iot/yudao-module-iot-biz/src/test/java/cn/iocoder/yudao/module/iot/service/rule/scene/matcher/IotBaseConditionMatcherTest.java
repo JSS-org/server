@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.service.rule.scene.matcher;
 
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.util.spring.SpringExpressionUtils;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -26,7 +27,5 @@ public abstract class IotBaseConditionMatcherTest {
         public SpringUtil springUtil() {
             return new SpringUtil();
         }
-
     }
-
 }

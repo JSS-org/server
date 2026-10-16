@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.comment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 工作项评论新增/修改 Request VO")
@@ -27,5 +29,4 @@ public class PmsWorkItemCommentSaveReqVO {
     @NotBlank(message = "评论内容不能为空")
     @Size(max = 2000, message = "评论内容不能超过 2000 个字符")
     private String content;
-
 }

@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.mes.service.md.autocode.strategy.impl;
 
-import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePartDO;
-import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodeContext;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePartDO;
+import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodeContext;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * {@link MesMdAutoCodeDatePartStrategy} 的单元测试
@@ -55,5 +56,4 @@ public class MesMdAutoCodeDatePartStrategyTest {
         assertEquals(6, result.length());
         assertTrue(result.matches("\\d{6}"));
     }
-
 }

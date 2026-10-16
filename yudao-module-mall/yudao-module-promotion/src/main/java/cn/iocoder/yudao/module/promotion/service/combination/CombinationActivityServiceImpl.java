@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.promotion.service.combination;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_EXISTS;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
+import static java.util.Collections.singletonList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -19,7 +28,9 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationA
 import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationProductDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.combination.CombinationActivityMapper;
 import cn.iocoder.yudao.module.promotion.dal.mysql.combination.CombinationProductMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -27,14 +38,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SPU_NOT_EXISTS;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singletonList;
 
 /**
  * 拼团活动 Service 实现类
@@ -45,15 +48,11 @@ import static java.util.Collections.singletonList;
 @Validated
 public class CombinationActivityServiceImpl implements CombinationActivityService {
 
-    @Resource
-    private CombinationActivityMapper combinationActivityMapper;
-    @Resource
-    private CombinationProductMapper combinationProductMapper;
+    @Resource private CombinationActivityMapper combinationActivityMapper;
+    @Resource private CombinationProductMapper combinationProductMapper;
 
-    @Resource
-    private ProductSpuApi productSpuApi;
-    @Resource
-    private ProductSkuApi productSkuApi;
+    @Resource private ProductSpuApi productSpuApi;
+    @Resource private ProductSkuApi productSkuApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,11 +63,15 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
         validateProductExists(createReqVO.getSpuId(), createReqVO.getProducts());
 
         // 插入拼团活动
-        CombinationActivityDO activity = CombinationActivityConvert.INSTANCE.convert(createReqVO)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        CombinationActivityDO activity =
+                CombinationActivityConvert.INSTANCE
+                        .convert(createReqVO)
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         combinationActivityMapper.insert(activity);
         // 插入商品
-        List<CombinationProductDO> products = CombinationActivityConvert.INSTANCE.convertList(createReqVO.getProducts(), activity);
+        List<CombinationProductDO> products =
+                CombinationActivityConvert.INSTANCE.convertList(
+                        createReqVO.getProducts(), activity);
         combinationProductMapper.insertBatch(products);
         return activity.getId();
     }
@@ -81,12 +84,14 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
      */
     private void validateProductConflict(Long spuId, Long activityId) {
         // 查询所有开启的拼团活动
-        List<CombinationActivityDO> activityList = combinationActivityMapper.selectListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        List<CombinationActivityDO> activityList =
+                combinationActivityMapper.selectListByStatus(CommonStatusEnum.ENABLE.getStatus());
         if (activityId != null) { // 时排除自己
             activityList.removeIf(item -> ObjectUtil.equal(item.getId(), activityId));
         }
         // 查找是否有其它活动，选择了该产品
-        List<CombinationActivityDO> matchActivityList = filterList(activityList, activity -> ObjectUtil.equal(activity.getSpuId(), spuId));
+        List<CombinationActivityDO> matchActivityList =
+                filterList(activityList, activity -> ObjectUtil.equal(activity.getSpuId(), spuId));
         if (CollUtil.isNotEmpty(matchActivityList)) {
             throw exception(COMBINATION_ACTIVITY_SPU_CONFLICTS);
         }
@@ -108,11 +113,12 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
         // 2. 校验商品 sku 都存在
         List<ProductSkuRespDTO> skus = productSkuApi.getSkuListBySpuId(singletonList(spuId));
         Map<Long, ProductSkuRespDTO> skuMap = convertMap(skus, ProductSkuRespDTO::getId);
-        products.forEach(product -> {
-            if (!skuMap.containsKey(product.getSkuId())) {
-                throw exception(SKU_NOT_EXISTS);
-            }
-        });
+        products.forEach(
+                product -> {
+                    if (!skuMap.containsKey(product.getSkuId())) {
+                        throw exception(SKU_NOT_EXISTS);
+                    }
+                });
     }
 
     @Override
@@ -146,8 +152,10 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
         }
 
         // 关闭活动
-        combinationActivityMapper.updateById(new CombinationActivityDO().setId(id)
-                .setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        combinationActivityMapper.updateById(
+                new CombinationActivityDO()
+                        .setId(id)
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus()));
     }
 
     /**
@@ -156,17 +164,25 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
      * @param activity 拼团活动
      * @param products 该活动的最新商品配置
      */
-    private void updateCombinationProduct(CombinationActivityDO activity, List<CombinationProductBaseVO> products) {
+    private void updateCombinationProduct(
+            CombinationActivityDO activity, List<CombinationProductBaseVO> products) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
-        List<CombinationProductDO> newList = CombinationActivityConvert.INSTANCE.convertList(products, activity);
-        List<CombinationProductDO> oldList = combinationProductMapper.selectListByActivityIds(CollUtil.newArrayList(activity.getId()));
-        List<List<CombinationProductDO>> diffList = CollectionUtils.diffList(oldList, newList, (oldVal, newVal) -> {
-            boolean same = ObjectUtil.equal(oldVal.getSkuId(), newVal.getSkuId());
-            if (same) {
-                newVal.setId(oldVal.getId());
-            }
-            return same;
-        });
+        List<CombinationProductDO> newList =
+                CombinationActivityConvert.INSTANCE.convertList(products, activity);
+        List<CombinationProductDO> oldList =
+                combinationProductMapper.selectListByActivityIds(
+                        CollUtil.newArrayList(activity.getId()));
+        List<List<CombinationProductDO>> diffList =
+                CollectionUtils.diffList(
+                        oldList,
+                        newList,
+                        (oldVal, newVal) -> {
+                            boolean same = ObjectUtil.equal(oldVal.getSkuId(), newVal.getSkuId());
+                            if (same) {
+                                newVal.setId(oldVal.getId());
+                            }
+                            return same;
+                        });
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(0))) {
@@ -176,7 +192,8 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
             combinationProductMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            combinationProductMapper.deleteByIds(CollectionUtils.convertList(diffList.get(2), CombinationProductDO::getId));
+            combinationProductMapper.deleteByIds(
+                    CollectionUtils.convertList(diffList.get(2), CombinationProductDO::getId));
         }
     }
 
@@ -209,12 +226,14 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
     }
 
     @Override
-    public PageResult<CombinationActivityDO> getCombinationActivityPage(CombinationActivityPageReqVO pageReqVO) {
+    public PageResult<CombinationActivityDO> getCombinationActivityPage(
+            CombinationActivityPageReqVO pageReqVO) {
         return combinationActivityMapper.selectPage(pageReqVO);
     }
 
     @Override
-    public List<CombinationProductDO> getCombinationProductListByActivityIds(Collection<Long> activityIds) {
+    public List<CombinationProductDO> getCombinationProductListByActivityIds(
+            Collection<Long> activityIds) {
         return combinationProductMapper.selectListByActivityIds(activityIds);
     }
 
@@ -237,7 +256,7 @@ public class CombinationActivityServiceImpl implements CombinationActivityServic
 
     @Override
     public CombinationActivityDO getMatchCombinationActivityBySpuId(Long spuId) {
-        return combinationActivityMapper.selectBySpuIdAndStatusAndNow(spuId, CommonStatusEnum.ENABLE.getStatus());
+        return combinationActivityMapper.selectBySpuIdAndStatusAndNow(
+                spuId, CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

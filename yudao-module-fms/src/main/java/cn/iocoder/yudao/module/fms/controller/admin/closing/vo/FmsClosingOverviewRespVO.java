@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.closing.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -59,5 +60,4 @@ public class FmsClosingOverviewRespVO {
 
     @Schema(description = "是否满足全部结账条件")
     private Boolean canClose;
-
 }

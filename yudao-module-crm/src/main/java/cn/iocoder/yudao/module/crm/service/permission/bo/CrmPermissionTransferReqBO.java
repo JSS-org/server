@@ -3,10 +3,11 @@ package cn.iocoder.yudao.module.crm.service.permission.bo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
 import cn.iocoder.yudao.module.crm.enums.permission.CrmPermissionLevelEnum;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
@@ -31,6 +32,7 @@ public class CrmPermissionTransferReqBO {
     @NotNull(message = "Crm 类型不能为空")
     @InEnum(CrmBizTypeEnum.class)
     private Integer bizType;
+
     /**
      * 数据编号
      */
@@ -49,5 +51,4 @@ public class CrmPermissionTransferReqBO {
      * 关联 {@link CrmPermissionLevelEnum}
      */
     private Integer oldOwnerPermissionLevel;
-
 }

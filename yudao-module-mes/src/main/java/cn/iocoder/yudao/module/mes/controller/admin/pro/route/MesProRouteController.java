@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.route;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -12,13 +16,16 @@ import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.MesProRouteResp
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.MesProRouteSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteDO;
 import cn.iocoder.yudao.module.mes.service.pro.route.MesProRouteService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,18 +33,13 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @Tag(name = "管理后台 - MES 工艺路线")
 @RestController
 @RequestMapping("/mes/pro/route")
 @Validated
 public class MesProRouteController {
 
-    @Resource
-    private MesProRouteService routeService;
+    @Resource private MesProRouteService routeService;
 
     @PostMapping("/create")
     @Operation(summary = "创建工艺路线")
@@ -57,12 +59,12 @@ public class MesProRouteController {
     @PutMapping("/update-status")
     @Operation(summary = "更新工艺路线状态")
     @Parameters({
-            @Parameter(name = "id", description = "编号", required = true),
-            @Parameter(name = "status", description = "状态", required = true)
+        @Parameter(name = "id", description = "编号", required = true),
+        @Parameter(name = "status", description = "状态", required = true)
     })
     @PreAuthorize("@ss.hasPermission('mes:pro-route:update')")
-    public CommonResult<Boolean> updateRouteStatus(@RequestParam("id") Long id,
-                                                    @RequestParam("status") Integer status) {
+    public CommonResult<Boolean> updateRouteStatus(
+            @RequestParam("id") Long id, @RequestParam("status") Integer status) {
         routeService.updateRouteStatus(id, status);
         return success(true);
     }
@@ -88,7 +90,8 @@ public class MesProRouteController {
     @GetMapping("/page")
     @Operation(summary = "获得工艺路线分页")
     @PreAuthorize("@ss.hasPermission('mes:pro-route:query')")
-    public CommonResult<PageResult<MesProRouteRespVO>> getRoutePage(@Valid MesProRoutePageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesProRouteRespVO>> getRoutePage(
+            @Valid MesProRoutePageReqVO pageReqVO) {
         PageResult<MesProRouteDO> pageResult = routeService.getRoutePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesProRouteRespVO.class));
     }
@@ -96,21 +99,28 @@ public class MesProRouteController {
     @GetMapping("/simple-list")
     @Operation(summary = "获得工艺路线精简列表", description = "只包含被开启的工艺路线，主要用于前端的下拉选项")
     public CommonResult<List<MesProRouteRespVO>> getRouteSimpleList() {
-        List<MesProRouteDO> list = routeService.getRouteListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, route -> new MesProRouteRespVO()
-                .setId(route.getId()).setName(route.getName()).setCode(route.getCode())));
+        List<MesProRouteDO> list =
+                routeService.getRouteListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return success(
+                convertList(
+                        list,
+                        route ->
+                                new MesProRouteRespVO()
+                                        .setId(route.getId())
+                                        .setName(route.getName())
+                                        .setCode(route.getCode())));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出工艺路线 Excel")
     @PreAuthorize("@ss.hasPermission('mes:pro-route:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportRouteExcel(@Valid MesProRoutePageReqVO pageReqVO,
-                                  HttpServletResponse response) throws IOException {
+    public void exportRouteExcel(
+            @Valid MesProRoutePageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesProRouteDO> list = routeService.getRoutePage(pageReqVO).getList();
         List<MesProRouteRespVO> data = BeanUtils.toBean(list, MesProRouteRespVO.class);
         ExcelUtils.write(response, "工艺路线.xls", "数据", MesProRouteRespVO.class, data);
     }
-
 }

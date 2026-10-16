@@ -4,8 +4,11 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.dict.validation.InDict;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 套红模板新增/修改 Request VO")
@@ -20,7 +23,10 @@ public class OaOfficialDocTemplateSaveReqVO {
     @Size(max = 128, message = "模板名称长度不能超过 {max} 个字符")
     private String name;
 
-    @Schema(description = "红头名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道科技有限公司文件")
+    @Schema(
+            description = "红头名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "芋道科技有限公司文件")
     @NotBlank(message = "红头名称不能为空")
     @Size(max = 255, message = "红头名称长度不能超过 {max} 个字符")
     private String authorityName;
@@ -56,5 +62,4 @@ public class OaOfficialDocTemplateSaveReqVO {
     @Schema(description = "备注", example = "请提前联系行政部确认")
     @Size(max = 500, message = "备注长度不能超过 {max} 个字符")
     private String remark;
-
 }

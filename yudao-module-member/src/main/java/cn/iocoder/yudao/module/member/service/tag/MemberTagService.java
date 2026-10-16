@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagUpdateReq
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -69,5 +70,4 @@ public interface MemberTagService {
      * @return 标签列表
      */
     List<MemberTagDO> getTagList();
-
 }

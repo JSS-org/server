@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.product;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -24,7 +25,10 @@ public class CrmStatisticsProductSalesRespVO {
     @Schema(description = "合同编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "30")
     private Long contractId;
 
-    @Schema(description = "合同编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "HT20240101001")
+    @Schema(
+            description = "合同编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "HT20240101001")
     private String contractNo;
 
     @Schema(description = "合同名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "CRM 采购合同")
@@ -50,5 +54,4 @@ public class CrmStatisticsProductSalesRespVO {
 
     @Schema(description = "销售金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "200.00")
     private BigDecimal productTotalPrice;
-
 }

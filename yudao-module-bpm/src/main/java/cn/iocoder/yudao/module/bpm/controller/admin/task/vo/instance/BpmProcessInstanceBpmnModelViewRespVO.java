@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.instance;
 
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.simple.BpmSimpleModelNodeVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task.BpmTaskRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -39,5 +41,4 @@ public class BpmProcessInstanceBpmnModelViewRespVO {
 
     @Schema(description = "已经拒绝的活动节点编号集合", requiredMode = Schema.RequiredMode.REQUIRED)
     private Set<String> rejectedTaskActivityIds; // 只包括 UserTask
-
 }

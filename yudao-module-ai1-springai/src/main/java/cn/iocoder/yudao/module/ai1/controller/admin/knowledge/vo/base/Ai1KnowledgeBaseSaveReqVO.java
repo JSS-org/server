@@ -2,9 +2,13 @@ package cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI1 知识库新增/修改 Request VO")
@@ -23,7 +27,10 @@ public class Ai1KnowledgeBaseSaveReqVO {
     @Size(max = 500, message = "描述长度不能超过 500 个字符")
     private String description;
 
-    @Schema(description = "向量化 Provider 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "向量化 Provider 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "向量化 Provider 不能为空")
     private Long embeddingProviderId;
 
@@ -31,7 +38,10 @@ public class Ai1KnowledgeBaseSaveReqVO {
     @NotNull(message = "向量化模型不能为空")
     private Long embeddingModelId;
 
-    @Schema(description = "分片大小，单位：字符", requiredMode = Schema.RequiredMode.REQUIRED, example = "500")
+    @Schema(
+            description = "分片大小，单位：字符",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "500")
     @NotNull(message = "分片大小不能为空")
     @Min(value = 100, message = "分片大小不能小于 100")
     private Integer chunkSize;
@@ -56,5 +66,4 @@ public class Ai1KnowledgeBaseSaveReqVO {
     public boolean isChunkOverlapValid() {
         return chunkSize == null || chunkOverlap == null || chunkOverlap < chunkSize;
     }
-
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.iot.core.mq.producer;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -31,7 +32,7 @@ public class IotDeviceMessageProducer {
      * @param message 设备消息
      */
     public void sendDeviceMessageToGateway(String serverId, IotDeviceMessage message) {
-        messageBus.post(IotDeviceMessageUtils.buildMessageBusGatewayDeviceMessageTopic(serverId), message);
+        messageBus.post(
+                IotDeviceMessageUtils.buildMessageBusGatewayDeviceMessageTopic(serverId), message);
     }
-
 }

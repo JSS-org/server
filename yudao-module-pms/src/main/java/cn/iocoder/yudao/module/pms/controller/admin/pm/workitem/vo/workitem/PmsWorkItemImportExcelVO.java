@@ -8,9 +8,12 @@ import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.framework.excel.core.convert.StringListConvert;
 import cn.iocoder.yudao.module.pms.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -117,5 +120,4 @@ public class PmsWorkItemImportExcelVO {
     public boolean isDefectTypeValid() {
         return defectType == null || PmsWorkItemTypeEnum.DEFECT.getType().equals(workItemType);
     }
-
 }

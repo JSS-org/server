@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.travel.vo.reimbursement;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -17,5 +19,4 @@ public class OaTravelReimbursementSubmitReqVO {
 
     @Schema(description = "发起人自选审批人")
     private Map<String, List<Long>> startUserSelectAssignees;
-
 }

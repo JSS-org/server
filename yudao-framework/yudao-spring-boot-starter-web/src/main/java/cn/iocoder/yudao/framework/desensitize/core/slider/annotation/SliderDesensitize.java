@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.desensitize.core.slider.annotation;
 
 import cn.iocoder.yudao.framework.desensitize.core.base.annotation.DesensitizeBy;
 import cn.iocoder.yudao.framework.desensitize.core.slider.handler.DefaultDesensitizationHandler;
+
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
 
 import java.lang.annotation.Documented;
@@ -47,5 +48,4 @@ public @interface SliderDesensitize {
      * 支持 Spring EL 表达式，如果返回 true 则跳过脱敏
      */
     String disable() default "";
-
 }

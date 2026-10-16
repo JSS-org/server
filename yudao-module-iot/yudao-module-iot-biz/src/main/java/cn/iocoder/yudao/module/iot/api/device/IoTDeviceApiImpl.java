@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.iot.api.device;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -20,8 +23,10 @@ import cn.iocoder.yudao.module.iot.service.device.IotDeviceModbusConfigService;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceModbusPointService;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
@@ -34,9 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 /**
  * IoT 设备 API 实现类
  *
@@ -47,15 +49,11 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Primary // 保证优先匹配，因为 yudao-iot-gateway 也有 IotDeviceCommonApi 的实现，并且也可能会被 biz 引入
 public class IoTDeviceApiImpl implements IotDeviceCommonApi {
 
-    @Resource
-    private IotDeviceService deviceService;
-    @Resource
-    private IotProductService productService;
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖
+    @Resource private IotDeviceService deviceService;
+    @Resource private IotProductService productService;
+    @Resource @Lazy // 延迟加载，解决循环依赖
     private IotDeviceModbusConfigService modbusConfigService;
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖
+    @Resource @Lazy // 延迟加载，解决循环依赖
     private IotDeviceModbusPointService modbusPointService;
 
     @Override
@@ -69,14 +67,24 @@ public class IoTDeviceApiImpl implements IotDeviceCommonApi {
     @PostMapping(RpcConstants.RPC_API_PREFIX + "/iot/device/get") // 特殊：方便调用，暂时使用 POST，实际更推荐 GET
     @PermitAll
     public CommonResult<IotDeviceRespDTO> getDevice(@RequestBody IotDeviceGetReqDTO getReqDTO) {
-        IotDeviceDO device = getReqDTO.getId() != null ? deviceService.getDeviceFromCache(getReqDTO.getId())
-                : deviceService.getDeviceFromCache(getReqDTO.getProductKey(), getReqDTO.getDeviceName());
-        return success(BeanUtils.toBean(device, IotDeviceRespDTO.class, deviceDTO -> {
-            IotProductDO product = productService.getProductFromCache(deviceDTO.getProductId());
-            if (product != null) {
-                deviceDTO.setProtocolType(product.getProtocolType()).setSerializeType(product.getSerializeType());
-            }
-        }));
+        IotDeviceDO device =
+                getReqDTO.getId() != null
+                        ? deviceService.getDeviceFromCache(getReqDTO.getId())
+                        : deviceService.getDeviceFromCache(
+                                getReqDTO.getProductKey(), getReqDTO.getDeviceName());
+        return success(
+                BeanUtils.toBean(
+                        device,
+                        IotDeviceRespDTO.class,
+                        deviceDTO -> {
+                            IotProductDO product =
+                                    productService.getProductFromCache(deviceDTO.getProductId());
+                            if (product != null) {
+                                deviceDTO
+                                        .setProtocolType(product.getProtocolType())
+                                        .setSerializeType(product.getSerializeType());
+                            }
+                        }));
     }
 
     @Override
@@ -86,7 +94,8 @@ public class IoTDeviceApiImpl implements IotDeviceCommonApi {
     public CommonResult<List<IotModbusDeviceConfigRespDTO>> getModbusDeviceConfigList(
             @RequestBody IotModbusDeviceConfigListReqDTO listReqDTO) {
         // 1. 获取 Modbus 连接配置
-        List<IotDeviceModbusConfigDO> configList = modbusConfigService.getDeviceModbusConfigList(listReqDTO);
+        List<IotDeviceModbusConfigDO> configList =
+                modbusConfigService.getDeviceModbusConfigList(listReqDTO);
         if (CollUtil.isEmpty(configList)) {
             return success(new ArrayList<>());
         }
@@ -97,8 +106,11 @@ public class IoTDeviceApiImpl implements IotDeviceCommonApi {
         if (CollUtil.isEmpty(deviceMap)) {
             return success(new ArrayList<>());
         }
-        Map<Long, List<IotDeviceModbusPointDO>> pointMap = modbusPointService.getEnabledDeviceModbusPointMapByDeviceIds(deviceIds);
-        Map<Long, IotProductDO> productMap = productService.getProductMap(convertSet(deviceMap.values(), IotDeviceDO::getProductId));
+        Map<Long, List<IotDeviceModbusPointDO>> pointMap =
+                modbusPointService.getEnabledDeviceModbusPointMapByDeviceIds(deviceIds);
+        Map<Long, IotProductDO> productMap =
+                productService.getProductMap(
+                        convertSet(deviceMap.values(), IotDeviceDO::getProductId));
         List<IotModbusDeviceConfigRespDTO> result = new ArrayList<>(configList.size());
         for (IotDeviceModbusConfigDO config : configList) {
             // 3.1 获取设备信息
@@ -109,7 +121,9 @@ public class IoTDeviceApiImpl implements IotDeviceCommonApi {
             // 3.2 按 protocolType 筛选（如果非空）
             if (StrUtil.isNotEmpty(listReqDTO.getProtocolType())) {
                 IotProductDO product = productMap.get(device.getProductId());
-                if (product == null || ObjUtil.notEqual(listReqDTO.getProtocolType(), product.getProtocolType())) {
+                if (product == null
+                        || ObjUtil.notEqual(
+                                listReqDTO.getProtocolType(), product.getProtocolType())) {
                     continue;
                 }
             }
@@ -120,9 +134,17 @@ public class IoTDeviceApiImpl implements IotDeviceCommonApi {
             }
 
             // 3.4 构建 IotModbusDeviceConfigRespDTO 对象
-            IotModbusDeviceConfigRespDTO configDTO = BeanUtils.toBean(config, IotModbusDeviceConfigRespDTO.class, o ->
-                    o.setProductKey(device.getProductKey()).setDeviceName(device.getDeviceName())
-                            .setPoints(BeanUtils.toBean(pointList, IotModbusPointRespDTO.class)));
+            IotModbusDeviceConfigRespDTO configDTO =
+                    BeanUtils.toBean(
+                            config,
+                            IotModbusDeviceConfigRespDTO.class,
+                            o ->
+                                    o.setProductKey(device.getProductKey())
+                                            .setDeviceName(device.getDeviceName())
+                                            .setPoints(
+                                                    BeanUtils.toBean(
+                                                            pointList,
+                                                            IotModbusPointRespDTO.class)));
             result.add(configDTO);
         }
         return success(result);
@@ -131,15 +153,16 @@ public class IoTDeviceApiImpl implements IotDeviceCommonApi {
     @Override
     @PostMapping(RpcConstants.RPC_API_PREFIX + "/iot/device/register")
     @PermitAll
-    public CommonResult<IotDeviceRegisterRespDTO> registerDevice(@RequestBody IotDeviceRegisterReqDTO reqDTO) {
+    public CommonResult<IotDeviceRegisterRespDTO> registerDevice(
+            @RequestBody IotDeviceRegisterReqDTO reqDTO) {
         return success(deviceService.registerDevice(reqDTO));
     }
 
     @Override
     @PostMapping(RpcConstants.RPC_API_PREFIX + "/iot/device/register-sub")
     @PermitAll
-    public CommonResult<List<IotSubDeviceRegisterRespDTO>> registerSubDevices(@RequestBody IotSubDeviceRegisterFullReqDTO reqDTO) {
+    public CommonResult<List<IotSubDeviceRegisterRespDTO>> registerSubDevices(
+            @RequestBody IotSubDeviceRegisterFullReqDTO reqDTO) {
         return success(deviceService.registerSubDevices(reqDTO));
     }
-
 }

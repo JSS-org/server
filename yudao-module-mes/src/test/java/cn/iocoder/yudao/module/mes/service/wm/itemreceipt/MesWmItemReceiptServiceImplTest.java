@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.mes.service.wm.itemreceipt;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDetailDO;
@@ -9,24 +19,16 @@ import cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService;
 import cn.iocoder.yudao.module.mes.service.qc.iqc.MesQcIqcService;
 import cn.iocoder.yudao.module.mes.service.wm.arrivalnotice.MesWmArrivalNoticeService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
+
+import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import jakarta.annotation.Resource;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link MesWmItemReceiptServiceImpl} 的单元测试
@@ -36,24 +38,16 @@ import static org.mockito.Mockito.*;
 @Import(MesWmItemReceiptServiceImpl.class)
 public class MesWmItemReceiptServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesWmItemReceiptServiceImpl itemReceiptService;
+    @Resource private MesWmItemReceiptServiceImpl itemReceiptService;
 
-    @Resource
-    private MesWmItemReceiptMapper itemReceiptMapper;
+    @Resource private MesWmItemReceiptMapper itemReceiptMapper;
 
-    @MockitoBean
-    private MesWmItemReceiptLineService itemReceiptLineService;
-    @MockitoBean
-    private MesWmItemReceiptDetailService itemReceiptDetailService;
-    @MockitoBean
-    private MesWmArrivalNoticeService arrivalNoticeService;
-    @MockitoBean
-    private MesMdVendorService vendorService;
-    @MockitoBean
-    private MesQcIqcService iqcService;
-    @MockitoBean
-    private MesWmTransactionService wmTransactionService;
+    @MockitoBean private MesWmItemReceiptLineService itemReceiptLineService;
+    @MockitoBean private MesWmItemReceiptDetailService itemReceiptDetailService;
+    @MockitoBean private MesWmArrivalNoticeService arrivalNoticeService;
+    @MockitoBean private MesMdVendorService vendorService;
+    @MockitoBean private MesQcIqcService iqcService;
+    @MockitoBean private MesWmTransactionService wmTransactionService;
 
     // ========== finishItemReceipt ==========
 
@@ -61,22 +55,31 @@ public class MesWmItemReceiptServiceImplTest extends BaseDbUnitTest {
     public void testFinishItemReceipt_success_withNoticeId() {
         // mock 数据：插入一条待入库状态的入库单（有关联到货通知单）
         Long noticeId = randomLongId();
-        MesWmItemReceiptDO receipt = randomPojo(MesWmItemReceiptDO.class, o -> {
-            o.setStatus(MesWmItemReceiptStatusEnum.APPROVED.getStatus());
-            o.setNoticeId(noticeId);
-        });
+        MesWmItemReceiptDO receipt =
+                randomPojo(
+                        MesWmItemReceiptDO.class,
+                        o -> {
+                            o.setStatus(MesWmItemReceiptStatusEnum.APPROVED.getStatus());
+                            o.setNoticeId(noticeId);
+                        });
         itemReceiptMapper.insert(receipt);
         Long receiptId = receipt.getId();
 
         // mock 明细列表
-        MesWmItemReceiptDetailDO detail1 = randomPojo(MesWmItemReceiptDetailDO.class, o -> {
-            o.setReceiptId(receiptId);
-            o.setQuantity(BigDecimal.valueOf(100));
-        });
-        MesWmItemReceiptDetailDO detail2 = randomPojo(MesWmItemReceiptDetailDO.class, o -> {
-            o.setReceiptId(receiptId);
-            o.setQuantity(BigDecimal.valueOf(50));
-        });
+        MesWmItemReceiptDetailDO detail1 =
+                randomPojo(
+                        MesWmItemReceiptDetailDO.class,
+                        o -> {
+                            o.setReceiptId(receiptId);
+                            o.setQuantity(BigDecimal.valueOf(100));
+                        });
+        MesWmItemReceiptDetailDO detail2 =
+                randomPojo(
+                        MesWmItemReceiptDetailDO.class,
+                        o -> {
+                            o.setReceiptId(receiptId);
+                            o.setQuantity(BigDecimal.valueOf(50));
+                        });
         when(itemReceiptDetailService.getItemReceiptDetailListByReceiptId(eq(receiptId)))
                 .thenReturn(Arrays.asList(detail1, detail2));
 
@@ -95,10 +98,13 @@ public class MesWmItemReceiptServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishItemReceipt_success_withoutNoticeId() {
         // mock 数据：插入一条待入库状态的入库单（无关联到货通知单）
-        MesWmItemReceiptDO receipt = randomPojo(MesWmItemReceiptDO.class, o -> {
-            o.setStatus(MesWmItemReceiptStatusEnum.APPROVED.getStatus());
-            o.setNoticeId(null); // 无到货通知单
-        });
+        MesWmItemReceiptDO receipt =
+                randomPojo(
+                        MesWmItemReceiptDO.class,
+                        o -> {
+                            o.setStatus(MesWmItemReceiptStatusEnum.APPROVED.getStatus());
+                            o.setNoticeId(null); // 无到货通知单
+                        });
         itemReceiptMapper.insert(receipt);
         Long receiptId = receipt.getId();
 
@@ -125,16 +131,18 @@ public class MesWmItemReceiptServiceImplTest extends BaseDbUnitTest {
 
         // 调用，并断言异常
         assertServiceException(
-                () -> itemReceiptService.finishItemReceipt(receiptId),
-                WM_ITEM_RECEIPT_NOT_EXISTS);
+                () -> itemReceiptService.finishItemReceipt(receiptId), WM_ITEM_RECEIPT_NOT_EXISTS);
     }
 
     @Test
     public void testFinishItemReceipt_statusNotApproved() {
         // mock 数据：插入一条草稿状态
-        MesWmItemReceiptDO receipt = randomPojo(MesWmItemReceiptDO.class, o -> {
-            o.setStatus(MesWmItemReceiptStatusEnum.PREPARE.getStatus());
-        });
+        MesWmItemReceiptDO receipt =
+                randomPojo(
+                        MesWmItemReceiptDO.class,
+                        o -> {
+                            o.setStatus(MesWmItemReceiptStatusEnum.PREPARE.getStatus());
+                        });
         itemReceiptMapper.insert(receipt);
 
         // 调用，并断言异常
@@ -146,9 +154,12 @@ public class MesWmItemReceiptServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishItemReceipt_statusAlreadyFinished() {
         // mock 数据：插入一条已完成状态
-        MesWmItemReceiptDO receipt = randomPojo(MesWmItemReceiptDO.class, o -> {
-            o.setStatus(MesWmItemReceiptStatusEnum.FINISHED.getStatus());
-        });
+        MesWmItemReceiptDO receipt =
+                randomPojo(
+                        MesWmItemReceiptDO.class,
+                        o -> {
+                            o.setStatus(MesWmItemReceiptStatusEnum.FINISHED.getStatus());
+                        });
         itemReceiptMapper.insert(receipt);
 
         // 调用，并断言异常
@@ -156,5 +167,4 @@ public class MesWmItemReceiptServiceImplTest extends BaseDbUnitTest {
                 () -> itemReceiptService.finishItemReceipt(receipt.getId()),
                 WM_ITEM_RECEIPT_STATUS_ERROR);
     }
-
 }

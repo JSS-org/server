@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.holiday.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -23,5 +25,4 @@ public class MesCalHolidaySaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
 }

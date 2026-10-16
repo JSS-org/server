@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.system.service.social;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.UTC_MS_WITH_XXX_OFFSET_FORMATTER;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.toEpochSecond;
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
+import static java.util.Collections.singletonList;
+
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.api.WxMaSubscribeService;
 import cn.binarywang.wx.miniapp.api.impl.WxMaServiceImpl;
@@ -33,14 +42,18 @@ import cn.iocoder.yudao.module.system.dal.mysql.social.SocialClientMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
 import cn.iocoder.yudao.module.system.framework.justauth.core.AuthRequestFactory;
+
 import com.binarywang.spring.starter.wxjava.miniapp.properties.WxMaProperties;
 import com.binarywang.spring.starter.wxjava.mp.properties.WxMpProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+
 import jakarta.annotation.Resource;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+
 import me.chanjar.weixin.common.bean.WxJsapiSignature;
 import me.chanjar.weixin.common.bean.subscribemsg.TemplateInfo;
 import me.chanjar.weixin.common.error.WxErrorException;
@@ -55,6 +68,7 @@ import me.zhyd.oauth.model.AuthUser;
 import me.zhyd.oauth.request.AuthAlipayRequest;
 import me.zhyd.oauth.request.AuthRequest;
 import me.zhyd.oauth.utils.AuthStateUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -66,14 +80,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.UTC_MS_WITH_XXX_OFFSET_FORMATTER;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.toEpochSecond;
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singletonList;
 
 /**
  * 社交应用 Service 实现类
@@ -93,6 +99,7 @@ public class SocialClientServiceImpl implements SocialClientService {
      */
     @Value("${yudao.wxa-code.env-version:release}")
     public String envVersion;
+
     /**
      * 订阅消息跳转小程序类型
      *
@@ -107,6 +114,7 @@ public class SocialClientServiceImpl implements SocialClientService {
      * 上传发货信息重试间隔（毫秒），数组长度即重试次数；总等待最坏 1 + 2 + 4 = 7 秒，覆盖微信支付回调的常见延迟
      */
     private static final long[] UPLOAD_SHIPPING_INFO_RETRY_BACKOFF_MILLIS = {1000, 2000, 4000};
+
     /**
      * 微信错误码：支付单不存在
      */
@@ -116,12 +124,10 @@ public class SocialClientServiceImpl implements SocialClientService {
     @Autowired(required = false) // 由于 justauth.enable 配置项，可以关闭 AuthRequestFactory 的功能，所以这里只能不强制注入
     private AuthRequestFactory authRequestFactory;
 
-    @Resource
-    private WxMpService wxMpService;
-    @Resource
-    private WxMpProperties wxMpProperties;
-    @Resource
-    private StringRedisTemplate stringRedisTemplate; // WxMpService 需要使用到，所以在 Service 注入了它
+    @Resource private WxMpService wxMpService;
+    @Resource private WxMpProperties wxMpProperties;
+    @Resource private StringRedisTemplate stringRedisTemplate; // WxMpService 需要使用到，所以在 Service 注入了它
+
     /**
      * 缓存 WxMpService 对象
      *
@@ -130,41 +136,39 @@ public class SocialClientServiceImpl implements SocialClientService {
      *
      * 为什么要做 WxMpService 缓存？因为 WxMpService 构建成本比较大，所以尽量保证它是单例。
      */
-    private final LoadingCache<String, WxMpService> wxMpServiceCache = CacheUtils.buildAsyncReloadingCache(
-            Duration.ofSeconds(10L),
-            new CacheLoader<String, WxMpService>() {
+    private final LoadingCache<String, WxMpService> wxMpServiceCache =
+            CacheUtils.buildAsyncReloadingCache(
+                    Duration.ofSeconds(10L),
+                    new CacheLoader<String, WxMpService>() {
 
-                @Override
-                public WxMpService load(String key) {
-                    String[] keys = key.split(":");
-                    return buildWxMpService(keys[0], keys[1]);
-                }
+                        @Override
+                        public WxMpService load(String key) {
+                            String[] keys = key.split(":");
+                            return buildWxMpService(keys[0], keys[1]);
+                        }
+                    });
 
-            });
+    @Resource private WxMaService wxMaService;
+    @Resource private WxMaProperties wxMaProperties;
 
-    @Resource
-    private WxMaService wxMaService;
-    @Resource
-    private WxMaProperties wxMaProperties;
     /**
      * 缓存 WxMaService 对象
      *
      * 说明同 {@link #wxMpServiceCache} 变量
      */
-    private final LoadingCache<String, WxMaService> wxMaServiceCache = CacheUtils.buildAsyncReloadingCache(
-            Duration.ofSeconds(10L),
-            new CacheLoader<String, WxMaService>() {
+    private final LoadingCache<String, WxMaService> wxMaServiceCache =
+            CacheUtils.buildAsyncReloadingCache(
+                    Duration.ofSeconds(10L),
+                    new CacheLoader<String, WxMaService>() {
 
-                @Override
-                public WxMaService load(String key) {
-                    String[] keys = key.split(":");
-                    return buildWxMaService(keys[0], keys[1]);
-                }
+                        @Override
+                        public WxMaService load(String key) {
+                            String[] keys = key.split(":");
+                            return buildWxMaService(keys[0], keys[1]);
+                        }
+                    });
 
-            });
-
-    @Resource
-    private SocialClientMapper socialClientMapper;
+    @Resource private SocialClientMapper socialClientMapper;
 
     @Override
     public String getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {
@@ -179,11 +183,15 @@ public class SocialClientServiceImpl implements SocialClientService {
     public AuthUser getAuthUser(Integer socialType, Integer userType, String code, String state) {
         // 构建请求
         AuthRequest authRequest = buildAuthRequest(socialType, userType);
-        AuthCallback authCallback = AuthCallback.builder().code(code).auth_code(code).state(state).build();
+        AuthCallback authCallback =
+                AuthCallback.builder().code(code).auth_code(code).state(state).build();
         // 执行请求
         AuthResponse<?> authResponse = authRequest.login(authCallback);
-        log.info("[getAuthUser][请求社交平台 type({}) request({}) response({})]", socialType,
-                toJsonString(authCallback), toJsonString(authResponse));
+        log.info(
+                "[getAuthUser][请求社交平台 type({}) request({}) response({})]",
+                socialType,
+                toJsonString(authCallback),
+                toJsonString(authResponse));
         if (!authResponse.ok()) {
             throw exception(SOCIAL_USER_AUTH_FAILURE, authResponse.getMsg());
         }
@@ -200,11 +208,14 @@ public class SocialClientServiceImpl implements SocialClientService {
     @VisibleForTesting
     AuthRequest buildAuthRequest(Integer socialType, Integer userType) {
         // 1. 先查找默认的配置项，从 application-*.yaml 中读取
-        AuthRequest request = authRequestFactory.get(SocialTypeEnum.valueOfType(socialType).getSource());
+        AuthRequest request =
+                authRequestFactory.get(SocialTypeEnum.valueOfType(socialType).getSource());
         Assert.notNull(request, String.format("社交平台(%d) 不存在", socialType));
         // 2. 查询 DB 的配置项，如果存在则进行覆盖
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(socialType, userType);
-        if (client != null && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
+        SocialClientDO client =
+                socialClientMapper.selectBySocialTypeAndUserType(socialType, userType);
+        if (client != null
+                && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
             // 2.1 构造新的 AuthConfig 对象
             AuthConfig authConfig = (AuthConfig) ReflectUtil.getFieldValue(request, "config");
             AuthConfig newAuthConfig = ReflectUtil.newInstance(authConfig.getClass());
@@ -243,10 +254,13 @@ public class SocialClientServiceImpl implements SocialClientService {
     @VisibleForTesting
     WxMpService getWxMpService(Integer userType) {
         // 第一步，查询 DB 的配置项，获得对应的 WxMpService 对象
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
-                SocialTypeEnum.WECHAT_MP.getType(), userType);
-        if (client != null && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
-            return wxMpServiceCache.getUnchecked(client.getClientId() + ":" + client.getClientSecret());
+        SocialClientDO client =
+                socialClientMapper.selectBySocialTypeAndUserType(
+                        SocialTypeEnum.WECHAT_MP.getType(), userType);
+        if (client != null
+                && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
+            return wxMpServiceCache.getUnchecked(
+                    client.getClientId() + ":" + client.getClientSecret());
         }
         // 第二步，不存在 DB 配置项，则使用 application-*.yaml 对应的 WxMpService 对象
         return wxMpService;
@@ -261,9 +275,10 @@ public class SocialClientServiceImpl implements SocialClientService {
      */
     public WxMpService buildWxMpService(String clientId, String clientSecret) {
         // 第一步，创建 WxMpRedisConfigImpl 对象
-        WxMpRedisConfigImpl configStorage = new WxMpRedisConfigImpl(
-                new RedisTemplateWxRedisOps(stringRedisTemplate),
-                wxMpProperties.getConfigStorage().getKeyPrefix());
+        WxMpRedisConfigImpl configStorage =
+                new WxMpRedisConfigImpl(
+                        new RedisTemplateWxRedisOps(stringRedisTemplate),
+                        wxMpProperties.getConfigStorage().getKeyPrefix());
         configStorage.setAppId(clientId);
         configStorage.setSecret(clientSecret);
 
@@ -281,7 +296,8 @@ public class SocialClientServiceImpl implements SocialClientService {
         try {
             return service.getUserService().getPhoneNumber(phoneCode);
         } catch (WxErrorException e) {
-            log.error("[getPhoneNumber][userType({}) phoneCode({}) 获得手机号失败]", userType, phoneCode, e);
+            log.error(
+                    "[getPhoneNumber][userType({}) phoneCode({}) 获得手机号失败]", userType, phoneCode, e);
             throw exception(SOCIAL_CLIENT_WEIXIN_MINI_APP_PHONE_CODE_ERROR);
         }
     }
@@ -290,15 +306,19 @@ public class SocialClientServiceImpl implements SocialClientService {
     public byte[] getWxaQrcode(SocialWxQrcodeReqDTO reqVO) {
         WxMaService service = getWxMaService(UserTypeEnum.MEMBER.getValue());
         try {
-            return service.getQrcodeService().createWxaCodeUnlimitBytes(
-                    ObjUtil.defaultIfEmpty(reqVO.getScene(), SocialWxQrcodeReqDTO.SCENE),
-                    reqVO.getPath(),
-                    ObjUtil.defaultIfNull(reqVO.getCheckPath(), SocialWxQrcodeReqDTO.CHECK_PATH),
-                    envVersion,
-                    ObjUtil.defaultIfNull(reqVO.getWidth(), SocialWxQrcodeReqDTO.WIDTH),
-                    ObjUtil.defaultIfNull(reqVO.getAutoColor(), SocialWxQrcodeReqDTO.AUTO_COLOR),
-                    null,
-                    ObjUtil.defaultIfNull(reqVO.getHyaline(), SocialWxQrcodeReqDTO.HYALINE));
+            return service.getQrcodeService()
+                    .createWxaCodeUnlimitBytes(
+                            ObjUtil.defaultIfEmpty(reqVO.getScene(), SocialWxQrcodeReqDTO.SCENE),
+                            reqVO.getPath(),
+                            ObjUtil.defaultIfNull(
+                                    reqVO.getCheckPath(), SocialWxQrcodeReqDTO.CHECK_PATH),
+                            envVersion,
+                            ObjUtil.defaultIfNull(reqVO.getWidth(), SocialWxQrcodeReqDTO.WIDTH),
+                            ObjUtil.defaultIfNull(
+                                    reqVO.getAutoColor(), SocialWxQrcodeReqDTO.AUTO_COLOR),
+                            null,
+                            ObjUtil.defaultIfNull(
+                                    reqVO.getHyaline(), SocialWxQrcodeReqDTO.HYALINE));
         } catch (WxErrorException e) {
             log.error("[getWxQrcode][reqVO({}) 获得小程序码失败]", reqVO, e);
             throw exception(SOCIAL_CLIENT_WEIXIN_MINI_APP_QRCODE_ERROR);
@@ -306,7 +326,9 @@ public class SocialClientServiceImpl implements SocialClientService {
     }
 
     @Override
-    @Cacheable(cacheNames = RedisKeyConstants.WXA_SUBSCRIBE_TEMPLATE, key = "#userType",
+    @Cacheable(
+            cacheNames = RedisKeyConstants.WXA_SUBSCRIBE_TEMPLATE,
+            key = "#userType",
             unless = "#result == null")
     public List<TemplateInfo> getSubscribeTemplateList(Integer userType) {
         WxMaService service = getWxMaService(userType);
@@ -320,13 +342,19 @@ public class SocialClientServiceImpl implements SocialClientService {
     }
 
     @Override
-    public void sendSubscribeMessage(SocialWxaSubscribeMessageSendReqDTO reqDTO, String templateId, String openId) {
+    public void sendSubscribeMessage(
+            SocialWxaSubscribeMessageSendReqDTO reqDTO, String templateId, String openId) {
         WxMaService service = getWxMaService(reqDTO.getUserType());
         try {
             WxMaSubscribeService subscribeService = service.getSubscribeService();
             subscribeService.sendSubscribeMsg(buildMessageSendReqDTO(reqDTO, templateId, openId));
         } catch (WxErrorException e) {
-            log.error("[sendSubscribeMessage][reqVO({}) templateId({}) openId({}) 发送小程序订阅消息失败]", reqDTO, templateId, openId, e);
+            log.error(
+                    "[sendSubscribeMessage][reqVO({}) templateId({}) openId({}) 发送小程序订阅消息失败]",
+                    reqDTO,
+                    templateId,
+                    openId,
+                    e);
             throw exception(SOCIAL_CLIENT_WEIXIN_MINI_APP_SUBSCRIBE_MESSAGE_ERROR);
         }
     }
@@ -339,85 +367,137 @@ public class SocialClientServiceImpl implements SocialClientService {
      * @param openId     会员 openId
      * @return 微信小程序订阅消息请求参数
      */
-    private WxMaSubscribeMessage buildMessageSendReqDTO(SocialWxaSubscribeMessageSendReqDTO reqDTO,
-                                                        String templateId, String openId) {
+    private WxMaSubscribeMessage buildMessageSendReqDTO(
+            SocialWxaSubscribeMessageSendReqDTO reqDTO, String templateId, String openId) {
         // 设置订阅消息基本参数
-        WxMaSubscribeMessage subscribeMessage = new WxMaSubscribeMessage().setLang(WxMaConstants.MiniProgramLang.ZH_CN)
-                .setMiniprogramState(miniprogramState).setTemplateId(templateId).setToUser(openId).setPage(reqDTO.getPage());
+        WxMaSubscribeMessage subscribeMessage =
+                new WxMaSubscribeMessage()
+                        .setLang(WxMaConstants.MiniProgramLang.ZH_CN)
+                        .setMiniprogramState(miniprogramState)
+                        .setTemplateId(templateId)
+                        .setToUser(openId)
+                        .setPage(reqDTO.getPage());
         // 设置具体消息参数
         Map<String, String> messages = reqDTO.getMessages();
         if (CollUtil.isNotEmpty(messages)) {
-            reqDTO.getMessages().keySet().forEach(key -> findAndThen(messages, key, value ->
-                    subscribeMessage.addData(new WxMaSubscribeMessage.MsgData(key, value))));
+            reqDTO.getMessages()
+                    .keySet()
+                    .forEach(
+                            key ->
+                                    findAndThen(
+                                            messages,
+                                            key,
+                                            value ->
+                                                    subscribeMessage.addData(
+                                                            new WxMaSubscribeMessage.MsgData(
+                                                                    key, value))));
         }
         return subscribeMessage;
     }
 
     @Override
-    public void uploadWxaOrderShippingInfo(Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO) {
+    public void uploadWxaOrderShippingInfo(
+            Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO) {
         WxMaService service = getWxMaService(userType);
         List<ShippingListBean> shippingList;
-        if (Objects.equals(reqDTO.getLogisticsType(), SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_EXPRESS)) {
-            shippingList = singletonList(ShippingListBean.builder()
-                    .trackingNo(reqDTO.getLogisticsNo())
-                    .expressCompany(reqDTO.getExpressCompany())
-                    .itemDesc(reqDTO.getItemDesc())
-                    .contact(ContactBean.builder().receiverContact(DesensitizedUtil.mobilePhone(reqDTO.getReceiverContact())).build())
-                    .build());
+        if (Objects.equals(
+                reqDTO.getLogisticsType(),
+                SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_EXPRESS)) {
+            shippingList =
+                    singletonList(
+                            ShippingListBean.builder()
+                                    .trackingNo(reqDTO.getLogisticsNo())
+                                    .expressCompany(reqDTO.getExpressCompany())
+                                    .itemDesc(reqDTO.getItemDesc())
+                                    .contact(
+                                            ContactBean.builder()
+                                                    .receiverContact(
+                                                            DesensitizedUtil.mobilePhone(
+                                                                    reqDTO.getReceiverContact()))
+                                                    .build())
+                                    .build());
         } else {
-            shippingList = singletonList(ShippingListBean.builder().itemDesc(reqDTO.getItemDesc()).build());
+            shippingList =
+                    singletonList(
+                            ShippingListBean.builder().itemDesc(reqDTO.getItemDesc()).build());
         }
-        WxMaOrderShippingInfoUploadRequest request = WxMaOrderShippingInfoUploadRequest.builder()
-                .orderKey(OrderKeyBean.builder()
-                        .orderNumberType(2) // 使用原支付交易对应的微信订单号，即渠道单号
-                        .transactionId(reqDTO.getTransactionId())
-                        .build())
-                .logisticsType(reqDTO.getLogisticsType()) // 配送方式
-                .deliveryMode(1) // 统一发货
-                .shippingList(shippingList)
-                .payer(PayerBean.builder().openid(reqDTO.getOpenid()).build())
-                .uploadTime(ZonedDateTime.now().format(UTC_MS_WITH_XXX_OFFSET_FORMATTER))
-                .build();
+        WxMaOrderShippingInfoUploadRequest request =
+                WxMaOrderShippingInfoUploadRequest.builder()
+                        .orderKey(
+                                OrderKeyBean.builder()
+                                        .orderNumberType(2) // 使用原支付交易对应的微信订单号，即渠道单号
+                                        .transactionId(reqDTO.getTransactionId())
+                                        .build())
+                        .logisticsType(reqDTO.getLogisticsType()) // 配送方式
+                        .deliveryMode(1) // 统一发货
+                        .shippingList(shippingList)
+                        .payer(PayerBean.builder().openid(reqDTO.getOpenid()).build())
+                        .uploadTime(ZonedDateTime.now().format(UTC_MS_WITH_XXX_OFFSET_FORMATTER))
+                        .build();
         // 重试机制：解决支付回调与订单信息上传之间的时间差导致的 10060001 错误
         // 对应 ISSUE：https://gitee.com/zhijiantianya/yudao-cloud/pulls/230
         // 注意：wx-java 的 upload 内部对 errCode != 0 直接抛 WxErrorException，所以重试判断必须基于异常的 errorCode
         int maxAttempts = UPLOAD_SHIPPING_INFO_RETRY_BACKOFF_MILLIS.length + 1;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                WxMaOrderShippingInfoBaseResponse response = service.getWxMaOrderShippingService().upload(request);
-                log.info("[uploadWxaOrderShippingInfo][上传微信小程序发货信息成功：request({}) response({})]", request, response);
+                WxMaOrderShippingInfoBaseResponse response =
+                        service.getWxMaOrderShippingService().upload(request);
+                log.info(
+                        "[uploadWxaOrderShippingInfo][上传微信小程序发货信息成功：request({}) response({})]",
+                        request,
+                        response);
                 return;
             } catch (WxErrorException ex) {
-                if (ex.getError().getErrorCode() == WX_ERR_CODE_PAY_ORDER_NOT_EXIST && attempt < maxAttempts) {
+                if (ex.getError().getErrorCode() == WX_ERR_CODE_PAY_ORDER_NOT_EXIST
+                        && attempt < maxAttempts) {
                     long delayMillis = UPLOAD_SHIPPING_INFO_RETRY_BACKOFF_MILLIS[attempt - 1];
-                    log.warn("[uploadWxaOrderShippingInfo][第 {} 次尝试失败，支付单不存在，{} ms 后重试：request({})]",
-                            attempt, delayMillis, request, ex);
+                    log.warn(
+                            "[uploadWxaOrderShippingInfo][第 {} 次尝试失败，支付单不存在，{} ms 后重试：request({})]",
+                            attempt,
+                            delayMillis,
+                            request,
+                            ex);
                     ThreadUtil.sleep(delayMillis);
                     continue;
                 }
                 log.error("[uploadWxaOrderShippingInfo][上传微信小程序发货信息失败：request({})]", request, ex);
-                throw exception(SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_UPLOAD_SHIPPING_INFO_ERROR, ex.getError().getErrorMsg());
+                throw exception(
+                        SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_UPLOAD_SHIPPING_INFO_ERROR,
+                        ex.getError().getErrorMsg());
             }
         }
     }
 
     @Override
-    public void notifyWxaOrderConfirmReceive(Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO) {
+    public void notifyWxaOrderConfirmReceive(
+            Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO) {
         WxMaService service = getWxMaService(userType);
-        WxMaOrderShippingInfoNotifyConfirmRequest request = WxMaOrderShippingInfoNotifyConfirmRequest.builder()
-                .transactionId(reqDTO.getTransactionId())
-                .receivedTime(toEpochSecond(reqDTO.getReceivedTime()))
-                .build();
+        WxMaOrderShippingInfoNotifyConfirmRequest request =
+                WxMaOrderShippingInfoNotifyConfirmRequest.builder()
+                        .transactionId(reqDTO.getTransactionId())
+                        .receivedTime(toEpochSecond(reqDTO.getReceivedTime()))
+                        .build();
         try {
-            WxMaOrderShippingInfoBaseResponse response = service.getWxMaOrderShippingService().notifyConfirmReceive(request);
+            WxMaOrderShippingInfoBaseResponse response =
+                    service.getWxMaOrderShippingService().notifyConfirmReceive(request);
             if (response.getErrCode() != 0) {
-                log.error("[notifyWxaOrderConfirmReceive][确认收货提醒到微信小程序失败：request({}) response({})]", request, response);
-                throw exception(SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_NOTIFY_CONFIRM_RECEIVE_ERROR, response.getErrMsg());
+                log.error(
+                        "[notifyWxaOrderConfirmReceive][确认收货提醒到微信小程序失败：request({}) response({})]",
+                        request,
+                        response);
+                throw exception(
+                        SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_NOTIFY_CONFIRM_RECEIVE_ERROR,
+                        response.getErrMsg());
             }
-            log.info("[notifyWxaOrderConfirmReceive][确认收货提醒到微信小程序成功：request({}) response({})]", request, response);
+            log.info(
+                    "[notifyWxaOrderConfirmReceive][确认收货提醒到微信小程序成功：request({}) response({})]",
+                    request,
+                    response);
         } catch (WxErrorException ex) {
             log.error("[notifyWxaOrderConfirmReceive][确认收货提醒到微信小程序失败：request({})]", request, ex);
-            throw exception(SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_NOTIFY_CONFIRM_RECEIVE_ERROR, ex.getError().getErrorMsg());
+            throw exception(
+                    SOCIAL_CLIENT_WEIXIN_MINI_APP_ORDER_NOTIFY_CONFIRM_RECEIVE_ERROR,
+                    ex.getError().getErrorMsg());
         }
     }
 
@@ -430,10 +510,13 @@ public class SocialClientServiceImpl implements SocialClientService {
     @VisibleForTesting
     WxMaService getWxMaService(Integer userType) {
         // 第一步，查询 DB 的配置项，获得对应的 WxMaService 对象
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
-                SocialTypeEnum.WECHAT_MINI_PROGRAM.getType(), userType);
-        if (client != null && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
-            return wxMaServiceCache.getUnchecked(client.getClientId() + ":" + client.getClientSecret());
+        SocialClientDO client =
+                socialClientMapper.selectBySocialTypeAndUserType(
+                        SocialTypeEnum.WECHAT_MINI_PROGRAM.getType(), userType);
+        if (client != null
+                && Objects.equals(client.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
+            return wxMaServiceCache.getUnchecked(
+                    client.getClientId() + ":" + client.getClientSecret());
         }
         // 第二步，不存在 DB 配置项，则使用 application-*.yaml 对应的 WxMaService 对象
         return wxMaService;
@@ -448,9 +531,10 @@ public class SocialClientServiceImpl implements SocialClientService {
      */
     private WxMaService buildWxMaService(String clientId, String clientSecret) {
         // 第一步，创建 WxMaRedisBetterConfigImpl 对象
-        WxMaRedisBetterConfigImpl configStorage = new WxMaRedisBetterConfigImpl(
-                new RedisTemplateWxRedisOps(stringRedisTemplate),
-                wxMaProperties.getConfigStorage().getKeyPrefix());
+        WxMaRedisBetterConfigImpl configStorage =
+                new WxMaRedisBetterConfigImpl(
+                        new RedisTemplateWxRedisOps(stringRedisTemplate),
+                        wxMaProperties.getConfigStorage().getKeyPrefix());
         configStorage.setAppid(clientId);
         configStorage.setSecret(clientSecret);
 
@@ -478,7 +562,8 @@ public class SocialClientServiceImpl implements SocialClientService {
         // 校验存在
         validateSocialClientExists(updateReqVO.getId());
         // 校验重复
-        validateSocialClientUnique(updateReqVO.getId(), updateReqVO.getUserType(), updateReqVO.getSocialType());
+        validateSocialClientUnique(
+                updateReqVO.getId(), updateReqVO.getUserType(), updateReqVO.getSocialType());
 
         // 更新
         SocialClientDO updateObj = BeanUtils.toBean(updateReqVO, SocialClientDO.class);
@@ -513,8 +598,8 @@ public class SocialClientServiceImpl implements SocialClientService {
      * @param socialType 社交类型
      */
     private void validateSocialClientUnique(Long id, Integer userType, Integer socialType) {
-        SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
-                socialType, userType);
+        SocialClientDO client =
+                socialClientMapper.selectBySocialTypeAndUserType(socialType, userType);
         if (client == null) {
             return;
         }
@@ -533,5 +618,4 @@ public class SocialClientServiceImpl implements SocialClientService {
     public PageResult<SocialClientDO> getSocialClientPage(SocialClientPageReqVO pageReqVO) {
         return socialClientMapper.selectPage(pageReqVO);
     }
-
 }

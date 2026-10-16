@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.mes.controller.admin.md.unitmeasure.vo;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -41,5 +44,4 @@ public class MesMdUnitMeasureSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
-    }
+}

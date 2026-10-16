@@ -22,9 +22,11 @@ public interface IotSceneRuleAction {
      * @param rule    规则
      * @param actionConfig  执行配置（实际对应规则里的哪条执行配置）
      */
-    void execute(@Nullable IotDeviceMessage message,
-                 IotSceneRuleDO rule,
-                 IotSceneRuleDO.Action actionConfig) throws Exception;
+    void execute(
+            @Nullable IotDeviceMessage message,
+            IotSceneRuleDO rule,
+            IotSceneRuleDO.Action actionConfig)
+            throws Exception;
 
     /**
      * 获得类型
@@ -32,5 +34,4 @@ public interface IotSceneRuleAction {
      * @return 类型
      */
     IotSceneRuleActionTypeEnum getType();
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.encrypt.core.filter;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
+
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.asymmetric.AsymmetricDecryptor;
@@ -14,11 +16,14 @@ import cn.iocoder.yudao.framework.encrypt.core.annotation.ApiEncrypt;
 import cn.iocoder.yudao.framework.web.config.WebProperties;
 import cn.iocoder.yudao.framework.web.core.filter.ApiRequestFilter;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
@@ -26,8 +31,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.ServletRequestPathUtils;
 
 import java.io.IOException;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
 
 /**
  * API 加密过滤器，处理 {@link ApiEncrypt} 注解。
@@ -55,24 +58,29 @@ public class ApiEncryptFilter extends ApiRequestFilter {
     private final SymmetricEncryptor responseSymmetricEncryptor;
     private final AsymmetricEncryptor responseAsymmetricEncryptor;
 
-    public ApiEncryptFilter(WebProperties webProperties,
-                            ApiEncryptProperties apiEncryptProperties,
-                            RequestMappingHandlerMapping requestMappingHandlerMapping,
-                            GlobalExceptionHandler globalExceptionHandler) {
+    public ApiEncryptFilter(
+            WebProperties webProperties,
+            ApiEncryptProperties apiEncryptProperties,
+            RequestMappingHandlerMapping requestMappingHandlerMapping,
+            GlobalExceptionHandler globalExceptionHandler) {
         super(webProperties);
         this.apiEncryptProperties = apiEncryptProperties;
         this.requestMappingHandlerMapping = requestMappingHandlerMapping;
         this.globalExceptionHandler = globalExceptionHandler;
         if (StrUtil.equalsIgnoreCase(apiEncryptProperties.getAlgorithm(), "AES")) {
-            this.requestSymmetricDecryptor = SecureUtil.aes(StrUtil.utf8Bytes(apiEncryptProperties.getRequestKey()));
+            this.requestSymmetricDecryptor =
+                    SecureUtil.aes(StrUtil.utf8Bytes(apiEncryptProperties.getRequestKey()));
             this.requestAsymmetricDecryptor = null;
-            this.responseSymmetricEncryptor = SecureUtil.aes(StrUtil.utf8Bytes(apiEncryptProperties.getResponseKey()));
+            this.responseSymmetricEncryptor =
+                    SecureUtil.aes(StrUtil.utf8Bytes(apiEncryptProperties.getResponseKey()));
             this.responseAsymmetricEncryptor = null;
         } else if (StrUtil.equalsIgnoreCase(apiEncryptProperties.getAlgorithm(), "RSA")) {
             this.requestSymmetricDecryptor = null;
-            this.requestAsymmetricDecryptor = SecureUtil.rsa(apiEncryptProperties.getRequestKey(), null);
+            this.requestAsymmetricDecryptor =
+                    SecureUtil.rsa(apiEncryptProperties.getRequestKey(), null);
             this.responseSymmetricEncryptor = null;
-            this.responseAsymmetricEncryptor = SecureUtil.rsa(null, apiEncryptProperties.getResponseKey());
+            this.responseAsymmetricEncryptor =
+                    SecureUtil.rsa(null, apiEncryptProperties.getResponseKey());
         } else {
             // 补充说明：如果要支持 SM2、SM4 等算法，可在此处增加对应实例的创建，并添加相应的 Maven 依赖即可。
             throw new IllegalArgumentException("不支持的加密算法：" + apiEncryptProperties.getAlgorithm());
@@ -81,25 +89,30 @@ public class ApiEncryptFilter extends ApiRequestFilter {
 
     @Override
     @SuppressWarnings("NullableProblems")
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         // 获取 @ApiEncrypt 注解
         ApiEncrypt apiEncrypt = getApiEncrypt(request);
         boolean requestEnable = apiEncrypt != null && apiEncrypt.request();
         boolean responseEnable = apiEncrypt != null && apiEncrypt.response();
         String encryptHeader = request.getHeader(apiEncryptProperties.getHeader());
-        if (!requestEnable && !responseEnable && StrUtil.isBlank(encryptHeader))  {
+        if (!requestEnable && !responseEnable && StrUtil.isBlank(encryptHeader)) {
             chain.doFilter(request, response);
             return;
         }
 
         // 1. 解密请求
-        if (ObjectUtils.equalsAny(HttpMethod.valueOf(request.getMethod()),
-                HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE)) {
+        if (ObjectUtils.equalsAny(
+                HttpMethod.valueOf(request.getMethod()),
+                HttpMethod.POST,
+                HttpMethod.PUT,
+                HttpMethod.DELETE)) {
             try {
                 if (StrUtil.isNotBlank(encryptHeader)) {
-                    request = new ApiDecryptRequestWrapper(request,
-                            requestSymmetricDecryptor, requestAsymmetricDecryptor);
+                    request =
+                            new ApiDecryptRequestWrapper(
+                                    request, requestSymmetricDecryptor, requestAsymmetricDecryptor);
                 } else if (requestEnable) {
                     throw invalidParamException("请求未包含加密标头，请检查是否正确配置了加密标头");
                 }
@@ -119,8 +132,11 @@ public class ApiEncryptFilter extends ApiRequestFilter {
 
         // 3. 加密响应（真正执行）
         if (responseEnable) {
-            ((ApiEncryptResponseWrapper) response).encrypt(apiEncryptProperties,
-                    responseSymmetricEncryptor, responseAsymmetricEncryptor);
+            ((ApiEncryptResponseWrapper) response)
+                    .encrypt(
+                            apiEncryptProperties,
+                            responseSymmetricEncryptor,
+                            responseAsymmetricEncryptor);
         }
     }
 
@@ -152,10 +168,12 @@ public class ApiEncryptFilter extends ApiRequestFilter {
                 return annotation;
             }
         } catch (Exception e) {
-            log.error("[getApiEncrypt][url({}/{}) 获取 @ApiEncrypt 注解失败]",
-                    request.getRequestURI(), request.getMethod(), e);
+            log.error(
+                    "[getApiEncrypt][url({}/{}) 获取 @ApiEncrypt 注解失败]",
+                    request.getRequestURI(),
+                    request.getMethod(),
+                    e);
         }
         return null;
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,12 +13,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.MesWmMiscR
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.MesWmMiscReceiptSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscreceipt.MesWmMiscReceiptDO;
 import cn.iocoder.yudao.module.mes.service.wm.miscreceipt.MesWmMiscReceiptService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,29 +29,27 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - MES 杂项入库单")
 @RestController
 @RequestMapping("/mes/wm/misc-receipt")
 @Validated
 public class MesWmMiscReceiptController {
 
-    @Resource
-    private MesWmMiscReceiptService miscReceiptService;
+    @Resource private MesWmMiscReceiptService miscReceiptService;
 
     @PostMapping("/create")
     @Operation(summary = "创建杂项入库单")
     @PreAuthorize("@ss.hasPermission('mes:wm:misc-receipt:create')")
-    public CommonResult<Long> createMiscReceipt(@Valid @RequestBody MesWmMiscReceiptSaveReqVO createReqVO) {
+    public CommonResult<Long> createMiscReceipt(
+            @Valid @RequestBody MesWmMiscReceiptSaveReqVO createReqVO) {
         return success(miscReceiptService.createMiscReceipt(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改杂项入库单")
     @PreAuthorize("@ss.hasPermission('mes:wm:misc-receipt:update')")
-    public CommonResult<Boolean> updateMiscReceipt(@Valid @RequestBody MesWmMiscReceiptSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateMiscReceipt(
+            @Valid @RequestBody MesWmMiscReceiptSaveReqVO updateReqVO) {
         miscReceiptService.updateMiscReceipt(updateReqVO);
         return success(true);
     }
@@ -71,8 +75,10 @@ public class MesWmMiscReceiptController {
     @GetMapping("/page")
     @Operation(summary = "获得杂项入库单分页")
     @PreAuthorize("@ss.hasPermission('mes:wm:misc-receipt:query')")
-    public CommonResult<PageResult<MesWmMiscReceiptRespVO>> getMiscReceiptPage(@Valid MesWmMiscReceiptPageReqVO pageReqVO) {
-        PageResult<MesWmMiscReceiptDO> pageResult = miscReceiptService.getMiscReceiptPage(pageReqVO);
+    public CommonResult<PageResult<MesWmMiscReceiptRespVO>> getMiscReceiptPage(
+            @Valid MesWmMiscReceiptPageReqVO pageReqVO) {
+        PageResult<MesWmMiscReceiptDO> pageResult =
+                miscReceiptService.getMiscReceiptPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesWmMiscReceiptRespVO.class));
     }
 
@@ -107,12 +113,16 @@ public class MesWmMiscReceiptController {
     @Operation(summary = "导出杂项入库单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm:misc-receipt:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportMiscReceiptExcel(@Valid MesWmMiscReceiptPageReqVO pageReqVO,
-                                       HttpServletResponse response) throws IOException {
+    public void exportMiscReceiptExcel(
+            @Valid MesWmMiscReceiptPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(Integer.MAX_VALUE);
         List<MesWmMiscReceiptDO> list = miscReceiptService.getMiscReceiptPage(pageReqVO).getList();
-        ExcelUtils.write(response, "杂项入库单.xls", "数据", MesWmMiscReceiptRespVO.class,
+        ExcelUtils.write(
+                response,
+                "杂项入库单.xls",
+                "数据",
+                MesWmMiscReceiptRespVO.class,
                 BeanUtils.toBean(list, MesWmMiscReceiptRespVO.class));
     }
-
 }

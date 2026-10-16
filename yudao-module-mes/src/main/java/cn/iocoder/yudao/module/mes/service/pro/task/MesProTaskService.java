@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.mes.service.pro.task;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.task.vo.MesProTaskPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.task.vo.MesProTaskSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.task.MesProTaskDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 生产任务 Service 接口
@@ -122,9 +123,9 @@ public interface MesProTaskService {
      * @param incrQualifyQuantity   本次合格品数量增量
      * @param incrUnqualifyQuantity 本次不合格品数量增量
      */
-    void updateProducedQuantity(Long id,
-                                BigDecimal incrProducedQuantity,
-                                BigDecimal incrQualifyQuantity,
-                                BigDecimal incrUnqualifyQuantity);
-
+    void updateProducedQuantity(
+            Long id,
+            BigDecimal incrProducedQuantity,
+            BigDecimal incrQualifyQuantity,
+            BigDecimal incrUnqualifyQuantity);
 }

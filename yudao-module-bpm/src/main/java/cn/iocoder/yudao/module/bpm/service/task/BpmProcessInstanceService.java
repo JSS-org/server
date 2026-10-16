@@ -1,9 +1,13 @@
 package cn.iocoder.yudao.module.bpm.service.task;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmProcessInstanceCreateReqDTO;
 import cn.iocoder.yudao.module.bpm.controller.admin.task.vo.instance.*;
+
 import jakarta.validation.Valid;
+
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.runtime.ProcessInstance;
 
@@ -11,8 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 流程实例 Service 接口
@@ -82,8 +84,8 @@ public interface BpmProcessInstanceService {
      * @param pageReqVO 分页请求
      * @return 流程实例的分页
      */
-    PageResult<HistoricProcessInstance> getProcessInstancePage(Long userId,
-                                                               @Valid BpmProcessInstancePageReqVO pageReqVO);
+    PageResult<HistoricProcessInstance> getProcessInstancePage(
+            Long userId, @Valid BpmProcessInstancePageReqVO pageReqVO);
 
     /**
      * 获取审批详情。
@@ -94,7 +96,8 @@ public interface BpmProcessInstanceService {
      * @param reqVO 请求信息
      * @return 流程实例的进度
      */
-    BpmApprovalDetailRespVO getApprovalDetail(Long loginUserId, @Valid BpmApprovalDetailReqVO reqVO);
+    BpmApprovalDetailRespVO getApprovalDetail(
+            Long loginUserId, @Valid BpmApprovalDetailReqVO reqVO);
 
     /**
      * 获取下一个执行节点信息
@@ -103,7 +106,8 @@ public interface BpmProcessInstanceService {
      * @param reqVO 请求信息
      * @return 下一个执行节点信息
      */
-    List<BpmApprovalDetailRespVO.ActivityNode> getNextApprovalNodes(Long loginUserId, @Valid BpmApprovalDetailReqVO reqVO);
+    List<BpmApprovalDetailRespVO.ActivityNode> getNextApprovalNodes(
+            Long loginUserId, @Valid BpmApprovalDetailReqVO reqVO);
 
     /**
      * 获取流程实例的 BPMN 模型视图
@@ -139,7 +143,8 @@ public interface BpmProcessInstanceService {
      * @param userId      用户编号
      * @param cancelReqVO 取消信息
      */
-    void cancelProcessInstanceByStartUser(Long userId, @Valid BpmProcessInstanceCancelReqVO cancelReqVO);
+    void cancelProcessInstanceByStartUser(
+            Long userId, @Valid BpmProcessInstanceCancelReqVO cancelReqVO);
 
     /**
      * 管理员取消流程实例

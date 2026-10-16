@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.seal;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,11 +20,14 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,33 +35,33 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - 用印申请")
 @RestController
 @RequestMapping("/oa/seal-apply")
 @Validated
 public class OaSealApplyController {
 
-    @Resource
-    private OaSealApplyService sealApplyService;
-    @Resource
-    private OaSealService sealService;
+    @Resource private OaSealApplyService sealApplyService;
+    @Resource private OaSealService sealService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @GetMapping("/seal-page")
     @Operation(summary = "获得可申请的印章分页")
     @PreAuthorize("@ss.hasAnyPermissions('oa:seal-apply:create', 'oa:seal-apply:query')")
     public CommonResult<PageResult<OaSealRespVO>> getSealPage(@Valid OaSealPageReqVO pageReqVO) {
         PageResult<OaSealDO> pageResult = sealService.getSealPage(pageReqVO);
-        return success(new PageResult<>(convertList(pageResult.getList(), seal -> new OaSealRespVO()
-                .setId(seal.getId()).setNo(seal.getNo()).setName(seal.getName())), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        convertList(
+                                pageResult.getList(),
+                                seal ->
+                                        new OaSealRespVO()
+                                                .setId(seal.getId())
+                                                .setNo(seal.getNo())
+                                                .setName(seal.getName())),
+                        pageResult.getTotal()));
     }
 
     @PostMapping("/create")
@@ -113,8 +120,11 @@ public class OaSealApplyController {
     @PreAuthorize("@ss.hasPermission('oa:seal-apply:query')")
     public CommonResult<PageResult<OaSealApplyRespVO>> getSealApplyPage(
             @Valid OaSealApplyPageReqVO pageReqVO) {
-        PageResult<OaSealApplyDO> pageResult = sealApplyService.getSealApplyPage(getLoginUserId(), pageReqVO);
-        return success(new PageResult<>(buildSealApplyRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<OaSealApplyDO> pageResult =
+                sealApplyService.getSealApplyPage(getLoginUserId(), pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildSealApplyRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -143,19 +153,34 @@ public class OaSealApplyController {
             return Collections.emptyList();
         }
         // 1. 批量查询申请人、申请部门和关联业务信息
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSetByFlatMap(applies, apply -> Stream.of(apply.getUserId(), apply.getKeeperUserId())));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSetByFlatMap(applies, apply -> Stream.of(apply.getDeptId(), apply.getKeeperDeptId())));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSetByFlatMap(
+                                applies,
+                                apply -> Stream.of(apply.getUserId(), apply.getKeeperUserId())));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(
+                        convertSetByFlatMap(
+                                applies,
+                                apply -> Stream.of(apply.getDeptId(), apply.getKeeperDeptId())));
         // 2. 转换并拼接展示字段
-        return convertList(applies, item -> {
-            OaSealApplyRespVO vo = BeanUtils.toBean(item, OaSealApplyRespVO.class);
-            MapUtils.findAndThen(userMap, item.getUserId(), user -> vo.setUserName(user.getNickname()));
-            MapUtils.findAndThen(deptMap, item.getDeptId(), dept -> vo.setDeptName(dept.getName()));
-            MapUtils.findAndThen(userMap, item.getKeeperUserId(), user -> vo.setKeeperName(user.getNickname()));
-            MapUtils.findAndThen(deptMap, item.getKeeperDeptId(), dept -> vo.setKeeperDeptName(dept.getName()));
-            return vo;
-        });
+        return convertList(
+                applies,
+                item -> {
+                    OaSealApplyRespVO vo = BeanUtils.toBean(item, OaSealApplyRespVO.class);
+                    MapUtils.findAndThen(
+                            userMap, item.getUserId(), user -> vo.setUserName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            deptMap, item.getDeptId(), dept -> vo.setDeptName(dept.getName()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            item.getKeeperUserId(),
+                            user -> vo.setKeeperName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            deptMap,
+                            item.getKeeperDeptId(),
+                            dept -> vo.setKeeperDeptName(dept.getName()));
+                    return vo;
+                });
     }
-
 }

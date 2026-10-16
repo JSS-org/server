@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.mp.dal.dataobject.tag;
 
+import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
-import lombok.*;
 
 import com.baomidou.mybatisplus.annotation.*;
-import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
+import lombok.*;
+
 import me.chanjar.weixin.mp.bean.tag.WxUserTag;
 
 /**
@@ -27,14 +29,17 @@ public class MpTagDO extends BaseDO {
      */
     @TableId(type = IdType.INPUT)
     private Long id;
+
     /**
      * 公众号标签 id
      */
     private Long tagId;
+
     /**
      * 标签名
      */
     private String name;
+
     /**
      * 此标签下粉丝数
      *
@@ -48,11 +53,11 @@ public class MpTagDO extends BaseDO {
      * 关联 {@link MpAccountDO#getId()}
      */
     private Long accountId;
+
     /**
      * 公众号 appId
      *
      * 冗余 {@link MpAccountDO#getAppId()}
      */
     private String appId;
-
 }

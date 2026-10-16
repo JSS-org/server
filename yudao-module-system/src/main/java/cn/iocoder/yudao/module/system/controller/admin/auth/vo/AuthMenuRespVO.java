@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.auth.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -49,5 +50,4 @@ public class AuthMenuRespVO {
      * 子路由
      */
     private List<AuthMenuRespVO> children;
-
 }

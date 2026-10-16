@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -15,12 +19,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.vendor.MesMdVendorDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnvendor.MesWmReturnVendorDO;
 import cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService;
 import cn.iocoder.yudao.module.mes.service.wm.returnvendor.MesWmReturnVendorService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,32 +37,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 供应商退货单")
 @RestController
 @RequestMapping("/mes/wm/return-vendor")
 @Validated
 public class MesWmReturnVendorController {
 
-    @Resource
-    private MesWmReturnVendorService returnVendorService;
-    @Resource
-    private MesMdVendorService vendorService;
+    @Resource private MesWmReturnVendorService returnVendorService;
+    @Resource private MesMdVendorService vendorService;
 
     @PostMapping("/create")
     @Operation(summary = "创建供应商退货单")
     @PreAuthorize("@ss.hasPermission('mes:wm-return-vendor:create')")
-    public CommonResult<Long> createReturnVendor(@Valid @RequestBody MesWmReturnVendorSaveReqVO createReqVO) {
+    public CommonResult<Long> createReturnVendor(
+            @Valid @RequestBody MesWmReturnVendorSaveReqVO createReqVO) {
         return success(returnVendorService.createReturnVendor(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改供应商退货单")
     @PreAuthorize("@ss.hasPermission('mes:wm-return-vendor:update')")
-    public CommonResult<Boolean> updateReturnVendor(@Valid @RequestBody MesWmReturnVendorSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateReturnVendor(
+            @Valid @RequestBody MesWmReturnVendorSaveReqVO updateReqVO) {
         returnVendorService.updateReturnVendor(updateReqVO);
         return success(true);
     }
@@ -86,19 +89,27 @@ public class MesWmReturnVendorController {
     @PreAuthorize("@ss.hasPermission('mes:wm-return-vendor:query')")
     public CommonResult<PageResult<MesWmReturnVendorRespVO>> getReturnVendorPage(
             @Valid MesWmReturnVendorPageReqVO pageReqVO) {
-        PageResult<MesWmReturnVendorDO> pageResult = returnVendorService.getReturnVendorPage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmReturnVendorDO> pageResult =
+                returnVendorService.getReturnVendorPage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出供应商退货单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-return-vendor:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportReturnVendorExcel(@Valid MesWmReturnVendorPageReqVO pageReqVO,
-                                        HttpServletResponse response) throws IOException {
+    public void exportReturnVendorExcel(
+            @Valid MesWmReturnVendorPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmReturnVendorDO> pageResult = returnVendorService.getReturnVendorPage(pageReqVO);
-        ExcelUtils.write(response, "供应商退货单.xls", "数据", MesWmReturnVendorRespVO.class,
+        PageResult<MesWmReturnVendorDO> pageResult =
+                returnVendorService.getReturnVendorPage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "供应商退货单.xls",
+                "数据",
+                MesWmReturnVendorRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -153,12 +164,19 @@ public class MesWmReturnVendorController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdVendorDO> vendorMap = vendorService.getVendorMap(
-                convertSet(list, MesWmReturnVendorDO::getVendorId));
+        Map<Long, MesMdVendorDO> vendorMap =
+                vendorService.getVendorMap(convertSet(list, MesWmReturnVendorDO::getVendorId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmReturnVendorRespVO.class, vo ->
-                MapUtils.findAndThen(vendorMap, vo.getVendorId(), vendor ->
-                        vo.setVendorCode(vendor.getCode()).setVendorName(vendor.getName()).setVendorNickname(vendor.getNickname())));
+        return BeanUtils.toBean(
+                list,
+                MesWmReturnVendorRespVO.class,
+                vo ->
+                        MapUtils.findAndThen(
+                                vendorMap,
+                                vo.getVendorId(),
+                                vendor ->
+                                        vo.setVendorCode(vendor.getCode())
+                                                .setVendorName(vendor.getName())
+                                                .setVendorNickname(vendor.getNickname())));
     }
-
 }

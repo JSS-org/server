@@ -19,9 +19,9 @@ public class SocialWxPhoneNumberInfoRespDTO {
      * 没有区号的手机号
      */
     private String purePhoneNumber;
+
     /**
      * 区号
      */
     private String countryCode;
-
 }

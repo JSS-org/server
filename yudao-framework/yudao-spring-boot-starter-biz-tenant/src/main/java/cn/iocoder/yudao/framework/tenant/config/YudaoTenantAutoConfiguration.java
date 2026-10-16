@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.tenant.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.biz.system.tenant.TenantCommonApi;
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
@@ -20,9 +22,12 @@ import cn.iocoder.yudao.framework.tenant.core.web.TenantContextWebFilter;
 import cn.iocoder.yudao.framework.tenant.core.web.TenantVisitContextInterceptor;
 import cn.iocoder.yudao.framework.web.config.WebProperties;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
+
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -47,15 +52,15 @@ import org.springframework.web.util.pattern.PathPattern;
 
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @AutoConfiguration
-@ConditionalOnProperty(prefix = "yudao.tenant", value = "enable", matchIfMissing = true) // 允许使用 yudao.tenant.enable=false 禁用多租户
+@ConditionalOnProperty(
+        prefix = "yudao.tenant",
+        value = "enable",
+        matchIfMissing = true) // 允许使用 yudao.tenant.enable=false 禁用多租户
 @EnableConfigurationProperties(TenantProperties.class)
 public class YudaoTenantAutoConfiguration {
 
-    @Resource
-    private ApplicationContext applicationContext;
+    @Resource private ApplicationContext applicationContext;
 
     @Bean
     public TenantFrameworkService tenantFrameworkService(TenantCommonApi tenantApi) {
@@ -72,9 +77,10 @@ public class YudaoTenantAutoConfiguration {
     // ========== DB ==========
 
     @Bean
-    public TenantLineInnerInterceptor tenantLineInnerInterceptor(TenantProperties properties,
-                                                                 MybatisPlusInterceptor interceptor) {
-        TenantLineInnerInterceptor inner = new TenantLineInnerInterceptor(new TenantDatabaseInterceptor(properties));
+    public TenantLineInnerInterceptor tenantLineInnerInterceptor(
+            TenantProperties properties, MybatisPlusInterceptor interceptor) {
+        TenantLineInnerInterceptor inner =
+                new TenantLineInnerInterceptor(new TenantDatabaseInterceptor(properties));
         // 添加到 interceptor 中
         // 需要加在首个，主要是为了在分页插件前面。这个是 MyBatis Plus 的规定
         MyBatisUtils.addInterceptor(interceptor, inner, 0);
@@ -85,27 +91,30 @@ public class YudaoTenantAutoConfiguration {
 
     @Bean
     public FilterRegistrationBean<TenantContextWebFilter> tenantContextWebFilter() {
-        FilterRegistrationBean<TenantContextWebFilter> registrationBean = new FilterRegistrationBean<>();
+        FilterRegistrationBean<TenantContextWebFilter> registrationBean =
+                new FilterRegistrationBean<>();
         registrationBean.setFilter(new TenantContextWebFilter());
         registrationBean.setOrder(WebFilterOrderEnum.TENANT_CONTEXT_FILTER);
         return registrationBean;
     }
 
     @Bean
-    public TenantVisitContextInterceptor tenantVisitContextInterceptor(TenantProperties tenantProperties,
-                                                                       SecurityFrameworkService securityFrameworkService) {
+    public TenantVisitContextInterceptor tenantVisitContextInterceptor(
+            TenantProperties tenantProperties, SecurityFrameworkService securityFrameworkService) {
         return new TenantVisitContextInterceptor(tenantProperties, securityFrameworkService);
     }
 
     @Bean
-    public WebMvcConfigurer tenantWebMvcConfigurer(TenantProperties tenantProperties,
-                                                   TenantVisitContextInterceptor tenantVisitContextInterceptor) {
+    public WebMvcConfigurer tenantWebMvcConfigurer(
+            TenantProperties tenantProperties,
+            TenantVisitContextInterceptor tenantVisitContextInterceptor) {
         return new WebMvcConfigurer() {
 
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(tenantVisitContextInterceptor)
-                        .excludePathPatterns(tenantProperties.getIgnoreVisitUrls().toArray(new String[0]));
+                        .excludePathPatterns(
+                                tenantProperties.getIgnoreVisitUrls().toArray(new String[0]));
             }
         };
     }
@@ -113,13 +122,20 @@ public class YudaoTenantAutoConfiguration {
     // ========== Security ==========
 
     @Bean
-    public FilterRegistrationBean<TenantSecurityWebFilter> tenantSecurityWebFilter(TenantProperties tenantProperties,
-                                                                                   WebProperties webProperties,
-                                                                                   GlobalExceptionHandler globalExceptionHandler,
-                                                                                   TenantFrameworkService tenantFrameworkService) {
-        FilterRegistrationBean<TenantSecurityWebFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new TenantSecurityWebFilter(webProperties, tenantProperties, getTenantIgnoreUrls(),
-                globalExceptionHandler, tenantFrameworkService));
+    public FilterRegistrationBean<TenantSecurityWebFilter> tenantSecurityWebFilter(
+            TenantProperties tenantProperties,
+            WebProperties webProperties,
+            GlobalExceptionHandler globalExceptionHandler,
+            TenantFrameworkService tenantFrameworkService) {
+        FilterRegistrationBean<TenantSecurityWebFilter> registrationBean =
+                new FilterRegistrationBean<>();
+        registrationBean.setFilter(
+                new TenantSecurityWebFilter(
+                        webProperties,
+                        tenantProperties,
+                        getTenantIgnoreUrls(),
+                        globalExceptionHandler,
+                        tenantFrameworkService));
         registrationBean.setOrder(WebFilterOrderEnum.TENANT_SECURITY_FILTER);
         return registrationBean;
     }
@@ -133,14 +149,18 @@ public class YudaoTenantAutoConfiguration {
     private Set<String> getTenantIgnoreUrls() {
         Set<String> ignoreUrls = new HashSet<>();
         // 获得接口对应的 HandlerMethod 集合
-        RequestMappingHandlerMapping requestMappingHandlerMapping = (RequestMappingHandlerMapping)
-                applicationContext.getBean("requestMappingHandlerMapping");
-        Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = requestMappingHandlerMapping.getHandlerMethods();
+        RequestMappingHandlerMapping requestMappingHandlerMapping =
+                (RequestMappingHandlerMapping)
+                        applicationContext.getBean("requestMappingHandlerMapping");
+        Map<RequestMappingInfo, HandlerMethod> handlerMethodMap =
+                requestMappingHandlerMapping.getHandlerMethods();
         // 获得有 @TenantIgnore 注解的接口
         for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : handlerMethodMap.entrySet()) {
             HandlerMethod handlerMethod = entry.getValue();
             if (!handlerMethod.hasMethodAnnotation(TenantIgnore.class) // 方法级
-                && !handlerMethod.getBeanType().isAnnotationPresent(TenantIgnore.class)) { // 接口级
+                    && !handlerMethod
+                            .getBeanType()
+                            .isAnnotationPresent(TenantIgnore.class)) { // 接口级
                 continue;
             }
             // 添加到忽略的 URL 中
@@ -149,7 +169,9 @@ public class YudaoTenantAutoConfiguration {
             }
             if (entry.getKey().getPathPatternsCondition() != null) {
                 ignoreUrls.addAll(
-                        convertList(entry.getKey().getPathPatternsCondition().getPatterns(), PathPattern::getPatternString));
+                        convertList(
+                                entry.getKey().getPathPatternsCondition().getPatterns(),
+                                PathPattern::getPatternString));
             }
         }
         return ignoreUrls;
@@ -158,14 +180,14 @@ public class YudaoTenantAutoConfiguration {
     // ========== MQ ==========
 
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnClass(name = "cn.iocoder.yudao.framework.mq.redis.core.interceptor.RedisMessageInterceptor")
+    @ConditionalOnClass(
+            name = "cn.iocoder.yudao.framework.mq.redis.core.interceptor.RedisMessageInterceptor")
     public static class TenantRedisMQConfiguration {
 
         @Bean
         public TenantRedisMessageInterceptor tenantRedisMessageInterceptor() {
             return new TenantRedisMessageInterceptor();
         }
-
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -176,7 +198,6 @@ public class YudaoTenantAutoConfiguration {
         public TenantRabbitMQInitializer tenantRabbitMQInitializer() {
             return new TenantRabbitMQInitializer();
         }
-
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -187,24 +208,28 @@ public class YudaoTenantAutoConfiguration {
         public TenantRocketMQInitializer tenantRocketMQInitializer() {
             return new TenantRocketMQInitializer();
         }
-
     }
 
     // ========== Redis ==========
 
     @Bean
     @Primary // 引入租户时，tenantRedisCacheManager 为主 Bean
-    public RedisCacheManager tenantRedisCacheManager(RedisTemplate<String, Object> redisTemplate,
-                                                     RedisCacheConfiguration redisCacheConfiguration,
-                                                     YudaoCacheProperties yudaoCacheProperties,
-                                                     TenantProperties tenantProperties) {
+    public RedisCacheManager tenantRedisCacheManager(
+            RedisTemplate<String, Object> redisTemplate,
+            RedisCacheConfiguration redisCacheConfiguration,
+            YudaoCacheProperties yudaoCacheProperties,
+            TenantProperties tenantProperties) {
         // 创建 RedisCacheWriter 对象
-        RedisConnectionFactory connectionFactory = Objects.requireNonNull(redisTemplate.getConnectionFactory());
-        RedisCacheWriter cacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory,
-                BatchStrategies.scan(yudaoCacheProperties.getRedisScanBatchSize()));
+        RedisConnectionFactory connectionFactory =
+                Objects.requireNonNull(redisTemplate.getConnectionFactory());
+        RedisCacheWriter cacheWriter =
+                RedisCacheWriter.nonLockingRedisCacheWriter(
+                        connectionFactory,
+                        BatchStrategies.scan(yudaoCacheProperties.getRedisScanBatchSize()));
         // 创建 TenantRedisCacheManager 对象
-        TenantRedisCacheManager cacheManager = new TenantRedisCacheManager(cacheWriter, redisCacheConfiguration,
-                tenantProperties.getIgnoreCaches());
+        TenantRedisCacheManager cacheManager =
+                new TenantRedisCacheManager(
+                        cacheWriter, redisCacheConfiguration, tenantProperties.getIgnoreCaches());
         // 开启事务感知：@Transactional 方法内的 @CacheEvict / @CachePut 自动延迟到 afterCommit，
         //             避免事务未提交就清缓存被并发读穿写脏值；无事务时立即生效，行为不变
         cacheManager.setTransactionAware(true);
@@ -221,7 +246,5 @@ public class YudaoTenantAutoConfiguration {
         public TenantJobAspect tenantJobAspect(TenantFrameworkService tenantFrameworkService) {
             return new TenantJobAspect(tenantFrameworkService);
         }
-
     }
-
 }

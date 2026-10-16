@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin;
 
+import static cn.hutool.core.date.DatePattern.*;
+import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig.API_VERSION_V2;
+import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig.API_VERSION_V3;
+
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollUtil;
@@ -16,6 +20,7 @@ import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefun
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.AbstractPayClient;
+
 import com.github.binarywang.wxpay.bean.notify.*;
 import com.github.binarywang.wxpay.bean.request.*;
 import com.github.binarywang.wxpay.bean.result.*;
@@ -27,6 +32,7 @@ import com.github.binarywang.wxpay.config.WxPayConfig;
 import com.github.binarywang.wxpay.exception.WxPayException;
 import com.github.binarywang.wxpay.service.WxPayService;
 import com.github.binarywang.wxpay.service.impl.WxPayServiceImpl;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -34,10 +40,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
-
-import static cn.hutool.core.date.DatePattern.*;
-import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig.API_VERSION_V2;
-import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig.API_VERSION_V3;
 
 /**
  * 微信支付抽象类，实现微信统一的接口、以及部分实现（退款）
@@ -61,19 +63,22 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
     protected void doInit(String tradeType) {
         // 创建 config 配置
         WxPayConfig payConfig = new WxPayConfig();
-        BeanUtil.copyProperties(config, payConfig, "keyContent", "privateKeyContent", "publicKeyContent");
+        BeanUtil.copyProperties(
+                config, payConfig, "keyContent", "privateKeyContent", "publicKeyContent");
         payConfig.setTradeType(tradeType);
         if (Objects.equals(config.getApiVersion(), API_VERSION_V2)) {
             payConfig.setKeyContent(Base64.decode(config.getKeyContent()));
         } else if (Objects.equals(config.getApiVersion(), API_VERSION_V3)) {
             payConfig.setPrivateKeyContent(StrUtil.utf8Bytes(config.getPrivateKeyContent()));
-            // 参考 https://gitee.com/yudaocode/yudao-ui-admin-vue3/issues/ICUE53 和 https://t.zsxq.com/ODR5V
+            // 参考 https://gitee.com/yudaocode/yudao-ui-admin-vue3/issues/ICUE53 和
+            // https://t.zsxq.com/ODR5V
             if (StrUtil.isNotBlank(config.getPublicKeyContent())) {
                 payConfig.setPublicKeyContent(StrUtil.utf8Bytes(config.getPublicKeyContent()));
             }
             // 特殊：强制使用微信公钥模式，避免灰度期间的问题！！！
             payConfig.setStrictlyNeedWechatPaySerial(true);
-            // 特殊：weixin-java-pay 只有配置 publicKeyContent 后，再开启 fullPublicKeyModel，才会使用 PublicCertificateVerifier
+            // 特殊：weixin-java-pay 只有配置 publicKeyContent 后，再开启 fullPublicKeyModel，才会使用
+            // PublicCertificateVerifier
             // 对应 https://t.zsxq.com/5Q9lO 帖子
             payConfig.setFullPublicKeyModel(true);
         }
@@ -92,18 +97,20 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                 case API_VERSION_V2:
                     return doUnifiedOrderV2(reqDTO);
                 case API_VERSION_V3:
-                    // TODO @芋艿：【可能是 wxjava 的 bug】参考 https://github.com/binarywang/WxJava/issues/1557
+                    // TODO @芋艿：【可能是 wxjava 的 bug】参考
+                    // https://github.com/binarywang/WxJava/issues/1557
                     client.getConfig().setApiV3HttpClient(null);
                     return doUnifiedOrderV3(reqDTO);
                 default:
-                    throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                    throw new IllegalArgumentException(
+                            String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
         } catch (WxPayException e) {
             log.error("[doUnifiedOrder][支付({}) 发起微信支付异常", reqDTO, e);
             String errorCode = getErrorCode(e);
             String errorMessage = getErrorMessage(e);
-            return PayOrderRespDTO.closedOf(errorCode, errorMessage,
-                    reqDTO.getOutTradeNo(), e.getXmlString());
+            return PayOrderRespDTO.closedOf(
+                    errorCode, errorMessage, reqDTO.getOutTradeNo(), e.getXmlString());
         }
     }
 
@@ -149,26 +156,32 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
      * @param reqDTO 下信息
      * @return 下单请求
      */
-    protected WxPayUnifiedOrderV3Request buildPayUnifiedOrderRequestV3(PayOrderUnifiedReqDTO reqDTO) {
+    protected WxPayUnifiedOrderV3Request buildPayUnifiedOrderRequestV3(
+            PayOrderUnifiedReqDTO reqDTO) {
         WxPayUnifiedOrderV3Request request = new WxPayUnifiedOrderV3Request();
         request.setOutTradeNo(reqDTO.getOutTradeNo());
         request.setDescription(reqDTO.getSubject());
-        request.setAmount(new WxPayUnifiedOrderV3Request.Amount().setTotal(reqDTO.getPrice())); // 单位分
+        request.setAmount(
+                new WxPayUnifiedOrderV3Request.Amount().setTotal(reqDTO.getPrice())); // 单位分
         request.setTimeExpire(formatDateV3(reqDTO.getExpireTime()));
-        request.setSceneInfo(new WxPayUnifiedOrderV3Request.SceneInfo().setPayerClientIp(reqDTO.getUserIp()));
+        request.setSceneInfo(
+                new WxPayUnifiedOrderV3Request.SceneInfo().setPayerClientIp(reqDTO.getUserIp()));
         request.setNotifyUrl(reqDTO.getNotifyUrl());
         return request;
     }
 
     @Override
-    public PayOrderRespDTO doParseOrderNotify(Map<String, String> params, String body, Map<String, String> headers) throws WxPayException {
+    public PayOrderRespDTO doParseOrderNotify(
+            Map<String, String> params, String body, Map<String, String> headers)
+            throws WxPayException {
         switch (config.getApiVersion()) {
             case API_VERSION_V2:
                 return doParseOrderNotifyV2(body);
             case API_VERSION_V3:
                 return doParseOrderNotifyV3(body, headers);
             default:
-                throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                throw new IllegalArgumentException(
+                        String.format("未知的 API 版本(%s)", config.getApiVersion()));
         }
     }
 
@@ -177,13 +190,21 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
         WxPayOrderNotifyResult response = client.parseOrderNotifyResult(body);
         // 2. 构建结果
         // V2 微信支付的回调，只有 SUCCESS 支付成功、CLOSED 支付失败两种情况，无需像支付宝一样解析的比较复杂
-        Integer status = Objects.equals(response.getResultCode(), "SUCCESS") ?
-                PayOrderStatusEnum.SUCCESS.getStatus() : PayOrderStatusEnum.CLOSED.getStatus();
-        return PayOrderRespDTO.of(status, response.getTransactionId(), response.getOpenid(), parseDateV2(response.getTimeEnd()),
-                response.getOutTradeNo(), body);
+        Integer status =
+                Objects.equals(response.getResultCode(), "SUCCESS")
+                        ? PayOrderStatusEnum.SUCCESS.getStatus()
+                        : PayOrderStatusEnum.CLOSED.getStatus();
+        return PayOrderRespDTO.of(
+                status,
+                response.getTransactionId(),
+                response.getOpenid(),
+                parseDateV2(response.getTimeEnd()),
+                response.getOutTradeNo(),
+                body);
     }
 
-    private PayOrderRespDTO doParseOrderNotifyV3(String body, Map<String, String> headers) throws WxPayException {
+    private PayOrderRespDTO doParseOrderNotifyV3(String body, Map<String, String> headers)
+            throws WxPayException {
         // 1. 解析回调
         SignatureHeader signatureHeader = getRequestHeader(headers);
         WxPayNotifyV3Result response = client.parseOrderNotifyV3Result(body, signatureHeader);
@@ -191,8 +212,13 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
         // 2. 构建结果
         Integer status = parseStatus(result.getTradeState());
         String openid = result.getPayer() != null ? result.getPayer().getOpenid() : null;
-        return PayOrderRespDTO.of(status, result.getTransactionId(), openid, parseDateV3(result.getSuccessTime()),
-                result.getOutTradeNo(), body);
+        return PayOrderRespDTO.of(
+                status,
+                result.getTransactionId(),
+                openid,
+                parseDateV3(result.getSuccessTime()),
+                result.getOutTradeNo(),
+                body);
     }
 
     @Override
@@ -204,14 +230,15 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                 case API_VERSION_V3:
                     return doGetOrderV3(outTradeNo);
                 default:
-                    throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                    throw new IllegalArgumentException(
+                            String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
         } catch (WxPayException e) {
             if (ObjectUtils.equalsAny(e.getErrCode(), "ORDERNOTEXIST", "ORDER_NOT_EXIST")) {
                 String errorCode = getErrorCode(e);
                 String errorMessage = getErrorMessage(e);
-                return PayOrderRespDTO.closedOf(errorCode, errorMessage,
-                        outTradeNo, e.getXmlString());
+                return PayOrderRespDTO.closedOf(
+                        errorCode, errorMessage, outTradeNo, e.getXmlString());
             }
             throw e;
         }
@@ -222,14 +249,18 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
         try {
             switch (config.getApiVersion()) {
                 case API_VERSION_V2:
-                    client.closeOrder(WxPayOrderCloseRequest.newBuilder().outTradeNo(outTradeNo).build());
+                    client.closeOrder(
+                            WxPayOrderCloseRequest.newBuilder().outTradeNo(outTradeNo).build());
                     break;
                 case API_VERSION_V3:
-                    client.closeOrderV3(new WxPayOrderCloseV3Request()
-                            .setMchid(config.getMchId()).setOutTradeNo(outTradeNo));
+                    client.closeOrderV3(
+                            new WxPayOrderCloseV3Request()
+                                    .setMchid(config.getMchId())
+                                    .setOutTradeNo(outTradeNo));
                     break;
                 default:
-                    throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                    throw new IllegalArgumentException(
+                            String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
             return PayOrderRespDTO.closedOf(null, null, outTradeNo, null);
         } catch (WxPayException e) {
@@ -240,29 +271,38 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
 
     private PayOrderRespDTO doGetOrderV2(String outTradeNo) throws WxPayException {
         // 构建 WxPayUnifiedOrderRequest 对象
-        WxPayOrderQueryRequest request = WxPayOrderQueryRequest.newBuilder()
-                .outTradeNo(outTradeNo).build();
+        WxPayOrderQueryRequest request =
+                WxPayOrderQueryRequest.newBuilder().outTradeNo(outTradeNo).build();
         // 执行请求
         WxPayOrderQueryResult response = client.queryOrder(request);
 
         // 转换结果
         Integer status = parseStatus(response.getTradeState());
-        return PayOrderRespDTO.of(status, response.getTransactionId(), response.getOpenid(), parseDateV2(response.getTimeEnd()),
-                outTradeNo, response);
+        return PayOrderRespDTO.of(
+                status,
+                response.getTransactionId(),
+                response.getOpenid(),
+                parseDateV2(response.getTimeEnd()),
+                outTradeNo,
+                response);
     }
 
     private PayOrderRespDTO doGetOrderV3(String outTradeNo) throws WxPayException {
         // 构建 WxPayUnifiedOrderRequest 对象
-        WxPayOrderQueryV3Request request = new WxPayOrderQueryV3Request()
-                .setOutTradeNo(outTradeNo);
+        WxPayOrderQueryV3Request request = new WxPayOrderQueryV3Request().setOutTradeNo(outTradeNo);
         // 执行请求
         WxPayOrderQueryV3Result response = client.queryOrderV3(request);
 
         // 转换结果
         Integer status = parseStatus(response.getTradeState());
         String openid = response.getPayer() != null ? response.getPayer().getOpenid() : null;
-        return PayOrderRespDTO.of(status, response.getTransactionId(), openid, parseDateV3(response.getSuccessTime()),
-                outTradeNo, response);
+        return PayOrderRespDTO.of(
+                status,
+                response.getTransactionId(),
+                openid,
+                parseDateV3(response.getSuccessTime()),
+                outTradeNo,
+                response);
     }
 
     private static Integer parseStatus(String tradeState) {
@@ -294,67 +334,79 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                 case API_VERSION_V3:
                     return doUnifiedRefundV3(reqDTO);
                 default:
-                    throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                    throw new IllegalArgumentException(
+                            String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
         } catch (WxPayException e) {
             String errorCode = getErrorCode(e);
             String errorMessage = getErrorMessage(e);
-            return PayRefundRespDTO.failureOf(errorCode, errorMessage,
-                    reqDTO.getOutRefundNo(), e.getXmlString());
+            return PayRefundRespDTO.failureOf(
+                    errorCode, errorMessage, reqDTO.getOutRefundNo(), e.getXmlString());
         }
     }
 
     private PayRefundRespDTO doUnifiedRefundV2(PayRefundUnifiedReqDTO reqDTO) throws Throwable {
         // 1. 构建 WxPayRefundRequest 请求
-        WxPayRefundRequest request = new WxPayRefundRequest()
-                .setOutTradeNo(reqDTO.getOutTradeNo())
-                .setOutRefundNo(reqDTO.getOutRefundNo())
-                .setRefundFee(reqDTO.getRefundPrice())
-                .setRefundDesc(reqDTO.getReason())
-                .setTotalFee(reqDTO.getPayPrice())
-                .setNotifyUrl(reqDTO.getNotifyUrl());
+        WxPayRefundRequest request =
+                new WxPayRefundRequest()
+                        .setOutTradeNo(reqDTO.getOutTradeNo())
+                        .setOutRefundNo(reqDTO.getOutRefundNo())
+                        .setRefundFee(reqDTO.getRefundPrice())
+                        .setRefundDesc(reqDTO.getReason())
+                        .setTotalFee(reqDTO.getPayPrice())
+                        .setNotifyUrl(reqDTO.getNotifyUrl());
         // 2.1 执行请求
         WxPayRefundResult response = client.refundV2(request);
         // 2.2 创建返回结果
         if (Objects.equals("SUCCESS", response.getResultCode())) { // V2 情况下，不直接返回退款成功，而是等待异步通知
-            return PayRefundRespDTO.waitingOf(response.getRefundId(),
-                    reqDTO.getOutRefundNo(), response);
+            return PayRefundRespDTO.waitingOf(
+                    response.getRefundId(), reqDTO.getOutRefundNo(), response);
         }
         return PayRefundRespDTO.failureOf(reqDTO.getOutRefundNo(), response);
     }
 
     private PayRefundRespDTO doUnifiedRefundV3(PayRefundUnifiedReqDTO reqDTO) throws Throwable {
         // 1. 构建 WxPayRefundRequest 请求
-        WxPayRefundV3Request request = new WxPayRefundV3Request()
-                .setOutTradeNo(reqDTO.getOutTradeNo())
-                .setOutRefundNo(reqDTO.getOutRefundNo())
-                .setAmount(new WxPayRefundV3Request.Amount().setRefund(reqDTO.getRefundPrice())
-                        .setTotal(reqDTO.getPayPrice()).setCurrency("CNY"))
-                .setReason(reqDTO.getReason())
-                .setNotifyUrl(reqDTO.getNotifyUrl());
+        WxPayRefundV3Request request =
+                new WxPayRefundV3Request()
+                        .setOutTradeNo(reqDTO.getOutTradeNo())
+                        .setOutRefundNo(reqDTO.getOutRefundNo())
+                        .setAmount(
+                                new WxPayRefundV3Request.Amount()
+                                        .setRefund(reqDTO.getRefundPrice())
+                                        .setTotal(reqDTO.getPayPrice())
+                                        .setCurrency("CNY"))
+                        .setReason(reqDTO.getReason())
+                        .setNotifyUrl(reqDTO.getNotifyUrl());
         // 2.1 执行请求
         WxPayRefundV3Result response = client.refundV3(request);
         // 2.2 创建返回结果
         if (Objects.equals("SUCCESS", response.getStatus())) {
-            return PayRefundRespDTO.successOf(response.getRefundId(), parseDateV3(response.getSuccessTime()),
-                    reqDTO.getOutRefundNo(), response);
+            return PayRefundRespDTO.successOf(
+                    response.getRefundId(),
+                    parseDateV3(response.getSuccessTime()),
+                    reqDTO.getOutRefundNo(),
+                    response);
         }
         if (Objects.equals("PROCESSING", response.getStatus())) {
-            return PayRefundRespDTO.waitingOf(response.getRefundId(),
-                    reqDTO.getOutRefundNo(), response);
+            return PayRefundRespDTO.waitingOf(
+                    response.getRefundId(), reqDTO.getOutRefundNo(), response);
         }
         return PayRefundRespDTO.failureOf(reqDTO.getOutRefundNo(), response);
     }
 
     @Override
-    public PayRefundRespDTO doParseRefundNotify(Map<String, String> params, String body, Map<String, String> headers) throws WxPayException {
+    public PayRefundRespDTO doParseRefundNotify(
+            Map<String, String> params, String body, Map<String, String> headers)
+            throws WxPayException {
         switch (config.getApiVersion()) {
             case API_VERSION_V2:
                 return doParseRefundNotifyV2(body);
             case API_VERSION_V3:
                 return parseRefundNotifyV3(body, headers);
             default:
-                throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                throw new IllegalArgumentException(
+                        String.format("未知的 API 版本(%s)", config.getApiVersion()));
         }
     }
 
@@ -364,27 +416,36 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
         WxPayRefundNotifyResult.ReqInfo result = response.getReqInfo();
         // 2. 构建结果
         if (Objects.equals("SUCCESS", result.getRefundStatus())) {
-            return PayRefundRespDTO.successOf(result.getRefundId(), parseDateV2B(result.getSuccessTime()),
-                    result.getOutRefundNo(), response);
+            return PayRefundRespDTO.successOf(
+                    result.getRefundId(),
+                    parseDateV2B(result.getSuccessTime()),
+                    result.getOutRefundNo(),
+                    response);
         }
         return PayRefundRespDTO.failureOf(result.getOutRefundNo(), response);
     }
 
-    private PayRefundRespDTO parseRefundNotifyV3(String body, Map<String, String> headers) throws WxPayException {
+    private PayRefundRespDTO parseRefundNotifyV3(String body, Map<String, String> headers)
+            throws WxPayException {
         // 1. 解析回调
         SignatureHeader signatureHeader = getRequestHeader(headers);
-        WxPayRefundNotifyV3Result response = client.parseRefundNotifyV3Result(body, signatureHeader);
+        WxPayRefundNotifyV3Result response =
+                client.parseRefundNotifyV3Result(body, signatureHeader);
         WxPayRefundNotifyV3Result.DecryptNotifyResult result = response.getResult();
         // 2. 构建结果
         if (Objects.equals("SUCCESS", result.getRefundStatus())) {
-            return PayRefundRespDTO.successOf(result.getRefundId(), parseDateV3(result.getSuccessTime()),
-                    result.getOutRefundNo(), response);
+            return PayRefundRespDTO.successOf(
+                    result.getRefundId(),
+                    parseDateV3(result.getSuccessTime()),
+                    result.getOutRefundNo(),
+                    response);
         }
         return PayRefundRespDTO.failureOf(result.getOutRefundNo(), response);
     }
 
     @Override
-    protected PayRefundRespDTO doGetRefund(String outTradeNo, String outRefundNo) throws WxPayException {
+    protected PayRefundRespDTO doGetRefund(String outTradeNo, String outRefundNo)
+            throws WxPayException {
         try {
             switch (config.getApiVersion()) {
                 case API_VERSION_V2:
@@ -392,53 +453,61 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                 case API_VERSION_V3:
                     return doGetRefundV3(outTradeNo, outRefundNo);
                 default:
-                    throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                    throw new IllegalArgumentException(
+                            String.format("未知的 API 版本(%s)", config.getApiVersion()));
             }
         } catch (WxPayException e) {
             if (ObjectUtils.equalsAny(e.getErrCode(), "REFUNDNOTEXIST", "RESOURCE_NOT_EXISTS")) {
                 String errorCode = getErrorCode(e);
                 String errorMessage = getErrorMessage(e);
-                return PayRefundRespDTO.failureOf(errorCode, errorMessage,
-                        outRefundNo, e.getXmlString());
+                return PayRefundRespDTO.failureOf(
+                        errorCode, errorMessage, outRefundNo, e.getXmlString());
             }
             throw e;
         }
     }
 
-    private PayRefundRespDTO doGetRefundV2(String outTradeNo, String outRefundNo) throws WxPayException {
+    private PayRefundRespDTO doGetRefundV2(String outTradeNo, String outRefundNo)
+            throws WxPayException {
         // 1. 构建 WxPayRefundRequest 请求
-        WxPayRefundQueryRequest request = WxPayRefundQueryRequest.newBuilder()
-                .outTradeNo(outTradeNo)
-                .outRefundNo(outRefundNo)
-                .build();
+        WxPayRefundQueryRequest request =
+                WxPayRefundQueryRequest.newBuilder()
+                        .outTradeNo(outTradeNo)
+                        .outRefundNo(outRefundNo)
+                        .build();
         // 2.1 执行请求
         WxPayRefundQueryResult response = client.refundQuery(request);
         // 2.2 创建返回结果
         if (!Objects.equals("SUCCESS", response.getResultCode())) {
-            return PayRefundRespDTO.waitingOf(null,
-                    outRefundNo, response);
+            return PayRefundRespDTO.waitingOf(null, outRefundNo, response);
         }
-        WxPayRefundQueryResult.RefundRecord refund = CollUtil.findOne(response.getRefundRecords(),
-                record -> record.getOutRefundNo().equals(outRefundNo));
+        WxPayRefundQueryResult.RefundRecord refund =
+                CollUtil.findOne(
+                        response.getRefundRecords(),
+                        record -> record.getOutRefundNo().equals(outRefundNo));
         if (refund == null) {
             return PayRefundRespDTO.failureOf(outRefundNo, response);
         }
         switch (refund.getRefundStatus()) {
             case "SUCCESS":
-                return PayRefundRespDTO.successOf(refund.getRefundId(), parseDateV2B(refund.getRefundSuccessTime()),
-                        outRefundNo, response);
+                return PayRefundRespDTO.successOf(
+                        refund.getRefundId(),
+                        parseDateV2B(refund.getRefundSuccessTime()),
+                        outRefundNo,
+                        response);
             case "PROCESSING":
-                return PayRefundRespDTO.waitingOf(refund.getRefundId(),
-                        outRefundNo, response);
+                return PayRefundRespDTO.waitingOf(refund.getRefundId(), outRefundNo, response);
             case "CHANGE": // 退款到银行发现用户的卡作废或者冻结了，导致原路退款银行卡失败，资金回流到商户的现金帐号，需要商户人工干预，通过线下或者财付通转账的方式进行退款
             case "FAIL":
                 return PayRefundRespDTO.failureOf(outRefundNo, response);
             default:
-                throw new IllegalArgumentException(String.format("未知的退款状态(%s)", refund.getRefundStatus()));
+                throw new IllegalArgumentException(
+                        String.format("未知的退款状态(%s)", refund.getRefundStatus()));
         }
     }
 
-    private PayRefundRespDTO doGetRefundV3(String outTradeNo, String outRefundNo) throws WxPayException {
+    private PayRefundRespDTO doGetRefundV3(String outTradeNo, String outRefundNo)
+            throws WxPayException {
         // 1. 构建 WxPayRefundRequest 请求
         WxPayRefundQueryV3Request request = new WxPayRefundQueryV3Request();
         request.setOutRefundNo(outRefundNo);
@@ -447,34 +516,41 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
         // 2.2 创建返回结果
         switch (response.getStatus()) {
             case "SUCCESS":
-                return PayRefundRespDTO.successOf(response.getRefundId(), parseDateV3(response.getSuccessTime()),
-                        outRefundNo, response);
+                return PayRefundRespDTO.successOf(
+                        response.getRefundId(),
+                        parseDateV3(response.getSuccessTime()),
+                        outRefundNo,
+                        response);
             case "PROCESSING":
-                return PayRefundRespDTO.waitingOf(response.getRefundId(),
-                        outRefundNo, response);
+                return PayRefundRespDTO.waitingOf(response.getRefundId(), outRefundNo, response);
             case "ABNORMAL": // 退款异常
             case "CLOSED":
                 return PayRefundRespDTO.failureOf(outRefundNo, response);
             default:
-                throw new IllegalArgumentException(String.format("未知的退款状态(%s)", response.getStatus()));
+                throw new IllegalArgumentException(
+                        String.format("未知的退款状态(%s)", response.getStatus()));
         }
     }
 
     @Override
-    protected PayTransferRespDTO doUnifiedTransfer(PayTransferUnifiedReqDTO reqDTO) throws WxPayException {
+    protected PayTransferRespDTO doUnifiedTransfer(PayTransferUnifiedReqDTO reqDTO)
+            throws WxPayException {
         // 1. 构建 TransferBillsRequest 请求
-        TransferBillsRequest request = TransferBillsRequest.newBuilder()
-                .appid(this.config.getAppId())
-                .outBillNo(reqDTO.getOutTransferNo())
-                .transferAmount(reqDTO.getPrice())
-                .transferRemark(reqDTO.getSubject())
-                .transferSceneId(reqDTO.getChannelExtras().get("sceneId"))
-                .openid(reqDTO.getUserAccount())
-                .userName(reqDTO.getUserName())
-                .transferSceneReportInfos(JsonUtils.parseArray(reqDTO.getChannelExtras().get("sceneReportInfos"),
-                        TransferBillsRequest.TransferSceneReportInfo.class))
-                .notifyUrl(reqDTO.getNotifyUrl())
-                .build();
+        TransferBillsRequest request =
+                TransferBillsRequest.newBuilder()
+                        .appid(this.config.getAppId())
+                        .outBillNo(reqDTO.getOutTransferNo())
+                        .transferAmount(reqDTO.getPrice())
+                        .transferRemark(reqDTO.getSubject())
+                        .transferSceneId(reqDTO.getChannelExtras().get("sceneId"))
+                        .openid(reqDTO.getUserAccount())
+                        .userName(reqDTO.getUserName())
+                        .transferSceneReportInfos(
+                                JsonUtils.parseArray(
+                                        reqDTO.getChannelExtras().get("sceneReportInfos"),
+                                        TransferBillsRequest.TransferSceneReportInfo.class))
+                        .notifyUrl(reqDTO.getNotifyUrl())
+                        .build();
         // 特殊：微信转账，必须 0.3 元起，才允许传入姓名
         if (reqDTO.getPrice() < 30) {
             request.setUserName(null);
@@ -486,16 +562,28 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
 
             // 2.2 创建返回结果
             String state = response.getState();
-            if (ObjectUtils.equalsAny(state, "ACCEPTED", "PROCESSING", "WAIT_USER_CONFIRM", "TRANSFERING", "CANCELING")) {
-                return PayTransferRespDTO.processingOf(response.getTransferBillNo(), response.getOutBillNo(), response)
-                        .setChannelPackageInfo(response.getPackageInfo()); // 一般情况下，只有 WAIT_USER_CONFIRM 会有！
+            if (ObjectUtils.equalsAny(
+                    state,
+                    "ACCEPTED",
+                    "PROCESSING",
+                    "WAIT_USER_CONFIRM",
+                    "TRANSFERING",
+                    "CANCELING")) {
+                return PayTransferRespDTO.processingOf(
+                                response.getTransferBillNo(), response.getOutBillNo(), response)
+                        .setChannelPackageInfo(
+                                response.getPackageInfo()); // 一般情况下，只有 WAIT_USER_CONFIRM 会有！
             }
             if (Objects.equals("SUCCESS", state)) {
-                return PayTransferRespDTO.successOf(response.getTransferBillNo(), parseDateV3(response.getCreateTime()),
-                        response.getOutBillNo(), response);
+                return PayTransferRespDTO.successOf(
+                        response.getTransferBillNo(),
+                        parseDateV3(response.getCreateTime()),
+                        response.getOutBillNo(),
+                        response);
             }
-            return PayTransferRespDTO.closedOf(state, response.getFailReason(),
-                    response.getOutBillNo(), response).setChannelTransferNo(response.getTransferBillNo());
+            return PayTransferRespDTO.closedOf(
+                            state, response.getFailReason(), response.getOutBillNo(), response)
+                    .setChannelTransferNo(response.getTransferBillNo());
         } catch (WxPayException e) {
             log.error("[doUnifiedTransfer][转账({}) 发起微信支付异常", reqDTO, e);
             // 参考 https://gitee.com/yudaocode/yudao-mall-uniapp/issues/ID0PFR，网络异常不能误判为转账关闭
@@ -504,58 +592,76 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
             }
             String errorCode = getErrorCode(e);
             String errorMessage = getErrorMessage(e);
-            return PayTransferRespDTO.closedOf(errorCode, errorMessage,
-                    reqDTO.getOutTransferNo(), e.getXmlString());
+            return PayTransferRespDTO.closedOf(
+                    errorCode, errorMessage, reqDTO.getOutTransferNo(), e.getXmlString());
         }
     }
 
     @Override
     protected PayTransferRespDTO doGetTransfer(String outTradeNo) throws WxPayException {
         // 1. 执行请求
-        TransferBillsGetResult response = client.getTransferService().getBillsByOutBillNo(outTradeNo);
+        TransferBillsGetResult response =
+                client.getTransferService().getBillsByOutBillNo(outTradeNo);
 
         // 2. 创建返回结果
         String state = response.getState();
-        if (ObjectUtils.equalsAny(state, "ACCEPTED", "PROCESSING", "WAIT_USER_CONFIRM", "TRANSFERING", "CANCELING")) {
-            return PayTransferRespDTO.processingOf(response.getTransferBillNo(), response.getOutBillNo(), response);
+        if (ObjectUtils.equalsAny(
+                state, "ACCEPTED", "PROCESSING", "WAIT_USER_CONFIRM", "TRANSFERING", "CANCELING")) {
+            return PayTransferRespDTO.processingOf(
+                    response.getTransferBillNo(), response.getOutBillNo(), response);
         }
         if (Objects.equals("SUCCESS", state)) {
-            return PayTransferRespDTO.successOf(response.getTransferBillNo(), parseDateV3(response.getUpdateTime()),
-                    response.getOutBillNo(), response);
+            return PayTransferRespDTO.successOf(
+                    response.getTransferBillNo(),
+                    parseDateV3(response.getUpdateTime()),
+                    response.getOutBillNo(),
+                    response);
         }
-        return PayTransferRespDTO.closedOf(state, response.getFailReason(),
-                response.getOutBillNo(), response).setChannelTransferNo(response.getTransferBillNo());
+        return PayTransferRespDTO.closedOf(
+                        state, response.getFailReason(), response.getOutBillNo(), response)
+                .setChannelTransferNo(response.getTransferBillNo());
     }
 
     @Override
-    public PayTransferRespDTO doParseTransferNotify(Map<String, String> params, String body, Map<String, String> headers) throws WxPayException {
+    public PayTransferRespDTO doParseTransferNotify(
+            Map<String, String> params, String body, Map<String, String> headers)
+            throws WxPayException {
         switch (config.getApiVersion()) {
             case API_VERSION_V3:
                 return parseTransferNotifyV3(body, headers);
             case API_VERSION_V2:
                 throw new UnsupportedOperationException("V2 版本暂不支持，建议使用 V3 版本");
             default:
-                throw new IllegalArgumentException(String.format("未知的 API 版本(%s)", config.getApiVersion()));
+                throw new IllegalArgumentException(
+                        String.format("未知的 API 版本(%s)", config.getApiVersion()));
         }
     }
 
-    private PayTransferRespDTO parseTransferNotifyV3(String body, Map<String, String> headers) throws WxPayException {
+    private PayTransferRespDTO parseTransferNotifyV3(String body, Map<String, String> headers)
+            throws WxPayException {
         // 1. 解析回调
         SignatureHeader signatureHeader = getRequestHeader(headers);
-        TransferBillsNotifyResult response = client.getTransferService().parseTransferBillsNotifyResult(body, signatureHeader);
+        TransferBillsNotifyResult response =
+                client.getTransferService().parseTransferBillsNotifyResult(body, signatureHeader);
         TransferBillsNotifyResult.DecryptNotifyResult result = response.getResult();
 
         // 2. 创建返回结果
         String state = result.getState();
-        if (ObjectUtils.equalsAny(state, "ACCEPTED", "PROCESSING", "WAIT_USER_CONFIRM", "TRANSFERING", "CANCELING")) {
-            return PayTransferRespDTO.processingOf(result.getTransferBillNo(), result.getOutBillNo(), response);
+        if (ObjectUtils.equalsAny(
+                state, "ACCEPTED", "PROCESSING", "WAIT_USER_CONFIRM", "TRANSFERING", "CANCELING")) {
+            return PayTransferRespDTO.processingOf(
+                    result.getTransferBillNo(), result.getOutBillNo(), response);
         }
         if (Objects.equals("SUCCESS", state)) {
-            return PayTransferRespDTO.successOf(result.getTransferBillNo(), parseDateV3(result.getUpdateTime()),
-                    result.getOutBillNo(), response);
+            return PayTransferRespDTO.successOf(
+                    result.getTransferBillNo(),
+                    parseDateV3(result.getUpdateTime()),
+                    result.getOutBillNo(),
+                    response);
         }
-        return PayTransferRespDTO.closedOf(state, result.getFailReason(),
-                result.getOutBillNo(), response).setChannelTransferNo(result.getTransferBillNo());
+        return PayTransferRespDTO.closedOf(
+                        state, result.getFailReason(), result.getOutBillNo(), response)
+                .setChannelTransferNo(result.getTransferBillNo());
     }
 
     // ========== 各种工具方法 ==========
@@ -586,7 +692,8 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
                 .build();
     }
 
-    private String getHeaderValue(Map<String, String> headers, String capitalizedKey, String lowercaseKey) {
+    private String getHeaderValue(
+            Map<String, String> headers, String capitalizedKey, String lowercaseKey) {
         String value = headers.get(capitalizedKey);
         if (value != null) {
             return value;
@@ -595,7 +702,8 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
     }
 
     static String formatDateV2(LocalDateTime time) {
-        return TemporalAccessorUtil.format(time.atZone(ZoneId.systemDefault()), PURE_DATETIME_PATTERN);
+        return TemporalAccessorUtil.format(
+                time.atZone(ZoneId.systemDefault()), PURE_DATETIME_PATTERN);
     }
 
     static LocalDateTime parseDateV2(String time) {
@@ -607,7 +715,8 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
     }
 
     static String formatDateV3(LocalDateTime time) {
-        return TemporalAccessorUtil.format(time.atZone(ZoneId.systemDefault()), UTC_WITH_XXX_OFFSET_PATTERN);
+        return TemporalAccessorUtil.format(
+                time.atZone(ZoneId.systemDefault()), UTC_WITH_XXX_OFFSET_PATTERN);
     }
 
     static LocalDateTime parseDateV3(String time) {
@@ -633,5 +742,4 @@ public abstract class AbstractWxPayClient extends AbstractPayClient<WxPayClientC
         }
         return e.getReturnMsg();
     }
-
 }

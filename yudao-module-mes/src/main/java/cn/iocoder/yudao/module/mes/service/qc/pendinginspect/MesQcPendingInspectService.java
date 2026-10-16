@@ -15,6 +15,6 @@ public interface MesQcPendingInspectService {
      * @param pageReqVO 分页查询
      * @return 待检任务分页
      */
-    PageResult<MesQcPendingInspectRespVO> getPendingInspectPage(MesQcPendingInspectPageReqVO pageReqVO);
-
+    PageResult<MesQcPendingInspectRespVO> getPendingInspectPage(
+            MesQcPendingInspectPageReqVO pageReqVO);
 }

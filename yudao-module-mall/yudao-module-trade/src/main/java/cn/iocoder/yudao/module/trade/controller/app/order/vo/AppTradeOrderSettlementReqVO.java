@@ -4,13 +4,17 @@ import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.common.validation.Mobile;
 import cn.iocoder.yudao.module.trade.enums.delivery.DeliveryTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -41,8 +45,10 @@ public class AppTradeOrderSettlementReqVO {
 
     @Schema(description = "自提门店编号", example = "1088")
     private Long pickUpStoreId;
+
     @Schema(description = "收件人名称", example = "芋艿") // 选择门店自提时，该字段为联系人名
     private String receiverName;
+
     @Schema(description = "收件人手机", example = "15601691300") // 选择门店自提时，该字段为联系人手机
     @Mobile(message = "收件人手机格式不正确")
     private String receiverMobile;
@@ -70,7 +76,8 @@ public class AppTradeOrderSettlementReqVO {
     @JsonIgnore
     public boolean isValidActivityItems() {
         // 校验是否是活动订单
-        if (ObjUtil.isAllEmpty(seckillActivityId, combinationActivityId, combinationHeadId, bargainRecordId)) {
+        if (ObjUtil.isAllEmpty(
+                seckillActivityId, combinationActivityId, combinationHeadId, bargainRecordId)) {
             return true;
         }
         // 校验订单项是否超出
@@ -103,7 +110,5 @@ public class AppTradeOrderSettlementReqVO {
             // 组合二：cartId 使用购物车项
             return cartId != null;
         }
-
     }
-
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -335,37 +336,43 @@ public enum ImContentTypeEnum implements ArrayValuable<Integer> {
      */
     GROUP_BANNED(1533, "群封禁变更", true, false);
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImContentTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImContentTypeEnum::getType).toArray(Integer[]::new);
 
-    private static final Set<Integer> FRIEND_NOTIFICATION_TYPES = CollUtil.newHashSet(
-            FRIEND_REQUEST_APPROVED.type,
-            FRIEND_REQUEST_REJECTED.type,
-            FRIEND_REQUEST_RECEIVED.type,
-            FRIEND_ADD.type,
-            FRIEND_DELETE.type,
-            FRIEND_BLOCK.type,
-            FRIEND_UNBLOCK.type,
-            FRIEND_INFO_UPDATED.type,
-            FRIEND_UPDATE.type);
+    private static final Set<Integer> FRIEND_NOTIFICATION_TYPES =
+            CollUtil.newHashSet(
+                    FRIEND_REQUEST_APPROVED.type,
+                    FRIEND_REQUEST_REJECTED.type,
+                    FRIEND_REQUEST_RECEIVED.type,
+                    FRIEND_ADD.type,
+                    FRIEND_DELETE.type,
+                    FRIEND_BLOCK.type,
+                    FRIEND_UNBLOCK.type,
+                    FRIEND_INFO_UPDATED.type,
+                    FRIEND_UPDATE.type);
 
-    private static final Set<Integer> GROUP_REQUEST_NOTIFICATION_TYPES = CollUtil.newHashSet(
-            GROUP_REQUEST_RECEIVED.type,
-            GROUP_REQUEST_APPROVED.type,
-            GROUP_REQUEST_REJECTED.type);
+    private static final Set<Integer> GROUP_REQUEST_NOTIFICATION_TYPES =
+            CollUtil.newHashSet(
+                    GROUP_REQUEST_RECEIVED.type,
+                    GROUP_REQUEST_APPROVED.type,
+                    GROUP_REQUEST_REJECTED.type);
 
-    private static final Set<Integer> RTC_NOTIFICATION_TYPES = CollUtil.newHashSet(
-            RTC_CALL.type,
-            RTC_PARTICIPANT_CONNECTED.type,
-            RTC_PARTICIPANT_DISCONNECTED.type);
+    private static final Set<Integer> RTC_NOTIFICATION_TYPES =
+            CollUtil.newHashSet(
+                    RTC_CALL.type,
+                    RTC_PARTICIPANT_CONNECTED.type,
+                    RTC_PARTICIPANT_DISCONNECTED.type);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
     private final String name;
+
     /**
      * 是否入库
      * <p>
@@ -373,6 +380,7 @@ public enum ImContentTypeEnum implements ArrayValuable<Integer> {
      * false：仅 WebSocket 推送，离线丢弃；状态由专用存储维护（如 READ 走 Redis 游标）
      */
     private final boolean persistent;
+
     /**
      * 是不是用户聊天消息（normal vs event 二分）
      * <p>
@@ -418,5 +426,4 @@ public enum ImContentTypeEnum implements ArrayValuable<Integer> {
     public static boolean isRtcNotification(Integer type) {
         return type != null && RTC_NOTIFICATION_TYPES.contains(type);
     }
-
 }

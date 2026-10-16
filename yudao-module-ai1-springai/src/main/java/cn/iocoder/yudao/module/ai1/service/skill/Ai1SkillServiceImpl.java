@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.service.skill;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +12,9 @@ import cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.skill.Ai1SkillSaveR
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.skill.Ai1SkillMapper;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
 
 /**
  * AI1 SKILL Service 实现类
@@ -31,14 +33,11 @@ import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
 @Validated
 public class Ai1SkillServiceImpl implements Ai1SkillService {
 
-    @Resource
-    private Ai1SkillMapper skillMapper;
+    @Resource private Ai1SkillMapper skillMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1SkillFileService skillFileService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1AgentService agentService;
 
     @Override
@@ -134,5 +133,4 @@ public class Ai1SkillServiceImpl implements Ai1SkillService {
             throw exception(SKILL_NAME_DUPLICATE, name);
         }
     }
-
 }

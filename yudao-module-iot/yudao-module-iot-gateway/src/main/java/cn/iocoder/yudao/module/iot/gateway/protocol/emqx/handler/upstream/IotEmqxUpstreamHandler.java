@@ -6,7 +6,9 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.gateway.util.IotMqttTopicUtils;
+
 import io.vertx.mqtt.messages.MqttPublishMessage;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,7 +32,10 @@ public class IotEmqxUpstreamHandler {
      * 处理 MQTT 发布消息
      */
     public void handle(MqttPublishMessage mqttMessage) {
-        log.debug("[handle][收到 MQTT 消息, topic: {}, payload: {}]", mqttMessage.topicName(), mqttMessage.payload());
+        log.debug(
+                "[handle][收到 MQTT 消息, topic: {}, payload: {}]",
+                mqttMessage.topicName(),
+                mqttMessage.payload());
         String topic = mqttMessage.topicName();
         byte[] payload = mqttMessage.payload().getBytes();
         try {
@@ -44,7 +49,8 @@ public class IotEmqxUpstreamHandler {
             }
 
             // 2.1 反序列化消息
-            IotDeviceMessage message = deviceMessageService.deserializeDeviceMessage(payload, productKey, deviceName);
+            IotDeviceMessage message =
+                    deviceMessageService.deserializeDeviceMessage(payload, productKey, deviceName);
             if (message == null) {
                 log.warn("[handle][topic({}) payload({}) 消息解码失败]", topic, new String(payload));
                 return;
@@ -58,5 +64,4 @@ public class IotEmqxUpstreamHandler {
             log.error("[handle][topic({}) payload({}) 处理异常]", topic, new String(payload), e);
         }
     }
-
 }

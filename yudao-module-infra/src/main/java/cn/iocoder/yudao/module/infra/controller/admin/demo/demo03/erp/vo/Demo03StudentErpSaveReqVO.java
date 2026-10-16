@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.infra.controller.admin.demo.demo03.erp.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,5 +31,4 @@ public class Demo03StudentErpSaveReqVO {
     @Schema(description = "简介", requiredMode = Schema.RequiredMode.REQUIRED, example = "随便")
     @NotEmpty(message = "简介不能为空")
     private String description;
-
 }

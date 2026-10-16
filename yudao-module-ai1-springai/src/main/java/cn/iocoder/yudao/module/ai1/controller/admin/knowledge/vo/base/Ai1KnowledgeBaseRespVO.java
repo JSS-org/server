@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,10 @@ public class Ai1KnowledgeBaseRespVO {
     @Schema(description = "描述", example = "产品使用说明")
     private String description;
 
-    @Schema(description = "向量化 Provider 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "向量化 Provider 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Long embeddingProviderId;
 
     @Schema(description = "向量化 Provider 名称", example = "Ollama")
@@ -30,7 +34,10 @@ public class Ai1KnowledgeBaseRespVO {
     @Schema(description = "向量化模型名称", example = "bge-m3")
     private String embeddingModelName;
 
-    @Schema(description = "分片大小，单位：字符", requiredMode = Schema.RequiredMode.REQUIRED, example = "500")
+    @Schema(
+            description = "分片大小，单位：字符",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "500")
     private Integer chunkSize;
 
     @Schema(description = "分片重叠，单位：字符", requiredMode = Schema.RequiredMode.REQUIRED, example = "50")
@@ -47,5 +54,4 @@ public class Ai1KnowledgeBaseRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

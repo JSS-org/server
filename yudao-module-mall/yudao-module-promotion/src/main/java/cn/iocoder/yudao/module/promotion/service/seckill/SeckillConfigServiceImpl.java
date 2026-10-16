@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.promotion.service.seckill;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBetween;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -11,19 +16,16 @@ import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.config.Seck
 import cn.iocoder.yudao.module.promotion.convert.seckill.SeckillConfigConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillConfigDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.seckill.seckillconfig.SeckillConfigMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.isBetween;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 
 /**
  * 秒杀时段 Service 实现类
@@ -34,8 +36,7 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 @Validated
 public class SeckillConfigServiceImpl implements SeckillConfigService {
 
-    @Resource
-    private SeckillConfigMapper seckillConfigMapper;
+    @Resource private SeckillConfigMapper seckillConfigMapper;
 
     @Override
     public Long createSeckillConfig(SeckillConfigCreateReqVO createReqVO) {
@@ -54,7 +55,8 @@ public class SeckillConfigServiceImpl implements SeckillConfigService {
         // 校验存在
         validateSeckillConfigExists(updateReqVO.getId());
         // 校验时间段是否冲突
-        validateSeckillConfigConflict(updateReqVO.getStartTime(), updateReqVO.getEndTime(), updateReqVO.getId());
+        validateSeckillConfigConflict(
+                updateReqVO.getStartTime(), updateReqVO.getEndTime(), updateReqVO.getId());
 
         // 更新
         SeckillConfigDO updateObj = SeckillConfigConvert.INSTANCE.convert(updateReqVO);
@@ -72,7 +74,9 @@ public class SeckillConfigServiceImpl implements SeckillConfigService {
 
     @Override
     public SeckillConfigDO getCurrentSeckillConfig() {
-        List<SeckillConfigDO> list = seckillConfigMapper.selectList(SeckillConfigDO::getStatus, CommonStatusEnum.ENABLE.getStatus());
+        List<SeckillConfigDO> list =
+                seckillConfigMapper.selectList(
+                        SeckillConfigDO::getStatus, CommonStatusEnum.ENABLE.getStatus());
         return findFirst(list, config -> isBetween(config.getStartTime(), config.getEndTime()));
     }
 
@@ -108,13 +112,19 @@ public class SeckillConfigServiceImpl implements SeckillConfigService {
         }
 
         // 2. 判断是否有重叠的时间
-        boolean hasConflict = configs.stream().anyMatch(config -> LocalDateTimeUtils.isOverlap(startTime, endTime,
-                LocalTime.parse(config.getStartTime()), LocalTime.parse(config.getEndTime())));
+        boolean hasConflict =
+                configs.stream()
+                        .anyMatch(
+                                config ->
+                                        LocalDateTimeUtils.isOverlap(
+                                                startTime,
+                                                endTime,
+                                                LocalTime.parse(config.getStartTime()),
+                                                LocalTime.parse(config.getEndTime())));
         if (hasConflict) {
             throw exception(SECKILL_CONFIG_TIME_CONFLICTS);
         }
     }
-
 
     @Override
     public SeckillConfigDO getSeckillConfig(Long id) {
@@ -138,11 +148,13 @@ public class SeckillConfigServiceImpl implements SeckillConfigService {
         }
 
         // 2. 如果存在关闭，则抛出 SECKILL_CONFIG_DISABLE 业务异常
-        configs.forEach(config -> {
-            if (ObjectUtil.equal(config.getStatus(), CommonStatusEnum.DISABLE.getStatus())) {
-                throw exception(SECKILL_CONFIG_DISABLE);
-            }
-        });
+        configs.forEach(
+                config -> {
+                    if (ObjectUtil.equal(
+                            config.getStatus(), CommonStatusEnum.DISABLE.getStatus())) {
+                        throw exception(SECKILL_CONFIG_DISABLE);
+                    }
+                });
     }
 
     @Override
@@ -156,5 +168,4 @@ public class SeckillConfigServiceImpl implements SeckillConfigService {
         list.sort(Comparator.comparing(SeckillConfigDO::getStartTime));
         return list;
     }
-
 }

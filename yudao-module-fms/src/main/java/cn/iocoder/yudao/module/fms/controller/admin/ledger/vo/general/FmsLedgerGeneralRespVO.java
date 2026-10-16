@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.general;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -49,5 +51,4 @@ public class FmsLedgerGeneralRespVO {
     @Schema(description = "余额")
     @ExcelProperty("余额")
     private BigDecimal balance;
-
 }

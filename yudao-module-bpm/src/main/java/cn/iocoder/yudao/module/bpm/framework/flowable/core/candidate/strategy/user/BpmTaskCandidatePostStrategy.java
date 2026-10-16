@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.strategy.user;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.system.api.dept.PostApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 /**
  * 岗位 {@link BpmTaskCandidateStrategy} 实现类
@@ -22,10 +24,8 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Component
 public class BpmTaskCandidatePostStrategy implements BpmTaskCandidateStrategy {
 
-    @Resource
-    private PostApi postApi;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private PostApi postApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public BpmTaskCandidateStrategyEnum getStrategy() {
@@ -44,5 +44,4 @@ public class BpmTaskCandidatePostStrategy implements BpmTaskCandidateStrategy {
         List<AdminUserRespDTO> users = adminUserApi.getUserListByPostIds(postIds);
         return convertSet(users, AdminUserRespDTO::getId);
     }
-
 }

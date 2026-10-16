@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.asymmetric.AsymmetricDecryptor;
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.crypto.symmetric.SymmetricDecryptor;
+
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,17 +25,20 @@ public class ApiDecryptRequestWrapper extends HttpServletRequestWrapper {
 
     private final byte[] body;
 
-    public ApiDecryptRequestWrapper(HttpServletRequest request,
-                                    SymmetricDecryptor symmetricDecryptor,
-                                    AsymmetricDecryptor asymmetricDecryptor) throws IOException {
+    public ApiDecryptRequestWrapper(
+            HttpServletRequest request,
+            SymmetricDecryptor symmetricDecryptor,
+            AsymmetricDecryptor asymmetricDecryptor)
+            throws IOException {
         super(request);
         // 读取 body，允许 HEX、BASE64 传输
-        String requestBody = StrUtil.utf8Str(
-                IoUtil.readBytes(request.getInputStream(), false));
+        String requestBody = StrUtil.utf8Str(IoUtil.readBytes(request.getInputStream(), false));
 
         // 解密 body
-        body = symmetricDecryptor != null ? symmetricDecryptor.decrypt(requestBody)
-                : asymmetricDecryptor.decrypt(requestBody, KeyType.PrivateKey);
+        body =
+                symmetricDecryptor != null
+                        ? symmetricDecryptor.decrypt(requestBody)
+                        : asymmetricDecryptor.decrypt(requestBody, KeyType.PrivateKey);
     }
 
     @Override
@@ -78,9 +82,7 @@ public class ApiDecryptRequestWrapper extends HttpServletRequestWrapper {
             }
 
             @Override
-            public void setReadListener(ReadListener readListener) {
-            }
-
+            public void setReadListener(ReadListener readListener) {}
         };
     }
 }

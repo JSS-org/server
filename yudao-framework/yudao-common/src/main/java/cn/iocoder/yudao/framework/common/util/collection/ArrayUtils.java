@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.common.util.collection;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.IterUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -7,8 +9,6 @@ import cn.hutool.core.util.ArrayUtil;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 /**
  * Array 工具类
@@ -54,5 +54,4 @@ public class ArrayUtils {
         }
         return array[index];
     }
-
 }

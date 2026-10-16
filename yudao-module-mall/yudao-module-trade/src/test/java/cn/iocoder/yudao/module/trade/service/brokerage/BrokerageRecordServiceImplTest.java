@@ -1,5 +1,16 @@
 package cn.iocoder.yudao.module.trade.service.brokerage;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -18,23 +29,15 @@ import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageRecordBizTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.brokerage.BrokerageRecordStatusEnum;
 import cn.iocoder.yudao.module.trade.service.brokerage.bo.BrokerageAddReqBO;
 import cn.iocoder.yudao.module.trade.service.config.TradeConfigService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.RoundingMode;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link BrokerageRecordServiceImpl} 的单元测试类
@@ -44,46 +47,48 @@ import static org.mockito.Mockito.when;
 @Import(BrokerageRecordServiceImpl.class)
 public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private BrokerageRecordServiceImpl brokerageRecordService;
-    @Resource
-    private BrokerageRecordMapper brokerageRecordMapper;
+    @Resource private BrokerageRecordServiceImpl brokerageRecordService;
+    @Resource private BrokerageRecordMapper brokerageRecordMapper;
 
-    @MockitoBean
-    private TradeConfigService tradeConfigService;
-    @MockitoBean
-    private BrokerageUserService brokerageUserService;
-    @MockitoBean
-    private ProductSpuApi productSpuApi;
-    @MockitoBean
-    private ProductSkuApi productSkuApi;
+    @MockitoBean private TradeConfigService tradeConfigService;
+    @MockitoBean private BrokerageUserService brokerageUserService;
+    @MockitoBean private ProductSpuApi productSpuApi;
+    @MockitoBean private ProductSkuApi productSkuApi;
 
     @Test
     public void testGetBrokerageRecordPage() {
         // mock 数据
-        BrokerageRecordDO dbBrokerageRecord = randomPojo(BrokerageRecordDO.class, o -> { // 等会查询到
-            o.setUserId(1L);
-            o.setBizType(BrokerageRecordBizTypeEnum.ORDER.getType());
-            o.setStatus(BrokerageRecordStatusEnum.SETTLEMENT.getStatus());
-            o.setSourceUserLevel(1);
-            o.setSourceUserId(100L);
-            o.setCreateTime(buildTime(2023, 2, 10));
-            o.setDeleted(false);
-        });
+        BrokerageRecordDO dbBrokerageRecord =
+                randomPojo(
+                        BrokerageRecordDO.class,
+                        o -> { // 等会查询到
+                            o.setUserId(1L);
+                            o.setBizType(BrokerageRecordBizTypeEnum.ORDER.getType());
+                            o.setStatus(BrokerageRecordStatusEnum.SETTLEMENT.getStatus());
+                            o.setSourceUserLevel(1);
+                            o.setSourceUserId(100L);
+                            o.setCreateTime(buildTime(2023, 2, 10));
+                            o.setDeleted(false);
+                        });
         brokerageRecordMapper.insert(dbBrokerageRecord);
         // 测试 userId 不匹配
         brokerageRecordMapper.insert(cloneIgnoreId(dbBrokerageRecord, o -> o.setUserId(2L)));
         // 测试 bizType 不匹配
-        brokerageRecordMapper.insert(cloneIgnoreId(dbBrokerageRecord,
-                o -> o.setBizType(BrokerageRecordBizTypeEnum.WITHDRAW.getType())));
+        brokerageRecordMapper.insert(
+                cloneIgnoreId(
+                        dbBrokerageRecord,
+                        o -> o.setBizType(BrokerageRecordBizTypeEnum.WITHDRAW.getType())));
         // 测试 status 不匹配
-        brokerageRecordMapper.insert(cloneIgnoreId(dbBrokerageRecord,
-                o -> o.setStatus(BrokerageRecordStatusEnum.CANCEL.getStatus())));
+        brokerageRecordMapper.insert(
+                cloneIgnoreId(
+                        dbBrokerageRecord,
+                        o -> o.setStatus(BrokerageRecordStatusEnum.CANCEL.getStatus())));
         // 测试 sourceUserLevel 不匹配
-        brokerageRecordMapper.insert(cloneIgnoreId(dbBrokerageRecord, o -> o.setSourceUserLevel(2)));
+        brokerageRecordMapper.insert(
+                cloneIgnoreId(dbBrokerageRecord, o -> o.setSourceUserLevel(2)));
         // 测试 createTime 不匹配
-        brokerageRecordMapper.insert(cloneIgnoreId(dbBrokerageRecord,
-                o -> o.setCreateTime(buildTime(2023, 3, 1))));
+        brokerageRecordMapper.insert(
+                cloneIgnoreId(dbBrokerageRecord, o -> o.setCreateTime(buildTime(2023, 3, 1))));
         // 准备参数
         BrokerageRecordPageReqVO reqVO = new BrokerageRecordPageReqVO();
         reqVO.setUserId(1L);
@@ -93,7 +98,8 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         reqVO.setCreateTime(buildBetweenTime(2023, 2, 1, 2023, 2, 28));
 
         // 调用
-        PageResult<BrokerageRecordDO> pageResult = brokerageRecordService.getBrokerageRecordPage(reqVO);
+        PageResult<BrokerageRecordDO> pageResult =
+                brokerageRecordService.getBrokerageRecordPage(reqVO);
         // 断言
         assertEquals(1, pageResult.getTotal());
         assertEquals(1, pageResult.getList().size());
@@ -106,11 +112,14 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         tradeConfig.setBrokerageEnabled(true);
         tradeConfig.setBrokerageFirstPercent(10);
         when(tradeConfigService.getTradeConfig()).thenReturn(tradeConfig);
-        BrokerageUserDO orderBrokerageUser = new BrokerageUserDO().setId(200L).setBrokerageEnabled(true)
-                .setBrokeragePrice(0);
+        BrokerageUserDO orderBrokerageUser =
+                new BrokerageUserDO().setId(200L).setBrokerageEnabled(true).setBrokeragePrice(0);
         when(brokerageUserService.getBrokerageUser(200L)).thenReturn(orderBrokerageUser);
 
-        brokerageRecordService.addBrokerage(100L, 200L, BrokerageRecordBizTypeEnum.ORDER,
+        brokerageRecordService.addBrokerage(
+                100L,
+                200L,
+                BrokerageRecordBizTypeEnum.ORDER,
                 ListUtil.of(new BrokerageAddReqBO("1", 1000, null, null, 100L, "订单商品")));
 
         List<BrokerageRecordDO> records = brokerageRecordMapper.selectList(null);
@@ -141,8 +150,10 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         // 调用
         int brokerage = brokerageRecordService.calculatePrice(payPrice, percent, fixedPrice);
         // 断言
-        assertEquals(NumberUtil.div(NumberUtil.mul(payPrice, percent), 100, 0,
-                RoundingMode.DOWN).intValue(), brokerage);
+        assertEquals(
+                NumberUtil.div(NumberUtil.mul(payPrice, percent), 100, 0, RoundingMode.DOWN)
+                        .intValue(),
+                brokerage);
     }
 
     @Test
@@ -188,7 +199,8 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         when(productSkuApi.getSkuListBySpuId(ListUtil.of(1L))).thenReturn(ListUtil.of(sku));
 
         // 调用
-        AppBrokerageProductPriceRespVO result = brokerageRecordService.calculateProductBrokeragePrice(100L, 1L);
+        AppBrokerageProductPriceRespVO result =
+                brokerageRecordService.calculateProductBrokeragePrice(100L, 1L);
 
         // 断言：按 10% 比例计算，1000 * 10% = 100 分（向下取整）
         assertTrue(result.getEnabled());
@@ -216,7 +228,8 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         when(productSkuApi.getSkuListBySpuId(ListUtil.of(2L))).thenReturn(ListUtil.of(sku));
 
         // 调用
-        AppBrokerageProductPriceRespVO result = brokerageRecordService.calculateProductBrokeragePrice(100L, 2L);
+        AppBrokerageProductPriceRespVO result =
+                brokerageRecordService.calculateProductBrokeragePrice(100L, 2L);
 
         // 断言：独立分销固定佣金为 0，应返回 0，不得回退到全局比例
         assertTrue(result.getEnabled());
@@ -244,10 +257,12 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         ProductSkuRespDTO fixedBrokerageSku = new ProductSkuRespDTO();
         fixedBrokerageSku.setPrice(2000);
         fixedBrokerageSku.setFirstBrokeragePrice(200);
-        when(productSkuApi.getSkuListBySpuId(ListUtil.of(3L))).thenReturn(ListUtil.of(nullBrokerageSku, fixedBrokerageSku));
+        when(productSkuApi.getSkuListBySpuId(ListUtil.of(3L)))
+                .thenReturn(ListUtil.of(nullBrokerageSku, fixedBrokerageSku));
 
         // 调用
-        AppBrokerageProductPriceRespVO result = brokerageRecordService.calculateProductBrokeragePrice(100L, 3L);
+        AppBrokerageProductPriceRespVO result =
+                brokerageRecordService.calculateProductBrokeragePrice(100L, 3L);
 
         // 断言：独立分销固定佣金为空时按 0 处理，避免比较最小/最大佣金时报错
         assertTrue(result.getEnabled());
@@ -271,7 +286,8 @@ public class BrokerageRecordServiceImplTest extends BaseDbUnitTest {
         when(productSkuApi.getSkuListBySpuId(ListUtil.of(4L))).thenReturn(ListUtil.of());
 
         // 调用
-        AppBrokerageProductPriceRespVO result = brokerageRecordService.calculateProductBrokeragePrice(100L, 4L);
+        AppBrokerageProductPriceRespVO result =
+                brokerageRecordService.calculateProductBrokeragePrice(100L, 4L);
 
         // 断言：独立分销没有固定佣金时，不回退到全局比例
         assertTrue(result.getEnabled());

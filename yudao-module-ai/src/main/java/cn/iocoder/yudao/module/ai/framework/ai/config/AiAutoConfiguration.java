@@ -24,6 +24,7 @@ import cn.iocoder.yudao.module.ai.tool.function.DirectoryListToolFunction;
 import cn.iocoder.yudao.module.ai.tool.function.UserProfileQueryToolFunction;
 import cn.iocoder.yudao.module.ai.tool.function.WeatherQueryToolFunction;
 import cn.iocoder.yudao.module.ai.tool.method.PersonService;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
@@ -32,9 +33,11 @@ import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingOptions;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
+
 import io.micrometer.observation.ObservationRegistry;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.model.ChatModel;
+
 import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.deepseek.DeepSeekChatOptions;
 import org.springframework.ai.deepseek.api.DeepSeekApi;
@@ -54,10 +57,10 @@ import org.springframework.ai.vectorstore.milvus.autoconfigure.MilvusServiceClie
 import org.springframework.ai.vectorstore.milvus.autoconfigure.MilvusVectorStoreProperties;
 import org.springframework.ai.vectorstore.qdrant.autoconfigure.QdrantVectorStoreProperties;
 import org.springframework.ai.vectorstore.redis.autoconfigure.RedisVectorStoreProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -69,10 +72,12 @@ import java.util.List;
  * @author fansili
  */
 @Configuration
-@EnableConfigurationProperties({ YudaoAiProperties.class,
-        QdrantVectorStoreProperties.class, // 解析 Qdrant 配置
-        RedisVectorStoreProperties.class, // 解析 Redis 配置
-        MilvusVectorStoreProperties.class, MilvusServiceClientProperties.class // 解析 Milvus 配置
+@EnableConfigurationProperties({
+    YudaoAiProperties.class,
+    QdrantVectorStoreProperties.class, // 解析 Qdrant 配置
+    RedisVectorStoreProperties.class, // 解析 Redis 配置
+    MilvusVectorStoreProperties.class,
+    MilvusServiceClientProperties.class // 解析 Milvus 配置
 })
 @Slf4j
 public class AiAutoConfiguration {
@@ -94,25 +99,28 @@ public class AiAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "spring.ai.dashscope.api-key")
-    public DashScopeChatModel dashScopeChatModel(@Value("${spring.ai.dashscope.api-key}") String apiKey,
-                                                 ToolCallingManager toolCallingManager,
-                                                 ObservationRegistry observationRegistry) {
+    public DashScopeChatModel dashScopeChatModel(
+            @Value("${spring.ai.dashscope.api-key}") String apiKey,
+            ToolCallingManager toolCallingManager,
+            ObservationRegistry observationRegistry) {
         return buildTongYiChatModel(apiKey, toolCallingManager, observationRegistry);
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "spring.ai.dashscope.api-key")
-    public DashScopeImageModel dashScopeImageModel(@Value("${spring.ai.dashscope.api-key}") String apiKey,
-                                                   ObservationRegistry observationRegistry) {
+    public DashScopeImageModel dashScopeImageModel(
+            @Value("${spring.ai.dashscope.api-key}") String apiKey,
+            ObservationRegistry observationRegistry) {
         return buildTongYiImagesModel(apiKey, observationRegistry);
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "spring.ai.dashscope.api-key")
-    public DashScopeEmbeddingModel dashScopeEmbeddingModel(@Value("${spring.ai.dashscope.api-key}") String apiKey,
-                                                           ObservationRegistry observationRegistry) {
+    public DashScopeEmbeddingModel dashScopeEmbeddingModel(
+            @Value("${spring.ai.dashscope.api-key}") String apiKey,
+            ObservationRegistry observationRegistry) {
         return buildTongYiEmbeddingModel(apiKey, null, observationRegistry);
     }
 
@@ -120,14 +128,21 @@ public class AiAutoConfiguration {
         return buildTongYiChatModel(apiKey, getToolCallingManager(), getObservationRegistry());
     }
 
-    private static DashScopeChatModel buildTongYiChatModel(String apiKey, ToolCallingManager toolCallingManager,
-                                                           ObservationRegistry observationRegistry) {
+    private static DashScopeChatModel buildTongYiChatModel(
+            String apiKey,
+            ToolCallingManager toolCallingManager,
+            ObservationRegistry observationRegistry) {
         DashScopeApi dashScopeApi = DashScopeApi.builder().apiKey(apiKey).build();
-        DashScopeChatOptions options = DashScopeChatOptions.builder()
-                .model(DashScopeApi.DEFAULT_CHAT_MODEL)
-                .temperature(0.7)
-                .build();
-        return new DashScopeChatModel(dashScopeApi, options, toolCallingManager, RetryUtils.DEFAULT_RETRY_TEMPLATE,
+        DashScopeChatOptions options =
+                DashScopeChatOptions.builder()
+                        .model(DashScopeApi.DEFAULT_CHAT_MODEL)
+                        .temperature(0.7)
+                        .build();
+        return new DashScopeChatModel(
+                dashScopeApi,
+                options,
+                toolCallingManager,
+                RetryUtils.DEFAULT_RETRY_TEMPLATE,
                 observationRegistry);
     }
 
@@ -135,26 +150,33 @@ public class AiAutoConfiguration {
         return buildTongYiImagesModel(apiKey, getObservationRegistry());
     }
 
-    private static DashScopeImageModel buildTongYiImagesModel(String apiKey, ObservationRegistry observationRegistry) {
+    private static DashScopeImageModel buildTongYiImagesModel(
+            String apiKey, ObservationRegistry observationRegistry) {
         DashScopeImageApi dashScopeImageApi = DashScopeImageApi.builder().apiKey(apiKey).build();
-        DashScopeImageOptions options = DashScopeImageOptions.builder()
-                .model(DashScopeImageApi.DEFAULT_IMAGE_MODEL)
-                .build();
-        return new DashScopeImageModel(dashScopeImageApi, options, RetryUtils.DEFAULT_RETRY_TEMPLATE,
-                observationRegistry);
+        DashScopeImageOptions options =
+                DashScopeImageOptions.builder()
+                        .model(DashScopeImageApi.DEFAULT_IMAGE_MODEL)
+                        .build();
+        return new DashScopeImageModel(
+                dashScopeImageApi, options, RetryUtils.DEFAULT_RETRY_TEMPLATE, observationRegistry);
     }
 
     public static DashScopeEmbeddingModel buildTongYiEmbeddingModel(String apiKey, String model) {
         return buildTongYiEmbeddingModel(apiKey, model, getObservationRegistry());
     }
 
-    private static DashScopeEmbeddingModel buildTongYiEmbeddingModel(String apiKey, String model,
-                                                                     ObservationRegistry observationRegistry) {
+    private static DashScopeEmbeddingModel buildTongYiEmbeddingModel(
+            String apiKey, String model, ObservationRegistry observationRegistry) {
         DashScopeApi dashScopeApi = DashScopeApi.builder().apiKey(apiKey).build();
-        DashScopeEmbeddingOptions options = DashScopeEmbeddingOptions.builder()
-                .model(StrUtil.blankToDefault(model, DashScopeApi.DEFAULT_EMBEDDING_MODEL))
-                .build();
-        return new DashScopeEmbeddingModel(dashScopeApi, MetadataMode.EMBED, options, RetryUtils.DEFAULT_RETRY_TEMPLATE,
+        DashScopeEmbeddingOptions options =
+                DashScopeEmbeddingOptions.builder()
+                        .model(StrUtil.blankToDefault(model, DashScopeApi.DEFAULT_EMBEDDING_MODEL))
+                        .build();
+        return new DashScopeEmbeddingModel(
+                dashScopeApi,
+                MetadataMode.EMBED,
+                options,
+                RetryUtils.DEFAULT_RETRY_TEMPLATE,
                 observationRegistry);
     }
 
@@ -169,19 +191,22 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(DouBaoChatModel.MODEL_DEFAULT);
         }
-        DeepSeekChatModel openAiChatModel = DeepSeekChatModel.builder()
-                .deepSeekApi(DeepSeekApi.builder()
-                        .baseUrl(DouBaoChatModel.BASE_URL)
-                        .completionsPath(DouBaoChatModel.COMPLETE_PATH)
-                        .apiKey(properties.getApiKey())
-                        .build())
-                .options(DeepSeekChatOptions.builder()
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
-                .build();
+        DeepSeekChatModel openAiChatModel =
+                DeepSeekChatModel.builder()
+                        .deepSeekApi(
+                                DeepSeekApi.builder()
+                                        .baseUrl(DouBaoChatModel.BASE_URL)
+                                        .completionsPath(DouBaoChatModel.COMPLETE_PATH)
+                                        .apiKey(properties.getApiKey())
+                                        .build())
+                        .options(
+                                DeepSeekChatOptions.builder()
+                                        .model(properties.getModel())
+                                        .temperature(properties.getTemperature())
+                                        .maxTokens(properties.getMaxTokens())
+                                        .topP(properties.getTopP())
+                                        .build())
+                        .build();
         return new DouBaoChatModel(openAiChatModel);
     }
 
@@ -192,22 +217,26 @@ public class AiAutoConfiguration {
         return buildSiliconFlowChatClient(properties);
     }
 
-    public SiliconFlowChatModel buildSiliconFlowChatClient(YudaoAiProperties.SiliconFlow properties) {
+    public SiliconFlowChatModel buildSiliconFlowChatClient(
+            YudaoAiProperties.SiliconFlow properties) {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(SiliconFlowApiConstants.MODEL_DEFAULT);
         }
-        DeepSeekChatModel openAiChatModel = DeepSeekChatModel.builder()
-                .deepSeekApi(DeepSeekApi.builder()
-                        .baseUrl(SiliconFlowApiConstants.DEFAULT_BASE_URL)
-                        .apiKey(properties.getApiKey())
-                        .build())
-                .options(DeepSeekChatOptions.builder()
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
-                .build();
+        DeepSeekChatModel openAiChatModel =
+                DeepSeekChatModel.builder()
+                        .deepSeekApi(
+                                DeepSeekApi.builder()
+                                        .baseUrl(SiliconFlowApiConstants.DEFAULT_BASE_URL)
+                                        .apiKey(properties.getApiKey())
+                                        .build())
+                        .options(
+                                DeepSeekChatOptions.builder()
+                                        .model(properties.getModel())
+                                        .temperature(properties.getTemperature())
+                                        .maxTokens(properties.getMaxTokens())
+                                        .topP(properties.getTopP())
+                                        .build())
+                        .build();
         return new SiliconFlowChatModel(openAiChatModel);
     }
 
@@ -226,19 +255,22 @@ public class AiAutoConfiguration {
             properties.setBaseUrl(HunYuanChatModel.BASE_URL);
         }
         // 创建 DeepSeekChatModel、HunYuanChatModel 对象
-        DeepSeekChatModel openAiChatModel = DeepSeekChatModel.builder()
-                .deepSeekApi(DeepSeekApi.builder()
-                        .baseUrl(properties.getBaseUrl())
-                        .completionsPath(HunYuanChatModel.COMPLETE_PATH)
-                        .apiKey(properties.getApiKey())
-                        .build())
-                .options(DeepSeekChatOptions.builder()
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
-                .build();
+        DeepSeekChatModel openAiChatModel =
+                DeepSeekChatModel.builder()
+                        .deepSeekApi(
+                                DeepSeekApi.builder()
+                                        .baseUrl(properties.getBaseUrl())
+                                        .completionsPath(HunYuanChatModel.COMPLETE_PATH)
+                                        .apiKey(properties.getApiKey())
+                                        .build())
+                        .options(
+                                DeepSeekChatOptions.builder()
+                                        .model(properties.getModel())
+                                        .temperature(properties.getTemperature())
+                                        .maxTokens(properties.getMaxTokens())
+                                        .topP(properties.getTopP())
+                                        .build())
+                        .build();
         return new HunYuanChatModel(openAiChatModel);
     }
 
@@ -255,12 +287,13 @@ public class AiAutoConfiguration {
         }
         return XingHuoChatModel.builder()
                 .apiKey(properties.getApiKey())
-                .options(DeepSeekChatOptions.builder()
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
+                .options(
+                        DeepSeekChatOptions.builder()
+                                .model(properties.getModel())
+                                .temperature(properties.getTemperature())
+                                .maxTokens(properties.getMaxTokens())
+                                .topP(properties.getTopP())
+                                .build())
                 .build();
     }
 
@@ -275,19 +308,22 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(BaiChuanChatModel.MODEL_DEFAULT);
         }
-        DeepSeekChatModel deepSeekChatModel = DeepSeekChatModel.builder()
-                .deepSeekApi(DeepSeekApi.builder()
-                        .baseUrl(BaiChuanChatModel.BASE_URL)
-                        .apiKey(properties.getApiKey())
-                        .completionsPath(BaiChuanChatModel.COMPLETE_PATH)
-                        .build())
-                .options(DeepSeekChatOptions.builder()
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
-                .build();
+        DeepSeekChatModel deepSeekChatModel =
+                DeepSeekChatModel.builder()
+                        .deepSeekApi(
+                                DeepSeekApi.builder()
+                                        .baseUrl(BaiChuanChatModel.BASE_URL)
+                                        .apiKey(properties.getApiKey())
+                                        .completionsPath(BaiChuanChatModel.COMPLETE_PATH)
+                                        .build())
+                        .options(
+                                DeepSeekChatOptions.builder()
+                                        .model(properties.getModel())
+                                        .temperature(properties.getTemperature())
+                                        .maxTokens(properties.getMaxTokens())
+                                        .topP(properties.getTopP())
+                                        .build())
+                        .build();
         return new BaiChuanChatModel(deepSeekChatModel);
     }
 
@@ -302,10 +338,15 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(YiYanChatModel.MODEL_DEFAULT);
         }
-        return new YiYanChatModel(buildDeepSeekCompatibleChatModel(
-                StrUtil.blankToDefault(properties.getBaseUrl(), YiYanChatModel.BASE_URL),
-                null, properties.getApiKey(), properties.getModel(), properties.getTemperature(),
-                properties.getMaxTokens(), properties.getTopP()));
+        return new YiYanChatModel(
+                buildDeepSeekCompatibleChatModel(
+                        StrUtil.blankToDefault(properties.getBaseUrl(), YiYanChatModel.BASE_URL),
+                        null,
+                        properties.getApiKey(),
+                        properties.getModel(),
+                        properties.getTemperature(),
+                        properties.getMaxTokens(),
+                        properties.getTopP()));
     }
 
     @Bean
@@ -319,18 +360,24 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(ZhiPuChatModel.MODEL_DEFAULT);
         }
-        DeepSeekChatModel deepSeekChatModel = DeepSeekChatModel.builder()
-                .deepSeekApi(DeepSeekApi.builder()
-                        .baseUrl(StrUtil.blankToDefault(properties.getBaseUrl(), ZhiPuChatModel.BASE_URL))
-                        .apiKey(properties.getApiKey())
-                        .build())
-                .options(DeepSeekChatOptions.builder()
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
-                .build();
+        DeepSeekChatModel deepSeekChatModel =
+                DeepSeekChatModel.builder()
+                        .deepSeekApi(
+                                DeepSeekApi.builder()
+                                        .baseUrl(
+                                                StrUtil.blankToDefault(
+                                                        properties.getBaseUrl(),
+                                                        ZhiPuChatModel.BASE_URL))
+                                        .apiKey(properties.getApiKey())
+                                        .build())
+                        .options(
+                                DeepSeekChatOptions.builder()
+                                        .model(properties.getModel())
+                                        .temperature(properties.getTemperature())
+                                        .maxTokens(properties.getMaxTokens())
+                                        .topP(properties.getTopP())
+                                        .build())
+                        .build();
         return new ZhiPuChatModel(deepSeekChatModel);
     }
 
@@ -345,10 +392,15 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(MiniMaxChatModel.MODEL_DEFAULT);
         }
-        return new MiniMaxChatModel(buildDeepSeekCompatibleChatModel(
-                StrUtil.blankToDefault(properties.getBaseUrl(), MiniMaxChatModel.BASE_URL),
-                null, properties.getApiKey(), properties.getModel(), properties.getTemperature(),
-                properties.getMaxTokens(), properties.getTopP()));
+        return new MiniMaxChatModel(
+                buildDeepSeekCompatibleChatModel(
+                        StrUtil.blankToDefault(properties.getBaseUrl(), MiniMaxChatModel.BASE_URL),
+                        null,
+                        properties.getApiKey(),
+                        properties.getModel(),
+                        properties.getTemperature(),
+                        properties.getMaxTokens(),
+                        properties.getTopP()));
     }
 
     @Bean
@@ -362,10 +414,15 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(MoonshotChatModel.MODEL_DEFAULT);
         }
-        return new MoonshotChatModel(buildDeepSeekCompatibleChatModel(
-                StrUtil.blankToDefault(properties.getBaseUrl(), MoonshotChatModel.BASE_URL),
-                MoonshotChatModel.COMPLETE_PATH, properties.getApiKey(), properties.getModel(),
-                properties.getTemperature(), properties.getMaxTokens(), properties.getTopP()));
+        return new MoonshotChatModel(
+                buildDeepSeekCompatibleChatModel(
+                        StrUtil.blankToDefault(properties.getBaseUrl(), MoonshotChatModel.BASE_URL),
+                        MoonshotChatModel.COMPLETE_PATH,
+                        properties.getApiKey(),
+                        properties.getModel(),
+                        properties.getTemperature(),
+                        properties.getMaxTokens(),
+                        properties.getTopP()));
     }
 
     @Bean
@@ -379,30 +436,38 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(StepFunChatModel.MODEL_DEFAULT);
         }
-        return new StepFunChatModel(buildDeepSeekCompatibleChatModel(
-                StrUtil.blankToDefault(properties.getBaseUrl(), StepFunChatModel.BASE_URL),
-                StepFunChatModel.COMPLETE_PATH, properties.getApiKey(), properties.getModel(),
-                properties.getTemperature(), properties.getMaxTokens(), properties.getTopP()));
+        return new StepFunChatModel(
+                buildDeepSeekCompatibleChatModel(
+                        StrUtil.blankToDefault(properties.getBaseUrl(), StepFunChatModel.BASE_URL),
+                        StepFunChatModel.COMPLETE_PATH,
+                        properties.getApiKey(),
+                        properties.getModel(),
+                        properties.getTemperature(),
+                        properties.getMaxTokens(),
+                        properties.getTopP()));
     }
 
-    private static DeepSeekChatModel buildDeepSeekCompatibleChatModel(String baseUrl, String completionsPath,
-                                                                     String apiKey, String model,
-                                                                     Double temperature, Integer maxTokens,
-                                                                     Double topP) {
-        DeepSeekApi.Builder apiBuilder = DeepSeekApi.builder()
-                .baseUrl(baseUrl)
-                .apiKey(apiKey);
+    private static DeepSeekChatModel buildDeepSeekCompatibleChatModel(
+            String baseUrl,
+            String completionsPath,
+            String apiKey,
+            String model,
+            Double temperature,
+            Integer maxTokens,
+            Double topP) {
+        DeepSeekApi.Builder apiBuilder = DeepSeekApi.builder().baseUrl(baseUrl).apiKey(apiKey);
         if (StrUtil.isNotEmpty(completionsPath)) {
             apiBuilder.completionsPath(completionsPath);
         }
         return DeepSeekChatModel.builder()
                 .deepSeekApi(apiBuilder.build())
-                .options(DeepSeekChatOptions.builder()
-                        .model(model)
-                        .temperature(temperature)
-                        .maxTokens(maxTokens)
-                        .topP(topP)
-                        .build())
+                .options(
+                        DeepSeekChatOptions.builder()
+                                .model(model)
+                                .temperature(temperature)
+                                .maxTokens(maxTokens)
+                                .topP(topP)
+                                .build())
                 .build();
     }
 
@@ -430,16 +495,21 @@ public class AiAutoConfiguration {
         if (StrUtil.isEmpty(properties.getModel())) {
             properties.setModel(GrokChatModel.MODEL_DEFAULT);
         }
-        OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-                .options(OpenAiChatOptions.builder()
-                        .baseUrl(StrUtil.blankToDefault(properties.getBaseUrl(), GrokChatModel.BASE_URL))
-                        .apiKey(properties.getApiKey())
-                        .model(properties.getModel())
-                        .temperature(properties.getTemperature())
-                        .maxTokens(properties.getMaxTokens())
-                        .topP(properties.getTopP())
-                        .build())
-                .build();
+        OpenAiChatModel openAiChatModel =
+                OpenAiChatModel.builder()
+                        .options(
+                                OpenAiChatOptions.builder()
+                                        .baseUrl(
+                                                StrUtil.blankToDefault(
+                                                        properties.getBaseUrl(),
+                                                        GrokChatModel.BASE_URL))
+                                        .apiKey(properties.getApiKey())
+                                        .model(properties.getModel())
+                                        .temperature(properties.getTemperature())
+                                        .maxTokens(properties.getMaxTokens())
+                                        .topP(properties.getTopP())
+                                        .build())
+                        .build();
         return new GrokChatModel(openAiChatModel);
     }
 
@@ -485,21 +555,23 @@ public class AiAutoConfiguration {
     public ToolCallback directoryListToolCallback(DirectoryListToolFunction function) {
         return FunctionToolCallback.builder("directory_list", function)
                 .description("列出指定目录的文件列表")
-                .inputType(DirectoryListToolFunction.Request.class).build();
+                .inputType(DirectoryListToolFunction.Request.class)
+                .build();
     }
 
     @Bean
     public ToolCallback weatherQueryToolCallback(WeatherQueryToolFunction function) {
         return FunctionToolCallback.builder("weather_query", function)
                 .description("查询指定城市的天气信息")
-                .inputType(WeatherQueryToolFunction.Request.class).build();
+                .inputType(WeatherQueryToolFunction.Request.class)
+                .build();
     }
 
     @Bean
     public ToolCallback userProfileQueryToolCallback(UserProfileQueryToolFunction function) {
         return FunctionToolCallback.builder("user_profile_query", function)
                 .description("用户信息查询")
-                .inputType(UserProfileQueryToolFunction.Request.class).build();
+                .inputType(UserProfileQueryToolFunction.Request.class)
+                .build();
     }
-
 }

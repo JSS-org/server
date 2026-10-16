@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.core.enums;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,11 +18,11 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum IotSerializeTypeEnum implements ArrayValuable<String> {
-
     JSON("json"),
     BINARY("binary");
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(IotSerializeTypeEnum::getType).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(IotSerializeTypeEnum::getType).toArray(String[]::new);
 
     /**
      * 类型
@@ -36,5 +37,4 @@ public enum IotSerializeTypeEnum implements ArrayValuable<String> {
     public static IotSerializeTypeEnum of(String type) {
         return ArrayUtil.firstMatch(e -> e.getType().equals(type), values());
     }
-
 }

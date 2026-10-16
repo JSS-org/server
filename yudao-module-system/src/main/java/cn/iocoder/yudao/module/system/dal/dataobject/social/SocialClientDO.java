@@ -4,10 +4,13 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
+
 import me.zhyd.oauth.config.AuthConfig;
 
 /**
@@ -18,7 +21,8 @@ import me.zhyd.oauth.config.AuthConfig;
  * @author 芋道源码
  */
 @TableName(value = "system_social_client", autoResultMap = true)
-@KeySequence("system_social_client_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence("system_social_client_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL
+// 等数据库，可不写。
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Builder
@@ -29,18 +33,20 @@ public class SocialClientDO extends TenantBaseDO {
     /**
      * 编号，自增
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 应用名
      */
     private String name;
+
     /**
      * 社交类型
      *
      * 枚举 {@link SocialTypeEnum}
      */
     private Integer socialType;
+
     /**
      * 用户类型
      *
@@ -49,6 +55,7 @@ public class SocialClientDO extends TenantBaseDO {
      * 枚举 {@link UserTypeEnum}
      */
     private Integer userType;
+
     /**
      * 状态
      *
@@ -60,6 +67,7 @@ public class SocialClientDO extends TenantBaseDO {
      * 客户端 id
      */
     private String clientId;
+
     /**
      * 客户端 Secret
      */
@@ -80,5 +88,4 @@ public class SocialClientDO extends TenantBaseDO {
      * 1. 支付宝：支付宝公钥
      */
     private String publicKey;
-
 }

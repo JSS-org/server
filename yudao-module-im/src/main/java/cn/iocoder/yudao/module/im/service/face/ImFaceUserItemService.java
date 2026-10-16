@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.face.vo.useritem.ImFaceUserItemSaveReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.useritem.ImFaceUserItemManagerPageReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFaceUserItemDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -56,5 +57,4 @@ public interface ImFaceUserItemService {
      * @param id 表情编号
      */
     void deleteFaceUserItem(Long id);
-
 }

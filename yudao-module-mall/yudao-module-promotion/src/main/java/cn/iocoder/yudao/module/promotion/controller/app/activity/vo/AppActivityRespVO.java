@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.activity.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,5 +31,4 @@ public class AppActivityRespVO {
 
     @Schema(description = "活动结束时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime endTime;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.conversation.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -28,5 +29,4 @@ public class ImConversationReadRespVO {
 
     @Schema(description = "最近更新时间（增量拉取游标用）")
     private LocalDateTime updateTime;
-
 }

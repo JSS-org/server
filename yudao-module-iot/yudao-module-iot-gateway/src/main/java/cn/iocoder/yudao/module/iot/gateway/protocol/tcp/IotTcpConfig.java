@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.tcp;
 
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpCodecTypeEnum;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -20,6 +22,7 @@ public class IotTcpConfig {
     @NotNull(message = "最大连接数不能为空")
     @Min(value = 1, message = "最大连接数必须大于 0")
     private Integer maxConnections = 1000;
+
     /**
      * 心跳超时时间（毫秒）
      */
@@ -30,8 +33,7 @@ public class IotTcpConfig {
     /**
      * 拆包配置
      */
-    @Valid
-    private CodecConfig codec;
+    @Valid private CodecConfig codec;
 
     /**
      * TCP 拆包配置
@@ -53,18 +55,21 @@ public class IotTcpConfig {
          * 表示长度字段在消息中的起始位置（从 0 开始）
          */
         private Integer lengthFieldOffset;
+
         /**
          * LENGTH_FIELD: 长度字段长度（字节数）
          * <p>
          * 常见值：1（最大 255）、2（最大 65535）、4（最大 2GB）
          */
         private Integer lengthFieldLength;
+
         /**
          * LENGTH_FIELD: 长度调整值
          * <p>
          * 用于调整长度字段的值，例如长度字段包含头部长度时需要减去头部长度
          */
         private Integer lengthAdjustment = 0;
+
         /**
          * LENGTH_FIELD: 跳过的初始字节数
          * <p>
@@ -85,7 +90,5 @@ public class IotTcpConfig {
          * 每条消息的固定长度
          */
         private Integer fixedLength;
-
     }
-
 }

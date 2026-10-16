@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.manager.message.vo.channel.ImChannelMessagePageReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.message.vo.channel.ImChannelMessageSendReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImChannelMessageDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -79,5 +80,4 @@ public interface ImChannelMessageService {
      * @param id 消息编号
      */
     void deleteMessage(Long id);
-
 }

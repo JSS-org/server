@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.product.api.sku.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -41,7 +42,5 @@ public class ProductSkuUpdateStockReqDTO {
          */
         @NotNull(message = "库存变化数量不能为空")
         private Integer incrCount;
-
     }
-
 }

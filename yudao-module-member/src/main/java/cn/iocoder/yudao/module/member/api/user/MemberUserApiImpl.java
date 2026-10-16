@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.member.api.user;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_MOBILE_NOT_EXISTS;
+
 import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
 import cn.iocoder.yudao.module.member.convert.user.MemberUserConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_MOBILE_NOT_EXISTS;
 
 /**
  * 会员用户的 API 实现类
@@ -23,8 +25,7 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.USER_MOBIL
 @Validated
 public class MemberUserApiImpl implements MemberUserApi {
 
-    @Resource
-    private MemberUserService userService;
+    @Resource private MemberUserService userService;
 
     @Override
     public MemberUserRespDTO getUser(Long id) {
@@ -54,5 +55,4 @@ public class MemberUserApiImpl implements MemberUserApi {
             throw exception(USER_MOBILE_NOT_EXISTS);
         }
     }
-
 }

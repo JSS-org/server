@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.promotion.controller.app.banner.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "用户 App - Banner Response VO")
 @Data
@@ -23,5 +24,4 @@ public class AppBannerRespVO {
     @Schema(description = "图片地址", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "图片地址不能为空")
     private String picUrl;
-
 }

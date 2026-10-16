@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.admin.base.system.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户精简信息 VO")
@@ -15,5 +16,4 @@ public class UserSimpleBaseVO {
 
     @Schema(description = "用户头像", example = "https://www.iocoder.cn/1.png")
     private String avatar;
-
 }

@@ -7,7 +7,8 @@ import cn.iocoder.yudao.framework.desensitize.core.slider.annotation.CarLicenseD
  *
  * @author gaibu
  */
-public class CarLicenseDesensitization extends AbstractSliderDesensitizationHandler<CarLicenseDesensitize> {
+public class CarLicenseDesensitization
+        extends AbstractSliderDesensitizationHandler<CarLicenseDesensitize> {
 
     @Override
     Integer getPrefixKeep(CarLicenseDesensitize annotation) {
@@ -28,5 +29,4 @@ public class CarLicenseDesensitization extends AbstractSliderDesensitizationHand
     public String getDisable(CarLicenseDesensitize annotation) {
         return annotation.disable();
     }
-
 }

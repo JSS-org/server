@@ -1,13 +1,21 @@
 package cn.iocoder.yudao.module.crm.service.product;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.crm.dal.dataobject.product.CrmProductCategoryDO.PARENT_ID_NULL;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.crm.controller.admin.product.vo.category.CrmProductCategoryCreateReqVO;
 import cn.iocoder.yudao.module.crm.controller.admin.product.vo.category.CrmProductCategoryListReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.product.CrmProductCategoryDO;
 import cn.iocoder.yudao.module.crm.dal.mysql.product.CrmProductCategoryMapper;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -15,11 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.crm.dal.dataobject.product.CrmProductCategoryDO.PARENT_ID_NULL;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 
 /**
  * CRM 产品分类 Service 实现类
@@ -33,12 +36,14 @@ public class CrmProductCategoryServiceImpl implements CrmProductCategoryService 
     @Resource(name = "crmProductCategoryMapper")
     private CrmProductCategoryMapper productCategoryMapper;
 
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖问题
+    @Resource @Lazy // 延迟加载，解决循环依赖问题
     private CrmProductService crmProductService;
 
     @Override
-    @LogRecord(type = CRM_PRODUCT_CATEGORY_TYPE, subType = CRM_PRODUCT_CATEGORY_CREATE_SUB_TYPE, bizNo = "{{#productCategoryId}}",
+    @LogRecord(
+            type = CRM_PRODUCT_CATEGORY_TYPE,
+            subType = CRM_PRODUCT_CATEGORY_CREATE_SUB_TYPE,
+            bizNo = "{{#productCategoryId}}",
             success = CRM_PRODUCT_CATEGORY_CREATE_SUCCESS)
     public Long createProductCategory(CrmProductCategoryCreateReqVO createReqVO) {
         // 1.1 校验父分类存在
@@ -56,7 +61,10 @@ public class CrmProductCategoryServiceImpl implements CrmProductCategoryService 
     }
 
     @Override
-    @LogRecord(type = CRM_PRODUCT_CATEGORY_TYPE, subType = CRM_PRODUCT_CATEGORY_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+    @LogRecord(
+            type = CRM_PRODUCT_CATEGORY_TYPE,
+            subType = CRM_PRODUCT_CATEGORY_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
             success = CRM_PRODUCT_CATEGORY_UPDATE_SUCCESS)
     public void updateProductCategory(CrmProductCategoryCreateReqVO updateReqVO) {
         // 1.1 校验存在
@@ -64,7 +72,8 @@ public class CrmProductCategoryServiceImpl implements CrmProductCategoryService 
         // 1.2 校验父分类存在
         validateParentProductCategory(updateReqVO.getParentId());
         // 1.3 分类名称是否存在
-        validateProductNameExists(updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
+        validateProductNameExists(
+                updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
 
         // 2. 更新分类
         CrmProductCategoryDO updateObj = BeanUtils.toBean(updateReqVO, CrmProductCategoryDO.class);
@@ -94,16 +103,19 @@ public class CrmProductCategoryServiceImpl implements CrmProductCategoryService 
     }
 
     private void validateProductNameExists(Long id, Long parentId, String name) {
-        CrmProductCategoryDO category = productCategoryMapper.selectByParentIdAndName(parentId, name);
-        if (category == null
-            || category.getId().equals(id)) {
+        CrmProductCategoryDO category =
+                productCategoryMapper.selectByParentIdAndName(parentId, name);
+        if (category == null || category.getId().equals(id)) {
             return;
         }
         throw exception(PRODUCT_CATEGORY_EXISTS);
     }
 
     @Override
-    @LogRecord(type = CRM_PRODUCT_CATEGORY_TYPE, subType = CRM_PRODUCT_CATEGORY_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_PRODUCT_CATEGORY_TYPE,
+            subType = CRM_PRODUCT_CATEGORY_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_PRODUCT_CATEGORY_DELETE_SUCCESS)
     public void deleteProductCategory(Long id) {
         // 1.1 校验存在
@@ -126,7 +138,8 @@ public class CrmProductCategoryServiceImpl implements CrmProductCategoryService 
     }
 
     @Override
-    public List<CrmProductCategoryDO> getProductCategoryList(CrmProductCategoryListReqVO listReqVO) {
+    public List<CrmProductCategoryDO> getProductCategoryList(
+            CrmProductCategoryListReqVO listReqVO) {
         return productCategoryMapper.selectList(listReqVO);
     }
 
@@ -134,5 +147,4 @@ public class CrmProductCategoryServiceImpl implements CrmProductCategoryService 
     public List<CrmProductCategoryDO> getProductCategoryList(Collection<Long> ids) {
         return productCategoryMapper.selectByIds(ids);
     }
-
 }

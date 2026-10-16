@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.operatelog.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,9 @@ public class HrmOperateLogRespVO {
     @Schema(description = "业务编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long bizId;
 
-    @Schema(description = "操作内容", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "操作内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "更新了招聘职位【Java 开发工程师】")
     private String action;
 
@@ -39,5 +42,4 @@ public class HrmOperateLogRespVO {
 
     @Schema(description = "操作时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

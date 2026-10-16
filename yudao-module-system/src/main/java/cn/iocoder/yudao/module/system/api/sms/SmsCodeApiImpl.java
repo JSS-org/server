@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.module.system.api.sms;
 
-import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeValidateReqDTO;
 import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeSendReqDTO;
 import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
+import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeValidateReqDTO;
 import cn.iocoder.yudao.module.system.service.sms.SmsCodeService;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * 短信验证码 API 实现类
@@ -18,8 +19,7 @@ import jakarta.annotation.Resource;
 @Validated
 public class SmsCodeApiImpl implements SmsCodeApi {
 
-    @Resource
-    private SmsCodeService smsCodeService;
+    @Resource private SmsCodeService smsCodeService;
 
     @Override
     public void sendSmsCode(SmsCodeSendReqDTO reqDTO) {
@@ -35,5 +35,4 @@ public class SmsCodeApiImpl implements SmsCodeApi {
     public void validateSmsCode(SmsCodeValidateReqDTO reqDTO) {
         smsCodeService.validateSmsCode(reqDTO);
     }
-
 }

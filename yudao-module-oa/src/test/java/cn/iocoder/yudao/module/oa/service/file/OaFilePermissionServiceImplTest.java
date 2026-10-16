@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.oa.service.file;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.oa.controller.admin.file.vo.permission.OaFilePermissionSaveReqVO;
@@ -7,7 +12,9 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.file.OaFilePermissionDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.file.OaFilePermissionMapper;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,10 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaFilePermissionServiceImpl} 的单元测试类
  *
@@ -29,24 +32,24 @@ import static org.mockito.Mockito.*;
 @Import(OaFilePermissionServiceImpl.class)
 public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaFilePermissionService filePermissionService;
+    @Resource private OaFilePermissionService filePermissionService;
 
-    @Resource
-    private OaFilePermissionMapper filePermissionMapper;
+    @Resource private OaFilePermissionMapper filePermissionMapper;
 
-    @MockitoBean
-    private OaFileNodeService fileNodeService;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private DeptApi deptApi;
+    @MockitoBean private OaFileNodeService fileNodeService;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private DeptApi deptApi;
 
     @Test
     public void testSaveFilePermission_createUser() {
         // 准备参数
-        OaFilePermissionSaveReqVO reqVO = new OaFilePermissionSaveReqVO().setNodeId(10L)
-                .setSubjectType(1).setSubjectId(20L).setLevel(1).setInherit(true);
+        OaFilePermissionSaveReqVO reqVO =
+                new OaFilePermissionSaveReqVO()
+                        .setNodeId(10L)
+                        .setSubjectType(1)
+                        .setSubjectId(20L)
+                        .setLevel(1)
+                        .setInherit(true);
 
         // 调用
         Long id = filePermissionService.saveFilePermission(reqVO, 1L);
@@ -67,8 +70,13 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
         permission.setExpireTime(LocalDateTime.now().plusDays(1));
         filePermissionMapper.insert(permission);
         // 准备参数
-        OaFilePermissionSaveReqVO reqVO = new OaFilePermissionSaveReqVO().setNodeId(10L)
-                .setSubjectType(1).setSubjectId(20L).setLevel(3).setInherit(false);
+        OaFilePermissionSaveReqVO reqVO =
+                new OaFilePermissionSaveReqVO()
+                        .setNodeId(10L)
+                        .setSubjectType(1)
+                        .setSubjectId(20L)
+                        .setLevel(3)
+                        .setInherit(false);
 
         // 调用
         Long id = filePermissionService.saveFilePermission(reqVO, 1L);
@@ -87,8 +95,13 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
         OaFilePermissionDO userPermission = randomFilePermissionDO(10L, 1, 20L);
         filePermissionMapper.insert(userPermission);
         // 准备参数
-        OaFilePermissionSaveReqVO reqVO = new OaFilePermissionSaveReqVO().setNodeId(10L)
-                .setSubjectType(2).setSubjectId(20L).setLevel(2).setInherit(true);
+        OaFilePermissionSaveReqVO reqVO =
+                new OaFilePermissionSaveReqVO()
+                        .setNodeId(10L)
+                        .setSubjectType(2)
+                        .setSubjectId(20L)
+                        .setLevel(2)
+                        .setInherit(true);
 
         // 调用
         Long id = filePermissionService.saveFilePermission(reqVO, 1L);
@@ -102,11 +115,18 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testSaveFilePermission_invalidSubjectType() {
         // 准备参数
-        OaFilePermissionSaveReqVO reqVO = new OaFilePermissionSaveReqVO().setNodeId(10L)
-                .setSubjectType(99).setSubjectId(20L).setLevel(1).setInherit(true);
+        OaFilePermissionSaveReqVO reqVO =
+                new OaFilePermissionSaveReqVO()
+                        .setNodeId(10L)
+                        .setSubjectType(99)
+                        .setSubjectId(20L)
+                        .setLevel(1)
+                        .setInherit(true);
 
         // 调用，并断言
-        assertThrows(IllegalArgumentException.class, () -> filePermissionService.saveFilePermission(reqVO, 1L));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> filePermissionService.saveFilePermission(reqVO, 1L));
         assertTrue(filePermissionMapper.selectList().isEmpty());
         verifyNoInteractions(adminUserApi, deptApi);
     }
@@ -119,8 +139,16 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
         filePermissionMapper.insert(randomFilePermissionDO(30L, 1, 20L));
 
         // 调用，并断言
-        assertEquals(permission.getId(), CollUtil.getFirst(filePermissionService.getFilePermissionListByNodeIds(Collections.singleton(10L))).getId());
-        assertTrue(filePermissionService.getFilePermissionListByNodeIds(Collections.emptyList()).isEmpty());
+        assertEquals(
+                permission.getId(),
+                CollUtil.getFirst(
+                                filePermissionService.getFilePermissionListByNodeIds(
+                                        Collections.singleton(10L)))
+                        .getId());
+        assertTrue(
+                filePermissionService
+                        .getFilePermissionListByNodeIds(Collections.emptyList())
+                        .isEmpty());
     }
 
     @Test
@@ -147,16 +175,19 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
         // mock 数据：本人及所属部门有效授权保留，过期、其他人和已删除授权排除
         OaFilePermissionDO user = randomFilePermissionDO(1L, 1, 10L).setExpireTime(null);
         filePermissionMapper.insert(user);
-        OaFilePermissionDO dept = randomFilePermissionDO(2L, 2, 100L).setExpireTime(LocalDateTime.now().plusDays(1));
+        OaFilePermissionDO dept =
+                randomFilePermissionDO(2L, 2, 100L).setExpireTime(LocalDateTime.now().plusDays(1));
         filePermissionMapper.insert(dept);
-        filePermissionMapper.insert(randomFilePermissionDO(3L, 1, 10L).setExpireTime(LocalDateTime.now().minusDays(1)));
+        filePermissionMapper.insert(
+                randomFilePermissionDO(3L, 1, 10L).setExpireTime(LocalDateTime.now().minusDays(1)));
         filePermissionMapper.insert(randomFilePermissionDO(4L, 1, 20L).setExpireTime(null));
         OaFilePermissionDO deleted = randomFilePermissionDO(5L, 1, 10L).setExpireTime(null);
         filePermissionMapper.insert(deleted);
         filePermissionMapper.deleteById(deleted.getId());
 
         // 调用
-        List<OaFilePermissionDO> result = filePermissionService.getValidFilePermissionList(10L, 100L);
+        List<OaFilePermissionDO> result =
+                filePermissionService.getValidFilePermissionList(10L, 100L);
         // 断言
         assertEquals(2, result.size());
         assertTrue(result.stream().anyMatch(permission -> permission.getId().equals(user.getId())));
@@ -171,7 +202,8 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
         filePermissionMapper.insert(randomFilePermissionDO(2L, 2, 10L).setExpireTime(null));
 
         // 调用
-        List<OaFilePermissionDO> result = filePermissionService.getValidFilePermissionList(10L, null);
+        List<OaFilePermissionDO> result =
+                filePermissionService.getValidFilePermissionList(10L, null);
         // 断言
         assertEquals(1, result.size());
         assertEquals(user.getId(), CollUtil.getFirst(result).getId());
@@ -187,15 +219,17 @@ public class OaFilePermissionServiceImplTest extends BaseDbUnitTest {
      * @param subjectId 授权对象编号
      * @return 未入库的测试对象
      */
-    private static OaFilePermissionDO randomFilePermissionDO(Long nodeId, Integer subjectType, Long subjectId) {
-        return randomPojo(OaFilePermissionDO.class, permission -> {
-            permission.setNodeId(nodeId);
-            permission.setSubjectType(subjectType);
-            permission.setSubjectId(subjectId);
-            permission.setLevel(1);
-            permission.setInherit(true);
-            permission.setExpireTime(null);
-        });
+    private static OaFilePermissionDO randomFilePermissionDO(
+            Long nodeId, Integer subjectType, Long subjectId) {
+        return randomPojo(
+                OaFilePermissionDO.class,
+                permission -> {
+                    permission.setNodeId(nodeId);
+                    permission.setSubjectType(subjectType);
+                    permission.setSubjectId(subjectId);
+                    permission.setLevel(1);
+                    permission.setInherit(true);
+                    permission.setExpireTime(null);
+                });
     }
-
 }

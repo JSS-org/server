@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.template.PmsKnowledgeLibraryTemplatePageReqVO;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.template.PmsKnowledgeLibraryTemplateSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.library.PmsKnowledgeLibraryTemplateDO;
+
 import org.springframework.lang.Nullable;
 
 import java.util.List;
@@ -70,5 +71,4 @@ public interface PmsKnowledgeLibraryTemplateService {
      * @param userId 当前用户编号
      */
     void createTemplateDocumentList(Long templateId, Long libraryId, Long userId);
-
 }

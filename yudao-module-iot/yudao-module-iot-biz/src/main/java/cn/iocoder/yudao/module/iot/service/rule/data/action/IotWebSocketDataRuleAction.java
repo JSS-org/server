@@ -5,7 +5,9 @@ import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkWebSocketConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.data.action.websocket.IotWebSocketClient;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,8 +25,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Component
 @Slf4j
-public class IotWebSocketDataRuleAction extends
-        IotDataRuleCacheableAction<IotDataSinkWebSocketConfig, IotWebSocketClient> {
+public class IotWebSocketDataRuleAction
+        extends IotDataRuleCacheableAction<IotDataSinkWebSocketConfig, IotWebSocketClient> {
 
     /**
      * 锁等待超时时间（毫秒）
@@ -36,7 +38,8 @@ public class IotWebSocketDataRuleAction extends
      * <p>
      * WebSocket 连接是与特定服务器实例绑定的，使用单机锁即可保证重连的线程安全
      */
-    private final ConcurrentHashMap<String, ReentrantLock> reconnectLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ReentrantLock> reconnectLocks =
+            new ConcurrentHashMap<>();
 
     @Override
     public Integer getType() {
@@ -54,16 +57,18 @@ public class IotWebSocketDataRuleAction extends
         }
 
         // 2.1 创建 WebSocket 客户端
-        IotWebSocketClient webSocketClient = new IotWebSocketClient(
-                config.getServerUrl(),
-                config.getConnectTimeoutMs(),
-                config.getSendTimeoutMs(),
-                config.getDataFormat()
-        );
+        IotWebSocketClient webSocketClient =
+                new IotWebSocketClient(
+                        config.getServerUrl(),
+                        config.getConnectTimeoutMs(),
+                        config.getSendTimeoutMs(),
+                        config.getDataFormat());
         // 2.2 连接服务器
         webSocketClient.connect();
-        log.info("[initProducer][WebSocket 客户端创建并连接成功，服务器: {}，数据格式: {}]",
-                config.getServerUrl(), config.getDataFormat());
+        log.info(
+                "[initProducer][WebSocket 客户端创建并连接成功，服务器: {}，数据格式: {}]",
+                config.getServerUrl(),
+                config.getDataFormat());
         return webSocketClient;
     }
 
@@ -75,7 +80,8 @@ public class IotWebSocketDataRuleAction extends
     }
 
     @Override
-    protected void execute(IotDeviceMessage message, IotDataSinkWebSocketConfig config) throws Exception {
+    protected void execute(IotDeviceMessage message, IotDataSinkWebSocketConfig config)
+            throws Exception {
         try {
             // 1.1 获取或创建 WebSocket 客户端
             IotWebSocketClient webSocketClient = getProducer(config);
@@ -88,11 +94,18 @@ public class IotWebSocketDataRuleAction extends
             // 2.1 发送消息
             webSocketClient.sendMessage(message);
             // 2.2 记录发送成功日志
-            log.info("[execute][message({}) config({}) 发送成功，WebSocket 服务器: {}]",
-                    message, config, config.getServerUrl());
+            log.info(
+                    "[execute][message({}) config({}) 发送成功，WebSocket 服务器: {}]",
+                    message,
+                    config,
+                    config.getServerUrl());
         } catch (Exception e) {
-            log.error("[execute][message({}) config({}) 发送失败，WebSocket 服务器: {}]",
-                    message, config, config.getServerUrl(), e);
+            log.error(
+                    "[execute][message({}) config({}) 发送失败，WebSocket 服务器: {}]",
+                    message,
+                    config,
+                    config.getServerUrl(),
+                    e);
             throw e;
         }
     }
@@ -105,8 +118,11 @@ public class IotWebSocketDataRuleAction extends
      * @param webSocketClient WebSocket 客户端
      * @param config          配置信息
      */
-    private void reconnectWithLock(IotWebSocketClient webSocketClient, IotDataSinkWebSocketConfig config) throws Exception {
-        ReentrantLock lock = reconnectLocks.computeIfAbsent(config.getServerUrl(), k -> new ReentrantLock());
+    private void reconnectWithLock(
+            IotWebSocketClient webSocketClient, IotDataSinkWebSocketConfig config)
+            throws Exception {
+        ReentrantLock lock =
+                reconnectLocks.computeIfAbsent(config.getServerUrl(), k -> new ReentrantLock());
         boolean acquired = false;
         try {
             acquired = lock.tryLock(LOCK_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
@@ -115,7 +131,9 @@ public class IotWebSocketDataRuleAction extends
             }
             // 双重检查：获取锁后再次检查连接状态，避免重复连接
             if (!webSocketClient.isConnected()) {
-                log.warn("[reconnectWithLock][WebSocket 连接已断开，尝试重新连接，服务器: {}]", config.getServerUrl());
+                log.warn(
+                        "[reconnectWithLock][WebSocket 连接已断开，尝试重新连接，服务器: {}]",
+                        config.getServerUrl());
                 webSocketClient.connect();
             }
         } catch (InterruptedException e) {
@@ -127,5 +145,4 @@ public class IotWebSocketDataRuleAction extends
             }
         }
     }
-
 }

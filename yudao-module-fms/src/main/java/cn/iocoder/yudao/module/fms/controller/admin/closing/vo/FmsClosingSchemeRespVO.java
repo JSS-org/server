@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.closing.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -86,5 +87,4 @@ public class FmsClosingSchemeRespVO {
         @Schema(description = "金额比例", example = "100")
         private BigDecimal amountRatio;
     }
-
 }

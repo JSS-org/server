@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.report.controller.admin.goview.vo.project;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -32,5 +33,4 @@ public class GoViewProjectRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

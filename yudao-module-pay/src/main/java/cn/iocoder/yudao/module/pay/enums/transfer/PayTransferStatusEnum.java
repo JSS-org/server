@@ -13,7 +13,6 @@ import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public enum PayTransferStatusEnum {
-
     WAITING(0, "等待转账"),
     PROCESSING(5, "转账进行中"),
     SUCCESS(10, "转账成功"),
@@ -23,6 +22,7 @@ public enum PayTransferStatusEnum {
      * 状态
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -63,5 +63,4 @@ public enum PayTransferStatusEnum {
     public static boolean isSuccessOrClosed(Integer status) {
         return isSuccess(status) || isClosed(status);
     }
-
 }

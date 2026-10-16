@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.material;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IM 频道素材新增 / 修改 Request VO")
@@ -40,5 +42,4 @@ public class ImChannelMaterialSaveReqVO {
     @Schema(description = "跳转链接；为空表示走客户端内置详情页", example = "https://example.com/activity/123")
     @Size(max = 512, message = "跳转链接长度不能超过 512")
     private String url;
-
 }

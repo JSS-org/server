@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.service.dept;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -10,19 +14,19 @@ import cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept.DeptSaveReqV
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
 import cn.iocoder.yudao.module.system.dal.mysql.dept.DeptMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
+
 import com.google.common.annotations.VisibleForTesting;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 部门 Service 实现类
@@ -34,11 +38,11 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Slf4j
 public class DeptServiceImpl implements DeptService {
 
-    @Resource
-    private DeptMapper deptMapper;
+    @Resource private DeptMapper deptMapper;
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为操作一个部门，涉及到多个缓存
     public Long createDept(DeptSaveReqVO createReqVO) {
         if (createReqVO.getParentId() == null) {
@@ -56,7 +60,8 @@ public class DeptServiceImpl implements DeptService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为操作一个部门，涉及到多个缓存
     public void updateDept(DeptSaveReqVO updateReqVO) {
         if (updateReqVO.getParentId() == null) {
@@ -67,7 +72,8 @@ public class DeptServiceImpl implements DeptService {
         // 校验父部门的有效性
         validateParentDept(updateReqVO.getId(), updateReqVO.getParentId());
         // 校验部门名的唯一性
-        validateDeptNameUnique(updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
+        validateDeptNameUnique(
+                updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
 
         // 更新部门
         DeptDO updateObj = BeanUtils.toBean(updateReqVO, DeptDO.class);
@@ -75,7 +81,8 @@ public class DeptServiceImpl implements DeptService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为操作一个部门，涉及到多个缓存
     public void deleteDept(Long id) {
         // 校验是否存在
@@ -89,7 +96,8 @@ public class DeptServiceImpl implements DeptService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为操作一个部门，涉及到多个缓存
     public void deleteDeptList(List<Long> ids) {
         // 校验是否有子部门
@@ -211,7 +219,8 @@ public class DeptServiceImpl implements DeptService {
         DeptDO dept = getDept(id);
         // TODO DONE @AI：使用 Short.MAX_VALUE 限制父链遍历次数，并通过已访问集合提前结束脏数据环路。
         for (int i = 0; i < Short.MAX_VALUE; i++) {
-            if (dept == null || dept.getParentId() == null
+            if (dept == null
+                    || dept.getParentId() == null
                     || ObjectUtil.equal(dept.getParentId(), DeptDO.PARENT_ID_ROOT)
                     || visitedDeptIds.contains(dept.getParentId())) {
                 break;
@@ -247,15 +256,15 @@ public class DeptServiceImpl implements DeptService {
         // 获得科室信息
         Map<Long, DeptDO> deptMap = getDeptMap(ids);
         // 校验
-        ids.forEach(id -> {
-            DeptDO dept = deptMap.get(id);
-            if (dept == null) {
-                throw exception(DEPT_NOT_FOUND);
-            }
-            if (!CommonStatusEnum.ENABLE.getStatus().equals(dept.getStatus())) {
-                throw exception(DEPT_NOT_ENABLE, dept.getName());
-            }
-        });
+        ids.forEach(
+                id -> {
+                    DeptDO dept = deptMap.get(id);
+                    if (dept == null) {
+                        throw exception(DEPT_NOT_FOUND);
+                    }
+                    if (!CommonStatusEnum.ENABLE.getStatus().equals(dept.getStatus())) {
+                        throw exception(DEPT_NOT_ENABLE, dept.getName());
+                    }
+                });
     }
-
 }

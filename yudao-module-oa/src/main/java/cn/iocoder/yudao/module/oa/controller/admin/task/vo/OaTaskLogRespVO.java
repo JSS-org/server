@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.task.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,7 +25,11 @@ public class OaTaskLogRespVO {
     @Schema(description = "反馈内容", example = "已完成盘点，结果已提交")
     private String content;
 
-    @Schema(description = "反馈时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "反馈时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

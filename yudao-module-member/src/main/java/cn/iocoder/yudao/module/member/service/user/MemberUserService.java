@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.member.controller.app.user.vo.*;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -186,5 +187,4 @@ public interface MemberUserService {
      * @return 更新结果
      */
     boolean updateUserPoint(Long userId, Integer point);
-
 }

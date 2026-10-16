@@ -34,5 +34,4 @@ public interface IotMessageSerializer {
      * @return 序列化类型枚举
      */
     IotSerializeTypeEnum getType();
-
 }

@@ -1,17 +1,24 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.voucherword.FmsVoucherWordRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.voucherword.FmsVoucherWordSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherWordDO;
 import cn.iocoder.yudao.module.fms.service.config.FmsVoucherWordService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,10 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 /**
  * FMS 凭证字 Controller
  *
@@ -40,20 +43,21 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class FmsVoucherWordController {
 
-    @Resource
-    private FmsVoucherWordService voucherWordService;
+    @Resource private FmsVoucherWordService voucherWordService;
 
     @PostMapping("/create")
     @Operation(summary = "创建凭证字")
     @PreAuthorize("@ss.hasPermission('fms:config:voucher-word:create')")
-    public CommonResult<Long> createVoucherWord(@Valid @RequestBody FmsVoucherWordSaveReqVO createReqVO) {
+    public CommonResult<Long> createVoucherWord(
+            @Valid @RequestBody FmsVoucherWordSaveReqVO createReqVO) {
         return success(voucherWordService.createVoucherWord(createReqVO, getLoginUserId()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改凭证字")
     @PreAuthorize("@ss.hasPermission('fms:config:voucher-word:update')")
-    public CommonResult<Boolean> updateVoucherWord(@Valid @RequestBody FmsVoucherWordSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateVoucherWord(
+            @Valid @RequestBody FmsVoucherWordSaveReqVO updateReqVO) {
         voucherWordService.updateVoucherWord(updateReqVO, getLoginUserId());
         return success(true);
     }
@@ -75,7 +79,8 @@ public class FmsVoucherWordController {
     @PreAuthorize("@ss.hasPermission('fms:config:voucher-word:query')")
     public CommonResult<List<FmsVoucherWordRespVO>> getVoucherWordList(
             @RequestParam("accountSetId") @NotNull Long accountSetId) {
-        List<FmsVoucherWordDO> list = voucherWordService.getVoucherWordList(accountSetId, getLoginUserId());
+        List<FmsVoucherWordDO> list =
+                voucherWordService.getVoucherWordList(accountSetId, getLoginUserId());
         return success(BeanUtils.toBean(list, FmsVoucherWordRespVO.class));
     }
 
@@ -84,10 +89,13 @@ public class FmsVoucherWordController {
     @Parameter(name = "accountSetId", description = "账套编号", required = true, example = "1024")
     public CommonResult<List<FmsVoucherWordRespVO>> getVoucherWordSimpleList(
             @RequestParam("accountSetId") @NotNull Long accountSetId) {
-        return success(convertList(voucherWordService.getVoucherWordList(
-                accountSetId, getLoginUserId()), voucherWord -> new FmsVoucherWordRespVO()
-                .setId(voucherWord.getId()).setName(voucherWord.getName())
-                .setDefaultStatus(voucherWord.getDefaultStatus())));
+        return success(
+                convertList(
+                        voucherWordService.getVoucherWordList(accountSetId, getLoginUserId()),
+                        voucherWord ->
+                                new FmsVoucherWordRespVO()
+                                        .setId(voucherWord.getId())
+                                        .setName(voucherWord.getName())
+                                        .setDefaultStatus(voucherWord.getDefaultStatus())));
     }
-
 }

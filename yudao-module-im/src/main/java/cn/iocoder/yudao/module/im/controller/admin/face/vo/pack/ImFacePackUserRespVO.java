@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.face.vo.pack;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -28,19 +29,25 @@ public class ImFacePackUserRespVO {
         @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
         private Long id;
 
-        @Schema(description = "表情图 URL", requiredMode = Schema.RequiredMode.REQUIRED,
+        @Schema(
+                description = "表情图 URL",
+                requiredMode = Schema.RequiredMode.REQUIRED,
                 example = "https://cdn.example.com/face/pack/cat-001.png")
         private String url;
 
         @Schema(description = "表情名", example = "狗头")
         private String name;
 
-        @Schema(description = "渲染宽度（像素）", requiredMode = Schema.RequiredMode.REQUIRED, example = "200")
+        @Schema(
+                description = "渲染宽度（像素）",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "200")
         private Integer width;
 
-        @Schema(description = "渲染高度（像素）", requiredMode = Schema.RequiredMode.REQUIRED, example = "200")
+        @Schema(
+                description = "渲染高度（像素）",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "200")
         private Integer height;
-
     }
-
 }

@@ -1,14 +1,17 @@
 package cn.iocoder.yudao.module.report.service.goview;
 
 import cn.iocoder.yudao.module.report.controller.admin.goview.vo.data.GoViewDataRespVO;
+
 import com.google.common.collect.Maps;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Map;
@@ -26,8 +29,7 @@ import java.util.Map;
 @Validated
 public class GoViewDataServiceImpl implements GoViewDataService {
 
-    @Resource
-    private JdbcTemplate jdbcTemplate;
+    @Resource private JdbcTemplate jdbcTemplate;
 
     @Override
     public GoViewDataRespVO getDataBySQL(String sql) {
@@ -51,5 +53,4 @@ public class GoViewDataServiceImpl implements GoViewDataService {
         }
         return respVO;
     }
-
 }

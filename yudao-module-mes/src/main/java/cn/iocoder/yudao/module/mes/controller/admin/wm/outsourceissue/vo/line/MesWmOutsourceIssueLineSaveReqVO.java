@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo.line;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -38,5 +40,4 @@ public class MesWmOutsourceIssueLineSaveReqVO {
 
     @Schema(description = "批次编码", example = "BATCH001")
     private String batchCode;
-
 }

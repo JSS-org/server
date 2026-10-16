@@ -1,9 +1,16 @@
 package cn.iocoder.yudao.module.oa.service.contact;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.contact.vo.OaContactPageReqVO;
@@ -13,22 +20,17 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.contact.OaContactShareDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.contact.OaContactMapper;
 import cn.iocoder.yudao.module.oa.dal.mysql.contact.OaContactShareMapper;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_NOT_EXISTS;
 
 /**
  * OA 外部联系人 Service 实现类
@@ -39,17 +41,13 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_NOT_EX
 @Validated
 public class OaContactServiceImpl implements OaContactService {
 
-    @Resource
-    private OaContactMapper contactMapper;
-    @Resource
-    private OaContactShareMapper contactShareMapper;
+    @Resource private OaContactMapper contactMapper;
+    @Resource private OaContactShareMapper contactShareMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaContactCategoryService contactCategoryService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -60,15 +58,20 @@ public class OaContactServiceImpl implements OaContactService {
         }
 
         // 2. 新增联系人
-        OaContactDO contact = BeanUtils.toBean(createReqVO, OaContactDO.class)
-                .setPinyin(StrUtils.toPinyin(createReqVO.getName()));
+        OaContactDO contact =
+                BeanUtils.toBean(createReqVO, OaContactDO.class)
+                        .setPinyin(StrUtils.toPinyin(createReqVO.getName()));
         contactMapper.insert(contact);
 
         // 3. 创建人也保存持有关系
         // 特殊：创建人和接收人均通过关联持有联系人，删除时只移除本人关联，最后一人移除后才删除正文。
         //      因此创建时也需保存本人关联，并标记为已处理，使其直接进入“我的联系人”。
-        contactShareMapper.insert(new OaContactShareDO().setContactId(contact.getId()).setUserId(userId)
-                .setCategoryId(createReqVO.getCategoryId()).setHandleStatus(true));
+        contactShareMapper.insert(
+                new OaContactShareDO()
+                        .setContactId(contact.getId())
+                        .setUserId(userId)
+                        .setCategoryId(createReqVO.getCategoryId())
+                        .setHandleStatus(true));
         return contact.getId();
     }
 
@@ -83,13 +86,17 @@ public class OaContactServiceImpl implements OaContactService {
         }
 
         // 2. 更新联系人
-        contactMapper.updateForSave(BeanUtils.toBean(updateReqVO, OaContactDO.class)
-                .setPinyin(StrUtils.toPinyin(updateReqVO.getName())));
+        contactMapper.updateForSave(
+                BeanUtils.toBean(updateReqVO, OaContactDO.class)
+                        .setPinyin(StrUtils.toPinyin(updateReqVO.getName())));
 
         // 3. 同步本人关联的分类
-        OaContactShareDO share = contactShareMapper.selectByContactIdAndUserId(updateReqVO.getId(), userId);
-        contactShareMapper.updateHandleStatusAndCategoryIdById(new OaContactShareDO().setId(share.getId())
-                .setCategoryId(updateReqVO.getCategoryId()));
+        OaContactShareDO share =
+                contactShareMapper.selectByContactIdAndUserId(updateReqVO.getId(), userId);
+        contactShareMapper.updateHandleStatusAndCategoryIdById(
+                new OaContactShareDO()
+                        .setId(share.getId())
+                        .setCategoryId(updateReqVO.getCategoryId()));
     }
 
     @Override
@@ -108,7 +115,8 @@ public class OaContactServiceImpl implements OaContactService {
         // 1.1 校验联系人存在
         validateContactExists(contactId);
         // 1.2 校验当前用户接收了该联系人
-        OaContactShareDO contactShare = contactShareMapper.selectByContactIdAndUserId(contactId, userId);
+        OaContactShareDO contactShare =
+                contactShareMapper.selectByContactIdAndUserId(contactId, userId);
         if (contactShare == null) {
             throw exception(CONTACT_ACCESS_DENIED);
         }
@@ -137,20 +145,29 @@ public class OaContactServiceImpl implements OaContactService {
     @Override
     public PageResult<OaContactDO> getMyContactPage(OaContactPageReqVO pageReqVO, Long userId) {
         // 1. 查询本人已处理且符合本人分类的共享关系
-        List<OaContactShareDO> shares = contactShareMapper.selectListByUserId(userId, true,
-                pageReqVO.getCategoryId());
+        List<OaContactShareDO> shares =
+                contactShareMapper.selectListByUserId(userId, true, pageReqVO.getCategoryId());
         List<Long> contactIds = convertList(shares, OaContactShareDO::getContactId);
         // 2. 查询本人创建及已处理接收的联系人
-        return CollUtil.isEmpty(contactIds) ? PageResult.empty() : contactMapper.selectReceivedPage(pageReqVO, contactIds);
+        return CollUtil.isEmpty(contactIds)
+                ? PageResult.empty()
+                : contactMapper.selectReceivedPage(pageReqVO, contactIds);
     }
 
     @Override
-    public PageResult<OaContactDO> getReceivedContactPage(OaContactPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaContactDO> getReceivedContactPage(
+            OaContactPageReqVO pageReqVO, Long userId) {
         // 1. 按接收人的分类和处理状态查询共享关系
-        List<OaContactShareDO> shares = contactShareMapper.selectListByUserId(userId,
-                pageReqVO.getHandleStatus(), pageReqVO.getCategoryId());
+        List<OaContactShareDO> shares =
+                contactShareMapper.selectListByUserId(
+                        userId, pageReqVO.getHandleStatus(), pageReqVO.getCategoryId());
         // 创建人初始化的本人关联不是收到的共享
-        shares = filterList(shares, share -> ObjectUtil.notEqual(NumberUtils.parseLong(share.getCreator()), userId));
+        shares =
+                filterList(
+                        shares,
+                        share ->
+                                ObjectUtil.notEqual(
+                                        NumberUtils.parseLong(share.getCreator()), userId));
         if (CollUtil.isEmpty(shares)) {
             return PageResult.empty();
         }
@@ -160,10 +177,14 @@ public class OaContactServiceImpl implements OaContactService {
     }
 
     @Override
-    public PageResult<OaContactShareDO> getSharedContactPage(OaContactPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaContactShareDO> getSharedContactPage(
+            OaContactPageReqVO pageReqVO, Long userId) {
         // 1. 查询本人仍持有且符合本人分类的联系人
-        List<Long> contactIds = convertList(contactShareMapper.selectListByUserId(userId, null,
-                pageReqVO.getCategoryId()), OaContactShareDO::getContactId);
+        List<Long> contactIds =
+                convertList(
+                        contactShareMapper.selectListByUserId(
+                                userId, null, pageReqVO.getCategoryId()),
+                        OaContactShareDO::getContactId);
         if (CollUtil.isEmpty(contactIds)) {
             return PageResult.empty();
         }
@@ -187,22 +208,33 @@ public class OaContactServiceImpl implements OaContactService {
         // 1.3 查询已有共享接收人
         List<OaContactShareDO> shares = contactShareMapper.selectListByContactId(contactId);
         List<Long> sharedUserIds = convertList(shares, OaContactShareDO::getUserId);
-        List<Long> createUserIds = filterList(convertSet(userIds, userId -> userId),
-                userId -> ObjectUtil.notEqual(userId, currentUserId) && !sharedUserIds.contains(userId));
+        List<Long> createUserIds =
+                filterList(
+                        convertSet(userIds, userId -> userId),
+                        userId ->
+                                ObjectUtil.notEqual(userId, currentUserId)
+                                        && !sharedUserIds.contains(userId));
         if (CollUtil.isEmpty(createUserIds)) {
             return;
         }
 
         // 2. 新增尚未共享的接收人
-        contactShareMapper.insertBatch(convertList(createUserIds, userId -> new OaContactShareDO()
-                .setContactId(contactId).setUserId(userId).setHandleStatus(false)));
+        contactShareMapper.insertBatch(
+                convertList(
+                        createUserIds,
+                        userId ->
+                                new OaContactShareDO()
+                                        .setContactId(contactId)
+                                        .setUserId(userId)
+                                        .setHandleStatus(false)));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleContactShare(Long contactId, Long categoryId, Long userId) {
         // 1.1 校验共享关系存在
-        OaContactShareDO contactShare = contactShareMapper.selectByContactIdAndUserId(contactId, userId);
+        OaContactShareDO contactShare =
+                contactShareMapper.selectByContactIdAndUserId(contactId, userId);
         if (contactShare == null) {
             throw exception(CONTACT_ACCESS_DENIED);
         }
@@ -217,8 +249,11 @@ public class OaContactServiceImpl implements OaContactService {
         }
 
         // 2. 更新处理状态和接收人分类
-        OaContactShareDO updateObj = new OaContactShareDO().setId(contactShare.getId())
-                .setHandleStatus(true).setCategoryId(categoryId);
+        OaContactShareDO updateObj =
+                new OaContactShareDO()
+                        .setId(contactShare.getId())
+                        .setHandleStatus(true)
+                        .setCategoryId(categoryId);
         contactShareMapper.updateHandleStatusAndCategoryIdById(updateObj);
     }
 
@@ -267,5 +302,4 @@ public class OaContactServiceImpl implements OaContactService {
         }
         return contact;
     }
-
 }

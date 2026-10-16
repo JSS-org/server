@@ -40,8 +40,8 @@ public interface PmsKnowledgeFavoriteService {
      * @param userId 用户编号
      * @return 关注分页结果
      */
-    PageResult<PmsKnowledgeInteractionItemRespVO> getFavoritePage(PmsKnowledgeFavoritePageReqVO pageReqVO,
-                                                                 Long userId);
+    PageResult<PmsKnowledgeInteractionItemRespVO> getFavoritePage(
+            PmsKnowledgeFavoritePageReqVO pageReqVO, Long userId);
 
     /**
      * 获得指定知识库内当前用户的关注列表
@@ -94,7 +94,6 @@ public interface PmsKnowledgeFavoriteService {
      * @param documentIds 文档编号集合
      * @param libraryId 目标知识库编号
      */
-    void updateFavoriteLibraryIdByEntityIds(Collection<Long> folderIds, Collection<Long> documentIds,
-                                            Long libraryId);
-
+    void updateFavoriteLibraryIdByEntityIds(
+            Collection<Long> folderIds, Collection<Long> documentIds, Long libraryId);
 }

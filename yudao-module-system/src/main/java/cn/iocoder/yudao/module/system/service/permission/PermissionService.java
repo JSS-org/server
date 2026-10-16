@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import static java.util.Collections.singleton;
+
 import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
 
 import java.util.Collection;
 import java.util.Set;
-
-import static java.util.Collections.singleton;
 
 /**
  * 权限 Service 接口
@@ -142,5 +142,4 @@ public interface PermissionService {
      * @return 部门数据权限
      */
     DeptDataPermissionRespDTO getDeptDataPermission(Long userId);
-
 }

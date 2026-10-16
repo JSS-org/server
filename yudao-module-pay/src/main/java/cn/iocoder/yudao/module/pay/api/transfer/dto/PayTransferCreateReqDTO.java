@@ -4,9 +4,11 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -38,6 +40,7 @@ public class PayTransferCreateReqDTO {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -72,6 +75,7 @@ public class PayTransferCreateReqDTO {
      */
     @NotEmpty(message = "收款人账号不能为空")
     private String userAccount;
+
     /**
      * 收款人姓名
      */
@@ -95,10 +99,9 @@ public class PayTransferCreateReqDTO {
      * @param rewardDescription 奖励说明
      * @return channelExtras
      */
-    public static Map<String, String> buildWeiXinChannelExtra1000(String activityName, String rewardDescription) {
-        return buildWeiXinChannelExtra(1000,
-                "活动名称", activityName,
-                "奖励说明", rewardDescription);
+    public static Map<String, String> buildWeiXinChannelExtra1000(
+            String activityName, String rewardDescription) {
+        return buildWeiXinChannelExtra(1000, "活动名称", activityName, "奖励说明", rewardDescription);
     }
 
     /**
@@ -108,10 +111,9 @@ public class PayTransferCreateReqDTO {
      * @param expenseDescription 报销说明
      * @return channelExtras
      */
-    public static Map<String, String> buildWeiXinChannelExtra1006(String expenseType, String expenseDescription) {
-        return buildWeiXinChannelExtra(1006,
-                "报销类型", expenseType,
-                "报销说明", expenseDescription);
+    public static Map<String, String> buildWeiXinChannelExtra1006(
+            String expenseType, String expenseDescription) {
+        return buildWeiXinChannelExtra(1006, "报销类型", expenseType, "报销说明", expenseDescription);
     }
 
     private static Map<String, String> buildWeiXinChannelExtra(Integer sceneId, String... values) {
@@ -143,5 +145,4 @@ public class PayTransferCreateReqDTO {
         channelExtras.put("sceneName", sceneName);
         return channelExtras;
     }
-
 }

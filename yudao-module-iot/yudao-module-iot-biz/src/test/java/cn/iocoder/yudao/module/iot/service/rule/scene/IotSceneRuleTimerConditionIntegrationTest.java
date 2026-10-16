@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -15,11 +19,12 @@ import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionTypeEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
+import cn.iocoder.yudao.module.iot.service.product.IotProductService;
 import cn.iocoder.yudao.module.iot.service.rule.scene.action.IotSceneRuleAction;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherManager;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotSceneRuleTimerHandler;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotTimerConditionEvaluator;
-import cn.iocoder.yudao.module.iot.service.product.IotProductService;
+
 import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -29,10 +34,6 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.lang.reflect.Field;
 import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotSceneRuleServiceImpl} 定时触发器条件组集成测试
@@ -62,32 +63,23 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         public SpringUtil springUtil() {
             return new SpringUtil();
         }
-
     }
 
-    @InjectMocks
-    private IotSceneRuleServiceImpl sceneRuleService;
+    @InjectMocks private IotSceneRuleServiceImpl sceneRuleService;
 
-    @Mock
-    private IotSceneRuleMapper sceneRuleMapper;
+    @Mock private IotSceneRuleMapper sceneRuleMapper;
 
-    @Mock
-    private IotDeviceService deviceService;
+    @Mock private IotDeviceService deviceService;
 
-    @Mock
-    private IotDevicePropertyService devicePropertyService;
+    @Mock private IotDevicePropertyService devicePropertyService;
 
-    @Mock
-    private List<IotSceneRuleAction> sceneRuleActions;
+    @Mock private List<IotSceneRuleAction> sceneRuleActions;
 
-    @Mock
-    private IotSceneRuleTimerHandler timerHandler;
+    @Mock private IotSceneRuleTimerHandler timerHandler;
 
-    @Mock
-    private IotSceneRuleMatcherManager sceneRuleMatcherManager;
+    @Mock private IotSceneRuleMatcherManager sceneRuleMatcherManager;
 
-    @Mock
-    private IotProductService productService;
+    @Mock private IotProductService productService;
 
     private IotTimerConditionEvaluator timerConditionEvaluator;
 
@@ -102,15 +94,18 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         // 创建并注入 timerConditionEvaluator 的依赖
         timerConditionEvaluator = new IotTimerConditionEvaluator();
         try {
-            Field devicePropertyServiceField = IotTimerConditionEvaluator.class.getDeclaredField("devicePropertyService");
+            Field devicePropertyServiceField =
+                    IotTimerConditionEvaluator.class.getDeclaredField("devicePropertyService");
             devicePropertyServiceField.setAccessible(true);
             devicePropertyServiceField.set(timerConditionEvaluator, devicePropertyService);
 
-            Field deviceServiceField = IotTimerConditionEvaluator.class.getDeclaredField("deviceService");
+            Field deviceServiceField =
+                    IotTimerConditionEvaluator.class.getDeclaredField("deviceService");
             deviceServiceField.setAccessible(true);
             deviceServiceField.set(timerConditionEvaluator, deviceService);
 
-            Field evaluatorField = IotSceneRuleServiceImpl.class.getDeclaredField("timerConditionEvaluator");
+            Field evaluatorField =
+                    IotSceneRuleServiceImpl.class.getDeclaredField("timerConditionEvaluator");
             evaluatorField.setAccessible(true);
             evaluatorField.set(sceneRuleService, timerConditionEvaluator);
         } catch (Exception e) {
@@ -130,8 +125,8 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         return sceneRule;
     }
 
-    private IotSceneRuleDO.Trigger createTimerTrigger(String cronExpression,
-                                                      List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups) {
+    private IotSceneRuleDO.Trigger createTimerTrigger(
+            String cronExpression, List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups) {
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.TIMER.getType());
         trigger.setCronExpression(cronExpression);
@@ -139,8 +134,8 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         return trigger;
     }
 
-    private IotSceneRuleDO.TriggerCondition createDevicePropertyCondition(Long deviceId, String identifier,
-                                                                          String operator, String param) {
+    private IotSceneRuleDO.TriggerCondition createDevicePropertyCondition(
+            Long deviceId, String identifier, String operator, String param) {
         IotSceneRuleDO.TriggerCondition condition = new IotSceneRuleDO.TriggerCondition();
         condition.setType(IotSceneRuleConditionTypeEnum.DEVICE_PROPERTY.getType());
         condition.setDeviceId(deviceId);
@@ -150,7 +145,8 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         return condition;
     }
 
-    private IotSceneRuleDO.TriggerCondition createDeviceStateCondition(Long deviceId, String operator, String param) {
+    private IotSceneRuleDO.TriggerCondition createDeviceStateCondition(
+            Long deviceId, String operator, String param) {
         IotSceneRuleDO.TriggerCondition condition = new IotSceneRuleDO.TriggerCondition();
         condition.setType(IotSceneRuleConditionTypeEnum.DEVICE_STATE.getType());
         condition.setDeviceId(deviceId);
@@ -165,7 +161,9 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         property.setValue(value);
         properties.put(identifier, property);
         // 使用 lenient：当首个条件组就匹配时，后续条件组的设备属性查询会被跳过，此 stubbing 可能未被使用
-        lenient().when(devicePropertyService.getLatestDeviceProperties(deviceId)).thenReturn(properties);
+        lenient()
+                .when(devicePropertyService.getLatestDeviceProperties(deviceId))
+                .thenReturn(properties);
     }
 
     private void mockDeviceState(Long deviceId, Integer state) {
@@ -240,7 +238,8 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @DisplayName("定时触发器条件组为空列表时，应直接执行动作")
         void testTimerTrigger_withEmptyConditionGroups_shouldExecuteActions() {
             IotSceneRuleDO sceneRule = createBaseSceneRule();
-            IotSceneRuleDO.Trigger trigger = createTimerTrigger("0 0 12 * * ?", Collections.emptyList());
+            IotSceneRuleDO.Trigger trigger =
+                    createTimerTrigger("0 0 12 * * ?", Collections.emptyList());
             sceneRule.setTriggers(ListUtil.toList(trigger));
 
             when(sceneRuleMapper.selectById(SCENE_RULE_ID)).thenReturn(sceneRule);
@@ -259,10 +258,18 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("多个条件组中第一个满足时，应执行动作")
         void testMultipleConditionGroups_firstGroupMatches_shouldExecuteActions() {
-            IotSceneRuleDO.TriggerCondition condition1 = createDevicePropertyCondition(
-                    DEVICE_ID, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "20");
-            IotSceneRuleDO.TriggerCondition condition2 = createDevicePropertyCondition(
-                    DEVICE_ID + 1, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "50");
+            IotSceneRuleDO.TriggerCondition condition1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "20");
+            IotSceneRuleDO.TriggerCondition condition2 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID + 1,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "50");
 
             List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
                     createTwoSingleConditionGroups(condition1, condition2);
@@ -283,10 +290,18 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("多个条件组中第二个满足时，应执行动作")
         void testMultipleConditionGroups_secondGroupMatches_shouldExecuteActions() {
-            IotSceneRuleDO.TriggerCondition condition1 = createDevicePropertyCondition(
-                    DEVICE_ID, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "50");
-            IotSceneRuleDO.TriggerCondition condition2 = createDevicePropertyCondition(
-                    DEVICE_ID + 1, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "20");
+            IotSceneRuleDO.TriggerCondition condition1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "50");
+            IotSceneRuleDO.TriggerCondition condition2 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID + 1,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "20");
 
             List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
                     createTwoSingleConditionGroups(condition1, condition2);
@@ -313,10 +328,18 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("条件组内所有条件都满足时，该组应匹配成功")
         void testSingleConditionGroup_allConditionsMatch_shouldPass() {
-            IotSceneRuleDO.TriggerCondition condition1 = createDevicePropertyCondition(
-                    DEVICE_ID, "temperature", IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "20");
-            IotSceneRuleDO.TriggerCondition condition2 = createDevicePropertyCondition(
-                    DEVICE_ID, "humidity", IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(), "80");
+            IotSceneRuleDO.TriggerCondition condition1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "temperature",
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "20");
+            IotSceneRuleDO.TriggerCondition condition2 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "humidity",
+                            IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(),
+                            "80");
 
             List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
                     createSingleGroupWithMultipleConditions(condition1, condition2);
@@ -343,10 +366,18 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("条件组内有一个条件不满足时，该组应匹配失败")
         void testSingleConditionGroup_oneConditionFails_shouldFail() {
-            IotSceneRuleDO.TriggerCondition condition1 = createDevicePropertyCondition(
-                    DEVICE_ID, "temperature", IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "20");
-            IotSceneRuleDO.TriggerCondition condition2 = createDevicePropertyCondition(
-                    DEVICE_ID, "humidity", IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(), "50");
+            IotSceneRuleDO.TriggerCondition condition1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "temperature",
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "20");
+            IotSceneRuleDO.TriggerCondition condition2 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "humidity",
+                            IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(),
+                            "50");
 
             List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
                     createSingleGroupWithMultipleConditions(condition1, condition2);
@@ -378,10 +409,18 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("所有条件组都不满足时，应跳过动作执行")
         void testAllConditionGroups_allFail_shouldSkipExecution() {
-            IotSceneRuleDO.TriggerCondition condition1 = createDevicePropertyCondition(
-                    DEVICE_ID, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "50");
-            IotSceneRuleDO.TriggerCondition condition2 = createDevicePropertyCondition(
-                    DEVICE_ID + 1, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "50");
+            IotSceneRuleDO.TriggerCondition condition1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "50");
+            IotSceneRuleDO.TriggerCondition condition2 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID + 1,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "50");
 
             List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
                     createTwoSingleConditionGroups(condition1, condition2);
@@ -408,11 +447,14 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("设备在线状态条件满足时，应匹配成功")
         void testDeviceStateCondition_online_shouldMatch() {
-            IotSceneRuleDO.TriggerCondition condition = createDeviceStateCondition(
-                    DEVICE_ID, IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                    String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
+            IotSceneRuleDO.TriggerCondition condition =
+                    createDeviceStateCondition(
+                            DEVICE_ID,
+                            IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                            String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
 
-            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups = createSingleConditionGroups(condition);
+            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
+                    createSingleConditionGroups(condition);
 
             IotSceneRuleDO sceneRule = createBaseSceneRule();
             IotSceneRuleDO.Trigger trigger = createTimerTrigger("0 0 12 * * ?", conditionGroups);
@@ -429,11 +471,14 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("设备不存在时，条件应不匹配")
         void testDeviceStateCondition_deviceNotExists_shouldNotMatch() {
-            IotSceneRuleDO.TriggerCondition condition = createDeviceStateCondition(
-                    DEVICE_ID, IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                    String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
+            IotSceneRuleDO.TriggerCondition condition =
+                    createDeviceStateCondition(
+                            DEVICE_ID,
+                            IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                            String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
 
-            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups = createSingleConditionGroups(condition);
+            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
+                    createSingleConditionGroups(condition);
 
             IotSceneRuleDO sceneRule = createBaseSceneRule();
             IotSceneRuleDO.Trigger trigger = createTimerTrigger("0 0 12 * * ?", conditionGroups);
@@ -455,10 +500,15 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("设备属性条件满足时，应匹配成功")
         void testDevicePropertyCondition_match_shouldPass() {
-            IotSceneRuleDO.TriggerCondition condition = createDevicePropertyCondition(
-                    DEVICE_ID, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "25");
+            IotSceneRuleDO.TriggerCondition condition =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "25");
 
-            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups = createSingleConditionGroups(condition);
+            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
+                    createSingleConditionGroups(condition);
 
             IotSceneRuleDO sceneRule = createBaseSceneRule();
             IotSceneRuleDO.Trigger trigger = createTimerTrigger("0 0 12 * * ?", conditionGroups);
@@ -475,16 +525,22 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("设备属性不存在时，条件应不匹配")
         void testDevicePropertyCondition_propertyNotExists_shouldNotMatch() {
-            IotSceneRuleDO.TriggerCondition condition = createDevicePropertyCondition(
-                    DEVICE_ID, "nonexistent", IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "25");
+            IotSceneRuleDO.TriggerCondition condition =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "nonexistent",
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "25");
 
-            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups = createSingleConditionGroups(condition);
+            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
+                    createSingleConditionGroups(condition);
 
             IotSceneRuleDO sceneRule = createBaseSceneRule();
             IotSceneRuleDO.Trigger trigger = createTimerTrigger("0 0 12 * * ?", conditionGroups);
             sceneRule.setTriggers(ListUtil.toList(trigger));
 
-            when(devicePropertyService.getLatestDeviceProperties(DEVICE_ID)).thenReturn(Collections.emptyMap());
+            when(devicePropertyService.getLatestDeviceProperties(DEVICE_ID))
+                    .thenReturn(Collections.emptyMap());
             when(sceneRuleMapper.selectById(SCENE_RULE_ID)).thenReturn(sceneRule);
 
             assertDoesNotThrow(() -> sceneRuleService.executeSceneRuleByTimer(SCENE_RULE_ID));
@@ -495,10 +551,15 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("设备属性等于条件测试")
         void testDevicePropertyCondition_equals_shouldMatch() {
-            IotSceneRuleDO.TriggerCondition condition = createDevicePropertyCondition(
-                    DEVICE_ID, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(), "30");
+            IotSceneRuleDO.TriggerCondition condition =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                            "30");
 
-            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups = createSingleConditionGroups(condition);
+            List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
+                    createSingleConditionGroups(condition);
 
             IotSceneRuleDO sceneRule = createBaseSceneRule();
             IotSceneRuleDO.Trigger trigger = createTimerTrigger("0 0 12 * * ?", conditionGroups);
@@ -563,11 +624,17 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         @Test
         @DisplayName("混合条件类型测试：设备属性 + 设备状态")
         void testMixedConditionTypes_propertyAndState() {
-            IotSceneRuleDO.TriggerCondition propertyCondition = createDevicePropertyCondition(
-                    DEVICE_ID, PROPERTY_IDENTIFIER, IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "20");
-            IotSceneRuleDO.TriggerCondition stateCondition = createDeviceStateCondition(
-                    DEVICE_ID, IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                    String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
+            IotSceneRuleDO.TriggerCondition propertyCondition =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            PROPERTY_IDENTIFIER,
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "20");
+            IotSceneRuleDO.TriggerCondition stateCondition =
+                    createDeviceStateCondition(
+                            DEVICE_ID,
+                            IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                            String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
 
             List<List<IotSceneRuleDO.TriggerCondition>> conditionGroups =
                     createSingleGroupWithMultipleConditions(propertyCondition, stateCondition);
@@ -591,16 +658,30 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
         void testComplexOrAndLogic() {
             // 条件组1：温度 > 30 AND 湿度 < 50（不满足）
             // 条件组2：温度 > 20 AND 设备在线（满足）
-            IotSceneRuleDO.TriggerCondition group1Cond1 = createDevicePropertyCondition(
-                    DEVICE_ID, "temperature", IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "30");
-            IotSceneRuleDO.TriggerCondition group1Cond2 = createDevicePropertyCondition(
-                    DEVICE_ID, "humidity", IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(), "50");
+            IotSceneRuleDO.TriggerCondition group1Cond1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "temperature",
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "30");
+            IotSceneRuleDO.TriggerCondition group1Cond2 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "humidity",
+                            IotSceneRuleConditionOperatorEnum.LESS_THAN.getOperator(),
+                            "50");
 
-            IotSceneRuleDO.TriggerCondition group2Cond1 = createDevicePropertyCondition(
-                    DEVICE_ID, "temperature", IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(), "20");
-            IotSceneRuleDO.TriggerCondition group2Cond2 = createDeviceStateCondition(
-                    DEVICE_ID, IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
-                    String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
+            IotSceneRuleDO.TriggerCondition group2Cond1 =
+                    createDevicePropertyCondition(
+                            DEVICE_ID,
+                            "temperature",
+                            IotSceneRuleConditionOperatorEnum.GREATER_THAN.getOperator(),
+                            "20");
+            IotSceneRuleDO.TriggerCondition group2Cond2 =
+                    createDeviceStateCondition(
+                            DEVICE_ID,
+                            IotSceneRuleConditionOperatorEnum.EQUALS.getOperator(),
+                            String.valueOf(IotDeviceStateEnum.ONLINE.getState()));
 
             // 创建两个条件组
             List<IotSceneRuleDO.TriggerCondition> group1 = new ArrayList<>();
@@ -634,5 +715,4 @@ public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTe
             verify(devicePropertyService, atLeastOnce()).getLatestDeviceProperties(DEVICE_ID);
         }
     }
-
 }

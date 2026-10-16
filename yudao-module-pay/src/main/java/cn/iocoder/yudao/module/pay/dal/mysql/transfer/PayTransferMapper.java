@@ -5,8 +5,10 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.pay.controller.admin.transfer.vo.PayTransferPageReqVO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.transfer.PayTransferDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -16,15 +18,19 @@ import java.util.List;
 public interface PayTransferMapper extends BaseMapperX<PayTransferDO> {
 
     default int updateByIdAndStatus(Long id, List<Integer> whereStatuses, PayTransferDO updateObj) {
-        return update(updateObj, new LambdaQueryWrapper<PayTransferDO>()
-                .eq(PayTransferDO::getId, id)
-                .in(PayTransferDO::getStatus, whereStatuses));
+        return update(
+                updateObj,
+                new LambdaQueryWrapper<PayTransferDO>()
+                        .eq(PayTransferDO::getId, id)
+                        .in(PayTransferDO::getStatus, whereStatuses));
     }
 
     default int updateByIdAndStatus(Long id, Integer whereStatus, PayTransferDO updateObj) {
-        return update(updateObj, new LambdaQueryWrapper<PayTransferDO>()
-                .eq(PayTransferDO::getId, id)
-                .eq(PayTransferDO::getStatus, whereStatus));
+        return update(
+                updateObj,
+                new LambdaQueryWrapper<PayTransferDO>()
+                        .eq(PayTransferDO::getId, id)
+                        .eq(PayTransferDO::getStatus, whereStatus));
     }
 
     /**
@@ -38,42 +44,63 @@ public interface PayTransferMapper extends BaseMapperX<PayTransferDO> {
      * @param updateObj 更新对象
      * @return 更新数量
      */
-    default int updateByIdAndStatusAndClearChannelResult(Long id, Integer whereStatus, PayTransferDO updateObj) {
-        return update(updateObj, new LambdaUpdateWrapper<PayTransferDO>()
-                .eq(PayTransferDO::getId, id).eq(PayTransferDO::getStatus, whereStatus)
-                .set(PayTransferDO::getChannelTransferNo, null).set(PayTransferDO::getSuccessTime, null)
-                .set(PayTransferDO::getChannelErrorCode, null).set(PayTransferDO::getChannelErrorMsg, null)
-                .set(PayTransferDO::getChannelNotifyData, null).set(PayTransferDO::getChannelPackageInfo, null)
-                .set(updateObj.getUserName() == null, PayTransferDO::getUserName, null)
-                .set(updateObj.getChannelExtras() == null, PayTransferDO::getChannelExtras, null)
-                .set(updateObj.getNotifyUrl() == null, PayTransferDO::getNotifyUrl, null));
+    default int updateByIdAndStatusAndClearChannelResult(
+            Long id, Integer whereStatus, PayTransferDO updateObj) {
+        return update(
+                updateObj,
+                new LambdaUpdateWrapper<PayTransferDO>()
+                        .eq(PayTransferDO::getId, id)
+                        .eq(PayTransferDO::getStatus, whereStatus)
+                        .set(PayTransferDO::getChannelTransferNo, null)
+                        .set(PayTransferDO::getSuccessTime, null)
+                        .set(PayTransferDO::getChannelErrorCode, null)
+                        .set(PayTransferDO::getChannelErrorMsg, null)
+                        .set(PayTransferDO::getChannelNotifyData, null)
+                        .set(PayTransferDO::getChannelPackageInfo, null)
+                        .set(updateObj.getUserName() == null, PayTransferDO::getUserName, null)
+                        .set(
+                                updateObj.getChannelExtras() == null,
+                                PayTransferDO::getChannelExtras,
+                                null)
+                        .set(updateObj.getNotifyUrl() == null, PayTransferDO::getNotifyUrl, null));
     }
 
     default int updateChannelPackageInfoIfAbsent(Long id, String channelPackageInfo) {
-        return update(new PayTransferDO().setChannelPackageInfo(channelPackageInfo),
+        return update(
+                new PayTransferDO().setChannelPackageInfo(channelPackageInfo),
                 new LambdaQueryWrapper<PayTransferDO>()
                         .eq(PayTransferDO::getId, id)
-                        .and(wrapper -> wrapper.isNull(PayTransferDO::getChannelPackageInfo)
-                                .or().eq(PayTransferDO::getChannelPackageInfo, "")));
+                        .and(
+                                wrapper ->
+                                        wrapper.isNull(PayTransferDO::getChannelPackageInfo)
+                                                .or()
+                                                .eq(PayTransferDO::getChannelPackageInfo, "")));
     }
 
     default PayTransferDO selectByAppIdAndMerchantOrderId(Long appId, String merchantOrderId) {
-        return selectOne(PayTransferDO::getAppId, appId,
-                    PayTransferDO::getMerchantTransferId, merchantOrderId);
+        return selectOne(
+                PayTransferDO::getAppId,
+                appId,
+                PayTransferDO::getMerchantTransferId,
+                merchantOrderId);
     }
 
     default PageResult<PayTransferDO> selectPage(PayTransferPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<PayTransferDO>()
-                .eqIfPresent(PayTransferDO::getNo, reqVO.getNo())
-                .eqIfPresent(PayTransferDO::getAppId, reqVO.getAppId())
-                .eqIfPresent(PayTransferDO::getChannelCode, reqVO.getChannelCode())
-                .eqIfPresent(PayTransferDO::getMerchantTransferId, reqVO.getMerchantOrderId())
-                .eqIfPresent(PayTransferDO::getStatus, reqVO.getStatus())
-                .likeIfPresent(PayTransferDO::getUserName, reqVO.getUserName())
-                .likeIfPresent(PayTransferDO::getUserAccount, reqVO.getUserAccount())
-                .eqIfPresent(PayTransferDO::getChannelTransferNo, reqVO.getChannelTransferNo())
-                .betweenIfPresent(PayTransferDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(PayTransferDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<PayTransferDO>()
+                        .eqIfPresent(PayTransferDO::getNo, reqVO.getNo())
+                        .eqIfPresent(PayTransferDO::getAppId, reqVO.getAppId())
+                        .eqIfPresent(PayTransferDO::getChannelCode, reqVO.getChannelCode())
+                        .eqIfPresent(
+                                PayTransferDO::getMerchantTransferId, reqVO.getMerchantOrderId())
+                        .eqIfPresent(PayTransferDO::getStatus, reqVO.getStatus())
+                        .likeIfPresent(PayTransferDO::getUserName, reqVO.getUserName())
+                        .likeIfPresent(PayTransferDO::getUserAccount, reqVO.getUserAccount())
+                        .eqIfPresent(
+                                PayTransferDO::getChannelTransferNo, reqVO.getChannelTransferNo())
+                        .betweenIfPresent(PayTransferDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(PayTransferDO::getId));
     }
 
     default List<PayTransferDO> selectListByStatus(Collection<Integer> statuses) {
@@ -81,12 +108,10 @@ public interface PayTransferMapper extends BaseMapperX<PayTransferDO> {
     }
 
     default PayTransferDO selectByAppIdAndNo(Long appId, String no) {
-        return selectOne(PayTransferDO::getAppId, appId,
-                PayTransferDO::getNo, no);
+        return selectOne(PayTransferDO::getAppId, appId, PayTransferDO::getNo, no);
     }
 
     default PayTransferDO selectByNo(String no) {
         return selectOne(PayTransferDO::getNo, no);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.desensitize.core.regex.annotation;
 
 import cn.iocoder.yudao.framework.desensitize.core.base.annotation.DesensitizeBy;
 import cn.iocoder.yudao.framework.desensitize.core.regex.handler.EmailDesensitizationHandler;
+
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
 
 import java.lang.annotation.Documented;
@@ -40,5 +41,4 @@ public @interface EmailDesensitize {
      * 支持 Spring EL 表达式，如果返回 true 则跳过脱敏
      */
     String disable() default "";
-
 }

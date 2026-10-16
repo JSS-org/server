@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.system.controller.admin.permission.vo.menu;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 菜单创建/修改 Request VO")
 @Data
@@ -23,7 +24,10 @@ public class MenuSaveVO {
     @Size(max = 100)
     private String permission;
 
-    @Schema(description = "类型，参见 MenuTypeEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "类型，参见 MenuTypeEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "菜单类型不能为空")
     private Integer type;
 
@@ -49,7 +53,10 @@ public class MenuSaveVO {
     @Schema(description = "组件名", example = "SystemUser")
     private String componentName;
 
-    @Schema(description = "状态,见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态,见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "状态不能为空")
     private Integer status;
 
@@ -61,5 +68,4 @@ public class MenuSaveVO {
 
     @Schema(description = "是否总是显示", example = "false")
     private Boolean alwaysShow;
-
 }

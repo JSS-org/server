@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.delivery.vo.express;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户 App - 快递公司 Response VO")
@@ -12,5 +13,4 @@ public class AppDeliveryExpressRespVO {
 
     @Schema(description = "门店名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "顺丰")
     private String name;
-
 }

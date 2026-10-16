@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.arrivalnotice;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,8 +14,11 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalN
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalNoticeLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.arrivalnotice.MesWmArrivalNoticeMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmArrivalNoticeStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -22,9 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 到货通知单 Service 实现类
  */
@@ -33,11 +36,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService {
 
-    @Resource
-    private MesWmArrivalNoticeMapper arrivalNoticeMapper;
+    @Resource private MesWmArrivalNoticeMapper arrivalNoticeMapper;
 
-    @Resource
-    private MesWmArrivalNoticeLineService arrivalNoticeLineService;
+    @Resource private MesWmArrivalNoticeLineService arrivalNoticeLineService;
+
     @Resource
     private cn.iocoder.yudao.module.mes.service.md.vendor.MesMdVendorService vendorService;
 
@@ -90,7 +92,8 @@ public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService 
     }
 
     @Override
-    public PageResult<MesWmArrivalNoticeDO> getArrivalNoticePage(MesWmArrivalNoticePageReqVO pageReqVO) {
+    public PageResult<MesWmArrivalNoticeDO> getArrivalNoticePage(
+            MesWmArrivalNoticePageReqVO pageReqVO) {
         return arrivalNoticeMapper.selectPage(pageReqVO);
     }
 
@@ -100,49 +103,65 @@ public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService 
         // 1.1 校验存在 + 草稿状态
         validateArrivalNoticeExistsAndDraft(id);
         // 1.2 检查是否有行项目
-        List<MesWmArrivalNoticeLineDO> lines = arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
+        List<MesWmArrivalNoticeLineDO> lines =
+                arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(WM_ARRIVAL_NOTICE_NO_LINE);
         }
 
         // 2. 检查所有行的 iqcCheckFlag：如果有需要检验的行，进入待质检状态
-        boolean needCheck = CollectionUtils.anyMatch(lines,
-                line -> Boolean.TRUE.equals(line.getIqcCheckFlag()));
+        boolean needCheck =
+                CollectionUtils.anyMatch(
+                        lines, line -> Boolean.TRUE.equals(line.getIqcCheckFlag()));
         if (needCheck) {
             // 需要检验，进入待质检
-            arrivalNoticeMapper.updateById(new MesWmArrivalNoticeDO()
-                    .setId(id).setStatus(MesWmArrivalNoticeStatusEnum.PENDING_QC.getStatus()));
+            arrivalNoticeMapper.updateById(
+                    new MesWmArrivalNoticeDO()
+                            .setId(id)
+                            .setStatus(MesWmArrivalNoticeStatusEnum.PENDING_QC.getStatus()));
             return;
         }
         // 不需要检验，直接进入待入库
-        arrivalNoticeMapper.updateById(new MesWmArrivalNoticeDO()
-                .setId(id).setStatus(MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus()));
+        arrivalNoticeMapper.updateById(
+                new MesWmArrivalNoticeDO()
+                        .setId(id)
+                        .setStatus(MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus()));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateArrivalNoticeWhenIqcFinish(Long id, Long lineId, Long iqcId, BigDecimal qualifiedQuantity) {
+    public void updateArrivalNoticeWhenIqcFinish(
+            Long id, Long lineId, Long iqcId, BigDecimal qualifiedQuantity) {
         // 1.1 校验到货通知单存在
         MesWmArrivalNoticeDO notice = validateArrivalNoticeExists(id);
         // 1.2 校验状态为待质检
-        if (ObjUtil.notEqual(MesWmArrivalNoticeStatusEnum.PENDING_QC.getStatus(), notice.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmArrivalNoticeStatusEnum.PENDING_QC.getStatus(), notice.getStatus())) {
             throw exception(WM_ARRIVAL_NOTICE_STATUS_NOT_PENDING_QC);
         }
 
         // 2. 更新到货通知单行：绑定 iqcId + 合格数量
-        arrivalNoticeLineService.updateArrivalNoticeLineWhenIqcFinish(lineId, iqcId, qualifiedQuantity);
+        arrivalNoticeLineService.updateArrivalNoticeLineWhenIqcFinish(
+                lineId, iqcId, qualifiedQuantity);
 
         // 3.1 判断是否所有需检行都已完成
-        List<MesWmArrivalNoticeLineDO> lines = arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
-        boolean hasUnchecked = CollectionUtils.anyMatch(lines,
-                line -> Boolean.TRUE.equals(line.getIqcCheckFlag()) && line.getIqcId() == null);
+        List<MesWmArrivalNoticeLineDO> lines =
+                arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
+        boolean hasUnchecked =
+                CollectionUtils.anyMatch(
+                        lines,
+                        line ->
+                                Boolean.TRUE.equals(line.getIqcCheckFlag())
+                                        && line.getIqcId() == null);
         if (hasUnchecked) {
             log.info("[updateArrivalNoticeWhenIqcFinish][到货通知单({}) 还有未完成检验的行，暂不更新状态]", id);
             return;
         }
         // 3.2 所有行检验完成，更新主表状态 PENDING_QC → PENDING_RECEIPT
-        arrivalNoticeMapper.updateById(new MesWmArrivalNoticeDO()
-                .setId(id).setStatus(MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus()));
+        arrivalNoticeMapper.updateById(
+                new MesWmArrivalNoticeDO()
+                        .setId(id)
+                        .setStatus(MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus()));
     }
 
     @Override
@@ -150,20 +169,28 @@ public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService 
         // 校验存在
         MesWmArrivalNoticeDO notice = validateArrivalNoticeExists(id);
         // 校验状态：只有待入库才允许完成
-        if (ObjUtil.notEqual(MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus(), notice.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus(), notice.getStatus())) {
             throw exception(WM_ARRIVAL_NOTICE_STATUS_NOT_PENDING_RECEIPT);
         }
         // 行级防御校验：确保所有需检行都已完成 IQC
-        List<MesWmArrivalNoticeLineDO> lines = arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
-        boolean hasUnchecked = CollectionUtils.anyMatch(lines,
-                line -> Boolean.TRUE.equals(line.getIqcCheckFlag()) && line.getIqcId() == null);
+        List<MesWmArrivalNoticeLineDO> lines =
+                arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
+        boolean hasUnchecked =
+                CollectionUtils.anyMatch(
+                        lines,
+                        line ->
+                                Boolean.TRUE.equals(line.getIqcCheckFlag())
+                                        && line.getIqcId() == null);
         if (hasUnchecked) {
             throw exception(WM_ARRIVAL_NOTICE_IQC_PENDING);
         }
 
         // 完成
-        arrivalNoticeMapper.updateById(new MesWmArrivalNoticeDO()
-                .setId(id).setStatus(MesWmArrivalNoticeStatusEnum.FINISHED.getStatus()));
+        arrivalNoticeMapper.updateById(
+                new MesWmArrivalNoticeDO()
+                        .setId(id)
+                        .setStatus(MesWmArrivalNoticeStatusEnum.FINISHED.getStatus()));
     }
 
     @Override
@@ -204,7 +231,8 @@ public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService 
     @Override
     public MesWmArrivalNoticeDO validateArrivalNoticeExistsAndDraft(Long id) {
         MesWmArrivalNoticeDO notice = validateArrivalNoticeExists(id);
-        if (ObjUtil.notEqual(MesWmArrivalNoticeStatusEnum.PREPARE.getStatus(), notice.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmArrivalNoticeStatusEnum.PREPARE.getStatus(), notice.getStatus())) {
             throw exception(WM_ARRIVAL_NOTICE_STATUS_NOT_PREPARE);
         }
         return notice;
@@ -214,13 +242,19 @@ public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService 
     public MesWmArrivalNoticeDO validateArrivalNoticeReadyForReceipt(Long id) {
         // 1. 校验到货通知单存在且状态为待入库
         MesWmArrivalNoticeDO notice = validateArrivalNoticeExists(id);
-        if (ObjUtil.notEqual(MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus(), notice.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmArrivalNoticeStatusEnum.PENDING_RECEIPT.getStatus(), notice.getStatus())) {
             throw exception(WM_ARRIVAL_NOTICE_STATUS_NOT_PENDING_RECEIPT);
         }
         // 2. 行级防御校验：确保所有需检行都已完成 IQC
-        List<MesWmArrivalNoticeLineDO> lines = arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
-        boolean hasUnchecked = CollectionUtils.anyMatch(lines,
-                line -> Boolean.TRUE.equals(line.getIqcCheckFlag()) && line.getIqcId() == null);
+        List<MesWmArrivalNoticeLineDO> lines =
+                arrivalNoticeLineService.getArrivalNoticeLineListByNoticeId(id);
+        boolean hasUnchecked =
+                CollectionUtils.anyMatch(
+                        lines,
+                        line ->
+                                Boolean.TRUE.equals(line.getIqcCheckFlag())
+                                        && line.getIqcId() == null);
         if (hasUnchecked) {
             throw exception(WM_ARRIVAL_NOTICE_IQC_PENDING);
         }
@@ -241,5 +275,4 @@ public class MesWmArrivalNoticeServiceImpl implements MesWmArrivalNoticeService 
     public Long getArrivalNoticeCountByVendorId(Long vendorId) {
         return arrivalNoticeMapper.selectCountByVendorId(vendorId);
     }
-
 }

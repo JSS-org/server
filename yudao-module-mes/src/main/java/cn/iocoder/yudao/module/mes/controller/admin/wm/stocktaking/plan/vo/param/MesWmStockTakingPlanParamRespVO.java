@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.param;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 盘点方案参数 Response VO")
@@ -27,5 +28,4 @@ public class MesWmStockTakingPlanParamRespVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

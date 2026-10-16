@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,17 +17,19 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsFinanceIndicatorTypeEnum implements ArrayValuable<Integer> {
-
     BALANCE_SHEET(1, "资产负债表"),
     INCOME_STATEMENT(2, "利润表");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsFinanceIndicatorTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(FmsFinanceIndicatorTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */

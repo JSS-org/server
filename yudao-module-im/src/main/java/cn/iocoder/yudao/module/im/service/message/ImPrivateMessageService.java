@@ -100,5 +100,4 @@ public interface ImPrivateMessageService {
      * 【管理后台】获取私聊消息详情
      */
     ImPrivateMessageDO getPrivateMessage(Long id);
-
 }

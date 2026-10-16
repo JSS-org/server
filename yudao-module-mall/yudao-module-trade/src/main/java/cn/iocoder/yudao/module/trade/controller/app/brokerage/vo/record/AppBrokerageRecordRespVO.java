@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,10 @@ public class AppBrokerageRecordRespVO {
     @Schema(description = "分销标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "用户下单")
     private String title;
 
-    @Schema(description = "分销金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1000")
+    @Schema(
+            description = "分销金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1000")
     private Integer price;
 
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -32,5 +36,4 @@ public class AppBrokerageRecordRespVO {
 
     @Schema(description = "完成时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime finishTime;
-
 }

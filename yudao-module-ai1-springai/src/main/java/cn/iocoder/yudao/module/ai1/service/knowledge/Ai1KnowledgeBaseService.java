@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base.Ai1Knowled
 import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base.Ai1KnowledgeBaseSaveReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.base.Ai1KnowledgeSearchRespVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.knowledge.Ai1KnowledgeBaseDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -103,5 +104,4 @@ public interface Ai1KnowledgeBaseService {
      * @return 命中分片
      */
     List<Ai1KnowledgeSearchRespVO> searchKnowledgeBase(Long id, String query, Integer topK);
-
 }

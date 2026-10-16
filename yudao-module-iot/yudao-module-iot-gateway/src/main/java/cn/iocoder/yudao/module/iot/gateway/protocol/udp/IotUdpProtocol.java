@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.udp;
 
+import cn.hutool.core.lang.Assert;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.module.iot.core.enums.IotProtocolTypeEnum;
 import cn.iocoder.yudao.module.iot.core.enums.IotSerializeTypeEnum;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
+import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
 import cn.iocoder.yudao.module.iot.gateway.config.IotGatewayProperties.ProtocolProperties;
 import cn.iocoder.yudao.module.iot.gateway.protocol.IotProtocol;
 import cn.iocoder.yudao.module.iot.gateway.protocol.udp.handler.downstream.IotUdpDownstreamHandler;
@@ -12,13 +14,13 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.udp.handler.upstream.IotUdpU
 import cn.iocoder.yudao.module.iot.gateway.protocol.udp.manager.IotUdpSessionManager;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializerManager;
-import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import cn.hutool.core.lang.Assert;
 
 /**
  * IoT UDP 协议实现
@@ -34,27 +36,27 @@ public class IotUdpProtocol implements IotProtocol {
      * 协议配置
      */
     private final ProtocolProperties properties;
+
     /**
      * 服务器 ID（用于消息追踪，全局唯一）
      */
-    @Getter
-    private final String serverId;
+    @Getter private final String serverId;
 
     /**
      * 运行状态
      */
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     /**
      * Vert.x 实例
      */
     private Vertx vertx;
+
     /**
      * UDP 服务器
      */
-    @Getter
-    private DatagramSocket udpSocket;
+    @Getter private DatagramSocket udpSocket;
+
     /**
      * UDP 会话管理器
      */
@@ -79,12 +81,14 @@ public class IotUdpProtocol implements IotProtocol {
         // 初始化序列化器
         IotSerializeTypeEnum serializeType = IotSerializeTypeEnum.of(properties.getSerialize());
         Assert.notNull(serializeType, "不支持的序列化类型：" + properties.getSerialize());
-        IotMessageSerializerManager serializerManager = SpringUtil.getBean(IotMessageSerializerManager.class);
+        IotMessageSerializerManager serializerManager =
+                SpringUtil.getBean(IotMessageSerializerManager.class);
         this.serializer = serializerManager.get(serializeType);
 
         // 初始化会话管理器
-        this.sessionManager = new IotUdpSessionManager(udpConfig.getMaxSessions(), udpConfig.getSessionTimeoutMs());
-
+        this.sessionManager =
+                new IotUdpSessionManager(
+                        udpConfig.getMaxSessions(), udpConfig.getSessionTimeoutMs());
     }
 
     @Override
@@ -107,21 +111,25 @@ public class IotUdpProtocol implements IotProtocol {
         // 1.1 创建 Vertx 实例 和 下行消息订阅者
         this.vertx = Vertx.vertx();
         IotMessageBus messageBus = SpringUtil.getBean(IotMessageBus.class);
-        IotUdpDownstreamHandler downstreamHandler = new IotUdpDownstreamHandler(this, sessionManager, serializer);
-        this.downstreamSubscriber = new IotUdpDownstreamSubscriber(this, downstreamHandler, messageBus);
+        IotUdpDownstreamHandler downstreamHandler =
+                new IotUdpDownstreamHandler(this, sessionManager, serializer);
+        this.downstreamSubscriber =
+                new IotUdpDownstreamSubscriber(this, downstreamHandler, messageBus);
 
         // 1.2 创建 UDP Socket 选项
         IotUdpConfig udpConfig = properties.getUdp();
-        DatagramSocketOptions options = new DatagramSocketOptions()
-                .setReceiveBufferSize(udpConfig.getReceiveBufferSize())
-                .setSendBufferSize(udpConfig.getSendBufferSize())
-                .setReuseAddress(true);
+        DatagramSocketOptions options =
+                new DatagramSocketOptions()
+                        .setReceiveBufferSize(udpConfig.getReceiveBufferSize())
+                        .setSendBufferSize(udpConfig.getSendBufferSize())
+                        .setReuseAddress(true);
 
         // 1.3 创建 UDP Socket
         udpSocket = vertx.createDatagramSocket(options);
 
         // 1.4 创建上行消息处理器
-        IotUdpUpstreamHandler upstreamHandler = new IotUdpUpstreamHandler(serverId, sessionManager, serializer);
+        IotUdpUpstreamHandler upstreamHandler =
+                new IotUdpUpstreamHandler(serverId, sessionManager, serializer);
 
         // 1.5 启动 UDP 服务器（阻塞式）
         try {
@@ -129,8 +137,11 @@ public class IotUdpProtocol implements IotProtocol {
             // 设置数据包处理器
             udpSocket.handler(packet -> upstreamHandler.handle(packet, udpSocket));
             running = true;
-            log.info("[start][IoT UDP 协议 {} 启动成功，端口：{}，serverId：{}]",
-                    getId(), properties.getPort(), serverId);
+            log.info(
+                    "[start][IoT UDP 协议 {} 启动成功，端口：{}，serverId：{}]",
+                    getId(),
+                    properties.getPort(),
+                    serverId);
 
             // 2. 启动下行消息订阅者
             this.downstreamSubscriber.start();
@@ -184,5 +195,4 @@ public class IotUdpProtocol implements IotProtocol {
         running = false;
         log.info("[stop][IoT UDP 协议 {} 已停止]", getId());
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.enums.demo;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,18 +15,19 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum PayDemoWithdrawTypeEnum implements ArrayValuable<Integer> {
-
     WECHAT(2, "微信"),
     ALIPAY(1, "支付宝"),
     WALLET(3, "钱包"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(PayDemoWithdrawTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(PayDemoWithdrawTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -35,5 +37,4 @@ public enum PayDemoWithdrawTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

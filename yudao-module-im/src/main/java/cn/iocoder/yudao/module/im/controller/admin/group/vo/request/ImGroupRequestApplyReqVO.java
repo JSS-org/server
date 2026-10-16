@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.im.controller.admin.group.vo.request;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.im.enums.group.ImGroupAddSourceEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IM 加群申请发起 Request VO")
@@ -22,5 +25,4 @@ public class ImGroupRequestApplyReqVO {
     @Schema(description = "加入来源", example = "1")
     @InEnum(ImGroupAddSourceEnum.class)
     private Integer addSource;
-
 }

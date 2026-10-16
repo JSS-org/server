@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.itemconsume.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -47,5 +48,4 @@ public class MesWmItemConsumeLineRespVO {
 
     @Schema(description = "单位")
     private String unitName;
-
 }

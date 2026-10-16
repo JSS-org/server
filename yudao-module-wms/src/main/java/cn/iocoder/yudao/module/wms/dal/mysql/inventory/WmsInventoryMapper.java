@@ -11,6 +11,7 @@ import cn.iocoder.yudao.module.wms.controller.admin.inventory.vo.WmsInventoryPag
 import cn.iocoder.yudao.module.wms.dal.dataobject.inventory.WmsInventoryDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemSkuDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.math.BigDecimal;
@@ -27,17 +28,19 @@ import java.util.List;
 public interface WmsInventoryMapper extends BaseMapperX<WmsInventoryDO> {
 
     default PageResult<WmsInventoryDO> selectPage(WmsInventoryPageReqVO reqVO) {
-        MPJLambdaWrapperX<WmsInventoryDO> query = new MPJLambdaWrapperX<WmsInventoryDO>()
-                .selectAll(WmsInventoryDO.class)
-                .innerJoin(WmsItemSkuDO.class, WmsItemSkuDO::getId, WmsInventoryDO::getSkuId)
-                .innerJoin(WmsItemDO.class, WmsItemDO::getId, WmsItemSkuDO::getItemId)
-                .likeIfPresent(WmsItemDO::getCode, reqVO.getItemCode())
-                .likeIfPresent(WmsItemDO::getName, reqVO.getItemName())
-                .eqIfPresent(WmsInventoryDO::getSkuId, reqVO.getSkuId())
-                .likeIfPresent(WmsItemSkuDO::getCode, reqVO.getSkuCode())
-                .likeIfPresent(WmsItemSkuDO::getName, reqVO.getSkuName())
-                .eqIfPresent(WmsInventoryDO::getWarehouseId, reqVO.getWarehouseId())
-                .geIfPresent(WmsInventoryDO::getQuantity, reqVO.getMinQuantity());
+        MPJLambdaWrapperX<WmsInventoryDO> query =
+                new MPJLambdaWrapperX<WmsInventoryDO>()
+                        .selectAll(WmsInventoryDO.class)
+                        .innerJoin(
+                                WmsItemSkuDO.class, WmsItemSkuDO::getId, WmsInventoryDO::getSkuId)
+                        .innerJoin(WmsItemDO.class, WmsItemDO::getId, WmsItemSkuDO::getItemId)
+                        .likeIfPresent(WmsItemDO::getCode, reqVO.getItemCode())
+                        .likeIfPresent(WmsItemDO::getName, reqVO.getItemName())
+                        .eqIfPresent(WmsInventoryDO::getSkuId, reqVO.getSkuId())
+                        .likeIfPresent(WmsItemSkuDO::getCode, reqVO.getSkuCode())
+                        .likeIfPresent(WmsItemSkuDO::getName, reqVO.getSkuName())
+                        .eqIfPresent(WmsInventoryDO::getWarehouseId, reqVO.getWarehouseId())
+                        .geIfPresent(WmsInventoryDO::getQuantity, reqVO.getMinQuantity());
         if (Boolean.TRUE.equals(reqVO.getOnlyPositiveQuantity())) {
             query.gt(WmsInventoryDO::getQuantity, BigDecimal.ZERO);
         }
@@ -54,21 +57,23 @@ public interface WmsInventoryMapper extends BaseMapperX<WmsInventoryDO> {
     }
 
     default List<WmsInventoryDO> selectList(WmsInventoryListReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<WmsInventoryDO>()
-                .eq(WmsInventoryDO::getWarehouseId, reqVO.getWarehouseId())
-                .orderByAsc(WmsInventoryDO::getSkuId)
-                .orderByAsc(WmsInventoryDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<WmsInventoryDO>()
+                        .eq(WmsInventoryDO::getWarehouseId, reqVO.getWarehouseId())
+                        .orderByAsc(WmsInventoryDO::getSkuId)
+                        .orderByAsc(WmsInventoryDO::getId));
     }
 
     default WmsInventoryDO selectBySkuIdAndWarehouseId(Long skuId, Long warehouseId) {
-        return selectOne(WmsInventoryDO::getSkuId, skuId,
-                WmsInventoryDO::getWarehouseId, warehouseId);
+        return selectOne(
+                WmsInventoryDO::getSkuId, skuId, WmsInventoryDO::getWarehouseId, warehouseId);
     }
 
     default WmsInventoryDO selectByIdForUpdate(Long id) {
-        return selectOne(new LambdaQueryWrapperX<WmsInventoryDO>()
-                .eq(WmsInventoryDO::getId, id)
-                .last("FOR UPDATE"));
+        return selectOne(
+                new LambdaQueryWrapperX<WmsInventoryDO>()
+                        .eq(WmsInventoryDO::getId, id)
+                        .last("FOR UPDATE"));
     }
 
     /**
@@ -81,27 +86,32 @@ public interface WmsInventoryMapper extends BaseMapperX<WmsInventoryDO> {
         if (CollUtil.isEmpty(keys)) {
             return Collections.emptyList();
         }
-        return selectList(new LambdaQueryWrapperX<WmsInventoryDO>()
-                .and(query -> {
-                    boolean first = true;
-                    for (WmsInventoryDO key : keys) {
-                        if (!first) {
-                            query.or();
-                        }
-                        query.eq(WmsInventoryDO::getSkuId, key.getSkuId())
-                                .eq(WmsInventoryDO::getWarehouseId, key.getWarehouseId());
-                        first = false;
-                    }
-                }));
+        return selectList(
+                new LambdaQueryWrapperX<WmsInventoryDO>()
+                        .and(
+                                query -> {
+                                    boolean first = true;
+                                    for (WmsInventoryDO key : keys) {
+                                        if (!first) {
+                                            query.or();
+                                        }
+                                        query.eq(WmsInventoryDO::getSkuId, key.getSkuId())
+                                                .eq(
+                                                        WmsInventoryDO::getWarehouseId,
+                                                        key.getWarehouseId());
+                                        first = false;
+                                    }
+                                }));
     }
 
     default List<WmsInventoryDO> selectListByIdsForUpdate(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return selectList(new LambdaQueryWrapperX<WmsInventoryDO>()
-                .in(WmsInventoryDO::getId, ids)
-                .last("FOR UPDATE"));
+        return selectList(
+                new LambdaQueryWrapperX<WmsInventoryDO>()
+                        .in(WmsInventoryDO::getId, ids)
+                        .last("FOR UPDATE"));
     }
 
     static void appendDimensionOrder(MPJLambdaWrapperX<WmsInventoryDO> query, String type) {
@@ -121,5 +131,4 @@ public interface WmsInventoryMapper extends BaseMapperX<WmsInventoryDO> {
         }
         throw new IllegalArgumentException("未知库存统计维度：" + type);
     }
-
 }

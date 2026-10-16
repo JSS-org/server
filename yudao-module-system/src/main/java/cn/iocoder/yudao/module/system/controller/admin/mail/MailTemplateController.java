@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.controller.admin.mail;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,40 +11,40 @@ import cn.iocoder.yudao.module.system.controller.admin.mail.vo.template.*;
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
 import cn.iocoder.yudao.module.system.service.mail.MailSendService;
 import cn.iocoder.yudao.module.system.service.mail.MailTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 邮件模版")
 @RestController
 @RequestMapping("/system/mail-template")
 public class MailTemplateController {
 
-    @Resource
-    private MailTemplateService mailTempleService;
-    @Resource
-    private MailSendService mailSendService;
+    @Resource private MailTemplateService mailTempleService;
+    @Resource private MailSendService mailSendService;
 
     @PostMapping("/create")
     @Operation(summary = "创建邮件模版")
     @PreAuthorize("@ss.hasPermission('system:mail-template:create')")
-    public CommonResult<Long> createMailTemplate(@Valid @RequestBody MailTemplateSaveReqVO createReqVO){
+    public CommonResult<Long> createMailTemplate(
+            @Valid @RequestBody MailTemplateSaveReqVO createReqVO) {
         return success(mailTempleService.createMailTemplate(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改邮件模版")
     @PreAuthorize("@ss.hasPermission('system:mail-template:update')")
-    public CommonResult<Boolean> updateMailTemplate(@Valid @RequestBody MailTemplateSaveReqVO updateReqVO){
+    public CommonResult<Boolean> updateMailTemplate(
+            @Valid @RequestBody MailTemplateSaveReqVO updateReqVO) {
         mailTempleService.updateMailTemplate(updateReqVO);
         return success(true);
     }
@@ -76,7 +79,8 @@ public class MailTemplateController {
     @GetMapping("/page")
     @Operation(summary = "获得邮件模版分页")
     @PreAuthorize("@ss.hasPermission('system:mail-template:query')")
-    public CommonResult<PageResult<MailTemplateRespVO>> getMailTemplatePage(@Valid MailTemplatePageReqVO pageReqVO) {
+    public CommonResult<PageResult<MailTemplateRespVO>> getMailTemplatePage(
+            @Valid MailTemplatePageReqVO pageReqVO) {
         PageResult<MailTemplateDO> pageResult = mailTempleService.getMailTemplatePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MailTemplateRespVO.class));
     }
@@ -84,8 +88,8 @@ public class MailTemplateController {
     @GetMapping({"/list-all-simple", "/simple-list"})
     @Operation(summary = "获得邮件模版精简列表", description = "只包含被开启的邮件模版，主要用于前端的下拉选项")
     public CommonResult<List<MailTemplateSimpleRespVO>> getSimpleMailTemplateList() {
-        List<MailTemplateDO> list = mailTempleService.getMailTemplateListByStatus(
-                CommonStatusEnum.ENABLE.getStatus());
+        List<MailTemplateDO> list =
+                mailTempleService.getMailTemplateListByStatus(CommonStatusEnum.ENABLE.getStatus());
         return success(BeanUtils.toBean(list, MailTemplateSimpleRespVO.class));
     }
 
@@ -93,9 +97,13 @@ public class MailTemplateController {
     @Operation(summary = "发送短信")
     @PreAuthorize("@ss.hasPermission('system:mail-template:send-mail')")
     public CommonResult<Long> sendMail(@Valid @RequestBody MailTemplateSendReqVO sendReqVO) {
-        return success(mailSendService.sendSingleMailToAdmin(getLoginUserId(),
-                sendReqVO.getToMails(), sendReqVO.getCcMails(), sendReqVO.getBccMails(),
-                sendReqVO.getTemplateCode(), sendReqVO.getTemplateParams()));
+        return success(
+                mailSendService.sendSingleMailToAdmin(
+                        getLoginUserId(),
+                        sendReqVO.getToMails(),
+                        sendReqVO.getCcMails(),
+                        sendReqVO.getBccMails(),
+                        sendReqVO.getTemplateCode(),
+                        sendReqVO.getTemplateParams()));
     }
-
 }

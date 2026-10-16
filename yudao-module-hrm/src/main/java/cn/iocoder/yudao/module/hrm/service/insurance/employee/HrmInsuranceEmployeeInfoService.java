@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.hrm.service.insurance.employee;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.employeeinfo.HrmInsuranceEmployeeInfoSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.employee.HrmInsuranceEmployeeInfoDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 员工参保信息 Service 接口
@@ -63,8 +64,11 @@ public interface HrmInsuranceEmployeeInfoService {
      * @param employeeIds 员工编号集合
      * @return 员工编号与参保信息的映射
      */
-    default Map<Long, HrmInsuranceEmployeeInfoDO> getInsuranceEmployeeInfoMap(Collection<Long> employeeIds) {
-        return convertMap(getInsuranceEmployeeInfoList(employeeIds), HrmInsuranceEmployeeInfoDO::getEmployeeId);
+    default Map<Long, HrmInsuranceEmployeeInfoDO> getInsuranceEmployeeInfoMap(
+            Collection<Long> employeeIds) {
+        return convertMap(
+                getInsuranceEmployeeInfoList(employeeIds),
+                HrmInsuranceEmployeeInfoDO::getEmployeeId);
     }
 
     /**
@@ -106,5 +110,4 @@ public interface HrmInsuranceEmployeeInfoService {
      * @param startMonth 社保起缴月份
      */
     void updateSocialSecurityStartMonthIfAbsent(Long employeeId, LocalDateTime startMonth);
-
 }

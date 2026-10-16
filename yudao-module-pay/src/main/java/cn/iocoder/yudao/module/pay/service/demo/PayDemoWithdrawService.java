@@ -45,5 +45,4 @@ public interface PayDemoWithdrawService {
      * @param payTransferId 转账单编号
      */
     void updateDemoWithdrawTransferred(Long id, Long payTransferId);
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -12,11 +16,14 @@ import cn.iocoder.yudao.module.hrm.service.attendance.config.HrmAttendanceGroupS
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,11 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
 
 @Tag(name = "管理后台 - HRM 考勤组")
 @RestController
@@ -44,24 +46,23 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class HrmAttendanceGroupController {
 
-    @Resource
-    private HrmAttendanceGroupService attendanceGroupService;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private HrmAttendanceGroupService attendanceGroupService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private DeptApi deptApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建考勤组")
     @PreAuthorize("@ss.hasPermission('hrm:attendance:group:create')")
-    public CommonResult<Long> createAttendanceGroup(@Valid @RequestBody HrmAttendanceGroupSaveReqVO createReqVO) {
+    public CommonResult<Long> createAttendanceGroup(
+            @Valid @RequestBody HrmAttendanceGroupSaveReqVO createReqVO) {
         return success(attendanceGroupService.createAttendanceGroup(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改考勤组")
     @PreAuthorize("@ss.hasPermission('hrm:attendance:group:update')")
-    public CommonResult<Boolean> updateAttendanceGroup(@Valid @RequestBody HrmAttendanceGroupSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAttendanceGroup(
+            @Valid @RequestBody HrmAttendanceGroupSaveReqVO updateReqVO) {
         attendanceGroupService.updateAttendanceGroup(updateReqVO);
         return success(true);
     }
@@ -87,8 +88,11 @@ public class HrmAttendanceGroupController {
     @Operation(summary = "获得员工所在考勤组")
     @Parameter(name = "employeeId", description = "员工编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('hrm:attendance:group:query')")
-    public CommonResult<HrmAttendanceGroupRespVO> getMyAttendanceGroup(@RequestParam("employeeId") Long employeeId) {
-        return success(buildAttendanceGroupRespVO(attendanceGroupService.getMyAttendanceGroup(employeeId)));
+    public CommonResult<HrmAttendanceGroupRespVO> getMyAttendanceGroup(
+            @RequestParam("employeeId") Long employeeId) {
+        return success(
+                buildAttendanceGroupRespVO(
+                        attendanceGroupService.getMyAttendanceGroup(employeeId)));
     }
 
     @GetMapping("/page")
@@ -96,17 +100,25 @@ public class HrmAttendanceGroupController {
     @PreAuthorize("@ss.hasPermission('hrm:attendance:group:query')")
     public CommonResult<PageResult<HrmAttendanceGroupRespVO>> getAttendanceGroupPage(
             @Validated HrmAttendanceGroupPageReqVO pageReqVO) {
-        PageResult<HrmAttendanceGroupDO> pageResult = attendanceGroupService.getAttendanceGroupPage(pageReqVO);
-        return success(new PageResult<>(
-                buildAttendanceGroupRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<HrmAttendanceGroupDO> pageResult =
+                attendanceGroupService.getAttendanceGroupPage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildAttendanceGroupRespVOList(pageResult.getList()),
+                        pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得考勤组精简列表")
     @PreAuthorize("@ss.hasPermission('hrm:attendance:group:query')")
     public CommonResult<List<HrmAttendanceGroupRespVO>> getAttendanceGroupSimpleList() {
-        return success(convertList(attendanceGroupService.getAttendanceGroupList(),
-                group -> new HrmAttendanceGroupRespVO().setId(group.getId()).setName(group.getName())));
+        return success(
+                convertList(
+                        attendanceGroupService.getAttendanceGroupList(),
+                        group ->
+                                new HrmAttendanceGroupRespVO()
+                                        .setId(group.getId())
+                                        .setName(group.getName())));
     }
 
     // ==================== 拼接 VO ====================
@@ -118,17 +130,35 @@ public class HrmAttendanceGroupController {
         return buildAttendanceGroupRespVOList(Collections.singletonList(group)).get(0);
     }
 
-    private List<HrmAttendanceGroupRespVO> buildAttendanceGroupRespVOList(List<HrmAttendanceGroupDO> list) {
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSetByFlatMap(list, HrmAttendanceGroupDO::getDeptIds, Collection::stream));
-        Map<Long, HrmEmployeeDO> employeeMap = employeeService.getEmployeeMap(
-                convertSetByFlatMap(list, HrmAttendanceGroupDO::getEmployeeIds, Collection::stream));
-        return convertList(list, group -> BeanUtils.toBean(group, HrmAttendanceGroupRespVO.class)
-                .setDeptNames(convertList(group.getDeptIds(),
-                        deptId -> deptMap.containsKey(deptId) ? deptMap.get(deptId).getName() : null))
-                .setEmployeeNames(convertList(group.getEmployeeIds(),
-                        employeeId -> employeeMap.containsKey(employeeId)
-                                ? employeeMap.get(employeeId).getName() : null)));
+    private List<HrmAttendanceGroupRespVO> buildAttendanceGroupRespVOList(
+            List<HrmAttendanceGroupDO> list) {
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(
+                        convertSetByFlatMap(
+                                list, HrmAttendanceGroupDO::getDeptIds, Collection::stream));
+        Map<Long, HrmEmployeeDO> employeeMap =
+                employeeService.getEmployeeMap(
+                        convertSetByFlatMap(
+                                list, HrmAttendanceGroupDO::getEmployeeIds, Collection::stream));
+        return convertList(
+                list,
+                group ->
+                        BeanUtils.toBean(group, HrmAttendanceGroupRespVO.class)
+                                .setDeptNames(
+                                        convertList(
+                                                group.getDeptIds(),
+                                                deptId ->
+                                                        deptMap.containsKey(deptId)
+                                                                ? deptMap.get(deptId).getName()
+                                                                : null))
+                                .setEmployeeNames(
+                                        convertList(
+                                                group.getEmployeeIds(),
+                                                employeeId ->
+                                                        employeeMap.containsKey(employeeId)
+                                                                ? employeeMap
+                                                                        .get(employeeId)
+                                                                        .getName()
+                                                                : null)));
     }
-
 }

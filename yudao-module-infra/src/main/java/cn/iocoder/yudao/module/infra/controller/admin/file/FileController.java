@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.infra.controller.admin.file;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.module.infra.framework.file.core.utils.FileTypeUtils.writeAttachment;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
@@ -10,20 +13,24 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.*;
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
-import cn.iocoder.yudao.module.infra.service.file.FileService;
-import cn.iocoder.yudao.module.infra.service.file.FilePrivatePathPolicy;
 import cn.iocoder.yudao.module.infra.framework.file.core.utils.FilePathUtils;
+import cn.iocoder.yudao.module.infra.service.file.FilePrivatePathPolicy;
+import cn.iocoder.yudao.module.infra.service.file.FileService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -32,9 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.module.infra.framework.file.core.utils.FileTypeUtils.writeAttachment;
-
 @Tag(name = "管理后台 - 文件存储")
 @RestController
 @RequestMapping("/infra/file")
@@ -42,29 +46,34 @@ import static cn.iocoder.yudao.module.infra.framework.file.core.utils.FileTypeUt
 @Slf4j
 public class FileController {
 
-    @Resource
-    private FileService fileService;
+    @Resource private FileService fileService;
 
-    @Resource
-    private FilePrivatePathPolicy privatePathPolicy;
+    @Resource private FilePrivatePathPolicy privatePathPolicy;
 
     @PostMapping("/upload")
     @Operation(summary = "上传文件", description = "模式一：后端上传文件")
-    @Parameter(name = "file", description = "文件附件", required = true,
+    @Parameter(
+            name = "file",
+            description = "文件附件",
+            required = true,
             schema = @Schema(type = "string", format = "binary"))
     public CommonResult<String> uploadFile(@Valid FileUploadReqVO uploadReqVO) throws Exception {
         privatePathPolicy.validatePublicUploadDirectory(uploadReqVO.getDirectory());
         MultipartFile file = uploadReqVO.getFile();
         byte[] content = IoUtil.readBytes(file.getInputStream());
-        return success(fileService.createFile(content, file.getOriginalFilename(),
-                uploadReqVO.getDirectory(), file.getContentType()));
+        return success(
+                fileService.createFile(
+                        content,
+                        file.getOriginalFilename(),
+                        uploadReqVO.getDirectory(),
+                        file.getContentType()));
     }
 
     @GetMapping("/presigned-url")
     @Operation(summary = "获取文件预签名地址（上传）", description = "模式二：前端上传文件：用于前端直接上传七牛、阿里云 OSS 等文件存储器")
     @Parameters({
-            @Parameter(name = "name", description = "文件名称", required = true),
-            @Parameter(name = "directory", description = "文件目录")
+        @Parameter(name = "name", description = "文件名称", required = true),
+        @Parameter(name = "directory", description = "文件目录")
     })
     public CommonResult<FilePresignedUrlRespVO> getFilePresignedUrl(
             @RequestParam("name") String name,
@@ -99,7 +108,8 @@ public class FileController {
     @Operation(summary = "批量删除文件")
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('infra:file:delete')")
-    public CommonResult<Boolean> deleteFileList(@RequestParam("ids") List<Long> ids) throws Exception {
+    public CommonResult<Boolean> deleteFileList(@RequestParam("ids") List<Long> ids)
+            throws Exception {
         fileService.deleteFileList(ids);
         return success(true);
     }
@@ -109,9 +119,11 @@ public class FileController {
     @TenantIgnore
     @Operation(summary = "下载文件")
     @Parameter(name = "configId", description = "配置编号", required = true)
-    public void getFileContent(HttpServletRequest request,
-                               HttpServletResponse response,
-                               @PathVariable("configId") Long configId) throws Exception {
+    public void getFileContent(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable("configId") Long configId)
+            throws Exception {
         // 获取请求的路径
         String path = StrUtil.subAfter(request.getRequestURI(), "/get/", false);
         if (StrUtil.isEmpty(path)) {
@@ -136,7 +148,10 @@ public class FileController {
             return;
         }
         FileDO file = fileService.getFileByConfigIdAndPath(configId, path);
-        String filename = file != null && StrUtil.isNotEmpty(file.getName()) ? file.getName() : FileUtil.getName(path);
+        String filename =
+                file != null && StrUtil.isNotEmpty(file.getName())
+                        ? file.getName()
+                        : FileUtil.getName(path);
         writeAttachment(response, filename, content);
     }
 
@@ -147,5 +162,4 @@ public class FileController {
         PageResult<FileDO> pageResult = fileService.getFilePage(pageVO);
         return success(BeanUtils.toBean(pageResult, FileRespVO.class));
     }
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.system.api.social.dto;
 
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.HashMap;
@@ -24,6 +26,7 @@ public class SocialWxaSubscribeMessageSendReqDTO {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
+
     /**
      * 用户类型
      *
@@ -57,5 +60,4 @@ public class SocialWxaSubscribeMessageSendReqDTO {
         messages.put(key, value);
         return this;
     }
-
 }

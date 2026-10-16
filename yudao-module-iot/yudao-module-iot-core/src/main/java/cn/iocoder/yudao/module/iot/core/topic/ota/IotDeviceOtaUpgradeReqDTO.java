@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.ota;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,5 +43,4 @@ public class IotDeviceOtaUpgradeReqDTO {
      * 固件文件摘要值
      */
     private String fileDigestValue;
-
 }

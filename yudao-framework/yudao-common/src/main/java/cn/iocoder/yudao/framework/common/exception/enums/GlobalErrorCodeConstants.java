@@ -37,5 +37,4 @@ public interface GlobalErrorCodeConstants {
     ErrorCode DEMO_DENY = new ErrorCode(901, "演示模式，禁止写操作");
 
     ErrorCode UNKNOWN = new ErrorCode(999, "未知错误");
-
 }

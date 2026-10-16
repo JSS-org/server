@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productissue;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -19,12 +23,15 @@ import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
 import cn.iocoder.yudao.module.mes.service.md.workstation.MesMdWorkstationService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.wm.productissue.MesWmProductIssueService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,36 +41,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 领料出库单")
 @RestController
 @RequestMapping("/mes/wm/product-issue")
 @Validated
 public class MesWmProductIssueController {
 
-    @Resource
-    private MesWmProductIssueService issueService;
-    @Resource
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesMdClientService clientService;
+    @Resource private MesWmProductIssueService issueService;
+    @Resource private MesMdWorkstationService workstationService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesMdClientService clientService;
 
     @PostMapping("/create")
     @Operation(summary = "创建领料出库单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-issue:create')")
-    public CommonResult<Long> createProductIssue(@Valid @RequestBody MesWmProductIssueSaveReqVO createReqVO) {
+    public CommonResult<Long> createProductIssue(
+            @Valid @RequestBody MesWmProductIssueSaveReqVO createReqVO) {
         return success(issueService.createProductIssue(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改领料出库单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-issue:update')")
-    public CommonResult<Boolean> updateProductIssue(@Valid @RequestBody MesWmProductIssueSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProductIssue(
+            @Valid @RequestBody MesWmProductIssueSaveReqVO updateReqVO) {
         issueService.updateProductIssue(updateReqVO);
         return success(true);
     }
@@ -95,18 +96,24 @@ public class MesWmProductIssueController {
     public CommonResult<PageResult<MesWmProductIssueRespVO>> getProductIssuePage(
             @Valid MesWmProductIssuePageReqVO pageReqVO) {
         PageResult<MesWmProductIssueDO> pageResult = issueService.getProductIssuePage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出领料出库单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-issue:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportProductIssueExcel(@Valid MesWmProductIssuePageReqVO pageReqVO,
-                                            HttpServletResponse response) throws IOException {
+    public void exportProductIssueExcel(
+            @Valid MesWmProductIssuePageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         PageResult<MesWmProductIssueDO> pageResult = issueService.getProductIssuePage(pageReqVO);
-        ExcelUtils.write(response, "领料出库单.xls", "数据", MesWmProductIssueRespVO.class,
+        ExcelUtils.write(
+                response,
+                "领料出库单.xls",
+                "数据",
+                MesWmProductIssueRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -161,22 +168,36 @@ public class MesWmProductIssueController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdWorkstationDO> workstationMap = workstationService.getWorkstationMap(
-                convertSet(list, MesWmProductIssueDO::getWorkstationId));
-        Map<Long, MesProWorkOrderDO> workOrderMap = workOrderService.getWorkOrderMap(
-                convertSet(list, MesWmProductIssueDO::getWorkOrderId));
-        Map<Long, MesMdClientDO> clientMap = clientService.getClientMap(
-                convertSet(workOrderMap.values(), MesProWorkOrderDO::getClientId));
+        Map<Long, MesMdWorkstationDO> workstationMap =
+                workstationService.getWorkstationMap(
+                        convertSet(list, MesWmProductIssueDO::getWorkstationId));
+        Map<Long, MesProWorkOrderDO> workOrderMap =
+                workOrderService.getWorkOrderMap(
+                        convertSet(list, MesWmProductIssueDO::getWorkOrderId));
+        Map<Long, MesMdClientDO> clientMap =
+                clientService.getClientMap(
+                        convertSet(workOrderMap.values(), MesProWorkOrderDO::getClientId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmProductIssueRespVO.class, vo -> {
-            MapUtils.findAndThen(workstationMap, vo.getWorkstationId(),
-                    workstation -> vo.setWorkstationName(workstation.getName()));
-            MapUtils.findAndThen(workOrderMap, vo.getWorkOrderId(), workOrder -> {
-                vo.setWorkOrderCode(workOrder.getCode());
-                MapUtils.findAndThen(clientMap, workOrder.getClientId(), client ->
-                        vo.setClientCode(client.getCode()).setClientName(client.getName()));
-            });
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmProductIssueRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            workstationMap,
+                            vo.getWorkstationId(),
+                            workstation -> vo.setWorkstationName(workstation.getName()));
+                    MapUtils.findAndThen(
+                            workOrderMap,
+                            vo.getWorkOrderId(),
+                            workOrder -> {
+                                vo.setWorkOrderCode(workOrder.getCode());
+                                MapUtils.findAndThen(
+                                        clientMap,
+                                        workOrder.getClientId(),
+                                        client ->
+                                                vo.setClientCode(client.getCode())
+                                                        .setClientName(client.getName()));
+                            });
+                });
     }
-
 }

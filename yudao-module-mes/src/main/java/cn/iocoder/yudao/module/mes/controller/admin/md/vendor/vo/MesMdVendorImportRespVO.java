@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,7 +19,8 @@ public class MesMdVendorImportRespVO {
     @Schema(description = "更新成功的供应商编码数组", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> updateCodes;
 
-    @Schema(description = "导入失败的供应商集合，key 为供应商编码，value 为失败原因", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            description = "导入失败的供应商集合，key 为供应商编码，value 为失败原因",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private Map<String, String> failureCodes;
-
 }

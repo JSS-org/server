@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.menu.MenuListReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -20,9 +21,10 @@ public interface MenuMapper extends BaseMapperX<MenuDO> {
     }
 
     default List<MenuDO> selectList(MenuListReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<MenuDO>()
-                .likeIfPresent(MenuDO::getName, reqVO.getName())
-                .eqIfPresent(MenuDO::getStatus, reqVO.getStatus()));
+        return selectList(
+                new LambdaQueryWrapperX<MenuDO>()
+                        .likeIfPresent(MenuDO::getName, reqVO.getName())
+                        .eqIfPresent(MenuDO::getStatus, reqVO.getStatus()));
     }
 
     default List<MenuDO> selectListByPermission(String permission) {
@@ -32,5 +34,4 @@ public interface MenuMapper extends BaseMapperX<MenuDO> {
     default MenuDO selectByComponentName(String componentName) {
         return selectOne(MenuDO::getComponentName, componentName);
     }
-
 }

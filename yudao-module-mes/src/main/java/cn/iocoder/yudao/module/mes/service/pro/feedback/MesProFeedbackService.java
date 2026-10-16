@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.feedback.vo.MesProFeedbackPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.feedback.vo.MesProFeedbackSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.feedback.MesProFeedbackDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -110,9 +111,12 @@ public interface MesProFeedbackService {
      * @param materialScrapQty    料废数量
      * @param otherScrapQty       其他废品数量
      */
-    void updateProFeedbackWhenIpqcFinish(Long feedbackId, Long sourceLineId,
-                                         BigDecimal qualifiedQty, BigDecimal unqualifiedQty,
-                                         BigDecimal laborScrapQty, BigDecimal materialScrapQty, BigDecimal otherScrapQty);
-
+    void updateProFeedbackWhenIpqcFinish(
+            Long feedbackId,
+            Long sourceLineId,
+            BigDecimal qualifiedQty,
+            BigDecimal unqualifiedQty,
+            BigDecimal laborScrapQty,
+            BigDecimal materialScrapQty,
+            BigDecimal otherScrapQty);
 }
-

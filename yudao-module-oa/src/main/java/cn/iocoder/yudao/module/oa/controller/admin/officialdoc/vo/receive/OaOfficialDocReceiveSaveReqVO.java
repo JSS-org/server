@@ -1,14 +1,18 @@
 package cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.receive;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import java.time.LocalDateTime;
-import java.util.List;
-import jakarta.validation.constraints.*;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.dict.validation.InDict;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.oa.enums.officialdoc.OaOfficialDocReceiveTypeEnum;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.*;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "管理后台 - 公文收文新增/修改 Request VO")
 @Data
@@ -17,7 +21,10 @@ public class OaOfficialDocReceiveSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "公文标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "关于开展办公用品盘点的通知")
+    @Schema(
+            description = "公文标题",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "关于开展办公用品盘点的通知")
     @NotBlank(message = "公文标题不能为空")
     @Size(max = 255, message = "公文标题长度不能超过 {max} 个字符")
     private String title;
@@ -41,7 +48,12 @@ public class OaOfficialDocReceiveSaveReqVO {
     @InEnum(value = OaOfficialDocReceiveTypeEnum.class, message = "收文类型必须是 {value}")
     private Integer receiveType;
 
-    @Schema(description = "收文时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "收文时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "收文时间不能为空")
     private LocalDateTime receiveTime;
 
@@ -76,5 +88,4 @@ public class OaOfficialDocReceiveSaveReqVO {
     @Schema(description = "正式公文地址", example = "https://example.com/file.pdf")
     @Size(max = 2048, message = "正式公文地址长度不能超过 {max} 个字符")
     private String formalFileUrl;
-
 }

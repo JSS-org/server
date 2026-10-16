@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums.group;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,17 +16,18 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImGroupMemberRoleEnum implements ArrayValuable<Integer> {
-
     OWNER(1, "群主"),
     ADMIN(2, "管理员"),
     NORMAL(3, "普通成员");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImGroupMemberRoleEnum::getRole).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImGroupMemberRoleEnum::getRole).toArray(Integer[]::new);
 
     /**
      * 角色
      */
     private final Integer role;
+
     /**
      * 名字
      */
@@ -47,5 +49,4 @@ public enum ImGroupMemberRoleEnum implements ArrayValuable<Integer> {
     public static boolean isOwnerOrAdmin(Integer role) {
         return isOwner(role) || isAdmin(role);
     }
-
 }

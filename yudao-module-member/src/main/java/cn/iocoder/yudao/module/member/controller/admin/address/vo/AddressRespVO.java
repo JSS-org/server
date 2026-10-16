@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.member.controller.admin.address.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - 用户收件地址 Response VO")
@@ -18,5 +20,4 @@ public class AddressRespVO extends AddressBaseVO {
 
     @Schema(description = "地区名称", example = "上海上海市普陀区")
     private String areaName;
-
 }

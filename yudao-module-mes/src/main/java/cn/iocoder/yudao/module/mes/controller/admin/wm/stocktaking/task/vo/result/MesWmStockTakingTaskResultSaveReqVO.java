@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo.result;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -45,11 +47,13 @@ public class MesWmStockTakingTaskResultSaveReqVO {
     @NotNull(message = "库位 ID 不能为空")
     private Long areaId;
 
-    @Schema(description = "盘点数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.000000")
+    @Schema(
+            description = "盘点数量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100.000000")
     @NotNull(message = "盘点数量不能为空")
     private BigDecimal takingQuantity;
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

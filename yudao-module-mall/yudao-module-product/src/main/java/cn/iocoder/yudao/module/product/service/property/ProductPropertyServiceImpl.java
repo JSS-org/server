@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.product.service.property;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,7 +11,9 @@ import cn.iocoder.yudao.module.product.controller.admin.property.vo.property.Pro
 import cn.iocoder.yudao.module.product.dal.dataobject.property.ProductPropertyDO;
 import cn.iocoder.yudao.module.product.dal.mysql.property.ProductPropertyMapper;
 import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +21,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 
 /**
  * 商品属性项 Service 实现类
@@ -29,15 +31,12 @@ import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.*;
 @Validated
 public class ProductPropertyServiceImpl implements ProductPropertyService {
 
-    @Resource
-    private ProductPropertyMapper productPropertyMapper;
+    @Resource private ProductPropertyMapper productPropertyMapper;
 
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖问题
+    @Resource @Lazy // 延迟加载，解决循环依赖问题
     private ProductPropertyValueService productPropertyValueService;
 
-    @Resource
-    private ProductSkuService productSkuService;
+    @Resource private ProductSkuService productSkuService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -61,8 +60,7 @@ public class ProductPropertyServiceImpl implements ProductPropertyService {
         validatePropertyExists(updateReqVO.getId());
         // 校验名字重复
         ProductPropertyDO property = productPropertyMapper.selectByName(updateReqVO.getName());
-        if (property != null &&
-                ObjUtil.notEqual(property.getId(), updateReqVO.getId())) {
+        if (property != null && ObjUtil.notEqual(property.getId(), updateReqVO.getId())) {
             throw exception(PROPERTY_EXISTS);
         }
 
@@ -113,5 +111,4 @@ public class ProductPropertyServiceImpl implements ProductPropertyService {
     public List<ProductPropertyDO> getPropertyList() {
         return productPropertyMapper.selectList();
     }
-
 }

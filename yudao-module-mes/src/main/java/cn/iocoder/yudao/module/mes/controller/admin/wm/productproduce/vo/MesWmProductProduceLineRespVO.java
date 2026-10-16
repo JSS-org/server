@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productproduce.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -57,5 +58,4 @@ public class MesWmProductProduceLineRespVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
-
 }

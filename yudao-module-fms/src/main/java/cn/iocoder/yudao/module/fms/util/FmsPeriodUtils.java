@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.util;
 
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO;
+
 import lombok.experimental.UtilityClass;
 
 import java.time.YearMonth;
@@ -30,5 +31,4 @@ public final class FmsPeriodUtils {
         YearMonth accountStartMonth = YearMonth.from(accountSet.getStartTime());
         return accountStartMonth.isAfter(yearStartMonth) ? accountStartMonth : yearStartMonth;
     }
-
 }

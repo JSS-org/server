@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.pay.controller.admin.order.vo;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
 import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 
 /**
  * 支付订单 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -39,7 +43,10 @@ public class PayOrderBaseVO {
     @NotNull(message = "商品描述不能为空")
     private String body;
 
-    @Schema(description = "异步通知地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "http://127.0.0.1:48080/pay/notify")
+    @Schema(
+            description = "异步通知地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "http://127.0.0.1:48080/pay/notify")
     @NotNull(message = "异步通知地址不能为空")
     private String notifyUrl;
 
@@ -57,7 +64,10 @@ public class PayOrderBaseVO {
     @NotNull(message = "支付状态不能为空")
     private Integer status;
 
-    @Schema(description = "用户 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "用户 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     @NotNull(message = "用户 IP不能为空")
     private String userIp;
 
@@ -85,5 +95,4 @@ public class PayOrderBaseVO {
 
     @Schema(description = "渠道订单号", example = "4096")
     private String channelOrderNo;
-
 }

@@ -3,9 +3,11 @@ package cn.iocoder.yudao.module.im.dal.dataobject.group;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.im.enums.group.ImGroupAddSourceEnum;
 import cn.iocoder.yudao.module.im.enums.group.ImGroupRequestHandleResultEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -35,20 +37,22 @@ public class ImGroupRequestDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 群编号
      * <p>
      * 关联 {@link ImGroupDO#getId()}
      */
     private Long groupId;
+
     /**
      * 申请人 / 被邀请人用户编号
      * <p>
      * 关联 AdminUserDO 的 id 字段
      */
     private Long userId;
+
     /**
      * 邀请人用户编号
      * <p>
@@ -61,6 +65,7 @@ public class ImGroupRequestDO extends BaseDO {
      * 申请理由
      */
     private String applyContent;
+
     /**
      * 加入来源
      * <p>
@@ -75,17 +80,19 @@ public class ImGroupRequestDO extends BaseDO {
      * 枚举 {@link ImGroupRequestHandleResultEnum}
      */
     private Integer handleResult;
+
     /**
      * 处理人用户编号（群主或管理员）
      */
     private Long handleUserId;
+
     /**
      * 处理理由（拒绝时可选填）
      */
     private String handleContent;
+
     /**
      * 处理时间
      */
     private LocalDateTime handleTime;
-
 }

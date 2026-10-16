@@ -53,5 +53,4 @@ public interface OaDiscussionVoteService {
      * @param discussionId 讨论编号
      */
     void deleteDiscussionVotesByDiscussionId(Long discussionId);
-
 }

@@ -4,10 +4,12 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.AfterSaleDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.cart.CartDO;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderItemAfterSaleStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 
 import java.io.Serializable;
@@ -19,7 +21,8 @@ import java.util.List;
  * @author 芋道源码
  */
 @TableName(value = "trade_order_item", autoResultMap = true)
-@KeySequence("trade_order_item_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "trade_order_item_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 public class TradeOrderItemDO extends BaseDO {
 
@@ -28,18 +31,21 @@ public class TradeOrderItemDO extends BaseDO {
      * 编号
      */
     private Long id;
+
     /**
      * 用户编号
      *
      * 关联 MemberUserDO 的 id 编号
      */
     private Long userId;
+
     /**
      * 订单编号
      *
      * 关联 {@link TradeOrderDO#getId()}
      */
     private Long orderId;
+
     /**
      * 购物车项编号
      *
@@ -54,18 +60,21 @@ public class TradeOrderItemDO extends BaseDO {
      * 关联 ProductSkuDO 的 spuId 编号
      */
     private Long spuId;
+
     /**
      * 商品 SPU 名称
      *
      * 冗余 ProductSkuDO 的 spuName 编号
      */
     private String spuName;
+
     /**
      * 商品 SKU 编号
      *
      * 关联 ProductSkuDO 的 id 编号
      */
     private Long skuId;
+
     /**
      * 属性数组，JSON 格式
      *
@@ -73,14 +82,17 @@ public class TradeOrderItemDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<Property> properties;
+
     /**
      * 商品图片
      */
     private String picUrl;
+
     /**
      * 购买数量
      */
     private Integer count;
+
     /**
      * 是否评价
      *
@@ -98,22 +110,26 @@ public class TradeOrderItemDO extends BaseDO {
      * 对应 taobao 的 order.price 字段
      */
     private Integer price;
+
     /**
      * 优惠金额（总），单位：分
      *
      * 对应 taobao 的 order.discount_fee 字段
      */
     private Integer discountPrice;
+
     /**
      * 运费金额（总），单位：分
      */
     private Integer deliveryPrice;
+
     /**
      * 订单调价（总），单位：分
      *
      * 正数，加价；负数，减价
      */
     private Integer adjustPrice;
+
     /**
      * 应付金额（总），单位：分
      *
@@ -135,24 +151,28 @@ public class TradeOrderItemDO extends BaseDO {
      * 对应 taobao 的 trade.coupon_fee 字段
      */
     private Integer couponPrice;
+
     /**
      * 积分抵扣的金额，单位：分
      *
      * 对应 taobao 的 trade.point_fee 字段
      */
     private Integer pointPrice;
+
     /**
      * 使用的积分
      *
      * 目的：用于后续取消或者售后订单时，需要归还赠送
      */
     private Integer usePoint;
+
     /**
      * 赠送的积分
      *
      * 目的：用于后续取消或者售后订单时，需要扣减赠送
      */
     private Integer givePoint;
+
     /**
      * VIP 减免金额，单位：分
      */
@@ -166,6 +186,7 @@ public class TradeOrderItemDO extends BaseDO {
      * 关联 {@link AfterSaleDO#getId()} 字段
      */
     private Long afterSaleId;
+
     /**
      * 售后状态
      *
@@ -185,6 +206,7 @@ public class TradeOrderItemDO extends BaseDO {
          * 关联 ProductPropertyDO 的 id 编号
          */
         private Long propertyId;
+
         /**
          * 属性名字
          *
@@ -198,14 +220,12 @@ public class TradeOrderItemDO extends BaseDO {
          * 关联 ProductPropertyValueDO 的 id 编号
          */
         private Long valueId;
+
         /**
          * 属性值名字
          *
          * 关联 ProductPropertyValueDO 的 name 字段
          */
         private String valueName;
-
     }
-
 }
-

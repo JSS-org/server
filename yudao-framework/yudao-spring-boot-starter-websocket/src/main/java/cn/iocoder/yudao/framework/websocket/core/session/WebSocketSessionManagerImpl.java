@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.websocket.core.util.WebSocketFrameworkUtils;
+
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.ArrayList;
@@ -34,8 +35,9 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
      * key1：用户类型
      * key2：用户编号
      */
-    private final ConcurrentMap<Integer, ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>>> userSessions
-            = new ConcurrentHashMap<>();
+    private final ConcurrentMap<
+                    Integer, ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>>>
+            userSessions = new ConcurrentHashMap<>();
 
     @Override
     public void addSession(WebSocketSession session) {
@@ -46,7 +48,8 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
         if (user == null) {
             return;
         }
-        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap = userSessions.get(user.getUserType());
+        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap =
+                userSessions.get(user.getUserType());
         if (userSessionsMap == null) {
             userSessionsMap = new ConcurrentHashMap<>();
             if (userSessions.putIfAbsent(user.getUserType(), userSessionsMap) != null) {
@@ -72,7 +75,8 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
         if (user == null) {
             return;
         }
-        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap = userSessions.get(user.getUserType());
+        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap =
+                userSessions.get(user.getUserType());
         if (userSessionsMap == null) {
             return;
         }
@@ -90,7 +94,8 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
 
     @Override
     public Collection<WebSocketSession> getSessionList(Integer userType) {
-        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap = userSessions.get(userType);
+        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap =
+                userSessions.get(userType);
         if (CollUtil.isEmpty(userSessionsMap)) {
             return new ArrayList<>();
         }
@@ -114,12 +119,12 @@ public class WebSocketSessionManagerImpl implements WebSocketSessionManager {
 
     @Override
     public Collection<WebSocketSession> getSessionList(Integer userType, Long userId) {
-        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap = userSessions.get(userType);
+        ConcurrentMap<Long, CopyOnWriteArrayList<WebSocketSession>> userSessionsMap =
+                userSessions.get(userType);
         if (CollUtil.isEmpty(userSessionsMap)) {
             return new ArrayList<>();
         }
         CopyOnWriteArrayList<WebSocketSession> sessions = userSessionsMap.get(userId);
         return CollUtil.isNotEmpty(sessions) ? new ArrayList<>(sessions) : new ArrayList<>();
     }
-
 }

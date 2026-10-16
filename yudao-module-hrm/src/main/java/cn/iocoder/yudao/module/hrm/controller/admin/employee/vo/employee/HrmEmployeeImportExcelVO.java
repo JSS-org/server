@@ -2,14 +2,16 @@ package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
-import cn.iocoder.yudao.framework.excel.core.annotations.ExcelColumnSelect;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
+import cn.iocoder.yudao.framework.excel.core.annotations.ExcelColumnSelect;
 import cn.iocoder.yudao.framework.excel.core.convert.AreaConvert;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.hrm.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.hrm.framework.excel.core.HrmEmployeeProbationExcelColumnSelectFunction;
 import cn.iocoder.yudao.module.hrm.framework.excel.core.HrmRecruitChannelExcelColumnSelectFunction;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -206,5 +208,4 @@ public class HrmEmployeeImportExcelVO {
     @ExcelProperty("备注")
     @Schema(description = "备注")
     private String remark;
-
 }

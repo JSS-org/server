@@ -1,18 +1,19 @@
 package cn.iocoder.yudao.module.mes.service.md.client;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.md.client.vo.MesMdClientImportExcelVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.client.vo.MesMdClientImportRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.client.vo.MesMdClientPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.client.vo.MesMdClientSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.client.MesMdClientDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 客户 Service 接口
@@ -98,6 +99,6 @@ public interface MesMdClientService {
      * @param updateSupport 是否支持更新
      * @return 导入结果
      */
-    MesMdClientImportRespVO importClientList(List<MesMdClientImportExcelVO> importClients, boolean updateSupport);
-
+    MesMdClientImportRespVO importClientList(
+            List<MesMdClientImportExcelVO> importClients, boolean updateSupport);
 }

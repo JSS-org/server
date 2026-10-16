@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageSubscriber;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceMessageUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,7 +18,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @AllArgsConstructor
 @Slf4j
-public abstract class AbstractIotProtocolDownstreamSubscriber implements IotMessageSubscriber<IotDeviceMessage> {
+public abstract class AbstractIotProtocolDownstreamSubscriber
+        implements IotMessageSubscriber<IotDeviceMessage> {
 
     private final IotProtocol protocol;
 
@@ -25,7 +27,8 @@ public abstract class AbstractIotProtocolDownstreamSubscriber implements IotMess
 
     @Override
     public String getTopic() {
-        return IotDeviceMessageUtils.buildMessageBusGatewayDeviceMessageTopic(protocol.getServerId());
+        return IotDeviceMessageUtils.buildMessageBusGatewayDeviceMessageTopic(
+                protocol.getServerId());
     }
 
     /**
@@ -50,22 +53,31 @@ public abstract class AbstractIotProtocolDownstreamSubscriber implements IotMess
 
     @Override
     public void onMessage(IotDeviceMessage message) {
-        log.debug("[onMessage][接收到下行消息, messageId: {}, method: {}, deviceId: {}]",
-                message.getId(), message.getMethod(), message.getDeviceId());
+        log.debug(
+                "[onMessage][接收到下行消息, messageId: {}, method: {}, deviceId: {}]",
+                message.getId(),
+                message.getMethod(),
+                message.getDeviceId());
         try {
             // 1. 校验
             String method = message.getMethod();
             if (StrUtil.isBlank(method)) {
-                log.warn("[onMessage][消息方法为空, messageId: {}, deviceId: {}]",
-                        message.getId(), message.getDeviceId());
+                log.warn(
+                        "[onMessage][消息方法为空, messageId: {}, deviceId: {}]",
+                        message.getId(),
+                        message.getDeviceId());
                 return;
             }
 
             // 2. 处理下行消息
             handleMessage(message);
         } catch (Exception e) {
-            log.error("[onMessage][处理下行消息失败, messageId: {}, method: {}, deviceId: {}]",
-                    message.getId(), message.getMethod(), message.getDeviceId(), e);
+            log.error(
+                    "[onMessage][处理下行消息失败, messageId: {}, method: {}, deviceId: {}]",
+                    message.getId(),
+                    message.getMethod(),
+                    message.getDeviceId(),
+                    e);
         }
     }
 
@@ -75,5 +87,4 @@ public abstract class AbstractIotProtocolDownstreamSubscriber implements IotMess
      * @param message 下行消息
      */
     protected abstract void handleMessage(IotDeviceMessage message);
-
 }

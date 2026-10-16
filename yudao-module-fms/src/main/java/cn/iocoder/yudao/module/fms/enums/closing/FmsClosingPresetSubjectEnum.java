@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FmsClosingPresetSubjectEnum {
-
     PRIOR_YEAR_ADJUSTMENT("6000", "以前年度损益调整"),
     PRIOR_YEAR_ADJUSTMENT_CLOSING("310415", "未分配利润"),
     CURRENT_YEAR_PROFIT("3103", "本年利润"),
@@ -35,6 +34,7 @@ public enum FmsClosingPresetSubjectEnum {
      * 科目编码
      */
     private final String code;
+
     /**
      * 科目名称
      */

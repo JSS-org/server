@@ -11,10 +11,11 @@ import cn.iocoder.yudao.module.iot.core.topic.event.IotDeviceEventPostReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.property.IotDevicePropertyPostReqDTO;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.core.util.IotProductAuthUtils;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 
 /**
  * IoT 直连设备 HTTP 协议集成测试（手动测试）
@@ -53,7 +54,8 @@ public class IotDirectDeviceHttpProtocolIntegrationTest {
     /**
      * 直连设备 Token：从 {@link #testAuth()} 方法获取后，粘贴到这里
      */
-    private static final String TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiNGF5bVpnT1RPT0NyREtSVCIsImV4cCI6MTc2OTMwNTA1NSwiZGV2aWNlTmFtZSI6InNtYWxsIn0.mf3MEATCn5bp6cXgULunZjs8d00RGUxj96JEz0hMS7k";
+    private static final String TOKEN =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiNGF5bVpnT1RPT0NyREtSVCIsImV4cCI6MTc2OTMwNTA1NSwiZGV2aWNlTmFtZSI6InNtYWxsIn0.mf3MEATCn5bp6cXgULunZjs8d00RGUxj96JEz0hMS7k";
 
     // ===================== 认证测试 =====================
 
@@ -64,11 +66,13 @@ public class IotDirectDeviceHttpProtocolIntegrationTest {
     public void testAuth() {
         // 1.1 构建请求
         String url = String.format("http://%s:%d/auth", SERVER_HOST, SERVER_PORT);
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
         String payload = JsonUtils.toJsonString(authReqDTO);
         // 1.2 输出请求
         log.info("[testAuth][请求 URL: {}]", url);
@@ -89,25 +93,29 @@ public class IotDirectDeviceHttpProtocolIntegrationTest {
     @Test
     public void testPropertyPost() {
         // 1.1 构建请求
-        String url = String.format("http://%s:%d/topic/sys/%s/%s/thing/property/post",
-                SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
-        String payload = JsonUtils.toJsonString(MapUtil.builder()
-                .put("method", IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
-                .put("params", IotDevicePropertyPostReqDTO.of(MapUtil.<String, Object>builder()
-                        .put("width", 1)
-                        .put("height", "2")
-                        .build())
-                )
-                .build());
+        String url =
+                String.format(
+                        "http://%s:%d/topic/sys/%s/%s/thing/property/post",
+                        SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
+        String payload =
+                JsonUtils.toJsonString(
+                        MapUtil.builder()
+                                .put("method", IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
+                                .put(
+                                        "params",
+                                        IotDevicePropertyPostReqDTO.of(
+                                                MapUtil.<String, Object>builder()
+                                                        .put("width", 1)
+                                                        .put("height", "2")
+                                                        .build()))
+                                .build());
         // 1.2 输出请求
         log.info("[testPropertyPost][请求 URL: {}]", url);
         log.info("[testPropertyPost][请求体: {}]", payload);
 
         // 2.1 发送请求
-        try (HttpResponse httpResponse = HttpUtil.createPost(url)
-                .header("Authorization", TOKEN)
-                .body(payload)
-                .execute()) {
+        try (HttpResponse httpResponse =
+                HttpUtil.createPost(url).header("Authorization", TOKEN).body(payload).execute()) {
             // 2.2 输出结果
             log.info("[testPropertyPost][响应体: {}]", httpResponse.body());
         }
@@ -121,25 +129,30 @@ public class IotDirectDeviceHttpProtocolIntegrationTest {
     @Test
     public void testEventPost() {
         // 1.1 构建请求
-        String url = String.format("http://%s:%d/topic/sys/%s/%s/thing/event/post",
-                SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
-        String payload = JsonUtils.toJsonString(MapUtil.builder()
-                .put("method", IotDeviceMessageMethodEnum.EVENT_POST.getMethod())
-                .put("params", IotDeviceEventPostReqDTO.of(
-                        "eat",
-                        MapUtil.<String, Object>builder().put("rice", 3).build(),
-                        System.currentTimeMillis())
-                )
-                .build());
+        String url =
+                String.format(
+                        "http://%s:%d/topic/sys/%s/%s/thing/event/post",
+                        SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
+        String payload =
+                JsonUtils.toJsonString(
+                        MapUtil.builder()
+                                .put("method", IotDeviceMessageMethodEnum.EVENT_POST.getMethod())
+                                .put(
+                                        "params",
+                                        IotDeviceEventPostReqDTO.of(
+                                                "eat",
+                                                MapUtil.<String, Object>builder()
+                                                        .put("rice", 3)
+                                                        .build(),
+                                                System.currentTimeMillis()))
+                                .build());
         // 1.2 输出请求
         log.info("[testEventPost][请求 URL: {}]", url);
         log.info("[testEventPost][请求体: {}]", payload);
 
         // 2.1 发送请求
-        try (HttpResponse httpResponse = HttpUtil.createPost(url)
-                .header("Authorization", TOKEN)
-                .body(payload)
-                .execute()) {
+        try (HttpResponse httpResponse =
+                HttpUtil.createPost(url).header("Authorization", TOKEN).body(payload).execute()) {
             // 2.2 输出结果
             log.info("[testEventPost][响应体: {}]", httpResponse.body());
         }
@@ -162,10 +175,11 @@ public class IotDirectDeviceHttpProtocolIntegrationTest {
         String deviceName = "test-" + System.currentTimeMillis();
         String productSecret = "test-product-secret"; // 替换为实际的 productSecret
         String sign = IotProductAuthUtils.buildSign(PRODUCT_KEY, deviceName, productSecret);
-        IotDeviceRegisterReqDTO reqDTO = new IotDeviceRegisterReqDTO()
-                .setProductKey(PRODUCT_KEY)
-                .setDeviceName(deviceName)
-                .setSign(sign);
+        IotDeviceRegisterReqDTO reqDTO =
+                new IotDeviceRegisterReqDTO()
+                        .setProductKey(PRODUCT_KEY)
+                        .setDeviceName(deviceName)
+                        .setSign(sign);
         String payload = JsonUtils.toJsonString(reqDTO);
         // 1.3 输出请求
         log.info("[testDeviceRegister][请求 URL: {}]", url);
@@ -177,5 +191,4 @@ public class IotDirectDeviceHttpProtocolIntegrationTest {
         log.info("[testDeviceRegister][响应体: {}]", response);
         log.info("[testDeviceRegister][成功后可使用返回的 deviceSecret 进行一机一密认证]");
     }
-
 }

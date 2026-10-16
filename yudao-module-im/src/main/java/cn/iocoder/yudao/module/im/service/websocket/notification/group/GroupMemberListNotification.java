@@ -16,5 +16,4 @@ public abstract class GroupMemberListNotification extends BaseGroupNotification 
      * 受影响的成员用户编号列表
      */
     private List<Long> memberUserIds;
-
 }

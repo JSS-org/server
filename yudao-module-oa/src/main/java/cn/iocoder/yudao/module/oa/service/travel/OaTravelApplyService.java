@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.oa.service.travel;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import jakarta.validation.Valid;
 import cn.iocoder.yudao.module.oa.controller.admin.travel.vo.apply.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.travel.OaTravelApplyDO;
+
+import jakarta.validation.Valid;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 出差申请 Service 接口
@@ -83,7 +85,8 @@ public interface OaTravelApplyService {
      * @param startTime 申请开始时间范围，包含边界；跨月申请整笔计入开始月份
      * @return 用户编号与出差天数的映射，无申请的用户不返回
      */
-    Map<Long, Integer> getApprovedTravelDaysMap(Collection<Long> userIds, LocalDateTime[] startTime);
+    Map<Long, Integer> getApprovedTravelDaysMap(
+            Collection<Long> userIds, LocalDateTime[] startTime);
 
     /**
      * 更新出差申请审批状态
@@ -134,5 +137,4 @@ public interface OaTravelApplyService {
      * @param id 申请编号
      */
     void updateTravelApplyReimburseStatus(Long id);
-
 }

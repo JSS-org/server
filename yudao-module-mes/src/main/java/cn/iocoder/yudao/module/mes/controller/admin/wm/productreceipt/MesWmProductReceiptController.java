@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -19,12 +23,15 @@ import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.wm.productreceipt.MesWmProductReceiptService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,36 +41,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 产品收货单")
 @RestController
 @RequestMapping("/mes/wm/product-receipt")
 @Validated
 public class MesWmProductReceiptController {
 
-    @Resource
-    private MesWmProductReceiptService productReceiptService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesWmProductReceiptService productReceiptService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
 
     @PostMapping("/create")
     @Operation(summary = "创建产品收货单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-receipt:create')")
-    public CommonResult<Long> createProductReceipt(@Valid @RequestBody MesWmProductReceiptSaveReqVO createReqVO) {
+    public CommonResult<Long> createProductReceipt(
+            @Valid @RequestBody MesWmProductReceiptSaveReqVO createReqVO) {
         return success(productReceiptService.createProductReceipt(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改产品收货单")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-receipt:update')")
-    public CommonResult<Boolean> updateProductReceipt(@Valid @RequestBody MesWmProductReceiptSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProductReceipt(
+            @Valid @RequestBody MesWmProductReceiptSaveReqVO updateReqVO) {
         productReceiptService.updateProductReceipt(updateReqVO);
         return success(true);
     }
@@ -94,19 +95,27 @@ public class MesWmProductReceiptController {
     @PreAuthorize("@ss.hasPermission('mes:wm-product-receipt:query')")
     public CommonResult<PageResult<MesWmProductReceiptRespVO>> getProductReceiptPage(
             @Valid MesWmProductReceiptPageReqVO pageReqVO) {
-        PageResult<MesWmProductReceiptDO> pageResult = productReceiptService.getProductReceiptPage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmProductReceiptDO> pageResult =
+                productReceiptService.getProductReceiptPage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出产品收货单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-product-receipt:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportProductReceiptExcel(@Valid MesWmProductReceiptPageReqVO pageReqVO,
-                                        HttpServletResponse response) throws IOException {
+    public void exportProductReceiptExcel(
+            @Valid MesWmProductReceiptPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmProductReceiptDO> pageResult = productReceiptService.getProductReceiptPage(pageReqVO);
-        ExcelUtils.write(response, "产品收货单.xls", "数据", MesWmProductReceiptRespVO.class,
+        PageResult<MesWmProductReceiptDO> pageResult =
+                productReceiptService.getProductReceiptPage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "产品收货单.xls",
+                "数据",
+                MesWmProductReceiptRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -161,22 +170,36 @@ public class MesWmProductReceiptController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesProWorkOrderDO> workOrderMap = workOrderService.getWorkOrderMap(
-                convertSet(list, MesWmProductReceiptDO::getWorkOrderId));
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesWmProductReceiptDO::getItemId));
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesProWorkOrderDO> workOrderMap =
+                workOrderService.getWorkOrderMap(
+                        convertSet(list, MesWmProductReceiptDO::getWorkOrderId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesWmProductReceiptDO::getItemId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmProductReceiptRespVO.class, vo -> {
-            MapUtils.findAndThen(workOrderMap, vo.getWorkOrderId(),
-                    workOrder -> vo.setWorkOrderCode(workOrder.getCode()));
-            MapUtils.findAndThen(itemMap, vo.getItemId(), item -> {
-                vo.setItemCode(item.getCode()).setItemName(item.getName()).setSpecification(item.getSpecification());
-                MapUtils.findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unitMeasure -> vo.setUnitMeasureName(unitMeasure.getName()));
-            });
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmProductReceiptRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            workOrderMap,
+                            vo.getWorkOrderId(),
+                            workOrder -> vo.setWorkOrderCode(workOrder.getCode()));
+                    MapUtils.findAndThen(
+                            itemMap,
+                            vo.getItemId(),
+                            item -> {
+                                vo.setItemCode(item.getCode())
+                                        .setItemName(item.getName())
+                                        .setSpecification(item.getSpecification());
+                                MapUtils.findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unitMeasure ->
+                                                vo.setUnitMeasureName(unitMeasure.getName()));
+                            });
+                });
     }
-
 }

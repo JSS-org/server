@@ -1,16 +1,21 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.monthrecord.HrmInsuranceMonthRecordCreateReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.monthrecord.HrmInsuranceMonthRecordRespVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.monthrecord.HrmInsuranceMonthRecordDO;
 import cn.iocoder.yudao.module.hrm.service.insurance.monthrecord.HrmInsuranceMonthRecordService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,16 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - HRM 月度社保表")
 @RestController
 @RequestMapping("/hrm/insurance/month-record")
 @Validated
 public class HrmInsuranceMonthRecordController {
 
-    @Resource
-    private HrmInsuranceMonthRecordService insuranceMonthRecordService;
+    @Resource private HrmInsuranceMonthRecordService insuranceMonthRecordService;
 
     @PostMapping("/create-first")
     @Operation(summary = "创建首月社保表")
@@ -81,8 +83,8 @@ public class HrmInsuranceMonthRecordController {
     @PreAuthorize("@ss.hasPermission('hrm:insurance:month-record:query')")
     public CommonResult<List<HrmInsuranceMonthRecordRespVO>> getMonthRecordList(
             @RequestParam(value = "year", required = false) Integer year) {
-        List<HrmInsuranceMonthRecordDO> monthRecords = insuranceMonthRecordService.getMonthRecordList(year);
+        List<HrmInsuranceMonthRecordDO> monthRecords =
+                insuranceMonthRecordService.getMonthRecordList(year);
         return success(BeanUtils.toBean(monthRecords, HrmInsuranceMonthRecordRespVO.class));
     }
-
 }

@@ -4,11 +4,15 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.recruit.post.HrmRecruitPostStatusEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 招聘职位状态修改 Request VO")
@@ -34,5 +38,4 @@ public class HrmRecruitPostStatusReqVO {
         return ObjUtil.notEqual(HrmRecruitPostStatusEnum.STOPPED.getStatus(), status)
                 || StrUtil.isNotBlank(stopReason);
     }
-
 }

@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.crm.service.contact;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.pojo.PageParam.PAGE_SIZE_NONE;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+
+import static java.util.Collections.singletonList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -21,10 +30,13 @@ import cn.iocoder.yudao.module.crm.service.permission.CrmPermissionService;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionCreateReqBO;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmPermissionTransferReqBO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,14 +45,6 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.pojo.PageParam.PAGE_SIZE_NONE;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
-import static java.util.Collections.singletonList;
 
 /**
  * CRM 联系人 Service 实现类
@@ -51,27 +55,22 @@ import static java.util.Collections.singletonList;
 @Validated
 public class CrmContactServiceImpl implements CrmContactService {
 
-    @Resource
-    private CrmContactMapper contactMapper;
+    @Resource private CrmContactMapper contactMapper;
 
-    @Resource
-    private CrmCustomerService customerService;
-    @Resource
-    private CrmPermissionService permissionService;
-    @Resource
-    @Lazy
-    private CrmContractService contractService;
-    @Resource
-    private CrmContactBusinessService contactBusinessService;
-    @Resource
-    private CrmBusinessService businessService;
+    @Resource private CrmCustomerService customerService;
+    @Resource private CrmPermissionService permissionService;
+    @Resource @Lazy private CrmContractService contractService;
+    @Resource private CrmContactBusinessService contactBusinessService;
+    @Resource private CrmBusinessService businessService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTACT_TYPE, subType = CRM_CONTACT_CREATE_SUB_TYPE, bizNo = "{{#contact.id}}",
+    @LogRecord(
+            type = CRM_CONTACT_TYPE,
+            subType = CRM_CONTACT_CREATE_SUB_TYPE,
+            bizNo = "{{#contact.id}}",
             success = CRM_CONTACT_CREATE_SUCCESS)
     public Long createContact(CrmContactSaveReqVO createReqVO, Long userId) {
         createReqVO.setId(null);
@@ -83,14 +82,19 @@ public class CrmContactServiceImpl implements CrmContactService {
         contactMapper.insert(contact);
 
         // 3. 创建数据权限
-        permissionService.createPermission(new CrmPermissionCreateReqBO().setUserId(userId)
-                .setBizType(CrmBizTypeEnum.CRM_CONTACT.getType()).setBizId(contact.getId())
-                .setLevel(CrmPermissionLevelEnum.OWNER.getLevel()));
+        permissionService.createPermission(
+                new CrmPermissionCreateReqBO()
+                        .setUserId(userId)
+                        .setBizType(CrmBizTypeEnum.CRM_CONTACT.getType())
+                        .setBizId(contact.getId())
+                        .setLevel(CrmPermissionLevelEnum.OWNER.getLevel()));
 
         // 4. 如果有关联商机，则需要创建关联
         if (createReqVO.getBusinessId() != null) {
-            contactBusinessService.createContactBusinessList(new CrmContactBusinessReqVO()
-                    .setContactId(contact.getId()).setBusinessIds(singletonList(createReqVO.getBusinessId())));
+            contactBusinessService.createContactBusinessList(
+                    new CrmContactBusinessReqVO()
+                            .setContactId(contact.getId())
+                            .setBusinessIds(singletonList(createReqVO.getBusinessId())));
         }
 
         // 5. 记录操作日志
@@ -100,9 +104,15 @@ public class CrmContactServiceImpl implements CrmContactService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTACT_TYPE, subType = CRM_CONTACT_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
+    @LogRecord(
+            type = CRM_CONTACT_TYPE,
+            subType = CRM_CONTACT_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
             success = CRM_CONTACT_UPDATE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTACT, bizId = "#updateReqVO.id", level = CrmPermissionLevelEnum.WRITE)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTACT,
+            bizId = "#updateReqVO.id",
+            level = CrmPermissionLevelEnum.WRITE)
     public void updateContact(CrmContactSaveReqVO updateReqVO) {
         // 1.1 校验存在
         CrmContactDO oldContact = validateContactExists(updateReqVO.getId());
@@ -115,7 +125,9 @@ public class CrmContactServiceImpl implements CrmContactService {
 
         // 3. 记录操作日志
         updateReqVO.setOwnerUserId(oldContact.getOwnerUserId()); // 避免操作日志出现“删除负责人”的情况
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(oldContact, CrmContactSaveReqVO.class));
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
+                BeanUtils.toBean(oldContact, CrmContactSaveReqVO.class));
         LogRecordContext.putVariable("contactName", oldContact.getName());
     }
 
@@ -126,7 +138,8 @@ public class CrmContactServiceImpl implements CrmContactService {
      */
     private void validateRelationDataExists(CrmContactSaveReqVO saveReqVO) {
         // 1. 校验客户
-        if (saveReqVO.getCustomerId() != null && customerService.getCustomer(saveReqVO.getCustomerId()) == null) {
+        if (saveReqVO.getCustomerId() != null
+                && customerService.getCustomer(saveReqVO.getCustomerId()) == null) {
             customerService.validateCustomer(saveReqVO.getCustomerId());
         }
         // 2. 校验负责人
@@ -138,16 +151,23 @@ public class CrmContactServiceImpl implements CrmContactService {
             validateContactExists(saveReqVO.getParentId());
         }
         // 4. 如果有关联商机，则需要校验存在
-        if (saveReqVO.getBusinessId() != null && businessService.getBusiness(saveReqVO.getBusinessId()) == null) {
+        if (saveReqVO.getBusinessId() != null
+                && businessService.getBusiness(saveReqVO.getBusinessId()) == null) {
             throw exception(BUSINESS_NOT_EXISTS);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTACT_TYPE, subType = CRM_CONTACT_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_CONTACT_TYPE,
+            subType = CRM_CONTACT_DELETE_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_CONTACT_DELETE_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTACT, bizId = "#id", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.OWNER)
     public void deleteContact(Long id) {
         // 1.1 校验存在
         CrmContactDO contact = validateContactExists(id);
@@ -178,18 +198,30 @@ public class CrmContactServiceImpl implements CrmContactService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = CRM_CONTACT_TYPE, subType = CRM_CONTACT_TRANSFER_SUB_TYPE, bizNo = "{{#reqVO.id}}",
+    @LogRecord(
+            type = CRM_CONTACT_TYPE,
+            subType = CRM_CONTACT_TRANSFER_SUB_TYPE,
+            bizNo = "{{#reqVO.id}}",
             success = CRM_CONTACT_TRANSFER_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTACT, bizId = "#reqVO.id", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTACT,
+            bizId = "#reqVO.id",
+            level = CrmPermissionLevelEnum.OWNER)
     public void transferContact(CrmContactTransferReqVO reqVO, Long userId) {
         // 1 校验联系人是否存在
         CrmContactDO contact = validateContactExists(reqVO.getId());
 
         // 2.1 数据权限转移
-        permissionService.transferPermission(new CrmPermissionTransferReqBO(userId, CrmBizTypeEnum.CRM_CONTACT.getType(),
-                reqVO.getId(), reqVO.getNewOwnerUserId(), reqVO.getOldOwnerPermissionLevel()));
+        permissionService.transferPermission(
+                new CrmPermissionTransferReqBO(
+                        userId,
+                        CrmBizTypeEnum.CRM_CONTACT.getType(),
+                        reqVO.getId(),
+                        reqVO.getNewOwnerUserId(),
+                        reqVO.getOldOwnerPermissionLevel()));
         // 2.2 设置新的负责人
-        contactMapper.updateById(new CrmContactDO().setId(reqVO.getId()).setOwnerUserId(reqVO.getNewOwnerUserId()));
+        contactMapper.updateById(
+                new CrmContactDO().setId(reqVO.getId()).setOwnerUserId(reqVO.getNewOwnerUserId()));
 
         // 3. 记录转移日志
         LogRecordContext.putVariable("contact", contact);
@@ -197,7 +229,10 @@ public class CrmContactServiceImpl implements CrmContactService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CUSTOMER, bizId = "#customerId", level = CrmPermissionLevelEnum.OWNER)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CUSTOMER,
+            bizId = "#customerId",
+            level = CrmPermissionLevelEnum.OWNER)
     public void updateOwnerUserIdByCustomerId(Long customerId, Long ownerUserId) {
         // 1. 校验存在
         List<CrmContactDO> contacts = contactMapper.selectListByCustomerId(customerId);
@@ -215,7 +250,10 @@ public class CrmContactServiceImpl implements CrmContactService {
         }
     }
 
-    @LogRecord(type = CRM_CONTACT_TYPE, subType = CRM_CONTACT_UPDATE_OWNER_USER_SUB_TYPE, bizNo = "{{#contact.id}}",
+    @LogRecord(
+            type = CRM_CONTACT_TYPE,
+            subType = CRM_CONTACT_UPDATE_OWNER_USER_SUB_TYPE,
+            bizNo = "{{#contact.id}}",
             success = CRM_CONTACT_UPDATE_OWNER_USER_SUCCESS)
     public void receiveContactLog(CrmContactDO contact, Long ownerUserId) {
         // 记录操作日志上下文
@@ -224,31 +262,51 @@ public class CrmContactServiceImpl implements CrmContactService {
     }
 
     @Override
-    @LogRecord(type = CRM_CONTACT_TYPE, subType = CRM_CONTACT_FOLLOW_UP_SUB_TYPE, bizNo = "{{#id}}",
+    @LogRecord(
+            type = CRM_CONTACT_TYPE,
+            subType = CRM_CONTACT_FOLLOW_UP_SUB_TYPE,
+            bizNo = "{{#id}}",
             success = CRM_CONTACT_FOLLOW_UP_SUCCESS)
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTACT, bizId = "#id", level = CrmPermissionLevelEnum.WRITE)
-    public void updateContactFollowUp(Long id, LocalDateTime contactNextTime, String contactLastContent) {
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.WRITE)
+    public void updateContactFollowUp(
+            Long id, LocalDateTime contactNextTime, String contactLastContent) {
         // 1. 校验存在
         CrmContactDO contact = validateContactExists(id);
 
         // 2. 更新联系人的跟进信息
-        contactMapper.updateById(new CrmContactDO().setId(id).setContactNextTime(contactNextTime)
-                .setContactLastTime(LocalDateTime.now()).setContactLastContent(contactLastContent));
+        contactMapper.updateById(
+                new CrmContactDO()
+                        .setId(id)
+                        .setContactNextTime(contactNextTime)
+                        .setContactLastTime(LocalDateTime.now())
+                        .setContactLastContent(contactLastContent));
 
         // 3. 记录操作日志上下文
         LogRecordContext.putVariable("contactName", contact.getName());
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTACT, bizId = "#ids", level = CrmPermissionLevelEnum.WRITE)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTACT,
+            bizId = "#ids",
+            level = CrmPermissionLevelEnum.WRITE)
     public void updateContactContactNextTime(Collection<Long> ids, LocalDateTime contactNextTime) {
-        contactMapper.updateBatch(convertList(ids, id -> new CrmContactDO().setId(id).setContactNextTime(contactNextTime)));
+        contactMapper.updateBatch(
+                convertList(
+                        ids,
+                        id -> new CrmContactDO().setId(id).setContactNextTime(contactNextTime)));
     }
 
-    //======================= 查询相关 =======================
+    // ======================= 查询相关 =======================
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CONTACT, bizId = "#id", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CONTACT,
+            bizId = "#id",
+            level = CrmPermissionLevelEnum.READ)
     public CrmContactDO getContact(Long id) {
         return contactMapper.selectById(id);
     }
@@ -279,19 +337,27 @@ public class CrmContactServiceImpl implements CrmContactService {
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CUSTOMER, bizId = "#pageVO.customerId", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CUSTOMER,
+            bizId = "#pageVO.customerId",
+            level = CrmPermissionLevelEnum.READ)
     public PageResult<CrmContactDO> getContactPageByCustomerId(CrmContactPageReqVO pageVO) {
         return contactMapper.selectPageByCustomerId(pageVO);
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_BUSINESS, bizId = "#pageVO.businessId", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_BUSINESS,
+            bizId = "#pageVO.businessId",
+            level = CrmPermissionLevelEnum.READ)
     public PageResult<CrmContactDO> getContactPageByBusinessId(CrmContactPageReqVO pageVO) {
-        List<CrmContactBusinessDO> contactBusinessList = contactBusinessService.getContactBusinessListByBusinessId(pageVO.getBusinessId());
+        List<CrmContactBusinessDO> contactBusinessList =
+                contactBusinessService.getContactBusinessListByBusinessId(pageVO.getBusinessId());
         if (CollUtil.isEmpty(contactBusinessList)) {
             return PageResult.empty();
         }
-        return contactMapper.selectPageByBusinessId(pageVO, convertSet(contactBusinessList, CrmContactBusinessDO::getContactId));
+        return contactMapper.selectPageByBusinessId(
+                pageVO, convertSet(contactBusinessList, CrmContactBusinessDO::getContactId));
     }
 
     @Override
@@ -300,14 +366,17 @@ public class CrmContactServiceImpl implements CrmContactService {
     }
 
     @Override
-    public List<CrmContactDO> getContactListByCustomerIdOwnerUserId(Long customerId, Long ownerUserId) {
+    public List<CrmContactDO> getContactListByCustomerIdOwnerUserId(
+            Long customerId, Long ownerUserId) {
         return contactMapper.selectListByCustomerIdOwnerUserId(customerId, ownerUserId);
     }
 
     @Override
-    @CrmPermission(bizType = CrmBizTypeEnum.CRM_CUSTOMER, bizId = "#customerId", level = CrmPermissionLevelEnum.READ)
+    @CrmPermission(
+            bizType = CrmBizTypeEnum.CRM_CUSTOMER,
+            bizId = "#customerId",
+            level = CrmPermissionLevelEnum.READ)
     public List<CrmContactDO> getContactListByCustomerId(Long customerId) {
         return contactMapper.selectListByCustomerId(customerId);
     }
-
 }

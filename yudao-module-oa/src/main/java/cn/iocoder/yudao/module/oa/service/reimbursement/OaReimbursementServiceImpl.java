@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.service.reimbursement;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,7 +17,9 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.reimbursement.OaReimbursementDO
 import cn.iocoder.yudao.module.oa.dal.mysql.reimbursement.OaReimbursementMapper;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -21,10 +27,6 @@ import org.springframework.validation.annotation.Validated;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 费用报销 Service 实现类
@@ -35,12 +37,9 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaReimbursementServiceImpl implements OaReimbursementService {
 
-    @Resource
-    private OaReimbursementMapper reimbursementMapper;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private OaReimbursementMapper reimbursementMapper;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -49,8 +48,9 @@ public class OaReimbursementServiceImpl implements OaReimbursementService {
         adminUserApi.validateUser(saveReqVO.getWitnessUserId());
 
         // 2. 转换申请内容、汇总金额和票据数，保存草稿
-        OaReimbursementDO reimbursement = buildReimbursement(saveReqVO)
-                .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
+        OaReimbursementDO reimbursement =
+                buildReimbursement(saveReqVO)
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
         reimbursementMapper.insert(reimbursement);
         return reimbursement.getId();
     }
@@ -72,21 +72,32 @@ public class OaReimbursementServiceImpl implements OaReimbursementService {
     @Transactional(rollbackFor = Exception.class)
     public void submitReimbursement(OaReimbursementSubmitReqVO submitReqVO, Long userId) {
         // 1. 校验申请可提交
-        OaReimbursementDO reimbursement = validateReimbursementEditable(submitReqVO.getId(), userId);
+        OaReimbursementDO reimbursement =
+                validateReimbursementEditable(submitReqVO.getId(), userId);
 
         // 2. 更新为审批中
-        reimbursementMapper.updateById(new OaReimbursementDO().setId(reimbursement.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        reimbursementMapper.updateById(
+                new OaReimbursementDO()
+                        .setId(reimbursement.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
         variables.put("totalPrice", reimbursement.getTotalPrice());
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.REIMBURSEMENT)
-                        .setBusinessKey(reimbursement.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.REIMBURSEMENT)
+                                .setBusinessKey(reimbursement.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        reimbursementMapper.updateById(new OaReimbursementDO().setId(reimbursement.getId()).setProcessInstanceId(processInstanceId));
+        reimbursementMapper.updateById(
+                new OaReimbursementDO()
+                        .setId(reimbursement.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -95,7 +106,8 @@ public class OaReimbursementServiceImpl implements OaReimbursementService {
     }
 
     @Override
-    public PageResult<OaReimbursementDO> getReimbursementPage(Long userId, OaReimbursementPageReqVO pageReqVO) {
+    public PageResult<OaReimbursementDO> getReimbursementPage(
+            Long userId, OaReimbursementPageReqVO pageReqVO) {
         return reimbursementMapper.selectPage(userId, pageReqVO);
     }
 
@@ -118,10 +130,22 @@ public class OaReimbursementServiceImpl implements OaReimbursementService {
     private OaReimbursementDO buildReimbursement(OaReimbursementSaveReqVO saveReqVO) {
         // 1. 转换申请及报销明细
         OaReimbursementDO reimbursement = BeanUtils.toBean(saveReqVO, OaReimbursementDO.class);
-        reimbursement.setItems(BeanUtils.toBean(saveReqVO.getItems(), OaReimbursementDO.Item.class));
+        reimbursement.setItems(
+                BeanUtils.toBean(saveReqVO.getItems(), OaReimbursementDO.Item.class));
         // 2. 汇总金额和票据数
-        reimbursement.setTotalPrice(getSumValue(reimbursement.getItems(), OaReimbursementDO.Item::getPrice, BigDecimal::add, BigDecimal.ZERO))
-                .setInvoiceCount(getSumValue(reimbursement.getItems(), OaReimbursementDO.Item::getInvoiceCount, Math::addExact, 0));
+        reimbursement
+                .setTotalPrice(
+                        getSumValue(
+                                reimbursement.getItems(),
+                                OaReimbursementDO.Item::getPrice,
+                                BigDecimal::add,
+                                BigDecimal.ZERO))
+                .setInvoiceCount(
+                        getSumValue(
+                                reimbursement.getItems(),
+                                OaReimbursementDO.Item::getInvoiceCount,
+                                Math::addExact,
+                                0));
         return reimbursement;
     }
 
@@ -143,7 +167,8 @@ public class OaReimbursementServiceImpl implements OaReimbursementService {
             throw exception(APPLY_ACCESS_DENIED);
         }
         // 3. 只有未提交草稿允许修改或提交
-        if (ObjUtil.notEqual(reimbursement.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                reimbursement.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(APPLY_STATUS_INVALID);
         }
         return reimbursement;
@@ -162,5 +187,4 @@ public class OaReimbursementServiceImpl implements OaReimbursementService {
         }
         return reimbursement;
     }
-
 }

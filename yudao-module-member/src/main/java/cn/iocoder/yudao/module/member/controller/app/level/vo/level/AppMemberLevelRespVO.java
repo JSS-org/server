@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.app.level.vo.level;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户 App - 会员等级 Response VO")
@@ -24,5 +25,4 @@ public class AppMemberLevelRespVO {
 
     @Schema(description = "等级背景图", example = "https://www.iocoder.cn/yudao.jpg")
     private String backgroundUrl;
-
 }

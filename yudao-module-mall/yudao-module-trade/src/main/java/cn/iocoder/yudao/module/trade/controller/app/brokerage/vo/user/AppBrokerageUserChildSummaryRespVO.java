@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,10 @@ public class AppBrokerageUserChildSummaryRespVO {
     @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "小王")
     private String nickname;
 
-    @Schema(description = "用户头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xxx.jpg")
+    @Schema(
+            description = "用户头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xxx.jpg")
     private String avatar;
 
     @Schema(description = "佣金金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
@@ -29,5 +33,4 @@ public class AppBrokerageUserChildSummaryRespVO {
 
     @Schema(description = "绑定推广员的时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime brokerageTime;
-
 }

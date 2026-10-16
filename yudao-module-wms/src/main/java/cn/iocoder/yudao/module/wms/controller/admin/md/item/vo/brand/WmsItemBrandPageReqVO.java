@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.brand;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class WmsItemBrandPageReqVO extends PageParam {
 
     @Schema(description = "品牌名称", example = "华为")
     private String name;
-
 }

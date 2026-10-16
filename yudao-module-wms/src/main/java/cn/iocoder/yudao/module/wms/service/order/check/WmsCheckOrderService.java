@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.order.WmsCheckOrderPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.order.WmsCheckOrderSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.check.WmsCheckOrderDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -72,5 +73,4 @@ public interface WmsCheckOrderService {
      * @return 盘库单数量
      */
     long getCheckOrderCountByWarehouseId(Long warehouseId);
-
 }

@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Schema(description = "管理后台 - 套红模板 Response VO")
 @Data
@@ -44,5 +45,4 @@ public class OaOfficialDocTemplateRespVO {
 
     @Schema(description = "创建时间", type = "integer", format = "int64", example = "1789347600000")
     private LocalDateTime createTime;
-
 }

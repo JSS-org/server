@@ -2,11 +2,15 @@ package cn.iocoder.yudao.module.im.controller.admin.message.vo.group;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,7 +22,10 @@ import java.util.List;
 @Data
 public class ImGroupMessageSendReqVO {
 
-    @Schema(description = "客户端消息编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "uuid-xxx")
+    @Schema(
+            description = "客户端消息编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "uuid-xxx")
     @NotEmpty(message = "客户端消息编号不能为空")
     private String clientMessageId;
 
@@ -31,7 +38,10 @@ public class ImGroupMessageSendReqVO {
     @InEnum(ImContentTypeEnum.class)
     private Integer type;
 
-    @Schema(description = "消息内容，JSON 格式", requiredMode = Schema.RequiredMode.REQUIRED, example = "{\"content\":\"你好\"}")
+    @Schema(
+            description = "消息内容，JSON 格式",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "{\"content\":\"你好\"}")
     @NotEmpty(message = "消息内容不能为空")
     private String content;
 
@@ -49,5 +59,4 @@ public class ImGroupMessageSendReqVO {
     public boolean isTypeNormal() {
         return type == null || ImContentTypeEnum.validate(type).isNormal();
     }
-
 }

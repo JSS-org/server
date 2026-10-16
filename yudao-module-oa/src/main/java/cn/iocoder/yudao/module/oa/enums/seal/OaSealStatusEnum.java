@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.seal;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,18 +16,18 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaSealStatusEnum implements ArrayValuable<Integer> {
-
     AVAILABLE(0, "在库"),
     DISABLED(1, "停用"),
     IN_USE(2, "使用中");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaSealStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaSealStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 印章台账状态
      */
     private final Integer status;
+
     /**
      * 名称
      */
@@ -40,5 +41,4 @@ public enum OaSealStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

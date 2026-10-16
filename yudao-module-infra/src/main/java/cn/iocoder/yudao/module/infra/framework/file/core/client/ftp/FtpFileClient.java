@@ -23,6 +23,7 @@ public class FtpFileClient extends AbstractFileClient<FtpFileClientConfig> {
      * 连接超时时间，单位：毫秒
      */
     private static final Long CONNECTION_TIMEOUT = 3000L;
+
     /**
      * 读写超时时间，单位：毫秒
      */
@@ -37,8 +38,15 @@ public class FtpFileClient extends AbstractFileClient<FtpFileClientConfig> {
     @Override
     protected void doInit() {
         // 初始化 Ftp 对象：https://gitee.com/zhijiantianya/yudao-cloud/pulls/207/
-        FtpConfig ftpConfig = new FtpConfig(config.getHost(), config.getPort(), config.getUsername(), config.getPassword(),
-                CharsetUtil.CHARSET_UTF_8, null, null);
+        FtpConfig ftpConfig =
+                new FtpConfig(
+                        config.getHost(),
+                        config.getPort(),
+                        config.getUsername(),
+                        config.getPassword(),
+                        CharsetUtil.CHARSET_UTF_8,
+                        null,
+                        null);
         ftpConfig.setConnectionTimeout(CONNECTION_TIMEOUT);
         ftpConfig.setSoTimeout(SO_TIMEOUT);
         this.ftp = new Ftp(ftpConfig, FtpMode.valueOf(config.getMode()));
@@ -51,7 +59,11 @@ public class FtpFileClient extends AbstractFileClient<FtpFileClientConfig> {
         String fileName = FileUtil.getName(filePath);
         String dir = StrUtil.removeSuffix(filePath, fileName);
         reconnectIfTimeout();
-        boolean success = ftp.upload(dir, fileName, new ByteArrayInputStream(content)); // 不需要主动创建目录，ftp 内部已经处理（见源码）
+        boolean success =
+                ftp.upload(
+                        dir,
+                        fileName,
+                        new ByteArrayInputStream(content)); // 不需要主动创建目录，ftp 内部已经处理（见源码）
         if (!success) {
             throw new FtpException(StrUtil.format("上传文件到目标目录 ({}) 失败", filePath));
         }
@@ -84,5 +96,4 @@ public class FtpFileClient extends AbstractFileClient<FtpFileClientConfig> {
     private synchronized void reconnectIfTimeout() {
         ftp.reconnectIfTimeout();
     }
-
 }

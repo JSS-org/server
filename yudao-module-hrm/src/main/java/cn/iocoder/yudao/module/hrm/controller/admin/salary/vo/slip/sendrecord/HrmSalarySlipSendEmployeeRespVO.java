@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -9,7 +10,10 @@ import java.math.BigDecimal;
 @Data
 public class HrmSalarySlipSendEmployeeRespVO {
 
-    @Schema(description = "员工月度工资记录编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "员工月度工资记录编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Long monthEmployeeRecordId;
 
     @Schema(description = "员工编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
@@ -41,5 +45,4 @@ public class HrmSalarySlipSendEmployeeRespVO {
 
     @Schema(description = "是否已发送", example = "false")
     private Boolean sent;
-
 }

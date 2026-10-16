@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.tenant.config;
 
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.Collections;
@@ -53,5 +54,4 @@ public class TenantProperties {
      * 即默认所有缓存都开启多租户的功能，所以记得添加对应的 tenant_id 字段哟
      */
     private Set<String> ignoreCaches = Collections.emptySet();
-
 }

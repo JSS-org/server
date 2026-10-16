@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem.FmsAuxiliaryItemImportExcelVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem.FmsAuxiliaryItemImportRespVO;
@@ -7,11 +9,9 @@ import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem.FmsA
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem.FmsAuxiliaryItemSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryItemDO;
 
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * FMS 辅助核算项目 Service 接口
@@ -65,8 +65,11 @@ public interface FmsAuxiliaryItemService {
      * @param userId 当前用户编号
      * @return 导入结果
      */
-    FmsAuxiliaryItemImportRespVO importAuxiliaryItemList(Long accountSetId, Long auxiliaryTypeId,
-            List<FmsAuxiliaryItemImportExcelVO> importItems, Long userId);
+    FmsAuxiliaryItemImportRespVO importAuxiliaryItemList(
+            Long accountSetId,
+            Long auxiliaryTypeId,
+            List<FmsAuxiliaryItemImportExcelVO> importItems,
+            Long userId);
 
     /**
      * 获得辅助核算项目分页
@@ -129,7 +132,8 @@ public interface FmsAuxiliaryItemService {
      */
     default Map<String, FmsAuxiliaryItemDO> getAuxiliaryItemMapByTypeIdAndCode(
             Long accountSetId, Long userId) {
-        return convertMap(getAuxiliaryItemListByAccountSetId(accountSetId, userId),
+        return convertMap(
+                getAuxiliaryItemListByAccountSetId(accountSetId, userId),
                 item -> item.getAuxiliaryTypeId() + "|" + item.getCode());
     }
 
@@ -150,5 +154,4 @@ public interface FmsAuxiliaryItemService {
      * @return 辅助核算项目列表
      */
     List<FmsAuxiliaryItemDO> validateAuxiliaryItemList(Long accountSetId, Collection<Long> ids);
-
 }

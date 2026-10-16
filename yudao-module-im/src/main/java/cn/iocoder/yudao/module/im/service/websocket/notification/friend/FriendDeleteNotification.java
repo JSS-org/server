@@ -14,5 +14,4 @@ public class FriendDeleteNotification extends BaseFriendNotification {
      * 是否级联清理本端相关数据（当前包含私聊会话；未来可能扩展更多 clear 项）
      */
     private Boolean clear;
-
 }

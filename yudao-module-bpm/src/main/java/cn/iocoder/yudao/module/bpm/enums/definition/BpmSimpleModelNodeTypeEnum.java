@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.bpm.enums.definition;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -37,10 +38,12 @@ public enum BpmSimpleModelNodeTypeEnum implements ArrayValuable<Integer> {
     CONDITION_BRANCH_NODE(51, "条件分支", "exclusiveGateway"),
     PARALLEL_BRANCH_NODE(52, "并行分支", "inclusiveGateway"), // 并行分支使用包容网关实现，条件表达式结果设置为 true
     INCLUSIVE_BRANCH_NODE(53, "包容分支", "inclusiveGateway"),
-    ROUTER_BRANCH_NODE(54, "路由分支", "exclusiveGateway")
-    ;
+    ROUTER_BRANCH_NODE(54, "路由分支", "exclusiveGateway");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BpmSimpleModelNodeTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(BpmSimpleModelNodeTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     private final Integer type;
     private final String name;
@@ -66,5 +69,4 @@ public enum BpmSimpleModelNodeTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

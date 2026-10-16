@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.trade.service.price.calculator;
 
+import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import static java.util.Arrays.asList;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.member.api.level.MemberLevelApi;
 import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
@@ -10,18 +19,12 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.util.ArrayList;
-
-import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link TradeDiscountActivityPriceCalculator} 的单元测试类
@@ -30,47 +33,73 @@ import static org.mockito.Mockito.when;
  */
 public class TradeDiscountActivityPriceCalculatorTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private TradeDiscountActivityPriceCalculator tradeDiscountActivityPriceCalculator;
+    @InjectMocks private TradeDiscountActivityPriceCalculator tradeDiscountActivityPriceCalculator;
 
-    @Mock
-    private DiscountActivityApi discountActivityApi;
-    @Mock
-    private MemberLevelApi memberLevelApi;
-    @Mock
-    private MemberUserApi memberUserApi;
+    @Mock private DiscountActivityApi discountActivityApi;
+    @Mock private MemberLevelApi memberLevelApi;
+    @Mock private MemberUserApi memberUserApi;
 
     @Test
     public void testCalculate() {
         // 准备参数
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setItems(asList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(2).setSelected(true), // 匹配活动，且已选中
-                        new TradePriceCalculateReqBO.Item().setSkuId(20L).setCount(3).setSelected(false) // 匹配活动，但未选中
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(asList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(2).setSelected(true)
-                                .setPrice(100),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(20L).setCount(3).setSelected(false)
-                                .setPrice(50)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true), // 匹配活动，且已选中
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(false) // 匹配活动，但未选中
+                                        ));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true)
+                                                .setPrice(100),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(false)
+                                                .setPrice(50)));
         // 保证价格被初始化上
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法（限时折扣活动）
-        when(discountActivityApi.getMatchDiscountProductListBySkuIds(eq(asSet(10L, 20L)))).thenReturn(asList(
-                randomPojo(DiscountProductRespDTO.class, o -> o.setActivityId(1000L)
-                        .setActivityName("活动 1000 号").setSkuId(10L)
-                        .setDiscountType(PromotionDiscountTypeEnum.PRICE.getType()).setDiscountPrice(40)),
-                randomPojo(DiscountProductRespDTO.class, o -> o.setActivityId(2000L)
-                        .setActivityName("活动 2000 号").setSkuId(20L)
-                        .setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType()).setDiscountPercent(60))
-        ));
+        when(discountActivityApi.getMatchDiscountProductListBySkuIds(eq(asSet(10L, 20L))))
+                .thenReturn(
+                        asList(
+                                randomPojo(
+                                        DiscountProductRespDTO.class,
+                                        o ->
+                                                o.setActivityId(1000L)
+                                                        .setActivityName("活动 1000 号")
+                                                        .setSkuId(10L)
+                                                        .setDiscountType(
+                                                                PromotionDiscountTypeEnum.PRICE
+                                                                        .getType())
+                                                        .setDiscountPrice(40)),
+                                randomPojo(
+                                        DiscountProductRespDTO.class,
+                                        o ->
+                                                o.setActivityId(2000L)
+                                                        .setActivityName("活动 2000 号")
+                                                        .setSkuId(20L)
+                                                        .setDiscountType(
+                                                                PromotionDiscountTypeEnum.PERCENT
+                                                                        .getType())
+                                                        .setDiscountPercent(60))));
         // 10L: 100 * 2 - 40 * 2 = 120
         // 20L：50 * 3 - 50 * 3 * 0.4 = 90
 
@@ -122,5 +151,4 @@ public class TradeDiscountActivityPriceCalculatorTest extends BaseMockitoUnitTes
         assertEquals(promotionItem01.getTotalPrice(), 200);
         assertEquals(promotionItem01.getDiscountPrice(), 80);
     }
-
 }

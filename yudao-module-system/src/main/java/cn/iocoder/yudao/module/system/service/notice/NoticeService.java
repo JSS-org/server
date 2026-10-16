@@ -56,5 +56,4 @@ public interface NoticeService {
      * @return 通知公告
      */
     NoticeDO getNotice(Long id);
-
 }

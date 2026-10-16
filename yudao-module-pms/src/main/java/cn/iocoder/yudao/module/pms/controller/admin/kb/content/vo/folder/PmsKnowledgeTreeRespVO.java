@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.folder;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -12,10 +13,16 @@ public class PmsKnowledgeTreeRespVO {
     @Schema(description = "知识库编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long libraryId;
 
-    @Schema(description = "当前用户是否可编辑", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "当前用户是否可编辑",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean writeStatus;
 
-    @Schema(description = "当前用户是否可管理目录结构", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "当前用户是否可管理目录结构",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean manageStatus;
 
     @Schema(description = "根文件夹列表", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -28,19 +35,34 @@ public class PmsKnowledgeTreeRespVO {
     @Data
     public static class FolderNode {
 
-        @Schema(description = "文件夹编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "文件夹编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long id;
 
-        @Schema(description = "协作权限编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "协作权限编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long permissionId;
 
-        @Schema(description = "当前用户协作等级", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
+        @Schema(
+                description = "当前用户协作等级",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "3")
         private Integer currentUserLevel;
 
-        @Schema(description = "父文件夹编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "父文件夹编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long parentId;
 
-        @Schema(description = "文件夹标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "产品文档")
+        @Schema(
+                description = "文件夹标题",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "产品文档")
         private String title;
 
         @Schema(description = "子文件夹列表", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -57,13 +79,22 @@ public class PmsKnowledgeTreeRespVO {
         @Schema(description = "文档编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
         private Long id;
 
-        @Schema(description = "协作权限编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "协作权限编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long permissionId;
 
-        @Schema(description = "当前用户协作等级", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
+        @Schema(
+                description = "当前用户协作等级",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "3")
         private Integer currentUserLevel;
 
-        @Schema(description = "父文档编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "父文档编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long parentId;
 
         @Schema(description = "文档标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "产品说明")
@@ -78,5 +109,4 @@ public class PmsKnowledgeTreeRespVO {
         @Schema(description = "子文档列表", requiredMode = Schema.RequiredMode.REQUIRED)
         private List<DocumentNode> children;
     }
-
 }

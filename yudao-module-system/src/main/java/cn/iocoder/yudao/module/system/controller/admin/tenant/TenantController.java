@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.controller.admin.tenant;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -13,14 +17,17 @@ import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantRe
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,18 +35,13 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @Tag(name = "管理后台 - 租户")
 @RestController
 @RequestMapping("/system/tenant")
 @Validated
 public class TenantController {
 
-    @Resource
-    private TenantService tenantService;
+    @Resource private TenantService tenantService;
 
     @GetMapping("/get-id-by-name")
     @PermitAll
@@ -51,14 +53,20 @@ public class TenantController {
         return success(tenant != null ? tenant.getId() : null);
     }
 
-    @GetMapping({ "simple-list" })
+    @GetMapping({"simple-list"})
     @PermitAll
     @TenantIgnore
     @Operation(summary = "获取租户精简信息列表", description = "只包含被开启的租户，用于【首页】功能的选择租户选项")
     public CommonResult<List<TenantRespVO>> getTenantSimpleList() {
-        List<TenantDO> list = tenantService.getTenantListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, tenantDO ->
-                new TenantRespVO().setId(tenantDO.getId()).setName(tenantDO.getName())));
+        List<TenantDO> list =
+                tenantService.getTenantListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return success(
+                convertList(
+                        list,
+                        tenantDO ->
+                                new TenantRespVO()
+                                        .setId(tenantDO.getId())
+                                        .setName(tenantDO.getName())));
     }
 
     @GetMapping("/get-by-website")
@@ -67,7 +75,9 @@ public class TenantController {
     @Operation(summary = "使用域名，获得租户信息", description = "登录界面，根据用户的域名，获得租户信息")
     @Parameter(name = "website", description = "域名", required = true, example = "www.iocoder.cn")
     public CommonResult<TenantRespVO> getTenantByWebsite(
-            @RequestParam("website") @Pattern(regexp = "^[a-zA-Z0-9.-]+(:\\d{1,5})?$", message = "网站域名格式不正确") String website) {
+            @RequestParam("website")
+                    @Pattern(regexp = "^[a-zA-Z0-9.-]+(:\\d{1,5})?$", message = "网站域名格式不正确")
+                    String website) {
         TenantDO tenant = tenantService.getTenantByWebsite(website);
         if (tenant == null || CommonStatusEnum.isDisable(tenant.getStatus())) {
             return success(null);
@@ -129,12 +139,16 @@ public class TenantController {
     @Operation(summary = "导出租户 Excel")
     @PreAuthorize("@ss.hasPermission('system:tenant:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportTenantExcel(@Valid TenantPageReqVO exportReqVO, HttpServletResponse response) throws IOException {
+    public void exportTenantExcel(@Valid TenantPageReqVO exportReqVO, HttpServletResponse response)
+            throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<TenantDO> list = tenantService.getTenantPage(exportReqVO).getList();
         // 导出 Excel
-        ExcelUtils.write(response, "租户.xls", "数据", TenantRespVO.class,
+        ExcelUtils.write(
+                response,
+                "租户.xls",
+                "数据",
+                TenantRespVO.class,
                 BeanUtils.toBean(list, TenantRespVO.class));
     }
-
 }

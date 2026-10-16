@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.mes.controller.admin.qc.defectrecord.vo;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,5 +29,4 @@ public class MesQcDefectRecordPageReqVO extends PageParam {
 
     @Schema(description = "检验行 ID", example = "200")
     private Long lineId;
-
 }

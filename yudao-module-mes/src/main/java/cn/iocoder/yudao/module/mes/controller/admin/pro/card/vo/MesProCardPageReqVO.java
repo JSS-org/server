@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.card.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -23,5 +25,4 @@ public class MesProCardPageReqVO extends PageParam {
 
     @Schema(description = "批次号", example = "BATCH-001")
     private String batchCode;
-
 }

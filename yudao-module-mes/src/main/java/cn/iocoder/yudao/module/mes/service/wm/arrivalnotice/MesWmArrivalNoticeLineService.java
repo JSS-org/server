@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo.line.MesWmArrivalNoticeLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo.line.MesWmArrivalNoticeLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalNoticeLineDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -50,7 +51,8 @@ public interface MesWmArrivalNoticeLineService {
      * @param pageReqVO 分页参数
      * @return 到货通知单行分页
      */
-    PageResult<MesWmArrivalNoticeLineDO> getArrivalNoticeLinePage(MesWmArrivalNoticeLinePageReqVO pageReqVO);
+    PageResult<MesWmArrivalNoticeLineDO> getArrivalNoticeLinePage(
+            MesWmArrivalNoticeLinePageReqVO pageReqVO);
 
     /**
      * 按通知单编号获得行列表
@@ -74,7 +76,8 @@ public interface MesWmArrivalNoticeLineService {
      * @param iqcId IQC 检验单编号
      * @param qualifiedQuantity 合格数量
      */
-    void updateArrivalNoticeLineWhenIqcFinish(Long lineId, Long iqcId, BigDecimal qualifiedQuantity);
+    void updateArrivalNoticeLineWhenIqcFinish(
+            Long lineId, Long iqcId, BigDecimal qualifiedQuantity);
 
     /**
      * 校验到货通知单行存在
@@ -92,5 +95,4 @@ public interface MesWmArrivalNoticeLineService {
      * @return 到货通知单行
      */
     MesWmArrivalNoticeLineDO validateArrivalNoticeLineExists(Long lineId, Long noticeId);
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.listener;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - BPM 流程监听器新增/修改 Request VO")
@@ -16,7 +18,10 @@ public class BpmProcessListenerSaveReqVO {
     @NotEmpty(message = "监听器名字不能为空")
     private String name;
 
-    @Schema(description = "监听器类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "execution")
+    @Schema(
+            description = "监听器类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "execution")
     @NotEmpty(message = "监听器类型不能为空")
     private String type;
 
@@ -35,5 +40,4 @@ public class BpmProcessListenerSaveReqVO {
     @Schema(description = "监听器值", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty(message = "监听器值不能为空")
     private String value;
-
 }

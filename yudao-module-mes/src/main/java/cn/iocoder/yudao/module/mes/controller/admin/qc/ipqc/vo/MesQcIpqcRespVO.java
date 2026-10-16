@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.qc.ipqc.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -17,11 +19,17 @@ public class MesQcIpqcRespVO {
     @ExcelProperty("编号")
     private Long id;
 
-    @Schema(description = "检验单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "IPQC20250101001")
+    @Schema(
+            description = "检验单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "IPQC20250101001")
     @ExcelProperty("检验单编号")
     private String code;
 
-    @Schema(description = "检验单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "XX工单过程检验")
+    @Schema(
+            description = "检验单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "XX工单过程检验")
     @ExcelProperty("检验单名称")
     private String name;
 
@@ -168,5 +176,4 @@ public class MesQcIpqcRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

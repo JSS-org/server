@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.iot.core.enums;
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.framework.common.util.collection.SetUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -66,19 +67,20 @@ public enum IotDeviceMessageMethodEnum implements ArrayValuable<String> {
 
     OTA_UPGRADE("thing.ota.upgrade", "OTA 固件信息推送", false),
     OTA_PROGRESS("thing.ota.progress", "OTA 升级进度上报", true),
-
     ;
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(IotDeviceMessageMethodEnum::getMethod)
-            .toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values())
+                    .map(IotDeviceMessageMethodEnum::getMethod)
+                    .toArray(String[]::new);
 
     /**
      * 不进行 reply 回复的方法集合
      */
-    public static final Set<String> REPLY_DISABLED = SetUtils.asSet(
-            STATE_UPDATE.getMethod(),
-            OTA_PROGRESS.getMethod() // 参考阿里云，OTA 升级进度上报，不进行回复
-    );
+    public static final Set<String> REPLY_DISABLED =
+            SetUtils.asSet(
+                    STATE_UPDATE.getMethod(), OTA_PROGRESS.getMethod() // 参考阿里云，OTA 升级进度上报，不进行回复
+                    );
 
     private final String method;
 
@@ -92,12 +94,11 @@ public enum IotDeviceMessageMethodEnum implements ArrayValuable<String> {
     }
 
     public static IotDeviceMessageMethodEnum of(String method) {
-        return ArrayUtil.firstMatch(item -> item.getMethod().equals(method),
-                IotDeviceMessageMethodEnum.values());
+        return ArrayUtil.firstMatch(
+                item -> item.getMethod().equals(method), IotDeviceMessageMethodEnum.values());
     }
 
     public static boolean isReplyDisabled(String method) {
         return REPLY_DISABLED.contains(method);
     }
-
 }

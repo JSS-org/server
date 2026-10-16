@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.im.util;
 
-import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.module.im.dal.dataobject.message.content.QuoteMessage;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+import cn.iocoder.yudao.module.im.dal.dataobject.message.content.QuoteMessage;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 /**
  * {@link ImMessageUtils} 的单元测试
@@ -23,7 +24,8 @@ public class ImMessageUtilsTest {
     @Test
     public void testParseQuoteMessageId_valid() {
         // 准备：content 含合法 quote 字段
-        String content = "{\"text\":\"你好\",\"quote\":{\"messageId\":1001,\"senderId\":2,\"type\":1}}";
+        String content =
+                "{\"text\":\"你好\",\"quote\":{\"messageId\":1001,\"senderId\":2,\"type\":1}}";
 
         // 调用 + 断言
         assertEquals(1001L, ImMessageUtils.parseQuoteMessageId(content));
@@ -69,7 +71,8 @@ public class ImMessageUtilsTest {
     public void testAppendQuote_existingContent() {
         // 准备：已有 text 字段的 content
         String content = "{\"text\":\"你好\"}";
-        QuoteMessage quote = new QuoteMessage().setMessageId(1001L).setSenderId(2L).setType(1).setContent("{}");
+        QuoteMessage quote =
+                new QuoteMessage().setMessageId(1001L).setSenderId(2L).setType(1).setContent("{}");
 
         // 调用
         String result = ImMessageUtils.appendQuote(content, quote);
@@ -180,5 +183,4 @@ public class ImMessageUtilsTest {
         // 断言：content 原样保留
         assertEquals(originalContent, quote.getContent());
     }
-
 }

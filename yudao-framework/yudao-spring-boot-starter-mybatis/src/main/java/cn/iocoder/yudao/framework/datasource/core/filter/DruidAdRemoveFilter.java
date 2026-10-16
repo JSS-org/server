@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.framework.datasource.core.filter;
 
 import com.alibaba.druid.util.Utils;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
 /**
@@ -22,7 +24,8 @@ public class DruidAdRemoveFilter extends OncePerRequestFilter {
     private static final String COMMON_JS_ILE_PATH = "support/http/resources/js/common.js";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         chain.doFilter(request, response);
         // 重置缓冲区，响应头不会被重置
@@ -34,5 +37,4 @@ public class DruidAdRemoveFilter extends OncePerRequestFilter {
         text = text.replaceAll("powered.*?shrek.wang</a>", "");
         response.getWriter().write(text);
     }
-
 }

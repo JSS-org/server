@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.member.controller.admin.group.vo.MemberGroupUpdat
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -80,5 +81,4 @@ public interface MemberGroupService {
     default List<MemberGroupDO> getEnableGroupList() {
         return getGroupListByStatus(CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

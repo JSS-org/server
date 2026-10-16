@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.promotion.service.reward;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,13 +12,12 @@ import cn.iocoder.yudao.module.promotion.controller.admin.reward.vo.RewardActivi
 import cn.iocoder.yudao.module.promotion.controller.admin.reward.vo.RewardActivityUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.reward.RewardActivityDO;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionConditionTypeEnum;
+
 import jakarta.validation.Valid;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
 
 /**
  * 满减送活动 Service 接口
@@ -78,7 +79,8 @@ public interface RewardActivityService {
      */
     List<RewardActivityMatchRespDTO> getMatchRewardActivityListBySpuIds(Collection<Long> spuIds);
 
-    default String getRewardActivityRuleDescription(Integer conditionType, RewardActivityDO.Rule rule) {
+    default String getRewardActivityRuleDescription(
+            Integer conditionType, RewardActivityDO.Rule rule) {
         String description = "";
         if (PromotionConditionTypeEnum.PRICE.getType().equals(conditionType)) {
             description += StrUtil.format("满 {} 元", MoneyUtils.fenToYuanStr(rule.getLimit()));
@@ -96,10 +98,14 @@ public interface RewardActivityService {
             tips.add(StrUtil.format("送 {} 积分", rule.getPoint()));
         }
         if (CollUtil.isNotEmpty(rule.getGiveCouponTemplateCounts())) {
-            tips.add(StrUtil.format("送 {} 张优惠券",
-                    getSumValue(rule.getGiveCouponTemplateCounts().values(), count -> count, Integer::sum)));
+            tips.add(
+                    StrUtil.format(
+                            "送 {} 张优惠券",
+                            getSumValue(
+                                    rule.getGiveCouponTemplateCounts().values(),
+                                    count -> count,
+                                    Integer::sum)));
         }
         return description + StrUtil.join("、", tips);
     }
-
 }

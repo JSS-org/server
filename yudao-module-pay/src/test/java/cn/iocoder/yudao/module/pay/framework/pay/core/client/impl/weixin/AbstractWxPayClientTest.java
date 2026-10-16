@@ -1,28 +1,31 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin;
 
-import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
-import cn.iocoder.yudao.module.pay.enums.transfer.PayTransferStatusEnum;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferRespDTO;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferUnifiedReqDTO;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.exception.PayClientException;
-import com.github.binarywang.wxpay.bean.transfer.TransferBillsGetResult;
-import com.github.binarywang.wxpay.exception.WxPayException;
-import com.github.binarywang.wxpay.service.TransferService;
-import com.github.binarywang.wxpay.service.WxPayService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.io.IOException;
-import java.util.Map;
-
 import static cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin.WxPayClientConfig.API_VERSION_V3;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+import cn.iocoder.yudao.module.pay.enums.transfer.PayTransferStatusEnum;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferRespDTO;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferUnifiedReqDTO;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.exception.PayClientException;
+
+import com.github.binarywang.wxpay.bean.transfer.TransferBillsGetResult;
+import com.github.binarywang.wxpay.exception.WxPayException;
+import com.github.binarywang.wxpay.service.TransferService;
+import com.github.binarywang.wxpay.service.WxPayService;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * {@link AbstractWxPayClient} 的单元测试类
@@ -76,18 +79,23 @@ public class AbstractWxPayClientTest extends BaseMockitoUnitTest {
 
     @Test // 发起微信转账发生 IO 异常时保留未知状态，不误判为关闭
     public void testUnifiedTransfer_ioException() throws Exception {
-        when(transferService.transferBills(any())).thenThrow(new WxPayException("timeout",
-                new IOException("connect timeout")));
+        when(transferService.transferBills(any()))
+                .thenThrow(new WxPayException("timeout", new IOException("connect timeout")));
 
-        assertThrows(PayClientException.class, () -> client.unifiedTransfer(buildTransferUnifiedReqDTO()));
+        assertThrows(
+                PayClientException.class,
+                () -> client.unifiedTransfer(buildTransferUnifiedReqDTO()));
         verify(transferService).transferBills(any());
     }
 
     private static PayTransferUnifiedReqDTO buildTransferUnifiedReqDTO() {
-        return new PayTransferUnifiedReqDTO().setUserIp("127.0.0.1").setOutTransferNo("T001")
-                .setPrice(100).setSubject("佣金提现").setUserAccount("openid")
+        return new PayTransferUnifiedReqDTO()
+                .setUserIp("127.0.0.1")
+                .setOutTransferNo("T001")
+                .setPrice(100)
+                .setSubject("佣金提现")
+                .setUserAccount("openid")
                 .setNotifyUrl("http://127.0.0.1/transfer")
                 .setChannelExtras(Map.of("sceneId", "1000", "sceneReportInfos", "[]"));
     }
-
 }

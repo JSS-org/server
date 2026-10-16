@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.framework.tracer.core.filter;
 
 import cn.iocoder.yudao.framework.common.util.monitor.TracerUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
 /**
@@ -22,12 +24,12 @@ public class TraceFilter extends OncePerRequestFilter {
     private static final String HEADER_NAME_TRACE_ID = "trace-id";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         // 设置响应 traceId
         response.addHeader(HEADER_NAME_TRACE_ID, TracerUtils.getTraceId());
         // 继续过滤
         chain.doFilter(request, response);
     }
-
 }

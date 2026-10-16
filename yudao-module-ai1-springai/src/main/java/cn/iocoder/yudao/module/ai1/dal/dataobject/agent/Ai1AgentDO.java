@@ -8,10 +8,12 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ModelDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ProviderDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.util.List;
@@ -34,32 +36,37 @@ public class Ai1AgentDO extends TenantBaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 名称
      */
     private String name;
+
     /**
      * 介绍
      */
     private String introduction;
+
     /**
      * 模型所属 Provider 编号
      *
      * 关联 {@link Ai1ProviderDO#getId()}
      */
     private Long providerId;
+
     /**
      * 对话模型编号
      *
      * 关联 {@link Ai1ModelDO#getId()}
      */
     private Long modelId;
+
     /**
      * 系统指令
      */
     private String systemPrompt;
+
     /**
      * 知识库编号集合
      *
@@ -67,6 +74,7 @@ public class Ai1AgentDO extends TenantBaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> knowledgeBaseIds;
+
     /**
      * MCP 编号集合
      *
@@ -74,6 +82,7 @@ public class Ai1AgentDO extends TenantBaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> mcpIds;
+
     /**
      * SKILL 编号集合
      *
@@ -81,11 +90,11 @@ public class Ai1AgentDO extends TenantBaseDO {
      */
     @TableField(typeHandler = LongListTypeHandler.class)
     private List<Long> skillIds;
+
     /**
      * 状态
      *
      * 枚举 {@link CommonStatusEnum}；开启后才可在「Agent 会话」中使用
      */
     private Integer status;
-
 }

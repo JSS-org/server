@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.proce
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.assessment.HrmPerformanceConfirmationResultEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -32,5 +35,4 @@ public class HrmPortalPerformanceHandleStageReqVO {
 
     @Schema(description = "退回评分阶段编号列表", example = "[1024, 1025]")
     private List<Long> reviewStageIds;
-
 }

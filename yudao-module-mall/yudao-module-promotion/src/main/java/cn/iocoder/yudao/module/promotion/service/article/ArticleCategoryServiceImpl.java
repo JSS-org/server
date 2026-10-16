@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.promotion.service.article;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_CATEGORY_DELETE_FAIL_HAVE_ARTICLES;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_CATEGORY_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.category.ArticleCategoryCreateReqVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.category.ArticleCategoryPageReqVO;
@@ -7,16 +11,14 @@ import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.category.Ar
 import cn.iocoder.yudao.module.promotion.convert.article.ArticleCategoryConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleCategoryDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.article.ArticleCategoryMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_CATEGORY_DELETE_FAIL_HAVE_ARTICLES;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_CATEGORY_NOT_EXISTS;
 
 /**
  * 文章分类 Service 实现类
@@ -27,11 +29,9 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE
 @Validated
 public class ArticleCategoryServiceImpl implements ArticleCategoryService {
 
-    @Resource
-    private ArticleCategoryMapper articleCategoryMapper;
+    @Resource private ArticleCategoryMapper articleCategoryMapper;
 
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖问题
+    @Resource @Lazy // 延迟加载，解决循环依赖问题
     private ArticleService articleService;
 
     @Override
@@ -78,7 +78,8 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
     }
 
     @Override
-    public PageResult<ArticleCategoryDO> getArticleCategoryPage(ArticleCategoryPageReqVO pageReqVO) {
+    public PageResult<ArticleCategoryDO> getArticleCategoryPage(
+            ArticleCategoryPageReqVO pageReqVO) {
         return articleCategoryMapper.selectPage(pageReqVO);
     }
 
@@ -86,5 +87,4 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
     public List<ArticleCategoryDO> getArticleCategoryListByStatus(Integer status) {
         return articleCategoryMapper.selectListByStatus(status);
     }
-
 }

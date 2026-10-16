@@ -1,7 +1,20 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.record;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_TIME_CONFLICT;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.bpm.api.task.BpmProcessInstanceApi;
+import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.leave.HrmAttendanceLeaveCancelReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.leave.HrmAttendanceLeaveCreateReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.leave.HrmAttendanceLeavePageReqVO;
@@ -9,8 +22,9 @@ import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.record.HrmAttendanc
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.attendance.record.HrmAttendanceLeaveMapper;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
-import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,17 +35,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_LEAVE_TIME_CONFLICT;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link HrmAttendanceLeaveServiceImpl} 的单元测试类
  *
@@ -40,23 +43,20 @@ import static org.mockito.Mockito.when;
 @Import(HrmAttendanceLeaveServiceImpl.class)
 public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmAttendanceLeaveServiceImpl attendanceLeaveService;
-    @Resource
-    private HrmAttendanceLeaveMapper attendanceLeaveMapper;
-    @MockitoBean
-    private HrmEmployeeService employeeService;
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private HrmAttendanceLeaveServiceImpl attendanceLeaveService;
+    @Resource private HrmAttendanceLeaveMapper attendanceLeaveMapper;
+    @MockitoBean private HrmEmployeeService employeeService;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
 
     @Test
     public void testCreateLeave_success() {
         // mock 数据
         Long userId = randomLongId();
-        HrmEmployeeDO employee = new HrmEmployeeDO().setId(randomLongId())
-                .setDeptId(randomLongId()).setName("张三");
+        HrmEmployeeDO employee =
+                new HrmEmployeeDO().setId(randomLongId()).setDeptId(randomLongId()).setName("张三");
         when(employeeService.validateEmployeeBySelf(userId)).thenReturn(employee);
-        when(processInstanceApi.createProcessInstance(eq(userId), any())).thenReturn("leave-process");
+        when(processInstanceApi.createProcessInstance(eq(userId), any()))
+                .thenReturn("leave-process");
 
         // 准备参数
         HrmAttendanceLeaveCreateReqVO reqVO = new HrmAttendanceLeaveCreateReqVO();
@@ -74,7 +74,9 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         assertNotNull(attendanceLeave);
         assertEquals(employee.getId(), attendanceLeave.getEmployeeId());
         assertEquals(0, reqVO.getDay().compareTo(attendanceLeave.getDay()));
-        assertEquals(BpmProcessInstanceStatusEnum.RUNNING.getStatus(), attendanceLeave.getApprovalStatus());
+        assertEquals(
+                BpmProcessInstanceStatusEnum.RUNNING.getStatus(),
+                attendanceLeave.getApprovalStatus());
         assertEquals("leave-process", attendanceLeave.getProcessInstanceId());
         verify(employeeService).validateEmployeeExistsForUpdate(employee.getId());
     }
@@ -83,10 +85,11 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
     public void testCreateLeave_timeConflict() {
         // mock 数据
         Long userId = randomLongId();
-        HrmEmployeeDO employee = new HrmEmployeeDO().setId(randomLongId())
-                .setDeptId(randomLongId()).setName("张三");
+        HrmEmployeeDO employee =
+                new HrmEmployeeDO().setId(randomLongId()).setDeptId(randomLongId()).setName("张三");
         when(employeeService.validateEmployeeBySelf(userId)).thenReturn(employee);
-        when(processInstanceApi.createProcessInstance(eq(userId), any())).thenReturn("leave-process");
+        when(processInstanceApi.createProcessInstance(eq(userId), any()))
+                .thenReturn("leave-process");
 
         // 准备参数
         HrmAttendanceLeaveCreateReqVO reqVO = new HrmAttendanceLeaveCreateReqVO();
@@ -98,7 +101,8 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         attendanceLeaveService.createLeave(userId, reqVO);
 
         // 调用，并断言异常
-        assertServiceException(() -> attendanceLeaveService.createLeave(userId, reqVO),
+        assertServiceException(
+                () -> attendanceLeaveService.createLeave(userId, reqVO),
                 ATTENDANCE_LEAVE_TIME_CONFLICT);
     }
 
@@ -107,10 +111,14 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long userId = randomLongId();
         Long employeeId = randomLongId();
-        when(employeeService.validateEmployeeBySelf(userId)).thenReturn(
-                new HrmEmployeeDO().setId(employeeId));
-        HrmAttendanceLeaveDO attendanceLeave = randomAttendanceLeaveDO(employeeId, "年假",
-                LocalDateTime.of(2026, 8, 1, 9, 0), BpmProcessInstanceStatusEnum.RUNNING.getStatus());
+        when(employeeService.validateEmployeeBySelf(userId))
+                .thenReturn(new HrmEmployeeDO().setId(employeeId));
+        HrmAttendanceLeaveDO attendanceLeave =
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "年假",
+                        LocalDateTime.of(2026, 8, 1, 9, 0),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus());
         attendanceLeaveMapper.insert(attendanceLeave);
 
         // 准备参数
@@ -122,8 +130,9 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         attendanceLeaveService.cancelLeave(userId, reqVO);
 
         // 断言
-        verify(processInstanceApi).cancelProcessInstanceByStartUser(
-                userId, attendanceLeave.getProcessInstanceId(), "行程取消");
+        verify(processInstanceApi)
+                .cancelProcessInstanceByStartUser(
+                        userId, attendanceLeave.getProcessInstanceId(), "行程取消");
         HrmAttendanceLeaveDO result = attendanceLeaveMapper.selectById(attendanceLeave.getId());
         assertEquals(BpmProcessInstanceStatusEnum.CANCEL.getStatus(), result.getApprovalStatus());
         assertEquals("行程取消", result.getApprovalReason());
@@ -134,14 +143,21 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
     public void testUpdateLeaveApprovalStatus_success() {
         // mock 数据
         Long employeeId = randomLongId();
-        HrmAttendanceLeaveDO attendanceLeave = randomAttendanceLeaveDO(employeeId, "年假",
-                LocalDateTime.of(2026, 8, 1, 9, 0), BpmProcessInstanceStatusEnum.RUNNING.getStatus());
+        HrmAttendanceLeaveDO attendanceLeave =
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "年假",
+                        LocalDateTime.of(2026, 8, 1, 9, 0),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus());
         attendanceLeave.setProcessInstanceId("leave-process");
         attendanceLeaveMapper.insert(attendanceLeave);
 
         // 调用
         attendanceLeaveService.updateLeaveApprovalStatus(
-                attendanceLeave.getId(), "leave-process", BpmProcessInstanceStatusEnum.APPROVE.getStatus(), "同意");
+                attendanceLeave.getId(),
+                "leave-process",
+                BpmProcessInstanceStatusEnum.APPROVE.getStatus(),
+                "同意");
 
         // 断言
         HrmAttendanceLeaveDO result = attendanceLeaveMapper.selectById(attendanceLeave.getId());
@@ -162,14 +178,21 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
     public void testUpdateLeaveApprovalStatus_processInstanceNotMatch() {
         // mock 数据
         Long employeeId = randomLongId();
-        HrmAttendanceLeaveDO attendanceLeave = randomAttendanceLeaveDO(employeeId, "年假",
-                LocalDateTime.of(2026, 8, 1, 9, 0), BpmProcessInstanceStatusEnum.RUNNING.getStatus());
+        HrmAttendanceLeaveDO attendanceLeave =
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "年假",
+                        LocalDateTime.of(2026, 8, 1, 9, 0),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus());
         attendanceLeave.setProcessInstanceId("current-process");
         attendanceLeaveMapper.insert(attendanceLeave);
 
         // 调用
         attendanceLeaveService.updateLeaveApprovalStatus(
-                attendanceLeave.getId(), "expired-process", BpmProcessInstanceStatusEnum.APPROVE.getStatus(), "同意");
+                attendanceLeave.getId(),
+                "expired-process",
+                BpmProcessInstanceStatusEnum.APPROVE.getStatus(),
+                "同意");
 
         // 断言
         HrmAttendanceLeaveDO result = attendanceLeaveMapper.selectById(attendanceLeave.getId());
@@ -181,17 +204,23 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
     public void testGetAttendanceLeavePage() {
         // mock 数据
         HrmEmployeeDO employee = new HrmEmployeeDO().setId(randomLongId()).setName("张三");
-        HrmAttendanceLeaveDO leave = randomAttendanceLeaveDO(employee.getId(), "年假",
-                LocalDateTime.of(2026, 8, 1, 9, 0), BpmProcessInstanceStatusEnum.RUNNING.getStatus());
+        HrmAttendanceLeaveDO leave =
+                randomAttendanceLeaveDO(
+                        employee.getId(),
+                        "年假",
+                        LocalDateTime.of(2026, 8, 1, 9, 0),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus());
         attendanceLeaveMapper.insert(leave);
-        when(employeeService.getEmployeeList(any())).thenReturn(Collections.singletonList(employee));
+        when(employeeService.getEmployeeList(any()))
+                .thenReturn(Collections.singletonList(employee));
 
         // 准备参数
         HrmAttendanceLeavePageReqVO reqVO = new HrmAttendanceLeavePageReqVO();
         reqVO.setEmployeeId(employee.getId());
 
         // 调用
-        HrmAttendanceLeaveDO result = attendanceLeaveService.getAttendanceLeavePage(reqVO).getList().get(0);
+        HrmAttendanceLeaveDO result =
+                attendanceLeaveService.getAttendanceLeavePage(reqVO).getList().get(0);
 
         // 断言
         assertEquals(leave.getId(), result.getId());
@@ -202,16 +231,32 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long employeeId = randomLongId();
         LocalDateTime beginTime = LocalDateTime.of(2026, 8, 1, 0, 0);
-        HrmAttendanceLeaveDO approvedLeave = randomAttendanceLeaveDO(employeeId, "年假",
-                beginTime.plusHours(9), BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO approvedLeave =
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "年假",
+                        beginTime.plusHours(9),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(approvedLeave);
-        HrmAttendanceLeaveDO secondApprovedLeave = randomAttendanceLeaveDO(employeeId, "病假",
-                beginTime.plusDays(1).plusHours(9), BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO secondApprovedLeave =
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "病假",
+                        beginTime.plusDays(1).plusHours(9),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(secondApprovedLeave);
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(employeeId, "事假",
-                beginTime.plusDays(2).plusHours(9), BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(randomLongId(), "年假",
-                beginTime.plusHours(9), BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "事假",
+                        beginTime.plusDays(2).plusHours(9),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        randomLongId(),
+                        "年假",
+                        beginTime.plusHours(9),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
 
         // 调用
         List<HrmAttendanceLeaveDO> leaves =
@@ -233,33 +278,61 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         Long secondEmployeeId = randomLongId();
         LocalDateTime beginTime = LocalDateTime.of(2026, 8, 1, 0, 0);
         LocalDateTime endTime = beginTime.plusMonths(1);
-        HrmAttendanceLeaveDO firstLeave = randomAttendanceLeaveDO(firstEmployeeId, "年假",
-                beginTime.plusHours(9), BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO firstLeave =
+                randomAttendanceLeaveDO(
+                        firstEmployeeId,
+                        "年假",
+                        beginTime.plusHours(9),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(firstLeave);
-        HrmAttendanceLeaveDO secondLeave = randomAttendanceLeaveDO(secondEmployeeId, "病假",
-                endTime.minusDays(1).plusHours(9), BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO secondLeave =
+                randomAttendanceLeaveDO(
+                        secondEmployeeId,
+                        "病假",
+                        endTime.minusDays(1).plusHours(9),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(secondLeave);
         // 请假开始时间早于查询左边界，但结束时间落在范围内，仍属于双闭区间重叠
-        HrmAttendanceLeaveDO boundaryOverlapLeave = randomAttendanceLeaveDO(firstEmployeeId, "调休",
-                beginTime.minusHours(4), BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO boundaryOverlapLeave =
+                randomAttendanceLeaveDO(
+                        firstEmployeeId,
+                        "调休",
+                        beginTime.minusHours(4),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(boundaryOverlapLeave);
         // 双闭区间首尾相接也属于重叠
-        HrmAttendanceLeaveDO leftBoundaryLeave = randomAttendanceLeaveDO(firstEmployeeId, "事假",
-                beginTime.minusHours(8), BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO leftBoundaryLeave =
+                randomAttendanceLeaveDO(
+                        firstEmployeeId,
+                        "事假",
+                        beginTime.minusHours(8),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(leftBoundaryLeave);
-        HrmAttendanceLeaveDO rightBoundaryLeave = randomAttendanceLeaveDO(firstEmployeeId, "事假",
-                endTime, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        HrmAttendanceLeaveDO rightBoundaryLeave =
+                randomAttendanceLeaveDO(
+                        firstEmployeeId,
+                        "事假",
+                        endTime,
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus());
         attendanceLeaveMapper.insert(rightBoundaryLeave);
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(firstEmployeeId, "事假",
-                beginTime.minusDays(2), BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(firstEmployeeId, "事假",
-                beginTime.plusDays(1), BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        firstEmployeeId,
+                        "事假",
+                        beginTime.minusDays(2),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        firstEmployeeId,
+                        "事假",
+                        beginTime.plusDays(1),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 调用
         List<HrmAttendanceLeaveDO> result =
                 attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
                         Arrays.asList(firstEmployeeId, secondEmployeeId),
-                        new LocalDateTime[]{beginTime, endTime});
+                        new LocalDateTime[] {beginTime, endTime});
 
         // 断言
         assertEquals(5, result.size());
@@ -275,14 +348,26 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long employeeId = randomLongId();
         LocalDateTime startTime = LocalDateTime.of(2026, 8, 1, 9, 0);
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(
-                employeeId, "年假", startTime, BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(
-                employeeId, "年假", startTime.plusDays(1), BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
-        attendanceLeaveMapper.insert(randomAttendanceLeaveDO(
-                employeeId, "病假", startTime.plusDays(2), BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
-        when(employeeService.getEmployeeList(any())).thenReturn(
-                Collections.singletonList(new HrmEmployeeDO().setId(employeeId)));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "年假",
+                        startTime,
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "年假",
+                        startTime.plusDays(1),
+                        BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        attendanceLeaveMapper.insert(
+                randomAttendanceLeaveDO(
+                        employeeId,
+                        "病假",
+                        startTime.plusDays(2),
+                        BpmProcessInstanceStatusEnum.APPROVE.getStatus()));
+        when(employeeService.getEmployeeList(any()))
+                .thenReturn(Collections.singletonList(new HrmEmployeeDO().setId(employeeId)));
 
         // 准备参数
         HrmAttendanceLeavePageReqVO reqVO = new HrmAttendanceLeavePageReqVO();
@@ -301,10 +386,17 @@ public class HrmAttendanceLeaveServiceImplTest extends BaseDbUnitTest {
 
     private static HrmAttendanceLeaveDO randomAttendanceLeaveDO(
             Long employeeId, String type, LocalDateTime startTime, Integer approvalStatus) {
-        return randomPojo(HrmAttendanceLeaveDO.class, leave -> leave.setId(null).setEmployeeId(employeeId)
-                .setType(type).setStartTime(startTime).setEndTime(startTime.plusHours(8))
-                .setDay(new BigDecimal("1.00")).setApprovalStatus(approvalStatus)
-                .setProcessInstanceId(employeeId + "-" + startTime).setDeleted(false));
+        return randomPojo(
+                HrmAttendanceLeaveDO.class,
+                leave ->
+                        leave.setId(null)
+                                .setEmployeeId(employeeId)
+                                .setType(type)
+                                .setStartTime(startTime)
+                                .setEndTime(startTime.plusHours(8))
+                                .setDay(new BigDecimal("1.00"))
+                                .setApprovalStatus(approvalStatus)
+                                .setProcessInstanceId(employeeId + "-" + startTime)
+                                .setDeleted(false));
     }
-
 }

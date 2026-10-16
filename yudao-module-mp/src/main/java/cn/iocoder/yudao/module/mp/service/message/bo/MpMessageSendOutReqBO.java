@@ -2,13 +2,17 @@ package cn.iocoder.yudao.module.mp.service.message.bo;
 
 import cn.iocoder.yudao.module.mp.dal.dataobject.message.MpMessageDO;
 import cn.iocoder.yudao.module.mp.framework.mp.core.util.MpUtils.*;
-import lombok.Data;
-import me.chanjar.weixin.common.api.WxConsts;
-import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import me.chanjar.weixin.common.api.WxConsts;
+
+import org.hibernate.validator.constraints.URL;
+
 import java.util.List;
 
 /**
@@ -26,6 +30,7 @@ public class MpMessageSendOutReqBO {
      */
     @NotEmpty(message = "公众号 appId 不能为空")
     private String appId;
+
     /**
      * 公众号粉丝 openid
      */
@@ -54,7 +59,9 @@ public class MpMessageSendOutReqBO {
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 IMAGE、VOICE、VIDEO
      */
-    @NotEmpty(message = "消息 mediaId 不能为空", groups = {ImageMessageGroup.class, VoiceMessageGroup.class, VideoMessageGroup.class})
+    @NotEmpty(
+            message = "消息 mediaId 不能为空",
+            groups = {ImageMessageGroup.class, VoiceMessageGroup.class, VideoMessageGroup.class})
     private String mediaId;
 
     /**
@@ -62,7 +69,9 @@ public class MpMessageSendOutReqBO {
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 VIDEO、MUSIC
      */
-    @NotEmpty(message = "消息 thumbMediaId 不能为空", groups = {MusicMessageGroup.class})
+    @NotEmpty(
+            message = "消息 thumbMediaId 不能为空",
+            groups = {MusicMessageGroup.class})
     private String thumbMediaId;
 
     /**
@@ -72,6 +81,7 @@ public class MpMessageSendOutReqBO {
      */
     @NotEmpty(message = "消息标题不能为空", groups = VideoMessageGroup.class)
     private String title;
+
     /**
      * 描述
      *
@@ -106,5 +116,4 @@ public class MpMessageSendOutReqBO {
     @NotEmpty(message = "高质量音乐链接不能为空", groups = MusicMessageGroup.class)
     @URL(message = "高质量音乐链接格式不正确", groups = MusicMessageGroup.class)
     private String hqMusicUrl;
-
 }

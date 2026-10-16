@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.crm.controller.admin.customer.vo.customer;
 
 import cn.iocoder.yudao.module.crm.enums.permission.CrmPermissionLevelEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,7 +21,10 @@ public class CrmCustomerTransferReqVO {
     /**
      * 新负责人的用户编号
      */
-    @Schema(description = "新负责人的用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "10430")
+    @Schema(
+            description = "新负责人的用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "10430")
     @NotNull(message = "新负责人的用户编号不能为空")
     private Long newOwnerUserId;
 
@@ -27,7 +33,10 @@ public class CrmCustomerTransferReqVO {
      *
      * 关联 {@link CrmPermissionLevelEnum}
      */
-    @Schema(description = "老负责人加入团队后的权限级别", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
+    @Schema(
+            description = "老负责人加入团队后的权限级别",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2")
     private Integer oldOwnerPermissionLevel;
 
     /**
@@ -35,5 +44,4 @@ public class CrmCustomerTransferReqVO {
      */
     @Schema(description = "同时转移", requiredMode = Schema.RequiredMode.REQUIRED, example = "10430")
     private List<Integer> toBizTypes;
-
 }

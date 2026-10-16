@@ -68,7 +68,8 @@ public interface ProductPropertyValueService {
      * @param pageReqVO 查询条件
      * @return 属性值的分页
      */
-    PageResult<ProductPropertyValueDO> getPropertyValuePage(ProductPropertyValuePageReqVO pageReqVO);
+    PageResult<ProductPropertyValueDO> getPropertyValuePage(
+            ProductPropertyValuePageReqVO pageReqVO);
 
     /**
      * 删除指定属性项编号下的属性值们
@@ -76,5 +77,4 @@ public interface ProductPropertyValueService {
      * @param propertyId 属性项的编号
      */
     void deletePropertyValueByPropertyId(Long propertyId);
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountset.FmsAccountSetInitializeReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountset.FmsAccountSetSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO;
@@ -7,8 +9,6 @@ import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * FMS 账套 Service 接口
@@ -118,5 +118,4 @@ public interface FmsAccountSetService {
     default Map<Long, FmsAccountSetDO> getAccountSetMap(Collection<Long> ids) {
         return convertMap(getAccountSetList(ids), FmsAccountSetDO::getId);
     }
-
 }

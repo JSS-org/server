@@ -2,13 +2,16 @@ package cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.template;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -52,7 +55,10 @@ public class PmsKnowledgeLibraryTemplateSaveReqVO {
     @Data
     public static class Document {
 
-        @Schema(description = "文档标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "产品需求文档")
+        @Schema(
+                description = "文档标题",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "产品需求文档")
         @NotBlank(message = "文档标题不能为空")
         @Size(max = 255, message = "文档标题不能超过 255 个字符")
         private String title;
@@ -60,7 +66,5 @@ public class PmsKnowledgeLibraryTemplateSaveReqVO {
         @Schema(description = "文档内容", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "文档内容不能为空")
         private String content;
-
     }
-
 }

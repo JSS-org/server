@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.gym.controller.admin.file;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
@@ -9,19 +12,22 @@ import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
 import cn.iocoder.yudao.module.gym.framework.file.core.utils.GymFileTypeUtils;
 import cn.iocoder.yudao.module.gym.service.file.GymFileService;
 import cn.iocoder.yudao.module.gym.service.file.dto.GymFileContentDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,9 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
 
 import java.io.IOException;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
 /**
  * 管理后台 - gym 私有文件
@@ -57,15 +60,16 @@ import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 @Validated
 public class GymFileController {
 
-    @Resource
-    private GymFileService gymFileService;
+    @Resource private GymFileService gymFileService;
 
-    @Resource
-    private GlobalExceptionHandler globalExceptionHandler;
+    @Resource private GlobalExceptionHandler globalExceptionHandler;
 
     @PostMapping({"", "/upload"})
     @Operation(summary = "上传私有文件", description = "魔数校验内容类型、按类别限制大小；storeId 为空时默认上传人所属门店")
-    @Parameter(name = "file", description = "文件附件", required = true,
+    @Parameter(
+            name = "file",
+            description = "文件附件",
+            required = true,
             schema = @Schema(type = "string", format = "binary"))
     @PreAuthorize("@ss.hasPermission('gym:files:upload')")
     public CommonResult<GymFileRespVO> uploadFile(@Valid GymFileUploadReqVO uploadReqVO) {
@@ -83,17 +87,22 @@ public class GymFileController {
     }
 
     @GetMapping("/{id}/content")
-    @Operation(summary = "下载文件内容", description = "鉴权下载；文件或内容缺失返回 HTTP 404，权限不足返回 HTTP 403，不暴露 infra 的公开存储地址")
+    @Operation(
+            summary = "下载文件内容",
+            description = "鉴权下载；文件或内容缺失返回 HTTP 404，权限不足返回 HTTP 403，不暴露 infra 的公开存储地址")
     @Parameter(name = "id", description = "文件编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('gym:files:read')")
-    public void getFileContent(@PathVariable("id") Long id, HttpServletResponse response) throws IOException {
+    public void getFileContent(@PathVariable("id") Long id, HttpServletResponse response)
+            throws IOException {
         GymFileContentDTO content = gymFileService.getFileContent(id);
-        GymFileTypeUtils.writeAttachment(response, content.getName(), content.getMimeType(), content.getContent());
+        GymFileTypeUtils.writeAttachment(
+                response, content.getName(), content.getMimeType(), content.getContent());
     }
 
     /** 保留框架错误码与日志；只有二进制下载使用非成功 HTTP 状态，避免 Blob 客户端误读错误 JSON。 */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<CommonResult<?>> handleException(HttpServletRequest request, Exception exception) {
+    public ResponseEntity<CommonResult<?>> handleException(
+            HttpServletRequest request, Exception exception) {
         CommonResult<?> result = globalExceptionHandler.allExceptionHandler(request, exception);
         Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         if (pattern == null || !pattern.toString().endsWith("/{id}/content")) {
@@ -106,9 +115,11 @@ public class GymFileController {
         } else if (code == FILE_STORE_NO_PERMISSION.getCode()) {
             status = HttpServletResponse.SC_FORBIDDEN;
         } else {
-            status = code >= 400 && code <= 599 ? code : HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+            status =
+                    code >= 400 && code <= 599
+                            ? code
+                            : HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         }
         return ResponseEntity.status(status).body(result);
     }
-
 }

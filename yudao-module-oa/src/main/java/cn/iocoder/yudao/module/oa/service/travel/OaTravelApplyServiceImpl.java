@@ -1,11 +1,15 @@
 package cn.iocoder.yudao.module.oa.service.travel;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.*;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
-import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.module.bpm.api.task.BpmProcessInstanceApi;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmProcessInstanceCreateReqDTO;
 import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
@@ -13,22 +17,20 @@ import cn.iocoder.yudao.module.oa.controller.admin.travel.vo.apply.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.travel.OaTravelApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.travel.OaTravelApplyMapper;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
+import cn.iocoder.yudao.module.oa.enums.attendance.OaAttendanceTypeEnum;
+import cn.iocoder.yudao.module.oa.service.attendance.OaAttendanceService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
-import cn.iocoder.yudao.module.oa.service.attendance.OaAttendanceService;
-import cn.iocoder.yudao.module.oa.enums.attendance.OaAttendanceTypeEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.*;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 出差申请 Service 实现类
@@ -39,23 +41,18 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaTravelApplyServiceImpl implements OaTravelApplyService {
 
-    @Resource
-    @Lazy
-    private OaAttendanceService attendanceService;
+    @Resource @Lazy private OaAttendanceService attendanceService;
 
-    @Resource
-    private OaTravelApplyMapper travelApplyMapper;
+    @Resource private OaTravelApplyMapper travelApplyMapper;
 
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
-    public Map<Long, Integer> getApprovedTravelDaysMap(Collection<Long> userIds, LocalDateTime[] startTime) {
+    public Map<Long, Integer> getApprovedTravelDaysMap(
+            Collection<Long> userIds, LocalDateTime[] startTime) {
         if (CollUtil.isEmpty(userIds)) {
             return Collections.emptyMap();
         }
@@ -75,10 +72,15 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
         }
 
         // 2. 创建草稿
-        OaTravelApplyDO record = BeanUtils.toBean(reqVO, OaTravelApplyDO.class)
-                .setDays(LocalDateTimeUtils.getDaysBetweenCeiling(reqVO.getStartTime(), reqVO.getEndTime())).setNo(no)
-                .setDeptId(user.getDeptId()).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
-                .setReimburseStatus(false);
+        OaTravelApplyDO record =
+                BeanUtils.toBean(reqVO, OaTravelApplyDO.class)
+                        .setDays(
+                                LocalDateTimeUtils.getDaysBetweenCeiling(
+                                        reqVO.getStartTime(), reqVO.getEndTime()))
+                        .setNo(no)
+                        .setDeptId(user.getDeptId())
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
+                        .setReimburseStatus(false);
         travelApplyMapper.insert(record);
         return record.getId();
     }
@@ -94,8 +96,11 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
         validateTravelApplyEditable(record);
 
         // 2. 更新单据
-        OaTravelApplyDO update = BeanUtils.toBean(reqVO, OaTravelApplyDO.class)
-                .setDays(LocalDateTimeUtils.getDaysBetweenCeiling(reqVO.getStartTime(), reqVO.getEndTime()));
+        OaTravelApplyDO update =
+                BeanUtils.toBean(reqVO, OaTravelApplyDO.class)
+                        .setDays(
+                                LocalDateTimeUtils.getDaysBetweenCeiling(
+                                        reqVO.getStartTime(), reqVO.getEndTime()));
         travelApplyMapper.updateById(update);
     }
 
@@ -110,18 +115,29 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
         validateTravelApplyEditable(record);
 
         // 2. 更新为审批中，兼容流程创建时的同步回调
-        travelApplyMapper.updateById(new OaTravelApplyDO().setId(record.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()).setProcessInstanceId(""));
+        travelApplyMapper.updateById(
+                new OaTravelApplyDO()
+                        .setId(record.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus())
+                        .setProcessInstanceId(""));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
         variables.put("days", record.getDays());
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(TRAVEL_APPLY)
-                        .setBusinessKey(record.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(TRAVEL_APPLY)
+                                .setBusinessKey(record.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        travelApplyMapper.updateById(new OaTravelApplyDO().setId(record.getId()).setProcessInstanceId(processInstanceId));
+        travelApplyMapper.updateById(
+                new OaTravelApplyDO()
+                        .setId(record.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -132,12 +148,14 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
         // 1.2 校验本人归属
         validateTravelApplyOwner(record, userId);
         // 1.3 仅审批中可以撤回
-        if (ObjUtil.notEqual(record.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
+        if (ObjUtil.notEqual(
+                record.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
             throw exception(TRAVEL_STATUS_INVALID);
         }
 
         // 2. 使用 BPM 取消流程，由事件回写单据状态
-        processInstanceApi.cancelProcessInstanceByStartUser(userId, record.getProcessInstanceId(), "申请人撤回出差申请");
+        processInstanceApi.cancelProcessInstanceByStartUser(
+                userId, record.getProcessInstanceId(), "申请人撤回出差申请");
     }
 
     @Override
@@ -160,7 +178,8 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
     }
 
     @Override
-    public PageResult<OaTravelApplyDO> getTravelApplyPage(Long userId, OaTravelApplyPageReqVO reqVO) {
+    public PageResult<OaTravelApplyDO> getTravelApplyPage(
+            Long userId, OaTravelApplyPageReqVO reqVO) {
         return travelApplyMapper.selectPage(userId, reqVO);
     }
 
@@ -175,14 +194,17 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
 
         // 3. 审批通过后生成考勤明细
         if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())) {
-            attendanceService.createApplyAttendance(Long.valueOf(apply.getCreator()),
-                    OaAttendanceTypeEnum.TRAVEL, apply.getStartTime());
+            attendanceService.createApplyAttendance(
+                    Long.valueOf(apply.getCreator()),
+                    OaAttendanceTypeEnum.TRAVEL,
+                    apply.getStartTime());
         }
     }
 
     @Override
     public List<OaTravelApplyDO> getApprovedTravelApplyList(Long userId) {
-        return travelApplyMapper.selectListByCreatorAndStatus(userId, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
+        return travelApplyMapper.selectListByCreatorAndStatus(
+                userId, BpmProcessInstanceStatusEnum.APPROVE.getStatus());
     }
 
     @Override
@@ -192,7 +214,8 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
         // 2. 校验申请归属
         validateTravelApplyOwner(record, userId);
         // 3. 校验申请已通过审批
-        if (ObjUtil.notEqual(record.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())) {
+        if (ObjUtil.notEqual(
+                record.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())) {
             throw exception(TRAVEL_APPLY_NOT_APPROVED);
         }
         // 4. 已报销的行程不再创建或提交报销单
@@ -212,8 +235,7 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
 
     @Override
     public void updateTravelApplyReimburseStatus(Long id) {
-        travelApplyMapper.updateById(new OaTravelApplyDO().setId(id)
-                .setReimburseStatus(true));
+        travelApplyMapper.updateById(new OaTravelApplyDO().setId(id).setReimburseStatus(true));
     }
 
     /**
@@ -248,10 +270,12 @@ public class OaTravelApplyServiceImpl implements OaTravelApplyService {
      * @param record 单据
      */
     private void validateTravelApplyEditable(OaTravelApplyDO record) {
-        if (ObjectUtils.notEqualsAny(record.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
-                BpmProcessInstanceStatusEnum.REJECT.getStatus(), BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
+        if (ObjectUtils.notEqualsAny(
+                record.getStatus(),
+                BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
+                BpmProcessInstanceStatusEnum.REJECT.getStatus(),
+                BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
             throw exception(TRAVEL_STATUS_INVALID);
         }
     }
-
 }

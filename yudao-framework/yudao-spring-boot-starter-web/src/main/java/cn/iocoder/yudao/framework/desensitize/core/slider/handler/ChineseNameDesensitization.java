@@ -7,7 +7,8 @@ import cn.iocoder.yudao.framework.desensitize.core.slider.annotation.ChineseName
  *
  * @author gaibu
  */
-public class ChineseNameDesensitization extends AbstractSliderDesensitizationHandler<ChineseNameDesensitize> {
+public class ChineseNameDesensitization
+        extends AbstractSliderDesensitizationHandler<ChineseNameDesensitize> {
 
     @Override
     Integer getPrefixKeep(ChineseNameDesensitize annotation) {
@@ -23,5 +24,4 @@ public class ChineseNameDesensitization extends AbstractSliderDesensitizationHan
     String getReplacer(ChineseNameDesensitize annotation) {
         return annotation.replacer();
     }
-
 }

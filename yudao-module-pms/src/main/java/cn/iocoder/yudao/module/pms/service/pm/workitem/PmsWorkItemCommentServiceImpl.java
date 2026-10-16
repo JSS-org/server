@@ -1,20 +1,5 @@
 package cn.iocoder.yudao.module.pms.service.pm.workitem;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.comment.PmsWorkItemCommentSaveReqVO;
-import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemCommentDO;
-import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemDO;
-import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemCommentMapper;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-
-import java.util.Collection;
-import java.util.List;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_COMMENT_ACCESS_DENIED;
 import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.WORK_ITEM_COMMENT_NOT_EXISTS;
@@ -23,6 +8,23 @@ import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityC
 import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.COMMENT_DELETED;
 import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.COMMENT_REPLIED;
 import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityContentEnum.COMMENT_UPDATED;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.comment.PmsWorkItemCommentSaveReqVO;
+import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemCommentDO;
+import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemDO;
+import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemCommentMapper;
+
+import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * PMS 工作项评论 Service 实现类
@@ -33,36 +35,45 @@ import static cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemActivityC
 @Validated
 public class PmsWorkItemCommentServiceImpl implements PmsWorkItemCommentService {
 
-    @Resource
-    private PmsWorkItemCommentMapper commentMapper;
+    @Resource private PmsWorkItemCommentMapper commentMapper;
 
-    @Resource
-    private PmsWorkItemService workItemService;
-    @Resource
-    private PmsWorkItemActivityService workItemActivityService;
+    @Resource private PmsWorkItemService workItemService;
+    @Resource private PmsWorkItemActivityService workItemActivityService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createWorkItemComment(PmsWorkItemCommentSaveReqVO saveReqVO, Long userId) {
         // 1.1 校验工作项可编辑
-        PmsWorkItemDO workItem = workItemService.getWritableWorkItem(saveReqVO.getWorkItemId(), userId);
+        PmsWorkItemDO workItem =
+                workItemService.getWritableWorkItem(saveReqVO.getWorkItemId(), userId);
         // 1.2 校验回复关系
-        Long mainId = saveReqVO.getMainId() != null ? saveReqVO.getMainId() : PmsWorkItemCommentDO.MAIN_ID_ROOT;
+        Long mainId =
+                saveReqVO.getMainId() != null
+                        ? saveReqVO.getMainId()
+                        : PmsWorkItemCommentDO.MAIN_ID_ROOT;
         if (ObjectUtil.notEqual(PmsWorkItemCommentDO.MAIN_ID_ROOT, mainId)) {
             PmsWorkItemCommentDO mainComment = validateCommentExists(mainId);
             if (ObjectUtil.notEqual(saveReqVO.getWorkItemId(), mainComment.getWorkItemId())
-                    || ObjectUtil.notEqual(PmsWorkItemCommentDO.MAIN_ID_ROOT, mainComment.getMainId())) {
+                    || ObjectUtil.notEqual(
+                            PmsWorkItemCommentDO.MAIN_ID_ROOT, mainComment.getMainId())) {
                 throw exception(WORK_ITEM_COMMENT_REPLY_INVALID);
             }
         }
 
         // 2.1 创建评论
-        PmsWorkItemCommentDO comment = BeanUtils.toBean(saveReqVO, PmsWorkItemCommentDO.class)
-                .setUserId(userId).setMainId(mainId);
+        PmsWorkItemCommentDO comment =
+                BeanUtils.toBean(saveReqVO, PmsWorkItemCommentDO.class)
+                        .setUserId(userId)
+                        .setMainId(mainId);
         commentMapper.insert(comment);
         // 2.2 记录评论动态
-        workItemActivityService.createWorkItemActivity(workItem.getProjectId(), workItem.getId(), userId,
-                ObjectUtil.equal(PmsWorkItemCommentDO.MAIN_ID_ROOT, mainId) ? COMMENT_CREATED : COMMENT_REPLIED);
+        workItemActivityService.createWorkItemActivity(
+                workItem.getProjectId(),
+                workItem.getId(),
+                userId,
+                ObjectUtil.equal(PmsWorkItemCommentDO.MAIN_ID_ROOT, mainId)
+                        ? COMMENT_CREATED
+                        : COMMENT_REPLIED);
         return comment.getId();
     }
 
@@ -72,12 +83,14 @@ public class PmsWorkItemCommentServiceImpl implements PmsWorkItemCommentService 
         // 1.1 校验评论存在
         PmsWorkItemCommentDO comment = validateCommentExists(saveReqVO.getId());
         // 1.2 校验工作项可编辑
-        PmsWorkItemDO workItem = workItemService.getWritableWorkItem(comment.getWorkItemId(), userId);
+        PmsWorkItemDO workItem =
+                workItemService.getWritableWorkItem(comment.getWorkItemId(), userId);
         // 1.3 校验评论属于当前用户
         validateCommentOwner(comment, userId);
 
         // 2.1 更新评论内容
-        commentMapper.updateById(BeanUtils.toBean(saveReqVO, PmsWorkItemCommentDO.class).setId(comment.getId()));
+        commentMapper.updateById(
+                BeanUtils.toBean(saveReqVO, PmsWorkItemCommentDO.class).setId(comment.getId()));
         // 2.2 记录评论更新动态
         workItemActivityService.createWorkItemActivity(
                 workItem.getProjectId(), workItem.getId(), userId, COMMENT_UPDATED);
@@ -89,7 +102,8 @@ public class PmsWorkItemCommentServiceImpl implements PmsWorkItemCommentService 
         // 1.1 校验评论存在
         PmsWorkItemCommentDO comment = validateCommentExists(id);
         // 1.2 校验工作项可编辑
-        PmsWorkItemDO workItem = workItemService.getWritableWorkItem(comment.getWorkItemId(), userId);
+        PmsWorkItemDO workItem =
+                workItemService.getWritableWorkItem(comment.getWorkItemId(), userId);
         // 1.3 校验评论属于当前用户
         validateCommentOwner(comment, userId);
 

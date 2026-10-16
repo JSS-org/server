@@ -1,7 +1,8 @@
 package cn.iocoder.yudao.module.ai.framework.security.config;
 
-import cn.iocoder.yudao.framework.security.config.AuthorizeRequestsCustomizer;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.security.config.AuthorizeRequestsCustomizer;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +17,10 @@ public class SecurityConfiguration {
 
     @Value("${spring.ai.mcp.server.sse-endpoint:/sse}")
     private String mcpSseEndpoint;
+
     @Value("${spring.ai.mcp.server.sse-message-endpoint:/mcp/message}")
     private String mcpSseMessageEndpoint;
+
     @Value("${spring.ai.mcp.server.streamable-http-endpoint:/mcp}")
     private String mcpStreamableHttpEndpoint;
 
@@ -26,7 +29,10 @@ public class SecurityConfiguration {
         return new AuthorizeRequestsCustomizer() {
 
             @Override
-            public void customize(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
+            public void customize(
+                    AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                                    .AuthorizationManagerRequestMatcherRegistry
+                            registry) {
                 if (StrUtil.isNotBlank(mcpSseEndpoint)) {
                     registry.requestMatchers(mcpSseEndpoint).permitAll();
                 }
@@ -37,8 +43,6 @@ public class SecurityConfiguration {
                     registry.requestMatchers(mcpStreamableHttpEndpoint).permitAll();
                 }
             }
-
         };
     }
-
 }

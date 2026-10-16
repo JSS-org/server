@@ -5,7 +5,9 @@ import cn.iocoder.yudao.module.trade.framework.delivery.config.TradeExpressPrope
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressTrackQueryReqDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressTrackRespDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.impl.kd100.Kd100ExpressClient;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,9 +29,10 @@ public class Kd100ExpressClientIntegrationTest {
     @BeforeEach
     public void init() {
         RestTemplate restTemplate = new RestTemplateBuilder().build();
-        TradeExpressProperties.Kd100Config config = new TradeExpressProperties.Kd100Config()
-                .setKey("pLXUGAwK5305")
-                .setCustomer("E77DF18BE109F454A5CD319E44BF5177");
+        TradeExpressProperties.Kd100Config config =
+                new TradeExpressProperties.Kd100Config()
+                        .setKey("pLXUGAwK5305")
+                        .setCustomer("E77DF18BE109F454A5CD319E44BF5177");
         client = new Kd100ExpressClient(restTemplate, config);
     }
 
@@ -42,5 +45,4 @@ public class Kd100ExpressClientIntegrationTest {
         List<ExpressTrackRespDTO> tracks = client.getExpressTrackList(reqDTO);
         System.out.println(JsonUtils.toJsonPrettyString(tracks));
     }
-
 }

@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_CODE_DUPLICATE;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_HAS_ITEM;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,19 +14,15 @@ import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.brand.WmsItemBran
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.brand.WmsItemBrandSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemBrandDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.md.item.WmsItemBrandMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_CODE_DUPLICATE;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_HAS_ITEM;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_NOT_EXISTS;
 
 /**
  * WMS 商品品牌 Service 实现类
@@ -31,10 +33,8 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_NO
 @Validated
 public class WmsItemBrandServiceImpl implements WmsItemBrandService {
 
-    @Resource
-    private WmsItemBrandMapper brandMapper;
-    @Resource
-    private WmsItemService itemService;
+    @Resource private WmsItemBrandMapper brandMapper;
+    @Resource private WmsItemService itemService;
 
     @Override
     public Long createItemBrand(WmsItemBrandSaveReqVO createReqVO) {
@@ -133,5 +133,4 @@ public class WmsItemBrandServiceImpl implements WmsItemBrandService {
         }
         return brandMapper.selectByIds(ids);
     }
-
 }

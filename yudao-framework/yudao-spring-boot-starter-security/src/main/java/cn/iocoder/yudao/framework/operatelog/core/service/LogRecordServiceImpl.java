@@ -6,10 +6,13 @@ import cn.iocoder.yudao.framework.common.util.monitor.TracerUtils;
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
+
 import com.mzt.logapi.beans.LogRecord;
 import com.mzt.logapi.service.ILogRecordService;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -24,8 +27,7 @@ import java.util.List;
 @Slf4j
 public class LogRecordServiceImpl implements ILogRecordService {
 
-    @Resource
-    private OperateLogCommonApi operateLogApi;
+    @Resource private OperateLogCommonApi operateLogApi;
 
     @Override
     public void record(LogRecord logRecord) {
@@ -59,10 +61,12 @@ public class LogRecordServiceImpl implements ILogRecordService {
 
     public static void fillModuleFields(OperateLogCreateReqDTO reqDTO, LogRecord logRecord) {
         reqDTO.setType(logRecord.getType()); // 大模块类型，例如：CRM 客户
-        reqDTO.setSubType(logRecord.getSubType());// 操作名称，例如：转移客户
+        reqDTO.setSubType(logRecord.getSubType()); // 操作名称，例如：转移客户
         reqDTO.setBizId(Long.parseLong(logRecord.getBizNo())); // 业务编号，例如：客户编号
-        reqDTO.setAction(logRecord.getAction());// 操作内容，例如：修改编号为 1 的用户信息，将性别从男改成女，将姓名从芋道改成源码。
-        reqDTO.setExtra(logRecord.getExtra()); // 拓展字段，有些复杂的业务，需要记录一些字段 ( JSON 格式 )，例如说，记录订单编号，{ orderId: "1"}
+        reqDTO.setAction(logRecord.getAction()); // 操作内容，例如：修改编号为 1 的用户信息，将性别从男改成女，将姓名从芋道改成源码。
+        reqDTO.setExtra(
+                logRecord.getExtra()); // 拓展字段，有些复杂的业务，需要记录一些字段 ( JSON 格式 )，例如说，记录订单编号，{ orderId:
+        // "1"}
     }
 
     private static void fillRequestFields(OperateLogCreateReqDTO reqDTO) {
@@ -87,5 +91,4 @@ public class LogRecordServiceImpl implements ILogRecordService {
     public List<LogRecord> queryLogByBizNo(String bizNo, String type, String subType) {
         throw new UnsupportedOperationException("使用 OperateLogApi 进行操作日志的查询");
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.client;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,25 +23,40 @@ public class OAuth2ClientRespVO {
     @Schema(description = "应用名", requiredMode = Schema.RequiredMode.REQUIRED, example = "土豆")
     private String name;
 
-    @Schema(description = "应用图标", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+    @Schema(
+            description = "应用图标",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xx.png")
     private String logo;
 
     @Schema(description = "应用描述", example = "我是一个应用")
     private String description;
 
-    @Schema(description = "状态，参见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态，参见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Integer status;
 
     @Schema(description = "访问令牌的有效期", requiredMode = Schema.RequiredMode.REQUIRED, example = "8640")
     private Integer accessTokenValiditySeconds;
 
-    @Schema(description = "刷新令牌的有效期", requiredMode = Schema.RequiredMode.REQUIRED, example = "8640000")
+    @Schema(
+            description = "刷新令牌的有效期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "8640000")
     private Integer refreshTokenValiditySeconds;
 
-    @Schema(description = "可重定向的 URI 地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn")
+    @Schema(
+            description = "可重定向的 URI 地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn")
     private List<String> redirectUris;
 
-    @Schema(description = "授权类型，参见 OAuth2GrantTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "password")
+    @Schema(
+            description = "授权类型，参见 OAuth2GrantTypeEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "password")
     private List<String> authorizedGrantTypes;
 
     @Schema(description = "授权范围", example = "user_info")
@@ -60,5 +76,4 @@ public class OAuth2ClientRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -9,5 +9,4 @@ public class IotGatewayServerApplication {
     public static void main(String[] args) {
         SpringApplication.run(IotGatewayServerApplication.class, args);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.enums.wm;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.module.mes.enums.MesOrderStatusConstants;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -53,12 +54,16 @@ public enum MesWmReturnIssueStatusEnum implements ArrayValuable<Integer> {
      */
     CANCELED(MesOrderStatusConstants.CANCELLED, "已取消");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(MesWmReturnIssueStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(MesWmReturnIssueStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -68,7 +73,7 @@ public enum MesWmReturnIssueStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }
 
-// DONE @AI：状态流转逻辑已在 MesWmReturnIssueServiceImpl 中实现，参考 confirmReturnIssue、submitReturnIssue、stockReturnIssue、finishReturnIssue 方法
+// DONE @AI：状态流转逻辑已在 MesWmReturnIssueServiceImpl 中实现，参考
+// confirmReturnIssue、submitReturnIssue、stockReturnIssue、finishReturnIssue 方法

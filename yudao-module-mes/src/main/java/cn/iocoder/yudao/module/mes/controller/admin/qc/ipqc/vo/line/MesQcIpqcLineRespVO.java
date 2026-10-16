@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.ipqc.vo.line;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -65,5 +66,4 @@ public class MesQcIpqcLineRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

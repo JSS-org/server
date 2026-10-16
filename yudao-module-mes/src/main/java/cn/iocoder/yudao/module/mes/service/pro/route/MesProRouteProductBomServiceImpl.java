@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.route;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,15 +11,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductBo
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.route.MesProRouteProductBomMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdProductBomService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工艺路线产品 BOM Service 实现类
@@ -27,16 +29,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomService {
 
-    @Resource
-    private MesProRouteProductBomMapper routeProductBomMapper;
+    @Resource private MesProRouteProductBomMapper routeProductBomMapper;
 
-    @Resource
-    @Lazy
-    private MesProRouteService routeService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdProductBomService productBomService;
+    @Resource @Lazy private MesProRouteService routeService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdProductBomService productBomService;
 
     @Override
     public Long createRouteProductBom(MesProRouteProductBomSaveReqVO createReqVO) {
@@ -44,7 +41,8 @@ public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomSe
         validateRouteProductBomSaveData(null, createReqVO);
 
         // 2. 插入
-        MesProRouteProductBomDO routeProductBom = BeanUtils.toBean(createReqVO, MesProRouteProductBomDO.class);
+        MesProRouteProductBomDO routeProductBom =
+                BeanUtils.toBean(createReqVO, MesProRouteProductBomDO.class);
         routeProductBomMapper.insert(routeProductBom);
         return routeProductBom.getId();
     }
@@ -56,7 +54,8 @@ public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomSe
         validateRouteProductBomSaveData(updateReqVO.getId(), updateReqVO);
 
         // 2. 更新
-        MesProRouteProductBomDO updateObj = BeanUtils.toBean(updateReqVO, MesProRouteProductBomDO.class);
+        MesProRouteProductBomDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesProRouteProductBomDO.class);
         routeProductBomMapper.updateById(updateObj);
     }
 
@@ -95,7 +94,8 @@ public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomSe
     }
 
     private void validateBomUnique(Long id, Long itemId, Long processId, Long productId) {
-        MesProRouteProductBomDO existing = routeProductBomMapper.selectByUnique(itemId, processId, productId);
+        MesProRouteProductBomDO existing =
+                routeProductBomMapper.selectByUnique(itemId, processId, productId);
         if (existing == null) {
             return;
         }
@@ -106,7 +106,8 @@ public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomSe
 
     private void validateBomItemBelongsToProduct(Long productId, Long itemId) {
         itemService.validateItemExists(itemId);
-        if (!CollUtil.anyMatch(productBomService.getProductBomListByItemId(productId),
+        if (!CollUtil.anyMatch(
+                productBomService.getProductBomListByItemId(productId),
                 productBom -> ObjUtil.equal(productBom.getBomItemId(), itemId))) {
             throw exception(MD_PRODUCT_BOM_ITEM_INVALID);
         }
@@ -118,7 +119,8 @@ public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomSe
     }
 
     @Override
-    public List<MesProRouteProductBomDO> getRouteProductBomList(Long routeId, Long processId, Long productId) {
+    public List<MesProRouteProductBomDO> getRouteProductBomList(
+            Long routeId, Long processId, Long productId) {
         return routeProductBomMapper.selectList(routeId, processId, productId);
     }
 
@@ -131,5 +133,4 @@ public class MesProRouteProductBomServiceImpl implements MesProRouteProductBomSe
     public void deleteRouteProductBomByRouteIdAndProductId(Long routeId, Long productId) {
         routeProductBomMapper.deleteByRouteIdAndProductId(routeId, productId);
     }
-
 }

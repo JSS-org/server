@@ -16,5 +16,4 @@ public interface GoViewDataService {
      * @return 数据
      */
     GoViewDataRespVO getDataBySQL(String sql);
-
 }

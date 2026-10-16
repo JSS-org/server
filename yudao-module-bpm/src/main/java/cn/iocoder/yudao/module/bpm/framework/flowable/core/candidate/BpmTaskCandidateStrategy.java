@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate;
 
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.delegate.DelegateExecution;
 
@@ -77,9 +78,13 @@ public interface BpmTaskCandidateStrategy {
      * @return 用户编号集合
      */
     @SuppressWarnings("unused")
-    default Set<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId, String param,
-                                               Long startUserId, String processDefinitionId, Map<String, Object> processVariables) {
+    default Set<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
         return calculateUsers(param);
     }
-
 }

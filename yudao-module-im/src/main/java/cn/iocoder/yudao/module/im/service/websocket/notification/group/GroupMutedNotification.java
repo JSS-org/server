@@ -6,6 +6,4 @@ import lombok.Data;
  * 全群禁言通知
  */
 @Data
-public class GroupMutedNotification extends BaseGroupNotification {
-
-}
+public class GroupMutedNotification extends BaseGroupNotification {}

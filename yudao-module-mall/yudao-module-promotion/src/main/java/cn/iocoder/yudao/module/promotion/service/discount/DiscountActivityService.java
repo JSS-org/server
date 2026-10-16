@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.discount.vo.DiscountAc
 import cn.iocoder.yudao.module.promotion.controller.admin.discount.vo.DiscountActivityUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.discount.DiscountActivityDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.discount.DiscountProductDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -88,5 +89,4 @@ public interface DiscountActivityService {
      * @return 活动的商品列表
      */
     List<DiscountProductDO> getDiscountProductsByActivityId(Collection<Long> activityIds);
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.core.topic.property;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
+
 import lombok.Data;
 
 import java.util.List;
@@ -54,7 +55,6 @@ public class IotDevicePropertyPackPostReqDTO {
          * 上报时间（毫秒时间戳）
          */
         private Long time;
-
     }
 
     /**
@@ -83,7 +83,5 @@ public class IotDevicePropertyPackPostReqDTO {
          * value: 事件值对象（包含 value 和 time）
          */
         private Map<String, EventValue> events;
-
     }
-
 }

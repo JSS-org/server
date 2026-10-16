@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.pay.controller.app.wallet.vo.recharge.AppPayWalle
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletRechargeDO;
 import cn.iocoder.yudao.module.pay.enums.DictTypeConstants;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -23,21 +24,32 @@ public interface PayWalletRechargeConvert {
     PayWalletRechargeConvert INSTANCE = Mappers.getMapper(PayWalletRechargeConvert.class);
 
     @Mapping(target = "totalPrice", expression = "java( payPrice + bonusPrice)")
-    PayWalletRechargeDO convert(Long walletId, Integer payPrice, Integer bonusPrice, Long packageId);
+    PayWalletRechargeDO convert(
+            Long walletId, Integer payPrice, Integer bonusPrice, Long packageId);
 
     AppPayWalletRechargeCreateRespVO convert(PayWalletRechargeDO bean);
 
-    default PageResult<AppPayWalletRechargeRespVO> convertPage(PageResult<PayWalletRechargeDO> pageResult,
-                                                               List<PayOrderDO> payOrderList) {
-        PageResult<AppPayWalletRechargeRespVO> voPageResult = BeanUtils.toBean(pageResult, AppPayWalletRechargeRespVO.class);
-        Map<Long, PayOrderDO> payOrderMap = CollectionUtils.convertMap(payOrderList, PayOrderDO::getId);
-        voPageResult.getList().forEach(recharge -> {
-            recharge.setPayChannelName(DictFrameworkUtils.parseDictDataLabel(
-                    DictTypeConstants.CHANNEL_CODE, recharge.getPayChannelCode()));
-            MapUtils.findAndThen(payOrderMap, recharge.getPayOrderId(),
-                    order -> recharge.setPayOrderChannelOrderNo(order.getChannelOrderNo()));
-        });
+    default PageResult<AppPayWalletRechargeRespVO> convertPage(
+            PageResult<PayWalletRechargeDO> pageResult, List<PayOrderDO> payOrderList) {
+        PageResult<AppPayWalletRechargeRespVO> voPageResult =
+                BeanUtils.toBean(pageResult, AppPayWalletRechargeRespVO.class);
+        Map<Long, PayOrderDO> payOrderMap =
+                CollectionUtils.convertMap(payOrderList, PayOrderDO::getId);
+        voPageResult
+                .getList()
+                .forEach(
+                        recharge -> {
+                            recharge.setPayChannelName(
+                                    DictFrameworkUtils.parseDictDataLabel(
+                                            DictTypeConstants.CHANNEL_CODE,
+                                            recharge.getPayChannelCode()));
+                            MapUtils.findAndThen(
+                                    payOrderMap,
+                                    recharge.getPayOrderId(),
+                                    order ->
+                                            recharge.setPayOrderChannelOrderNo(
+                                                    order.getChannelOrderNo()));
+                        });
         return voPageResult;
     }
-
 }

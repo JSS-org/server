@@ -16,8 +16,10 @@ import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.gateway.protocol.emqx.IotEmqxProtocol;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.gateway.util.IotMqttTopicUtils;
+
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Locale;
@@ -45,10 +47,12 @@ public class IotEmqxAuthEventHandler {
      * 认证允许结果
      */
     private static final String RESULT_ALLOW = "allow";
+
     /**
      * 认证拒绝结果
      */
     private static final String RESULT_DENY = "deny";
+
     /**
      * 认证忽略结果
      */
@@ -58,6 +62,7 @@ public class IotEmqxAuthEventHandler {
      * EMQX 事件类型常量 - 客户端连接
      */
     private static final String EVENT_CLIENT_CONNECTED = "client.connected";
+
     /**
      * EMQX 事件类型常量 - 客户端断开连接
      */
@@ -159,8 +164,12 @@ public class IotEmqxAuthEventHandler {
      */
     private boolean handleDeviceAuth(String clientId, String username, String password) {
         try {
-            CommonResult<Boolean> result = deviceApi.authDevice(new IotDeviceAuthReqDTO()
-                    .setClientId(clientId).setUsername(username).setPassword(password));
+            CommonResult<Boolean> result =
+                    deviceApi.authDevice(
+                            new IotDeviceAuthReqDTO()
+                                    .setClientId(clientId)
+                                    .setUsername(username)
+                                    .setPassword(password));
             result.checkError();
             return BooleanUtil.isTrue(result.getData());
         } catch (Exception e) {
@@ -178,9 +187,7 @@ public class IotEmqxAuthEventHandler {
      */
     private void sendAuthResponse(RoutingContext context, String result) {
         // 构建符合 EMQX 官方规范的响应
-        JsonObject response = new JsonObject()
-                .put("result", result)
-                .put("is_superuser", false);
+        JsonObject response = new JsonObject().put("result", result).put("is_superuser", false);
         // 可以根据业务需求添加客户端属性
         // response.put("client_attrs", new JsonObject().put("role", "device"));
         // 可以添加认证过期时间（可选）
@@ -230,9 +237,12 @@ public class IotEmqxAuthEventHandler {
             }
 
             // 2. 执行 ACL 校验
-            boolean allowed = subscribe
-                    ? IotMqttTopicUtils.isTopicSubscribeAllowed(topic, deviceInfo.getProductKey(), deviceInfo.getDeviceName())
-                    : IotMqttTopicUtils.isTopicPublishAllowed(topic, deviceInfo.getProductKey(), deviceInfo.getDeviceName());
+            boolean allowed =
+                    subscribe
+                            ? IotMqttTopicUtils.isTopicSubscribeAllowed(
+                                    topic, deviceInfo.getProductKey(), deviceInfo.getDeviceName())
+                            : IotMqttTopicUtils.isTopicPublishAllowed(
+                                    topic, deviceInfo.getProductKey(), deviceInfo.getDeviceName());
             sendAuthResponse(context, allowed ? RESULT_ALLOW : RESULT_DENY);
         } catch (Exception e) {
             log.error("[handleAcl][ACL 处理失败][body={}]", body, e);
@@ -389,12 +399,14 @@ public class IotEmqxAuthEventHandler {
 
         try {
             // 2. 构建设备状态消息
-            IotDeviceMessage message = online ? IotDeviceMessage.buildStateUpdateOnline()
-                    : IotDeviceMessage.buildStateOffline();
+            IotDeviceMessage message =
+                    online
+                            ? IotDeviceMessage.buildStateUpdateOnline()
+                            : IotDeviceMessage.buildStateOffline();
 
             // 3. 发送设备状态消息
-            deviceMessageService.sendDeviceMessage(message,
-                    deviceInfo.getProductKey(), deviceInfo.getDeviceName(), serverId);
+            deviceMessageService.sendDeviceMessage(
+                    message, deviceInfo.getProductKey(), deviceInfo.getDeviceName(), serverId);
         } catch (Exception e) {
             log.error("[handleDeviceStateChange][发送设备状态消息失败: {}]", username, e);
         }
@@ -420,10 +432,11 @@ public class IotEmqxAuthEventHandler {
             }
 
             // 2. 调用注册 API
-            IotDeviceRegisterReqDTO params = new IotDeviceRegisterReqDTO()
-                    .setProductKey(deviceInfo.getProductKey())
-                    .setDeviceName(deviceInfo.getDeviceName())
-                    .setSign(password);
+            IotDeviceRegisterReqDTO params =
+                    new IotDeviceRegisterReqDTO()
+                            .setProductKey(deviceInfo.getProductKey())
+                            .setDeviceName(deviceInfo.getDeviceName())
+                            .setSign(password);
             CommonResult<IotDeviceRegisterRespDTO> result = deviceApi.registerDevice(params);
             result.checkError();
 
@@ -454,13 +467,17 @@ public class IotEmqxAuthEventHandler {
         try {
             // 1.1 构建响应消息
             String method = IotDeviceMessageMethodEnum.DEVICE_REGISTER.getMethod();
-            IotDeviceMessage responseMessage = IotDeviceMessage.replyOf(null, method, result, 0, null);
+            IotDeviceMessage responseMessage =
+                    IotDeviceMessage.replyOf(null, method, result, 0, null);
             // 1.2 序列化消息
-            byte[] encodedData = deviceMessageService.serializeDeviceMessage(responseMessage,
-                    cn.iocoder.yudao.module.iot.core.enums.IotSerializeTypeEnum.JSON);
+            byte[] encodedData =
+                    deviceMessageService.serializeDeviceMessage(
+                            responseMessage,
+                            cn.iocoder.yudao.module.iot.core.enums.IotSerializeTypeEnum.JSON);
             // 1.3 构建响应主题
-            String replyTopic = IotMqttTopicUtils.buildTopicByMethod(method,
-                    deviceInfo.getProductKey(), deviceInfo.getDeviceName(), true);
+            String replyTopic =
+                    IotMqttTopicUtils.buildTopicByMethod(
+                            method, deviceInfo.getProductKey(), deviceInfo.getDeviceName(), true);
 
             // 2. 构建响应主题，并延迟发布（等待设备连接成功并完成订阅）
             protocol.publishDelayMessage(replyTopic, encodedData, 5000);
@@ -469,5 +486,4 @@ public class IotEmqxAuthEventHandler {
             log.error("[sendRegisterResultMessage][发送注册结果失败: {}]", username, e);
         }
     }
-
 }

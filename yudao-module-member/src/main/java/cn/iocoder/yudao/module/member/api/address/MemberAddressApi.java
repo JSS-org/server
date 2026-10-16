@@ -25,5 +25,4 @@ public interface MemberAddressApi {
      * @return 用户收件地址
      */
     MemberAddressRespDTO getDefaultAddress(Long userId);
-
 }

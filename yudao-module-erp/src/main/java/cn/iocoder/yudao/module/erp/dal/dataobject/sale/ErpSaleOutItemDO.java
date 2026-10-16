@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpStockOutDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpWarehouseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -17,7 +19,8 @@ import java.math.BigDecimal;
  * @author 芋道源码
  */
 @TableName("erp_sale_out_items")
-@KeySequence("erp_sale_out_items_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence("erp_sale_out_items_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL
+// 等数据库，可不写。
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -29,14 +32,15 @@ public class ErpSaleOutItemDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 销售出库编号
      *
      * 关联 {@link ErpStockOutDO##getId()}
      */
     private Long outId;
+
     /**
      * 销售订单项编号
      *
@@ -44,18 +48,21 @@ public class ErpSaleOutItemDO extends BaseDO {
      * 目的：方便更新关联的销售订单项的出库数量
      */
     private Long orderItemId;
+
     /**
      * 仓库编号
      *
      * 关联 {@link ErpWarehouseDO#getId()}
      */
     private Long warehouseId;
+
     /**
      * 产品编号
      *
      * 关联 {@link ErpProductDO#getId()}
      */
     private Long productId;
+
     /**
      * 产品单位单位
      *
@@ -67,20 +74,24 @@ public class ErpSaleOutItemDO extends BaseDO {
      * 产品单位单价，单位：元
      */
     private BigDecimal productPrice;
+
     /**
      * 数量
      */
     private BigDecimal count;
+
     /**
      * 总价，单位：元
      *
      * totalPrice = productPrice * count
      */
     private BigDecimal totalPrice;
+
     /**
      * 税率，百分比
      */
     private BigDecimal taxPercent;
+
     /**
      * 税额，单位：元
      *
@@ -92,5 +103,4 @@ public class ErpSaleOutItemDO extends BaseDO {
      * 备注
      */
     private String remark;
-
 }

@@ -1,8 +1,12 @@
 package cn.iocoder.yudao.module.im.service.statistics;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.convert.Convert;
 import cn.iocoder.yudao.module.im.dal.mysql.statistics.ImStatisticsManagerMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -10,8 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * IM 数据看板 Service 实现类
@@ -22,8 +24,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerService {
 
-    @Resource
-    private ImStatisticsManagerMapper statisticsMapper;
+    @Resource private ImStatisticsManagerMapper statisticsMapper;
 
     // ==================== 用户 ====================
 
@@ -43,14 +44,18 @@ public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerServic
     }
 
     @Override
-    public Map<LocalDateTime, Long> getNewUserDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime) {
-        List<Map<String, Object>> rows = statisticsMapper.selectNewUserDailyCount(beginTime, endTime);
+    public Map<LocalDateTime, Long> getNewUserDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime) {
+        List<Map<String, Object>> rows =
+                statisticsMapper.selectNewUserDailyCount(beginTime, endTime);
         return toDailyCountMap(rows);
     }
 
     @Override
-    public Map<LocalDateTime, Long> getActiveUserDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime) {
-        List<Map<String, Object>> rows = statisticsMapper.selectActiveUserDailyCount(beginTime, endTime);
+    public Map<LocalDateTime, Long> getActiveUserDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime) {
+        List<Map<String, Object>> rows =
+                statisticsMapper.selectActiveUserDailyCount(beginTime, endTime);
         return toDailyCountMap(rows);
     }
 
@@ -69,9 +74,8 @@ public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerServic
     @Override
     public Map<String, Long> getGroupSizeCountMap() {
         List<Map<String, Object>> rows = statisticsMapper.selectGroupSizeDistribution();
-        return convertMap(rows,
-                row -> (String) row.get("range"),
-                row -> Convert.toLong(row.get("count")));
+        return convertMap(
+                rows, row -> (String) row.get("range"), row -> Convert.toLong(row.get("count")));
     }
 
     // ==================== 消息 ====================
@@ -87,29 +91,39 @@ public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerServic
     }
 
     @Override
-    public Map<LocalDateTime, Long> getPrivateMessageDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime) {
-        List<Map<String, Object>> rows = statisticsMapper.selectPrivateMessageDailyCount(beginTime, endTime);
+    public Map<LocalDateTime, Long> getPrivateMessageDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime) {
+        List<Map<String, Object>> rows =
+                statisticsMapper.selectPrivateMessageDailyCount(beginTime, endTime);
         return toDailyCountMap(rows);
     }
 
     @Override
-    public Map<LocalDateTime, Long> getGroupMessageDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime) {
-        List<Map<String, Object>> rows = statisticsMapper.selectGroupMessageDailyCount(beginTime, endTime);
+    public Map<LocalDateTime, Long> getGroupMessageDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime) {
+        List<Map<String, Object>> rows =
+                statisticsMapper.selectGroupMessageDailyCount(beginTime, endTime);
         return toDailyCountMap(rows);
     }
 
     @Override
-    public Map<Integer, Long> getMessageTypeCountMap(LocalDateTime beginTime, LocalDateTime endTime) {
-        List<Map<String, Object>> rows = statisticsMapper.selectMessageTypeDistribution(beginTime, endTime);
-        return convertMap(rows,
+    public Map<Integer, Long> getMessageTypeCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime) {
+        List<Map<String, Object>> rows =
+                statisticsMapper.selectMessageTypeDistribution(beginTime, endTime);
+        return convertMap(
+                rows,
                 row -> Convert.toInt(row.get("type")),
                 row -> Convert.toLong(row.get("count")));
     }
 
     @Override
-    public Map<Long, Long> getTopSenderCountMap(LocalDateTime beginTime, LocalDateTime endTime, int limit) {
-        List<Map<String, Object>> rows = statisticsMapper.selectTopSenders(beginTime, endTime, limit);
-        return convertMap(rows,
+    public Map<Long, Long> getTopSenderCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime, int limit) {
+        List<Map<String, Object>> rows =
+                statisticsMapper.selectTopSenders(beginTime, endTime, limit);
+        return convertMap(
+                rows,
                 row -> Convert.toLong(row.get("userId")),
                 row -> Convert.toLong(row.get("messageCount")));
     }
@@ -118,9 +132,9 @@ public class ImStatisticsManagerServiceImpl implements ImStatisticsManagerServic
      * 把 [{date, count}] 行映射为 {LocalDateTime -> Long}；
      */
     private static Map<LocalDateTime, Long> toDailyCountMap(List<Map<String, Object>> rows) {
-        return convertMap(rows,
+        return convertMap(
+                rows,
                 row -> Convert.convert(LocalDate.class, row.get("date")).atStartOfDay(),
                 row -> Convert.toLong(row.get("count")));
     }
-
 }

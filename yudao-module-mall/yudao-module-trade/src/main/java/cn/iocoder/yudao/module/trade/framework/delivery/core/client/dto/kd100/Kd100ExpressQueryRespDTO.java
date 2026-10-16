@@ -1,16 +1,18 @@
 package cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kd100;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.TIME_ZONE_DEFAULT;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
+
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.TIME_ZONE_DEFAULT;
 
 /**
  * 快递 100 实时快递查询 Resp DTO
@@ -27,11 +29,13 @@ public class Kd100ExpressQueryRespDTO {
      */
     @JsonProperty("com")
     private String expressCompanyCode;
+
     /**
      * 快递单号
      */
     @JsonProperty("nu")
     private String logisticsNo;
+
     /**
      * 快递单当前状态
      */
@@ -43,6 +47,7 @@ public class Kd100ExpressQueryRespDTO {
      * 失败返回 "false"
      */
     private String result;
+
     /**
      * 查询结果失败时的错误信息
      */
@@ -60,14 +65,15 @@ public class Kd100ExpressQueryRespDTO {
         /**
          * 轨迹发生时间
          */
-        @JsonFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND, timezone = TIME_ZONE_DEFAULT)
+        @JsonFormat(
+                pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND,
+                timezone = TIME_ZONE_DEFAULT)
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         private LocalDateTime time;
+
         /**
          * 轨迹描述
          */
         private String context;
-
     }
-
 }

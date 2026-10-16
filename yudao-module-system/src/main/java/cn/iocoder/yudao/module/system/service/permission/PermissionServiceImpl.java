@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
-import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleMenuDO;
@@ -18,23 +21,24 @@ import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
 import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Sets;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.annotation.Resource;
 import java.util.*;
 import java.util.function.Supplier;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
 
 /**
  * 权限 Service 实现类
@@ -45,19 +49,13 @@ import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString
 @Slf4j
 public class PermissionServiceImpl implements PermissionService {
 
-    @Resource
-    private RoleMenuMapper roleMenuMapper;
-    @Resource
-    private UserRoleMapper userRoleMapper;
+    @Resource private RoleMenuMapper roleMenuMapper;
+    @Resource private UserRoleMapper userRoleMapper;
 
-    @Resource
-    private RoleService roleService;
-    @Resource
-    private MenuService menuService;
-    @Resource
-    private DeptService deptService;
-    @Resource
-    private AdminUserService userService;
+    @Resource private RoleService roleService;
+    @Resource private MenuService menuService;
+    @Resource private DeptService deptService;
+    @Resource private AdminUserService userService;
 
     @Override
     public boolean hasAnyPermissions(Long userId, String... permissions) {
@@ -132,27 +130,32 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
-    @Caching(evict = {
-            @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST,
-            allEntries = true),
-            @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
-            allEntries = true) // allEntries 清空所有缓存，主要一次更新涉及到的 menuIds 较多，反倒批量会更快
-    })
+    @Caching(
+            evict = {
+                @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST, allEntries = true),
+                @CacheEvict(
+                        value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
+                        allEntries = true) // allEntries 清空所有缓存，主要一次更新涉及到的 menuIds 较多，反倒批量会更快
+            })
     public void assignRoleMenu(Long roleId, Set<Long> menuIds) {
         // 获得角色拥有菜单编号
-        Set<Long> dbMenuIds = convertSet(roleMenuMapper.selectListByRoleId(roleId), RoleMenuDO::getMenuId);
+        Set<Long> dbMenuIds =
+                convertSet(roleMenuMapper.selectListByRoleId(roleId), RoleMenuDO::getMenuId);
         // 计算新增和删除的菜单编号
         Set<Long> menuIdList = CollUtil.emptyIfNull(menuIds);
         Collection<Long> createMenuIds = CollUtil.subtract(menuIdList, dbMenuIds);
         Collection<Long> deleteMenuIds = CollUtil.subtract(dbMenuIds, menuIdList);
         // 执行新增和删除。对于已经授权的菜单，不用做任何处理
         if (CollUtil.isNotEmpty(createMenuIds)) {
-            roleMenuMapper.insertBatch(CollectionUtils.convertList(createMenuIds, menuId -> {
-                RoleMenuDO entity = new RoleMenuDO();
-                entity.setRoleId(roleId);
-                entity.setMenuId(menuId);
-                return entity;
-            }));
+            roleMenuMapper.insertBatch(
+                    CollectionUtils.convertList(
+                            createMenuIds,
+                            menuId -> {
+                                RoleMenuDO entity = new RoleMenuDO();
+                                entity.setRoleId(roleId);
+                                entity.setMenuId(menuId);
+                                return entity;
+                            }));
         }
         if (CollUtil.isNotEmpty(deleteMenuIds)) {
             roleMenuMapper.deleteListByRoleIdAndMenuIds(roleId, deleteMenuIds);
@@ -161,12 +164,15 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @Caching(evict = {
-            @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST,
-                    allEntries = true), // allEntries 清空所有缓存，此处无法方便获得 roleId 对应的 menu 缓存们
-            @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST,
-                    allEntries = true) // allEntries 清空所有缓存，此处无法方便获得 roleId 对应的 user 缓存们
-    })
+    @Caching(
+            evict = {
+                @CacheEvict(
+                        value = RedisKeyConstants.MENU_ROLE_ID_LIST,
+                        allEntries = true), // allEntries 清空所有缓存，此处无法方便获得 roleId 对应的 menu 缓存们
+                @CacheEvict(
+                        value = RedisKeyConstants.USER_ROLE_ID_LIST,
+                        allEntries = true) // allEntries 清空所有缓存，此处无法方便获得 roleId 对应的 user 缓存们
+            })
     public void processRoleDeleted(Long roleId) {
         // 标记删除 UserRole
         userRoleMapper.deleteListByRoleId(roleId);
@@ -207,20 +213,23 @@ public class PermissionServiceImpl implements PermissionService {
     @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
     public void assignUserRole(Long userId, Set<Long> roleIds) {
         // 获得角色拥有角色编号
-        Set<Long> dbRoleIds = convertSet(userRoleMapper.selectListByUserId(userId),
-                UserRoleDO::getRoleId);
+        Set<Long> dbRoleIds =
+                convertSet(userRoleMapper.selectListByUserId(userId), UserRoleDO::getRoleId);
         // 计算新增和删除的角色编号
         Set<Long> roleIdList = CollUtil.emptyIfNull(roleIds);
         Collection<Long> createRoleIds = CollUtil.subtract(roleIdList, dbRoleIds);
         Collection<Long> deleteMenuIds = CollUtil.subtract(dbRoleIds, roleIdList);
         // 执行新增和删除。对于已经授权的角色，不用做任何处理
         if (!CollectionUtil.isEmpty(createRoleIds)) {
-            userRoleMapper.insertBatch(CollectionUtils.convertList(createRoleIds, roleId -> {
-                UserRoleDO entity = new UserRoleDO();
-                entity.setUserId(userId);
-                entity.setRoleId(roleId);
-                return entity;
-            }));
+            userRoleMapper.insertBatch(
+                    CollectionUtils.convertList(
+                            createRoleIds,
+                            roleId -> {
+                                UserRoleDO entity = new UserRoleDO();
+                                entity.setUserId(userId);
+                                entity.setRoleId(roleId);
+                                return entity;
+                            }));
         }
         if (!CollectionUtil.isEmpty(deleteMenuIds)) {
             userRoleMapper.deleteListByUserIdAndRoleIdIds(userId, deleteMenuIds);
@@ -286,7 +295,8 @@ public class PermissionServiceImpl implements PermissionService {
         }
 
         // 获得用户的部门编号的缓存，通过 Guava 的 Suppliers 惰性求值，即有且仅有第一次发起 DB 的查询
-        Supplier<Long> userDeptId = Suppliers.memoize(() -> userService.getUser(userId).getDeptId());
+        Supplier<Long> userDeptId =
+                Suppliers.memoize(() -> userService.getUser(userId).getDeptId());
         // 遍历每个角色，计算
         for (RoleDO role : roles) {
             // 为空时，跳过
@@ -318,7 +328,8 @@ public class PermissionServiceImpl implements PermissionService {
                 if (deptId == null) {
                     continue;
                 }
-                CollUtil.addAll(result.getDeptIds(), deptService.getChildDeptIdListFromCache(deptId));
+                CollUtil.addAll(
+                        result.getDeptIds(), deptService.getChildDeptIdListFromCache(deptId));
                 // 添加本身部门编号
                 result.getDeptIds().add(deptId);
                 continue;
@@ -329,7 +340,10 @@ public class PermissionServiceImpl implements PermissionService {
                 continue;
             }
             // 未知情况，error log 即可
-            log.error("[getDeptDataPermission][LoginUser({}) role({}) 无法处理]", userId, toJsonString(result));
+            log.error(
+                    "[getDeptDataPermission][LoginUser({}) role({}) 无法处理]",
+                    userId,
+                    toJsonString(result));
         }
         return result;
     }
@@ -342,5 +356,4 @@ public class PermissionServiceImpl implements PermissionService {
     private PermissionServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }
-
 }

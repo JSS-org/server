@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -26,5 +27,4 @@ public class FmsVoucherTemplateRespVO {
 
     @Schema(description = "凭证模板分录数组", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<FmsVoucherTemplateEntryVO> entries;
-
 }

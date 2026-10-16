@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup.*;
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryPickUpStoreDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -67,7 +68,8 @@ public interface DeliveryPickUpStoreService {
      * @param pageReqVO 分页查询
      * @return 自提门店分页
      */
-    PageResult<DeliveryPickUpStoreDO> getDeliveryPickUpStorePage(DeliveryPickUpStorePageReqVO pageReqVO);
+    PageResult<DeliveryPickUpStoreDO> getDeliveryPickUpStorePage(
+            DeliveryPickUpStorePageReqVO pageReqVO);
 
     /**
      * 绑定自提店员
@@ -75,5 +77,4 @@ public interface DeliveryPickUpStoreService {
      * @param bindReqVO 绑定数据
      */
     void bindDeliveryPickUpStore(DeliveryPickUpBindReqVO bindReqVO);
-
 }

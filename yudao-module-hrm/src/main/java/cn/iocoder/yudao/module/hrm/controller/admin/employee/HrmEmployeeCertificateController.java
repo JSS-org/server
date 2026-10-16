@@ -1,16 +1,21 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.certificate.HrmEmployeeCertificateRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.certificate.HrmEmployeeCertificateSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.experience.HrmEmployeeCertificateDO;
 import cn.iocoder.yudao.module.hrm.service.employee.experience.HrmEmployeeCertificateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,16 +29,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - HRM 员工证书")
 @RestController
 @RequestMapping("/hrm/employee/certificate")
 @Validated
 public class HrmEmployeeCertificateController {
 
-    @Resource
-    private HrmEmployeeCertificateService certificateService;
+    @Resource private HrmEmployeeCertificateService certificateService;
 
     @GetMapping("/list")
     @Operation(summary = "获得员工证书列表")
@@ -41,7 +43,8 @@ public class HrmEmployeeCertificateController {
     @PreAuthorize("@ss.hasPermission('hrm:employee:query')")
     public CommonResult<List<HrmEmployeeCertificateRespVO>> getCertificateList(
             @RequestParam("employeeId") Long employeeId) {
-        List<HrmEmployeeCertificateDO> certificates = certificateService.getCertificateListByEmployeeId(employeeId);
+        List<HrmEmployeeCertificateDO> certificates =
+                certificateService.getCertificateListByEmployeeId(employeeId);
         return success(BeanUtils.toBean(certificates, HrmEmployeeCertificateRespVO.class));
     }
 
@@ -70,5 +73,4 @@ public class HrmEmployeeCertificateController {
         certificateService.deleteCertificate(id);
         return success(true);
     }
-
 }

@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.instance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
+
 import java.util.List;
 import java.util.Map;
 
@@ -20,5 +22,4 @@ public class BpmProcessInstanceCreateReqVO {
 
     @Schema(description = "发起人自选审批人 Map", example = "{taskKey1: [1, 2]}")
     private Map<String, List<Long>> startUserSelectAssignees;
-
 }

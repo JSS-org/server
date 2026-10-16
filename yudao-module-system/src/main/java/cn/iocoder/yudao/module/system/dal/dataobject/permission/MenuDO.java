@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.system.enums.permission.MenuTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -30,12 +32,13 @@ public class MenuDO extends BaseDO {
     /**
      * 菜单编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 菜单名称
      */
     private String name;
+
     /**
      * 权限标识
      *
@@ -47,44 +50,53 @@ public class MenuDO extends BaseDO {
      * - 对于前端，配合前端标签，配置按钮是否展示，避免用户没有该权限时，结果可以看到该操作。
      */
     private String permission;
+
     /**
      * 菜单类型
      *
      * 枚举 {@link MenuTypeEnum}
      */
     private Integer type;
+
     /**
      * 显示顺序
      */
     private Integer sort;
+
     /**
      * 父菜单ID
      */
     private Long parentId;
+
     /**
      * 路由地址
      *
      * 如果 path 为 http(s) 时，则它是外链
      */
     private String path;
+
     /**
      * 菜单图标
      */
     private String icon;
+
     /**
      * 组件路径
      */
     private String component;
+
     /**
      * 组件名
      */
     private String componentName;
+
     /**
      * 状态
      *
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
+
     /**
      * 是否可见
      *
@@ -92,6 +104,7 @@ public class MenuDO extends BaseDO {
      * 当设置为 true 时，该菜单不会展示在侧边栏，但是路由还是存在。例如说，一些独立的编辑页面 /edit/1024 等等
      */
     private Boolean visible;
+
     /**
      * 是否缓存
      *
@@ -99,11 +112,11 @@ public class MenuDO extends BaseDO {
      * 注意：如果开启缓存，则必须填写 {@link #componentName} 属性，否则无法缓存
      */
     private Boolean keepAlive;
+
     /**
      * 是否总是显示
      *
      * 如果为 false 时，当该菜单只有一个子菜单时，不展示自己，直接展示子菜单
      */
     private Boolean alwaysShow;
-
 }

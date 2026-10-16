@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 项目分组新增/修改 Request VO")
@@ -16,5 +18,4 @@ public class PmsProjectGroupSaveReqVO {
     @NotBlank(message = "分组名称不能为空")
     @Size(max = 100, message = "分组名称不能超过 100 个字符")
     private String name;
-
 }

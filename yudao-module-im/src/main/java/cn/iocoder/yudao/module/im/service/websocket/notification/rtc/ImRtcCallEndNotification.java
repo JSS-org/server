@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.im.service.websocket.notification.rtc;
 import cn.iocoder.yudao.module.im.dal.dataobject.rtc.ImRtcCallDO;
 import cn.iocoder.yudao.module.im.enums.rtc.ImRtcCallEndReasonEnum;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import lombok.Data;
 
 /**
@@ -26,39 +27,50 @@ public class ImRtcCallEndNotification {
      * 业务通话编号
      */
     private String room;
+
     /**
      * 会话类型
      */
     private Integer conversationType;
+
     /**
      * 媒体类型
      */
     private Integer mediaType;
+
     /**
      * 结束原因
      */
     private Integer endReason;
+
     /**
      * 通话时长（秒）：接通过为 endTime - acceptTime；未接通为 null
      */
     private Long durationSeconds;
+
     /**
      * 操作者用户编号：HANGUP / CANCEL / REJECT 是触发结束的人；HANGUP webhook 兜底为 null
      * <p>
      * 用于前端「被某某挂断」类文案；普通文案不依赖此字段
      */
     private Long operatorUserId;
+
     /**
      * 操作者昵称：前端按需展示（被某某挂断 / 头像 tip）；操作者为空时随之为空
      */
     private String operatorNickname;
+
     /**
      * 操作者头像：前端按需展示；操作者为空时随之为空
      */
     private String operatorAvatar;
 
-    public static ImRtcCallEndNotification of(ImRtcCallDO call, ImRtcCallEndReasonEnum reason, Long durationSeconds,
-                                              Long operatorId, AdminUserRespDTO operator) {
+    public static ImRtcCallEndNotification of(
+            ImRtcCallDO call,
+            ImRtcCallEndReasonEnum reason,
+            Long durationSeconds,
+            Long operatorId,
+            AdminUserRespDTO operator) {
         ImRtcCallEndNotification notification = new ImRtcCallEndNotification();
         notification.room = call.getRoom();
         notification.conversationType = call.getConversationType();
@@ -72,5 +84,4 @@ public class ImRtcCallEndNotification {
         }
         return notification;
     }
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.infra.controller.admin.job.vo.job.JobPageReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.job.JobDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -20,11 +21,12 @@ public interface JobMapper extends BaseMapperX<JobDO> {
     }
 
     default PageResult<JobDO> selectPage(JobPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<JobDO>()
-                .likeIfPresent(JobDO::getName, reqVO.getName())
-                .eqIfPresent(JobDO::getStatus, reqVO.getStatus())
-                .likeIfPresent(JobDO::getHandlerName, reqVO.getHandlerName())
-                .orderByDesc(JobDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<JobDO>()
+                        .likeIfPresent(JobDO::getName, reqVO.getName())
+                        .eqIfPresent(JobDO::getStatus, reqVO.getStatus())
+                        .likeIfPresent(JobDO::getHandlerName, reqVO.getHandlerName())
+                        .orderByDesc(JobDO::getId));
     }
-
 }

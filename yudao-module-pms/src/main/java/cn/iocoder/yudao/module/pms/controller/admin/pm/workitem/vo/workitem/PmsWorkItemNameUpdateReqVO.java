@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.workitem;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 工作项名称更新 Request VO")
@@ -18,5 +20,4 @@ public class PmsWorkItemNameUpdateReqVO {
     @NotBlank(message = "工作项标题不能为空")
     @Size(max = 100, message = "工作项标题不能超过 100 个字符")
     private String name;
-
 }

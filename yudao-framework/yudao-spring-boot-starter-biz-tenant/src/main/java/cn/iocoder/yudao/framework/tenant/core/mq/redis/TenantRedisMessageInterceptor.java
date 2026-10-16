@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.framework.tenant.core.mq.redis;
 
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.mq.redis.core.interceptor.RedisMessageInterceptor;
 import cn.iocoder.yudao.framework.mq.redis.core.message.AbstractRedisMessage;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
-
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
 
 /**
  * 多租户 {@link AbstractRedisMessage} 拦截器
@@ -38,5 +38,4 @@ public class TenantRedisMessageInterceptor implements RedisMessageInterceptor {
         // 注意，Consumer 是一个逻辑的入口，所以不考虑原本上下文就存在租户编号的情况
         TenantContextHolder.clear();
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.announcement.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -55,7 +56,11 @@ public class OaAnnouncementRespVO {
     @Schema(description = "当前接收人是否已转发给下属", example = "false")
     private Boolean forwarded;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

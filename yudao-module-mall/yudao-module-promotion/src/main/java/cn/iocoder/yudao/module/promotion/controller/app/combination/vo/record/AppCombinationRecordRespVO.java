@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.combination.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -39,7 +40,10 @@ public class AppCombinationRecordRespVO {
     @Schema(description = "商品名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "我是大黄豆")
     private String spuName;
 
-    @Schema(description = "商品图片", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/1.png")
+    @Schema(
+            description = "商品图片",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/1.png")
     private String picUrl;
 
     @Schema(description = "购买的商品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
@@ -47,5 +51,4 @@ public class AppCombinationRecordRespVO {
 
     @Schema(description = "拼团金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer combinationPrice;
-
 }

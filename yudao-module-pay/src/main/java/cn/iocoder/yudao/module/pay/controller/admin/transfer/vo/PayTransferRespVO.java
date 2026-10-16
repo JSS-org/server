@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.pay.controller.admin.transfer.vo;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.framework.excel.core.convert.MoneyConvert;
 import cn.iocoder.yudao.module.pay.enums.DictTypeConstants;
 
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -69,7 +71,10 @@ public class PayTransferRespVO {
     @ExcelProperty("收款人账号")
     private String userAccount;
 
-    @Schema(description = "异步通知商户地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn")
+    @Schema(
+            description = "异步通知商户地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn")
     private String notifyUrl;
 
     @ExcelProperty("用户 IP")
@@ -96,5 +101,4 @@ public class PayTransferRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

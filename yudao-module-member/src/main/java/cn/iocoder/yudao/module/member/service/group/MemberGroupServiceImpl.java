@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.member.service.group;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_HAS_USER;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,16 +14,14 @@ import cn.iocoder.yudao.module.member.convert.group.MemberGroupConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.mysql.group.MemberGroupMapper;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_HAS_USER;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_NOT_EXISTS;
 
 /**
  * 用户分组 Service 实现类
@@ -30,11 +32,9 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_NOT_
 @Validated
 public class MemberGroupServiceImpl implements MemberGroupService {
 
-    @Resource
-    private MemberGroupMapper memberGroupMapper;
+    @Resource private MemberGroupMapper memberGroupMapper;
 
-    @Resource
-    private MemberUserService memberUserService;
+    @Resource private MemberUserService memberUserService;
 
     @Override
     public Long createGroup(MemberGroupCreateReqVO createReqVO) {
@@ -99,5 +99,4 @@ public class MemberGroupServiceImpl implements MemberGroupService {
     public List<MemberGroupDO> getGroupListByStatus(Integer status) {
         return memberGroupMapper.selectListByStatus(status);
     }
-
 }

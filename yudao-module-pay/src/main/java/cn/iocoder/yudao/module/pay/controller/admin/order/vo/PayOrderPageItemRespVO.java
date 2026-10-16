@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.admin.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -20,6 +21,5 @@ public class PayOrderPageItemRespVO extends PayOrderBaseVO {
     private LocalDateTime createTime;
 
     @Schema(description = "应用名称", example = "wx_pay")
-    private String  appName;
-
+    private String appName;
 }

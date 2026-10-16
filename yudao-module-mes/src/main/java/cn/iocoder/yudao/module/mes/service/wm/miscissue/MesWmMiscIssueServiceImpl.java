@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.miscissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,22 +14,21 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.MesWmMiscIss
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscissue.MesWmMiscIssueMapper;
-import cn.iocoder.yudao.module.mes.enums.wm.MesWmMiscIssueStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
+import cn.iocoder.yudao.module.mes.enums.wm.MesWmMiscIssueStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmTransactionTypeEnum;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSaveReqDTO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 杂项出库单 Service 实现类
@@ -35,13 +38,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
 
-    @Resource
-    private MesWmMiscIssueMapper miscIssueMapper;
+    @Resource private MesWmMiscIssueMapper miscIssueMapper;
 
-    @Resource
-    private MesWmMiscIssueLineService miscIssueLineService;
-    @Resource
-    private MesWmTransactionService wmTransactionService;
+    @Resource private MesWmMiscIssueLineService miscIssueLineService;
+    @Resource private MesWmTransactionService wmTransactionService;
 
     @Override
     public Long createMiscIssue(MesWmMiscIssueSaveReqVO createReqVO) {
@@ -101,8 +101,10 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
         }
 
         // 提交（草稿 → 待执行出库）
-        miscIssueMapper.updateById(new MesWmMiscIssueDO()
-                .setId(id).setStatus(MesWmMiscIssueStatusEnum.APPROVED.getStatus()));
+        miscIssueMapper.updateById(
+                new MesWmMiscIssueDO()
+                        .setId(id)
+                        .setStatus(MesWmMiscIssueStatusEnum.APPROVED.getStatus()));
     }
 
     @Override
@@ -123,18 +125,32 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
         createTransactionList(issue);
 
         // 3. 更新出库单状态（待执行出库 → 已完成）
-        miscIssueMapper.updateById(new MesWmMiscIssueDO()
-                .setId(id).setStatus(MesWmMiscIssueStatusEnum.FINISHED.getStatus()));
+        miscIssueMapper.updateById(
+                new MesWmMiscIssueDO()
+                        .setId(id)
+                        .setStatus(MesWmMiscIssueStatusEnum.FINISHED.getStatus()));
     }
 
     private void createTransactionList(MesWmMiscIssueDO issue) {
-        List<MesWmMiscIssueLineDO> lines = miscIssueLineService.getMiscIssueLineListByIssueId(issue.getId());
-        wmTransactionService.createTransactionList(convertList(lines, line -> new MesWmTransactionSaveReqDTO()
-                .setType(MesWmTransactionTypeEnum.OUT.getType()).setItemId(line.getItemId())
-                .setQuantity(line.getQuantity().negate()) // 出库数量为负数
-                .setBatchId(line.getBatchId()).setBatchCode(line.getBatchCode())
-                .setWarehouseId(line.getWarehouseId()).setLocationId(line.getLocationId()).setAreaId(line.getAreaId())
-                .setBizType(MesBizTypeConstants.WM_MISC_ISSUE).setBizId(issue.getId()).setBizCode(issue.getCode()).setBizLineId(line.getId())));
+        List<MesWmMiscIssueLineDO> lines =
+                miscIssueLineService.getMiscIssueLineListByIssueId(issue.getId());
+        wmTransactionService.createTransactionList(
+                convertList(
+                        lines,
+                        line ->
+                                new MesWmTransactionSaveReqDTO()
+                                        .setType(MesWmTransactionTypeEnum.OUT.getType())
+                                        .setItemId(line.getItemId())
+                                        .setQuantity(line.getQuantity().negate()) // 出库数量为负数
+                                        .setBatchId(line.getBatchId())
+                                        .setBatchCode(line.getBatchCode())
+                                        .setWarehouseId(line.getWarehouseId())
+                                        .setLocationId(line.getLocationId())
+                                        .setAreaId(line.getAreaId())
+                                        .setBizType(MesBizTypeConstants.WM_MISC_ISSUE)
+                                        .setBizId(issue.getId())
+                                        .setBizCode(issue.getCode())
+                                        .setBizLineId(line.getId())));
     }
 
     @Override
@@ -143,14 +159,17 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
         // 校验存在
         MesWmMiscIssueDO issue = validateMiscIssueExists(id);
         // 已完成和已取消不允许取消
-        if (ObjectUtils.equalsAny(issue.getStatus(),
+        if (ObjectUtils.equalsAny(
+                issue.getStatus(),
                 MesWmMiscIssueStatusEnum.FINISHED.getStatus(),
                 MesWmMiscIssueStatusEnum.CANCELED.getStatus())) {
             throw exception(WM_MISC_ISSUE_CANCEL_NOT_ALLOWED);
         }
         // 取消
-        miscIssueMapper.updateById(new MesWmMiscIssueDO()
-                .setId(id).setStatus(MesWmMiscIssueStatusEnum.CANCELED.getStatus()));
+        miscIssueMapper.updateById(
+                new MesWmMiscIssueDO()
+                        .setId(id)
+                        .setStatus(MesWmMiscIssueStatusEnum.CANCELED.getStatus()));
     }
 
     @Override
@@ -190,5 +209,4 @@ public class MesWmMiscIssueServiceImpl implements MesWmMiscIssueService {
             throw exception(WM_MISC_ISSUE_CODE_DUPLICATE);
         }
     }
-
 }

@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.subject.vo;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.mes.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -32,7 +34,10 @@ public class MesDvSubjectRespVO {
     @DictFormat(DictTypeConstants.MES_DV_SUBJECT_TYPE)
     private Integer type;
 
-    @Schema(description = "项目内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "检查注塑机外壳是否有裂纹")
+    @Schema(
+            description = "项目内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "检查注塑机外壳是否有裂纹")
     @ExcelProperty("项目内容")
     private String content;
 
@@ -52,5 +57,4 @@ public class MesDvSubjectRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

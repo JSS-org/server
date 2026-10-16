@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.product.controller.admin.brand.vo.*;
 import cn.iocoder.yudao.module.product.dal.dataobject.brand.ProductBrandDO;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.erp.controller.admin.statistics.vo.sale;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -20,5 +21,4 @@ public class ErpSaleSummaryRespVO {
 
     @Schema(description = "今年销售金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "88888")
     private BigDecimal yearPrice;
-
 }

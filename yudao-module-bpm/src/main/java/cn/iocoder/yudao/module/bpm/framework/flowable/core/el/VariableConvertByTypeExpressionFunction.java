@@ -12,21 +12,22 @@ import org.springframework.stereotype.Component;
  */
 @Deprecated // TODO @芋艿：兼容老版本，预计 27 年删除；
 @Component
-public class VariableConvertByTypeExpressionFunction extends AbstractFlowableVariableExpressionFunction {
+public class VariableConvertByTypeExpressionFunction
+        extends AbstractFlowableVariableExpressionFunction {
 
     public VariableConvertByTypeExpressionFunction() {
         super("convertByType");
     }
 
-    public static Object convertByType(VariableContainer variableContainer, String variableName, Object parmaValue) {
+    public static Object convertByType(
+            VariableContainer variableContainer, String variableName, Object parmaValue) {
         Object variable = variableContainer.getVariable(variableName);
         if (variable != null && parmaValue != null) {
             // 如果值不是字符串类型，流程变量的类型是字符串，把值转成字符串
-            if (!(parmaValue instanceof String) && variable instanceof String ) {
+            if (!(parmaValue instanceof String) && variable instanceof String) {
                 return parmaValue.toString();
             }
         }
         return parmaValue;
     }
-
 }

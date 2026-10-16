@@ -1,9 +1,15 @@
 package cn.iocoder.yudao.module.mes.controller.admin.tm.tool;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.tm.tool.vo.MesTmToolPageReqVO;
@@ -13,27 +19,23 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.tm.tool.MesTmToolDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.tm.tool.MesTmToolTypeDO;
 import cn.iocoder.yudao.module.mes.service.tm.tool.MesTmToolService;
 import cn.iocoder.yudao.module.mes.service.tm.tool.MesTmToolTypeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - MES 工具台账")
 @RestController
@@ -41,10 +43,8 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class MesTmToolController {
 
-    @Resource
-    private MesTmToolService toolService;
-    @Resource
-    private MesTmToolTypeService toolTypeService;
+    @Resource private MesTmToolService toolService;
+    @Resource private MesTmToolTypeService toolTypeService;
 
     @PostMapping("/create")
     @Operation(summary = "创建工具")
@@ -90,17 +90,19 @@ public class MesTmToolController {
     @GetMapping("/page")
     @Operation(summary = "获得工具分页")
     @PreAuthorize("@ss.hasPermission('mes:tm-tool:query')")
-    public CommonResult<PageResult<MesTmToolRespVO>> getToolPage(@Valid MesTmToolPageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesTmToolRespVO>> getToolPage(
+            @Valid MesTmToolPageReqVO pageReqVO) {
         PageResult<MesTmToolDO> pageResult = toolService.getToolPage(pageReqVO);
-        return success(new PageResult<>(buildToolRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildToolRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出工具 Excel")
     @PreAuthorize("@ss.hasPermission('mes:tm-tool:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportToolExcel(@Valid MesTmToolPageReqVO pageReqVO,
-                                HttpServletResponse response) throws IOException {
+    public void exportToolExcel(@Valid MesTmToolPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesTmToolDO> list = toolService.getToolPage(pageReqVO).getList();
         List<MesTmToolRespVO> voList = buildToolRespVOList(list);
@@ -124,13 +126,17 @@ public class MesTmToolController {
             return Collections.emptyList();
         }
         // 1. 批量获取工具类型信息
-        Map<Long, MesTmToolTypeDO> toolTypeMap = toolTypeService.getToolTypeMap(
-                convertSet(list, MesTmToolDO::getToolTypeId));
+        Map<Long, MesTmToolTypeDO> toolTypeMap =
+                toolTypeService.getToolTypeMap(convertSet(list, MesTmToolDO::getToolTypeId));
         // 2. 拼接 VO
-        return BeanUtils.toBean(list, MesTmToolRespVO.class, vo -> {
-            MapUtils.findAndThen(toolTypeMap, vo.getToolTypeId(),
-                    toolType -> vo.setToolTypeName(toolType.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesTmToolRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            toolTypeMap,
+                            vo.getToolTypeId(),
+                            toolType -> vo.setToolTypeName(toolType.getName()));
+                });
     }
-
 }

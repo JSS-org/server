@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.notice;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -11,18 +13,19 @@ import cn.iocoder.yudao.module.system.controller.admin.notice.vo.NoticeRespVO;
 import cn.iocoder.yudao.module.system.controller.admin.notice.vo.NoticeSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.notice.NoticeDO;
 import cn.iocoder.yudao.module.system.service.notice.NoticeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 通知公告")
 @RestController
@@ -30,11 +33,9 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class NoticeController {
 
-    @Resource
-    private NoticeService noticeService;
+    @Resource private NoticeService noticeService;
 
-    @Resource
-    private WebSocketSenderApi webSocketSenderApi;
+    @Resource private WebSocketSenderApi webSocketSenderApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建通知公告")
@@ -73,7 +74,8 @@ public class NoticeController {
     @GetMapping("/page")
     @Operation(summary = "获取通知公告列表")
     @PreAuthorize("@ss.hasPermission('system:notice:query')")
-    public CommonResult<PageResult<NoticeRespVO>> getNoticePage(@Validated NoticePageReqVO pageReqVO) {
+    public CommonResult<PageResult<NoticeRespVO>> getNoticePage(
+            @Validated NoticePageReqVO pageReqVO) {
         PageResult<NoticeDO> pageResult = noticeService.getNoticePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, NoticeRespVO.class));
     }
@@ -98,5 +100,4 @@ public class NoticeController {
         webSocketSenderApi.sendObject(UserTypeEnum.ADMIN.getValue(), "notice-push", notice);
         return success(true);
     }
-
 }

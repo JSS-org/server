@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.promotion.service.bargain;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,19 +13,18 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainHelpDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainRecordDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.bargain.BargainHelpMapper;
 import cn.iocoder.yudao.module.promotion.enums.bargain.BargainRecordStatusEnum;
+
+import jakarta.annotation.Resource;
+
 import jodd.util.MathUtil;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 
 /**
  * 砍价助力 Service 实现类
@@ -33,13 +35,10 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 @Validated
 public class BargainHelpServiceImpl implements BargainHelpService {
 
-    @Resource
-    private BargainHelpMapper bargainHelpMapper;
+    @Resource private BargainHelpMapper bargainHelpMapper;
 
-    @Resource
-    private BargainRecordService bargainRecordService;
-    @Resource
-    private BargainActivityService bargainActivityService;
+    @Resource private BargainRecordService bargainRecordService;
+    @Resource private BargainActivityService bargainActivityService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -58,7 +57,8 @@ public class BargainHelpServiceImpl implements BargainHelpService {
         }
 
         // 2.1 校验砍价活动
-        BargainActivityDO activity = bargainActivityService.getBargainActivity(record.getActivityId());
+        BargainActivityDO activity =
+                bargainActivityService.getBargainActivity(record.getActivityId());
         // 2.2 校验自己是否助力次数上限
         if (bargainHelpMapper.selectCountByUserIdAndActivityId(userId, activity.getId())
                 >= activity.getBargainCount()) {
@@ -78,13 +78,21 @@ public class BargainHelpServiceImpl implements BargainHelpService {
         Integer reducePrice = calculateReducePrice(activity, record);
         Assert.isTrue(reducePrice > 0, "砍价金额必须大于 0 元");
         // 4.2 创建助力记录
-        BargainHelpDO help = BargainHelpDO.builder().userId(userId).activityId(activity.getId())
-                .recordId(record.getId()).reducePrice(reducePrice).build();
+        BargainHelpDO help =
+                BargainHelpDO.builder()
+                        .userId(userId)
+                        .activityId(activity.getId())
+                        .recordId(record.getId())
+                        .reducePrice(reducePrice)
+                        .build();
         bargainHelpMapper.insert(help);
 
         // 5. 判断砍价记录是否完成
-        Boolean success = record.getBargainPrice() - reducePrice <= activity.getBargainMinPrice() // 情况一：砍价已经砍到最低价
-                || bargainHelpMapper.selectUserCountMapByRecordId(reqVO.getRecordId()) >= activity.getHelpMaxCount(); // 情况二：砍价助力已经达到上限
+        Boolean success =
+                record.getBargainPrice() - reducePrice
+                                <= activity.getBargainMinPrice() // 情况一：砍价已经砍到最低价
+                        || bargainHelpMapper.selectUserCountMapByRecordId(reqVO.getRecordId())
+                                >= activity.getHelpMaxCount(); // 情况二：砍价助力已经达到上限
         if (!bargainRecordService.updateBargainRecordBargainPrice(
                 record.getId(), record.getBargainPrice(), reducePrice, success)) {
             // 多人一起砍价，需要重试
@@ -96,8 +104,10 @@ public class BargainHelpServiceImpl implements BargainHelpService {
     // TODO 芋艿：优化点：实现一个更随机的逻辑，可以按照你自己的业务；
     private Integer calculateReducePrice(BargainActivityDO activity, BargainRecordDO record) {
         // 1. 随机金额
-        Integer reducePrice = MathUtil.randomInt(activity.getBargainMinPrice(),
-                activity.getRandomMaxPrice() + 1); // + 1 的原因是，randomInt 默认不包含第二个参数
+        Integer reducePrice =
+                MathUtil.randomInt(
+                        activity.getBargainMinPrice(),
+                        activity.getRandomMaxPrice() + 1); // + 1 的原因是，randomInt 默认不包含第二个参数
         // 2. 校验是否超过砍价上限
         if (record.getBargainPrice() - reducePrice < activity.getBargainMinPrice()) {
             reducePrice = record.getBargainPrice() - activity.getBargainMinPrice();
@@ -134,5 +144,4 @@ public class BargainHelpServiceImpl implements BargainHelpService {
     public BargainHelpDO getBargainHelp(Long recordId, Long userId) {
         return bargainHelpMapper.selectByUserIdAndRecordId(userId, recordId);
     }
-
 }

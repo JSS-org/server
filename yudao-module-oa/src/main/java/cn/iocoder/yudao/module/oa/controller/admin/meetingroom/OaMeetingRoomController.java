@@ -1,30 +1,32 @@
 package cn.iocoder.yudao.module.oa.controller.admin.meetingroom;
 
-import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.meetingroom.*;
 import cn.iocoder.yudao.module.oa.service.meetingroom.*;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 会议室")
 @RestController
@@ -32,10 +34,8 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaMeetingRoomController {
 
-    @Resource
-    private OaMeetingRoomService meetingRoomService;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private OaMeetingRoomService meetingRoomService;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建会议室")
@@ -47,7 +47,8 @@ public class OaMeetingRoomController {
     @PutMapping("/update")
     @Operation(summary = "更新会议室")
     @PreAuthorize("@ss.hasPermission('oa:meeting-room:update')")
-    public CommonResult<Boolean> updateMeetingRoom(@Valid @RequestBody OaMeetingRoomSaveReqVO reqVO) {
+    public CommonResult<Boolean> updateMeetingRoom(
+            @Valid @RequestBody OaMeetingRoomSaveReqVO reqVO) {
         meetingRoomService.updateMeetingRoom(reqVO);
         return success(true);
     }
@@ -73,20 +74,35 @@ public class OaMeetingRoomController {
     @GetMapping("/page")
     @Operation(summary = "获得会议室分页")
     @PreAuthorize("@ss.hasPermission('oa:meeting-room:query')")
-    public CommonResult<PageResult<OaMeetingRoomRespVO>> getMeetingRoomPage(@Valid OaMeetingRoomPageReqVO reqVO) {
+    public CommonResult<PageResult<OaMeetingRoomRespVO>> getMeetingRoomPage(
+            @Valid OaMeetingRoomPageReqVO reqVO) {
         PageResult<OaMeetingRoomDO> pageResult = meetingRoomService.getMeetingRoomPage(reqVO);
-        return success(new PageResult<>(buildMeetingRoomRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildMeetingRoomRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/bookable-page")
     @Operation(summary = "获得可预定会议室分页")
-    public CommonResult<PageResult<OaMeetingRoomRespVO>> getMeetingRoomPageByBookingUserId(@Valid OaMeetingRoomPageReqVO reqVO) {
-        PageResult<OaMeetingRoomDO> pageResult = meetingRoomService.getMeetingRoomPageByBookingUserId(reqVO, getLoginUserId());
+    public CommonResult<PageResult<OaMeetingRoomRespVO>> getMeetingRoomPageByBookingUserId(
+            @Valid OaMeetingRoomPageReqVO reqVO) {
+        PageResult<OaMeetingRoomDO> pageResult =
+                meetingRoomService.getMeetingRoomPageByBookingUserId(reqVO, getLoginUserId());
         List<OaMeetingRoomRespVO> list = buildMeetingRoomRespVOList(pageResult.getList());
-        return success(new PageResult<>(convertList(list, room -> new OaMeetingRoomRespVO()
-                .setId(room.getId()).setName(room.getName()).setLocation(room.getLocation())
-                .setType(room.getType()).setStatus(room.getStatus()).setSeatCount(room.getSeatCount())
-                .setManagerName(room.getManagerName())), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        convertList(
+                                list,
+                                room ->
+                                        new OaMeetingRoomRespVO()
+                                                .setId(room.getId())
+                                                .setName(room.getName())
+                                                .setLocation(room.getLocation())
+                                                .setType(room.getType())
+                                                .setStatus(room.getStatus())
+                                                .setSeatCount(room.getSeatCount())
+                                                .setManagerName(room.getManagerName())),
+                        pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -117,14 +133,20 @@ public class OaMeetingRoomController {
             return Collections.emptyList();
         }
         // 1. 批量查询管理员
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertSet(rooms, OaMeetingRoomDO::getManagerUserId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(rooms, OaMeetingRoomDO::getManagerUserId));
         // 2. 转换并拼接管理员姓名、电话
-        return convertList(rooms, room -> {
-            OaMeetingRoomRespVO vo = BeanUtils.toBean(room, OaMeetingRoomRespVO.class);
-            MapUtils.findAndThen(userMap, room.getManagerUserId(), user ->
-                    vo.setManagerName(user.getNickname()).setManagerPhone(user.getMobile()));
-            return vo;
-        });
+        return convertList(
+                rooms,
+                room -> {
+                    OaMeetingRoomRespVO vo = BeanUtils.toBean(room, OaMeetingRoomRespVO.class);
+                    MapUtils.findAndThen(
+                            userMap,
+                            room.getManagerUserId(),
+                            user ->
+                                    vo.setManagerName(user.getNickname())
+                                            .setManagerPhone(user.getMobile()));
+                    return vo;
+                });
     }
-
 }

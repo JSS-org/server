@@ -1,10 +1,10 @@
 package cn.iocoder.yudao.module.fms.service.report;
 
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance.FmsBalanceSheetCheckRespVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance.FmsBalanceSheetRowRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaUpdateReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportItemRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportListReqVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance.FmsBalanceSheetCheckRespVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance.FmsBalanceSheetRowRespVO;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -37,8 +37,8 @@ public interface FmsBalanceSheetService {
      * @param userId 用户编号
      * @return 行次到报表项目的 Map
      */
-    Map<Integer, FmsReportItemRespVO> getBalanceSheetLineMap(FmsReportListReqVO listReqVO,
-            YearMonth startMonth, YearMonth endMonth, Long userId);
+    Map<Integer, FmsReportItemRespVO> getBalanceSheetLineMap(
+            FmsReportListReqVO listReqVO, YearMonth startMonth, YearMonth endMonth, Long userId);
 
     /**
      * 检查资产负债表的平衡、初始余额、损益结转和公式覆盖状态
@@ -56,5 +56,4 @@ public interface FmsBalanceSheetService {
      * @param userId 用户编号
      */
     void updateBalanceSheetFormula(FmsReportFormulaUpdateReqVO updateReqVO, Long userId);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.autocode;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,15 +11,14 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.autocode.vo.rule.MesMdAut
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodeRuleDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.autocode.MesMdAutoCodePartMapper;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.autocode.MesMdAutoCodeRuleMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 编码规则 Service 实现类
@@ -27,10 +29,8 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdAutoCodeRuleServiceImpl implements MesMdAutoCodeRuleService {
 
-    @Resource
-    private MesMdAutoCodeRuleMapper ruleMapper;
-    @Resource
-    private MesMdAutoCodePartMapper partMapper;
+    @Resource private MesMdAutoCodeRuleMapper ruleMapper;
+    @Resource private MesMdAutoCodePartMapper partMapper;
 
     @Override
     public Long createAutoCodeRule(MesMdAutoCodeRuleSaveReqVO createReqVO) {
@@ -78,7 +78,8 @@ public class MesMdAutoCodeRuleServiceImpl implements MesMdAutoCodeRuleService {
     }
 
     @Override
-    public PageResult<MesMdAutoCodeRuleDO> getAutoCodeRulePage(MesMdAutoCodeRulePageReqVO pageReqVO) {
+    public PageResult<MesMdAutoCodeRuleDO> getAutoCodeRulePage(
+            MesMdAutoCodeRulePageReqVO pageReqVO) {
         return ruleMapper.selectPage(pageReqVO);
     }
 
@@ -110,5 +111,4 @@ public class MesMdAutoCodeRuleServiceImpl implements MesMdAutoCodeRuleService {
             throw exception(AUTO_CODE_RULE_CODE_DUPLICATE);
         }
     }
-
 }

@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.codec;
 
 import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusFrameFormatEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.common.utils.IotModbusCommonUtils;
+
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.parsetools.RecordParser;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,7 +44,8 @@ public class IotModbusFrameDecoder {
      * @param frameHandler 完整帧回调（解码后的 IotModbusFrame + 检测到的帧格式）
      * @return RecordParser 实例
      */
-    public RecordParser createRecordParser(BiConsumer<IotModbusFrame, IotModbusFrameFormatEnum> frameHandler) {
+    public RecordParser createRecordParser(
+            BiConsumer<IotModbusFrame, IotModbusFrameFormatEnum> frameHandler) {
         return createRecordParser(frameHandler, REQUEST_MODE_DEFAULT);
     }
 
@@ -54,11 +57,13 @@ public class IotModbusFrameDecoder {
      *                     false：接收方收到的是 Modbus 响应帧，FC01-04 按 byteCount 变长解析）
      * @return RecordParser 实例
      */
-    public RecordParser createRecordParser(BiConsumer<IotModbusFrame, IotModbusFrameFormatEnum> frameHandler,
-                                           boolean requestMode) {
+    public RecordParser createRecordParser(
+            BiConsumer<IotModbusFrame, IotModbusFrameFormatEnum> frameHandler,
+            boolean requestMode) {
         // 先创建一个 RecordParser：使用 fixedSizeMode(6) 读取首帧前 6 字节进行帧格式检测
         RecordParser parser = RecordParser.newFixed(6);
-        parser.handler(new DetectPhaseHandler(parser, customFunctionCode, frameHandler, requestMode));
+        parser.handler(
+                new DetectPhaseHandler(parser, customFunctionCode, frameHandler, requestMode));
         return parser;
     }
 
@@ -127,12 +132,14 @@ public class IotModbusFrameDecoder {
     /**
      * 构建 IotModbusFrame
      */
-    private IotModbusFrame buildFrame(int slaveId, int functionCode, byte[] pdu, Integer transactionId) {
-        IotModbusFrame frame = new IotModbusFrame()
-                .setSlaveId(slaveId)
-                .setFunctionCode(functionCode)
-                .setPdu(pdu)
-                .setTransactionId(transactionId);
+    private IotModbusFrame buildFrame(
+            int slaveId, int functionCode, byte[] pdu, Integer transactionId) {
+        IotModbusFrame frame =
+                new IotModbusFrame()
+                        .setSlaveId(slaveId)
+                        .setFunctionCode(functionCode)
+                        .setPdu(pdu)
+                        .setTransactionId(transactionId);
         // 异常响应
         if (IotModbusCommonUtils.isExceptionResponse(functionCode)) {
             frame.setFunctionCode(IotModbusCommonUtils.extractOriginalFunctionCode(functionCode));
@@ -185,7 +192,8 @@ public class IotModbusFrameDecoder {
             } else {
                 // MODBUS_RTU：切换到 RTU 拆包 Handler
                 log.debug("[DetectPhaseHandler][检测到 MODBUS_RTU 帧格式]");
-                RtuFrameHandler rtuHandler = new RtuFrameHandler(parser, frameHandler, customFunctionCode, requestMode);
+                RtuFrameHandler rtuHandler =
+                        new RtuFrameHandler(parser, frameHandler, customFunctionCode, requestMode);
                 parser.handler(rtuHandler);
                 // 当前 bytes 包含前 6 字节（slaveId + FC + 部分数据），交给 rtuHandler 处理
                 rtuHandler.handleFirstBytes(bytes);
@@ -230,7 +238,8 @@ public class IotModbusFrameDecoder {
                 System.arraycopy(mbapHeader, 0, fullFrame, 0, mbapHeader.length);
                 System.arraycopy(body, 0, fullFrame, mbapHeader.length, body.length);
                 // 解码并回调
-                IotModbusFrame frame = decodeResponse(fullFrame, IotModbusFrameFormatEnum.MODBUS_TCP);
+                IotModbusFrame frame =
+                        decodeResponse(fullFrame, IotModbusFrameFormatEnum.MODBUS_TCP);
                 if (frame != null) {
                     frameHandler.accept(frame, IotModbusFrameFormatEnum.MODBUS_TCP);
                 }
@@ -280,6 +289,7 @@ public class IotModbusFrameDecoder {
         private final RecordParser parser;
         private final BiConsumer<IotModbusFrame, IotModbusFrameFormatEnum> frameHandler;
         private final int customFunctionCode;
+
         /**
          * 请求模式：
          *    - true 表示接收方收到的是 Modbus 请求帧（如设备端收到网关下发的读请求），FC01-04 按固定 8 字节帧解析
@@ -460,7 +470,8 @@ public class IotModbusFrameDecoder {
          * 发射完整帧：解码并回调
          */
         private void emitFrame(Buffer frameBuffer) {
-            IotModbusFrame frame = decodeResponse(frameBuffer.getBytes(), IotModbusFrameFormatEnum.MODBUS_RTU);
+            IotModbusFrame frame =
+                    decodeResponse(frameBuffer.getBytes(), IotModbusFrameFormatEnum.MODBUS_RTU);
             if (frame != null) {
                 frameHandler.accept(frame, IotModbusFrameFormatEnum.MODBUS_RTU);
             }
@@ -471,7 +482,5 @@ public class IotModbusFrameDecoder {
             pendingData = null;
             parser.fixedSizeMode(2); // slaveId + FC
         }
-
     }
-
 }

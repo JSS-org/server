@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.receive;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -93,7 +95,11 @@ public class OaOfficialDocReceiveRespVO {
     @Schema(description = "创建人编号", example = "1024")
     private String creator;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

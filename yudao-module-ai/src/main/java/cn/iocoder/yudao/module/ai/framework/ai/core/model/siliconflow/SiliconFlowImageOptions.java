@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.siliconflow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.ai.image.ImageOptions;
 
 /**
@@ -55,7 +57,7 @@ public class SiliconFlowImageOptions implements ImageOptions {
      *
      */
     @JsonProperty("seed")
-    private Integer seed =  (int)(Math.random() * 1_000_000_000);
+    private Integer seed = (int) (Math.random() * 1_000_000_000);
 
     /**
      * The image that needs to be uploaded should be converted into base64 format.
@@ -101,5 +103,4 @@ public class SiliconFlowImageOptions implements ImageOptions {
     public String getStyle() {
         return null;
     }
-
 }

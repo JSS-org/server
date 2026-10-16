@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,5 +36,4 @@ public class HrmSalaryMonthRecordCreateReqVO {
 
     @Schema(description = "结束日期")
     private LocalDateTime endTime;
-
 }

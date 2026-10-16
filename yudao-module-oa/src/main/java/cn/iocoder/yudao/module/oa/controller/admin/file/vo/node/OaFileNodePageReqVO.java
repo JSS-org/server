@@ -1,25 +1,32 @@
 package cn.iocoder.yudao.module.oa.controller.admin.file.vo.node;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileCategoryEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileScopeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - 云盘文件分页 Request VO")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OaFileNodePageReqVO extends PageParam {
 
-    @Schema(description = "列表范围：my、shared、favorite、recycle", requiredMode = Schema.RequiredMode.REQUIRED, example = "my")
+    @Schema(
+            description = "列表范围：my、shared、favorite、recycle",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "my")
     @NotBlank(message = "列表范围不能为空")
     @InEnum(value = OaFileScopeEnum.class, message = "列表范围必须是 {value}")
     private String scope;
@@ -38,5 +45,4 @@ public class OaFileNodePageReqVO extends PageParam {
     @Schema(description = "创建时间范围", example = "[\"2026-09-14 00:00:00\", \"2026-09-14 23:59:59\"]")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] createTime;
-
 }

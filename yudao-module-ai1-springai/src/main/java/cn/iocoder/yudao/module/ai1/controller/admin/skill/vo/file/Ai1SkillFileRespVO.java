@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.file;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,10 @@ public class Ai1SkillFileRespVO {
     @Schema(description = "文件内容；文件树中不返回，编辑时通过获取接口加载", example = "# SKILL")
     private String content;
 
-    @Schema(description = "是否固定：固定节点不可删除、改名、移动", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否固定：固定节点不可删除、改名、移动",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean locked;
 
     @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -41,5 +45,4 @@ public class Ai1SkillFileRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

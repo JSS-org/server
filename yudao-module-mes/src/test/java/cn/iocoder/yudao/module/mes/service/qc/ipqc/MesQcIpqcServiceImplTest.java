@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.mes.service.qc.ipqc;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.ipqc.vo.MesQcIpqcSaveReqVO;
@@ -28,18 +35,14 @@ import cn.iocoder.yudao.module.mes.service.qc.indicatorresult.MesQcIndicatorResu
 import cn.iocoder.yudao.module.mes.service.qc.template.MesQcTemplateItemService;
 import cn.iocoder.yudao.module.mes.service.wm.productproduce.MesWmProductProduceLineService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link MesQcIpqcServiceImpl} 的单元测试
@@ -49,38 +52,23 @@ import static org.mockito.Mockito.*;
 @Import(MesQcIpqcServiceImpl.class)
 public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesQcIpqcServiceImpl ipqcService;
+    @Resource private MesQcIpqcServiceImpl ipqcService;
 
-    @Resource
-    private MesQcIpqcMapper ipqcMapper;
+    @Resource private MesQcIpqcMapper ipqcMapper;
 
-    @MockitoBean
-    private MesQcTemplateItemService templateItemService;
-    @MockitoBean
-    private MesQcIpqcLineService ipqcLineService;
-    @MockitoBean
-    private MesProWorkOrderService workOrderService;
-    @MockitoBean
-    private MesMdWorkstationService workstationService;
-    @MockitoBean
-    private MesMdItemService itemService;
-    @MockitoBean
-    private MesQcDefectRecordService defectRecordService;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private MesProFeedbackService feedbackService;
-    @MockitoBean
-    private MesProRouteProductService routeProductService;
-    @MockitoBean
-    private MesProRouteProcessService routeProcessService;
-    @MockitoBean
-    private MesProTaskService taskService;
-    @MockitoBean
-    private MesQcIndicatorResultService indicatorResultService;
-    @MockitoBean
-    private MesWmProductProduceLineService productProduceLineService;
+    @MockitoBean private MesQcTemplateItemService templateItemService;
+    @MockitoBean private MesQcIpqcLineService ipqcLineService;
+    @MockitoBean private MesProWorkOrderService workOrderService;
+    @MockitoBean private MesMdWorkstationService workstationService;
+    @MockitoBean private MesMdItemService itemService;
+    @MockitoBean private MesQcDefectRecordService defectRecordService;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private MesProFeedbackService feedbackService;
+    @MockitoBean private MesProRouteProductService routeProductService;
+    @MockitoBean private MesProRouteProcessService routeProcessService;
+    @MockitoBean private MesProTaskService taskService;
+    @MockitoBean private MesQcIndicatorResultService indicatorResultService;
+    @MockitoBean private MesWmProductProduceLineService productProduceLineService;
 
     @Test
     public void testFinishIpqc_writeBack_feedback() {
@@ -93,18 +81,21 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         BigDecimal materialScrapQty = BigDecimal.valueOf(10);
         BigDecimal otherScrapQty = BigDecimal.valueOf(5);
 
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
-            o.setCheckResult(1); // 非空，满足 finishIpqc 的校验
-            o.setSourceDocType(MesBizTypeConstants.PRO_FEEDBACK);
-            o.setSourceDocId(sourceDocId);
-            o.setSourceLineId(sourceLineId);
-            o.setQualifiedQuantity(qualifiedQty);
-            o.setUnqualifiedQuantity(unqualifiedQty);
-            o.setLaborScrapQuantity(laborScrapQty);
-            o.setMaterialScrapQuantity(materialScrapQty);
-            o.setOtherScrapQuantity(otherScrapQty);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
+                            o.setCheckResult(1); // 非空，满足 finishIpqc 的校验
+                            o.setSourceDocType(MesBizTypeConstants.PRO_FEEDBACK);
+                            o.setSourceDocId(sourceDocId);
+                            o.setSourceLineId(sourceLineId);
+                            o.setQualifiedQuantity(qualifiedQty);
+                            o.setUnqualifiedQuantity(unqualifiedQty);
+                            o.setLaborScrapQuantity(laborScrapQty);
+                            o.setMaterialScrapQuantity(materialScrapQty);
+                            o.setOtherScrapQuantity(otherScrapQty);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用
@@ -116,14 +107,15 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
 
         // 断言 2：调用了 feedbackService，传递 sourceLineId
         // 注意：数量经过 DB 存取后 scale 可能变化（例如 80 → 80.00），所以用 any() 匹配
-        verify(feedbackService).updateProFeedbackWhenIpqcFinish(
-                eq(sourceDocId),
-                eq(sourceLineId),
-                any(BigDecimal.class),
-                any(BigDecimal.class),
-                any(BigDecimal.class),
-                any(BigDecimal.class),
-                any(BigDecimal.class));
+        verify(feedbackService)
+                .updateProFeedbackWhenIpqcFinish(
+                        eq(sourceDocId),
+                        eq(sourceLineId),
+                        any(BigDecimal.class),
+                        any(BigDecimal.class),
+                        any(BigDecimal.class),
+                        any(BigDecimal.class),
+                        any(BigDecimal.class));
     }
 
     @Test
@@ -131,44 +123,51 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         // 准备数据：合格品/不合格品/废品数量为 null 的场景，应该 defaultIfNull 为 0
         Long sourceDocId = randomLongId();
         Long sourceLineId = randomLongId();
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
-            o.setCheckResult(1);
-            o.setSourceDocType(MesBizTypeConstants.PRO_FEEDBACK);
-            o.setSourceDocId(sourceDocId);
-            o.setSourceLineId(sourceLineId);
-            o.setQualifiedQuantity(null);
-            o.setUnqualifiedQuantity(null);
-            o.setLaborScrapQuantity(null);
-            o.setMaterialScrapQuantity(null);
-            o.setOtherScrapQuantity(null);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
+                            o.setCheckResult(1);
+                            o.setSourceDocType(MesBizTypeConstants.PRO_FEEDBACK);
+                            o.setSourceDocId(sourceDocId);
+                            o.setSourceLineId(sourceLineId);
+                            o.setQualifiedQuantity(null);
+                            o.setUnqualifiedQuantity(null);
+                            o.setLaborScrapQuantity(null);
+                            o.setMaterialScrapQuantity(null);
+                            o.setOtherScrapQuantity(null);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用
         ipqcService.finishIpqc(ipqc.getId());
 
         // 断言：所有数量参数都是 BigDecimal.ZERO（defaultIfNull 处理）
-        verify(feedbackService).updateProFeedbackWhenIpqcFinish(
-                eq(sourceDocId),
-                eq(sourceLineId),
-                eq(BigDecimal.ZERO),
-                eq(BigDecimal.ZERO),
-                eq(BigDecimal.ZERO),
-                eq(BigDecimal.ZERO),
-                eq(BigDecimal.ZERO));
+        verify(feedbackService)
+                .updateProFeedbackWhenIpqcFinish(
+                        eq(sourceDocId),
+                        eq(sourceLineId),
+                        eq(BigDecimal.ZERO),
+                        eq(BigDecimal.ZERO),
+                        eq(BigDecimal.ZERO),
+                        eq(BigDecimal.ZERO),
+                        eq(BigDecimal.ZERO));
     }
 
     @Test
     public void testFinishIpqc_writeBack_noSourceDoc() {
         // 准备数据：sourceDocType 为空，不需要回写
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
-            o.setCheckResult(1);
-            o.setSourceDocType(null);
-            o.setSourceDocId(null);
-            o.setSourceLineId(null);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
+                            o.setCheckResult(1);
+                            o.setSourceDocType(null);
+                            o.setSourceDocId(null);
+                            o.setSourceLineId(null);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用
@@ -179,20 +178,24 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         assertEquals(MesQcStatusEnum.FINISHED.getStatus(), updatedIpqc.getStatus());
 
         // 断言 2：不应该调用 feedbackService
-        verify(feedbackService, never()).updateProFeedbackWhenIpqcFinish(
-                anyLong(), anyLong(), any(), any(), any(), any(), any());
+        verify(feedbackService, never())
+                .updateProFeedbackWhenIpqcFinish(
+                        anyLong(), anyLong(), any(), any(), any(), any(), any());
     }
 
     @Test
     public void testFinishIpqc_writeBack_sourceDocTypeDirtyData() {
         // 准备数据：sourceDocType 非空但 sourceDocId 为空，应该抛异常
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
-            o.setCheckResult(1);
-            o.setSourceDocType(MesBizTypeConstants.PRO_FEEDBACK);
-            o.setSourceDocId(null); // 脏数据
-            o.setSourceLineId(null);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
+                            o.setCheckResult(1);
+                            o.setSourceDocType(MesBizTypeConstants.PRO_FEEDBACK);
+                            o.setSourceDocId(null); // 脏数据
+                            o.setSourceLineId(null);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用，并断言异常
@@ -202,13 +205,16 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishIpqc_writeBack_unknownSourceDocType() {
         // 准备数据：sourceDocType 无法识别
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
-            o.setCheckResult(1);
-            o.setSourceDocType(99999); // 无法识别的类型
-            o.setSourceDocId(randomLongId());
-            o.setSourceLineId(null);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
+                            o.setCheckResult(1);
+                            o.setSourceDocType(99999); // 无法识别的类型
+                            o.setSourceDocId(randomLongId());
+                            o.setSourceLineId(null);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用，并断言异常
@@ -218,11 +224,14 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishIpqc_checkResultEmpty() {
         // 准备数据：checkResult 为空，应该报错
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
-            o.setCheckResult(null); // 检测结论为空
-            o.setSourceDocType(null);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.DRAFT.getStatus());
+                            o.setCheckResult(null); // 检测结论为空
+                            o.setSourceDocType(null);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用，应该抛异常（检测结论必填）
@@ -232,10 +241,13 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testFinishIpqc_notDraftStatus() {
         // 准备数据：已完成状态，不能再次完成
-        MesQcIpqcDO ipqc = randomPojo(MesQcIpqcDO.class, o -> {
-            o.setStatus(MesQcStatusEnum.FINISHED.getStatus());
-            o.setCheckResult(1);
-        });
+        MesQcIpqcDO ipqc =
+                randomPojo(
+                        MesQcIpqcDO.class,
+                        o -> {
+                            o.setStatus(MesQcStatusEnum.FINISHED.getStatus());
+                            o.setCheckResult(1);
+                        });
         ipqcMapper.insert(ipqc);
 
         // 调用，应该抛异常（不是草稿状态）
@@ -277,7 +289,8 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         // mock 模板匹配
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
         // mock 工艺路线
         MesProRouteProductDO routeProduct = new MesProRouteProductDO();
         routeProduct.setRouteId(routeId);
@@ -334,15 +347,15 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         // mock 模板匹配
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
 
         // 调用
         Long ipqcId = ipqcService.createIpqc(reqVO);
 
         // 断言：processId 应该是 null，即使传入了 taskId 也不应该回退
         MesQcIpqcDO ipqc = ipqcMapper.selectById(ipqcId);
-        assertNull(ipqc.getProcessId(),
-                "工位无工序时 processId 应为 null，不应回退到任务工序");
+        assertNull(ipqc.getProcessId(), "工位无工序时 processId 应为 null，不应回退到任务工序");
         // 断言：不应该读取任务的 processId
         verify(routeProductService, never()).getRouteProductByItemId(any());
     }
@@ -380,7 +393,8 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         // mock 模板匹配
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
         // mock 工艺路线存在
         MesProRouteProductDO routeProduct = new MesProRouteProductDO();
         routeProduct.setRouteId(routeId);
@@ -432,11 +446,13 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         when(workOrderService.validateWorkOrderConfirmed(workOrderId)).thenReturn(workOrder);
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
         when(feedbackService.validateFeedbackExists(feedbackId)).thenReturn(new MesProFeedbackDO());
 
         // 调用，断言异常
-        ServiceException ex = assertThrows(ServiceException.class, () -> ipqcService.createIpqc(reqVO));
+        ServiceException ex =
+                assertThrows(ServiceException.class, () -> ipqcService.createIpqc(reqVO));
         assertEquals(QC_IPQC_SOURCE_LINE_REQUIRED.getCode(), ex.getCode());
     }
 
@@ -474,17 +490,20 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         when(workOrderService.validateWorkOrderConfirmed(workOrderId)).thenReturn(workOrder);
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
         when(feedbackService.validateFeedbackExists(feedbackId)).thenReturn(new MesProFeedbackDO());
         // mock：产出行存在但 feedbackId 不匹配
         MesWmProductProduceLineDO line = new MesWmProductProduceLineDO();
         line.setId(sourceLineId);
         line.setFeedbackId(randomLongId()); // 不同的 feedbackId
         line.setQualityStatus(MesWmQualityStatusEnum.PENDING.getStatus());
-        when(productProduceLineService.validateProductProduceLineExists(sourceLineId)).thenReturn(line);
+        when(productProduceLineService.validateProductProduceLineExists(sourceLineId))
+                .thenReturn(line);
 
         // 调用，断言异常
-        ServiceException ex = assertThrows(ServiceException.class, () -> ipqcService.createIpqc(reqVO));
+        ServiceException ex =
+                assertThrows(ServiceException.class, () -> ipqcService.createIpqc(reqVO));
         assertEquals(QC_IPQC_SOURCE_LINE_NOT_BELONG.getCode(), ex.getCode());
     }
 
@@ -522,17 +541,20 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         when(workOrderService.validateWorkOrderConfirmed(workOrderId)).thenReturn(workOrder);
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
         when(feedbackService.validateFeedbackExists(feedbackId)).thenReturn(new MesProFeedbackDO());
         // mock：产出行存在且归属正确，但不是 PENDING 状态
         MesWmProductProduceLineDO line = new MesWmProductProduceLineDO();
         line.setId(sourceLineId);
         line.setFeedbackId(feedbackId);
         line.setQualityStatus(MesWmQualityStatusEnum.PASS.getStatus()); // 已合格，非待检
-        when(productProduceLineService.validateProductProduceLineExists(sourceLineId)).thenReturn(line);
+        when(productProduceLineService.validateProductProduceLineExists(sourceLineId))
+                .thenReturn(line);
 
         // 调用，断言异常
-        ServiceException ex = assertThrows(ServiceException.class, () -> ipqcService.createIpqc(reqVO));
+        ServiceException ex =
+                assertThrows(ServiceException.class, () -> ipqcService.createIpqc(reqVO));
         assertEquals(QC_IPQC_SOURCE_LINE_NOT_PENDING.getCode(), ex.getCode());
     }
 
@@ -570,7 +592,8 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         when(workOrderService.validateWorkOrderConfirmed(workOrderId)).thenReturn(workOrder);
         MesQcTemplateItemDO templateItem = new MesQcTemplateItemDO();
         templateItem.setTemplateId(templateId);
-        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt())).thenReturn(templateItem);
+        when(templateItemService.getRequiredTemplateByItemIdAndType(eq(productId), anyInt()))
+                .thenReturn(templateItem);
         MesProFeedbackDO feedback = new MesProFeedbackDO();
         feedback.setId(feedbackId);
         feedback.setCode("FB-001");
@@ -580,7 +603,8 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         line.setId(sourceLineId);
         line.setFeedbackId(feedbackId);
         line.setQualityStatus(MesWmQualityStatusEnum.PENDING.getStatus());
-        when(productProduceLineService.validateProductProduceLineExists(sourceLineId)).thenReturn(line);
+        when(productProduceLineService.validateProductProduceLineExists(sourceLineId))
+                .thenReturn(line);
 
         // 调用
         Long ipqcId = ipqcService.createIpqc(reqVO);
@@ -592,5 +616,4 @@ public class MesQcIpqcServiceImplTest extends BaseDbUnitTest {
         assertEquals(sourceLineId, ipqc.getSourceLineId());
         assertEquals("FB-001", ipqc.getSourceDocCode());
     }
-
 }

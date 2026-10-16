@@ -1,10 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.product.vo.product;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 @Schema(description = "管理后台 - IoT 产品分页 Request VO")
 @Data
@@ -15,5 +15,4 @@ public class IotProductPageReqVO extends PageParam {
 
     @Schema(description = "产品标识")
     private String productKey;
-
 }

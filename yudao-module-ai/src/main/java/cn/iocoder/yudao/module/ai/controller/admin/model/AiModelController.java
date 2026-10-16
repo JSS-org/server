@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,19 +12,19 @@ import cn.iocoder.yudao.module.ai.controller.admin.model.vo.model.AiModelRespVO;
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.model.AiModelSaveReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.service.model.AiModelService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - AI 模型")
 @RestController
@@ -29,8 +32,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class AiModelController {
 
-    @Resource
-    private AiModelService modelService;
+    @Resource private AiModelService modelService;
 
     @PostMapping("/create")
     @Operation(summary = "创建模型")
@@ -80,10 +82,17 @@ public class AiModelController {
     public CommonResult<List<AiModelRespVO>> getModelSimpleList(
             @RequestParam("type") Integer type,
             @RequestParam(value = "platform", required = false) String platform) {
-        List<AiModelDO> list = modelService.getModelListByStatusAndType(
-                CommonStatusEnum.ENABLE.getStatus(), type, platform);
-        return success(convertList(list, model -> new AiModelRespVO().setId(model.getId())
-                .setName(model.getName()).setModel(model.getModel()).setPlatform(model.getPlatform())));
+        List<AiModelDO> list =
+                modelService.getModelListByStatusAndType(
+                        CommonStatusEnum.ENABLE.getStatus(), type, platform);
+        return success(
+                convertList(
+                        list,
+                        model ->
+                                new AiModelRespVO()
+                                        .setId(model.getId())
+                                        .setName(model.getName())
+                                        .setModel(model.getModel())
+                                        .setPlatform(model.getPlatform())));
     }
-
 }

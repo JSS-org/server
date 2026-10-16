@@ -1,19 +1,22 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectDO;
-import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectFavoriteMapper;
-import jakarta.annotation.Resource;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectDO;
+import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectFavoriteMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * {@link PmsProjectFavoriteServiceImpl} 的单元测试类
@@ -23,14 +26,11 @@ import static org.mockito.Mockito.when;
 @Import(PmsProjectFavoriteServiceImpl.class)
 public class PmsProjectFavoriteServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsProjectFavoriteServiceImpl favoriteService;
+    @Resource private PmsProjectFavoriteServiceImpl favoriteService;
 
-    @Resource
-    private PmsProjectFavoriteMapper favoriteMapper;
+    @Resource private PmsProjectFavoriteMapper favoriteMapper;
 
-    @MockitoBean
-    private PmsProjectMemberService projectMemberService;
+    @MockitoBean private PmsProjectMemberService projectMemberService;
 
     @Test
     public void testCreateProjectFavorite_success() {
@@ -78,5 +78,4 @@ public class PmsProjectFavoriteServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertTrue(CollUtil.isEmpty(favoriteMapper.selectProjectIdListByUserId(userId)));
     }
-
 }

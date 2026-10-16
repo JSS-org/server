@@ -28,5 +28,4 @@ public interface PmsKnowledgeFolderReadService {
      * @return 文件夹列表
      */
     List<PmsKnowledgeFolderDO> getFolderList(Collection<Long> ids);
-
 }

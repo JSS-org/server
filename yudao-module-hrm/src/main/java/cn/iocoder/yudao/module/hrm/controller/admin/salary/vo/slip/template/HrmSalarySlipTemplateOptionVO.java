@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 工资条模板项 VO")
@@ -32,5 +34,4 @@ public class HrmSalarySlipTemplateOptionVO {
 
     @Schema(description = "排序")
     private Integer sort;
-
 }

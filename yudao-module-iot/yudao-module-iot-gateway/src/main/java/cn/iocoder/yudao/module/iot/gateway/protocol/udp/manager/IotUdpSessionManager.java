@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.udp.manager;
 
 import cn.hutool.core.util.ObjUtil;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.datagram.DatagramSocket;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,10 +39,11 @@ public class IotUdpSessionManager {
 
     public IotUdpSessionManager(int maxSessions, long sessionTimeoutMs) {
         this.maxSessions = maxSessions;
-        this.deviceSessionCache = CacheBuilder.newBuilder()
-                .maximumSize(maxSessions)
-                .expireAfterAccess(sessionTimeoutMs, TimeUnit.MILLISECONDS)
-                .build();
+        this.deviceSessionCache =
+                CacheBuilder.newBuilder()
+                        .maximumSize(maxSessions)
+                        .expireAfterAccess(sessionTimeoutMs, TimeUnit.MILLISECONDS)
+                        .build();
     }
 
     /**
@@ -56,9 +60,12 @@ public class IotUdpSessionManager {
         }
         // 注册会话
         deviceSessionCache.put(deviceId, sessionInfo);
-        log.info("[registerSession][注册设备会话，设备 ID: {}，地址: {}，productKey: {}，deviceName: {}]",
-                deviceId, buildAddressKey(sessionInfo.getAddress()),
-                sessionInfo.getProductKey(), sessionInfo.getDeviceName());
+        log.info(
+                "[registerSession][注册设备会话，设备 ID: {}，地址: {}，productKey: {}，deviceName: {}]",
+                deviceId,
+                buildAddressKey(sessionInfo.getAddress()),
+                sessionInfo.getProductKey(),
+                sessionInfo.getDeviceName());
     }
 
     /**
@@ -94,8 +101,11 @@ public class IotUdpSessionManager {
         // 更新地址
         String oldAddressKey = buildAddressKey(sessionInfo.getAddress());
         sessionInfo.setAddress(newAddress);
-        log.debug("[updateSessionAddress][更新设备地址，设备 ID: {}，旧地址: {}，新地址: {}]",
-                deviceId, oldAddressKey, buildAddressKey(newAddress));
+        log.debug(
+                "[updateSessionAddress][更新设备地址，设备 ID: {}，旧地址: {}，新地址: {}]",
+                deviceId,
+                oldAddressKey,
+                buildAddressKey(newAddress));
     }
 
     /**
@@ -116,17 +126,27 @@ public class IotUdpSessionManager {
         try {
             // 使用 CompletableFuture 同步等待发送结果
             CompletableFuture<Boolean> future = new CompletableFuture<>();
-            socket.send(Buffer.buffer(data), address.getPort(), address.getHostString(), result -> {
-                if (result.succeeded()) {
-                    log.debug("[sendToDevice][发送消息成功，设备 ID: {}，地址: {}，数据长度: {} 字节]",
-                            deviceId, buildAddressKey(address), data.length);
-                    future.complete(true);
-                } else {
-                    log.error("[sendToDevice][发送消息失败，设备 ID: {}，地址: {}]",
-                            deviceId, buildAddressKey(address), result.cause());
-                    future.complete(false);
-                }
-            });
+            socket.send(
+                    Buffer.buffer(data),
+                    address.getPort(),
+                    address.getHostString(),
+                    result -> {
+                        if (result.succeeded()) {
+                            log.debug(
+                                    "[sendToDevice][发送消息成功，设备 ID: {}，地址: {}，数据长度: {} 字节]",
+                                    deviceId,
+                                    buildAddressKey(address),
+                                    data.length);
+                            future.complete(true);
+                        } else {
+                            log.error(
+                                    "[sendToDevice][发送消息失败，设备 ID: {}，地址: {}]",
+                                    deviceId,
+                                    buildAddressKey(address),
+                                    result.cause());
+                            future.complete(false);
+                        }
+                    });
             // 同步等待结果，超时 5 秒
             return future.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
@@ -155,10 +175,12 @@ public class IotUdpSessionManager {
          * 设备 ID
          */
         private Long deviceId;
+
         /**
          * 产品 Key
          */
         private String productKey;
+
         /**
          * 设备名称
          */
@@ -168,7 +190,5 @@ public class IotUdpSessionManager {
          * 设备地址
          */
         private InetSocketAddress address;
-
     }
-
 }

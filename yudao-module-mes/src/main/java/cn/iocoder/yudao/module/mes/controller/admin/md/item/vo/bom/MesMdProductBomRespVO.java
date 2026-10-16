@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.bom;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -47,5 +48,4 @@ public class MesMdProductBomRespVO {
 
     @Schema(description = "产品物料标识", example = "ITEM")
     private String itemOrProduct;
-
 }

@@ -1,5 +1,20 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.config;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_DEFAULT_CANNOT_DELETE;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_GROUP_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_CREATE_SUB_TYPE;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_CREATE_SUCCESS;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_DELETE_SUB_TYPE;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_DELETE_SUCCESS;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_TYPE;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_UPDATE_SUB_TYPE;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_UPDATE_SUCCESS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -15,10 +30,13 @@ import cn.iocoder.yudao.module.hrm.enums.attendance.config.HrmAttendanceHolidayT
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -37,21 +55,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_DEFAULT_CANNOT_DELETE;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_GROUP_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_CREATE_SUB_TYPE;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_CREATE_SUCCESS;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_DELETE_SUB_TYPE;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_DELETE_SUCCESS;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_TYPE;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_UPDATE_SUB_TYPE;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANCE_GROUP_UPDATE_SUCCESS;
-
 /**
  * HRM 考勤组 Service 实现类
  *
@@ -61,21 +64,20 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.HRM_ATTENDANC
 @Validated
 public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService {
 
-    @Resource
-    private HrmAttendanceGroupMapper attendanceGroupMapper;
+    @Resource private HrmAttendanceGroupMapper attendanceGroupMapper;
 
-    @Resource
-    private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeeService employeeService;
 
-    @Resource
-    private DeptApi deptApi;
-    @Resource
-    private HrmAttendanceHolidayService attendanceHolidayService;
+    @Resource private DeptApi deptApi;
+    @Resource private HrmAttendanceHolidayService attendanceHolidayService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_ATTENDANCE_GROUP_TYPE, subType = HRM_ATTENDANCE_GROUP_CREATE_SUB_TYPE,
-            bizNo = "{{#attendanceGroup.id}}", success = HRM_ATTENDANCE_GROUP_CREATE_SUCCESS)
+    @LogRecord(
+            type = HRM_ATTENDANCE_GROUP_TYPE,
+            subType = HRM_ATTENDANCE_GROUP_CREATE_SUB_TYPE,
+            bizNo = "{{#attendanceGroup.id}}",
+            success = HRM_ATTENDANCE_GROUP_CREATE_SUCCESS)
     public Long createAttendanceGroup(HrmAttendanceGroupSaveReqVO createReqVO) {
         // 1.1 校验考勤组名称唯一
         validateAttendanceGroupNameUnique(null, createReqVO.getName());
@@ -83,11 +85,17 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
         validateAttendanceGroup(createReqVO);
 
         // 2. 创建考勤组
-        HrmAttendanceGroupDO group = BeanUtils.toBean(createReqVO, HrmAttendanceGroupDO.class)
-                .setSpecialDates(BeanUtils.toBean(createReqVO.getSpecialDates(),
-                        HrmAttendanceGroupDO.SpecialDate.class, specialDate -> specialDate
-                                .setDate(LocalDateTimeUtils.getDayBeginTime(specialDate.getDate()))))
-                .setDefaultStatus(false);
+        HrmAttendanceGroupDO group =
+                BeanUtils.toBean(createReqVO, HrmAttendanceGroupDO.class)
+                        .setSpecialDates(
+                                BeanUtils.toBean(
+                                        createReqVO.getSpecialDates(),
+                                        HrmAttendanceGroupDO.SpecialDate.class,
+                                        specialDate ->
+                                                specialDate.setDate(
+                                                        LocalDateTimeUtils.getDayBeginTime(
+                                                                specialDate.getDate()))))
+                        .setDefaultStatus(false);
         attendanceGroupMapper.insert(group);
 
         // 3. 接管考勤组适用范围
@@ -100,8 +108,11 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_ATTENDANCE_GROUP_TYPE, subType = HRM_ATTENDANCE_GROUP_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.id}}", success = HRM_ATTENDANCE_GROUP_UPDATE_SUCCESS)
+    @LogRecord(
+            type = HRM_ATTENDANCE_GROUP_TYPE,
+            subType = HRM_ATTENDANCE_GROUP_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
+            success = HRM_ATTENDANCE_GROUP_UPDATE_SUCCESS)
     public void updateAttendanceGroup(HrmAttendanceGroupSaveReqVO updateReqVO) {
         // 1.1 校验考勤组是否存在
         HrmAttendanceGroupDO oldGroup = validateAttendanceGroupExists(updateReqVO.getId());
@@ -111,24 +122,34 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
         validateAttendanceGroup(updateReqVO);
 
         // 2. 更新考勤组
-        HrmAttendanceGroupDO group = BeanUtils.toBean(updateReqVO, HrmAttendanceGroupDO.class)
-                .setSpecialDates(BeanUtils.toBean(updateReqVO.getSpecialDates(),
-                        HrmAttendanceGroupDO.SpecialDate.class, specialDate -> specialDate
-                                .setDate(LocalDateTimeUtils.getDayBeginTime(specialDate.getDate()))));
+        HrmAttendanceGroupDO group =
+                BeanUtils.toBean(updateReqVO, HrmAttendanceGroupDO.class)
+                        .setSpecialDates(
+                                BeanUtils.toBean(
+                                        updateReqVO.getSpecialDates(),
+                                        HrmAttendanceGroupDO.SpecialDate.class,
+                                        specialDate ->
+                                                specialDate.setDate(
+                                                        LocalDateTimeUtils.getDayBeginTime(
+                                                                specialDate.getDate()))));
         attendanceGroupMapper.updateById(group);
 
         // 3. 接管考勤组适用范围
         transferAttendanceGroupScope(group.getId(), updateReqVO);
 
         // 4. 记录操作日志上下文
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT,
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
                 BeanUtils.toBean(oldGroup, HrmAttendanceGroupSaveReqVO.class));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = HRM_ATTENDANCE_GROUP_TYPE, subType = HRM_ATTENDANCE_GROUP_DELETE_SUB_TYPE,
-            bizNo = "{{#attendanceGroup.id}}", success = HRM_ATTENDANCE_GROUP_DELETE_SUCCESS)
+    @LogRecord(
+            type = HRM_ATTENDANCE_GROUP_TYPE,
+            subType = HRM_ATTENDANCE_GROUP_DELETE_SUB_TYPE,
+            bizNo = "{{#attendanceGroup.id}}",
+            success = HRM_ATTENDANCE_GROUP_DELETE_SUCCESS)
     public void deleteAttendanceGroup(Long id) {
         // 1. 校验考勤组是否存在且不是默认考勤组
         HrmAttendanceGroupDO group = validateAttendanceGroupExists(id);
@@ -157,10 +178,12 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
         }
 
         // 2. 匹配员工考勤组
-        Map<Long, List<Long>> deptHierarchyMap = buildDeptHierarchyMap(
-                Collections.singleton(employee.getDeptId()));
-        return matchAttendanceGroup(employee,
-                attendanceGroupMapper.selectListOrderByDefaultStatusAndId(), deptHierarchyMap);
+        Map<Long, List<Long>> deptHierarchyMap =
+                buildDeptHierarchyMap(Collections.singleton(employee.getDeptId()));
+        return matchAttendanceGroup(
+                employee,
+                attendanceGroupMapper.selectListOrderByDefaultStatusAndId(),
+                deptHierarchyMap);
     }
 
     @Override
@@ -174,25 +197,30 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
             return Collections.emptyMap();
         }
         // 2. 匹配员工考勤组
-        Map<Long, List<Long>> deptHierarchyMap = buildDeptHierarchyMap(
-                convertSet(employeeMap.values(), HrmEmployeeDO::getDeptId));
-        return matchAttendanceGroupMap(employeeMap,
-                attendanceGroupMapper.selectListOrderByDefaultStatusAndId(), deptHierarchyMap);
+        Map<Long, List<Long>> deptHierarchyMap =
+                buildDeptHierarchyMap(convertSet(employeeMap.values(), HrmEmployeeDO::getDeptId));
+        return matchAttendanceGroupMap(
+                employeeMap,
+                attendanceGroupMapper.selectListOrderByDefaultStatusAndId(),
+                deptHierarchyMap);
     }
 
     @Override
     public Map<LocalDate, HrmAttendanceGroupDO.Shift> getAttendanceGroupShiftMap(
-            HrmAttendanceGroupDO attendanceGroup, Collection<LocalDate> attendanceDates,
+            HrmAttendanceGroupDO attendanceGroup,
+            Collection<LocalDate> attendanceDates,
             Map<LocalDate, HrmAttendanceHolidayDO> holidayMap) {
         if (attendanceGroup == null || CollUtil.isEmpty(attendanceDates)) {
             return Collections.emptyMap();
         }
 
         // 1. 将考勤组特殊日期按自然日归集，便于优先匹配
-        Map<LocalDate, HrmAttendanceGroupDO.SpecialDate> specialDateMap = convertMap(
-                CollUtil.emptyIfNull(attendanceGroup.getSpecialDates()),
-                specialDate -> specialDate.getDate().toLocalDate(), Function.identity(),
-                (first, second) -> second);
+        Map<LocalDate, HrmAttendanceGroupDO.SpecialDate> specialDateMap =
+                convertMap(
+                        CollUtil.emptyIfNull(attendanceGroup.getSpecialDates()),
+                        specialDate -> specialDate.getDate().toLocalDate(),
+                        Function.identity(),
+                        (first, second) -> second);
 
         // 2. 逐日结合特殊日期、法定节假日和每周班次解析实际班次
         Map<LocalDate, HrmAttendanceGroupDO.Shift> result = new LinkedHashMap<>();
@@ -200,9 +228,14 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
             if (attendanceDate == null) {
                 continue;
             }
-            HrmAttendanceHolidayDO holiday = holidayMap == null ? null : holidayMap.get(attendanceDate);
-            HrmAttendanceGroupDO.Shift shift = resolveAttendanceGroupShift(
-                    attendanceGroup, attendanceDate, holiday, specialDateMap.get(attendanceDate));
+            HrmAttendanceHolidayDO holiday =
+                    holidayMap == null ? null : holidayMap.get(attendanceDate);
+            HrmAttendanceGroupDO.Shift shift =
+                    resolveAttendanceGroupShift(
+                            attendanceGroup,
+                            attendanceDate,
+                            holiday,
+                            specialDateMap.get(attendanceDate));
             result.put(attendanceDate, shift);
         }
         return result;
@@ -215,14 +248,15 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
         HrmAttendanceGroupDO attendanceGroup = getMyAttendanceGroup(employeeId);
         Map<LocalDate, HrmAttendanceHolidayDO> holidayMap =
                 attendanceHolidayService.getAttendanceHolidayMap(
-                        LocalDateTimeUtils.getDateTimeRange(
-                                attendanceDate, attendanceDate));
-        return getAttendanceGroupShiftMap(attendanceGroup,
-                Collections.singletonList(attendanceDate), holidayMap).get(attendanceDate);
+                        LocalDateTimeUtils.getDateTimeRange(attendanceDate, attendanceDate));
+        return getAttendanceGroupShiftMap(
+                        attendanceGroup, Collections.singletonList(attendanceDate), holidayMap)
+                .get(attendanceDate);
     }
 
     @Override
-    public PageResult<HrmAttendanceGroupDO> getAttendanceGroupPage(HrmAttendanceGroupPageReqVO pageReqVO) {
+    public PageResult<HrmAttendanceGroupDO> getAttendanceGroupPage(
+            HrmAttendanceGroupPageReqVO pageReqVO) {
         return attendanceGroupMapper.selectPage(pageReqVO);
     }
 
@@ -250,12 +284,16 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
      * @return 实际班次；休息日返回 {@code null}
      */
     private HrmAttendanceGroupDO.Shift resolveAttendanceGroupShift(
-            HrmAttendanceGroupDO group, LocalDate attendanceDate,
-            HrmAttendanceHolidayDO holiday, HrmAttendanceGroupDO.SpecialDate specialDate) {
+            HrmAttendanceGroupDO group,
+            LocalDate attendanceDate,
+            HrmAttendanceHolidayDO holiday,
+            HrmAttendanceGroupDO.SpecialDate specialDate) {
         // 命中特殊日期时，以考勤组的工作日或休息日配置为准
         if (specialDate != null) {
-            return Objects.equals(specialDate.getType(), HrmAttendanceHolidayTypeEnum.WORK.getType())
-                    ? getWorkShift(group, attendanceDate) : null;
+            return Objects.equals(
+                            specialDate.getType(), HrmAttendanceHolidayTypeEnum.WORK.getType())
+                    ? getWorkShift(group, attendanceDate)
+                    : null;
         }
         // 未配置特殊日期时，再按法定节假日决定休息或补班
         if (holiday != null) {
@@ -299,7 +337,8 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
             return null;
         }
         int week = attendanceDate.getDayOfWeek().getValue();
-        return CollUtil.findOne(group.getShifts(),
+        return CollUtil.findOne(
+                group.getShifts(),
                 shift -> shift != null && CollUtil.contains(shift.getWeeks(), week));
     }
 
@@ -331,34 +370,43 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
         deptScope.addAll(convertSet(deptApi.getChildDeptList(deptIds), DeptRespDTO::getId));
         Set<Long> employeeIds = new HashSet<>(reqVO.getEmployeeIds());
         if (CollUtil.isNotEmpty(deptScope)) {
-            employeeIds.addAll(convertSet(
-                    employeeService.getEmployeeListByDeptIds(deptScope), HrmEmployeeDO::getId));
+            employeeIds.addAll(
+                    convertSet(
+                            employeeService.getEmployeeListByDeptIds(deptScope),
+                            HrmEmployeeDO::getId));
         }
 
         // 2. 从其它考勤组移除冲突范围
-        for (HrmAttendanceGroupDO group : attendanceGroupMapper.selectListOrderByDefaultStatusAndId()) {
+        for (HrmAttendanceGroupDO group :
+                attendanceGroupMapper.selectListOrderByDefaultStatusAndId()) {
             if (Objects.equals(group.getId(), attendanceGroupId)) {
                 continue;
             }
-            List<Long> remainDeptIds = CollUtil.subtractToList(
-                    CollUtil.emptyIfNull(group.getDeptIds()), deptScope);
-            List<Long> remainEmployeeIds = CollUtil.subtractToList(
-                    CollUtil.emptyIfNull(group.getEmployeeIds()), employeeIds);
+            List<Long> remainDeptIds =
+                    CollUtil.subtractToList(CollUtil.emptyIfNull(group.getDeptIds()), deptScope);
+            List<Long> remainEmployeeIds =
+                    CollUtil.subtractToList(
+                            CollUtil.emptyIfNull(group.getEmployeeIds()), employeeIds);
             if (Objects.equals(remainDeptIds, group.getDeptIds())
                     && Objects.equals(remainEmployeeIds, group.getEmployeeIds())) {
                 continue;
             }
-            attendanceGroupMapper.updateById(new HrmAttendanceGroupDO().setId(group.getId())
-                    .setDeptIds(remainDeptIds).setEmployeeIds(remainEmployeeIds));
+            attendanceGroupMapper.updateById(
+                    new HrmAttendanceGroupDO()
+                            .setId(group.getId())
+                            .setDeptIds(remainDeptIds)
+                            .setEmployeeIds(remainEmployeeIds));
         }
     }
 
     private Map<Long, HrmAttendanceGroupDO> matchAttendanceGroupMap(
-            Map<Long, HrmEmployeeDO> employeeMap, List<HrmAttendanceGroupDO> groupList,
+            Map<Long, HrmEmployeeDO> employeeMap,
+            List<HrmAttendanceGroupDO> groupList,
             Map<Long, List<Long>> deptHierarchyMap) {
         Map<Long, HrmAttendanceGroupDO> result = new HashMap<>();
         for (HrmEmployeeDO employee : employeeMap.values()) {
-            HrmAttendanceGroupDO group = matchAttendanceGroup(employee, groupList, deptHierarchyMap);
+            HrmAttendanceGroupDO group =
+                    matchAttendanceGroup(employee, groupList, deptHierarchyMap);
             if (group != null) {
                 result.put(employee.getId(), group);
             }
@@ -370,7 +418,8 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
      * 按显式员工、最近上级部门、默认考勤组的顺序匹配员工考勤组
      */
     private HrmAttendanceGroupDO matchAttendanceGroup(
-            HrmEmployeeDO employee, List<HrmAttendanceGroupDO> groups,
+            HrmEmployeeDO employee,
+            List<HrmAttendanceGroupDO> groups,
             Map<Long, List<Long>> deptHierarchyMap) {
         // 1. 优先匹配显式员工
         for (HrmAttendanceGroupDO group : groups) {
@@ -381,8 +430,9 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
 
         // 2. 其次按当前部门到父部门的顺序匹配
         if (employee.getDeptId() != null) {
-            List<Long> deptHierarchy = deptHierarchyMap.getOrDefault(
-                    employee.getDeptId(), Collections.singletonList(employee.getDeptId()));
+            List<Long> deptHierarchy =
+                    deptHierarchyMap.getOrDefault(
+                            employee.getDeptId(), Collections.singletonList(employee.getDeptId()));
             for (Long deptId : deptHierarchy) {
                 for (HrmAttendanceGroupDO group : groups) {
                     if (CollUtil.contains(group.getDeptIds(), deptId)) {
@@ -417,5 +467,4 @@ public class HrmAttendanceGroupServiceImpl implements HrmAttendanceGroupService 
         }
         return result;
     }
-
 }

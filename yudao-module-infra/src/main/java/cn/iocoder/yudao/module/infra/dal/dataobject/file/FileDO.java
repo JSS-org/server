@@ -2,8 +2,10 @@ package cn.iocoder.yudao.module.infra.dal.dataobject.file;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -27,31 +29,36 @@ public class FileDO extends BaseDO {
      * 编号，数据库自增
      */
     private Long id;
+
     /**
      * 配置编号
      *
      * 关联 {@link FileConfigDO#getId()}
      */
     private Long configId;
+
     /**
      * 原文件名
      */
     private String name;
+
     /**
      * 路径，即文件名
      */
     private String path;
+
     /**
      * 访问地址
      */
     private String url;
+
     /**
      * 文件的 MIME 类型，例如 "application/octet-stream"
      */
     private String type;
+
     /**
      * 文件大小
      */
     private Long size;
-
 }

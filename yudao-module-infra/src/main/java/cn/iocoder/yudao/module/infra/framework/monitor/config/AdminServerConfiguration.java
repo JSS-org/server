@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.infra.framework.monitor.config;
 
 import de.codecentric.boot.admin.server.config.EnableAdminServer;
+
 import jakarta.servlet.DispatcherType;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +31,9 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
  */
 @Configuration(proxyBeanMethods = false)
 @EnableAdminServer
-@ConditionalOnClass(name = "de.codecentric.boot.admin.server.config.AdminServerProperties") // 目的：按需启动 spring boot admin 监控服务
+@ConditionalOnClass(
+        name = "de.codecentric.boot.admin.server.config.AdminServerProperties") // 目的：按需启动 spring
+// boot admin 监控服务
 public class AdminServerConfiguration {
 
     @Value("${spring.boot.admin.context-path:''}")
@@ -50,11 +54,12 @@ public class AdminServerConfiguration {
      */
     @Bean("adminUserDetailsManager")
     public InMemoryUserDetailsManager adminUserDetailsManager(PasswordEncoder passwordEncoder) {
-        UserDetails adminUser = User.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
-                .roles("ADMIN_SERVER")
-                .build();
+        UserDetails adminUser =
+                User.builder()
+                        .username(username)
+                        .password(passwordEncoder.encode(password))
+                        .roles("ADMIN_SERVER")
+                        .build();
         return new InMemoryUserDetailsManager(adminUser);
     }
 
@@ -64,10 +69,12 @@ public class AdminServerConfiguration {
      */
     @Bean("adminServerSecurityFilterChain")
     @Order(1)
-    public SecurityFilterChain adminServerSecurityFilterChain(HttpSecurity httpSecurity,
-                                                               InMemoryUserDetailsManager adminUserDetailsManager) throws Exception {
+    public SecurityFilterChain adminServerSecurityFilterChain(
+            HttpSecurity httpSecurity, InMemoryUserDetailsManager adminUserDetailsManager)
+            throws Exception {
         // 登录成功后的处理器
-        SavedRequestAwareAuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+        SavedRequestAwareAuthenticationSuccessHandler successHandler =
+                new SavedRequestAwareAuthenticationSuccessHandler();
         successHandler.setTargetUrlParameter("redirectTo");
         successHandler.setDefaultTargetUrl(adminSeverContextPath + "/");
 
@@ -78,44 +85,62 @@ public class AdminServerConfiguration {
                 // 使用独立的 UserDetailsManager
                 .userDetailsService(adminUserDetailsManager)
                 // 授权配置
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(adminSeverContextPath + "/assets/**").permitAll() // 静态资源允许匿名访问
-                        .requestMatchers(adminSeverContextPath + "/login").permitAll() // 登录页面允许匿名访问
-                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll() // 异步请求允许
-                        .anyRequest().authenticated() // 其他请求需要认证
-                )
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers(adminSeverContextPath + "/assets/**")
+                                        .permitAll() // 静态资源允许匿名访问
+                                        .requestMatchers(adminSeverContextPath + "/login")
+                                        .permitAll() // 登录页面允许匿名访问
+                                        .dispatcherTypeMatchers(DispatcherType.ASYNC)
+                                        .permitAll() // 异步请求允许
+                                        .anyRequest()
+                                        .authenticated() // 其他请求需要认证
+                        )
                 // 表单登录配置（用于 Admin UI 访问）
-                .formLogin(form -> form
-                        .loginPage(adminSeverContextPath + "/login")
-                        .successHandler(successHandler)
-                        .permitAll()
-                )
+                .formLogin(
+                        form ->
+                                form.loginPage(adminSeverContextPath + "/login")
+                                        .successHandler(successHandler)
+                                        .permitAll())
                 // 登出配置
-                .logout(logout -> logout
-                        .logoutUrl(adminSeverContextPath + "/logout")
-                        .logoutSuccessUrl(adminSeverContextPath + "/login")
-                )
+                .logout(
+                        logout ->
+                                logout.logoutUrl(adminSeverContextPath + "/logout")
+                                        .logoutSuccessUrl(adminSeverContextPath + "/login"))
                 // HTTP Basic 认证（用于 Admin Client 注册）
                 .httpBasic(Customizer.withDefaults())
                 // CSRF 配置
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers(
-                                adminSeverContextPath + "/instances", // Admin Client 注册端点忽略 CSRF
-                                adminSeverContextPath + "/actuator/**" // Actuator 端点忽略 CSRF
-                        )
-                )
-                .headers(headers -> headers
-                        // 特殊：Spring Boot Admin 前端基于 Vue，需 unsafe-inline ／ unsafe-eval 支持内联脚本与表达式
-                        .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; "
-                                        + "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-                                        + "style-src 'self' 'unsafe-inline'; "
-                                        + "frame-ancestors " + frameAncestors))
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin) // 显式设置 X-Frame-Options 为 SAMEORIGIN
-                        .cacheControl(HeadersConfigurer.CacheControlConfig::disable) // 禁用缓存，避免旧配置生效
-                );
+                .csrf(
+                        csrf ->
+                                csrf.csrfTokenRepository(
+                                                CookieCsrfTokenRepository.withHttpOnlyFalse())
+                                        .ignoringRequestMatchers(
+                                                adminSeverContextPath
+                                                        + "/instances", // Admin Client 注册端点忽略 CSRF
+                                                adminSeverContextPath
+                                                        + "/actuator/**" // Actuator 端点忽略 CSRF
+                                                ))
+                .headers(
+                        headers ->
+                                headers
+                                        // 特殊：Spring Boot Admin 前端基于 Vue，需 unsafe-inline ／
+                                        // unsafe-eval 支持内联脚本与表达式
+                                        .contentSecurityPolicy(
+                                                csp ->
+                                                        csp.policyDirectives(
+                                                                "default-src 'self'; "
+                                                                        + "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                                                                        + "style-src 'self' 'unsafe-inline'; "
+                                                                        + "frame-ancestors "
+                                                                        + frameAncestors))
+                                        .frameOptions(
+                                                HeadersConfigurer.FrameOptionsConfig
+                                                        ::sameOrigin) // 显式设置 X-Frame-Options 为
+                                        // SAMEORIGIN
+                                        .cacheControl(
+                                                HeadersConfigurer.CacheControlConfig
+                                                        ::disable) // 禁用缓存，避免旧配置生效
+                        );
         return httpSecurity.build();
     }
-
 }

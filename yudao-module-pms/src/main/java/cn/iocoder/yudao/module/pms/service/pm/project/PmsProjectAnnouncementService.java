@@ -61,5 +61,4 @@ public interface PmsProjectAnnouncementService {
      * @param projectId 项目编号
      */
     void deleteProjectAnnouncementListByProjectId(Long projectId);
-
 }

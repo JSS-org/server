@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.wm.transfer;
 
 import cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo.line.MesWmTransferLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.transfer.MesWmTransferLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -63,5 +64,4 @@ public interface MesWmTransferLineService {
      * @return 转移单行
      */
     MesWmTransferLineDO validateTransferLineExists(Long id);
-
 }

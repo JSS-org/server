@@ -1,6 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.tm.tool;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.tm.tool.vo.type.MesTmToolTypePageReqVO;
@@ -8,19 +12,16 @@ import cn.iocoder.yudao.module.mes.controller.admin.tm.tool.vo.type.MesTmToolTyp
 import cn.iocoder.yudao.module.mes.dal.dataobject.tm.tool.MesTmToolTypeDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.tm.tool.MesTmToolTypeMapper;
 import cn.iocoder.yudao.module.mes.service.md.workstation.MesMdWorkstationToolService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import cn.hutool.core.util.ObjUtil;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工具类型 Service 实现类
@@ -31,15 +32,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesTmToolTypeServiceImpl implements MesTmToolTypeService {
 
-    @Resource
-    private MesTmToolTypeMapper toolTypeMapper;
+    @Resource private MesTmToolTypeMapper toolTypeMapper;
 
-    @Resource
-    @Lazy
-    private MesTmToolService toolService;
-    @Resource
-    @Lazy
-    private MesMdWorkstationToolService workstationToolService;
+    @Resource @Lazy private MesTmToolService toolService;
+    @Resource @Lazy private MesMdWorkstationToolService workstationToolService;
 
     @Override
     public Long createToolType(MesTmToolTypeSaveReqVO createReqVO) {
@@ -137,5 +133,4 @@ public class MesTmToolTypeServiceImpl implements MesTmToolTypeService {
         }
         return toolTypeMapper.selectByIds(ids);
     }
-
 }

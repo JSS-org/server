@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.crm.controller.admin.followup.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class CrmFollowUpRecordPageReqVO extends PageParam {
 
     @Schema(description = "数据编号", example = "5564")
     private Long bizId;
-
 }

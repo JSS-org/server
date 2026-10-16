@@ -13,7 +13,12 @@ import liquibase.util.StringUtil;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-@DataTypeInfo(name = "boolean", aliases = {"java.sql.Types.BOOLEAN", "java.lang.Boolean", "bit", "bool"}, minParameters = 0, maxParameters = 0, priority = LiquibaseDataType.PRIORITY_DEFAULT)
+@DataTypeInfo(
+        name = "boolean",
+        aliases = {"java.sql.Types.BOOLEAN", "java.lang.Boolean", "bit", "bool"},
+        minParameters = 0,
+        maxParameters = 0,
+        priority = LiquibaseDataType.PRIORITY_DEFAULT)
 public class BooleanType extends LiquibaseDataType {
 
     @Override
@@ -34,7 +39,8 @@ public class BooleanType extends LiquibaseDataType {
             return new DatabaseDataType("BIT", 1);
         } else if (database instanceof OracleDatabase) {
             return new DatabaseDataType("NUMBER", 1);
-        } else if ((database instanceof SybaseASADatabase) || (database instanceof SybaseDatabase)) {
+        } else if ((database instanceof SybaseASADatabase)
+                || (database instanceof SybaseDatabase)) {
             return new DatabaseDataType("BIT");
         } else if (database instanceof DerbyDatabase) {
             if (((DerbyDatabase) database).supportsBooleanDataType()) {
@@ -45,8 +51,7 @@ public class BooleanType extends LiquibaseDataType {
         } else if (database instanceof DB2Database) {
             if (((DB2Database) database).supportsBooleanDataType())
                 return new DatabaseDataType("BOOLEAN");
-            else
-                return new DatabaseDataType("SMALLINT");
+            else return new DatabaseDataType("SMALLINT");
         } else if (database instanceof HsqlDatabase) {
             return new DatabaseDataType("BOOLEAN");
         } else if (database instanceof PostgresDatabase) {
@@ -69,18 +74,31 @@ public class BooleanType extends LiquibaseDataType {
         String returnValue;
         if (value instanceof String) {
             value = ((String) value).replaceAll("'", "");
-            if ("true".equals(((String) value).toLowerCase(Locale.US)) || "1".equals(value) || "b'1'".equals(((String) value).toLowerCase(Locale.US)) || "t".equals(((String) value).toLowerCase(Locale.US)) || ((String) value).toLowerCase(Locale.US).equals(this.getTrueBooleanValue(database).toLowerCase(Locale.US))) {
+            if ("true".equals(((String) value).toLowerCase(Locale.US))
+                    || "1".equals(value)
+                    || "b'1'".equals(((String) value).toLowerCase(Locale.US))
+                    || "t".equals(((String) value).toLowerCase(Locale.US))
+                    || ((String) value)
+                            .toLowerCase(Locale.US)
+                            .equals(this.getTrueBooleanValue(database).toLowerCase(Locale.US))) {
                 returnValue = this.getTrueBooleanValue(database);
-            } else if ("false".equals(((String) value).toLowerCase(Locale.US)) || "0".equals(value) || "b'0'".equals(
-                ((String) value).toLowerCase(Locale.US)) || "f".equals(((String) value).toLowerCase(Locale.US)) || ((String) value).toLowerCase(Locale.US).equals(this.getFalseBooleanValue(database).toLowerCase(Locale.US))) {
+            } else if ("false".equals(((String) value).toLowerCase(Locale.US))
+                    || "0".equals(value)
+                    || "b'0'".equals(((String) value).toLowerCase(Locale.US))
+                    || "f".equals(((String) value).toLowerCase(Locale.US))
+                    || ((String) value)
+                            .toLowerCase(Locale.US)
+                            .equals(this.getFalseBooleanValue(database).toLowerCase(Locale.US))) {
                 returnValue = this.getFalseBooleanValue(database);
-            } else if (database instanceof PostgresDatabase && Pattern.matches("b?([01])\\1*(::bit|::\"bit\")?", (String) value)) {
-                returnValue = "b'"
-                    + value.toString()
-                    .replace("b", "")
-                    .replace("\"", "")
-                    .replace("::it", "")
-                    + "'::\"bit\"";
+            } else if (database instanceof PostgresDatabase
+                    && Pattern.matches("b?([01])\\1*(::bit|::\"bit\")?", (String) value)) {
+                returnValue =
+                        "b'"
+                                + value.toString()
+                                        .replace("b", "")
+                                        .replace("\"", "")
+                                        .replace("::it", "")
+                                + "'::\"bit\"";
             } else {
                 throw new UnexpectedLiquibaseException("Unknown boolean value: " + value);
             }
@@ -105,7 +123,8 @@ public class BooleanType extends LiquibaseDataType {
                 returnValue = this.getFalseBooleanValue(database);
             }
         } else {
-            throw new UnexpectedLiquibaseException("Cannot convert type " + value.getClass() + " to a boolean value");
+            throw new UnexpectedLiquibaseException(
+                    "Cannot convert type " + value.getClass() + " to a boolean value");
         }
 
         return returnValue;
@@ -121,14 +140,14 @@ public class BooleanType extends LiquibaseDataType {
             return !((DB2Database) database).supportsBooleanDataType();
         }
         return (database instanceof Db2zDatabase)
-            || (database instanceof FirebirdDatabase)
-            || (database instanceof MSSQLDatabase)
-            || (database instanceof MySQLDatabase)
-            || (database instanceof OracleDatabase)
-            || (database instanceof SQLiteDatabase)
-            || (database instanceof SybaseASADatabase)
-            || (database instanceof SybaseDatabase)
-            || (database instanceof DmDatabase); // dhb52: DM Support
+                || (database instanceof FirebirdDatabase)
+                || (database instanceof MSSQLDatabase)
+                || (database instanceof MySQLDatabase)
+                || (database instanceof OracleDatabase)
+                || (database instanceof SQLiteDatabase)
+                || (database instanceof SybaseASADatabase)
+                || (database instanceof SybaseDatabase)
+                || (database instanceof DmDatabase); // dhb52: DM Support
     }
 
     /**
@@ -161,5 +180,4 @@ public class BooleanType extends LiquibaseDataType {
     public LoadDataChange.LOAD_DATA_TYPE getLoadTypeName() {
         return LoadDataChange.LOAD_DATA_TYPE.BOOLEAN;
     }
-
 }

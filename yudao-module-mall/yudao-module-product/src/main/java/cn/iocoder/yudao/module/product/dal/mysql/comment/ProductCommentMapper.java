@@ -7,21 +7,24 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.product.controller.admin.comment.vo.ProductCommentPageReqVO;
 import cn.iocoder.yudao.module.product.controller.app.comment.vo.AppCommentPageReqVO;
 import cn.iocoder.yudao.module.product.dal.dataobject.comment.ProductCommentDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface ProductCommentMapper extends BaseMapperX<ProductCommentDO> {
 
     default PageResult<ProductCommentDO> selectPage(ProductCommentPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ProductCommentDO>()
-                .likeIfPresent(ProductCommentDO::getUserNickname, reqVO.getUserNickname())
-                .eqIfPresent(ProductCommentDO::getOrderId, reqVO.getOrderId())
-                .eqIfPresent(ProductCommentDO::getSpuId, reqVO.getSpuId())
-                .eqIfPresent(ProductCommentDO::getScores, reqVO.getScores())
-                .eqIfPresent(ProductCommentDO::getReplyStatus, reqVO.getReplyStatus())
-                .betweenIfPresent(ProductCommentDO::getCreateTime, reqVO.getCreateTime())
-                .likeIfPresent(ProductCommentDO::getSpuName, reqVO.getSpuName())
-                .orderByDesc(ProductCommentDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<ProductCommentDO>()
+                        .likeIfPresent(ProductCommentDO::getUserNickname, reqVO.getUserNickname())
+                        .eqIfPresent(ProductCommentDO::getOrderId, reqVO.getOrderId())
+                        .eqIfPresent(ProductCommentDO::getSpuId, reqVO.getSpuId())
+                        .eqIfPresent(ProductCommentDO::getScores, reqVO.getScores())
+                        .eqIfPresent(ProductCommentDO::getReplyStatus, reqVO.getReplyStatus())
+                        .betweenIfPresent(ProductCommentDO::getCreateTime, reqVO.getCreateTime())
+                        .likeIfPresent(ProductCommentDO::getSpuName, reqVO.getSpuName())
+                        .orderByDesc(ProductCommentDO::getId));
     }
 
     static void appendTabQuery(LambdaQueryWrapperX<ProductCommentDO> queryWrapper, Integer type) {
@@ -41,9 +44,10 @@ public interface ProductCommentMapper extends BaseMapperX<ProductCommentDO> {
     }
 
     default PageResult<ProductCommentDO> selectPage(AppCommentPageReqVO reqVO, Boolean visible) {
-        LambdaQueryWrapperX<ProductCommentDO> queryWrapper = new LambdaQueryWrapperX<ProductCommentDO>()
-                .eqIfPresent(ProductCommentDO::getSpuId, reqVO.getSpuId())
-                .eqIfPresent(ProductCommentDO::getVisible, visible);
+        LambdaQueryWrapperX<ProductCommentDO> queryWrapper =
+                new LambdaQueryWrapperX<ProductCommentDO>()
+                        .eqIfPresent(ProductCommentDO::getSpuId, reqVO.getSpuId())
+                        .eqIfPresent(ProductCommentDO::getVisible, visible);
         // 构建评价查询语句
         appendTabQuery(queryWrapper, reqVO.getType());
         // 按评价时间排序最新的显示在前面
@@ -52,9 +56,9 @@ public interface ProductCommentMapper extends BaseMapperX<ProductCommentDO> {
     }
 
     default ProductCommentDO selectByUserIdAndOrderItemId(Long userId, Long orderItemId) {
-        return selectOne(new LambdaQueryWrapperX<ProductCommentDO>()
-                .eq(ProductCommentDO::getUserId, userId)
-                .eq(ProductCommentDO::getOrderItemId, orderItemId));
+        return selectOne(
+                new LambdaQueryWrapperX<ProductCommentDO>()
+                        .eq(ProductCommentDO::getUserId, userId)
+                        .eq(ProductCommentDO::getOrderItemId, orderItemId));
     }
-
 }

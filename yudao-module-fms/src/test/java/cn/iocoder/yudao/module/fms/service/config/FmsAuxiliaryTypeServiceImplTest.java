@@ -1,16 +1,22 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliarytype.FmsAuxiliaryTypeSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryTypeDO;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsAuxiliaryTypeMapper;
 import cn.iocoder.yudao.module.fms.enums.config.FmsAuxiliaryTypeEnum;
-import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
-import cn.iocoder.yudao.module.fms.service.config.FmsInitialBalanceService;
-import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
 import cn.iocoder.yudao.module.fms.service.voucher.FmsVoucherService;
-import cn.iocoder.yudao.module.fms.service.config.FmsVoucherTemplateService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -18,32 +24,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @Import(FmsAuxiliaryTypeServiceImpl.class)
 public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FmsAuxiliaryTypeServiceImpl auxiliaryTypeService;
-    @Resource
-    private FmsAuxiliaryTypeMapper auxiliaryTypeMapper;
-    @MockitoBean
-    private FmsAccountSetService accountSetService;
-    @MockitoBean
-    private FmsAuxiliaryItemService auxiliaryItemService;
-    @MockitoBean
-    private FmsSubjectService subjectService;
-    @MockitoBean
-    private FmsVoucherService voucherService;
-    @MockitoBean
-    private FmsVoucherTemplateService voucherTemplateService;
-    @MockitoBean
-    private FmsInitialBalanceService initialBalanceService;
+    @Resource private FmsAuxiliaryTypeServiceImpl auxiliaryTypeService;
+    @Resource private FmsAuxiliaryTypeMapper auxiliaryTypeMapper;
+    @MockitoBean private FmsAccountSetService accountSetService;
+    @MockitoBean private FmsAuxiliaryItemService auxiliaryItemService;
+    @MockitoBean private FmsSubjectService subjectService;
+    @MockitoBean private FmsVoucherService voucherService;
+    @MockitoBean private FmsVoucherTemplateService voucherTemplateService;
+    @MockitoBean private FmsInitialBalanceService initialBalanceService;
 
     @Test
     public void testInitializeDefaultTypes_success() {
@@ -60,8 +51,13 @@ public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
         assertEquals(FmsAuxiliaryTypeEnum.INVENTORY.getName(), types.get(5).getName());
         assertTrue(types.stream().allMatch(FmsAuxiliaryTypeDO::getSystemPreset));
         assertTrue(types.stream().allMatch(type -> accountSetId.equals(type.getAccountSetId())));
-        assertFalse(types.stream().anyMatch(
-                type -> FmsAuxiliaryTypeEnum.CUSTOM.getType().equals(type.getType())));
+        assertFalse(
+                types.stream()
+                        .anyMatch(
+                                type ->
+                                        FmsAuxiliaryTypeEnum.CUSTOM
+                                                .getType()
+                                                .equals(type.getType())));
     }
 
     @Test
@@ -74,7 +70,8 @@ public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
         auxiliaryTypeMapper.insert(store);
 
         // 调用
-        Map<String, Long> auxiliaryTypeIdMap = auxiliaryTypeService.getAuxiliaryTypeIdMap(accountSetId);
+        Map<String, Long> auxiliaryTypeIdMap =
+                auxiliaryTypeService.getAuxiliaryTypeIdMap(accountSetId);
 
         // 断言
         assertEquals(2, auxiliaryTypeIdMap.size());
@@ -111,7 +108,8 @@ public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
         reqVO.setName("门店");
 
         // 调用，并断言
-        assertServiceException(() -> auxiliaryTypeService.createAuxiliaryType(reqVO, 10L),
+        assertServiceException(
+                () -> auxiliaryTypeService.createAuxiliaryType(reqVO, 10L),
                 AUXILIARY_TYPE_NAME_DUPLICATE);
     }
 
@@ -127,7 +125,8 @@ public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
         reqVO.setName("客户资料");
 
         // 调用，并断言
-        assertServiceException(() -> auxiliaryTypeService.updateAuxiliaryType(reqVO, 10L),
+        assertServiceException(
+                () -> auxiliaryTypeService.updateAuxiliaryType(reqVO, 10L),
                 AUXILIARY_TYPE_SYSTEM_NOT_EDITABLE);
     }
 
@@ -137,12 +136,14 @@ public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
         FmsAuxiliaryTypeDO auxiliaryType = buildAuxiliaryType(1L, "门店", false);
         auxiliaryTypeMapper.insert(auxiliaryType);
         // mock 方法
-        when(auxiliaryItemService.getAuxiliaryItemCountByAuxiliaryTypeId(
-                1L, auxiliaryType.getId())).thenReturn(1L);
+        when(auxiliaryItemService.getAuxiliaryItemCountByAuxiliaryTypeId(1L, auxiliaryType.getId()))
+                .thenReturn(1L);
 
         // 调用，并断言
-        assertServiceException(() -> auxiliaryTypeService.deleteAuxiliaryType(
-                1L, auxiliaryType.getId(), 10L), AUXILIARY_TYPE_HAS_ITEM, 1L);
+        assertServiceException(
+                () -> auxiliaryTypeService.deleteAuxiliaryType(1L, auxiliaryType.getId(), 10L),
+                AUXILIARY_TYPE_HAS_ITEM,
+                1L);
     }
 
     @Test
@@ -154,17 +155,27 @@ public class FmsAuxiliaryTypeServiceImplTest extends BaseDbUnitTest {
                 .thenReturn(1L);
 
         // 调用，并断言
-        assertServiceException(() -> auxiliaryTypeService.deleteAuxiliaryType(
-                1L, auxiliaryType.getId(), 10L), AUXILIARY_TYPE_SUBJECT_IN_USE, 1L);
+        assertServiceException(
+                () -> auxiliaryTypeService.deleteAuxiliaryType(1L, auxiliaryType.getId(), 10L),
+                AUXILIARY_TYPE_SUBJECT_IN_USE,
+                1L);
     }
 
     // ========== 随机对象 ==========
 
-    private FmsAuxiliaryTypeDO buildAuxiliaryType(Long accountSetId, String name, boolean systemPreset) {
-        return randomPojo(FmsAuxiliaryTypeDO.class, auxiliaryType -> auxiliaryType.setId(null)
-                .setName(name).setSystemPreset(systemPreset).setAccountSetId(accountSetId)
-                .setType(systemPreset
-                        ? FmsAuxiliaryTypeEnum.CUSTOMER.getType() : FmsAuxiliaryTypeEnum.CUSTOM.getType()));
+    private FmsAuxiliaryTypeDO buildAuxiliaryType(
+            Long accountSetId, String name, boolean systemPreset) {
+        return randomPojo(
+                FmsAuxiliaryTypeDO.class,
+                auxiliaryType ->
+                        auxiliaryType
+                                .setId(null)
+                                .setName(name)
+                                .setSystemPreset(systemPreset)
+                                .setAccountSetId(accountSetId)
+                                .setType(
+                                        systemPreset
+                                                ? FmsAuxiliaryTypeEnum.CUSTOMER.getType()
+                                                : FmsAuxiliaryTypeEnum.CUSTOM.getType()));
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.autocode;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
@@ -11,17 +14,16 @@ import cn.iocoder.yudao.module.mes.dal.mysql.md.autocode.MesMdAutoCodeRecordMapp
 import cn.iocoder.yudao.module.mes.enums.md.autocode.MesMdAutoCodePaddedMethodEnum;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodeContext;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodePartStrategy;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 编码生成记录 Service 实现类
@@ -34,16 +36,12 @@ public class MesMdAutoCodeRecordServiceImpl implements MesMdAutoCodeRecordServic
 
     private static final int GENERATE_MAX_RETRY_COUNT = 10;
 
-    @Resource
-    private MesMdAutoCodeRecordMapper recordMapper;
+    @Resource private MesMdAutoCodeRecordMapper recordMapper;
 
-    @Resource
-    private MesMdAutoCodeRuleService ruleService;
-    @Resource
-    private MesMdAutoCodePartService partService;
+    @Resource private MesMdAutoCodeRuleService ruleService;
+    @Resource private MesMdAutoCodePartService partService;
 
-    @Resource
-    private List<MesMdAutoCodePartStrategy> strategyList;
+    @Resource private List<MesMdAutoCodePartStrategy> strategyList;
     private Map<Integer, MesMdAutoCodePartStrategy> strategyMap;
 
     @PostConstruct
@@ -68,8 +66,11 @@ public class MesMdAutoCodeRecordServiceImpl implements MesMdAutoCodeRecordServic
         // 2. 循环生成编码，跳过因 Redis 流水号落后导致的历史重复编码
         for (int i = 0; i < GENERATE_MAX_RETRY_COUNT; i++) {
             // 2.1 生成编码
-            MesMdAutoCodeContext context = new MesMdAutoCodeContext()
-                    .setRule(rule).setParts(parts).setInputChar(inputChar);
+            MesMdAutoCodeContext context =
+                    new MesMdAutoCodeContext()
+                            .setRule(rule)
+                            .setParts(parts)
+                            .setInputChar(inputChar);
             String result = generateCode(rule, parts, context);
             // 2.2 二次校验（防止重复）
             MesMdAutoCodeRecordDO existRecord = recordMapper.selectByResult(result);
@@ -77,9 +78,12 @@ public class MesMdAutoCodeRecordServiceImpl implements MesMdAutoCodeRecordServic
                 continue;
             }
             // 2.3 保存生成记录
-            MesMdAutoCodeRecordDO record = new MesMdAutoCodeRecordDO()
-                    .setRuleId(rule.getId()).setResult(result)
-                    .setSerialNo(context.getSerialNo()).setInputChar(inputChar);
+            MesMdAutoCodeRecordDO record =
+                    new MesMdAutoCodeRecordDO()
+                            .setRuleId(rule.getId())
+                            .setResult(result)
+                            .setSerialNo(context.getSerialNo())
+                            .setInputChar(inputChar);
             recordMapper.insert(record);
             return result;
         }
@@ -91,8 +95,10 @@ public class MesMdAutoCodeRecordServiceImpl implements MesMdAutoCodeRecordServic
     /**
      * 生成编码
      */
-    private String generateCode(MesMdAutoCodeRuleDO rule, List<MesMdAutoCodePartDO> parts,
-                                MesMdAutoCodeContext context) {
+    private String generateCode(
+            MesMdAutoCodeRuleDO rule,
+            List<MesMdAutoCodePartDO> parts,
+            MesMdAutoCodeContext context) {
         StringBuilder codeBuilder = new StringBuilder();
         for (MesMdAutoCodePartDO part : parts) {
             MesMdAutoCodePartStrategy strategy = strategyMap.get(part.getType());
@@ -120,7 +126,10 @@ public class MesMdAutoCodeRecordServiceImpl implements MesMdAutoCodeRecordServic
             return StrUtil.sub(code, 0, rule.getMaxLength());
         }
         String paddedChar = StrUtil.emptyToDefault(rule.getPaddedChar(), "0");
-        Integer paddedMethod = rule.getPaddedMethod() != null ? rule.getPaddedMethod() : MesMdAutoCodePaddedMethodEnum.LEFT.getMethod();
+        Integer paddedMethod =
+                rule.getPaddedMethod() != null
+                        ? rule.getPaddedMethod()
+                        : MesMdAutoCodePaddedMethodEnum.LEFT.getMethod();
         if (MesMdAutoCodePaddedMethodEnum.LEFT.getMethod().equals(paddedMethod)) {
             // 左补齐
             return StrUtil.padPre(code, rule.getMaxLength(), paddedChar.charAt(0));
@@ -129,5 +138,4 @@ public class MesMdAutoCodeRecordServiceImpl implements MesMdAutoCodeRecordServic
             return StrUtil.padAfter(code, rule.getMaxLength(), paddedChar.charAt(0));
         }
     }
-
 }

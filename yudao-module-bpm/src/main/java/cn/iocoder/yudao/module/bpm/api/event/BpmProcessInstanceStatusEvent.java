@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.bpm.api.event;
 
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.context.ApplicationEvent;
 
 /**
@@ -18,16 +20,19 @@ public class BpmProcessInstanceStatusEvent extends ApplicationEvent {
      */
     @NotNull(message = "流程实例的编号不能为空")
     private String id;
+
     /**
      * 流程实例的 key
      */
     @NotNull(message = "流程实例的 key 不能为空")
     private String processDefinitionKey;
+
     /**
      * 流程实例的结果
      */
     @NotNull(message = "流程实例的状态不能为空")
     private Integer status;
+
     /**
      * 流程实例结束的原因
      */
@@ -42,5 +47,4 @@ public class BpmProcessInstanceStatusEvent extends ApplicationEvent {
     public BpmProcessInstanceStatusEvent(Object source) {
         super(source);
     }
-
 }

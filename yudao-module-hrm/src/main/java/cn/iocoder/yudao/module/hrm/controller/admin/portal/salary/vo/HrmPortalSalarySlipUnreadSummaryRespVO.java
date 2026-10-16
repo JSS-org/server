@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.salary.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,5 +17,4 @@ public class HrmPortalSalarySlipUnreadSummaryRespVO {
 
     @Schema(description = "最新未读工资条提醒")
     private String reminder;
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,14 +12,13 @@ import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessListenerD
 import cn.iocoder.yudao.module.bpm.dal.mysql.definition.BpmProcessListenerMapper;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmProcessListenerTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmProcessListenerValueTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.delegate.TaskListener;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
 
 /**
  * BPM 流程监听器 Service 实现类
@@ -27,15 +29,15 @@ import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.*;
 @Validated
 public class BpmProcessListenerServiceImpl implements BpmProcessListenerService {
 
-    @Resource
-    private BpmProcessListenerMapper processListenerMapper;
+    @Resource private BpmProcessListenerMapper processListenerMapper;
 
     @Override
     public Long createProcessListener(BpmProcessListenerSaveReqVO createReqVO) {
         // 校验
         validateCreateProcessListenerValue(createReqVO);
         // 插入
-        BpmProcessListenerDO processListener = BeanUtils.toBean(createReqVO, BpmProcessListenerDO.class);
+        BpmProcessListenerDO processListener =
+                BeanUtils.toBean(createReqVO, BpmProcessListenerDO.class);
         processListenerMapper.insert(processListener);
         return processListener.getId();
     }
@@ -56,12 +58,16 @@ public class BpmProcessListenerServiceImpl implements BpmProcessListenerService 
             try {
                 Class<?> clazz = Class.forName(createReqVO.getValue());
                 if (createReqVO.getType().equals(BpmProcessListenerTypeEnum.EXECUTION.getType())
-                    && !JavaDelegate.class.isAssignableFrom(clazz)) {
-                    throw exception(PROCESS_LISTENER_CLASS_IMPLEMENTS_ERROR, createReqVO.getValue(),
+                        && !JavaDelegate.class.isAssignableFrom(clazz)) {
+                    throw exception(
+                            PROCESS_LISTENER_CLASS_IMPLEMENTS_ERROR,
+                            createReqVO.getValue(),
                             JavaDelegate.class.getName());
                 } else if (createReqVO.getType().equals(BpmProcessListenerTypeEnum.TASK.getType())
-                    && !TaskListener.class.isAssignableFrom(clazz)) {
-                    throw exception(PROCESS_LISTENER_CLASS_IMPLEMENTS_ERROR, createReqVO.getValue(),
+                        && !TaskListener.class.isAssignableFrom(clazz)) {
+                    throw exception(
+                            PROCESS_LISTENER_CLASS_IMPLEMENTS_ERROR,
+                            createReqVO.getValue(),
                             TaskListener.class.getName());
                 }
             } catch (ClassNotFoundException e) {
@@ -70,7 +76,8 @@ public class BpmProcessListenerServiceImpl implements BpmProcessListenerService 
             return;
         }
         // 表达式
-        if (!StrUtil.startWith(createReqVO.getValue(), "${") || !StrUtil.endWith(createReqVO.getValue(), "}")) {
+        if (!StrUtil.startWith(createReqVO.getValue(), "${")
+                || !StrUtil.endWith(createReqVO.getValue(), "}")) {
             throw exception(PROCESS_LISTENER_EXPRESSION_INVALID, createReqVO.getValue());
         }
     }
@@ -95,8 +102,8 @@ public class BpmProcessListenerServiceImpl implements BpmProcessListenerService 
     }
 
     @Override
-    public PageResult<BpmProcessListenerDO> getProcessListenerPage(BpmProcessListenerPageReqVO pageReqVO) {
+    public PageResult<BpmProcessListenerDO> getProcessListenerPage(
+            BpmProcessListenerPageReqVO pageReqVO) {
         return processListenerMapper.selectPage(pageReqVO);
     }
-
 }

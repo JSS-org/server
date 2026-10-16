@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.MesWmMiscReceiptPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.MesWmMiscReceiptSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscreceipt.MesWmMiscReceiptDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -86,5 +87,4 @@ public interface MesWmMiscReceiptService {
      * @param id 编号
      */
     void validateMiscReceiptEditable(Long id);
-
 }

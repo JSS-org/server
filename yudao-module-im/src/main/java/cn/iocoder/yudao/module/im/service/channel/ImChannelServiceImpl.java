@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.im.service.channel;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,7 +11,9 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.channel.Im
 import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.channel.ImChannelSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.channel.ImChannelDO;
 import cn.iocoder.yudao.module.im.dal.mysql.channel.ImChannelMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -16,9 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
 
 /**
  * IM 频道 Service 实现类
@@ -29,10 +31,8 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.*;
 @Validated
 public class ImChannelServiceImpl implements ImChannelService {
 
-    @Resource
-    private ImChannelMapper channelMapper;
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖
+    @Resource private ImChannelMapper channelMapper;
+    @Resource @Lazy // 延迟加载，解决循环依赖
     private ImChannelMaterialService channelMaterialService;
 
     // ==================== 用户端 ====================
@@ -116,5 +116,4 @@ public class ImChannelServiceImpl implements ImChannelService {
             throw exception(IM_CHANNEL_CODE_DUPLICATED, code);
         }
     }
-
 }

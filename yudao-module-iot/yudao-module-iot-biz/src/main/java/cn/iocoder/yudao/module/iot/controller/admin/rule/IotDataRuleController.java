@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.rule;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,16 +10,17 @@ import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.rule.IotDataRul
 import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.rule.IotDataRuleSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataRuleDO;
 import cn.iocoder.yudao.module.iot.service.rule.data.IotDataRuleService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - IoT 数据流转规则")
 @RestController
@@ -25,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class IotDataRuleController {
 
-    @Resource
-    private IotDataRuleService dataRuleService;
+    @Resource private IotDataRuleService dataRuleService;
 
     @PostMapping("/create")
     @Operation(summary = "创建数据流转规则")
@@ -38,7 +40,8 @@ public class IotDataRuleController {
     @PutMapping("/update")
     @Operation(summary = "更新数据流转规则")
     @PreAuthorize("@ss.hasPermission('iot:data-rule:update')")
-    public CommonResult<Boolean> updateDataRule(@Valid @RequestBody IotDataRuleSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateDataRule(
+            @Valid @RequestBody IotDataRuleSaveReqVO updateReqVO) {
         dataRuleService.updateDataRule(updateReqVO);
         return success(true);
     }
@@ -64,9 +67,9 @@ public class IotDataRuleController {
     @GetMapping("/page")
     @Operation(summary = "获得数据流转规则分页")
     @PreAuthorize("@ss.hasPermission('iot:data-rule:query')")
-    public CommonResult<PageResult<IotDataRuleRespVO>> getDataRulePage(@Valid IotDataRulePageReqVO pageReqVO) {
+    public CommonResult<PageResult<IotDataRuleRespVO>> getDataRulePage(
+            @Valid IotDataRulePageReqVO pageReqVO) {
         PageResult<IotDataRuleDO> pageResult = dataRuleService.getDataRulePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, IotDataRuleRespVO.class));
     }
-
 }

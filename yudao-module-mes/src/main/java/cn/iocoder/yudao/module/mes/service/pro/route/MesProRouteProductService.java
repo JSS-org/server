@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.pro.route;
 
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.product.MesProRouteProductSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -52,5 +53,4 @@ public interface MesProRouteProductService {
      * @param routeId 工艺路线编号
      */
     void deleteRouteProductByRouteId(Long routeId);
-
 }

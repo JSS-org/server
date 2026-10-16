@@ -1,5 +1,17 @@
 package cn.iocoder.yudao.module.system.service.sms;
 
+import static cn.hutool.core.util.RandomUtil.randomEle;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeSendReqDTO;
@@ -9,7 +21,9 @@ import cn.iocoder.yudao.module.system.dal.dataobject.sms.SmsCodeDO;
 import cn.iocoder.yudao.module.system.dal.mysql.sms.SmsCodeMapper;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
 import cn.iocoder.yudao.module.system.framework.sms.config.SmsCodeProperties;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -18,30 +32,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import static cn.hutool.core.util.RandomUtil.randomEle;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @Import(SmsCodeServiceImpl.class)
 public class SmsCodeServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private SmsCodeServiceImpl smsCodeService;
+    @Resource private SmsCodeServiceImpl smsCodeService;
 
-    @Resource
-    private SmsCodeMapper smsCodeMapper;
+    @Resource private SmsCodeMapper smsCodeMapper;
 
-    @MockitoBean
-    private SmsCodeProperties smsCodeProperties;
-    @MockitoBean
-    private SmsSendService smsSendService;
+    @MockitoBean private SmsCodeProperties smsCodeProperties;
+    @MockitoBean private SmsSendService smsSendService;
 
     @BeforeEach
     public void setUp() {
@@ -55,10 +54,13 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void sendSmsCode_success() {
         // 准备参数
-        SmsCodeSendReqDTO reqDTO = randomPojo(SmsCodeSendReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(SmsSceneEnum.MEMBER_LOGIN.getScene());
-        });
+        SmsCodeSendReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeSendReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(SmsSceneEnum.MEMBER_LOGIN.getScene());
+                        });
 
         // 调用
         smsCodeService.sendSmsCode(reqDTO);
@@ -69,56 +71,80 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, smsCodeDO.getTodayIndex());
         assertFalse(smsCodeDO.getUsed());
         // 断言调用
-        verify(smsSendService).sendSingleSms(eq(reqDTO.getMobile()), isNull(), isNull(),
-                eq("user-sms-login"), eq(MapUtil.of("code", "9999")));
+        verify(smsSendService)
+                .sendSingleSms(
+                        eq(reqDTO.getMobile()),
+                        isNull(),
+                        isNull(),
+                        eq("user-sms-login"),
+                        eq(MapUtil.of("code", "9999")));
     }
 
     @Test
     public void sendSmsCode_tooFast() {
         // mock 数据
-        SmsCodeDO smsCodeDO = randomPojo(SmsCodeDO.class,
-                o -> o.setMobile("15601691300").setTodayIndex(1));
+        SmsCodeDO smsCodeDO =
+                randomPojo(SmsCodeDO.class, o -> o.setMobile("15601691300").setTodayIndex(1));
         smsCodeMapper.insert(smsCodeDO);
         // 准备参数
-        SmsCodeSendReqDTO reqDTO = randomPojo(SmsCodeSendReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(SmsSceneEnum.MEMBER_LOGIN.getScene());
-        });
+        SmsCodeSendReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeSendReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(SmsSceneEnum.MEMBER_LOGIN.getScene());
+                        });
 
         // 调用，并断言异常
-        assertServiceException(() -> smsCodeService.sendSmsCode(reqDTO),
-                SMS_CODE_SEND_TOO_FAST);
+        assertServiceException(() -> smsCodeService.sendSmsCode(reqDTO), SMS_CODE_SEND_TOO_FAST);
     }
 
     @Test
     public void sendSmsCode_exceedDay() {
         // mock 数据
-        SmsCodeDO smsCodeDO = randomPojo(SmsCodeDO.class,
-                o -> o.setMobile("15601691300").setTodayIndex(10).setCreateTime(LocalDateTime.now()));
+        SmsCodeDO smsCodeDO =
+                randomPojo(
+                        SmsCodeDO.class,
+                        o ->
+                                o.setMobile("15601691300")
+                                        .setTodayIndex(10)
+                                        .setCreateTime(LocalDateTime.now()));
         smsCodeMapper.insert(smsCodeDO);
         // 准备参数
-        SmsCodeSendReqDTO reqDTO = randomPojo(SmsCodeSendReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(SmsSceneEnum.MEMBER_LOGIN.getScene());
-        });
+        SmsCodeSendReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeSendReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(SmsSceneEnum.MEMBER_LOGIN.getScene());
+                        });
         when(smsCodeProperties.getSendFrequency()).thenReturn(Duration.ofMillis(0));
 
         // 调用，并断言异常
-        assertServiceException(() -> smsCodeService.sendSmsCode(reqDTO),
+        assertServiceException(
+                () -> smsCodeService.sendSmsCode(reqDTO),
                 SMS_CODE_EXCEED_SEND_MAXIMUM_QUANTITY_PER_DAY);
     }
 
     @Test
     public void testUseSmsCode_success() {
         // 准备参数
-        SmsCodeUseReqDTO reqDTO = randomPojo(SmsCodeUseReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
-        });
-        smsCodeMapper.insert(randomPojo(SmsCodeDO.class, o -> {
-            o.setMobile(reqDTO.getMobile()).setScene(reqDTO.getScene())
-                    .setCode(reqDTO.getCode()).setUsed(false);
-        }));
+        SmsCodeUseReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeUseReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
+                        });
+        smsCodeMapper.insert(
+                randomPojo(
+                        SmsCodeDO.class,
+                        o -> {
+                            o.setMobile(reqDTO.getMobile())
+                                    .setScene(reqDTO.getScene())
+                                    .setCode(reqDTO.getCode())
+                                    .setUsed(false);
+                        }));
 
         // 调用
         smsCodeService.useSmsCode(reqDTO);
@@ -132,12 +158,21 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void validateSmsCode_success() {
         // 准备参数
-        SmsCodeValidateReqDTO reqDTO = randomPojo(SmsCodeValidateReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
-        });
-        smsCodeMapper.insert(randomPojo(SmsCodeDO.class, o -> o.setMobile(reqDTO.getMobile())
-                .setScene(reqDTO.getScene()).setCode(reqDTO.getCode()).setUsed(false)));
+        SmsCodeValidateReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeValidateReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
+                        });
+        smsCodeMapper.insert(
+                randomPojo(
+                        SmsCodeDO.class,
+                        o ->
+                                o.setMobile(reqDTO.getMobile())
+                                        .setScene(reqDTO.getScene())
+                                        .setCode(reqDTO.getCode())
+                                        .setUsed(false)));
 
         // 调用
         smsCodeService.validateSmsCode(reqDTO);
@@ -146,46 +181,63 @@ public class SmsCodeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void validateSmsCode_notFound() {
         // 准备参数
-        SmsCodeValidateReqDTO reqDTO = randomPojo(SmsCodeValidateReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
-        });
+        SmsCodeValidateReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeValidateReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
+                        });
 
         // 调用，并断言异常
-        assertServiceException(() -> smsCodeService.validateSmsCode(reqDTO),
-                SMS_CODE_NOT_FOUND);
+        assertServiceException(() -> smsCodeService.validateSmsCode(reqDTO), SMS_CODE_NOT_FOUND);
     }
 
     @Test
     public void validateSmsCode_expired() {
         // 准备参数
-        SmsCodeValidateReqDTO reqDTO = randomPojo(SmsCodeValidateReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
-        });
-        smsCodeMapper.insert(randomPojo(SmsCodeDO.class, o -> o.setMobile(reqDTO.getMobile())
-                .setScene(reqDTO.getScene()).setCode(reqDTO.getCode()).setUsed(false)
-                .setCreateTime(LocalDateTime.now().minusMinutes(6))));
+        SmsCodeValidateReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeValidateReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
+                        });
+        smsCodeMapper.insert(
+                randomPojo(
+                        SmsCodeDO.class,
+                        o ->
+                                o.setMobile(reqDTO.getMobile())
+                                        .setScene(reqDTO.getScene())
+                                        .setCode(reqDTO.getCode())
+                                        .setUsed(false)
+                                        .setCreateTime(LocalDateTime.now().minusMinutes(6))));
 
         // 调用，并断言异常
-        assertServiceException(() -> smsCodeService.validateSmsCode(reqDTO),
-                SMS_CODE_EXPIRED);
+        assertServiceException(() -> smsCodeService.validateSmsCode(reqDTO), SMS_CODE_EXPIRED);
     }
 
     @Test
     public void validateSmsCode_used() {
         // 准备参数
-        SmsCodeValidateReqDTO reqDTO = randomPojo(SmsCodeValidateReqDTO.class, o -> {
-            o.setMobile("15601691300");
-            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
-        });
-        smsCodeMapper.insert(randomPojo(SmsCodeDO.class, o -> o.setMobile(reqDTO.getMobile())
-                .setScene(reqDTO.getScene()).setCode(reqDTO.getCode()).setUsed(true)
-                .setCreateTime(LocalDateTime.now())));
+        SmsCodeValidateReqDTO reqDTO =
+                randomPojo(
+                        SmsCodeValidateReqDTO.class,
+                        o -> {
+                            o.setMobile("15601691300");
+                            o.setScene(randomEle(SmsSceneEnum.values()).getScene());
+                        });
+        smsCodeMapper.insert(
+                randomPojo(
+                        SmsCodeDO.class,
+                        o ->
+                                o.setMobile(reqDTO.getMobile())
+                                        .setScene(reqDTO.getScene())
+                                        .setCode(reqDTO.getCode())
+                                        .setUsed(true)
+                                        .setCreateTime(LocalDateTime.now())));
 
         // 调用，并断言异常
-        assertServiceException(() -> smsCodeService.validateSmsCode(reqDTO),
-                SMS_CODE_USED);
+        assertServiceException(() -> smsCodeService.validateSmsCode(reqDTO), SMS_CODE_USED);
     }
-
 }

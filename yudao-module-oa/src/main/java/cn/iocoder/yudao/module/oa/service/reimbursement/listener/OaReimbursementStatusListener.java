@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.oa.service.reimbursement.OaReimbursementService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OaReimbursementStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private OaReimbursementService reimbursementService;
+    @Resource private OaReimbursementService reimbursementService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -25,7 +26,7 @@ public class OaReimbursementStatusListener extends BpmProcessInstanceStatusEvent
 
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
-        reimbursementService.updateReimbursementStatus(Long.valueOf(event.getBusinessKey()), event.getStatus());
+        reimbursementService.updateReimbursementStatus(
+                Long.valueOf(event.getBusinessKey()), event.getStatus());
     }
-
 }

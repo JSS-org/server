@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.rtc;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
@@ -7,18 +9,20 @@ import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.im.framework.rtc.core.LiveKitClient;
 import cn.iocoder.yudao.module.im.framework.rtc.core.LiveKitWebhookEventDTO;
 import cn.iocoder.yudao.module.im.service.rtc.ImRtcCallService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 /**
  * LiveKit 厂商对接入口（Webhook 回调）
@@ -33,10 +37,8 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Slf4j
 public class ImRtcLiveKitController {
 
-    @Resource
-    private LiveKitClient liveKitClient;
-    @Resource
-    private ImRtcCallService rtcCallService;
+    @Resource private LiveKitClient liveKitClient;
+    @Resource private ImRtcCallService rtcCallService;
 
     /**
      * LiveKit Webhook 回调入口
@@ -52,8 +54,10 @@ public class ImRtcLiveKitController {
     public CommonResult<Boolean> webhook(HttpServletRequest request, @RequestBody String rawBody) {
         // 1.1 校验签名；伪造请求直接 200 但忽略，避免给攻击者反馈
         if (!liveKitClient.verifyWebhookSignature(request.getHeader("Authorization"), rawBody)) {
-            log.warn("[webhook][签名校验失败 ip={} bodyLength={}]",
-                    request.getRemoteAddr(), rawBody == null ? 0 : rawBody.length());
+            log.warn(
+                    "[webhook][签名校验失败 ip={} bodyLength={}]",
+                    request.getRemoteAddr(),
+                    rawBody == null ? 0 : rawBody.length());
             return success(false);
         }
         // 1.2 解析事件载荷；非法 / 空 event 直接忽略
@@ -63,7 +67,9 @@ public class ImRtcLiveKitController {
         }
 
         // 2. 交给 service 处理；幂等由 service 自己保证
-        log.info("[webhook][事件处理 event={} room={}]", event.getEvent(),
+        log.info(
+                "[webhook][事件处理 event={} room={}]",
+                event.getEvent(),
                 event.getRoom() == null ? null : event.getRoom().getName());
         try {
             rtcCallService.handleLiveKitEvent(event);
@@ -72,5 +78,4 @@ public class ImRtcLiveKitController {
         }
         return success(true);
     }
-
 }

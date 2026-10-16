@@ -1,8 +1,9 @@
 package cn.iocoder.yudao.module.bpm.api.task.dto;
 
+import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 
-import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ public class BpmProcessInstanceCreateReqDTO {
      */
     @NotEmpty(message = "流程定义的标识不能为空")
     private String processDefinitionKey;
+
     /**
      * 变量实例（动态表单）
      */
@@ -40,5 +42,4 @@ public class BpmProcessInstanceCreateReqDTO {
      * 例如：{ taskKey1 :[1, 2] }，则表示 taskKey1 这个任务，提前设定了，由 userId 为 1,2 的用户进行审批
      */
     private Map<String, List<Long>> startUserSelectAssignees;
-
 }

@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinanceReceiptItemDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.math.BigDecimal;
@@ -30,15 +32,16 @@ public interface ErpFinanceReceiptItemMapper extends BaseMapperX<ErpFinanceRecei
 
     default BigDecimal selectReceiptPriceSumByBizIdAndBizType(Long bizId, Integer bizType) {
         // SQL sum 查询
-        List<Map<String, Object>> result = selectMaps(new QueryWrapper<ErpFinanceReceiptItemDO>()
-                .select("SUM(receipt_price) AS receipt_price_sum")
-                .eq("biz_id", bizId)
-                .eq("biz_type", bizType));
+        List<Map<String, Object>> result =
+                selectMaps(
+                        new QueryWrapper<ErpFinanceReceiptItemDO>()
+                                .select("SUM(receipt_price) AS receipt_price_sum")
+                                .eq("biz_id", bizId)
+                                .eq("biz_type", bizType));
         // 获得数量
         if (CollUtil.isEmpty(result)) {
             return BigDecimal.ZERO;
         }
         return BigDecimal.valueOf(MapUtil.getDouble(result.get(0), "receipt_price_sum", 0D));
     }
-
 }

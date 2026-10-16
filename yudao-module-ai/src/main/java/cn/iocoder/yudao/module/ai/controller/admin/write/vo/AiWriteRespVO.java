@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.write.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,7 +25,10 @@ public class AiWriteRespVO {
     @Schema(description = "模型", requiredMode = Schema.RequiredMode.REQUIRED, example = "qwen")
     private String model;
 
-    @Schema(description = "生成内容提示", requiredMode = Schema.RequiredMode.REQUIRED, example = "撰写：田忌赛马")
+    @Schema(
+            description = "生成内容提示",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "撰写：田忌赛马")
     private String prompt;
 
     @Schema(description = "生成的内容", example = "你非常不错")
@@ -50,5 +54,4 @@ public class AiWriteRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

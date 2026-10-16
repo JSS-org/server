@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -26,5 +28,4 @@ public class HrmSalarySlipTemplateSaveReqVO {
     @Schema(description = "选项列表")
     @Valid
     private List<HrmSalarySlipTemplateOptionVO> options;
-
 }

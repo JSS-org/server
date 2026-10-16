@@ -3,9 +3,12 @@ package cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.rule;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataRuleDO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -36,5 +39,4 @@ public class IotDataRuleSaveReqVO {
     @Schema(description = "数据目的编号数组", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty(message = "数据目的编号数组不能为空")
     private List<Long> sinkIds;
-
 }

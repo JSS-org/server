@@ -3,8 +3,10 @@ package cn.iocoder.yudao.framework.mybatis.core.query;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -90,7 +92,8 @@ public class LambdaQueryWrapperX<T> extends LambdaQueryWrapper<T> {
         return this;
     }
 
-    public LambdaQueryWrapperX<T> betweenIfPresent(SFunction<T, ?> column, Object val1, Object val2) {
+    public LambdaQueryWrapperX<T> betweenIfPresent(
+            SFunction<T, ?> column, Object val1, Object val2) {
         if (val1 != null && val2 != null) {
             return (LambdaQueryWrapperX<T>) super.between(column, val1, val2);
         }
@@ -184,7 +187,8 @@ public class LambdaQueryWrapperX<T> extends LambdaQueryWrapper<T> {
     }
 
     @Override
-    public LambdaQueryWrapperX<T> nested(boolean condition, Consumer<LambdaQueryWrapper<T>> consumer) {
+    public LambdaQueryWrapperX<T> nested(
+            boolean condition, Consumer<LambdaQueryWrapper<T>> consumer) {
         super.nested(condition, consumer);
         return this;
     }
@@ -194,5 +198,4 @@ public class LambdaQueryWrapperX<T> extends LambdaQueryWrapper<T> {
         super.not(condition, consumer);
         return this;
     }
-
 }

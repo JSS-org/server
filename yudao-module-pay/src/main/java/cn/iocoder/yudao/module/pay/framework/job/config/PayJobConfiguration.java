@@ -9,7 +9,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration(proxyBeanMethods = false)
 public class PayJobConfiguration {
 
-    public static final String NOTIFY_THREAD_POOL_TASK_EXECUTOR = "NOTIFY_THREAD_POOL_TASK_EXECUTOR";
+    public static final String NOTIFY_THREAD_POOL_TASK_EXECUTOR =
+            "NOTIFY_THREAD_POOL_TASK_EXECUTOR";
 
     @Bean(NOTIFY_THREAD_POOL_TASK_EXECUTOR)
     public ThreadPoolTaskExecutor notifyThreadPoolTaskExecutor() {
@@ -24,5 +25,4 @@ public class PayJobConfiguration {
         executor.initialize();
         return executor;
     }
-
 }

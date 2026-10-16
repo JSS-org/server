@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic;
 
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,5 +29,4 @@ public class IotDeviceIdentity {
      */
     @NotEmpty(message = "设备名称不能为空")
     private String deviceName;
-
 }

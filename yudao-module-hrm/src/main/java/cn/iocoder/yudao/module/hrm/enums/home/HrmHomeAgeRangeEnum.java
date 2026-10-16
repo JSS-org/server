@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.enums.home;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmHomeAgeRangeEnum implements ArrayValuable<Integer> {
-
     UNDER_18(1, "17 以下", 17),
     AGE_18_TO_25(2, "18 至 25", 25),
     AGE_26_TO_35(3, "26 至 35", 35),
@@ -22,8 +22,8 @@ public enum HrmHomeAgeRangeEnum implements ArrayValuable<Integer> {
     AGE_46_TO_55(5, "46 至 55", 55),
     AGE_56_AND_ABOVE(6, "56 以上", Integer.MAX_VALUE);
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmHomeAgeRangeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(HrmHomeAgeRangeEnum::getType).toArray(Integer[]::new);
 
     private final Integer type;
     private final String name;
@@ -44,8 +44,10 @@ public enum HrmHomeAgeRangeEnum implements ArrayValuable<Integer> {
         if (age == null || age < 0) {
             return null;
         }
-        return Arrays.stream(values()).filter(item -> age <= item.maximumAge)
-                .findFirst().map(HrmHomeAgeRangeEnum::getType).orElse(null);
+        return Arrays.stream(values())
+                .filter(item -> age <= item.maximumAge)
+                .findFirst()
+                .map(HrmHomeAgeRangeEnum::getType)
+                .orElse(null);
     }
-
 }

@@ -7,10 +7,11 @@ import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationValidate
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
 // TODO @puhui999：单测可以后补下
 
@@ -23,8 +24,7 @@ import jakarta.annotation.Resource;
 @Order(TradePriceCalculator.ORDER_COMBINATION_ACTIVITY)
 public class TradeCombinationActivityPriceCalculator implements TradePriceCalculator {
 
-    @Resource
-    private CombinationRecordApi combinationRecordApi;
+    @Resource private CombinationRecordApi combinationRecordApi;
 
     @Override
     public void calculate(TradePriceCalculateReqBO param, TradePriceCalculateRespBO result) {
@@ -35,20 +35,30 @@ public class TradeCombinationActivityPriceCalculator implements TradePriceCalcul
         Assert.isTrue(param.getItems().size() == 1, "拼团时，只允许选择一个商品");
         // 2. 校验是否可以参与拼团
         TradePriceCalculateRespBO.OrderItem orderItem = result.getItems().get(0);
-        CombinationValidateJoinRespDTO combinationActivity = combinationRecordApi.validateJoinCombination(
-                param.getUserId(), param.getCombinationActivityId(), param.getCombinationHeadId(),
-                orderItem.getSkuId(), orderItem.getCount());
+        CombinationValidateJoinRespDTO combinationActivity =
+                combinationRecordApi.validateJoinCombination(
+                        param.getUserId(),
+                        param.getCombinationActivityId(),
+                        param.getCombinationHeadId(),
+                        orderItem.getSkuId(),
+                        orderItem.getCount());
 
         // 3.1 记录优惠明细
-        Integer discountPrice = orderItem.getPayPrice() - combinationActivity.getCombinationPrice() * orderItem.getCount();
-        TradePriceCalculatorHelper.addPromotion(result, orderItem,
-                param.getCombinationActivityId(), combinationActivity.getName(), PromotionTypeEnum.COMBINATION_ACTIVITY.getType(),
-                StrUtil.format("拼团活动：省 {} 元", TradePriceCalculatorHelper.formatPrice(discountPrice)),
+        Integer discountPrice =
+                orderItem.getPayPrice()
+                        - combinationActivity.getCombinationPrice() * orderItem.getCount();
+        TradePriceCalculatorHelper.addPromotion(
+                result,
+                orderItem,
+                param.getCombinationActivityId(),
+                combinationActivity.getName(),
+                PromotionTypeEnum.COMBINATION_ACTIVITY.getType(),
+                StrUtil.format(
+                        "拼团活动：省 {} 元", TradePriceCalculatorHelper.formatPrice(discountPrice)),
                 discountPrice);
         // 3.2 更新 SKU 优惠金额
         orderItem.setDiscountPrice(orderItem.getDiscountPrice() + discountPrice);
         TradePriceCalculatorHelper.recountPayPrice(orderItem);
         TradePriceCalculatorHelper.recountAllPrice(result);
     }
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.protocol.AbstractIotProtocolDownstreamSubscriber;
 import cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient.IotModbusTcpClientProtocol;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -12,13 +13,15 @@ import lombok.extern.slf4j.Slf4j;
  * @author 芋道源码
  */
 @Slf4j
-public class IotModbusTcpClientDownstreamSubscriber extends AbstractIotProtocolDownstreamSubscriber {
+public class IotModbusTcpClientDownstreamSubscriber
+        extends AbstractIotProtocolDownstreamSubscriber {
 
     private final IotModbusTcpClientDownstreamHandler downstreamHandler;
 
-    public IotModbusTcpClientDownstreamSubscriber(IotModbusTcpClientProtocol protocol,
-                                                  IotModbusTcpClientDownstreamHandler downstreamHandler,
-                                                  IotMessageBus messageBus) {
+    public IotModbusTcpClientDownstreamSubscriber(
+            IotModbusTcpClientProtocol protocol,
+            IotModbusTcpClientDownstreamHandler downstreamHandler,
+            IotMessageBus messageBus) {
         super(protocol, messageBus);
         this.downstreamHandler = downstreamHandler;
     }
@@ -27,5 +30,4 @@ public class IotModbusTcpClientDownstreamSubscriber extends AbstractIotProtocolD
     protected void handleMessage(IotDeviceMessage message) {
         downstreamHandler.handle(message);
     }
-
 }

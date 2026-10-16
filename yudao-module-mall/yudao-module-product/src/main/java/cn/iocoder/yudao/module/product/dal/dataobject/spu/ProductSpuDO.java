@@ -6,11 +6,13 @@ import cn.iocoder.yudao.module.product.dal.dataobject.brand.ProductBrandDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.category.ProductCategoryDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.sku.ProductSkuDO;
 import cn.iocoder.yudao.module.product.enums.spu.ProductSpuStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.*;
 
 import java.util.List;
@@ -33,8 +35,7 @@ public class ProductSpuDO extends BaseDO {
     /**
      * 商品 SPU 编号，自增
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     // ========== 基本信息 =========
 
@@ -42,14 +43,17 @@ public class ProductSpuDO extends BaseDO {
      * 商品名称
      */
     private String name;
+
     /**
      * 关键字
      */
     private String keyword;
+
     /**
      * 商品简介
      */
     private String introduction;
+
     /**
      * 商品详情
      */
@@ -61,16 +65,19 @@ public class ProductSpuDO extends BaseDO {
      * 关联 {@link ProductCategoryDO#getId()}
      */
     private Long categoryId;
+
     /**
      * 商品品牌编号
      *
      * 关联 {@link ProductBrandDO#getId()}
      */
     private Long brandId;
+
     /**
      * 商品封面图
      */
     private String picUrl;
+
     /**
      * 商品轮播图
      */
@@ -81,6 +88,7 @@ public class ProductSpuDO extends BaseDO {
      * 排序字段
      */
     private Integer sort;
+
     /**
      * 商品状态
      *
@@ -97,24 +105,28 @@ public class ProductSpuDO extends BaseDO {
      * true - 多规格
      */
     private Boolean specType;
+
     /**
      * 商品价格，单位使用：分
      *
      * 基于其对应的 {@link ProductSkuDO#getPrice()} sku单价最低的商品的
      */
     private Integer price;
+
     /**
      * 市场价，单位使用：分
      *
      * 基于其对应的 {@link ProductSkuDO#getMarketPrice()} sku单价最低的商品的
      */
     private Integer marketPrice;
+
     /**
      * 成本价，单位使用：分
      *
      * 基于其对应的 {@link ProductSkuDO#getCostPrice()} sku单价最低的商品的
      */
     private Integer costPrice;
+
     /**
      * 库存
      *
@@ -131,6 +143,7 @@ public class ProductSpuDO extends BaseDO {
      */
     @TableField(typeHandler = IntegerListTypeHandler.class)
     private List<Integer> deliveryTypes;
+
     /**
      * 物流配置模板编号
      *
@@ -160,10 +173,12 @@ public class ProductSpuDO extends BaseDO {
      * 商品销量
      */
     private Integer salesCount;
+
     /**
      * 虚拟销量
      */
     private Integer virtualSalesCount;
+
     /**
      * 浏览量
      */

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.framework.rtc.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Data;
 
 /**
@@ -18,18 +19,22 @@ public class LiveKitWebhookEventDTO {
      * 房间创建：首个 participant 加入时触发
      */
     public static final String EVENT_ROOM_STARTED = "room_started";
+
     /**
      * 房间销毁：最后一个 participant 离开 / 显式 DeleteRoom 后触发；用于业务侧兜底关房
      */
     public static final String EVENT_ROOM_FINISHED = "room_finished";
+
     /**
      * 参与者加入房间
      */
     public static final String EVENT_PARTICIPANT_JOINED = "participant_joined";
+
     /**
      * 参与者离开房间：关 tab / 网络断 / 显式 disconnect 都会触发；用于业务侧兜底清理
      */
     public static final String EVENT_PARTICIPANT_LEFT = "participant_left";
+
     /**
      * 参与者发布媒体轨道（摄像头 / 麦克风 / 屏幕共享）
      */
@@ -63,7 +68,6 @@ public class LiveKitWebhookEventDTO {
         private String name;
         private Long creationTime;
         private Integer numParticipants;
-
     }
 
     @Data
@@ -71,13 +75,13 @@ public class LiveKitWebhookEventDTO {
     public static class ParticipantInfo {
 
         private String sid;
+
         /**
          * 用户身份：签 token 时写入 userId 字符串，后续支持多端会拼成 userId#terminal
          */
         private String identity;
+
         private String name;
         private Long joinedAt;
-
     }
-
 }

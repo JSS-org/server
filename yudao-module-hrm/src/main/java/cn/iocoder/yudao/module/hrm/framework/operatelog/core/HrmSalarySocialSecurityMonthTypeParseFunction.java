@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.hrm.framework.operatelog.core;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.hrm.enums.salary.config.HrmSalarySocialSecurityMonthTypeEnum;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,5 +31,4 @@ public class HrmSalarySocialSecurityMonthTypeParseFunction implements IParseFunc
                 HrmSalarySocialSecurityMonthTypeEnum.valueOf(Integer.valueOf(value.toString()));
         return monthType == null ? "" : monthType.getName();
     }
-
 }

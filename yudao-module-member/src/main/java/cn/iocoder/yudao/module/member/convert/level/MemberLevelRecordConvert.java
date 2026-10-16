@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.record.MemberLevelRecordRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelRecordDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

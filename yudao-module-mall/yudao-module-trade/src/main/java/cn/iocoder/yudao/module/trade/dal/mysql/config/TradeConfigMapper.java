@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.dal.mysql.config;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.trade.dal.dataobject.config.TradeConfigDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -10,6 +11,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author owen
  */
 @Mapper
-public interface TradeConfigMapper extends BaseMapperX<TradeConfigDO> {
-
-}
+public interface TradeConfigMapper extends BaseMapperX<TradeConfigDO> {}

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.oa.service.officialdoc;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.officialdoc.vo.template.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.officialdoc.*;
+
 import java.util.List;
 
 /**
@@ -56,7 +57,8 @@ public interface OaOfficialDocTemplateService {
      * @param reqVO 分页条件
      * @return 套红模板分页
      */
-    PageResult<OaOfficialDocTemplateDO> getOfficialDocTemplatePage(OaOfficialDocTemplatePageReqVO reqVO);
+    PageResult<OaOfficialDocTemplateDO> getOfficialDocTemplatePage(
+            OaOfficialDocTemplatePageReqVO reqVO);
 
     /**
      * 获得模板列表
@@ -65,5 +67,4 @@ public interface OaOfficialDocTemplateService {
      * @return 模板列表
      */
     List<OaOfficialDocTemplateDO> getOfficialDocTemplateList(Integer status);
-
 }

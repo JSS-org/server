@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.wms.service.md.merchant;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -14,16 +17,15 @@ import cn.iocoder.yudao.module.wms.enums.md.WmsMerchantTypeEnum;
 import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.service.order.receipt.WmsReceiptOrderService;
 import cn.iocoder.yudao.module.wms.service.order.shipment.WmsShipmentOrderService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 往来企业 Service 实现类
@@ -34,13 +36,10 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsMerchantServiceImpl implements WmsMerchantService {
 
-    @Resource
-    private WmsMerchantMapper merchantMapper;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private WmsMerchantMapper merchantMapper;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsReceiptOrderService receiptOrderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsShipmentOrderService shipmentOrderService;
 
     @Override
@@ -124,7 +123,8 @@ public class WmsMerchantServiceImpl implements WmsMerchantService {
     public WmsMerchantDO validateSupplierMerchantExists(Long id) {
         WmsMerchantDO merchant = validateMerchantExists(id);
         if (ObjectUtil.notEqual(merchant.getType(), WmsMerchantTypeEnum.SUPPLIER.getType())
-                && ObjectUtil.notEqual(merchant.getType(), WmsMerchantTypeEnum.CUSTOMER_SUPPLIER.getType())) {
+                && ObjectUtil.notEqual(
+                        merchant.getType(), WmsMerchantTypeEnum.CUSTOMER_SUPPLIER.getType())) {
             throw exception(MERCHANT_NOT_SUPPLIER);
         }
         return merchant;
@@ -134,7 +134,8 @@ public class WmsMerchantServiceImpl implements WmsMerchantService {
     public WmsMerchantDO validateCustomerMerchantExists(Long id) {
         WmsMerchantDO merchant = validateMerchantExists(id);
         if (ObjectUtil.notEqual(merchant.getType(), WmsMerchantTypeEnum.CUSTOMER.getType())
-                && ObjectUtil.notEqual(merchant.getType(), WmsMerchantTypeEnum.CUSTOMER_SUPPLIER.getType())) {
+                && ObjectUtil.notEqual(
+                        merchant.getType(), WmsMerchantTypeEnum.CUSTOMER_SUPPLIER.getType())) {
             throw exception(MERCHANT_NOT_CUSTOMER);
         }
         return merchant;
@@ -162,5 +163,4 @@ public class WmsMerchantServiceImpl implements WmsMerchantService {
         }
         return merchantMapper.selectByIds(ids);
     }
-
 }

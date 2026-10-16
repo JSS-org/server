@@ -15,5 +15,4 @@ public interface Lock4jRedisKeyConstants {
      * 过期时间：不固定
      */
     String LOCK4J = "lock4j:%s";
-
 }

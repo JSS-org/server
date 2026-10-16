@@ -26,5 +26,4 @@ public class GymFileContentDTO {
 
     /** 文件内容 */
     private byte[] content;
-
 }

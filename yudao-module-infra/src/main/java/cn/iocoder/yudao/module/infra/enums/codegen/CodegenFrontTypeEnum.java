@@ -11,7 +11,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum CodegenFrontTypeEnum {
-
     VUE2_ELEMENT_UI(10), // Vue2 Element UI 标准模版
 
     VUE3_ELEMENT_PLUS(20), // Vue3 Element Plus 标准模版
@@ -34,5 +33,4 @@ public enum CodegenFrontTypeEnum {
      * 类型
      */
     private final Integer type;
-
 }

@@ -88,5 +88,4 @@ public interface HrmInsuranceMonthRecordService {
      * @param id 月度社保表编号
      */
     void updateMonthRecordSummary(Long id);
-
 }

@@ -8,12 +8,11 @@ import cn.iocoder.yudao.module.member.convert.level.MemberExperienceRecordConver
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberExperienceRecordDO;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberExperienceRecordMapper;
 import cn.iocoder.yudao.module.member.enums.MemberExperienceBizTypeEnum;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import jakarta.annotation.Resource;
-import java.util.Collection;
-import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * 会员经验记录 Service 实现类
@@ -24,8 +23,7 @@ import java.util.List;
 @Validated
 public class MemberExperienceRecordServiceImpl implements MemberExperienceRecordService {
 
-    @Resource
-    private MemberExperienceRecordMapper experienceLogMapper;
+    @Resource private MemberExperienceRecordMapper experienceLogMapper;
 
     @Override
     public MemberExperienceRecordDO getExperienceRecord(Long id) {
@@ -33,23 +31,34 @@ public class MemberExperienceRecordServiceImpl implements MemberExperienceRecord
     }
 
     @Override
-    public PageResult<MemberExperienceRecordDO> getExperienceRecordPage(MemberExperienceRecordPageReqVO pageReqVO) {
+    public PageResult<MemberExperienceRecordDO> getExperienceRecordPage(
+            MemberExperienceRecordPageReqVO pageReqVO) {
         return experienceLogMapper.selectPage(pageReqVO);
     }
 
     @Override
-    public PageResult<MemberExperienceRecordDO> getExperienceRecordPage(Long userId, PageParam pageParam) {
-         return experienceLogMapper.selectPage(userId, pageParam);
+    public PageResult<MemberExperienceRecordDO> getExperienceRecordPage(
+            Long userId, PageParam pageParam) {
+        return experienceLogMapper.selectPage(userId, pageParam);
     }
 
     @Override
-    public void createExperienceRecord(Long userId, Integer experience, Integer totalExperience,
-                                       MemberExperienceBizTypeEnum bizType, String bizId) {
+    public void createExperienceRecord(
+            Long userId,
+            Integer experience,
+            Integer totalExperience,
+            MemberExperienceBizTypeEnum bizType,
+            String bizId) {
         String description = StrUtil.format(bizType.getDescription(), experience);
-        MemberExperienceRecordDO record = MemberExperienceRecordConvert.INSTANCE.convert(
-                userId, experience, totalExperience,
-                bizId, bizType.getType(), bizType.getTitle(), description);
+        MemberExperienceRecordDO record =
+                MemberExperienceRecordConvert.INSTANCE.convert(
+                        userId,
+                        experience,
+                        totalExperience,
+                        bizId,
+                        bizType.getType(),
+                        bizType.getTitle(),
+                        description);
         experienceLogMapper.insert(record);
     }
-
 }

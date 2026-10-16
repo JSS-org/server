@@ -6,7 +6,4 @@ package cn.iocoder.yudao.module.erp.enums;
  *
  * @author 芋道源码
  */
-public interface LogRecordConstants {
-
-
-}
+public interface LogRecordConstants {}

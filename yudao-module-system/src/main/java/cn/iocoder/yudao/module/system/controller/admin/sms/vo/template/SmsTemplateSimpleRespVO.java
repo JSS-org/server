@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.sms.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 短信模板的精简 Response VO")
@@ -15,5 +16,4 @@ public class SmsTemplateSimpleRespVO {
 
     @Schema(description = "模板编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "sms_001")
     private String code;
-
 }

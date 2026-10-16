@@ -32,20 +32,17 @@ public interface ErrorCodeConstants {
     ErrorCode EMPLOYEE_QUIT_TIME_INVALID = new ErrorCode(1_050_100_028, "离职时间范围不合法");
     ErrorCode EMPLOYEE_RESOURCE_BELONG_INVALID = new ErrorCode(1_050_100_029, "员工{}不属于指定员工");
     ErrorCode EMPLOYEE_PERSONAL_NOTE_NOT_EXISTS = new ErrorCode(1_050_100_030, "员工个人备忘不存在");
-    ErrorCode EMPLOYEE_CREATE_USER_LIST_DUPLICATE =
-            new ErrorCode(1_050_100_031, "批量建档的后台用户不能重复");
+    ErrorCode EMPLOYEE_CREATE_USER_LIST_DUPLICATE = new ErrorCode(1_050_100_031, "批量建档的后台用户不能重复");
     ErrorCode EMPLOYEE_CREATE_USER_NOT_EXISTS = new ErrorCode(1_050_100_032, "批量建档的后台用户不存在");
 
     // ========== 员工教育经历 1-050-100-016 ==========
-    ErrorCode EMPLOYEE_EDUCATION_EXPERIENCE_NOT_EXISTS =
-            new ErrorCode(1_050_100_016, "员工教育经历不存在");
+    ErrorCode EMPLOYEE_EDUCATION_EXPERIENCE_NOT_EXISTS = new ErrorCode(1_050_100_016, "员工教育经历不存在");
 
     // ========== 员工工作经历 1-050-100-017 ==========
     ErrorCode EMPLOYEE_WORK_EXPERIENCE_NOT_EXISTS = new ErrorCode(1_050_100_017, "员工工作经历不存在");
 
     // ========== 员工培训经历 1-050-100-018 ==========
-    ErrorCode EMPLOYEE_TRAINING_EXPERIENCE_NOT_EXISTS =
-            new ErrorCode(1_050_100_018, "员工培训经历不存在");
+    ErrorCode EMPLOYEE_TRAINING_EXPERIENCE_NOT_EXISTS = new ErrorCode(1_050_100_018, "员工培训经历不存在");
 
     // ========== 员工证书 1-050-100-019 ==========
     ErrorCode EMPLOYEE_CERTIFICATE_NOT_EXISTS = new ErrorCode(1_050_100_019, "员工证书不存在");
@@ -71,8 +68,7 @@ public interface ErrorCodeConstants {
     ErrorCode RECRUIT_CANDIDATE_NOT_EXISTS = new ErrorCode(1_050_200_001, "招聘候选人不存在");
     ErrorCode RECRUIT_CANDIDATE_STATUS_TRANSITION_INVALID =
             new ErrorCode(1_050_200_011, "候选人当前状态不允许流转到【{}】");
-    ErrorCode RECRUIT_CANDIDATE_HAS_EMPLOYEE =
-            new ErrorCode(1_050_200_012, "候选人已生成员工档案，不能删除");
+    ErrorCode RECRUIT_CANDIDATE_HAS_EMPLOYEE = new ErrorCode(1_050_200_012, "候选人已生成员工档案，不能删除");
     ErrorCode RECRUIT_CANDIDATE_DELETE_STATUS_INVALID =
             new ErrorCode(1_050_200_016, "候选人当前状态不允许删除");
     ErrorCode RECRUIT_CANDIDATE_CONVERT_STATUS_INVALID =
@@ -85,12 +81,9 @@ public interface ErrorCodeConstants {
     ErrorCode RECRUIT_INTERVIEW_FINISHED = new ErrorCode(1_050_200_009, "已完成的招聘面试不允许修改安排");
     ErrorCode RECRUIT_INTERVIEW_CANCEL_REASON_REQUIRED =
             new ErrorCode(1_050_200_010, "取消面试时必须填写取消原因");
-    ErrorCode RECRUIT_INTERVIEW_STATE_INVALID =
-            new ErrorCode(1_050_200_013, "候选人当前状态不允许安排或修改面试");
-    ErrorCode RECRUIT_INTERVIEW_NOT_CURRENT =
-            new ErrorCode(1_050_200_014, "只能操作候选人当前轮次的面试");
-    ErrorCode RECRUIT_INTERVIEW_RESULT_INVALID =
-            new ErrorCode(1_050_200_015, "当前面试状态或面试结果不允许提交");
+    ErrorCode RECRUIT_INTERVIEW_STATE_INVALID = new ErrorCode(1_050_200_013, "候选人当前状态不允许安排或修改面试");
+    ErrorCode RECRUIT_INTERVIEW_NOT_CURRENT = new ErrorCode(1_050_200_014, "只能操作候选人当前轮次的面试");
+    ErrorCode RECRUIT_INTERVIEW_RESULT_INVALID = new ErrorCode(1_050_200_015, "当前面试状态或面试结果不允许提交");
 
     // ========== 招聘渠道 1-050-200-003 ==========
     ErrorCode RECRUIT_CHANNEL_NOT_EXISTS = new ErrorCode(1_050_200_003, "招聘渠道不存在");
@@ -98,8 +91,7 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_050_200_005, "系统内置招聘渠道不允许修改名称");
     ErrorCode RECRUIT_CHANNEL_SYSTEM_DELETE_FORBIDDEN =
             new ErrorCode(1_050_200_006, "系统内置招聘渠道不允许删除");
-    ErrorCode RECRUIT_CHANNEL_TRANSFER_SELF =
-            new ErrorCode(1_050_200_007, "承接招聘渠道不能是待删除渠道");
+    ErrorCode RECRUIT_CHANNEL_TRANSFER_SELF = new ErrorCode(1_050_200_007, "承接招聘渠道不能是待删除渠道");
     ErrorCode RECRUIT_CHANNEL_TRANSFER_DISABLED = new ErrorCode(1_050_200_008, "承接招聘渠道已停用");
 
     // ========== 招聘职位类型 1-050-200-004 ==========
@@ -112,10 +104,9 @@ public interface ErrorCodeConstants {
 
     // ========== 考勤打卡 1-050-300-003 ==========
     ErrorCode ATTENDANCE_CLOCK_NOT_EXISTS = new ErrorCode(1_050_300_003, "打卡记录不存在");
-    ErrorCode ATTENDANCE_CLOCK_NON_MANUAL_MODIFY_FORBIDDEN = new ErrorCode(1_050_300_028,
-            "只有手工录入的打卡记录可以修改或删除");
-    ErrorCode ATTENDANCE_CLOCK_TIME_INVALID = new ErrorCode(1_050_300_033,
-            "应打卡时间或实际打卡时间不在员工班次窗口内");
+    ErrorCode ATTENDANCE_CLOCK_NON_MANUAL_MODIFY_FORBIDDEN =
+            new ErrorCode(1_050_300_028, "只有手工录入的打卡记录可以修改或删除");
+    ErrorCode ATTENDANCE_CLOCK_TIME_INVALID = new ErrorCode(1_050_300_033, "应打卡时间或实际打卡时间不在员工班次窗口内");
     ErrorCode ATTENDANCE_CLOCK_REST_DAY = new ErrorCode(1_050_300_034, "今日休息，无需打卡");
     ErrorCode ATTENDANCE_CLOCK_NOT_ALLOWED = new ErrorCode(1_050_300_035, "当前不在可打卡时间");
     ErrorCode ATTENDANCE_CLOCK_POINT_INVALID = new ErrorCode(1_050_300_036, "不在考勤打卡范围内");
@@ -144,10 +135,9 @@ public interface ErrorCodeConstants {
     // ========== 薪资项 1-050-400-003 ==========
     ErrorCode SALARY_OPTION_NOT_EXISTS = new ErrorCode(1_050_400_003, "薪资项不存在");
     ErrorCode SALARY_OPTION_CATEGORY_INVALID = new ErrorCode(1_050_400_028, "薪资项分类不存在或不可用");
-    ErrorCode SALARY_OPTION_CODE_OCCUPIED = new ErrorCode(1_050_400_029,
-            "薪资项编码 {} 已被历史或自定义数据占用，请先完成数据迁移");
-    ErrorCode SALARY_OPTION_STANDARD_CANNOT_MODIFY =
-            new ErrorCode(1_050_400_029, "标准薪资项不允许修改或删除");
+    ErrorCode SALARY_OPTION_CODE_OCCUPIED =
+            new ErrorCode(1_050_400_029, "薪资项编码 {} 已被历史或自定义数据占用，请先完成数据迁移");
+    ErrorCode SALARY_OPTION_STANDARD_CANNOT_MODIFY = new ErrorCode(1_050_400_029, "标准薪资项不允许修改或删除");
 
     // ========== 薪资计税规则 1-050-400-005 ==========
     ErrorCode SALARY_TAX_RULE_NOT_EXISTS = new ErrorCode(1_050_400_005, "计税规则不存在");
@@ -162,7 +152,8 @@ public interface ErrorCodeConstants {
     // ========== 定薪调薪记录 1-050-400-007 ==========
     ErrorCode SALARY_CHANGE_RECORD_NOT_EXISTS = new ErrorCode(1_050_400_007, "定薪调薪记录不存在");
     ErrorCode SALARY_PENDING_CHANGE_RECORD_EXISTS = new ErrorCode(1_050_400_016, "员工存在待生效的定薪调薪记录");
-    ErrorCode SALARY_CHANGE_RECORD_STATUS_INVALID = new ErrorCode(1_050_400_017, "当前定薪调薪记录状态不允许执行该操作");
+    ErrorCode SALARY_CHANGE_RECORD_STATUS_INVALID =
+            new ErrorCode(1_050_400_017, "当前定薪调薪记录状态不允许执行该操作");
     ErrorCode SALARY_CHANGE_EFFECT_DATE_INVALID =
             new ErrorCode(1_050_400_030, "调薪生效日期不能为空，且不能早于最近工资月份");
 
@@ -171,8 +162,7 @@ public interface ErrorCodeConstants {
     ErrorCode SALARY_MONTH_RECORD_EXISTS = new ErrorCode(1_050_400_009, "该月份工资表已存在");
     ErrorCode SALARY_MONTH_EMP_RECORD_NOT_EXISTS = new ErrorCode(1_050_400_010, "员工月度工资记录不存在");
     ErrorCode SALARY_MONTH_RECORD_STATUS_INVALID = new ErrorCode(1_050_400_018, "当前工资表状态不允许执行该操作");
-    ErrorCode SALARY_MONTH_RECORD_NOT_LATEST =
-            new ErrorCode(1_050_400_024, "只能删除最新的月度工资表");
+    ErrorCode SALARY_MONTH_RECORD_NOT_LATEST = new ErrorCode(1_050_400_024, "只能删除最新的月度工资表");
     ErrorCode SALARY_MONTH_RECORD_CANNOT_DELETE_ONLY =
             new ErrorCode(1_050_400_025, "至少需要保留一张月度工资表");
 
@@ -181,8 +171,8 @@ public interface ErrorCodeConstants {
     ErrorCode SALARY_SLIP_RECORD_NOT_EXISTS = new ErrorCode(1_050_400_012, "工资条发放记录不存在");
     ErrorCode SALARY_SLIP_NOT_EXISTS = new ErrorCode(1_050_400_013, "工资条不存在");
     ErrorCode SALARY_SLIP_ALREADY_SENT = new ErrorCode(1_050_400_030, "员工工资条已经发放，请勿重复操作");
-    ErrorCode SALARY_SLIP_EMPLOYEE_ACCOUNT_NOT_EXISTS = new ErrorCode(1_050_400_031,
-            "所选员工未绑定后台账号，无法发放工资条");
+    ErrorCode SALARY_SLIP_EMPLOYEE_ACCOUNT_NOT_EXISTS =
+            new ErrorCode(1_050_400_031, "所选员工未绑定后台账号，无法发放工资条");
 
     // ========== 社保方案 1-050-500-000 ==========
     ErrorCode INSURANCE_SCHEME_NOT_EXISTS = new ErrorCode(1_050_500_000, "社保方案不存在");
@@ -194,11 +184,11 @@ public interface ErrorCodeConstants {
 
     // ========== 员工社保信息 1-050-500-003 ==========
     ErrorCode INSURANCE_EMPLOYEE_INFO_NOT_EXISTS = new ErrorCode(1_050_500_003, "员工参保信息不存在");
-    ErrorCode INSURANCE_EMPLOYEE_INFO_EMPLOYEE_MISMATCH = new ErrorCode(1_050_500_015,
-            "员工参保信息不能变更所属员工");
+    ErrorCode INSURANCE_EMPLOYEE_INFO_EMPLOYEE_MISMATCH =
+            new ErrorCode(1_050_500_015, "员工参保信息不能变更所属员工");
     ErrorCode INSURANCE_EMP_STATUS_ILLEGAL = new ErrorCode(1_050_500_018, "员工参保状态不合法");
-    ErrorCode INSURANCE_EMPLOYEE_SCHEME_NOT_CONFIGURED = new ErrorCode(1_050_500_025,
-            "员工尚未配置有效的社保方案");
+    ErrorCode INSURANCE_EMPLOYEE_SCHEME_NOT_CONFIGURED =
+            new ErrorCode(1_050_500_025, "员工尚未配置有效的社保方案");
 
     // ========== 月度社保表 1-050-500-004 ==========
     ErrorCode INSURANCE_MONTH_RECORD_NOT_EXISTS = new ErrorCode(1_050_500_004, "月度社保表不存在");
@@ -208,20 +198,20 @@ public interface ErrorCodeConstants {
     ErrorCode INSURANCE_MONTH_RECORD_ARCHIVED = new ErrorCode(1_050_500_009, "月度社保表已归档，不能修改");
     ErrorCode INSURANCE_MONTH_YEAR_MONTH_ILLEGAL = new ErrorCode(1_050_500_017, "社保表年月不合法");
     ErrorCode INSURANCE_MONTH_RECORD_NOT_LATEST = new ErrorCode(1_050_500_020, "只能删除最新的月度社保表");
-    ErrorCode INSURANCE_MONTH_RECORD_CANNOT_DELETE_ONLY = new ErrorCode(1_050_500_021,
-            "至少需要保留一张月度社保表");
-    ErrorCode INSURANCE_FIRST_MONTH_RECORD_EXISTS = new ErrorCode(1_050_500_023,
-            "已存在社保表，请新建次月社保表");
-    ErrorCode INSURANCE_MONTH_EMPLOYEE_NOT_ELIGIBLE = new ErrorCode(1_050_500_026,
-            "员工在所选月份不符合参保条件");
+    ErrorCode INSURANCE_MONTH_RECORD_CANNOT_DELETE_ONLY =
+            new ErrorCode(1_050_500_021, "至少需要保留一张月度社保表");
+    ErrorCode INSURANCE_FIRST_MONTH_RECORD_EXISTS = new ErrorCode(1_050_500_023, "已存在社保表，请新建次月社保表");
+    ErrorCode INSURANCE_MONTH_EMPLOYEE_NOT_ELIGIBLE =
+            new ErrorCode(1_050_500_026, "员工在所选月份不符合参保条件");
 
     // ========== 员工工资卡 1-050-500-008 ==========
     ErrorCode EMPLOYEE_SALARY_CARD_NOT_EXISTS = new ErrorCode(1_050_500_008, "员工工资卡不存在");
-    ErrorCode EMPLOYEE_SALARY_CARD_EMPLOYEE_MISMATCH = new ErrorCode(1_050_500_016,
-            "员工工资卡不能变更所属员工");
+    ErrorCode EMPLOYEE_SALARY_CARD_EMPLOYEE_MISMATCH =
+            new ErrorCode(1_050_500_016, "员工工资卡不能变更所属员工");
 
     // ========== 绩效考核模板 1-050-600-000 ==========
-    ErrorCode PERFORMANCE_ASSESSMENT_TEMPLATE_NOT_EXISTS = new ErrorCode(1_050_600_000, "绩效考核模板不存在");
+    ErrorCode PERFORMANCE_ASSESSMENT_TEMPLATE_NOT_EXISTS =
+            new ErrorCode(1_050_600_000, "绩效考核模板不存在");
     ErrorCode PERFORMANCE_ASSESSMENT_TEMPLATE_NAME_DUPLICATE =
             new ErrorCode(1_050_600_001, "绩效考核模板名称已存在");
 
@@ -248,10 +238,8 @@ public interface ErrorCodeConstants {
     ErrorCode PERFORMANCE_STAGE_ACTION_INVALID = new ErrorCode(1_050_600_008, "当前绩效阶段不允许执行该操作");
     ErrorCode PERFORMANCE_PROCESS_RUNNING_CANNOT_MODIFY =
             new ErrorCode(1_050_600_009, "绩效流程处理中，不能修改当前记录");
-    ErrorCode PERFORMANCE_PROCESS_CONFIG_INVALID =
-            new ErrorCode(1_050_600_024, "绩效流程配置不合法");
-    ErrorCode PERFORMANCE_STAGE_NO_PERMISSION =
-            new ErrorCode(1_050_600_027, "当前用户不是该绩效阶段的处理人");
+    ErrorCode PERFORMANCE_PROCESS_CONFIG_INVALID = new ErrorCode(1_050_600_024, "绩效流程配置不合法");
+    ErrorCode PERFORMANCE_STAGE_NO_PERMISSION = new ErrorCode(1_050_600_027, "当前用户不是该绩效阶段的处理人");
     ErrorCode PERFORMANCE_STAGE_HANDLER_USER_NOT_BOUND =
             new ErrorCode(1_050_600_026, "绩效必办节点处理人【{}】未绑定后台账号");
 
@@ -266,14 +254,12 @@ public interface ErrorCodeConstants {
     // ========== 绩效阶段流转 1-050-600-016 ==========
     ErrorCode PERFORMANCE_INTERVIEW_NOT_READY =
             new ErrorCode(1_050_600_016, "绩效结果审核尚未全部完成，无法发起绩效面谈");
-    ErrorCode PERFORMANCE_ARCHIVE_NOT_READY =
-            new ErrorCode(1_050_600_017, "绩效面谈或申诉尚未全部结束，无法归档");
+    ErrorCode PERFORMANCE_ARCHIVE_NOT_READY = new ErrorCode(1_050_600_017, "绩效面谈或申诉尚未全部结束，无法归档");
     ErrorCode PERFORMANCE_SCORING_NOT_READY =
             new ErrorCode(1_050_600_018, "指标制定或目标确认尚未全部完成，无法开启评分");
 
     // ========== 绩效指标 1-050-600-019 ==========
-    ErrorCode PERFORMANCE_QUOTA_SETTING_INVALID =
-            new ErrorCode(1_050_600_019, "绩效指标制定数据不合法");
+    ErrorCode PERFORMANCE_QUOTA_SETTING_INVALID = new ErrorCode(1_050_600_019, "绩效指标制定数据不合法");
 
     // ========== 绩效目标确认 1-050-600-020 ==========
     ErrorCode PERFORMANCE_TARGET_CONFIRM_CONFIG_INVALID =
@@ -293,5 +279,4 @@ public interface ErrorCodeConstants {
 
     // ========== HRM 首页 1-050-900-001 ==========
     ErrorCode HOME_CALENDAR_DATE_RANGE_ILLEGAL = new ErrorCode(1_050_900_001, "HRM 首页日期范围不合法");
-
 }

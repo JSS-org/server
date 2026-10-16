@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.mes.service.md.workstation;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.tool.MesMdWorkstationToolSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationToolDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.workstation.MesMdWorkstationToolMapper;
 import cn.iocoder.yudao.module.mes.service.tm.tool.MesTmToolTypeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工装夹具资源 Service 实现类
@@ -24,11 +26,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdWorkstationToolServiceImpl implements MesMdWorkstationToolService {
 
-    @Resource
-    private MesMdWorkstationToolMapper workstationToolMapper;
+    @Resource private MesMdWorkstationToolMapper workstationToolMapper;
 
-    @Resource
-    private MesTmToolTypeService toolTypeService;
+    @Resource private MesTmToolTypeService toolTypeService;
 
     @Override
     public Long createWorkstationTool(MesMdWorkstationToolSaveReqVO createReqVO) {
@@ -49,7 +49,8 @@ public class MesMdWorkstationToolServiceImpl implements MesMdWorkstationToolServ
         validateWorkstationToolSaveData(updateReqVO.getId(), updateReqVO);
 
         // 更新
-        MesMdWorkstationToolDO updateObj = BeanUtils.toBean(updateReqVO, MesMdWorkstationToolDO.class);
+        MesMdWorkstationToolDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesMdWorkstationToolDO.class);
         workstationToolMapper.updateById(updateObj);
     }
 
@@ -57,8 +58,9 @@ public class MesMdWorkstationToolServiceImpl implements MesMdWorkstationToolServ
         // 校验工具类型是否存在
         toolTypeService.validateToolTypeExists(reqVO.getToolTypeId());
         // 校验同一工作站下工具类型不重复（排除自身）
-        MesMdWorkstationToolDO existing = workstationToolMapper.selectByWorkstationIdAndToolTypeId(
-                reqVO.getWorkstationId(), reqVO.getToolTypeId());
+        MesMdWorkstationToolDO existing =
+                workstationToolMapper.selectByWorkstationIdAndToolTypeId(
+                        reqVO.getWorkstationId(), reqVO.getToolTypeId());
         if (existing != null && ObjUtil.notEqual(existing.getId(), id)) {
             throw exception(MD_WORKSTATION_TOOL_TYPE_EXISTS);
         }
@@ -93,5 +95,4 @@ public class MesMdWorkstationToolServiceImpl implements MesMdWorkstationToolServ
     public Long getWorkstationToolCountByToolTypeId(Long toolTypeId) {
         return workstationToolMapper.selectCountByToolTypeId(toolTypeId);
     }
-
 }

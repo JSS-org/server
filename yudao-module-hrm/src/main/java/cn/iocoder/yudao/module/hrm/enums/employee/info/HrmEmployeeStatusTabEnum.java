@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.employee.info;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeStatusTabEnum implements ArrayValuable<Integer> {
-
     REGULAR(HrmEmployeeStatusEnum.REGULAR.getStatus(), "正式"),
     PROBATION(HrmEmployeeStatusEnum.PROBATION.getStatus(), "试用"),
     INTERN(HrmEmployeeStatusEnum.INTERN.getStatus(), "实习"),
@@ -30,13 +30,16 @@ public enum HrmEmployeeStatusTabEnum implements ArrayValuable<Integer> {
     PENDING_LEAVE(14, "待离职"),
     LEFT(15, "已离职");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmEmployeeStatusTabEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmEmployeeStatusTabEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态页签
      */
     private final Integer status;
+
     /**
      * 名字
      */
@@ -50,5 +53,4 @@ public enum HrmEmployeeStatusTabEnum implements ArrayValuable<Integer> {
     public static HrmEmployeeStatusTabEnum valueOf(Integer status) {
         return ArrayUtil.firstMatch(item -> item.getStatus().equals(status), values());
     }
-
 }

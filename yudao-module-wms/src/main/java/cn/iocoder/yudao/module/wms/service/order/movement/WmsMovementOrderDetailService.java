@@ -67,5 +67,4 @@ public interface WmsMovementOrderDetailService {
      * @return 移库单明细数量
      */
     long getMovementOrderDetailCountBySkuId(Long skuId);
-
 }

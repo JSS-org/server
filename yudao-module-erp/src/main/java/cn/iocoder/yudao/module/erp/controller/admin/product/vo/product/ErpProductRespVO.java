@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.erp.controller.admin.product.vo.product;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -27,12 +29,14 @@ public class ErpProductRespVO {
 
     @Schema(description = "产品分类编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11161")
     private Long categoryId;
+
     @Schema(description = "产品分类", requiredMode = Schema.RequiredMode.REQUIRED, example = "水果")
     @ExcelProperty("产品分类")
     private String categoryName;
 
     @Schema(description = "单位编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "8869")
     private Long unitId;
+
     @Schema(description = "单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "个")
     @ExcelProperty("单位")
     private String unitName;
@@ -72,5 +76,4 @@ public class ErpProductRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

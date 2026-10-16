@@ -38,5 +38,4 @@ public interface PointActivityApi {
      * @param count 数量(正数)
      */
     void updatePointStockIncr(Long id, Long skuId, Integer count);
-
 }

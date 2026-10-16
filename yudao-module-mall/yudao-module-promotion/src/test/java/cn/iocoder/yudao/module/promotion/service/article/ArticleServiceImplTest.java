@@ -1,18 +1,5 @@
 package cn.iocoder.yudao.module.promotion.service.article;
 
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticleCreateReqVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticlePageReqVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticleUpdateReqVO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleDO;
-import cn.iocoder.yudao.module.promotion.dal.mysql.article.ArticleMapper;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-
-import jakarta.annotation.Resource;
-
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
 import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
@@ -20,7 +7,22 @@ import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServic
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.ARTICLE_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticleCreateReqVO;
+import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticlePageReqVO;
+import cn.iocoder.yudao.module.promotion.controller.admin.article.vo.article.ArticleUpdateReqVO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.article.ArticleDO;
+import cn.iocoder.yudao.module.promotion.dal.mysql.article.ArticleMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
 
 /**
  * {@link ArticleServiceImpl} 的单元测试类
@@ -31,11 +33,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(ArticleServiceImpl.class)
 public class ArticleServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private ArticleServiceImpl articleService;
+    @Resource private ArticleServiceImpl articleService;
 
-    @Resource
-    private ArticleMapper articleMapper;
+    @Resource private ArticleMapper articleMapper;
 
     @Test
     public void testCreateArticle_success() {
@@ -55,11 +55,14 @@ public class ArticleServiceImplTest extends BaseDbUnitTest {
     public void testUpdateArticle_success() {
         // mock 数据
         ArticleDO dbArticle = randomPojo(ArticleDO.class);
-        articleMapper.insert(dbArticle);// @Sql: 先插入出一条存在的数据
+        articleMapper.insert(dbArticle); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        ArticleUpdateReqVO reqVO = randomPojo(ArticleUpdateReqVO.class, o -> {
-            o.setId(dbArticle.getId()); // 设置更新的 ID
-        });
+        ArticleUpdateReqVO reqVO =
+                randomPojo(
+                        ArticleUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbArticle.getId()); // 设置更新的 ID
+                        });
 
         // 调用
         articleService.updateArticle(reqVO);
@@ -81,7 +84,7 @@ public class ArticleServiceImplTest extends BaseDbUnitTest {
     public void testDeleteArticle_success() {
         // mock 数据
         ArticleDO dbArticle = randomPojo(ArticleDO.class);
-        articleMapper.insert(dbArticle);// @Sql: 先插入出一条存在的数据
+        articleMapper.insert(dbArticle); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbArticle.getId();
 
@@ -101,24 +104,27 @@ public class ArticleServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
-    @Disabled  // TODO 请修改 null 为需要的值，然后删除 @Disabled 注解
+    @Disabled // TODO 请修改 null 为需要的值，然后删除 @Disabled 注解
     public void testGetArticlePage() {
         // mock 数据
-        ArticleDO dbArticle = randomPojo(ArticleDO.class, o -> { // 等会查询到
-            o.setCategoryId(null);
-            o.setTitle(null);
-            o.setAuthor(null);
-            o.setPicUrl(null);
-            o.setIntroduction(null);
-            o.setBrowseCount(null);
-            o.setSort(null);
-            o.setStatus(null);
-            o.setSpuId(null);
-            o.setRecommendHot(null);
-            o.setRecommendBanner(null);
-            o.setContent(null);
-            o.setCreateTime(null);
-        });
+        ArticleDO dbArticle =
+                randomPojo(
+                        ArticleDO.class,
+                        o -> { // 等会查询到
+                            o.setCategoryId(null);
+                            o.setTitle(null);
+                            o.setAuthor(null);
+                            o.setPicUrl(null);
+                            o.setIntroduction(null);
+                            o.setBrowseCount(null);
+                            o.setSort(null);
+                            o.setStatus(null);
+                            o.setSpuId(null);
+                            o.setRecommendHot(null);
+                            o.setRecommendBanner(null);
+                            o.setContent(null);
+                            o.setCreateTime(null);
+                        });
         articleMapper.insert(dbArticle);
         // 测试 categoryId 不匹配
         articleMapper.insert(cloneIgnoreId(dbArticle, o -> o.setCategoryId(null)));
@@ -164,5 +170,4 @@ public class ArticleServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, pageResult.getList().size());
         assertPojoEquals(dbArticle, pageResult.getList().get(0));
     }
-
 }

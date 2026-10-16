@@ -95,5 +95,4 @@ public interface MesWmBatchService {
      * @return 批次数量
      */
     Long getBatchCountByToolId(Long toolId);
-
 }

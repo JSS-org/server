@@ -130,5 +130,4 @@ public interface DeptService {
      * @param ids 角色编号数组
      */
     void validateDeptList(Collection<Long> ids);
-
 }

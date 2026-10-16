@@ -1,14 +1,20 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.personalnote.HrmEmployeePersonalNoteCreateReqVO;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeePersonalNoteService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,19 +24,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - HRM 员工个人备忘")
 @RestController
 @RequestMapping("/hrm/employee/personal-note")
 @Validated
 public class HrmEmployeePersonalNoteController {
 
-    @Resource
-    private HrmEmployeePersonalNoteService personalNoteService;
-    @Resource
-    private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeePersonalNoteService personalNoteService;
+    @Resource private HrmEmployeeService employeeService;
 
     @PostMapping("/create")
     @Operation(summary = "创建员工个人备忘")
@@ -50,5 +51,4 @@ public class HrmEmployeePersonalNoteController {
         personalNoteService.deletePersonalNote(employeeId, id);
         return success(true);
     }
-
 }

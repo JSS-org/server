@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.trade.service.brokerage;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.trade.controller.admin.brokerage.vo.record.BrokerageRecordPageReqVO;
 import cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.record.AppBrokerageProductPriceRespVO;
@@ -12,12 +14,11 @@ import cn.iocoder.yudao.module.trade.service.brokerage.bo.BrokerageAddReqBO;
 import cn.iocoder.yudao.module.trade.service.brokerage.bo.UserBrokerageSummaryRespBO;
 
 import jakarta.validation.Valid;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 佣金记录 Service 接口
@@ -50,8 +51,11 @@ public interface BrokerageRecordService {
      * @param bizType 业务类型
      * @param list    请求参数列表
      */
-    void addBrokerage(Long userId, Long brokerageUserId, BrokerageRecordBizTypeEnum bizType,
-                      @Valid List<BrokerageAddReqBO> list);
+    void addBrokerage(
+            Long userId,
+            Long brokerageUserId,
+            BrokerageRecordBizTypeEnum bizType,
+            @Valid List<BrokerageAddReqBO> list);
 
     /**
      * 增加佣金【只针对自己】
@@ -62,7 +66,12 @@ public interface BrokerageRecordService {
      * @param brokeragePrice 佣金
      * @param title          标题
      */
-    void addBrokerage(Long userId, BrokerageRecordBizTypeEnum bizType, String bizId, Integer brokeragePrice, String title);
+    void addBrokerage(
+            Long userId,
+            BrokerageRecordBizTypeEnum bizType,
+            String bizId,
+            Integer brokeragePrice,
+            String title);
 
     /**
      * 减少佣金【只针对自己】
@@ -73,7 +82,12 @@ public interface BrokerageRecordService {
      * @param brokeragePrice 佣金
      * @param title          标题
      */
-    default void reduceBrokerage(Long userId, BrokerageRecordBizTypeEnum bizType, String bizId, Integer brokeragePrice, String title) {
+    default void reduceBrokerage(
+            Long userId,
+            BrokerageRecordBizTypeEnum bizType,
+            String bizId,
+            Integer brokeragePrice,
+            String title) {
         addBrokerage(userId, bizType, bizId, -brokeragePrice, title);
     }
 
@@ -100,8 +114,8 @@ public interface BrokerageRecordService {
      * @param status  佣金状态
      * @return 用户佣金汇总 List
      */
-    List<UserBrokerageSummaryRespBO> getUserBrokerageSummaryListByUserId(Collection<Long> userIds,
-                                                                         Integer bizType, Integer status);
+    List<UserBrokerageSummaryRespBO> getUserBrokerageSummaryListByUserId(
+            Collection<Long> userIds, Integer bizType, Integer status);
 
     /**
      * 按照 userId，汇总每个用户的佣金
@@ -111,9 +125,10 @@ public interface BrokerageRecordService {
      * @param status  佣金状态
      * @return 用户佣金汇总 Map
      */
-    default Map<Long, UserBrokerageSummaryRespBO> getUserBrokerageSummaryMapByUserId(Collection<Long> userIds,
-                                                                                     Integer bizType, Integer status) {
-        return convertMap(getUserBrokerageSummaryListByUserId(userIds, bizType, status),
+    default Map<Long, UserBrokerageSummaryRespBO> getUserBrokerageSummaryMapByUserId(
+            Collection<Long> userIds, Integer bizType, Integer status) {
+        return convertMap(
+                getUserBrokerageSummaryListByUserId(userIds, bizType, status),
                 UserBrokerageSummaryRespBO::getUserId);
     }
 
@@ -127,8 +142,12 @@ public interface BrokerageRecordService {
      * @param endTime   截止时间
      * @return 用户佣金合计
      */
-    Integer getSummaryPriceByUserId(Long userId, BrokerageRecordBizTypeEnum bizType, BrokerageRecordStatusEnum status,
-                                    LocalDateTime beginTime, LocalDateTime endTime);
+    Integer getSummaryPriceByUserId(
+            Long userId,
+            BrokerageRecordBizTypeEnum bizType,
+            BrokerageRecordStatusEnum status,
+            LocalDateTime beginTime,
+            LocalDateTime endTime);
 
     /**
      * 获得用户佣金排行分页列表（基于佣金总数）
@@ -156,5 +175,4 @@ public interface BrokerageRecordService {
      * @return 用户佣金
      */
     AppBrokerageProductPriceRespVO calculateProductBrokeragePrice(Long userId, Long spuId);
-
 }

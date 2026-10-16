@@ -11,5 +11,4 @@ public interface MessageTemplateConstants {
 
     String MEETING_ROOM_BOOKING_REMINDER = "oa_meeting_room_booking_reminder"; // 会议开始提醒
     String SCHEDULE_REMINDER = "oa_schedule_reminder"; // 日程开始提醒
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourcereceipt.vo.MesWmOutsourceReceiptPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourcereceipt.vo.MesWmOutsourceReceiptSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.outsourcereceipt.MesWmOutsourceReceiptDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -49,7 +50,8 @@ public interface MesWmOutsourceReceiptService {
      * @param pageReqVO 分页参数
      * @return 外协入库单分页
      */
-    PageResult<MesWmOutsourceReceiptDO> getOutsourceReceiptPage(MesWmOutsourceReceiptPageReqVO pageReqVO);
+    PageResult<MesWmOutsourceReceiptDO> getOutsourceReceiptPage(
+            MesWmOutsourceReceiptPageReqVO pageReqVO);
 
     /**
      * 提交外协入库单（草稿 → 审批中）
@@ -88,8 +90,12 @@ public interface MesWmOutsourceReceiptService {
      * @param qualifiedQuantity   合格品数量
      * @param unqualifiedQuantity 不合格品数量
      */
-    void updateOutsourceReceiptWhenIqcFinish(Long receiptId, Long lineId, Long iqcId,
-                                             BigDecimal qualifiedQuantity, BigDecimal unqualifiedQuantity);
+    void updateOutsourceReceiptWhenIqcFinish(
+            Long receiptId,
+            Long lineId,
+            Long iqcId,
+            BigDecimal qualifiedQuantity,
+            BigDecimal unqualifiedQuantity);
 
     /**
      * 校验外协入库单和行存在
@@ -106,5 +112,4 @@ public interface MesWmOutsourceReceiptService {
      * @return 数量
      */
     Long getOutsourceReceiptCountByVendorId(Long vendorId);
-
 }

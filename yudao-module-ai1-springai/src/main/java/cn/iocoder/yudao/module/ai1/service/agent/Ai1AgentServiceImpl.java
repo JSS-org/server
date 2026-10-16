@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.ai1.service.agent;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.AGENT_DISABLE;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.AGENT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.MODEL_TYPE_NOT_CHAT;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,10 +15,12 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.agent.Ai1AgentMapper;
 import cn.iocoder.yudao.module.ai1.enums.model.Ai1ModelTypeEnum;
 import cn.iocoder.yudao.module.ai1.harness.skill.Ai1SkillToolFactory;
-import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
+import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +29,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.AGENT_DISABLE;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.AGENT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.MODEL_TYPE_NOT_CHAT;
 
 /**
  * AI1 Agent Service 实现类
@@ -37,17 +39,13 @@ import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.MODEL_TYPE
 @Validated
 public class Ai1AgentServiceImpl implements Ai1AgentService {
 
-    @Resource
-    private Ai1AgentMapper agentMapper;
+    @Resource private Ai1AgentMapper agentMapper;
 
-    @Resource
-    private Ai1ModelService modelService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private Ai1ModelService modelService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1SessionService sessionService;
 
-    @Resource
-    private Ai1SkillToolFactory skillToolFactory;
+    @Resource private Ai1SkillToolFactory skillToolFactory;
 
     @Override
     public Long createAgent(Ai1AgentSaveReqVO createReqVO) {
@@ -55,7 +53,9 @@ public class Ai1AgentServiceImpl implements Ai1AgentService {
         validateChatModel(createReqVO.getProviderId(), createReqVO.getModelId());
 
         // 2. 插入
-        Ai1AgentDO agent = BeanUtils.toBean(createReqVO, Ai1AgentDO.class).setStatus(CommonStatusEnum.DISABLE.getStatus());
+        Ai1AgentDO agent =
+                BeanUtils.toBean(createReqVO, Ai1AgentDO.class)
+                        .setStatus(CommonStatusEnum.DISABLE.getStatus());
         agentMapper.insert(agent);
         return agent.getId();
     }
@@ -173,5 +173,4 @@ public class Ai1AgentServiceImpl implements Ai1AgentService {
             throw exception(MODEL_TYPE_NOT_CHAT);
         }
     }
-
 }

@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.MAIL_FOLDER_NOT_AVAILABLE;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.OaMailFolderDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.mail.OaMailFolderMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.MAIL_FOLDER_NOT_AVAILABLE;
 
 /**
  * 企业邮箱文件夹 Service 实现类
@@ -19,8 +21,7 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.MAIL_FOLDER_NO
 @Service
 public class OaMailFolderServiceImpl implements OaMailFolderService {
 
-    @Resource
-    private OaMailFolderMapper mailFolderMapper;
+    @Resource private OaMailFolderMapper mailFolderMapper;
 
     @Override
     public List<OaMailFolderDO> getMailFolderList(Long accountId) {
@@ -58,5 +59,4 @@ public class OaMailFolderServiceImpl implements OaMailFolderService {
         // 1. 更新文件夹同步信息
         mailFolderMapper.updateById(folder);
     }
-
 }

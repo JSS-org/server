@@ -7,6 +7,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.QueryWrapperX;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.iteration.vo.PmsIterationPageReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.iteration.PmsIterationDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -19,20 +20,24 @@ import java.util.Map;
 public interface PmsIterationMapper extends BaseMapperX<PmsIterationDO> {
 
     default PageResult<PmsIterationDO> selectPage(PmsIterationPageReqVO pageReqVO) {
-        return selectPage(pageReqVO, new LambdaQueryWrapperX<PmsIterationDO>()
-                .eq(PmsIterationDO::getProjectId, pageReqVO.getProjectId())
-                .likeIfPresent(PmsIterationDO::getName, pageReqVO.getName())
-                .eqIfPresent(PmsIterationDO::getStatus, pageReqVO.getStatus())
-                .orderByAsc(PmsIterationDO::getSort)
-                .orderByDesc(PmsIterationDO::getId));
+        return selectPage(
+                pageReqVO,
+                new LambdaQueryWrapperX<PmsIterationDO>()
+                        .eq(PmsIterationDO::getProjectId, pageReqVO.getProjectId())
+                        .likeIfPresent(PmsIterationDO::getName, pageReqVO.getName())
+                        .eqIfPresent(PmsIterationDO::getStatus, pageReqVO.getStatus())
+                        .orderByAsc(PmsIterationDO::getSort)
+                        .orderByDesc(PmsIterationDO::getId));
     }
 
     default Integer selectMaxSortByProjectId(Long projectId) {
-        PmsIterationDO iteration = selectLastOne(new LambdaQueryWrapperX<PmsIterationDO>()
-                .select(PmsIterationDO::getSort)
-                .eq(PmsIterationDO::getProjectId, projectId)
-                .orderByAsc(PmsIterationDO::getSort)
-                .orderByAsc(PmsIterationDO::getId));
+        PmsIterationDO iteration =
+                selectLastOne(
+                        new LambdaQueryWrapperX<PmsIterationDO>()
+                                .select(PmsIterationDO::getSort)
+                                .eq(PmsIterationDO::getProjectId, projectId)
+                                .orderByAsc(PmsIterationDO::getSort)
+                                .orderByAsc(PmsIterationDO::getId));
         return iteration != null ? iteration.getSort() : null;
     }
 
@@ -53,20 +58,27 @@ public interface PmsIterationMapper extends BaseMapperX<PmsIterationDO> {
      * @param ownerUserId 迭代负责人编号
      * @return 迭代分页结果
      */
-    default PageResult<PmsIterationDO> selectWorkbenchPage(PageParam pageParam, Collection<Long> projectIds,
-                                                            Long projectId, String name,
-                                                            Integer status, LocalDateTime[] endTime,
-                                                            Integer completedStatus, Long ownerUserId) {
-        return selectPage(pageParam, new LambdaQueryWrapperX<PmsIterationDO>()
-                .in(PmsIterationDO::getProjectId, projectIds)
-                .eqIfPresent(PmsIterationDO::getProjectId, projectId)
-                .eq(PmsIterationDO::getOwnerUserId, ownerUserId)
-                .likeIfPresent(PmsIterationDO::getName, name)
-                .eqIfPresent(PmsIterationDO::getStatus, status)
-                .betweenIfPresent(PmsIterationDO::getEndTime, endTime)
-                .ne(status == null, PmsIterationDO::getStatus, completedStatus)
-                .orderByAsc(PmsIterationDO::getEndTime)
-                .orderByDesc(PmsIterationDO::getId));
+    default PageResult<PmsIterationDO> selectWorkbenchPage(
+            PageParam pageParam,
+            Collection<Long> projectIds,
+            Long projectId,
+            String name,
+            Integer status,
+            LocalDateTime[] endTime,
+            Integer completedStatus,
+            Long ownerUserId) {
+        return selectPage(
+                pageParam,
+                new LambdaQueryWrapperX<PmsIterationDO>()
+                        .in(PmsIterationDO::getProjectId, projectIds)
+                        .eqIfPresent(PmsIterationDO::getProjectId, projectId)
+                        .eq(PmsIterationDO::getOwnerUserId, ownerUserId)
+                        .likeIfPresent(PmsIterationDO::getName, name)
+                        .eqIfPresent(PmsIterationDO::getStatus, status)
+                        .betweenIfPresent(PmsIterationDO::getEndTime, endTime)
+                        .ne(status == null, PmsIterationDO::getStatus, completedStatus)
+                        .orderByAsc(PmsIterationDO::getEndTime)
+                        .orderByDesc(PmsIterationDO::getId));
     }
 
     /**
@@ -81,17 +93,23 @@ public interface PmsIterationMapper extends BaseMapperX<PmsIterationDO> {
      * @param ownerUserId 迭代负责人编号
      * @return 迭代数量
      */
-    default Long selectWorkbenchCount(Collection<Long> projectIds, Long projectId, String name,
-                                      Integer status, LocalDateTime[] endTime,
-                                      Integer completedStatus, Long ownerUserId) {
-        return selectCount(new LambdaQueryWrapperX<PmsIterationDO>()
-                .in(PmsIterationDO::getProjectId, projectIds)
-                .eqIfPresent(PmsIterationDO::getProjectId, projectId)
-                .eq(PmsIterationDO::getOwnerUserId, ownerUserId)
-                .likeIfPresent(PmsIterationDO::getName, name)
-                .eqIfPresent(PmsIterationDO::getStatus, status)
-                .betweenIfPresent(PmsIterationDO::getEndTime, endTime)
-                .ne(status == null, PmsIterationDO::getStatus, completedStatus));
+    default Long selectWorkbenchCount(
+            Collection<Long> projectIds,
+            Long projectId,
+            String name,
+            Integer status,
+            LocalDateTime[] endTime,
+            Integer completedStatus,
+            Long ownerUserId) {
+        return selectCount(
+                new LambdaQueryWrapperX<PmsIterationDO>()
+                        .in(PmsIterationDO::getProjectId, projectIds)
+                        .eqIfPresent(PmsIterationDO::getProjectId, projectId)
+                        .eq(PmsIterationDO::getOwnerUserId, ownerUserId)
+                        .likeIfPresent(PmsIterationDO::getName, name)
+                        .eqIfPresent(PmsIterationDO::getStatus, status)
+                        .betweenIfPresent(PmsIterationDO::getEndTime, endTime)
+                        .ne(status == null, PmsIterationDO::getStatus, completedStatus));
     }
 
     /**
@@ -100,16 +118,20 @@ public interface PmsIterationMapper extends BaseMapperX<PmsIterationDO> {
      * @param projectIds 项目编号集合
      * @return 项目编号 ->（状态 -> 迭代数量）
      */
-    default Map<Long, Map<Integer, Long>> selectStatusCountMapByProjectIds(Collection<Long> projectIds) {
-        List<Map<String, Object>> rows = selectMaps(new QueryWrapperX<PmsIterationDO>()
-                .select("project_id AS projectId", "status", "COUNT(*) AS count")
-                .in("project_id", projectIds)
-                .groupBy("project_id", "status"));
+    default Map<Long, Map<Integer, Long>> selectStatusCountMapByProjectIds(
+            Collection<Long> projectIds) {
+        List<Map<String, Object>> rows =
+                selectMaps(
+                        new QueryWrapperX<PmsIterationDO>()
+                                .select("project_id AS projectId", "status", "COUNT(*) AS count")
+                                .in("project_id", projectIds)
+                                .groupBy("project_id", "status"));
         Map<Long, Map<Integer, Long>> projectStatusCountMap = new LinkedHashMap<>();
         for (Map<String, Object> row : rows) {
             Long projectId = ((Number) row.get("projectId")).longValue();
             Integer status = ((Number) row.get("status")).intValue();
-            projectStatusCountMap.computeIfAbsent(projectId, key -> new LinkedHashMap<>())
+            projectStatusCountMap
+                    .computeIfAbsent(projectId, key -> new LinkedHashMap<>())
                     .put(status, ((Number) row.get("count")).longValue());
         }
         return projectStatusCountMap;
@@ -118,5 +140,4 @@ public interface PmsIterationMapper extends BaseMapperX<PmsIterationDO> {
     default void deleteByProjectId(Long projectId) {
         delete(PmsIterationDO::getProjectId, projectId);
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.subject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,5 +19,4 @@ public class FmsSubjectImportRespVO {
 
     @Schema(description = "失败原因 Map", requiredMode = Schema.RequiredMode.REQUIRED)
     private Map<String, String> failureReasons;
-
 }

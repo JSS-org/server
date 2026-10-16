@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.andon.vo.config;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class MesProAndonConfigPageReqVO extends PageParam {
 
     @Schema(description = "级别", example = "1")
     private Integer level;
-
 }

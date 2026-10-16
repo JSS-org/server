@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.framework.idempotent.core.annotation.Idempotent;
 import cn.iocoder.yudao.framework.idempotent.core.keyresolver.IdempotentKeyResolver;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
+
 import org.aspectj.lang.JoinPoint;
 
 /**
@@ -24,5 +25,4 @@ public class UserIdempotentKeyResolver implements IdempotentKeyResolver {
         Integer userType = WebFrameworkUtils.getLoginUserType();
         return SecureUtil.md5(methodName + argsStr + userId + userType);
     }
-
 }

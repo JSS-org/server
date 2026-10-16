@@ -6,8 +6,11 @@ import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.strategy.us
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.FlowableUtils;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceService;
+
 import com.google.common.collect.Sets;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -24,10 +27,10 @@ import java.util.Map;
  * @author 芋道源码
  */
 @Component
-public class BpmTaskCandidateStartUserSelectStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {
+public class BpmTaskCandidateStartUserSelectStrategy
+        extends AbstractBpmTaskCandidateDeptLeaderStrategy {
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private BpmProcessInstanceService processInstanceService;
 
     @Override
@@ -45,29 +48,42 @@ public class BpmTaskCandidateStartUserSelectStrategy extends AbstractBpmTaskCand
 
     @Override
     public LinkedHashSet<Long> calculateUsersByTask(DelegateExecution execution, String param) {
-        ProcessInstance processInstance = processInstanceService.getProcessInstance(execution.getProcessInstanceId());
+        ProcessInstance processInstance =
+                processInstanceService.getProcessInstance(execution.getProcessInstanceId());
         Assert.notNull(processInstance, "流程实例({})不能为空", execution.getProcessInstanceId());
-        Map<String, List<Long>> startUserSelectAssignees = FlowableUtils.getStartUserSelectAssignees(processInstance);
-        Assert.notNull(startUserSelectAssignees, "流程实例({}) 的发起人自选审批人不能为空",
+        Map<String, List<Long>> startUserSelectAssignees =
+                FlowableUtils.getStartUserSelectAssignees(processInstance);
+        Assert.notNull(
+                startUserSelectAssignees,
+                "流程实例({}) 的发起人自选审批人不能为空",
                 execution.getProcessInstanceId());
         // 获得审批人
         List<Long> assignees = startUserSelectAssignees.get(execution.getCurrentActivityId());
-        return CollUtil.isNotEmpty(assignees) ? new LinkedHashSet<>(assignees) : Sets.newLinkedHashSet();
+        return CollUtil.isNotEmpty(assignees)
+                ? new LinkedHashSet<>(assignees)
+                : Sets.newLinkedHashSet();
     }
 
     @Override
-    public LinkedHashSet<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId, String param,
-                                                        Long startUserId, String processDefinitionId, Map<String, Object> processVariables) {
+    public LinkedHashSet<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
         if (processVariables == null) {
             return Sets.newLinkedHashSet();
         }
-        Map<String, List<Long>> startUserSelectAssignees = FlowableUtils.getStartUserSelectAssignees(processVariables);
+        Map<String, List<Long>> startUserSelectAssignees =
+                FlowableUtils.getStartUserSelectAssignees(processVariables);
         if (startUserSelectAssignees == null) {
             return Sets.newLinkedHashSet();
         }
         // 获得审批人
         List<Long> assignees = startUserSelectAssignees.get(activityId);
-        return CollUtil.isNotEmpty(assignees) ? new LinkedHashSet<>(assignees) : Sets.newLinkedHashSet();
+        return CollUtil.isNotEmpty(assignees)
+                ? new LinkedHashSet<>(assignees)
+                : Sets.newLinkedHashSet();
     }
-
 }

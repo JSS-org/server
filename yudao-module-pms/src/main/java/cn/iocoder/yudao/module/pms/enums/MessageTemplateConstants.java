@@ -11,5 +11,4 @@ public interface MessageTemplateConstants {
 
     String WORK_ITEM_ASSIGNED = "pms_work_item_assigned"; // 工作项指派通知
     String KNOWLEDGE_DOCUMENT_SHARED = "pms_knowledge_document_shared"; // 知识文档分享通知
-
 }

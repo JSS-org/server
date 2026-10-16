@@ -5,6 +5,7 @@ import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.strategy.dept.AbstractBpmTaskCandidateDeptLeaderStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,8 @@ import java.util.Set;
  * @author jason
  */
 @Component
-public class BpmTaskCandidateFormDeptLeaderStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {
+public class BpmTaskCandidateFormDeptLeaderStrategy
+        extends AbstractBpmTaskCandidateDeptLeaderStrategy {
 
     @Override
     public BpmTaskCandidateStrategyEnum getStrategy() {
@@ -44,13 +46,16 @@ public class BpmTaskCandidateFormDeptLeaderStrategy extends AbstractBpmTaskCandi
     }
 
     @Override
-    public Set<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId,
-                                              String param, Long startUserId, String processDefinitionId,
-                                              Map<String, Object> processVariables) {
+    public Set<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
         String[] params = param.split("\\|");
         Object result = processVariables == null ? null : processVariables.get(params[0]);
         int level = Integer.parseInt(params[1]);
         return super.getMultiLevelDeptLeaderIds(Convert.toList(Long.class, result), level);
     }
-
 }

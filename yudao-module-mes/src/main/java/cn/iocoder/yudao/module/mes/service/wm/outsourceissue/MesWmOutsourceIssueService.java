@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo.MesWmOutsourceIssuePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo.MesWmOutsourceIssueSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.outsourceissue.MesWmOutsourceIssueDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -94,5 +95,4 @@ public interface MesWmOutsourceIssueService {
      * @return 数量
      */
     Long getOutsourceIssueCountByVendorId(Long vendorId);
-
 }

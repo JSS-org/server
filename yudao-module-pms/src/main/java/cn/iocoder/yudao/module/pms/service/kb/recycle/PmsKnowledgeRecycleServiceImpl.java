@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.pms.service.kb.recycle;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_ADMIN_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_RECYCLE_RECORD_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_RECYCLE_TYPE_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -31,7 +40,9 @@ import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,15 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_ADMIN_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_RECYCLE_RECORD_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_RECYCLE_TYPE_INVALID;
-
 /**
  * PMS 知识库回收站 Service 实现类
  *
@@ -65,111 +67,155 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_REC
 @Validated
 public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleService {
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeLibraryService libraryService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeFolderService folderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeDocumentService documentService;
-    @Resource
-    private PmsKnowledgeRecycleRecordMapper recycleRecordMapper;
-    @Resource
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
-    @Resource
-    private PmsKnowledgeGroupService knowledgeGroupService;
-    @Resource
-    private PmsKnowledgeFavoriteService favoriteService;
-    @Resource
-    private PmsKnowledgeDocumentLikeService documentLikeService;
-    @Resource
-    private PmsKnowledgeViewRecordService viewRecordService;
-    @Resource
-    private PmsKnowledgeDocumentShareService documentShareService;
-    @Resource
-    private PmsKnowledgeDocumentCommentService documentCommentService;
-    @Resource
-    private PmsKnowledgeContentPermissionService contentPermissionService;
+    @Resource private PmsKnowledgeRecycleRecordMapper recycleRecordMapper;
+    @Resource private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @Resource private PmsKnowledgeGroupService knowledgeGroupService;
+    @Resource private PmsKnowledgeFavoriteService favoriteService;
+    @Resource private PmsKnowledgeDocumentLikeService documentLikeService;
+    @Resource private PmsKnowledgeViewRecordService viewRecordService;
+    @Resource private PmsKnowledgeDocumentShareService documentShareService;
+    @Resource private PmsKnowledgeDocumentCommentService documentCommentService;
+    @Resource private PmsKnowledgeContentPermissionService contentPermissionService;
 
-    @Resource
-    private PermissionApi permissionApi;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private PermissionApi permissionApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void recycleLibrary(PmsKnowledgeLibraryDO library, Long userId) {
         LocalDateTime deleteTime = LocalDateTime.now();
         // 1.1 查询知识库范围内的文件夹和文档
-        List<PmsKnowledgeFolderDO> folders = folderService.getFolderListByLibraryId(library.getId());
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(library.getId());
+        List<PmsKnowledgeFolderDO> folders =
+                folderService.getFolderListByLibraryId(library.getId());
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(library.getId());
 
         // 2.1 将知识库主记录移入回收站
         libraryService.updateLibraryToRecycled(library.getId(), userId, deleteTime);
         // 2.2 将文件夹及文档移入回收站
         if (CollUtil.isNotEmpty(folders)) {
-            folderService.updateFolderList(convertList(folders, folder -> new PmsKnowledgeFolderDO()
-                    .setId(folder.getId()).setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
-                    .setDeleteUserId(userId).setDeleteTime(deleteTime)));
+            folderService.updateFolderList(
+                    convertList(
+                            folders,
+                            folder ->
+                                    new PmsKnowledgeFolderDO()
+                                            .setId(folder.getId())
+                                            .setStatus(
+                                                    PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                                            .getStatus())
+                                            .setDeleteUserId(userId)
+                                            .setDeleteTime(deleteTime)));
         }
         if (CollUtil.isNotEmpty(documents)) {
-            documentService.updateDocumentList(convertList(documents, document -> new PmsKnowledgeDocumentDO()
-                    .setId(document.getId()).setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
-                    .setDeleteUserId(userId).setDeleteTime(deleteTime)));
+            documentService.updateDocumentList(
+                    convertList(
+                            documents,
+                            document ->
+                                    new PmsKnowledgeDocumentDO()
+                                            .setId(document.getId())
+                                            .setStatus(
+                                                    PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                                            .getStatus())
+                                            .setDeleteUserId(userId)
+                                            .setDeleteTime(deleteTime)));
         }
 
         // 3. 只记录本次显式删除的知识库，级联内容不重复出现在回收站
-        insertRecycleRecord(library.getId(), PmsKnowledgeObjectTypeEnum.LIBRARY.getType(),
-                library.getId(), library.getName(), userId, deleteTime);
+        insertRecycleRecord(
+                library.getId(),
+                PmsKnowledgeObjectTypeEnum.LIBRARY.getType(),
+                library.getId(),
+                library.getName(),
+                userId,
+                deleteTime);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void recycleFolder(PmsKnowledgeFolderDO folder, List<PmsKnowledgeFolderDO> folders,
-                              List<PmsKnowledgeDocumentDO> documents, Long userId) {
+    public void recycleFolder(
+            PmsKnowledgeFolderDO folder,
+            List<PmsKnowledgeFolderDO> folders,
+            List<PmsKnowledgeDocumentDO> documents,
+            Long userId) {
         LocalDateTime deleteTime = LocalDateTime.now();
         // 1. 将文件夹、子文件夹及其中的文档移入回收站
         if (CollUtil.isNotEmpty(documents)) {
-            documentService.updateDocumentList(convertList(documents, document ->
-                    new PmsKnowledgeDocumentDO().setId(document.getId())
-                            .setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
-                            .setDeleteUserId(userId).setDeleteTime(deleteTime)));
+            documentService.updateDocumentList(
+                    convertList(
+                            documents,
+                            document ->
+                                    new PmsKnowledgeDocumentDO()
+                                            .setId(document.getId())
+                                            .setStatus(
+                                                    PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                                            .getStatus())
+                                            .setDeleteUserId(userId)
+                                            .setDeleteTime(deleteTime)));
         }
         if (CollUtil.isNotEmpty(folders)) {
-            folderService.updateFolderList(convertList(folders, item ->
-                    new PmsKnowledgeFolderDO().setId(item.getId())
-                            .setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
-                            .setDeleteUserId(userId).setDeleteTime(deleteTime)));
+            folderService.updateFolderList(
+                    convertList(
+                            folders,
+                            item ->
+                                    new PmsKnowledgeFolderDO()
+                                            .setId(item.getId())
+                                            .setStatus(
+                                                    PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                                            .getStatus())
+                                            .setDeleteUserId(userId)
+                                            .setDeleteTime(deleteTime)));
         }
 
         // 2. 只记录本次显式删除的根文件夹
-        insertRecycleRecord(folder.getLibraryId(), PmsKnowledgeObjectTypeEnum.FOLDER.getType(),
-                folder.getId(), folder.getTitle(), userId, deleteTime);
+        insertRecycleRecord(
+                folder.getLibraryId(),
+                PmsKnowledgeObjectTypeEnum.FOLDER.getType(),
+                folder.getId(),
+                folder.getTitle(),
+                userId,
+                deleteTime);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void recycleDocument(PmsKnowledgeDocumentDO document, List<PmsKnowledgeDocumentDO> documents,
-                                Long userId) {
+    public void recycleDocument(
+            PmsKnowledgeDocumentDO document, List<PmsKnowledgeDocumentDO> documents, Long userId) {
         LocalDateTime deleteTime = LocalDateTime.now();
         // 1. 将文档及全部子文档移入回收站
         if (CollUtil.isNotEmpty(documents)) {
-            documentService.updateDocumentList(convertList(documents, item ->
-                    new PmsKnowledgeDocumentDO().setId(item.getId())
-                            .setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
-                            .setDeleteUserId(userId).setDeleteTime(deleteTime)));
+            documentService.updateDocumentList(
+                    convertList(
+                            documents,
+                            item ->
+                                    new PmsKnowledgeDocumentDO()
+                                            .setId(item.getId())
+                                            .setStatus(
+                                                    PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                                            .getStatus())
+                                            .setDeleteUserId(userId)
+                                            .setDeleteTime(deleteTime)));
         }
 
         // 2. 只记录本次显式删除的根文档
-        insertRecycleRecord(document.getLibraryId(), getDocumentRecycleType(document),
-                document.getId(), document.getTitle(), userId, deleteTime);
+        insertRecycleRecord(
+                document.getLibraryId(),
+                getDocumentRecycleType(document),
+                document.getId(),
+                document.getTitle(),
+                userId,
+                deleteTime);
     }
 
     @Override
     public List<PmsKnowledgeRecycleRecordDO> getLibraryRecycleList(Long userId) {
-        return recycleRecordMapper.selectListByTypeAndDeleteUserId(PmsKnowledgeObjectTypeEnum.LIBRARY.getType(), userId);
+        return recycleRecordMapper.selectListByTypeAndDeleteUserId(
+                PmsKnowledgeObjectTypeEnum.LIBRARY.getType(), userId);
     }
 
     @Override
@@ -177,16 +223,22 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         // 1.1 校验知识库可读
         libraryMemberService.validateLibraryReadable(libraryId, userId);
         // 1.2 查询知识库回收站记录，并排除知识库自身记录
-        List<PmsKnowledgeRecycleRecordDO> records = recycleRecordMapper.selectListByLibraryId(libraryId);
-        records.removeIf(record -> PmsKnowledgeObjectTypeEnum.LIBRARY.getType().equals(record.getType()));
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleRecordMapper.selectListByLibraryId(libraryId);
+        records.removeIf(
+                record -> PmsKnowledgeObjectTypeEnum.LIBRARY.getType().equals(record.getType()));
 
         // 2.1 批量解析内容权限
         Map<Long, Long> recordPermissionIdMap = getRecordPermissionIdMap(records);
         Set<Long> permissionIds = new LinkedHashSet<>(recordPermissionIdMap.values());
-        Map<Long, Integer> levelMap = contentPermissionService.getCurrentUserContentPermissionLevelMap(permissionIds, libraryId, userId);
+        Map<Long, Integer> levelMap =
+                contentPermissionService.getCurrentUserContentPermissionLevelMap(
+                        permissionIds, libraryId, userId);
         // 2.2 只展示当前用户仍可删除的回收站记录
-        records.removeIf(record ->
-                !PmsKnowledgeContentLevelEnum.canDelete(levelMap.get(recordPermissionIdMap.get(record.getId()))));
+        records.removeIf(
+                record ->
+                        !PmsKnowledgeContentLevelEnum.canDelete(
+                                levelMap.get(recordPermissionIdMap.get(record.getId()))));
         return records;
     }
 
@@ -196,39 +248,63 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         PmsKnowledgeRecycleRecordDO record = validateContentRecycleRecord(recordId, userId);
 
         // 2. 查询仍处于回收状态的内容，按根对象关系筛出本次级联删除的子树
-        List<PmsKnowledgeFolderDO> folders = folderService.getFolderListByLibraryId(record.getLibraryId());
-        folders.removeIf(folder -> ObjectUtil.notEqual(folder.getStatus(),
-                PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus()));
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(record.getLibraryId());
-        documents.removeIf(document -> ObjectUtil.notEqual(document.getStatus(),
-                PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus()));
+        List<PmsKnowledgeFolderDO> folders =
+                folderService.getFolderListByLibraryId(record.getLibraryId());
+        folders.removeIf(
+                folder ->
+                        ObjectUtil.notEqual(
+                                folder.getStatus(),
+                                PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus()));
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(record.getLibraryId());
+        documents.removeIf(
+                document ->
+                        ObjectUtil.notEqual(
+                                document.getStatus(),
+                                PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus()));
         Set<Long> folderIds = collectFolderDescendantIds(record, folders);
         Set<Long> documentIds = collectDocumentDescendantIds(record, documents, folderIds);
 
         // 3. 组装平铺详情，前端按 parentId/folderId 渲染递归树
         // 3.1 组装级联文件夹节点，并排除回收站根对象
-        List<PmsKnowledgeRecycleDetailRespVO.Item> children = convertList(folders,
-                folder -> new PmsKnowledgeRecycleDetailRespVO.Item()
-                        .setId(folder.getId()).setType(PmsKnowledgeObjectTypeEnum.FOLDER.getType())
-                        .setName(folder.getTitle()).setParentId(folder.getParentId())
-                        .setDeleteTime(folder.getDeleteTime()),
-                folder -> folderIds.contains(folder.getId())
-                        && ObjectUtil.notEqual(folder.getId(), record.getEntityId()));
+        List<PmsKnowledgeRecycleDetailRespVO.Item> children =
+                convertList(
+                        folders,
+                        folder ->
+                                new PmsKnowledgeRecycleDetailRespVO.Item()
+                                        .setId(folder.getId())
+                                        .setType(PmsKnowledgeObjectTypeEnum.FOLDER.getType())
+                                        .setName(folder.getTitle())
+                                        .setParentId(folder.getParentId())
+                                        .setDeleteTime(folder.getDeleteTime()),
+                        folder ->
+                                folderIds.contains(folder.getId())
+                                        && ObjectUtil.notEqual(
+                                                folder.getId(), record.getEntityId()));
         // 3.2 组装级联文档节点，并排除回收站根对象
-        children.addAll(convertList(documents,
-                document -> new PmsKnowledgeRecycleDetailRespVO.Item()
-                        .setId(document.getId()).setType(getDocumentRecycleType(document))
-                        .setName(document.getTitle()).setParentId(document.getParentId())
-                        .setFolderId(document.getFolderId()).setDeleteTime(document.getDeleteTime()),
-                document -> documentIds.contains(document.getId())
-                        && ObjectUtil.notEqual(document.getId(), record.getEntityId())));
+        children.addAll(
+                convertList(
+                        documents,
+                        document ->
+                                new PmsKnowledgeRecycleDetailRespVO.Item()
+                                        .setId(document.getId())
+                                        .setType(getDocumentRecycleType(document))
+                                        .setName(document.getTitle())
+                                        .setParentId(document.getParentId())
+                                        .setFolderId(document.getFolderId())
+                                        .setDeleteTime(document.getDeleteTime()),
+                        document ->
+                                documentIds.contains(document.getId())
+                                        && ObjectUtil.notEqual(
+                                                document.getId(), record.getEntityId())));
         return new PmsKnowledgeRecycleDetailRespVO()
                 .setRoot(BeanUtils.toBean(record, PmsKnowledgeRecycleRespVO.class))
                 .setChildren(children);
     }
 
     @Override
-    public PmsKnowledgeDocumentDO getContentRecyclePreview(Long recordId, Long entityId, Long userId) {
+    public PmsKnowledgeDocumentDO getContentRecyclePreview(
+            Long recordId, Long entityId, Long userId) {
         // 1. 复用回收站内容权限校验，避免通过预览接口读取无权限内容
         PmsKnowledgeRecycleRecordDO record = validateContentRecycleRecord(recordId, userId);
 
@@ -237,7 +313,8 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         Integer targetType = record.getType();
         if (entityId != null && ObjectUtil.notEqual(entityId, record.getEntityId())) {
             PmsKnowledgeRecycleDetailRespVO detail = getContentRecycleDetail(recordId, userId);
-            PmsKnowledgeRecycleDetailRespVO.Item item = CollUtil.findOne(detail.getChildren(), child -> child.getId().equals(entityId));
+            PmsKnowledgeRecycleDetailRespVO.Item item =
+                    CollUtil.findOne(detail.getChildren(), child -> child.getId().equals(entityId));
             if (item == null) {
                 throw exception(KNOWLEDGE_RECYCLE_RECORD_NOT_EXISTS);
             }
@@ -260,8 +337,8 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param folders 知识库文件夹列表
      * @return 文件夹编号集合
      */
-    private Set<Long> collectFolderDescendantIds(PmsKnowledgeRecycleRecordDO record,
-                                                 List<PmsKnowledgeFolderDO> folders) {
+    private Set<Long> collectFolderDescendantIds(
+            PmsKnowledgeRecycleRecordDO record, List<PmsKnowledgeFolderDO> folders) {
         if (ObjectUtil.notEqual(PmsKnowledgeObjectTypeEnum.FOLDER.getType(), record.getType())) {
             return Collections.emptySet();
         }
@@ -276,9 +353,10 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param folderIds 回收站文件夹及其后代编号
      * @return 文档编号集合
      */
-    private Set<Long> collectDocumentDescendantIds(PmsKnowledgeRecycleRecordDO record,
-                                                   List<PmsKnowledgeDocumentDO> documents,
-                                                   Set<Long> folderIds) {
+    private Set<Long> collectDocumentDescendantIds(
+            PmsKnowledgeRecycleRecordDO record,
+            List<PmsKnowledgeDocumentDO> documents,
+            Set<Long> folderIds) {
         // 1. 文档回收记录：收集根文档及其全部子文档
         if (isDocumentRecycleType(record.getType())) {
             return getDocumentDescendantIds(documents, Collections.singleton(record.getEntityId()));
@@ -351,7 +429,8 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
     @Transactional(rollbackFor = Exception.class)
     public int deleteExpiredRecycleRecords(LocalDateTime deleteTime) {
         // 1. 按删除时间从早到晚查询到期记录
-        List<PmsKnowledgeRecycleRecordDO> records = recycleRecordMapper.selectListByDeleteTimeBefore(deleteTime);
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleRecordMapper.selectListByDeleteTimeBefore(deleteTime);
         if (CollUtil.isEmpty(records)) {
             return 0;
         }
@@ -381,12 +460,14 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
     private void restoreLibrary(PmsKnowledgeRecycleRecordDO record) {
         // 1.1 查询并校验仍处于回收站状态的知识库
         PmsKnowledgeLibraryDO library = libraryService.getLibrary(record.getLibraryId());
-        if (library == null || ObjectUtil.notEqual(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus(),
-                library.getStatus())) {
+        if (library == null
+                || ObjectUtil.notEqual(
+                        PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus(), library.getStatus())) {
             throw exception(KNOWLEDGE_LIBRARY_NOT_EXISTS);
         }
         // 1.2 查询知识库回收站记录，供后续排除独立删除的子树
-        List<PmsKnowledgeRecycleRecordDO> records = recycleRecordMapper.selectListByLibraryId(library.getId());
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleRecordMapper.selectListByLibraryId(library.getId());
 
         // 2.1 恢复知识库主记录
         libraryService.restoreLibrary(library.getId());
@@ -402,24 +483,35 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
     private void restoreFolder(PmsKnowledgeRecycleRecordDO record) {
         // 1. 校验根文件夹仍处于回收站状态
         PmsKnowledgeFolderDO root = folderService.getFolder(record.getEntityId());
-        if (root == null || ObjectUtil.notEqual(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus(),
-                root.getStatus())) {
+        if (root == null
+                || ObjectUtil.notEqual(
+                        PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus(), root.getStatus())) {
             throw exception(KNOWLEDGE_RECYCLE_RECORD_NOT_EXISTS);
         }
         // 1.2 查询知识库回收站记录和原父文件夹
-        List<PmsKnowledgeRecycleRecordDO> records = recycleRecordMapper.selectListByLibraryId(record.getLibraryId());
-        PmsKnowledgeFolderDO parent = root.getParentId() != null
-                && ObjectUtil.notEqual(PmsKnowledgeFolderDO.PARENT_ID_ROOT, root.getParentId())
-                ? folderService.getFolder(root.getParentId()) : null;
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleRecordMapper.selectListByLibraryId(record.getLibraryId());
+        PmsKnowledgeFolderDO parent =
+                root.getParentId() != null
+                                && ObjectUtil.notEqual(
+                                        PmsKnowledgeFolderDO.PARENT_ID_ROOT, root.getParentId())
+                        ? folderService.getFolder(root.getParentId())
+                        : null;
 
         // 2.1 恢复当前文件夹树，同时跳过其中独立删除的子树
         restoreLibraryContent(record.getLibraryId(), records, root.getId());
         // 2.2 被删除的父文件夹尚未恢复时，将当前根文件夹恢复到知识库根目录
         if (root.getParentId() != null
                 && ObjectUtil.notEqual(PmsKnowledgeFolderDO.PARENT_ID_ROOT, root.getParentId())) {
-            if (parent == null || PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus().equals(parent.getStatus())) {
-                folderService.updateFolderList(Collections.singleton(new PmsKnowledgeFolderDO()
-                        .setId(root.getId()).setParentId(PmsKnowledgeFolderDO.PARENT_ID_ROOT)));
+            if (parent == null
+                    || PmsKnowledgeDocumentStatusEnum.RECYCLED
+                            .getStatus()
+                            .equals(parent.getStatus())) {
+                folderService.updateFolderList(
+                        Collections.singleton(
+                                new PmsKnowledgeFolderDO()
+                                        .setId(root.getId())
+                                        .setParentId(PmsKnowledgeFolderDO.PARENT_ID_ROOT)));
             }
         }
     }
@@ -432,34 +524,55 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
     private void restoreDocument(PmsKnowledgeRecycleRecordDO record) {
         // 1. 校验根文档仍处于回收站状态
         PmsKnowledgeDocumentDO root = documentService.getDocument(record.getEntityId());
-        if (root == null || ObjectUtil.notEqual(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus(),
-                root.getStatus())) {
+        if (root == null
+                || ObjectUtil.notEqual(
+                        PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus(), root.getStatus())) {
             throw exception(KNOWLEDGE_RECYCLE_RECORD_NOT_EXISTS);
         }
         // 1.2 查询知识库文档全集和回收站记录
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(record.getLibraryId());
-        List<PmsKnowledgeRecycleRecordDO> records = recycleRecordMapper.selectListByLibraryId(record.getLibraryId());
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(record.getLibraryId());
+        List<PmsKnowledgeRecycleRecordDO> records =
+                recycleRecordMapper.selectListByLibraryId(record.getLibraryId());
         // 1.3 查询文档原目录和父文档
-        PmsKnowledgeFolderDO folder = equalsAny(root.getFolderId(), null, PmsKnowledgeDocumentDO.FOLDER_ID_ROOT) ? null
-                : folderService.getFolder(root.getFolderId());
-        PmsKnowledgeDocumentDO parent = equalsAny(root.getParentId(), null, PmsKnowledgeDocumentDO.PARENT_ID_ROOT) ? null
-                : documentService.getDocument(root.getParentId());
+        PmsKnowledgeFolderDO folder =
+                equalsAny(root.getFolderId(), null, PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
+                        ? null
+                        : folderService.getFolder(root.getFolderId());
+        PmsKnowledgeDocumentDO parent =
+                equalsAny(root.getParentId(), null, PmsKnowledgeDocumentDO.PARENT_ID_ROOT)
+                        ? null
+                        : documentService.getDocument(root.getParentId());
 
         // 2.1 恢复文档树，同时保留独立删除的子文档树
-        Set<Long> restoreIds = getDocumentDescendantIds(documents, Collections.singleton(root.getId()));
+        Set<Long> restoreIds =
+                getDocumentDescendantIds(documents, Collections.singleton(root.getId()));
         excludeProtectedDocuments(restoreIds, documents, records, record.getId());
         restoreDocuments(restoreIds);
         // 2.2 原目录或父文档尚未恢复时，将当前根文档恢复到知识库根目录
-        boolean invalidFolder = root.getFolderId() != null
-                && ObjectUtil.notEqual(PmsKnowledgeDocumentDO.FOLDER_ID_ROOT, root.getFolderId())
-                && (folder == null || PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus().equals(folder.getStatus()));
-        boolean invalidParent = root.getParentId() != null
-                && ObjectUtil.notEqual(PmsKnowledgeDocumentDO.PARENT_ID_ROOT, root.getParentId())
-                && (parent == null || PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus().equals(parent.getStatus()));
+        boolean invalidFolder =
+                root.getFolderId() != null
+                        && ObjectUtil.notEqual(
+                                PmsKnowledgeDocumentDO.FOLDER_ID_ROOT, root.getFolderId())
+                        && (folder == null
+                                || PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                        .getStatus()
+                                        .equals(folder.getStatus()));
+        boolean invalidParent =
+                root.getParentId() != null
+                        && ObjectUtil.notEqual(
+                                PmsKnowledgeDocumentDO.PARENT_ID_ROOT, root.getParentId())
+                        && (parent == null
+                                || PmsKnowledgeDocumentStatusEnum.RECYCLED
+                                        .getStatus()
+                                        .equals(parent.getStatus()));
         if (invalidFolder || invalidParent) {
-            documentService.updateDocumentList(Collections.singleton(new PmsKnowledgeDocumentDO()
-                    .setId(root.getId()).setFolderId(PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
-                    .setParentId(PmsKnowledgeDocumentDO.PARENT_ID_ROOT)));
+            documentService.updateDocumentList(
+                    Collections.singleton(
+                            new PmsKnowledgeDocumentDO()
+                                    .setId(root.getId())
+                                    .setFolderId(PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
+                                    .setParentId(PmsKnowledgeDocumentDO.PARENT_ID_ROOT)));
         }
     }
 
@@ -470,20 +583,30 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param records   知识库回收站记录
      * @param folderRootId 仅恢复指定文件夹子树时的根编号，为 {@code null} 表示整个知识库
      */
-    private void restoreLibraryContent(Long libraryId, List<PmsKnowledgeRecycleRecordDO> records, Long folderRootId) {
+    private void restoreLibraryContent(
+            Long libraryId, List<PmsKnowledgeRecycleRecordDO> records, Long folderRootId) {
         // 1.1 查询知识库范围内的文件夹和文档
         List<PmsKnowledgeFolderDO> folders = folderService.getFolderListByLibraryId(libraryId);
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(libraryId);
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(libraryId);
         // 1.2 解析目标文件夹树，并排除被单独删除的文件夹子树
-        Set<Long> restoreFolderIds = folderRootId == null ? convertSet(folders, PmsKnowledgeFolderDO::getId)
-                : getFolderDescendantIds(folders, Collections.singleton(folderRootId));
+        Set<Long> restoreFolderIds =
+                folderRootId == null
+                        ? convertSet(folders, PmsKnowledgeFolderDO::getId)
+                        : getFolderDescendantIds(folders, Collections.singleton(folderRootId));
         excludeProtectedFolders(restoreFolderIds, folders, records, folderRootId);
         // 1.3 解析需要随文件夹恢复的文档树，并排除被单独删除的文档子树
         Set<Long> documentRoots = new LinkedHashSet<>();
         for (PmsKnowledgeDocumentDO document : documents) {
-            if ((folderRootId == null && equalsAny(document.getFolderId(), null,
-                    PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
-                    && equalsAny(document.getParentId(), null, PmsKnowledgeDocumentDO.PARENT_ID_ROOT))
+            if ((folderRootId == null
+                            && equalsAny(
+                                    document.getFolderId(),
+                                    null,
+                                    PmsKnowledgeDocumentDO.FOLDER_ID_ROOT)
+                            && equalsAny(
+                                    document.getParentId(),
+                                    null,
+                                    PmsKnowledgeDocumentDO.PARENT_ID_ROOT))
                     || restoreFolderIds.contains(document.getFolderId())) {
                 documentRoots.add(document.getId());
             }
@@ -519,8 +642,11 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param records 回收站记录
      * @param currentFolderId 当前正在恢复的根文件夹编号
      */
-    private void excludeProtectedFolders(Set<Long> restoreIds, List<PmsKnowledgeFolderDO> folders,
-                                         List<PmsKnowledgeRecycleRecordDO> records, Long currentFolderId) {
+    private void excludeProtectedFolders(
+            Set<Long> restoreIds,
+            List<PmsKnowledgeFolderDO> folders,
+            List<PmsKnowledgeRecycleRecordDO> records,
+            Long currentFolderId) {
         Set<Long> protectedRoots = new LinkedHashSet<>();
         for (PmsKnowledgeRecycleRecordDO record : records) {
             if (PmsKnowledgeObjectTypeEnum.FOLDER.getType().equals(record.getType())
@@ -539,8 +665,11 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param records 回收站记录
      * @param currentRecordId 当前正在恢复的回收站记录编号
      */
-    private void excludeProtectedDocuments(Set<Long> restoreIds, List<PmsKnowledgeDocumentDO> documents,
-                                           List<PmsKnowledgeRecycleRecordDO> records, Long currentRecordId) {
+    private void excludeProtectedDocuments(
+            Set<Long> restoreIds,
+            List<PmsKnowledgeDocumentDO> documents,
+            List<PmsKnowledgeRecycleRecordDO> records,
+            Long currentRecordId) {
         Set<Long> protectedRoots = new LinkedHashSet<>();
         for (PmsKnowledgeRecycleRecordDO record : records) {
             if (isDocumentRecycleType(record.getType())
@@ -558,11 +687,14 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      */
     private void permanentDeleteLibrary(Long libraryId) {
         // 1.1 查询知识库范围内的文档
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(libraryId);
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(libraryId);
         Set<Long> documentIds = convertSet(documents, PmsKnowledgeDocumentDO::getId);
         // 1.2 查询知识库范围内的文件夹
-        Set<Long> folderIds = convertSet(folderService.getFolderListByLibraryId(libraryId),
-                PmsKnowledgeFolderDO::getId);
+        Set<Long> folderIds =
+                convertSet(
+                        folderService.getFolderListByLibraryId(libraryId),
+                        PmsKnowledgeFolderDO::getId);
 
         // 2.1 删除文档收藏、点赞、浏览、分享和评论
         favoriteService.deleteFavoritesByLibraryId(libraryId);
@@ -589,10 +721,13 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      */
     private void permanentDeleteFolder(PmsKnowledgeRecycleRecordDO record) {
         // 1.1 查询文件夹和文档全集
-        List<PmsKnowledgeFolderDO> folders = folderService.getFolderListByLibraryId(record.getLibraryId());
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(record.getLibraryId());
+        List<PmsKnowledgeFolderDO> folders =
+                folderService.getFolderListByLibraryId(record.getLibraryId());
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(record.getLibraryId());
         // 1.2 解析文件夹子树和其中的文档编号
-        Set<Long> folderIds = getFolderDescendantIds(folders, Collections.singleton(record.getEntityId()));
+        Set<Long> folderIds =
+                getFolderDescendantIds(folders, Collections.singleton(record.getEntityId()));
         Set<Long> documentRoots = new LinkedHashSet<>();
         for (PmsKnowledgeDocumentDO document : documents) {
             if (folderIds.contains(document.getFolderId())) {
@@ -625,9 +760,11 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         recycleRecordMapper.deleteByTypeAndEntityIds(
                 Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()), folderIds);
         if (CollUtil.isNotEmpty(documentIds)) {
-            recycleRecordMapper.deleteByTypeAndEntityIds(Arrays.asList(
-                    PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
-                    PmsKnowledgeObjectTypeEnum.FILE.getType()), documentIds);
+            recycleRecordMapper.deleteByTypeAndEntityIds(
+                    Arrays.asList(
+                            PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+                            PmsKnowledgeObjectTypeEnum.FILE.getType()),
+                    documentIds);
         }
     }
 
@@ -638,9 +775,11 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      */
     private void permanentDeleteDocument(PmsKnowledgeRecycleRecordDO record) {
         // 1.1 查询知识库文档全集
-        List<PmsKnowledgeDocumentDO> documents = documentService.getDocumentListByLibraryId(record.getLibraryId());
+        List<PmsKnowledgeDocumentDO> documents =
+                documentService.getDocumentListByLibraryId(record.getLibraryId());
         // 1.2 解析文档子树编号
-        Set<Long> documentIds = getDocumentDescendantIds(documents, Collections.singleton(record.getEntityId()));
+        Set<Long> documentIds =
+                getDocumentDescendantIds(documents, Collections.singleton(record.getEntityId()));
         // 1.3 收集文档对应的内容权限编号
         Set<Long> permissionIds = new LinkedHashSet<>();
         for (PmsKnowledgeDocumentDO document : documents) {
@@ -656,9 +795,11 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         deleteDocuments(documentIds);
         // 2.2 删除不再被引用的内容权限和回收站记录
         contentPermissionService.deleteUnusedContentPermissions(permissionIds);
-        recycleRecordMapper.deleteByTypeAndEntityIds(Arrays.asList(
-                PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
-                PmsKnowledgeObjectTypeEnum.FILE.getType()), documentIds);
+        recycleRecordMapper.deleteByTypeAndEntityIds(
+                Arrays.asList(
+                        PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+                        PmsKnowledgeObjectTypeEnum.FILE.getType()),
+                documentIds);
     }
 
     /**
@@ -684,13 +825,15 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param rootIds 根文件夹编号
      * @return 根节点及后代编号集合
      */
-    private Set<Long> getFolderDescendantIds(List<PmsKnowledgeFolderDO> folders, Collection<Long> rootIds) {
+    private Set<Long> getFolderDescendantIds(
+            List<PmsKnowledgeFolderDO> folders, Collection<Long> rootIds) {
         Set<Long> descendantIds = new LinkedHashSet<>(rootIds);
         // 层级深度设上限，避免异常循环父子关系导致无限遍历
         for (int level = 0; level < Short.MAX_VALUE; level++) {
             boolean changed = false;
             for (PmsKnowledgeFolderDO folder : folders) {
-                if (descendantIds.contains(folder.getParentId()) && descendantIds.add(folder.getId())) {
+                if (descendantIds.contains(folder.getParentId())
+                        && descendantIds.add(folder.getId())) {
                     changed = true;
                 }
             }
@@ -708,13 +851,15 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param rootIds 根文档编号
      * @return 根节点及后代编号集合
      */
-    private Set<Long> getDocumentDescendantIds(List<PmsKnowledgeDocumentDO> documents, Collection<Long> rootIds) {
+    private Set<Long> getDocumentDescendantIds(
+            List<PmsKnowledgeDocumentDO> documents, Collection<Long> rootIds) {
         Set<Long> descendantIds = new LinkedHashSet<>(rootIds);
         // 层级深度设上限，避免异常循环父子关系导致无限遍历
         for (int level = 0; level < Short.MAX_VALUE; level++) {
             boolean changed = false;
             for (PmsKnowledgeDocumentDO document : documents) {
-                if (descendantIds.contains(document.getParentId()) && descendantIds.add(document.getId())) {
+                if (descendantIds.contains(document.getParentId())
+                        && descendantIds.add(document.getId())) {
                     changed = true;
                 }
             }
@@ -725,10 +870,21 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         return descendantIds;
     }
 
-    private void insertRecycleRecord(Long libraryId, Integer type, Long entityId, String name,
-                                     Long userId, LocalDateTime deleteTime) {
-        recycleRecordMapper.insert(new PmsKnowledgeRecycleRecordDO().setLibraryId(libraryId).setType(type)
-                .setEntityId(entityId).setName(name).setDeleteUserId(userId).setDeleteTime(deleteTime));
+    private void insertRecycleRecord(
+            Long libraryId,
+            Integer type,
+            Long entityId,
+            String name,
+            Long userId,
+            LocalDateTime deleteTime) {
+        recycleRecordMapper.insert(
+                new PmsKnowledgeRecycleRecordDO()
+                        .setLibraryId(libraryId)
+                        .setType(type)
+                        .setEntityId(entityId)
+                        .setName(name)
+                        .setDeleteUserId(userId)
+                        .setDeleteTime(deleteTime));
     }
 
     private PmsKnowledgeRecycleRecordDO validateRecycleRecord(Long id) {
@@ -774,22 +930,34 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         }
         Map<Long, Long> folderPermissionIdMap = new LinkedHashMap<>();
         if (CollUtil.isNotEmpty(folderIds)) {
-            folderService.getFolderList(folderIds).forEach(folder ->
-                    folderPermissionIdMap.put(folder.getId(), folder.getPermissionId()));
+            folderService
+                    .getFolderList(folderIds)
+                    .forEach(
+                            folder ->
+                                    folderPermissionIdMap.put(
+                                            folder.getId(), folder.getPermissionId()));
         }
         Map<Long, Long> documentPermissionIdMap = new LinkedHashMap<>();
         if (CollUtil.isNotEmpty(documentIds)) {
-            documentService.getDocumentList(documentIds).forEach(document ->
-                    documentPermissionIdMap.put(document.getId(), document.getPermissionId()));
+            documentService
+                    .getDocumentList(documentIds)
+                    .forEach(
+                            document ->
+                                    documentPermissionIdMap.put(
+                                            document.getId(), document.getPermissionId()));
         }
 
         // 2. 将实体权限编号映射回回收站记录
         Map<Long, Long> recordPermissionIdMap = new LinkedHashMap<>();
-        records.forEach(record -> {
-            Map<Long, Long> permissionIdMap = PmsKnowledgeObjectTypeEnum.FOLDER.getType().equals(record.getType())
-                    ? folderPermissionIdMap : documentPermissionIdMap;
-            recordPermissionIdMap.put(record.getId(), permissionIdMap.get(record.getEntityId()));
-        });
+        records.forEach(
+                record -> {
+                    Map<Long, Long> permissionIdMap =
+                            PmsKnowledgeObjectTypeEnum.FOLDER.getType().equals(record.getType())
+                                    ? folderPermissionIdMap
+                                    : documentPermissionIdMap;
+                    recordPermissionIdMap.put(
+                            record.getId(), permissionIdMap.get(record.getEntityId()));
+                });
         return recordPermissionIdMap;
     }
 
@@ -816,7 +984,8 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
             throw exception(KNOWLEDGE_RECYCLE_RECORD_NOT_EXISTS);
         }
         // 2. 校验当前用户具备内容删除权限
-        contentPermissionService.validateContentPermissionDeletable(permissionId, record.getLibraryId(), userId);
+        contentPermissionService.validateContentPermissionDeletable(
+                permissionId, record.getLibraryId(), userId);
     }
 
     /**
@@ -834,11 +1003,16 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
         if (member == null) {
             AdminUserRespDTO user = adminUserApi.getUser(userId);
             if (user != null && user.getDeptId() != null) {
-                member = libraryMemberService.getMemberByLibraryIdAndDeptId(record.getLibraryId(), user.getDeptId());
+                member =
+                        libraryMemberService.getMemberByLibraryIdAndDeptId(
+                                record.getLibraryId(), user.getDeptId());
             }
         }
-        if (member == null || !equalsAny(member.getLevel(), PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(),
-                PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel())) {
+        if (member == null
+                || !equalsAny(
+                        member.getLevel(),
+                        PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(),
+                        PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel())) {
             throw exception(KNOWLEDGE_LIBRARY_ADMIN_REQUIRED);
         }
     }
@@ -851,7 +1025,8 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      */
     private Integer getDocumentRecycleType(PmsKnowledgeDocumentDO document) {
         return PmsKnowledgeDocumentTypeEnum.FILE.getType().equals(document.getType())
-                ? PmsKnowledgeObjectTypeEnum.FILE.getType() : PmsKnowledgeObjectTypeEnum.DOCUMENT.getType();
+                ? PmsKnowledgeObjectTypeEnum.FILE.getType()
+                : PmsKnowledgeObjectTypeEnum.DOCUMENT.getType();
     }
 
     /**
@@ -861,7 +1036,9 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @return 是否为文档或文件
      */
     private boolean isDocumentRecycleType(Integer type) {
-        return equalsAny(type, PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+        return equalsAny(
+                type,
+                PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
                 PmsKnowledgeObjectTypeEnum.FILE.getType());
     }
 
@@ -871,12 +1048,14 @@ public class PmsKnowledgeRecycleServiceImpl implements PmsKnowledgeRecycleServic
      * @param type 回收站对象类型
      */
     private void validateRecycleType(Integer type) {
-        if (equalsAny(type, PmsKnowledgeObjectTypeEnum.LIBRARY.getType(),
-                PmsKnowledgeObjectTypeEnum.FOLDER.getType(), PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+        if (equalsAny(
+                type,
+                PmsKnowledgeObjectTypeEnum.LIBRARY.getType(),
+                PmsKnowledgeObjectTypeEnum.FOLDER.getType(),
+                PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
                 PmsKnowledgeObjectTypeEnum.FILE.getType())) {
             return;
         }
         throw exception(KNOWLEDGE_RECYCLE_TYPE_INVALID);
     }
-
 }

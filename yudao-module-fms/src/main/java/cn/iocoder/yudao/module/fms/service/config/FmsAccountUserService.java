@@ -61,5 +61,4 @@ public interface FmsAccountUserService {
      * @param userId 当前用户编号
      */
     void updateAccountUserList(FmsAccountUserUpdateReqVO updateReqVO, Long userId);
-
 }

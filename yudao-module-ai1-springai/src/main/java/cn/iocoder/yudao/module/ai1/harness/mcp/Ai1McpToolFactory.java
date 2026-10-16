@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.ai1.harness.mcp;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ReUtil;
@@ -10,17 +12,19 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.service.mcp.Ai1McpService;
+
 import io.modelcontextprotocol.spec.McpSchema;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.function.Function;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 /**
  * AI1 MCP 工具工厂：把 Agent 绑定的 MCP 服务暴露的工具，桥接为 Spring AI ToolCallback
@@ -41,11 +45,9 @@ public class Ai1McpToolFactory {
      */
     private static final String NAME_SEPARATOR = "__";
 
-    @Resource
-    private Ai1McpService mcpService;
+    @Resource private Ai1McpService mcpService;
 
-    @Resource
-    private Ai1McpClientTool mcpClientTool;
+    @Resource private Ai1McpClientTool mcpClientTool;
 
     /**
      * 构建 Agent 绑定的 MCP 工具集合；单个服务失败时跳过，不影响会话
@@ -89,8 +91,8 @@ public class Ai1McpToolFactory {
      * 构建单个工具回调：名称去冲突 + 入参 Schema 透传 + MCP 客户端调用落地
      */
     private ToolCallback buildToolCallback(Ai1McpDO mcp, McpSchema.Tool tool) {
-        Function<Map<String, Object>, String> function = arguments ->
-                mcpClientTool.callTool(mcp, tool.name(), arguments);
+        Function<Map<String, Object>, String> function =
+                arguments -> mcpClientTool.callTool(mcp, tool.name(), arguments);
         Map<String, Object> inputSchema = tool.inputSchema();
         if (MapUtil.isEmpty(inputSchema)) {
             inputSchema = new HashMap<>();
@@ -137,5 +139,4 @@ public class Ai1McpToolFactory {
         slug = ReUtil.replaceAll(slug, "_+", "_");
         return ReUtil.replaceAll(slug, "^_+|_+$", "");
     }
-
 }

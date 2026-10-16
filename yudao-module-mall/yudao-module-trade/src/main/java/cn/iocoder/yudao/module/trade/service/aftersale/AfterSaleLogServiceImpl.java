@@ -4,10 +4,12 @@ import cn.iocoder.yudao.module.trade.convert.aftersale.AfterSaleLogConvert;
 import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.AfterSaleLogDO;
 import cn.iocoder.yudao.module.trade.dal.mysql.aftersale.AfterSaleLogMapper;
 import cn.iocoder.yudao.module.trade.service.aftersale.bo.AfterSaleLogCreateReqBO;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -19,8 +21,7 @@ import java.util.List;
 @Validated
 public class AfterSaleLogServiceImpl implements AfterSaleLogService {
 
-    @Resource
-    private AfterSaleLogMapper afterSaleLogMapper;
+    @Resource private AfterSaleLogMapper afterSaleLogMapper;
 
     @Override
     public void createAfterSaleLog(AfterSaleLogCreateReqBO createReqBO) {
@@ -32,5 +33,4 @@ public class AfterSaleLogServiceImpl implements AfterSaleLogService {
     public List<AfterSaleLogDO> getAfterSaleLogList(Long afterSaleId) {
         return afterSaleLogMapper.selectListByAfterSaleId(afterSaleId);
     }
-
 }

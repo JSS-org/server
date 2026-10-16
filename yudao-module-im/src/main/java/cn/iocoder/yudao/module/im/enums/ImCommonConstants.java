@@ -13,5 +13,4 @@ public interface ImCommonConstants {
      * 前后端协议契约值；atUserIds 数组里出现该值表示 @ 全体成员
      */
     long AT_USER_ID_ALL = -1L;
-
 }

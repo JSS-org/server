@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum HrmAttendanceResultEnum {
-
     NOT_SCHEDULED("未排班"),
     REST("休息"),
     FUTURE("未到日期"),
@@ -33,5 +32,4 @@ public enum HrmAttendanceResultEnum {
     public String format(Object... args) {
         return String.format(format, args);
     }
-
 }

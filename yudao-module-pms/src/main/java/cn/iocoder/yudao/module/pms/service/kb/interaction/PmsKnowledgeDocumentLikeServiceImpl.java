@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.interaction.PmsKnowledgeDocumentLikeDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.interaction.PmsKnowledgeDocumentLikeMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.PmsKnowledgeObjectTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -21,10 +23,8 @@ import java.util.List;
 @Validated
 public class PmsKnowledgeDocumentLikeServiceImpl implements PmsKnowledgeDocumentLikeService {
 
-    @Resource
-    private PmsKnowledgeDocumentLikeMapper documentLikeMapper;
-    @Resource
-    private PmsKnowledgeInteractionTargetService interactionTargetService;
+    @Resource private PmsKnowledgeDocumentLikeMapper documentLikeMapper;
+    @Resource private PmsKnowledgeInteractionTargetService interactionTargetService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -34,11 +34,13 @@ public class PmsKnowledgeDocumentLikeServiceImpl implements PmsKnowledgeDocument
                 PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId);
 
         // 2. 新增点赞关系，重复请求保持幂等
-        PmsKnowledgeDocumentLikeDO like = documentLikeMapper.selectByDocumentIdAndUserId(documentId, userId);
+        PmsKnowledgeDocumentLikeDO like =
+                documentLikeMapper.selectByDocumentIdAndUserId(documentId, userId);
         if (like != null) {
             return;
         }
-        documentLikeMapper.insert(new PmsKnowledgeDocumentLikeDO().setDocumentId(documentId).setUserId(userId));
+        documentLikeMapper.insert(
+                new PmsKnowledgeDocumentLikeDO().setDocumentId(documentId).setUserId(userId));
     }
 
     @Override
@@ -49,7 +51,8 @@ public class PmsKnowledgeDocumentLikeServiceImpl implements PmsKnowledgeDocument
                 PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), documentId, userId);
 
         // 2. 删除点赞关系，重复请求保持幂等
-        PmsKnowledgeDocumentLikeDO like = documentLikeMapper.selectByDocumentIdAndUserId(documentId, userId);
+        PmsKnowledgeDocumentLikeDO like =
+                documentLikeMapper.selectByDocumentIdAndUserId(documentId, userId);
         if (like != null) {
             documentLikeMapper.deleteById(like.getId());
         }
@@ -67,5 +70,4 @@ public class PmsKnowledgeDocumentLikeServiceImpl implements PmsKnowledgeDocument
         }
         documentLikeMapper.deleteByDocumentIds(documentIds);
     }
-
 }

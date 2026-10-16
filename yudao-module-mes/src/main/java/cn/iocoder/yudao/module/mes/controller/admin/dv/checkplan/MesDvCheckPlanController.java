@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
@@ -11,12 +14,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.MesDvCheckPl
 import cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo.MesDvCheckPlanSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkplan.MesDvCheckPlanDO;
 import cn.iocoder.yudao.module.mes.service.dv.checkplan.MesDvCheckPlanService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,29 +30,27 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - MES 点检保养方案")
 @RestController
 @RequestMapping("/mes/dv/check-plan")
 @Validated
 public class MesDvCheckPlanController {
 
-    @Resource
-    private MesDvCheckPlanService checkPlanService;
+    @Resource private MesDvCheckPlanService checkPlanService;
 
     @PostMapping("/create")
     @Operation(summary = "创建点检保养方案")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-plan:create')")
-    public CommonResult<Long> createCheckPlan(@Valid @RequestBody MesDvCheckPlanSaveReqVO createReqVO) {
+    public CommonResult<Long> createCheckPlan(
+            @Valid @RequestBody MesDvCheckPlanSaveReqVO createReqVO) {
         return success(checkPlanService.createCheckPlan(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新点检保养方案")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-plan:update')")
-    public CommonResult<Boolean> updateCheckPlan(@Valid @RequestBody MesDvCheckPlanSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateCheckPlan(
+            @Valid @RequestBody MesDvCheckPlanSaveReqVO updateReqVO) {
         checkPlanService.updateCheckPlan(updateReqVO);
         return success(true);
     }
@@ -90,7 +94,8 @@ public class MesDvCheckPlanController {
     @GetMapping("/page")
     @Operation(summary = "获得点检保养方案分页")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-plan:query')")
-    public CommonResult<PageResult<MesDvCheckPlanRespVO>> getCheckPlanPage(@Valid MesDvCheckPlanPageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesDvCheckPlanRespVO>> getCheckPlanPage(
+            @Valid MesDvCheckPlanPageReqVO pageReqVO) {
         PageResult<MesDvCheckPlanDO> pageResult = checkPlanService.getCheckPlanPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesDvCheckPlanRespVO.class));
     }
@@ -99,13 +104,17 @@ public class MesDvCheckPlanController {
     @Operation(summary = "导出点检保养方案 Excel")
     @PreAuthorize("@ss.hasPermission('mes:dv-check-plan:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportCheckPlanExcel(@Valid MesDvCheckPlanPageReqVO pageReqVO,
-                                      HttpServletResponse response) throws IOException {
+    public void exportCheckPlanExcel(
+            @Valid MesDvCheckPlanPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesDvCheckPlanDO> list = checkPlanService.getCheckPlanPage(pageReqVO).getList();
         // 导出 Excel
-        ExcelUtils.write(response, "点检保养方案.xls", "数据", MesDvCheckPlanRespVO.class,
+        ExcelUtils.write(
+                response,
+                "点检保养方案.xls",
+                "数据",
+                MesDvCheckPlanRespVO.class,
                 BeanUtils.toBean(list, MesDvCheckPlanRespVO.class));
     }
-
 }

@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.im.dal.mysql.message;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImPrivateMessageDO;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link ImPrivateMessageMapper} 的单元测试
@@ -18,8 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ImPrivateMessageMapperTest extends BaseDbUnitTest {
 
-    @Resource
-    private ImPrivateMessageMapper mapper;
+    @Resource private ImPrivateMessageMapper mapper;
 
     private static final LocalDateTime FAR_PAST = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
@@ -42,8 +43,9 @@ public class ImPrivateMessageMapperTest extends BaseDbUnitTest {
 
         // 断言：只包含与用户 1 相关的 2 条
         assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(m ->
-                m.getSenderId().equals(1L) || m.getReceiverId().equals(1L)));
+        assertTrue(
+                result.stream()
+                        .allMatch(m -> m.getSenderId().equals(1L) || m.getReceiverId().equals(1L)));
     }
 
     @Test
@@ -87,8 +89,8 @@ public class ImPrivateMessageMapperTest extends BaseDbUnitTest {
         mapper.insert(oldMsg);
 
         // 调用：窗口起点 = 30 天前
-        List<ImPrivateMessageDO> result = mapper.selectListByMinId(1L, 0L,
-                LocalDateTime.now().minusDays(30), 100);
+        List<ImPrivateMessageDO> result =
+                mapper.selectListByMinId(1L, 0L, LocalDateTime.now().minusDays(30), 100);
 
         // 断言：只返回窗口内的消息
         assertEquals(1, result.size());
@@ -181,7 +183,8 @@ public class ImPrivateMessageMapperTest extends BaseDbUnitTest {
 
     // ========== 工具方法 ==========
 
-    private ImPrivateMessageDO buildMessage(Long senderId, Long receiverId, ImMessageStatusEnum status) {
+    private ImPrivateMessageDO buildMessage(
+            Long senderId, Long receiverId, ImMessageStatusEnum status) {
         return ImPrivateMessageDO.builder()
                 .clientMessageId("uuid-" + System.nanoTime())
                 .senderId(senderId)
@@ -192,5 +195,4 @@ public class ImPrivateMessageMapperTest extends BaseDbUnitTest {
                 .sendTime(LocalDateTime.now())
                 .build();
     }
-
 }

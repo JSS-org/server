@@ -1,13 +1,13 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliarytype.FmsAuxiliaryTypeSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryTypeDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * FMS 辅助核算类别 Service 接口
@@ -112,8 +112,10 @@ public interface FmsAuxiliaryTypeService {
      * @return 辅助核算类别名称与编号 Map
      */
     default Map<String, Long> getAuxiliaryTypeIdMap(Long accountSetId) {
-        return convertMap(getAuxiliaryTypeList(accountSetId),
-                FmsAuxiliaryTypeDO::getName, FmsAuxiliaryTypeDO::getId);
+        return convertMap(
+                getAuxiliaryTypeList(accountSetId),
+                FmsAuxiliaryTypeDO::getName,
+                FmsAuxiliaryTypeDO::getId);
     }
 
     /**
@@ -132,5 +134,4 @@ public interface FmsAuxiliaryTypeService {
      * @return 辅助核算类别列表
      */
     List<FmsAuxiliaryTypeDO> validateAuxiliaryTypeList(Long accountSetId, Collection<Long> ids);
-
 }

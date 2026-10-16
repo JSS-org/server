@@ -5,7 +5,9 @@ import cn.iocoder.yudao.module.product.api.sku.dto.ProductSkuRespDTO;
 import cn.iocoder.yudao.module.product.api.sku.dto.ProductSkuUpdateStockReqDTO;
 import cn.iocoder.yudao.module.product.dal.dataobject.sku.ProductSkuDO;
 import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -22,8 +24,7 @@ import java.util.List;
 @Validated
 public class ProductSkuApiImpl implements ProductSkuApi {
 
-    @Resource
-    private ProductSkuService productSkuService;
+    @Resource private ProductSkuService productSkuService;
 
     @Override
     public ProductSkuRespDTO getSku(Long id) {
@@ -47,5 +48,4 @@ public class ProductSkuApiImpl implements ProductSkuApi {
     public void updateSkuStock(ProductSkuUpdateStockReqDTO updateStockReqDTO) {
         productSkuService.updateSkuStock(updateStockReqDTO);
     }
-
 }

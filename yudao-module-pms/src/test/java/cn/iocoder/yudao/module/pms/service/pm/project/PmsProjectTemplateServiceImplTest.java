@@ -1,5 +1,17 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.enums.CommonStatusEnum.ENABLE;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_CONFIG_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_NAME_DUPLICATE;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.template.PmsProjectTemplateSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectTemplateDO;
@@ -7,19 +19,11 @@ import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectTemplateMapper
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemStatusTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
-
-import static cn.iocoder.yudao.framework.common.enums.CommonStatusEnum.ENABLE;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_CONFIG_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_NAME_DUPLICATE;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * {@link PmsProjectTemplateServiceImpl} 的单元测试类
@@ -29,11 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @Import(PmsProjectTemplateServiceImpl.class)
 public class PmsProjectTemplateServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsProjectTemplateServiceImpl projectTemplateService;
+    @Resource private PmsProjectTemplateServiceImpl projectTemplateService;
 
-    @Resource
-    private PmsProjectTemplateMapper projectTemplateMapper;
+    @Resource private PmsProjectTemplateMapper projectTemplateMapper;
 
     @Test
     public void testCreateProjectTemplate_success() {
@@ -59,8 +61,10 @@ public class PmsProjectTemplateServiceImplTest extends BaseDbUnitTest {
         reqVO.getStatuses().get(0).setDefaultStatus(false);
 
         // 调用，并断言异常
-        assertServiceException(() -> projectTemplateService.createProjectTemplate(reqVO),
-                PROJECT_TEMPLATE_CONFIG_INVALID, "每种工作项必须且只能配置一个初始状态");
+        assertServiceException(
+                () -> projectTemplateService.createProjectTemplate(reqVO),
+                PROJECT_TEMPLATE_CONFIG_INVALID,
+                "每种工作项必须且只能配置一个初始状态");
     }
 
     @Test
@@ -72,19 +76,23 @@ public class PmsProjectTemplateServiceImplTest extends BaseDbUnitTest {
         PmsProjectTemplateSaveReqVO reqVO = buildProjectTemplateSaveReqVO("通用项目模板-重名");
 
         // 调用，并断言异常
-        assertServiceException(() -> projectTemplateService.createProjectTemplate(reqVO),
+        assertServiceException(
+                () -> projectTemplateService.createProjectTemplate(reqVO),
                 PROJECT_TEMPLATE_NAME_DUPLICATE);
     }
 
     @Test
     public void testUpdateProjectTemplate_success() {
         // mock 数据
-        Long templateId = projectTemplateService.createProjectTemplate(
-                buildProjectTemplateSaveReqVO("通用项目模板-修改前"));
+        Long templateId =
+                projectTemplateService.createProjectTemplate(
+                        buildProjectTemplateSaveReqVO("通用项目模板-修改前"));
 
         // 准备参数
-        PmsProjectTemplateSaveReqVO reqVO = buildProjectTemplateSaveReqVO("通用项目模板-修改后")
-                .setId(templateId).setDescription("更新后的通用协作模板");
+        PmsProjectTemplateSaveReqVO reqVO =
+                buildProjectTemplateSaveReqVO("通用项目模板-修改后")
+                        .setId(templateId)
+                        .setDescription("更新后的通用协作模板");
 
         // 调用
         projectTemplateService.updateProjectTemplate(reqVO);
@@ -99,8 +107,9 @@ public class PmsProjectTemplateServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteProjectTemplate_success() {
         // mock 数据
-        Long templateId = projectTemplateService.createProjectTemplate(
-                buildProjectTemplateSaveReqVO("通用项目模板-删除"));
+        Long templateId =
+                projectTemplateService.createProjectTemplate(
+                        buildProjectTemplateSaveReqVO("通用项目模板-删除"));
 
         // 调用
         projectTemplateService.deleteProjectTemplate(templateId);
@@ -115,24 +124,46 @@ public class PmsProjectTemplateServiceImplTest extends BaseDbUnitTest {
      * @return 项目模板保存参数
      */
     private PmsProjectTemplateSaveReqVO buildProjectTemplateSaveReqVO(String name) {
-        PmsProjectTemplateSaveReqVO.StatusTemplate todoStatus = new PmsProjectTemplateSaveReqVO.StatusTemplate()
-                .setCode("task_todo").setName("待处理").setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
-                .setStatusType(PmsWorkItemStatusTypeEnum.PENDING.getType()).setDefaultStatus(true)
-                .setSort(10).setBoardCode("todo");
-        PmsProjectTemplateSaveReqVO.StatusTemplate doneStatus = new PmsProjectTemplateSaveReqVO.StatusTemplate()
-                .setCode("task_done").setName("已完成").setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
-                .setStatusType(PmsWorkItemStatusTypeEnum.COMPLETED.getType()).setDefaultStatus(false)
-                .setSort(20).setBoardCode("done");
-        PmsProjectTemplateSaveReqVO.BoardTemplate todoBoard = new PmsProjectTemplateSaveReqVO.BoardTemplate()
-                .setCode("todo").setName("待处理").setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
-                .setSort(10).setStatusCodes(singletonList("task_todo"));
-        PmsProjectTemplateSaveReqVO.BoardTemplate doneBoard = new PmsProjectTemplateSaveReqVO.BoardTemplate()
-                .setCode("done").setName("已完成").setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
-                .setSort(20).setStatusCodes(singletonList("task_done"));
-        return new PmsProjectTemplateSaveReqVO().setName(name).setDescription("通用协作")
-                .setProjectType(PmsProjectTypeEnum.GENERAL.getType()).setStatus(ENABLE.getStatus()).setSort(10)
+        PmsProjectTemplateSaveReqVO.StatusTemplate todoStatus =
+                new PmsProjectTemplateSaveReqVO.StatusTemplate()
+                        .setCode("task_todo")
+                        .setName("待处理")
+                        .setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
+                        .setStatusType(PmsWorkItemStatusTypeEnum.PENDING.getType())
+                        .setDefaultStatus(true)
+                        .setSort(10)
+                        .setBoardCode("todo");
+        PmsProjectTemplateSaveReqVO.StatusTemplate doneStatus =
+                new PmsProjectTemplateSaveReqVO.StatusTemplate()
+                        .setCode("task_done")
+                        .setName("已完成")
+                        .setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
+                        .setStatusType(PmsWorkItemStatusTypeEnum.COMPLETED.getType())
+                        .setDefaultStatus(false)
+                        .setSort(20)
+                        .setBoardCode("done");
+        PmsProjectTemplateSaveReqVO.BoardTemplate todoBoard =
+                new PmsProjectTemplateSaveReqVO.BoardTemplate()
+                        .setCode("todo")
+                        .setName("待处理")
+                        .setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
+                        .setSort(10)
+                        .setStatusCodes(singletonList("task_todo"));
+        PmsProjectTemplateSaveReqVO.BoardTemplate doneBoard =
+                new PmsProjectTemplateSaveReqVO.BoardTemplate()
+                        .setCode("done")
+                        .setName("已完成")
+                        .setWorkItemType(PmsWorkItemTypeEnum.TASK.getType())
+                        .setSort(20)
+                        .setStatusCodes(singletonList("task_done"));
+        return new PmsProjectTemplateSaveReqVO()
+                .setName(name)
+                .setDescription("通用协作")
+                .setProjectType(PmsProjectTypeEnum.GENERAL.getType())
+                .setStatus(ENABLE.getStatus())
+                .setSort(10)
                 .setItemTypes(singletonList(PmsWorkItemTypeEnum.TASK.getType()))
-                .setStatuses(asList(todoStatus, doneStatus)).setBoards(asList(todoBoard, doneBoard));
+                .setStatuses(asList(todoStatus, doneStatus))
+                .setBoards(asList(todoBoard, doneBoard));
     }
-
 }

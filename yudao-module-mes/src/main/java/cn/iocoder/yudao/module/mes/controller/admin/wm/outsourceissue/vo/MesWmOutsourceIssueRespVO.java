@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,11 +18,17 @@ public class MesWmOutsourceIssueRespVO {
     @ExcelProperty("发料单ID")
     private Long id;
 
-    @Schema(description = "发料单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "WOS202603020001")
+    @Schema(
+            description = "发料单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "WOS202603020001")
     @ExcelProperty("发料单编号")
     private String code;
 
-    @Schema(description = "发料单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "外协发料单001")
+    @Schema(
+            description = "发料单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "外协发料单001")
     @ExcelProperty("发料单名称")
     private String name;
 
@@ -61,5 +69,4 @@ public class MesWmOutsourceIssueRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.URL;
 
@@ -51,6 +53,7 @@ public class PayTransferUnifiedReqDTO {
      */
     @NotEmpty(message = "收款人账号不能为空")
     private String userAccount;
+
     /**
      * 收款人姓名
      */
@@ -69,5 +72,4 @@ public class PayTransferUnifiedReqDTO {
     @NotEmpty(message = "转账结果的回调地址不能为空")
     @URL(message = "转账结果的 notify 回调地址必须是 URL 格式")
     private String notifyUrl;
-
 }

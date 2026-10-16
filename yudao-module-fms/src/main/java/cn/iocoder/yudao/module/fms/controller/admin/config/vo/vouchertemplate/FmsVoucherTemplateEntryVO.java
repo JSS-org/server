@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -65,5 +67,4 @@ public class FmsVoucherTemplateEntryVO {
         @Schema(description = "辅助核算项目名称")
         private String name;
     }
-
 }

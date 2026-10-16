@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kd100;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 /**
@@ -29,5 +30,4 @@ public class Kd100ExpressQueryReqDTO {
      * 收、寄件人的电话号码
      */
     private String phone;
-
 }

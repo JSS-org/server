@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.product;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -23,5 +24,4 @@ public class CrmStatisticsProductCategoryRespVO {
 
     @Schema(description = "销售金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "20000.00")
     private BigDecimal productTotalPrice;
-
 }

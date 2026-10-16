@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.rtc.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,10 @@ public class ImRtcCallManagerRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "业务通话编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "uuid-xxx")
+    @Schema(
+            description = "业务通话编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "uuid-xxx")
     private String room;
 
     @Schema(description = "会话类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -50,5 +54,4 @@ public class ImRtcCallManagerRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.product;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.crm.controller.admin.product.vo.category.CrmProductCategoryCreateReqVO;
@@ -7,18 +9,19 @@ import cn.iocoder.yudao.module.crm.controller.admin.product.vo.category.CrmProdu
 import cn.iocoder.yudao.module.crm.controller.admin.product.vo.category.CrmProductCategoryRespVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.product.CrmProductCategoryDO;
 import cn.iocoder.yudao.module.crm.service.product.CrmProductCategoryService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - CRM 产品分类")
 @RestController
@@ -26,20 +29,21 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class CrmProductCategoryController {
 
-    @Resource
-    private CrmProductCategoryService productCategoryService;
+    @Resource private CrmProductCategoryService productCategoryService;
 
     @PostMapping("/create")
     @Operation(summary = "创建产品分类")
     @PreAuthorize("@ss.hasPermission('crm:product-category:create')")
-    public CommonResult<Long> createProductCategory(@Valid @RequestBody CrmProductCategoryCreateReqVO createReqVO) {
+    public CommonResult<Long> createProductCategory(
+            @Valid @RequestBody CrmProductCategoryCreateReqVO createReqVO) {
         return success(productCategoryService.createProductCategory(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新产品分类")
     @PreAuthorize("@ss.hasPermission('crm:product-category:update')")
-    public CommonResult<Boolean> updateProductCategory(@Valid @RequestBody CrmProductCategoryCreateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProductCategory(
+            @Valid @RequestBody CrmProductCategoryCreateReqVO updateReqVO) {
         productCategoryService.updateProductCategory(updateReqVO);
         return success(true);
     }
@@ -65,9 +69,9 @@ public class CrmProductCategoryController {
     @GetMapping("/list")
     @Operation(summary = "获得产品分类列表")
     @PreAuthorize("@ss.hasPermission('crm:product-category:query')")
-    public CommonResult<List<CrmProductCategoryRespVO>> getProductCategoryList(@Valid CrmProductCategoryListReqVO listReqVO) {
+    public CommonResult<List<CrmProductCategoryRespVO>> getProductCategoryList(
+            @Valid CrmProductCategoryListReqVO listReqVO) {
         List<CrmProductCategoryDO> list = productCategoryService.getProductCategoryList(listReqVO);
         return success(BeanUtils.toBean(list, CrmProductCategoryRespVO.class));
     }
-
 }

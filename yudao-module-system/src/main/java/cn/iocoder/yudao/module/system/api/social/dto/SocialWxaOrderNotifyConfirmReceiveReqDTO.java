@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.api.social.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,5 +27,4 @@ public class SocialWxaOrderNotifyConfirmReceiveReqDTO {
      */
     @NotNull(message = "快递签收时间不能为空")
     private LocalDateTime receivedTime;
-
 }

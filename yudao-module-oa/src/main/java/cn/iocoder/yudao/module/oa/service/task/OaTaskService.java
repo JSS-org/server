@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.oa.service.task;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskFeedbackReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.task.vo.OaTaskPageReqVO;
@@ -11,8 +13,6 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.task.OaTaskReceiverDO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 
 /**
  * OA 任务 Service 接口
@@ -129,5 +129,4 @@ public interface OaTaskService {
      * @return 发布人用户编号与总体已完成任务数量的 Map
      */
     Map<Long, Long> getCompletedTaskCountMapByUserId();
-
 }

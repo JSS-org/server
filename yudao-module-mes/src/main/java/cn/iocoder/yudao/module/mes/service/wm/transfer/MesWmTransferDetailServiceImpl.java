@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.wm.transfer;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_DETAIL_MIXED_GOODS;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_DETAIL_NOT_EXISTS;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_DETAIL_QUANTITY_EXCEED;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,18 +13,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.transfer.MesWmTransferDetai
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.transfer.MesWmTransferLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.transfer.MesWmTransferDetailMapper;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_DETAIL_NOT_EXISTS;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_DETAIL_QUANTITY_EXCEED;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_DETAIL_MIXED_GOODS;
 
 /**
  * MES 调拨明细 Service 实现类
@@ -28,17 +30,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_TRANSFER_D
 @Validated
 public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailService {
 
-    @Resource
-    private MesWmTransferDetailMapper transferDetailMapper;
+    @Resource private MesWmTransferDetailMapper transferDetailMapper;
 
-    @Resource
-    @Lazy
-    private MesWmTransferService transferService;
-    @Resource
-    @Lazy
-    private MesWmTransferLineService transferLineService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource @Lazy private MesWmTransferService transferService;
+    @Resource @Lazy private MesWmTransferLineService transferLineService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
 
     @Override
     public Long createTransferDetail(MesWmTransferDetailSaveReqVO createReqVO) {
@@ -59,7 +55,8 @@ public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailServic
         validateDetailSaveData(updateReqVO, updateReqVO.getId());
 
         // 更新
-        MesWmTransferDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmTransferDetailDO.class);
+        MesWmTransferDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmTransferDetailDO.class);
         transferDetailMapper.updateById(updateObj);
     }
 
@@ -71,7 +68,8 @@ public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailServic
             throw exception(WM_TRANSFER_DETAIL_NOT_EXISTS);
         }
         // 校验父转移单可编辑（通过 line 找到 transfer）
-        MesWmTransferLineDO line = transferLineService.validateTransferLineExists(detail.getLineId());
+        MesWmTransferLineDO line =
+                transferLineService.validateTransferLineExists(detail.getLineId());
         transferService.validateTransferEditable(line.getTransferId());
         // 删除
         transferDetailMapper.deleteById(id);
@@ -116,15 +114,22 @@ public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailServic
      */
     private void validateDetailSaveData(MesWmTransferDetailSaveReqVO reqVO, Long excludeDetailId) {
         // 校验父数据存在
-        MesWmTransferLineDO line = transferLineService.validateTransferLineExists(reqVO.getLineId());
+        MesWmTransferLineDO line =
+                transferLineService.validateTransferLineExists(reqVO.getLineId());
         // 校验仓库、库区、库位的关联关系
         warehouseAreaService.validateWarehouseAreaExists(
                 reqVO.getToWarehouseId(), reqVO.getToLocationId(), reqVO.getToAreaId());
         // 校验明细总数量不超过行数量
-        validateDetailQuantityNotExceed(reqVO.getLineId(), reqVO.getQuantity(), excludeDetailId, line);
+        validateDetailQuantityNotExceed(
+                reqVO.getLineId(), reqVO.getQuantity(), excludeDetailId, line);
         // 校验不能混货：同一个目标仓位下，不能存在不同物料的明细
-        validateNoMixedGoods(reqVO.getLineId(), reqVO.getToWarehouseId(),
-                reqVO.getToLocationId(), reqVO.getToAreaId(), line.getItemId(), excludeDetailId);
+        validateNoMixedGoods(
+                reqVO.getLineId(),
+                reqVO.getToWarehouseId(),
+                reqVO.getToLocationId(),
+                reqVO.getToAreaId(),
+                line.getItemId(),
+                excludeDetailId);
     }
 
     /**
@@ -135,14 +140,19 @@ public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailServic
      * @param excludeDetailId 排除的明细 ID（更新时排除自身，新增时传 null）
      * @param line 调拨单行
      */
-    private void validateDetailQuantityNotExceed(Long lineId, BigDecimal newQuantity,
-                                                 Long excludeDetailId, MesWmTransferLineDO line) {
+    private void validateDetailQuantityNotExceed(
+            Long lineId, BigDecimal newQuantity, Long excludeDetailId, MesWmTransferLineDO line) {
         // 计算已有明细总数量（排除自身）
         List<MesWmTransferDetailDO> details = transferDetailMapper.selectListByLineId(lineId);
-        BigDecimal existingTotal = CollectionUtils.getSumValue(details,
-                detail -> excludeDetailId != null && excludeDetailId.equals(detail.getId())
-                        ? BigDecimal.ZERO : detail.getQuantity(),
-                BigDecimal::add, BigDecimal.ZERO);
+        BigDecimal existingTotal =
+                CollectionUtils.getSumValue(
+                        details,
+                        detail ->
+                                excludeDetailId != null && excludeDetailId.equals(detail.getId())
+                                        ? BigDecimal.ZERO
+                                        : detail.getQuantity(),
+                        BigDecimal::add,
+                        BigDecimal.ZERO);
         // 校验：已有 + 本次 <= 行数量
         if (existingTotal.add(newQuantity).compareTo(line.getQuantity()) > 0) {
             throw exception(WM_TRANSFER_DETAIL_QUANTITY_EXCEED);
@@ -159,12 +169,18 @@ public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailServic
      * @param itemId 当前物料 ID
      * @param excludeDetailId 排除的明细 ID（更新时排除自身）
      */
-    private void validateNoMixedGoods(Long lineId, Long toWarehouseId, Long toLocationId,
-                                      Long toAreaId, Long itemId, Long excludeDetailId) {
+    private void validateNoMixedGoods(
+            Long lineId,
+            Long toWarehouseId,
+            Long toLocationId,
+            Long toAreaId,
+            Long itemId,
+            Long excludeDetailId) {
         // 1. 获取当前转移单下的所有明细
         // 说明：因为无法直接从参数拿到 transferId，所以先通过 lineId 查询当前行，进而获取 transferId 和所有明细
         MesWmTransferLineDO currentLine = transferLineService.validateTransferLineExists(lineId);
-        List<MesWmTransferDetailDO> allDetails = transferDetailMapper.selectListByTransferId(currentLine.getTransferId());
+        List<MesWmTransferDetailDO> allDetails =
+                transferDetailMapper.selectListByTransferId(currentLine.getTransferId());
 
         // 2. 遍历所有明细，校验同一个目标仓位不能有不同的物料
         for (MesWmTransferDetailDO detail : allDetails) {
@@ -183,11 +199,11 @@ public class MesWmTransferDetailServiceImpl implements MesWmTransferDetailServic
                 continue;
             }
             // 2.4 重点：如果目标仓位相同，则必须保证物料也相同
-            MesWmTransferLineDO otherLine = transferLineService.validateTransferLineExists(detail.getLineId());
+            MesWmTransferLineDO otherLine =
+                    transferLineService.validateTransferLineExists(detail.getLineId());
             if (ObjUtil.notEqual(otherLine.getItemId(), itemId)) {
                 throw exception(WM_TRANSFER_DETAIL_MIXED_GOODS);
             }
         }
     }
-
 }

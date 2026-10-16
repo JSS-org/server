@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.mp.controller.admin.menu;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.mp.controller.admin.menu.vo.MpMenuRespVO;
 import cn.iocoder.yudao.module.mp.controller.admin.menu.vo.MpMenuSaveReqVO;
 import cn.iocoder.yudao.module.mp.convert.menu.MpMenuConvert;
 import cn.iocoder.yudao.module.mp.dal.dataobject.menu.MpMenuDO;
 import cn.iocoder.yudao.module.mp.service.menu.MpMenuService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 公众号菜单")
 @RestController
@@ -25,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MpMenuController {
 
-    @Resource
-    private MpMenuService mpMenuService;
+    @Resource private MpMenuService mpMenuService;
 
     @PostMapping("/save")
     @Operation(summary = "保存公众号菜单")
@@ -53,5 +55,4 @@ public class MpMenuController {
         List<MpMenuDO> list = mpMenuService.getMenuListByAccountId(accountId);
         return success(MpMenuConvert.INSTANCE.convertList(list));
     }
-
 }

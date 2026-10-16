@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.controller.admin.chat.vo.message;
 
 import cn.iocoder.yudao.module.ai.framework.ai.core.webserch.AiWebSearchResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,7 +31,10 @@ public class AiChatMessageRespVO {
     @Schema(description = "角色编号", example = "888")
     private Long roleId;
 
-    @Schema(description = "模型标志", requiredMode = Schema.RequiredMode.REQUIRED, example = "gpt-3.5-turbo")
+    @Schema(
+            description = "模型标志",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "gpt-3.5-turbo")
     private String model;
 
     @Schema(description = "模型编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "123")
@@ -56,7 +61,10 @@ public class AiChatMessageRespVO {
     @Schema(description = "附件 URL 数组", example = "https://www.iocoder.cn/1.png")
     private List<String> attachmentUrls;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-05-12 12:51")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-05-12 12:51")
     private LocalDateTime createTime;
 
     // ========== 仅在【对话管理】时加载 ==========
@@ -71,15 +79,22 @@ public class AiChatMessageRespVO {
         @Schema(description = "段落编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
         private Long id;
 
-        @Schema(description = "切片内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "Java 开发手册")
+        @Schema(
+                description = "切片内容",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "Java 开发手册")
         private String content;
 
-        @Schema(description = "文档编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "24790")
+        @Schema(
+                description = "文档编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "24790")
         private Long documentId;
 
-        @Schema(description = "文档名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "产品使用手册")
+        @Schema(
+                description = "文档名称",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "产品使用手册")
         private String documentName;
-
     }
-
 }

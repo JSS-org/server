@@ -1,35 +1,34 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.DIGEST_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.digest.FmsDigestSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsDigestDO;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsDigestMapper;
-import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.DIGEST_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-
 @Import(FmsDigestServiceImpl.class)
 public class FmsDigestServiceImplTest extends BaseDbUnitTest {
 
     private static final Long USER_ID = 10L;
 
-    @Resource
-    private FmsDigestServiceImpl digestService;
-    @Resource
-    private FmsDigestMapper digestMapper;
+    @Resource private FmsDigestServiceImpl digestService;
+    @Resource private FmsDigestMapper digestMapper;
 
-    @MockitoBean
-    private FmsAccountSetService accountSetService;
+    @MockitoBean private FmsAccountSetService accountSetService;
 
     @Test
     public void testCreateDigest_success() {
@@ -116,5 +115,4 @@ public class FmsDigestServiceImplTest extends BaseDbUnitTest {
         reqVO.setContent(content);
         return reqVO;
     }
-
 }

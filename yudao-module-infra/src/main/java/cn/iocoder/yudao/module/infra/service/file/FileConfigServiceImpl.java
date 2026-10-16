@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.infra.service.file;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.cache.CacheUtils.buildAsyncReloadingCache;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_DELETE_FAIL_MASTER;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_NOT_EXISTS;
+
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,12 +20,16 @@ import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientConfig;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientFactory;
 import cn.iocoder.yudao.module.infra.framework.file.core.enums.FileStorageEnum;
+
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Validator;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -29,11 +38,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.cache.CacheUtils.buildAsyncReloadingCache;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_DELETE_FAIL_MASTER;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_NOT_EXISTS;
 
 /**
  * 文件配置 Service 实现类
@@ -51,35 +55,41 @@ public class FileConfigServiceImpl implements FileConfigService {
      * {@link FileClient} 缓存，通过它异步刷新 fileClientFactory
      */
     @Getter
-    private final LoadingCache<Long, FileClient> clientCache = buildAsyncReloadingCache(Duration.ofSeconds(10L),
-            new CacheLoader<Long, FileClient>() {
+    private final LoadingCache<Long, FileClient> clientCache =
+            buildAsyncReloadingCache(
+                    Duration.ofSeconds(10L),
+                    new CacheLoader<Long, FileClient>() {
 
-                @Override
-                public FileClient load(Long id) {
-                    FileConfigDO config = Objects.equals(CACHE_MASTER_ID, id) ?
-                            fileConfigMapper.selectByMaster() : fileConfigMapper.selectById(id);
-                    if (config != null) {
-                        fileClientFactory.createOrUpdateFileClient(config.getId(), config.getStorage(), config.getConfig());
-                    }
-                    return fileClientFactory.getFileClient(null == config ? id : config.getId());
-                }
+                        @Override
+                        public FileClient load(Long id) {
+                            FileConfigDO config =
+                                    Objects.equals(CACHE_MASTER_ID, id)
+                                            ? fileConfigMapper.selectByMaster()
+                                            : fileConfigMapper.selectById(id);
+                            if (config != null) {
+                                fileClientFactory.createOrUpdateFileClient(
+                                        config.getId(), config.getStorage(), config.getConfig());
+                            }
+                            return fileClientFactory.getFileClient(
+                                    null == config ? id : config.getId());
+                        }
+                    });
 
-            });
+    @Resource private FileClientFactory fileClientFactory;
 
-    @Resource
-    private FileClientFactory fileClientFactory;
+    @Resource private FileConfigMapper fileConfigMapper;
 
-    @Resource
-    private FileConfigMapper fileConfigMapper;
-
-    @Resource
-    private Validator validator;
+    @Resource private Validator validator;
 
     @Override
     public Long createFileConfig(FileConfigSaveReqVO createReqVO) {
-        FileConfigDO fileConfig = FileConfigConvert.INSTANCE.convert(createReqVO)
-                .setConfig(parseClientConfig(createReqVO.getStorage(), createReqVO.getConfig()))
-                .setMaster(false); // 默认非 master
+        FileConfigDO fileConfig =
+                FileConfigConvert.INSTANCE
+                        .convert(createReqVO)
+                        .setConfig(
+                                parseClientConfig(
+                                        createReqVO.getStorage(), createReqVO.getConfig()))
+                        .setMaster(false); // 默认非 master
         fileConfigMapper.insert(fileConfig);
         return fileConfig.getId();
     }
@@ -89,8 +99,10 @@ public class FileConfigServiceImpl implements FileConfigService {
         // 校验存在
         FileConfigDO config = validateFileConfigExists(updateReqVO.getId());
         // 更新
-        FileConfigDO updateObj = FileConfigConvert.INSTANCE.convert(updateReqVO)
-                .setConfig(parseClientConfig(config.getStorage(), updateReqVO.getConfig()));
+        FileConfigDO updateObj =
+                FileConfigConvert.INSTANCE
+                        .convert(updateReqVO)
+                        .setConfig(parseClientConfig(config.getStorage(), updateReqVO.getConfig()));
         fileConfigMapper.updateById(updateObj);
 
         // 清空缓存
@@ -113,9 +125,10 @@ public class FileConfigServiceImpl implements FileConfigService {
 
     private FileClientConfig parseClientConfig(Integer storage, Map<String, Object> config) {
         // 获取配置类
-        Class<? extends FileClientConfig> configClass = FileStorageEnum.getByStorage(storage)
-                .getConfigClass();
-        FileClientConfig clientConfig = JsonUtils.parseObject2(JsonUtils.toJsonString(config), configClass);
+        Class<? extends FileClientConfig> configClass =
+                FileStorageEnum.getByStorage(storage).getConfigClass();
+        FileClientConfig clientConfig =
+                JsonUtils.parseObject2(JsonUtils.toJsonString(config), configClass);
         // 参数校验
         ValidationUtils.validate(validator, clientConfig);
         // 设置参数
@@ -192,7 +205,11 @@ public class FileConfigServiceImpl implements FileConfigService {
         validateFileConfigExists(id);
         // 上传文件
         byte[] content = ResourceUtil.readBytes("file/erweima.jpg");
-        return getFileClient(id).upload(content, "public" + StrUtil.SLASH + IdUtil.fastSimpleUUID() + ".jpg", "image/jpeg");
+        return getFileClient(id)
+                .upload(
+                        content,
+                        "public" + StrUtil.SLASH + IdUtil.fastSimpleUUID() + ".jpg",
+                        "image/jpeg");
     }
 
     @Override
@@ -204,5 +221,4 @@ public class FileConfigServiceImpl implements FileConfigService {
     public FileClient getMasterFileClient() {
         return clientCache.getUnchecked(CACHE_MASTER_ID);
     }
-
 }

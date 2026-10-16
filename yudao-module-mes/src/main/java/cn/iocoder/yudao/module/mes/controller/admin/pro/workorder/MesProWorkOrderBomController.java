@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.workorder;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -20,20 +24,20 @@ import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemTypeService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdProductBomService;
 import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderBomService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.*;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - MES 生产工单 BOM")
 @RestController
@@ -41,28 +45,25 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class MesProWorkOrderBomController {
 
-    @Resource
-    private MesProWorkOrderBomService workOrderBomService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
-    @Resource
-    private MesMdItemTypeService itemTypeService;
-    @Resource
-    private MesMdProductBomService productBomService;
+    @Resource private MesProWorkOrderBomService workOrderBomService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesMdItemTypeService itemTypeService;
+    @Resource private MesMdProductBomService productBomService;
 
     @PostMapping("/create")
     @Operation(summary = "创建工单 BOM")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:update')")
-    public CommonResult<Long> createWorkOrderBom(@Valid @RequestBody MesProWorkOrderBomSaveReqVO createReqVO) {
+    public CommonResult<Long> createWorkOrderBom(
+            @Valid @RequestBody MesProWorkOrderBomSaveReqVO createReqVO) {
         return success(workOrderBomService.createWorkOrderBom(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新工单 BOM")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:update')")
-    public CommonResult<Boolean> updateWorkOrderBom(@Valid @RequestBody MesProWorkOrderBomSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateWorkOrderBom(
+            @Valid @RequestBody MesProWorkOrderBomSaveReqVO updateReqVO) {
         workOrderBomService.updateWorkOrderBom(updateReqVO);
         return success(true);
     }
@@ -91,9 +92,13 @@ public class MesProWorkOrderBomController {
     @GetMapping("/page")
     @Operation(summary = "获得工单 BOM 分页")
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:query')")
-    public CommonResult<PageResult<MesProWorkOrderBomRespVO>> getWorkOrderBomPage(@Valid MesProWorkOrderBomPageReqVO pageReqVO) {
-        PageResult<MesProWorkOrderBomDO> pageResult = workOrderBomService.getWorkOrderBomPage(pageReqVO);
-        return success(new PageResult<>(buildWorkOrderBomRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<MesProWorkOrderBomRespVO>> getWorkOrderBomPage(
+            @Valid MesProWorkOrderBomPageReqVO pageReqVO) {
+        PageResult<MesProWorkOrderBomDO> pageResult =
+                workOrderBomService.getWorkOrderBomPage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildWorkOrderBomRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/list-by-work-order-id")
@@ -102,7 +107,8 @@ public class MesProWorkOrderBomController {
     @PreAuthorize("@ss.hasPermission('mes:pro-work-order:query')")
     public CommonResult<List<MesProWorkOrderBomRespVO>> getWorkOrderBomListByWorkOrderId(
             @RequestParam("workOrderId") Long workOrderId) {
-        List<MesProWorkOrderBomDO> list = workOrderBomService.getWorkOrderBomListByWorkOrderId(workOrderId);
+        List<MesProWorkOrderBomDO> list =
+                workOrderBomService.getWorkOrderBomListByWorkOrderId(workOrderId);
         return success(buildWorkOrderBomRespVOList(list));
     }
 
@@ -113,7 +119,8 @@ public class MesProWorkOrderBomController {
     public CommonResult<List<MesProWorkOrderItemRespVO>> getWorkOrderBomItemListByWorkOrderId(
             @RequestParam("workOrderId") Long workOrderId) {
         // 1. 获取工单 BOM 行
-        List<MesProWorkOrderBomDO> bomList = workOrderBomService.getWorkOrderBomListByWorkOrderId(workOrderId);
+        List<MesProWorkOrderBomDO> bomList =
+                workOrderBomService.getWorkOrderBomListByWorkOrderId(workOrderId);
         if (CollUtil.isEmpty(bomList)) {
             return success(Collections.emptyList());
         }
@@ -126,22 +133,32 @@ public class MesProWorkOrderBomController {
 
         // 3. 拼接 VO 字段
         Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(leafItems.keySet());
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
-        Map<Long, MesMdItemTypeDO> itemTypeMap = itemTypeService.getItemTypeMap(
-                convertSet(itemMap.values(), MesMdItemDO::getItemTypeId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesMdItemTypeDO> itemTypeMap =
+                itemTypeService.getItemTypeMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getItemTypeId));
         List<MesProWorkOrderItemRespVO> result = new ArrayList<>(leafItems.size());
         for (Map.Entry<Long, BigDecimal> entry : leafItems.entrySet()) {
             MesMdItemDO item = itemMap.get(entry.getKey());
             if (item == null) {
                 continue;
             }
-            MesProWorkOrderItemRespVO vo = new MesProWorkOrderItemRespVO()
-                    .setItemId(item.getId()).setQuantity(entry.getValue())
-                    .setItemCode(item.getCode()).setItemName(item.getName()).setItemSpecification(item.getSpecification());
-            MapUtils.findAndThen(unitMeasureMap, item.getUnitMeasureId(),
+            MesProWorkOrderItemRespVO vo =
+                    new MesProWorkOrderItemRespVO()
+                            .setItemId(item.getId())
+                            .setQuantity(entry.getValue())
+                            .setItemCode(item.getCode())
+                            .setItemName(item.getName())
+                            .setItemSpecification(item.getSpecification());
+            MapUtils.findAndThen(
+                    unitMeasureMap,
+                    item.getUnitMeasureId(),
                     unitMeasure -> vo.setUnitMeasureName(unitMeasure.getName()));
-            MapUtils.findAndThen(itemTypeMap, item.getItemTypeId(),
+            MapUtils.findAndThen(
+                    itemTypeMap,
+                    item.getItemTypeId(),
                     itemType -> vo.setItemOrProduct(itemType.getItemOrProduct()));
             result.add(vo);
         }
@@ -150,28 +167,44 @@ public class MesProWorkOrderBomController {
 
     // ==================== 拼接 VO ====================
 
-    private List<MesProWorkOrderBomRespVO> buildWorkOrderBomRespVOList(List<MesProWorkOrderBomDO> list) {
+    private List<MesProWorkOrderBomRespVO> buildWorkOrderBomRespVOList(
+            List<MesProWorkOrderBomDO> list) {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
         // 1. 批量获取关联数据
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesProWorkOrderBomDO::getItemId));
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
-        Map<Long, MesMdItemTypeDO> itemTypeMap = itemTypeService.getItemTypeMap(
-                convertSet(itemMap.values(), MesMdItemDO::getItemTypeId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesProWorkOrderBomDO::getItemId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesMdItemTypeDO> itemTypeMap =
+                itemTypeService.getItemTypeMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getItemTypeId));
         // 2. 拼接 VO
-        return BeanUtils.toBean(list, MesProWorkOrderBomRespVO.class, vo -> {
-            MapUtils.findAndThen(itemMap, vo.getItemId(), item -> {
-                vo.setItemName(item.getName()).setItemCode(item.getCode())
-                        .setItemSpecification(item.getSpecification());
-                MapUtils.findAndThen(itemTypeMap, item.getItemTypeId(),
-                        itemType -> vo.setItemOrProduct(itemType.getItemOrProduct()));
-                MapUtils.findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unitMeasure -> vo.setUnitMeasureName(unitMeasure.getName()));
-            });
-        });
+        return BeanUtils.toBean(
+                list,
+                MesProWorkOrderBomRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            itemMap,
+                            vo.getItemId(),
+                            item -> {
+                                vo.setItemName(item.getName())
+                                        .setItemCode(item.getCode())
+                                        .setItemSpecification(item.getSpecification());
+                                MapUtils.findAndThen(
+                                        itemTypeMap,
+                                        item.getItemTypeId(),
+                                        itemType ->
+                                                vo.setItemOrProduct(itemType.getItemOrProduct()));
+                                MapUtils.findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unitMeasure ->
+                                                vo.setUnitMeasureName(unitMeasure.getName()));
+                            });
+                });
     }
 
     // ==================== 物料需求逐层展开 ====================
@@ -193,9 +226,11 @@ public class MesProWorkOrderBomController {
         Map<Long, BigDecimal> leafItems = new LinkedHashMap<>();
         for (int i = 0; i < Byte.MAX_VALUE && CollUtil.isNotEmpty(currentLayer); i++) {
             // 2.1 批量查询当前层所有物料的子 BOM
-            List<MesMdProductBomDO> subBomList = productBomService.getProductBomListByItemIds(currentLayer.keySet());
+            List<MesMdProductBomDO> subBomList =
+                    productBomService.getProductBomListByItemIds(currentLayer.keySet());
             // 2.2 按 itemId 分组
-            Map<Long, List<MesMdProductBomDO>> subBomMap = convertMultiMap(subBomList, MesMdProductBomDO::getItemId);
+            Map<Long, List<MesMdProductBomDO>> subBomMap =
+                    convertMultiMap(subBomList, MesMdProductBomDO::getItemId);
             // 2.3 区分叶子节点和非叶子节点
             Map<Long, BigDecimal> nextLayer = new LinkedHashMap<>();
             for (Map.Entry<Long, BigDecimal> entry : currentLayer.entrySet()) {
@@ -209,12 +244,14 @@ public class MesProWorkOrderBomController {
                 }
                 // 情况二：非叶子，子物料进入下一层
                 for (MesMdProductBomDO child : children) {
-                    nextLayer.merge(child.getBomItemId(), quantity.multiply(child.getQuantity()), BigDecimal::add);
+                    nextLayer.merge(
+                            child.getBomItemId(),
+                            quantity.multiply(child.getQuantity()),
+                            BigDecimal::add);
                 }
             }
             currentLayer = nextLayer;
         }
         return leafItems;
     }
-
 }

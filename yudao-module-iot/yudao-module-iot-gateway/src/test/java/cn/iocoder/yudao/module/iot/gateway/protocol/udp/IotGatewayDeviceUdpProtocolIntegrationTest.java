@@ -14,7 +14,9 @@ import cn.iocoder.yudao.module.iot.core.topic.topo.IotDeviceTopoGetReqDTO;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.json.IotJsonSerializer;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -73,7 +75,8 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
     /**
      * 网关设备 Token：从 {@link #testAuth()} 方法获取后，粘贴到这里
      */
-    private static final String GATEWAY_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoibTZYY1MxWkozVFc4ZUMwdiIsImV4cCI6MTc2OTk1NDcxNSwiZGV2aWNlTmFtZSI6InN1Yi1kZGQifQ.Vg5iateNrpg0FVQI2eJomggxrYXGpwug8wsz9BsVr5w";
+    private static final String GATEWAY_TOKEN =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoibTZYY1MxWkozVFc4ZUMwdiIsImV4cCI6MTc2OTk1NDcxNSwiZGV2aWNlTmFtZSI6InN1Yi1kZGQifQ.Vg5iateNrpg0FVQI2eJomggxrYXGpwug8wsz9BsVr5w";
 
     // ===================== 子设备信息（根据实际情况修改，从 iot_device 表查询子设备） =====================
     private static final String SUB_DEVICE_PRODUCT_KEY = "jAufEMTF1W6wnPhn";
@@ -88,12 +91,14 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
     @Test
     public void testAuth() throws Exception {
         // 1. 构建认证消息
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(
-                GATEWAY_PRODUCT_KEY, GATEWAY_DEVICE_NAME, GATEWAY_DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(
+                        GATEWAY_PRODUCT_KEY, GATEWAY_DEVICE_NAME, GATEWAY_DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
         IotDeviceMessage request = IotDeviceMessage.requestOf("auth", authReqDTO);
 
         // 2. 发送并接收响应
@@ -110,16 +115,19 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
     @Test
     public void testTopoAdd() throws Exception {
         // 1. 构建子设备认证信息
-        IotDeviceAuthReqDTO subAuthInfo = IotDeviceAuthUtils.getAuthInfo(
-                SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME, SUB_DEVICE_SECRET);
-        IotDeviceAuthReqDTO subDeviceAuth = new IotDeviceAuthReqDTO()
-                .setClientId(subAuthInfo.getClientId())
-                .setUsername(subAuthInfo.getUsername())
-                .setPassword(subAuthInfo.getPassword());
+        IotDeviceAuthReqDTO subAuthInfo =
+                IotDeviceAuthUtils.getAuthInfo(
+                        SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME, SUB_DEVICE_SECRET);
+        IotDeviceAuthReqDTO subDeviceAuth =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(subAuthInfo.getClientId())
+                        .setUsername(subAuthInfo.getUsername())
+                        .setPassword(subAuthInfo.getPassword());
         IotDeviceTopoAddReqDTO params = new IotDeviceTopoAddReqDTO();
         params.setSubDevices(Collections.singletonList(subDeviceAuth));
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.TOPO_ADD.getMethod(), withToken(params));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.TOPO_ADD.getMethod(), withToken(params));
 
         // 2. 发送并接收响应
         IotDeviceMessage response = sendAndReceive(request);
@@ -133,10 +141,12 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
     public void testTopoDelete() throws Exception {
         // 1. 构建请求参数
         IotDeviceTopoDeleteReqDTO params = new IotDeviceTopoDeleteReqDTO();
-        params.setSubDevices(Collections.singletonList(
-                new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME)));
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.TOPO_DELETE.getMethod(), withToken(params));
+        params.setSubDevices(
+                Collections.singletonList(
+                        new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME)));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.TOPO_DELETE.getMethod(), withToken(params));
 
         // 2. 发送并接收响应
         IotDeviceMessage response = sendAndReceive(request);
@@ -150,8 +160,9 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
     public void testTopoGet() throws Exception {
         // 1. 构建请求参数
         IotDeviceTopoGetReqDTO params = new IotDeviceTopoGetReqDTO();
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.TOPO_GET.getMethod(), withToken(params));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.TOPO_GET.getMethod(), withToken(params));
 
         // 2. 发送并接收响应
         IotDeviceMessage response = sendAndReceive(request);
@@ -169,9 +180,10 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
         IotSubDeviceRegisterReqDTO subDevice = new IotSubDeviceRegisterReqDTO();
         subDevice.setProductKey(SUB_DEVICE_PRODUCT_KEY);
         subDevice.setDeviceName("mougezishebei");
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.SUB_DEVICE_REGISTER.getMethod(),
-                withToken(Collections.singletonList(subDevice)));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.SUB_DEVICE_REGISTER.getMethod(),
+                        withToken(Collections.singletonList(subDevice)));
 
         // 2. 发送并接收响应
         IotDeviceMessage response = sendAndReceive(request);
@@ -186,29 +198,32 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
     @Test
     public void testPropertyPackPost() throws Exception {
         // 1.1 构建【网关设备】自身属性
-        Map<String, Object> gatewayProperties = MapUtil.<String, Object>builder()
-                .put("temperature", 25.5)
-                .build();
+        Map<String, Object> gatewayProperties =
+                MapUtil.<String, Object>builder().put("temperature", 25.5).build();
         // 1.2 构建【网关设备】自身事件
-        IotDevicePropertyPackPostReqDTO.EventValue gatewayEvent = new IotDevicePropertyPackPostReqDTO.EventValue();
+        IotDevicePropertyPackPostReqDTO.EventValue gatewayEvent =
+                new IotDevicePropertyPackPostReqDTO.EventValue();
         gatewayEvent.setValue(MapUtil.builder().put("message", "gateway started").build());
         gatewayEvent.setTime(System.currentTimeMillis());
-        Map<String, IotDevicePropertyPackPostReqDTO.EventValue> gatewayEvents = MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
-                .put("statusReport", gatewayEvent)
-                .build();
+        Map<String, IotDevicePropertyPackPostReqDTO.EventValue> gatewayEvents =
+                MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
+                        .put("statusReport", gatewayEvent)
+                        .build();
         // 1.3 构建【网关子设备】属性
-        Map<String, Object> subDeviceProperties = MapUtil.<String, Object>builder()
-                .put("power", 100)
-                .build();
+        Map<String, Object> subDeviceProperties =
+                MapUtil.<String, Object>builder().put("power", 100).build();
         // 1.4 构建【网关子设备】事件
-        IotDevicePropertyPackPostReqDTO.EventValue subDeviceEvent = new IotDevicePropertyPackPostReqDTO.EventValue();
+        IotDevicePropertyPackPostReqDTO.EventValue subDeviceEvent =
+                new IotDevicePropertyPackPostReqDTO.EventValue();
         subDeviceEvent.setValue(MapUtil.builder().put("errorCode", 0).build());
         subDeviceEvent.setTime(System.currentTimeMillis());
-        Map<String, IotDevicePropertyPackPostReqDTO.EventValue> subDeviceEvents = MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
-                .put("healthCheck", subDeviceEvent)
-                .build();
+        Map<String, IotDevicePropertyPackPostReqDTO.EventValue> subDeviceEvents =
+                MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
+                        .put("healthCheck", subDeviceEvent)
+                        .build();
         // 1.5 构建子设备数据
-        IotDevicePropertyPackPostReqDTO.SubDeviceData subDeviceData = new IotDevicePropertyPackPostReqDTO.SubDeviceData();
+        IotDevicePropertyPackPostReqDTO.SubDeviceData subDeviceData =
+                new IotDevicePropertyPackPostReqDTO.SubDeviceData();
         subDeviceData.setIdentity(new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME));
         subDeviceData.setProperties(subDeviceProperties);
         subDeviceData.setEvents(subDeviceEvents);
@@ -217,8 +232,10 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
         params.setProperties(gatewayProperties);
         params.setEvents(gatewayEvents);
         params.setSubDevices(ListUtil.of(subDeviceData));
-        IotDeviceMessage request = IotDeviceMessage.requestOf(
-                IotDeviceMessageMethodEnum.PROPERTY_PACK_POST.getMethod(), withToken(params));
+        IotDeviceMessage request =
+                IotDeviceMessage.requestOf(
+                        IotDeviceMessageMethodEnum.PROPERTY_PACK_POST.getMethod(),
+                        withToken(params));
 
         // 2. 发送并接收响应
         IotDeviceMessage response = sendAndReceive(request);
@@ -247,7 +264,8 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setSoTimeout(TIMEOUT_MS);
             InetAddress address = InetAddress.getByName(SERVER_HOST);
-            DatagramPacket sendPacket = new DatagramPacket(payload, payload.length, address, SERVER_PORT);
+            DatagramPacket sendPacket =
+                    new DatagramPacket(payload, payload.length, address, SERVER_PORT);
             socket.send(sendPacket);
 
             byte[] receiveData = new byte[4096];
@@ -255,7 +273,8 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
             try {
                 socket.receive(receivePacket);
                 byte[] responseBytes = new byte[receivePacket.getLength()];
-                System.arraycopy(receivePacket.getData(), 0, responseBytes, 0, receivePacket.getLength());
+                System.arraycopy(
+                        receivePacket.getData(), 0, responseBytes, 0, receivePacket.getLength());
                 return SERIALIZER.deserialize(responseBytes);
             } catch (java.net.SocketTimeoutException e) {
                 log.warn("[sendAndReceive][接收响应超时]");
@@ -263,5 +282,4 @@ public class IotGatewayDeviceUdpProtocolIntegrationTest {
             }
         }
     }
-
 }

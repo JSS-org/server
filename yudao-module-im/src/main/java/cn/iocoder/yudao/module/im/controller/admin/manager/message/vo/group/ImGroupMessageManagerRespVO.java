@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.message.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ public class ImGroupMessageManagerRespVO {
 
     @Schema(description = "@ 目标用户编号列表（-1 表示 @所有人）")
     private List<Long> atUserIds;
+
     @Schema(description = "@ 目标用户昵称列表（-1 位置为 null，前端根据 atUserIds 自行展示「@所有人」）")
     private List<String> atUserNicknames;
 
@@ -50,5 +52,4 @@ public class ImGroupMessageManagerRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

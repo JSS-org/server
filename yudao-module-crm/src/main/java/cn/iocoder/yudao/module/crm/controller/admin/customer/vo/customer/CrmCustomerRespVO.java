@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.crm.controller.admin.customer.vo.customer;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -43,9 +45,11 @@ public class CrmCustomerRespVO {
     @Schema(description = "负责人的用户编号", example = "25682")
     @ExcelProperty("负责人的用户编号")
     private Long ownerUserId;
+
     @Schema(description = "负责人名字", example = "25682")
     @ExcelProperty("负责人名字")
     private String ownerUserName;
+
     @Schema(description = "负责人部门")
     @ExcelProperty("负责人部门")
     private String ownerUserDeptName;
@@ -83,9 +87,11 @@ public class CrmCustomerRespVO {
     @Schema(description = "地区编号", example = "1024")
     @ExcelProperty("地区编号")
     private Integer areaId;
+
     @Schema(description = "地区名称", example = "北京市")
     @ExcelProperty("地区名称")
     private String areaName;
+
     @Schema(description = "详细地址", example = "北京市成华大道")
     @ExcelProperty("详细地址")
     private String detailAddress;
@@ -120,11 +126,11 @@ public class CrmCustomerRespVO {
     @Schema(description = "创建人", example = "1024")
     @ExcelProperty("创建人")
     private String creator;
+
     @Schema(description = "创建人名字", example = "芋道源码")
     @ExcelProperty("创建人名字")
     private String creatorName;
 
     @Schema(description = "距离加入公海时间", example = "1")
     private Long poolDay;
-
 }

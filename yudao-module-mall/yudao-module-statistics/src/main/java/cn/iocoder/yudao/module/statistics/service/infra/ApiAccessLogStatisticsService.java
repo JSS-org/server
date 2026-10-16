@@ -28,5 +28,4 @@ public interface ApiAccessLogStatisticsService {
      * @return 访问用户数量
      */
     Integer getIpCount(Integer userType, LocalDateTime beginTime, LocalDateTime endTime);
-
 }

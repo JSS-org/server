@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.statistics.controller.admin.member.vo;
 
 import cn.iocoder.yudao.module.statistics.controller.admin.common.vo.DataComparisonRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 会员分析 Response VO")
@@ -22,5 +24,4 @@ public class MemberAnalyseRespVO {
 
     @Schema(description = "对照数据", requiredMode = Schema.RequiredMode.REQUIRED)
     private DataComparisonRespVO<MemberAnalyseDataRespVO> comparison;
-
 }

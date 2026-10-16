@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.app.aftersale.vo;
 
 import cn.iocoder.yudao.module.trade.controller.app.base.property.AppProductPropertyValueDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class AppAfterSaleRespVO {
     @Schema(description = "售后编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "售后流水号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1146347329394184195")
+    @Schema(
+            description = "售后流水号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1146347329394184195")
     private String no;
 
     @Schema(description = "售后状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -66,7 +71,10 @@ public class AppAfterSaleRespVO {
      */
     private List<AppProductPropertyValueDetailRespVO> properties;
 
-    @Schema(description = "商品图片", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/01.jpg")
+    @Schema(
+            description = "商品图片",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/01.jpg")
     private String picUrl;
 
     @Schema(description = "退货商品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -105,5 +113,4 @@ public class AppAfterSaleRespVO {
 
     @Schema(description = "收货备注")
     private String receiveReason;
-
 }

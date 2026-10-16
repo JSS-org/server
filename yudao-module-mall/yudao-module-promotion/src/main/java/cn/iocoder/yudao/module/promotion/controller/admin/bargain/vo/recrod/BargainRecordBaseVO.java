@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.bargain.vo.recrod;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import lombok.Data;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 
 /**
  * 砍价记录 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -24,19 +27,31 @@ public class BargainRecordBaseVO {
     @NotNull(message = "用户编号不能为空")
     private Long userId;
 
-    @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "23622")
+    @Schema(
+            description = "商品 SPU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "23622")
     @NotNull(message = "商品 SPU 编号不能为空")
     private Long spuId;
 
-    @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "29950")
+    @Schema(
+            description = "商品 SKU 编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "29950")
     @NotNull(message = "商品 SKU 编号不能为空")
     private Long skuId;
 
-    @Schema(description = "砍价起始价格，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "31160")
+    @Schema(
+            description = "砍价起始价格，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "31160")
     @NotNull(message = "砍价起始价格，单位：分不能为空")
     private Integer bargainFirstPrice;
 
-    @Schema(description = "当前砍价，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "22743")
+    @Schema(
+            description = "当前砍价，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "22743")
     @NotNull(message = "当前砍价，单位：分不能为空")
     private Integer bargainPrice;
 
@@ -51,5 +66,4 @@ public class BargainRecordBaseVO {
     @NotNull(message = "结束时间不能为空")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime endTime;
-
 }

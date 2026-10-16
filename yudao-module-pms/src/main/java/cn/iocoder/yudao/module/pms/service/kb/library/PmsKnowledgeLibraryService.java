@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.kb.library;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.library.PmsKnowledgeLibraryPageReqVO;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.library.PmsKnowledgeLibrarySaveReqVO;
@@ -9,8 +11,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 知识库 Service 接口
@@ -82,7 +82,8 @@ public interface PmsKnowledgeLibraryService {
      * @param userId 用户编号
      * @return 知识库分页
      */
-    PageResult<PmsKnowledgeLibraryDO> getLibraryPage(PmsKnowledgeLibraryPageReqVO pageReqVO, Long userId);
+    PageResult<PmsKnowledgeLibraryDO> getLibraryPage(
+            PmsKnowledgeLibraryPageReqVO pageReqVO, Long userId);
 
     /**
      * 获得知识库列表
@@ -109,5 +110,4 @@ public interface PmsKnowledgeLibraryService {
      * @return 知识库编号列表
      */
     List<Long> getLibraryIdList(Boolean openStatus);
-
 }

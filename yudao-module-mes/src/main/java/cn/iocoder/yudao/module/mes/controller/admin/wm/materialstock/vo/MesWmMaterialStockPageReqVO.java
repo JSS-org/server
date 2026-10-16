@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.materialstock.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -16,6 +18,7 @@ public class MesWmMaterialStockPageReqVO extends PageParam {
      * 虚拟仓过滤模式 - 排除虚拟仓
      */
     public static final String VIRTUAL_FILTER_EXCLUDE = "exclude";
+
     /**
      * 虚拟仓过滤模式 - 只看虚拟仓
      */
@@ -50,5 +53,4 @@ public class MesWmMaterialStockPageReqVO extends PageParam {
 
     @Schema(description = "是否冻结", example = "false")
     private Boolean frozen;
-
 }

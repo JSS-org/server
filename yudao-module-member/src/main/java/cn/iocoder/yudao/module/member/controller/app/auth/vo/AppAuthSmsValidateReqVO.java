@@ -3,13 +3,16 @@ package cn.iocoder.yudao.module.member.controller.app.auth.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.common.validation.Mobile;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "用户 APP - 校验手机验证码 Request VO")
 @Data
@@ -29,5 +32,4 @@ public class AppAuthSmsValidateReqVO {
     @Length(min = 4, max = 6, message = "手机验证码长度为 4-6 位")
     @Pattern(regexp = "^[0-9]+$", message = "手机验证码必须都是数字")
     private String code;
-
 }

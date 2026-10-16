@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.user.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,10 +18,16 @@ public class MemberUserRespVO extends MemberUserBaseVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "23788")
     private Long id;
 
-    @Schema(description = "注册 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "注册 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     private String registerIp;
 
-    @Schema(description = "最后登录IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "最后登录IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     private String loginIp;
 
     @Schema(description = "最后登录时间", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -31,7 +38,7 @@ public class MemberUserRespVO extends MemberUserBaseVO {
 
     // ========== 其它信息 ==========
 
-    @Schema(description = "积分", requiredMode  = Schema.RequiredMode.REQUIRED, example = "100")
+    @Schema(description = "积分", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer point;
 
     @Schema(description = "总积分", requiredMode = Schema.RequiredMode.REQUIRED, example = "2000")
@@ -46,7 +53,6 @@ public class MemberUserRespVO extends MemberUserBaseVO {
     @Schema(description = "用户分组", example = "购物达人")
     private String groupName;
 
-    @Schema(description = "用户经验值", requiredMode  = Schema.RequiredMode.REQUIRED, example = "200")
+    @Schema(description = "用户经验值", requiredMode = Schema.RequiredMode.REQUIRED, example = "200")
     private Integer experience;
-
 }

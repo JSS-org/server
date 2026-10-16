@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.trade.service.order;
 
+import static java.util.Collections.singleton;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.trade.controller.admin.order.vo.TradeOrderPageReqVO;
 import cn.iocoder.yudao.module.trade.controller.admin.order.vo.TradeOrderSummaryRespVO;
@@ -11,8 +13,6 @@ import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressT
 
 import java.util.Collection;
 import java.util.List;
-
-import static java.util.Collections.singleton;
 
 /**
  * 交易订单【读】 Service 接口
@@ -48,7 +48,8 @@ public interface TradeOrderQueryService {
      * @param status                订单状态
      * @return 交易订单
      */
-    TradeOrderDO getOrderByUserIdAndStatusAndCombination(Long userId, Long combinationActivityId, Integer status);
+    TradeOrderDO getOrderByUserIdAndStatusAndCombination(
+            Long userId, Long combinationActivityId, Integer status);
 
     /**
      * 获得订单列表
@@ -156,5 +157,4 @@ public interface TradeOrderQueryService {
      * @return 交易订单项数组
      */
     List<TradeOrderItemDO> getOrderItemListByOrderId(Collection<Long> orderIds);
-
 }

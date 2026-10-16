@@ -42,5 +42,4 @@ public interface PmsKnowledgeDocumentLikeService {
      * @param documentIds 文档编号集合
      */
     void deleteLikesByDocumentIds(Collection<Long> documentIds);
-
 }

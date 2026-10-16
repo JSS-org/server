@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.weixin;
 
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+
 import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
+
 import com.github.binarywang.wxpay.bean.order.WxPayAppOrderResult;
 import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderRequest;
 import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderV3Request;
@@ -11,9 +14,8 @@ import com.github.binarywang.wxpay.bean.result.WxPayUnifiedOrderV3Result;
 import com.github.binarywang.wxpay.bean.result.enums.TradeTypeEnum;
 import com.github.binarywang.wxpay.constant.WxPayConstants;
 import com.github.binarywang.wxpay.exception.WxPayException;
-import lombok.extern.slf4j.Slf4j;
 
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 微信支付【App 支付】的 PayClient 实现类
@@ -44,8 +46,11 @@ public class WxAppPayClient extends AbstractWxPayClient {
         WxPayAppOrderResult response = client.createOrder(request);
 
         // 转换结果
-        return PayOrderRespDTO.waitingOf(PayOrderDisplayModeEnum.APP.getMode(), toJsonString(response),
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                PayOrderDisplayModeEnum.APP.getMode(),
+                toJsonString(response),
+                reqDTO.getOutTradeNo(),
+                response);
     }
 
     @Override
@@ -53,11 +58,14 @@ public class WxAppPayClient extends AbstractWxPayClient {
         // 构建 WxPayUnifiedOrderV3Request 对象
         WxPayUnifiedOrderV3Request request = buildPayUnifiedOrderRequestV3(reqDTO);
         // 执行请求
-        WxPayUnifiedOrderV3Result.AppResult response = client.createOrderV3(TradeTypeEnum.APP, request);
+        WxPayUnifiedOrderV3Result.AppResult response =
+                client.createOrderV3(TradeTypeEnum.APP, request);
 
         // 转换结果
-        return PayOrderRespDTO.waitingOf(PayOrderDisplayModeEnum.APP.getMode(), toJsonString(response),
-                reqDTO.getOutTradeNo(), response);
+        return PayOrderRespDTO.waitingOf(
+                PayOrderDisplayModeEnum.APP.getMode(),
+                toJsonString(response),
+                reqDTO.getOutTradeNo(),
+                response);
     }
-
 }

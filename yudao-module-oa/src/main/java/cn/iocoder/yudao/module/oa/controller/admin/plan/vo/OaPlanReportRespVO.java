@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.plan.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -48,5 +49,4 @@ public class OaPlanReportRespVO {
 
     @Schema(description = "创建时间", type = "integer", format = "int64", example = "1789347600000")
     private LocalDateTime createTime;
-
 }

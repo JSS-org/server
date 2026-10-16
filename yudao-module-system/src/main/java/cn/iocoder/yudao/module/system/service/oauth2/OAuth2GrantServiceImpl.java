@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.service.oauth2;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,12 +11,12 @@ import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2CodeDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.ErrorCodeConstants;
 import cn.iocoder.yudao.module.system.service.auth.AdminAuthService;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
-import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * OAuth2 授予 Service 实现类
@@ -24,30 +26,32 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 @Service
 public class OAuth2GrantServiceImpl implements OAuth2GrantService {
 
-    @Resource
-    private OAuth2TokenService oauth2TokenService;
-    @Resource
-    private OAuth2CodeService oauth2CodeService;
-    @Resource
-    private AdminAuthService adminAuthService;
+    @Resource private OAuth2TokenService oauth2TokenService;
+    @Resource private OAuth2CodeService oauth2CodeService;
+    @Resource private AdminAuthService adminAuthService;
 
     @Override
-    public OAuth2AccessTokenDO grantImplicit(Long userId, Integer userType,
-                                             String clientId, List<String> scopes) {
+    public OAuth2AccessTokenDO grantImplicit(
+            Long userId, Integer userType, String clientId, List<String> scopes) {
         return oauth2TokenService.createAccessToken(userId, userType, clientId, scopes);
     }
 
     @Override
-    public String grantAuthorizationCodeForCode(Long userId, Integer userType,
-                                                String clientId, List<String> scopes,
-                                                String redirectUri, String state) {
-        return oauth2CodeService.createAuthorizationCode(userId, userType, clientId, scopes,
-                redirectUri, state).getCode();
+    public String grantAuthorizationCodeForCode(
+            Long userId,
+            Integer userType,
+            String clientId,
+            List<String> scopes,
+            String redirectUri,
+            String state) {
+        return oauth2CodeService
+                .createAuthorizationCode(userId, userType, clientId, scopes, redirectUri, state)
+                .getCode();
     }
 
     @Override
-    public OAuth2AccessTokenDO grantAuthorizationCodeForAccessToken(String clientId, String code,
-                                                                    String redirectUri, String state) {
+    public OAuth2AccessTokenDO grantAuthorizationCodeForAccessToken(
+            String clientId, String code, String redirectUri, String state) {
         OAuth2CodeDO codeDO = oauth2CodeService.consumeAuthorizationCode(code);
         Assert.notNull(codeDO, "授权码不能为空"); // 防御性编程
         // 校验 clientId 是否匹配
@@ -65,18 +69,20 @@ public class OAuth2GrantServiceImpl implements OAuth2GrantService {
         }
 
         // 创建访问令牌
-        return oauth2TokenService.createAccessToken(codeDO.getUserId(), codeDO.getUserType(),
-                codeDO.getClientId(), codeDO.getScopes());
+        return oauth2TokenService.createAccessToken(
+                codeDO.getUserId(), codeDO.getUserType(), codeDO.getClientId(), codeDO.getScopes());
     }
 
     @Override
-    public OAuth2AccessTokenDO grantPassword(String username, String password, String clientId, List<String> scopes) {
+    public OAuth2AccessTokenDO grantPassword(
+            String username, String password, String clientId, List<String> scopes) {
         // 使用账号 + 密码进行登录
         AdminUserDO user = adminAuthService.authenticate(username, password);
         Assert.notNull(user, "用户不能为空！"); // 防御性编程
 
         // 创建访问令牌
-        return oauth2TokenService.createAccessToken(user.getId(), UserTypeEnum.ADMIN.getValue(), clientId, scopes);
+        return oauth2TokenService.createAccessToken(
+                user.getId(), UserTypeEnum.ADMIN.getValue(), clientId, scopes);
     }
 
     @Override
@@ -87,7 +93,8 @@ public class OAuth2GrantServiceImpl implements OAuth2GrantService {
     @Override
     public OAuth2AccessTokenDO grantClientCredentials(String clientId, List<String> scopes) {
         // 特殊：https://yuanbao.tencent.com/bot/app/share/chat/wFj642xSZHHx
-        return oauth2TokenService.createAccessToken(0L, UserTypeEnum.ADMIN.getValue(), clientId, scopes);
+        return oauth2TokenService.createAccessToken(
+                0L, UserTypeEnum.ADMIN.getValue(), clientId, scopes);
     }
 
     @Override
@@ -100,5 +107,4 @@ public class OAuth2GrantServiceImpl implements OAuth2GrantService {
         // 再删除
         return oauth2TokenService.removeAccessToken(accessToken) != null;
     }
-
 }

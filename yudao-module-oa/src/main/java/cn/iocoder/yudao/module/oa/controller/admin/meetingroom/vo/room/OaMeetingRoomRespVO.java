@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,10 @@ public class OaMeetingRoomRespVO {
     @Schema(description = "编号", example = "1024", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long id;
 
-    @Schema(description = "会议室名称", example = "101 项目讨论室", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            description = "会议室名称",
+            example = "101 项目讨论室",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
 
     @Schema(description = "位置", example = "办公楼一层 101", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -64,7 +68,11 @@ public class OaMeetingRoomRespVO {
     @Schema(description = "负责人联系方式", example = "13800138000")
     private String managerPhone;
 
-    @Schema(description = "创建时间", example = "1789347600000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "创建时间",
+            example = "1789347600000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime createTime;
-
 }

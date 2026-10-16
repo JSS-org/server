@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.pay.dal.dataobject.transfer;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.dal.dataobject.app.PayAppDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.channel.PayChannelDO;
+import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.enums.transfer.PayTransferStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,16 +22,17 @@ import java.util.Map;
  *
  * @author jason
  */
-@TableName(value ="pay_transfer", autoResultMap = true)
-@KeySequence("pay_transfer_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@TableName(value = "pay_transfer", autoResultMap = true)
+@KeySequence(
+        "pay_transfer_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 public class PayTransferDO extends BaseDO {
 
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 转账单号
      */
@@ -41,12 +44,14 @@ public class PayTransferDO extends BaseDO {
      * 关联 {@link PayAppDO#getId()}
      */
     private Long appId;
+
     /**
      * 转账渠道编号
      *
      * 关联 {@link PayChannelDO#getId()}
      */
     private Long channelId;
+
     /**
      * 转账渠道编码
      *
@@ -58,6 +63,7 @@ public class PayTransferDO extends BaseDO {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -87,6 +93,7 @@ public class PayTransferDO extends BaseDO {
      * 收款人账号
      */
     private String userAccount;
+
     /**
      * 收款人姓名
      */
@@ -131,6 +138,7 @@ public class PayTransferDO extends BaseDO {
      * 调用渠道的错误码
      */
     private String channelErrorCode;
+
     /**
      * 调用渠道的错误提示
      */
@@ -148,5 +156,4 @@ public class PayTransferDO extends BaseDO {
      * @see <a href="https://pay.weixin.qq.com/doc/v3/merchant/4012716430">JSAPI 调起用户确认收款</a>
      */
     private String channelPackageInfo;
-
 }

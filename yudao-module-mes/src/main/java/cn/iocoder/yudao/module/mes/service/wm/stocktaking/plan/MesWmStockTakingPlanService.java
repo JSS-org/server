@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.wm.stocktaking.plan;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.MesWmStockTakingPlanPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.plan.vo.MesWmStockTakingPlanSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.plan.MesWmStockTakingPlanDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 盘点方案 Service 接口
@@ -105,6 +106,6 @@ public interface MesWmStockTakingPlanService {
      * @param pageReqVO 分页查询条件
      * @return 盘点方案分页结果
      */
-    PageResult<MesWmStockTakingPlanDO> getStockTakingPlanPage(MesWmStockTakingPlanPageReqVO pageReqVO);
-
+    PageResult<MesWmStockTakingPlanDO> getStockTakingPlanPage(
+            MesWmStockTakingPlanPageReqVO pageReqVO);
 }

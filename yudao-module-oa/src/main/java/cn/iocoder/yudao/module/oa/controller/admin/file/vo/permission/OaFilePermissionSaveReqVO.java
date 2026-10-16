@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.oa.controller.admin.file.vo.permission;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFilePermissionLevelEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileSubjectTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,12 +34,14 @@ public class OaFilePermissionSaveReqVO {
     @InEnum(value = OaFilePermissionLevelEnum.class, message = "权限级别必须是 {value}")
     private Integer level;
 
-    @Schema(description = "是否继承到子目录及文件", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "是否继承到子目录及文件",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     @NotNull(message = "是否继承不能为空")
     private Boolean inherit;
 
     @Schema(description = "到期时间", type = "integer", format = "int64", example = "1789347600000")
     @Future(message = "到期时间必须晚于当前时间")
     private LocalDateTime expireTime;
-
 }

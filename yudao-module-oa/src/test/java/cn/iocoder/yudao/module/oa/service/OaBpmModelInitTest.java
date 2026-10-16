@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.oa.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * OA 流程初始化测试类
@@ -32,7 +34,8 @@ public class OaBpmModelInitTest {
     private static final Long TENANT_ID = 1L;
     private static final Long USER_ID = 1L;
 
-    private static final String TOKEN = "test" + USER_ID; // 本地默认 mockSecret 为 test，后缀为模拟用户编号，不是真实登录令牌
+    private static final String TOKEN =
+            "test" + USER_ID; // 本地默认 mockSecret 为 test，后缀为模拟用户编号，不是真实登录令牌
 
     /**
      * 初始化用车申请流程
@@ -173,29 +176,38 @@ public class OaBpmModelInitTest {
 
             // 2. 查询已有模型，不覆盖本地已调整的流程
             JSONObject existingModel;
-            try (HttpResponse response = HttpUtil.createGet(BASE_URL + "/bpm/model/list")
-                    .header("Authorization", "Bearer " + TOKEN)
-                    .header("tenant-id", TENANT_ID.toString())
-                    .timeout(30000).execute()) {
+            try (HttpResponse response =
+                    HttpUtil.createGet(BASE_URL + "/bpm/model/list")
+                            .header("Authorization", "Bearer " + TOKEN)
+                            .header("tenant-id", TENANT_ID.toString())
+                            .timeout(30000)
+                            .execute()) {
                 assertEquals(200, response.getStatus());
                 JSONObject result = JSONUtil.parseObj(response.body());
                 assertEquals(Integer.valueOf(0), result.getInt("code"), result.getStr("msg"));
-                existingModel = CollUtil.findOne(result.getJSONArray("data").toList(JSONObject.class),
-                        item -> model.getStr("key").equals(item.getStr("key")));
+                existingModel =
+                        CollUtil.findOne(
+                                result.getJSONArray("data").toList(JSONObject.class),
+                                item -> model.getStr("key").equals(item.getStr("key")));
             }
 
             // 3. 导入不存在的模型，补充发布尚未发布的模型
-            String modelId = existingModel != null ? existingModel.getStr("id") : importModel(fileName, model);
+            String modelId =
+                    existingModel != null
+                            ? existingModel.getStr("id")
+                            : importModel(fileName, model);
             if (existingModel == null || existingModel.getJSONObject("processDefinition") == null) {
                 deployModel(modelId);
             }
 
             // 4. 断言流程定义已生效，可用于业务提交
-            try (HttpResponse response = HttpUtil.createGet(BASE_URL + "/bpm/process-definition/get")
-                    .header("Authorization", "Bearer " + TOKEN)
-                    .header("tenant-id", TENANT_ID.toString())
-                    .form("key", model.getStr("key"))
-                    .timeout(30000).execute()) {
+            try (HttpResponse response =
+                    HttpUtil.createGet(BASE_URL + "/bpm/process-definition/get")
+                            .header("Authorization", "Bearer " + TOKEN)
+                            .header("tenant-id", TENANT_ID.toString())
+                            .form("key", model.getStr("key"))
+                            .timeout(30000)
+                            .execute()) {
                 assertEquals(200, response.getStatus());
                 JSONObject result = JSONUtil.parseObj(response.body());
                 assertEquals(Integer.valueOf(0), result.getInt("code"), result.getStr("msg"));
@@ -203,8 +215,11 @@ public class OaBpmModelInitTest {
                 assertNotNull(definition, "未找到生效的流程定义，请检查模型是否已发布或被挂起");
                 assertEquals(model.getStr("key"), definition.getStr("key"));
                 assertNotNull(definition.getStr("id"));
-                log.info("[initModel][流程初始化成功，文件：{}，模型编号：{}，流程定义编号：{}]",
-                        fileName, modelId, definition.getStr("id"));
+                log.info(
+                        "[initModel][流程初始化成功，文件：{}，模型编号：{}，流程定义编号：{}]",
+                        fileName,
+                        modelId,
+                        definition.getStr("id"));
             }
         } catch (RuntimeException | AssertionError ex) {
             log.error("[initModel][流程初始化失败，文件：{}]", fileName, ex);
@@ -220,11 +235,13 @@ public class OaBpmModelInitTest {
      * @return 模型编号
      */
     private String importModel(String fileName, JSONObject model) {
-        try (HttpResponse response = HttpUtil.createPost(BASE_URL + "/bpm/model/import")
-                .header("Authorization", "Bearer " + TOKEN)
-                .header("tenant-id", TENANT_ID.toString())
-                .form("file", model.toString().getBytes(StandardCharsets.UTF_8), fileName)
-                .timeout(30000).execute()) {
+        try (HttpResponse response =
+                HttpUtil.createPost(BASE_URL + "/bpm/model/import")
+                        .header("Authorization", "Bearer " + TOKEN)
+                        .header("tenant-id", TENANT_ID.toString())
+                        .form("file", model.toString().getBytes(StandardCharsets.UTF_8), fileName)
+                        .timeout(30000)
+                        .execute()) {
             assertEquals(200, response.getStatus());
             JSONObject result = JSONUtil.parseObj(response.body());
             assertEquals(Integer.valueOf(0), result.getInt("code"), result.getStr("msg"));
@@ -239,11 +256,13 @@ public class OaBpmModelInitTest {
      * @param modelId 模型编号
      */
     private void deployModel(String modelId) {
-        try (HttpResponse response = HttpUtil.createPost(BASE_URL + "/bpm/model/deploy")
-                .header("Authorization", "Bearer " + TOKEN)
-                .header("tenant-id", TENANT_ID.toString())
-                .form("id", modelId)
-                .timeout(30000).execute()) {
+        try (HttpResponse response =
+                HttpUtil.createPost(BASE_URL + "/bpm/model/deploy")
+                        .header("Authorization", "Bearer " + TOKEN)
+                        .header("tenant-id", TENANT_ID.toString())
+                        .form("id", modelId)
+                        .timeout(30000)
+                        .execute()) {
             assertEquals(200, response.getStatus());
             JSONObject result = JSONUtil.parseObj(response.body());
             assertEquals(Integer.valueOf(0), result.getInt("code"), result.getStr("msg"));

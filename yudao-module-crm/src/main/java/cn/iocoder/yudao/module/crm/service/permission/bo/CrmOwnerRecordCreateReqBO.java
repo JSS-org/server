@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.crm.service.permission.bo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -35,5 +37,4 @@ public class CrmOwnerRecordCreateReqBO {
      * 变更后负责人
      */
     private Long postOwnerUserId;
-
 }

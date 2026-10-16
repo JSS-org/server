@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.ai.controller.admin.image.vo.midjourney;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI 绘画生成（Midjourney） Request VO")
@@ -31,5 +33,4 @@ public class AiMidjourneyImagineReqVO {
 
     @Schema(description = "参考图", example = "https://www.iocoder.cn/x.png")
     private String referImageUrl;
-
 }

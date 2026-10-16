@@ -1,9 +1,13 @@
 package cn.iocoder.yudao.module.erp.dal.mysql.sale;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleReturnItemDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.math.BigDecimal;
@@ -11,8 +15,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * ERP 销售退货项 Mapper
@@ -40,17 +42,22 @@ public interface ErpSaleReturnItemMapper extends BaseMapperX<ErpSaleReturnItemDO
      * @param returnIds 出库订单项编号数组
      * @return key：销售订单项编号；value：退货数量之和
      */
-    default Map<Long, BigDecimal> selectOrderItemCountSumMapByReturnIds(Collection<Long> returnIds) {
+    default Map<Long, BigDecimal> selectOrderItemCountSumMapByReturnIds(
+            Collection<Long> returnIds) {
         if (CollUtil.isEmpty(returnIds)) {
             return Collections.emptyMap();
         }
         // SQL sum 查询
-        List<Map<String, Object>> result = selectMaps(new QueryWrapper<ErpSaleReturnItemDO>()
-                .select("order_item_id, SUM(count) AS sum_count")
-                .groupBy("order_item_id")
-                .in("return_id", returnIds));
+        List<Map<String, Object>> result =
+                selectMaps(
+                        new QueryWrapper<ErpSaleReturnItemDO>()
+                                .select("order_item_id, SUM(count) AS sum_count")
+                                .groupBy("order_item_id")
+                                .in("return_id", returnIds));
         // 获得数量
-        return convertMap(result, obj -> (Long) obj.get("order_item_id"), obj -> (BigDecimal) obj.get("sum_count"));
+        return convertMap(
+                result,
+                obj -> (Long) obj.get("order_item_id"),
+                obj -> (BigDecimal) obj.get("sum_count"));
     }
-
 }

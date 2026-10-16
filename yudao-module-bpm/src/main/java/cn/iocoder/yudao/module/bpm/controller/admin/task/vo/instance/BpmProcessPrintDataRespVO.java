@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.instance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -12,7 +13,10 @@ public class BpmProcessPrintDataRespVO {
     @Schema(description = "流程实例数据")
     private BpmProcessInstanceRespVO processInstance;
 
-    @Schema(description = "是否开启自定义打印模板", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+    @Schema(
+            description = "是否开启自定义打印模板",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "true")
     private Boolean printTemplateEnable;
 
     @Schema(description = "自定义打印模板 HTML")
@@ -25,7 +29,10 @@ public class BpmProcessPrintDataRespVO {
     @Data
     public static class Task {
 
-        @Schema(description = "流程任务的编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "流程任务的编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private String id;
 
         @Schema(description = "任务名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
@@ -36,7 +43,5 @@ public class BpmProcessPrintDataRespVO {
 
         @Schema(description = "任务描述", requiredMode = Schema.RequiredMode.REQUIRED)
         private String description; // 该字段由后端拼接
-
     }
-
 }

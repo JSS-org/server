@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
 
 import java.util.List;
 
@@ -20,5 +21,4 @@ public class BpmTaskRejectReqVO {
 
     @Schema(description = "附件", example = "[https://test.yudao.iocoder.cn/20260609/test.txt]")
     private List<String> attachments;
-
 }

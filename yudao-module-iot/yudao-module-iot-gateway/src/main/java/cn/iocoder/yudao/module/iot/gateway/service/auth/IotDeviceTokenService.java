@@ -33,5 +33,4 @@ public interface IotDeviceTokenService {
      * @return 设备信息
      */
     IotDeviceIdentity parseUsername(String username);
-
 }

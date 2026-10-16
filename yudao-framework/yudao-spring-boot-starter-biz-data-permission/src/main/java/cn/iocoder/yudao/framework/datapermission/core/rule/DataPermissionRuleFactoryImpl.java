@@ -4,8 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
 import cn.iocoder.yudao.framework.datapermission.core.aop.DataPermissionContextHolder;
-import org.dromara.trans.service.impl.SimpleTransService;
+
 import lombok.RequiredArgsConstructor;
+
+import org.dromara.trans.service.impl.SimpleTransService;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,12 +54,20 @@ public class DataPermissionRuleFactoryImpl implements DataPermissionRuleFactory 
 
         // 2.1 情况一：已配置，只选择部分规则
         if (ArrayUtil.isNotEmpty(dataPermission.includeRules())) {
-            return rules.stream().filter(rule -> ArrayUtil.contains(dataPermission.includeRules(), rule.getClass()))
+            return rules.stream()
+                    .filter(
+                            rule ->
+                                    ArrayUtil.contains(
+                                            dataPermission.includeRules(), rule.getClass()))
                     .collect(Collectors.toList()); // 一般规则不会太多，所以不采用 HashSet 查询
         }
         // 2.2 已配置，只排除部分规则
         if (ArrayUtil.isNotEmpty(dataPermission.excludeRules())) {
-            return rules.stream().filter(rule -> !ArrayUtil.contains(dataPermission.excludeRules(), rule.getClass()))
+            return rules.stream()
+                    .filter(
+                            rule ->
+                                    !ArrayUtil.contains(
+                                            dataPermission.excludeRules(), rule.getClass()))
                     .collect(Collectors.toList()); // 一般规则不会太多，所以不采用 HashSet 查询
         }
         // 2.3 已配置，全部规则
@@ -80,5 +90,4 @@ public class DataPermissionRuleFactoryImpl implements DataPermissionRuleFactory 
         }
         return false;
     }
-
 }

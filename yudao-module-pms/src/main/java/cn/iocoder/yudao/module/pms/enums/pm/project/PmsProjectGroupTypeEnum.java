@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.pms.enums.pm.project;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,18 +16,18 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum PmsProjectGroupTypeEnum implements ArrayValuable<Integer> {
-
     ALL(1, "全部项目"),
     UNGROUPED(2, "未分组"),
     CUSTOM(3, "自定义分组");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(PmsProjectGroupTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(PmsProjectGroupTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -40,5 +41,4 @@ public enum PmsProjectGroupTypeEnum implements ArrayValuable<Integer> {
     public static PmsProjectGroupTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

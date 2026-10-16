@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem;
 
-import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -27,5 +30,4 @@ public class FmsAuxiliaryItemStatusReqVO {
     @NotNull(message = "状态不能为空")
     @InEnum(CommonStatusEnum.class)
     private Integer status;
-
 }

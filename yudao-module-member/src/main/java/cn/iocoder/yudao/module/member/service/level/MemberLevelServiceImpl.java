@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.member.service.level;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -16,20 +19,21 @@ import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberLevelMapper;
 import cn.iocoder.yudao.module.member.enums.MemberExperienceBizTypeEnum;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
 import com.google.common.annotations.VisibleForTesting;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 
 /**
  * 会员等级 Service 实现类
@@ -41,20 +45,17 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 @Validated
 public class MemberLevelServiceImpl implements MemberLevelService {
 
-    @Resource
-    private MemberLevelMapper memberLevelMapper;
+    @Resource private MemberLevelMapper memberLevelMapper;
 
-    @Resource
-    private MemberLevelRecordService memberLevelRecordService;
-    @Resource
-    private MemberExperienceRecordService memberExperienceRecordService;
-    @Resource
-    private MemberUserService memberUserService;
+    @Resource private MemberLevelRecordService memberLevelRecordService;
+    @Resource private MemberExperienceRecordService memberExperienceRecordService;
+    @Resource private MemberUserService memberUserService;
 
     @Override
     public Long createLevel(MemberLevelCreateReqVO createReqVO) {
         // 校验配置是否有效
-        validateConfigValid(null, createReqVO.getName(), createReqVO.getLevel(), createReqVO.getExperience());
+        validateConfigValid(
+                null, createReqVO.getName(), createReqVO.getLevel(), createReqVO.getExperience());
 
         // 插入
         MemberLevelDO level = MemberLevelConvert.INSTANCE.convert(createReqVO);
@@ -68,7 +69,11 @@ public class MemberLevelServiceImpl implements MemberLevelService {
         // 校验存在
         validateLevelExists(updateReqVO.getId());
         // 校验配置是否有效
-        validateConfigValid(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getLevel(), updateReqVO.getExperience());
+        validateConfigValid(
+                updateReqVO.getId(),
+                updateReqVO.getName(),
+                updateReqVO.getLevel(),
+                updateReqVO.getExperience());
 
         // 更新
         MemberLevelDO updateObj = MemberLevelConvert.INSTANCE.convert(updateReqVO);
@@ -120,7 +125,8 @@ public class MemberLevelServiceImpl implements MemberLevelService {
     }
 
     @VisibleForTesting
-    void validateExperienceOutRange(List<MemberLevelDO> list, Long id, Integer level, Integer experience) {
+    void validateExperienceOutRange(
+            List<MemberLevelDO> list, Long id, Integer level, Integer experience) {
         for (MemberLevelDO levelDO : list) {
             if (levelDO.getId().equals(id)) {
                 continue;
@@ -129,12 +135,14 @@ public class MemberLevelServiceImpl implements MemberLevelService {
             if (levelDO.getLevel() < level) {
                 // 经验大于前一个等级
                 if (experience <= levelDO.getExperience()) {
-                    throw exception(LEVEL_EXPERIENCE_MIN, levelDO.getName(), levelDO.getExperience());
+                    throw exception(
+                            LEVEL_EXPERIENCE_MIN, levelDO.getName(), levelDO.getExperience());
                 }
             } else if (levelDO.getLevel() > level) {
-                //小于下一个级别
+                // 小于下一个级别
                 if (experience >= levelDO.getExperience()) {
-                    throw exception(LEVEL_EXPERIENCE_MAX, levelDO.getName(), levelDO.getExperience());
+                    throw exception(
+                            LEVEL_EXPERIENCE_MAX, levelDO.getName(), levelDO.getExperience());
                 }
             }
         }
@@ -195,8 +203,10 @@ public class MemberLevelServiceImpl implements MemberLevelService {
         }
 
         // 1. 记录等级变动
-        MemberLevelRecordDO levelRecord = new MemberLevelRecordDO()
-                .setUserId(user.getId()).setRemark(updateReqVO.getReason());
+        MemberLevelRecordDO levelRecord =
+                new MemberLevelRecordDO()
+                        .setUserId(user.getId())
+                        .setRemark(updateReqVO.getReason());
         MemberLevelDO memberLevel = null;
         if (updateReqVO.getLevelId() == null) {
             // 取消用户等级时，需要扣减经验
@@ -215,13 +225,16 @@ public class MemberLevelServiceImpl implements MemberLevelService {
         memberLevelRecordService.createLevelRecord(levelRecord);
 
         // 2. 记录会员经验变动
-        memberExperienceRecordService.createExperienceRecord(user.getId(),
-                levelRecord.getExperience(), levelRecord.getUserExperience(),
-                MemberExperienceBizTypeEnum.ADMIN, String.valueOf(MemberExperienceBizTypeEnum.ADMIN.getType()));
+        memberExperienceRecordService.createExperienceRecord(
+                user.getId(),
+                levelRecord.getExperience(),
+                levelRecord.getUserExperience(),
+                MemberExperienceBizTypeEnum.ADMIN,
+                String.valueOf(MemberExperienceBizTypeEnum.ADMIN.getType()));
 
         // 3. 更新会员表上的等级编号、经验值
-        memberUserService.updateUserLevel(user.getId(), updateReqVO.getLevelId(),
-                levelRecord.getUserExperience());
+        memberUserService.updateUserLevel(
+                user.getId(), updateReqVO.getLevelId(), levelRecord.getUserExperience());
 
         // 4. 给会员发送等级变动消息
         notifyMemberLevelChange(user.getId(), memberLevel);
@@ -229,7 +242,8 @@ public class MemberLevelServiceImpl implements MemberLevelService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addExperience(Long userId, Integer experience, MemberExperienceBizTypeEnum bizType, String bizId) {
+    public void addExperience(
+            Long userId, Integer experience, MemberExperienceBizTypeEnum bizType, String bizId) {
         if (experience == 0) {
             return;
         }
@@ -241,10 +255,14 @@ public class MemberLevelServiceImpl implements MemberLevelService {
         MemberUserDO user = memberUserService.getUser(userId);
         Integer userExperience = ObjUtil.defaultIfNull(user.getExperience(), 0);
         userExperience = NumberUtil.max(userExperience + experience, 0); // 防止扣出负数
-        MemberLevelRecordDO levelRecord = new MemberLevelRecordDO().setUserId(user.getId())
-                .setExperience(experience).setUserExperience(userExperience).setLevelId(user.getLevelId());
-        memberExperienceRecordService.createExperienceRecord(userId, experience, userExperience,
-                bizType, bizId);
+        MemberLevelRecordDO levelRecord =
+                new MemberLevelRecordDO()
+                        .setUserId(user.getId())
+                        .setExperience(experience)
+                        .setUserExperience(userExperience)
+                        .setLevelId(user.getLevelId());
+        memberExperienceRecordService.createExperienceRecord(
+                userId, experience, userExperience, bizType, bizId);
 
         // 2.1 保存等级变更记录
         MemberLevelDO newLevel = calculateNewLevel(user, userExperience);
@@ -274,10 +292,11 @@ public class MemberLevelServiceImpl implements MemberLevelService {
             return null;
         }
 
-        MemberLevelDO matchLevel = list.stream()
-                .filter(level -> userExperience >= level.getExperience())
-                .max(Comparator.nullsFirst(Comparator.comparing(MemberLevelDO::getLevel)))
-                .orElse(null);
+        MemberLevelDO matchLevel =
+                list.stream()
+                        .filter(level -> userExperience >= level.getExperience())
+                        .max(Comparator.nullsFirst(Comparator.comparing(MemberLevelDO::getLevel)))
+                        .orElse(null);
         if (matchLevel == null) {
             log.warn("计算会员等级失败：未找到会员{}经验{}对应的等级配置", user.getId(), userExperience);
             return null;
@@ -292,7 +311,6 @@ public class MemberLevelServiceImpl implements MemberLevelService {
     }
 
     private void notifyMemberLevelChange(Long userId, MemberLevelDO level) {
-        //todo: 给会员发消息
+        // todo: 给会员发消息
     }
-
 }

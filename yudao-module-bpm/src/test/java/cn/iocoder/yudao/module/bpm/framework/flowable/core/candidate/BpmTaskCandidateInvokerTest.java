@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate;
 
+import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.flowable.bpmn.constants.BpmnXMLConstants.FLOWABLE_EXTENSIONS_NAMESPACE;
+import static org.flowable.bpmn.constants.BpmnXMLConstants.FLOWABLE_EXTENSIONS_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -14,6 +24,7 @@ import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.BpmnModelUtils;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.ExtensionElement;
 import org.flowable.bpmn.model.FlowElement;
@@ -29,15 +40,6 @@ import org.mockito.internal.util.collections.Sets;
 
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.flowable.bpmn.constants.BpmnXMLConstants.FLOWABLE_EXTENSIONS_NAMESPACE;
-import static org.flowable.bpmn.constants.BpmnXMLConstants.FLOWABLE_EXTENSIONS_PREFIX;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link BpmTaskCandidateInvoker} 的单元测试
  *
@@ -47,19 +49,14 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
 
     private BpmTaskCandidateInvoker taskCandidateInvoker;
 
-    @Mock
-    private AdminUserApi adminUserApi;
-    @Mock
-    private BpmProcessInstanceService processInstanceService;
+    @Mock private AdminUserApi adminUserApi;
+    @Mock private BpmProcessInstanceService processInstanceService;
 
-    @Spy
-    private BpmTaskCandidateStrategy userStrategy;
+    @Spy private BpmTaskCandidateStrategy userStrategy;
 
-    @Mock
-    private BpmTaskCandidateAssignEmptyStrategy emptyStrategy;
+    @Mock private BpmTaskCandidateAssignEmptyStrategy emptyStrategy;
 
-    @Spy
-    private List<BpmTaskCandidateStrategy> strategyList;
+    @Spy private List<BpmTaskCandidateStrategy> strategyList;
 
     @BeforeEach
     public void setUp() {
@@ -83,25 +80,37 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
             String processInstanceId = randomString();
             when(execution.getProcessInstanceId()).thenReturn(processInstanceId);
             when(execution.getCurrentFlowElement()).thenReturn(userTask);
-            when(userTask.getAttributeValue(eq(BpmnModelConstants.NAMESPACE), eq(BpmnModelConstants.USER_TASK_CANDIDATE_STRATEGY)))
+            when(userTask.getAttributeValue(
+                            eq(BpmnModelConstants.NAMESPACE),
+                            eq(BpmnModelConstants.USER_TASK_CANDIDATE_STRATEGY)))
                     .thenReturn(BpmTaskCandidateStrategyEnum.USER.getStrategy().toString());
-            when(userTask.getAttributeValue(eq(BpmnModelConstants.NAMESPACE), eq(BpmnModelConstants.USER_TASK_CANDIDATE_PARAM)))
+            when(userTask.getAttributeValue(
+                            eq(BpmnModelConstants.NAMESPACE),
+                            eq(BpmnModelConstants.USER_TASK_CANDIDATE_PARAM)))
                     .thenReturn(param);
             // mock 方法（adminUserApi）
-            AdminUserRespDTO user1 = randomPojo(AdminUserRespDTO.class, o -> o.setId(1L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
-            AdminUserRespDTO user2 = randomPojo(AdminUserRespDTO.class, o -> o.setId(2L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
-            Map<Long, AdminUserRespDTO> userMap = MapUtil.builder(user1.getId(), user1)
-                    .put(user2.getId(), user2).build();
+            AdminUserRespDTO user1 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(1L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            AdminUserRespDTO user2 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(2L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            Map<Long, AdminUserRespDTO> userMap =
+                    MapUtil.builder(user1.getId(), user1).put(user2.getId(), user2).build();
             when(adminUserApi.getUserMap(eq(asSet(1L, 2L)))).thenReturn(userMap);
             // mock 移除发起人的用户
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(BpmProcessInstanceService.class))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(BpmProcessInstanceService.class))
                     .thenReturn(processInstanceService);
             ProcessInstance processInstance = mock(ProcessInstance.class);
-            when(processInstanceService.getProcessInstance(eq(processInstanceId))).thenReturn(processInstance);
+            when(processInstanceService.getProcessInstance(eq(processInstanceId)))
+                    .thenReturn(processInstance);
             when(processInstance.getStartUserId()).thenReturn("1");
-            mockFlowElementExtensionElement(userTask, BpmnModelConstants.USER_TASK_ASSIGN_START_USER_HANDLER_TYPE,
+            mockFlowElementExtensionElement(
+                    userTask,
+                    BpmnModelConstants.USER_TASK_ASSIGN_START_USER_HANDLER_TYPE,
                     String.valueOf(BpmUserTaskAssignStartUserHandlerTypeEnum.SKIP.getType()));
 
             // 调用
@@ -125,26 +134,36 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
             String processInstanceId = randomString();
             when(execution.getProcessInstanceId()).thenReturn(processInstanceId);
             when(execution.getCurrentFlowElement()).thenReturn(userTask);
-            when(userTask.getAttributeValue(eq(BpmnModelConstants.NAMESPACE), eq(BpmnModelConstants.USER_TASK_CANDIDATE_STRATEGY)))
+            when(userTask.getAttributeValue(
+                            eq(BpmnModelConstants.NAMESPACE),
+                            eq(BpmnModelConstants.USER_TASK_CANDIDATE_STRATEGY)))
                     .thenReturn(BpmTaskCandidateStrategyEnum.USER.getStrategy().toString());
-            when(userTask.getAttributeValue(eq(BpmnModelConstants.NAMESPACE), eq(BpmnModelConstants.USER_TASK_CANDIDATE_PARAM)))
+            when(userTask.getAttributeValue(
+                            eq(BpmnModelConstants.NAMESPACE),
+                            eq(BpmnModelConstants.USER_TASK_CANDIDATE_PARAM)))
                     .thenReturn(param);
             // mock 方法（adminUserApi）
-            AdminUserRespDTO user1 = randomPojo(AdminUserRespDTO.class, o -> o.setId(1L)
-                    .setStatus(CommonStatusEnum.DISABLE.getStatus()));
-            AdminUserRespDTO user2 = randomPojo(AdminUserRespDTO.class, o -> o.setId(2L)
-                    .setStatus(CommonStatusEnum.DISABLE.getStatus()));
-            Map<Long, AdminUserRespDTO> userMap = MapUtil.builder(user1.getId(), user1)
-                    .put(user2.getId(), user2).build();
+            AdminUserRespDTO user1 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(1L).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+            AdminUserRespDTO user2 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(2L).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+            Map<Long, AdminUserRespDTO> userMap =
+                    MapUtil.builder(user1.getId(), user1).put(user2.getId(), user2).build();
             when(adminUserApi.getUserMap(eq(asSet(1L, 2L)))).thenReturn(userMap);
             // mock 方法（empty）
             when(emptyStrategy.calculateUsersByTask(same(execution), same(param)))
                     .thenReturn(Sets.newSet(2L));
             // mock 移除发起人的用户
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(BpmProcessInstanceService.class))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(BpmProcessInstanceService.class))
                     .thenReturn(processInstanceService);
             ProcessInstance processInstance = mock(ProcessInstance.class);
-            when(processInstanceService.getProcessInstance(eq(processInstanceId))).thenReturn(processInstance);
+            when(processInstanceService.getProcessInstance(eq(processInstanceId)))
+                    .thenReturn(processInstance);
             when(processInstance.getStartUserId()).thenReturn("1");
 
             // 调用
@@ -159,7 +178,8 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
      */
     @Test
     public void testCalculateUsersByActivity_some() {
-        try (MockedStatic<BpmnModelUtils> bpmnModelUtilsMockedStatic = mockStatic(BpmnModelUtils.class)) {
+        try (MockedStatic<BpmnModelUtils> bpmnModelUtilsMockedStatic =
+                mockStatic(BpmnModelUtils.class)) {
             // 准备参数
             String param = "1,2";
             BpmnModel bpmnModel = mock(BpmnModel.class);
@@ -169,26 +189,40 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
             Map<String, Object> processVariables = new HashMap<>();
             // mock 方法（DelegateExecution）
             UserTask userTask = mock(UserTask.class);
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.parseCandidateStrategy(same(userTask)))
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.parseCandidateStrategy(same(userTask)))
                     .thenReturn(BpmTaskCandidateStrategyEnum.USER.getStrategy());
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.parseCandidateParam(same(userTask)))
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.parseCandidateParam(same(userTask)))
                     .thenReturn(param);
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.getFlowElementById(same(bpmnModel), eq(activityId))).thenReturn(userTask);
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.getFlowElementById(same(bpmnModel), eq(activityId)))
+                    .thenReturn(userTask);
             // mock 方法（adminUserApi）
-            AdminUserRespDTO user1 = randomPojo(AdminUserRespDTO.class, o -> o.setId(1L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
-            AdminUserRespDTO user2 = randomPojo(AdminUserRespDTO.class, o -> o.setId(2L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
-            Map<Long, AdminUserRespDTO> userMap = MapUtil.builder(user1.getId(), user1)
-                    .put(user2.getId(), user2).build();
+            AdminUserRespDTO user1 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(1L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            AdminUserRespDTO user2 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(2L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            Map<Long, AdminUserRespDTO> userMap =
+                    MapUtil.builder(user1.getId(), user1).put(user2.getId(), user2).build();
             when(adminUserApi.getUserMap(eq(asSet(1L, 2L)))).thenReturn(userMap);
             // mock 移除发起人的用户
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.parseAssignStartUserHandlerType(same(userTask)))
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.parseAssignStartUserHandlerType(same(userTask)))
                     .thenReturn(BpmUserTaskAssignStartUserHandlerTypeEnum.SKIP.getType());
 
             // 调用
-            Set<Long> results = taskCandidateInvoker.calculateUsersByActivity(bpmnModel, activityId,
-                    startUserId, processDefinitionId, processVariables);
+            Set<Long> results =
+                    taskCandidateInvoker.calculateUsersByActivity(
+                            bpmnModel,
+                            activityId,
+                            startUserId,
+                            processDefinitionId,
+                            processVariables);
             // 断言
             assertEquals(asSet(2L), results);
         }
@@ -199,7 +233,8 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
      */
     @Test
     public void testCalculateUsersByActivity_none() {
-        try (MockedStatic<BpmnModelUtils> bpmnModelUtilsMockedStatic = mockStatic(BpmnModelUtils.class)) {
+        try (MockedStatic<BpmnModelUtils> bpmnModelUtilsMockedStatic =
+                mockStatic(BpmnModelUtils.class)) {
             // 准备参数
             String param = "1,2";
             BpmnModel bpmnModel = mock(BpmnModel.class);
@@ -209,33 +244,52 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
             Map<String, Object> processVariables = new HashMap<>();
             // mock 方法（DelegateExecution）
             UserTask userTask = mock(UserTask.class);
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.parseCandidateStrategy(same(userTask)))
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.parseCandidateStrategy(same(userTask)))
                     .thenReturn(BpmTaskCandidateStrategyEnum.USER.getStrategy());
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.parseCandidateParam(same(userTask)))
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.parseCandidateParam(same(userTask)))
                     .thenReturn(param);
-            bpmnModelUtilsMockedStatic.when(() -> BpmnModelUtils.getFlowElementById(same(bpmnModel), eq(activityId))).thenReturn(userTask);
+            bpmnModelUtilsMockedStatic
+                    .when(() -> BpmnModelUtils.getFlowElementById(same(bpmnModel), eq(activityId)))
+                    .thenReturn(userTask);
             // mock 方法（adminUserApi）
-            AdminUserRespDTO user1 = randomPojo(AdminUserRespDTO.class, o -> o.setId(1L)
-                    .setStatus(CommonStatusEnum.DISABLE.getStatus()));
-            AdminUserRespDTO user2 = randomPojo(AdminUserRespDTO.class, o -> o.setId(2L)
-                    .setStatus(CommonStatusEnum.DISABLE.getStatus()));
-            Map<Long, AdminUserRespDTO> userMap = MapUtil.builder(user1.getId(), user1)
-                    .put(user2.getId(), user2).build();
+            AdminUserRespDTO user1 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(1L).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+            AdminUserRespDTO user2 =
+                    randomPojo(
+                            AdminUserRespDTO.class,
+                            o -> o.setId(2L).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+            Map<Long, AdminUserRespDTO> userMap =
+                    MapUtil.builder(user1.getId(), user1).put(user2.getId(), user2).build();
             when(adminUserApi.getUserMap(eq(asSet(1L, 2L)))).thenReturn(userMap);
             // mock 方法（empty）
-            when(emptyStrategy.calculateUsersByActivity(same(bpmnModel), eq(activityId),
-                            eq(param), same(startUserId), same(processDefinitionId), same(processVariables)))
+            when(emptyStrategy.calculateUsersByActivity(
+                            same(bpmnModel),
+                            eq(activityId),
+                            eq(param),
+                            same(startUserId),
+                            same(processDefinitionId),
+                            same(processVariables)))
                     .thenReturn(Sets.newSet(2L));
 
             // 调用
-            Set<Long> results = taskCandidateInvoker.calculateUsersByActivity(bpmnModel, activityId,
-                    startUserId, processDefinitionId, processVariables);
+            Set<Long> results =
+                    taskCandidateInvoker.calculateUsersByActivity(
+                            bpmnModel,
+                            activityId,
+                            startUserId,
+                            processDefinitionId,
+                            processVariables);
             // 断言
             assertEquals(asSet(2L), results);
         }
     }
 
-    private static void mockFlowElementExtensionElement(FlowElement element, String name, String value) {
+    private static void mockFlowElementExtensionElement(
+            FlowElement element, String name, String value) {
         if (value == null) {
             return;
         }
@@ -258,12 +312,16 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
         // 准备参数. 1L 可以找到；2L 是禁用的；3L 找不到
         Set<Long> assigneeUserIds = asSet(1L, 2L, 3L);
         // mock 方法
-        AdminUserRespDTO user1 = randomPojo(AdminUserRespDTO.class, o -> o.setId(1L)
-                .setStatus(CommonStatusEnum.ENABLE.getStatus()));
-        AdminUserRespDTO user2 = randomPojo(AdminUserRespDTO.class, o -> o.setId(2L)
-                .setStatus(CommonStatusEnum.DISABLE.getStatus()));
-        Map<Long, AdminUserRespDTO> userMap = MapUtil.builder(user1.getId(), user1)
-                .put(user2.getId(), user2).build();
+        AdminUserRespDTO user1 =
+                randomPojo(
+                        AdminUserRespDTO.class,
+                        o -> o.setId(1L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        AdminUserRespDTO user2 =
+                randomPojo(
+                        AdminUserRespDTO.class,
+                        o -> o.setId(2L).setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        Map<Long, AdminUserRespDTO> userMap =
+                MapUtil.builder(user1.getId(), user1).put(user2.getId(), user2).build();
         when(adminUserApi.getUserMap(eq(assigneeUserIds))).thenReturn(userMap);
 
         // 调用
@@ -271,5 +329,4 @@ public class BpmTaskCandidateInvokerTest extends BaseMockitoUnitTest {
         // 断言
         assertEquals(asSet(1L), assigneeUserIds);
     }
-
 }

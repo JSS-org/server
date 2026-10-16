@@ -3,6 +3,7 @@ package cn.iocoder.yudao.framework.test.core.ut;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.redis.config.YudaoRedisAutoConfiguration;
 import cn.iocoder.yudao.framework.test.config.RedisTestConfiguration;
+
 import org.redisson.spring.starter.RedissonAutoConfigurationV4;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,21 +17,21 @@ import org.springframework.test.context.ActiveProfiles;
  *
  * @author 芋道源码
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = BaseRedisUnitTest.Application.class)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        classes = BaseRedisUnitTest.Application.class)
 @ActiveProfiles("unit-test") // 设置使用 application-unit-test 配置文件
 public class BaseRedisUnitTest {
 
     @Import({
-            // Redis 配置类
-            RedisTestConfiguration.class, // Redis 测试配置类，用于启动 RedisServer
-            DataRedisAutoConfiguration.class, // Spring Redis 自动配置类
-            YudaoRedisAutoConfiguration.class, // 自己的 Redis 配置类
-            RedissonAutoConfigurationV4.class, // Redisson 自动配置类
+        // Redis 配置类
+        RedisTestConfiguration.class, // Redis 测试配置类，用于启动 RedisServer
+        DataRedisAutoConfiguration.class, // Spring Redis 自动配置类
+        YudaoRedisAutoConfiguration.class, // 自己的 Redis 配置类
+        RedissonAutoConfigurationV4.class, // Redisson 自动配置类
 
-            // 其它配置类
-            SpringUtil.class
+        // 其它配置类
+        SpringUtil.class
     })
-    public static class Application {
-    }
-
+    public static class Application {}
 }

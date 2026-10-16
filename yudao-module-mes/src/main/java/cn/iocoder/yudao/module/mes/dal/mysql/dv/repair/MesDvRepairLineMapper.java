@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo.line.MesDvRepairLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.repair.MesDvRepairLineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.List;
 public interface MesDvRepairLineMapper extends BaseMapperX<MesDvRepairLineDO> {
 
     default PageResult<MesDvRepairLineDO> selectPage(MesDvRepairLinePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesDvRepairLineDO>()
-                .eqIfPresent(MesDvRepairLineDO::getRepairId, reqVO.getRepairId())
-                .orderByDesc(MesDvRepairLineDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesDvRepairLineDO>()
+                        .eqIfPresent(MesDvRepairLineDO::getRepairId, reqVO.getRepairId())
+                        .orderByDesc(MesDvRepairLineDO::getId));
     }
 
     default List<MesDvRepairLineDO> selectListByRepairId(Long repairId) {
@@ -30,5 +33,4 @@ public interface MesDvRepairLineMapper extends BaseMapperX<MesDvRepairLineDO> {
     default int deleteByRepairId(Long repairId) {
         return delete(MesDvRepairLineDO::getRepairId, repairId);
     }
-
 }

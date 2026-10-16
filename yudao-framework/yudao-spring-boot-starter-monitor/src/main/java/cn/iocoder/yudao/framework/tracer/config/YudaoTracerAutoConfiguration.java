@@ -3,8 +3,10 @@ package cn.iocoder.yudao.framework.tracer.config;
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
 import cn.iocoder.yudao.framework.tracer.core.aop.BizTraceAspect;
 import cn.iocoder.yudao.framework.tracer.core.filter.TraceFilter;
+
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -20,10 +22,11 @@ import org.springframework.context.annotation.Bean;
  * @author mashu
  */
 @AutoConfiguration
-@ConditionalOnClass(name = {
-        "io.opentelemetry.api.trace.Tracer", // 来自 opentelemetry-api.jar
-        "jakarta.servlet.Filter"
-})
+@ConditionalOnClass(
+        name = {
+            "io.opentelemetry.api.trace.Tracer", // 来自 opentelemetry-api.jar
+            "jakarta.servlet.Filter"
+        })
 @EnableConfigurationProperties(TracerProperties.class)
 @ConditionalOnProperty(prefix = "yudao.tracer", value = "enable", matchIfMissing = true)
 public class YudaoTracerAutoConfiguration {
@@ -53,5 +56,4 @@ public class YudaoTracerAutoConfiguration {
         registrationBean.setOrder(WebFilterOrderEnum.TRACE_FILTER);
         return registrationBean;
     }
-
 }

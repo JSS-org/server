@@ -1582,3 +1582,37 @@ SQL47随全部迁移在隔离库双轮幂等通过：58表/35业务页/61页面�
 ### 未做 / 后续
 
 本轮现行管理端所需后端API实现、debug、运行前端验证及review已完成；不是R01–R43所有客户端/厂商的合同验收。设备/支付代扣分账/电子签/验券/通知/小程序码真实集成按用户原授权暂缓，必须保留未配置/失败语义。前端UPLOAD-JSON-001、FRONTEND-CONTENT-IMAGE-001、FRONTEND-SETTLEMENT-ERROR-001、通用SELF申请store选择及IAB嵌入PDF限制不改前端，业务HTTP证据与UI限制分别列出。历史18个外部S3对象须原存储处理或重新导入，当前本地403不能撤销外部地址。未清库、未删除测试资料、未提交/重置Git；staged/unstaged/untracked现状保留供用户检视。
+
+
+## [2026-10-16 19:28 ~ 19:28] 接入 Spotless 并执行全后端 Java 格式化
+
+### 意图
+
+用户要求安装常用格式化依赖并实际执行。项目原无统一Maven格式化配置，采用常见构建插件固定工具版本，使本地和后续检查可复现；延续不修改前端约束。
+
+### 改了什么
+
+| 路径 | 类型 | 说明 |
+| --- | --- | --- |
+| pom.xml | 修改 | Spotless3.10.4/google-java-format1.36.1；根项目执行、AOSP四空格及verify检查 |
+| **/src/main/java/**/*.java、**/src/test/java/**/*.java | 格式化 | 检查7,723文件，最终7,504修改/219未变，含禁用模块及sql/dm源码补丁，排除target |
+| script/gym/verify-controller-permissions.py | 修改 | 权限注解字符串参数跨行后仍可提取，守卫业务语义不变 |
+| docs/README.md、docs/testing.md、docs/CHANGELOG.md | 修改 | 命令、范围、验证证据和限制 |
+
+### 结构关系
+
+根pom声明构建插件，不增加运行时依赖。inherited=false防止每个模块重复遍历，通过根目录递归Java源/测试glob覆盖启用和禁用模块。AOSP四空格、UTF-8/LF；不重写长字符串/Javadoc，import按引擎整理并清理未用项。check绑定verify，不在compile/test阶段强制改变源代码；apply由明确命令执行。
+
+### 验证证据
+
+mvn -N spotless:apply实际完成依赖下载及格式化。最终mvn -B -ntp -N spotless:apply spotless:check通过，7,723文件无待修正，日志/tmp/server-spotless-final.log。现有相关回归301项（Gym256+infra文件45）0失败/错误/跳过，日志/tmp/server-format-tests.log；最终import排序后再次服务端依赖链test-compile通过，日志/tmp/server-format-final-compile.log。
+
+JDK词法扫描对比Git基线：忽略注释/空白/import后，只有一个CRM文件的三处final static→static final修饰符等价规范化，其余声明/语句token及字面量值不变。未使用import清理由引擎执行；不能把全部diff宣称为纯空白。权限提取脚本已兼容换行，150个方法的表达式离线前后比对一致。git diff --check通过，前端Git干净，原有未跟踪pycache保留。
+
+### 影响面 / 风险
+
+首次统一格式产生7,504个Java文件的较大diff，影响源码/测试排版和import。关闭长字符串重写，未改业务规则。未启用模块未进入当前Maven编译/功能测试，仅有格式解析及源码差异证据；当前启用服务端依赖链编译和相关业务回归通过。全部修改留工作区，未自动提交/暂存或重置。
+
+### 未做 / 后续
+
+不处理前端或将Python/SQL/文档当作本轮格式化输入。HTTP权限审查重跑时48080连接拒绝，仅记录未执行成功；未为格式化启动服务或变更数据库。后续根目录执行mvn -N spotless:apply/check，含根项目的mvn verify自动检查；单独选择子模块的构建如未含根项目，应另跑根检查。

@@ -49,5 +49,4 @@ public interface WebSocketSessionManager {
      * @return Session 列表
      */
     Collection<WebSocketSession> getSessionList(Integer userType, Long userId);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,19 +12,19 @@ import cn.iocoder.yudao.module.ai.controller.admin.model.vo.apikey.AiApiKeySaveR
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.model.AiModelRespVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiApiKeyDO;
 import cn.iocoder.yudao.module.ai.service.model.AiApiKeyService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - AI API 密钥")
 @RestController
@@ -29,8 +32,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class AiApiKeyController {
 
-    @Resource
-    private AiApiKeyService apiKeyService;
+    @Resource private AiApiKeyService apiKeyService;
 
     @PostMapping("/create")
     @Operation(summary = "创建 API 密钥")
@@ -68,7 +70,8 @@ public class AiApiKeyController {
     @GetMapping("/page")
     @Operation(summary = "获得 API 密钥分页")
     @PreAuthorize("@ss.hasPermission('ai:api-key:query')")
-    public CommonResult<PageResult<AiApiKeyRespVO>> getApiKeyPage(@Valid AiApiKeyPageReqVO pageReqVO) {
+    public CommonResult<PageResult<AiApiKeyRespVO>> getApiKeyPage(
+            @Valid AiApiKeyPageReqVO pageReqVO) {
         PageResult<AiApiKeyDO> pageResult = apiKeyService.getApiKeyPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, AiApiKeyRespVO.class));
     }
@@ -77,7 +80,9 @@ public class AiApiKeyController {
     @Operation(summary = "获得 API 密钥分页列表")
     public CommonResult<List<AiModelRespVO>> getApiKeySimpleList() {
         List<AiApiKeyDO> list = apiKeyService.getApiKeyList();
-        return success(convertList(list, key -> new AiModelRespVO().setId(key.getId()).setName(key.getName())));
+        return success(
+                convertList(
+                        list,
+                        key -> new AiModelRespVO().setId(key.getId()).setName(key.getName())));
     }
-
 }

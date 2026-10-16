@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.framework.tenant.core.mq.rocketmq;
 
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
+
 import org.apache.rocketmq.client.hook.ConsumeMessageContext;
 import org.apache.rocketmq.client.hook.ConsumeMessageHook;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.HEADER_TENANT_ID;
 
 /**
  * RocketMQ 消息队列的多租户 {@link ConsumeMessageHook} 实现类
@@ -42,5 +43,4 @@ public class TenantRocketMQConsumeMessageHook implements ConsumeMessageHook {
     public void consumeMessageAfter(ConsumeMessageContext context) {
         TenantContextHolder.clear();
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.process;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -56,5 +57,4 @@ public class MesProRouteProcessRespVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
-
 }

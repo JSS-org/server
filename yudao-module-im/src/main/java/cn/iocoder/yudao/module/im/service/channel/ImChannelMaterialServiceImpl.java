@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.im.service.channel;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.IM_CHANNEL_MATERIAL_NOT_EXISTS;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.IM_CHANNEL_MATERIAL_USED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,17 +12,15 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.material.I
 import cn.iocoder.yudao.module.im.dal.dataobject.channel.ImChannelMaterialDO;
 import cn.iocoder.yudao.module.im.dal.mysql.channel.ImChannelMaterialMapper;
 import cn.iocoder.yudao.module.im.dal.mysql.message.ImChannelMessageMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.IM_CHANNEL_MATERIAL_NOT_EXISTS;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.IM_CHANNEL_MATERIAL_USED;
 
 /**
  * IM 频道素材 Service 实现类
@@ -29,12 +31,9 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.IM_CHANNEL_MAT
 @Validated
 public class ImChannelMaterialServiceImpl implements ImChannelMaterialService {
 
-    @Resource
-    private ImChannelMaterialMapper channelMaterialMapper;
-    @Resource
-    private ImChannelService channelService;
-    @Resource
-    private ImChannelMessageMapper channelMessageMapper;
+    @Resource private ImChannelMaterialMapper channelMaterialMapper;
+    @Resource private ImChannelService channelService;
+    @Resource private ImChannelMessageMapper channelMessageMapper;
 
     // ==================== 用户端 ====================
 
@@ -109,5 +108,4 @@ public class ImChannelMaterialServiceImpl implements ImChannelMaterialService {
         }
         channelMaterialMapper.deleteById(id);
     }
-
 }

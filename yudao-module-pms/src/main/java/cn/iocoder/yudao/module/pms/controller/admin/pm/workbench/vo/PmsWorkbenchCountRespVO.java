@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workbench.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -20,5 +21,4 @@ public class PmsWorkbenchCountRespVO {
 
     @Schema(description = "迭代数量", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer iterationCount;
-
 }

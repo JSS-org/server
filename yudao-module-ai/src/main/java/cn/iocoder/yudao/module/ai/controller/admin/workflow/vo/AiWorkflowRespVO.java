@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.workflow.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,5 +30,4 @@ public class AiWorkflowRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     private LocalDateTime createTime;
-
 }

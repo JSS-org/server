@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,8 +30,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class HrmEmployeePersonalNoteDO extends BaseDO {
 
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 所属员工编号
@@ -47,5 +48,4 @@ public class HrmEmployeePersonalNoteDO extends BaseDO {
      * 提醒时间
      */
     private LocalDateTime reminderTime;
-
 }

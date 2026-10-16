@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.salesnotice.vo.line;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -39,5 +41,4 @@ public class MesWmSalesNoticeLineSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

@@ -2,12 +2,14 @@ package cn.iocoder.yudao.framework.web.core.filter;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
 /**
@@ -26,7 +28,8 @@ public class CacheRequestBodyFilter extends OncePerRequestFilter {
     private static final String[] IGNORE_URIS = {"/admin/", "/actuator/"};
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
         filterChain.doFilter(new CacheRequestBodyWrapper(request), response);
     }
@@ -42,5 +45,4 @@ public class CacheRequestBodyFilter extends OncePerRequestFilter {
         // 2. 只处理 json 请求内容
         return !ServletUtils.isJsonRequest(request);
     }
-
 }

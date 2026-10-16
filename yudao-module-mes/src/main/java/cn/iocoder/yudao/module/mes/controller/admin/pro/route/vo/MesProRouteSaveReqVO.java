@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 工艺路线新增/修改 Request VO")
@@ -11,7 +13,10 @@ public class MesProRouteSaveReqVO {
     @Schema(description = "编号", example = "1")
     private Long id;
 
-    @Schema(description = "工艺路线编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "ROUTE001")
+    @Schema(
+            description = "工艺路线编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ROUTE001")
     @NotBlank(message = "工艺路线编码不能为空")
     private String code;
 
@@ -24,5 +29,4 @@ public class MesProRouteSaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
 }

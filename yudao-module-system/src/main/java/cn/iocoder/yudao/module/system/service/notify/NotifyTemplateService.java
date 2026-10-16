@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.NotifyTemplatePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.NotifyTemplateSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyTemplateDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -85,5 +86,4 @@ public interface NotifyTemplateService {
      * @return 格式化后的内容
      */
     String formatNotifyTemplateContent(String content, Map<String, Object> params);
-
 }

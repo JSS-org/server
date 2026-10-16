@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.infra.service.demo.demo02;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.infra.controller.admin.demo.demo02.vo.Demo02CategoryListReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.demo.demo02.vo.Demo02CategorySaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo02.Demo02CategoryDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo02.Demo02CategoryMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 
 /**
  * 示例分类 Service 实现类
@@ -24,8 +26,7 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 @Validated
 public class Demo02CategoryServiceImpl implements Demo02CategoryService {
 
-    @Resource
-    private Demo02CategoryMapper demo02CategoryMapper;
+    @Resource private Demo02CategoryMapper demo02CategoryMapper;
 
     @Override
     public Long createDemo02Category(Demo02CategorySaveReqVO createReqVO) {
@@ -48,7 +49,8 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
         // 校验父级编号的有效性
         validateParentDemo02Category(updateReqVO.getId(), updateReqVO.getParentId());
         // 校验名字的唯一性
-        validateDemo02CategoryNameUnique(updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
+        validateDemo02CategoryNameUnique(
+                updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
 
         // 更新
         Demo02CategoryDO updateObj = BeanUtils.toBean(updateReqVO, Demo02CategoryDO.class);
@@ -108,7 +110,8 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
     }
 
     private void validateDemo02CategoryNameUnique(Long id, Long parentId, String name) {
-        Demo02CategoryDO demo02Category = demo02CategoryMapper.selectByParentIdAndName(parentId, name);
+        Demo02CategoryDO demo02Category =
+                demo02CategoryMapper.selectByParentIdAndName(parentId, name);
         if (demo02Category == null) {
             return;
         }
@@ -130,5 +133,4 @@ public class Demo02CategoryServiceImpl implements Demo02CategoryService {
     public List<Demo02CategoryDO> getDemo02CategoryList(Demo02CategoryListReqVO listReqVO) {
         return demo02CategoryMapper.selectList(listReqVO);
     }
-
 }

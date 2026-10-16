@@ -15,5 +15,4 @@ public class SetUtils {
     public static <T> Set<T> asSet(T... objs) {
         return CollUtil.newHashSet(objs);
     }
-
 }

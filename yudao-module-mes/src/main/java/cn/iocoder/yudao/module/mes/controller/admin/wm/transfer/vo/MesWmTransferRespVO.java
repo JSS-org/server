@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -50,5 +51,4 @@ public class MesWmTransferRespVO {
 
     @Schema(description = "备注", example = "备注信息")
     private String remark;
-
 }

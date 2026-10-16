@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.promotion.dal.mysql.discount;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.discount.DiscountProductDO;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -27,21 +29,24 @@ public interface DiscountProductMapper extends BaseMapperX<DiscountProductDO> {
     }
 
     default void updateByActivityId(DiscountProductDO discountProductDO) {
-        update(discountProductDO, new LambdaUpdateWrapper<DiscountProductDO>()
-                .eq(DiscountProductDO::getActivityId, discountProductDO.getActivityId()));
+        update(
+                discountProductDO,
+                new LambdaUpdateWrapper<DiscountProductDO>()
+                        .eq(DiscountProductDO::getActivityId, discountProductDO.getActivityId()));
     }
 
     default void deleteByActivityId(Long activityId) {
         delete(DiscountProductDO::getActivityId, activityId);
     }
 
-    default List<DiscountProductDO> selectListBySkuIdsAndStatusAndNow(Collection<Long> skuIds, Integer status) {
+    default List<DiscountProductDO> selectListBySkuIdsAndStatusAndNow(
+            Collection<Long> skuIds, Integer status) {
         LocalDateTime now = LocalDateTime.now();
-        return selectList(new LambdaQueryWrapperX<DiscountProductDO>()
-                .in(DiscountProductDO::getSkuId, skuIds)
-                .eq(DiscountProductDO::getActivityStatus,status)
-                .lt(DiscountProductDO::getActivityStartTime, now)
-                .gt(DiscountProductDO::getActivityEndTime, now));
+        return selectList(
+                new LambdaQueryWrapperX<DiscountProductDO>()
+                        .in(DiscountProductDO::getSkuId, skuIds)
+                        .eq(DiscountProductDO::getActivityStatus, status)
+                        .lt(DiscountProductDO::getActivityStartTime, now)
+                        .gt(DiscountProductDO::getActivityEndTime, now));
     }
-
 }

@@ -22,7 +22,8 @@ public interface WmsHomeStatisticsMapper {
      * @param warehouseId 仓库编号
      * @return [{ "orderType": 1, "status": 0, "count": 5 }, ...]
      */
-    List<Map<String, Object>> selectOrderCountGroupByTypeAndStatus(@Param("warehouseId") Long warehouseId);
+    List<Map<String, Object>> selectOrderCountGroupByTypeAndStatus(
+            @Param("warehouseId") Long warehouseId);
 
     /**
      * 按天聚合单据数量
@@ -32,9 +33,10 @@ public interface WmsHomeStatisticsMapper {
      * @param warehouseId 仓库编号
      * @return [{ "date": "2026-05-14", "orderType": 1, "count": 5 }, ...]
      */
-    List<Map<String, Object>> selectDailyOrderTrend(@Param("beginTime") LocalDateTime beginTime,
-                                                    @Param("endTime") LocalDateTime endTime,
-                                                    @Param("warehouseId") Long warehouseId);
+    List<Map<String, Object>> selectDailyOrderTrend(
+            @Param("beginTime") LocalDateTime beginTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("warehouseId") Long warehouseId);
 
     /**
      * 统计库存总数量
@@ -51,8 +53,8 @@ public interface WmsHomeStatisticsMapper {
      * @param limit 数量限制
      * @return [{ "id": 1, "name": "A4 复印纸", "quantity": 100 }, ...]
      */
-    List<Map<String, Object>> selectInventoryItemRank(@Param("warehouseId") Long warehouseId,
-                                                      @Param("limit") Integer limit);
+    List<Map<String, Object>> selectInventoryItemRank(
+            @Param("warehouseId") Long warehouseId, @Param("limit") Integer limit);
 
     /**
      * 按仓库统计库存数量排行
@@ -61,7 +63,6 @@ public interface WmsHomeStatisticsMapper {
      * @param limit 数量限制
      * @return [{ "id": 1, "name": "上海仓", "quantity": 100 }, ...]
      */
-    List<Map<String, Object>> selectInventoryWarehouseRank(@Param("warehouseId") Long warehouseId,
-                                                           @Param("limit") Integer limit);
-
+    List<Map<String, Object>> selectInventoryWarehouseRank(
+            @Param("warehouseId") Long warehouseId, @Param("limit") Integer limit);
 }

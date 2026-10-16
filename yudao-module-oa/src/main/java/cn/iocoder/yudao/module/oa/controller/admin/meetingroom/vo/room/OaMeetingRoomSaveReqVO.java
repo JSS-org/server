@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.meetingroom.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.util.List;
@@ -15,7 +18,10 @@ public class OaMeetingRoomSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "会议室名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "101 项目讨论室")
+    @Schema(
+            description = "会议室名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "101 项目讨论室")
     @NotBlank(message = "会议室名称不能为空")
     @Size(max = 100, message = "会议室名称长度不能超过 {max} 个字符")
     private String name;
@@ -64,7 +70,10 @@ public class OaMeetingRoomSaveReqVO {
     @InEnum(value = OaMeetingRoomBookingScopeEnum.class, message = "可预定范围不正确")
     private Integer bookingScope;
 
-    @Schema(description = "可预定成员用户编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1,2]")
+    @Schema(
+            description = "可预定成员用户编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1,2]")
     @NotNull(message = "可预定成员不能为空")
     private List<@NotNull(message = "可预定成员不能为空") Long> bookingUserIds;
 
@@ -76,8 +85,10 @@ public class OaMeetingRoomSaveReqVO {
     @Size(max = 200, message = "备注长度不能超过 {max} 个字符")
     private String remark;
 
-    @Schema(description = "附件地址列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[\"https://www.iocoder.cn/meeting.pdf\"]")
+    @Schema(
+            description = "附件地址列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[\"https://www.iocoder.cn/meeting.pdf\"]")
     @NotNull(message = "附件地址列表不能为空")
     private List<@NotBlank(message = "附件地址列表不能为空") String> fileUrls;
-
 }

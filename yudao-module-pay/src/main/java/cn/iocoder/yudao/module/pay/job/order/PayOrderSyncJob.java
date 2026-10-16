@@ -4,9 +4,11 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -29,8 +31,7 @@ public class PayOrderSyncJob implements JobHandler {
      */
     private static final Duration CREATE_TIME_DURATION_BEFORE = Duration.ofMinutes(10);
 
-    @Resource
-    private PayOrderService orderService;
+    @Resource private PayOrderService orderService;
 
     @Override
     @TenantJob
@@ -39,5 +40,4 @@ public class PayOrderSyncJob implements JobHandler {
         int count = orderService.syncOrder(minCreateTime);
         return StrUtil.format("同步支付订单 {} 个", count);
     }
-
 }

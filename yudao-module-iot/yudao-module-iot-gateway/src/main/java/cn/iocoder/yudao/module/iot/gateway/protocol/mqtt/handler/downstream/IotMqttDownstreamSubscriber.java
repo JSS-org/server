@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.protocol.AbstractIotProtocolDownstreamSubscriber;
 import cn.iocoder.yudao.module.iot.gateway.protocol.mqtt.IotMqttProtocol;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -16,9 +17,10 @@ public class IotMqttDownstreamSubscriber extends AbstractIotProtocolDownstreamSu
 
     private final IotMqttDownstreamHandler downstreamHandler;
 
-    public IotMqttDownstreamSubscriber(IotMqttProtocol protocol,
-                                       IotMqttDownstreamHandler downstreamHandler,
-                                       IotMessageBus messageBus) {
+    public IotMqttDownstreamSubscriber(
+            IotMqttProtocol protocol,
+            IotMqttDownstreamHandler downstreamHandler,
+            IotMessageBus messageBus) {
         super(protocol, messageBus);
         this.downstreamHandler = downstreamHandler;
     }
@@ -27,5 +29,4 @@ public class IotMqttDownstreamSubscriber extends AbstractIotProtocolDownstreamSu
     protected void handleMessage(IotDeviceMessage message) {
         downstreamHandler.handle(message);
     }
-
 }

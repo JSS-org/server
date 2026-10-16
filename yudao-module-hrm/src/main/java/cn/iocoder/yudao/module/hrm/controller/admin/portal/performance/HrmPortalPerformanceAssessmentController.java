@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.performance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -27,11 +30,14 @@ import cn.iocoder.yudao.module.hrm.service.performance.assessment.HrmPerformance
 import cn.iocoder.yudao.module.hrm.service.performance.assessment.HrmPerformanceAssessmentQueryService;
 import cn.iocoder.yudao.module.hrm.service.performance.assessment.HrmPerformanceAssessmentReviewService;
 import cn.iocoder.yudao.module.hrm.service.performance.assessment.HrmPerformanceAssessmentService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,34 +53,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - HRM 员工端绩效考核")
 @RestController
 @RequestMapping("/hrm/portal/performance/assessment")
 @Validated
 public class HrmPortalPerformanceAssessmentController {
 
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private HrmPerformanceAssessmentService performanceAssessmentService;
-    @Resource
-    private HrmPerformanceAssessmentProcessService performanceAssessmentProcessService;
-    @Resource
-    private HrmPerformanceAssessmentReviewService performanceAssessmentReviewService;
-    @Resource
-    private HrmPerformanceAssessmentQueryService performanceAssessmentQueryService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private HrmPerformanceAssessmentService performanceAssessmentService;
+    @Resource private HrmPerformanceAssessmentProcessService performanceAssessmentProcessService;
+    @Resource private HrmPerformanceAssessmentReviewService performanceAssessmentReviewService;
+    @Resource private HrmPerformanceAssessmentQueryService performanceAssessmentQueryService;
 
     @GetMapping("/page")
     @Operation(summary = "获得我的绩效分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPortalPerformanceAssessmentRespVO>> getPerformanceAssessmentPage(
-            @Valid HrmPortalPerformanceAssessmentPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPortalPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentPage(@Valid HrmPortalPerformanceAssessmentPageReqVO reqVO) {
         HrmEmployeeDO employee = employeeService.validateEmployeeBySelf(getLoginUserId());
         PageResult<HrmPerformanceAssessmentDO> pageResult =
-                performanceAssessmentService.getPortalPerformanceAssessmentPage(reqVO, employee.getId());
+                performanceAssessmentService.getPortalPerformanceAssessmentPage(
+                        reqVO, employee.getId());
         // 拼接 VO
         return success(buildPortalAssessmentRespVOPage(pageResult));
     }
@@ -96,73 +95,85 @@ public class HrmPortalPerformanceAssessmentController {
     @GetMapping("/fill-quota-task-page")
     @Operation(summary = "获得我的绩效指标填写任务分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>> getPerformanceAssessmentFillQuotaTaskPage(
-            @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentFillQuotaTaskPage(
+                    @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
         Long loginUserId = getLoginUserId();
         PageResult<HrmPerformanceAssessmentStageDO> pageResult =
                 performanceAssessmentReviewService.getMyFillQuotaTaskPage(loginUserId, reqVO);
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentTaskRespVOPage(pageResult, loginUserId));
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVOPage(
+                        pageResult, loginUserId));
     }
 
     @GetMapping("/target-confirmation-task-page")
     @Operation(summary = "获得我的绩效目标确认任务分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>> getPerformanceAssessmentTargetConfirmationTaskPage(
-            @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentTargetConfirmationTaskPage(
+                    @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
         Long loginUserId = getLoginUserId();
         PageResult<HrmPerformanceAssessmentStageDO> pageResult =
-                performanceAssessmentProcessService.getMyTargetConfirmationTaskPage(loginUserId, reqVO);
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentTaskRespVOPage(pageResult, loginUserId));
+                performanceAssessmentProcessService.getMyTargetConfirmationTaskPage(
+                        loginUserId, reqVO);
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVOPage(
+                        pageResult, loginUserId));
     }
 
     @GetMapping("/review-task-page")
     @Operation(summary = "获得我的绩效评分任务分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>> getPerformanceAssessmentReviewTaskPage(
-            @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentReviewTaskPage(@Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
         Long loginUserId = getLoginUserId();
         PageResult<HrmPerformanceAssessmentStageDO> pageResult =
                 performanceAssessmentReviewService.getMyReviewTaskPage(loginUserId, reqVO);
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentTaskRespVOPage(pageResult, loginUserId));
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVOPage(
+                        pageResult, loginUserId));
     }
 
     @GetMapping("/result-audit-task-page")
     @Operation(summary = "获得我的绩效结果审核任务分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>> getPerformanceAssessmentResultAuditTaskPage(
-            @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentResultAuditTaskPage(
+                    @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
         Long loginUserId = getLoginUserId();
         PageResult<HrmPerformanceAssessmentStageDO> pageResult =
                 performanceAssessmentProcessService.getMyResultAuditTaskPage(loginUserId, reqVO);
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentTaskRespVOPage(pageResult, loginUserId));
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVOPage(
+                        pageResult, loginUserId));
     }
 
     @GetMapping("/result-confirmation-task-page")
     @Operation(summary = "获得我的绩效结果确认任务分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>> getPerformanceAssessmentResultConfirmationTaskPage(
-            @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentResultConfirmationTaskPage(
+                    @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
         Long loginUserId = getLoginUserId();
         PageResult<HrmPerformanceAssessmentStageDO> pageResult =
-                performanceAssessmentProcessService.getMyResultConfirmationTaskPage(loginUserId, reqVO);
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentTaskRespVOPage(pageResult, loginUserId));
+                performanceAssessmentProcessService.getMyResultConfirmationTaskPage(
+                        loginUserId, reqVO);
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVOPage(
+                        pageResult, loginUserId));
     }
 
     @GetMapping("/appeal-task-page")
     @Operation(summary = "获得我的绩效申诉处理任务分页")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>> getPerformanceAssessmentAppealTaskPage(
-            @Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
+    public CommonResult<PageResult<HrmPerformanceAssessmentRespVO>>
+            getPerformanceAssessmentAppealTaskPage(@Valid HrmPortalPerformanceTaskPageReqVO reqVO) {
         Long loginUserId = getLoginUserId();
         PageResult<HrmPerformanceAssessmentStageDO> pageResult =
                 performanceAssessmentProcessService.getMyAppealTaskPage(loginUserId, reqVO);
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentTaskRespVOPage(pageResult, loginUserId));
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVOPage(
+                        pageResult, loginUserId));
     }
 
     @GetMapping("/get")
@@ -173,26 +184,33 @@ public class HrmPortalPerformanceAssessmentController {
             @RequestParam("id") Long id,
             @RequestParam(value = "stageId", required = false) Long stageId) {
         Long loginUserId = getLoginUserId();
-        HrmPerformanceAssessmentDO assessment = validateReadablePerformanceAssessment(loginUserId, id, stageId);
+        HrmPerformanceAssessmentDO assessment =
+                validateReadablePerformanceAssessment(loginUserId, id, stageId);
         // 拼接 VO
         if (stageId != null) {
-            return success(performanceAssessmentQueryService
-                    .getPerformanceAssessmentTaskRespVO(assessment, stageId, loginUserId));
+            return success(
+                    performanceAssessmentQueryService.getPerformanceAssessmentTaskRespVO(
+                            assessment, stageId, loginUserId));
         }
-        return success(performanceAssessmentQueryService
-                .getPerformanceAssessmentProcessRespVO(assessment, loginUserId));
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentProcessRespVO(
+                        assessment, loginUserId));
     }
 
     @GetMapping("/process-record-list")
     @Operation(summary = "获得我的绩效流程记录")
     @Parameter(name = "id", description = "员工绩效考核编号", required = true, example = "1")
     @PreAuthorize("@ss.hasPermission('hrm:portal:query')")
-    public CommonResult<List<HrmPerformanceProcessRecordRespVO>> getPerformanceAssessmentProcessRecordList(
-            @RequestParam("id") Long id,
-            @RequestParam(value = "stageId", required = false) Long stageId) {
+    public CommonResult<List<HrmPerformanceProcessRecordRespVO>>
+            getPerformanceAssessmentProcessRecordList(
+                    @RequestParam("id") Long id,
+                    @RequestParam(value = "stageId", required = false) Long stageId) {
         Long loginUserId = getLoginUserId();
-        HrmPerformanceAssessmentDO assessment = validateReadablePerformanceAssessment(loginUserId, id, stageId);
-        return success(performanceAssessmentQueryService.getPerformanceAssessmentProcessRecordList(assessment, loginUserId));
+        HrmPerformanceAssessmentDO assessment =
+                validateReadablePerformanceAssessment(loginUserId, id, stageId);
+        return success(
+                performanceAssessmentQueryService.getPerformanceAssessmentProcessRecordList(
+                        assessment, loginUserId));
     }
 
     @PutMapping("/fill-quota")
@@ -279,9 +297,11 @@ public class HrmPortalPerformanceAssessmentController {
         return success(true);
     }
 
-    private HrmPerformanceAssessmentDO validateOwnPerformanceAssessment(Long loginUserId, Long assessmentId) {
+    private HrmPerformanceAssessmentDO validateOwnPerformanceAssessment(
+            Long loginUserId, Long assessmentId) {
         HrmEmployeeDO employee = employeeService.validateEmployeeBySelf(loginUserId);
-        return performanceAssessmentService.validatePerformanceAssessmentByEmployeeId(assessmentId, employee.getId());
+        return performanceAssessmentService.validatePerformanceAssessmentByEmployeeId(
+                assessmentId, employee.getId());
     }
 
     private HrmPerformanceAssessmentDO validateReadablePerformanceAssessment(
@@ -310,45 +330,85 @@ public class HrmPortalPerformanceAssessmentController {
         Integer completedStatus = HrmPerformanceAssessmentStageStatusEnum.PROCESSED.getStatus();
         // 按流程类型和处理状态组装员工端各页签的待办、已办数量
         return new HrmPortalPerformanceTaskCountRespVO()
-                .setFillPendingCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.FILL_QUOTA.getType(), pendingStatus))
-                .setFillCompletedCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.FILL_QUOTA.getType(), completedStatus))
-                .setTargetPendingCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.TARGET_CONFIRM.getType(), pendingStatus))
-                .setTargetCompletedCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.TARGET_CONFIRM.getType(), completedStatus))
-                .setReviewPendingCount(getTaskCount(taskCountMap, HrmPerformanceStageTypeEnum.REVIEW_TYPES, pendingStatus))
-                .setReviewCompletedCount(getTaskCount(taskCountMap, HrmPerformanceStageTypeEnum.REVIEW_TYPES, completedStatus))
-                .setResultAuditPendingCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.RESULT_AUDIT.getType(), pendingStatus))
-                .setResultAuditCompletedCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.RESULT_AUDIT.getType(), completedStatus))
-                .setResultConfirmationPendingCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.RESULT_CONFIRM.getType(), pendingStatus))
-                .setResultConfirmationCompletedCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.RESULT_CONFIRM.getType(), completedStatus))
-                .setResultConfirmationAppealedCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.RESULT_CONFIRM.getType(),
-                        HrmPerformanceAssessmentStageStatusEnum.APPEALED.getStatus()))
-                .setAppealPendingCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.APPEAL_CONFIRM.getType(), pendingStatus))
-                .setAppealCompletedCount(getTaskCount(
-                        taskCountMap, HrmPerformanceStageTypeEnum.APPEAL_CONFIRM.getType(), completedStatus));
+                .setFillPendingCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.FILL_QUOTA.getType(),
+                                pendingStatus))
+                .setFillCompletedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.FILL_QUOTA.getType(),
+                                completedStatus))
+                .setTargetPendingCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.TARGET_CONFIRM.getType(),
+                                pendingStatus))
+                .setTargetCompletedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.TARGET_CONFIRM.getType(),
+                                completedStatus))
+                .setReviewPendingCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.REVIEW_TYPES,
+                                pendingStatus))
+                .setReviewCompletedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.REVIEW_TYPES,
+                                completedStatus))
+                .setResultAuditPendingCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.RESULT_AUDIT.getType(),
+                                pendingStatus))
+                .setResultAuditCompletedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.RESULT_AUDIT.getType(),
+                                completedStatus))
+                .setResultConfirmationPendingCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.RESULT_CONFIRM.getType(),
+                                pendingStatus))
+                .setResultConfirmationCompletedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.RESULT_CONFIRM.getType(),
+                                completedStatus))
+                .setResultConfirmationAppealedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.RESULT_CONFIRM.getType(),
+                                HrmPerformanceAssessmentStageStatusEnum.APPEALED.getStatus()))
+                .setAppealPendingCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.APPEAL_CONFIRM.getType(),
+                                pendingStatus))
+                .setAppealCompletedCount(
+                        getTaskCount(
+                                taskCountMap,
+                                HrmPerformanceStageTypeEnum.APPEAL_CONFIRM.getType(),
+                                completedStatus));
     }
 
-    private long getTaskCount(Map<Integer, Map<Integer, Long>> countMap, Integer type, Integer status) {
+    private long getTaskCount(
+            Map<Integer, Map<Integer, Long>> countMap, Integer type, Integer status) {
         return countMap.getOrDefault(type, Collections.emptyMap()).getOrDefault(status, 0L);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private long getTaskCount(Map<Integer, Map<Integer, Long>> countMap,
-                              Collection<Integer> types, Integer status) {
+    private long getTaskCount(
+            Map<Integer, Map<Integer, Long>> countMap, Collection<Integer> types, Integer status) {
         long count = 0L;
         for (Integer type : types) {
             count += getTaskCount(countMap, type, status);
         }
         return count;
     }
-
 }

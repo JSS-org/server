@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.crm.framework.operatelog.core;
 
+import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_CUSTOMER_LEVEL;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
-import com.mzt.logapi.service.IParseFunction;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
-import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_CUSTOMER_LEVEL;
+import com.mzt.logapi.service.IParseFunction;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Component;
 
 /**
  * 客户等级的 {@link IParseFunction} 实现类
@@ -36,5 +39,4 @@ public class CrmCustomerLevelParseFunction implements IParseFunction {
         }
         return DictFrameworkUtils.parseDictDataLabel(CRM_CUSTOMER_LEVEL, value.toString());
     }
-
 }

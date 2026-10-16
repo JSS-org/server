@@ -49,5 +49,4 @@ public interface RoleApi {
         List<RoleRespDTO> list = getRoleList(ids);
         return CollectionUtils.convertMap(list, RoleRespDTO::getId);
     }
-
 }

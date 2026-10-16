@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.oa.controller.admin.workreport;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,16 +17,20 @@ import cn.iocoder.yudao.module.oa.controller.admin.workreport.vo.OaWorkReportSav
 import cn.iocoder.yudao.module.oa.controller.admin.workreport.vo.OaWorkReportStatisticsReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.workreport.vo.OaWorkReportStatisticsRespVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.workreport.OaWorkReportDO;
+import cn.iocoder.yudao.module.oa.enums.workreport.OaWorkReportTypeEnum;
 import cn.iocoder.yudao.module.oa.service.workreport.OaWorkReportService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,15 +42,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import cn.iocoder.yudao.module.oa.enums.workreport.OaWorkReportTypeEnum;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - OA 工作汇报")
 @RestController
@@ -49,27 +52,26 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaWorkReportController {
 
-    @Resource
-    private OaWorkReportService workReportService;
+    @Resource private OaWorkReportService workReportService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     // ==================== 我的汇报 ====================
 
     @PostMapping("/create")
     @Operation(summary = "创建工作汇报草稿")
     @PreAuthorize("@ss.hasPermission('oa:work-report:create')")
-    public CommonResult<Long> createWorkReport(@Valid @RequestBody OaWorkReportSaveReqVO createReqVO) {
+    public CommonResult<Long> createWorkReport(
+            @Valid @RequestBody OaWorkReportSaveReqVO createReqVO) {
         return success(workReportService.createWorkReport(createReqVO, getLoginUserId()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新工作汇报草稿")
     @PreAuthorize("@ss.hasPermission('oa:work-report:update')")
-    public CommonResult<Boolean> updateWorkReport(@Valid @RequestBody OaWorkReportSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateWorkReport(
+            @Valid @RequestBody OaWorkReportSaveReqVO updateReqVO) {
         workReportService.updateWorkReport(updateReqVO, getLoginUserId());
         return success(true);
     }
@@ -115,8 +117,11 @@ public class OaWorkReportController {
     @PreAuthorize("@ss.hasPermission('oa:work-report:query')")
     public CommonResult<PageResult<OaWorkReportRespVO>> getWorkReportPage(
             @Valid OaWorkReportPageReqVO pageReqVO) {
-        PageResult<OaWorkReportDO> pageResult = workReportService.getWorkReportPage(pageReqVO, getLoginUserId());
-        return success(new PageResult<>(buildWorkReportRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<OaWorkReportDO> pageResult =
+                workReportService.getWorkReportPage(pageReqVO, getLoginUserId());
+        return success(
+                new PageResult<>(
+                        buildWorkReportRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 汇报统计 ====================
@@ -154,18 +159,29 @@ public class OaWorkReportController {
         if (CollUtil.isEmpty(workReports)) {
             return Collections.emptyList();
         }
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(workReports, report -> NumberUtils.parseLong(report.getCreator())));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSet(workReports, OaWorkReportDO::getDeptId));
-        return convertList(workReports, workReport -> {
-            Long userId = NumberUtils.parseLong(workReport.getCreator());
-            OaWorkReportRespVO respVO = BeanUtils.toBean(workReport, OaWorkReportRespVO.class).setUserId(userId)
-                    .setPeriodKey(OaWorkReportTypeEnum.valueOf(workReport.getType()).formatPeriod(workReport.getStartTime()));
-            MapUtils.findAndThen(userMap, userId, user -> respVO.setUserName(user.getNickname()));
-            MapUtils.findAndThen(deptMap, workReport.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
-            return respVO;
-        });
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(
+                                workReports, report -> NumberUtils.parseLong(report.getCreator())));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(workReports, OaWorkReportDO::getDeptId));
+        return convertList(
+                workReports,
+                workReport -> {
+                    Long userId = NumberUtils.parseLong(workReport.getCreator());
+                    OaWorkReportRespVO respVO =
+                            BeanUtils.toBean(workReport, OaWorkReportRespVO.class)
+                                    .setUserId(userId)
+                                    .setPeriodKey(
+                                            OaWorkReportTypeEnum.valueOf(workReport.getType())
+                                                    .formatPeriod(workReport.getStartTime()));
+                    MapUtils.findAndThen(
+                            userMap, userId, user -> respVO.setUserName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            deptMap,
+                            workReport.getDeptId(),
+                            dept -> respVO.setDeptName(dept.getName()));
+                    return respVO;
+                });
     }
-
 }

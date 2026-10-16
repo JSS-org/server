@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.promotion.service.combination;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.core.KeyValue;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordCreateReqDTO;
@@ -11,11 +13,10 @@ import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationP
 import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationRecordDO;
 
 import jakarta.annotation.Nullable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 拼团记录 Service 接口
@@ -36,8 +37,8 @@ public interface CombinationRecordService {
      * @param count      数量
      * @return 拼团信息
      */
-    KeyValue<CombinationActivityDO, CombinationProductDO> validateCombinationRecord(Long userId, Long activityId, Long headId,
-                                                                                    Long skuId, Integer count);
+    KeyValue<CombinationActivityDO, CombinationProductDO> validateCombinationRecord(
+            Long userId, Long activityId, Long headId, Long skuId, Integer count);
 
     /**
      * 创建拼团记录
@@ -68,7 +69,8 @@ public interface CombinationRecordService {
      * @param count      数量
      * @return 拼团信息
      */
-    CombinationValidateJoinRespDTO validateJoinCombination(Long userId, Long activityId, Long headId, Long skuId, Integer count);
+    CombinationValidateJoinRespDTO validateJoinCombination(
+            Long userId, Long activityId, Long headId, Long skuId, Integer count);
 
     /**
      * 获取拼团记录数
@@ -78,7 +80,8 @@ public interface CombinationRecordService {
      * @param headId       团长编号，允许空。目的 headId 设置为 {@link CombinationRecordDO#HEAD_ID_GROUP} 时，可以设置
      * @return 记录数
      */
-    Long getCombinationRecordCount(@Nullable Integer status, @Nullable Boolean virtualGroup, Long headId);
+    Long getCombinationRecordCount(
+            @Nullable Integer status, @Nullable Boolean virtualGroup, Long headId);
 
     /**
      * 查询用户拼团记录（DISTINCT 去重），也就是说查询会员表中的用户有多少人参与过拼团活动每个人只统计一次
@@ -103,7 +106,8 @@ public interface CombinationRecordService {
      * @param count      数量
      * @return 拼团记录列表
      */
-    List<CombinationRecordDO> getHeadCombinationRecordList(Long activityId, Integer status, Integer count);
+    List<CombinationRecordDO> getHeadCombinationRecordList(
+            Long activityId, Integer status, Integer count);
 
     /**
      * 获取指定编号的拼团记录
@@ -155,9 +159,8 @@ public interface CombinationRecordService {
      * @param headId      团长编号，允许空。目的 headId 设置为 {@link CombinationRecordDO#HEAD_ID_GROUP} 时，可以设置
      * @return 拼团记录数量 Map
      */
-    Map<Long, Integer> getCombinationRecordCountMapByActivity(Collection<Long> activityIds,
-                                                              @Nullable Integer status,
-                                                              @Nullable Long headId);
+    Map<Long, Integer> getCombinationRecordCountMapByActivity(
+            Collection<Long> activityIds, @Nullable Integer status, @Nullable Long headId);
 
     /**
      * 处理过期拼团
@@ -173,6 +176,6 @@ public interface CombinationRecordService {
      * @param pageReqVO 分页请求
      * @return 拼团记录分页数据
      */
-    PageResult<CombinationRecordDO> getCombinationRecordPage(Long userId, AppCombinationRecordPageReqVO pageReqVO);
-
+    PageResult<CombinationRecordDO> getCombinationRecordPage(
+            Long userId, AppCombinationRecordPageReqVO pageReqVO);
 }

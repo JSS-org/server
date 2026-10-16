@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.pro.route;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -24,8 +25,8 @@ public interface MesProRouteProductMapper extends BaseMapperX<MesProRouteProduct
     }
 
     default void deleteByRouteId(Long routeId) {
-        delete(new LambdaQueryWrapperX<MesProRouteProductDO>()
-                .eq(MesProRouteProductDO::getRouteId, routeId));
+        delete(
+                new LambdaQueryWrapperX<MesProRouteProductDO>()
+                        .eq(MesProRouteProductDO::getRouteId, routeId));
     }
-
 }

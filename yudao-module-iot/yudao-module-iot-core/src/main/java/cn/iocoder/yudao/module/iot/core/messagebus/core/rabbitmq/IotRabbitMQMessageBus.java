@@ -4,10 +4,13 @@ import cn.hutool.core.util.TypeUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageSubscriber;
+
 import jakarta.annotation.PreDestroy;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -38,14 +41,14 @@ public class IotRabbitMQMessageBus implements IotMessageBus {
 
     private final RabbitAdmin rabbitAdmin;
 
-    @Getter
-    private final List<IotMessageSubscriber<?>> subscribers = new ArrayList<>();
+    @Getter private final List<IotMessageSubscriber<?>> subscribers = new ArrayList<>();
 
     private final List<SimpleMessageListenerContainer> containers = new ArrayList<>();
 
     @Override
     public void post(String topic, Object message) {
-        rabbitTemplate.send(topic, ROUTING_KEY, MessageBuilder.withBody(JsonUtils.toJsonByte(message)).build());
+        rabbitTemplate.send(
+                topic, ROUTING_KEY, MessageBuilder.withBody(JsonUtils.toJsonByte(message)).build());
         log.info("[post][topic({}) 发送消息({})]", topic, message);
     }
 
@@ -66,21 +69,34 @@ public class IotRabbitMQMessageBus implements IotMessageBus {
         rabbitAdmin.declareBinding(binding);
 
         // 1.2 创建消费容器
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(rabbitTemplate.getConnectionFactory());
+        SimpleMessageListenerContainer container =
+                new SimpleMessageListenerContainer(rabbitTemplate.getConnectionFactory());
         container.setQueues(queue);
         container.setConcurrentConsumers(1);
         container.setMaxConcurrentConsumers(10);
         container.setAcknowledgeMode(AcknowledgeMode.MANUAL);
-        container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
-            try {
-                subscriber.onMessage(JsonUtils.parseObject(message.getBody(), type));
-                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-            } catch (Exception ex) {
-                log.error("[onMessage][topic({}/{}) message({}) 消费者({}) 处理异常]",
-                        subscriber.getTopic(), subscriber.getGroup(), message, subscriber.getClass().getName(), ex);
-                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);
-            }
-        });
+        container.setMessageListener(
+                (ChannelAwareMessageListener)
+                        (message, channel) -> {
+                            try {
+                                subscriber.onMessage(
+                                        JsonUtils.parseObject(message.getBody(), type));
+                                channel.basicAck(
+                                        message.getMessageProperties().getDeliveryTag(), false);
+                            } catch (Exception ex) {
+                                log.error(
+                                        "[onMessage][topic({}/{}) message({}) 消费者({}) 处理异常]",
+                                        subscriber.getTopic(),
+                                        subscriber.getGroup(),
+                                        message,
+                                        subscriber.getClass().getName(),
+                                        ex);
+                                channel.basicNack(
+                                        message.getMessageProperties().getDeliveryTag(),
+                                        false,
+                                        false);
+                            }
+                        });
         container.start();
 
         // 2. 保存消费者引用
@@ -100,5 +116,4 @@ public class IotRabbitMQMessageBus implements IotMessageBus {
             }
         }
     }
-
 }

@@ -11,5 +11,4 @@ public interface ArrayValuable<T> {
      * @return 数组
      */
     T[] array();
-
-} 
+}

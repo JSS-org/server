@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dept.vo.post.PostSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
+
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -60,8 +61,8 @@ public interface PostService {
      * @param statuses 状态数组。如果为空，不进行筛选
      * @return 部门列表
      */
-    List<PostDO> getPostList(@Nullable Collection<Long> ids,
-                             @Nullable Collection<Integer> statuses);
+    List<PostDO> getPostList(
+            @Nullable Collection<Long> ids, @Nullable Collection<Integer> statuses);
 
     /**
      * 获得岗位分页列表
@@ -87,5 +88,4 @@ public interface PostService {
      * @param ids 岗位编号数组
      */
     void validatePostList(Collection<Long> ids);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.wms.service.order.check;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,21 +14,20 @@ import cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.order.WmsChec
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.check.WmsCheckOrderDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.check.WmsCheckOrderDetailDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.order.check.WmsCheckOrderMapper;
-import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.enums.order.WmsOrderStatusEnum;
+import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.service.inventory.WmsInventoryService;
 import cn.iocoder.yudao.module.wms.service.inventory.dto.WmsInventoryCheckReqDTO;
 import cn.iocoder.yudao.module.wms.service.md.warehouse.WmsWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 盘库单 Service 实现类
@@ -36,14 +38,10 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
 
-    @Resource
-    private WmsCheckOrderMapper checkOrderMapper;
-    @Resource
-    private WmsCheckOrderDetailService checkOrderDetailService;
-    @Resource
-    private WmsWarehouseService warehouseService;
-    @Resource
-    private WmsInventoryService inventoryService;
+    @Resource private WmsCheckOrderMapper checkOrderMapper;
+    @Resource private WmsCheckOrderDetailService checkOrderDetailService;
+    @Resource private WmsWarehouseService warehouseService;
+    @Resource private WmsInventoryService inventoryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -69,11 +67,13 @@ public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
         validateCheckOrderSaveData(updateReqVO);
 
         // 2.1 更新盘库单
-        WmsCheckOrderDO updateObj = BeanUtils.toBean(updateReqVO, WmsCheckOrderDO.class)
-                .setStatus(WmsOrderStatusEnum.PREPARE.getStatus());
+        WmsCheckOrderDO updateObj =
+                BeanUtils.toBean(updateReqVO, WmsCheckOrderDO.class)
+                        .setStatus(WmsOrderStatusEnum.PREPARE.getStatus());
         fillCheckOrderTotal(updateObj, updateReqVO);
-        int updateCount = checkOrderMapper.updateByIdAndStatus(updateReqVO.getId(),
-                WmsOrderStatusEnum.PREPARE.getStatus(), updateObj);
+        int updateCount =
+                checkOrderMapper.updateByIdAndStatus(
+                        updateReqVO.getId(), WmsOrderStatusEnum.PREPARE.getStatus(), updateObj);
         if (updateCount == 0) {
             throw exception(CHECK_ORDER_STATUS_NOT_PREPARE);
         }
@@ -87,7 +87,8 @@ public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
         // 1. 校验存在，且可删除
         WmsCheckOrderDO order = validateCheckOrderExists(id);
         if (ObjectUtil.notEqual(order.getStatus(), WmsOrderStatusEnum.PREPARE.getStatus())
-                && ObjectUtil.notEqual(order.getStatus(), WmsOrderStatusEnum.CANCELED.getStatus())) {
+                && ObjectUtil.notEqual(
+                        order.getStatus(), WmsOrderStatusEnum.CANCELED.getStatus())) {
             throw exception(CHECK_ORDER_STATUS_NOT_DELETABLE);
         }
 
@@ -103,11 +104,15 @@ public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
         // 1.1 校验存在，且草稿
         WmsCheckOrderDO order = validateCheckOrderPrepare(id);
         // 1.2 校验盘库单明细存在
-        List<WmsCheckOrderDetailDO> details = checkOrderDetailService.validateCheckOrderDetailListExists(id);
+        List<WmsCheckOrderDetailDO> details =
+                checkOrderDetailService.validateCheckOrderDetailListExists(id);
 
         // 2. 完成盘库单
-        if (checkOrderMapper.updateByIdAndStatus(id, WmsOrderStatusEnum.PREPARE.getStatus(),
-                new WmsCheckOrderDO().setStatus(WmsOrderStatusEnum.FINISHED.getStatus())) == 0) {
+        if (checkOrderMapper.updateByIdAndStatus(
+                        id,
+                        WmsOrderStatusEnum.PREPARE.getStatus(),
+                        new WmsCheckOrderDO().setStatus(WmsOrderStatusEnum.FINISHED.getStatus()))
+                == 0) {
             throw exception(CHECK_ORDER_STATUS_NOT_PREPARE);
         }
 
@@ -122,8 +127,11 @@ public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
         validateCheckOrderPrepare(id);
 
         // 2. 作废盘库单
-        if (checkOrderMapper.updateByIdAndStatus(id, WmsOrderStatusEnum.PREPARE.getStatus(),
-                new WmsCheckOrderDO().setStatus(WmsOrderStatusEnum.CANCELED.getStatus())) == 0) {
+        if (checkOrderMapper.updateByIdAndStatus(
+                        id,
+                        WmsOrderStatusEnum.PREPARE.getStatus(),
+                        new WmsCheckOrderDO().setStatus(WmsOrderStatusEnum.CANCELED.getStatus()))
+                == 0) {
             throw exception(CHECK_ORDER_STATUS_NOT_PREPARE);
         }
     }
@@ -166,16 +174,24 @@ public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
         BigDecimal actualPrice = BigDecimal.ZERO;
         if (CollUtil.isNotEmpty(reqVO.getDetails())) {
             for (WmsCheckOrderDetailSaveReqVO detail : reqVO.getDetails()) {
-                BigDecimal differenceQuantity = calculateDifferenceQuantity(detail.getQuantity(), detail.getCheckQuantity());
+                BigDecimal differenceQuantity =
+                        calculateDifferenceQuantity(
+                                detail.getQuantity(), detail.getCheckQuantity());
                 totalQuantity = totalQuantity.add(differenceQuantity);
                 if (detail.getPrice() == null) {
                     continue;
                 }
                 if (detail.getQuantity() != null) {
-                    totalPrice = totalPrice.add(MoneyUtils.priceMultiply(detail.getPrice(), detail.getQuantity()));
+                    totalPrice =
+                            totalPrice.add(
+                                    MoneyUtils.priceMultiply(
+                                            detail.getPrice(), detail.getQuantity()));
                 }
                 if (detail.getCheckQuantity() != null) {
-                    actualPrice = actualPrice.add(MoneyUtils.priceMultiply(detail.getPrice(), detail.getCheckQuantity()));
+                    actualPrice =
+                            actualPrice.add(
+                                    MoneyUtils.priceMultiply(
+                                            detail.getPrice(), detail.getCheckQuantity()));
                 }
             }
         }
@@ -211,12 +227,12 @@ public class WmsCheckOrderServiceImpl implements WmsCheckOrderService {
         return order;
     }
 
-    private WmsInventoryCheckReqDTO buildCheckInventoryReqDTO(WmsCheckOrderDO order,
-                                                             List<WmsCheckOrderDetailDO> details) {
+    private WmsInventoryCheckReqDTO buildCheckInventoryReqDTO(
+            WmsCheckOrderDO order, List<WmsCheckOrderDetailDO> details) {
         return new WmsInventoryCheckReqDTO()
-                .setOrderId(order.getId()).setOrderNo(order.getNo())
+                .setOrderId(order.getId())
+                .setOrderNo(order.getNo())
                 .setOrderType(WmsOrderTypeEnum.CHECK.getType())
                 .setItems(BeanUtils.toBean(details, WmsInventoryCheckReqDTO.Item.class));
     }
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.system.controller.admin.mail.vo.template.MailTemplatePageReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -12,14 +13,16 @@ import java.util.List;
 @Mapper
 public interface MailTemplateMapper extends BaseMapperX<MailTemplateDO> {
 
-    default PageResult<MailTemplateDO> selectPage(MailTemplatePageReqVO pageReqVO){
-        return selectPage(pageReqVO , new LambdaQueryWrapperX<MailTemplateDO>()
-                .eqIfPresent(MailTemplateDO::getStatus, pageReqVO.getStatus())
-                .likeIfPresent(MailTemplateDO::getCode, pageReqVO.getCode())
-                .likeIfPresent(MailTemplateDO::getName, pageReqVO.getName())
-                .eqIfPresent(MailTemplateDO::getAccountId, pageReqVO.getAccountId())
-                .betweenIfPresent(MailTemplateDO::getCreateTime, pageReqVO.getCreateTime())
-                .orderByDesc(MailTemplateDO::getId));
+    default PageResult<MailTemplateDO> selectPage(MailTemplatePageReqVO pageReqVO) {
+        return selectPage(
+                pageReqVO,
+                new LambdaQueryWrapperX<MailTemplateDO>()
+                        .eqIfPresent(MailTemplateDO::getStatus, pageReqVO.getStatus())
+                        .likeIfPresent(MailTemplateDO::getCode, pageReqVO.getCode())
+                        .likeIfPresent(MailTemplateDO::getName, pageReqVO.getName())
+                        .eqIfPresent(MailTemplateDO::getAccountId, pageReqVO.getAccountId())
+                        .betweenIfPresent(MailTemplateDO::getCreateTime, pageReqVO.getCreateTime())
+                        .orderByDesc(MailTemplateDO::getId));
     }
 
     default Long selectCountByAccountId(Long accountId) {
@@ -33,5 +36,4 @@ public interface MailTemplateMapper extends BaseMapperX<MailTemplateDO> {
     default List<MailTemplateDO> selectListByStatus(Integer status) {
         return selectList(MailTemplateDO::getStatus, status);
     }
-
 }

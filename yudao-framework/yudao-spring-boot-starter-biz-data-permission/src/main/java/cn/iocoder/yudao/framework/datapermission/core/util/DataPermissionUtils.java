@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.datapermission.core.util;
 
 import cn.iocoder.yudao.framework.datapermission.core.annotation.DataPermission;
 import cn.iocoder.yudao.framework.datapermission.core.aop.DataPermissionContextHolder;
+
 import lombok.SneakyThrows;
 
 import java.util.concurrent.Callable;
@@ -19,9 +20,10 @@ public class DataPermissionUtils {
     @SneakyThrows
     private static DataPermission getDisableDataPermissionDisable() {
         if (DATA_PERMISSION_DISABLE == null) {
-            DATA_PERMISSION_DISABLE = DataPermissionUtils.class
-                    .getDeclaredMethod("getDisableDataPermissionDisable")
-                    .getAnnotation(DataPermission.class);
+            DATA_PERMISSION_DISABLE =
+                    DataPermissionUtils.class
+                            .getDeclaredMethod("getDisableDataPermissionDisable")
+                            .getAnnotation(DataPermission.class);
         }
         return DATA_PERMISSION_DISABLE;
     }
@@ -61,13 +63,12 @@ public class DataPermissionUtils {
     /**
      * 添加忽略数据权限
      */
-    public static void addDisableDataPermission(){
+    public static void addDisableDataPermission() {
         DataPermission dataPermission = getDisableDataPermissionDisable();
         DataPermissionContextHolder.add(dataPermission);
     }
 
-    public static void removeDataPermission(){
+    public static void removeDataPermission() {
         DataPermissionContextHolder.remove();
     }
-
 }

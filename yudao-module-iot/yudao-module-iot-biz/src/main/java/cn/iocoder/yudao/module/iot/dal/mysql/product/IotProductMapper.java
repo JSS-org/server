@@ -5,12 +5,15 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.product.IotProductPageReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * IoT 产品 Mapper
@@ -21,21 +24,25 @@ import java.util.List;
 public interface IotProductMapper extends BaseMapperX<IotProductDO> {
 
     default PageResult<IotProductDO> selectPage(IotProductPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<IotProductDO>()
-                .likeIfPresent(IotProductDO::getName, reqVO.getName())
-                .likeIfPresent(IotProductDO::getProductKey, reqVO.getProductKey())
-                .orderByDesc(IotProductDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<IotProductDO>()
+                        .likeIfPresent(IotProductDO::getName, reqVO.getName())
+                        .likeIfPresent(IotProductDO::getProductKey, reqVO.getProductKey())
+                        .orderByDesc(IotProductDO::getId));
     }
 
     default List<IotProductDO> selectList(Integer deviceType) {
-        return selectList(new LambdaQueryWrapperX<IotProductDO>()
-                .eqIfPresent(IotProductDO::getDeviceType, deviceType)
-                .orderByDesc(IotProductDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<IotProductDO>()
+                        .eqIfPresent(IotProductDO::getDeviceType, deviceType)
+                        .orderByDesc(IotProductDO::getId));
     }
 
     default IotProductDO selectByProductKey(String productKey) {
-        return selectOne(new LambdaQueryWrapper<IotProductDO>()
-                .apply("LOWER(product_key) = {0}", productKey.toLowerCase()));
+        return selectOne(
+                new LambdaQueryWrapper<IotProductDO>()
+                        .apply("LOWER(product_key) = {0}", productKey.toLowerCase()));
     }
 
     default List<IotProductDO> selectListByStatus(Integer status) {
@@ -43,8 +50,8 @@ public interface IotProductMapper extends BaseMapperX<IotProductDO> {
     }
 
     default Long selectCountByCreateTime(@Nullable LocalDateTime createTime) {
-        return selectCount(new LambdaQueryWrapperX<IotProductDO>()
-                .geIfPresent(IotProductDO::getCreateTime, createTime));
+        return selectCount(
+                new LambdaQueryWrapperX<IotProductDO>()
+                        .geIfPresent(IotProductDO::getCreateTime, createTime));
     }
-
 }

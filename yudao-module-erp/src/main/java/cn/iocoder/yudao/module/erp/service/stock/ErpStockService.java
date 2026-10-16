@@ -57,5 +57,4 @@ public interface ErpStockService {
      * @return 更新后的库存
      */
     BigDecimal updateStockCountIncrement(Long productId, Long warehouseId, BigDecimal count);
-
 }

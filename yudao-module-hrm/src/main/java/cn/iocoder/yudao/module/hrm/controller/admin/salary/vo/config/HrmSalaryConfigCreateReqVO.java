@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.config;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.config.HrmSalarySocialSecurityMonthTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 计薪配置创建 Request VO")
@@ -34,5 +37,4 @@ public class HrmSalaryConfigCreateReqVO {
     @Min(value = 1, message = "工资开始月份必须在 1 到 12 之间")
     @Max(value = 12, message = "工资开始月份必须在 1 到 12 之间")
     private Integer startMonth;
-
 }

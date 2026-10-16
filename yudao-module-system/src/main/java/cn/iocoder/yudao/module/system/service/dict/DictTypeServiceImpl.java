@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.service.dict;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
@@ -8,15 +11,15 @@ import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypePage
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.type.DictTypeSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictTypeDO;
 import cn.iocoder.yudao.module.system.dal.mysql.dict.DictTypeMapper;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 字典类型 Service 实现类
@@ -26,11 +29,9 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Service
 public class DictTypeServiceImpl implements DictTypeService {
 
-    @Resource
-    private DictDataService dictDataService;
+    @Resource private DictDataService dictDataService;
 
-    @Resource
-    private DictTypeMapper dictTypeMapper;
+    @Resource private DictTypeMapper dictTypeMapper;
 
     @Override
     public PageResult<DictTypeDO> getDictTypePage(DictTypePageReqVO pageReqVO) {
@@ -91,11 +92,12 @@ public class DictTypeServiceImpl implements DictTypeService {
     public void deleteDictTypeList(List<Long> ids) {
         // 1. 校验是否有字典数据
         List<DictTypeDO> dictTypes = dictTypeMapper.selectByIds(ids);
-        dictTypes.forEach(dictType -> {
-            if (dictDataService.getDictDataCountByDictType(dictType.getType()) > 0) {
-                throw exception(DICT_TYPE_HAS_CHILDREN);
-            }
-        });
+        dictTypes.forEach(
+                dictType -> {
+                    if (dictDataService.getDictDataCountByDictType(dictType.getType()) > 0) {
+                        throw exception(DICT_TYPE_HAS_CHILDREN);
+                    }
+                });
 
         // 2. 批量删除字典类型
         LocalDateTime now = LocalDateTime.now();
@@ -151,5 +153,4 @@ public class DictTypeServiceImpl implements DictTypeService {
         }
         return dictType;
     }
-
 }

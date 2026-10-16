@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -30,5 +31,4 @@ public class HrmPerformanceProcessRecordRespVO {
 
     @Schema(description = "附件地址列表")
     private List<String> fileUrls;
-
 }

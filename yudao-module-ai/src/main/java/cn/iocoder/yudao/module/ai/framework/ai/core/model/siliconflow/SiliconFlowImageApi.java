@@ -18,6 +18,7 @@ package cn.iocoder.yudao.module.ai.framework.ai.core.model.siliconflow;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import org.springframework.ai.model.ApiKey;
 import org.springframework.ai.model.NoopApiKey;
 import org.springframework.ai.model.SimpleApiKey;
@@ -38,85 +39,99 @@ import org.springframework.web.client.RestClient;
  */
 public class SiliconFlowImageApi {
 
-	private final RestClient restClient;
+    private final RestClient restClient;
 
-	public SiliconFlowImageApi(String aiToken) {
-		this(SiliconFlowApiConstants.DEFAULT_BASE_URL, aiToken, RestClient.builder());
-	}
+    public SiliconFlowImageApi(String aiToken) {
+        this(SiliconFlowApiConstants.DEFAULT_BASE_URL, aiToken, RestClient.builder());
+    }
 
     public SiliconFlowImageApi(String baseUrl, String openAiToken) {
         this(baseUrl, openAiToken, RestClient.builder());
     }
 
-	public SiliconFlowImageApi(String baseUrl, String openAiToken, RestClient.Builder restClientBuilder) {
-		this(baseUrl, openAiToken, restClientBuilder, RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER);
-	}
+    public SiliconFlowImageApi(
+            String baseUrl, String openAiToken, RestClient.Builder restClientBuilder) {
+        this(baseUrl, openAiToken, restClientBuilder, RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER);
+    }
 
-	public SiliconFlowImageApi(String baseUrl, String apiKey, RestClient.Builder restClientBuilder,
-                               ResponseErrorHandler responseErrorHandler) {
-		this(baseUrl, apiKey, new HttpHeaders(), restClientBuilder, responseErrorHandler);
-	}
+    public SiliconFlowImageApi(
+            String baseUrl,
+            String apiKey,
+            RestClient.Builder restClientBuilder,
+            ResponseErrorHandler responseErrorHandler) {
+        this(baseUrl, apiKey, new HttpHeaders(), restClientBuilder, responseErrorHandler);
+    }
 
-	public SiliconFlowImageApi(String baseUrl, String apiKey, HttpHeaders headers,
-                               RestClient.Builder restClientBuilder, ResponseErrorHandler responseErrorHandler) {
-		this(baseUrl, new SimpleApiKey(apiKey), headers, restClientBuilder, responseErrorHandler);
-	}
+    public SiliconFlowImageApi(
+            String baseUrl,
+            String apiKey,
+            HttpHeaders headers,
+            RestClient.Builder restClientBuilder,
+            ResponseErrorHandler responseErrorHandler) {
+        this(baseUrl, new SimpleApiKey(apiKey), headers, restClientBuilder, responseErrorHandler);
+    }
 
-	public SiliconFlowImageApi(String baseUrl, ApiKey apiKey, HttpHeaders headers,
-                               RestClient.Builder restClientBuilder, ResponseErrorHandler responseErrorHandler) {
+    public SiliconFlowImageApi(
+            String baseUrl,
+            ApiKey apiKey,
+            HttpHeaders headers,
+            RestClient.Builder restClientBuilder,
+            ResponseErrorHandler responseErrorHandler) {
 
-		// @formatter:off
-		this.restClient = restClientBuilder.baseUrl(baseUrl)
-			.defaultHeaders(h -> {
-				if(!(apiKey instanceof NoopApiKey)) {
-					h.setBearerAuth(apiKey.getValue());
-				}
-				h.setContentType(MediaType.APPLICATION_JSON);
-				h.addAll(headers);
-			})
-			.defaultStatusHandler(responseErrorHandler)
-			.build();
-		// @formatter:on
-	}
+        // @formatter:off
+        this.restClient =
+                restClientBuilder
+                        .baseUrl(baseUrl)
+                        .defaultHeaders(
+                                h -> {
+                                    if (!(apiKey instanceof NoopApiKey)) {
+                                        h.setBearerAuth(apiKey.getValue());
+                                    }
+                                    h.setContentType(MediaType.APPLICATION_JSON);
+                                    h.addAll(headers);
+                                })
+                        .defaultStatusHandler(responseErrorHandler)
+                        .build();
+        // @formatter:on
+    }
 
-	public ResponseEntity<SiliconFlowImageResponse> createImage(SiliconflowImageRequest siliconflowImageRequest) {
-		Assert.notNull(siliconflowImageRequest, "Image request cannot be null.");
-		Assert.hasLength(siliconflowImageRequest.prompt(), "Prompt cannot be empty.");
+    public ResponseEntity<SiliconFlowImageResponse> createImage(
+            SiliconflowImageRequest siliconflowImageRequest) {
+        Assert.notNull(siliconflowImageRequest, "Image request cannot be null.");
+        Assert.hasLength(siliconflowImageRequest.prompt(), "Prompt cannot be empty.");
 
-		return this.restClient.post()
-			.uri("v1/images/generations")
-			.body(siliconflowImageRequest)
-			.retrieve()
-			.toEntity(SiliconFlowImageResponse.class);
-	}
+        return this.restClient
+                .post()
+                .uri("v1/images/generations")
+                .body(siliconflowImageRequest)
+                .retrieve()
+                .toEntity(SiliconFlowImageResponse.class);
+    }
 
+    // @formatter:off
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record SiliconflowImageRequest(
+            @JsonProperty("prompt") String prompt,
+            @JsonProperty("model") String model,
+            @JsonProperty("batch_size") Integer batchSize,
+            @JsonProperty("negative_prompt") String negativePrompt,
+            @JsonProperty("seed") Integer seed,
+            @JsonProperty("num_inference_steps") Integer numInferenceSteps,
+            @JsonProperty("guidance_scale") Float guidanceScale,
+            @JsonProperty("image") String image) {
 
-	// @formatter:off
-	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record SiliconflowImageRequest (
-			@JsonProperty("prompt") String prompt,
-			@JsonProperty("model") String model,
-			@JsonProperty("batch_size") Integer batchSize,
-			@JsonProperty("negative_prompt") String negativePrompt,
-			@JsonProperty("seed") Integer seed,
-			@JsonProperty("num_inference_steps") Integer numInferenceSteps,
-			@JsonProperty("guidance_scale") Float guidanceScale,
-			@JsonProperty("image") String image) {
+        public SiliconflowImageRequest(String prompt, String model) {
+            this(prompt, model, null, null, null, null, null, null);
+        }
+    }
 
-		public SiliconflowImageRequest(String prompt, String model) {
-			this(prompt, model, null, null, null, null, null, null);
-		}
-	}
+    public record SiliconFlowImageResponse(
+            @JsonProperty("created") Long created,
+            @JsonProperty("data") java.util.List<Entry> data) {
 
-	public record SiliconFlowImageResponse(
-			@JsonProperty("created") Long created,
-			@JsonProperty("data") java.util.List<Entry> data) {
-
-		public record Entry(
-				@JsonProperty("url") String url,
-				@JsonProperty("b64_json") String b64Json,
-				@JsonProperty("revised_prompt") String revisedPrompt) {
-		}
-	}
-
+        public record Entry(
+                @JsonProperty("url") String url,
+                @JsonProperty("b64_json") String b64Json,
+                @JsonProperty("revised_prompt") String revisedPrompt) {}
+    }
 }

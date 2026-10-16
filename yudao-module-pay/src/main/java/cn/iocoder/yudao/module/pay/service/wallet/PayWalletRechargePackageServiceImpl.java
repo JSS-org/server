@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pay.service.wallet;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,14 +12,12 @@ import cn.iocoder.yudao.module.pay.controller.admin.wallet.vo.rechargepackage.Wa
 import cn.iocoder.yudao.module.pay.convert.wallet.PayWalletRechargePackageConvert;
 import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletRechargePackageDO;
 import cn.iocoder.yudao.module.pay.dal.mysql.wallet.PayWalletRechargePackageMapper;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
 
-import java.util.List;
+import org.springframework.stereotype.Service;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
+import java.util.List;
 
 /**
  * 钱包充值套餐 Service 实现类
@@ -26,8 +27,7 @@ import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.*;
 @Service
 public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePackageService {
 
-    @Resource
-    private PayWalletRechargePackageMapper walletRechargePackageMapper;
+    @Resource private PayWalletRechargePackageMapper walletRechargePackageMapper;
 
     @Override
     public PayWalletRechargePackageDO getWalletRechargePackage(Long packageId) {
@@ -36,7 +36,8 @@ public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePac
 
     @Override
     public PayWalletRechargePackageDO validWalletRechargePackage(Long packageId) {
-        PayWalletRechargePackageDO rechargePackageDO = walletRechargePackageMapper.selectById(packageId);
+        PayWalletRechargePackageDO rechargePackageDO =
+                walletRechargePackageMapper.selectById(packageId);
         if (rechargePackageDO == null) {
             throw exception(WALLET_RECHARGE_PACKAGE_NOT_FOUND);
         }
@@ -52,7 +53,8 @@ public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePac
         validateRechargePackageNameUnique(null, createReqVO.getName());
 
         // 插入
-        PayWalletRechargePackageDO walletRechargePackage = PayWalletRechargePackageConvert.INSTANCE.convert(createReqVO);
+        PayWalletRechargePackageDO walletRechargePackage =
+                PayWalletRechargePackageConvert.INSTANCE.convert(createReqVO);
         walletRechargePackageMapper.insert(walletRechargePackage);
         // 返回
         return walletRechargePackage.getId();
@@ -66,7 +68,8 @@ public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePac
         validateRechargePackageNameUnique(updateReqVO.getId(), updateReqVO.getName());
 
         // 更新
-        PayWalletRechargePackageDO updateObj = PayWalletRechargePackageConvert.INSTANCE.convert(updateReqVO);
+        PayWalletRechargePackageDO updateObj =
+                PayWalletRechargePackageConvert.INSTANCE.convert(updateReqVO);
         walletRechargePackageMapper.updateById(updateObj);
     }
 
@@ -76,7 +79,7 @@ public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePac
         }
         PayWalletRechargePackageDO rechargePackage = walletRechargePackageMapper.selectByName(name);
         if (rechargePackage == null) {
-            return ;
+            return;
         }
         if (id == null) {
             throw exception(WALLET_RECHARGE_PACKAGE_NAME_EXISTS);
@@ -101,7 +104,8 @@ public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePac
     }
 
     @Override
-    public PageResult<PayWalletRechargePackageDO> getWalletRechargePackagePage(WalletRechargePackagePageReqVO pageReqVO) {
+    public PageResult<PayWalletRechargePackageDO> getWalletRechargePackagePage(
+            WalletRechargePackagePageReqVO pageReqVO) {
         return walletRechargePackageMapper.selectPage(pageReqVO);
     }
 
@@ -109,5 +113,4 @@ public class PayWalletRechargePackageServiceImpl implements PayWalletRechargePac
     public List<PayWalletRechargePackageDO> getWalletRechargePackageList(Integer status) {
         return walletRechargePackageMapper.selectListByStatus(status);
     }
-
 }

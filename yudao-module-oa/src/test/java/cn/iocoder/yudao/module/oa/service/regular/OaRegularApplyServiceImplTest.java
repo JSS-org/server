@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.regular;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
@@ -12,7 +20,9 @@ import cn.iocoder.yudao.module.oa.controller.admin.regular.vo.OaRegularApplySave
 import cn.iocoder.yudao.module.oa.controller.admin.regular.vo.OaRegularApplySubmitReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.regular.OaRegularApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.regular.OaRegularApplyMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +33,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaRegularApplyServiceImpl} 的单元测试类
  *
@@ -38,18 +41,16 @@ import static org.mockito.Mockito.*;
 @Import(OaRegularApplyServiceImpl.class)
 public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaRegularApplyService regularApplyService;
+    @Resource private OaRegularApplyService regularApplyService;
 
-    @Resource
-    private OaRegularApplyMapper regularApplyMapper;
+    @Resource private OaRegularApplyMapper regularApplyMapper;
 
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
 
     @BeforeEach
     public void before() {
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(10L).setUserType(2), new MockHttpServletRequest());
     }
 
     @AfterEach
@@ -64,9 +65,13 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
         OaRegularApplySaveReqVO reqVO = randomRegularApplySaveReqVO().setId(id).setTitle("修改后的草稿");
 
         // 调用，并断言：他人不能修改、提交
-        assertServiceException(() -> regularApplyService.updateRegularApply(reqVO, 99L), APPLY_ACCESS_DENIED);
-        assertServiceException(() -> regularApplyService.submitRegularApply(new OaRegularApplySubmitReqVO()
-                .setId(id), 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () -> regularApplyService.updateRegularApply(reqVO, 99L), APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () ->
+                        regularApplyService.submitRegularApply(
+                                new OaRegularApplySubmitReqVO().setId(id), 99L),
+                APPLY_ACCESS_DENIED);
         regularApplyService.updateRegularApply(reqVO, 10L);
         assertEquals("修改后的草稿", regularApplyMapper.selectById(id).getTitle());
         assertEquals(-1, regularApplyMapper.selectById(id).getStatus());
@@ -83,10 +88,16 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
         // 调用
         regularApplyService.submitRegularApply(new OaRegularApplySubmitReqVO().setId(id), 10L);
         // 断言
-        assertServiceException(() -> regularApplyService.submitRegularApply(new OaRegularApplySubmitReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
-        assertServiceException(() -> regularApplyService.updateRegularApply(randomRegularApplySaveReqVO()
-                .setId(id), 10L), APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        regularApplyService.submitRegularApply(
+                                new OaRegularApplySubmitReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
+        assertServiceException(
+                () ->
+                        regularApplyService.updateRegularApply(
+                                randomRegularApplySaveReqVO().setId(id), 10L),
+                APPLY_STATUS_INVALID);
         verify(processInstanceApi, times(1)).createProcessInstance(eq(10L), any());
     }
 
@@ -110,9 +121,14 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, application.getStatus());
         assertEquals("process-1", application.getProcessInstanceId());
         assertEquals(1, application.getDays());
-        verify(processInstanceApi).createProcessInstance(eq(10L), argThat(dto ->
-                "oa_regular_apply".equals(dto.getProcessDefinitionKey()) && id.toString().equals(dto.getBusinessKey())
-                        && !dto.getVariables().containsKey("title")));
+        verify(processInstanceApi)
+                .createProcessInstance(
+                        eq(10L),
+                        argThat(
+                                dto ->
+                                        "oa_regular_apply".equals(dto.getProcessDefinitionKey())
+                                                && id.toString().equals(dto.getBusinessKey())
+                                                && !dto.getVariables().containsKey("title")));
     }
 
     @Test
@@ -120,13 +136,17 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         OaRegularApplySaveReqVO reqVO = randomRegularApplySaveReqVO();
         // mock 方法
-        when(processInstanceApi.createProcessInstance(anyLong(), any())).thenThrow(new IllegalStateException("流程尚未配置"));
+        when(processInstanceApi.createProcessInstance(anyLong(), any()))
+                .thenThrow(new IllegalStateException("流程尚未配置"));
 
         // 调用
         Long id = regularApplyService.createRegularApply(reqVO);
         // 断言
-        assertThrows(IllegalStateException.class, () -> regularApplyService.submitRegularApply(
-                new OaRegularApplySubmitReqVO().setId(id), 10L));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        regularApplyService.submitRegularApply(
+                                new OaRegularApplySubmitReqVO().setId(id), 10L));
         assertEquals(1L, regularApplyMapper.selectCount());
         assertEquals(-1, regularApplyMapper.selectById(id).getStatus());
         assertNull(regularApplyMapper.selectById(id).getProcessInstanceId());
@@ -162,11 +182,14 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long id = regularApplyService.createRegularApply(randomRegularApplySaveReqVO());
         // mock 方法
-        when(processInstanceApi.createProcessInstance(eq(10L), any())).thenAnswer(invocation -> {
-            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
-            regularApplyService.updateRegularApplyStatus(Long.valueOf(reqDTO.getBusinessKey()), 2);
-            return "process-1";
-        });
+        when(processInstanceApi.createProcessInstance(eq(10L), any()))
+                .thenAnswer(
+                        invocation -> {
+                            BpmProcessInstanceCreateReqDTO reqDTO = invocation.getArgument(1);
+                            regularApplyService.updateRegularApplyStatus(
+                                    Long.valueOf(reqDTO.getBusinessKey()), 2);
+                            return "process-1";
+                        });
 
         // 调用
         regularApplyService.submitRegularApply(new OaRegularApplySubmitReqVO().setId(id), 10L);
@@ -215,15 +238,17 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
     public void testUpdateRegularApplyStatus_notExists() {
 
         // 调用，并断言异常
-        assertServiceException(() -> regularApplyService.updateRegularApplyStatus(1024L, 2), APPLY_NOT_EXISTS);
+        assertServiceException(
+                () -> regularApplyService.updateRegularApplyStatus(1024L, 2), APPLY_NOT_EXISTS);
     }
 
     @Test
     public void testCreateRegularApply_crossMidnight() {
         // 准备参数
-        OaRegularApplySaveReqVO reqVO = randomRegularApplySaveReqVO()
-                .setStartTime(LocalDateTime.of(2026, 9, 13, 23, 0))
-                .setEndTime(LocalDateTime.of(2026, 9, 14, 1, 0));
+        OaRegularApplySaveReqVO reqVO =
+                randomRegularApplySaveReqVO()
+                        .setStartTime(LocalDateTime.of(2026, 9, 13, 23, 0))
+                        .setEndTime(LocalDateTime.of(2026, 9, 14, 1, 0));
 
         // 调用
         Long id = regularApplyService.createRegularApply(reqVO);
@@ -238,9 +263,11 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long id = regularApplyService.createRegularApply(randomRegularApplySaveReqVO());
         // 准备参数
-        OaRegularApplySaveReqVO reqVO = randomRegularApplySaveReqVO().setId(id)
-                .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0))
-                .setEndTime(LocalDateTime.of(2026, 9, 14, 20, 0));
+        OaRegularApplySaveReqVO reqVO =
+                randomRegularApplySaveReqVO()
+                        .setId(id)
+                        .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0))
+                        .setEndTime(LocalDateTime.of(2026, 9, 14, 20, 0));
 
         // 调用
         regularApplyService.updateRegularApply(reqVO, 10L);
@@ -260,8 +287,12 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
      * @return 请求参数
      */
     private static OaRegularApplySaveReqVO randomRegularApplySaveReqVO() {
-        return randomPojo(OaRegularApplySaveReqVO.class).setTitle("业务申请").setUrgency(1).setId(null)
-                .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0)).setEndTime(LocalDateTime.of(2026, 9, 13, 20, 0));
+        return randomPojo(OaRegularApplySaveReqVO.class)
+                .setTitle("业务申请")
+                .setUrgency(1)
+                .setId(null)
+                .setStartTime(LocalDateTime.of(2026, 9, 13, 8, 0))
+                .setEndTime(LocalDateTime.of(2026, 9, 13, 20, 0));
     }
 
     /**
@@ -270,10 +301,16 @@ public class OaRegularApplyServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaRegularApplyDO randomRegularApplyDO() {
-        return randomPojo(OaRegularApplyDO.class, application -> {
-            application.setId(null).setTitle("申请").setUrgency(1).setStatus(1).setProcessInstanceId("process-1");
-            application.setCreator("10").setDeleted(false);
-        });
+        return randomPojo(
+                OaRegularApplyDO.class,
+                application -> {
+                    application
+                            .setId(null)
+                            .setTitle("申请")
+                            .setUrgency(1)
+                            .setStatus(1)
+                            .setProcessInstanceId("process-1");
+                    application.setCreator("10").setDeleted(false);
+                });
     }
-
 }

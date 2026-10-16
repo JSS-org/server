@@ -20,13 +20,15 @@ def main():
     for source in sorted(root.rglob('*Controller.java')):
         text = source.read_text()
         prefix = text[:text.index('public class ')]
-        class_guard = re.findall(r'@PreAuthorize\("([^\n]*)"\)', prefix)
+        # Formatters may put the annotation's string argument on the next line.
+        guard_pattern = r'@PreAuthorize\s*\(\s*"((?:\\.|[^"\\])*)"\s*\)'
+        class_guard = re.findall(guard_pattern, prefix)
         methods = list(re.finditer(r'@(Get|Post|Patch|Put|Delete)Mapping\b', text))
         for method in methods:
             end = text.find('public ', method.end())
             if end == -1: raise AssertionError('Unsupported controller layout: ' + source.stem)
             attributes = text[method.start():end]
-            guard = re.findall(r'@PreAuthorize\("([^\n]*)"\)', attributes) or class_guard
+            guard = re.findall(guard_pattern, attributes) or class_guard
             if not guard: missing.append(source.stem + ':' + method[1])
             permissions.update(re.findall(r'gym:[A-Za-z:-]+', ' '.join(guard)))
         reviewed.append({'controller': source.stem, 'mappedMethods': len(methods)})

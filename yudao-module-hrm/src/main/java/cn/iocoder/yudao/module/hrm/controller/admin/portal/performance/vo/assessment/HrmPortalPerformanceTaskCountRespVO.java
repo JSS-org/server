@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.assessment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -47,5 +48,4 @@ public class HrmPortalPerformanceTaskCountRespVO {
 
     @Schema(description = "已处理申诉数量")
     private Long appealCompletedCount;
-
 }

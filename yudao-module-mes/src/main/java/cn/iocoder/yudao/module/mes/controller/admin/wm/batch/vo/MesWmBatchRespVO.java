@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.batch.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,10 @@ public class MesWmBatchRespVO {
     @Schema(description = "批次 ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "批次编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "BATCH20250314001")
+    @Schema(
+            description = "批次编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "BATCH20250314001")
     private String code;
 
     @Schema(description = "物料 ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -101,5 +105,4 @@ public class MesWmBatchRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

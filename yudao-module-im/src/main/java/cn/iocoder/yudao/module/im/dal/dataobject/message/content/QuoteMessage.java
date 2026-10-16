@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.dal.dataobject.message.content;
 
 import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -30,21 +31,23 @@ public class QuoteMessage {
      * 被引用消息编号
      */
     private Long messageId;
+
     /**
      * 被引用消息发送人编号
      * <p>
      * 关联 AdminUserDO 的 id 字段
      */
     private Long senderId;
+
     /**
      * 被引用消息类型
      * <p>
      * 枚举 {@link ImContentTypeEnum}
      */
     private Integer type;
+
     /**
      * 原消息完整 content(JSON);服务端复制时会 removeQuote 防嵌套
      */
     private String content;
-
 }

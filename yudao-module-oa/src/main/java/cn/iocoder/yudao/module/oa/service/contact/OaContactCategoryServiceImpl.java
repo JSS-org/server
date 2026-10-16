@@ -1,24 +1,26 @@
 package cn.iocoder.yudao.module.oa.service.contact;
 
-import cn.hutool.core.util.ObjectUtil;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_CATEGORY_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_CATEGORY_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.contact.vo.category.OaContactCategorySaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.contact.OaContactCategoryDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.contact.OaContactCategoryMapper;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.List;
 import java.util.Collection;
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_CATEGORY_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_CATEGORY_NOT_EXISTS;
+import java.util.List;
 
 /**
  * OA 联系人分类 Service 实现类
@@ -29,11 +31,9 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.CONTACT_CATEGO
 @Validated
 public class OaContactCategoryServiceImpl implements OaContactCategoryService {
 
-    @Resource
-    private OaContactCategoryMapper contactCategoryMapper;
+    @Resource private OaContactCategoryMapper contactCategoryMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaContactService contactService;
 
     @Override
@@ -42,8 +42,8 @@ public class OaContactCategoryServiceImpl implements OaContactCategoryService {
         validateContactCategoryNameUnique(null, userId, createReqVO.getName());
 
         // 2. 新增联系人分类
-        OaContactCategoryDO category = BeanUtils.toBean(createReqVO, OaContactCategoryDO.class)
-                .setUserId(userId);
+        OaContactCategoryDO category =
+                BeanUtils.toBean(createReqVO, OaContactCategoryDO.class).setUserId(userId);
         contactCategoryMapper.insert(category);
         return category.getId();
     }
@@ -82,7 +82,6 @@ public class OaContactCategoryServiceImpl implements OaContactCategoryService {
         return contactCategoryMapper.selectListByUserId(userId);
     }
 
-
     @Override
     public List<OaContactCategoryDO> getContactCategoryList(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
@@ -113,5 +112,4 @@ public class OaContactCategoryServiceImpl implements OaContactCategoryService {
             throw exception(CONTACT_CATEGORY_NAME_DUPLICATE);
         }
     }
-
 }

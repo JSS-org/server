@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.websocket;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -23,6 +24,7 @@ public class IotWebSocketConfig {
      */
     @NotNull(message = "最大消息大小不能为空")
     private Integer maxMessageSize = 65536;
+
     /**
      * 最大帧大小（字节，默认 64KB）
      */
@@ -34,5 +36,4 @@ public class IotWebSocketConfig {
      */
     @NotNull(message = "空闲超时时间不能为空")
     private Integer idleTimeoutSeconds = 60;
-
 }

@@ -26,5 +26,4 @@ public interface NotifyMessageSendApi {
      * @return 发送消息 ID
      */
     Long sendSingleMessageToMember(@Valid NotifySendSingleToUserReqDTO reqDTO);
-
 }

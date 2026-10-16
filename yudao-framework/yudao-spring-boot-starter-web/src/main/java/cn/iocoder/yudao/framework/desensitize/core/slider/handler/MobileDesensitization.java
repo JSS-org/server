@@ -23,5 +23,4 @@ public class MobileDesensitization extends AbstractSliderDesensitizationHandler<
     String getReplacer(MobileDesensitize annotation) {
         return annotation.replacer();
     }
-
 }

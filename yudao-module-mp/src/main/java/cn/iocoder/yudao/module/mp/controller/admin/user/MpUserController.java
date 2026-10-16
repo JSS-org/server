@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.mp.controller.admin.user;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.user.vo.MpUserPageReqVO;
@@ -8,17 +10,17 @@ import cn.iocoder.yudao.module.mp.controller.admin.user.vo.MpUserUpdateReqVO;
 import cn.iocoder.yudao.module.mp.convert.user.MpUserConvert;
 import cn.iocoder.yudao.module.mp.dal.dataobject.user.MpUserDO;
 import cn.iocoder.yudao.module.mp.service.user.MpUserService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "管理后台 - 公众号粉丝")
 @RestController
@@ -26,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MpUserController {
 
-    @Resource
-    private MpUserService mpUserService;
+    @Resource private MpUserService mpUserService;
 
     @GetMapping("/page")
     @Operation(summary = "获得公众号粉丝分页")
@@ -61,5 +62,4 @@ public class MpUserController {
         mpUserService.syncUser(accountId);
         return success(true);
     }
-
 }

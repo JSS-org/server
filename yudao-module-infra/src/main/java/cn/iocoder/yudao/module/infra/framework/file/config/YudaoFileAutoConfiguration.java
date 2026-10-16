@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.infra.framework.file.config;
 
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientFactory;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientFactoryImpl;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,5 +18,4 @@ public class YudaoFileAutoConfiguration {
     public FileClientFactory fileClientFactory() {
         return new FileClientFactoryImpl();
     }
-
 }

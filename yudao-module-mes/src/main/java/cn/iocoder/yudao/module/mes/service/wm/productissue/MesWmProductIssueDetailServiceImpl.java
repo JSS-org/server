@@ -1,25 +1,27 @@
 package cn.iocoder.yudao.module.mes.service.wm.productissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productissue.vo.detail.MesWmProductIssueDetailSaveReqVO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueDetailDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueDetailDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productissue.MesWmProductIssueDetailMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmProductIssueStatusEnum;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 领料出库明细 Service 实现类
@@ -28,19 +30,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDetailService {
 
-    @Resource
-    private MesWmProductIssueDetailMapper issueDetailMapper;
+    @Resource private MesWmProductIssueDetailMapper issueDetailMapper;
 
-    @Resource
-    @Lazy
-    private MesWmProductIssueService issueService;
-    @Resource
-    @Lazy
-    private MesWmProductIssueLineService issueLineService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
+    @Resource @Lazy private MesWmProductIssueService issueService;
+    @Resource @Lazy private MesWmProductIssueLineService issueLineService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource private MesWmMaterialStockService materialStockService;
 
     @Override
     public Long createProductIssueDetail(MesWmProductIssueDetailSaveReqVO createReqVO) {
@@ -48,7 +43,8 @@ public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDeta
         validateProductIssueDetailSaveData(createReqVO);
 
         // 插入
-        MesWmProductIssueDetailDO detail = BeanUtils.toBean(createReqVO, MesWmProductIssueDetailDO.class);
+        MesWmProductIssueDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmProductIssueDetailDO.class);
         issueDetailMapper.insert(detail);
         return detail.getId();
     }
@@ -61,7 +57,8 @@ public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDeta
         validateProductIssueDetailSaveData(updateReqVO);
 
         // 更新
-        MesWmProductIssueDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmProductIssueDetailDO.class);
+        MesWmProductIssueDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmProductIssueDetailDO.class);
         issueDetailMapper.updateById(updateObj);
     }
 
@@ -73,9 +70,11 @@ public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDeta
             throw exception(WM_PRODUCT_ISSUE_DETAIL_NOT_EXISTS);
         }
         // 校验主单状态为草稿或待拣货（允许在拣货模式删除明细）
-        MesWmProductIssueLineDO line = issueLineService.validateProductIssueLineExists(detail.getLineId());
+        MesWmProductIssueLineDO line =
+                issueLineService.validateProductIssueLineExists(detail.getLineId());
         MesWmProductIssueDO issue = issueService.validateProductIssueExists(line.getIssueId());
-        if (!ObjectUtils.equalsAny(issue.getStatus(),
+        if (!ObjectUtils.equalsAny(
+                issue.getStatus(),
                 MesWmProductIssueStatusEnum.PREPARE.getStatus(),
                 MesWmProductIssueStatusEnum.APPROVING.getStatus())) {
             throw exception(WM_PRODUCT_ISSUE_STATUS_INVALID);
@@ -121,13 +120,15 @@ public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDeta
      */
     private void validateProductIssueDetailSaveData(MesWmProductIssueDetailSaveReqVO reqVO) {
         // 校验父数据存在
-        MesWmProductIssueLineDO line = issueLineService.validateProductIssueLineExists(reqVO.getLineId());
+        MesWmProductIssueLineDO line =
+                issueLineService.validateProductIssueLineExists(reqVO.getLineId());
         if (ObjUtil.notEqual(line.getIssueId(), reqVO.getIssueId())) {
             throw exception(WM_PRODUCT_ISSUE_DETAIL_LINE_NOT_MATCH);
         }
         // 校验主单状态为待拣货（只有 APPROVING 状态才允许新增/修改明细）
         MesWmProductIssueDO issue = issueService.validateProductIssueExists(line.getIssueId());
-        if (ObjUtil.notEqual(MesWmProductIssueStatusEnum.APPROVING.getStatus(), issue.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmProductIssueStatusEnum.APPROVING.getStatus(), issue.getStatus())) {
             throw exception(WM_PRODUCT_ISSUE_STATUS_INVALID);
         }
         // 校验物料匹配（明细 itemId 必须与行 itemId 一致）
@@ -137,8 +138,14 @@ public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDeta
                 reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
         // 校验库存记录
         materialStockService.validateSelectedStock(
-                reqVO.getMaterialStockId(), reqVO.getItemId(), reqVO.getBatchId(), reqVO.getBatchCode(),
-                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId(), reqVO.getQuantity());
+                reqVO.getMaterialStockId(),
+                reqVO.getItemId(),
+                reqVO.getBatchId(),
+                reqVO.getBatchCode(),
+                reqVO.getWarehouseId(),
+                reqVO.getLocationId(),
+                reqVO.getAreaId(),
+                reqVO.getQuantity());
     }
 
     /**
@@ -149,5 +156,4 @@ public class MesWmProductIssueDetailServiceImpl implements MesWmProductIssueDeta
             throw exception(WM_PRODUCT_ISSUE_DETAIL_ITEM_MISMATCH);
         }
     }
-
 }

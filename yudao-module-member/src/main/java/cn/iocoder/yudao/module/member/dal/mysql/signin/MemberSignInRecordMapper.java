@@ -6,7 +6,9 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.member.controller.admin.signin.vo.record.MemberSignInRecordPageReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.signin.MemberSignInRecordDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -20,19 +22,25 @@ import java.util.Set;
 @Mapper
 public interface MemberSignInRecordMapper extends BaseMapperX<MemberSignInRecordDO> {
 
-    default PageResult<MemberSignInRecordDO> selectPage(MemberSignInRecordPageReqVO reqVO, Set<Long> userIds) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MemberSignInRecordDO>()
-                .inIfPresent(MemberSignInRecordDO::getUserId, userIds)
-                .eqIfPresent(MemberSignInRecordDO::getUserId, reqVO.getUserId())
-                .eqIfPresent(MemberSignInRecordDO::getDay, reqVO.getDay())
-                .betweenIfPresent(MemberSignInRecordDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(MemberSignInRecordDO::getId));
+    default PageResult<MemberSignInRecordDO> selectPage(
+            MemberSignInRecordPageReqVO reqVO, Set<Long> userIds) {
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MemberSignInRecordDO>()
+                        .inIfPresent(MemberSignInRecordDO::getUserId, userIds)
+                        .eqIfPresent(MemberSignInRecordDO::getUserId, reqVO.getUserId())
+                        .eqIfPresent(MemberSignInRecordDO::getDay, reqVO.getDay())
+                        .betweenIfPresent(
+                                MemberSignInRecordDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(MemberSignInRecordDO::getId));
     }
 
     default PageResult<MemberSignInRecordDO> selectPage(Long userId, PageParam pageParam) {
-        return selectPage(pageParam, new LambdaQueryWrapperX<MemberSignInRecordDO>()
-                .eq(MemberSignInRecordDO::getUserId, userId)
-                .orderByDesc(MemberSignInRecordDO::getId));
+        return selectPage(
+                pageParam,
+                new LambdaQueryWrapperX<MemberSignInRecordDO>()
+                        .eq(MemberSignInRecordDO::getUserId, userId)
+                        .orderByDesc(MemberSignInRecordDO::getId));
     }
 
     /**
@@ -42,10 +50,11 @@ public interface MemberSignInRecordMapper extends BaseMapperX<MemberSignInRecord
      * @return 签到记录列表
      */
     default MemberSignInRecordDO selectLastRecordByUserId(Long userId) {
-        return selectOne(new QueryWrapper<MemberSignInRecordDO>()
-                .eq("user_id", userId)
-                .orderByDesc("create_time")
-                .last("limit 1"));
+        return selectOne(
+                new QueryWrapper<MemberSignInRecordDO>()
+                        .eq("user_id", userId)
+                        .orderByDesc("create_time")
+                        .last("limit 1"));
     }
 
     default Long selectCountByUserId(Long userId) {
@@ -61,5 +70,4 @@ public interface MemberSignInRecordMapper extends BaseMapperX<MemberSignInRecord
     default List<MemberSignInRecordDO> selectListByUserId(Long userId) {
         return selectList(MemberSignInRecordDO::getUserId, userId);
     }
-
 }

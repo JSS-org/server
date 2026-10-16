@@ -1,10 +1,14 @@
 package cn.iocoder.yudao.module.mes.service.qc.iqc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.iqc.vo.MesQcIqcPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.iqc.vo.MesQcIqcSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.defectrecord.MesQcDefectRecordDO;
@@ -23,7 +27,9 @@ import cn.iocoder.yudao.module.mes.service.qc.template.MesQcTemplateItemService;
 import cn.iocoder.yudao.module.mes.service.wm.arrivalnotice.MesWmArrivalNoticeService;
 import cn.iocoder.yudao.module.mes.service.wm.outsourcereceipt.MesWmOutsourceReceiptService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +38,6 @@ import org.springframework.validation.annotation.Validated;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 来料检验单（IQC） Service 实现类
@@ -47,29 +48,18 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcIqcServiceImpl implements MesQcIqcService {
 
-    @Resource
-    private MesQcIqcMapper iqcMapper;
+    @Resource private MesQcIqcMapper iqcMapper;
 
-    @Resource
-    private MesQcTemplateItemService templateItemService;
-    @Resource
-    private MesQcIqcLineService iqcLineService;
-    @Resource
-    private MesQcDefectRecordService defectRecordService;
-    @Resource
-    private MesWmArrivalNoticeService arrivalNoticeService;
-    @Resource
-    private MesWmOutsourceReceiptService outsourceReceiptService;
-    @Resource
-    private MesMdVendorService vendorService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    @Lazy
-    private MesQcIndicatorResultService indicatorResultService;
+    @Resource private MesQcTemplateItemService templateItemService;
+    @Resource private MesQcIqcLineService iqcLineService;
+    @Resource private MesQcDefectRecordService defectRecordService;
+    @Resource private MesWmArrivalNoticeService arrivalNoticeService;
+    @Resource private MesWmOutsourceReceiptService outsourceReceiptService;
+    @Resource private MesMdVendorService vendorService;
+    @Resource private MesMdItemService itemService;
+    @Resource @Lazy private MesQcIndicatorResultService indicatorResultService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -77,19 +67,27 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
         // 1.1 校验数据
         validateIqcSaveData(createReqVO);
         // 1.2 校验来源单据参数，并验证数据存在
-        String sourceDocCode = validateAndGetSourceDocCode(
-                createReqVO.getSourceDocType(), createReqVO.getSourceDocId(), createReqVO.getSourceLineId());
+        String sourceDocCode =
+                validateAndGetSourceDocCode(
+                        createReqVO.getSourceDocType(),
+                        createReqVO.getSourceDocId(),
+                        createReqVO.getSourceLineId());
         // 1.3 通过 itemId + IQC 类型自动查找模板
-        MesQcTemplateItemDO templateItem = templateItemService.getRequiredTemplateByItemIdAndType(
-                createReqVO.getItemId(), MesQcTypeEnum.IQC.getType());
+        MesQcTemplateItemDO templateItem =
+                templateItemService.getRequiredTemplateByItemIdAndType(
+                        createReqVO.getItemId(), MesQcTypeEnum.IQC.getType());
         Long templateId = templateItem.getTemplateId();
 
         // 2. 插入主表
-        MesQcIqcDO iqc = BeanUtils.toBean(createReqVO, MesQcIqcDO.class)
-                .setTemplateId(templateId)
-                .setCheckQuantity(createReqVO.getQualifiedQuantity().add(createReqVO.getUnqualifiedQuantity()))
-                .setSourceDocCode(sourceDocCode)
-                .setStatus(MesQcStatusEnum.DRAFT.getStatus());
+        MesQcIqcDO iqc =
+                BeanUtils.toBean(createReqVO, MesQcIqcDO.class)
+                        .setTemplateId(templateId)
+                        .setCheckQuantity(
+                                createReqVO
+                                        .getQualifiedQuantity()
+                                        .add(createReqVO.getUnqualifiedQuantity()))
+                        .setSourceDocCode(sourceDocCode)
+                        .setStatus(MesQcStatusEnum.DRAFT.getStatus());
         iqcMapper.insert(iqc);
 
         // 3. 从模板指标自动生成检验行
@@ -109,7 +107,8 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
         updateObj.setSourceDocType(null).setSourceDocId(null).setSourceLineId(null); // 不允许修改来源单据
         updateObj.setTemplateId(null); // 不允许修改模板
         updateObj.setItemId(null); // 不允许修改物料
-        updateObj.setCheckQuantity(updateReqVO.getQualifiedQuantity().add(updateReqVO.getUnqualifiedQuantity()));
+        updateObj.setCheckQuantity(
+                updateReqVO.getQualifiedQuantity().add(updateReqVO.getUnqualifiedQuantity()));
         iqcMapper.updateById(updateObj);
     }
 
@@ -131,11 +130,12 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
             throw exception(QC_IQC_CHECK_RESULT_EMPTY);
         }
         // 1.2 校验至少存在一条检测结果
-        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(id, MesQcTypeEnum.IQC.getType());
+        indicatorResultService.validateIndicatorResultExistsByQcIdAndType(
+                id, MesQcTypeEnum.IQC.getType());
 
         // 2. 更新状态为已完成
-        MesQcIqcDO updateObj = new MesQcIqcDO()
-                .setId(id).setStatus(MesQcStatusEnum.FINISHED.getStatus());
+        MesQcIqcDO updateObj =
+                new MesQcIqcDO().setId(id).setStatus(MesQcStatusEnum.FINISHED.getStatus());
         iqcMapper.updateById(updateObj);
 
         // 3. 回写来源单据
@@ -159,14 +159,25 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
 
         // 根据不同的来源单据类型，回写不同的单据
         if (Objects.equals(iqc.getSourceDocType(), MesBizTypeConstants.WM_ARRIVAL_NOTICE)) {
-            arrivalNoticeService.updateArrivalNoticeWhenIqcFinish(iqc.getSourceDocId(), iqc.getSourceLineId(),
-                    iqc.getId(), iqc.getQualifiedQuantity());
+            arrivalNoticeService.updateArrivalNoticeWhenIqcFinish(
+                    iqc.getSourceDocId(),
+                    iqc.getSourceLineId(),
+                    iqc.getId(),
+                    iqc.getQualifiedQuantity());
         } else if (Objects.equals(iqc.getSourceDocType(), MesBizTypeConstants.WM_OUTSOURCE_RECPT)) {
-            outsourceReceiptService.updateOutsourceReceiptWhenIqcFinish(iqc.getSourceDocId(), iqc.getSourceLineId(),
-                    iqc.getId(), iqc.getQualifiedQuantity(), iqc.getUnqualifiedQuantity());
+            outsourceReceiptService.updateOutsourceReceiptWhenIqcFinish(
+                    iqc.getSourceDocId(),
+                    iqc.getSourceLineId(),
+                    iqc.getId(),
+                    iqc.getQualifiedQuantity(),
+                    iqc.getUnqualifiedQuantity());
         } else {
             throw new IllegalArgumentException(
-                    "IQC 单[" + iqc.getId() + "] sourceDocType=" + iqc.getSourceDocType() + " 无法识别，无法回写来源单据");
+                    "IQC 单["
+                            + iqc.getId()
+                            + "] sourceDocType="
+                            + iqc.getSourceDocType()
+                            + " 无法识别，无法回写来源单据");
         }
     }
 
@@ -224,7 +235,8 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
      * @param sourceDocId 来源单据 ID
      * @param sourceLineId 来源单据行 ID
      */
-    private String validateAndGetSourceDocCode(Integer sourceDocType, Long sourceDocId, Long sourceLineId) {
+    private String validateAndGetSourceDocCode(
+            Integer sourceDocType, Long sourceDocId, Long sourceLineId) {
         if (sourceDocType == null) {
             return null;
         }
@@ -236,7 +248,8 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
             arrivalNoticeService.validateArrivalNoticeAndLineExists(sourceDocId, sourceLineId);
             return arrivalNoticeService.getArrivalNotice(sourceDocId).getCode();
         } else if (Objects.equals(sourceDocType, MesBizTypeConstants.WM_OUTSOURCE_RECPT)) {
-            outsourceReceiptService.validateOutsourceReceiptAndLineExists(sourceDocId, sourceLineId);
+            outsourceReceiptService.validateOutsourceReceiptAndLineExists(
+                    sourceDocId, sourceLineId);
             return outsourceReceiptService.getOutsourceReceipt(sourceDocId).getCode();
         }
         return null;
@@ -278,19 +291,32 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
         BigDecimal criticalRate = BigDecimal.ZERO;
         BigDecimal majorRate = BigDecimal.ZERO;
         BigDecimal minorRate = BigDecimal.ZERO;
-        if (iqc.getCheckQuantity() != null && iqc.getCheckQuantity().compareTo(BigDecimal.ZERO) > 0) {
+        if (iqc.getCheckQuantity() != null
+                && iqc.getCheckQuantity().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal checkQty = iqc.getCheckQuantity();
-            criticalRate = BigDecimal.valueOf(totalCritical).multiply(BigDecimal.valueOf(100))
-                    .divide(checkQty, 2, RoundingMode.HALF_UP);
-            majorRate = BigDecimal.valueOf(totalMajor).multiply(BigDecimal.valueOf(100))
-                    .divide(checkQty, 2, RoundingMode.HALF_UP);
-            minorRate = BigDecimal.valueOf(totalMinor).multiply(BigDecimal.valueOf(100))
-                    .divide(checkQty, 2, RoundingMode.HALF_UP);
+            criticalRate =
+                    BigDecimal.valueOf(totalCritical)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(checkQty, 2, RoundingMode.HALF_UP);
+            majorRate =
+                    BigDecimal.valueOf(totalMajor)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(checkQty, 2, RoundingMode.HALF_UP);
+            minorRate =
+                    BigDecimal.valueOf(totalMinor)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(checkQty, 2, RoundingMode.HALF_UP);
         }
         // 2.3 更新主表
-        MesQcIqcDO updateIqc = new MesQcIqcDO().setId(iqcId)
-                .setCriticalQuantity(totalCritical).setMajorQuantity(totalMajor).setMinorQuantity(totalMinor)
-                .setCriticalRate(criticalRate).setMajorRate(majorRate).setMinorRate(minorRate);
+        MesQcIqcDO updateIqc =
+                new MesQcIqcDO()
+                        .setId(iqcId)
+                        .setCriticalQuantity(totalCritical)
+                        .setMajorQuantity(totalMajor)
+                        .setMinorQuantity(totalMinor)
+                        .setCriticalRate(criticalRate)
+                        .setMajorRate(majorRate)
+                        .setMinorRate(minorRate);
         iqcMapper.updateById(updateIqc);
     }
 
@@ -307,5 +333,4 @@ public class MesQcIqcServiceImpl implements MesQcIqcService {
     public Long getIqcCountByVendorId(Long vendorId) {
         return iqcMapper.selectCountByVendorId(vendorId);
     }
-
 }

@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.framework.ip.core.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import cn.iocoder.yudao.framework.ip.core.Area;
+
 import org.junit.jupiter.api.Test;
 import org.lionsoul.ip2region.xdb.Searcher;
-
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * {@link IPUtils} 的单元测试
@@ -43,5 +43,4 @@ public class IPUtilsTest {
         Area area = IPUtils.getArea(ip);
         assertEquals("宜春市", area.getName());
     }
-
 }

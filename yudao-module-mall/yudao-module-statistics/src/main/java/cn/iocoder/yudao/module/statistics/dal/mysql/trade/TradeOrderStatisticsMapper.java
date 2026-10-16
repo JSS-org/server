@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.statistics.controller.admin.trade.vo.TradeOrderSu
 import cn.iocoder.yudao.module.statistics.controller.admin.trade.vo.TradeOrderTrendRespVO;
 import cn.iocoder.yudao.module.statistics.dal.dataobject.trade.TradeStatisticsDO;
 import cn.iocoder.yudao.module.statistics.service.member.bo.MemberAreaStatisticsRespBO;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -21,20 +22,20 @@ public interface TradeOrderStatisticsMapper extends BaseMapperX<TradeStatisticsD
 
     List<MemberAreaStatisticsRespBO> selectSummaryListByAreaId();
 
-    Integer selectCountByCreateTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                           @Param("endTime") LocalDateTime endTime);
+    Integer selectCountByCreateTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    Integer selectCountByPayTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                        @Param("endTime") LocalDateTime endTime);
+    Integer selectCountByPayTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    Integer selectSummaryPriceByPayTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                               @Param("endTime") LocalDateTime endTime);
+    Integer selectSummaryPriceByPayTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    Integer selectUserCountByCreateTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                               @Param("endTime") LocalDateTime endTime);
+    Integer selectUserCountByCreateTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    Integer selectUserCountByPayTimeBetween(@Param("beginTime") LocalDateTime beginTime,
-                                            @Param("endTime") LocalDateTime endTime);
+    Integer selectUserCountByPayTimeBetween(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
     /**
      * 按照支付时间统计订单（按天分组）
@@ -43,8 +44,8 @@ public interface TradeOrderStatisticsMapper extends BaseMapperX<TradeStatisticsD
      * @param endTime   支付截止时间
      * @return 订单统计列表
      */
-    List<TradeOrderTrendRespVO> selectListByPayTimeBetweenAndGroupByDay(@Param("beginTime") LocalDateTime beginTime,
-                                                                        @Param("endTime") LocalDateTime endTime);
+    List<TradeOrderTrendRespVO> selectListByPayTimeBetweenAndGroupByDay(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
     /**
      * 按照支付时间统计订单（按月分组）
@@ -53,13 +54,14 @@ public interface TradeOrderStatisticsMapper extends BaseMapperX<TradeStatisticsD
      * @param endTime   支付截止时间
      * @return 订单统计列表
      */
-    List<TradeOrderTrendRespVO> selectListByPayTimeBetweenAndGroupByMonth(@Param("beginTime") LocalDateTime beginTime,
-                                                                          @Param("endTime") LocalDateTime endTime);
+    List<TradeOrderTrendRespVO> selectListByPayTimeBetweenAndGroupByMonth(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
-    Long selectCountByStatusAndDeliveryType(@Param("status") Integer status, @Param("deliveryType") Integer deliveryType);
+    Long selectCountByStatusAndDeliveryType(
+            @Param("status") Integer status, @Param("deliveryType") Integer deliveryType);
 
-    TradeOrderSummaryRespVO selectPaySummaryByPayStatusAndPayTimeBetween(@Param("payStatus") Boolean payStatus,
-                                                                         @Param("beginTime") LocalDateTime beginTime,
-                                                                         @Param("endTime") LocalDateTime endTime);
-
+    TradeOrderSummaryRespVO selectPaySummaryByPayStatusAndPayTimeBetween(
+            @Param("payStatus") Boolean payStatus,
+            @Param("beginTime") LocalDateTime beginTime,
+            @Param("endTime") LocalDateTime endTime);
 }

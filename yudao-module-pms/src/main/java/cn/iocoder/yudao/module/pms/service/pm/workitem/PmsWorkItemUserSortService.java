@@ -42,5 +42,4 @@ public interface PmsWorkItemUserSortService {
      * @param projectId 项目编号
      */
     void deleteWorkItemUserSortByProjectId(Long projectId);
-
 }

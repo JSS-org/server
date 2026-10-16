@@ -1,30 +1,32 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply;
 
-import cn.iocoder.yudao.framework.common.pojo.CommonResult;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item.*;
 import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.apply.*;
 import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.issue.*;
+import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.supply.*;
 import cn.iocoder.yudao.module.oa.service.supply.*;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 办公用品")
 @RestController
@@ -32,10 +34,8 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaSupplyItemController {
 
-    @Resource
-    private OaSupplyItemService supplyItemService;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private OaSupplyItemService supplyItemService;
+    @Resource private DeptApi deptApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建办公用品")
@@ -73,24 +73,29 @@ public class OaSupplyItemController {
     @GetMapping("/page")
     @Operation(summary = "获得办公用品分页")
     @PreAuthorize("@ss.hasPermission('oa:supply-item:query')")
-    public CommonResult<PageResult<OaSupplyItemRespVO>> getSupplyItemPage(@Valid OaSupplyItemPageReqVO reqVO) {
+    public CommonResult<PageResult<OaSupplyItemRespVO>> getSupplyItemPage(
+            @Valid OaSupplyItemPageReqVO reqVO) {
         // 1. 查询物品及所属部门
         PageResult<OaSupplyItemDO> page = supplyItemService.getSupplyItemPage(reqVO);
-        Map<Long, DeptRespDTO> depts = deptApi.getDeptMap(convertSet(page.getList(), OaSupplyItemDO::getDeptId));
+        Map<Long, DeptRespDTO> depts =
+                deptApi.getDeptMap(convertSet(page.getList(), OaSupplyItemDO::getDeptId));
         // 2. 拼接部门名称
         PageResult<OaSupplyItemRespVO> result = BeanUtils.toBean(page, OaSupplyItemRespVO.class);
-        result.getList().forEach(item -> {
-            DeptRespDTO dept = depts.get(item.getDeptId());
-            if (dept != null) {
-                item.setDeptName(dept.getName());
-            }
-        });
+        result.getList()
+                .forEach(
+                        item -> {
+                            DeptRespDTO dept = depts.get(item.getDeptId());
+                            if (dept != null) {
+                                item.setDeptName(dept.getName());
+                            }
+                        });
         return success(result);
     }
 
     @GetMapping("/select-page")
     @Operation(summary = "获得可领用的办公用品分页")
-    public CommonResult<PageResult<OaSupplyItemRespVO>> getSupplyItemSelectPage(@Valid OaSupplyItemPageReqVO reqVO) {
+    public CommonResult<PageResult<OaSupplyItemRespVO>> getSupplyItemSelectPage(
+            @Valid OaSupplyItemPageReqVO reqVO) {
         reqVO.setStatus(CommonStatusEnum.ENABLE.getStatus());
         PageResult<OaSupplyItemDO> page = supplyItemService.getSupplyItemPage(reqVO);
         return success(BeanUtils.toBean(page, OaSupplyItemRespVO.class));
@@ -99,9 +104,9 @@ public class OaSupplyItemController {
     @PutMapping("/stock-in")
     @Operation(summary = "办公用品入库")
     @PreAuthorize("@ss.hasPermission('oa:supply-item:stock-in')")
-    public CommonResult<Boolean> stockInSupplyItem(@Valid @RequestBody OaSupplyItemStockInReqVO reqVO) {
+    public CommonResult<Boolean> stockInSupplyItem(
+            @Valid @RequestBody OaSupplyItemStockInReqVO reqVO) {
         supplyItemService.stockInSupplyItem(reqVO);
         return success(true);
     }
-
 }

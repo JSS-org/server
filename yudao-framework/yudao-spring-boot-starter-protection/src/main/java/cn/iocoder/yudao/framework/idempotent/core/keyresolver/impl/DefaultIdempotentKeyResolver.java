@@ -4,6 +4,7 @@ import cn.hutool.crypto.SecureUtil;
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.framework.idempotent.core.annotation.Idempotent;
 import cn.iocoder.yudao.framework.idempotent.core.keyresolver.IdempotentKeyResolver;
+
 import org.aspectj.lang.JoinPoint;
 
 /**
@@ -21,5 +22,4 @@ public class DefaultIdempotentKeyResolver implements IdempotentKeyResolver {
         String argsStr = StrUtils.joinMethodArgs(joinPoint);
         return SecureUtil.md5(methodName + argsStr);
     }
-
 }

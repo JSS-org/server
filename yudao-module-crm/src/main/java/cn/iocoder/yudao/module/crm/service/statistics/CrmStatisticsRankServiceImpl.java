@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.crm.service.statistics;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank.CrmStatisticsRankReqVO;
@@ -9,7 +12,9 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,9 +23,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 /**
  * CRM 排行榜统计 Service 实现类
@@ -31,13 +33,10 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class CrmStatisticsRankServiceImpl implements CrmStatisticsRankService {
 
-    @Resource
-    private CrmStatisticsRankMapper rankMapper;
+    @Resource private CrmStatisticsRankMapper rankMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @Override
     public List<CrmStatisticsRankRespVO> getContractPriceRank(CrmStatisticsRankReqVO rankReqVO) {
@@ -75,7 +74,8 @@ public class CrmStatisticsRankServiceImpl implements CrmStatisticsRankService {
     }
 
     @Override
-    public List<CrmStatisticsRankRespVO> getFollowCustomerCountRank(CrmStatisticsRankReqVO rankReqVO) {
+    public List<CrmStatisticsRankRespVO> getFollowCustomerCountRank(
+            CrmStatisticsRankReqVO rankReqVO) {
         return getRank(rankReqVO, rankMapper::selectFollowCustomerCountRank);
     }
 
@@ -86,7 +86,9 @@ public class CrmStatisticsRankServiceImpl implements CrmStatisticsRankService {
      * @param rankFunction 排行榜方法
      * @return 排行版数据
      */
-    private List<CrmStatisticsRankRespVO> getRank(CrmStatisticsRankReqVO rankReqVO, Function<CrmStatisticsRankReqVO, List<CrmStatisticsRankRespVO>> rankFunction) {
+    private List<CrmStatisticsRankRespVO> getRank(
+            CrmStatisticsRankReqVO rankReqVO,
+            Function<CrmStatisticsRankReqVO, List<CrmStatisticsRankRespVO>> rankFunction) {
         // 1. 获得用户编号数组
         rankReqVO.setUserIds(getUserIds(rankReqVO.getDeptId()));
         if (CollUtil.isEmpty(rankReqVO.getUserIds())) {
@@ -109,12 +111,22 @@ public class CrmStatisticsRankServiceImpl implements CrmStatisticsRankService {
      * @param ranks 排行榜数据
      */
     private void appendUserInfo(List<CrmStatisticsRankRespVO> ranks) {
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertSet(ranks, CrmStatisticsRankRespVO::getOwnerUserId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
-        ranks.forEach(rank -> MapUtils.findAndThen(userMap, rank.getOwnerUserId(), user -> {
-            rank.setNickname(user.getNickname());
-            MapUtils.findAndThen(deptMap, user.getDeptId(), dept -> rank.setDeptName(dept.getName()));
-        }));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(ranks, CrmStatisticsRankRespVO::getOwnerUserId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
+        ranks.forEach(
+                rank ->
+                        MapUtils.findAndThen(
+                                userMap,
+                                rank.getOwnerUserId(),
+                                user -> {
+                                    rank.setNickname(user.getNickname());
+                                    MapUtils.findAndThen(
+                                            deptMap,
+                                            user.getDeptId(),
+                                            dept -> rank.setDeptName(dept.getName()));
+                                }));
     }
 
     /**
@@ -130,5 +142,4 @@ public class CrmStatisticsRankServiceImpl implements CrmStatisticsRankService {
         // 2. 获得用户编号
         return convertList(adminUserApi.getUserListByDeptIds(deptIds), AdminUserRespDTO::getId);
     }
-
 }

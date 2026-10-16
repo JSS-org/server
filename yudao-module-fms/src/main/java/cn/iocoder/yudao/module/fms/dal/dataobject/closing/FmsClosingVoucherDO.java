@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.fms.dal.dataobject.closing;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,37 +34,41 @@ public class FmsClosingVoucherDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 结账方案编号
      *
      * 关联 {@link FmsClosingSchemeDO#getId()}
      */
     private Long closingId;
+
     /**
      * 凭证编号
      *
      * 关联 {@link cn.iocoder.yudao.module.fms.dal.dataobject.voucher.FmsVoucherDO#getId()}
      */
     private Long voucherId;
+
     /**
      * 凭证日期
      */
     private LocalDateTime voucherTime;
+
     /**
      * 结转金额
      */
     private BigDecimal amount;
+
     /**
      * 是否已结账
      */
     private Boolean closed;
+
     /**
      * 账套编号
      *
      * 关联 {@link cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO#getId()}
      */
     private Long accountSetId;
-
 }

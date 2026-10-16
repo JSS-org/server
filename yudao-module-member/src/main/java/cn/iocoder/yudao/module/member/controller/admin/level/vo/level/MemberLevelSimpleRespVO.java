@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.level.vo.level;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.ToString;
 
@@ -17,5 +18,4 @@ public class MemberLevelSimpleRespVO {
 
     @Schema(description = "等级图标", example = "https://www.iocoder.cn/yudao.jpg")
     private String icon;
-
 }

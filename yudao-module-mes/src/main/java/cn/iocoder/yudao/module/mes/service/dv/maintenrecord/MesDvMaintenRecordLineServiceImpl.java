@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.dv.maintenrecord;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.maintenrecord.vo.line.MesDvMaintenRecordLinePageReqVO;
@@ -7,15 +10,14 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.maintenrecord.vo.line.Mes
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.maintenrecord.MesDvMaintenRecordLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.maintenrecord.MesDvMaintenRecordLineMapper;
 import cn.iocoder.yudao.module.mes.service.dv.subject.MesDvSubjectService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 设备保养记录明细 Service 实现类
@@ -26,14 +28,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesDvMaintenRecordLineServiceImpl implements MesDvMaintenRecordLineService {
 
-    @Resource
-    private MesDvMaintenRecordLineMapper maintenRecordLineMapper;
+    @Resource private MesDvMaintenRecordLineMapper maintenRecordLineMapper;
 
-    @Resource
-    @Lazy
-    private MesDvMaintenRecordService maintenRecordService;
-    @Resource
-    private MesDvSubjectService subjectService;
+    @Resource @Lazy private MesDvMaintenRecordService maintenRecordService;
+    @Resource private MesDvSubjectService subjectService;
 
     @Override
     public Long createMaintenRecordLine(MesDvMaintenRecordLineSaveReqVO createReqVO) {
@@ -41,7 +39,8 @@ public class MesDvMaintenRecordLineServiceImpl implements MesDvMaintenRecordLine
         validateMaintenRecordLineRelation(createReqVO);
 
         // 2. 插入
-        MesDvMaintenRecordLineDO maintenRecordLine = BeanUtils.toBean(createReqVO, MesDvMaintenRecordLineDO.class);
+        MesDvMaintenRecordLineDO maintenRecordLine =
+                BeanUtils.toBean(createReqVO, MesDvMaintenRecordLineDO.class);
         maintenRecordLineMapper.insert(maintenRecordLine);
         return maintenRecordLine.getId();
     }
@@ -54,7 +53,8 @@ public class MesDvMaintenRecordLineServiceImpl implements MesDvMaintenRecordLine
         validateMaintenRecordLineRelation(updateReqVO);
 
         // 2. 更新
-        MesDvMaintenRecordLineDO updateObj = BeanUtils.toBean(updateReqVO, MesDvMaintenRecordLineDO.class);
+        MesDvMaintenRecordLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesDvMaintenRecordLineDO.class);
         maintenRecordLineMapper.updateById(updateObj);
     }
 
@@ -90,7 +90,8 @@ public class MesDvMaintenRecordLineServiceImpl implements MesDvMaintenRecordLine
     }
 
     @Override
-    public PageResult<MesDvMaintenRecordLineDO> getMaintenRecordLinePage(MesDvMaintenRecordLinePageReqVO pageReqVO) {
+    public PageResult<MesDvMaintenRecordLineDO> getMaintenRecordLinePage(
+            MesDvMaintenRecordLinePageReqVO pageReqVO) {
         return maintenRecordLineMapper.selectPage(pageReqVO);
     }
 
@@ -103,5 +104,4 @@ public class MesDvMaintenRecordLineServiceImpl implements MesDvMaintenRecordLine
     public void deleteMaintenRecordLineByRecordId(Long recordId) {
         maintenRecordLineMapper.deleteByRecordId(recordId);
     }
-
 }

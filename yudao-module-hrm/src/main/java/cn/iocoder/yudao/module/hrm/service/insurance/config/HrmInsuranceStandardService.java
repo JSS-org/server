@@ -28,5 +28,4 @@ public interface HrmInsuranceStandardService {
      * @return 标准参保项目列表
      */
     List<HrmInsuranceStandardProjectRespVO> getStandardProjectList(Integer areaId, String typeCode);
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.enums.rule;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -47,13 +48,14 @@ public enum IotSceneRuleTriggerTypeEnum implements ArrayValuable<Integer> {
     /**
      * 定时触发
      */
-    TIMER(100)
-
-    ;
+    TIMER(100);
 
     private final Integer type;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(IotSceneRuleTriggerTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(IotSceneRuleTriggerTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
@@ -63,5 +65,4 @@ public enum IotSceneRuleTriggerTypeEnum implements ArrayValuable<Integer> {
     public static IotSceneRuleTriggerTypeEnum typeOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

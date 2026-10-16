@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.permission;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -34,7 +35,10 @@ public class PmsKnowledgeContentPermissionRespVO {
     @Data
     public static class Member {
 
-        @Schema(description = "协作者编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "协作者编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long id;
 
         @Schema(description = "用户编号", example = "1")
@@ -51,7 +55,5 @@ public class PmsKnowledgeContentPermissionRespVO {
 
         @Schema(description = "协作等级", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
         private Integer level;
-
     }
-
 }

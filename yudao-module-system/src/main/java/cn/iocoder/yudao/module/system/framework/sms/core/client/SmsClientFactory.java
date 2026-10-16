@@ -33,5 +33,4 @@ public interface SmsClientFactory {
      * @return 短信 Client
      */
     SmsClient createOrUpdateSmsClient(SmsChannelProperties properties);
-
 }

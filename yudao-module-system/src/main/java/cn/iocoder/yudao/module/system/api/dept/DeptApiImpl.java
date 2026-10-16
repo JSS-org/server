@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.DeptDO;
 import cn.iocoder.yudao.module.system.service.dept.DeptService;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -18,8 +20,7 @@ import java.util.List;
 @Service
 public class DeptApiImpl implements DeptApi {
 
-    @Resource
-    private DeptService deptService;
+    @Resource private DeptService deptService;
 
     @Override
     public DeptRespDTO getDept(Long id) {
@@ -49,5 +50,4 @@ public class DeptApiImpl implements DeptApi {
         List<DeptDO> parentDepts = deptService.getParentDeptList(id);
         return BeanUtils.toBean(parentDepts, DeptRespDTO.class);
     }
-
 }

@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import cn.idev.excel.annotation.format.DateTimeFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -58,5 +60,4 @@ public class FmsVoucherExportRespVO {
     @Schema(description = "审核人")
     @ExcelProperty("审核人")
     private String reviewerUserName;
-
 }

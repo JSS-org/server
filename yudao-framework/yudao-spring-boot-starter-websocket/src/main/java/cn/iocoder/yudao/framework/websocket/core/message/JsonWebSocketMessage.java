@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.websocket.core.message;
 
 import cn.iocoder.yudao.framework.websocket.core.listener.WebSocketMessageListener;
+
 import lombok.Data;
 
 import java.io.Serializable;
@@ -19,11 +20,11 @@ public class JsonWebSocketMessage implements Serializable {
      * 目的：用于分发到对应的 {@link WebSocketMessageListener} 实现类
      */
     private String type;
+
     /**
      * 消息内容
      *
      * 要求 JSON 对象
      */
     private String content;
-
 }

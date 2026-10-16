@@ -16,10 +16,12 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.websocket.handler.upstream.I
 import cn.iocoder.yudao.module.iot.gateway.protocol.websocket.manager.IotWebSocketConnectionManager;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializerManager;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.PemKeyCertOptions;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,26 +39,27 @@ public class IotWebSocketProtocol implements IotProtocol {
      * 协议配置
      */
     private final ProtocolProperties properties;
+
     /**
      * 服务器 ID（用于消息追踪，全局唯一）
      */
-    @Getter
-    private final String serverId;
+    @Getter private final String serverId;
 
     /**
      * 运行状态
      */
-    @Getter
-    private volatile boolean running = false;
+    @Getter private volatile boolean running = false;
 
     /**
      * Vert.x 实例
      */
     private Vertx vertx;
+
     /**
      * WebSocket 服务器
      */
     private HttpServer httpServer;
+
     /**
      * WebSocket 连接管理器
      */
@@ -81,12 +84,12 @@ public class IotWebSocketProtocol implements IotProtocol {
         // 初始化序列化器
         IotSerializeTypeEnum serializeType = IotSerializeTypeEnum.of(properties.getSerialize());
         Assert.notNull(serializeType, "不支持的序列化类型：" + properties.getSerialize());
-        IotMessageSerializerManager serializerManager = SpringUtil.getBean(IotMessageSerializerManager.class);
+        IotMessageSerializerManager serializerManager =
+                SpringUtil.getBean(IotMessageSerializerManager.class);
         this.serializer = serializerManager.get(serializeType);
 
         // 初始化连接管理器
         this.connectionManager = new IotWebSocketConnectionManager();
-
     }
 
     @Override
@@ -112,45 +115,58 @@ public class IotWebSocketProtocol implements IotProtocol {
 
         // 1.2 创建服务器选项
         IotWebSocketConfig wsConfig = properties.getWebsocket();
-        HttpServerOptions options = new HttpServerOptions()
-                .setPort(properties.getPort())
-                .setIdleTimeout(wsConfig.getIdleTimeoutSeconds())
-                .setMaxWebSocketFrameSize(wsConfig.getMaxFrameSize())
-                .setMaxWebSocketMessageSize(wsConfig.getMaxMessageSize());
+        HttpServerOptions options =
+                new HttpServerOptions()
+                        .setPort(properties.getPort())
+                        .setIdleTimeout(wsConfig.getIdleTimeoutSeconds())
+                        .setMaxWebSocketFrameSize(wsConfig.getMaxFrameSize())
+                        .setMaxWebSocketMessageSize(wsConfig.getMaxMessageSize());
         IotGatewayProperties.SslConfig sslConfig = properties.getSsl();
         if (sslConfig != null && Boolean.TRUE.equals(sslConfig.getSsl())) {
-            PemKeyCertOptions pemKeyCertOptions = new PemKeyCertOptions()
-                    .setKeyPath(sslConfig.getSslKeyPath())
-                    .setCertPath(sslConfig.getSslCertPath());
+            PemKeyCertOptions pemKeyCertOptions =
+                    new PemKeyCertOptions()
+                            .setKeyPath(sslConfig.getSslKeyPath())
+                            .setCertPath(sslConfig.getSslCertPath());
             options.setSsl(true).setKeyCertOptions(pemKeyCertOptions);
         }
 
         // 1.3 创建服务器并设置 WebSocket 处理器
         httpServer = vertx.createHttpServer(options);
-        httpServer.webSocketHandler(socket -> {
-            // 验证路径
-            if (ObjUtil.notEqual(wsConfig.getPath(), socket.path())) {
-                log.warn("[webSocketHandler][WebSocket 路径不匹配，拒绝连接，路径: {}，期望: {}]",
-                        socket.path(), wsConfig.getPath());
-                socket.reject();
-                return;
-            }
-            // 创建上行处理器
-            IotWebSocketUpstreamHandler handler = new IotWebSocketUpstreamHandler(serverId, serializer, connectionManager);
-            handler.handle(socket);
-        });
+        httpServer.webSocketHandler(
+                socket -> {
+                    // 验证路径
+                    if (ObjUtil.notEqual(wsConfig.getPath(), socket.path())) {
+                        log.warn(
+                                "[webSocketHandler][WebSocket 路径不匹配，拒绝连接，路径: {}，期望: {}]",
+                                socket.path(),
+                                wsConfig.getPath());
+                        socket.reject();
+                        return;
+                    }
+                    // 创建上行处理器
+                    IotWebSocketUpstreamHandler handler =
+                            new IotWebSocketUpstreamHandler(
+                                    serverId, serializer, connectionManager);
+                    handler.handle(socket);
+                });
 
         // 1.4 启动服务器
         try {
             httpServer.listen().result();
             running = true;
-            log.info("[start][IoT WebSocket 协议 {} 启动成功，端口：{}，路径：{}，serverId：{}]",
-                    getId(), properties.getPort(), wsConfig.getPath(), serverId);
+            log.info(
+                    "[start][IoT WebSocket 协议 {} 启动成功，端口：{}，路径：{}，serverId：{}]",
+                    getId(),
+                    properties.getPort(),
+                    wsConfig.getPath(),
+                    serverId);
 
             // 2. 启动下行消息订阅者
             IotMessageBus messageBus = SpringUtil.getBean(IotMessageBus.class);
-            IotWebSocketDownstreamHandler downstreamHandler = new IotWebSocketDownstreamHandler(serializer, connectionManager);
-            this.downstreamSubscriber = new IotWebSocketDownstreamSubscriber(this, downstreamHandler, messageBus);
+            IotWebSocketDownstreamHandler downstreamHandler =
+                    new IotWebSocketDownstreamHandler(serializer, connectionManager);
+            this.downstreamSubscriber =
+                    new IotWebSocketDownstreamSubscriber(this, downstreamHandler, messageBus);
             downstreamSubscriber.start();
         } catch (Exception e) {
             log.error("[start][IoT WebSocket 协议 {} 启动失败]", getId(), e);
@@ -204,5 +220,4 @@ public class IotWebSocketProtocol implements IotProtocol {
         running = false;
         log.info("[stop][IoT WebSocket 协议 {} 已停止]", getId());
     }
-
 }

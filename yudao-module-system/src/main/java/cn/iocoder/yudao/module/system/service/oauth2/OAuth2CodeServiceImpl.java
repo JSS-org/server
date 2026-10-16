@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.system.service.oauth2;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_EXPIRE;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_NOT_EXISTS;
+
 import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.common.util.date.DateUtils;
 import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2CodeDO;
 import cn.iocoder.yudao.module.system.dal.mysql.oauth2.OAuth2CodeMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_EXPIRE;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_NOT_EXISTS;
 
 /**
  * OAuth2.0 授权码 Service 实现类
@@ -29,17 +31,26 @@ public class OAuth2CodeServiceImpl implements OAuth2CodeService {
      */
     private static final Integer TIMEOUT = 5 * 60;
 
-    @Resource
-    private OAuth2CodeMapper oauth2CodeMapper;
+    @Resource private OAuth2CodeMapper oauth2CodeMapper;
 
     @Override
-    public OAuth2CodeDO createAuthorizationCode(Long userId, Integer userType, String clientId,
-                                                List<String> scopes, String redirectUri, String state) {
-        OAuth2CodeDO codeDO = new OAuth2CodeDO().setCode(generateCode())
-                .setUserId(userId).setUserType(userType)
-                .setClientId(clientId).setScopes(scopes)
-                .setExpiresTime(LocalDateTime.now().plusSeconds(TIMEOUT))
-                .setRedirectUri(redirectUri).setState(state);
+    public OAuth2CodeDO createAuthorizationCode(
+            Long userId,
+            Integer userType,
+            String clientId,
+            List<String> scopes,
+            String redirectUri,
+            String state) {
+        OAuth2CodeDO codeDO =
+                new OAuth2CodeDO()
+                        .setCode(generateCode())
+                        .setUserId(userId)
+                        .setUserType(userType)
+                        .setClientId(clientId)
+                        .setScopes(scopes)
+                        .setExpiresTime(LocalDateTime.now().plusSeconds(TIMEOUT))
+                        .setRedirectUri(redirectUri)
+                        .setState(state);
         oauth2CodeMapper.insert(codeDO);
         return codeDO;
     }
@@ -60,5 +71,4 @@ public class OAuth2CodeServiceImpl implements OAuth2CodeService {
     private static String generateCode() {
         return IdUtil.fastSimpleUUID();
     }
-
 }

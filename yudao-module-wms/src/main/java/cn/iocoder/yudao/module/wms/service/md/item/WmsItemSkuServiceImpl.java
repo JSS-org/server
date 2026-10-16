@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.wms.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -15,7 +19,9 @@ import cn.iocoder.yudao.module.wms.service.order.check.WmsCheckOrderDetailServic
 import cn.iocoder.yudao.module.wms.service.order.movement.WmsMovementOrderDetailService;
 import cn.iocoder.yudao.module.wms.service.order.receipt.WmsReceiptOrderDetailService;
 import cn.iocoder.yudao.module.wms.service.order.shipment.WmsShipmentOrderDetailService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
-
 /**
  * WMS 商品 SKU Service 实现类
  *
@@ -39,30 +41,27 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsItemSkuServiceImpl implements WmsItemSkuService {
 
-    @Resource
-    private WmsItemSkuMapper itemSkuMapper;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private WmsItemSkuMapper itemSkuMapper;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsInventoryService inventoryService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsReceiptOrderDetailService receiptOrderDetailService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsShipmentOrderDetailService shipmentOrderDetailService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsMovementOrderDetailService movementOrderDetailService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private WmsCheckOrderDetailService checkOrderDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createItemSkuList(Long itemId, List<WmsItemSkuSaveReqVO> skus) {
         validateItemSkuList(skus);
-        List<WmsItemSkuDO> list = BeanUtils.toBean(skus, WmsItemSkuDO.class, sku ->
-                sku.setItemId(itemId).setId(null)); // id 由数据库自增分配，避免前端误操作
+        List<WmsItemSkuDO> list =
+                BeanUtils.toBean(
+                        skus,
+                        WmsItemSkuDO.class,
+                        sku -> sku.setItemId(itemId).setId(null)); // id 由数据库自增分配，避免前端误操作
         itemSkuMapper.insertBatch(list);
     }
 
@@ -74,8 +73,11 @@ public class WmsItemSkuServiceImpl implements WmsItemSkuService {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
         List<WmsItemSkuDO> oldList = itemSkuMapper.selectListByItemId(itemId);
         List<WmsItemSkuDO> newList = BeanUtils.toBean(skus, WmsItemSkuDO.class);
-        List<List<WmsItemSkuDO>> diffList = diffList(oldList, newList, // id 不同，就认为是不同的记录
-                (oldVal, newVal) -> ObjectUtil.equal(oldVal.getId(), newVal.getId()));
+        List<List<WmsItemSkuDO>> diffList =
+                diffList(
+                        oldList,
+                        newList, // id 不同，就认为是不同的记录
+                        (oldVal, newVal) -> ObjectUtil.equal(oldVal.getId(), newVal.getId()));
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(2))) {
@@ -87,10 +89,12 @@ public class WmsItemSkuServiceImpl implements WmsItemSkuService {
         }
         if (CollUtil.isNotEmpty(diffList.get(0))) {
             // 新增场景下忽略前端误传的 SKU id：统一置 null，由数据库自增分配
-            diffList.get(0).forEach(sku -> {
-                sku.setItemId(itemId);
-                sku.setId(null);
-            });
+            diffList.get(0)
+                    .forEach(
+                            sku -> {
+                                sku.setItemId(itemId);
+                                sku.setId(null);
+                            });
             itemSkuMapper.insertBatch(diffList.get(0));
         }
         if (CollUtil.isNotEmpty(diffList.get(1))) {
@@ -186,5 +190,4 @@ public class WmsItemSkuServiceImpl implements WmsItemSkuService {
             throw exception(ITEM_SKU_HAS_ORDER, sku.getName(), WmsOrderTypeEnum.CHECK.getName());
         }
     }
-
 }

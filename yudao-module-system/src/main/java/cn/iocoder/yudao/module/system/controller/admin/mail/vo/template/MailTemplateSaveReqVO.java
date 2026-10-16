@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.system.controller.admin.mail.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 邮件模版创建/修改 Request VO")
 @Data
@@ -36,11 +37,13 @@ public class MailTemplateSaveReqVO {
     @NotEmpty(message = "内容不能为空")
     private String content;
 
-    @Schema(description = "状态，参见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态，参见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "状态不能为空")
     private Integer status;
 
     @Schema(description = "备注", example = "奥特曼")
     private String remark;
-
 }

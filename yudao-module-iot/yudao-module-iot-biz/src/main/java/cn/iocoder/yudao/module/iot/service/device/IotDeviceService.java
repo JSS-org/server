@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.service.device;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.device.*;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotDeviceAuthReqDTO;
@@ -12,16 +14,16 @@ import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterRespDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotSubDeviceRegisterRespDTO;
 import cn.iocoder.yudao.module.iot.core.topic.topo.IotDeviceTopoGetRespDTO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
+
 import jakarta.validation.Valid;
 
-import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import javax.annotation.Nullable;
 
 /**
  * IoT 设备 Service 接口
@@ -142,8 +144,8 @@ public interface IotDeviceService {
      * @param productId 产品编号
      * @return 设备列表
      */
-    List<IotDeviceDO> getDeviceListByCondition(@Nullable Integer deviceType,
-                                               @Nullable Long productId);
+    List<IotDeviceDO> getDeviceListByCondition(
+            @Nullable Integer deviceType, @Nullable Long productId);
 
     /**
      * 获得状态，获得设备列表
@@ -184,7 +186,8 @@ public interface IotDeviceService {
      * @param updateSupport 是否支持更新
      * @return 导入结果
      */
-    IotDeviceImportRespVO importDevice(List<IotDeviceImportExcelVO> importDevices, boolean updateSupport);
+    IotDeviceImportRespVO importDevice(
+            List<IotDeviceImportExcelVO> importDevices, boolean updateSupport);
 
     /**
      * 获得设备数量
@@ -224,7 +227,8 @@ public interface IotDeviceService {
      * @param deviceNames 设备名称列表
      * @return 设备列表
      */
-    List<IotDeviceDO> getDeviceListByProductKeyAndNames(String productKey, List<String> deviceNames);
+    List<IotDeviceDO> getDeviceListByProductKeyAndNames(
+            String productKey, List<String> deviceNames);
 
     /**
      * 认证设备
@@ -326,7 +330,8 @@ public interface IotDeviceService {
      * @param gatewayDevice 网关设备
      * @return 成功添加的子设备列表
      */
-    List<IotDeviceIdentity> handleTopoAddMessage(IotDeviceMessage message, IotDeviceDO gatewayDevice);
+    List<IotDeviceIdentity> handleTopoAddMessage(
+            IotDeviceMessage message, IotDeviceDO gatewayDevice);
 
     /**
      * 处理删除拓扑关系消息（网关设备上报）
@@ -335,7 +340,8 @@ public interface IotDeviceService {
      * @param gatewayDevice 网关设备
      * @return 成功删除的子设备列表
      */
-    List<IotDeviceIdentity> handleTopoDeleteMessage(IotDeviceMessage message, IotDeviceDO gatewayDevice);
+    List<IotDeviceIdentity> handleTopoDeleteMessage(
+            IotDeviceMessage message, IotDeviceDO gatewayDevice);
 
     /**
      * 处理获取拓扑关系消息（网关设备上报）
@@ -364,7 +370,8 @@ public interface IotDeviceService {
      * @param reqDTO 子设备注册请求（包含网关设备信息）
      * @return 注册结果列表
      */
-    List<IotSubDeviceRegisterRespDTO> registerSubDevices(@Valid IotSubDeviceRegisterFullReqDTO reqDTO);
+    List<IotSubDeviceRegisterRespDTO> registerSubDevices(
+            @Valid IotSubDeviceRegisterFullReqDTO reqDTO);
 
     /**
      * 处理子设备动态注册消息（网关设备上报）
@@ -373,6 +380,6 @@ public interface IotDeviceService {
      * @param gatewayDevice 网关设备
      * @return 注册结果列表
      */
-    List<IotSubDeviceRegisterRespDTO> handleSubDeviceRegisterMessage(IotDeviceMessage message, IotDeviceDO gatewayDevice);
-
+    List<IotSubDeviceRegisterRespDTO> handleSubDeviceRegisterMessage(
+            IotDeviceMessage message, IotDeviceDO gatewayDevice);
 }

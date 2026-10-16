@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.framework.sms.core.client.impl;
 
 import cn.iocoder.yudao.module.system.framework.sms.core.client.SmsClient;
 import cn.iocoder.yudao.module.system.framework.sms.core.property.SmsChannelProperties;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -44,5 +45,4 @@ public abstract class AbstractSmsClient implements SmsClient {
     public Long getId() {
         return properties.getId();
     }
-
 }

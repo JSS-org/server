@@ -55,5 +55,4 @@ public interface PmsWorkItemBoardService {
      * @param projectId 项目编号
      */
     void deleteWorkItemBoardListByProjectId(Long projectId);
-
 }

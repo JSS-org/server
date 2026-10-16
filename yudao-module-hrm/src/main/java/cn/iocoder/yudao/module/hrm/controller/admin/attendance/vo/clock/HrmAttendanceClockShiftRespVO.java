@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.clock;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,5 +27,4 @@ public class HrmAttendanceClockShiftRespVO {
 
     @Schema(description = "下班打卡结束时间")
     private LocalDateTime clockOutEndTime;
-
 }

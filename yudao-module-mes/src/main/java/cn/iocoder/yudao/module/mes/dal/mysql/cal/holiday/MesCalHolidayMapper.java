@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.cal.holiday;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.holiday.MesCalHolidayDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -21,9 +22,9 @@ public interface MesCalHolidayMapper extends BaseMapperX<MesCalHolidayDO> {
     }
 
     default List<MesCalHolidayDO> selectList(LocalDateTime startDay, LocalDateTime endDay) {
-        return selectList(new LambdaQueryWrapperX<MesCalHolidayDO>()
-                .betweenIfPresent(MesCalHolidayDO::getDay, startDay, endDay)
-                .orderByAsc(MesCalHolidayDO::getDay));
+        return selectList(
+                new LambdaQueryWrapperX<MesCalHolidayDO>()
+                        .betweenIfPresent(MesCalHolidayDO::getDay, startDay, endDay)
+                        .orderByAsc(MesCalHolidayDO::getDay));
     }
-
 }

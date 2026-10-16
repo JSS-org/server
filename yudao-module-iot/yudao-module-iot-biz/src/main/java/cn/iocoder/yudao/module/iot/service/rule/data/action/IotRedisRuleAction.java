@@ -6,7 +6,9 @@ import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkRedisConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotRedisDataStructureEnum;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -29,8 +31,8 @@ import java.util.Map;
  */
 @Component
 @Slf4j
-public class IotRedisRuleAction extends
-        IotDataRuleCacheableAction<IotDataSinkRedisConfig, RedisTemplate<String, Object>> {
+public class IotRedisRuleAction
+        extends IotDataRuleCacheableAction<IotDataSinkRedisConfig, RedisTemplate<String, Object>> {
 
     @Override
     public Integer getType() {
@@ -68,54 +70,75 @@ public class IotRedisRuleAction extends
                 throw new IllegalArgumentException("不支持的 Redis 数据结构类型: " + dataStructure);
         }
 
-        log.info("[execute][消息发送成功] dataStructure: {}, config: {}", dataStructure.getName(), config);
+        log.info(
+                "[execute][消息发送成功] dataStructure: {}, config: {}", dataStructure.getName(), config);
     }
 
     /**
      * 执行 Stream 操作
      */
-    private void executeStream(RedisTemplate<String, Object> redisTemplate, IotDataSinkRedisConfig config, String messageJson) {
-        ObjectRecord<String, ?> record = StreamRecords.newRecord()
-                .ofObject(messageJson).withStreamKey(config.getTopic());
+    private void executeStream(
+            RedisTemplate<String, Object> redisTemplate,
+            IotDataSinkRedisConfig config,
+            String messageJson) {
+        ObjectRecord<String, ?> record =
+                StreamRecords.newRecord().ofObject(messageJson).withStreamKey(config.getTopic());
         redisTemplate.opsForStream().add(record);
     }
 
     /**
      * 执行 Hash 操作
      */
-    private void executeHash(RedisTemplate<String, Object> redisTemplate, IotDataSinkRedisConfig config,
-                             IotDeviceMessage message, String messageJson) {
-        String hashField = StrUtil.isNotBlank(config.getHashField()) ?
-                config.getHashField() : String.valueOf(message.getDeviceId());
+    private void executeHash(
+            RedisTemplate<String, Object> redisTemplate,
+            IotDataSinkRedisConfig config,
+            IotDeviceMessage message,
+            String messageJson) {
+        String hashField =
+                StrUtil.isNotBlank(config.getHashField())
+                        ? config.getHashField()
+                        : String.valueOf(message.getDeviceId());
         redisTemplate.opsForHash().put(config.getTopic(), hashField, messageJson);
     }
 
     /**
      * 执行 List 操作
      */
-    private void executeList(RedisTemplate<String, Object> redisTemplate, IotDataSinkRedisConfig config, String messageJson) {
+    private void executeList(
+            RedisTemplate<String, Object> redisTemplate,
+            IotDataSinkRedisConfig config,
+            String messageJson) {
         redisTemplate.opsForList().rightPush(config.getTopic(), messageJson);
     }
 
     /**
      * 执行 Set 操作
      */
-    private void executeSet(RedisTemplate<String, Object> redisTemplate, IotDataSinkRedisConfig config, String messageJson) {
+    private void executeSet(
+            RedisTemplate<String, Object> redisTemplate,
+            IotDataSinkRedisConfig config,
+            String messageJson) {
         redisTemplate.opsForSet().add(config.getTopic(), messageJson);
     }
 
     /**
      * 执行 ZSet 操作
      */
-    private void executeZSet(RedisTemplate<String, Object> redisTemplate, IotDataSinkRedisConfig config,
-                             IotDeviceMessage message, String messageJson) {
+    private void executeZSet(
+            RedisTemplate<String, Object> redisTemplate,
+            IotDataSinkRedisConfig config,
+            IotDeviceMessage message,
+            String messageJson) {
         double score;
         if (StrUtil.isNotBlank(config.getScoreField())) {
             // 尝试从消息中获取分数字段
             try {
                 Map<String, Object> messageMap = JsonUtils.parseObject(messageJson, Map.class);
                 Object scoreValue = messageMap.get(config.getScoreField());
-                score = scoreValue instanceof Number ? ((Number) scoreValue).doubleValue() : System.currentTimeMillis();
+                score =
+                        scoreValue instanceof Number
+                                ? ((Number) scoreValue).doubleValue()
+                                : System.currentTimeMillis();
             } catch (Exception e) {
                 score = System.currentTimeMillis();
             }
@@ -129,7 +152,10 @@ public class IotRedisRuleAction extends
     /**
      * 执行 String 操作
      */
-    private void executeString(RedisTemplate<String, Object> redisTemplate, IotDataSinkRedisConfig config, String messageJson) {
+    private void executeString(
+            RedisTemplate<String, Object> redisTemplate,
+            IotDataSinkRedisConfig config,
+            String messageJson) {
         redisTemplate.opsForValue().set(config.getTopic(), messageJson);
     }
 
@@ -137,9 +163,11 @@ public class IotRedisRuleAction extends
     protected RedisTemplate<String, Object> initProducer(IotDataSinkRedisConfig config) {
         // 1.1 创建 Redisson 配置
         Config redissonConfig = new Config();
-        SingleServerConfig serverConfig = redissonConfig.useSingleServer()
-                .setAddress("redis://" + config.getHost() + ":" + config.getPort())
-                .setDatabase(config.getDatabase());
+        SingleServerConfig serverConfig =
+                redissonConfig
+                        .useSingleServer()
+                        .setAddress("redis://" + config.getHost() + ":" + config.getPort())
+                        .setDatabase(config.getDatabase());
         // 1.2 设置密码（如果有）
         if (StrUtil.isNotBlank(config.getPassword())) {
             serverConfig.setPassword(config.getPassword());
@@ -177,5 +205,4 @@ public class IotRedisRuleAction extends
         }
         throw new IllegalArgumentException("不支持的 Redis 数据结构类型: " + type);
     }
-
 }

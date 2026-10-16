@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.ai.framework.ai.core.model.image;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.thread.ThreadUtil;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.image.ImageOptions;
@@ -11,9 +12,10 @@ import org.springframework.ai.openai.OpenAiImageOptions;
 import org.springframework.ai.stabilityai.StabilityAiImageModel;
 import org.springframework.ai.stabilityai.api.StabilityAiApi;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.*;
 
 /**
  * {@link StabilityAiImageModel} 集成测试类
@@ -22,18 +24,21 @@ import java.util.concurrent.TimeUnit;
  */
 public class StabilityAiImageModelTests {
 
-    private final StabilityAiImageModel imageModel = new StabilityAiImageModel(
-            new StabilityAiApi("sk-e53UqbboF8QJCscYvzJscJxJXoFcFg4iJjl1oqgE7baJETmx") // 密钥
-    );
+    private final StabilityAiImageModel imageModel =
+            new StabilityAiImageModel(
+                    new StabilityAiApi("sk-e53UqbboF8QJCscYvzJscJxJXoFcFg4iJjl1oqgE7baJETmx") // 密钥
+                    );
 
     @Test
     @Disabled
     public void testCall() {
         // 准备参数
-        ImageOptions options = OpenAiImageOptions.builder()
-                .model("stable-diffusion-v1-6")
-                .height(320).width(320)
-                .build();
+        ImageOptions options =
+                OpenAiImageOptions.builder()
+                        .model("stable-diffusion-v1-6")
+                        .height(320)
+                        .width(320)
+                        .build();
         ImagePrompt prompt = new ImagePrompt("great wall", options);
 
         // 方法调用
@@ -61,5 +66,4 @@ public class StabilityAiImageModelTests {
         frame.setVisible(true);
         ThreadUtil.sleep(1, TimeUnit.HOURS);
     }
-
 }

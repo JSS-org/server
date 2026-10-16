@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,20 +17,19 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 用品领用申请")
 @RestController
@@ -34,12 +37,9 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaSupplyApplyController {
 
-    @Resource
-    private OaSupplyApplyService supplyApplyService;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private OaSupplyApplyService supplyApplyService;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建用品领用申请")
@@ -51,7 +51,8 @@ public class OaSupplyApplyController {
     @PutMapping("/update")
     @Operation(summary = "更新用品领用申请")
     @PreAuthorize("@ss.hasPermission('oa:supply-apply:update')")
-    public CommonResult<Boolean> updateSupplyApply(@Valid @RequestBody OaSupplyApplySaveReqVO reqVO) {
+    public CommonResult<Boolean> updateSupplyApply(
+            @Valid @RequestBody OaSupplyApplySaveReqVO reqVO) {
         supplyApplyService.updateSupplyApply(reqVO, getLoginUserId());
         return success(true);
     }
@@ -95,9 +96,12 @@ public class OaSupplyApplyController {
     @GetMapping("/page")
     @Operation(summary = "获得本人的用品领用申请分页")
     @PreAuthorize("@ss.hasPermission('oa:supply-apply:query')")
-    public CommonResult<PageResult<OaSupplyApplyRespVO>> getSupplyApplyPage(@Valid OaSupplyApplyPageReqVO reqVO) {
-        PageResult<OaSupplyApplyDO> page = supplyApplyService.getSupplyApplyPage(reqVO, getLoginUserId());
-        return success(new PageResult<>(buildSupplyApplyRespVOList(page.getList()), page.getTotal()));
+    public CommonResult<PageResult<OaSupplyApplyRespVO>> getSupplyApplyPage(
+            @Valid OaSupplyApplyPageReqVO reqVO) {
+        PageResult<OaSupplyApplyDO> page =
+                supplyApplyService.getSupplyApplyPage(reqVO, getLoginUserId());
+        return success(
+                new PageResult<>(buildSupplyApplyRespVOList(page.getList()), page.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -113,7 +117,8 @@ public class OaSupplyApplyController {
             return null;
         }
         List<OaSupplyApplyItemDO> items = supplyApplyService.getSupplyApplyItemList(apply.getId());
-        OaSupplyApplyRespVO respVO = CollUtil.getFirst(buildSupplyApplyRespVOList(Collections.singletonList(apply)));
+        OaSupplyApplyRespVO respVO =
+                CollUtil.getFirst(buildSupplyApplyRespVOList(Collections.singletonList(apply)));
         respVO.setItems(BeanUtils.toBean(items, OaSupplyIssueRespVO.class));
         return respVO;
     }
@@ -129,15 +134,23 @@ public class OaSupplyApplyController {
             return Collections.emptyList();
         }
         // 1. 查询申请人及部门
-        Map<Long, AdminUserRespDTO> users = adminUserApi.getUserMap(convertSet(applies, apply -> Long.valueOf(apply.getCreator())));
-        Map<Long, DeptRespDTO> depts = deptApi.getDeptMap(convertSet(applies, OaSupplyApplyDO::getDeptId));
+        Map<Long, AdminUserRespDTO> users =
+                adminUserApi.getUserMap(
+                        convertSet(applies, apply -> Long.valueOf(apply.getCreator())));
+        Map<Long, DeptRespDTO> depts =
+                deptApi.getDeptMap(convertSet(applies, OaSupplyApplyDO::getDeptId));
         // 2. 拼接展示字段
-        return convertList(applies, apply -> {
-            OaSupplyApplyRespVO respVO = BeanUtils.toBean(apply, OaSupplyApplyRespVO.class);
-            MapUtils.findAndThen(users, Long.valueOf(apply.getCreator()), user -> respVO.setCreatorName(user.getNickname()));
-            MapUtils.findAndThen(depts, apply.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
-            return respVO;
-        });
+        return convertList(
+                applies,
+                apply -> {
+                    OaSupplyApplyRespVO respVO = BeanUtils.toBean(apply, OaSupplyApplyRespVO.class);
+                    MapUtils.findAndThen(
+                            users,
+                            Long.valueOf(apply.getCreator()),
+                            user -> respVO.setCreatorName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            depts, apply.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
+                    return respVO;
+                });
     }
-
 }

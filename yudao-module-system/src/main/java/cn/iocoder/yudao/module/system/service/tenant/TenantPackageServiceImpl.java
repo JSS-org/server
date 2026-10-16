@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.service.tenant;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -10,17 +13,17 @@ import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.packages.Tenant
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.tenant.TenantPackageDO;
 import cn.iocoder.yudao.module.system.dal.mysql.tenant.TenantPackageMapper;
+
 import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 租户套餐 Service 实现类
@@ -31,11 +34,9 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Validated
 public class TenantPackageServiceImpl implements TenantPackageService {
 
-    @Resource
-    private TenantPackageMapper tenantPackageMapper;
+    @Resource private TenantPackageMapper tenantPackageMapper;
 
-    @Resource
-    @Lazy // 避免循环依赖的报错
+    @Resource @Lazy // 避免循环依赖的报错
     private TenantService tenantService;
 
     @Override
@@ -62,7 +63,10 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         // 如果菜单发生变化，则修改每个租户的菜单
         if (!CollUtil.isEqualList(tenantPackage.getMenuIds(), updateReqVO.getMenuIds())) {
             List<TenantDO> tenants = tenantService.getTenantListByPackageId(tenantPackage.getId());
-            tenants.forEach(tenant -> tenantService.updateTenantRoleMenu(tenant.getId(), updateReqVO.getMenuIds()));
+            tenants.forEach(
+                    tenant ->
+                            tenantService.updateTenantRoleMenu(
+                                    tenant.getId(), updateReqVO.getMenuIds()));
         }
     }
 
@@ -130,7 +134,6 @@ public class TenantPackageServiceImpl implements TenantPackageService {
         return tenantPackageMapper.selectListByStatus(status);
     }
 
-
     @VisibleForTesting
     void validateTenantPackageNameUnique(Long id, String name) {
         if (StrUtil.isBlank(name)) {
@@ -148,5 +151,4 @@ public class TenantPackageServiceImpl implements TenantPackageService {
             throw exception(TENANT_PACKAGE_NAME_DUPLICATE);
         }
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.task.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -56,5 +57,4 @@ public class GanttDataRespVO {
 
     @Schema(description = "生产时长")
     private Long duration;
-
 }

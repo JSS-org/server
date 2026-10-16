@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.extra.ftp.FtpMode;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.ftp.FtpFileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.ftp.FtpFileClientConfig;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +16,15 @@ import org.junit.jupiter.api.Test;
  */
 public class FtpFileClientTest {
 
-//    docker run -d \
-//            -p 2121:21 -p 30000-30009:30000-30009 \
-//            -e FTP_USER=foo \
-//            -e FTP_PASS=pass \
-//            -e PASV_ADDRESS=127.0.0.1 \
-//            -e PASV_MIN_PORT=30000 \
-//            -e PASV_MAX_PORT=30009 \
-//            -v $(pwd)/ftp-data:/home/vsftpd \
-//    fauria/vsftpd
+    //    docker run -d \
+    //            -p 2121:21 -p 30000-30009:30000-30009 \
+    //            -e FTP_USER=foo \
+    //            -e FTP_PASS=pass \
+    //            -e PASV_ADDRESS=127.0.0.1 \
+    //            -e PASV_MIN_PORT=30000 \
+    //            -e PASV_MAX_PORT=30009 \
+    //            -v $(pwd)/ftp-data:/home/vsftpd \
+    //    fauria/vsftpd
 
     @Test
     @Disabled
@@ -52,5 +53,4 @@ public class FtpFileClientTest {
             client.delete(path);
         }
     }
-
 }

@@ -4,6 +4,7 @@ import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -56,5 +57,4 @@ public class MesMdItemImportExcelVO {
 
     @ExcelProperty("备注")
     private String remark;
-
 }

@@ -14,14 +14,17 @@ public class IotDeviceRespDTO {
      * 设备编号
      */
     private Long id;
+
     /**
      * 产品标识
      */
     private String productKey;
+
     /**
      * 设备名称
      */
     private String deviceName;
+
     /**
      * 租户编号
      */
@@ -33,13 +36,14 @@ public class IotDeviceRespDTO {
      * 产品编号
      */
     private Long productId;
+
     /**
      * 协议类型
      */
     private String protocolType;
+
     /**
      * 序列化类型
      */
     private String serializeType;
-
 }

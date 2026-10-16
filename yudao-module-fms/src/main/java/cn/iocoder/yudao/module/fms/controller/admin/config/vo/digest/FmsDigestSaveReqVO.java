@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.digest;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 /**
@@ -26,5 +28,4 @@ public class FmsDigestSaveReqVO {
     @NotBlank(message = "摘要内容不能为空")
     @Size(max = 500, message = "摘要内容长度不能超过 500 个字符")
     private String content;
-
 }

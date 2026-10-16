@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.infra.framework.file.core.client.ftp;
 
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientConfig;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.URL;
 
 /**
@@ -32,21 +35,25 @@ public class FtpFileClientConfig implements FileClientConfig {
      */
     @NotEmpty(message = "host 不能为空")
     private String host;
+
     /**
      * 主机端口
      */
     @NotNull(message = "port 不能为空")
     private Integer port;
+
     /**
      * 用户名
      */
     @NotEmpty(message = "用户名不能为空")
     private String username;
+
     /**
      * 密码
      */
     @NotEmpty(message = "密码不能为空")
     private String password;
+
     /**
      * 连接模式
      *
@@ -54,5 +61,4 @@ public class FtpFileClientConfig implements FileClientConfig {
      */
     @NotEmpty(message = "连接模式不能为空")
     private String mode;
-
 }

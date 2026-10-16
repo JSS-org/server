@@ -3,10 +3,13 @@ package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemStatusTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 创建工作项状态 Request VO")
@@ -35,5 +38,4 @@ public class PmsWorkItemStatusCreateReqVO {
     @Schema(description = "状态描述", example = "需求已拆分，等待开发")
     @Size(max = 255, message = "状态描述不能超过 255 个字符")
     private String description;
-
 }

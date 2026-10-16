@@ -1,21 +1,8 @@
 package cn.iocoder.yudao.module.im.service.face;
 
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
-import cn.iocoder.yudao.framework.common.exception.ServiceException;
-import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
-import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.pack.ImFacePackSaveReqVO;
-import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackDO;
-import cn.iocoder.yudao.module.im.dal.mysql.face.ImFacePackMapper;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import java.util.Arrays;
-import java.util.Collections;
-
 import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_HAS_ITEMS;
 import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,6 +11,21 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
+import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.pack.ImFacePackSaveReqVO;
+import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackDO;
+import cn.iocoder.yudao.module.im.dal.mysql.face.ImFacePackMapper;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import java.util.Arrays;
+import java.util.Collections;
+
 /**
  * {@link ImFacePackServiceImpl} 的单元测试
  *
@@ -31,13 +33,10 @@ import static org.mockito.Mockito.when;
  */
 public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private ImFacePackServiceImpl service;
+    @InjectMocks private ImFacePackServiceImpl service;
 
-    @Mock
-    private ImFacePackMapper facePackMapper;
-    @Mock
-    private ImFacePackItemService facePackItemService;
+    @Mock private ImFacePackMapper facePackMapper;
+    @Mock private ImFacePackItemService facePackItemService;
 
     // ========== validateFacePackExists ==========
 
@@ -45,8 +44,8 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
     public void testValidateFacePackExists_notFound() {
         when(facePackMapper.selectById(1L)).thenReturn(null);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.validateFacePackExists(1L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.validateFacePackExists(1L));
         assertEquals(FACE_PACK_NOT_EXISTS.getCode(), exception.getCode());
     }
 
@@ -64,7 +63,10 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
     public void testCreateFacePack_insert() {
         // 准备
         ImFacePackSaveReqVO reqVO = new ImFacePackSaveReqVO();
-        reqVO.setName("猫主子").setIcon("icon.png").setSort(0).setStatus(CommonStatusEnum.ENABLE.getStatus());
+        reqVO.setName("猫主子")
+                .setIcon("icon.png")
+                .setSort(0)
+                .setStatus(CommonStatusEnum.ENABLE.getStatus());
 
         // 调用
         service.createFacePack(reqVO);
@@ -103,8 +105,8 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
         when(facePackMapper.selectById(99L)).thenReturn(null);
 
         // 调用 + 断言
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.updateFacePack(reqVO));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.updateFacePack(reqVO));
         assertEquals(FACE_PACK_NOT_EXISTS.getCode(), exception.getCode());
         verify(facePackMapper, never()).updateById(any(ImFacePackDO.class));
     }
@@ -127,7 +129,8 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
         when(facePackMapper.selectById(1L)).thenReturn(ImFacePackDO.builder().id(1L).build());
         when(facePackItemService.getFacePackItemCount(1L)).thenReturn(3L);
 
-        ServiceException exception = assertThrows(ServiceException.class, () -> service.deleteFacePack(1L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.deleteFacePack(1L));
         assertEquals(FACE_PACK_HAS_ITEMS.getCode(), exception.getCode());
         verify(facePackMapper, never()).deleteById(anyLong());
     }
@@ -136,7 +139,8 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
     public void testDeleteFacePack_notExists() {
         when(facePackMapper.selectById(99L)).thenReturn(null);
 
-        ServiceException exception = assertThrows(ServiceException.class, () -> service.deleteFacePack(99L));
+        ServiceException exception =
+                assertThrows(ServiceException.class, () -> service.deleteFacePack(99L));
         assertEquals(FACE_PACK_NOT_EXISTS.getCode(), exception.getCode());
     }
 
@@ -156,8 +160,10 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
         // 准备：批量中存在表情
         when(facePackItemService.getFacePackItemCount(Arrays.asList(1L, 2L))).thenReturn(1L);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> service.deleteFacePackList(Arrays.asList(1L, 2L)));
+        ServiceException exception =
+                assertThrows(
+                        ServiceException.class,
+                        () -> service.deleteFacePackList(Arrays.asList(1L, 2L)));
         assertEquals(FACE_PACK_HAS_ITEMS.getCode(), exception.getCode());
         verify(facePackMapper, never()).deleteByIds(any());
     }
@@ -173,5 +179,4 @@ public class ImFacePackServiceImplTest extends BaseMockitoUnitTest {
         // 断言
         verify(facePackMapper).deleteByIds(Arrays.asList(1L, 2L));
     }
-
 }

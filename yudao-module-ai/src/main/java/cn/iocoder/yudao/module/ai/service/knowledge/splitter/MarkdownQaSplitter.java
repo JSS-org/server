@@ -2,8 +2,10 @@ package cn.iocoder.yudao.module.ai.service.knowledge.splitter;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.transformer.splitter.TextSplitter;
 
 import java.util.ArrayList;
@@ -103,9 +105,10 @@ public class MarkdownQaSplitter extends TextSplitter {
         // 提取每个 QA 对
         for (int i = 0; i < headingPositions.size(); i++) {
             int start = headingPositions.get(i);
-            int end = (i + 1 < headingPositions.size())
-                    ? headingPositions.get(i + 1)
-                    : content.length();
+            int end =
+                    (i + 1 < headingPositions.size())
+                            ? headingPositions.get(i + 1)
+                            : content.length();
             String qaText = content.substring(start, end).trim();
             String question = questions.get(i);
             // 提取答案部分（去掉问题标题）
@@ -295,7 +298,6 @@ public class MarkdownQaSplitter extends TextSplitter {
         String question;
         String answer;
         String fullText;
-
     }
 
     /**
@@ -304,7 +306,6 @@ public class MarkdownQaSplitter extends TextSplitter {
     public interface TokenEstimator {
 
         int estimate(String text);
-
     }
 
     /**
@@ -338,5 +339,4 @@ public class MarkdownQaSplitter extends TextSplitter {
             return chineseChars + (int) (englishWords * 1.3);
         }
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.infra.service.demo.demo03.erp;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,15 +15,14 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.erp.Demo03CourseErpMapper;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.erp.Demo03GradeErpMapper;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.erp.Demo03StudentErpMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 
 /**
  * 学生 Service 实现类
@@ -31,12 +33,9 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 @Validated
 public class Demo03StudentErpServiceImpl implements Demo03StudentErpService {
 
-    @Resource
-    private Demo03StudentErpMapper demo03StudentErpMapper;
-    @Resource
-    private Demo03CourseErpMapper demo03CourseErpMapper;
-    @Resource
-    private Demo03GradeErpMapper demo03GradeErpMapper;
+    @Resource private Demo03StudentErpMapper demo03StudentErpMapper;
+    @Resource private Demo03CourseErpMapper demo03CourseErpMapper;
+    @Resource private Demo03GradeErpMapper demo03GradeErpMapper;
 
     @Override
     public Long createDemo03Student(Demo03StudentErpSaveReqVO createReqVO) {
@@ -215,5 +214,4 @@ public class Demo03StudentErpServiceImpl implements Demo03StudentErpService {
     private void deleteDemo03GradeByStudentIds(List<Long> studentIds) {
         demo03GradeErpMapper.deleteByStudentIds(studentIds);
     }
-
 }

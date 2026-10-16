@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.initialbalance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -46,16 +47,28 @@ public class FmsInitialBalanceRespVO {
     @Schema(description = "期初数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "10.0000")
     private BigDecimal openingQuantity;
 
-    @Schema(description = "本年累计借方金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+    @Schema(
+            description = "本年累计借方金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "100.00")
     private BigDecimal yearDebitAmount;
 
-    @Schema(description = "本年累计借方数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1.0000")
+    @Schema(
+            description = "本年累计借方数量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1.0000")
     private BigDecimal yearDebitQuantity;
 
-    @Schema(description = "本年累计贷方金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "50.00")
+    @Schema(
+            description = "本年累计贷方金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "50.00")
     private BigDecimal yearCreditAmount;
 
-    @Schema(description = "本年累计贷方数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1.0000")
+    @Schema(
+            description = "本年累计贷方数量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1.0000")
     private BigDecimal yearCreditQuantity;
 
     @Schema(description = "年初金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "950.00")
@@ -67,7 +80,10 @@ public class FmsInitialBalanceRespVO {
     @Schema(description = "实际损益发生额", requiredMode = Schema.RequiredMode.REQUIRED, example = "0.00")
     private BigDecimal profitLossAmount;
 
-    @Schema(description = "实际损益发生数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1.0000")
+    @Schema(
+            description = "实际损益发生数量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1.0000")
     private BigDecimal profitLossQuantity;
 
     @Schema(description = "辅助核算配置数组")
@@ -80,7 +96,10 @@ public class FmsInitialBalanceRespVO {
     @Data
     public static class AuxiliaryConfig {
 
-        @Schema(description = "辅助核算类别编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算类别编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long auxiliaryTypeId;
 
         @Schema(description = "辅助核算类型", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -88,49 +107,80 @@ public class FmsInitialBalanceRespVO {
 
         @Schema(description = "辅助核算类别名称", requiredMode = Schema.RequiredMode.REQUIRED)
         private String name;
-
     }
 
     @Schema(description = "管理后台 - FMS 初始余额辅助核算余额")
     @Data
     public static class AssistBalance {
 
-        @Schema(description = "辅助核算组合编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算组合编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long assistCombinationId;
 
         @Schema(description = "辅助核算项目数组", requiredMode = Schema.RequiredMode.REQUIRED)
         private List<AuxiliaryItem> auxiliaries;
 
-        @Schema(description = "期初金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "1000.00")
+        @Schema(
+                description = "期初金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1000.00")
         private BigDecimal openingAmount;
 
-        @Schema(description = "期初数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "10.0000")
+        @Schema(
+                description = "期初数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10.0000")
         private BigDecimal openingQuantity;
 
-        @Schema(description = "本年累计借方金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "本年累计借方金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         private BigDecimal yearDebitAmount;
 
-        @Schema(description = "本年累计借方数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1.0000")
+        @Schema(
+                description = "本年累计借方数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1.0000")
         private BigDecimal yearDebitQuantity;
 
-        @Schema(description = "本年累计贷方金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "50.00")
+        @Schema(
+                description = "本年累计贷方金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "50.00")
         private BigDecimal yearCreditAmount;
 
-        @Schema(description = "本年累计贷方数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1.0000")
+        @Schema(
+                description = "本年累计贷方数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1.0000")
         private BigDecimal yearCreditQuantity;
 
-        @Schema(description = "年初金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "950.00")
+        @Schema(
+                description = "年初金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "950.00")
         private BigDecimal yearOpeningAmount;
 
-        @Schema(description = "年初数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "10.0000")
+        @Schema(
+                description = "年初数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "10.0000")
         private BigDecimal yearOpeningQuantity;
 
-        @Schema(description = "实际损益发生额", requiredMode = Schema.RequiredMode.REQUIRED, example = "0.00")
+        @Schema(
+                description = "实际损益发生额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "0.00")
         private BigDecimal profitLossAmount;
 
-        @Schema(description = "实际损益发生数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1.0000")
+        @Schema(
+                description = "实际损益发生数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1.0000")
         private BigDecimal profitLossQuantity;
-
     }
 
     @Schema(description = "管理后台 - FMS 初始余额辅助核算项目")
@@ -140,15 +190,19 @@ public class FmsInitialBalanceRespVO {
         @Schema(description = "辅助核算类型", requiredMode = Schema.RequiredMode.REQUIRED)
         private Integer type;
 
-        @Schema(description = "辅助核算类别编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算类别编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long typeId;
 
-        @Schema(description = "辅助核算项目编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "辅助核算项目编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long itemId;
 
         @Schema(description = "辅助核算项目名称", requiredMode = Schema.RequiredMode.REQUIRED)
         private String name;
-
     }
-
 }

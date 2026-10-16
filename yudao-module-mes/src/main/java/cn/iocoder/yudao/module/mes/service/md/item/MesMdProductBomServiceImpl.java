@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.md.item;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap2;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,16 +11,14 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.bom.MesMdProductB
 import cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.bom.MesMdProductBomSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdProductBomDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.item.MesMdProductBomMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap2;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 产品BOM Service 实现类
@@ -27,11 +29,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdProductBomServiceImpl implements MesMdProductBomService {
 
-    @Resource
-    private MesMdProductBomMapper productBomMapper;
+    @Resource private MesMdProductBomMapper productBomMapper;
 
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource @Lazy // 避免循环依赖
     private MesMdItemService itemService;
 
     @Override
@@ -103,8 +103,9 @@ public class MesMdProductBomServiceImpl implements MesMdProductBomService {
         // 1.1 获取所有已有的 BOM 记录
         List<MesMdProductBomDO> allBoms = productBomMapper.selectAll();
         // 1.2 构建邻接表：parent -> Set<child>
-        Map<Long, Set<Long>> graph = convertMultiMap2(allBoms,
-                MesMdProductBomDO::getItemId, MesMdProductBomDO::getBomItemId);
+        Map<Long, Set<Long>> graph =
+                convertMultiMap2(
+                        allBoms, MesMdProductBomDO::getItemId, MesMdProductBomDO::getBomItemId);
         // 1.3  添加待新增的边
         graph.computeIfAbsent(itemId, k -> new HashSet<>()).add(bomItemId);
         // 2. DFS 检测环
@@ -140,5 +141,4 @@ public class MesMdProductBomServiceImpl implements MesMdProductBomService {
     public void deleteProductBomByItemId(Long itemId) {
         productBomMapper.deleteByItemId(itemId);
     }
-
 }

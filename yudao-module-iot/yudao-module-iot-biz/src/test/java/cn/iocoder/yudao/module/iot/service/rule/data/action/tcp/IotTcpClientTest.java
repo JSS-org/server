@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.iot.service.rule.data.action.tcp;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.util.ReflectUtil;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkTcpConfig;
-import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * {@link IotTcpClient} 的单元测试
@@ -27,7 +28,8 @@ class IotTcpClientTest {
         IotTcpClient client = new IotTcpClient(host, port, null, null, null, null);
 
         // 断言：dataFormat 为 null 时应使用默认值
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
+        assertEquals(
+                IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
                 ReflectUtil.getFieldValue(client, "dataFormat"));
     }
 
@@ -41,7 +43,8 @@ class IotTcpClientTest {
         IotTcpClient client = new IotTcpClient(host, port, null, null, null, "");
 
         // 断言：dataFormat 为空字符串时应使用默认值
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
+        assertEquals(
+                IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
                 ReflectUtil.getFieldValue(client, "dataFormat"));
     }
 
@@ -55,7 +58,8 @@ class IotTcpClientTest {
         IotTcpClient client = new IotTcpClient(host, port, null, null, null, "   ");
 
         // 断言：dataFormat 为纯空白字符串时应使用默认值
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
+        assertEquals(
+                IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
                 ReflectUtil.getFieldValue(client, "dataFormat"));
     }
 
@@ -85,13 +89,15 @@ class IotTcpClientTest {
         // 断言：验证所有默认值
         assertEquals(host, ReflectUtil.getFieldValue(client, "host"));
         assertEquals(port, ReflectUtil.getFieldValue(client, "port"));
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_CONNECT_TIMEOUT_MS,
+        assertEquals(
+                IotDataSinkTcpConfig.DEFAULT_CONNECT_TIMEOUT_MS,
                 ReflectUtil.getFieldValue(client, "connectTimeoutMs"));
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_READ_TIMEOUT_MS,
+        assertEquals(
+                IotDataSinkTcpConfig.DEFAULT_READ_TIMEOUT_MS,
                 ReflectUtil.getFieldValue(client, "readTimeoutMs"));
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_SSL,
-                ReflectUtil.getFieldValue(client, "ssl"));
-        assertEquals(IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
+        assertEquals(IotDataSinkTcpConfig.DEFAULT_SSL, ReflectUtil.getFieldValue(client, "ssl"));
+        assertEquals(
+                IotDataSinkTcpConfig.DEFAULT_DATA_FORMAT,
                 ReflectUtil.getFieldValue(client, "dataFormat"));
     }
 
@@ -106,7 +112,8 @@ class IotTcpClientTest {
         String dataFormat = "BINARY";
 
         // 调用
-        IotTcpClient client = new IotTcpClient(host, port, connectTimeoutMs, readTimeoutMs, ssl, dataFormat);
+        IotTcpClient client =
+                new IotTcpClient(host, port, connectTimeoutMs, readTimeoutMs, ssl, dataFormat);
 
         // 断言：验证自定义值
         assertEquals(host, ReflectUtil.getFieldValue(client, "host"));
@@ -147,5 +154,4 @@ class IotTcpClientTest {
         assertTrue(result.contains("dataFormat='JSON'"));
         assertTrue(result.contains("connected=false"));
     }
-
 }

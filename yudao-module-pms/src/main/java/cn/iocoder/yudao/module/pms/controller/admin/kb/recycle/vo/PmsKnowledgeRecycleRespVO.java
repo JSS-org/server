@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.recycle.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -41,5 +42,4 @@ public class PmsKnowledgeRecycleRespVO {
 
     @Schema(description = "所属文件夹编号，回收站详情中用于组装层级", example = "2048")
     private Long folderId;
-
 }

@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.module.fms.service.closing;
 
 import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingQueryReqVO;
-import cn.iocoder.yudao.module.fms.dal.dataobject.closing.FmsClosingSchemeDO;
 import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingSchemeRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsClosingSchemeSaveReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsProfitLossSettingsSaveReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.closing.vo.FmsSpecialClosingSettingsSaveReqVO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.closing.FmsClosingSchemeDO;
 
 import java.util.Collection;
 import java.util.List;
@@ -112,5 +112,4 @@ public interface FmsClosingSchemeService {
      * @param userId 用户编号
      */
     void deleteClosingScheme(Long accountSetId, Long id, Long userId);
-
 }

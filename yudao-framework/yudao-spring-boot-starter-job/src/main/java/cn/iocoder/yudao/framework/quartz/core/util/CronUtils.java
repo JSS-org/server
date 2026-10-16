@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.quartz.core.util;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+
 import org.quartz.CronExpression;
 
 import java.text.ParseException;
@@ -56,5 +57,4 @@ public class CronUtils {
         }
         return nextTimes;
     }
-
 }

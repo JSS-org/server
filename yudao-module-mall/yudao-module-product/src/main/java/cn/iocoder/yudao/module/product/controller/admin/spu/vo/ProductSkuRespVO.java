@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.controller.admin.spu.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -12,10 +13,16 @@ public class ProductSkuRespVO {
     @Schema(description = "主键", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "商品 SKU 名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "清凉小短袖")
+    @Schema(
+            description = "商品 SKU 名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "清凉小短袖")
     private String name;
 
-    @Schema(description = "销售价格，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1999")
+    @Schema(
+            description = "销售价格，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1999")
     private Integer price;
 
     @Schema(description = "市场价", example = "2999")
@@ -27,7 +34,10 @@ public class ProductSkuRespVO {
     @Schema(description = "条形码", example = "15156165456")
     private String barCode;
 
-    @Schema(description = "图片地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+    @Schema(
+            description = "图片地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xx.png")
     private String picUrl;
 
     @Schema(description = "库存", requiredMode = Schema.RequiredMode.REQUIRED, example = "200")
@@ -47,5 +57,4 @@ public class ProductSkuRespVO {
 
     @Schema(description = "属性数组")
     private List<ProductSkuSaveReqVO.Property> properties;
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.property;
 
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.dataType.ThingModelDataSpecs;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -21,5 +23,4 @@ public class IotDevicePropertyDetailRespVO extends IotDevicePropertyRespVO {
 
     @Schema(description = "数据定义列表")
     private List<ThingModelDataSpecs> dataSpecsList;
-
 }

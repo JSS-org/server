@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.member.service.user;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
@@ -22,23 +26,23 @@ import cn.iocoder.yudao.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import cn.iocoder.yudao.module.system.api.social.SocialClientApi;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialWxPhoneNumberInfoRespDTO;
 import cn.iocoder.yudao.module.system.enums.sms.SmsSceneEnum;
+
 import com.google.common.annotations.VisibleForTesting;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.servlet.ServletUtils.getClientIP;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 
 /**
  * 会员 User Service 实现类
@@ -50,21 +54,15 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MemberUserServiceImpl implements MemberUserService {
 
-    @Resource
-    private MemberUserMapper memberUserMapper;
+    @Resource private MemberUserMapper memberUserMapper;
 
-    @Resource
-    private SmsCodeApi smsCodeApi;
-    @Resource
-    private SocialClientApi socialClientApi;
-    @Resource
-    private OAuth2TokenCommonApi oauth2TokenApi;
+    @Resource private SmsCodeApi smsCodeApi;
+    @Resource private SocialClientApi socialClientApi;
+    @Resource private OAuth2TokenCommonApi oauth2TokenApi;
 
-    @Resource
-    private PasswordEncoder passwordEncoder;
+    @Resource private PasswordEncoder passwordEncoder;
 
-    @Resource
-    private MemberUserProducer memberUserProducer;
+    @Resource private MemberUserProducer memberUserProducer;
 
     @Override
     public MemberUserDO getUserByMobile(String mobile) {
@@ -90,12 +88,13 @@ public class MemberUserServiceImpl implements MemberUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MemberUserDO createUser(String nickname, String avtar, String registerIp, Integer terminal) {
+    public MemberUserDO createUser(
+            String nickname, String avtar, String registerIp, Integer terminal) {
         return createUser(null, nickname, avtar, registerIp, terminal);
     }
 
-    private MemberUserDO createUser(String mobile, String nickname, String avtar,
-                                    String registerIp, Integer terminal) {
+    private MemberUserDO createUser(
+            String mobile, String nickname, String avtar, String registerIp, Integer terminal) {
         // 生成密码
         String password = IdUtil.fastSimpleUUID();
         // 插入用户
@@ -112,21 +111,21 @@ public class MemberUserServiceImpl implements MemberUserService {
         memberUserMapper.insert(user);
 
         // 发送 MQ 消息：用户创建
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
 
-            @Override
-            public void afterCommit() {
-                memberUserProducer.sendUserCreateMessage(user.getId());
-            }
-
-        });
+                    @Override
+                    public void afterCommit() {
+                        memberUserProducer.sendUserCreateMessage(user.getId());
+                    }
+                });
         return user;
     }
 
     @Override
     public void updateUserLogin(Long id, String loginIp) {
-        memberUserMapper.updateById(new MemberUserDO().setId(id)
-                .setLoginIp(loginIp).setLoginDate(LocalDateTime.now()));
+        memberUserMapper.updateById(
+                new MemberUserDO().setId(id).setLoginIp(loginIp).setLoginDate(LocalDateTime.now()));
     }
 
     @Override
@@ -165,28 +164,40 @@ public class MemberUserServiceImpl implements MemberUserService {
         // 2.1 校验旧手机和旧验证码
         // 补充说明：从安全性来说，老手机也校验 oldCode 验证码会更安全。但是由于 uni-app 商城界面暂时没做，所以这里不强制校验
         if (StrUtil.isNotEmpty(reqVO.getOldCode())) {
-            smsCodeApi.useSmsCode(new SmsCodeUseReqDTO().setMobile(user.getMobile()).setCode(reqVO.getOldCode())
-                    .setScene(SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene()).setUsedIp(getClientIP()));
+            smsCodeApi.useSmsCode(
+                    new SmsCodeUseReqDTO()
+                            .setMobile(user.getMobile())
+                            .setCode(reqVO.getOldCode())
+                            .setScene(SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene())
+                            .setUsedIp(getClientIP()));
         }
         // 2.2 使用新验证码
-        smsCodeApi.useSmsCode(new SmsCodeUseReqDTO().setMobile(reqVO.getMobile()).setCode(reqVO.getCode())
-                .setScene(SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene()).setUsedIp(getClientIP()));
+        smsCodeApi.useSmsCode(
+                new SmsCodeUseReqDTO()
+                        .setMobile(reqVO.getMobile())
+                        .setCode(reqVO.getCode())
+                        .setScene(SmsSceneEnum.MEMBER_UPDATE_MOBILE.getScene())
+                        .setUsedIp(getClientIP()));
 
         // 3. 更新用户手机
-        memberUserMapper.updateById(MemberUserDO.builder().id(userId).mobile(reqVO.getMobile()).build());
+        memberUserMapper.updateById(
+                MemberUserDO.builder().id(userId).mobile(reqVO.getMobile()).build());
     }
 
     @Override
-    public void updateUserMobileByWeixin(Long userId, AppMemberUserUpdateMobileByWeixinReqVO reqVO) {
+    public void updateUserMobileByWeixin(
+            Long userId, AppMemberUserUpdateMobileByWeixinReqVO reqVO) {
         // 1.1 获得对应的手机号信息
-        SocialWxPhoneNumberInfoRespDTO phoneNumberInfo = socialClientApi.getWxMaPhoneNumberInfo(
-                UserTypeEnum.MEMBER.getValue(), reqVO.getCode());
+        SocialWxPhoneNumberInfoRespDTO phoneNumberInfo =
+                socialClientApi.getWxMaPhoneNumberInfo(
+                        UserTypeEnum.MEMBER.getValue(), reqVO.getCode());
         Assert.notNull(phoneNumberInfo, "获得手机信息失败，结果为空");
         // 1.2 校验新手机是否已经被绑定
         validateMobileUnique(userId, phoneNumberInfo.getPhoneNumber());
 
         // 2. 更新用户手机
-        memberUserMapper.updateById(MemberUserDO.builder().id(userId).mobile(phoneNumberInfo.getPhoneNumber()).build());
+        memberUserMapper.updateById(
+                MemberUserDO.builder().id(userId).mobile(phoneNumberInfo.getPhoneNumber()).build());
     }
 
     @Override
@@ -194,12 +205,19 @@ public class MemberUserServiceImpl implements MemberUserService {
         // 检测用户是否存在
         MemberUserDO user = validateUserExists(userId);
         // 校验验证码
-        smsCodeApi.useSmsCode(new SmsCodeUseReqDTO().setMobile(user.getMobile()).setCode(reqVO.getCode())
-                .setScene(SmsSceneEnum.MEMBER_UPDATE_PASSWORD.getScene()).setUsedIp(getClientIP()));
+        smsCodeApi.useSmsCode(
+                new SmsCodeUseReqDTO()
+                        .setMobile(user.getMobile())
+                        .setCode(reqVO.getCode())
+                        .setScene(SmsSceneEnum.MEMBER_UPDATE_PASSWORD.getScene())
+                        .setUsedIp(getClientIP()));
 
         // 更新用户密码
-        memberUserMapper.updateById(MemberUserDO.builder().id(userId)
-                .password(passwordEncoder.encode(reqVO.getPassword())).build());
+        memberUserMapper.updateById(
+                MemberUserDO.builder()
+                        .id(userId)
+                        .password(passwordEncoder.encode(reqVO.getPassword()))
+                        .build());
     }
 
     @Override
@@ -208,12 +226,16 @@ public class MemberUserServiceImpl implements MemberUserService {
         MemberUserDO user = validateUserExists(reqVO.getMobile());
 
         // 使用验证码
-        smsCodeApi.useSmsCode(AuthConvert.INSTANCE.convert(reqVO, SmsSceneEnum.MEMBER_RESET_PASSWORD,
-                getClientIP()));
+        smsCodeApi.useSmsCode(
+                AuthConvert.INSTANCE.convert(
+                        reqVO, SmsSceneEnum.MEMBER_RESET_PASSWORD, getClientIP()));
 
         // 更新密码
-        memberUserMapper.updateById(MemberUserDO.builder().id(user.getId())
-                .password(passwordEncoder.encode(reqVO.getPassword())).build());
+        memberUserMapper.updateById(
+                MemberUserDO.builder()
+                        .id(user.getId())
+                        .password(passwordEncoder.encode(reqVO.getPassword()))
+                        .build());
     }
 
     private MemberUserDO validateUserExists(String mobile) {
@@ -316,10 +338,8 @@ public class MemberUserServiceImpl implements MemberUserService {
     public void updateUserLevel(Long id, Long levelId, Integer experience) {
         // 0 代表无等级：防止UpdateById时，会被过滤掉的问题
         levelId = ObjectUtil.defaultIfNull(levelId, 0L);
-        memberUserMapper.updateById(new MemberUserDO()
-                .setId(id)
-                .setLevelId(levelId).setExperience(experience)
-        );
+        memberUserMapper.updateById(
+                new MemberUserDO().setId(id).setLevelId(levelId).setExperience(experience));
     }
 
     @Override
@@ -346,5 +366,4 @@ public class MemberUserServiceImpl implements MemberUserService {
         }
         return true;
     }
-
 }

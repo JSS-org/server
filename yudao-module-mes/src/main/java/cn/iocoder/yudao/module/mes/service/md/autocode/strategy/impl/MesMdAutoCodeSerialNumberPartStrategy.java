@@ -8,7 +8,9 @@ import cn.iocoder.yudao.module.mes.enums.md.autocode.MesMdAutoCodeCycleMethodEnu
 import cn.iocoder.yudao.module.mes.enums.md.autocode.MesMdAutoCodePartTypeEnum;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodeContext;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodePartStrategy;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -22,8 +24,7 @@ import java.time.LocalDateTime;
 @Component
 public class MesMdAutoCodeSerialNumberPartStrategy implements MesMdAutoCodePartStrategy {
 
-    @Resource
-    private MesMdAutoCodeRedisDAO redisDAO;
+    @Resource private MesMdAutoCodeRedisDAO redisDAO;
 
     @Override
     public Integer getType() {
@@ -35,7 +36,10 @@ public class MesMdAutoCodeSerialNumberPartStrategy implements MesMdAutoCodePartS
         // 1.1 构建 Redis key 后缀
         String keySuffix = buildRedisKeySuffix(part, context);
         // 1.2 获取过期时间
-        Duration duration = Boolean.TRUE.equals(part.getCycleFlag()) ? getExpireDuration(part.getCycleMethod()) : null;
+        Duration duration =
+                Boolean.TRUE.equals(part.getCycleFlag())
+                        ? getExpireDuration(part.getCycleMethod())
+                        : null;
 
         // 2. 获取流水号
         Integer step = part.getSerialStep() != null ? part.getSerialStep() : 1;
@@ -76,7 +80,8 @@ public class MesMdAutoCodeSerialNumberPartStrategy implements MesMdAutoCodePartS
             keySuffix.append(DateUtil.format(time, "yyyyMMddHH"));
         } else if (part.getCycleMethod().equals(MesMdAutoCodeCycleMethodEnum.MINUTE.getMethod())) {
             keySuffix.append(DateUtil.format(time, "yyyyMMddHHmm"));
-        } else if (part.getCycleMethod().equals(MesMdAutoCodeCycleMethodEnum.INPUT_CHAR.getMethod())) {
+        } else if (part.getCycleMethod()
+                .equals(MesMdAutoCodeCycleMethodEnum.INPUT_CHAR.getMethod())) {
             if (StrUtil.isNotEmpty(context.getInputChar())) {
                 keySuffix.append(context.getInputChar());
             }
@@ -110,5 +115,4 @@ public class MesMdAutoCodeSerialNumberPartStrategy implements MesMdAutoCodePartS
             throw new IllegalArgumentException("未知的循环方式：" + cycleMethod);
         }
     }
-
 }

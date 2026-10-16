@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.channel.HrmRecruitChannelDeleteReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.channel.HrmRecruitChannelPageReqVO;
@@ -10,8 +12,6 @@ import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.config.HrmRecruitChann
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 招聘渠道 Service 接口
@@ -97,5 +97,4 @@ public interface HrmRecruitChannelService {
      * @return 招聘渠道精简列表
      */
     List<HrmRecruitChannelDO> getRecruitChannelSimpleList();
-
 }

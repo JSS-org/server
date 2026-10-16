@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.member.convert.signin;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,14 +12,13 @@ import cn.iocoder.yudao.module.member.controller.app.signin.vo.record.AppMemberS
 import cn.iocoder.yudao.module.member.dal.dataobject.signin.MemberSignInConfigDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.signin.MemberSignInRecordDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 签到记录 Convert
@@ -29,22 +30,33 @@ public interface MemberSignInRecordConvert {
 
     MemberSignInRecordConvert INSTANCE = Mappers.getMapper(MemberSignInRecordConvert.class);
 
-    default PageResult<MemberSignInRecordRespVO> convertPage(PageResult<MemberSignInRecordDO> pageResult, List<MemberUserDO> users) {
+    default PageResult<MemberSignInRecordRespVO> convertPage(
+            PageResult<MemberSignInRecordDO> pageResult, List<MemberUserDO> users) {
         PageResult<MemberSignInRecordRespVO> voPageResult = convertPage(pageResult);
         // user 拼接
         Map<Long, MemberUserDO> userMap = convertMap(users, MemberUserDO::getId);
-        voPageResult.getList().forEach(record -> MapUtils.findAndThen(userMap, record.getUserId(),
-                memberUserRespDTO -> record.setNickname(memberUserRespDTO.getNickname())));
+        voPageResult
+                .getList()
+                .forEach(
+                        record ->
+                                MapUtils.findAndThen(
+                                        userMap,
+                                        record.getUserId(),
+                                        memberUserRespDTO ->
+                                                record.setNickname(
+                                                        memberUserRespDTO.getNickname())));
         return voPageResult;
     }
 
     PageResult<MemberSignInRecordRespVO> convertPage(PageResult<MemberSignInRecordDO> pageResult);
 
-    PageResult<AppMemberSignInRecordRespVO> convertPage02(PageResult<MemberSignInRecordDO> pageResult);
+    PageResult<AppMemberSignInRecordRespVO> convertPage02(
+            PageResult<MemberSignInRecordDO> pageResult);
 
     AppMemberSignInRecordRespVO coverRecordToAppRecordVo(MemberSignInRecordDO memberSignInRecordDO);
 
-    default MemberSignInRecordDO convert(Long userId, MemberSignInRecordDO lastRecord, List<MemberSignInConfigDO> configs) {
+    default MemberSignInRecordDO convert(
+            Long userId, MemberSignInRecordDO lastRecord, List<MemberSignInConfigDO> configs) {
         // 1. 计算是第几天签到
         configs.sort(Comparator.comparing(MemberSignInConfigDO::getDay));
         MemberSignInConfigDO lastConfig = CollUtil.getLast(configs); // 最大签到天数配置
@@ -59,10 +71,15 @@ public interface MemberSignInRecordConvert {
         }
 
         // 2.1 初始化签到信息
-        MemberSignInRecordDO record = new MemberSignInRecordDO().setUserId(userId)
-                .setDay(day).setPoint(0).setExperience(0);
+        MemberSignInRecordDO record =
+                new MemberSignInRecordDO()
+                        .setUserId(userId)
+                        .setDay(day)
+                        .setPoint(0)
+                        .setExperience(0);
         // 2.2 获取签到对应的积分
-        MemberSignInConfigDO config = CollUtil.findOne(configs, item -> ObjUtil.equal(item.getDay(), record.getDay()));
+        MemberSignInConfigDO config =
+                CollUtil.findOne(configs, item -> ObjUtil.equal(item.getDay(), record.getDay()));
         if (config == null) {
             return record;
         }
@@ -70,5 +87,4 @@ public interface MemberSignInRecordConvert {
         record.setExperience(config.getExperience());
         return record;
     }
-
 }

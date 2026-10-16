@@ -5,7 +5,9 @@ import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task.*;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmUserTaskTimeoutHandlerTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.task.BpmAttachmentTypeEnum;
+
 import jakarta.validation.Valid;
+
 import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.task.Attachment;
@@ -73,9 +75,10 @@ public interface BpmTaskService {
      * @param processInstanceIds 流程实例的编号数组
      * @return 流程任务 Map
      */
-    default Map<String, List<Task>> getTaskMapByProcessInstanceIds(List<String> processInstanceIds) {
-        return CollectionUtils.convertMultiMap(getTasksByProcessInstanceIds(processInstanceIds),
-                Task::getProcessInstanceId);
+    default Map<String, List<Task>> getTaskMapByProcessInstanceIds(
+            List<String> processInstanceIds) {
+        return CollectionUtils.convertMultiMap(
+                getTasksByProcessInstanceIds(processInstanceIds), Task::getProcessInstanceId);
     }
 
     /**
@@ -93,7 +96,8 @@ public interface BpmTaskService {
      * @param asc               是否升序
      * @return 流程任务列表
      */
-    List<HistoricTaskInstance> getTaskListByProcessInstanceId(String processInstanceId, Boolean asc);
+    List<HistoricTaskInstance> getTaskListByProcessInstanceId(
+            String processInstanceId, Boolean asc);
 
     /**
      * 校验任务是否存在，并且是否是分配给自己的任务
@@ -152,9 +156,8 @@ public interface BpmTaskService {
      * @param assigned          是否分配了审批人，允许空
      * @param taskDefineKey     任务定义 Key，允许空
      */
-    List<Task> getRunningTaskListByProcessInstanceId(String processInstanceId,
-                                                     Boolean assigned,
-                                                     String taskDefineKey);
+    List<Task> getRunningTaskListByProcessInstanceId(
+            String processInstanceId, Boolean assigned, String taskDefineKey);
 
     /**
      * 获取当前任务的可退回的 UserTask 集合
@@ -171,7 +174,8 @@ public interface BpmTaskService {
      * @param tasks 任务列表
      * @return 子任务列表
      */
-    <T extends TaskInfo> List<T> getAllChildrenTaskListByParentTaskId(String parentTaskId, List<T> tasks);
+    <T extends TaskInfo> List<T> getAllChildrenTaskListByParentTaskId(
+            String parentTaskId, List<T> tasks);
 
     /**
      * 获取指定任务的子任务列表
@@ -203,8 +207,8 @@ public interface BpmTaskService {
      * @param processInstanceId 流程实例的编号
      * @return 流程任务列表
      */
-    List<HistoricTaskInstance> getFinishedTaskListByProcessInstanceIdWithoutCancel(String processInstanceId);
-
+    List<HistoricTaskInstance> getFinishedTaskListByProcessInstanceIdWithoutCancel(
+            String processInstanceId);
 
     /**
      * 根据条件获取附件
@@ -214,7 +218,8 @@ public interface BpmTaskService {
      * @param attachmentType 附件类型
      * @return 附件集合
      */
-    List<Attachment> getAttachments(String processInstanceId, Set<String> taskIds, BpmAttachmentTypeEnum attachmentType);
+    List<Attachment> getAttachments(
+            String processInstanceId, Set<String> taskIds, BpmAttachmentTypeEnum attachmentType);
 
     // ========== Update 写入相关方法 ==========
 
@@ -360,5 +365,4 @@ public interface BpmTaskService {
      * @param taskDefineKey     任务 Key
      */
     void triggerTask(String processInstanceId, String taskDefineKey);
-
 }

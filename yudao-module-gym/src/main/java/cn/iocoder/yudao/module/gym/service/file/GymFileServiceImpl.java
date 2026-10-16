@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.gym.service.file;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
@@ -18,16 +21,16 @@ import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
 /**
  * gym 文件 Service 实现类
@@ -50,29 +53,24 @@ public class GymFileServiceImpl implements GymFileService {
     /** 存储用文件名的长度上限（infra_file.name 列为 varchar(255)，留出安全余量） */
     private static final int MAX_STORAGE_NAME_LENGTH = 180;
 
-    @Resource
-    private GymFileMapper gymFileMapper;
+    @Resource private GymFileMapper gymFileMapper;
 
     @Resource
-    private cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractTemplateMapper gymContractTemplateMapper;
+    private cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractTemplateMapper
+            gymContractTemplateMapper;
 
-    @Resource
-    private FileApi fileApi;
+    @Resource private FileApi fileApi;
 
     @org.springframework.beans.factory.annotation.Value("${gym.file.storage-config-id:#{null}}")
     private Long storageConfigId;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private PermissionApi permissionApi;
 
-    @Resource
-    private GymMemberFileAccess memberFileAccess;
+    @Resource private GymMemberFileAccess memberFileAccess;
 
     @Override
     public GymFileDO uploadFile(GymFileUploadReqVO uploadReqVO) {
@@ -88,7 +86,11 @@ public class GymFileServiceImpl implements GymFileService {
 
         // 2. 先按 multipart 元信息判断大小，避免把超大文件整体读进内存
         if (file.getSize() > category.getMaxSize()) {
-            throw exception(FILE_SIZE_EXCEED_LIMIT, category.getName(), category.getMaxSize(), file.getSize());
+            throw exception(
+                    FILE_SIZE_EXCEED_LIMIT,
+                    category.getName(),
+                    category.getMaxSize(),
+                    file.getSize());
         }
 
         // 3. 读取内容，并以「魔数」判定真实类型（不信任 Content-Type / 后缀）
@@ -96,37 +98,53 @@ public class GymFileServiceImpl implements GymFileService {
         try {
             content = file.getBytes();
         } catch (IOException ex) {
-            log.error("[uploadFile][category({}) name({}) 读取上传内容失败]",
-                    category.getCategory(), file.getOriginalFilename(), ex);
+            log.error(
+                    "[uploadFile][category({}) name({}) 读取上传内容失败]",
+                    category.getCategory(),
+                    file.getOriginalFilename(),
+                    ex);
             throw exception(FILE_UPLOAD_FAILED, ex.getMessage());
         }
         if (content.length == 0) {
             throw exception(FILE_CONTENT_EMPTY);
         }
         if (content.length > category.getMaxSize()) { // 双保险：元信息与实际内容不一致时以内容为准
-            throw exception(FILE_SIZE_EXCEED_LIMIT, category.getName(), category.getMaxSize(), content.length);
+            throw exception(
+                    FILE_SIZE_EXCEED_LIMIT,
+                    category.getName(),
+                    category.getMaxSize(),
+                    content.length);
         }
         GymFileMimeTypeEnum detected = GymFileTypeUtils.detect(content);
         if (detected == null) {
-            throw exception(FILE_TYPE_NOT_ALLOWED,
+            throw exception(
+                    FILE_TYPE_NOT_ALLOWED,
                     StrUtil.format("无法识别文件内容类型，仅支持 {}", GymFileMimeTypeEnum.allMimeTypes()));
         }
 
         // 4. 内容与「声明类型」比对：后缀、Content-Type 任一不一致即拒绝（旧 Mock 的 415 语义）
         GymFileMimeTypeEnum byName = GymFileTypeUtils.detectByFileName(file.getOriginalFilename());
         if (byName != null && byName != detected) {
-            throw exception(FILE_TYPE_NOT_ALLOWED,
-                    StrUtil.format("文件名后缀声明为 {}，实际内容为 {}", byName.getMimeType(), detected.getMimeType()));
+            throw exception(
+                    FILE_TYPE_NOT_ALLOWED,
+                    StrUtil.format(
+                            "文件名后缀声明为 {}，实际内容为 {}", byName.getMimeType(), detected.getMimeType()));
         }
-        GymFileMimeTypeEnum byContentType = GymFileMimeTypeEnum.findByMimeType(file.getContentType());
+        GymFileMimeTypeEnum byContentType =
+                GymFileMimeTypeEnum.findByMimeType(file.getContentType());
         if (byContentType != null && byContentType != detected) {
-            throw exception(FILE_TYPE_NOT_ALLOWED,
-                    StrUtil.format("请求声明的类型为 {}，实际内容为 {}", byContentType.getMimeType(), detected.getMimeType()));
+            throw exception(
+                    FILE_TYPE_NOT_ALLOWED,
+                    StrUtil.format(
+                            "请求声明的类型为 {}，实际内容为 {}",
+                            byContentType.getMimeType(),
+                            detected.getMimeType()));
         }
 
         // 5. 该类别是否允许此类型
         if (!category.isMimeTypeAllowed(detected.getMimeType())) {
-            throw exception(FILE_TYPE_NOT_ALLOWED,
+            throw exception(
+                    FILE_TYPE_NOT_ALLOWED,
                     StrUtil.format("类别 {} 不允许 {} 类型", category.getName(), detected.getMimeType()));
         }
 
@@ -136,17 +154,34 @@ public class GymFileServiceImpl implements GymFileService {
         // 7. 存储文件（复用 infra 文件服务：本地磁盘 / 数据库 / S3 等按 infra 配置生效）
         //    存储名带唯一前缀：infra 默认路径是「日期/原文件名」，同名文件会落同一路径互相覆盖
         String storageName = buildStorageName(file.getOriginalFilename(), detected);
-        String url = storageConfigId == null
-                ? fileApi.createFile(content, storageName, DIRECTORY_PREFIX + category.getCategory(), detected.getMimeType())
-                : fileApi.createFile(content, storageName, DIRECTORY_PREFIX + category.getCategory(), detected.getMimeType(), storageConfigId);
+        String url =
+                storageConfigId == null
+                        ? fileApi.createFile(
+                                content,
+                                storageName,
+                                DIRECTORY_PREFIX + category.getCategory(),
+                                detected.getMimeType())
+                        : fileApi.createFile(
+                                content,
+                                storageName,
+                                DIRECTORY_PREFIX + category.getCategory(),
+                                detected.getMimeType(),
+                                storageConfigId);
 
         // 8. 落库业务归属（name 仍存原始文件名，展示/下载不受存储名影响）
-        GymFileDO gymFile = GymFileDO.builder()
-                .storeId(storeId).category(category.getCategory())
-                .name(StrUtil.blankToDefault(file.getOriginalFilename(), "unnamed." + detected.getExtension()))
-                .url(url).mimeType(detected.getMimeType()).size((long) content.length)
-                .uploaderId(SecurityFrameworkUtils.getLoginUserId())
-                .build();
+        GymFileDO gymFile =
+                GymFileDO.builder()
+                        .storeId(storeId)
+                        .category(category.getCategory())
+                        .name(
+                                StrUtil.blankToDefault(
+                                        file.getOriginalFilename(),
+                                        "unnamed." + detected.getExtension()))
+                        .url(url)
+                        .mimeType(detected.getMimeType())
+                        .size((long) content.length)
+                        .uploaderId(SecurityFrameworkUtils.getLoginUserId())
+                        .build();
         gymFileMapper.insert(gymFile);
         return gymFile;
     }
@@ -171,12 +206,18 @@ public class GymFileServiceImpl implements GymFileService {
         String extension = FileUtil.extName(name);
         String mainName = FileUtil.mainName(name);
         // 截断主文件名，避免「uuid + 原文件名」超过 infra_file.name 的长度上限
-        int maxMainNameLength = MAX_STORAGE_NAME_LENGTH - unique.length() - 1
-                - (StrUtil.isEmpty(extension) ? 0 : extension.length() + 1);
+        int maxMainNameLength =
+                MAX_STORAGE_NAME_LENGTH
+                        - unique.length()
+                        - 1
+                        - (StrUtil.isEmpty(extension) ? 0 : extension.length() + 1);
         if (mainName.length() > maxMainNameLength) {
             mainName = StrUtil.subPre(mainName, maxMainNameLength);
         }
-        return unique + "-" + mainName + (StrUtil.isEmpty(extension) ? StrUtil.EMPTY : StrUtil.DOT + extension);
+        return unique
+                + "-"
+                + mainName
+                + (StrUtil.isEmpty(extension) ? StrUtil.EMPTY : StrUtil.DOT + extension);
     }
 
     @Override
@@ -186,8 +227,9 @@ public class GymFileServiceImpl implements GymFileService {
             throw exception(FILE_NOT_EXISTS);
         }
         // 门店越权校验：非本门店（且不在数据范围内）的文件，一律按无权处理
-        Long userId=SecurityFrameworkUtils.getLoginUserId();
-        if (!publishedTemplateAccess(file,userId) && !memberFileAccess.canRead(file)) validateStorePermission(userId, file.getStoreId());
+        Long userId = SecurityFrameworkUtils.getLoginUserId();
+        if (!publishedTemplateAccess(file, userId) && !memberFileAccess.canRead(file))
+            validateStorePermission(userId, file.getStoreId());
         return file;
     }
 
@@ -198,7 +240,11 @@ public class GymFileServiceImpl implements GymFileService {
         if (content == null) {
             throw exception(FILE_CONTENT_NOT_EXISTS);
         }
-        return GymFileContentDTO.builder().name(file.getName()).mimeType(file.getMimeType()).content(content).build();
+        return GymFileContentDTO.builder()
+                .name(file.getName())
+                .mimeType(file.getMimeType())
+                .content(content)
+                .build();
     }
 
     /**
@@ -220,7 +266,8 @@ public class GymFileServiceImpl implements GymFileService {
         if (dept == null) {
             throw exception(FILE_STORE_NOT_EXISTS, storeId);
         }
-        if (!memberFileAccess.canUploadReport(storeId, category)) validateStorePermission(userId, storeId);
+        if (!memberFileAccess.canUploadReport(storeId, category))
+            validateStorePermission(userId, storeId);
         return storeId;
     }
 
@@ -237,25 +284,35 @@ public class GymFileServiceImpl implements GymFileService {
         DeptDataPermissionRespDTO permission = permissionApi.getDeptDataPermission(userId);
         if (storeId == null) {
             // An unbound legacy file is not a responsible member's private attachment.
-            if(permission!=null && Boolean.TRUE.equals(permission.getSelf()) && !Boolean.TRUE.equals(permission.getAll())
-                    && (permission.getDeptIds()==null || permission.getDeptIds().isEmpty())) throw exception(FILE_STORE_NO_PERMISSION, storeId);
+            if (permission != null
+                    && Boolean.TRUE.equals(permission.getSelf())
+                    && !Boolean.TRUE.equals(permission.getAll())
+                    && (permission.getDeptIds() == null || permission.getDeptIds().isEmpty()))
+                throw exception(FILE_STORE_NO_PERMISSION, storeId);
             return;
         }
-        if (permission!=null && Boolean.TRUE.equals(permission.getAll())) {
+        if (permission != null && Boolean.TRUE.equals(permission.getAll())) {
             return;
         }
-        if (permission!=null && permission.getDeptIds() != null && permission.getDeptIds().contains(storeId)) {
+        if (permission != null
+                && permission.getDeptIds() != null
+                && permission.getDeptIds().contains(storeId)) {
             return;
         }
         throw exception(FILE_STORE_NO_PERMISSION, storeId);
     }
 
-
     /** Published blank contract templates are intentionally shared; unrelated PDFs and draft/suspended templates remain store-private. */
-    private boolean publishedTemplateAccess(GymFileDO file,Long userId) {
-        if (!"contract".equals(file.getCategory()) || !"application/pdf".equals(file.getMimeType())) return false;
-        var permission=permissionApi.getDeptDataPermission(userId);
-        if (permission==null || (!Boolean.TRUE.equals(permission.getAll()) && (permission.getDeptIds()==null || permission.getDeptIds().isEmpty()))) return false;
-        return permissionApi.hasAnyPermissions(userId,"gym:contracts:read","gym:contracts:templates") && gymContractTemplateMapper.isPublishedFile(file.getId());
+    private boolean publishedTemplateAccess(GymFileDO file, Long userId) {
+        if (!"contract".equals(file.getCategory()) || !"application/pdf".equals(file.getMimeType()))
+            return false;
+        var permission = permissionApi.getDeptDataPermission(userId);
+        if (permission == null
+                || (!Boolean.TRUE.equals(permission.getAll())
+                        && (permission.getDeptIds() == null || permission.getDeptIds().isEmpty())))
+            return false;
+        return permissionApi.hasAnyPermissions(
+                        userId, "gym:contracts:read", "gym:contracts:templates")
+                && gymContractTemplateMapper.isPublishedFile(file.getId());
     }
 }

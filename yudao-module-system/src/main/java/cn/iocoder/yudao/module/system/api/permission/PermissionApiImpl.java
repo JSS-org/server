@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.system.api.permission;
 
 import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.util.Collection;
 import java.util.Set;
 
@@ -16,8 +18,7 @@ import java.util.Set;
 @Service
 public class PermissionApiImpl implements PermissionApi {
 
-    @Resource
-    private PermissionService permissionService;
+    @Resource private PermissionService permissionService;
 
     @Override
     public Set<Long> getUserRoleIdListByRoleIds(Collection<Long> roleIds) {
@@ -38,5 +39,4 @@ public class PermissionApiImpl implements PermissionApi {
     public DeptDataPermissionRespDTO getDeptDataPermission(Long userId) {
         return permissionService.getDeptDataPermission(userId);
     }
-
 }

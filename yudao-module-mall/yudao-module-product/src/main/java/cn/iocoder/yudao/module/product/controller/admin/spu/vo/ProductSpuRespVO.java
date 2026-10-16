@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.module.product.controller.admin.spu.vo;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.framework.excel.core.convert.MoneyConvert;
 import cn.iocoder.yudao.module.product.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -45,11 +47,17 @@ public class ProductSpuRespVO {
     @ExcelProperty("商品品牌编号")
     private Long brandId;
 
-    @Schema(description = "商品封面图", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+    @Schema(
+            description = "商品封面图",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/xx.png")
     @ExcelProperty("商品封面图")
     private String picUrl;
 
-    @Schema(description = "商品轮播图", requiredMode = Schema.RequiredMode.REQUIRED, example = "[https://www.iocoder.cn/xx.png, https://www.iocoder.cn/xxx.png]")
+    @Schema(
+            description = "商品轮播图",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[https://www.iocoder.cn/xx.png, https://www.iocoder.cn/xxx.png]")
     private List<String> sliderPicUrls;
 
     @Schema(description = "排序字段", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -61,7 +69,10 @@ public class ProductSpuRespVO {
     @DictFormat(DictTypeConstants.PRODUCT_SPU_STATUS)
     private Integer status;
 
-    @Schema(description = "商品创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "2023-05-24 00:00:00")
+    @Schema(
+            description = "商品创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2023-05-24 00:00:00")
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
 
@@ -75,7 +86,10 @@ public class ProductSpuRespVO {
     @ExcelProperty(value = "商品价格", converter = MoneyConvert.class)
     private Integer price;
 
-    @Schema(description = "市场价，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "199")
+    @Schema(
+            description = "市场价，单位使用：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "199")
     @ExcelProperty(value = "市场价", converter = MoneyConvert.class)
     private Integer marketPrice;
 
@@ -122,5 +136,4 @@ public class ProductSpuRespVO {
     @Schema(description = "浏览量", requiredMode = Schema.RequiredMode.REQUIRED, example = "888")
     @ExcelProperty("商品点击量")
     private Integer browseCount;
-
 }

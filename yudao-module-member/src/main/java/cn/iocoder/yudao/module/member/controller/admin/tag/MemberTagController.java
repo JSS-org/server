@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.member.controller.admin.tag;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagCreateReqVO;
@@ -9,19 +11,20 @@ import cn.iocoder.yudao.module.member.controller.admin.tag.vo.MemberTagUpdateReq
 import cn.iocoder.yudao.module.member.convert.tag.MemberTagConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import cn.iocoder.yudao.module.member.service.tag.MemberTagService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 会员标签")
 @RestController
@@ -29,8 +32,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MemberTagController {
 
-    @Resource
-    private MemberTagService tagService;
+    @Resource private MemberTagService tagService;
 
     @PostMapping("/create")
     @Operation(summary = "创建会员标签")
@@ -78,7 +80,8 @@ public class MemberTagController {
     @Operation(summary = "获得会员标签列表")
     @Parameter(name = "ids", description = "编号列表", required = true, example = "1024,2048")
     @PreAuthorize("@ss.hasPermission('member:tag:query')")
-    public CommonResult<List<MemberTagRespVO>> getMemberTagList(@RequestParam("ids") Collection<Long> ids) {
+    public CommonResult<List<MemberTagRespVO>> getMemberTagList(
+            @RequestParam("ids") Collection<Long> ids) {
         List<MemberTagDO> list = tagService.getTagList(ids);
         return success(MemberTagConvert.INSTANCE.convertList(list));
     }
@@ -90,5 +93,4 @@ public class MemberTagController {
         PageResult<MemberTagDO> pageResult = tagService.getTagPage(pageVO);
         return success(MemberTagConvert.INSTANCE.convertPage(pageResult));
     }
-
 }

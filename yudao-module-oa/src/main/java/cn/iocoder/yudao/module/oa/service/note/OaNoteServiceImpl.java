@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.note;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,7 +20,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.note.OaNoteMapper;
 import cn.iocoder.yudao.module.oa.dal.mysql.note.OaNoteReceiverMapper;
 import cn.iocoder.yudao.module.oa.enums.note.OaNoteTypeEnum;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,13 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_NOT_EXISTS;
-
 /**
  * OA 笔记 Service 实现类
  *
@@ -41,15 +43,10 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_NOT_EXIST
 @Validated
 public class OaNoteServiceImpl implements OaNoteService {
 
-    @Resource
-    private OaNoteMapper noteMapper;
-    @Resource
-    private OaNoteReceiverMapper noteReceiverMapper;
-    @Resource
-    @Lazy
-    private OaNoteCategoryService noteCategoryService;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private OaNoteMapper noteMapper;
+    @Resource private OaNoteReceiverMapper noteReceiverMapper;
+    @Resource @Lazy private OaNoteCategoryService noteCategoryService;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -58,8 +55,7 @@ public class OaNoteServiceImpl implements OaNoteService {
         noteCategoryService.validateNoteCategoryOwner(createReqVO.getCategoryId(), userId);
 
         // 2. 新增笔记
-        OaNoteDO note = BeanUtils.toBean(createReqVO, OaNoteDO.class)
-                .setFavorite(false);
+        OaNoteDO note = BeanUtils.toBean(createReqVO, OaNoteDO.class).setFavorite(false);
         noteMapper.insert(note);
 
         // 3. 创建人也通过持有关系访问笔记
@@ -91,17 +87,25 @@ public class OaNoteServiceImpl implements OaNoteService {
         List<OaNoteReceiverDO> oldReceivers = noteReceiverMapper.selectListByNoteId(id);
         Set<Long> holderUserIds = new HashSet<>(receiverUserIds);
         holderUserIds.add(userId); // 清空共享名单也保留创建人自己的持有关系
-        List<OaNoteReceiverDO> newReceivers = convertList(holderUserIds,
-                receiverUserId -> new OaNoteReceiverDO().setNoteId(id).setUserId(receiverUserId));
-        List<List<OaNoteReceiverDO>> diffReceivers = diffList(oldReceivers, newReceivers,
-                (oldReceiver, newReceiver) -> ObjectUtil.equal(oldReceiver.getUserId(), newReceiver.getUserId()));
+        List<OaNoteReceiverDO> newReceivers =
+                convertList(
+                        holderUserIds,
+                        receiverUserId ->
+                                new OaNoteReceiverDO().setNoteId(id).setUserId(receiverUserId));
+        List<List<OaNoteReceiverDO>> diffReceivers =
+                diffList(
+                        oldReceivers,
+                        newReceivers,
+                        (oldReceiver, newReceiver) ->
+                                ObjectUtil.equal(oldReceiver.getUserId(), newReceiver.getUserId()));
         // 2.2 新增接收关系
         if (CollUtil.isNotEmpty(diffReceivers.get(0))) {
             noteReceiverMapper.insertBatch(diffReceivers.get(0));
         }
         // 2.3 删除取消的接收关系，创建人自身关系不参与撤销
         if (CollUtil.isNotEmpty(diffReceivers.get(2))) {
-            noteReceiverMapper.deleteByNoteIdAndUserIds(id, convertList(diffReceivers.get(2), OaNoteReceiverDO::getUserId));
+            noteReceiverMapper.deleteByNoteIdAndUserIds(
+                    id, convertList(diffReceivers.get(2), OaNoteReceiverDO::getUserId));
         }
     }
 
@@ -113,8 +117,10 @@ public class OaNoteServiceImpl implements OaNoteService {
 
         // 2. 共享笔记只退出本人持有，保留正文及其他接收人的访问
         if (ObjectUtil.equal(note.getType(), OaNoteTypeEnum.SHARED.getType())
-                || CollUtil.findOne(noteReceiverMapper.selectListByNoteId(id),
-                        receiver -> ObjectUtil.notEqual(receiver.getUserId(), userId)) != null) {
+                || CollUtil.findOne(
+                                noteReceiverMapper.selectListByNoteId(id),
+                                receiver -> ObjectUtil.notEqual(receiver.getUserId(), userId))
+                        != null) {
             noteReceiverMapper.deleteByNoteIdAndUserIds(id, Collections.singletonList(userId));
             return;
         }
@@ -157,7 +163,9 @@ public class OaNoteServiceImpl implements OaNoteService {
     @Override
     public PageResult<OaNoteDO> getMyNotePage(OaNotePageReqVO pageReqVO, Long userId) {
         // 1. 查询当前用户仍持有的笔记
-        List<Long> noteIds = convertList(noteReceiverMapper.selectListByUserId(userId), OaNoteReceiverDO::getNoteId);
+        List<Long> noteIds =
+                convertList(
+                        noteReceiverMapper.selectListByUserId(userId), OaNoteReceiverDO::getNoteId);
         if (CollUtil.isEmpty(noteIds)) {
             return PageResult.empty();
         }
@@ -199,7 +207,9 @@ public class OaNoteServiceImpl implements OaNoteService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteNotesByCategoryId(Long categoryId, Long userId) {
         // 1.1 查询本人仍持有的目录笔记，已退出的正文不随目录删除
-        List<Long> heldNoteIds = convertList(noteReceiverMapper.selectListByUserId(userId), OaNoteReceiverDO::getNoteId);
+        List<Long> heldNoteIds =
+                convertList(
+                        noteReceiverMapper.selectListByUserId(userId), OaNoteReceiverDO::getNoteId);
         if (CollUtil.isEmpty(heldNoteIds)) {
             return;
         }
@@ -208,7 +218,12 @@ public class OaNoteServiceImpl implements OaNoteService {
             return;
         }
         // 1.2 校验笔记均属于当前用户
-        if (CollUtil.findOne(notes, note -> ObjectUtil.notEqual(NumberUtils.parseLong(note.getCreator()), userId)) != null) {
+        if (CollUtil.findOne(
+                        notes,
+                        note ->
+                                ObjectUtil.notEqual(
+                                        NumberUtils.parseLong(note.getCreator()), userId))
+                != null) {
             throw exception(NOTE_ACCESS_DENIED);
         }
 
@@ -247,5 +262,4 @@ public class OaNoteServiceImpl implements OaNoteService {
         }
         return note;
     }
-
 }

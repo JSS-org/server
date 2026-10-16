@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.warehouse;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,18 +10,19 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.warehouse.vo.MesWmWarehou
 import cn.iocoder.yudao.module.mes.controller.admin.wm.warehouse.vo.MesWmWarehouseSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - MES 仓库")
 @RestController
@@ -27,20 +30,21 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MesWmWarehouseController {
 
-    @Resource
-    private MesWmWarehouseService warehouseService;
+    @Resource private MesWmWarehouseService warehouseService;
 
     @PostMapping("/create")
     @Operation(summary = "创建仓库")
     @PreAuthorize("@ss.hasPermission('mes:wm-warehouse:create')")
-    public CommonResult<Long> createWarehouse(@Valid @RequestBody MesWmWarehouseSaveReqVO createReqVO) {
+    public CommonResult<Long> createWarehouse(
+            @Valid @RequestBody MesWmWarehouseSaveReqVO createReqVO) {
         return success(warehouseService.createWarehouse(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新仓库")
     @PreAuthorize("@ss.hasPermission('mes:wm-warehouse:update')")
-    public CommonResult<Boolean> updateWarehouse(@Valid @RequestBody MesWmWarehouseSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateWarehouse(
+            @Valid @RequestBody MesWmWarehouseSaveReqVO updateReqVO) {
         warehouseService.updateWarehouse(updateReqVO);
         return success(true);
     }
@@ -66,7 +70,8 @@ public class MesWmWarehouseController {
     @GetMapping("/page")
     @Operation(summary = "获得仓库分页")
     @PreAuthorize("@ss.hasPermission('mes:wm-warehouse:query')")
-    public CommonResult<PageResult<MesWmWarehouseRespVO>> getWarehousePage(@Valid MesWmWarehousePageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesWmWarehouseRespVO>> getWarehousePage(
+            @Valid MesWmWarehousePageReqVO pageReqVO) {
         PageResult<MesWmWarehouseDO> pageResult = warehouseService.getWarehousePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, MesWmWarehouseRespVO.class));
     }
@@ -77,5 +82,4 @@ public class MesWmWarehouseController {
         List<MesWmWarehouseDO> list = warehouseService.getWarehouseList();
         return success(BeanUtils.toBean(list, MesWmWarehouseRespVO.class));
     }
-
 }

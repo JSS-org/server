@@ -1,22 +1,24 @@
 package cn.iocoder.yudao.module.oa.service.discussion;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_LIKE_TARGET_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.module.oa.dal.dataobject.discussion.OaDiscussionLikeDO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.discussion.OaDiscussionReplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.discussion.OaDiscussionLikeMapper;
+
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_LIKE_TARGET_INVALID;
 
 /**
  * OA 讨论点赞 Service 实现类
@@ -27,14 +29,11 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.DISCUSSION_LIK
 @Validated
 public class OaDiscussionLikeServiceImpl implements OaDiscussionLikeService {
 
-    @Resource
-    private OaDiscussionLikeMapper discussionLikeMapper;
+    @Resource private OaDiscussionLikeMapper discussionLikeMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaDiscussionService discussionService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaDiscussionReplyService discussionReplyService;
 
     @Override
@@ -48,15 +47,19 @@ public class OaDiscussionLikeServiceImpl implements OaDiscussionLikeService {
         }
 
         // 2. 新增点赞
-        discussionLikeMapper.insert(new OaDiscussionLikeDO().setDiscussionId(discussionId)
-                .setReplyId(replyId).setUserId(userId));
+        discussionLikeMapper.insert(
+                new OaDiscussionLikeDO()
+                        .setDiscussionId(discussionId)
+                        .setReplyId(replyId)
+                        .setUserId(userId));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDiscussionLike(Long discussionId, Long replyId, Long userId) {
         // 1. 查询当前用户的点赞，没有点赞时无需处理
-        OaDiscussionLikeDO like = discussionLikeMapper.selectByTargetAndUserId(discussionId, replyId, userId);
+        OaDiscussionLikeDO like =
+                discussionLikeMapper.selectByTargetAndUserId(discussionId, replyId, userId);
         if (like == null) {
             return;
         }
@@ -67,13 +70,15 @@ public class OaDiscussionLikeServiceImpl implements OaDiscussionLikeService {
 
     @Override
     public List<OaDiscussionLikeDO> getDiscussionLikeList(Collection<Long> discussionIds) {
-        return CollUtil.isEmpty(discussionIds) ? Collections.emptyList()
+        return CollUtil.isEmpty(discussionIds)
+                ? Collections.emptyList()
                 : discussionLikeMapper.selectListByDiscussionIds(discussionIds);
     }
 
     @Override
     public List<OaDiscussionLikeDO> getReplyLikeList(Collection<Long> replyIds) {
-        return CollUtil.isEmpty(replyIds) ? Collections.emptyList()
+        return CollUtil.isEmpty(replyIds)
+                ? Collections.emptyList()
                 : discussionLikeMapper.selectListByReplyIds(replyIds);
     }
 
@@ -100,11 +105,11 @@ public class OaDiscussionLikeServiceImpl implements OaDiscussionLikeService {
         if (discussionId != null) {
             discussionService.validateDiscussionExists(discussionId);
         } else {
-            OaDiscussionReplyDO reply = discussionReplyService.validateDiscussionReplyExists(replyId);
+            OaDiscussionReplyDO reply =
+                    discussionReplyService.validateDiscussionReplyExists(replyId);
             if (ObjectUtil.notEqual(reply.getParentId(), OaDiscussionReplyDO.PARENT_ID_ROOT)) {
                 throw exception(DISCUSSION_LIKE_TARGET_INVALID);
             }
         }
     }
-
 }

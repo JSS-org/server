@@ -1,17 +1,20 @@
 package cn.iocoder.yudao.module.oa.controller.admin.file;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.oa.service.file.OaFileFavoriteService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 云盘收藏")
 @RestController
@@ -19,8 +22,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaFileFavoriteController {
 
-    @Resource
-    private OaFileFavoriteService fileFavoriteService;
+    @Resource private OaFileFavoriteService fileFavoriteService;
 
     @PostMapping("/create")
     @Operation(summary = "收藏文件")
@@ -39,5 +41,4 @@ public class OaFileFavoriteController {
         fileFavoriteService.deleteFileFavorite(nodeId, getLoginUserId());
         return success(true);
     }
-
 }

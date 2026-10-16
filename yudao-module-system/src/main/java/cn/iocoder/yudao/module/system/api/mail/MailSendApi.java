@@ -30,5 +30,4 @@ public interface MailSendApi {
      * @return 发送日志编号
      */
     Long sendSingleMailToMember(@Valid MailSendSingleToUserReqDTO reqDTO);
-
 }

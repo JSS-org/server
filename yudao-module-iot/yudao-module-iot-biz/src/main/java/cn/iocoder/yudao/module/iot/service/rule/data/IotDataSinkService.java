@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.sink.IotDataSinkPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.sink.IotDataSinkSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataSinkDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -76,5 +77,4 @@ public interface IotDataSinkService {
      * @param ids 数据目的编号集合
      */
     void validateDataSinksExist(Collection<Long> ids);
-
 }

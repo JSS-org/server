@@ -1,14 +1,17 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.calendar.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - MES 排班日历查询 Request VO")
 @Data
@@ -28,7 +31,10 @@ public class MesCalCalendarListReqVO {
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime endDay;
 
-    @Schema(description = "查询类型：TYPE-按分类，TEAM-按班组，USER-按个人", requiredMode = Schema.RequiredMode.REQUIRED, example = "TYPE")
+    @Schema(
+            description = "查询类型：TYPE-按分类，TEAM-按班组，USER-按个人",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "TYPE")
     @NotEmpty(message = "查询类型不能为空")
     private String queryType;
 
@@ -40,5 +46,4 @@ public class MesCalCalendarListReqVO {
 
     @Schema(description = "用户编号（queryType=USER 时使用）", example = "1")
     private Long userId;
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus.IotDeviceModbusPointPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus.IotDeviceModbusPointSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceModbusPointDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -53,7 +54,8 @@ public interface IotDeviceModbusPointService {
      * @param pageReqVO 分页查询
      * @return 设备 Modbus 点位配置分页
      */
-    PageResult<IotDeviceModbusPointDO> getDeviceModbusPointPage(IotDeviceModbusPointPageReqVO pageReqVO);
+    PageResult<IotDeviceModbusPointDO> getDeviceModbusPointPage(
+            IotDeviceModbusPointPageReqVO pageReqVO);
 
     /**
      * 物模型变更时，更新关联点位的冗余字段（identifier、name）
@@ -70,6 +72,6 @@ public interface IotDeviceModbusPointService {
      * @param deviceIds 设备编号集合
      * @return 设备点位 Map，key 为设备编号，value 为点位配置列表
      */
-    Map<Long, List<IotDeviceModbusPointDO>> getEnabledDeviceModbusPointMapByDeviceIds(Collection<Long> deviceIds);
-
+    Map<Long, List<IotDeviceModbusPointDO>> getEnabledDeviceModbusPointMapByDeviceIds(
+            Collection<Long> deviceIds);
 }

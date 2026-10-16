@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.infra.controller.admin.logger.vo.apiaccesslog;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,7 +21,10 @@ public class ApiAccessLogRespVO {
     @ExcelProperty("日志主键")
     private Long id;
 
-    @Schema(description = "链路追踪编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "66600cb6-7852-11eb-9439-0242ac130002")
+    @Schema(
+            description = "链路追踪编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "66600cb6-7852-11eb-9439-0242ac130002")
     @ExcelProperty("链路追踪编号")
     private String traceId;
 
@@ -27,7 +32,10 @@ public class ApiAccessLogRespVO {
     @ExcelProperty("用户编号")
     private Long userId;
 
-    @Schema(description = "用户类型，参见 UserTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
+    @Schema(
+            description = "用户类型，参见 UserTypeEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2")
     @ExcelProperty(value = "用户类型", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.USER_TYPE)
     private Integer userType;
@@ -52,11 +60,17 @@ public class ApiAccessLogRespVO {
     @ExcelProperty("响应结果")
     private String responseBody;
 
-    @Schema(description = "用户 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "用户 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     @ExcelProperty("用户 IP")
     private String userIp;
 
-    @Schema(description = "浏览器 UA", requiredMode = Schema.RequiredMode.REQUIRED, example = "Mozilla/5.0")
+    @Schema(
+            description = "浏览器 UA",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "Mozilla/5.0")
     @ExcelProperty("浏览器 UA")
     private String userAgent;
 
@@ -95,5 +109,4 @@ public class ApiAccessLogRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

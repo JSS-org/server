@@ -1,23 +1,25 @@
 package cn.iocoder.yudao.module.mes.service.wm.returnissue;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.returnissue.MesWmReturnIssueLineMapper;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcCheckResultEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmQualityStatusEnum;
+import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
-
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * {@link MesWmReturnIssueLineServiceImpl} 的单元测试类
@@ -27,17 +29,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Import(MesWmReturnIssueLineServiceImpl.class)
 public class MesWmReturnIssueLineServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesWmReturnIssueLineServiceImpl returnIssueLineService;
+    @Resource private MesWmReturnIssueLineServiceImpl returnIssueLineService;
 
-    @Resource
-    private MesWmReturnIssueLineMapper returnIssueLineMapper;
+    @Resource private MesWmReturnIssueLineMapper returnIssueLineMapper;
 
-    @MockitoBean
-    private MesWmReturnIssueService issueService;
+    @MockitoBean private MesWmReturnIssueService issueService;
 
-    @MockitoBean
-    private MesMdItemService itemService;
+    @MockitoBean private MesMdItemService itemService;
 
     @Test
     public void testUpdateReturnIssueLineWhenRqcFinish_allPass() {
@@ -47,7 +45,8 @@ public class MesWmReturnIssueLineServiceImplTest extends BaseDbUnitTest {
         BigDecimal unqualifiedQty = BigDecimal.ZERO;
 
         // mock 数据
-        MesWmReturnIssueLineDO lineDO = randomPojo(MesWmReturnIssueLineDO.class, o -> o.setQuantity(qualifiedQty));
+        MesWmReturnIssueLineDO lineDO =
+                randomPojo(MesWmReturnIssueLineDO.class, o -> o.setQuantity(qualifiedQty));
         returnIssueLineMapper.insert(lineDO);
 
         // 调用（sourceDocId 传 null 不联动主表状态）
@@ -67,7 +66,8 @@ public class MesWmReturnIssueLineServiceImplTest extends BaseDbUnitTest {
         BigDecimal unqualifiedQty = new BigDecimal("100");
 
         // mock 数据
-        MesWmReturnIssueLineDO lineDO = randomPojo(MesWmReturnIssueLineDO.class, o -> o.setQuantity(unqualifiedQty));
+        MesWmReturnIssueLineDO lineDO =
+                randomPojo(MesWmReturnIssueLineDO.class, o -> o.setQuantity(unqualifiedQty));
         returnIssueLineMapper.insert(lineDO);
 
         // 调用
@@ -87,8 +87,8 @@ public class MesWmReturnIssueLineServiceImplTest extends BaseDbUnitTest {
         BigDecimal unqualifiedQty = new BigDecimal("20");
 
         // mock 数据
-        MesWmReturnIssueLineDO lineDO = randomPojo(MesWmReturnIssueLineDO.class, o ->
-                o.setQuantity(new BigDecimal("100")));
+        MesWmReturnIssueLineDO lineDO =
+                randomPojo(MesWmReturnIssueLineDO.class, o -> o.setQuantity(new BigDecimal("100")));
         returnIssueLineMapper.insert(lineDO);
 
         // 调用
@@ -101,14 +101,16 @@ public class MesWmReturnIssueLineServiceImplTest extends BaseDbUnitTest {
         assertEquals(0, qualifiedQty.compareTo(originalLine.getQuantity()));
 
         // 断言：新增了一行不合格品
-        List<MesWmReturnIssueLineDO> allLines = returnIssueLineMapper.selectListByIssueId(lineDO.getIssueId());
+        List<MesWmReturnIssueLineDO> allLines =
+                returnIssueLineMapper.selectListByIssueId(lineDO.getIssueId());
         assertEquals(2, allLines.size());
-        MesWmReturnIssueLineDO newLine = allLines.stream()
-                .filter(l -> !l.getId().equals(lineDO.getId()))
-                .findFirst().orElse(null);
+        MesWmReturnIssueLineDO newLine =
+                allLines.stream()
+                        .filter(l -> !l.getId().equals(lineDO.getId()))
+                        .findFirst()
+                        .orElse(null);
         assertNotNull(newLine);
         assertEquals(MesWmQualityStatusEnum.FAIL.getStatus(), newLine.getQualityStatus());
         assertEquals(0, unqualifiedQty.compareTo(newLine.getQuantity()));
     }
-
 }

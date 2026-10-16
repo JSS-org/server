@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.workreport.vo;
 
 import cn.iocoder.yudao.module.oa.dal.dataobject.workreport.OaWorkReportDO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class OaWorkReportRespVO {
     @Schema(description = "汇报编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "汇报单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "HB202609140001")
+    @Schema(
+            description = "汇报单号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "HB202609140001")
     private String no;
 
     @Schema(description = "汇报类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -23,16 +28,32 @@ public class OaWorkReportRespVO {
     @Schema(description = "汇报状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer status;
 
-    @Schema(description = "汇报标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-09-14 工作日报")
+    @Schema(
+            description = "汇报标题",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2026-09-14 工作日报")
     private String title;
 
-    @Schema(description = "汇报周期标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-09-14")
+    @Schema(
+            description = "汇报周期标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2026-09-14")
     private String periodKey;
 
-    @Schema(description = "周期开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "周期开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime startTime;
 
-    @Schema(description = "周期结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "周期结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     private LocalDateTime endTime;
 
     @Schema(description = "工作总结", example = "本周已完成库存盘点并整理差异清单")
@@ -68,10 +89,19 @@ public class OaWorkReportRespVO {
     @Schema(description = "汇报人部门名称", example = "研发部")
     private String deptName;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
-    @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "更新时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime updateTime;
-
 }

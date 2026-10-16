@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.inner;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -25,5 +26,4 @@ public interface Demo03GradeInnerMapper extends BaseMapperX<Demo03GradeDO> {
     default int deleteByStudentIds(List<Long> studentIds) {
         return deleteBatch(Demo03GradeDO::getStudentId, studentIds);
     }
-
 }

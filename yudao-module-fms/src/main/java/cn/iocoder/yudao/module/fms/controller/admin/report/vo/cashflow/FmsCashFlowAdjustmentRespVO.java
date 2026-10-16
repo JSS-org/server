@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -35,5 +36,4 @@ public class FmsCashFlowAdjustmentRespVO {
 
     @Schema(description = "层级", example = "1")
     private Integer level;
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 工资条备注 Request VO")
@@ -16,5 +18,4 @@ public class HrmSalarySlipRemarkReqVO {
     @Schema(description = "备注", example = "本月绩效奖金已计入")
     @Size(max = 500, message = "备注不能超过 500 个字符")
     private String remark;
-
 }

@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "管理后台 - OAuth2 更新用户基本信息 Request VO")
 @Data
@@ -30,5 +32,4 @@ public class OAuth2UserUpdateReqVO {
 
     @Schema(description = "用户性别，参见 SexEnum 枚举类", example = "1")
     private Integer sex;
-
 }

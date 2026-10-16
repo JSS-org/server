@@ -23,7 +23,8 @@ public interface HrmPerformanceAssessmentQueryService {
      * @param assessment 员工绩效考核
      * @return 员工绩效考核响应
      */
-    HrmPerformanceAssessmentRespVO getPerformanceAssessmentRespVO(HrmPerformanceAssessmentDO assessment);
+    HrmPerformanceAssessmentRespVO getPerformanceAssessmentRespVO(
+            HrmPerformanceAssessmentDO assessment);
 
     /**
      * 获得员工绩效考核分页响应
@@ -122,5 +123,4 @@ public interface HrmPerformanceAssessmentQueryService {
      */
     PageResult<HrmPerformanceArchiveEmployeeRespVO> getPerformanceArchiveEmployeeRespVOPage(
             PageResult<HrmEmployeeDO> pageResult);
-
 }

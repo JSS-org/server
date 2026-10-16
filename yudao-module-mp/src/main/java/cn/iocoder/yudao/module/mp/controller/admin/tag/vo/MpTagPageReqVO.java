@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.module.mp.controller.admin.tag.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import jakarta.validation.constraints.NotEmpty;
 
 @Schema(description = "管理后台 - 公众号标签分页 Request VO")
 @Data
@@ -20,5 +22,4 @@ public class MpTagPageReqVO extends PageParam {
 
     @Schema(description = "标签名，模糊匹配", example = "哈哈")
     private String name;
-
 }

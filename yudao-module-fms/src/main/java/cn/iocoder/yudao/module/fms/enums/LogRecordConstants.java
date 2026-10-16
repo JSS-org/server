@@ -18,8 +18,7 @@ public interface LogRecordConstants {
     String FMS_ACCOUNT_SET_INITIALIZE_SUB_TYPE = "初始化账套";
     String FMS_ACCOUNT_SET_INITIALIZE_SUCCESS = "初始化了账套【{{#accountSet.companyName}}】";
     String FMS_ACCOUNT_SET_MEMBER_UPDATE_SUB_TYPE = "更新账套成员";
-    String FMS_ACCOUNT_SET_MEMBER_UPDATE_SUCCESS =
-            "更新了账套【{{#accountSet.companyName}}】的成员授权";
+    String FMS_ACCOUNT_SET_MEMBER_UPDATE_SUCCESS = "更新了账套【{{#accountSet.companyName}}】的成员授权";
 
     // ======================= FMS_FINANCE_PARAMETER 财务参数 =======================
 
@@ -52,11 +51,14 @@ public interface LogRecordConstants {
 
     String FMS_AUXILIARY_ITEM_TYPE = "FMS 辅助核算项目";
     String FMS_AUXILIARY_ITEM_CREATE_SUB_TYPE = "创建辅助核算项目";
-    String FMS_AUXILIARY_ITEM_CREATE_SUCCESS = "创建了辅助核算项目【{{#createReqVO.code}} {{#createReqVO.name}}】";
+    String FMS_AUXILIARY_ITEM_CREATE_SUCCESS =
+            "创建了辅助核算项目【{{#createReqVO.code}} {{#createReqVO.name}}】";
     String FMS_AUXILIARY_ITEM_UPDATE_SUB_TYPE = "更新辅助核算项目";
-    String FMS_AUXILIARY_ITEM_UPDATE_SUCCESS = "更新了辅助核算项目【{{#updateReqVO.code}} {{#updateReqVO.name}}】";
+    String FMS_AUXILIARY_ITEM_UPDATE_SUCCESS =
+            "更新了辅助核算项目【{{#updateReqVO.code}} {{#updateReqVO.name}}】";
     String FMS_AUXILIARY_ITEM_DELETE_SUB_TYPE = "删除辅助核算项目";
-    String FMS_AUXILIARY_ITEM_DELETE_SUCCESS = "删除了辅助核算项目【{{#auxiliaryItem.code}} {{#auxiliaryItem.name}}】";
+    String FMS_AUXILIARY_ITEM_DELETE_SUCCESS =
+            "删除了辅助核算项目【{{#auxiliaryItem.code}} {{#auxiliaryItem.name}}】";
     String FMS_AUXILIARY_ITEM_STATUS_SUB_TYPE = "更新辅助核算项目状态";
     String FMS_AUXILIARY_ITEM_STATUS_SUCCESS = "更新了辅助核算项目状态";
 
@@ -76,7 +78,8 @@ public interface LogRecordConstants {
     String FMS_VOUCHER_TIDY_SUB_TYPE = "整理凭证";
     String FMS_VOUCHER_TIDY_SUCCESS = "整理了【{{#tidyReqVO.month}}】期间的凭证";
     String FMS_VOUCHER_MOVE_SUB_TYPE = "移动凭证";
-    String FMS_VOUCHER_MOVE_SUCCESS = "将【{{#moveReqVO.month}}】期间的【{{#moveReqVO.sourceNumber}}】号凭证移动到【{{#moveReqVO.targetNumber}}】号之前";
+    String FMS_VOUCHER_MOVE_SUCCESS =
+            "将【{{#moveReqVO.month}}】期间的【{{#moveReqVO.sourceNumber}}】号凭证移动到【{{#moveReqVO.targetNumber}}】号之前";
 
     // ======================= FMS_VOUCHER_WORD 凭证字 =======================
 
@@ -133,8 +136,7 @@ public interface LogRecordConstants {
     String FMS_INITIAL_BALANCE_SAVE_SUCCESS =
             "保存了账套【{{#saveReqVO.accountSetId}}】的【{{#saveReqVO.balances.size()}}】项财务初始余额";
     String FMS_INITIAL_BALANCE_IMPORT_SUB_TYPE = "导入财务初始余额";
-    String FMS_INITIAL_BALANCE_IMPORT_SUCCESS =
-            "向账套【{{#accountSetId}}】导入了【{{#_ret}}】项财务初始余额";
+    String FMS_INITIAL_BALANCE_IMPORT_SUCCESS = "向账套【{{#accountSetId}}】导入了【{{#_ret}}】项财务初始余额";
 
     // ======================= FMS_CLOSING 结账 =======================
 
@@ -181,5 +183,4 @@ public interface LogRecordConstants {
     String FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUB_TYPE = "更新现金流量辅助公式";
     String FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUCCESS =
             "更新了账套【{{#updateReqVO.accountSetId}}】的现金流量辅助公式【{{#updateReqVO.id}}】";
-
 }

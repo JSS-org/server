@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.card;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_CARD_PROCESS_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.card.vo.process.MesProCardProcessPageReqVO;
@@ -7,13 +10,12 @@ import cn.iocoder.yudao.module.mes.controller.admin.pro.card.vo.process.MesProCa
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.card.MesProCardProcessDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.card.MesProCardProcessMapper;
 import cn.iocoder.yudao.module.mes.service.pro.process.MesProProcessService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_CARD_PROCESS_NOT_EXISTS;
 
 /**
  * MES 流转卡工序记录 Service 实现类
@@ -24,14 +26,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_CARD_PROC
 @Validated
 public class MesProCardProcessServiceImpl implements MesProCardProcessService {
 
-    @Resource
-    private MesProCardProcessMapper cardProcessMapper;
+    @Resource private MesProCardProcessMapper cardProcessMapper;
 
-    @Resource
-    @Lazy
-    private MesProCardService cardService;
-    @Resource
-    private MesProProcessService processService;
+    @Resource @Lazy private MesProCardService cardService;
+    @Resource private MesProProcessService processService;
 
     @Override
     public Long createCardProcess(MesProCardProcessSaveReqVO createReqVO) {
@@ -76,7 +74,8 @@ public class MesProCardProcessServiceImpl implements MesProCardProcessService {
     }
 
     @Override
-    public PageResult<MesProCardProcessDO> getCardProcessPage(MesProCardProcessPageReqVO pageReqVO) {
+    public PageResult<MesProCardProcessDO> getCardProcessPage(
+            MesProCardProcessPageReqVO pageReqVO) {
         return cardProcessMapper.selectPage(pageReqVO);
     }
 
@@ -101,5 +100,4 @@ public class MesProCardProcessServiceImpl implements MesProCardProcessService {
     public void deleteCardProcessByCardId(Long cardId) {
         cardProcessMapper.deleteByCardId(cardId);
     }
-
 }

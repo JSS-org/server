@@ -1,18 +1,19 @@
 package cn.iocoder.yudao.module.mes.service.cal.plan;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.plan.MesCalPlanShiftDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.cal.plan.MesCalPlanShiftMapper;
 import cn.iocoder.yudao.module.mes.enums.cal.MesCalShiftTypeEnum;
+
+import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import jakarta.annotation.Resource;
-
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link MesCalPlanShiftServiceImpl} 的单元测试
@@ -22,14 +23,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(MesCalPlanShiftServiceImpl.class)
 public class MesCalPlanShiftServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MesCalPlanShiftServiceImpl planShiftService;
+    @Resource private MesCalPlanShiftServiceImpl planShiftService;
 
-    @Resource
-    private MesCalPlanShiftMapper planShiftMapper;
+    @Resource private MesCalPlanShiftMapper planShiftMapper;
 
-    @MockitoBean
-    private MesCalPlanService planService;
+    @MockitoBean private MesCalPlanService planService;
 
     @Test
     public void testAddDefaultPlanShift_singleShift_use18Clock() {
@@ -49,5 +47,4 @@ public class MesCalPlanShiftServiceImplTest extends BaseDbUnitTest {
         assertEquals("08:00", shift.getStartTime());
         assertEquals("18:00", shift.getEndTime());
     }
-
 }

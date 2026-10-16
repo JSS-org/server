@@ -1,5 +1,19 @@
 package cn.iocoder.yudao.module.pms.service.kb.library;
 
+import static cn.hutool.core.util.ObjectUtil.notEqual;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_ADMIN_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_CREATOR_CANNOT_REMOVE;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_DIRECT_MEMBER_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_MEMBERS_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_WRITE_ACCESS_DENIED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.member.PmsKnowledgeLibraryUpdateMemberListReqVO;
@@ -14,7 +28,9 @@ import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,20 +46,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static cn.hutool.core.util.ObjectUtil.notEqual;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.equalsAny;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_ADMIN_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_CREATOR_CANNOT_REMOVE;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_DIRECT_MEMBER_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_MEMBERS_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIBRARY_WRITE_ACCESS_DENIED;
-
 /**
  * PMS 知识库成员 Service 实现类
  *
@@ -53,22 +55,16 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_LIB
 @Validated
 public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibraryMemberService {
 
-    @Resource
-    private PmsKnowledgeLibraryMemberMapper memberMapper;
+    @Resource private PmsKnowledgeLibraryMemberMapper memberMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeLibraryService libraryService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeContentPermissionService contentPermissionService;
 
-    @Resource
-    private PermissionApi permissionApi;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private PermissionApi permissionApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @Override
     public PmsKnowledgeLibraryDO validateLibraryReadable(Long libraryId, Long userId) {
@@ -104,7 +100,9 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
             return library;
         }
         PmsKnowledgeLibraryMemberDO member = getLibraryMember(libraryId, userId);
-        if (member == null || notEqual(PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(), member.getLevel())) {
+        if (member == null
+                || notEqual(
+                        PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(), member.getLevel())) {
             throw exception(KNOWLEDGE_LIBRARY_ADMIN_REQUIRED);
         }
         return library;
@@ -125,7 +123,9 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
             return false;
         }
         // 公开库也允许管理员参与成员和内容协作；创建人权限单独用于公开状态和删除等高危操作
-        return equalsAny(member.getLevel(), PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(),
+        return equalsAny(
+                member.getLevel(),
+                PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel(),
                 PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel());
     }
 
@@ -133,8 +133,8 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
     public List<Long> getJoinedLibraryIdList(Long userId) {
         // 1. 查询当前用户及所在部门加入的知识库编号
         AdminUserRespDTO user = adminUserApi.getUser(userId);
-        List<Long> joinedLibraryIds = getLibraryIdListByUserIdOrDeptId(
-                userId, user != null ? user.getDeptId() : null);
+        List<Long> joinedLibraryIds =
+                getLibraryIdListByUserIdOrDeptId(userId, user != null ? user.getDeptId() : null);
 
         // 2. 过滤已删除或已进入回收站的知识库
         Set<Long> libraryIds = new LinkedHashSet<>(joinedLibraryIds);
@@ -160,23 +160,30 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
     }
 
     @Override
-    public void createLibraryMemberList(Long libraryId, Long creatorUserId,
-                                        Collection<Long> adminUserIds, Collection<Long> memberUserIds) {
+    public void createLibraryMemberList(
+            Long libraryId,
+            Long creatorUserId,
+            Collection<Long> adminUserIds,
+            Collection<Long> memberUserIds) {
         // 1.1 整理初始成员并校验重复、创建人保护
-        List<Long> adminUserIdList = CollUtil.isEmpty(adminUserIds)
-                ? new ArrayList<>() : new ArrayList<>(adminUserIds);
-        List<Long> memberUserIdList = CollUtil.isEmpty(memberUserIds)
-                ? new ArrayList<>() : new ArrayList<>(memberUserIds);
+        List<Long> adminUserIdList =
+                CollUtil.isEmpty(adminUserIds) ? new ArrayList<>() : new ArrayList<>(adminUserIds);
+        List<Long> memberUserIdList =
+                CollUtil.isEmpty(memberUserIds)
+                        ? new ArrayList<>()
+                        : new ArrayList<>(memberUserIds);
         Set<Long> initialMemberUserIds = new LinkedHashSet<>();
         // 两个角色数组统一校验创建人保护和重复用户，避免维护两套不一致的校验分支
         for (Long userId : adminUserIdList) {
-            if (userId == null || Objects.equals(creatorUserId, userId)
+            if (userId == null
+                    || Objects.equals(creatorUserId, userId)
                     || !initialMemberUserIds.add(userId)) {
                 throw exception(KNOWLEDGE_LIBRARY_MEMBERS_INVALID);
             }
         }
         for (Long userId : memberUserIdList) {
-            if (userId == null || Objects.equals(creatorUserId, userId)
+            if (userId == null
+                    || Objects.equals(creatorUserId, userId)
                     || !initialMemberUserIds.add(userId)) {
                 throw exception(KNOWLEDGE_LIBRARY_MEMBERS_INVALID);
             }
@@ -186,14 +193,32 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
 
         // 2. 创建创建人和初始成员
         List<PmsKnowledgeLibraryMemberDO> members = new ArrayList<>();
-        members.addAll(convertList(adminUserIdList, userId -> new PmsKnowledgeLibraryMemberDO()
-                .setLibraryId(libraryId).setUserId(userId)
-                .setLevel(PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel())));
-        members.addAll(convertList(memberUserIdList, userId -> new PmsKnowledgeLibraryMemberDO()
-                .setLibraryId(libraryId).setUserId(userId)
-                .setLevel(PmsKnowledgeLibraryMemberLevelEnum.MEMBER.getLevel())));
-        members.add(0, new PmsKnowledgeLibraryMemberDO().setLibraryId(libraryId).setUserId(creatorUserId)
-                .setLevel(PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel()));
+        members.addAll(
+                convertList(
+                        adminUserIdList,
+                        userId ->
+                                new PmsKnowledgeLibraryMemberDO()
+                                        .setLibraryId(libraryId)
+                                        .setUserId(userId)
+                                        .setLevel(
+                                                PmsKnowledgeLibraryMemberLevelEnum.ADMIN
+                                                        .getLevel())));
+        members.addAll(
+                convertList(
+                        memberUserIdList,
+                        userId ->
+                                new PmsKnowledgeLibraryMemberDO()
+                                        .setLibraryId(libraryId)
+                                        .setUserId(userId)
+                                        .setLevel(
+                                                PmsKnowledgeLibraryMemberLevelEnum.MEMBER
+                                                        .getLevel())));
+        members.add(
+                0,
+                new PmsKnowledgeLibraryMemberDO()
+                        .setLibraryId(libraryId)
+                        .setUserId(creatorUserId)
+                        .setLevel(PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel()));
         memberMapper.insertBatch(members);
     }
 
@@ -205,18 +230,28 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateLibraryMemberList(PmsKnowledgeLibraryUpdateMemberListReqVO updateReqVO, Long userId) {
+    public void updateLibraryMemberList(
+            PmsKnowledgeLibraryUpdateMemberListReqVO updateReqVO, Long userId) {
         // 1.1 校验知识库管理员权限
         validateLibraryAdmin(updateReqVO.getLibraryId(), userId);
         // 1.2 校验成员不重复
-        Set<Long> memberUserIds = convertSet(updateReqVO.getMembers(),
-                PmsKnowledgeLibraryUpdateMemberListReqVO.Member::getUserId);
-        Set<Long> memberDeptIds = convertSet(updateReqVO.getMembers(),
-                PmsKnowledgeLibraryUpdateMemberListReqVO.Member::getDeptId);
+        Set<Long> memberUserIds =
+                convertSet(
+                        updateReqVO.getMembers(),
+                        PmsKnowledgeLibraryUpdateMemberListReqVO.Member::getUserId);
+        Set<Long> memberDeptIds =
+                convertSet(
+                        updateReqVO.getMembers(),
+                        PmsKnowledgeLibraryUpdateMemberListReqVO.Member::getDeptId);
         List<PmsKnowledgeLibraryMemberDO> oldMembers =
                 memberMapper.selectListByLibraryId(updateReqVO.getLibraryId());
-        PmsKnowledgeLibraryMemberDO creator = CollUtil.findOne(oldMembers, member ->
-                PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel().equals(member.getLevel()));
+        PmsKnowledgeLibraryMemberDO creator =
+                CollUtil.findOne(
+                        oldMembers,
+                        member ->
+                                PmsKnowledgeLibraryMemberLevelEnum.CREATOR
+                                        .getLevel()
+                                        .equals(member.getLevel()));
         if (memberUserIds.size() + memberDeptIds.size() != updateReqVO.getMembers().size()) {
             throw exception(KNOWLEDGE_LIBRARY_MEMBERS_INVALID);
         }
@@ -225,8 +260,13 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
             throw exception(KNOWLEDGE_LIBRARY_MEMBERS_INVALID);
         }
         // 1.4 校验成员不能伪造创建人等级
-        if (CollUtil.findOne(updateReqVO.getMembers(), member ->
-                PmsKnowledgeLibraryMemberLevelEnum.CREATOR.getLevel().equals(member.getLevel())) != null) {
+        if (CollUtil.findOne(
+                        updateReqVO.getMembers(),
+                        member ->
+                                PmsKnowledgeLibraryMemberLevelEnum.CREATOR
+                                        .getLevel()
+                                        .equals(member.getLevel()))
+                != null) {
             throw exception(KNOWLEDGE_LIBRARY_MEMBERS_INVALID);
         }
         // 1.5 校验用户成员存在
@@ -235,13 +275,18 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
         deptApi.validateDeptList(memberDeptIds);
 
         // 2. 保留创建人并重建管理员和普通成员
-        memberMapper.deleteByLibraryIdAndLevels(updateReqVO.getLibraryId(), Arrays.asList(
-                PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel(),
-                PmsKnowledgeLibraryMemberLevelEnum.MEMBER.getLevel()));
+        memberMapper.deleteByLibraryIdAndLevels(
+                updateReqVO.getLibraryId(),
+                Arrays.asList(
+                        PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel(),
+                        PmsKnowledgeLibraryMemberLevelEnum.MEMBER.getLevel()));
         if (CollUtil.isNotEmpty(updateReqVO.getMembers())) {
-            memberMapper.insertBatch(convertList(updateReqVO.getMembers(), member ->
-                    BeanUtils.toBean(member, PmsKnowledgeLibraryMemberDO.class)
-                            .setLibraryId(updateReqVO.getLibraryId())));
+            memberMapper.insertBatch(
+                    convertList(
+                            updateReqVO.getMembers(),
+                            member ->
+                                    BeanUtils.toBean(member, PmsKnowledgeLibraryMemberDO.class)
+                                            .setLibraryId(updateReqVO.getLibraryId())));
         }
 
         // 3. 移除已退出知识库成员的内容级协作权限
@@ -253,7 +298,8 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
         removedUserIds.removeAll(retainedUserIds);
         Set<Long> removedDeptIds = convertSet(oldMembers, PmsKnowledgeLibraryMemberDO::getDeptId);
         removedDeptIds.removeAll(memberDeptIds);
-        contentPermissionService.deleteContentPermissionMembersByLibraryId(updateReqVO.getLibraryId(), removedUserIds, removedDeptIds);
+        contentPermissionService.deleteContentPermissionMembersByLibraryId(
+                updateReqVO.getLibraryId(), removedUserIds, removedDeptIds);
     }
 
     @Override
@@ -262,7 +308,8 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
         // 1.1 校验知识库可访问
         validateLibraryReadable(libraryId, userId);
         // 1.2 校验当前账号是直接成员
-        PmsKnowledgeLibraryMemberDO member = memberMapper.selectByLibraryIdAndUserId(libraryId, userId);
+        PmsKnowledgeLibraryMemberDO member =
+                memberMapper.selectByLibraryIdAndUserId(libraryId, userId);
         if (member == null) {
             throw exception(KNOWLEDGE_LIBRARY_DIRECT_MEMBER_NOT_EXISTS);
         }
@@ -273,8 +320,8 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
 
         // 2. 退出知识库并清理当前账号的内容级协作权限
         memberMapper.deleteByLibraryIdAndUserId(libraryId, userId);
-        contentPermissionService.deleteContentPermissionMembersByLibraryId(libraryId, Collections.singleton(userId),
-                Collections.emptySet());
+        contentPermissionService.deleteContentPermissionMembersByLibraryId(
+                libraryId, Collections.singleton(userId), Collections.emptySet());
     }
 
     @Override
@@ -283,11 +330,13 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
     }
 
     @Override
-    public Map<Long, List<PmsKnowledgeLibraryMemberDO>> getLibraryMemberListMap(Collection<Long> libraryIds) {
+    public Map<Long, List<PmsKnowledgeLibraryMemberDO>> getLibraryMemberListMap(
+            Collection<Long> libraryIds) {
         if (CollUtil.isEmpty(libraryIds)) {
             return Collections.emptyMap();
         }
-        return convertMultiMap(memberMapper.selectListByLibraryIds(libraryIds),
+        return convertMultiMap(
+                memberMapper.selectListByLibraryIds(libraryIds),
                 PmsKnowledgeLibraryMemberDO::getLibraryId);
     }
 
@@ -308,7 +357,9 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
 
     private PmsKnowledgeLibraryDO validateLibraryExists(Long libraryId) {
         PmsKnowledgeLibraryDO library = libraryService.getLibrary(libraryId);
-        if (library == null || notEqual(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus(), library.getStatus())) {
+        if (library == null
+                || notEqual(
+                        PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus(), library.getStatus())) {
             throw exception(KNOWLEDGE_LIBRARY_NOT_EXISTS);
         }
         return library;
@@ -333,5 +384,4 @@ public class PmsKnowledgeLibraryMemberServiceImpl implements PmsKnowledgeLibrary
         }
         return getMemberByLibraryIdAndDeptId(libraryId, user.getDeptId());
     }
-
 }

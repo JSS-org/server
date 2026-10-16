@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.insurance.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmInsuranceProjectTypeEnum implements ArrayValuable<Integer> {
-
     PENSION_INSURANCE(1, "养老保险"),
     MEDICAL_INSURANCE(2, "医疗保险"),
     UNEMPLOYMENT_INSURANCE(3, "失业保险"),
@@ -28,13 +28,16 @@ public enum HrmInsuranceProjectTypeEnum implements ArrayValuable<Integer> {
     PROVIDENT_FUND(10, "公积金"),
     PROVIDENT_FUND_CUSTOM(11, "公积金自定义");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmInsuranceProjectTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmInsuranceProjectTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -70,5 +73,4 @@ public enum HrmInsuranceProjectTypeEnum implements ArrayValuable<Integer> {
         HrmInsuranceProjectTypeEnum typeEnum = valueOf(type);
         return typeEnum != null && typeEnum.isProvidentFund();
     }
-
 }

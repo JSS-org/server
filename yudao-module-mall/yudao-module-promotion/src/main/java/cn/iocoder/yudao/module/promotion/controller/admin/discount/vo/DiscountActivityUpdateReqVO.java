@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.discount.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,5 +28,4 @@ public class DiscountActivityUpdateReqVO extends DiscountActivityBaseVO {
     @NotEmpty(message = "商品列表不能为空")
     @Valid
     private List<Product> products;
-
 }

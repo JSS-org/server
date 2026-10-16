@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.enums.permission;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,7 +17,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum DataScopeEnum implements ArrayValuable<Integer> {
-
     ALL(1), // 全部数据权限
 
     DEPT_CUSTOM(2), // 指定部门数据权限
@@ -30,11 +30,11 @@ public enum DataScopeEnum implements ArrayValuable<Integer> {
      */
     private final Integer scope;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(DataScopeEnum::getScope).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(DataScopeEnum::getScope).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

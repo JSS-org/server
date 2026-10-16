@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.fms.service.voucher;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.fms.controller.admin.voucher.vo.FmsVoucherAttachmentUpdateReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.voucher.vo.FmsVoucherImportExcelVO;
@@ -12,8 +14,8 @@ import cn.iocoder.yudao.module.fms.controller.admin.voucher.vo.FmsVoucherStatist
 import cn.iocoder.yudao.module.fms.controller.admin.voucher.vo.FmsVoucherStatisticsRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.voucher.vo.FmsVoucherSubjectAmountVO;
 import cn.iocoder.yudao.module.fms.controller.admin.voucher.vo.FmsVoucherTidyReqVO;
-import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryCombinationDO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.voucher.FmsVoucherDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.voucher.FmsVoucherEntryDO;
 
@@ -21,8 +23,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 
 /**
  * FMS 凭证 Service 接口
@@ -118,7 +118,8 @@ public interface FmsVoucherService {
      * @param endTime 结束时间，不包含
      * @return 凭证列表
      */
-    List<FmsVoucherDO> getVoucherListByPeriod(Long accountSetId, LocalDateTime beginTime, LocalDateTime endTime);
+    List<FmsVoucherDO> getVoucherListByPeriod(
+            Long accountSetId, LocalDateTime beginTime, LocalDateTime endTime);
 
     /**
      * 获得凭证分录列表
@@ -180,8 +181,8 @@ public interface FmsVoucherService {
      * @param subjectId 科目编号
      * @param combination 辅助核算组合
      */
-    void migrateVoucherEntryAuxiliaries(Long accountSetId, Long subjectId,
-                                        FmsAuxiliaryCombinationDO combination);
+    void migrateVoucherEntryAuxiliaries(
+            Long accountSetId, Long subjectId, FmsAuxiliaryCombinationDO combination);
 
     /**
      * 获得使用指定辅助核算项目的凭证分录数量
@@ -190,7 +191,8 @@ public interface FmsVoucherService {
      * @param auxiliaryItemIds 辅助核算项目编号数组
      * @return 凭证分录数量
      */
-    Long getVoucherEntryCountByAuxiliaryItemIds(Long accountSetId, Collection<Long> auxiliaryItemIds);
+    Long getVoucherEntryCountByAuxiliaryItemIds(
+            Long accountSetId, Collection<Long> auxiliaryItemIds);
 
     /**
      * 获得使用指定辅助核算类别的凭证分录数量
@@ -219,7 +221,8 @@ public interface FmsVoucherService {
      * @param userId 用户编号
      * @return 下一个凭证号
      */
-    Integer getNextVoucherNumber(Long accountSetId, Long voucherWordId, LocalDateTime voucherTime, Long userId);
+    Integer getNextVoucherNumber(
+            Long accountSetId, Long voucherWordId, LocalDateTime voucherTime, Long userId);
 
     /**
      * 获得凭证导入模板数据
@@ -238,7 +241,8 @@ public interface FmsVoucherService {
      * @param userId 用户编号
      * @return 导入结果
      */
-    FmsVoucherImportRespVO importVoucher(Long accountSetId, List<FmsVoucherImportExcelVO> rows, Long userId);
+    FmsVoucherImportRespVO importVoucher(
+            Long accountSetId, List<FmsVoucherImportExcelVO> rows, Long userId);
 
     /**
      * 获得凭证汇总
@@ -249,5 +253,4 @@ public interface FmsVoucherService {
      */
     List<FmsVoucherStatisticsRespVO> getVoucherStatisticsList(
             FmsVoucherStatisticsReqVO queryReqVO, Long userId);
-
 }

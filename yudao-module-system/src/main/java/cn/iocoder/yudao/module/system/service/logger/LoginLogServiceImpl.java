@@ -6,10 +6,11 @@ import cn.iocoder.yudao.module.system.api.logger.dto.LoginLogCreateReqDTO;
 import cn.iocoder.yudao.module.system.controller.admin.logger.vo.loginlog.LoginLogPageReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.logger.LoginLogDO;
 import cn.iocoder.yudao.module.system.dal.mysql.logger.LoginLogMapper;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * 登录日志 Service 实现
@@ -18,8 +19,7 @@ import jakarta.annotation.Resource;
 @Validated
 public class LoginLogServiceImpl implements LoginLogService {
 
-    @Resource
-    private LoginLogMapper loginLogMapper;
+    @Resource private LoginLogMapper loginLogMapper;
 
     @Override
     public LoginLogDO getLoginLog(Long id) {
@@ -36,5 +36,4 @@ public class LoginLogServiceImpl implements LoginLogService {
         LoginLogDO loginLog = BeanUtils.toBean(reqDTO, LoginLogDO.class);
         loginLogMapper.insert(loginLog);
     }
-
 }

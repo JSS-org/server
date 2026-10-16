@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.hrm.service.employee.info;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_PERSONAL_NOTE_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.personalnote.HrmEmployeePersonalNoteCreateReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeePersonalNoteDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.employee.info.HrmEmployeePersonalNoteMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_PERSONAL_NOTE_NOT_EXISTS;
 
 /**
  * HRM 员工个人备忘 Service 实现类
@@ -24,10 +26,8 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_PERS
 @Validated
 public class HrmEmployeePersonalNoteServiceImpl implements HrmEmployeePersonalNoteService {
 
-    @Resource
-    private HrmEmployeePersonalNoteMapper personalNoteMapper;
-    @Resource
-    private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeePersonalNoteMapper personalNoteMapper;
+    @Resource private HrmEmployeeService employeeService;
 
     @Override
     public Long createPersonalNote(Long employeeId, HrmEmployeePersonalNoteCreateReqVO reqVO) {
@@ -35,8 +35,8 @@ public class HrmEmployeePersonalNoteServiceImpl implements HrmEmployeePersonalNo
         employeeService.validateEmployeeExists(employeeId);
 
         // 2. 创建个人备忘
-        HrmEmployeePersonalNoteDO personalNote = BeanUtils.toBean(reqVO, HrmEmployeePersonalNoteDO.class)
-                .setEmployeeId(employeeId);
+        HrmEmployeePersonalNoteDO personalNote =
+                BeanUtils.toBean(reqVO, HrmEmployeePersonalNoteDO.class).setEmployeeId(employeeId);
         personalNoteMapper.insert(personalNote);
         return personalNote.getId();
     }
@@ -56,7 +56,7 @@ public class HrmEmployeePersonalNoteServiceImpl implements HrmEmployeePersonalNo
     @Override
     public List<HrmEmployeePersonalNoteDO> getPersonalNoteList(
             Long employeeId, LocalDateTime[] reminderTimes) {
-        return personalNoteMapper.selectListByEmployeeIdAndReminderTimeBetween(employeeId, reminderTimes);
+        return personalNoteMapper.selectListByEmployeeIdAndReminderTimeBetween(
+                employeeId, reminderTimes);
     }
-
 }

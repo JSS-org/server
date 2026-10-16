@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.oa.service.announcement;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_ALREADY_FORWARDED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_RECEIVER_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_UNREAD_DELETE_DENIED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,7 +21,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.announcement.OaAnnouncementMapper;
 import cn.iocoder.yudao.module.oa.dal.mysql.announcement.OaAnnouncementReceiverMapper;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -21,15 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_ALREADY_FORWARDED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_RECEIVER_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_UNREAD_DELETE_DENIED;
 
 /**
  * OA 公告 Service 实现类
@@ -40,19 +42,17 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.ANNOUNCEMENT_U
 @Validated
 public class OaAnnouncementServiceImpl implements OaAnnouncementService {
 
-    @Resource
-    private OaAnnouncementMapper announcementMapper;
-    @Resource
-    private OaAnnouncementReceiverMapper announcementReceiverMapper;
+    @Resource private OaAnnouncementMapper announcementMapper;
+    @Resource private OaAnnouncementReceiverMapper announcementReceiverMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createAnnouncement(OaAnnouncementSaveReqVO createReqVO, Long userId) {
         // 1. 查询发布人负责部门及其子部门下的用户，作为公告接收人
-        List<Long> receiverUserIds = convertList(adminUserApi.getUserListBySubordinate(userId), AdminUserRespDTO::getId);
+        List<Long> receiverUserIds =
+                convertList(adminUserApi.getUserListBySubordinate(userId), AdminUserRespDTO::getId);
 
         // 2. 新增公告
         OaAnnouncementDO announcement = BeanUtils.toBean(createReqVO, OaAnnouncementDO.class);
@@ -104,19 +104,22 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
     public OaAnnouncementDO getAnnouncement(Long id, Long userId) {
         OaAnnouncementDO announcement = validateAnnouncementExists(id);
         if (ObjUtil.notEqual(announcement.getCreator(), userId.toString())
-                && announcementReceiverMapper.selectByAnnouncementIdAndReceiverUserId(id, userId) == null) {
+                && announcementReceiverMapper.selectByAnnouncementIdAndReceiverUserId(id, userId)
+                        == null) {
             throw exception(ANNOUNCEMENT_ACCESS_DENIED);
         }
         return announcement;
     }
 
     @Override
-    public PageResult<OaAnnouncementDO> getPublishedAnnouncementPage(OaAnnouncementPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaAnnouncementDO> getPublishedAnnouncementPage(
+            OaAnnouncementPageReqVO pageReqVO, Long userId) {
         return announcementMapper.selectPage(pageReqVO, userId);
     }
 
     @Override
-    public PageResult<OaAnnouncementDO> getReceivedAnnouncementPage(OaAnnouncementPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaAnnouncementDO> getReceivedAnnouncementPage(
+            OaAnnouncementPageReqVO pageReqVO, Long userId) {
         return announcementMapper.selectReceivedPage(pageReqVO, userId);
     }
 
@@ -132,8 +135,8 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
         }
 
         // 2. 标记公告为已读
-        announcementReceiverMapper.updateById(new OaAnnouncementReceiverDO()
-                .setId(receiver.getId()).setReadStatus(true));
+        announcementReceiverMapper.updateById(
+                new OaAnnouncementReceiverDO().setId(receiver.getId()).setReadStatus(true));
     }
 
     @Override
@@ -146,14 +149,16 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
         // 1.2 校验当前用户的接收关系
         validateAnnouncementReceiver(id, userId);
         // 1.3 查询当前用户的下属
-        List<Long> subordinateUserIds = convertList(adminUserApi.getUserListBySubordinate(userId), AdminUserRespDTO::getId);
+        List<Long> subordinateUserIds =
+                convertList(adminUserApi.getUserListBySubordinate(userId), AdminUserRespDTO::getId);
         if (CollUtil.isEmpty(subordinateUserIds)) {
             return 0;
         }
         // 1.4 与列表已转发状态一致：任一下属已经接收，就不允许再次转发
-        List<OaAnnouncementReceiverDO> receivers = announcementReceiverMapper.selectListByAnnouncementId(id);
-        Set<Long> existingReceiverUserIds = convertSet(receivers,
-                OaAnnouncementReceiverDO::getReceiverUserId);
+        List<OaAnnouncementReceiverDO> receivers =
+                announcementReceiverMapper.selectListByAnnouncementId(id);
+        Set<Long> existingReceiverUserIds =
+                convertSet(receivers, OaAnnouncementReceiverDO::getReceiverUserId);
         if (CollUtil.containsAny(subordinateUserIds, existingReceiverUserIds)) {
             throw exception(ANNOUNCEMENT_ALREADY_FORWARDED);
         }
@@ -164,7 +169,8 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
     }
 
     @Override
-    public List<OaAnnouncementReceiverDO> getAnnouncementReceiverList(Collection<Long> announcementIds) {
+    public List<OaAnnouncementReceiverDO> getAnnouncementReceiverList(
+            Collection<Long> announcementIds) {
         if (CollUtil.isEmpty(announcementIds)) {
             return Collections.emptyList();
         }
@@ -177,13 +183,19 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
      * @param announcementId 公告编号
      * @param receiverUserIds 接收人用户编号列表
      */
-    private void createAnnouncementReceiverList(Long announcementId, Collection<Long> receiverUserIds) {
+    private void createAnnouncementReceiverList(
+            Long announcementId, Collection<Long> receiverUserIds) {
         if (CollUtil.isEmpty(receiverUserIds)) {
             return;
         }
-        List<OaAnnouncementReceiverDO> receivers = convertList(receiverUserIds,
-                receiverUserId -> new OaAnnouncementReceiverDO().setAnnouncementId(announcementId)
-                        .setReceiverUserId(receiverUserId).setReadStatus(false));
+        List<OaAnnouncementReceiverDO> receivers =
+                convertList(
+                        receiverUserIds,
+                        receiverUserId ->
+                                new OaAnnouncementReceiverDO()
+                                        .setAnnouncementId(announcementId)
+                                        .setReceiverUserId(receiverUserId)
+                                        .setReadStatus(false));
         announcementReceiverMapper.insertBatch(receivers);
     }
 
@@ -210,8 +222,11 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
      * @param userId 用户编号
      * @return 公告接收关系
      */
-    private OaAnnouncementReceiverDO validateAnnouncementReceiver(Long announcementId, Long userId) {
-        OaAnnouncementReceiverDO receiver = announcementReceiverMapper.selectByAnnouncementIdAndReceiverUserId(announcementId, userId);
+    private OaAnnouncementReceiverDO validateAnnouncementReceiver(
+            Long announcementId, Long userId) {
+        OaAnnouncementReceiverDO receiver =
+                announcementReceiverMapper.selectByAnnouncementIdAndReceiverUserId(
+                        announcementId, userId);
         if (receiver == null) {
             throw exception(ANNOUNCEMENT_RECEIVER_NOT_EXISTS);
         }
@@ -231,5 +246,4 @@ public class OaAnnouncementServiceImpl implements OaAnnouncementService {
         }
         return announcement;
     }
-
 }

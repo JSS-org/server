@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerUpdate
 import cn.iocoder.yudao.module.promotion.dal.dataobject.banner.BannerDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -68,5 +69,4 @@ public interface BannerService {
      * @return Banner 列表
      */
     List<BannerDO> getBannerListByPosition(Integer position);
-
 }

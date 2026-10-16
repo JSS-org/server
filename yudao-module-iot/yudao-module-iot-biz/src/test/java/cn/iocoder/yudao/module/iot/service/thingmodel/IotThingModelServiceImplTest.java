@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.service.thingmodel;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -10,7 +12,9 @@ import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.dataType.Thin
 import cn.iocoder.yudao.module.iot.enums.thingmodel.IotDataSpecsDataTypeEnum;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceModbusPointService;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,8 +24,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * {@link IotThingModelServiceImpl} 的单元测试
  *
@@ -30,13 +32,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(IotThingModelServiceImpl.class)
 public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private IotThingModelServiceImpl thingModelService;
+    @Resource private IotThingModelServiceImpl thingModelService;
 
-    @MockitoBean
-    private IotProductService productService;
-    @MockitoBean
-    private IotDeviceModbusPointService deviceModbusPointService;
+    @MockitoBean private IotProductService productService;
+    @MockitoBean private IotDeviceModbusPointService deviceModbusPointService;
 
     @Test
     public void testConvertThingModelPropertyValue_boolFromBooleanTrue() {
@@ -70,7 +69,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_boolInvalid() {
-        IotThingModelDO thingModel = buildThingModel("PowerSwitch", IotDataSpecsDataTypeEnum.BOOL.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("PowerSwitch", IotDataSpecsDataTypeEnum.BOOL.getDataType());
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, "yes");
 
@@ -79,7 +79,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_enumFromStringNumber() {
-        IotThingModelDO thingModel = buildEnumThingModel("WorkMode", enumSpec("Auto", 1), enumSpec("Manual", 2));
+        IotThingModelDO thingModel =
+                buildEnumThingModel("WorkMode", enumSpec("Auto", 1), enumSpec("Manual", 2));
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, "1");
 
@@ -88,7 +89,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_enumFromSpecName() {
-        IotThingModelDO thingModel = buildEnumThingModel("WorkMode", enumSpec("Auto", 1), enumSpec("Manual", 2));
+        IotThingModelDO thingModel =
+                buildEnumThingModel("WorkMode", enumSpec("Auto", 1), enumSpec("Manual", 2));
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, "Manual");
 
@@ -97,7 +99,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_enumInvalidSpecValue() {
-        IotThingModelDO thingModel = buildEnumThingModel("WorkMode", enumSpec("Auto", 1), enumSpec("Manual", 2));
+        IotThingModelDO thingModel =
+                buildEnumThingModel("WorkMode", enumSpec("Auto", 1), enumSpec("Manual", 2));
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, 3);
 
@@ -106,7 +109,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_enumOutOfTinyIntRange() {
-        IotThingModelDO thingModel = buildThingModel("WorkMode", IotDataSpecsDataTypeEnum.ENUM.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("WorkMode", IotDataSpecsDataTypeEnum.ENUM.getDataType());
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, 128);
 
@@ -115,7 +119,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_dateFromLocalDateTime() {
-        IotThingModelDO thingModel = buildThingModel("CollectTime", IotDataSpecsDataTypeEnum.DATE.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("CollectTime", IotDataSpecsDataTypeEnum.DATE.getDataType());
         LocalDateTime collectTime = LocalDateTime.of(2025, 1, 2, 3, 4, 5);
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, collectTime);
@@ -125,17 +130,20 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_dateFromString() {
-        IotThingModelDO thingModel = buildThingModel("CollectTime", IotDataSpecsDataTypeEnum.DATE.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("CollectTime", IotDataSpecsDataTypeEnum.DATE.getDataType());
         LocalDateTime collectTime = LocalDateTime.of(2025, 1, 2, 3, 4, 5);
 
-        Object result = thingModelService.convertThingModelPropertyValue(thingModel, "2025-01-02 03:04:05");
+        Object result =
+                thingModelService.convertThingModelPropertyValue(thingModel, "2025-01-02 03:04:05");
 
         assertEquals(LocalDateTimeUtil.toEpochMilli(collectTime), result);
     }
 
     @Test
     public void testConvertThingModelPropertyValue_intInvalid() {
-        IotThingModelDO thingModel = buildThingModel("Temperature", IotDataSpecsDataTypeEnum.INT.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("Temperature", IotDataSpecsDataTypeEnum.INT.getDataType());
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, "abc");
 
@@ -153,7 +161,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testConvertThingModelPropertyValue_structToJson() {
-        IotThingModelDO thingModel = buildThingModel("GeoLocation", IotDataSpecsDataTypeEnum.STRUCT.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("GeoLocation", IotDataSpecsDataTypeEnum.STRUCT.getDataType());
         Map<String, Object> value = new HashMap<>();
         value.put("Longitude", 120.1D);
 
@@ -163,7 +172,8 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
     }
 
     private void assertBoolValueConvertedToByte(Object reportedValue, byte expected) {
-        IotThingModelDO thingModel = buildThingModel("PowerSwitch", IotDataSpecsDataTypeEnum.BOOL.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("PowerSwitch", IotDataSpecsDataTypeEnum.BOOL.getDataType());
 
         Object result = thingModelService.convertThingModelPropertyValue(thingModel, reportedValue);
 
@@ -177,8 +187,10 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
         return IotThingModelDO.builder().identifier(identifier).property(property).build();
     }
 
-    private IotThingModelDO buildEnumThingModel(String identifier, ThingModelBoolOrEnumDataSpecs... dataSpecsList) {
-        IotThingModelDO thingModel = buildThingModel(identifier, IotDataSpecsDataTypeEnum.ENUM.getDataType());
+    private IotThingModelDO buildEnumThingModel(
+            String identifier, ThingModelBoolOrEnumDataSpecs... dataSpecsList) {
+        IotThingModelDO thingModel =
+                buildThingModel(identifier, IotDataSpecsDataTypeEnum.ENUM.getDataType());
         thingModel.getProperty().setDataSpecsList(Arrays.asList(dataSpecsList));
         return thingModel;
     }
@@ -191,11 +203,11 @@ public class IotThingModelServiceImplTest extends BaseDbUnitTest {
     }
 
     private IotThingModelDO buildTextThingModel(String identifier, Integer length) {
-        IotThingModelDO thingModel = buildThingModel(identifier, IotDataSpecsDataTypeEnum.TEXT.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel(identifier, IotDataSpecsDataTypeEnum.TEXT.getDataType());
         ThingModelDateOrTextDataSpecs dataSpecs = new ThingModelDateOrTextDataSpecs();
         dataSpecs.setLength(length);
         thingModel.getProperty().setDataSpecs(dataSpecs);
         return thingModel;
     }
-
 }

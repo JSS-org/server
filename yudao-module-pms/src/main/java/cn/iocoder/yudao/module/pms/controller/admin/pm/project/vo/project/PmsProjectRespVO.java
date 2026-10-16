@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.project;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,7 +32,10 @@ public class PmsProjectRespVO {
     @Schema(description = "是否公开", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
     private Boolean openStatus;
 
-    @Schema(description = "项目图标", requiredMode = Schema.RequiredMode.REQUIRED, example = "ep:folder")
+    @Schema(
+            description = "项目图标",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ep:folder")
     private String icon;
 
     @Schema(description = "开始时间")
@@ -90,5 +94,4 @@ public class PmsProjectRespVO {
 
     @Schema(description = "当前用户是否已收藏", requiredMode = Schema.RequiredMode.REQUIRED)
     private Boolean favoriteStatus;
-
 }

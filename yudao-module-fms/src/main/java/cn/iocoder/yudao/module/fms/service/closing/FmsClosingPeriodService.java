@@ -92,5 +92,4 @@ public interface FmsClosingPeriodService {
      * @return 是否已结账
      */
     boolean isPeriodClosed(Long accountSetId, String month);
-
 }

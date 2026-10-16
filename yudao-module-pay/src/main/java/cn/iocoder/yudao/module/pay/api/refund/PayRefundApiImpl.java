@@ -5,7 +5,9 @@ import cn.iocoder.yudao.module.pay.api.refund.dto.PayRefundCreateReqDTO;
 import cn.iocoder.yudao.module.pay.api.refund.dto.PayRefundRespDTO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,8 +20,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class PayRefundApiImpl implements PayRefundApi {
 
-    @Resource
-    private PayRefundService payRefundService;
+    @Resource private PayRefundService payRefundService;
 
     @Override
     public Long createRefund(PayRefundCreateReqDTO reqDTO) {
@@ -31,5 +32,4 @@ public class PayRefundApiImpl implements PayRefundApi {
         PayRefundDO refund = payRefundService.getRefund(id);
         return BeanUtils.toBean(refund, PayRefundRespDTO.class);
     }
-
 }

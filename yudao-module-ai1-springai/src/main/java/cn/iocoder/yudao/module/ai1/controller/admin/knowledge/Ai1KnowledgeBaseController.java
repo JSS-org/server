@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.knowledge;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -18,12 +21,15 @@ import cn.iocoder.yudao.module.ai1.service.knowledge.Ai1KnowledgeBaseService;
 import cn.iocoder.yudao.module.ai1.service.knowledge.Ai1KnowledgeDocumentService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ProviderService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -32,35 +38,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-
 @Tag(name = "管理后台 - AI1 知识库")
 @RestController
 @RequestMapping("/ai1/knowledge")
 @Validated
 public class Ai1KnowledgeBaseController {
 
-    @Resource
-    private Ai1KnowledgeBaseService knowledgeBaseService;
-    @Resource
-    private Ai1KnowledgeDocumentService knowledgeDocumentService;
-    @Resource
-    private Ai1ProviderService providerService;
-    @Resource
-    private Ai1ModelService modelService;
+    @Resource private Ai1KnowledgeBaseService knowledgeBaseService;
+    @Resource private Ai1KnowledgeDocumentService knowledgeDocumentService;
+    @Resource private Ai1ProviderService providerService;
+    @Resource private Ai1ModelService modelService;
 
     @PostMapping("/create")
     @Operation(summary = "创建知识库")
     @PreAuthorize("@ss.hasPermission('ai1:knowledge:create')")
-    public CommonResult<Long> createKnowledgeBase(@Valid @RequestBody Ai1KnowledgeBaseSaveReqVO createReqVO) {
+    public CommonResult<Long> createKnowledgeBase(
+            @Valid @RequestBody Ai1KnowledgeBaseSaveReqVO createReqVO) {
         return success(knowledgeBaseService.createKnowledgeBase(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新知识库")
     @PreAuthorize("@ss.hasPermission('ai1:knowledge:update')")
-    public CommonResult<Boolean> updateKnowledgeBase(@Valid @RequestBody Ai1KnowledgeBaseSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateKnowledgeBase(
+            @Valid @RequestBody Ai1KnowledgeBaseSaveReqVO updateReqVO) {
         knowledgeBaseService.updateKnowledgeBase(updateReqVO);
         return success(true);
     }
@@ -95,17 +96,28 @@ public class Ai1KnowledgeBaseController {
     @GetMapping("/page")
     @Operation(summary = "获得知识库分页")
     @PreAuthorize("@ss.hasPermission('ai1:knowledge:query')")
-    public CommonResult<PageResult<Ai1KnowledgeBaseRespVO>> getKnowledgeBasePage(@Valid Ai1KnowledgeBasePageReqVO pageReqVO) {
-        PageResult<Ai1KnowledgeBaseDO> pageResult = knowledgeBaseService.getKnowledgeBasePage(pageReqVO);
-        return success(new PageResult<>(buildKnowledgeBaseRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<Ai1KnowledgeBaseRespVO>> getKnowledgeBasePage(
+            @Valid Ai1KnowledgeBasePageReqVO pageReqVO) {
+        PageResult<Ai1KnowledgeBaseDO> pageResult =
+                knowledgeBaseService.getKnowledgeBasePage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildKnowledgeBaseRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得知识库精简列表", description = "只包含开启状态，用于 Agent 绑定知识库的下拉选择")
     public CommonResult<List<Ai1KnowledgeBaseRespVO>> getKnowledgeBaseSimpleList() {
-        List<Ai1KnowledgeBaseDO> list = knowledgeBaseService.getKnowledgeBaseListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, knowledgeBase -> new Ai1KnowledgeBaseRespVO()
-                .setId(knowledgeBase.getId()).setName(knowledgeBase.getName())));
+        List<Ai1KnowledgeBaseDO> list =
+                knowledgeBaseService.getKnowledgeBaseListByStatus(
+                        CommonStatusEnum.ENABLE.getStatus());
+        return success(
+                convertList(
+                        list,
+                        knowledgeBase ->
+                                new Ai1KnowledgeBaseRespVO()
+                                        .setId(knowledgeBase.getId())
+                                        .setName(knowledgeBase.getName())));
     }
 
     @GetMapping("/search")
@@ -118,7 +130,8 @@ public class Ai1KnowledgeBaseController {
             @RequestParam("id") Long id,
             @RequestParam("query") @NotEmpty(message = "检索内容不能为空") String query,
             @RequestParam(value = "topK", required = false) Integer topK) {
-        List<Ai1KnowledgeSearchRespVO> list = knowledgeBaseService.searchKnowledgeBase(id, query, topK);
+        List<Ai1KnowledgeSearchRespVO> list =
+                knowledgeBaseService.searchKnowledgeBase(id, query, topK);
         return success(buildKnowledgeSearchRespVOList(list));
     }
 
@@ -128,28 +141,43 @@ public class Ai1KnowledgeBaseController {
         if (knowledgeBase == null) {
             return null;
         }
-        return CollUtil.getFirst(buildKnowledgeBaseRespVOList(Collections.singletonList(knowledgeBase)));
+        return CollUtil.getFirst(
+                buildKnowledgeBaseRespVOList(Collections.singletonList(knowledgeBase)));
     }
 
-    private List<Ai1KnowledgeBaseRespVO> buildKnowledgeBaseRespVOList(List<Ai1KnowledgeBaseDO> list) {
-        Map<Long, Ai1ProviderDO> providerMap = providerService.getProviderMap(
-                convertSet(list, Ai1KnowledgeBaseDO::getEmbeddingProviderId));
-        Map<Long, Ai1ModelDO> modelMap = modelService.getModelMap(
-                convertSet(list, Ai1KnowledgeBaseDO::getEmbeddingModelId));
-        return BeanUtils.toBean(list, Ai1KnowledgeBaseRespVO.class, respVO -> {
-            MapUtils.findAndThen(providerMap, respVO.getEmbeddingProviderId(),
-                    provider -> respVO.setEmbeddingProviderName(provider.getName()));
-            MapUtils.findAndThen(modelMap, respVO.getEmbeddingModelId(),
-                    model -> respVO.setEmbeddingModelName(model.getName()));
-        });
+    private List<Ai1KnowledgeBaseRespVO> buildKnowledgeBaseRespVOList(
+            List<Ai1KnowledgeBaseDO> list) {
+        Map<Long, Ai1ProviderDO> providerMap =
+                providerService.getProviderMap(
+                        convertSet(list, Ai1KnowledgeBaseDO::getEmbeddingProviderId));
+        Map<Long, Ai1ModelDO> modelMap =
+                modelService.getModelMap(convertSet(list, Ai1KnowledgeBaseDO::getEmbeddingModelId));
+        return BeanUtils.toBean(
+                list,
+                Ai1KnowledgeBaseRespVO.class,
+                respVO -> {
+                    MapUtils.findAndThen(
+                            providerMap,
+                            respVO.getEmbeddingProviderId(),
+                            provider -> respVO.setEmbeddingProviderName(provider.getName()));
+                    MapUtils.findAndThen(
+                            modelMap,
+                            respVO.getEmbeddingModelId(),
+                            model -> respVO.setEmbeddingModelName(model.getName()));
+                });
     }
 
-    private List<Ai1KnowledgeSearchRespVO> buildKnowledgeSearchRespVOList(List<Ai1KnowledgeSearchRespVO> list) {
-        Map<Long, Ai1KnowledgeDocumentDO> documentMap = knowledgeDocumentService.getKnowledgeDocumentMap(
-                convertSet(list, Ai1KnowledgeSearchRespVO::getDocumentId));
-        list.forEach(respVO -> MapUtils.findAndThen(documentMap, respVO.getDocumentId(),
-                document -> respVO.setDocumentName(document.getName())));
+    private List<Ai1KnowledgeSearchRespVO> buildKnowledgeSearchRespVOList(
+            List<Ai1KnowledgeSearchRespVO> list) {
+        Map<Long, Ai1KnowledgeDocumentDO> documentMap =
+                knowledgeDocumentService.getKnowledgeDocumentMap(
+                        convertSet(list, Ai1KnowledgeSearchRespVO::getDocumentId));
+        list.forEach(
+                respVO ->
+                        MapUtils.findAndThen(
+                                documentMap,
+                                respVO.getDocumentId(),
+                                document -> respVO.setDocumentName(document.getName())));
         return list;
     }
-
 }

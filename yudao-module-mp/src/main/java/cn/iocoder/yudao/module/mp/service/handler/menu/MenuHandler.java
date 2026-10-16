@@ -2,14 +2,17 @@ package cn.iocoder.yudao.module.mp.service.handler.menu;
 
 import cn.iocoder.yudao.module.mp.framework.mp.core.context.MpContextHolder;
 import cn.iocoder.yudao.module.mp.service.menu.MpMenuService;
+
+import jakarta.annotation.Resource;
+
 import me.chanjar.weixin.common.session.WxSessionManager;
 import me.chanjar.weixin.mp.api.WxMpMessageHandler;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlOutMessage;
+
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.Resource;
 import java.util.Map;
 
 /**
@@ -22,13 +25,15 @@ import java.util.Map;
 @Component
 public class MenuHandler implements WxMpMessageHandler {
 
-    @Resource
-    private MpMenuService mpMenuService;
+    @Resource private MpMenuService mpMenuService;
 
     @Override
-    public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context,
-                                    WxMpService weixinService, WxSessionManager sessionManager) {
-        return mpMenuService.reply(MpContextHolder.getAppId(), wxMessage.getEventKey(), wxMessage.getFromUser());
+    public WxMpXmlOutMessage handle(
+            WxMpXmlMessage wxMessage,
+            Map<String, Object> context,
+            WxMpService weixinService,
+            WxSessionManager sessionManager) {
+        return mpMenuService.reply(
+                MpContextHolder.getAppId(), wxMessage.getEventKey(), wxMessage.getFromUser());
     }
-
 }

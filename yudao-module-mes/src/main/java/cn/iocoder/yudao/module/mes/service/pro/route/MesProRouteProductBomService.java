@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.pro.route;
 
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.productbom.MesProRouteProductBomSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductBomDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -36,7 +37,8 @@ public interface MesProRouteProductBomService {
     /**
      * 按条件查询工艺路线产品 BOM 列表
      */
-    List<MesProRouteProductBomDO> getRouteProductBomList(Long routeId, Long processId, Long productId);
+    List<MesProRouteProductBomDO> getRouteProductBomList(
+            Long routeId, Long processId, Long productId);
 
     /**
      * 按工艺路线删除产品 BOM（级联删除使用）
@@ -52,5 +54,4 @@ public interface MesProRouteProductBomService {
      * @param productId 产品物料编号
      */
     void deleteRouteProductBomByRouteIdAndProductId(Long routeId, Long productId);
-
 }

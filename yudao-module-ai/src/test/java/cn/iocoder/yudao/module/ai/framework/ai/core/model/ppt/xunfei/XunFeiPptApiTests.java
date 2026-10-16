@@ -1,8 +1,9 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.ppt.xunfei;
 
 import cn.hutool.core.io.FileUtil;
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.xinghuo.api.XunFeiPptApi;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.xinghuo.api.XunFeiPptApi;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -92,7 +93,8 @@ public class XunFeiPptApiTests {
         // 创建大纲对象
         XunFeiPptApi.CreateResponse createResponse = getCreateResponse();
         // 调用方法
-        XunFeiPptApi.CreateResponse response = xunfeiPptApi.createPptByOutline(createResponse.data().outline(), "精简一些，不要超过6个章节");
+        XunFeiPptApi.CreateResponse response =
+                xunfeiPptApi.createPptByOutline(createResponse.data().outline(), "精简一些，不要超过6个章节");
         // 打印结果
         System.out.println("通过大纲创建 PPT 响应：" + JsonUtils.toJsonString(response));
 
@@ -181,8 +183,14 @@ public class XunFeiPptApiTests {
                 // 打印进度信息
                 System.out.println("PPT 构建状态: " + data.pptStatus());
                 if (data.totalPages() != null && data.donePages() != null) {
-                    System.out.println("完成进度: " + data.donePages() + "/" + data.totalPages()
-                            + " (" + data.getProgressPercent() + "%)");
+                    System.out.println(
+                            "完成进度: "
+                                    + data.donePages()
+                                    + "/"
+                                    + data.totalPages()
+                                    + " ("
+                                    + data.getProgressPercent()
+                                    + "%)");
                 }
 
                 // 检查是否完成
@@ -270,15 +278,16 @@ public class XunFeiPptApiTests {
         String query = "合肥天气趋势分析，包括近 5 年的气温变化、降水量变化、极端天气事件，以及对城市生活的影响";
 
         // 创建请求对象
-        XunFeiPptApi.CreatePptRequest request = XunFeiPptApi.CreatePptRequest.builder()
-                .query(query)
-                .language("cn")
-                .isCardNote(true)
-                .search(true)
-                .isFigure(true)
-                .aiImage("advanced")
-                .author("测试用户")
-                .build();
+        XunFeiPptApi.CreatePptRequest request =
+                XunFeiPptApi.CreatePptRequest.builder()
+                        .query(query)
+                        .language("cn")
+                        .isCardNote(true)
+                        .search(true)
+                        .isFigure(true)
+                        .aiImage("advanced")
+                        .author("测试用户")
+                        .build();
 
         // 调用方法
         XunFeiPptApi.CreateResponse response = xunfeiPptApi.create(request);
@@ -302,8 +311,14 @@ public class XunFeiPptApiTests {
                 XunFeiPptApi.ProgressResponseData progressData = progressResponse.data();
                 System.out.println("PPT 构建状态: " + progressData.pptStatus());
                 if (progressData.totalPages() != null && progressData.donePages() != null) {
-                    System.out.println("完成进度: " + progressData.donePages() + "/" + progressData.totalPages()
-                            + " (" + progressData.getProgressPercent() + "%)");
+                    System.out.println(
+                            "完成进度: "
+                                    + progressData.donePages()
+                                    + "/"
+                                    + progressData.totalPages()
+                                    + " ("
+                                    + progressData.getProgressPercent()
+                                    + "%)");
                 }
             }
         }
@@ -313,7 +328,7 @@ public class XunFeiPptApiTests {
      * 将 File 转换为 MultipartFile
      */
     private MultipartFile convertFileToMultipartFile(File file) {
-        return new MockMultipartFile("file", file.getName(), "text/plain", FileUtil.readBytes(file));
+        return new MockMultipartFile(
+                "file", file.getName(), "text/plain", FileUtil.readBytes(file));
     }
-
 }

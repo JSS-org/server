@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.pendinginspect.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ public class MesQcPendingInspectRespVO {
 
     @Schema(description = "来源单据行 ID", example = "200")
     private Long sourceLineId;
+
     @Schema(description = "来源单据编号", example = "AN2025001")
     private String sourceDocCode;
 
@@ -83,5 +85,4 @@ public class MesQcPendingInspectRespVO {
 
     @Schema(description = "记录时间")
     private LocalDateTime recordTime;
-
 }

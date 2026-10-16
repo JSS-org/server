@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.statistics.service.pay.bo;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -18,5 +17,4 @@ public class RechargeSummaryRespBO {
      * 充值金额
      */
     private Integer rechargePrice;
-
 }

@@ -4,7 +4,9 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.oa.service.supply.OaSupplyApplyService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 // TODO DONE @AI：审批监听器统一放在业务模块的 listener 子包
@@ -16,8 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OaSupplyApplyStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private OaSupplyApplyService supplyApplyService;
+    @Resource private OaSupplyApplyService supplyApplyService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -26,7 +27,7 @@ public class OaSupplyApplyStatusListener extends BpmProcessInstanceStatusEventLi
 
     @Override
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
-        supplyApplyService.updateSupplyApplyStatus(Long.parseLong(event.getBusinessKey()), event.getId(), event.getStatus());
+        supplyApplyService.updateSupplyApplyStatus(
+                Long.parseLong(event.getBusinessKey()), event.getId(), event.getStatus());
     }
-
 }

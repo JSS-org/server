@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.infra.service.file;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
@@ -11,7 +20,9 @@ import cn.iocoder.yudao.module.infra.controller.admin.file.vo.file.FilePresigned
 import cn.iocoder.yudao.module.infra.dal.dataobject.file.FileDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.file.FileMapper;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClient;
+
 import jakarta.annotation.Resource;
+
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -20,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -28,26 +38,18 @@ import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.*;
+import javax.imageio.ImageIO;
 
 @Import({FileServiceImpl.class, FilePrivatePathPolicy.class})
-@org.springframework.test.context.TestPropertySource(properties="yudao.file.private-path-prefixes=gym/")
+@org.springframework.test.context.TestPropertySource(
+        properties = "yudao.file.private-path-prefixes=gym/")
 public class FileServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FileServiceImpl fileService;
+    @Resource private FileServiceImpl fileService;
 
-    @Resource
-    private FileMapper fileMapper;
+    @Resource private FileMapper fileMapper;
 
-    @MockitoBean
-    private FileConfigService fileConfigService;
+    @MockitoBean private FileConfigService fileConfigService;
 
     @BeforeEach
     public void setUp() {
@@ -59,27 +61,36 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetFilePage() {
         // mock 数据
-        FileDO dbFile = randomPojo(FileDO.class, o -> { // 等会查询到
-            o.setPath("yunai");
-            o.setType("image/jpg");
-            o.setCreateTime(buildTime(2021, 1, 15));
-        });
+        FileDO dbFile =
+                randomPojo(
+                        FileDO.class,
+                        o -> { // 等会查询到
+                            o.setPath("yunai");
+                            o.setType("image/jpg");
+                            o.setCreateTime(buildTime(2021, 1, 15));
+                        });
         fileMapper.insert(dbFile);
         // 测试 path 不匹配
         fileMapper.insert(ObjectUtils.cloneIgnoreId(dbFile, o -> o.setPath("tudou")));
         // 测试 type 不匹配
-        fileMapper.insert(ObjectUtils.cloneIgnoreId(dbFile, o -> {
-            o.setType("image/png");
-        }));
+        fileMapper.insert(
+                ObjectUtils.cloneIgnoreId(
+                        dbFile,
+                        o -> {
+                            o.setType("image/png");
+                        }));
         // 测试 createTime 不匹配
-        fileMapper.insert(ObjectUtils.cloneIgnoreId(dbFile, o -> {
-            o.setCreateTime(buildTime(2020, 1, 15));
-        }));
+        fileMapper.insert(
+                ObjectUtils.cloneIgnoreId(
+                        dbFile,
+                        o -> {
+                            o.setCreateTime(buildTime(2020, 1, 15));
+                        }));
         // 准备参数
         FilePageReqVO reqVO = new FilePageReqVO();
         reqVO.setPath("yunai");
         reqVO.setType("jp");
-        reqVO.setCreateTime((new LocalDateTime[]{buildTime(2021, 1, 10), buildTime(2021, 1, 20)}));
+        reqVO.setCreateTime((new LocalDateTime[] {buildTime(2021, 1, 10), buildTime(2021, 1, 20)}));
 
         // 调用
         PageResult<FileDO> pageResult = fileService.getFilePage(reqVO);
@@ -104,11 +115,18 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         when(fileConfigService.getMasterFileClient()).thenReturn(client);
         String url = randomString();
         AtomicReference<String> pathRef = new AtomicReference<>();
-        when(client.upload(same(content), argThat(path -> {
-            assertTrue(path.matches(directory + "/\\d{8}/\\d+/" + name + ".jpg"));
-            pathRef.set(path);
-            return true;
-        }), eq(type))).thenReturn(url);
+        when(client.upload(
+                        same(content),
+                        argThat(
+                                path -> {
+                                    assertTrue(
+                                            path.matches(
+                                                    directory + "/\\d{8}/\\d+/" + name + ".jpg"));
+                                    pathRef.set(path);
+                                    return true;
+                                }),
+                        eq(type)))
+                .thenReturn(url);
         when(client.getId()).thenReturn(10L);
         // 调用
         String result = fileService.createFile(content, name, directory, type);
@@ -136,11 +154,18 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         when(fileConfigService.getMasterFileClient()).thenReturn(client);
         String url = randomString();
         AtomicReference<String> pathRef = new AtomicReference<>();
-        when(client.upload(same(content), argThat(path -> {
-            assertTrue(path.matches("\\d{8}/\\d+/6318848e882d8a7e7e82789d87608f684ee52d41966bfc8cad3ce15aad2b970e\\.jpg"));
-            pathRef.set(path);
-            return true;
-        }), eq(type))).thenReturn(url);
+        when(client.upload(
+                        same(content),
+                        argThat(
+                                path -> {
+                                    assertTrue(
+                                            path.matches(
+                                                    "\\d{8}/\\d+/6318848e882d8a7e7e82789d87608f684ee52d41966bfc8cad3ce15aad2b970e\\.jpg"));
+                                    pathRef.set(path);
+                                    return true;
+                                }),
+                        eq(type)))
+                .thenReturn(url);
         when(client.getId()).thenReturn(10L);
         // 调用
         String result = fileService.createFile(content, null, null, null);
@@ -157,11 +182,15 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFile_success_image() throws Exception {
-        for (String extension : new String[]{"jpg", "png", "gif", "bmp"}) {
+        for (String extension : new String[] {"jpg", "png", "gif", "bmp"}) {
             // 准备参数
             String type = "jpg".equals(extension) ? "image/jpeg" : "image/" + extension;
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            assertTrue(ImageIO.write(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB), extension, outputStream));
+            assertTrue(
+                    ImageIO.write(
+                            new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB),
+                            extension,
+                            outputStream));
             byte[] content = outputStream.toByteArray();
             String name = "头像." + extension.toUpperCase(Locale.ROOT);
             // mock 方法
@@ -182,13 +211,16 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFile_success_excel() throws Exception {
-        for (String extension : new String[]{"xls", "xlsx"}) {
+        for (String extension : new String[] {"xls", "xlsx"}) {
             // 准备参数
-            String type = "xls".equals(extension) ? "application/vnd.ms-excel"
-                    : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            String type =
+                    "xls".equals(extension)
+                            ? "application/vnd.ms-excel"
+                            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             byte[] content;
-            try (Workbook workbook = "xls".equals(extension) ? new HSSFWorkbook() : new XSSFWorkbook();
-                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            try (Workbook workbook =
+                            "xls".equals(extension) ? new HSSFWorkbook() : new XSSFWorkbook();
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 workbook.createSheet("用户").createRow(0).createCell(0).setCellValue("芋道源码");
                 workbook.write(outputStream);
                 content = outputStream.toByteArray();
@@ -209,7 +241,8 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFile_success_detectType() throws Exception {
-        for (String declaredType : new String[]{null, "", "image/jpg", "text/html", "application/octet-stream"}) {
+        for (String declaredType :
+                new String[] {null, "", "image/jpg", "text/html", "application/octet-stream"}) {
             // 准备参数
             byte[] content = ResourceUtil.readBytes("file/erweima.jpg");
             // mock 方法
@@ -228,12 +261,22 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFile_success_document() throws Exception {
-        for (String[] document : new String[][]{
-                {"test.svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>", "image/svg+xml"},
-                {"test.html", "<html><script>alert(1)</script></html>", "text/html"},
-                {"test.xml", "<?xml version=\"1.0\"?><root>test</root>", "application/xml"},
-                {"test.markdown", "# test\n\nhello", "text/markdown"},
-                {"test.eml", "From: a@example.com\r\nTo: b@example.com\r\nSubject: test\r\n\r\nhello", "message/rfc822"}}) {
+        for (String[] document :
+                new String[][] {
+                    {
+                        "test.svg",
+                        "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>",
+                        "image/svg+xml"
+                    },
+                    {"test.html", "<html><script>alert(1)</script></html>", "text/html"},
+                    {"test.xml", "<?xml version=\"1.0\"?><root>test</root>", "application/xml"},
+                    {"test.markdown", "# test\n\nhello", "text/markdown"},
+                    {
+                        "test.eml",
+                        "From: a@example.com\r\nTo: b@example.com\r\nSubject: test\r\n\r\nhello",
+                        "message/rfc822"
+                    }
+                }) {
             // 准备参数
             String name = document[0];
             byte[] content = document[1].getBytes(StandardCharsets.UTF_8);
@@ -273,13 +316,18 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFile_typeNotAllowed_fakeImage() {
-        for (String text : new String[]{"<html><script>alert(1)</script></html>",
-                "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>", "普通文本"}) {
+        for (String text :
+                new String[] {
+                    "<html><script>alert(1)</script></html>",
+                    "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>",
+                    "普通文本"
+                }) {
             // 准备参数
             byte[] content = text.getBytes(StandardCharsets.UTF_8);
 
             // 调用，并断言异常
-            assertServiceException(() -> fileService.createFile(content, "头像.jpg", null, "image/jpeg"),
+            assertServiceException(
+                    () -> fileService.createFile(content, "头像.jpg", null, "image/jpeg"),
                     FILE_TYPE_NOT_ALLOWED);
             // 断言未上传文件、未保存记录
             verifyNoInteractions(fileConfigService);
@@ -289,12 +337,14 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFile_typeNotAllowed_extension() {
-        for (String name : new String[]{"头像.svg", "头像.js", "头像.exe", "头像.unknown", "头像.png"}) {
+        for (String name : new String[] {"头像.svg", "头像.js", "头像.exe", "头像.unknown", "头像.png"}) {
             // 准备参数
             byte[] content = ResourceUtil.readBytes("file/erweima.jpg");
 
             // 调用，并断言异常
-            assertServiceException(() -> fileService.createFile(content, name, null, "image/jpeg"), FILE_TYPE_NOT_ALLOWED);
+            assertServiceException(
+                    () -> fileService.createFile(content, name, null, "image/jpeg"),
+                    FILE_TYPE_NOT_ALLOWED);
             // 校验调用
             verifyNoInteractions(fileConfigService);
         }
@@ -306,17 +356,61 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         byte[] content = new byte[0];
 
         // 调用，并断言异常
-        assertServiceException(() -> fileService.createFile(content, "头像.jpg", null, null), FILE_IS_EMPTY);
+        assertServiceException(
+                () -> fileService.createFile(content, "头像.jpg", null, null), FILE_IS_EMPTY);
         // 校验调用
         verifyNoInteractions(fileConfigService);
     }
 
     @Test
     public void testPresignPutUrl_success() {
-        for (String extension : new String[]{"jpg", "JPEG", "jfif", "png", "gif", "webp", "bmp", "ico", "tiff",
-                "avif", "heic", "heif", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "md",
-                "zip", "rar", "mp3", "mp4", "svg", "html", "htm", "xml", "markdown", "eml", "msg", "epub",
-                "json", "opus", "ogg", "m4a", "webm", "amr", "wma", "wmv", "flv", "mkv"}) {
+        for (String extension :
+                new String[] {
+                    "jpg",
+                    "JPEG",
+                    "jfif",
+                    "png",
+                    "gif",
+                    "webp",
+                    "bmp",
+                    "ico",
+                    "tiff",
+                    "avif",
+                    "heic",
+                    "heif",
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "xls",
+                    "xlsx",
+                    "ppt",
+                    "pptx",
+                    "txt",
+                    "csv",
+                    "md",
+                    "zip",
+                    "rar",
+                    "mp3",
+                    "mp4",
+                    "svg",
+                    "html",
+                    "htm",
+                    "xml",
+                    "markdown",
+                    "eml",
+                    "msg",
+                    "epub",
+                    "json",
+                    "opus",
+                    "ogg",
+                    "m4a",
+                    "webm",
+                    "amr",
+                    "wma",
+                    "wmv",
+                    "flv",
+                    "mkv"
+                }) {
             // 准备参数
             String name = "测试文件." + extension;
             // mock 方法
@@ -339,9 +433,13 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testPresignPutUrl_typeNotAllowed() {
         // 准备参数
-        for (String name : new String[]{"test.php", "test.jsp", "test.js", "test.exe", "test.unknown", "test"}) {
+        for (String name :
+                new String[] {
+                    "test.php", "test.jsp", "test.js", "test.exe", "test.unknown", "test"
+                }) {
             // 调用，并断言异常
-            assertServiceException(() -> fileService.presignPutUrl(name, null), FILE_TYPE_NOT_ALLOWED);
+            assertServiceException(
+                    () -> fileService.presignPutUrl(name, null), FILE_TYPE_NOT_ALLOWED);
             // 校验调用
             verifyNoInteractions(fileConfigService);
         }
@@ -351,7 +449,7 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     public void testDeleteFile_success() throws Exception {
         // mock 数据
         FileDO dbFile = randomPojo(FileDO.class, o -> o.setConfigId(10L).setPath("tudou.jpg"));
-        fileMapper.insert(dbFile);// @Sql: 先插入出一条存在的数据
+        fileMapper.insert(dbFile); // @Sql: 先插入出一条存在的数据
         // mock Master 文件客户端
         FileClient client = mock(FileClient.class);
         when(fileConfigService.getFileClient(eq(10L))).thenReturn(client);
@@ -393,7 +491,7 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         // mock 方法
         FileClient client = mock(FileClient.class);
         when(fileConfigService.getFileClient(eq(10L))).thenReturn(client);
-        byte[] content = new byte[]{};
+        byte[] content = new byte[] {};
         when(client.getContent(eq("tudou.jpg"))).thenReturn(content);
 
         // 调用
@@ -415,7 +513,8 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetFileByConfigIdAndPath() {
         // mock 数据
-        FileDO dbFile = randomPojo(FileDO.class, o -> o.setConfigId(10L).setPath("avatar/中文 100%+文件.jpg"));
+        FileDO dbFile =
+                randomPojo(FileDO.class, o -> o.setConfigId(10L).setPath("avatar/中文 100%+文件.jpg"));
         fileMapper.insert(dbFile);
         FileDO latestFile = ObjectUtils.cloneIgnoreId(dbFile, o -> o.setName("最新文件名.jpg"));
         fileMapper.insert(latestFile);
@@ -432,11 +531,14 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateFileByPresignedPath_success() {
         // 准备参数
-        FileCreateReqVO reqVO = randomPojo(FileCreateReqVO.class, o -> {
-            o.setPath("avatar/test.jpg");
-            o.setName("test.jpg");
-            o.setUrl("https://www.iocoder.cn/test.jpg?token=123");
-        });
+        FileCreateReqVO reqVO =
+                randomPojo(
+                        FileCreateReqVO.class,
+                        o -> {
+                            o.setPath("avatar/test.jpg");
+                            o.setName("test.jpg");
+                            o.setUrl("https://www.iocoder.cn/test.jpg?token=123");
+                        });
 
         // 调用
         Long fileId = fileService.createFile(reqVO);
@@ -451,16 +553,24 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testCreateFileByPresignedPath_typeNotAllowed() {
-        for (String[] file : new String[][]{{"test.js", "avatar/test.js"}, {"test.jpg", "avatar/test.html"},
-                {"test.html", "avatar/test.jpg"}, {"test.jpg", "avatar/test.png"}}) {
+        for (String[] file :
+                new String[][] {
+                    {"test.js", "avatar/test.js"},
+                    {"test.jpg", "avatar/test.html"},
+                    {"test.html", "avatar/test.jpg"},
+                    {"test.jpg", "avatar/test.png"}
+                }) {
             // 准备参数
             String name = file[0];
             String path = file[1];
-            FileCreateReqVO reqVO = randomPojo(FileCreateReqVO.class, o -> {
-                o.setName(name);
-                o.setPath(path);
-                o.setType("image/jpeg");
-            });
+            FileCreateReqVO reqVO =
+                    randomPojo(
+                            FileCreateReqVO.class,
+                            o -> {
+                                o.setName(name);
+                                o.setPath(path);
+                                o.setType("image/jpeg");
+                            });
 
             // 调用，并断言异常
             assertServiceException(() -> fileService.createFile(reqVO), FILE_TYPE_NOT_ALLOWED);
@@ -472,10 +582,13 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateFileByPresignedPath_nameInvalid() {
         // 准备参数
-        FileCreateReqVO reqVO = randomPojo(FileCreateReqVO.class, o -> {
-            o.setPath("avatar/test.jpg");
-            o.setName("../test.jpg");
-        });
+        FileCreateReqVO reqVO =
+                randomPojo(
+                        FileCreateReqVO.class,
+                        o -> {
+                            o.setPath("avatar/test.jpg");
+                            o.setName("../test.jpg");
+                        });
 
         // 调用，并断言异常
         assertServiceException(() -> fileService.createFile(reqVO), FILE_PATH_INVALID);
@@ -484,10 +597,13 @@ public class FileServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateFileByPresignedPath_pathInvalid() {
         // 准备参数
-        FileCreateReqVO reqVO = randomPojo(FileCreateReqVO.class, o -> {
-            o.setPath("../test.jpg");
-            o.setName("test.jpg");
-        });
+        FileCreateReqVO reqVO =
+                randomPojo(
+                        FileCreateReqVO.class,
+                        o -> {
+                            o.setPath("../test.jpg");
+                            o.setName("test.jpg");
+                        });
 
         // 调用，并断言异常
         assertServiceException(() -> fileService.createFile(reqVO), FILE_PATH_INVALID);
@@ -655,7 +771,8 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         FileServiceImpl.PATH_SUFFIX_TIMESTAMP_ENABLE = false;
 
         // 调用，并断言异常
-        assertServiceException(() -> fileService.generateUploadPath(name, directory), FILE_PATH_INVALID);
+        assertServiceException(
+                () -> fileService.generateUploadPath(name, directory), FILE_PATH_INVALID);
     }
 
     @Test
@@ -665,7 +782,8 @@ public class FileServiceImplTest extends BaseDbUnitTest {
         String directory = "../avatar";
 
         // 调用，并断言异常
-        assertServiceException(() -> fileService.generateUploadPath(name, directory), FILE_PATH_INVALID);
+        assertServiceException(
+                () -> fileService.generateUploadPath(name, directory), FILE_PATH_INVALID);
     }
 
     @Test
@@ -686,40 +804,63 @@ public class FileServiceImplTest extends BaseDbUnitTest {
 
     @Test
     void explicitStorageUsesSelectedClientAndPreservesGlobalMaster() throws Exception {
-        byte[] content=ResourceUtil.readBytes("file/erweima.jpg");
-        FileClient selected=mock(cn.iocoder.yudao.module.infra.framework.file.core.client.db.DBFileClient.class);
+        byte[] content = ResourceUtil.readBytes("file/erweima.jpg");
+        FileClient selected =
+                mock(
+                        cn.iocoder.yudao.module.infra.framework.file.core.client.db.DBFileClient
+                                .class);
         when(fileConfigService.getFileClient(42L)).thenReturn(selected);
         when(selected.getId()).thenReturn(42L);
-        when(selected.upload(same(content),anyString(),eq("image/jpeg"))).thenReturn("http://selected.local/gym/test.jpg");
-        assertEquals("http://selected.local/gym/test.jpg",fileService.createFile(content,"test.jpg","gym/image","image/jpeg",42L));
-        assertEquals(42L,fileMapper.selectOne(FileDO::getUrl,"http://selected.local/gym/test.jpg").getConfigId());
-        verify(fileConfigService,never()).getMasterFileClient();
+        when(selected.upload(same(content), anyString(), eq("image/jpeg")))
+                .thenReturn("http://selected.local/gym/test.jpg");
+        assertEquals(
+                "http://selected.local/gym/test.jpg",
+                fileService.createFile(content, "test.jpg", "gym/image", "image/jpeg", 42L));
+        assertEquals(
+                42L,
+                fileMapper
+                        .selectOne(FileDO::getUrl, "http://selected.local/gym/test.jpg")
+                        .getConfigId());
+        verify(fileConfigService, never()).getMasterFileClient();
     }
+
     @Test
     void missingExplicitStorageDoesNotFallBackOrPersistFile() {
-        byte[] content=ResourceUtil.readBytes("file/erweima.jpg");
-        assertThrows(IllegalArgumentException.class,()->fileService.createFile(content,"test.jpg","gym/image","image/jpeg",999L));
-        verify(fileConfigService,never()).getMasterFileClient();
-        assertEquals(0L,fileMapper.selectCount());
+        byte[] content = ResourceUtil.readBytes("file/erweima.jpg");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> fileService.createFile(content, "test.jpg", "gym/image", "image/jpeg", 999L));
+        verify(fileConfigService, never()).getMasterFileClient();
+        assertEquals(0L, fileMapper.selectCount());
     }
 
     @Test
     void privateFilesCannotUseExternalStorageOrFallBackToPublicMaster() throws Exception {
-        byte[] content=ResourceUtil.readBytes("file/erweima.jpg");
-        var external=mock(FileClient.class);
+        byte[] content = ResourceUtil.readBytes("file/erweima.jpg");
+        var external = mock(FileClient.class);
         when(fileConfigService.getFileClient(42L)).thenReturn(external);
-        assertServiceException(()->fileService.createFile(content,"test.jpg","gym/body_report","image/jpeg",42L),FILE_PRIVATE_STORAGE_REQUIRED);
-        verify(external,never()).upload(any(),anyString(),anyString());
-        assertEquals(0L,fileMapper.selectCount());
-        verify(fileConfigService,never()).getMasterFileClient();
-    }
-    @Test
-    void privateNamespacesRejectDirectUploadPresigningAndMetadataRegistration() {
-        assertServiceException(()->fileService.presignPutUrl("test.jpg","gym/body_report"),FILE_PRIVATE_UPLOAD_REQUIRED);
-        var req=new FileCreateReqVO();req.setConfigId(42L);req.setPath("gym/body_report/test.jpg");req.setName("test.jpg");req.setUrl("https://storage.example/test.jpg");
-        assertServiceException(()->fileService.createFile(req),FILE_PRIVATE_UPLOAD_REQUIRED);
-        verifyNoInteractions(fileConfigService);
-        assertEquals(0L,fileMapper.selectCount());
+        assertServiceException(
+                () ->
+                        fileService.createFile(
+                                content, "test.jpg", "gym/body_report", "image/jpeg", 42L),
+                FILE_PRIVATE_STORAGE_REQUIRED);
+        verify(external, never()).upload(any(), anyString(), anyString());
+        assertEquals(0L, fileMapper.selectCount());
+        verify(fileConfigService, never()).getMasterFileClient();
     }
 
+    @Test
+    void privateNamespacesRejectDirectUploadPresigningAndMetadataRegistration() {
+        assertServiceException(
+                () -> fileService.presignPutUrl("test.jpg", "gym/body_report"),
+                FILE_PRIVATE_UPLOAD_REQUIRED);
+        var req = new FileCreateReqVO();
+        req.setConfigId(42L);
+        req.setPath("gym/body_report/test.jpg");
+        req.setName("test.jpg");
+        req.setUrl("https://storage.example/test.jpg");
+        assertServiceException(() -> fileService.createFile(req), FILE_PRIVATE_UPLOAD_REQUIRED);
+        verifyNoInteractions(fileConfigService);
+        assertEquals(0L, fileMapper.selectCount());
+    }
 }

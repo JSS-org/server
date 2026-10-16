@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,11 +21,14 @@ import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryGroupService;
 import cn.iocoder.yudao.module.hrm.service.salary.config.HrmSalaryTaxRuleService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,25 +45,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-
 @Tag(name = "管理后台 - HRM 薪资组")
 @RestController
 @RequestMapping("/hrm/salary/group")
 @Validated
 public class HrmSalaryGroupController {
 
-    @Resource
-    private HrmSalaryGroupService salaryGroupService;
-    @Resource
-    private HrmSalaryTaxRuleService salaryTaxRuleService;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private HrmSalaryGroupService salaryGroupService;
+    @Resource private HrmSalaryTaxRuleService salaryTaxRuleService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private DeptApi deptApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建薪资组")
@@ -67,7 +66,8 @@ public class HrmSalaryGroupController {
     @PutMapping("/update")
     @Operation(summary = "修改薪资组")
     @PreAuthorize("@ss.hasPermission('hrm:salary:group:update')")
-    public CommonResult<Boolean> updateSalaryGroup(@Valid @RequestBody HrmSalaryGroupSaveReqVO reqVO) {
+    public CommonResult<Boolean> updateSalaryGroup(
+            @Valid @RequestBody HrmSalaryGroupSaveReqVO reqVO) {
         salaryGroupService.updateSalaryGroup(reqVO);
         return success(true);
     }
@@ -95,16 +95,23 @@ public class HrmSalaryGroupController {
     public CommonResult<PageResult<HrmSalaryGroupRespVO>> getSalaryGroupPage(
             @Validated HrmSalaryGroupPageReqVO reqVO) {
         PageResult<HrmSalaryGroupDO> pageResult = salaryGroupService.getSalaryGroupPage(reqVO);
-        return success(new PageResult<>(buildSalaryGroupRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildSalaryGroupRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得薪资组精简列表")
     @PreAuthorize("@ss.hasPermission('hrm:salary:group:query')")
     public CommonResult<List<HrmSalaryGroupRespVO>> getSalaryGroupSimpleList() {
-        return success(convertList(salaryGroupService.getSalaryGroupList(),
-                salaryGroup -> new HrmSalaryGroupRespVO().setId(salaryGroup.getId())
-                        .setName(salaryGroup.getName()).setTaxRuleId(salaryGroup.getTaxRuleId())));
+        return success(
+                convertList(
+                        salaryGroupService.getSalaryGroupList(),
+                        salaryGroup ->
+                                new HrmSalaryGroupRespVO()
+                                        .setId(salaryGroup.getId())
+                                        .setName(salaryGroup.getName())
+                                        .setTaxRuleId(salaryGroup.getTaxRuleId())));
     }
 
     // ==================== 拼接 VO ====================
@@ -116,26 +123,44 @@ public class HrmSalaryGroupController {
         return CollUtil.getFirst(buildSalaryGroupRespVOList(Collections.singletonList(group)));
     }
 
-    private List<HrmSalaryGroupRespVO> buildSalaryGroupRespVOList(List<HrmSalaryGroupDO> salaryGroups) {
+    private List<HrmSalaryGroupRespVO> buildSalaryGroupRespVOList(
+            List<HrmSalaryGroupDO> salaryGroups) {
         if (CollUtil.isEmpty(salaryGroups)) {
             return Collections.emptyList();
         }
         // 1.1 批量查询计税规则
-        Map<Long, HrmSalaryTaxRuleDO> taxRuleMap = salaryTaxRuleService.getSalaryTaxRuleMap(
-                convertSet(salaryGroups, HrmSalaryGroupDO::getTaxRuleId));
+        Map<Long, HrmSalaryTaxRuleDO> taxRuleMap =
+                salaryTaxRuleService.getSalaryTaxRuleMap(
+                        convertSet(salaryGroups, HrmSalaryGroupDO::getTaxRuleId));
         // 1.2 批量查询部门和员工
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSetByFlatMap(salaryGroups, HrmSalaryGroupDO::getDeptIds, Collection::stream));
-        Map<Long, HrmEmployeeDO> employeeMap = employeeService.getEmployeeMap(
-                convertSetByFlatMap(salaryGroups, HrmSalaryGroupDO::getEmployeeIds, Collection::stream));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(
+                        convertSetByFlatMap(
+                                salaryGroups, HrmSalaryGroupDO::getDeptIds, Collection::stream));
+        Map<Long, HrmEmployeeDO> employeeMap =
+                employeeService.getEmployeeMap(
+                        convertSetByFlatMap(
+                                salaryGroups,
+                                HrmSalaryGroupDO::getEmployeeIds,
+                                Collection::stream));
 
         // 2. 拼接响应
-        return BeanUtils.toBean(salaryGroups, HrmSalaryGroupRespVO.class, vo -> {
-            MapUtils.findAndThen(taxRuleMap, vo.getTaxRuleId(), taxRule -> vo.setTaxRuleName(taxRule.getName()));
-            vo.setDeptNames(convertList(convertList(vo.getDeptIds(), deptMap::get), DeptRespDTO::getName));
-            vo.setEmployeeNames(convertList(convertList(vo.getEmployeeIds(), employeeMap::get),
-                    HrmEmployeeDO::getName));
-        });
+        return BeanUtils.toBean(
+                salaryGroups,
+                HrmSalaryGroupRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            taxRuleMap,
+                            vo.getTaxRuleId(),
+                            taxRule -> vo.setTaxRuleName(taxRule.getName()));
+                    vo.setDeptNames(
+                            convertList(
+                                    convertList(vo.getDeptIds(), deptMap::get),
+                                    DeptRespDTO::getName));
+                    vo.setEmployeeNames(
+                            convertList(
+                                    convertList(vo.getEmployeeIds(), employeeMap::get),
+                                    HrmEmployeeDO::getName));
+                });
     }
-
 }

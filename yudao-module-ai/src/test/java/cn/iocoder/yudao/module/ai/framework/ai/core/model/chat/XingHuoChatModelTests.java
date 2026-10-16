@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.chat;
 
+import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
+
 import cn.hutool.system.SystemUtil;
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.xinghuo.XingHuoChatModel;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.Message;
@@ -10,13 +13,12 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.deepseek.DeepSeekChatOptions;
+
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
 
 /**
  * {@link XingHuoChatModel} 集成测试
@@ -25,18 +27,16 @@ import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
  */
 public class XingHuoChatModelTests {
 
-    private static final String API_KEY = SystemUtil.get("XINGHUO_API_KEY",
-            "sk-xxxx"); // 按需改成你的讯飞星火 API Key
-    private static final String MODEL = SystemUtil.get("XINGHUO_MODEL",
-            XingHuoChatModel.MODEL_DEFAULT);
+    private static final String API_KEY =
+            SystemUtil.get("XINGHUO_API_KEY", "sk-xxxx"); // 按需改成你的讯飞星火 API Key
+    private static final String MODEL =
+            SystemUtil.get("XINGHUO_MODEL", XingHuoChatModel.MODEL_DEFAULT);
 
-    private final XingHuoChatModel chatModel = XingHuoChatModel.builder()
-            .apiKey(API_KEY)
-            .options(DeepSeekChatOptions.builder()
-                    .model(MODEL)
-                    .temperature(0.7)
-                    .build())
-            .build();
+    private final XingHuoChatModel chatModel =
+            XingHuoChatModel.builder()
+                    .apiKey(API_KEY)
+                    .options(DeepSeekChatOptions.builder().model(MODEL).temperature(0.7).build())
+                    .build();
 
     @Test
     @Disabled
@@ -75,17 +75,18 @@ public class XingHuoChatModelTests {
         // 准备参数
         List<Message> messages = new ArrayList<>();
         messages.add(new UserMessage("详细分析下，如何设计一个电商系统？"));
-        DeepSeekChatOptions options = DeepSeekChatOptions.builder()
-                .model(MODEL)
-                .build();
+        DeepSeekChatOptions options = DeepSeekChatOptions.builder().model(MODEL).build();
 
         // 调用
         Flux<ChatResponse> flux = chatModel.stream(new Prompt(messages, options));
         // 打印结果
-        flux.doOnNext(response -> {
-//            System.out.println(response);
-            System.out.println(Objects.requireNonNull(response.getResult()).getOutput());
-        }).then().block();
+        flux.doOnNext(
+                        response -> {
+                            //            System.out.println(response);
+                            System.out.println(
+                                    Objects.requireNonNull(response.getResult()).getOutput());
+                        })
+                .then()
+                .block();
     }
-
 }

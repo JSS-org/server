@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.oa.controller.admin.reimbursement.vo;
 
 import cn.iocoder.yudao.framework.dict.validation.InDict;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -44,9 +47,15 @@ public class OaReimbursementSaveReqVO {
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
     @Size(max = 5, message = "附件不能超过 5 个")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 1024, message = "附件地址不能超过 1024 个字符") String> fileUrls;
+    private List<
+                    @NotBlank(message = "附件地址不能为空") @Size(max = 1024, message = "附件地址不能超过 1024 个字符")
+                    String>
+            fileUrls;
 
-    @Schema(description = "申请原因", requiredMode = Schema.RequiredMode.REQUIRED, example = "报销客户项目验收期间的交通费用")
+    @Schema(
+            description = "申请原因",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "报销客户项目验收期间的交通费用")
     @NotBlank(message = "申请原因不能为空")
     @Size(max = 5000, message = "申请原因不能超过 5000 个字符")
     private String reason;
@@ -56,12 +65,16 @@ public class OaReimbursementSaveReqVO {
     @Valid
     private List<@NotNull(message = "报销明细不能为空") Item> items;
 
-
     @Schema(description = "管理后台 - 报销明细 Request VO")
     @Data
     public static class Item {
 
-        @Schema(description = "费用发生时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+        @Schema(
+                description = "费用发生时间",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                type = "integer",
+                format = "int64",
+                example = "1789347600000")
         @NotNull(message = "费用发生时间不能为空")
         private LocalDateTime expenseTime;
 
@@ -70,7 +83,10 @@ public class OaReimbursementSaveReqVO {
         @InDict(type = DictTypeConstants.EXPENSE_TYPE, message = "费用类型必须是 {value}")
         private Integer expenseType;
 
-        @Schema(description = "费用说明", requiredMode = Schema.RequiredMode.REQUIRED, example = "客户项目验收往返交通费")
+        @Schema(
+                description = "费用说明",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "客户项目验收往返交通费")
         @NotBlank(message = "费用说明不能为空")
         private String description;
 
@@ -79,12 +95,13 @@ public class OaReimbursementSaveReqVO {
         @Min(value = 0, message = "票据张数不能小于 0")
         private Integer invoiceCount;
 
-        @Schema(description = "报销金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "报销金额",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "报销金额不能为空")
         @DecimalMin(value = "0", message = "报销金额不能小于 0")
         @Digits(integer = 16, fraction = 2, message = "金额最多 16 位整数、2 位小数")
         private BigDecimal price;
-
     }
-
 }

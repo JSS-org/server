@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.ai1.controller.admin.mcp.vo.Ai1McpConnectRespVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.mcp.vo.Ai1McpPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.mcp.vo.Ai1McpSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -85,5 +86,4 @@ public interface Ai1McpService {
      * @return 测试结果
      */
     Ai1McpConnectRespVO testMcpConnect(Long id);
-
 }

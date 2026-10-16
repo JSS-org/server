@@ -52,5 +52,4 @@ public interface MesProWorkRecordService {
      * @return 绑定关系，如果未绑定则返回 null
      */
     MesProWorkRecordDO getWorkRecord(Long userId);
-
 }

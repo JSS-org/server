@@ -1,8 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.batch.vo;
 
+import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
@@ -23,10 +24,12 @@ public class MesWmBatchGenerateReqVO {
      * 生产日期
      */
     private LocalDateTime produceDate;
+
     /**
      * 有效期
      */
     private LocalDateTime expireDate;
+
     /**
      * 入库日期
      */
@@ -36,6 +39,7 @@ public class MesWmBatchGenerateReqVO {
      * 供应商 ID
      */
     private Long vendorId;
+
     /**
      * 客户 ID
      */
@@ -45,6 +49,7 @@ public class MesWmBatchGenerateReqVO {
      * 采购订单编号
      */
     private String purchaseOrderCode;
+
     /**
      * 销售订单编号
      */
@@ -54,18 +59,22 @@ public class MesWmBatchGenerateReqVO {
      * 生产工单 ID
      */
     private Long workOrderId;
+
     /**
      * 生产任务 ID
      */
     private Long taskId;
+
     /**
      * 工作站 ID
      */
     private Long workstationId;
+
     /**
      * 工具 ID
      */
     private Long toolId;
+
     /**
      * 模具 ID
      */
@@ -75,9 +84,9 @@ public class MesWmBatchGenerateReqVO {
      * 生产批号
      */
     private String lotNumber;
+
     /**
      * 质量状态
      */
     private Integer qualityStatus;
-
 }

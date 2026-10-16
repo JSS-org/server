@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.performance.plan;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,7 +18,6 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public enum HrmPerformanceStageTypeEnum implements ArrayValuable<Integer> {
-
     NOT_STARTED(0, "未开始"),
     FILL_QUOTA(1, "员工填写"),
     TARGET_CONFIRM(2, "目标确认"),
@@ -30,16 +30,20 @@ public enum HrmPerformanceStageTypeEnum implements ArrayValuable<Integer> {
     EXECUTING(9, "执行中"),
     END(10, "结束");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmPerformanceStageTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmPerformanceStageTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
-    public static final List<Integer> REVIEW_TYPES = Collections.unmodifiableList(Arrays.asList(
-            SELF_SCORE.getType(), OTHER_SCORE.getType()));
+    public static final List<Integer> REVIEW_TYPES =
+            Collections.unmodifiableList(
+                    Arrays.asList(SELF_SCORE.getType(), OTHER_SCORE.getType()));
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -53,5 +57,4 @@ public enum HrmPerformanceStageTypeEnum implements ArrayValuable<Integer> {
     public static HrmPerformanceStageTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

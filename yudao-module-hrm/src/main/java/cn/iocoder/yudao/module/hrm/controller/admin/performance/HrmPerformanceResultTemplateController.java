@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,11 +19,14 @@ import cn.iocoder.yudao.module.hrm.dal.dataobject.performance.config.HrmPerforma
 import cn.iocoder.yudao.module.hrm.service.performance.config.HrmPerformanceResultTemplateService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,22 +41,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
 @Tag(name = "管理后台 - HRM 绩效结果模板")
 @RestController
 @RequestMapping("/hrm/performance/result-template")
 @Validated
 public class HrmPerformanceResultTemplateController {
 
-    @Resource
-    private HrmPerformanceResultTemplateService resultTemplateService;
+    @Resource private HrmPerformanceResultTemplateService resultTemplateService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建绩效结果模板")
@@ -79,7 +81,8 @@ public class HrmPerformanceResultTemplateController {
     @Operation(summary = "批量删除绩效结果模板")
     @Parameter(name = "ids", description = "模板编号列表", required = true, example = "1024,1025")
     @PreAuthorize("@ss.hasPermission('hrm:performance:result-template:delete')")
-    public CommonResult<Boolean> deletePerformanceResultTemplateList(@RequestParam("ids") List<Long> ids) {
+    public CommonResult<Boolean> deletePerformanceResultTemplateList(
+            @RequestParam("ids") List<Long> ids) {
         resultTemplateService.deletePerformanceResultTemplateList(ids);
         return success(true);
     }
@@ -91,7 +94,8 @@ public class HrmPerformanceResultTemplateController {
     public CommonResult<HrmPerformanceResultTemplateRespVO> getPerformanceResultTemplate(
             @RequestParam("id") Long id) {
         // 1. 获得结果模板
-        HrmPerformanceResultTemplateDO template = resultTemplateService.getPerformanceResultTemplate(id);
+        HrmPerformanceResultTemplateDO template =
+                resultTemplateService.getPerformanceResultTemplate(id);
         // 2. 拼接数据
         return success(buildResultTemplateRespVO(template));
     }
@@ -99,24 +103,28 @@ public class HrmPerformanceResultTemplateController {
     @GetMapping("/page")
     @Operation(summary = "获得绩效结果模板分页")
     @PreAuthorize("@ss.hasPermission('hrm:performance:result-template:query')")
-    public CommonResult<PageResult<HrmPerformanceResultTemplateRespVO>> getPerformanceResultTemplatePage(
-            @Validated HrmPerformanceResultTemplatePageReqVO pageReqVO) {
+    public CommonResult<PageResult<HrmPerformanceResultTemplateRespVO>>
+            getPerformanceResultTemplatePage(
+                    @Validated HrmPerformanceResultTemplatePageReqVO pageReqVO) {
         PageResult<HrmPerformanceResultTemplateDO> pageResult =
                 resultTemplateService.getPerformanceResultTemplatePage(pageReqVO);
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(PageResult.empty(pageResult.getTotal()));
         }
         // 2. 拼接数据
-        return success(new PageResult<>(buildResultTemplateRespVOList(pageResult.getList()),
-                pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildResultTemplateRespVOList(pageResult.getList()),
+                        pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得绩效结果模板精简列表")
     @Parameter(name = "status", description = "状态", example = "0")
     @PreAuthorize("@ss.hasPermission('hrm:performance:result-template:query')")
-    public CommonResult<List<HrmPerformanceResultTemplateRespVO>> getPerformanceResultTemplateSimpleList(
-            @RequestParam(value = "status", required = false) Integer status) {
+    public CommonResult<List<HrmPerformanceResultTemplateRespVO>>
+            getPerformanceResultTemplateSimpleList(
+                    @RequestParam(value = "status", required = false) Integer status) {
         List<HrmPerformanceResultTemplateDO> templates =
                 resultTemplateService.getPerformanceResultTemplateList(status);
         return success(BeanUtils.toBean(templates, HrmPerformanceResultTemplateRespVO.class));
@@ -138,12 +146,19 @@ public class HrmPerformanceResultTemplateController {
             return emptyList();
         }
         // 1. 获得创建人信息
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(templates, template -> NumberUtils.parseLong(template.getCreator())));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSet(
+                                templates,
+                                template -> NumberUtils.parseLong(template.getCreator())));
         // 2. 拼接响应
-        return BeanUtils.toBean(templates, HrmPerformanceResultTemplateRespVO.class, template ->
-                MapUtils.findAndThen(userMap, NumberUtils.parseLong(template.getCreator()),
-                        user -> template.setCreatorName(user.getNickname())));
+        return BeanUtils.toBean(
+                templates,
+                HrmPerformanceResultTemplateRespVO.class,
+                template ->
+                        MapUtils.findAndThen(
+                                userMap,
+                                NumberUtils.parseLong(template.getCreator()),
+                                user -> template.setCreatorName(user.getNickname())));
     }
-
 }

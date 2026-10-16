@@ -1,11 +1,17 @@
 package cn.iocoder.yudao.framework.quartz.core.handler;
 
+import static cn.hutool.core.exceptions.ExceptionUtil.getRootCauseMessage;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.iocoder.yudao.framework.quartz.core.enums.JobDataKeyEnum;
 import cn.iocoder.yudao.framework.quartz.core.service.JobLogFrameworkService;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -13,10 +19,7 @@ import org.quartz.PersistJobDataAfterExecution;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
-
-import static cn.hutool.core.exceptions.ExceptionUtil.getRootCauseMessage;
 
 /**
  * 基础 Job 调用者，负责调用 {@link JobHandler#execute(String)} 执行任务
@@ -28,21 +31,34 @@ import static cn.hutool.core.exceptions.ExceptionUtil.getRootCauseMessage;
 @Slf4j
 public class JobHandlerInvoker extends QuartzJobBean {
 
-    @Resource
-    private ApplicationContext applicationContext;
+    @Resource private ApplicationContext applicationContext;
 
-    @Resource
-    private JobLogFrameworkService jobLogFrameworkService;
+    @Resource private JobLogFrameworkService jobLogFrameworkService;
 
     @Override
-    protected void executeInternal(JobExecutionContext executionContext) throws JobExecutionException {
+    protected void executeInternal(JobExecutionContext executionContext)
+            throws JobExecutionException {
         // 第一步，获得 Job 数据
         Long jobId = executionContext.getMergedJobDataMap().getLong(JobDataKeyEnum.JOB_ID.name());
-        String jobHandlerName = executionContext.getMergedJobDataMap().getString(JobDataKeyEnum.JOB_HANDLER_NAME.name());
-        String jobHandlerParam = executionContext.getMergedJobDataMap().getString(JobDataKeyEnum.JOB_HANDLER_PARAM.name());
-        int refireCount  = executionContext.getRefireCount();
-        int retryCount = (Integer) executionContext.getMergedJobDataMap().getOrDefault(JobDataKeyEnum.JOB_RETRY_COUNT.name(), 0);
-        int retryInterval = (Integer) executionContext.getMergedJobDataMap().getOrDefault(JobDataKeyEnum.JOB_RETRY_INTERVAL.name(), 0);
+        String jobHandlerName =
+                executionContext
+                        .getMergedJobDataMap()
+                        .getString(JobDataKeyEnum.JOB_HANDLER_NAME.name());
+        String jobHandlerParam =
+                executionContext
+                        .getMergedJobDataMap()
+                        .getString(JobDataKeyEnum.JOB_HANDLER_PARAM.name());
+        int refireCount = executionContext.getRefireCount();
+        int retryCount =
+                (Integer)
+                        executionContext
+                                .getMergedJobDataMap()
+                                .getOrDefault(JobDataKeyEnum.JOB_RETRY_COUNT.name(), 0);
+        int retryInterval =
+                (Integer)
+                        executionContext
+                                .getMergedJobDataMap()
+                                .getOrDefault(JobDataKeyEnum.JOB_RETRY_INTERVAL.name(), 0);
 
         // 第二步，执行任务
         Long jobLogId = null;
@@ -51,7 +67,9 @@ public class JobHandlerInvoker extends QuartzJobBean {
         Throwable exception = null;
         try {
             // 记录 Job 日志（初始）
-            jobLogId = jobLogFrameworkService.createJobLog(jobId, startTime, jobHandlerName, jobHandlerParam, refireCount + 1);
+            jobLogId =
+                    jobLogFrameworkService.createJobLog(
+                            jobId, startTime, jobHandlerName, jobHandlerParam, refireCount + 1);
             // 执行任务
             data = this.executeInternal(jobHandlerName, jobHandlerParam);
         } catch (Throwable ex) {
@@ -73,8 +91,12 @@ public class JobHandlerInvoker extends QuartzJobBean {
         return jobHandler.execute(jobHandlerParam);
     }
 
-    private void updateJobLogResultAsync(Long jobLogId, LocalDateTime startTime, String data, Throwable exception,
-                                         JobExecutionContext executionContext) {
+    private void updateJobLogResultAsync(
+            Long jobLogId,
+            LocalDateTime startTime,
+            String data,
+            Throwable exception,
+            JobExecutionContext executionContext) {
         LocalDateTime endTime = LocalDateTime.now();
         // 处理是否成功
         boolean success = exception == null;
@@ -83,15 +105,25 @@ public class JobHandlerInvoker extends QuartzJobBean {
         }
         // 更新日志
         try {
-            jobLogFrameworkService.updateJobLogResultAsync(jobLogId, endTime, (int) LocalDateTimeUtil.between(startTime, endTime).toMillis(), success, data);
+            jobLogFrameworkService.updateJobLogResultAsync(
+                    jobLogId,
+                    endTime,
+                    (int) LocalDateTimeUtil.between(startTime, endTime).toMillis(),
+                    success,
+                    data);
         } catch (Exception ex) {
-            log.error("[executeInternal][Job({}) logId({}) 记录执行日志失败({}/{})]",
-                    executionContext.getJobDetail().getKey(), jobLogId, success, data);
+            log.error(
+                    "[executeInternal][Job({}) logId({}) 记录执行日志失败({}/{})]",
+                    executionContext.getJobDetail().getKey(),
+                    jobLogId,
+                    success,
+                    data);
         }
     }
 
-    private void handleException(Throwable exception,
-                                 int refireCount, int retryCount, int retryInterval) throws JobExecutionException {
+    private void handleException(
+            Throwable exception, int refireCount, int retryCount, int retryInterval)
+            throws JobExecutionException {
         // 如果有异常，则进行重试
         if (exception == null) {
             return;
@@ -109,5 +141,4 @@ public class JobHandlerInvoker extends QuartzJobBean {
         // 第二个参数，refireImmediately = true，表示立即重试
         throw new JobExecutionException(exception, true);
     }
-
 }

@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ANNOUNCEMENT_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.announcement.PmsProjectAnnouncementSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectAnnouncementDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectAnnouncementMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ANNOUNCEMENT_NOT_EXISTS;
 
 /**
  * PMS 项目公告 Service 实现类
@@ -23,11 +25,9 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ANNOU
 @Validated
 public class PmsProjectAnnouncementServiceImpl implements PmsProjectAnnouncementService {
 
-    @Resource
-    private PmsProjectAnnouncementMapper announcementMapper;
+    @Resource private PmsProjectAnnouncementMapper announcementMapper;
 
-    @Resource
-    private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectMemberService projectMemberService;
 
     @Override
     public Long createProjectAnnouncement(PmsProjectAnnouncementSaveReqVO saveReqVO, Long userId) {
@@ -35,7 +35,8 @@ public class PmsProjectAnnouncementServiceImpl implements PmsProjectAnnouncement
         projectMemberService.validateProjectWritable(saveReqVO.getProjectId(), userId);
 
         // 2. 创建公告
-        PmsProjectAnnouncementDO announcement = BeanUtils.toBean(saveReqVO, PmsProjectAnnouncementDO.class);
+        PmsProjectAnnouncementDO announcement =
+                BeanUtils.toBean(saveReqVO, PmsProjectAnnouncementDO.class);
         announcementMapper.insert(announcement);
         return announcement.getId();
     }
@@ -102,5 +103,4 @@ public class PmsProjectAnnouncementServiceImpl implements PmsProjectAnnouncement
         }
         return announcement;
     }
-
 }

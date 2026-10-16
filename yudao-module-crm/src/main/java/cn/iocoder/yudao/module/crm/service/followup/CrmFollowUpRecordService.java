@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.crm.controller.admin.followup.vo.CrmFollowUpRecor
 import cn.iocoder.yudao.module.crm.controller.admin.followup.vo.CrmFollowUpRecordSaveReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.followup.CrmFollowUpRecordDO;
 import cn.iocoder.yudao.module.crm.service.followup.bo.CrmFollowUpCreateReqBO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -72,5 +73,4 @@ public interface CrmFollowUpRecordService {
      * @return 跟进列表
      */
     List<CrmFollowUpRecordDO> getFollowUpRecordByBiz(Integer bizType, Collection<Long> bizIds);
-
 }

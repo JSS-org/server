@@ -42,5 +42,4 @@ public interface ApiAccessLogService {
      * @param deleteLimit 清理的间隔条数
      */
     Integer cleanAccessLog(Integer exceedDay, Integer deleteLimit);
-
 }

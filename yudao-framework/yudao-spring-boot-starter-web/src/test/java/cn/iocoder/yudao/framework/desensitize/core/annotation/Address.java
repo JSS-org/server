@@ -1,8 +1,9 @@
 package cn.iocoder.yudao.framework.desensitize.core.annotation;
 
 import cn.iocoder.yudao.framework.desensitize.core.DesensitizeTest;
-import cn.iocoder.yudao.framework.desensitize.core.handler.AddressHandler;
 import cn.iocoder.yudao.framework.desensitize.core.base.annotation.DesensitizeBy;
+import cn.iocoder.yudao.framework.desensitize.core.handler.AddressHandler;
+
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
 
 import java.lang.annotation.Documented;
@@ -26,5 +27,4 @@ import java.lang.annotation.Target;
 public @interface Address {
 
     String replacer() default "*";
-
 }

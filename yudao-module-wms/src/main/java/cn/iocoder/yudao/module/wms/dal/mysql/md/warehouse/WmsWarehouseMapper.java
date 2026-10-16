@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.wms.controller.admin.md.warehouse.vo.WmsWarehousePageReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.warehouse.WmsWarehouseDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,11 +19,13 @@ import java.util.List;
 public interface WmsWarehouseMapper extends BaseMapperX<WmsWarehouseDO> {
 
     default PageResult<WmsWarehouseDO> selectPage(WmsWarehousePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<WmsWarehouseDO>()
-                .eqIfPresent(WmsWarehouseDO::getCode, reqVO.getCode())
-                .likeIfPresent(WmsWarehouseDO::getName, reqVO.getName())
-                .orderByAsc(WmsWarehouseDO::getSort)
-                .orderByDesc(WmsWarehouseDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<WmsWarehouseDO>()
+                        .eqIfPresent(WmsWarehouseDO::getCode, reqVO.getCode())
+                        .likeIfPresent(WmsWarehouseDO::getName, reqVO.getName())
+                        .orderByAsc(WmsWarehouseDO::getSort)
+                        .orderByDesc(WmsWarehouseDO::getId));
     }
 
     default WmsWarehouseDO selectByCode(String code) {
@@ -34,9 +37,9 @@ public interface WmsWarehouseMapper extends BaseMapperX<WmsWarehouseDO> {
     }
 
     default List<WmsWarehouseDO> selectSimpleList() {
-        return selectList(new LambdaQueryWrapperX<WmsWarehouseDO>()
-                .orderByAsc(WmsWarehouseDO::getSort)
-                .orderByDesc(WmsWarehouseDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<WmsWarehouseDO>()
+                        .orderByAsc(WmsWarehouseDO::getSort)
+                        .orderByDesc(WmsWarehouseDO::getId));
     }
-
 }

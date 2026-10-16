@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.knowledge;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import org.hibernate.validator.constraints.URL;
 
+import lombok.Data;
+
+import org.hibernate.validator.constraints.URL;
 
 @Schema(description = "管理后台 - AI 知识库文档的创建 Request VO")
 @Data
@@ -19,12 +21,17 @@ public class AiKnowledgeDocumentCreateReqVO {
     @NotBlank(message = "文档名称不能为空")
     private String name;
 
-    @Schema(description = "文档 URL", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://doc.iocoder.cn")
+    @Schema(
+            description = "文档 URL",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://doc.iocoder.cn")
     @URL(message = "文档 URL 格式不正确")
     private String url;
 
-    @Schema(description = "分段的最大 Token 数", requiredMode = Schema.RequiredMode.REQUIRED, example = "800")
+    @Schema(
+            description = "分段的最大 Token 数",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "800")
     @NotNull(message = "分段的最大 Token 数不能为空")
     private Integer segmentMaxTokens;
-
 }

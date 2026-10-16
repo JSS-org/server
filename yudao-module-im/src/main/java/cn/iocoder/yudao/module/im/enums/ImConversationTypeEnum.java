@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,18 +16,19 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImConversationTypeEnum implements ArrayValuable<Integer> {
-
     NONE(0, "无会话"), // 无会话
     PRIVATE(1, "私聊"), // 私聊
     GROUP(2, "群聊"), // 群聊
     CHANNEL(3, "频道"); // 频道 / 公众号
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImConversationTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImConversationTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -52,5 +54,4 @@ public enum ImConversationTypeEnum implements ArrayValuable<Integer> {
     public static boolean isChannel(Integer type) {
         return Objects.equals(CHANNEL.type, type);
     }
-
 }

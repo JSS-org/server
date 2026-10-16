@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.service.sms;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ReUtil;
@@ -16,9 +19,13 @@ import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.system.framework.sms.core.client.SmsClient;
 import cn.iocoder.yudao.module.system.framework.sms.core.client.dto.SmsTemplateRespDTO;
 import cn.iocoder.yudao.module.system.framework.sms.core.enums.SmsTemplateAuditStatusEnum;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -27,9 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 短信模板 Service 实现类
@@ -46,11 +50,9 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
      */
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
-    @Resource
-    private SmsTemplateMapper smsTemplateMapper;
+    @Resource private SmsTemplateMapper smsTemplateMapper;
 
-    @Resource
-    private SmsChannelService smsChannelService;
+    @Resource private SmsChannelService smsChannelService;
 
     @Override
     public Long createSmsTemplate(SmsTemplateSaveReqVO createReqVO) {
@@ -71,7 +73,8 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.SMS_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.SMS_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为可能修改到 code 字段，不好清理
     public void updateSmsTemplate(SmsTemplateSaveReqVO updateReqVO) {
         // 校验存在
@@ -91,7 +94,8 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.SMS_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.SMS_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteSmsTemplate(Long id) {
         // 校验存在
@@ -101,7 +105,8 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.SMS_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.SMS_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteSmsTemplateList(List<Long> ids) {
         smsTemplateMapper.deleteByIds(ids);
@@ -119,7 +124,9 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     }
 
     @Override
-    @Cacheable(cacheNames = RedisKeyConstants.SMS_TEMPLATE, key = "#code",
+    @Cacheable(
+            cacheNames = RedisKeyConstants.SMS_TEMPLATE,
+            key = "#code",
             unless = "#result == null")
     public SmsTemplateDO getSmsTemplateByCodeFromCache(String code) {
         return smsTemplateMapper.selectByCode(code);
@@ -188,13 +195,17 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
         if (template == null) {
             throw exception(SMS_TEMPLATE_API_NOT_FOUND);
         }
-        if (Objects.equals(template.getAuditStatus(), SmsTemplateAuditStatusEnum.CHECKING.getStatus())) {
+        if (Objects.equals(
+                template.getAuditStatus(), SmsTemplateAuditStatusEnum.CHECKING.getStatus())) {
             throw exception(SMS_TEMPLATE_API_AUDIT_CHECKING);
         }
-        if (Objects.equals(template.getAuditStatus(), SmsTemplateAuditStatusEnum.FAIL.getStatus())) {
+        if (Objects.equals(
+                template.getAuditStatus(), SmsTemplateAuditStatusEnum.FAIL.getStatus())) {
             throw exception(SMS_TEMPLATE_API_AUDIT_FAIL, template.getAuditReason());
         }
-        Assert.equals(template.getAuditStatus(), SmsTemplateAuditStatusEnum.SUCCESS.getStatus(),
+        Assert.equals(
+                template.getAuditStatus(),
+                SmsTemplateAuditStatusEnum.SUCCESS.getStatus(),
                 String.format("短信模板(%s) 审核状态(%d) 不正确", apiTemplateId, template.getAuditStatus()));
     }
 
@@ -207,5 +218,4 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     List<String> parseTemplateContentParams(String content) {
         return ReUtil.findAllGroup1(PATTERN_PARAMS, content);
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.route;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -8,14 +11,16 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.MesProRoutePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.route.vo.MesProRouteSaveReqVO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProcessDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductBomDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProductDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.route.MesProRouteMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +29,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工艺路线 Service 实现类
@@ -37,21 +39,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProRouteServiceImpl implements MesProRouteService {
 
-    @Resource
-    private MesProRouteMapper routeMapper;
+    @Resource private MesProRouteMapper routeMapper;
 
-    @Resource
-    @Lazy
-    private MesProRouteProcessService routeProcessService;
-    @Resource
-    @Lazy
-    private MesProRouteProductService routeProductService;
-    @Resource
-    @Lazy
-    private MesProRouteProductBomService routeProductBomService;
-    @Resource
-    @Lazy
-    private MesMdItemService itemService;
+    @Resource @Lazy private MesProRouteProcessService routeProcessService;
+    @Resource @Lazy private MesProRouteProductService routeProductService;
+    @Resource @Lazy private MesProRouteProductBomService routeProductBomService;
+    @Resource @Lazy private MesMdItemService itemService;
 
     @Override
     public Long createRoute(MesProRouteSaveReqVO createReqVO) {
@@ -129,7 +122,8 @@ public class MesProRouteServiceImpl implements MesProRouteService {
      */
     private void validateRouteEnable(Long routeId) {
         // 1. 必须有工序
-        List<MesProRouteProcessDO> processList = routeProcessService.getRouteProcessListByRouteId(routeId);
+        List<MesProRouteProcessDO> processList =
+                routeProcessService.getRouteProcessListByRouteId(routeId);
         if (CollUtil.isEmpty(processList)) {
             throw exception(PRO_ROUTE_ENABLE_NO_PROCESS);
         }
@@ -139,10 +133,12 @@ public class MesProRouteServiceImpl implements MesProRouteService {
             throw exception(PRO_ROUTE_ENABLE_NO_KEY_PROCESS);
         }
         // 3. 所有产品必须配置了 BOM 消耗
-        List<MesProRouteProductDO> productList = routeProductService.getRouteProductListByRouteId(routeId);
+        List<MesProRouteProductDO> productList =
+                routeProductService.getRouteProductListByRouteId(routeId);
         for (MesProRouteProductDO product : productList) {
-            List<MesProRouteProductBomDO> bomList = routeProductBomService
-                    .getRouteProductBomList(routeId, null, product.getItemId());
+            List<MesProRouteProductBomDO> bomList =
+                    routeProductBomService.getRouteProductBomList(
+                            routeId, null, product.getItemId());
             if (CollUtil.isEmpty(bomList)) {
                 MesMdItemDO item = itemService.validateItemExists(product.getItemId());
                 throw exception(PRO_ROUTE_ENABLE_PRODUCT_NO_BOM, item.getName());
@@ -180,5 +176,4 @@ public class MesProRouteServiceImpl implements MesProRouteService {
         }
         return routeMapper.selectByIds(ids);
     }
-
 }

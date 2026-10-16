@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -23,5 +24,4 @@ public class HrmPerformanceAssessmentQuotaScoreRespVO {
 
     @Schema(description = "说明")
     private String comment;
-
 }

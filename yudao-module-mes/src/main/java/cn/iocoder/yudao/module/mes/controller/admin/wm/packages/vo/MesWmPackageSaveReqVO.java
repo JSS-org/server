@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.packages.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -20,7 +22,10 @@ public class MesWmPackageSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "装箱单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "PKG20260307001")
+    @Schema(
+            description = "装箱单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "PKG20260307001")
     @NotEmpty(message = "装箱单编号不能为空")
     private String code;
 
@@ -63,5 +68,4 @@ public class MesWmPackageSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

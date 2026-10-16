@@ -13,5 +13,4 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @DS("tdengine")
-public @interface TDengineDS {
-}
+public @interface TDengineDS {}

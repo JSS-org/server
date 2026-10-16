@@ -4,15 +4,19 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.user.MpUserDO;
 import cn.iocoder.yudao.module.mp.enums.message.MpMessageSendFromEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
 import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.mp.builder.kefu.NewsBuilder;
 
@@ -34,30 +38,34 @@ public class MpMessageDO extends BaseDO {
     /**
      * 主键
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 微信公众号消息 id
      */
     private Long msgId;
+
     /**
      * 公众号账号的 ID
      *
      * 关联 {@link MpAccountDO#getId()}
      */
     private Long accountId;
+
     /**
      * 公众号 appid
      *
      * 冗余 {@link MpAccountDO#getAppId()}
      */
     private String appId;
+
     /**
      * 公众号粉丝的编号
      *
      * 关联 {@link MpUserDO#getId()}
      */
     private Long userId;
+
     /**
      * 公众号粉丝标志
      *
@@ -71,6 +79,7 @@ public class MpMessageDO extends BaseDO {
      * 枚举 {@link WxConsts.XmlMsgType}
      */
     private String type;
+
     /**
      * 消息来源
      *
@@ -78,7 +87,8 @@ public class MpMessageDO extends BaseDO {
      */
     private Integer sendFrom;
 
-    // ========= 普通消息内容 https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_standard_messages.html
+    // ========= 普通消息内容
+    // https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_standard_messages.html
 
     /**
      * 消息内容
@@ -93,28 +103,33 @@ public class MpMessageDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 IMAGE、VOICE、VIDEO
      */
     private String mediaId;
+
     /**
      * 媒体文件的 URL
      */
     private String mediaUrl;
+
     /**
      * 语音识别后文本
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 VOICE
      */
     private String recognition;
+
     /**
      * 语音格式，如 amr，speex 等
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 VOICE
      */
     private String format;
+
     /**
      * 标题
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 VIDEO、MUSIC、LINK
      */
     private String title;
+
     /**
      * 描述
      *
@@ -128,6 +143,7 @@ public class MpMessageDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 MUSIC、VIDEO
      */
     private String thumbMediaId;
+
     /**
      * 缩略图的媒体 URL
      *
@@ -148,18 +164,21 @@ public class MpMessageDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 LOCATION
      */
     private Double locationX;
+
     /**
      * 地理位置经度
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 LOCATION
      */
     private Double locationY;
+
     /**
      * 地图缩放大小
      *
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 LOCATION
      */
     private Double scale;
+
     /**
      * 详细地址
      *
@@ -183,6 +202,7 @@ public class MpMessageDO extends BaseDO {
      * 消息类型为 {@link WxConsts.XmlMsgType} 的 MUSIC
      */
     private String musicUrl;
+
     /**
      * 高质量音乐链接
      *
@@ -192,7 +212,8 @@ public class MpMessageDO extends BaseDO {
      */
     private String hqMusicUrl;
 
-    // ========= 事件推送 https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_event_pushes.html
+    // ========= 事件推送
+    // https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_event_pushes.html
 
     /**
      * 事件类型
@@ -200,6 +221,7 @@ public class MpMessageDO extends BaseDO {
      * 枚举 {@link WxConsts.EventType}
      */
     private String event;
+
     /**
      * 事件 Key
      *
@@ -219,11 +241,13 @@ public class MpMessageDO extends BaseDO {
          */
         @NotEmpty(message = "图文消息标题不能为空", groups = NewsBuilder.class)
         private String title;
+
         /**
          * 图文消息描述
          */
         @NotEmpty(message = "图文消息描述不能为空", groups = NewsBuilder.class)
         private String description;
+
         /**
          * 图片链接
          *
@@ -231,12 +255,11 @@ public class MpMessageDO extends BaseDO {
          */
         @NotEmpty(message = "图片链接不能为空", groups = NewsBuilder.class)
         private String picUrl;
+
         /**
          * 点击图文消息跳转链接
          */
         @NotEmpty(message = "点击图文消息跳转链接不能为空", groups = NewsBuilder.class)
         private String url;
-
     }
-
 }

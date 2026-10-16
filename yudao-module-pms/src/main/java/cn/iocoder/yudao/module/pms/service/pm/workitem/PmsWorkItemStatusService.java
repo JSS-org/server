@@ -128,7 +128,8 @@ public interface PmsWorkItemStatusService {
      * @param userId 用户编号
      * @return 状态列表
      */
-    List<PmsWorkItemStatusDO> getWorkItemStatusList(Long projectId, Integer workItemType, Long userId);
+    List<PmsWorkItemStatusDO> getWorkItemStatusList(
+            Long projectId, Integer workItemType, Long userId);
 
     /**
      * 校验并获得看板状态
@@ -154,5 +155,4 @@ public interface PmsWorkItemStatusService {
      * @param projectId 项目编号
      */
     void deleteWorkItemStatusListByProjectId(Long projectId);
-
 }

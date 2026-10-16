@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.mes.service.wm.arrivalnotice;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo.MesWmArrivalNoticePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo.MesWmArrivalNoticeSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalNoticeDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 到货通知单 Service 接口
@@ -71,7 +72,8 @@ public interface MesWmArrivalNoticeService {
      * @param iqcId IQC 检验单编号
      * @param qualifiedQuantity 合格数量
      */
-    void updateArrivalNoticeWhenIqcFinish(Long id, Long lineId, Long iqcId, BigDecimal qualifiedQuantity);
+    void updateArrivalNoticeWhenIqcFinish(
+            Long id, Long lineId, Long iqcId, BigDecimal qualifiedQuantity);
 
     /**
      * 完成到货通知单（待入库 → 已完成），内部调用
@@ -132,5 +134,4 @@ public interface MesWmArrivalNoticeService {
      * @return 数量
      */
     Long getArrivalNoticeCountByVendorId(Long vendorId);
-
 }

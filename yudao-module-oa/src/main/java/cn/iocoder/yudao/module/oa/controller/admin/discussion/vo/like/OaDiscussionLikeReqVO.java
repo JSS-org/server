@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.like;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - OA 讨论点赞 Request VO")
@@ -24,5 +27,4 @@ public class OaDiscussionLikeReqVO {
         }
         return replyId != null;
     }
-
 }

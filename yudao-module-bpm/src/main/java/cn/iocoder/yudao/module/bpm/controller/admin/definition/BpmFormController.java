@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,19 +11,19 @@ import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.form.BpmFormRe
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.form.BpmFormSaveReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmFormDO;
 import cn.iocoder.yudao.module.bpm.service.definition.BpmFormService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - 动态表单")
 @RestController
@@ -28,8 +31,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class BpmFormController {
 
-    @Resource
-    private BpmFormService formService;
+    @Resource private BpmFormService formService;
 
     @PostMapping("/create")
     @Operation(summary = "创建动态表单")
@@ -68,8 +70,11 @@ public class BpmFormController {
     @Operation(summary = "获得动态表单的精简列表", description = "用于表单下拉框")
     public CommonResult<List<BpmFormRespVO>> getFormSimpleList() {
         List<BpmFormDO> list = formService.getFormList();
-        return success(convertList(list, formDO -> // 只返回 id、name 字段
-                new BpmFormRespVO().setId(formDO.getId()).setName(formDO.getName())));
+        return success(
+                convertList(
+                        list,
+                        formDO -> // 只返回 id、name 字段
+                        new BpmFormRespVO().setId(formDO.getId()).setName(formDO.getName())));
     }
 
     @GetMapping("/page")
@@ -79,5 +84,4 @@ public class BpmFormController {
         PageResult<BpmFormDO> pageResult = formService.getFormPage(pageVO);
         return success(BeanUtils.toBean(pageResult, BpmFormRespVO.class));
     }
-
 }

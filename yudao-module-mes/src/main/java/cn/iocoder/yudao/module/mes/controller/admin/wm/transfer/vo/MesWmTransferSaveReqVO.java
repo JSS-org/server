@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
-import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 @Schema(description = "管理后台 - MES 转移单 Save Request VO")
 @Data
@@ -53,5 +55,4 @@ public class MesWmTransferSaveReqVO {
 
     @Schema(description = "备注", example = "备注信息")
     private String remark;
-
 }

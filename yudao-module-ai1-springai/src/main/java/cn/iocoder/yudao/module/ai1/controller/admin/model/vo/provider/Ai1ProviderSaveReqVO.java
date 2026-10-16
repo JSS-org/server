@@ -3,12 +3,16 @@ package cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.ai1.util.Ai1Utils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.Map;
@@ -25,7 +29,10 @@ public class Ai1ProviderSaveReqVO {
     @Size(max = 50, message = "名称长度不能超过 50 个字符")
     private String name;
 
-    @Schema(description = "接口地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://api.deepseek.com/v1")
+    @Schema(
+            description = "接口地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://api.deepseek.com/v1")
     @NotEmpty(message = "接口地址不能为空")
     @Size(max = 200, message = "接口地址长度不能超过 200 个字符")
     private String baseUrl;
@@ -51,5 +58,4 @@ public class Ai1ProviderSaveReqVO {
     public boolean isHeadersValid() {
         return Ai1Utils.isHeadersValid(headers);
     }
-
 }

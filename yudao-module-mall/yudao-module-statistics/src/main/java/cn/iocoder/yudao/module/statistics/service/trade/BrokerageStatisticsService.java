@@ -27,5 +27,4 @@ public interface BrokerageStatisticsService {
      * @return 提现记录数量
      */
     Long getWithdrawCountByStatus(BrokerageWithdrawStatusEnum status);
-
 }

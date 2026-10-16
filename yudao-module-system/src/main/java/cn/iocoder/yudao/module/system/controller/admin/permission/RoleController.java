@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.system.controller.admin.permission;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
+import static java.util.Collections.singleton;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -12,12 +17,15 @@ import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleRe
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,18 +34,13 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static java.util.Collections.singleton;
-
 @Tag(name = "管理后台 - 角色")
 @RestController
 @RequestMapping("/system/role")
 @Validated
 public class RoleController {
 
-    @Resource
-    private RoleService roleService;
+    @Resource private RoleService roleService;
 
     @PostMapping("/create")
     @Operation(summary = "创建角色")
@@ -91,7 +94,8 @@ public class RoleController {
     @GetMapping({"/list-all-simple", "/simple-list"})
     @Operation(summary = "获取角色精简信息列表", description = "只包含被开启的角色，主要用于前端的下拉选项")
     public CommonResult<List<RoleRespVO>> getSimpleRoleList() {
-        List<RoleDO> list = roleService.getRoleListByStatus(singleton(CommonStatusEnum.ENABLE.getStatus()));
+        List<RoleDO> list =
+                roleService.getRoleListByStatus(singleton(CommonStatusEnum.ENABLE.getStatus()));
         list.sort(Comparator.comparing(RoleDO::getSort));
         return success(BeanUtils.toBean(list, RoleRespVO.class));
     }
@@ -100,12 +104,16 @@ public class RoleController {
     @Operation(summary = "导出角色 Excel")
     @ApiAccessLog(operateType = EXPORT)
     @PreAuthorize("@ss.hasPermission('system:role:export')")
-    public void export(HttpServletResponse response, @Validated RolePageReqVO exportReqVO) throws IOException {
+    public void export(HttpServletResponse response, @Validated RolePageReqVO exportReqVO)
+            throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<RoleDO> list = roleService.getRolePage(exportReqVO).getList();
         // 输出
-        ExcelUtils.write(response, "角色数据.xls", "数据", RoleRespVO.class,
+        ExcelUtils.write(
+                response,
+                "角色数据.xls",
+                "数据",
+                RoleRespVO.class,
                 BeanUtils.toBean(list, RoleRespVO.class));
     }
-
 }

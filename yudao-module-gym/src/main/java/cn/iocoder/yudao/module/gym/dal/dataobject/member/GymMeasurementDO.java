@@ -1,10 +1,15 @@
 package cn.iocoder.yudao.module.gym.dal.dataobject.member;
+
 import cn.iocoder.yudao.framework.tenant.core.db.TenantBaseDO;
+
 import com.baomidou.mybatisplus.annotation.*;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import java.time.Instant;
+
 import java.math.BigDecimal;
+import java.time.Instant;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("gym_measurement")

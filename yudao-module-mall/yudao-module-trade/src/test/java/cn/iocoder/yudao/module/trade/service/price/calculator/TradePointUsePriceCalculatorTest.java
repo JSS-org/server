@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.trade.service.price.calculator;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
+import static java.util.Arrays.asList;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.member.api.config.MemberConfigApi;
 import cn.iocoder.yudao.module.member.api.config.dto.MemberConfigRespDTO;
@@ -9,17 +17,12 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.util.ArrayList;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link TradePointUsePriceCalculator } 的单元测试类
@@ -28,48 +31,74 @@ import static org.mockito.Mockito.when;
  */
 public class TradePointUsePriceCalculatorTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private TradePointUsePriceCalculator tradePointUsePriceCalculator;
+    @InjectMocks private TradePointUsePriceCalculator tradePointUsePriceCalculator;
 
-    @Mock
-    private MemberConfigApi memberConfigApi;
-    @Mock
-    private MemberUserApi memberUserApi;
+    @Mock private MemberConfigApi memberConfigApi;
+    @Mock private MemberUserApi memberUserApi;
 
     @Test
     public void testCalculate_success() {
         // 准备参数
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setUserId(233L).setPointStatus(true) // 是否使用积分
-                .setItems(asList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(2).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(20L).setCount(3).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(30L).setCount(5).setSelected(false) // 未选中，不使用积分
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(asList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(2).setSelected(true)
-                                .setPrice(100).setSpuId(1L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(20L).setCount(3).setSelected(true)
-                                .setPrice(50).setSpuId(2L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(30L).setCount(5).setSelected(false)
-                                .setPrice(30).setSpuId(3L)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setUserId(233L)
+                        .setPointStatus(true) // 是否使用积分
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false) // 未选中，不使用积分
+                                        ));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true)
+                                                .setPrice(50)
+                                                .setSpuId(2L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false)
+                                                .setPrice(30)
+                                                .setSpuId(3L)));
         // 保证价格被初始化上
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法（积分配置 信息）
-        MemberConfigRespDTO memberConfig = randomPojo(MemberConfigRespDTO.class,
-                o -> o.setPointTradeDeductEnable(true) // 启用积分折扣
-                        .setPointTradeDeductUnitPrice(1) // 1 积分抵扣多少金额（单位分）
-                        .setPointTradeDeductMaxPrice(100)); // 积分抵扣最大值
+        MemberConfigRespDTO memberConfig =
+                randomPojo(
+                        MemberConfigRespDTO.class,
+                        o ->
+                                o.setPointTradeDeductEnable(true) // 启用积分折扣
+                                        .setPointTradeDeductUnitPrice(1) // 1 积分抵扣多少金额（单位分）
+                                        .setPointTradeDeductMaxPrice(100)); // 积分抵扣最大值
         when(memberConfigApi.getConfig()).thenReturn(memberConfig);
         // mock 方法（会员 信息）
-        MemberUserRespDTO user = randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(100));
+        MemberUserRespDTO user =
+                randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(100));
         when(memberUserApi.getUser(user.getId())).thenReturn(user);
 
         // 调用
@@ -129,37 +158,66 @@ public class TradePointUsePriceCalculatorTest extends BaseMockitoUnitTest {
     @Test
     public void testCalculate_TradeDeductMaxPrice() {
         // 准备参数
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setUserId(233L).setPointStatus(true) // 是否使用积分
-                .setItems(asList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(2).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(20L).setCount(3).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(30L).setCount(5).setSelected(false) // 未选中，不使用积分
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(asList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(2).setSelected(true)
-                                .setPrice(100).setSpuId(1L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(20L).setCount(3).setSelected(true)
-                                .setPrice(50).setSpuId(2L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(30L).setCount(5).setSelected(false)
-                                .setPrice(30).setSpuId(3L)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setUserId(233L)
+                        .setPointStatus(true) // 是否使用积分
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false) // 未选中，不使用积分
+                                        ));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true)
+                                                .setPrice(50)
+                                                .setSpuId(2L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false)
+                                                .setPrice(30)
+                                                .setSpuId(3L)));
         // 保证价格被初始化上
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法（积分配置 信息）
-        MemberConfigRespDTO memberConfig = randomPojo(MemberConfigRespDTO.class,
-                o -> o.setPointTradeDeductEnable(true) // 启用积分折扣
-                        .setPointTradeDeductUnitPrice(1) // 1 积分抵扣多少金额（单位分）
-                        .setPointTradeDeductMaxPrice(50)); // 积分抵扣最大值
+        MemberConfigRespDTO memberConfig =
+                randomPojo(
+                        MemberConfigRespDTO.class,
+                        o ->
+                                o.setPointTradeDeductEnable(true) // 启用积分折扣
+                                        .setPointTradeDeductUnitPrice(1) // 1 积分抵扣多少金额（单位分）
+                                        .setPointTradeDeductMaxPrice(50)); // 积分抵扣最大值
         when(memberConfigApi.getConfig()).thenReturn(memberConfig);
         // mock 方法（会员 信息）
-        MemberUserRespDTO user = randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(100));
+        MemberUserRespDTO user =
+                randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(100));
         when(memberUserApi.getUser(user.getId())).thenReturn(user);
 
         // 调用
@@ -219,31 +277,57 @@ public class TradePointUsePriceCalculatorTest extends BaseMockitoUnitTest {
     @Test
     public void testCalculate_PointStatusFalse() {
         // 准备参数
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setUserId(233L).setPointStatus(false) // 是否使用积分
-                .setItems(asList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(2).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(20L).setCount(3).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(30L).setCount(5).setSelected(false) // 未选中，不使用积分
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(asList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(2).setSelected(true)
-                                .setPrice(100).setSpuId(1L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(20L).setCount(3).setSelected(true)
-                                .setPrice(50).setSpuId(2L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(30L).setCount(5).setSelected(false)
-                                .setPrice(30).setSpuId(3L)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setUserId(233L)
+                        .setPointStatus(false) // 是否使用积分
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false) // 未选中，不使用积分
+                                        ));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true)
+                                                .setPrice(50)
+                                                .setSpuId(2L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false)
+                                                .setPrice(30)
+                                                .setSpuId(3L)));
         // 保证价格被初始化上
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法（会员 信息）：不使用积分仍需获取用户初始化 totalPoint
-        MemberUserRespDTO user = randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(100));
+        MemberUserRespDTO user =
+                randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(100));
         when(memberUserApi.getUser(user.getId())).thenReturn(user);
 
         // 调用
@@ -258,37 +342,66 @@ public class TradePointUsePriceCalculatorTest extends BaseMockitoUnitTest {
     @Test
     public void testCalculate_UserPointNotEnough() {
         // 准备参数
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setUserId(233L).setPointStatus(true) // 是否使用积分
-                .setItems(asList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(2).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(20L).setCount(3).setSelected(true), // 使用积分
-                        new TradePriceCalculateReqBO.Item().setSkuId(30L).setCount(5).setSelected(false) // 未选中，不使用积分
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(asList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(2).setSelected(true)
-                                .setPrice(100).setSpuId(1L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(20L).setCount(3).setSelected(true)
-                                .setPrice(50).setSpuId(2L),
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(30L).setCount(5).setSelected(false)
-                                .setPrice(30).setSpuId(3L)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setUserId(233L)
+                        .setPointStatus(true) // 是否使用积分
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true), // 使用积分
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false) // 未选中，不使用积分
+                                        ));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                asList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(2)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(20L)
+                                                .setCount(3)
+                                                .setSelected(true)
+                                                .setPrice(50)
+                                                .setSpuId(2L),
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(30L)
+                                                .setCount(5)
+                                                .setSelected(false)
+                                                .setPrice(30)
+                                                .setSpuId(3L)));
         // 保证价格被初始化上
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法（积分配置 信息）
-        MemberConfigRespDTO memberConfig = randomPojo(MemberConfigRespDTO.class,
-                o -> o.setPointTradeDeductEnable(true) // 启用积分折扣
-                        .setPointTradeDeductUnitPrice(1) // 1 积分抵扣多少金额（单位分）
-                        .setPointTradeDeductMaxPrice(100)); // 积分抵扣最大值
+        MemberConfigRespDTO memberConfig =
+                randomPojo(
+                        MemberConfigRespDTO.class,
+                        o ->
+                                o.setPointTradeDeductEnable(true) // 启用积分折扣
+                                        .setPointTradeDeductUnitPrice(1) // 1 积分抵扣多少金额（单位分）
+                                        .setPointTradeDeductMaxPrice(100)); // 积分抵扣最大值
         when(memberConfigApi.getConfig()).thenReturn(memberConfig);
         // mock 方法（会员 信息）
-        MemberUserRespDTO user = randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(0));
+        MemberUserRespDTO user =
+                randomPojo(MemberUserRespDTO.class, o -> o.setId(param.getUserId()).setPoint(0));
         when(memberUserApi.getUser(user.getId())).thenReturn(user);
 
         // 调用

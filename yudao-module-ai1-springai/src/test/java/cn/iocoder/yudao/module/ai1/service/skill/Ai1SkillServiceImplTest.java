@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.ai1.service.skill;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.skill.Ai1SkillSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.skill.Ai1SkillMapper;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link Ai1SkillServiceImpl} 的单元测试
@@ -27,16 +30,12 @@ import static org.mockito.Mockito.*;
 @Import(Ai1SkillServiceImpl.class)
 public class Ai1SkillServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private Ai1SkillServiceImpl skillService;
+    @Resource private Ai1SkillServiceImpl skillService;
 
-    @Resource
-    private Ai1SkillMapper skillMapper;
+    @Resource private Ai1SkillMapper skillMapper;
 
-    @MockitoBean
-    private Ai1SkillFileService skillFileService;
-    @MockitoBean
-    private Ai1AgentService agentService;
+    @MockitoBean private Ai1SkillFileService skillFileService;
+    @MockitoBean private Ai1AgentService agentService;
 
     @Test
     public void testCreateSkill_success() {
@@ -57,8 +56,10 @@ public class Ai1SkillServiceImplTest extends BaseDbUnitTest {
         skillService.createSkill(buildSkillSaveReqVO("pdf-reader"));
 
         // 调用，并断言异常
-        assertServiceException(() -> skillService.createSkill(buildSkillSaveReqVO("pdf-reader")),
-                SKILL_NAME_DUPLICATE, "pdf-reader");
+        assertServiceException(
+                () -> skillService.createSkill(buildSkillSaveReqVO("pdf-reader")),
+                SKILL_NAME_DUPLICATE,
+                "pdf-reader");
     }
 
     @Test
@@ -86,7 +87,8 @@ public class Ai1SkillServiceImplTest extends BaseDbUnitTest {
         Ai1SkillSaveReqVO reqVO = buildSkillSaveReqVO("pdf-reader").setId(id);
 
         // 调用，并断言异常
-        assertServiceException(() -> skillService.updateSkill(reqVO), SKILL_NAME_DUPLICATE, "pdf-reader");
+        assertServiceException(
+                () -> skillService.updateSkill(reqVO), SKILL_NAME_DUPLICATE, "pdf-reader");
     }
 
     @Test
@@ -110,7 +112,8 @@ public class Ai1SkillServiceImplTest extends BaseDbUnitTest {
         clearInvocations(skillFileService);
 
         // 调用
-        skillService.updateSkill(buildSkillSaveReqVO("财务 PDF 工具").setId(id).setDescription("给财务人员使用"));
+        skillService.updateSkill(
+                buildSkillSaveReqVO("财务 PDF 工具").setId(id).setDescription("给财务人员使用"));
         // 断言
         Ai1SkillDO skill = skillMapper.selectById(id);
         assertEquals("财务 PDF 工具", skill.getName());
@@ -121,8 +124,10 @@ public class Ai1SkillServiceImplTest extends BaseDbUnitTest {
     // ========== 测试数据 ==========
 
     private static Ai1SkillSaveReqVO buildSkillSaveReqVO(String name) {
-        return new Ai1SkillSaveReqVO().setName(name).setDescription("读取 PDF").setVersion("1.0")
+        return new Ai1SkillSaveReqVO()
+                .setName(name)
+                .setDescription("读取 PDF")
+                .setVersion("1.0")
                 .setStatus(CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

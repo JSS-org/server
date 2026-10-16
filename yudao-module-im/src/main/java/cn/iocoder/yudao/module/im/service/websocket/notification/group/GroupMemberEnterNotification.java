@@ -17,9 +17,9 @@ public class GroupMemberEnterNotification extends BaseGroupNotification {
      * 进群者用户编号
      */
     private Long entrantUserId;
+
     /**
      * 加入来源
      */
     private Integer addSource;
-
 }

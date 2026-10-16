@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.dv.subject;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.subject.vo.MesDvSubjectPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.subject.vo.MesDvSubjectSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.subject.MesDvSubjectDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 点检保养项目 Service 接口
@@ -95,5 +96,4 @@ public interface MesDvSubjectService {
     default Map<Long, MesDvSubjectDO> getSubjectMap(Collection<Long> ids) {
         return convertMap(getSubjectList(ids), MesDvSubjectDO::getId);
     }
-
 }

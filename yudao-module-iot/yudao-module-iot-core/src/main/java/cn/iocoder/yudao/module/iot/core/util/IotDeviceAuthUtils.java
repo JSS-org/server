@@ -13,11 +13,13 @@ import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
  */
 public class IotDeviceAuthUtils {
 
-    public static IotDeviceAuthReqDTO getAuthInfo(String productKey, String deviceName, String deviceSecret) {
+    public static IotDeviceAuthReqDTO getAuthInfo(
+            String productKey, String deviceName, String deviceSecret) {
         String clientId = buildClientId(productKey, deviceName);
         String username = buildUsername(productKey, deviceName);
-        String password = buildPassword(deviceSecret,
-                buildContent(clientId, productKey, deviceName, deviceSecret));
+        String password =
+                buildPassword(
+                        deviceSecret, buildContent(clientId, productKey, deviceName, deviceSecret));
         return new IotDeviceAuthReqDTO(clientId, username, password);
     }
 
@@ -42,11 +44,16 @@ public class IotDeviceAuthUtils {
                 .digestHex(content);
     }
 
-    private static String buildContent(String clientId, String productKey, String deviceName, String deviceSecret) {
-        return "clientId" + clientId +
-                "deviceName" + deviceName +
-                "deviceSecret" + deviceSecret +
-                "productKey" + productKey;
+    private static String buildContent(
+            String clientId, String productKey, String deviceName, String deviceSecret) {
+        return "clientId"
+                + clientId
+                + "deviceName"
+                + deviceName
+                + "deviceSecret"
+                + deviceSecret
+                + "productKey"
+                + productKey;
     }
 
     public static IotDeviceIdentity parseUsername(String username) {
@@ -56,5 +63,4 @@ public class IotDeviceAuthUtils {
         }
         return new IotDeviceIdentity(usernameParts[1], usernameParts[0]);
     }
-
 }

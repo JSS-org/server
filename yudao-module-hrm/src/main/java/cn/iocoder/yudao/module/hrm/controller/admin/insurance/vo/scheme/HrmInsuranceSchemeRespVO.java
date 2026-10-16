@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -58,5 +59,4 @@ public class HrmInsuranceSchemeRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

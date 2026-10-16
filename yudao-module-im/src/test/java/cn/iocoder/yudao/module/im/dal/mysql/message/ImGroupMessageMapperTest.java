@@ -1,16 +1,18 @@
 package cn.iocoder.yudao.module.im.dal.mysql.message;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImGroupMessageDO;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageReceiptStatusEnum;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link ImGroupMessageMapper} 的单元测试
@@ -19,8 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ImGroupMessageMapperTest extends BaseDbUnitTest {
 
-    @Resource
-    private ImGroupMessageMapper mapper;
+    @Resource private ImGroupMessageMapper mapper;
 
     private static final LocalDateTime FAR_PAST = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
@@ -29,15 +30,19 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
     @Test
     public void testSelectListByMinId_filterByReceiverSnapshot() {
         // 准备：群 10 三条消息，快照分别命中 / 不命中用户 1
-        ImGroupMessageDO visible = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(1L, 2L));
+        ImGroupMessageDO visible =
+                buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(1L, 2L));
         mapper.insert(visible);
-        ImGroupMessageDO invisible = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(2L, 3L));
+        ImGroupMessageDO invisible =
+                buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(2L, 3L));
         mapper.insert(invisible);
-        ImGroupMessageDO selfSend = buildMessage(10L, 1L, ImMessageStatusEnum.NORMAL, List.of(1L, 2L));
+        ImGroupMessageDO selfSend =
+                buildMessage(10L, 1L, ImMessageStatusEnum.NORMAL, List.of(1L, 2L));
         mapper.insert(selfSend);
 
         // 调用：用户 1 拉取群 10
-        List<ImGroupMessageDO> result = mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
+        List<ImGroupMessageDO> result =
+                mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
 
         // 断言：仅返回快照包含用户 1 的消息
         assertEquals(2, result.size());
@@ -50,10 +55,12 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
         // 准备：快照为 null / 空字符串的老数据，不应被任何用户拉到
         ImGroupMessageDO nullSnapshot = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, null);
         mapper.insert(nullSnapshot);
-        ImGroupMessageDO emptySnapshot = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of());
+        ImGroupMessageDO emptySnapshot =
+                buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of());
         mapper.insert(emptySnapshot);
 
-        List<ImGroupMessageDO> result = mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
+        List<ImGroupMessageDO> result =
+                mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
 
         assertTrue(result.isEmpty());
     }
@@ -67,7 +74,8 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
         mapper.insert(msg20);
 
         // 调用：候选群只含群 10
-        List<ImGroupMessageDO> result = mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
+        List<ImGroupMessageDO> result =
+                mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
 
         assertEquals(1, result.size());
         assertEquals(msg10.getId(), result.get(0).getId());
@@ -81,7 +89,8 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
         ImGroupMessageDO recalled = buildMessage(10L, 2L, ImMessageStatusEnum.RECALL, List.of(1L));
         mapper.insert(recalled);
 
-        List<ImGroupMessageDO> result = mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
+        List<ImGroupMessageDO> result =
+                mapper.selectListByMinId(1L, List.of(10L), 0L, FAR_PAST, 100);
 
         assertEquals(2, result.size());
     }
@@ -96,8 +105,9 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
         outWindow.setSendTime(LocalDateTime.now().minusDays(40));
         mapper.insert(outWindow);
 
-        List<ImGroupMessageDO> result = mapper.selectListByMinId(1L, List.of(10L), 0L,
-                LocalDateTime.now().minusDays(30), 100);
+        List<ImGroupMessageDO> result =
+                mapper.selectListByMinId(
+                        1L, List.of(10L), 0L, LocalDateTime.now().minusDays(30), 100);
 
         assertEquals(1, result.size());
         assertEquals(inWindow.getId(), result.get(0).getId());
@@ -130,7 +140,8 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
         ImGroupMessageDO m2 = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(1L));
         mapper.insert(m2);
 
-        List<ImGroupMessageDO> result = mapper.selectListByMinId(1L, List.of(10L), m1.getId(), FAR_PAST, 100);
+        List<ImGroupMessageDO> result =
+                mapper.selectListByMinId(1L, List.of(10L), m1.getId(), FAR_PAST, 100);
 
         assertEquals(1, result.size());
         assertEquals(m2.getId(), result.get(0).getId());
@@ -145,7 +156,8 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
         mapper.insert(m1);
         ImGroupMessageDO m2 = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(1L, 2L));
         mapper.insert(m2);
-        ImGroupMessageDO directedOther = buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(2L, 3L));
+        ImGroupMessageDO directedOther =
+                buildMessage(10L, 2L, ImMessageStatusEnum.NORMAL, List.of(2L, 3L));
         mapper.insert(directedOther);
         // 别的群
         ImGroupMessageDO other = buildMessage(20L, 2L, ImMessageStatusEnum.NORMAL, List.of(1L));
@@ -177,8 +189,8 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
 
     // ========== 工具方法 ==========
 
-    private ImGroupMessageDO buildMessage(Long groupId, Long senderId, ImMessageStatusEnum status,
-                                          List<Long> receiverUserIds) {
+    private ImGroupMessageDO buildMessage(
+            Long groupId, Long senderId, ImMessageStatusEnum status, List<Long> receiverUserIds) {
         return ImGroupMessageDO.builder()
                 .clientMessageId("uuid-" + System.nanoTime())
                 .senderId(senderId)
@@ -191,5 +203,4 @@ public class ImGroupMessageMapperTest extends BaseDbUnitTest {
                 .receiptStatus(ImMessageReceiptStatusEnum.NO_RECEIPT.getStatus())
                 .build();
     }
-
 }

@@ -1,17 +1,19 @@
 package cn.iocoder.yudao.module.infra.framework.file.core.s3;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.s3.S3FileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.s3.S3FileClientConfig;
+
 import jakarta.validation.Validation;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("resource")
 public class S3FileClientTest {
@@ -28,7 +30,9 @@ public class S3FileClientTest {
         String result = client.presignGetUrl("avatar/中文 100%+文件.jpg", 300);
 
         // 断言
-        assertEquals("https://static.iocoder.cn/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.jpg", result);
+        assertEquals(
+                "https://static.iocoder.cn/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.jpg",
+                result);
     }
 
     @Test
@@ -40,10 +44,15 @@ public class S3FileClientTest {
         S3FileClient client = new S3FileClient(0L, config);
 
         // 调用
-        String result = client.presignGetUrl("https://static.iocoder.cn/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.jpg?token=1", 300);
+        String result =
+                client.presignGetUrl(
+                        "https://static.iocoder.cn/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.jpg?token=1",
+                        300);
 
         // 断言
-        assertEquals("https://static.iocoder.cn/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.jpg", result);
+        assertEquals(
+                "https://static.iocoder.cn/avatar/%E4%B8%AD%E6%96%87%20100%25+%E6%96%87%E4%BB%B6.jpg",
+                result);
     }
 
     @Test
@@ -158,12 +167,13 @@ public class S3FileClientTest {
     public void testQiniu() throws Exception {
         S3FileClientConfig config = new S3FileClientConfig();
         // 配置成你自己的
-//        config.setAccessKey(System.getenv("QINIU_ACCESS_KEY"));
-//        config.setAccessSecret(System.getenv("QINIU_SECRET_KEY"));
+        //        config.setAccessKey(System.getenv("QINIU_ACCESS_KEY"));
+        //        config.setAccessSecret(System.getenv("QINIU_SECRET_KEY"));
         config.setAccessKey("b7yvuhBSAGjmtPhMFcn9iMOxUOY_I06cA_p0ZUx8");
         config.setAccessSecret("kXM1l5ia1RvSX3QaOEcwI3RLz3Y2rmNszWonKZtP");
         config.setBucket("ruoyi-vue-pro");
-        config.setDomain("http://test.yudao.iocoder.cn"); // 如果有自定义域名，则可以设置。http://static.yudao.iocoder.cn
+        config.setDomain(
+                "http://test.yudao.iocoder.cn"); // 如果有自定义域名，则可以设置。http://static.yudao.iocoder.cn
         config.setEnablePathStyleAccess(false);
         // 默认上海的 endpoint
         config.setEndpoint("s3-cn-south-1.qiniucs.com");
@@ -177,12 +187,13 @@ public class S3FileClientTest {
     public void testQiniu_privateGet() {
         S3FileClientConfig config = new S3FileClientConfig();
         // 配置成你自己的
-//        config.setAccessKey(System.getenv("QINIU_ACCESS_KEY"));
-//        config.setAccessSecret(System.getenv("QINIU_SECRET_KEY"));
+        //        config.setAccessKey(System.getenv("QINIU_ACCESS_KEY"));
+        //        config.setAccessSecret(System.getenv("QINIU_SECRET_KEY"));
         config.setAccessKey("b7yvuhBSAGjmtPhMFcn9iMOxUOY_I06cA_p0ZUx8");
         config.setAccessSecret("kXM1l5ia1RvSX3QaOEcwI3RLz3Y2rmNszWonKZtP");
         config.setBucket("ruoyi-vue-pro-private");
-        config.setDomain("http://t151glocd.hn-bkt.clouddn.com"); // 如果有自定义域名，则可以设置。http://static.yudao.iocoder.cn
+        config.setDomain(
+                "http://t151glocd.hn-bkt.clouddn.com"); // 如果有自定义域名，则可以设置。http://static.yudao.iocoder.cn
         config.setEnablePathStyleAccess(false);
         // 默认上海的 endpoint
         config.setEndpoint("s3-cn-south-1.qiniucs.com");
@@ -203,8 +214,8 @@ public class S3FileClientTest {
     public void testHuaweiCloud() throws Exception {
         S3FileClientConfig config = new S3FileClientConfig();
         // 配置成你自己的
-//        config.setAccessKey(System.getenv("HUAWEI_CLOUD_ACCESS_KEY"));
-//        config.setAccessSecret(System.getenv("HUAWEI_CLOUD_SECRET_KEY"));
+        //        config.setAccessKey(System.getenv("HUAWEI_CLOUD_ACCESS_KEY"));
+        //        config.setAccessSecret(System.getenv("HUAWEI_CLOUD_SECRET_KEY"));
         config.setBucket("yudao");
         config.setDomain(null); // 如果有自定义域名，则可以设置。
         // 默认上海的 endpoint
@@ -235,5 +246,4 @@ public class S3FileClientTest {
             client.delete(path);
         }
     }
-
 }

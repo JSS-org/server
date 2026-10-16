@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.oa.service.announcement;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.announcement.vo.OaAnnouncementPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.announcement.vo.OaAnnouncementSaveReqVO;
@@ -9,8 +11,6 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.announcement.OaAnnouncementRece
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 
 /**
  * OA 公告 Service 接口
@@ -68,7 +68,8 @@ public interface OaAnnouncementService {
      * @param userId 用户编号
      * @return 公告分页
      */
-    PageResult<OaAnnouncementDO> getPublishedAnnouncementPage(OaAnnouncementPageReqVO pageReqVO, Long userId);
+    PageResult<OaAnnouncementDO> getPublishedAnnouncementPage(
+            OaAnnouncementPageReqVO pageReqVO, Long userId);
 
     /**
      * 获得接收的公告分页
@@ -77,7 +78,8 @@ public interface OaAnnouncementService {
      * @param userId 用户编号
      * @return 公告分页
      */
-    PageResult<OaAnnouncementDO> getReceivedAnnouncementPage(OaAnnouncementPageReqVO pageReqVO, Long userId);
+    PageResult<OaAnnouncementDO> getReceivedAnnouncementPage(
+            OaAnnouncementPageReqVO pageReqVO, Long userId);
 
     /**
      * 标记公告为已读
@@ -102,8 +104,11 @@ public interface OaAnnouncementService {
      * @param announcementIds 公告编号集合
      * @return 公告编号与接收关系列表的 Map
      */
-    default Map<Long, List<OaAnnouncementReceiverDO>> getAnnouncementReceiverListMap(Collection<Long> announcementIds) {
-        return convertMultiMap(getAnnouncementReceiverList(announcementIds), OaAnnouncementReceiverDO::getAnnouncementId);
+    default Map<Long, List<OaAnnouncementReceiverDO>> getAnnouncementReceiverListMap(
+            Collection<Long> announcementIds) {
+        return convertMultiMap(
+                getAnnouncementReceiverList(announcementIds),
+                OaAnnouncementReceiverDO::getAnnouncementId);
     }
 
     /**
@@ -113,5 +118,4 @@ public interface OaAnnouncementService {
      * @return 公告接收关系列表
      */
     List<OaAnnouncementReceiverDO> getAnnouncementReceiverList(Collection<Long> announcementIds);
-
 }

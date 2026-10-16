@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.oa.framework.config;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -24,14 +26,12 @@ public class OaProperties {
     /**
      * 考勤配置
      */
-    @Valid
-    private Attendance attendance = new Attendance();
+    @Valid private Attendance attendance = new Attendance();
 
     /**
      * 日程配置
      */
-    @Valid
-    private Schedule schedule = new Schedule();
+    @Valid private Schedule schedule = new Schedule();
 
     /**
      * 云盘配置
@@ -59,7 +59,6 @@ public class OaProperties {
         @NotNull(message = "下载地址有效期不能为空")
         @Min(value = 1, message = "下载地址有效期必须大于 0")
         private Integer downloadUrlExpireSeconds = 300;
-
     }
 
     /**
@@ -73,7 +72,6 @@ public class OaProperties {
          */
         @Min(value = 1, message = "日程提前提醒小时数必须大于 0")
         private Integer remindBeforeHours = 24;
-
     }
 
     /**
@@ -94,17 +92,17 @@ public class OaProperties {
          */
         @NotNull(message = "每日最早打卡时间不能为空")
         private LocalTime clockBeginTime = LocalTime.of(5, 0);
+
         /**
          * 标准上班时间
          */
         @NotNull(message = "标准上班时间不能为空")
         private LocalTime workBeginTime = LocalTime.of(8, 0);
+
         /**
          * 标准下班时间，同时作为每日打卡截止时间（不包含）
          */
         @NotNull(message = "标准下班时间不能为空")
         private LocalTime workEndTime = LocalTime.of(17, 0);
-
     }
-
 }

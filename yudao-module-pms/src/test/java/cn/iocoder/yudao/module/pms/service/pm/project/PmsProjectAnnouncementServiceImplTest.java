@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.announcement.PmsProjectAnnouncementSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectAnnouncementDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectAnnouncementMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link PmsProjectAnnouncementServiceImpl} 的单元测试类
@@ -27,14 +30,11 @@ import static org.mockito.Mockito.when;
 @Import(PmsProjectAnnouncementServiceImpl.class)
 public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsProjectAnnouncementServiceImpl announcementService;
+    @Resource private PmsProjectAnnouncementServiceImpl announcementService;
 
-    @Resource
-    private PmsProjectAnnouncementMapper announcementMapper;
+    @Resource private PmsProjectAnnouncementMapper announcementMapper;
 
-    @MockitoBean
-    private PmsProjectMemberService projectMemberService;
+    @MockitoBean private PmsProjectMemberService projectMemberService;
 
     @Test
     public void testCreateProjectAnnouncement_success() {
@@ -44,9 +44,11 @@ public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
         when(projectMemberService.validateProjectWritable(projectId, userId))
                 .thenReturn(new PmsProjectDO().setId(projectId));
         // 准备参数
-        PmsProjectAnnouncementSaveReqVO reqVO = new PmsProjectAnnouncementSaveReqVO()
-                .setProjectId(projectId).setContent("项目启动")
-                .setFileUrls(Collections.singletonList("https://example.com/a.pdf"));
+        PmsProjectAnnouncementSaveReqVO reqVO =
+                new PmsProjectAnnouncementSaveReqVO()
+                        .setProjectId(projectId)
+                        .setContent("项目启动")
+                        .setFileUrls(Collections.singletonList("https://example.com/a.pdf"));
 
         // 调用
         Long id = announcementService.createProjectAnnouncement(reqVO, userId);
@@ -61,15 +63,18 @@ public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long projectId = randomLongId();
         Long userId = randomLongId();
-        PmsProjectAnnouncementDO announcement = new PmsProjectAnnouncementDO()
-                .setProjectId(projectId).setContent("项目启动");
+        PmsProjectAnnouncementDO announcement =
+                new PmsProjectAnnouncementDO().setProjectId(projectId).setContent("项目启动");
         announcementMapper.insert(announcement);
         when(projectMemberService.validateProjectWritable(projectId, userId))
                 .thenReturn(new PmsProjectDO().setId(projectId));
         // 准备参数
-        PmsProjectAnnouncementSaveReqVO reqVO = new PmsProjectAnnouncementSaveReqVO()
-                .setId(announcement.getId()).setProjectId(projectId).setContent("项目已启动")
-                .setFileUrls(Collections.singletonList("https://example.com/a.pdf"));
+        PmsProjectAnnouncementSaveReqVO reqVO =
+                new PmsProjectAnnouncementSaveReqVO()
+                        .setId(announcement.getId())
+                        .setProjectId(projectId)
+                        .setContent("项目已启动")
+                        .setFileUrls(Collections.singletonList("https://example.com/a.pdf"));
 
         // 调用
         announcementService.updateProjectAnnouncement(reqVO, userId);
@@ -84,8 +89,8 @@ public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long projectId = randomLongId();
         Long userId = randomLongId();
-        PmsProjectAnnouncementDO announcement = new PmsProjectAnnouncementDO()
-                .setProjectId(projectId).setContent("项目启动");
+        PmsProjectAnnouncementDO announcement =
+                new PmsProjectAnnouncementDO().setProjectId(projectId).setContent("项目启动");
         announcementMapper.insert(announcement);
         when(projectMemberService.validateProjectWritable(projectId, userId))
                 .thenReturn(new PmsProjectDO().setId(projectId));
@@ -102,15 +107,15 @@ public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long projectId = randomLongId();
         Long userId = randomLongId();
-        PmsProjectAnnouncementDO announcement = new PmsProjectAnnouncementDO()
-                .setProjectId(projectId).setContent("项目启动");
+        PmsProjectAnnouncementDO announcement =
+                new PmsProjectAnnouncementDO().setProjectId(projectId).setContent("项目启动");
         announcementMapper.insert(announcement);
         when(projectMemberService.validateProjectReadable(projectId, userId))
                 .thenReturn(new PmsProjectDO().setId(projectId));
 
         // 调用
-        PmsProjectAnnouncementDO result = announcementService
-                .getProjectAnnouncement(announcement.getId(), userId);
+        PmsProjectAnnouncementDO result =
+                announcementService.getProjectAnnouncement(announcement.getId(), userId);
 
         // 断言
         assertEquals(announcement.getId(), result.getId());
@@ -121,7 +126,8 @@ public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
     public void testDeleteProjectAnnouncementListByProjectId() {
         // mock 数据
         Long projectId = randomLongId();
-        announcementMapper.insert(new PmsProjectAnnouncementDO().setProjectId(projectId).setContent("公告"));
+        announcementMapper.insert(
+                new PmsProjectAnnouncementDO().setProjectId(projectId).setContent("公告"));
 
         // 调用
         announcementService.deleteProjectAnnouncementListByProjectId(projectId);
@@ -129,5 +135,4 @@ public class PmsProjectAnnouncementServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertTrue(CollUtil.isEmpty(announcementMapper.selectListByProjectId(projectId)));
     }
-
 }

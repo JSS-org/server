@@ -4,6 +4,7 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.delimiter.IotTcpDelimiterFrameCodec;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.length.IotTcpFixedLengthFrameCodec;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.length.IotTcpLengthFieldFrameCodec;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -36,6 +37,7 @@ public enum IotTcpCodecTypeEnum {
      * 类型标识
      */
     private final String type;
+
     /**
      * 编解码器类
      */
@@ -50,5 +52,4 @@ public enum IotTcpCodecTypeEnum {
     public static IotTcpCodecTypeEnum of(String type) {
         return ArrayUtil.firstMatch(e -> e.getType().equalsIgnoreCase(type), values());
     }
-
 }

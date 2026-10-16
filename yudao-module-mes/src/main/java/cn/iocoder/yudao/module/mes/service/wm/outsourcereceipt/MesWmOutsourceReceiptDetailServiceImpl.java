@@ -1,19 +1,21 @@
 package cn.iocoder.yudao.module.mes.service.wm.outsourcereceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_OUTSOURCE_RECEIPT_DETAIL_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.outsourcereceipt.vo.detail.MesWmOutsourceReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.outsourcereceipt.MesWmOutsourceReceiptDetailDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.outsourcereceipt.MesWmOutsourceReceiptDetailMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_OUTSOURCE_RECEIPT_DETAIL_NOT_EXISTS;
 
 /**
  * MES 委外收货明细 Service 实现类
@@ -22,13 +24,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_OUTSOURCE_
 @Validated
 public class MesWmOutsourceReceiptDetailServiceImpl implements MesWmOutsourceReceiptDetailService {
 
-    @Resource
-    private MesWmOutsourceReceiptDetailMapper detailMapper;
+    @Resource private MesWmOutsourceReceiptDetailMapper detailMapper;
 
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmWarehouseAreaService areaService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmWarehouseAreaService areaService;
 
     @Override
     public Long createOutsourceReceiptDetail(MesWmOutsourceReceiptDetailSaveReqVO createReqVO) {
@@ -36,7 +35,8 @@ public class MesWmOutsourceReceiptDetailServiceImpl implements MesWmOutsourceRec
         validateDetailSaveData(createReqVO);
 
         // 插入
-        MesWmOutsourceReceiptDetailDO detail = BeanUtils.toBean(createReqVO, MesWmOutsourceReceiptDetailDO.class);
+        MesWmOutsourceReceiptDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmOutsourceReceiptDetailDO.class);
         detailMapper.insert(detail);
         return detail.getId();
     }
@@ -49,7 +49,8 @@ public class MesWmOutsourceReceiptDetailServiceImpl implements MesWmOutsourceRec
         validateDetailSaveData(updateReqVO);
 
         // 更新
-        MesWmOutsourceReceiptDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmOutsourceReceiptDetailDO.class);
+        MesWmOutsourceReceiptDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmOutsourceReceiptDetailDO.class);
         detailMapper.updateById(updateObj);
     }
 
@@ -67,7 +68,8 @@ public class MesWmOutsourceReceiptDetailServiceImpl implements MesWmOutsourceRec
     }
 
     @Override
-    public List<MesWmOutsourceReceiptDetailDO> getOutsourceReceiptDetailListByReceiptId(Long receiptId) {
+    public List<MesWmOutsourceReceiptDetailDO> getOutsourceReceiptDetailListByReceiptId(
+            Long receiptId) {
         return detailMapper.selectListByReceiptId(receiptId);
     }
 
@@ -93,7 +95,8 @@ public class MesWmOutsourceReceiptDetailServiceImpl implements MesWmOutsourceRec
         // 校验物料存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
         // 校验仓库、库区、库位的层级关系
-        areaService.validateWarehouseAreaExists(reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
+        areaService.validateWarehouseAreaExists(
+                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
     }
 
     private void validateOutsourceReceiptDetailExists(Long id) {
@@ -101,5 +104,4 @@ public class MesWmOutsourceReceiptDetailServiceImpl implements MesWmOutsourceRec
             throw exception(WM_OUTSOURCE_RECEIPT_DETAIL_NOT_EXISTS);
         }
     }
-
 }

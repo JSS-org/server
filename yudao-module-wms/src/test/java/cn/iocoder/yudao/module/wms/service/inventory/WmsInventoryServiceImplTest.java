@@ -1,10 +1,20 @@
 package cn.iocoder.yudao.module.wms.service.inventory;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.CHECK_ORDER_INVENTORY_CHANGED;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.INVENTORY_QUANTITY_NOT_ENOUGH;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.wms.controller.admin.inventory.vo.WmsInventoryPageReqVO;
-import cn.iocoder.yudao.module.wms.dal.dataobject.inventory.WmsInventoryHistoryDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.inventory.WmsInventoryDO;
+import cn.iocoder.yudao.module.wms.dal.dataobject.inventory.WmsInventoryHistoryDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemSkuDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.inventory.WmsInventoryHistoryMapper;
@@ -16,7 +26,9 @@ import cn.iocoder.yudao.module.wms.service.inventory.dto.WmsInventoryChangeReqDT
 import cn.iocoder.yudao.module.wms.service.inventory.dto.WmsInventoryCheckReqDTO;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemService;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemSkuService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -32,34 +44,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.CHECK_ORDER_INVENTORY_CHANGED;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.INVENTORY_QUANTITY_NOT_ENOUGH;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.when;
-
 @Import({WmsInventoryServiceImpl.class, WmsInventoryHistoryServiceImpl.class})
 public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private WmsInventoryServiceImpl inventoryService;
+    @Resource private WmsInventoryServiceImpl inventoryService;
 
-    @Resource
-    private WmsInventoryMapper inventoryMapper;
-    @Resource
-    private WmsInventoryHistoryMapper inventoryHistoryMapper;
-    @Resource
-    private WmsItemMapper itemMapper;
-    @Resource
-    private WmsItemSkuMapper skuMapper;
+    @Resource private WmsInventoryMapper inventoryMapper;
+    @Resource private WmsInventoryHistoryMapper inventoryHistoryMapper;
+    @Resource private WmsItemMapper itemMapper;
+    @Resource private WmsItemSkuMapper skuMapper;
 
-    @MockitoBean
-    private WmsItemSkuService itemSkuService;
-    @MockitoBean
-    private WmsItemService itemService;
+    @MockitoBean private WmsItemSkuService itemSkuService;
+    @MockitoBean private WmsItemService itemService;
 
     @Test
     public void testChangeInventory_createInventory() {
@@ -121,13 +117,14 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
         WmsInventoryChangeReqDTO reqDTO = createChangeReq(sku.getId(), 100L, "5.00");
         List<WmsInventoryChangeReqDTO.Item> items = new ArrayList<>(reqDTO.getItems());
-        items.add(new WmsInventoryChangeReqDTO.Item()
-                .setSkuId(sku.getId())
-                .setWarehouseId(100L)
-                .setQuantity(new BigDecimal("7.00"))
-                .setPrice(new BigDecimal("140.00"))
-                .setTotalPrice(new BigDecimal("980.00"))
-                .setRemark("测试入库 2"));
+        items.add(
+                new WmsInventoryChangeReqDTO.Item()
+                        .setSkuId(sku.getId())
+                        .setWarehouseId(100L)
+                        .setQuantity(new BigDecimal("7.00"))
+                        .setPrice(new BigDecimal("140.00"))
+                        .setTotalPrice(new BigDecimal("980.00"))
+                        .setRemark("测试入库 2"));
         reqDTO.setItems(items);
 
         // 调用
@@ -159,13 +156,14 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         inventoryMapper.insert(createInventory(sku.getId(), 100L, "2.00"));
         WmsInventoryChangeReqDTO reqDTO = createChangeReq(sku.getId(), 100L, "3.00");
         List<WmsInventoryChangeReqDTO.Item> items = new ArrayList<>(reqDTO.getItems());
-        items.add(new WmsInventoryChangeReqDTO.Item()
-                .setSkuId(sku.getId())
-                .setWarehouseId(100L)
-                .setQuantity(new BigDecimal("4.00"))
-                .setPrice(new BigDecimal("80.00"))
-                .setTotalPrice(new BigDecimal("320.00"))
-                .setRemark("测试入库 2"));
+        items.add(
+                new WmsInventoryChangeReqDTO.Item()
+                        .setSkuId(sku.getId())
+                        .setWarehouseId(100L)
+                        .setQuantity(new BigDecimal("4.00"))
+                        .setPrice(new BigDecimal("80.00"))
+                        .setTotalPrice(new BigDecimal("320.00"))
+                        .setRemark("测试入库 2"));
         reqDTO.setItems(items);
 
         // 调用
@@ -196,20 +194,22 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
         WmsInventoryChangeReqDTO reqDTO = createChangeReq(sku.getId(), 100L, "5.00");
         List<WmsInventoryChangeReqDTO.Item> items = new ArrayList<>(reqDTO.getItems());
-        items.add(new WmsInventoryChangeReqDTO.Item()
-                .setSkuId(sku.getId())
-                .setWarehouseId(200L)
-                .setQuantity(new BigDecimal("3.00"))
-                .setPrice(new BigDecimal("60.00"))
-                .setTotalPrice(new BigDecimal("180.00"))
-                .setRemark("测试入库 2"));
-        items.add(new WmsInventoryChangeReqDTO.Item()
-                .setSkuId(sku.getId())
-                .setWarehouseId(100L)
-                .setQuantity(new BigDecimal("-2.00"))
-                .setPrice(new BigDecimal("40.00"))
-                .setTotalPrice(new BigDecimal("-80.00"))
-                .setRemark("测试出库"));
+        items.add(
+                new WmsInventoryChangeReqDTO.Item()
+                        .setSkuId(sku.getId())
+                        .setWarehouseId(200L)
+                        .setQuantity(new BigDecimal("3.00"))
+                        .setPrice(new BigDecimal("60.00"))
+                        .setTotalPrice(new BigDecimal("180.00"))
+                        .setRemark("测试入库 2"));
+        items.add(
+                new WmsInventoryChangeReqDTO.Item()
+                        .setSkuId(sku.getId())
+                        .setWarehouseId(100L)
+                        .setQuantity(new BigDecimal("-2.00"))
+                        .setPrice(new BigDecimal("40.00"))
+                        .setTotalPrice(new BigDecimal("-80.00"))
+                        .setRemark("测试出库"));
         reqDTO.setItems(items);
 
         // 调用
@@ -249,13 +249,14 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         inventoryMapper.insert(createInventory(sku.getId(), 100L, "5.00"));
         WmsInventoryChangeReqDTO reqDTO = createChangeReq(sku.getId(), 100L, "2.00");
         List<WmsInventoryChangeReqDTO.Item> items = new ArrayList<>(reqDTO.getItems());
-        items.add(new WmsInventoryChangeReqDTO.Item()
-                .setSkuId(sku.getId())
-                .setWarehouseId(200L)
-                .setQuantity(new BigDecimal("3.00"))
-                .setPrice(new BigDecimal("100.00"))
-                .setTotalPrice(new BigDecimal("300.00"))
-                .setRemark("测试入库 2"));
+        items.add(
+                new WmsInventoryChangeReqDTO.Item()
+                        .setSkuId(sku.getId())
+                        .setWarehouseId(200L)
+                        .setQuantity(new BigDecimal("3.00"))
+                        .setPrice(new BigDecimal("100.00"))
+                        .setTotalPrice(new BigDecimal("300.00"))
+                        .setRemark("测试入库 2"));
         reqDTO.setItems(items);
 
         // 调用
@@ -291,16 +292,19 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         List<Future<?>> futures = new ArrayList<>(threadCount);
         for (int i = 0; i < threadCount; i++) {
-            futures.add(executorService.submit(() -> {
-                readyLatch.countDown();
-                try {
-                    startLatch.await();
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(ex);
-                }
-                inventoryService.changeInventory(createChangeReq(sku.getId(), 100L, "1.00"));
-            }));
+            futures.add(
+                    executorService.submit(
+                            () -> {
+                                readyLatch.countDown();
+                                try {
+                                    startLatch.await();
+                                } catch (InterruptedException ex) {
+                                    Thread.currentThread().interrupt();
+                                    throw new IllegalStateException(ex);
+                                }
+                                inventoryService.changeInventory(
+                                        createChangeReq(sku.getId(), 100L, "1.00"));
+                            }));
         }
 
         try {
@@ -315,8 +319,10 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         }
 
         // 断言：并发补行后仍只有一条库存余额，数量累计正确
-        List<WmsInventoryDO> inventories = inventoryMapper.selectListByKeys(Collections.singletonList(
-                new WmsInventoryDO().setSkuId(sku.getId()).setWarehouseId(100L)));
+        List<WmsInventoryDO> inventories =
+                inventoryMapper.selectListByKeys(
+                        Collections.singletonList(
+                                new WmsInventoryDO().setSkuId(sku.getId()).setWarehouseId(100L)));
         assertEquals(1, inventories.size());
         assertEquals(0, new BigDecimal("4.00").compareTo(inventories.get(0).getQuantity()));
         assertEquals(threadCount, inventoryHistoryMapper.selectCount());
@@ -332,8 +338,14 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         mockItemSkuAndItem(item, sku);
 
         // 调用，并断言
-        assertServiceException(() -> inventoryService.changeInventory(reqDTO), INVENTORY_QUANTITY_NOT_ENOUGH,
-                item.getName(), sku.getName(), 100L, new BigDecimal("2.00"), new BigDecimal("-3.00"));
+        assertServiceException(
+                () -> inventoryService.changeInventory(reqDTO),
+                INVENTORY_QUANTITY_NOT_ENOUGH,
+                item.getName(),
+                sku.getName(),
+                100L,
+                new BigDecimal("2.00"),
+                new BigDecimal("-3.00"));
         WmsInventoryDO inventory = inventoryMapper.selectBySkuIdAndWarehouseId(sku.getId(), 100L);
         assertNotNull(inventory);
         assertEquals(0, new BigDecimal("2.00").compareTo(inventory.getQuantity()));
@@ -349,8 +361,14 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         mockItemSkuAndItem(item, sku);
 
         // 调用，并断言
-        assertServiceException(() -> inventoryService.changeInventory(reqDTO), INVENTORY_QUANTITY_NOT_ENOUGH,
-                item.getName(), sku.getName(), 100L, new BigDecimal("0.00"), new BigDecimal("-3.00"));
+        assertServiceException(
+                () -> inventoryService.changeInventory(reqDTO),
+                INVENTORY_QUANTITY_NOT_ENOUGH,
+                item.getName(),
+                sku.getName(),
+                100L,
+                new BigDecimal("0.00"),
+                new BigDecimal("-3.00"));
         assertEquals(0L, inventoryMapper.selectCount());
         assertEquals(0L, inventoryHistoryMapper.selectCount());
     }
@@ -362,19 +380,26 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
         WmsInventoryChangeReqDTO reqDTO = createChangeReq(sku.getId(), 100L, "5.00");
         List<WmsInventoryChangeReqDTO.Item> items = new ArrayList<>(reqDTO.getItems());
-        items.add(new WmsInventoryChangeReqDTO.Item()
-                .setSkuId(sku.getId())
-                .setWarehouseId(200L)
-                .setQuantity(new BigDecimal("-1.00"))
-                .setPrice(new BigDecimal("20.00"))
-                .setTotalPrice(new BigDecimal("-20.00"))
-                .setRemark("测试出库"));
+        items.add(
+                new WmsInventoryChangeReqDTO.Item()
+                        .setSkuId(sku.getId())
+                        .setWarehouseId(200L)
+                        .setQuantity(new BigDecimal("-1.00"))
+                        .setPrice(new BigDecimal("20.00"))
+                        .setTotalPrice(new BigDecimal("-20.00"))
+                        .setRemark("测试出库"));
         reqDTO.setItems(items);
         mockItemSkuAndItem(item, sku);
 
         // 调用，并断言：第二条明细库存不足，事务回滚前面补齐的库存行
-        assertServiceException(() -> inventoryService.changeInventory(reqDTO), INVENTORY_QUANTITY_NOT_ENOUGH,
-                item.getName(), sku.getName(), 200L, new BigDecimal("0.00"), new BigDecimal("-1.00"));
+        assertServiceException(
+                () -> inventoryService.changeInventory(reqDTO),
+                INVENTORY_QUANTITY_NOT_ENOUGH,
+                item.getName(),
+                sku.getName(),
+                200L,
+                new BigDecimal("0.00"),
+                new BigDecimal("-1.00"));
         assertNull(inventoryMapper.selectBySkuIdAndWarehouseId(sku.getId(), 100L));
         assertNull(inventoryMapper.selectBySkuIdAndWarehouseId(sku.getId(), 200L));
         assertEquals(0L, inventoryHistoryMapper.selectCount());
@@ -387,8 +412,8 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
         WmsInventoryDO inventory = createInventory(sku.getId(), 100L, "10.00");
         inventoryMapper.insert(inventory);
-        WmsInventoryCheckReqDTO reqDTO = createCheckReq(inventory.getId(), sku.getId(), 100L,
-                "10.00", "7.00");
+        WmsInventoryCheckReqDTO reqDTO =
+                createCheckReq(inventory.getId(), sku.getId(), 100L, "10.00", "7.00");
 
         // 调用
         inventoryService.checkInventory(reqDTO);
@@ -419,11 +444,12 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
         WmsInventoryDO inventory = createInventory(sku.getId(), 100L, "12.00");
         inventoryMapper.insert(inventory);
-        WmsInventoryCheckReqDTO reqDTO = createCheckReq(inventory.getId(), sku.getId(), 100L,
-                "10.00", "7.00");
+        WmsInventoryCheckReqDTO reqDTO =
+                createCheckReq(inventory.getId(), sku.getId(), 100L, "10.00", "7.00");
 
         // 调用，并断言
-        assertServiceException(() -> inventoryService.checkInventory(reqDTO), CHECK_ORDER_INVENTORY_CHANGED);
+        assertServiceException(
+                () -> inventoryService.checkInventory(reqDTO), CHECK_ORDER_INVENTORY_CHANGED);
         WmsInventoryDO dbInventory = inventoryMapper.selectById(inventory.getId());
         assertNotNull(dbInventory);
         assertEquals(0, new BigDecimal("12.00").compareTo(dbInventory.getQuantity()));
@@ -435,8 +461,7 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         WmsItemDO item = createItem("ITEM-001", "红富士苹果");
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
-        WmsInventoryCheckReqDTO reqDTO = createCheckReq(null, sku.getId(), 100L,
-                "0.00", "5.00");
+        WmsInventoryCheckReqDTO reqDTO = createCheckReq(null, sku.getId(), 100L, "0.00", "5.00");
 
         // 调用
         inventoryService.checkInventory(reqDTO);
@@ -459,8 +484,7 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         WmsItemDO item = createItem("ITEM-001", "红富士苹果");
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
-        WmsInventoryCheckReqDTO reqDTO = createCheckReq(null, sku.getId(), 100L,
-                "0.00", "0.00");
+        WmsInventoryCheckReqDTO reqDTO = createCheckReq(null, sku.getId(), 100L, "0.00", "0.00");
 
         // 调用
         inventoryService.checkInventory(reqDTO);
@@ -478,11 +502,11 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         WmsItemDO item = createItem("ITEM-001", "红富士苹果");
         WmsItemSkuDO sku = createSku(item.getId(), "SKU-001", "10kg 箱装");
         inventoryMapper.insert(createInventory(sku.getId(), 100L, "3.00"));
-        WmsInventoryCheckReqDTO reqDTO = createCheckReq(null, sku.getId(), 100L,
-                "0.00", "5.00");
+        WmsInventoryCheckReqDTO reqDTO = createCheckReq(null, sku.getId(), 100L, "0.00", "5.00");
 
         // 调用，并断言
-        assertServiceException(() -> inventoryService.checkInventory(reqDTO), CHECK_ORDER_INVENTORY_CHANGED);
+        assertServiceException(
+                () -> inventoryService.checkInventory(reqDTO), CHECK_ORDER_INVENTORY_CHANGED);
         WmsInventoryDO inventory = inventoryMapper.selectBySkuIdAndWarehouseId(sku.getId(), 100L);
         assertNotNull(inventory);
         assertEquals(0, new BigDecimal("3.00").compareTo(inventory.getQuantity()));
@@ -551,9 +575,11 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
         assertEquals(2, pageResult.getTotal());
         assertEquals(2, pageResult.getList().size());
         assertEquals(200L, pageResult.getList().get(0).getWarehouseId());
-        assertEquals(0, new BigDecimal("0.01").compareTo(pageResult.getList().get(0).getQuantity()));
+        assertEquals(
+                0, new BigDecimal("0.01").compareTo(pageResult.getList().get(0).getQuantity()));
         assertEquals(300L, pageResult.getList().get(1).getWarehouseId());
-        assertEquals(0, new BigDecimal("1.00").compareTo(pageResult.getList().get(1).getQuantity()));
+        assertEquals(
+                0, new BigDecimal("1.00").compareTo(pageResult.getList().get(1).getQuantity()));
     }
 
     @Test
@@ -605,23 +631,19 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
     }
 
     private WmsItemDO createItem(String code, String name) {
-        WmsItemDO item = WmsItemDO.builder()
-                .code(code)
-                .name(name)
-                .unit("箱")
-                .categoryId(1L)
-                .build();
+        WmsItemDO item = WmsItemDO.builder().code(code).name(name).unit("箱").categoryId(1L).build();
         itemMapper.insert(item);
         return item;
     }
 
     private WmsItemSkuDO createSku(Long itemId, String code, String name) {
-        WmsItemSkuDO sku = WmsItemSkuDO.builder()
-                .itemId(itemId)
-                .code(code)
-                .name(name)
-                .barCode("69010001")
-                .build();
+        WmsItemSkuDO sku =
+                WmsItemSkuDO.builder()
+                        .itemId(itemId)
+                        .code(code)
+                        .name(name)
+                        .barCode("69010001")
+                        .build();
         skuMapper.insert(sku);
         return sku;
     }
@@ -639,34 +661,40 @@ public class WmsInventoryServiceImplTest extends BaseDbUnitTest {
                 .build();
     }
 
-    private static WmsInventoryChangeReqDTO createChangeReq(Long skuId, Long warehouseId, String quantity) {
+    private static WmsInventoryChangeReqDTO createChangeReq(
+            Long skuId, Long warehouseId, String quantity) {
         return new WmsInventoryChangeReqDTO()
                 .setOrderId(1L)
                 .setOrderNo("RK202605120001")
                 .setOrderType(WmsOrderTypeEnum.RECEIPT.getType())
-                .setItems(Collections.singletonList(new WmsInventoryChangeReqDTO.Item()
-                        .setSkuId(skuId)
-                        .setWarehouseId(warehouseId)
-                        .setQuantity(new BigDecimal(quantity))
-                        .setPrice(new BigDecimal("100.00"))
-                        .setTotalPrice(new BigDecimal(quantity).multiply(new BigDecimal("100.00")))
-                        .setRemark("测试入库")));
+                .setItems(
+                        Collections.singletonList(
+                                new WmsInventoryChangeReqDTO.Item()
+                                        .setSkuId(skuId)
+                                        .setWarehouseId(warehouseId)
+                                        .setQuantity(new BigDecimal(quantity))
+                                        .setPrice(new BigDecimal("100.00"))
+                                        .setTotalPrice(
+                                                new BigDecimal(quantity)
+                                                        .multiply(new BigDecimal("100.00")))
+                                        .setRemark("测试入库")));
     }
 
-    private static WmsInventoryCheckReqDTO createCheckReq(Long inventoryId, Long skuId, Long warehouseId,
-                                                          String quantity, String checkQuantity) {
+    private static WmsInventoryCheckReqDTO createCheckReq(
+            Long inventoryId, Long skuId, Long warehouseId, String quantity, String checkQuantity) {
         return new WmsInventoryCheckReqDTO()
                 .setOrderId(2L)
                 .setOrderNo("PK202605120001")
                 .setOrderType(WmsOrderTypeEnum.CHECK.getType())
-                .setItems(Collections.singletonList(new WmsInventoryCheckReqDTO.Item()
-                        .setInventoryId(inventoryId)
-                        .setSkuId(skuId)
-                        .setWarehouseId(warehouseId)
-                        .setQuantity(new BigDecimal(quantity))
-                        .setCheckQuantity(new BigDecimal(checkQuantity))
-                        .setPrice(new BigDecimal("100.00"))
-                        .setRemark("测试盘库")));
+                .setItems(
+                        Collections.singletonList(
+                                new WmsInventoryCheckReqDTO.Item()
+                                        .setInventoryId(inventoryId)
+                                        .setSkuId(skuId)
+                                        .setWarehouseId(warehouseId)
+                                        .setQuantity(new BigDecimal(quantity))
+                                        .setCheckQuantity(new BigDecimal(checkQuantity))
+                                        .setPrice(new BigDecimal("100.00"))
+                                        .setRemark("测试盘库")));
     }
-
 }

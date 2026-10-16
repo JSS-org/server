@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.model;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -12,19 +15,19 @@ import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider.Ai1Provide
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider.Ai1ProviderSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ProviderDO;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ProviderService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - AI1 供应商")
 @RestController
@@ -32,8 +35,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class Ai1ProviderController {
 
-    @Resource
-    private Ai1ProviderService providerService;
+    @Resource private Ai1ProviderService providerService;
 
     @PostMapping("/create")
     @Operation(summary = "创建供应商")
@@ -45,7 +47,8 @@ public class Ai1ProviderController {
     @PutMapping("/update")
     @Operation(summary = "更新供应商")
     @PreAuthorize("@ss.hasPermission('ai1:provider:update')")
-    public CommonResult<Boolean> updateProvider(@Valid @RequestBody Ai1ProviderSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProvider(
+            @Valid @RequestBody Ai1ProviderSaveReqVO updateReqVO) {
         providerService.updateProvider(updateReqVO);
         return success(true);
     }
@@ -80,16 +83,27 @@ public class Ai1ProviderController {
     @GetMapping("/page")
     @Operation(summary = "获得供应商分页")
     @PreAuthorize("@ss.hasPermission('ai1:provider:query')")
-    public CommonResult<PageResult<Ai1ProviderRespVO>> getProviderPage(@Valid Ai1ProviderPageReqVO pageReqVO) {
+    public CommonResult<PageResult<Ai1ProviderRespVO>> getProviderPage(
+            @Valid Ai1ProviderPageReqVO pageReqVO) {
         PageResult<Ai1ProviderDO> pageResult = providerService.getProviderPage(pageReqVO);
-        return success(new PageResult<>(convertList(pageResult.getList(), this::buildProviderRespVO), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        convertList(pageResult.getList(), this::buildProviderRespVO),
+                        pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得供应商精简列表", description = "只包含开启状态，用于 Agent 模型、知识库向量化模型的下拉选择")
     public CommonResult<List<Ai1ProviderRespVO>> getProviderSimpleList() {
-        List<Ai1ProviderDO> list = providerService.getProviderListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, provider -> new Ai1ProviderRespVO().setId(provider.getId()).setName(provider.getName())));
+        List<Ai1ProviderDO> list =
+                providerService.getProviderListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return success(
+                convertList(
+                        list,
+                        provider ->
+                                new Ai1ProviderRespVO()
+                                        .setId(provider.getId())
+                                        .setName(provider.getName())));
     }
 
     @PostMapping("/test")
@@ -115,10 +129,9 @@ public class Ai1ProviderController {
             // 【安全性】仅完整的变量占位符原样返回；带默认值或拼接内容的密钥仍需脱敏
             respVO.setApiKey(apiKey);
         } else if (StrUtil.isNotEmpty(apiKey)) {
-            respVO.setApiKey(apiKey.length() <= 8 ? "****"
-                    : StrUtil.hide(apiKey, 3, apiKey.length() - 4));
+            respVO.setApiKey(
+                    apiKey.length() <= 8 ? "****" : StrUtil.hide(apiKey, 3, apiKey.length() - 4));
         }
         return respVO;
     }
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.skill.Ai1SkillPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.skill.Ai1SkillSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -91,5 +92,4 @@ public interface Ai1SkillService {
      * @param id 编号
      */
     void touchSkill(Long id);
-
 }

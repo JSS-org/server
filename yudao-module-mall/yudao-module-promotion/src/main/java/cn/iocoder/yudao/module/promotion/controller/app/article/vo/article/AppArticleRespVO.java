@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.article.vo.article;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,10 @@ public class AppArticleRespVO {
     @Schema(description = "文章编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "文章标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码 - 促销模块")
+    @Schema(
+            description = "文章标题",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "芋道源码 - 促销模块")
     private String title;
 
     @Schema(description = "文章作者", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码")
@@ -21,7 +25,10 @@ public class AppArticleRespVO {
     @Schema(description = "分类编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
     private Long categoryId;
 
-    @Schema(description = "图文封面", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/1.png")
+    @Schema(
+            description = "图文封面",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/1.png")
     private String picUrl;
 
     @Schema(description = "文章简介", requiredMode = Schema.RequiredMode.REQUIRED, example = "我是简介")
@@ -38,5 +45,4 @@ public class AppArticleRespVO {
 
     @Schema(description = "关联的商品 SPU 编号", example = "1024")
     private Long spuId;
-
 }

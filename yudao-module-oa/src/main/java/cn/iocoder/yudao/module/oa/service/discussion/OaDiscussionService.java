@@ -60,7 +60,8 @@ public interface OaDiscussionService {
      * @param userId 当前用户编号
      * @return 管理员可查询全部讨论，普通用户仅查询本人讨论
      */
-    PageResult<OaDiscussionDO> getDiscussionManagePage(OaDiscussionPageReqVO pageReqVO, Long userId);
+    PageResult<OaDiscussionDO> getDiscussionManagePage(
+            OaDiscussionPageReqVO pageReqVO, Long userId);
 
     /**
      * 增加讨论访问次数
@@ -76,5 +77,4 @@ public interface OaDiscussionService {
      * @return 讨论，不存在时抛出异常
      */
     OaDiscussionDO validateDiscussionExists(Long id);
-
 }

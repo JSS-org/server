@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.product.service.history;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.product.controller.admin.history.vo.ProductBrowseHistoryPageReqVO;
 import cn.iocoder.yudao.module.product.dal.dataobject.history.ProductBrowseHistoryDO;
+
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.Collection;
@@ -37,6 +38,6 @@ public interface ProductBrowseHistoryService {
      * @param pageReqVO 分页查询
      * @return 商品浏览记录分页
      */
-    PageResult<ProductBrowseHistoryDO> getBrowseHistoryPage(ProductBrowseHistoryPageReqVO pageReqVO);
-
+    PageResult<ProductBrowseHistoryDO> getBrowseHistoryPage(
+            ProductBrowseHistoryPageReqVO pageReqVO);
 }

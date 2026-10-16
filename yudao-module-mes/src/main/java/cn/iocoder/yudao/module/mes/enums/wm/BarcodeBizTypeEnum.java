@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.enums.wm;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum BarcodeBizTypeEnum implements ArrayValuable<Integer> {
-
     WAREHOUSE(MesBizTypeConstants.WM_WAREHOUSE, "仓库"),
     LOCATION(MesBizTypeConstants.WM_LOCATION, "库区"),
     AREA(MesBizTypeConstants.WM_AREA, "库位"),
@@ -35,12 +35,14 @@ public enum BarcodeBizTypeEnum implements ArrayValuable<Integer> {
     WORKSHOP(MesBizTypeConstants.MD_WORKSHOP, "车间"),
     USER(MesBizTypeConstants.MD_USER, "人员");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BarcodeBizTypeEnum::getValue).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(BarcodeBizTypeEnum::getValue).toArray(Integer[]::new);
 
     /**
      * 业务类型值
      */
     private final Integer value;
+
     /**
      * 业务类型名称
      */
@@ -50,5 +52,4 @@ public enum BarcodeBizTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

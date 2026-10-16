@@ -5,8 +5,10 @@ import cn.iocoder.yudao.framework.common.enums.TerminalEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.web.config.WebProperties;
+
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -60,7 +62,7 @@ public class WebFrameworkUtils {
      */
     public static Long getVisitTenantId(HttpServletRequest request) {
         String tenantId = request.getHeader(HEADER_VISIT_TENANT_ID);
-        return NumberUtil.isNumber(tenantId)? Long.valueOf(tenantId) : null;
+        return NumberUtil.isNumber(tenantId) ? Long.valueOf(tenantId) : null;
     }
 
     public static void setLoginUserId(ServletRequest request, Long userId) {
@@ -150,8 +152,8 @@ public class WebFrameworkUtils {
         if (!(requestAttributes instanceof ServletRequestAttributes)) {
             return null;
         }
-        ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
+        ServletRequestAttributes servletRequestAttributes =
+                (ServletRequestAttributes) requestAttributes;
         return servletRequestAttributes.getRequest();
     }
-
 }

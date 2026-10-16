@@ -3,10 +3,14 @@ package cn.iocoder.yudao.module.im.controller.admin.rtc.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.im.enums.ImConversationTypeEnum;
 import cn.iocoder.yudao.module.im.enums.rtc.ImRtcCallMediaTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.Set;
@@ -37,8 +41,8 @@ public class ImRtcCallCreateReqVO {
     @AssertTrue(message = "会话类型不支持")
     @JsonIgnore
     public boolean isConversationTypeSupported() {
-        return conversationType == null || ImConversationTypeEnum.isPrivate(conversationType)
+        return conversationType == null
+                || ImConversationTypeEnum.isPrivate(conversationType)
                 || ImConversationTypeEnum.isGroup(conversationType);
     }
-
 }

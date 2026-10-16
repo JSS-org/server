@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.MesWmProd
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.MesWmProductSalesSaveReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.MesWmProductSalesShippingReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -123,6 +124,4 @@ public interface MesWmProductSalesService {
      * @return 销售出库单
      */
     MesWmProductSalesDO validateProductSalesExistsAndDraft(Long id);
-
 }
-

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.message.vo.channel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -39,5 +40,4 @@ public class ImChannelMessageRespVO {
 
     @Schema(description = "发送时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime sendTime;
-
 }

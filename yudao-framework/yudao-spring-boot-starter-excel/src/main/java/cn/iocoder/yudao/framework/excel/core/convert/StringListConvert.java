@@ -27,8 +27,10 @@ public class StringListConvert implements Converter<List<String>> {
      * @return 字符串列表
      */
     @Override
-    public List<String> convertToJavaData(ReadCellData<?> value, ExcelContentProperty contentProperty,
-                                          GlobalConfiguration globalConfiguration) {
+    public List<String> convertToJavaData(
+            ReadCellData<?> value,
+            ExcelContentProperty contentProperty,
+            GlobalConfiguration globalConfiguration) {
         String text = value == null ? null : value.getStringValue();
         if (StrUtil.isBlank(text)) {
             return Collections.emptyList();
@@ -38,9 +40,10 @@ public class StringListConvert implements Converter<List<String>> {
     }
 
     @Override
-    public WriteCellData<String> convertToExcelData(List<String> value,
-            ExcelContentProperty contentProperty, GlobalConfiguration globalConfiguration) {
+    public WriteCellData<String> convertToExcelData(
+            List<String> value,
+            ExcelContentProperty contentProperty,
+            GlobalConfiguration globalConfiguration) {
         return new WriteCellData<>(CollUtil.isEmpty(value) ? "" : String.join("/", value));
     }
-
 }

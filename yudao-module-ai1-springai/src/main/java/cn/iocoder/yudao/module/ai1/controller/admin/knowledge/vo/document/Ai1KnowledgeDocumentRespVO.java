@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.document;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -21,7 +22,10 @@ public class Ai1KnowledgeDocumentRespVO {
     @Schema(description = "内容；分页列表不返回，编辑时通过获取接口加载", example = "三体舰队距离地球还有四光年")
     private String content;
 
-    @Schema(description = "内容长度，单位：字符", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "内容长度，单位：字符",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Integer contentLength;
 
     @Schema(description = "分片数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
@@ -35,5 +39,4 @@ public class Ai1KnowledgeDocumentRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

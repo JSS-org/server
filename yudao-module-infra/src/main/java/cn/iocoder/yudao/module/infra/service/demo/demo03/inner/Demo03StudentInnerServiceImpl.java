@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.infra.service.demo.demo03.inner;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DEMO03_STUDENT_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,17 +17,14 @@ import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.inner.Demo03CourseInnerMapper;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.inner.Demo03GradeInnerMapper;
 import cn.iocoder.yudao.module.infra.dal.mysql.demo.demo03.inner.Demo03StudentInnerMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DEMO03_STUDENT_NOT_EXISTS;
 
 /**
  * 学生 Service 实现类
@@ -33,12 +35,9 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DEMO03_STUD
 @Validated
 public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService {
 
-    @Resource
-    private Demo03StudentInnerMapper demo03StudentInnerMapper;
-    @Resource
-    private Demo03CourseInnerMapper demo03CourseInnerMapper;
-    @Resource
-    private Demo03GradeInnerMapper demo03GradeInnerMapper;
+    @Resource private Demo03StudentInnerMapper demo03StudentInnerMapper;
+    @Resource private Demo03CourseInnerMapper demo03CourseInnerMapper;
+    @Resource private Demo03GradeInnerMapper demo03GradeInnerMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -132,13 +131,17 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
     private void updateDemo03CourseList(Long studentId, List<Demo03CourseDO> list) {
         list.forEach(o -> o.setStudentId(studentId).clean());
         List<Demo03CourseDO> oldList = demo03CourseInnerMapper.selectListByStudentId(studentId);
-        List<List<Demo03CourseDO>> diffList = diffList(oldList, list, (oldVal, newVal) -> {
-            boolean same = ObjectUtil.equal(oldVal.getId(), newVal.getId());
-            if (same) {
-                newVal.setId(oldVal.getId());
-            }
-            return same;
-        });
+        List<List<Demo03CourseDO>> diffList =
+                diffList(
+                        oldList,
+                        list,
+                        (oldVal, newVal) -> {
+                            boolean same = ObjectUtil.equal(oldVal.getId(), newVal.getId());
+                            if (same) {
+                                newVal.setId(oldVal.getId());
+                            }
+                            return same;
+                        });
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(0))) {
@@ -148,7 +151,8 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
             demo03CourseInnerMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            demo03CourseInnerMapper.deleteByIds(convertList(diffList.get(2), Demo03CourseDO::getId));
+            demo03CourseInnerMapper.deleteByIds(
+                    convertList(diffList.get(2), Demo03CourseDO::getId));
         }
     }
 
@@ -190,5 +194,4 @@ public class Demo03StudentInnerServiceImpl implements Demo03StudentInnerService 
     private void deleteDemo03GradeByStudentIds(List<Long> studentIds) {
         demo03GradeInnerMapper.deleteByStudentIds(studentIds);
     }
-
 }

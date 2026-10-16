@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.ai1.util;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.spring.SpringUtil;
-import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.framework.common.exception.ServiceException;
-import org.springframework.core.env.Environment;
-
-import java.util.*;
-
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.CONFIG_PLACEHOLDER_NOT_RESOLVED;
 import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.PROVIDER_HEADERS_INVALID;
+
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
+import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+
+import org.springframework.core.env.Environment;
+
+import java.util.*;
 
 /**
  * AI1 工具类
@@ -62,16 +63,17 @@ public class Ai1Utils {
         }
         Map<String, String> headers = new LinkedHashMap<>();
         Set<String> names = new HashSet<>();
-        values.forEach((key, value) -> {
-            if (StrUtil.isBlank(key) || value == null) {
-                throw exception(PROVIDER_HEADERS_INVALID);
-            }
-            String name = key.trim();
-            if (!names.add(name.toLowerCase(Locale.ROOT))) {
-                throw exception(PROVIDER_HEADERS_INVALID);
-            }
-            headers.put(name, value);
-        });
+        values.forEach(
+                (key, value) -> {
+                    if (StrUtil.isBlank(key) || value == null) {
+                        throw exception(PROVIDER_HEADERS_INVALID);
+                    }
+                    String name = key.trim();
+                    if (!names.add(name.toLowerCase(Locale.ROOT))) {
+                        throw exception(PROVIDER_HEADERS_INVALID);
+                    }
+                    headers.put(name, value);
+                });
         if (JsonUtils.toJsonString(headers).length() > 2000) {
             throw exception(PROVIDER_HEADERS_INVALID);
         }
@@ -86,5 +88,4 @@ public class Ai1Utils {
             return false;
         }
     }
-
 }

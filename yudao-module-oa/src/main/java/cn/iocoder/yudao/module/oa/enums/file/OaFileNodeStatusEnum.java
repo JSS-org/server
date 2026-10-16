@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.file;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,17 +16,17 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaFileNodeStatusEnum implements ArrayValuable<Integer> {
-
     NORMAL(0, "正常"),
     RECYCLED(1, "回收站");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaFileNodeStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaFileNodeStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 云盘节点状态
      */
     private final Integer status;
+
     /**
      * 名称
      */
@@ -45,5 +46,4 @@ public enum OaFileNodeStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

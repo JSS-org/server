@@ -3,18 +3,22 @@ package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.common.validation.Mobile;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.time.LocalTime;
 
 /**
-* 自提门店 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 自提门店 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class DeliveryPickUpStoreBaseVO {
 
@@ -25,7 +29,10 @@ public class DeliveryPickUpStoreBaseVO {
     @Schema(description = "门店简介", example = "我是门店简介")
     private String introduction;
 
-    @Schema(description = "门店手机", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601892312")
+    @Schema(
+            description = "门店手机",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601892312")
     @NotBlank(message = "门店手机不能为空")
     @Mobile
     private String phone;
@@ -34,11 +41,17 @@ public class DeliveryPickUpStoreBaseVO {
     @NotNull(message = "区域编号不能为空")
     private Integer areaId;
 
-    @Schema(description = "门店详细地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "复旦大学路 188 号")
+    @Schema(
+            description = "门店详细地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "复旦大学路 188 号")
     @NotBlank(message = "门店详细地址不能为空")
     private String detailAddress;
 
-    @Schema(description = "门店 logo", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/1.png")
+    @Schema(
+            description = "门店 logo",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/1.png")
     @NotBlank(message = "门店 logo 不能为空")
     private String logo;
 
@@ -64,5 +77,4 @@ public class DeliveryPickUpStoreBaseVO {
     @NotNull(message = "门店状态不能为空")
     @InEnum(CommonStatusEnum.class)
     private Integer status;
-
 }

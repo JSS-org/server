@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.subject;
 
 import cn.idev.excel.annotation.ExcelProperty;
+
 import jakarta.validation.constraints.NotBlank;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,5 +41,4 @@ public class FmsSubjectImportExcelVO {
 
     @ExcelProperty("辅助核算")
     private String auxiliaryNames;
-
 }

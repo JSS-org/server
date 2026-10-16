@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.promotion.service.bargain;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.anyMatch;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
@@ -13,7 +18,9 @@ import cn.iocoder.yudao.module.promotion.controller.admin.bargain.vo.activity.Ba
 import cn.iocoder.yudao.module.promotion.convert.bargain.BargainActivityConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainActivityDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.bargain.BargainActivityMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -21,11 +28,6 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.anyMatch;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 
 /**
  * 砍价活动 Service 实现类
@@ -36,11 +38,9 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 @Validated
 public class BargainActivityServiceImpl implements BargainActivityService {
 
-    @Resource
-    private BargainActivityMapper bargainActivityMapper;
+    @Resource private BargainActivityMapper bargainActivityMapper;
 
-    @Resource
-    private ProductSkuApi productSkuApi;
+    @Resource private ProductSkuApi productSkuApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -51,9 +51,11 @@ public class BargainActivityServiceImpl implements BargainActivityService {
         validateSku(createReqVO.getSkuId());
 
         // 插入砍价活动
-        BargainActivityDO activityDO = BargainActivityConvert.INSTANCE.convert(createReqVO)
-                .setTotalStock(createReqVO.getStock())
-                .setStatus(CommonStatusEnum.ENABLE.getStatus());
+        BargainActivityDO activityDO =
+                BargainActivityConvert.INSTANCE
+                        .convert(createReqVO)
+                        .setTotalStock(createReqVO.getStock())
+                        .setStatus(CommonStatusEnum.ENABLE.getStatus());
         bargainActivityMapper.insert(activityDO);
         return activityDO.getId();
     }
@@ -102,13 +104,14 @@ public class BargainActivityServiceImpl implements BargainActivityService {
             throw exception(BARGAIN_ACTIVITY_STATUS_DISABLE);
         }
 
-        bargainActivityMapper.updateById(new BargainActivityDO().setId(id)
-                .setStatus(CommonStatusEnum.DISABLE.getStatus()));
+        bargainActivityMapper.updateById(
+                new BargainActivityDO().setId(id).setStatus(CommonStatusEnum.DISABLE.getStatus()));
     }
 
     private void validateBargainConflict(Long spuId, Long activityId) {
         // 查询所有开启的砍价活动
-        List<BargainActivityDO> activityList = bargainActivityMapper.selectListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        List<BargainActivityDO> activityList =
+                bargainActivityMapper.selectListByStatus(CommonStatusEnum.ENABLE.getStatus());
         if (activityId != null) { // 更新时排除自己
             activityList.removeIf(item -> ObjectUtil.equal(item.getId(), activityId));
         }
@@ -176,24 +179,27 @@ public class BargainActivityServiceImpl implements BargainActivityService {
     }
 
     @Override
-    public PageResult<BargainActivityDO> getBargainActivityPage(BargainActivityPageReqVO pageReqVO) {
+    public PageResult<BargainActivityDO> getBargainActivityPage(
+            BargainActivityPageReqVO pageReqVO) {
         return bargainActivityMapper.selectPage(pageReqVO);
     }
 
     @Override
     public PageResult<BargainActivityDO> getBargainActivityPage(PageParam pageReqVO) {
         // 只查询进行中，且在时间范围内的
-        return bargainActivityMapper.selectPage(pageReqVO, CommonStatusEnum.ENABLE.getStatus(), LocalDateTime.now());
+        return bargainActivityMapper.selectPage(
+                pageReqVO, CommonStatusEnum.ENABLE.getStatus(), LocalDateTime.now());
     }
 
     @Override
     public List<BargainActivityDO> getBargainActivityListByCount(Integer count) {
-        return bargainActivityMapper.selectList(count, CommonStatusEnum.ENABLE.getStatus(), LocalDateTime.now());
+        return bargainActivityMapper.selectList(
+                count, CommonStatusEnum.ENABLE.getStatus(), LocalDateTime.now());
     }
 
     @Override
     public BargainActivityDO getMatchBargainActivityBySpuId(Long spuId) {
-        return bargainActivityMapper.selectBySpuIdAndStatusAndNow(spuId, CommonStatusEnum.ENABLE.getStatus());
+        return bargainActivityMapper.selectBySpuIdAndStatusAndNow(
+                spuId, CommonStatusEnum.ENABLE.getStatus());
     }
-
 }

@@ -32,8 +32,11 @@ public interface PmsKnowledgeRecycleService {
      * @param documents 文件夹子树中的文档列表
      * @param userId 用户编号
      */
-    void recycleFolder(PmsKnowledgeFolderDO folder, List<PmsKnowledgeFolderDO> folders,
-                       List<PmsKnowledgeDocumentDO> documents, Long userId);
+    void recycleFolder(
+            PmsKnowledgeFolderDO folder,
+            List<PmsKnowledgeFolderDO> folders,
+            List<PmsKnowledgeDocumentDO> documents,
+            Long userId);
 
     /**
      * 将文档及全部子文档移入回收站，只记录本次显式删除的根文档
@@ -42,7 +45,8 @@ public interface PmsKnowledgeRecycleService {
      * @param documents 根文档及其子文档列表
      * @param userId 用户编号
      */
-    void recycleDocument(PmsKnowledgeDocumentDO document, List<PmsKnowledgeDocumentDO> documents, Long userId);
+    void recycleDocument(
+            PmsKnowledgeDocumentDO document, List<PmsKnowledgeDocumentDO> documents, Long userId);
 
     /**
      * 获得当前用户删除的知识库回收站记录
@@ -103,5 +107,4 @@ public interface PmsKnowledgeRecycleService {
      * @return 处理的回收站记录数量
      */
     int deleteExpiredRecycleRecords(LocalDateTime deleteTime);
-
 }

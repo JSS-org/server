@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.member.controller.admin.address.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.*;
+
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.*;
-import jakarta.validation.constraints.*;
 
 /**
  * 用户收件地址 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -33,5 +34,4 @@ public class AddressBaseVO {
     @Schema(description = "是否默认", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @NotNull(message = "是否默认不能为空")
     private Boolean defaultStatus;
-
 }

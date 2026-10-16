@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.enums.business;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,17 +15,20 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum CrmBusinessEndStatusEnum implements ArrayValuable<Integer> {
-
     WIN(1, "赢单"),
     LOSE(2, "输单"),
     INVALID(3, "无效");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(CrmBusinessEndStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(CrmBusinessEndStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 场景类型
      */
     private final Integer status;
+
     /**
      * 场景名称
      */
@@ -41,5 +45,4 @@ public enum CrmBusinessEndStatusEnum implements ArrayValuable<Integer> {
                 .findFirst()
                 .orElse(null);
     }
-
 }

@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mes.service.wm.warehouse;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.warehouse.vo.location.MesWmWarehouseLocationPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.warehouse.vo.location.MesWmWarehouseLocationSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * MES 库区 Service 接口
@@ -61,7 +62,8 @@ public interface MesWmWarehouseLocationService {
      * @param pageReqVO 分页参数
      * @return 库区分页
      */
-    PageResult<MesWmWarehouseLocationDO> getWarehouseLocationPage(MesWmWarehouseLocationPageReqVO pageReqVO);
+    PageResult<MesWmWarehouseLocationDO> getWarehouseLocationPage(
+            MesWmWarehouseLocationPageReqVO pageReqVO);
 
     /**
      * 按仓库获得库区列表
@@ -98,5 +100,4 @@ public interface MesWmWarehouseLocationService {
      * @return 库区
      */
     MesWmWarehouseLocationDO getWarehouseLocationByCode(String code);
-
 }

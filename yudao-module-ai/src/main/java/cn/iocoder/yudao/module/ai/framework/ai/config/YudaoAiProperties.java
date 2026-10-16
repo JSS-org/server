@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.framework.ai.config;
 
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -94,7 +95,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -108,7 +108,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -121,7 +120,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -134,7 +132,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -147,7 +144,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -161,7 +157,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -175,7 +170,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -189,7 +183,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -203,7 +196,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -214,7 +206,6 @@ public class YudaoAiProperties {
 
         private String apiKey;
         private String notifyUrl;
-
     }
 
     @Data
@@ -223,7 +214,6 @@ public class YudaoAiProperties {
         private boolean enable;
 
         private String baseUrl;
-
     }
 
     @Data
@@ -237,7 +227,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -251,7 +240,6 @@ public class YudaoAiProperties {
         private Double temperature;
         private Integer maxTokens;
         private Double topP;
-
     }
 
     @Data
@@ -260,7 +248,5 @@ public class YudaoAiProperties {
         private boolean enable;
 
         private String apiKey;
-
     }
-
 }

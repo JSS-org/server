@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.mp.dal.dataobject.material;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
+
 import me.chanjar.weixin.common.api.WxConsts;
 
 /**
@@ -29,14 +32,15 @@ public class MpMaterialDO extends BaseDO {
     /**
      * 主键
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 公众号账号的编号
      *
      * 关联 {@link MpAccountDO#getId()}
      */
     private Long accountId;
+
     /**
      * 公众号 appId
      *
@@ -48,12 +52,14 @@ public class MpMaterialDO extends BaseDO {
      * 公众号素材 id
      */
     private String mediaId;
+
     /**
      * 文件类型
      *
      * 枚举 {@link WxConsts.MediaFileType}
      */
     private String type;
+
     /**
      * 是否永久
      *
@@ -61,6 +67,7 @@ public class MpMaterialDO extends BaseDO {
      * false - 临时素材
      */
     private Boolean permanent;
+
     /**
      * 文件服务器的 URL
      */
@@ -89,11 +96,11 @@ public class MpMaterialDO extends BaseDO {
      * 只有【永久素材】使用
      */
     private String title;
+
     /**
      * 视频素材的描述
      *
      * 只有【永久素材】使用
      */
     private String introduction;
-
 }

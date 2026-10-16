@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.framework.ip.core;
 
 import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,6 +29,7 @@ public class Area {
      * 编号 - 全球，即根目录
      */
     public static final Integer ID_GLOBAL = 0;
+
     /**
      * 编号 - 中国
      */
@@ -36,10 +39,12 @@ public class Area {
      * 编号
      */
     private Integer id;
+
     /**
      * 名字
      */
     private String name;
+
     /**
      * 类型
      *
@@ -50,12 +55,10 @@ public class Area {
     /**
      * 父节点
      */
-    @JsonManagedReference
-    private Area parent;
+    @JsonManagedReference private Area parent;
+
     /**
      * 子节点
      */
-    @JsonBackReference
-    private List<Area> children;
-
+    @JsonBackReference private List<Area> children;
 }

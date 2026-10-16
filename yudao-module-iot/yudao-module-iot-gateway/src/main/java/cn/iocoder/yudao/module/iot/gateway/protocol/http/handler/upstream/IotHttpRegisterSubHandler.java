@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.http.handler.upstream;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -7,12 +9,12 @@ import cn.iocoder.yudao.module.iot.core.biz.IotDeviceCommonApi;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotSubDeviceRegisterFullReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotSubDeviceRegisterReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotSubDeviceRegisterRespDTO;
+
 import io.vertx.ext.web.RoutingContext;
+
 import lombok.Data;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 /**
  * IoT 网关 HTTP 协议的【子设备动态注册】处理器
@@ -43,16 +45,19 @@ public class IotHttpRegisterSubHandler extends IotHttpAbstractHandler {
         String productKey = context.pathParam("productKey");
         String deviceName = context.pathParam("deviceName");
         // 1.2 解析子设备列表
-        SubDeviceRegisterRequest request = deserializeRequest(context, SubDeviceRegisterRequest.class);
+        SubDeviceRegisterRequest request =
+                deserializeRequest(context, SubDeviceRegisterRequest.class);
         Assert.notNull(request, "请求参数不能为空");
         Assert.notEmpty(request.getParams(), "params 不能为空");
 
         // 2. 调用子设备动态注册
-        IotSubDeviceRegisterFullReqDTO reqDTO = new IotSubDeviceRegisterFullReqDTO()
-                .setGatewayProductKey(productKey)
-                .setGatewayDeviceName(deviceName)
-                .setSubDevices(request.getParams());
-        CommonResult<List<IotSubDeviceRegisterRespDTO>> result = deviceApi.registerSubDevices(reqDTO);
+        IotSubDeviceRegisterFullReqDTO reqDTO =
+                new IotSubDeviceRegisterFullReqDTO()
+                        .setGatewayProductKey(productKey)
+                        .setGatewayDeviceName(deviceName)
+                        .setSubDevices(request.getParams());
+        CommonResult<List<IotSubDeviceRegisterRespDTO>> result =
+                deviceApi.registerSubDevices(reqDTO);
         result.checkError();
 
         // 3. 返回结果
@@ -63,7 +68,5 @@ public class IotHttpRegisterSubHandler extends IotHttpAbstractHandler {
     public static class SubDeviceRegisterRequest {
 
         private List<IotSubDeviceRegisterReqDTO> params;
-
     }
-
 }

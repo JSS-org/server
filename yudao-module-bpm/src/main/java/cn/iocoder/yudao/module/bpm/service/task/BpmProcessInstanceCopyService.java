@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.bpm.service.task;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.bpm.controller.admin.task.vo.instance.BpmProcessInstanceCopyPageReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.task.BpmProcessInstanceCopyDO;
+
 import jakarta.validation.constraints.NotEmpty;
+
 import org.flowable.bpmn.model.FlowNode;
 
 import java.util.Collection;
@@ -34,11 +36,13 @@ public interface BpmProcessInstanceCopyService {
      * @param activityName 任务编号（对应 {@link FlowNode#getName()}）
      * @param taskId 任务编号，允许空
      */
-    void createProcessInstanceCopy(Collection<Long> userIds, String reason,
-                                   @NotEmpty(message = "流程实例编号不能为空") String processInstanceId,
-                                   @NotEmpty(message = "流程活动编号不能为空") String activityId,
-                                   @NotEmpty(message = "流程活动名字不能为空") String activityName,
-                                   String taskId);
+    void createProcessInstanceCopy(
+            Collection<Long> userIds,
+            String reason,
+            @NotEmpty(message = "流程实例编号不能为空") String processInstanceId,
+            @NotEmpty(message = "流程活动编号不能为空") String activityId,
+            @NotEmpty(message = "流程活动名字不能为空") String activityName,
+            String taskId);
 
     /**
      * 获得抄送的流程的分页
@@ -47,8 +51,8 @@ public interface BpmProcessInstanceCopyService {
      * @param pageReqVO 分页请求
      * @return 抄送的分页结果
      */
-    PageResult<BpmProcessInstanceCopyDO> getProcessInstanceCopyPage(Long userId,
-                                                                    BpmProcessInstanceCopyPageReqVO pageReqVO);
+    PageResult<BpmProcessInstanceCopyDO> getProcessInstanceCopyPage(
+            Long userId, BpmProcessInstanceCopyPageReqVO pageReqVO);
 
     /**
      * 删除抄送流程
@@ -56,5 +60,4 @@ public interface BpmProcessInstanceCopyService {
      * @param processInstanceId 流程实例 ID
      */
     void deleteProcessInstanceCopy(String processInstanceId);
-
 }

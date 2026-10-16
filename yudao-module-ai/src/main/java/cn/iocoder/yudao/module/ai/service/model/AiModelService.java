@@ -1,20 +1,24 @@
 package cn.iocoder.yudao.module.ai.service.model;
 
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.suno.api.SunoApi;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.model.AiModelPageReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.model.AiModelSaveReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.suno.api.SunoApi;
+
 import dev.tinyflow.core.Tinyflow;
+
 import jakarta.validation.Valid;
+
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.vectorstore.VectorStore;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * AI 模型 Service 接口
@@ -87,8 +91,8 @@ public interface AiModelService {
      * @param platform 平台，允许空
      * @return 模型列表
      */
-    List<AiModelDO> getModelListByStatusAndType(Integer status, Integer type,
-                                                @Nullable String platform);
+    List<AiModelDO> getModelListByStatusAndType(
+            Integer status, Integer type, @Nullable String platform);
 
     // ========== 与 Spring AI 集成 ==========
 
@@ -139,5 +143,4 @@ public interface AiModelService {
      * @param modelId AI 模型 ID
      */
     void getLLmProvider4Tinyflow(Tinyflow tinyflow, Long modelId);
-
 }

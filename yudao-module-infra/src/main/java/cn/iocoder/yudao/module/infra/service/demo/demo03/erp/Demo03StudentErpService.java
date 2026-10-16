@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.infra.controller.admin.demo.demo03.erp.vo.Demo03S
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03CourseDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03GradeDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.demo.demo03.Demo03StudentDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -158,5 +159,4 @@ public interface Demo03StudentErpService {
      * @return 学生班级
      */
     Demo03GradeDO getDemo03Grade(Long id);
-
 }

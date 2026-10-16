@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.supply;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.bpm.api.task.BpmProcessInstanceApi;
@@ -10,8 +18,10 @@ import cn.iocoder.yudao.module.oa.dal.mysql.supply.*;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.ConstraintViolationException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -25,13 +35,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link OaSupplyApplyServiceImpl} 的单元测试类
  *
@@ -40,24 +43,16 @@ import static org.mockito.Mockito.*;
 @Import({OaSupplyApplyServiceImpl.class, ValidationAutoConfiguration.class})
 public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaSupplyApplyService supplyApplyService;
+    @Resource private OaSupplyApplyService supplyApplyService;
 
-    @Resource
-    private OaSupplyApplyMapper supplyApplyMapper;
-    @Resource
-    private OaSupplyApplyItemMapper supplyApplyItemMapper;
-    @Resource
-    private PlatformTransactionManager transactionManager;
+    @Resource private OaSupplyApplyMapper supplyApplyMapper;
+    @Resource private OaSupplyApplyItemMapper supplyApplyItemMapper;
+    @Resource private PlatformTransactionManager transactionManager;
 
-    @MockitoBean
-    private OaSupplyItemService supplyItemService;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private OaNoRedisDAO noRedisDAO;
-    @MockitoBean
-    private BpmProcessInstanceApi processInstanceApi;
+    @MockitoBean private OaSupplyItemService supplyItemService;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private OaNoRedisDAO noRedisDAO;
+    @MockitoBean private BpmProcessInstanceApi processInstanceApi;
 
     @Test
     public void testGetPendingSupplyItemCount_statusAndDeletion() {
@@ -76,18 +71,27 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testHasUnreturnedSupplyItem_quantityAndType() {
         // mock 数据：借用品已发放 3 件，已归还 1 件
-        OaSupplyApplyItemDO item = randomSupplyApplyItemDO().setItemId(10L).setManageType(2)
-                .setIssuedQuantity(3).setReturnedQuantity(1);
+        OaSupplyApplyItemDO item =
+                randomSupplyApplyItemDO()
+                        .setItemId(10L)
+                        .setManageType(2)
+                        .setIssuedQuantity(3)
+                        .setReturnedQuantity(1);
         supplyApplyItemMapper.insert(item);
 
         // 调用，并断言
         assertEquals(1L, supplyApplyService.getUnreturnedSupplyItemCount(10L));
         assertEquals(0L, supplyApplyService.getUnreturnedSupplyItemCount(11L));
-        supplyApplyItemMapper.updateById(new OaSupplyApplyItemDO().setId(item.getId()).setReturnedQuantity(3));
+        supplyApplyItemMapper.updateById(
+                new OaSupplyApplyItemDO().setId(item.getId()).setReturnedQuantity(3));
         assertEquals(0L, supplyApplyService.getUnreturnedSupplyItemCount(10L));
         // 消耗品发放后不要求归还
-        supplyApplyItemMapper.insert(randomSupplyApplyItemDO().setItemId(10L).setManageType(1)
-                .setIssuedQuantity(3).setReturnedQuantity(0));
+        supplyApplyItemMapper.insert(
+                randomSupplyApplyItemDO()
+                        .setItemId(10L)
+                        .setManageType(1)
+                        .setIssuedQuantity(3)
+                        .setReturnedQuantity(0));
         assertEquals(0L, supplyApplyService.getUnreturnedSupplyItemCount(10L));
     }
 
@@ -113,7 +117,8 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         supplyApplyMapper.insert(randomSupplyApplyDO());
 
         // 调用
-        Map<Long, OaSupplyApplyDO> applies = supplyApplyService.getSupplyApplyMap(Collections.singletonList(apply.getId()));
+        Map<Long, OaSupplyApplyDO> applies =
+                supplyApplyService.getSupplyApplyMap(Collections.singletonList(apply.getId()));
 
         // 断言
         assertEquals(1, applies.size());
@@ -123,14 +128,32 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateSupplyApply_success() {
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setApplyTime(LocalDateTime.now())
-                .setUseType(1).setPickupMethod(1).setReason("办公领用").setFileUrls(Collections.emptyList())
-                .setItems(Collections.singletonList(new OaSupplyApplySaveReqVO.Item().setItemId(10L).setApplyQuantity(2)));
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setApplyTime(LocalDateTime.now())
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("办公领用")
+                        .setFileUrls(Collections.emptyList())
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item()
+                                                .setItemId(10L)
+                                                .setApplyQuantity(2)));
         // mock 方法
-        when(adminUserApi.validateUser(1L)).thenReturn(new AdminUserRespDTO().setId(1L).setDeptId(100L));
+        when(adminUserApi.validateUser(1L))
+                .thenReturn(new AdminUserRespDTO().setId(1L).setDeptId(100L));
         when(noRedisDAO.generate(anyString())).thenReturn("YP-TEST");
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(Collections.singletonMap(10L,
-                new OaSupplyItemDO().setId(10L).setName("白板笔").setUnit("支").setManageType(1).setStatus(0)));
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        Collections.singletonMap(
+                                10L,
+                                new OaSupplyItemDO()
+                                        .setId(10L)
+                                        .setName("白板笔")
+                                        .setUnit("支")
+                                        .setManageType(1)
+                                        .setStatus(0)));
 
         // 调用
         Long id = supplyApplyService.createSupplyApply(reqVO, 1L);
@@ -148,17 +171,36 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         supplyApplyMapper.insert(randomSupplyApplyDO().setNo("YP-TEST"));
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setApplyTime(LocalDateTime.now())
-                .setUseType(1).setPickupMethod(1).setReason("办公领用").setFileUrls(Collections.emptyList())
-                .setItems(Collections.singletonList(new OaSupplyApplySaveReqVO.Item().setItemId(10L).setApplyQuantity(2)));
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setApplyTime(LocalDateTime.now())
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("办公领用")
+                        .setFileUrls(Collections.emptyList())
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item()
+                                                .setItemId(10L)
+                                                .setApplyQuantity(2)));
         // mock 方法
-        when(adminUserApi.validateUser(1L)).thenReturn(new AdminUserRespDTO().setId(1L).setDeptId(100L));
+        when(adminUserApi.validateUser(1L))
+                .thenReturn(new AdminUserRespDTO().setId(1L).setDeptId(100L));
         when(noRedisDAO.generate(anyString())).thenReturn("YP-TEST");
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(Collections.singletonMap(10L,
-                new OaSupplyItemDO().setId(10L).setName("白板笔").setUnit("支").setManageType(1).setStatus(0)));
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        Collections.singletonMap(
+                                10L,
+                                new OaSupplyItemDO()
+                                        .setId(10L)
+                                        .setName("白板笔")
+                                        .setUnit("支")
+                                        .setManageType(1)
+                                        .setStatus(0)));
 
         // 调用，并断言：申请单号冲突不能提示为物品编号冲突
-        assertServiceException(() -> supplyApplyService.createSupplyApply(reqVO, 1L), SUPPLY_APPLY_NO_DUPLICATE);
+        assertServiceException(
+                () -> supplyApplyService.createSupplyApply(reqVO, 1L), SUPPLY_APPLY_NO_DUPLICATE);
     }
 
     @Test
@@ -167,33 +209,46 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO();
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> supplyApplyService.createSupplyApply(reqVO, 1L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> supplyApplyService.createSupplyApply(reqVO, 1L));
         verifyNoInteractions(supplyItemService, adminUserApi, noRedisDAO, processInstanceApi);
     }
 
     @Test
     public void testCreateSupplyApply_quantityMissing() {
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setApplyTime(LocalDateTime.now())
-                .setUseType(1).setPickupMethod(1).setReason("办公领用").setItems(Collections.singletonList(
-                new OaSupplyApplySaveReqVO.Item().setItemId(10L)));
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setApplyTime(LocalDateTime.now())
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("办公领用")
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item().setItemId(10L)));
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> supplyApplyService.createSupplyApply(reqVO, 1L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> supplyApplyService.createSupplyApply(reqVO, 1L));
         verifyNoInteractions(supplyItemService, adminUserApi, noRedisDAO, processInstanceApi);
     }
 
     @Test
     public void testUpdateSupplyApply_missingInformation() {
         // mock 数据
-        OaSupplyApplyDO apply = randomSupplyApplyDO().setStatus(3).setProcessInstanceId("old-process");
+        OaSupplyApplyDO apply =
+                randomSupplyApplyDO().setStatus(3).setProcessInstanceId("old-process");
         supplyApplyMapper.insert(apply);
         supplyApplyItemMapper.insert(randomSupplyApplyItemDO().setApplyId(apply.getId()));
         // 准备参数
         OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setId(apply.getId());
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> supplyApplyService.updateSupplyApply(reqVO, 1L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> supplyApplyService.updateSupplyApply(reqVO, 1L));
 
         // 断言
         OaSupplyApplyDO actual = supplyApplyMapper.selectById(apply.getId());
@@ -211,17 +266,36 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateSupplyApply_nullFieldsIgnored() {
         // mock 数据
-        OaSupplyApplyDO apply = randomSupplyApplyDO().setStatus(3).setProcessInstanceId("old-process")
-                .setRemark("原备注").setFileUrls(Collections.singletonList("https://example.com/test.pdf"));
+        OaSupplyApplyDO apply =
+                randomSupplyApplyDO()
+                        .setStatus(3)
+                        .setProcessInstanceId("old-process")
+                        .setRemark("原备注")
+                        .setFileUrls(Collections.singletonList("https://example.com/test.pdf"));
         supplyApplyMapper.insert(apply);
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setId(apply.getId())
-                .setApplyTime(LocalDateTime.of(2026, 9, 15, 0, 0)).setUseType(1).setPickupMethod(1)
-                .setReason("更新事由").setItems(Collections.singletonList(
-                        new OaSupplyApplySaveReqVO.Item().setItemId(10L).setApplyQuantity(2)));
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setId(apply.getId())
+                        .setApplyTime(LocalDateTime.of(2026, 9, 15, 0, 0))
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("更新事由")
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item()
+                                                .setItemId(10L)
+                                                .setApplyQuantity(2)));
         // mock 方法
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(Collections.singletonMap(10L,
-                new OaSupplyItemDO().setId(10L).setName("白板笔").setManageType(1).setStatus(0)));
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        Collections.singletonMap(
+                                10L,
+                                new OaSupplyItemDO()
+                                        .setId(10L)
+                                        .setName("白板笔")
+                                        .setManageType(1)
+                                        .setStatus(0)));
 
         // 调用
         supplyApplyService.updateSupplyApply(reqVO, 1L);
@@ -239,17 +313,35 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateSupplyApply_completeDraft() {
         // mock 数据
-        OaSupplyApplyDO apply = randomSupplyApplyDO().setStatus(-1).setApplyTime(null).setReason(null);
+        OaSupplyApplyDO apply =
+                randomSupplyApplyDO().setStatus(-1).setApplyTime(null).setReason(null);
         supplyApplyMapper.insert(apply);
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setId(apply.getId())
-                .setApplyTime(LocalDateTime.of(2026, 9, 15, 0, 0)).setUseType(1).setPickupMethod(1)
-                .setReason("补全草稿").setFileUrls(Collections.singletonList("https://example.com/test.pdf"))
-                .setItems(Collections.singletonList(new OaSupplyApplySaveReqVO.Item().setItemId(10L).setApplyQuantity(2)));
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setId(apply.getId())
+                        .setApplyTime(LocalDateTime.of(2026, 9, 15, 0, 0))
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("补全草稿")
+                        .setFileUrls(Collections.singletonList("https://example.com/test.pdf"))
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item()
+                                                .setItemId(10L)
+                                                .setApplyQuantity(2)));
         // mock 方法
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(Collections.singletonMap(10L,
-                new OaSupplyItemDO().setId(10L).setName("白板笔").setManageType(1).setStatus(0)));
-        when(processInstanceApi.createProcessInstance(eq(1L), any())).thenReturn("process-complete");
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        Collections.singletonMap(
+                                10L,
+                                new OaSupplyItemDO()
+                                        .setId(10L)
+                                        .setName("白板笔")
+                                        .setManageType(1)
+                                        .setStatus(0)));
+        when(processInstanceApi.createProcessInstance(eq(1L), any()))
+                .thenReturn("process-complete");
 
         // 调用
         supplyApplyService.updateSupplyApply(reqVO, 1L);
@@ -268,9 +360,17 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @ValueSource(strings = {"applyTime", "useType", "pickupMethod", "reason"})
     public void testCreateSupplyApply_missingInformation(String field) {
         // mock 数据
-        OaSupplyApplySaveReqVO apply = new OaSupplyApplySaveReqVO().setApplyTime(LocalDateTime.now())
-                .setUseType(1).setPickupMethod(1).setReason("办公领用")
-                .setItems(Collections.singletonList(new OaSupplyApplySaveReqVO.Item().setItemId(10L).setApplyQuantity(2)));
+        OaSupplyApplySaveReqVO apply =
+                new OaSupplyApplySaveReqVO()
+                        .setApplyTime(LocalDateTime.now())
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("办公领用")
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item()
+                                                .setItemId(10L)
+                                                .setApplyQuantity(2)));
         switch (field) {
             case "applyTime":
                 apply.setApplyTime(null);
@@ -287,30 +387,49 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         }
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> supplyApplyService.createSupplyApply(apply, 1L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> supplyApplyService.createSupplyApply(apply, 1L));
         verifyNoInteractions(processInstanceApi, noRedisDAO, supplyItemService);
     }
 
     @Test
     public void testCreateSupplyApply_emptyItems() {
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setApplyTime(LocalDateTime.now())
-                .setUseType(1).setPickupMethod(1).setReason("办公领用").setItems(Collections.emptyList());
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setApplyTime(LocalDateTime.now())
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("办公领用")
+                        .setItems(Collections.emptyList());
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> supplyApplyService.createSupplyApply(reqVO, 1L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> supplyApplyService.createSupplyApply(reqVO, 1L));
         verifyNoInteractions(processInstanceApi);
     }
 
     @Test
     public void testCreateSupplyApply_invalidQuantity() {
         // 准备参数
-        OaSupplyApplySaveReqVO reqVO = new OaSupplyApplySaveReqVO().setApplyTime(LocalDateTime.now())
-                .setUseType(1).setPickupMethod(1).setReason("办公领用")
-                .setItems(Collections.singletonList(new OaSupplyApplySaveReqVO.Item().setItemId(10L).setApplyQuantity(0)));
+        OaSupplyApplySaveReqVO reqVO =
+                new OaSupplyApplySaveReqVO()
+                        .setApplyTime(LocalDateTime.now())
+                        .setUseType(1)
+                        .setPickupMethod(1)
+                        .setReason("办公领用")
+                        .setItems(
+                                Collections.singletonList(
+                                        new OaSupplyApplySaveReqVO.Item()
+                                                .setItemId(10L)
+                                                .setApplyQuantity(0)));
 
         // 调用，并断言
-        assertThrows(ConstraintViolationException.class, () -> supplyApplyService.createSupplyApply(reqVO, 1L));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> supplyApplyService.createSupplyApply(reqVO, 1L));
         verifyNoInteractions(processInstanceApi);
     }
 
@@ -322,11 +441,17 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         supplyApplyMapper.insert(apply);
         supplyApplyItemMapper.insert(randomSupplyApplyItemDO().setApplyId(apply.getId()));
         // mock 方法
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(deleted ? Collections.emptyMap()
-                : Collections.singletonMap(10L, new OaSupplyItemDO().setId(10L).setStatus(1)));
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        deleted
+                                ? Collections.emptyMap()
+                                : Collections.singletonMap(
+                                        10L, new OaSupplyItemDO().setId(10L).setStatus(1)));
 
         // 调用，并断言异常
-        assertServiceException(() -> supplyApplyService.submitSupplyApply(apply.getId(), 1L), SUPPLY_APPLY_ITEM_INVALID);
+        assertServiceException(
+                () -> supplyApplyService.submitSupplyApply(apply.getId(), 1L),
+                SUPPLY_APPLY_ITEM_INVALID);
         assertEquals(-1, supplyApplyMapper.selectById(apply.getId()).getStatus());
         verifyNoInteractions(processInstanceApi);
     }
@@ -338,8 +463,10 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         supplyApplyMapper.insert(apply);
         supplyApplyItemMapper.insert(randomSupplyApplyItemDO().setApplyId(apply.getId()));
         // mock 方法
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(Collections.singletonMap(10L,
-                new OaSupplyItemDO().setId(10L).setStatus(0)));
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        Collections.singletonMap(
+                                10L, new OaSupplyItemDO().setId(10L).setStatus(0)));
         when(processInstanceApi.createProcessInstance(eq(1L), any())).thenReturn("process-1");
 
         // 调用
@@ -358,22 +485,33 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         supplyApplyMapper.insert(apply);
         supplyApplyItemMapper.insert(randomSupplyApplyItemDO().setApplyId(apply.getId()));
         // mock 方法
-        when(supplyItemService.getSupplyItemMap(anyCollection())).thenReturn(Collections.singletonMap(10L,
-                new OaSupplyItemDO().setId(10L).setStatus(0)));
-        when(processInstanceApi.createProcessInstance(eq(1L), any())).thenThrow(new IllegalStateException("流程未部署"));
+        when(supplyItemService.getSupplyItemMap(anyCollection()))
+                .thenReturn(
+                        Collections.singletonMap(
+                                10L, new OaSupplyItemDO().setId(10L).setStatus(0)));
+        when(processInstanceApi.createProcessInstance(eq(1L), any()))
+                .thenThrow(new IllegalStateException("流程未部署"));
 
         // 调用，并断言
-        assertThrows(IllegalStateException.class, () -> new TransactionTemplate(transactionManager)
-                .executeWithoutResult(status -> supplyApplyService.submitSupplyApply(apply.getId(), 1L)));
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        new TransactionTemplate(transactionManager)
+                                .executeWithoutResult(
+                                        status ->
+                                                supplyApplyService.submitSupplyApply(
+                                                        apply.getId(), 1L)));
         assertEquals(-1, supplyApplyMapper.selectById(apply.getId()).getStatus());
     }
 
     @Test
     public void testUpdateSupplyApplyStatus_approve() {
         // mock 数据
-        OaSupplyApplyDO apply = randomSupplyApplyDO().setStatus(1).setProcessInstanceId("process-1");
+        OaSupplyApplyDO apply =
+                randomSupplyApplyDO().setStatus(1).setProcessInstanceId("process-1");
         supplyApplyMapper.insert(apply);
-        OaSupplyApplyItemDO item = randomSupplyApplyItemDO().setApplyId(apply.getId()).setStatus(-1);
+        OaSupplyApplyItemDO item =
+                randomSupplyApplyItemDO().setApplyId(apply.getId()).setStatus(-1);
         supplyApplyItemMapper.insert(item);
 
         // 调用
@@ -387,7 +525,8 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateSupplyApplyStatus_oldProcessIgnored() {
         // mock 数据
-        OaSupplyApplyDO apply = randomSupplyApplyDO().setStatus(1).setProcessInstanceId("new-process");
+        OaSupplyApplyDO apply =
+                randomSupplyApplyDO().setStatus(1).setProcessInstanceId("new-process");
         supplyApplyMapper.insert(apply);
 
         // 调用
@@ -400,9 +539,14 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateSupplyApplyStatus_repeatApprove() {
         // mock 数据
-        OaSupplyApplyDO apply = randomSupplyApplyDO().setStatus(2).setProcessInstanceId("process-1");
+        OaSupplyApplyDO apply =
+                randomSupplyApplyDO().setStatus(2).setProcessInstanceId("process-1");
         supplyApplyMapper.insert(apply);
-        OaSupplyApplyItemDO item = randomSupplyApplyItemDO().setApplyId(apply.getId()).setStatus(2).setIssuedQuantity(3);
+        OaSupplyApplyItemDO item =
+                randomSupplyApplyItemDO()
+                        .setApplyId(apply.getId())
+                        .setStatus(2)
+                        .setIssuedQuantity(3);
         supplyApplyItemMapper.insert(item);
 
         // 调用
@@ -415,7 +559,6 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         assertEquals(3, dbItem.getIssuedQuantity());
     }
 
-
     @Test
     public void testDeleteSupplyApply_notOwner() {
         // mock 数据
@@ -423,7 +566,9 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
         supplyApplyMapper.insert(apply);
 
         // 调用，并断言异常
-        assertServiceException(() -> supplyApplyService.deleteSupplyApply(apply.getId(), 2L), SUPPLY_APPLY_ACCESS_DENIED);
+        assertServiceException(
+                () -> supplyApplyService.deleteSupplyApply(apply.getId(), 2L),
+                SUPPLY_APPLY_ACCESS_DENIED);
         assertNotNull(supplyApplyMapper.selectById(apply.getId()));
     }
 
@@ -435,9 +580,18 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaSupplyApplyDO randomSupplyApplyDO() {
-        return randomPojo(OaSupplyApplyDO.class, apply -> apply.setId(null).setStatus(2)
-                .setDeptId(100L).setUseType(1).setPickupMethod(1).setFileUrls(Collections.emptyList())
-                .setProcessInstanceId(null).setCreator("1").setDeleted(false));
+        return randomPojo(
+                OaSupplyApplyDO.class,
+                apply ->
+                        apply.setId(null)
+                                .setStatus(2)
+                                .setDeptId(100L)
+                                .setUseType(1)
+                                .setPickupMethod(1)
+                                .setFileUrls(Collections.emptyList())
+                                .setProcessInstanceId(null)
+                                .setCreator("1")
+                                .setDeleted(false));
     }
 
     /**
@@ -446,9 +600,16 @@ public class OaSupplyApplyServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaSupplyApplyItemDO randomSupplyApplyItemDO() {
-        return randomPojo(OaSupplyApplyItemDO.class, item -> item.setId(null).setItemId(10L)
-                .setStatus(0).setManageType(2).setApplyQuantity(3).setIssuedQuantity(0)
-                .setReturnedQuantity(0).setDeleted(false));
+        return randomPojo(
+                OaSupplyApplyItemDO.class,
+                item ->
+                        item.setId(null)
+                                .setItemId(10L)
+                                .setStatus(0)
+                                .setManageType(2)
+                                .setApplyQuantity(3)
+                                .setIssuedQuantity(0)
+                                .setReturnedQuantity(0)
+                                .setDeleted(false));
     }
-
 }

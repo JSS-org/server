@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.iot.service.rule.data.action;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotMqttDataRuleAction} 的单元测试
@@ -19,8 +20,7 @@ class IotMqttDataRuleActionTest {
 
     private IotMqttDataRuleAction mqttDataRuleAction;
 
-    @Mock
-    private MqttClient mqttClient;
+    @Mock private MqttClient mqttClient;
 
     @BeforeEach
     public void setUp() {
@@ -59,5 +59,4 @@ class IotMqttDataRuleActionTest {
         verify(mqttClient, never()).disconnect();
         verify(mqttClient, times(1)).close();
     }
-
 }

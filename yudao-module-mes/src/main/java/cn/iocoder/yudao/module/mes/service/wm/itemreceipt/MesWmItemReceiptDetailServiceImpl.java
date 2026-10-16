@@ -1,16 +1,21 @@
 package cn.iocoder.yudao.module.mes.service.wm.itemreceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt.vo.detail.MesWmItemReceiptDetailSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDetailDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.itemreceipt.MesWmItemReceiptDetailMapper;
-import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
-import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
+import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
+import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -19,9 +24,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 采购入库明细 Service 实现类
  */
@@ -29,25 +31,15 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmItemReceiptDetailServiceImpl implements MesWmItemReceiptDetailService {
 
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmBatchService batchService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmBatchService batchService;
 
-    @Resource
-    private MesWmItemReceiptDetailMapper itemReceiptDetailMapper;
+    @Resource private MesWmItemReceiptDetailMapper itemReceiptDetailMapper;
 
-    @Resource
-    @Lazy
-    private MesWmItemReceiptService itemReceiptService;
-    @Resource
-    @Lazy
-    private MesWmItemReceiptLineService itemReceiptLineService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
-    @Resource
-    @Lazy
-    private MesWmMaterialStockService materialStockService;
+    @Resource @Lazy private MesWmItemReceiptService itemReceiptService;
+    @Resource @Lazy private MesWmItemReceiptLineService itemReceiptLineService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource @Lazy private MesWmMaterialStockService materialStockService;
 
     @Override
     public Long createItemReceiptDetail(MesWmItemReceiptDetailSaveReqVO createReqVO) {
@@ -56,7 +48,8 @@ public class MesWmItemReceiptDetailServiceImpl implements MesWmItemReceiptDetail
         validateItemReceiptDetailSaveData(createReqVO);
 
         // 2. 插入
-        MesWmItemReceiptDetailDO detail = BeanUtils.toBean(createReqVO, MesWmItemReceiptDetailDO.class);
+        MesWmItemReceiptDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmItemReceiptDetailDO.class);
         itemReceiptDetailMapper.insert(detail);
 
         // 3. 插入后校验数量是否超出
@@ -75,7 +68,8 @@ public class MesWmItemReceiptDetailServiceImpl implements MesWmItemReceiptDetail
         validateItemReceiptDetailSaveData(updateReqVO);
 
         // 2. 更新
-        MesWmItemReceiptDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmItemReceiptDetailDO.class);
+        MesWmItemReceiptDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmItemReceiptDetailDO.class);
         itemReceiptDetailMapper.updateById(updateObj);
 
         // 3. 更新后校验数量是否超出
@@ -103,9 +97,11 @@ public class MesWmItemReceiptDetailServiceImpl implements MesWmItemReceiptDetail
             batchService.validateBatchExists(reqVO.getBatchId(), reqVO.getItemId());
         }
         // 校验库区关系
-        warehouseAreaService.validateWarehouseAreaExists(reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
+        warehouseAreaService.validateWarehouseAreaExists(
+                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
         // 校验库位物料/批次混放规则
-        materialStockService.checkAreaMixingRule(reqVO.getAreaId(), reqVO.getItemId(), reqVO.getBatchId());
+        materialStockService.checkAreaMixingRule(
+                reqVO.getAreaId(), reqVO.getItemId(), reqVO.getBatchId());
     }
 
     @Override
@@ -163,11 +159,14 @@ public class MesWmItemReceiptDetailServiceImpl implements MesWmItemReceiptDetail
             return;
         }
         List<MesWmItemReceiptDetailDO> details = itemReceiptDetailMapper.selectListByLineId(lineId);
-        BigDecimal totalDetailQty = CollectionUtils.getSumValue(details,
-                MesWmItemReceiptDetailDO::getQuantity, BigDecimal::add, BigDecimal.ZERO);
+        BigDecimal totalDetailQty =
+                CollectionUtils.getSumValue(
+                        details,
+                        MesWmItemReceiptDetailDO::getQuantity,
+                        BigDecimal::add,
+                        BigDecimal.ZERO);
         if (totalDetailQty.compareTo(line.getReceivedQuantity()) > 0) {
             throw exception(WM_ITEM_RECEIPT_DETAIL_QUANTITY_EXCEED);
         }
     }
-
 }

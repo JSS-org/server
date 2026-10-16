@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.common.biz.infra.logger;
 
 import cn.iocoder.yudao.framework.common.biz.infra.logger.dto.ApiAccessLogCreateReqDTO;
+
 import jakarta.validation.Valid;
+
 import org.springframework.scheduling.annotation.Async;
 
 /**
@@ -27,5 +29,4 @@ public interface ApiAccessLogCommonApi {
     default void createApiAccessLogAsync(ApiAccessLogCreateReqDTO createDTO) {
         createApiAccessLog(createDTO);
     }
-
 }

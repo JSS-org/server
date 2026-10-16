@@ -16,5 +16,4 @@ public class LocalWebSocketMessageSender extends AbstractWebSocketMessageSender 
     public LocalWebSocketMessageSender(WebSocketSessionManager sessionManager) {
         super(sessionManager);
     }
-
 }

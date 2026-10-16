@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.core.enums;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +18,6 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum IotProtocolTypeEnum implements ArrayValuable<String> {
-
     TCP("tcp"),
     UDP("udp"),
     WEBSOCKET("websocket"),
@@ -28,7 +28,8 @@ public enum IotProtocolTypeEnum implements ArrayValuable<String> {
     MODBUS_TCP_CLIENT("modbus_tcp_client"),
     MODBUS_TCP_SERVER("modbus_tcp_server");
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(IotProtocolTypeEnum::getType).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(IotProtocolTypeEnum::getType).toArray(String[]::new);
 
     /**
      * 类型
@@ -43,5 +44,4 @@ public enum IotProtocolTypeEnum implements ArrayValuable<String> {
     public static IotProtocolTypeEnum of(String type) {
         return ArrayUtil.firstMatch(e -> e.getType().equals(type), values());
     }
-
 }

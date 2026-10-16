@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.crm.service.business;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +14,9 @@ import cn.iocoder.yudao.module.crm.dal.dataobject.business.CrmBusinessStatusDO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.business.CrmBusinessStatusTypeDO;
 import cn.iocoder.yudao.module.crm.dal.mysql.business.CrmBusinessStatusMapper;
 import cn.iocoder.yudao.module.crm.dal.mysql.business.CrmBusinessStatusTypeMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +27,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
-
 /**
  * 商机状态 Service 实现类
  *
@@ -34,13 +36,10 @@ import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.*;
 @Validated
 public class CrmBusinessStatusServiceImpl implements CrmBusinessStatusService {
 
-    @Resource
-    private CrmBusinessStatusTypeMapper businessStatusTypeMapper;
-    @Resource
-    private CrmBusinessStatusMapper businessStatusMapper;
+    @Resource private CrmBusinessStatusTypeMapper businessStatusTypeMapper;
+    @Resource private CrmBusinessStatusMapper businessStatusMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private CrmBusinessService businessService;
 
     @Override
@@ -55,11 +54,15 @@ public class CrmBusinessStatusServiceImpl implements CrmBusinessStatusService {
         }
 
         // 2.1 插入类型
-        CrmBusinessStatusTypeDO statusType = BeanUtils.toBean(createReqVO, CrmBusinessStatusTypeDO.class);
+        CrmBusinessStatusTypeDO statusType =
+                BeanUtils.toBean(createReqVO, CrmBusinessStatusTypeDO.class);
         businessStatusTypeMapper.insert(statusType);
         // 2.2 插入状态
-        List<CrmBusinessStatusDO> statuses = BeanUtils.toBean(createReqVO.getStatuses(), CrmBusinessStatusDO.class,
-                status -> status.setTypeId(statusType.getId()));
+        List<CrmBusinessStatusDO> statuses =
+                BeanUtils.toBean(
+                        createReqVO.getStatuses(),
+                        CrmBusinessStatusDO.class,
+                        status -> status.setTypeId(statusType.getId()));
         businessStatusMapper.insertBatch(statuses);
         return statusType.getId();
     }
@@ -82,16 +85,22 @@ public class CrmBusinessStatusServiceImpl implements CrmBusinessStatusService {
         }
 
         // 2.1 更新类型
-        CrmBusinessStatusTypeDO updateObj = BeanUtils.toBean(updateReqVO, CrmBusinessStatusTypeDO.class);
+        CrmBusinessStatusTypeDO updateObj =
+                BeanUtils.toBean(updateReqVO, CrmBusinessStatusTypeDO.class);
         businessStatusTypeMapper.updateById(updateObj);
         // 2.2 更新状态
-        updateBusinessStatus(updateReqVO.getId(), BeanUtils.toBean(updateReqVO.getStatuses(), CrmBusinessStatusDO.class));
+        updateBusinessStatus(
+                updateReqVO.getId(),
+                BeanUtils.toBean(updateReqVO.getStatuses(), CrmBusinessStatusDO.class));
     }
 
     private void updateBusinessStatus(Long id, List<CrmBusinessStatusDO> newList) {
         List<CrmBusinessStatusDO> oldList = businessStatusMapper.selectListByTypeId(id);
-        List<List<CrmBusinessStatusDO>> diffList = diffList(oldList, newList, // id 不同，就认为是不同的记录
-                (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
+        List<List<CrmBusinessStatusDO>> diffList =
+                diffList(
+                        oldList,
+                        newList, // id 不同，就认为是不同的记录
+                        (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
         if (CollUtil.isNotEmpty(diffList.get(0))) {
             diffList.get(0).forEach(o -> o.setTypeId(id));
             businessStatusMapper.insertBatch(diffList.get(0));
@@ -100,7 +109,8 @@ public class CrmBusinessStatusServiceImpl implements CrmBusinessStatusService {
             businessStatusMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            businessStatusMapper.deleteByIds(convertSet(diffList.get(2), CrmBusinessStatusDO::getId));
+            businessStatusMapper.deleteByIds(
+                    convertSet(diffList.get(2), CrmBusinessStatusDO::getId));
         }
     }
 
@@ -112,8 +122,7 @@ public class CrmBusinessStatusServiceImpl implements CrmBusinessStatusService {
 
     private void validateBusinessStatusTypeNameUnique(String name, Long id) {
         CrmBusinessStatusTypeDO statusType = businessStatusTypeMapper.selectByName(name);
-        if (statusType == null
-                || statusType.getId().equals(id)) {
+        if (statusType == null || statusType.getId().equals(id)) {
             return;
         }
         throw exception(BUSINESS_STATUS_TYPE_NAME_EXISTS);
@@ -185,11 +194,11 @@ public class CrmBusinessStatusServiceImpl implements CrmBusinessStatusService {
 
     @Override
     public CrmBusinessStatusDO validateBusinessStatus(Long statusTypeId, Long statusId) {
-        CrmBusinessStatusDO status = businessStatusMapper.selectByTypeIdAndId(statusTypeId, statusId);
+        CrmBusinessStatusDO status =
+                businessStatusMapper.selectByTypeIdAndId(statusTypeId, statusId);
         if (status == null) {
             throw exception(BUSINESS_STATUS_NOT_EXISTS);
         }
         return status;
     }
-
 }

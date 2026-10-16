@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.iot.enums.ota.IotOtaTaskDeviceScopeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -29,7 +32,10 @@ public class IotOtaTaskCreateReqVO {
     @InEnum(value = IotOtaTaskDeviceScopeEnum.class)
     private Integer deviceScope;
 
-    @Schema(description = "选中的设备编号数组", requiredMode = Schema.RequiredMode.REQUIRED, example = "1,2,3")
+    @Schema(
+            description = "选中的设备编号数组",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1,2,3")
     private List<Long> deviceIds;
 
     // TODO @li：如果 deviceScope 等于 2 时，deviceIds 校验非空；

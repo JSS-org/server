@@ -63,5 +63,4 @@ public interface PayDemoOrderService {
      * @param payRefundId 退款订单号
      */
     void updateDemoOrderRefunded(Long id, String refundId, Long payRefundId);
-
 }

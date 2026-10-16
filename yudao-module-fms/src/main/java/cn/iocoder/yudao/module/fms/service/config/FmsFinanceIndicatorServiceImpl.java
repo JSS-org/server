@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.HOME_METRIC_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -12,8 +17,11 @@ import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsFinanceIndicatorDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsFinanceIndicatorMapper;
 import cn.iocoder.yudao.module.fms.service.report.FmsReportCommonService;
+
 import jakarta.annotation.Resource;
+
 import lombok.Data;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.HOME_METRIC_INVALID;
 
 /**
  * FMS 首页财务指标 Service 实现类
@@ -49,15 +52,11 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
 
     private static final String PRESET_RESOURCE = "fms/config/finance-indicator-presets.json";
 
-    @Resource
-    private FmsFinanceIndicatorMapper financeIndicatorMapper;
+    @Resource private FmsFinanceIndicatorMapper financeIndicatorMapper;
 
-    @Resource
-    private FmsAccountSetService accountSetService;
-    @Resource
-    private FmsSubjectService subjectService;
-    @Resource
-    private FmsReportCommonService reportCommonService;
+    @Resource private FmsAccountSetService accountSetService;
+    @Resource private FmsSubjectService subjectService;
+    @Resource private FmsReportCommonService reportCommonService;
 
     @Override
     public Long createFinanceIndicator(FmsFinanceIndicatorSaveReqVO reqVO, Long userId) {
@@ -70,8 +69,14 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
         validateCodeUnique(reqVO.getAccountSetId(), null, reqVO.getCode());
 
         // 2. 创建财务指标
-        FmsFinanceIndicatorDO indicator = BeanUtils.toBean(reqVO, FmsFinanceIndicatorDO.class).setId(null)
-                .setFormula(bindFormula(reqVO.getAccountSetId(), normalizeFormula(reqVO.getFormula()), userId));
+        FmsFinanceIndicatorDO indicator =
+                BeanUtils.toBean(reqVO, FmsFinanceIndicatorDO.class)
+                        .setId(null)
+                        .setFormula(
+                                bindFormula(
+                                        reqVO.getAccountSetId(),
+                                        normalizeFormula(reqVO.getFormula()),
+                                        userId));
         financeIndicatorMapper.insert(indicator);
         return indicator.getId();
     }
@@ -88,8 +93,13 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
         validateCodeUnique(reqVO.getAccountSetId(), reqVO.getId(), reqVO.getCode());
 
         // 2. 更新指标
-        financeIndicatorMapper.updateById(BeanUtils.toBean(reqVO, FmsFinanceIndicatorDO.class)
-                .setFormula(bindFormula(reqVO.getAccountSetId(), normalizeFormula(reqVO.getFormula()), userId)));
+        financeIndicatorMapper.updateById(
+                BeanUtils.toBean(reqVO, FmsFinanceIndicatorDO.class)
+                        .setFormula(
+                                bindFormula(
+                                        reqVO.getAccountSetId(),
+                                        normalizeFormula(reqVO.getFormula()),
+                                        userId)));
     }
 
     @Override
@@ -121,16 +131,18 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
     }
 
     @Override
-    public List<FmsFinanceIndicatorDO> getEnabledFinanceIndicatorList(Long accountSetId, Long userId) {
+    public List<FmsFinanceIndicatorDO> getEnabledFinanceIndicatorList(
+            Long accountSetId, Long userId) {
         // 1. 校验账套读权限
         accountSetService.validateAccountSetReadPermission(accountSetId, userId);
         // 2. 查询已启用的首页财务指标
-        return financeIndicatorMapper.selectListByAccountSetIdAndStatus(accountSetId,
-                CommonStatusEnum.ENABLE.getStatus());
+        return financeIndicatorMapper.selectListByAccountSetIdAndStatus(
+                accountSetId, CommonStatusEnum.ENABLE.getStatus());
     }
 
     private FmsFinanceIndicatorDO validateFinanceIndicatorExists(Long accountSetId, Long id) {
-        FmsFinanceIndicatorDO indicator = financeIndicatorMapper.selectByIdAndAccountSetId(id, accountSetId);
+        FmsFinanceIndicatorDO indicator =
+                financeIndicatorMapper.selectByIdAndAccountSetId(id, accountSetId);
         if (indicator == null) {
             throw exception(HOME_METRIC_INVALID);
         }
@@ -151,10 +163,21 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
         List<Preset> presets = loadPresetList();
         List<FmsSubjectDO> subjects = subjectService.getSubjectList(accountSetId, null, userId);
         Map<String, FmsSubjectDO> subjectMap = convertMap(subjects, FmsSubjectDO::getCode);
-        financeIndicatorMapper.insertBatch(convertList(presets, preset -> new FmsFinanceIndicatorDO()
-                .setAccountSetId(accountSetId).setCode(preset.getCode()).setName(preset.getName())
-                .setType(preset.getType()).setFormula(bindFormula(normalizeFormula(preset.getFormula()), subjectMap))
-                .setSort(preset.getSort()).setStatus(CommonStatusEnum.ENABLE.getStatus())));
+        financeIndicatorMapper.insertBatch(
+                convertList(
+                        presets,
+                        preset ->
+                                new FmsFinanceIndicatorDO()
+                                        .setAccountSetId(accountSetId)
+                                        .setCode(preset.getCode())
+                                        .setName(preset.getName())
+                                        .setType(preset.getType())
+                                        .setFormula(
+                                                bindFormula(
+                                                        normalizeFormula(preset.getFormula()),
+                                                        subjectMap))
+                                        .setSort(preset.getSort())
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())));
     }
 
     private void validateSaveReq(FmsFinanceIndicatorSaveReqVO reqVO) {
@@ -180,7 +203,8 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
     private String normalizeFormula(String formula) {
         String normalized = formula.replace(" ", "");
         return LINE_FORMULA_PATTERN.matcher(normalized).matches()
-                ? JsonUtils.toJsonString(Collections.singletonList(normalized)) : formula;
+                ? JsonUtils.toJsonString(Collections.singletonList(normalized))
+                : formula;
     }
 
     private String bindFormula(Long accountSetId, String formula, Long userId) {
@@ -210,7 +234,8 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
     }
 
     private void validateCodeUnique(Long accountSetId, Long id, String code) {
-        FmsFinanceIndicatorDO indicator = financeIndicatorMapper.selectByAccountSetIdAndCode(accountSetId, code);
+        FmsFinanceIndicatorDO indicator =
+                financeIndicatorMapper.selectByAccountSetIdAndCode(accountSetId, code);
         if (indicator != null && ObjUtil.notEqual(indicator.getId(), id)) {
             throw exception(HOME_METRIC_INVALID);
         }
@@ -223,18 +248,22 @@ public class FmsFinanceIndicatorServiceImpl implements FmsFinanceIndicatorServic
          * 指标编码
          */
         private String code;
+
         /**
          * 指标名称
          */
         private String name;
+
         /**
          * 取数报表类型
          */
         private Integer type;
+
         /**
          * 指标公式
          */
         private String formula;
+
         /**
          * 展示顺序
          */

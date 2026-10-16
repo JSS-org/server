@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.itemreceipt;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,11 +19,14 @@ import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureService;
 import cn.iocoder.yudao.module.mes.service.wm.itemreceipt.MesWmItemReceiptLineService;
 import cn.iocoder.yudao.module.mes.service.wm.itemreceipt.MesWmItemReceiptService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,35 +35,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 采购入库单行")
 @RestController
 @RequestMapping("/mes/wm/item-receipt-line")
 @Validated
 public class MesWmItemReceiptLineController {
 
-    @Resource
-    private MesWmItemReceiptLineService itemReceiptLineService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
-    @Resource
-    private MesWmItemReceiptService itemReceiptService;
+    @Resource private MesWmItemReceiptLineService itemReceiptLineService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesWmItemReceiptService itemReceiptService;
 
     @PostMapping("/create")
     @Operation(summary = "创建采购入库单行")
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:create')")
-    public CommonResult<Long> createItemReceiptLine(@Valid @RequestBody MesWmItemReceiptLineSaveReqVO createReqVO) {
+    public CommonResult<Long> createItemReceiptLine(
+            @Valid @RequestBody MesWmItemReceiptLineSaveReqVO createReqVO) {
         return success(itemReceiptLineService.createItemReceiptLine(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改采购入库单行")
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:update')")
-    public CommonResult<Boolean> updateItemReceiptLine(@Valid @RequestBody MesWmItemReceiptLineSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateItemReceiptLine(
+            @Valid @RequestBody MesWmItemReceiptLineSaveReqVO updateReqVO) {
         itemReceiptLineService.updateItemReceiptLine(updateReqVO);
         return success(true);
     }
@@ -75,7 +76,8 @@ public class MesWmItemReceiptLineController {
     @Operation(summary = "获得采购入库单行")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:query')")
-    public CommonResult<MesWmItemReceiptLineRespVO> getItemReceiptLine(@RequestParam("id") Long id) {
+    public CommonResult<MesWmItemReceiptLineRespVO> getItemReceiptLine(
+            @RequestParam("id") Long id) {
         MesWmItemReceiptLineDO line = itemReceiptLineService.getItemReceiptLine(id);
         if (line == null) {
             return success(null);
@@ -88,8 +90,10 @@ public class MesWmItemReceiptLineController {
     @PreAuthorize("@ss.hasPermission('mes:wm-item-receipt:query')")
     public CommonResult<PageResult<MesWmItemReceiptLineRespVO>> getItemReceiptLinePage(
             @Valid MesWmItemReceiptLinePageReqVO pageReqVO) {
-        PageResult<MesWmItemReceiptLineDO> pageResult = itemReceiptLineService.getItemReceiptLinePage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmItemReceiptLineDO> pageResult =
+                itemReceiptLineService.getItemReceiptLinePage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     // ==================== 拼接 VO ====================
@@ -99,22 +103,38 @@ public class MesWmItemReceiptLineController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesWmItemReceiptLineDO::getItemId));
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
-        Map<Long, MesWmItemReceiptDO> receiptMap = itemReceiptService.getItemReceiptMap(
-                convertSet(list, MesWmItemReceiptLineDO::getReceiptId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesWmItemReceiptLineDO::getItemId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesWmItemReceiptDO> receiptMap =
+                itemReceiptService.getItemReceiptMap(
+                        convertSet(list, MesWmItemReceiptLineDO::getReceiptId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmItemReceiptLineRespVO.class, vo -> {
-            MapUtils.findAndThen(itemMap, vo.getItemId(), item -> {
-                vo.setItemCode(item.getCode()).setItemName(item.getName()).setSpecification(item.getSpecification());
-                MapUtils.findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unitMeasure -> vo.setUnitMeasureName(unitMeasure.getName()));
-            });
-            MapUtils.findAndThen(receiptMap, vo.getReceiptId(), receipt ->
-                    vo.setReceiptCode(receipt.getCode()).setPurchaseOrderCode(receipt.getPurchaseOrderCode()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmItemReceiptLineRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            itemMap,
+                            vo.getItemId(),
+                            item -> {
+                                vo.setItemCode(item.getCode())
+                                        .setItemName(item.getName())
+                                        .setSpecification(item.getSpecification());
+                                MapUtils.findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unitMeasure ->
+                                                vo.setUnitMeasureName(unitMeasure.getName()));
+                            });
+                    MapUtils.findAndThen(
+                            receiptMap,
+                            vo.getReceiptId(),
+                            receipt ->
+                                    vo.setReceiptCode(receipt.getCode())
+                                            .setPurchaseOrderCode(receipt.getPurchaseOrderCode()));
+                });
     }
-
 }

@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - FMS 凭证移动 Request VO")
@@ -33,5 +35,4 @@ public class FmsVoucherMoveReqVO {
     @NotNull(message = "移动到的凭证号不能为空")
     @Min(value = 1, message = "移动到的凭证号必须大于 0")
     private Integer targetNumber;
-
 }

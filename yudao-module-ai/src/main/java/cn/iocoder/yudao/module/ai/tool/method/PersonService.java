@@ -76,5 +76,4 @@ public interface PersonService {
      * @return An unmodifiable List of matching Persons. Returns an empty list if no matches.
      */
     List<Person> filterByAge(int age);
-
 }

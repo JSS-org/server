@@ -2,10 +2,11 @@ package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.group;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.date.DateUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
@@ -26,5 +27,4 @@ public class BpmUserGroupPageReqVO extends PageParam {
     @DateTimeFormat(pattern = DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     @Schema(description = "创建时间")
     private LocalDateTime[] createTime;
-
 }

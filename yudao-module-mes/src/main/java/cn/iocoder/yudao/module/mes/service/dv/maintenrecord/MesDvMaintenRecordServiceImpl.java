@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.dv.maintenrecord;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,20 +12,19 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.maintenrecord.vo.MesDvMai
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.maintenrecord.MesDvMaintenRecordDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.maintenrecord.MesDvMaintenRecordLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.maintenrecord.MesDvMaintenRecordMapper;
-import cn.iocoder.yudao.module.mes.enums.dv.MesDvMaintenRecordStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.dv.MesDvCheckPlanTypeEnum;
+import cn.iocoder.yudao.module.mes.enums.dv.MesDvMaintenRecordStatusEnum;
 import cn.iocoder.yudao.module.mes.service.dv.checkplan.MesDvCheckPlanService;
 import cn.iocoder.yudao.module.mes.service.dv.machinery.MesDvMachineryService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 设备保养记录 Service 实现类
@@ -33,16 +35,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService {
 
-    @Resource
-    private MesDvMaintenRecordMapper maintenRecordMapper;
+    @Resource private MesDvMaintenRecordMapper maintenRecordMapper;
 
-    @Resource
-    @Lazy
-    private MesDvMaintenRecordLineService maintenRecordLineService;
-    @Resource
-    private MesDvMachineryService machineryService;
-    @Resource
-    private MesDvCheckPlanService checkPlanService;
+    @Resource @Lazy private MesDvMaintenRecordLineService maintenRecordLineService;
+    @Resource private MesDvMachineryService machineryService;
+    @Resource private MesDvCheckPlanService checkPlanService;
 
     @Override
     public Long createMaintenRecord(MesDvMaintenRecordSaveReqVO createReqVO) {
@@ -50,7 +47,8 @@ public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService 
         validateMaintenRecordRelation(createReqVO);
 
         // 2. 插入
-        MesDvMaintenRecordDO maintenRecord = BeanUtils.toBean(createReqVO, MesDvMaintenRecordDO.class);
+        MesDvMaintenRecordDO maintenRecord =
+                BeanUtils.toBean(createReqVO, MesDvMaintenRecordDO.class);
         maintenRecord.setStatus(MesDvMaintenRecordStatusEnum.PREPARE.getStatus());
         maintenRecordMapper.insert(maintenRecord);
         return maintenRecord.getId();
@@ -74,7 +72,8 @@ public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService 
         // 1.1 校验状态为草稿
         validateMaintenRecordDraft(id);
         // 1.2 校验至少有一条明细
-        List<MesDvMaintenRecordLineDO> lines = maintenRecordLineService.getMaintenRecordLineListByRecordId(id);
+        List<MesDvMaintenRecordLineDO> lines =
+                maintenRecordLineService.getMaintenRecordLineListByRecordId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(MAINTEN_RECORD_NO_LINE);
         }
@@ -88,7 +87,8 @@ public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService 
 
         // 3. 回写设备台账的【最近保养时间】
         if (record.getMaintenTime() != null) {
-            machineryService.updateMachineryLastMaintenTime(record.getMachineryId(), record.getMaintenTime());
+            machineryService.updateMachineryLastMaintenTime(
+                    record.getMachineryId(), record.getMaintenTime());
         }
     }
 
@@ -109,7 +109,8 @@ public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService 
         machineryService.validateMachineryExists(reqVO.getMachineryId());
         // 校验保养计划是否存在
         if (reqVO.getPlanId() != null) {
-            checkPlanService.validateCheckPlanExistsAndType(reqVO.getPlanId(), MesDvCheckPlanTypeEnum.MAINTENANCE.getType());
+            checkPlanService.validateCheckPlanExistsAndType(
+                    reqVO.getPlanId(), MesDvCheckPlanTypeEnum.MAINTENANCE.getType());
         }
     }
 
@@ -131,7 +132,8 @@ public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService 
         if (record == null) {
             throw exception(MAINTEN_RECORD_NOT_EXISTS);
         }
-        if (ObjUtil.notEqual(MesDvMaintenRecordStatusEnum.PREPARE.getStatus(), record.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesDvMaintenRecordStatusEnum.PREPARE.getStatus(), record.getStatus())) {
             throw exception(MAINTEN_RECORD_NOT_DRAFT);
         }
         return record;
@@ -143,8 +145,8 @@ public class MesDvMaintenRecordServiceImpl implements MesDvMaintenRecordService 
     }
 
     @Override
-    public PageResult<MesDvMaintenRecordDO> getMaintenRecordPage(MesDvMaintenRecordPageReqVO pageReqVO) {
+    public PageResult<MesDvMaintenRecordDO> getMaintenRecordPage(
+            MesDvMaintenRecordPageReqVO pageReqVO) {
         return maintenRecordMapper.selectPage(pageReqVO);
     }
-
 }

@@ -19,5 +19,4 @@ public @interface ApiEncrypt {
      * 是否对响应结果进行加密，默认 true
      */
     boolean response() default true;
-
 }

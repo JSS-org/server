@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.system.controller.admin.sms.vo.channel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.URL;
+
 import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - 短信渠道 Response VO")
@@ -18,7 +21,10 @@ public class SmsChannelRespVO {
     @NotNull(message = "短信签名不能为空")
     private String signature;
 
-    @Schema(description = "渠道编码，参见 SmsChannelEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "YUN_PIAN")
+    @Schema(
+            description = "渠道编码，参见 SmsChannelEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "YUN_PIAN")
     private String code;
 
     @Schema(description = "启用状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -28,7 +34,10 @@ public class SmsChannelRespVO {
     @Schema(description = "备注", example = "好吃！")
     private String remark;
 
-    @Schema(description = "短信 API 的账号", requiredMode = Schema.RequiredMode.REQUIRED, example = "yudao")
+    @Schema(
+            description = "短信 API 的账号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "yudao")
     @NotNull(message = "短信 API 的账号不能为空")
     private String apiKey;
 
@@ -41,5 +50,4 @@ public class SmsChannelRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

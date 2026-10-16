@@ -1,10 +1,10 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.rank;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
-
 
 @Schema(description = "管理后台 - CRM 排行榜统计 Response VO")
 @Data
@@ -29,5 +29,4 @@ public class CrmStatisticsRankRespVO {
      */
     @Schema(description = "数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private BigDecimal count;
-
 }

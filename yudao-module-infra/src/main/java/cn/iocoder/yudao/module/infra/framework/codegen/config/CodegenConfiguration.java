@@ -5,5 +5,4 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(CodegenProperties.class)
-public class CodegenConfiguration {
-}
+public class CodegenConfiguration {}

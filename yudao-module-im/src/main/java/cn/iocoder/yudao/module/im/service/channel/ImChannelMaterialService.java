@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.im.service.channel;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.material.ImChannelMaterialPageReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.material.ImChannelMaterialSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.channel.ImChannelMaterialDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * IM 频道素材 Service 接口
@@ -43,9 +44,9 @@ public interface ImChannelMaterialService {
      * @param ids 素材编号列表
      * @return id -> 素材 Map
      */
-   default Map<Long, ImChannelMaterialDO> getMaterialMap(Collection<Long> ids) {
-       return convertMap(getMaterialList(ids), ImChannelMaterialDO::getId);
-   }
+    default Map<Long, ImChannelMaterialDO> getMaterialMap(Collection<Long> ids) {
+        return convertMap(getMaterialList(ids), ImChannelMaterialDO::getId);
+    }
 
     /**
      * 统计指定频道下的素材数量
@@ -102,5 +103,4 @@ public interface ImChannelMaterialService {
      * @param id 素材编号
      */
     void deleteMaterial(Long id);
-
 }

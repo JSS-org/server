@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productproduce.vo.MesWmProductProduceLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productproduce.MesWmProductProduceLineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -17,10 +18,14 @@ import java.util.List;
 @Mapper
 public interface MesWmProductProduceLineMapper extends BaseMapperX<MesWmProductProduceLineDO> {
 
-    default PageResult<MesWmProductProduceLineDO> selectPage(MesWmProductProduceLinePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesWmProductProduceLineDO>()
-                .eqIfPresent(MesWmProductProduceLineDO::getFeedbackId, reqVO.getFeedbackId())
-                .orderByDesc(MesWmProductProduceLineDO::getId));
+    default PageResult<MesWmProductProduceLineDO> selectPage(
+            MesWmProductProduceLinePageReqVO reqVO) {
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesWmProductProduceLineDO>()
+                        .eqIfPresent(
+                                MesWmProductProduceLineDO::getFeedbackId, reqVO.getFeedbackId())
+                        .orderByDesc(MesWmProductProduceLineDO::getId));
     }
 
     default List<MesWmProductProduceLineDO> selectListByProduceId(Long produceId) {
@@ -30,5 +35,4 @@ public interface MesWmProductProduceLineMapper extends BaseMapperX<MesWmProductP
     default List<MesWmProductProduceLineDO> selectListByFeedbackId(Long feedbackId) {
         return selectList(MesWmProductProduceLineDO::getFeedbackId, feedbackId);
     }
-
 }

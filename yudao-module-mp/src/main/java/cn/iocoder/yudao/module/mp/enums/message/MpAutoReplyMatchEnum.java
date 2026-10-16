@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MpAutoReplyMatchEnum {
-
     ALL(1, "完全匹配"),
     LIKE(2, "半匹配"),
     ;
@@ -20,9 +19,9 @@ public enum MpAutoReplyMatchEnum {
      * 匹配
      */
     private final Integer match;
+
     /**
      * 匹配的名字
      */
     private final String name;
-
 }

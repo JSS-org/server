@@ -1,22 +1,25 @@
 package cn.iocoder.yudao.framework.tracer.core.aop;
 
+import static java.util.Arrays.asList;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.iocoder.yudao.framework.tracer.core.annotation.BizTrace;
 import cn.iocoder.yudao.framework.common.util.spring.SpringExpressionUtils;
+import cn.iocoder.yudao.framework.tracer.core.annotation.BizTrace;
 import cn.iocoder.yudao.framework.tracer.core.util.TracerFrameworkUtils;
+
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Scope;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 
 import java.util.Map;
-
-import static java.util.Arrays.asList;
 
 /**
  * {@link BizTrace} 切面，记录业务链路
@@ -36,9 +39,7 @@ public class BizTraceAspect {
     public Object around(ProceedingJoinPoint joinPoint, BizTrace trace) throws Throwable {
         // 创建 span
         String operationName = getOperationName(joinPoint, trace);
-        Span span = tracer.spanBuilder(operationName)
-                .setAttribute("component", "biz")
-                .startSpan();
+        Span span = tracer.spanBuilder(operationName).setAttribute("component", "biz").startSpan();
         try (Scope ignored = span.makeCurrent()) {
             // 执行原有方法
             return joinPoint.proceed();
@@ -61,17 +62,19 @@ public class BizTraceAspect {
         // 默认操作名，使用方法名
         return BIZ_OPERATION_NAME_PREFIX
                 + joinPoint.getSignature().getDeclaringType().getSimpleName()
-                + "/" + joinPoint.getSignature().getName();
+                + "/"
+                + joinPoint.getSignature().getName();
     }
 
     private void setBizTag(Span span, ProceedingJoinPoint joinPoint, BizTrace trace) {
         try {
-            Map<String, Object> result = SpringExpressionUtils.parseExpressions(joinPoint, asList(trace.type(), trace.id()));
+            Map<String, Object> result =
+                    SpringExpressionUtils.parseExpressions(
+                            joinPoint, asList(trace.type(), trace.id()));
             span.setAttribute(BizTrace.TYPE_TAG, MapUtil.getStr(result, trace.type()));
             span.setAttribute(BizTrace.ID_TAG, MapUtil.getStr(result, trace.id()));
         } catch (Exception ex) {
             log.error("[setBizTag][解析 bizType 与 bizId 发生异常]", ex);
         }
     }
-
 }

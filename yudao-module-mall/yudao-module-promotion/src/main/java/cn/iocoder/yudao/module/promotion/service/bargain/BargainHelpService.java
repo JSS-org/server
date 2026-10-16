@@ -74,5 +74,4 @@ public interface BargainHelpService {
      * @return 助力记录
      */
     BargainHelpDO getBargainHelp(Long recordId, Long userId);
-
 }

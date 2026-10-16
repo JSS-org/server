@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.vehicle;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.OaVehiclePageReqVO;
@@ -7,7 +14,9 @@ import cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo.OaVehicleSaveReqVO
 import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.vehicle.OaVehicleMapper;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -15,12 +24,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link OaVehicleServiceImpl} 的单元测试类
@@ -30,16 +33,12 @@ import static org.mockito.Mockito.*;
 @Import(OaVehicleServiceImpl.class)
 public class OaVehicleServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaVehicleService vehicleService;
+    @Resource private OaVehicleService vehicleService;
 
-    @Resource
-    private OaVehicleMapper vehicleMapper;
+    @Resource private OaVehicleMapper vehicleMapper;
 
-    @MockitoBean
-    private DeptApi deptApi;
-    @MockitoBean
-    private OaVehicleApplyService vehicleApplyService;
+    @MockitoBean private DeptApi deptApi;
+    @MockitoBean private OaVehicleApplyService vehicleApplyService;
 
     @Test
     public void testDeleteVehicle_inUse() {
@@ -58,29 +57,62 @@ public class OaVehicleServiceImplTest extends BaseDbUnitTest {
     public void testGetVehiclePage_filters() {
         // mock 数据
         LocalDateTime expireTime = LocalDateTime.of(2026, 9, 12, 12, 0);
-        OaVehicleDO vehicle = randomVehicleDO().setType("商务车").setBrandModel("别克 GL8")
-                .setCompulsoryInsuranceExpireTime(expireTime).setCommercialInsuranceExpireTime(expireTime)
-                .setInspectionExpireTime(expireTime);
+        OaVehicleDO vehicle =
+                randomVehicleDO()
+                        .setType("商务车")
+                        .setBrandModel("别克 GL8")
+                        .setCompulsoryInsuranceExpireTime(expireTime)
+                        .setCommercialInsuranceExpireTime(expireTime)
+                        .setInspectionExpireTime(expireTime);
         vehicleMapper.insert(vehicle);
         // 准备参数
-        OaVehiclePageReqVO reqVO = new OaVehiclePageReqVO().setType("商务").setBrandModel("GL8")
-                .setCompulsoryInsuranceExpireTime(new LocalDateTime[]{expireTime, expireTime})
-                .setCommercialInsuranceExpireTime(new LocalDateTime[]{expireTime, expireTime})
-                .setInspectionExpireTime(new LocalDateTime[]{expireTime, expireTime});
+        OaVehiclePageReqVO reqVO =
+                new OaVehiclePageReqVO()
+                        .setType("商务")
+                        .setBrandModel("GL8")
+                        .setCompulsoryInsuranceExpireTime(
+                                new LocalDateTime[] {expireTime, expireTime})
+                        .setCommercialInsuranceExpireTime(
+                                new LocalDateTime[] {expireTime, expireTime})
+                        .setInspectionExpireTime(new LocalDateTime[] {expireTime, expireTime});
 
         // 调用，并断言：组合筛选包含时间边界，各个条件独立生效
         assertEquals(1, vehicleService.getVehiclePage(reqVO).getTotal());
-        assertEquals(0, vehicleService.getVehiclePage(BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
-                .setType("货车")).getTotal());
-        assertEquals(0, vehicleService.getVehiclePage(BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
-                .setBrandModel("宝马")).getTotal());
+        assertEquals(
+                0,
+                vehicleService
+                        .getVehiclePage(
+                                BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class).setType("货车"))
+                        .getTotal());
+        assertEquals(
+                0,
+                vehicleService
+                        .getVehiclePage(
+                                BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
+                                        .setBrandModel("宝马"))
+                        .getTotal());
         LocalDateTime[] outsideTime = {expireTime.plusSeconds(1), expireTime.plusDays(1)};
-        assertEquals(0, vehicleService.getVehiclePage(BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
-                .setCompulsoryInsuranceExpireTime(outsideTime)).getTotal());
-        assertEquals(0, vehicleService.getVehiclePage(BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
-                .setCommercialInsuranceExpireTime(outsideTime)).getTotal());
-        assertEquals(0, vehicleService.getVehiclePage(BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
-                .setInspectionExpireTime(outsideTime)).getTotal());
+        assertEquals(
+                0,
+                vehicleService
+                        .getVehiclePage(
+                                BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
+                                        .setCompulsoryInsuranceExpireTime(outsideTime))
+                        .getTotal());
+        assertEquals(
+                0,
+                vehicleService
+                        .getVehiclePage(
+                                BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
+                                        .setCommercialInsuranceExpireTime(outsideTime))
+                        .getTotal());
+        assertEquals(
+                0,
+                vehicleService
+                        .getVehiclePage(
+                                BeanUtils.toBean(reqVO, OaVehiclePageReqVO.class)
+                                        .setInspectionExpireTime(outsideTime))
+                        .getTotal());
     }
 
     @Test
@@ -110,7 +142,8 @@ public class OaVehicleServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertNull(vehicleMapper.selectById(vehicle.getId()));
-        assertServiceException(() -> vehicleService.validateVehicleExists(vehicle.getId()), VEHICLE_NOT_EXISTS);
+        assertServiceException(
+                () -> vehicleService.validateVehicleExists(vehicle.getId()), VEHICLE_NOT_EXISTS);
     }
 
     @Test
@@ -137,8 +170,11 @@ public class OaVehicleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreateVehicle_deptAndImage() {
         // 准备参数
-        OaVehicleSaveReqVO reqVO = BeanUtils.toBean(randomVehicleDO(), OaVehicleSaveReqVO.class)
-                .setDeptId(103L).setPicUrl("https://example.com/vehicle.png").setStatus(2);
+        OaVehicleSaveReqVO reqVO =
+                BeanUtils.toBean(randomVehicleDO(), OaVehicleSaveReqVO.class)
+                        .setDeptId(103L)
+                        .setPicUrl("https://example.com/vehicle.png")
+                        .setStatus(2);
 
         // 调用
         Long id = vehicleService.createVehicle(reqVO);
@@ -156,8 +192,10 @@ public class OaVehicleServiceImplTest extends BaseDbUnitTest {
         OaVehicleDO vehicle = randomVehicleDO();
         vehicleMapper.insert(vehicle);
         // 准备参数
-        OaVehicleSaveReqVO reqVO = BeanUtils.toBean(vehicle, OaVehicleSaveReqVO.class)
-                .setDeptId(103L).setPicUrl("https://example.com/new.png");
+        OaVehicleSaveReqVO reqVO =
+                BeanUtils.toBean(vehicle, OaVehicleSaveReqVO.class)
+                        .setDeptId(103L)
+                        .setPicUrl("https://example.com/new.png");
 
         // 调用
         vehicleService.updateVehicle(reqVO);
@@ -171,11 +209,12 @@ public class OaVehicleServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateVehicle_clearDeptAndImage() {
         // mock 数据
-        OaVehicleDO vehicle = randomVehicleDO().setDeptId(103L).setPicUrl("https://example.com/old.png");
+        OaVehicleDO vehicle =
+                randomVehicleDO().setDeptId(103L).setPicUrl("https://example.com/old.png");
         vehicleMapper.insert(vehicle);
         // 准备参数
-        OaVehicleSaveReqVO reqVO = BeanUtils.toBean(vehicle, OaVehicleSaveReqVO.class)
-                .setDeptId(null).setPicUrl("");
+        OaVehicleSaveReqVO reqVO =
+                BeanUtils.toBean(vehicle, OaVehicleSaveReqVO.class).setDeptId(null).setPicUrl("");
 
         // 调用
         vehicleService.updateVehicle(reqVO);
@@ -209,9 +248,16 @@ public class OaVehicleServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaVehicleDO randomVehicleDO() {
-        return randomPojo(OaVehicleDO.class, vehicle -> vehicle.setId(null).setNo("沪A12345")
-                .setName("商务车").setType("1").setSeatCount(5).setBarePrice(BigDecimal.ZERO)
-                .setStatus(0).setSort(0));
+        return randomPojo(
+                OaVehicleDO.class,
+                vehicle ->
+                        vehicle.setId(null)
+                                .setNo("沪A12345")
+                                .setName("商务车")
+                                .setType("1")
+                                .setSeatCount(5)
+                                .setBarePrice(BigDecimal.ZERO)
+                                .setStatus(0)
+                                .setSort(0));
     }
-
 }

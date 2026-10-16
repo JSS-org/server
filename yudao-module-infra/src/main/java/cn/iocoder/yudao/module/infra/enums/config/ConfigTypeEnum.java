@@ -17,5 +17,4 @@ public enum ConfigTypeEnum {
     CUSTOM(2);
 
     private final Integer type;
-
 }

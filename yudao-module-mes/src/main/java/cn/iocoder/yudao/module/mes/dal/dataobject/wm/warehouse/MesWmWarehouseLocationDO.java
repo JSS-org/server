@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -29,33 +31,37 @@ public class MesWmWarehouseLocationDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 库区编码
      */
     private String code;
+
     /**
      * 库区名称
      */
     private String name;
+
     /**
      * 仓库编号
      *
      * 关联 {@link MesWmWarehouseDO#getId()}
      */
     private Long warehouseId;
+
     /**
      * 面积
      */
     private BigDecimal area;
+
     /**
      * 是否冻结
      */
     private Boolean frozen;
+
     /**
      * 备注
      */
     private String remark;
-
 }

@@ -42,5 +42,4 @@ public abstract class AbstractRegexDesensitizationHandler<T extends Annotation>
      * @return 待替换的字符串
      */
     abstract String getReplacer(T annotation);
-
 }

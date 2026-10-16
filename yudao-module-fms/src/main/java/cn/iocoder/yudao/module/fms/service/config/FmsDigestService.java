@@ -55,5 +55,4 @@ public interface FmsDigestService {
      * @return 常用摘要
      */
     FmsDigestDO validateDigestExists(Long accountSetId, Long id);
-
 }

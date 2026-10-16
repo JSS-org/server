@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
+
 import java.util.Set;
 
 @Schema(description = "管理后台 - 加签任务的创建（加签） Request VO")
@@ -25,5 +27,4 @@ public class BpmTaskSignCreateReqVO {
     @Schema(description = "加签原因", requiredMode = Schema.RequiredMode.REQUIRED, example = "需要加签")
     @NotEmpty(message = "加签原因不能为空")
     private String reason;
-
 }

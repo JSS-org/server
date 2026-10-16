@@ -52,7 +52,6 @@ public interface PmsKnowledgeViewRecordService {
      * @param documentIds 文档编号集合
      * @param libraryId 目标知识库编号
      */
-    void updateViewRecordLibraryIdByEntityIds(Collection<Long> folderIds, Collection<Long> documentIds,
-                                              Long libraryId);
-
+    void updateViewRecordLibraryIdByEntityIds(
+            Collection<Long> folderIds, Collection<Long> documentIds, Long libraryId);
 }

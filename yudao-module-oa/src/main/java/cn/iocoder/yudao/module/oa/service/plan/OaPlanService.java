@@ -75,7 +75,6 @@ public interface OaPlanService {
      * @param createTime 创建时间范围
      * @return 以成员用户编号为 Key 的最新工作计划 Map
      */
-    Map<Long, OaPlanDO> getLatestPlanMap(Collection<Long> userIds, Integer type,
-                                         LocalDateTime[] createTime);
-
+    Map<Long, OaPlanDO> getLatestPlanMap(
+            Collection<Long> userIds, Integer type, LocalDateTime[] createTime);
 }

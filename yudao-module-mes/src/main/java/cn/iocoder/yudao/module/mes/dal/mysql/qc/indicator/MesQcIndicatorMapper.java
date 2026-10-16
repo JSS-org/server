@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.indicator.vo.MesQcIndicatorPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.indicator.MesQcIndicatorDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,12 +19,14 @@ import java.util.List;
 public interface MesQcIndicatorMapper extends BaseMapperX<MesQcIndicatorDO> {
 
     default PageResult<MesQcIndicatorDO> selectPage(MesQcIndicatorPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesQcIndicatorDO>()
-                .likeIfPresent(MesQcIndicatorDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesQcIndicatorDO::getName, reqVO.getName())
-                .eqIfPresent(MesQcIndicatorDO::getType, reqVO.getType())
-                .eqIfPresent(MesQcIndicatorDO::getResultType, reqVO.getResultType())
-                .orderByDesc(MesQcIndicatorDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesQcIndicatorDO>()
+                        .likeIfPresent(MesQcIndicatorDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesQcIndicatorDO::getName, reqVO.getName())
+                        .eqIfPresent(MesQcIndicatorDO::getType, reqVO.getType())
+                        .eqIfPresent(MesQcIndicatorDO::getResultType, reqVO.getResultType())
+                        .orderByDesc(MesQcIndicatorDO::getId));
     }
 
     default MesQcIndicatorDO selectByCode(String code) {
@@ -35,8 +38,7 @@ public interface MesQcIndicatorMapper extends BaseMapperX<MesQcIndicatorDO> {
     }
 
     default List<MesQcIndicatorDO> selectList() {
-        return selectList(new LambdaQueryWrapperX<MesQcIndicatorDO>()
-                .orderByDesc(MesQcIndicatorDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<MesQcIndicatorDO>().orderByDesc(MesQcIndicatorDO::getId));
     }
-
 }

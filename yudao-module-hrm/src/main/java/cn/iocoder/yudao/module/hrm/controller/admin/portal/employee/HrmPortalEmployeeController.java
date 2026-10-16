@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.employee;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getYearsBetween;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.portal.employee.vo.employee.HrmPortalEmployeeRespVO;
@@ -12,10 +16,13 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,24 +35,16 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getYearsBetween;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - HRM 员工端档案")
 @RestController
 @RequestMapping("/hrm/portal/employee")
 @Validated
 public class HrmPortalEmployeeController {
 
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private HrmEmployeeFieldConfigService employeeFieldConfigService;
-    @Resource
-    private DeptApi deptApi;
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeeFieldConfigService employeeFieldConfigService;
+    @Resource private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @GetMapping("/get-bind-status")
     @Operation(summary = "获得当前账号的员工绑定状态")
@@ -66,10 +65,17 @@ public class HrmPortalEmployeeController {
             respVO.setAge(getYearsBetween(employee.getBirthday().toLocalDate(), today));
         }
         if (employee.getCompanyAgeStartTime() != null) {
-            respVO.setCompanyAge(getYearsBetween(employee.getCompanyAgeStartTime().toLocalDate(), today));
+            respVO.setCompanyAge(
+                    getYearsBetween(employee.getCompanyAgeStartTime().toLocalDate(), today));
         }
-        respVO.setEntryDay(employee.getEntryTime() == null ? 0L
-                : Math.max(0L, ChronoUnit.DAYS.between(employee.getEntryTime().toLocalDate(), today) + 1));
+        respVO.setEntryDay(
+                employee.getEntryTime() == null
+                        ? 0L
+                        : Math.max(
+                                0L,
+                                ChronoUnit.DAYS.between(
+                                                employee.getEntryTime().toLocalDate(), today)
+                                        + 1));
         if (employee.getUserId() != null) {
             AdminUserRespDTO user = adminUserApi.getUser(employee.getUserId());
             respVO.setAvatar(user == null ? null : user.getAvatar());
@@ -82,7 +88,8 @@ public class HrmPortalEmployeeController {
             HrmEmployeeDO leader = employeeService.getEmployee(employee.getLeaderEmployeeId());
             respVO.setLeaderEmployeeName(leader == null ? null : leader.getName());
         }
-        hideInvisibleArchiveFields(respVO, employeeFieldConfigService.getVisibleArchiveFieldNames());
+        hideInvisibleArchiveFields(
+                respVO, employeeFieldConfigService.getVisibleArchiveFieldNames());
         return success(respVO);
     }
 
@@ -97,7 +104,8 @@ public class HrmPortalEmployeeController {
 
     // ==================== 拼接 VO ====================
 
-    private void hideInvisibleArchiveFields(HrmPortalEmployeeRespVO respVO, Set<String> visibleFields) {
+    private void hideInvisibleArchiveFields(
+            HrmPortalEmployeeRespVO respVO, Set<String> visibleFields) {
         if (!visibleFields.contains(HrmEmployeeArchiveFieldEnum.NAME.getName())) {
             respVO.setName(null);
         }
@@ -138,5 +146,4 @@ public class HrmPortalEmployeeController {
             respVO.setAddress(null);
         }
     }
-
 }

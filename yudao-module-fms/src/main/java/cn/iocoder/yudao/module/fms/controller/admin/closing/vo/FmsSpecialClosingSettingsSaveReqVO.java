@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.closing.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.fms.enums.common.FmsDebitCreditDirectionEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -10,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -61,5 +64,4 @@ public class FmsSpecialClosingSettingsSaveReqVO {
         @DecimalMax(value = "100", message = "金额比例不能超过 100")
         private BigDecimal amountRatio;
     }
-
 }

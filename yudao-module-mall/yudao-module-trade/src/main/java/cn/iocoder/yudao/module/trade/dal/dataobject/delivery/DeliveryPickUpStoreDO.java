@@ -4,10 +4,12 @@ import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.type.LongListTypeHandler;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 import java.time.LocalTime;
@@ -18,16 +20,17 @@ import java.util.List;
  *
  * @author jason
  */
-@TableName(value ="trade_delivery_pick_up_store", autoResultMap = true)
-@KeySequence("trade_delivery_pick_up_store_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@TableName(value = "trade_delivery_pick_up_store", autoResultMap = true)
+@KeySequence(
+        "trade_delivery_pick_up_store_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是
+// MySQL 等数据库，可不写。
 @Data
 public class DeliveryPickUpStoreDO extends BaseDO {
 
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 门店名称
@@ -73,6 +76,7 @@ public class DeliveryPickUpStoreDO extends BaseDO {
      * 纬度
      */
     private Double latitude;
+
     /**
      * 经度
      */
@@ -94,5 +98,4 @@ public class DeliveryPickUpStoreDO extends BaseDO {
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
-
 }

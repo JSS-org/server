@@ -41,6 +41,7 @@ public interface BpmModelConstants {
      * 出差申请
      */
     String TRAVEL_APPLY = "oa_travel_apply";
+
     /**
      * 出差报销
      */
@@ -55,6 +56,7 @@ public interface BpmModelConstants {
      * 用车申请
      */
     String VEHICLE_APPLY = "oa_vehicle_apply";
+
     /**
      * 还车申请
      */
@@ -69,9 +71,9 @@ public interface BpmModelConstants {
      * 公文发文
      */
     String OFFICIAL_DOC_SEND = "oa_official_doc_send";
+
     /**
      * 公文收文
      */
     String OFFICIAL_DOC_RECEIVE = "oa_official_doc_receive";
-
 }

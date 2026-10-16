@@ -1,24 +1,27 @@
 package cn.iocoder.yudao.module.hrm.service.salary.config;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_OPTION_CODE_OCCUPIED;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_OPTION_STANDARD_CANNOT_MODIFY;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionTemplateDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryOptionMapper;
 import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryOptionTemplateMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_OPTION_STANDARD_CANNOT_MODIFY;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_OPTION_CODE_OCCUPIED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link HrmSalaryOptionServiceImpl} 的单元测试类
@@ -28,13 +31,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Import(HrmSalaryOptionServiceImpl.class)
 public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmSalaryOptionServiceImpl salaryOptionService;
+    @Resource private HrmSalaryOptionServiceImpl salaryOptionService;
 
-    @Resource
-    private HrmSalaryOptionMapper salaryOptionMapper;
-    @Resource
-    private HrmSalaryOptionTemplateMapper salaryOptionTemplateMapper;
+    @Resource private HrmSalaryOptionMapper salaryOptionMapper;
+    @Resource private HrmSalaryOptionTemplateMapper salaryOptionTemplateMapper;
 
     @Test
     public void testCreateSalaryOption_success() {
@@ -48,7 +48,8 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         HrmSalaryOptionDO option = salaryOptionMapper.selectById(id);
-        assertEquals(Integer.valueOf(HrmSalaryOptionDO.CUSTOM_OPTION_CODE_BASE + 30 * 10_000 + 1),
+        assertEquals(
+                Integer.valueOf(HrmSalaryOptionDO.CUSTOM_OPTION_CODE_BASE + 30 * 10_000 + 1),
                 option.getCode());
         assertEquals(Integer.valueOf(30), option.getParentCode());
         assertEquals("绩效奖金", option.getName());
@@ -74,7 +75,8 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
         Long id = salaryOptionService.createSalaryOption(createReqVO);
 
         // 断言
-        assertEquals(Integer.valueOf(HrmSalaryOptionDO.CUSTOM_OPTION_CODE_BASE + 30 * 10_000 + 1),
+        assertEquals(
+                Integer.valueOf(HrmSalaryOptionDO.CUSTOM_OPTION_CODE_BASE + 30 * 10_000 + 1),
                 salaryOptionMapper.selectById(id).getCode());
     }
 
@@ -124,7 +126,8 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
         salaryOptionMapper.insert(option);
 
         // 调用，并断言异常
-        assertServiceException(() -> salaryOptionService.deleteSalaryOption(option.getId()),
+        assertServiceException(
+                () -> salaryOptionService.deleteSalaryOption(option.getId()),
                 SALARY_OPTION_STANDARD_CANNOT_MODIFY);
     }
 
@@ -158,7 +161,8 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
         salaryOptionMapper.insert(createSalaryOption(180101, 180, "加班工资", true));
         salaryOptionMapper.insert(createSalaryOption(190, 0, "考勤扣款", true));
         for (int code = 190101; code <= 190106; code++) {
-            salaryOptionMapper.insert(createSalaryOption(code, 190, "考勤扣款", true).setVisible(false));
+            salaryOptionMapper.insert(
+                    createSalaryOption(code, 190, "考勤扣款", true).setVisible(false));
         }
         salaryOptionMapper.insert(createSalaryOption(10102, 10, "停用工资项", false).setEnabled(false));
         salaryOptionMapper.insert(createSalaryOption(10103, 10, "隐藏工资项", false).setVisible(false));
@@ -194,8 +198,11 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
         salaryOptionTemplateMapper.insert(categoryTemplate);
         HrmSalaryOptionTemplateDO optionTemplate = createSalaryOptionTemplate(10101, 10, "基本工资");
         salaryOptionTemplateMapper.insert(optionTemplate);
-        HrmSalaryOptionDO disabledOption = createSalaryOption(10101, 10, "旧基本工资", false)
-                .setTemplateId(optionTemplate.getId()).setEnabled(false).setVisible(false);
+        HrmSalaryOptionDO disabledOption =
+                createSalaryOption(10101, 10, "旧基本工资", false)
+                        .setTemplateId(optionTemplate.getId())
+                        .setEnabled(false)
+                        .setVisible(false);
         salaryOptionMapper.insert(disabledOption);
 
         // 调用
@@ -223,8 +230,8 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
         salaryOptionMapper.insert(createSalaryOption(10101, 10, "租户自定义项", false));
 
         // 调用，并断言异常
-        assertServiceException(() -> salaryOptionService.syncSalaryOption(),
-                SALARY_OPTION_CODE_OCCUPIED, 10101);
+        assertServiceException(
+                () -> salaryOptionService.syncSalaryOption(), SALARY_OPTION_CODE_OCCUPIED, 10101);
     }
 
     // ========== 随机对象 ==========
@@ -233,16 +240,32 @@ public class HrmSalaryOptionServiceImplTest extends BaseDbUnitTest {
         return new HrmSalaryOptionSaveReqVO().setParentCode(30).setName(name);
     }
 
-    private HrmSalaryOptionDO createSalaryOption(Integer code, Integer parentCode, String name,
-                                                  Boolean systemFlag) {
-        return HrmSalaryOptionDO.builder().code(code).parentCode(parentCode).name(name)
-                .systemFlag(systemFlag).type(1).taxEnabled(true).visible(true)
-                .calculateEnabled(true).enabled(true).build();
+    private HrmSalaryOptionDO createSalaryOption(
+            Integer code, Integer parentCode, String name, Boolean systemFlag) {
+        return HrmSalaryOptionDO.builder()
+                .code(code)
+                .parentCode(parentCode)
+                .name(name)
+                .systemFlag(systemFlag)
+                .type(1)
+                .taxEnabled(true)
+                .visible(true)
+                .calculateEnabled(true)
+                .enabled(true)
+                .build();
     }
 
-    private HrmSalaryOptionTemplateDO createSalaryOptionTemplate(Integer code, Integer parentCode, String name) {
-        return HrmSalaryOptionTemplateDO.builder().code(code).parentCode(parentCode).name(name)
-                .systemFlag(false).type(1).taxEnabled(true).visible(true).calculateEnabled(true).build();
+    private HrmSalaryOptionTemplateDO createSalaryOptionTemplate(
+            Integer code, Integer parentCode, String name) {
+        return HrmSalaryOptionTemplateDO.builder()
+                .code(code)
+                .parentCode(parentCode)
+                .name(name)
+                .systemFlag(false)
+                .type(1)
+                .taxEnabled(true)
+                .visible(true)
+                .calculateEnabled(true)
+                .build();
     }
-
 }

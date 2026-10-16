@@ -1,15 +1,16 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item;
 
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.supply.*;
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - 办公用品新增/修改 Request VO")
 @Data
@@ -80,5 +81,4 @@ public class OaSupplyItemSaveReqVO {
     @Schema(description = "备注", example = "请提前联系行政部确认")
     @Size(max = 500, message = "备注长度不能超过 {max} 个字符")
     private String remark;
-
 }

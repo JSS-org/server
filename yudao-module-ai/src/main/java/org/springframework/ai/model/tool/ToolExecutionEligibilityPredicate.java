@@ -17,5 +17,4 @@ public interface ToolExecutionEligibilityPredicate extends BiPredicate<ChatOptio
         Assert.notNull(chatResponse, "chatResponse cannot be null");
         return test(promptOptions, chatResponse);
     }
-
 }

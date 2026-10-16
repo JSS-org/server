@@ -6,7 +6,9 @@ import cn.iocoder.yudao.module.bpm.enums.definition.BpmChildProcessMultiInstance
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateInvoker;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.BpmnModelUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.FlowableUtils;
+
 import lombok.Setter;
+
 import org.flowable.bpmn.model.*;
 import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -31,7 +33,8 @@ public class BpmSequentialMultiInstanceBehavior extends SequentialMultiInstanceB
 
     private BpmTaskCandidateInvoker taskCandidateInvoker;
 
-    public BpmSequentialMultiInstanceBehavior(Activity activity, AbstractBpmnActivityBehavior innerActivityBehavior) {
+    public BpmSequentialMultiInstanceBehavior(
+            Activity activity, AbstractBpmnActivityBehavior innerActivityBehavior) {
         super(activity, innerActivityBehavior);
         // 关联 Pull Request：https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1483
         // 在解析/构造阶段基于 activityId 初始化与 activity 绑定且不变的字段，避免在运行期修改 Behavior 实例状态
@@ -40,9 +43,11 @@ public class BpmSequentialMultiInstanceBehavior extends SequentialMultiInstanceB
             return;
         }
         super.collectionExpression = null; // collectionExpression 和 collectionVariable 是互斥的
-        super.collectionVariable = FlowableUtils.formatExecutionCollectionVariable(activity.getId());
+        super.collectionVariable =
+                FlowableUtils.formatExecutionCollectionVariable(activity.getId());
         // 从 execution.getVariable() 读取当前所有任务处理的人的 key
-        super.collectionElementVariable = FlowableUtils.formatExecutionCollectionElementVariable(activity.getId());
+        super.collectionElementVariable =
+                FlowableUtils.formatExecutionCollectionElementVariable(activity.getId());
     }
 
     /**
@@ -55,11 +60,14 @@ public class BpmSequentialMultiInstanceBehavior extends SequentialMultiInstanceB
         // 情况一：UserTask 节点
         if (execution.getCurrentFlowElement() instanceof UserTask) {
             // 获取任务的所有处理人
-            // 不使用 execution.getVariable 原因：目前依次审批任务回退后 collectionVariable 变量没有清理， 如果重新进入该任务不会重新分配审批人
+            // 不使用 execution.getVariable 原因：目前依次审批任务回退后 collectionVariable 变量没有清理，
+            // 如果重新进入该任务不会重新分配审批人
             @SuppressWarnings("unchecked")
-            Set<Long> assigneeUserIds = (Set<Long>) execution.getVariableLocal(super.collectionVariable, Set.class);
+            Set<Long> assigneeUserIds =
+                    (Set<Long>) execution.getVariableLocal(super.collectionVariable, Set.class);
             if (assigneeUserIds == null) {
-                assigneeUserIds = new LinkedHashSet<>(taskCandidateInvoker.calculateUsersByTask(execution));
+                assigneeUserIds =
+                        new LinkedHashSet<>(taskCandidateInvoker.calculateUsersByTask(execution));
                 if (CollUtil.isEmpty(assigneeUserIds)) {
                     // 特殊：如果没有处理人的情况下，至少有一个 null 空元素，避免自动通过！
                     // 这样，保证在 BpmUserTaskActivityBehavior 至少创建出一个 Task 任务
@@ -75,11 +83,17 @@ public class BpmSequentialMultiInstanceBehavior extends SequentialMultiInstanceB
         if (execution.getCurrentFlowElement() instanceof CallActivity) {
             FlowElement flowElement = execution.getCurrentFlowElement();
             Integer sourceType = BpmnModelUtils.parseMultiInstanceSourceType(flowElement);
-            if (Objects.equals(sourceType, BpmChildProcessMultiInstanceSourceTypeEnum.NUMBER_FORM.getType())) {
-                return execution.getVariable(super.collectionExpression.getExpressionText(), Integer.class);
+            if (Objects.equals(
+                    sourceType, BpmChildProcessMultiInstanceSourceTypeEnum.NUMBER_FORM.getType())) {
+                return execution.getVariable(
+                        super.collectionExpression.getExpressionText(), Integer.class);
             }
-            if (Objects.equals(sourceType, BpmChildProcessMultiInstanceSourceTypeEnum.MULTIPLE_FORM.getType())) {
-                return execution.getVariable(super.collectionExpression.getExpressionText(), List.class).size();
+            if (Objects.equals(
+                    sourceType,
+                    BpmChildProcessMultiInstanceSourceTypeEnum.MULTIPLE_FORM.getType())) {
+                return execution
+                        .getVariable(super.collectionExpression.getExpressionText(), List.class)
+                        .size();
             }
         }
 
@@ -87,10 +101,13 @@ public class BpmSequentialMultiInstanceBehavior extends SequentialMultiInstanceB
     }
 
     @Override
-    protected void executeOriginalBehavior(DelegateExecution execution, ExecutionEntity multiInstanceRootExecution, int loopCounter) {
+    protected void executeOriginalBehavior(
+            DelegateExecution execution,
+            ExecutionEntity multiInstanceRootExecution,
+            int loopCounter) {
         // 参见 https://t.zsxq.com/53Meo 情况
         if (execution.getCurrentFlowElement() instanceof CallActivity
-            || execution.getCurrentFlowElement() instanceof SubProcess) {
+                || execution.getCurrentFlowElement() instanceof SubProcess) {
             super.executeOriginalBehavior(execution, multiInstanceRootExecution, loopCounter);
             return;
         }
@@ -125,5 +142,4 @@ public class BpmSequentialMultiInstanceBehavior extends SequentialMultiInstanceB
         }
         super.setCollectionElementVariable(collectionElementVariable);
     }
-
 }

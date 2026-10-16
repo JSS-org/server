@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.ai.service.image;
 
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.image.vo.*;
 import cn.iocoder.yudao.module.ai.controller.admin.image.vo.midjourney.AiMidjourneyActionReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.image.vo.midjourney.AiMidjourneyImagineReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.image.AiImageDO;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -122,5 +123,4 @@ public interface AiImageService {
      * @return 绘画编号
      */
     Long midjourneyAction(Long userId, AiMidjourneyActionReqVO reqVO);
-
 }

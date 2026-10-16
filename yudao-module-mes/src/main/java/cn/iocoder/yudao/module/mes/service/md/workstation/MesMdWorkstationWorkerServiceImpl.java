@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.mes.service.md.workstation;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.worker.MesMdWorkstationWorkerSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationWorkerDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.workstation.MesMdWorkstationWorkerMapper;
 import cn.iocoder.yudao.module.system.api.dept.PostApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 人力资源 Service 实现类
@@ -25,11 +27,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdWorkstationWorkerServiceImpl implements MesMdWorkstationWorkerService {
 
-    @Resource
-    private MesMdWorkstationWorkerMapper workstationWorkerMapper;
+    @Resource private MesMdWorkstationWorkerMapper workstationWorkerMapper;
 
-    @Resource
-    private PostApi postApi;
+    @Resource private PostApi postApi;
 
     @Override
     public Long createWorkstationWorker(MesMdWorkstationWorkerSaveReqVO createReqVO) {
@@ -37,7 +37,8 @@ public class MesMdWorkstationWorkerServiceImpl implements MesMdWorkstationWorker
         validateWorkstationWorkerSaveData(null, createReqVO);
 
         // 插入
-        MesMdWorkstationWorkerDO worker = BeanUtils.toBean(createReqVO, MesMdWorkstationWorkerDO.class);
+        MesMdWorkstationWorkerDO worker =
+                BeanUtils.toBean(createReqVO, MesMdWorkstationWorkerDO.class);
         workstationWorkerMapper.insert(worker);
         return worker.getId();
     }
@@ -50,7 +51,8 @@ public class MesMdWorkstationWorkerServiceImpl implements MesMdWorkstationWorker
         validateWorkstationWorkerSaveData(updateReqVO.getId(), updateReqVO);
 
         // 更新
-        MesMdWorkstationWorkerDO updateObj = BeanUtils.toBean(updateReqVO, MesMdWorkstationWorkerDO.class);
+        MesMdWorkstationWorkerDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesMdWorkstationWorkerDO.class);
         workstationWorkerMapper.updateById(updateObj);
     }
 
@@ -58,8 +60,9 @@ public class MesMdWorkstationWorkerServiceImpl implements MesMdWorkstationWorker
         // 校验岗位是否存在
         postApi.validPostList(Collections.singleton(reqVO.getPostId()));
         // 校验同一工作站下岗位不重复（排除自身）
-        MesMdWorkstationWorkerDO existing = workstationWorkerMapper.selectByWorkstationIdAndPostId(
-                reqVO.getWorkstationId(), reqVO.getPostId());
+        MesMdWorkstationWorkerDO existing =
+                workstationWorkerMapper.selectByWorkstationIdAndPostId(
+                        reqVO.getWorkstationId(), reqVO.getPostId());
         if (existing != null && ObjUtil.notEqual(existing.getId(), id)) {
             throw exception(MD_WORKSTATION_WORKER_POST_EXISTS);
         }
@@ -81,7 +84,8 @@ public class MesMdWorkstationWorkerServiceImpl implements MesMdWorkstationWorker
     }
 
     @Override
-    public List<MesMdWorkstationWorkerDO> getWorkstationWorkerListByWorkstationId(Long workstationId) {
+    public List<MesMdWorkstationWorkerDO> getWorkstationWorkerListByWorkstationId(
+            Long workstationId) {
         return workstationWorkerMapper.selectListByWorkstationId(workstationId);
     }
 
@@ -89,5 +93,4 @@ public class MesMdWorkstationWorkerServiceImpl implements MesMdWorkstationWorker
     public void deleteWorkstationWorkerByWorkstationId(Long workstationId) {
         workstationWorkerMapper.deleteByWorkstationId(workstationId);
     }
-
 }

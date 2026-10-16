@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.iot.service.device.message;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -14,7 +20,9 @@ import cn.iocoder.yudao.module.iot.dal.tdengine.IotDeviceMessageMapper;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.service.device.property.IotDevicePropertyService;
 import cn.iocoder.yudao.module.iot.service.ota.IotOtaTaskRecordService;
+
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -24,12 +32,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotDeviceMessageServiceImpl} 的单元测试
@@ -42,19 +44,13 @@ import static org.mockito.Mockito.*;
  */
 public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private IotDeviceMessageServiceImpl service;
+    @InjectMocks private IotDeviceMessageServiceImpl service;
 
-    @Mock
-    private IotDeviceService deviceService;
-    @Mock
-    private IotDevicePropertyService devicePropertyService;
-    @Mock
-    private IotOtaTaskRecordService otaTaskRecordService;
-    @Mock
-    private IotDeviceMessageMapper deviceMessageMapper;
-    @Mock
-    private IotDeviceMessageProducer deviceMessageProducer;
+    @Mock private IotDeviceService deviceService;
+    @Mock private IotDevicePropertyService devicePropertyService;
+    @Mock private IotOtaTaskRecordService otaTaskRecordService;
+    @Mock private IotDeviceMessageMapper deviceMessageMapper;
+    @Mock private IotDeviceMessageProducer deviceMessageProducer;
 
     // ========== defineDeviceMessageStable ==========
 
@@ -87,7 +83,8 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testCreateDeviceLogAsync_tsFallback_whenNull() {
         // 准备：构造一条 ts 为 null 的消息
-        IotDeviceMessage message = buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
+        IotDeviceMessage message =
+                buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
         long before = System.currentTimeMillis();
 
         // 调用
@@ -95,25 +92,26 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
         long after = System.currentTimeMillis();
 
         // 断言：mapper.insert 接收到的 messageDO 已被填上 ts，值在 [before, after] 区间
-        ArgumentCaptor<IotDeviceMessageDO> captor = ArgumentCaptor.forClass(IotDeviceMessageDO.class);
+        ArgumentCaptor<IotDeviceMessageDO> captor =
+                ArgumentCaptor.forClass(IotDeviceMessageDO.class);
         verify(deviceMessageMapper).insert(captor.capture());
         Long actualTs = captor.getValue().getTs();
         assertNotNull(actualTs, "ts 不应为空");
-        assertTrue(actualTs >= before && actualTs <= after,
-                "ts 应在调用前后区间内； 实际 = " + actualTs);
+        assertTrue(actualTs >= before && actualTs <= after, "ts 应在调用前后区间内； 实际 = " + actualTs);
     }
 
     @Test
     public void testCreateDeviceLogAsync_idFallback_whenBlank() {
         // 准备：构造一条 id 为空的消息，复合主键字段不能为 null
-        IotDeviceMessage message = buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
-                .setId(null);
+        IotDeviceMessage message =
+                buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod()).setId(null);
 
         // 调用
         service.createDeviceLogAsync(message);
 
         // 断言：mapper.insert 接收到的 messageDO 已补充 id
-        ArgumentCaptor<IotDeviceMessageDO> captor = ArgumentCaptor.forClass(IotDeviceMessageDO.class);
+        ArgumentCaptor<IotDeviceMessageDO> captor =
+                ArgumentCaptor.forClass(IotDeviceMessageDO.class);
         verify(deviceMessageMapper).insert(captor.capture());
         assertNotNull(captor.getValue().getId(), "id 不应为空");
     }
@@ -121,7 +119,8 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testCreateDeviceLogAsync_swallowMapperException() {
         // 准备：mapper.insert 抛异常，验证 @Async 方法内部 try/catch 兜底，不向上抛
-        IotDeviceMessage message = buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
+        IotDeviceMessage message =
+                buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
         doThrow(new RuntimeException("DB unavailable")).when(deviceMessageMapper).insert(any());
 
         // 调用 & 断言
@@ -135,7 +134,8 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     public void testSendDeviceMessage_upstream_publishToProducer() {
         // 准备：上行消息（PROPERTY_POST）
         IotDeviceDO device = buildDevice();
-        IotDeviceMessage message = buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
+        IotDeviceMessage message =
+                buildMessage(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod());
 
         // 调用
         IotDeviceMessage result = service.sendDeviceMessage(message, device);
@@ -151,12 +151,14 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     public void testSendDeviceMessage_downstream_serverIdMissing_throwException() {
         // 准备：下行消息（SERVICE_INVOKE）；devicePropertyService 也查不到 serverId
         IotDeviceDO device = buildDevice();
-        IotDeviceMessage message = buildMessage(IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod());
+        IotDeviceMessage message =
+                buildMessage(IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod());
         when(devicePropertyService.getDeviceServerId(device.getId())).thenReturn(null);
 
         // 调用 & 断言：抛 DEVICE_DOWNSTREAM_FAILED_SERVER_ID_NULL
-        ServiceException ex = assertThrows(ServiceException.class,
-                () -> service.sendDeviceMessage(message, device));
+        ServiceException ex =
+                assertThrows(
+                        ServiceException.class, () -> service.sendDeviceMessage(message, device));
         assertEquals(1_050_003_007, ex.getCode().intValue());
         verify(deviceMessageProducer, never()).sendDeviceMessageToGateway(any(), any());
     }
@@ -218,8 +220,8 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     @Test
     public void testGetDeviceMessageListByRequestIdsAndReply_emptyIds_returnEmpty() {
         // 调用 & 断言：requestIds 为空直接返回空列表，不查 DB
-        List<IotDeviceMessageDO> result = service.getDeviceMessageListByRequestIdsAndReply(
-                1L, Collections.emptyList(), true);
+        List<IotDeviceMessageDO> result =
+                service.getDeviceMessageListByRequestIdsAndReply(1L, Collections.emptyList(), true);
 
         assertTrue(result.isEmpty());
         verify(deviceMessageMapper, never()).selectListByRequestIdsAndReply(any(), any(), any());
@@ -234,8 +236,8 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
                 .thenReturn(Collections.singletonList(record));
 
         // 调用
-        List<IotDeviceMessageDO> result = service.getDeviceMessageListByRequestIdsAndReply(
-                1L, requestIds, true);
+        List<IotDeviceMessageDO> result =
+                service.getDeviceMessageListByRequestIdsAndReply(1L, requestIds, true);
 
         // 断言
         assertEquals(1, result.size());
@@ -287,5 +289,4 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     private IotDeviceDO buildDevice() {
         return IotDeviceDO.builder().id(2L).build();
     }
-
 }

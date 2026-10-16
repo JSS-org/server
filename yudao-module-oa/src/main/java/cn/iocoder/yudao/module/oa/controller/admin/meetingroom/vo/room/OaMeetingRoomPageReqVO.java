@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.room;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,5 +26,4 @@ public class OaMeetingRoomPageReqVO extends PageParam {
 
     @Schema(description = "负责人姓名", example = "芋艿")
     private String managerName;
-
 }

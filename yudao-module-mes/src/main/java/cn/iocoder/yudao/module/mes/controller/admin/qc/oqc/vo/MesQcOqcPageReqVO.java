@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.oqc.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,5 +28,4 @@ public class MesQcOqcPageReqVO extends PageParam {
 
     @Schema(description = "检测结果", example = "1")
     private Integer checkResult;
-
 }

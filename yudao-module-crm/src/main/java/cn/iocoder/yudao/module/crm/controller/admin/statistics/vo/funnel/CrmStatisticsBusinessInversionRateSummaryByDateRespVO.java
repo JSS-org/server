@@ -1,9 +1,8 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.funnel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
-import java.math.BigDecimal;
+import lombok.Data;
 
 @Schema(description = "管理后台 - CRM 商机转化率分析(按日期) VO")
 @Data
@@ -17,5 +16,4 @@ public class CrmStatisticsBusinessInversionRateSummaryByDateRespVO {
 
     @Schema(description = "赢单商机数", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long businessWinCount;
-
 }

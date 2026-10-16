@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.framework.tdengine.config;
 
 import cn.iocoder.yudao.module.iot.service.device.message.IotDeviceMessageService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -30,5 +32,4 @@ public class TDengineTableInitRunner implements ApplicationRunner {
             System.exit(1);
         }
     }
-
 }

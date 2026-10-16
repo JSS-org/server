@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.sn.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES SN 码生成 Request VO")
@@ -27,5 +29,4 @@ public class MesWmSnGenerateReqVO {
     @Min(value = 1, message = "生成数量最小为 1")
     @Max(value = 1000, message = "生成数量最大为 1000")
     private Integer count;
-
 }

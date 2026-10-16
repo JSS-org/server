@@ -1,20 +1,23 @@
 package cn.iocoder.yudao.module.hrm.service.performance.assessment;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.performance.assessment.HrmPerformanceAssessmentActionRecordDO;
 import cn.iocoder.yudao.module.hrm.enums.performance.assessment.HrmPerformanceAssessmentActionTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.assessment.HrmPerformanceAssessmentStageStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link HrmPerformanceAssessmentActionRecordServiceImpl} 的单元测试类
@@ -24,8 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Import(HrmPerformanceAssessmentActionRecordServiceImpl.class)
 public class HrmPerformanceAssessmentActionRecordServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmPerformanceAssessmentActionRecordServiceImpl actionRecordService;
+    @Resource private HrmPerformanceAssessmentActionRecordServiceImpl actionRecordService;
 
     @Test
     public void testCreateListAndDeletePerformanceAssessmentActionRecord() {
@@ -36,32 +38,42 @@ public class HrmPerformanceAssessmentActionRecordServiceImplTest extends BaseDbU
 
         // 调用
         actionRecordService.createPerformanceAssessmentActionRecord(
-                employeeId, assessmentId, stageId,
+                employeeId,
+                assessmentId,
+                stageId,
                 HrmPerformanceAssessmentActionTypeEnum.SUBMIT_APPEAL,
                 Arrays.asList("https://example.com/a.pdf", "https://example.com/b.png"),
-                HrmPerformanceAssessmentStageStatusEnum.APPEALED.getStatus(), "申请复核评分结果");
+                HrmPerformanceAssessmentStageStatusEnum.APPEALED.getStatus(),
+                "申请复核评分结果");
         actionRecordService.createPerformanceAssessmentActionRecord(
-                null, assessmentId, stageId,
+                null,
+                assessmentId,
+                stageId,
                 HrmPerformanceAssessmentActionTypeEnum.APPEAL_TIMEOUT_REJECT,
-                null, HrmPerformanceAssessmentStageStatusEnum.REJECTED.getStatus(),
+                null,
+                HrmPerformanceAssessmentStageStatusEnum.REJECTED.getStatus(),
                 "，意见：申诉确认超期，系统自动驳回");
 
         // 断言创建和查询
-        List<HrmPerformanceAssessmentActionRecordDO> records = actionRecordService
-                .getPerformanceAssessmentActionRecordList(assessmentId);
+        List<HrmPerformanceAssessmentActionRecordDO> records =
+                actionRecordService.getPerformanceAssessmentActionRecordList(assessmentId);
         assertEquals(2, records.size());
         assertEquals(employeeId, records.get(0).getEmployeeId());
         assertEquals("提交绩效申诉", records.get(0).getTitle());
         assertEquals("提交了绩效申诉，原因：申请复核评分结果", records.get(0).getContent());
-        assertEquals(Arrays.asList("https://example.com/a.pdf", "https://example.com/b.png"),
+        assertEquals(
+                Arrays.asList("https://example.com/a.pdf", "https://example.com/b.png"),
                 records.get(0).getFileUrls());
-        assertEquals(HrmPerformanceAssessmentActionTypeEnum.APPEAL_TIMEOUT_REJECT.getType(),
+        assertEquals(
+                HrmPerformanceAssessmentActionTypeEnum.APPEAL_TIMEOUT_REJECT.getType(),
                 records.get(1).getType());
 
         // 调用并断言删除
         actionRecordService.deletePerformanceAssessmentActionRecordList(
                 Collections.singleton(assessmentId));
-        assertTrue(actionRecordService.getPerformanceAssessmentActionRecordList(assessmentId).isEmpty());
+        assertTrue(
+                actionRecordService
+                        .getPerformanceAssessmentActionRecordList(assessmentId)
+                        .isEmpty());
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.note.vo.category;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,5 +21,4 @@ public class OaNoteCategoryRespVO {
 
     @Schema(description = "创建时间", type = "integer", format = "int64", example = "1789347600000")
     private LocalDateTime createTime;
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.member.service.signin;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_RECORD_TODAY_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -19,7 +23,9 @@ import cn.iocoder.yudao.module.member.enums.point.MemberPointBizTypeEnum;
 import cn.iocoder.yudao.module.member.service.level.MemberLevelService;
 import cn.iocoder.yudao.module.member.service.point.MemberPointRecordService;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
 import jakarta.annotation.Resource;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +33,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_RECORD_TODAY_EXISTS;
 
 /**
  * 签到记录 Service 实现类
@@ -41,17 +43,12 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.SIGN_IN_RE
 @Validated
 public class MemberSignInRecordServiceImpl implements MemberSignInRecordService {
 
-    @Resource
-    private MemberSignInRecordMapper signInRecordMapper;
-    @Resource
-    private MemberSignInConfigService signInConfigService;
-    @Resource
-    private MemberPointRecordService pointRecordService;
-    @Resource
-    private MemberLevelService memberLevelService;
+    @Resource private MemberSignInRecordMapper signInRecordMapper;
+    @Resource private MemberSignInConfigService signInConfigService;
+    @Resource private MemberPointRecordService pointRecordService;
+    @Resource private MemberLevelService memberLevelService;
 
-    @Resource
-    private MemberUserService memberUserService;
+    @Resource private MemberUserService memberUserService;
 
     @Override
     public AppMemberSignInRecordSummaryRespVO getSignInRecordSummary(Long userId) {
@@ -86,11 +83,13 @@ public class MemberSignInRecordServiceImpl implements MemberSignInRecordService 
     }
 
     @Override
-    public PageResult<MemberSignInRecordDO> getSignInRecordPage(MemberSignInRecordPageReqVO pageReqVO) {
+    public PageResult<MemberSignInRecordDO> getSignInRecordPage(
+            MemberSignInRecordPageReqVO pageReqVO) {
         // 根据用户昵称查询出用户ids
         Set<Long> userIds = null;
         if (StringUtils.isNotBlank(pageReqVO.getNickname())) {
-            List<MemberUserDO> users = memberUserService.getUserListByNickname(pageReqVO.getNickname());
+            List<MemberUserDO> users =
+                    memberUserService.getUserListByNickname(pageReqVO.getNickname());
             // 如果查询用户结果为空直接返回无需继续查询
             if (CollUtil.isEmpty(users)) {
                 return PageResult.empty();
@@ -115,20 +114,30 @@ public class MemberSignInRecordServiceImpl implements MemberSignInRecordService 
         validateSigned(lastRecord);
 
         // 2.1. 获取所有的签到规则
-        List<MemberSignInConfigDO> signInConfigs = signInConfigService.getSignInConfigList(CommonStatusEnum.ENABLE.getStatus());
+        List<MemberSignInConfigDO> signInConfigs =
+                signInConfigService.getSignInConfigList(CommonStatusEnum.ENABLE.getStatus());
         // 2.2. 组合数据
-        MemberSignInRecordDO record = MemberSignInRecordConvert.INSTANCE.convert(userId, lastRecord, signInConfigs);
+        MemberSignInRecordDO record =
+                MemberSignInRecordConvert.INSTANCE.convert(userId, lastRecord, signInConfigs);
 
         // 3. 插入签到记录
         signInRecordMapper.insert(record);
 
         // 4. 增加积分
         if (!ObjectUtils.equalsAny(record.getPoint(), null, 0)) {
-            pointRecordService.createPointRecord(userId, record.getPoint(), MemberPointBizTypeEnum.SIGN, String.valueOf(record.getId()));
+            pointRecordService.createPointRecord(
+                    userId,
+                    record.getPoint(),
+                    MemberPointBizTypeEnum.SIGN,
+                    String.valueOf(record.getId()));
         }
         // 5. 增加经验
         if (!ObjectUtils.equalsAny(record.getExperience(), null, 0)) {
-            memberLevelService.addExperience(userId, record.getExperience(), MemberExperienceBizTypeEnum.SIGN_IN, String.valueOf(record.getId()));
+            memberLevelService.addExperience(
+                    userId,
+                    record.getExperience(),
+                    MemberExperienceBizTypeEnum.SIGN_IN,
+                    String.valueOf(record.getId()));
         }
         return record;
     }
@@ -141,5 +150,4 @@ public class MemberSignInRecordServiceImpl implements MemberSignInRecordService 
             throw exception(SIGN_IN_RECORD_TODAY_EXISTS);
         }
     }
-
 }

@@ -1,17 +1,19 @@
 package cn.iocoder.yudao.module.iot.dal.redis.device;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.iot.dal.redis.RedisKeyConstants.DEVICE_PROPERTY;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDevicePropertyDO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.iot.dal.redis.RedisKeyConstants.DEVICE_PROPERTY;
 
 /**
  * {@link IotDevicePropertyDO} 的 Redis DAO
@@ -19,8 +21,7 @@ import static cn.iocoder.yudao.module.iot.dal.redis.RedisKeyConstants.DEVICE_PRO
 @Repository
 public class DevicePropertyRedisDAO {
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Resource private StringRedisTemplate stringRedisTemplate;
 
     public Map<String, IotDevicePropertyDO> get(Long id) {
         String redisKey = formatKey(id);
@@ -28,9 +29,12 @@ public class DevicePropertyRedisDAO {
         if (CollUtil.isEmpty(entries)) {
             return Collections.emptyMap();
         }
-        return convertMap(entries.entrySet(),
+        return convertMap(
+                entries.entrySet(),
                 entry -> (String) entry.getKey(),
-                entry -> JsonUtils.parseObject((String) entry.getValue(), IotDevicePropertyDO.class));
+                entry ->
+                        JsonUtils.parseObject(
+                                (String) entry.getValue(), IotDevicePropertyDO.class));
     }
 
     public void putAll(Long id, Map<String, IotDevicePropertyDO> properties) {
@@ -38,13 +42,17 @@ public class DevicePropertyRedisDAO {
             return;
         }
         String redisKey = formatKey(id);
-        stringRedisTemplate.opsForHash().putAll(redisKey, convertMap(properties.entrySet(),
-                Map.Entry::getKey,
-                entry -> JsonUtils.toJsonString(entry.getValue())));
+        stringRedisTemplate
+                .opsForHash()
+                .putAll(
+                        redisKey,
+                        convertMap(
+                                properties.entrySet(),
+                                Map.Entry::getKey,
+                                entry -> JsonUtils.toJsonString(entry.getValue())));
     }
 
     private static String formatKey(Long id) {
         return String.format(DEVICE_PROPERTY, id);
     }
-
 }

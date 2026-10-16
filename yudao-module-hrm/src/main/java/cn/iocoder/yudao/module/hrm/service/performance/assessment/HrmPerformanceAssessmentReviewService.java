@@ -1,8 +1,8 @@
 package cn.iocoder.yudao.module.hrm.service.performance.assessment;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review.HrmPortalPerformanceFillQuotaReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.process.HrmPortalPerformanceProcessRespVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review.HrmPortalPerformanceFillQuotaReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review.HrmPortalPerformanceReviewRejectReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review.HrmPortalPerformanceScorePreviewRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.review.HrmPortalPerformanceScoreReqVO;
@@ -62,7 +62,8 @@ public interface HrmPerformanceAssessmentReviewService {
      * @param reqVO 评分信息
      * @return 评分试算结果
      */
-    HrmPortalPerformanceScorePreviewRespVO previewScore(Long userId, HrmPortalPerformanceScoreReqVO reqVO);
+    HrmPortalPerformanceScorePreviewRespVO previewScore(
+            Long userId, HrmPortalPerformanceScoreReqVO reqVO);
 
     /**
      * 提交绩效评分
@@ -71,7 +72,8 @@ public interface HrmPerformanceAssessmentReviewService {
      * @param reqVO 评分信息
      * @return 流程处理结果
      */
-    HrmPortalPerformanceProcessRespVO scoreAssessment(Long userId, HrmPortalPerformanceScoreReqVO reqVO);
+    HrmPortalPerformanceProcessRespVO scoreAssessment(
+            Long userId, HrmPortalPerformanceScoreReqVO reqVO);
 
     /**
      * 驳回绩效评分阶段
@@ -80,5 +82,4 @@ public interface HrmPerformanceAssessmentReviewService {
      * @param reqVO 驳回信息
      */
     void rejectReviewStage(Long userId, HrmPortalPerformanceReviewRejectReqVO reqVO);
-
 }

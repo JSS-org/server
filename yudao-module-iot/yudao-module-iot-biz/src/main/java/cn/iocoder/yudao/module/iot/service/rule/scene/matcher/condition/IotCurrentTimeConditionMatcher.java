@@ -6,7 +6,9 @@ import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionOperatorEnum;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleConditionTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.IotSceneRuleTimeHelper;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherHelper;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,8 +34,10 @@ public class IotCurrentTimeConditionMatcher implements IotSceneRuleConditionMatc
         }
 
         // 1.2 修复条件匹配中忽略了产品和设备的一致性验证，2025.05.25 by panda
-        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(message, condition.getProductId(),condition.getDeviceId())){
-            IotSceneRuleMatcherHelper.logConditionMatchFailure(message,condition,"条件匹配器中产品或设备不匹配");
+        if (IotSceneRuleMatcherHelper.productAndDeviceNotMatched(
+                message, condition.getProductId(), condition.getDeviceId())) {
+            IotSceneRuleMatcherHelper.logConditionMatchFailure(
+                    message, condition, "条件匹配器中产品或设备不匹配");
             return false;
         }
 
@@ -45,20 +49,24 @@ public class IotCurrentTimeConditionMatcher implements IotSceneRuleConditionMatc
 
         // 1.4 验证操作符是否为支持的时间操作符
         String operator = condition.getOperator();
-        IotSceneRuleConditionOperatorEnum operatorEnum = IotSceneRuleConditionOperatorEnum.operatorOf(operator);
+        IotSceneRuleConditionOperatorEnum operatorEnum =
+                IotSceneRuleConditionOperatorEnum.operatorOf(operator);
         if (operatorEnum == null) {
-            IotSceneRuleMatcherHelper.logConditionMatchFailure(message, condition, "无效的操作符: " + operator);
+            IotSceneRuleMatcherHelper.logConditionMatchFailure(
+                    message, condition, "无效的操作符: " + operator);
             return false;
         }
 
         // 1.5 验证操作符是否为时间相关的操作符
         if (IotSceneRuleTimeHelper.isTimeOperator(operatorEnum)) {
-            IotSceneRuleMatcherHelper.logConditionMatchFailure(message, condition, "不支持的时间操作符: " + operator);
+            IotSceneRuleMatcherHelper.logConditionMatchFailure(
+                    message, condition, "不支持的时间操作符: " + operator);
             return false;
         }
 
         // 2.1 执行时间匹配
-        boolean matched = IotSceneRuleTimeHelper.executeTimeMatching(operatorEnum, condition.getParam());
+        boolean matched =
+                IotSceneRuleTimeHelper.executeTimeMatching(operatorEnum, condition.getParam());
 
         // 2.2 记录匹配结果
         if (matched) {
@@ -74,5 +82,4 @@ public class IotCurrentTimeConditionMatcher implements IotSceneRuleConditionMatc
     public int getPriority() {
         return 40; // 较低优先级
     }
-
 }

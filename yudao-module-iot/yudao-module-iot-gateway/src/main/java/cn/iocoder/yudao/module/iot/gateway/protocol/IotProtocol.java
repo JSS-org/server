@@ -48,5 +48,4 @@ public interface IotProtocol {
      * @return 是否正在运行
      */
     boolean isRunning();
-
 }

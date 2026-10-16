@@ -7,7 +7,6 @@ import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailLogDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,10 +48,17 @@ public interface MailLogService {
      * @param isSend          是否发送成功
      * @return 日志编号
      */
-    Long createMailLog(Long userId, Integer userType,
-                       Collection<String> toMails, Collection<String> ccMails, Collection<String> bccMails,
-                       MailAccountDO account, MailTemplateDO template,
-                       String templateContent, Map<String, Object> templateParams, Boolean isSend);
+    Long createMailLog(
+            Long userId,
+            Integer userType,
+            Collection<String> toMails,
+            Collection<String> ccMails,
+            Collection<String> bccMails,
+            MailAccountDO account,
+            MailTemplateDO template,
+            String templateContent,
+            Map<String, Object> templateParams,
+            Boolean isSend);
 
     /**
      * 更新邮件发送结果
@@ -62,5 +68,4 @@ public interface MailLogService {
      * @param exception 发送异常
      */
     void updateMailSendResult(Long logId, String messageId, Exception exception);
-
 }

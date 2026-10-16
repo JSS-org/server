@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.pack.ImFacePackPageReqVO;
 import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.pack.ImFacePackSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -79,5 +80,4 @@ public interface ImFacePackService {
      * @param ids 表情包编号列表
      */
     void deleteFacePackList(List<Long> ids);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.service.wm.transaction;
 
 import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSaveReqDTO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -26,5 +27,4 @@ public interface MesWmTransactionService {
      * @param reqDTOs 事务数据列表
      */
     void createTransactionList(List<MesWmTransactionSaveReqDTO> reqDTOs);
-
 }

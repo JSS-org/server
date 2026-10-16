@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -12,10 +18,14 @@ import cn.iocoder.yudao.module.system.dal.mysql.permission.MenuMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.system.enums.permission.MenuTypeEnum;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -23,12 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 
 /**
  * 菜单 Service 实现
@@ -39,16 +43,15 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MenuServiceImpl implements MenuService {
 
-    @Resource
-    private MenuMapper menuMapper;
-    @Resource
-    private PermissionService permissionService;
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource private MenuMapper menuMapper;
+    @Resource private PermissionService permissionService;
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private TenantService tenantService;
 
     @Override
-    @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#createReqVO.permission",
+    @CacheEvict(
+            value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
+            key = "#createReqVO.permission",
             condition = "#createReqVO.permission != null")
     public Long createMenu(MenuSaveVO createReqVO) {
         // 校验父菜单存在
@@ -66,7 +69,8 @@ public class MenuServiceImpl implements MenuService {
     }
 
     @Override
-    @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
+    @CacheEvict(
+            value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为 permission 如果变更，涉及到新老两个 permission。直接清理，简单有效
     public void updateMenu(MenuSaveVO updateReqVO) {
         // 校验更新的菜单是否存在
@@ -87,7 +91,8 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
+    @CacheEvict(
+            value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为此时不知道 id 对应的 permission 是多少。直接清理，简单有效
     public void deleteMenu(Long id) {
         // 校验是否还有子菜单
@@ -106,15 +111,17 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
+    @CacheEvict(
+            value = RedisKeyConstants.PERMISSION_MENU_ID_LIST,
             allEntries = true) // allEntries 清空所有缓存，因为 Spring Cache 不支持按照 ids 批量删除
     public void deleteMenuList(List<Long> ids) {
         // 校验是否还有子菜单
-        ids.forEach(id -> {
-            if (menuMapper.selectCountByParentId(id) > 0) {
-                throw exception(MENU_EXISTS_CHILDREN);
-            }
-        });
+        ids.forEach(
+                id -> {
+                    if (menuMapper.selectCountByParentId(id) > 0) {
+                        throw exception(MENU_EXISTS_CHILDREN);
+                    }
+                });
 
         // 标记删除
         menuMapper.deleteByIds(ids);
@@ -132,13 +139,14 @@ public class MenuServiceImpl implements MenuService {
         // 查询所有菜单，并过滤掉关闭的节点
         List<MenuDO> menus = getMenuList(reqVO);
         // 开启多租户的情况下，需要过滤掉未开通的菜单
-        tenantService.handleTenantMenu(menuIds -> menus.removeIf(menu -> !CollUtil.contains(menuIds, menu.getId())));
+        tenantService.handleTenantMenu(
+                menuIds -> menus.removeIf(menu -> !CollUtil.contains(menuIds, menu.getId())));
         return menus;
     }
 
     @Override
     public List<MenuDO> filterDisableMenus(List<MenuDO> menuList) {
-        if (CollUtil.isEmpty(menuList)){
+        if (CollUtil.isEmpty(menuList)) {
             return Collections.emptyList();
         }
         Map<Long, MenuDO> menuMap = convertMap(menuList, MenuDO::getId);
@@ -155,7 +163,8 @@ public class MenuServiceImpl implements MenuService {
         return enabledMenus;
     }
 
-    private boolean isMenuDisabled(MenuDO node, Map<Long, MenuDO> menuMap, Set<Long> disabledMenuCache) {
+    private boolean isMenuDisabled(
+            MenuDO node, Map<Long, MenuDO> menuMap, Set<Long> disabledMenuCache) {
         // 如果已经判定是禁用的节点，直接结束
         if (disabledMenuCache.contains(node.getId())) {
             return true;
@@ -303,5 +312,4 @@ public class MenuServiceImpl implements MenuService {
             menu.setPath("");
         }
     }
-
 }

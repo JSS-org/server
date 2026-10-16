@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo.MesWmStockTakingTaskPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo.MesWmStockTakingTaskSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.task.MesWmStockTakingTaskDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -94,6 +95,6 @@ public interface MesWmStockTakingTaskService {
      * @param pageReqVO 分页查询条件
      * @return 盘点任务分页结果
      */
-    PageResult<MesWmStockTakingTaskDO> getStockTakingTaskPage(MesWmStockTakingTaskPageReqVO pageReqVO);
-
+    PageResult<MesWmStockTakingTaskDO> getStockTakingTaskPage(
+            MesWmStockTakingTaskPageReqVO pageReqVO);
 }

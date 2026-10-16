@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_IMPORT_FAIL_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -19,12 +25,15 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.Model;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -40,70 +49,84 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_IMPORT_FAIL_INVALID;
-
 @Tag(name = "管理后台 - 流程模型")
 @RestController
 @RequestMapping("/bpm/model")
 @Validated
 public class BpmModelController {
 
-    @Resource
-    private BpmModelService modelService;
-    @Resource
-    private BpmFormService formService;
-    @Resource
-    private BpmCategoryService categoryService;
-    @Resource
-    private BpmProcessDefinitionService processDefinitionService;
+    @Resource private BpmModelService modelService;
+    @Resource private BpmFormService formService;
+    @Resource private BpmCategoryService categoryService;
+    @Resource private BpmProcessDefinitionService processDefinitionService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     @GetMapping("/list")
     @Operation(summary = "获得模型分页")
     @Parameter(name = "name", description = "模型名称", example = "芋艿")
-    public CommonResult<List<BpmModelRespVO>> getModelList(@RequestParam(value = "name", required = false) String name) {
+    public CommonResult<List<BpmModelRespVO>> getModelList(
+            @RequestParam(value = "name", required = false) String name) {
         List<Model> list = modelService.getModelList(name);
         if (CollUtil.isEmpty(list)) {
             return success(Collections.emptyList());
         }
 
         // 获得 Form 表单
-        Set<Long> formIds = convertSet(list, model -> {
-            BpmModelMetaInfoVO metaInfo = BpmModelConvert.INSTANCE.parseMetaInfo(model);
-            return metaInfo != null ? metaInfo.getFormId() : null;
-        });
+        Set<Long> formIds =
+                convertSet(
+                        list,
+                        model -> {
+                            BpmModelMetaInfoVO metaInfo =
+                                    BpmModelConvert.INSTANCE.parseMetaInfo(model);
+                            return metaInfo != null ? metaInfo.getFormId() : null;
+                        });
         Map<Long, BpmFormDO> formMap = formService.getFormMap(formIds);
         // 获得 Category Map
-        Map<String, BpmCategoryDO> categoryMap = categoryService.getCategoryMap(
-                convertSet(list, Model::getCategory));
+        Map<String, BpmCategoryDO> categoryMap =
+                categoryService.getCategoryMap(convertSet(list, Model::getCategory));
         // 获得 Deployment Map
-        Map<String, Deployment> deploymentMap = processDefinitionService.getDeploymentMap(
-                convertSet(list, Model::getDeploymentId));
+        Map<String, Deployment> deploymentMap =
+                processDefinitionService.getDeploymentMap(convertSet(list, Model::getDeploymentId));
         // 获得 ProcessDefinition Map
-        List<ProcessDefinition> processDefinitions = processDefinitionService.getProcessDefinitionListByDeploymentIds(
-                deploymentMap.keySet());
-        Map<String, ProcessDefinition> processDefinitionMap = convertMap(processDefinitions, ProcessDefinition::getDeploymentId);
+        List<ProcessDefinition> processDefinitions =
+                processDefinitionService.getProcessDefinitionListByDeploymentIds(
+                        deploymentMap.keySet());
+        Map<String, ProcessDefinition> processDefinitionMap =
+                convertMap(processDefinitions, ProcessDefinition::getDeploymentId);
         // 获得 User Map、Dept Map
-        Set<Long> userIds = convertSetByFlatMap(list, model -> {
-            BpmModelMetaInfoVO metaInfo = BpmModelConvert.INSTANCE.parseMetaInfo(model);
-            return metaInfo != null ? metaInfo.getStartUserIds().stream() : Stream.empty();
-        });
+        Set<Long> userIds =
+                convertSetByFlatMap(
+                        list,
+                        model -> {
+                            BpmModelMetaInfoVO metaInfo =
+                                    BpmModelConvert.INSTANCE.parseMetaInfo(model);
+                            return metaInfo != null
+                                    ? metaInfo.getStartUserIds().stream()
+                                    : Stream.empty();
+                        });
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
-        Set<Long> deptIds = convertSetByFlatMap(list, model -> {
-            BpmModelMetaInfoVO metaInfo = BpmModelConvert.INSTANCE.parseMetaInfo(model);
-            return metaInfo != null && metaInfo.getStartDeptIds() != null ? metaInfo.getStartDeptIds().stream() : Stream.empty();
-        });
+        Set<Long> deptIds =
+                convertSetByFlatMap(
+                        list,
+                        model -> {
+                            BpmModelMetaInfoVO metaInfo =
+                                    BpmModelConvert.INSTANCE.parseMetaInfo(model);
+                            return metaInfo != null && metaInfo.getStartDeptIds() != null
+                                    ? metaInfo.getStartDeptIds().stream()
+                                    : Stream.empty();
+                        });
         Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(deptIds);
-        return success(BpmModelConvert.INSTANCE.buildModelList(list,
-                formMap, categoryMap, deploymentMap, processDefinitionMap, userMap, deptMap));
+        return success(
+                BpmModelConvert.INSTANCE.buildModelList(
+                        list,
+                        formMap,
+                        categoryMap,
+                        deploymentMap,
+                        processDefinitionMap,
+                        userMap,
+                        deptMap));
     }
 
     @GetMapping("/get")
@@ -138,14 +161,16 @@ public class BpmModelController {
     @PostMapping("/import")
     @Operation(summary = "导入模型")
     @Parameters({
-            @Parameter(name = "file", description = "流程模型 JSON 文件", required = true),
-            @Parameter(name = "key", description = "流程标识，替换导入文件中的标识", example = "process_yudao"),
-            @Parameter(name = "name", description = "流程名称，替换导入文件中的名称", example = "芋道")
+        @Parameter(name = "file", description = "流程模型 JSON 文件", required = true),
+        @Parameter(name = "key", description = "流程标识，替换导入文件中的标识", example = "process_yudao"),
+        @Parameter(name = "name", description = "流程名称，替换导入文件中的名称", example = "芋道")
     })
     @PreAuthorize("@ss.hasPermission('bpm:model:import')")
-    public CommonResult<String> importModel(@RequestParam("file") MultipartFile file,
-                                            @RequestParam(value = "key", required = false) String key,
-                                            @RequestParam(value = "name", required = false) String name) throws IOException {
+    public CommonResult<String> importModel(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "key", required = false) String key,
+            @RequestParam(value = "name", required = false) String name)
+            throws IOException {
         BpmModelSaveReqVO reqVO;
         try {
             reqVO = JsonUtils.parseObject(file.getBytes(), BpmModelSaveReqVO.class);
@@ -193,7 +218,8 @@ public class BpmModelController {
     @PutMapping("/update-state")
     @Operation(summary = "修改模型的状态", description = "实际更新的部署的流程定义的状态")
     @PreAuthorize("@ss.hasPermission('bpm:model:update')")
-    public CommonResult<Boolean> updateModelState(@Valid @RequestBody BpmModelUpdateStateReqVO reqVO) {
+    public CommonResult<Boolean> updateModelState(
+            @Valid @RequestBody BpmModelUpdateStateReqVO reqVO) {
         modelService.updateModelState(getLoginUserId(), reqVO.getId(), reqVO.getState());
         return success(true);
     }
@@ -229,8 +255,12 @@ public class BpmModelController {
 
     @GetMapping("/simple/get")
     @Operation(summary = "获得仿钉钉流程设计模型")
-    @Parameter(name = "modelId", description = "流程模型编号", required = true, example = "a2c5eee0-eb6c-11ee-abf4-0c37967c420a")
-    public CommonResult<BpmSimpleModelNodeVO> getSimpleModel(@RequestParam("id") String modelId){
+    @Parameter(
+            name = "modelId",
+            description = "流程模型编号",
+            required = true,
+            example = "a2c5eee0-eb6c-11ee-abf4-0c37967c420a")
+    public CommonResult<BpmSimpleModelNodeVO> getSimpleModel(@RequestParam("id") String modelId) {
         return success(modelService.getSimpleModel(modelId));
     }
 
@@ -238,9 +268,9 @@ public class BpmModelController {
     @PostMapping("/simple/update")
     @Operation(summary = "保存仿钉钉流程设计模型")
     @PreAuthorize("@ss.hasPermission('bpm:model:update')")
-    public CommonResult<Boolean> updateSimpleModel(@Valid @RequestBody BpmSimpleModelUpdateReqVO reqVO) {
+    public CommonResult<Boolean> updateSimpleModel(
+            @Valid @RequestBody BpmSimpleModelUpdateReqVO reqVO) {
         modelService.updateSimpleModel(getLoginUserId(), reqVO);
         return success(Boolean.TRUE);
     }
-
 }

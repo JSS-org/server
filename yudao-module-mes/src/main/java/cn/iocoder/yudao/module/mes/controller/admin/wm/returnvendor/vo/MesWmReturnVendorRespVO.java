@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,10 @@ public class MesWmReturnVendorRespVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "退货单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "RV20250226001")
+    @Schema(
+            description = "退货单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "RV20250226001")
     private String code;
 
     @Schema(description = "退货单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "供应商退货")
@@ -53,5 +57,4 @@ public class MesWmReturnVendorRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

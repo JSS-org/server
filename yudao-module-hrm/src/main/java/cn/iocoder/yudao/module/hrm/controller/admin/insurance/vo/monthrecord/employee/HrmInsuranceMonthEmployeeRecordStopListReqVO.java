@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.monthrecord.employee;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -11,9 +13,10 @@ import java.util.List;
 @Data
 public class HrmInsuranceMonthEmployeeRecordStopListReqVO {
 
-    @Schema(description = "员工月度社保记录编号列表", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "员工月度社保记录编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "[1024, 1025]")
     @NotEmpty(message = "员工社保记录不能为空")
     private List<@NotNull(message = "员工社保记录编号不能为空") Long> ids;
-
 }

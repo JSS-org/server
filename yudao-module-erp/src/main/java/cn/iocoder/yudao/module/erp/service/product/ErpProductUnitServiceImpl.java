@@ -1,22 +1,25 @@
 package cn.iocoder.yudao.module.erp.service.product;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.unit.ErpProductUnitPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.unit.ErpProductUnitSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductUnitDO;
 import cn.iocoder.yudao.module.erp.dal.mysql.product.ErpProductUnitMapper;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 /**
  * ERP 产品单位 Service 实现类
@@ -27,11 +30,9 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 @Validated
 public class ErpProductUnitServiceImpl implements ErpProductUnitService {
 
-    @Resource
-    private ErpProductUnitMapper productUnitMapper;
+    @Resource private ErpProductUnitMapper productUnitMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpProductService productService;
 
     @Override
@@ -105,7 +106,6 @@ public class ErpProductUnitServiceImpl implements ErpProductUnitService {
 
     @Override
     public List<ErpProductUnitDO> getProductUnitList(Collection<Long> ids) {
-         return productUnitMapper.selectByIds(ids);
+        return productUnitMapper.selectByIds(ids);
     }
-
 }

@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.library.PmsKnowledgeLibraryDO;
 import cn.iocoder.yudao.module.pms.enums.kb.PmsKnowledgeObjectTypeEnum;
 import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,31 +28,33 @@ public class PmsKnowledgeViewRecordDO extends BaseDO {
     /**
      * 浏览记录编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 知识库编号
      *
      * 关联 {@link PmsKnowledgeLibraryDO#getId()}
      */
     private Long libraryId;
+
     /**
      * 浏览对象类型
      *
      * 枚举 {@link PmsKnowledgeObjectTypeEnum}
      */
     private Integer type;
+
     /**
      * 浏览对象编号
      *
      * 根据 {@link #getType()} 关联文件夹或文档编号
      */
     private Long entityId;
+
     /**
      * 浏览人用户编号
      *
      * 关联 {@link AdminUserDO#getId()}
      */
     private Long userId;
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.performance.assessment;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmPerformanceAssessmentActionTypeEnum implements ArrayValuable<Integer> {
-
     FILL_QUOTA(1, "提交绩效指标", "填写并提交了绩效指标"), // 填写考核指标
     CONFIRM_TARGET(2, "确认绩效目标", "确认了绩效目标%s"), // 确认考核目标
     REJECT_TARGET(3, "驳回绩效目标", "驳回了绩效目标%s"), // 驳回考核目标
@@ -31,17 +31,21 @@ public enum HrmPerformanceAssessmentActionTypeEnum implements ArrayValuable<Inte
     APPEAL_TIMEOUT_REJECT(13, "自动驳回绩效申诉", "驳回了绩效申诉%s"), // 超时自动驳回申诉
     TERMINATE(14, "终止绩效考核", "终止了绩效考核"); // 终止绩效考核
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmPerformanceAssessmentActionTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmPerformanceAssessmentActionTypeEnum::getType)
+                    .toArray(Integer[]::new);
 
     /**
      * 动作类型
      */
     private final Integer type;
+
     /**
      * 动作标题
      */
     private final String title;
+
     /**
      * 动作内容模板
      */
@@ -65,5 +69,4 @@ public enum HrmPerformanceAssessmentActionTypeEnum implements ArrayValuable<Inte
     public String formatContent(Object... args) {
         return String.format(contentTemplate, args);
     }
-
 }

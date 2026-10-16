@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.banner;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerCreateReqVO;
@@ -9,17 +11,17 @@ import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerUpdate
 import cn.iocoder.yudao.module.promotion.convert.banner.BannerConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.banner.BannerDO;
 import cn.iocoder.yudao.module.promotion.service.banner.BannerService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "管理后台 - Banner 管理")
 @RestController
@@ -27,8 +29,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class BannerController {
 
-    @Resource
-    private BannerService bannerService;
+    @Resource private BannerService bannerService;
 
     @PostMapping("/create")
     @Operation(summary = "创建 Banner")
@@ -70,5 +71,4 @@ public class BannerController {
         PageResult<BannerDO> pageResult = bannerService.getBannerPage(pageVO);
         return success(BannerConvert.INSTANCE.convertPage(pageResult));
     }
-
 }

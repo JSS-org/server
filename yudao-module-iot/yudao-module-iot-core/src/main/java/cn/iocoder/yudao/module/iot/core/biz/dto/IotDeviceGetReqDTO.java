@@ -19,9 +19,9 @@ public class IotDeviceGetReqDTO {
      * 产品标识
      */
     private String productKey;
+
     /**
      * 设备名称
      */
     private String deviceName;
-
 }

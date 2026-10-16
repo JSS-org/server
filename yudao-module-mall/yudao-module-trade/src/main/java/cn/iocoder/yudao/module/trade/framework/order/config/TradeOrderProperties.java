@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.trade.framework.order.config;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
-
-import jakarta.validation.constraints.NotNull;
 
 import java.time.Duration;
 
@@ -53,5 +54,4 @@ public class TradeOrderProperties {
      */
     @NotNull(message = "是否同步订单状态到微信小程序不能为空")
     private Boolean statusSyncToWxaEnable;
-
 }

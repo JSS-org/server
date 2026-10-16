@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.performance.assessment;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmPerformanceAssessmentStageStatusEnum implements ArrayValuable<Integer> {
-
     NOT_PROCESSED(0, "未处理"),
     PROCESSED(1, "已处理"),
     PENDING(2, "待处理"),
@@ -23,13 +23,16 @@ public enum HrmPerformanceAssessmentStageStatusEnum implements ArrayValuable<Int
     PROCESSING(4, "处理中"),
     APPEALED(5, "已申诉");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmPerformanceAssessmentStageStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmPerformanceAssessmentStageStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态
      */
     private final Integer status;
+
     /**
      * 名称
      */
@@ -43,5 +46,4 @@ public enum HrmPerformanceAssessmentStageStatusEnum implements ArrayValuable<Int
     public static HrmPerformanceAssessmentStageStatusEnum valueOf(Integer status) {
         return ArrayUtil.firstMatch(item -> item.getStatus().equals(status), values());
     }
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.controller.admin.image;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.util.ObjUtil;
-import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,22 +12,24 @@ import cn.iocoder.yudao.module.ai.controller.admin.image.vo.*;
 import cn.iocoder.yudao.module.ai.controller.admin.image.vo.midjourney.AiMidjourneyActionReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.image.vo.midjourney.AiMidjourneyImagineReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.image.AiImageDO;
+import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
 import cn.iocoder.yudao.module.ai.service.image.AiImageService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - AI 绘画")
 @RestController
@@ -33,19 +37,20 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Slf4j
 public class AiImageController {
 
-    @Resource
-    private AiImageService imageService;
+    @Resource private AiImageService imageService;
 
     @GetMapping("/my-page")
     @Operation(summary = "获取【我的】绘图分页")
-    public CommonResult<PageResult<AiImageRespVO>> getImagePageMy(@Validated AiImagePageReqVO pageReqVO) {
+    public CommonResult<PageResult<AiImageRespVO>> getImagePageMy(
+            @Validated AiImagePageReqVO pageReqVO) {
         PageResult<AiImageDO> pageResult = imageService.getImagePageMy(getLoginUserId(), pageReqVO);
         return success(BeanUtils.toBean(pageResult, AiImageRespVO.class));
     }
 
     @GetMapping("/public-page")
     @Operation(summary = "获取公开的绘图分页")
-    public CommonResult<PageResult<AiImageRespVO>> getImagePagePublic(AiImagePublicPageReqVO pageReqVO) {
+    public CommonResult<PageResult<AiImageRespVO>> getImagePagePublic(
+            AiImagePublicPageReqVO pageReqVO) {
         PageResult<AiImageDO> pageResult = imageService.getImagePagePublic(pageReqVO);
         return success(BeanUtils.toBean(pageResult, AiImageRespVO.class));
     }
@@ -64,7 +69,8 @@ public class AiImageController {
     @GetMapping("/my-list-by-ids")
     @Operation(summary = "获取【我的】绘图记录列表")
     @Parameter(name = "ids", required = true, description = "绘画编号数组", example = "1024,2048")
-    public CommonResult<List<AiImageRespVO>> getImageListMyByIds(@RequestParam("ids") List<Long> ids) {
+    public CommonResult<List<AiImageRespVO>> getImageListMyByIds(
+            @RequestParam("ids") List<Long> ids) {
         List<AiImageDO> imageList = imageService.getImageList(ids);
         imageList.removeIf(item -> !ObjUtil.equal(getLoginUserId(), item.getUserId()));
         return success(BeanUtils.toBean(imageList, AiImageRespVO.class));
@@ -88,7 +94,8 @@ public class AiImageController {
 
     @Operation(summary = "【Midjourney】生成图片")
     @PostMapping("/midjourney/imagine")
-    public CommonResult<Long> midjourneyImagine(@Valid @RequestBody AiMidjourneyImagineReqVO reqVO) {
+    public CommonResult<Long> midjourneyImagine(
+            @Valid @RequestBody AiMidjourneyImagineReqVO reqVO) {
         Long imageId = imageService.midjourneyImagine(getLoginUserId(), reqVO);
         return success(imageId);
     }
@@ -144,5 +151,4 @@ public class AiImageController {
         imageService.deleteImage(id);
         return success(true);
     }
-
 }

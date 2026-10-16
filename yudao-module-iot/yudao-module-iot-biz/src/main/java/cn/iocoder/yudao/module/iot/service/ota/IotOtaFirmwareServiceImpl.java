@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.iot.service.ota;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_DELETE_FAIL_TASK_IN_PROGRESS;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_PRODUCT_VERSION_DUPLICATE;
+
 import cn.hutool.crypto.digest.DigestAlgorithm;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.http.HttpUtil;
@@ -13,8 +18,11 @@ import cn.iocoder.yudao.module.iot.dal.mysql.ota.IotOtaFirmwareMapper;
 import cn.iocoder.yudao.module.iot.dal.mysql.ota.IotOtaTaskMapper;
 import cn.iocoder.yudao.module.iot.enums.ota.IotOtaTaskStatusEnum;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -23,11 +31,6 @@ import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_DELETE_FAIL_TASK_IN_PROGRESS;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_PRODUCT_VERSION_DUPLICATE;
 
 /**
  * OTA 固件管理 Service 实现类
@@ -39,18 +42,16 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.OTA_FIRMWARE_
 @Slf4j
 public class IotOtaFirmwareServiceImpl implements IotOtaFirmwareService {
 
-    @Resource
-    private IotOtaFirmwareMapper otaFirmwareMapper;
-    @Resource
-    private IotOtaTaskMapper otaTaskMapper;
-    @Lazy
-    @Resource
-    private IotProductService productService;
+    @Resource private IotOtaFirmwareMapper otaFirmwareMapper;
+    @Resource private IotOtaTaskMapper otaTaskMapper;
+    @Lazy @Resource private IotProductService productService;
 
     @Override
     public Long createOtaFirmware(IotOtaFirmwareCreateReqVO saveReqVO) {
         // 1.1 校验固件产品 + 版本号不能重复
-        if (otaFirmwareMapper.selectByProductIdAndVersion(saveReqVO.getProductId(), saveReqVO.getVersion()) != null) {
+        if (otaFirmwareMapper.selectByProductIdAndVersion(
+                        saveReqVO.getProductId(), saveReqVO.getVersion())
+                != null) {
             throw exception(OTA_FIRMWARE_PRODUCT_VERSION_DUPLICATE);
         }
         // 1.2 校验产品存在
@@ -84,7 +85,9 @@ public class IotOtaFirmwareServiceImpl implements IotOtaFirmwareService {
         // 1.1 校验存在
         validateFirmwareExists(id);
         // 1.2 校验是否有进行中的升级任务
-        if (otaTaskMapper.selectCountByFirmwareIdAndStatus(id, IotOtaTaskStatusEnum.IN_PROGRESS.getStatus()) > 0) {
+        if (otaTaskMapper.selectCountByFirmwareIdAndStatus(
+                        id, IotOtaTaskStatusEnum.IN_PROGRESS.getStatus())
+                > 0) {
             throw exception(OTA_FIRMWARE_DELETE_FAIL_TASK_IN_PROGRESS);
         }
 
@@ -137,8 +140,9 @@ public class IotOtaFirmwareServiceImpl implements IotOtaFirmwareService {
         firmware.setFileSize((long) fileBytes.length);
         // 计算 MD5 签名
         firmware.setFileDigestAlgorithm(DigestAlgorithm.MD5.getValue());
-        String md5Hex = DigestUtil.digester(firmware.getFileDigestAlgorithm()).digestHex(new ByteArrayInputStream(fileBytes));
+        String md5Hex =
+                DigestUtil.digester(firmware.getFileDigestAlgorithm())
+                        .digestHex(new ByteArrayInputStream(fileBytes));
         firmware.setFileDigestValue(md5Hex);
     }
-
 }

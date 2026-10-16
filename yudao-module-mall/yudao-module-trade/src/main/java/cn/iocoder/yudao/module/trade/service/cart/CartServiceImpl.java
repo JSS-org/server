@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.trade.service.cart;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
+import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_STOCK_NOT_ENOUGH;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.CARD_ITEM_NOT_FOUND;
+
+import static java.util.Collections.emptyList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.product.api.sku.ProductSkuApi;
 import cn.iocoder.yudao.module.product.api.sku.dto.ProductSkuRespDTO;
@@ -9,19 +17,14 @@ import cn.iocoder.yudao.module.trade.controller.app.cart.vo.*;
 import cn.iocoder.yudao.module.trade.convert.cart.TradeCartConvert;
 import cn.iocoder.yudao.module.trade.dal.dataobject.cart.CartDO;
 import cn.iocoder.yudao.module.trade.dal.mysql.cart.CartMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_NOT_EXISTS;
-import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.SKU_STOCK_NOT_ENOUGH;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.CARD_ITEM_NOT_FOUND;
-import static java.util.Collections.emptyList;
 
 /**
  * 购物车 Service 实现类
@@ -34,13 +37,10 @@ import static java.util.Collections.emptyList;
 @Validated
 public class CartServiceImpl implements CartService {
 
-    @Resource
-    private CartMapper cartMapper;
+    @Resource private CartMapper cartMapper;
 
-    @Resource
-    private ProductSpuApi productSpuApi;
-    @Resource
-    private ProductSkuApi productSkuApi;
+    @Resource private ProductSpuApi productSpuApi;
+    @Resource private ProductSkuApi productSkuApi;
 
     @Override
     public Long addCart(Long userId, AppCartAddReqVO addReqVO) {
@@ -52,13 +52,21 @@ public class CartServiceImpl implements CartService {
 
         // 情况一：存在，则进行数量更新
         if (cart != null) {
-            cartMapper.updateById(new CartDO().setId(cart.getId()).setSelected(true)
-                    .setCount(cart.getCount() + count));
+            cartMapper.updateById(
+                    new CartDO()
+                            .setId(cart.getId())
+                            .setSelected(true)
+                            .setCount(cart.getCount() + count));
             return cart.getId();
-        // 情况二：不存在，则进行插入
+            // 情况二：不存在，则进行插入
         } else {
-            cart = new CartDO().setUserId(userId).setSelected(true)
-                    .setSpuId(sku.getSpuId()).setSkuId(sku.getId()).setCount(count);
+            cart =
+                    new CartDO()
+                            .setUserId(userId)
+                            .setSelected(true)
+                            .setSpuId(sku.getSpuId())
+                            .setSkuId(sku.getId())
+                            .setCount(count);
             cartMapper.insert(cart);
         }
         return cart.getId();
@@ -75,13 +83,14 @@ public class CartServiceImpl implements CartService {
         checkProductSku(cart.getSkuId(), updateReqVO.getCount());
 
         // 更新数量
-        cartMapper.updateById(new CartDO().setId(cart.getId())
-                .setCount(updateReqVO.getCount()));
+        cartMapper.updateById(new CartDO().setId(cart.getId()).setCount(updateReqVO.getCount()));
     }
 
     @Override
     public void updateCartSelected(Long userId, AppCartUpdateSelectedReqVO updateSelectedReqVO) {
-        cartMapper.updateByIds(updateSelectedReqVO.getIds(), userId,
+        cartMapper.updateByIds(
+                updateSelectedReqVO.getIds(),
+                userId,
                 new CartDO().setSelected(updateSelectedReqVO.getSelected()));
     }
 
@@ -98,11 +107,17 @@ public class CartServiceImpl implements CartService {
         // 第二步：添加新的购物项
         CartDO newCart = cartMapper.selectByUserIdAndSkuId(userId, resetReqVO.getSkuId());
         if (newCart != null) {
-            updateCartCount(userId, new AppCartUpdateCountReqVO()
-                    .setId(newCart.getId()).setCount(resetReqVO.getCount()));
+            updateCartCount(
+                    userId,
+                    new AppCartUpdateCountReqVO()
+                            .setId(newCart.getId())
+                            .setCount(resetReqVO.getCount()));
         } else {
-            addCart(userId, new AppCartAddReqVO().setSkuId(resetReqVO.getSkuId())
-                    .setCount(resetReqVO.getCount()));
+            addCart(
+                    userId,
+                    new AppCartAddReqVO()
+                            .setSkuId(resetReqVO.getSkuId())
+                            .setCount(resetReqVO.getCount()));
         }
     }
 
@@ -137,13 +152,14 @@ public class CartServiceImpl implements CartService {
         carts.sort(Comparator.comparing(CartDO::getId).reversed());
         // 如果未空，则返回空结果
         if (CollUtil.isEmpty(carts)) {
-            return new AppCartListRespVO().setValidList(emptyList())
-                    .setInvalidList(emptyList());
+            return new AppCartListRespVO().setValidList(emptyList()).setInvalidList(emptyList());
         }
 
         // 查询 SPU、SKU 列表
-        List<ProductSpuRespDTO> spus = productSpuApi.getSpuList(convertSet(carts, CartDO::getSpuId));
-        List<ProductSkuRespDTO> skus = productSkuApi.getSkuList(convertSet(carts, CartDO::getSkuId));
+        List<ProductSpuRespDTO> spus =
+                productSpuApi.getSpuList(convertSet(carts, CartDO::getSpuId));
+        List<ProductSkuRespDTO> skus =
+                productSkuApi.getSkuList(convertSet(carts, CartDO::getSkuId));
 
         // 如果 SPU 被删除，则删除购物车对应的商品。延迟删除
         // 为什么不是 SKU 被删除呢？因为 SKU 被删除时，还可以通过 SPU 选择其它 SKU
@@ -163,13 +179,14 @@ public class CartServiceImpl implements CartService {
 
     private void deleteCartIfSpuDeleted(List<CartDO> carts, List<ProductSpuRespDTO> spus) {
         // 如果 SPU 被删除，则删除购物车对应的商品。延迟删除
-        carts.removeIf(cart -> {
-            if (spus.stream().noneMatch(spu -> spu.getId().equals(cart.getSpuId()))) {
-                cartMapper.deleteById(cart.getId());
-                return true;
-            }
-            return false;
-        });
+        carts.removeIf(
+                cart -> {
+                    if (spus.stream().noneMatch(spu -> spu.getId().equals(cart.getSpuId()))) {
+                        cartMapper.deleteById(cart.getId());
+                        return true;
+                    }
+                    return false;
+                });
     }
 
     /**
@@ -192,5 +209,4 @@ public class CartServiceImpl implements CartService {
         }
         return sku;
     }
-
 }

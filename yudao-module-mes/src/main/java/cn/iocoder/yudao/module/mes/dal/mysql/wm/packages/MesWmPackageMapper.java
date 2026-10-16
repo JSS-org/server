@@ -20,14 +20,16 @@ import java.util.List;
 public interface MesWmPackageMapper extends BaseMapperX<MesWmPackageDO> {
 
     default PageResult<MesWmPackageDO> selectPage(MesWmPackagePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesWmPackageDO>()
-                .likeIfPresent(MesWmPackageDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesWmPackageDO::getSalesOrderCode, reqVO.getSalesOrderCode())
-                .eqIfPresent(MesWmPackageDO::getClientId, reqVO.getClientId())
-                .eqIfPresent(MesWmPackageDO::getParentId, reqVO.getParentId())
-                .eqIfPresent(MesWmPackageDO::getInspectorUserId, reqVO.getInspectorUserId())
-                .eqIfPresent(MesWmPackageDO::getStatus, reqVO.getStatus())
-                .orderByDesc(MesWmPackageDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesWmPackageDO>()
+                        .likeIfPresent(MesWmPackageDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesWmPackageDO::getSalesOrderCode, reqVO.getSalesOrderCode())
+                        .eqIfPresent(MesWmPackageDO::getClientId, reqVO.getClientId())
+                        .eqIfPresent(MesWmPackageDO::getParentId, reqVO.getParentId())
+                        .eqIfPresent(MesWmPackageDO::getInspectorUserId, reqVO.getInspectorUserId())
+                        .eqIfPresent(MesWmPackageDO::getStatus, reqVO.getStatus())
+                        .orderByDesc(MesWmPackageDO::getId));
     }
 
     default MesWmPackageDO selectByCode(String code) {
@@ -39,9 +41,8 @@ public interface MesWmPackageMapper extends BaseMapperX<MesWmPackageDO> {
     }
 
     default List<MesWmPackageDO> selectListByParentIds(Collection<Long> parentIds) {
-        return selectList(new LambdaQueryWrapperX<MesWmPackageDO>()
-                .in(MesWmPackageDO::getParentId, parentIds));
+        return selectList(
+                new LambdaQueryWrapperX<MesWmPackageDO>()
+                        .in(MesWmPackageDO::getParentId, parentIds));
     }
-
-
 }

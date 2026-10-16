@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.controller.admin.image.vo;
 
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,9 +21,12 @@ public class AiImageRespVO {
     private Long userId;
 
     @Schema(description = "平台", requiredMode = Schema.RequiredMode.REQUIRED, example = "OpenAI")
-    private String platform;  // 参见 AiPlatformEnum 枚举
+    private String platform; // 参见 AiPlatformEnum 枚举
 
-    @Schema(description = "模型", requiredMode = Schema.RequiredMode.REQUIRED, example = "stable-diffusion-v1-6")
+    @Schema(
+            description = "模型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "stable-diffusion-v1-6")
     private String model;
 
     @Schema(description = "提示词", requiredMode = Schema.RequiredMode.REQUIRED, example = "南极的小企鹅")
@@ -56,5 +61,4 @@ public class AiImageRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.member.controller.admin.user.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.ToString;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+import lombok.ToString;
 
 @Schema(description = "管理后台 - 用户修改等级 Request VO")
 @Data
@@ -25,5 +26,4 @@ public class MemberUserUpdateLevelReqVO {
     @Schema(description = "修改原因", requiredMode = Schema.RequiredMode.REQUIRED, example = "推广需要")
     @NotBlank(message = "修改原因不能为空")
     private String reason;
-
 }

@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - MES 维修工单新增/修改 Request VO")
@@ -14,11 +16,17 @@ public class MesDvRepairSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1024")
     private Long id;
 
-    @Schema(description = "维修工单编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "REP2024001")
+    @Schema(
+            description = "维修工单编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "REP2024001")
     @NotBlank(message = "维修工单编码不能为空")
     private String code;
 
-    @Schema(description = "维修工单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "注塑机液压系统维修")
+    @Schema(
+            description = "维修工单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "注塑机液压系统维修")
     @NotBlank(message = "维修工单名称不能为空")
     private String name;
 
@@ -56,5 +64,4 @@ public class MesDvRepairSaveReqVO {
 
     @Schema(description = "备注", example = "测试备注")
     private String remark;
-
 }

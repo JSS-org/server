@@ -25,5 +25,4 @@ public interface MemberConfigService {
      * @return 积分配置
      */
     MemberConfigDO getConfig();
-
 }

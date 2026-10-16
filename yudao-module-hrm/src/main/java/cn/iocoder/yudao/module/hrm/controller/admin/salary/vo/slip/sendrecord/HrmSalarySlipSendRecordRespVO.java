@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,5 +39,4 @@ public class HrmSalarySlipSendRecordRespVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
-
 }

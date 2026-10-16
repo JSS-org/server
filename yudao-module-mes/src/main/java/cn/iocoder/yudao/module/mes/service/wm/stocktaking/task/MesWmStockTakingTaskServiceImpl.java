@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.stocktaking.task;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,17 +17,15 @@ import cn.iocoder.yudao.module.mes.enums.wm.MesWmStockTakingTaskStatusEnum;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.stocktaking.plan.MesWmStockTakingPlanService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 盘点任务 Service 实现类
@@ -34,22 +36,14 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskService {
 
-    @Resource
-    private MesWmStockTakingTaskMapper stockTakingTaskMapper;
+    @Resource private MesWmStockTakingTaskMapper stockTakingTaskMapper;
 
-    @Resource
-    private MesWmMaterialStockService materialStockService;
-    @Resource
-    private MesWmStockTakingPlanService stockTakingPlanService;
-    @Lazy
-    @Resource
-    private MesWmStockTakingTaskLineService stockTakingTaskLineService;
-    @Lazy
-    @Resource
-    private MesWmStockTakingTaskResultService stockTakingTaskResultService;
+    @Resource private MesWmMaterialStockService materialStockService;
+    @Resource private MesWmStockTakingPlanService stockTakingPlanService;
+    @Lazy @Resource private MesWmStockTakingTaskLineService stockTakingTaskLineService;
+    @Lazy @Resource private MesWmStockTakingTaskResultService stockTakingTaskResultService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,8 +58,9 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
         }
 
         // 2. 插入任务
-        MesWmStockTakingTaskDO task = BeanUtils.toBean(createReqVO, MesWmStockTakingTaskDO.class)
-                .setStatus(MesWmStockTakingTaskStatusEnum.PREPARE.getStatus());
+        MesWmStockTakingTaskDO task =
+                BeanUtils.toBean(createReqVO, MesWmStockTakingTaskDO.class)
+                        .setStatus(MesWmStockTakingTaskStatusEnum.PREPARE.getStatus());
         stockTakingTaskMapper.insert(task);
 
         // 3. 根据方案生成盘点明细行（仅当有 plan 时）
@@ -90,7 +85,8 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
         }
 
         // 2. 更新任务
-        MesWmStockTakingTaskDO updateObj = BeanUtils.toBean(updateReqVO, MesWmStockTakingTaskDO.class);
+        MesWmStockTakingTaskDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmStockTakingTaskDO.class);
         stockTakingTaskMapper.updateById(updateObj);
 
         // 3. 重新生成盘点明细行（仅当有 plan 时）
@@ -117,14 +113,17 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
         // 1.1 校验任务存在且为草稿状态
         MesWmStockTakingTaskDO task = validateStockTakingTaskExistsAndPrepare(id);
         // 1.2 检查要盘点的内容
-        List<MesWmStockTakingTaskLineDO> lines = stockTakingTaskLineService.getStockTakingTaskLineListByTaskId(id);
+        List<MesWmStockTakingTaskLineDO> lines =
+                stockTakingTaskLineService.getStockTakingTaskLineListByTaskId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(WM_STOCK_TAKING_TASK_NO_LINE);
         }
 
         // 2. 更新任务状态为审批中
-        stockTakingTaskMapper.updateById(new MesWmStockTakingTaskDO().setId(id)
-                .setStatus(MesWmStockTakingTaskStatusEnum.APPROVING.getStatus()));
+        stockTakingTaskMapper.updateById(
+                new MesWmStockTakingTaskDO()
+                        .setId(id)
+                        .setStatus(MesWmStockTakingTaskStatusEnum.APPROVING.getStatus()));
 
         // 3. 根据冻结标识，对物资进行冻结
         if (Boolean.TRUE.equals(task.getFrozen())) {
@@ -139,12 +138,15 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
         MesWmStockTakingTaskDO task = validateStockTakingTaskExistsAndApproving(id);
 
         // 2. 更新任务状态为已完成
-        stockTakingTaskMapper.updateById(new MesWmStockTakingTaskDO().setId(id)
-                .setStatus(MesWmStockTakingTaskStatusEnum.FINISHED.getStatus()));
+        stockTakingTaskMapper.updateById(
+                new MesWmStockTakingTaskDO()
+                        .setId(id)
+                        .setStatus(MesWmStockTakingTaskStatusEnum.FINISHED.getStatus()));
 
         // 3. 解冻库存
         if (Boolean.TRUE.equals(task.getFrozen())) {
-            List<MesWmStockTakingTaskLineDO> lines = stockTakingTaskLineService.getStockTakingTaskLineListByTaskId(id);
+            List<MesWmStockTakingTaskLineDO> lines =
+                    stockTakingTaskLineService.getStockTakingTaskLineListByTaskId(id);
             updateMaterialStockFrozen(lines, false);
         }
     }
@@ -160,7 +162,8 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
         task.setStatus(MesWmStockTakingTaskStatusEnum.CANCELED.getStatus());
         stockTakingTaskMapper.updateById(task);
         if (Boolean.TRUE.equals(task.getFrozen())) {
-            updateMaterialStockFrozen(stockTakingTaskLineService.getStockTakingTaskLineListByTaskId(id), false);
+            updateMaterialStockFrozen(
+                    stockTakingTaskLineService.getStockTakingTaskLineListByTaskId(id), false);
         }
     }
 
@@ -181,7 +184,8 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
     @Override
     public MesWmStockTakingTaskDO validateStockTakingTaskExistsAndPrepare(Long id) {
         MesWmStockTakingTaskDO task = validateStockTakingTaskExists(id);
-        if (ObjUtil.notEqual(MesWmStockTakingTaskStatusEnum.PREPARE.getStatus(), task.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmStockTakingTaskStatusEnum.PREPARE.getStatus(), task.getStatus())) {
             throw exception(WM_STOCK_TAKING_TASK_NOT_PREPARE);
         }
         return task;
@@ -190,14 +194,16 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
     @Override
     public MesWmStockTakingTaskDO validateStockTakingTaskExistsAndApproving(Long id) {
         MesWmStockTakingTaskDO task = validateStockTakingTaskExists(id);
-        if (ObjUtil.notEqual(MesWmStockTakingTaskStatusEnum.APPROVING.getStatus(), task.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmStockTakingTaskStatusEnum.APPROVING.getStatus(), task.getStatus())) {
             throw exception(WM_STOCK_TAKING_TASK_NOT_APPROVING);
         }
         return task;
     }
 
     @Override
-    public PageResult<MesWmStockTakingTaskDO> getStockTakingTaskPage(MesWmStockTakingTaskPageReqVO pageReqVO) {
+    public PageResult<MesWmStockTakingTaskDO> getStockTakingTaskPage(
+            MesWmStockTakingTaskPageReqVO pageReqVO) {
         return stockTakingTaskMapper.selectPage(pageReqVO);
     }
 
@@ -205,8 +211,11 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
         if (CollUtil.isEmpty(lines)) {
             return;
         }
-        List<Long> materialStockIds = convertList(lines,
-                MesWmStockTakingTaskLineDO::getMaterialStockId, line -> line.getMaterialStockId() != null);
+        List<Long> materialStockIds =
+                convertList(
+                        lines,
+                        MesWmStockTakingTaskLineDO::getMaterialStockId,
+                        line -> line.getMaterialStockId() != null);
         materialStockService.updateMaterialStockFrozen(materialStockIds, frozen);
     }
 
@@ -219,5 +228,4 @@ public class MesWmStockTakingTaskServiceImpl implements MesWmStockTakingTaskServ
             throw exception(WM_STOCK_TAKING_TASK_CODE_DUPLICATE);
         }
     }
-
 }

@@ -4,12 +4,15 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemStatusTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -43,7 +46,10 @@ public class PmsProjectTemplateSaveReqVO {
     @NotNull(message = "显示顺序不能为空")
     private Integer sort;
 
-    @Schema(description = "启用的工作项类型列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[2, 3, 4]")
+    @Schema(
+            description = "启用的工作项类型列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[2, 3, 4]")
     @NotEmpty(message = "工作项类型不能为空")
     private List<Integer> itemTypes;
 
@@ -61,7 +67,10 @@ public class PmsProjectTemplateSaveReqVO {
     @Data
     public static class StatusTemplate {
 
-        @Schema(description = "模板内稳定编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "task_todo")
+        @Schema(
+                description = "模板内稳定编码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "task_todo")
         @NotBlank(message = "状态编码不能为空")
         @Size(max = 50, message = "状态编码不能超过 50 个字符")
         private String code;
@@ -81,7 +90,10 @@ public class PmsProjectTemplateSaveReqVO {
         @InEnum(PmsWorkItemStatusTypeEnum.class)
         private Integer statusType;
 
-        @Schema(description = "是否为初始状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+        @Schema(
+                description = "是否为初始状态",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "true")
         @NotNull(message = "是否为初始状态不能为空")
         private Boolean defaultStatus;
 
@@ -89,7 +101,10 @@ public class PmsProjectTemplateSaveReqVO {
         @NotNull(message = "状态显示顺序不能为空")
         private Integer sort;
 
-        @Schema(description = "所属看板列编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "todo")
+        @Schema(
+                description = "所属看板列编码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "todo")
         @NotBlank(message = "状态所属看板列不能为空")
         private String boardCode;
     }
@@ -98,7 +113,10 @@ public class PmsProjectTemplateSaveReqVO {
     @Data
     public static class BoardTemplate {
 
-        @Schema(description = "模板内稳定编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "todo")
+        @Schema(
+                description = "模板内稳定编码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "todo")
         @NotBlank(message = "看板列编码不能为空")
         @Size(max = 50, message = "看板列编码不能超过 50 个字符")
         private String code;
@@ -117,10 +135,11 @@ public class PmsProjectTemplateSaveReqVO {
         @NotNull(message = "看板列显示顺序不能为空")
         private Integer sort;
 
-        @Schema(description = "关联的状态编码列表", requiredMode = Schema.RequiredMode.REQUIRED,
+        @Schema(
+                description = "关联的状态编码列表",
+                requiredMode = Schema.RequiredMode.REQUIRED,
                 example = "[\"task_todo\"]")
         @NotEmpty(message = "看板列关联状态不能为空")
         private List<String> statusCodes;
     }
-
 }

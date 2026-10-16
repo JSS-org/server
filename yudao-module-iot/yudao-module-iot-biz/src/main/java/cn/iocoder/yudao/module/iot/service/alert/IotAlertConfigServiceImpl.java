@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.iot.service.alert;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_MAIL_TEMPLATE_REQUIRED;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_NOTIFY_TEMPLATE_REQUIRED;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_SMS_TEMPLATE_REQUIRED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,18 +17,14 @@ import cn.iocoder.yudao.module.iot.dal.mysql.alert.IotAlertConfigMapper;
 import cn.iocoder.yudao.module.iot.enums.alert.IotAlertReceiveTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.IotSceneRuleService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_MAIL_TEMPLATE_REQUIRED;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_NOTIFY_TEMPLATE_REQUIRED;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_SMS_TEMPLATE_REQUIRED;
 
 /**
  * IoT 告警配置 Service 实现类
@@ -33,15 +35,12 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.ALERT_CONFIG_
 @Validated
 public class IotAlertConfigServiceImpl implements IotAlertConfigService {
 
-    @Resource
-    private IotAlertConfigMapper alertConfigMapper;
+    @Resource private IotAlertConfigMapper alertConfigMapper;
 
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private IotSceneRuleService sceneRuleService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public Long createAlertConfig(IotAlertConfigSaveReqVO createReqVO) {
@@ -118,8 +117,8 @@ public class IotAlertConfigServiceImpl implements IotAlertConfigService {
     }
 
     @Override
-    public List<IotAlertConfigDO> getAlertConfigListBySceneRuleIdAndStatus(Long sceneRuleId, Integer status) {
+    public List<IotAlertConfigDO> getAlertConfigListBySceneRuleIdAndStatus(
+            Long sceneRuleId, Integer status) {
         return alertConfigMapper.selectListBySceneRuleIdAndStatus(sceneRuleId, status);
     }
-
 }

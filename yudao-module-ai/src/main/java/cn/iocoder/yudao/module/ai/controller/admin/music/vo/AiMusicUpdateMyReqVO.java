@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.controller.admin.music.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI 修改我的音乐 Request VO")
@@ -14,5 +16,4 @@ public class AiMusicUpdateMyReqVO {
 
     @Schema(description = "音乐名称", example = "夜空中最亮的星")
     private String title;
-
 }

@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.bpm.controller.admin.task.vo.cc;
 
 import cn.iocoder.yudao.framework.common.core.KeyValue;
 import cn.iocoder.yudao.module.bpm.controller.admin.base.user.UserSimpleBaseVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,13 +22,16 @@ public class BpmProcessInstanceCopyRespVO {
 
     @Schema(description = "流程实例编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "A233")
     private String processInstanceId;
+
     @Schema(description = "流程实例的名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "测试")
     private String processInstanceName;
+
     @Schema(description = "流程实例的发起时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime processInstanceStartTime;
 
     @Schema(description = "流程活动的编号", requiredMode = Schema.RequiredMode.REQUIRED)
     private String activityId;
+
     @Schema(description = "流程活动的名字", requiredMode = Schema.RequiredMode.REQUIRED)
     private String activityName;
 
@@ -44,5 +49,4 @@ public class BpmProcessInstanceCopyRespVO {
 
     @Schema(description = "流程摘要", example = "[]")
     private List<KeyValue<String, String>> summary;
-
 }

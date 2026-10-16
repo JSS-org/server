@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.hrm.service.performance.plan;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment.HrmPerformanceAssessmentBatchReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.plan.HrmPerformancePlanPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.plan.HrmPerformancePlanSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.performance.plan.HrmPerformancePlanDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 绩效计划 Service 接口
@@ -173,6 +174,6 @@ public interface HrmPerformancePlanService {
      * @param stageType 阶段类型
      * @param operationType 可执行操作
      */
-    void updatePerformancePlanStageTypeAndOperationType(Long id, Integer stageType, Integer operationType);
-
+    void updatePerformancePlanStageTypeAndOperationType(
+            Long id, Integer stageType, Integer operationType);
 }

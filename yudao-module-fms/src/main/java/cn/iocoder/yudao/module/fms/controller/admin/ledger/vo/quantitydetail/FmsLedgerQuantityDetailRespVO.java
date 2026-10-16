@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.quantitydetail;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -100,5 +103,4 @@ public class FmsLedgerQuantityDetailRespVO {
     @Schema(description = "计量单位", example = "件")
     @ExcelProperty("单位")
     private String quantityUnit;
-
 }

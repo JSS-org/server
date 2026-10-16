@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -23,5 +24,4 @@ public class CrmStatisticsPerformanceSummaryRespVO {
 
     @Schema(description = "未回款金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "2000.00")
     private BigDecimal unreceivedPrice;
-
 }

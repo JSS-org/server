@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.mp.controller.admin.tag.vo.MpTagUpdateReqVO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.tag.MpTagDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -61,5 +62,4 @@ public interface MpTagService {
      * @param accountId 公众号账号的编号
      */
     void syncTag(Long accountId);
-
 }

@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.seckill.vo.activity.Se
 import cn.iocoder.yudao.module.promotion.controller.app.seckill.vo.activity.AppSeckillActivityPageReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillActivityDO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.seckill.SeckillProductDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -106,7 +107,8 @@ public interface SeckillActivityService {
      * @param status   状态
      * @return 秒杀活动列表
      */
-    List<SeckillActivityDO> getSeckillActivityListByConfigIdAndStatus(Long configId, Integer status);
+    List<SeckillActivityDO> getSeckillActivityListByConfigIdAndStatus(
+            Long configId, Integer status);
 
     /**
      * 通过活动时段获取开始的秒杀活动
@@ -114,7 +116,8 @@ public interface SeckillActivityService {
      * @param pageReqVO 请求
      * @return 秒杀活动列表
      */
-    PageResult<SeckillActivityDO> getSeckillActivityAppPageByConfigId(AppSeckillActivityPageReqVO pageReqVO);
+    PageResult<SeckillActivityDO> getSeckillActivityAppPageByConfigId(
+            AppSeckillActivityPageReqVO pageReqVO);
 
     /**
      * 校验是否参与秒杀商品
@@ -143,5 +146,4 @@ public interface SeckillActivityService {
      * @return 拼团活动的列表
      */
     List<SeckillActivityDO> getSeckillActivityListByIds(Collection<Long> ids);
-
 }

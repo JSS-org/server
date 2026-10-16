@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.bargain.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -22,12 +23,13 @@ public class AppBargainRecordSummaryRespVO {
         @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "王**")
         private String nickname;
 
-        @Schema(description = "用户头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xxx.jpg")
+        @Schema(
+                description = "用户头像",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "https://www.iocoder.cn/xxx.jpg")
         private String avatar;
 
         @Schema(description = "活动名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "天蚕土豆")
         private String activityName;
-
     }
-
 }

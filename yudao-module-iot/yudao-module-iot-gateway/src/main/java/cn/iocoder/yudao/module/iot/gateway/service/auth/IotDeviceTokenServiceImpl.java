@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.iot.gateway.service.auth;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_TOKEN_EXPIRED;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.json.JSONObject;
 import cn.hutool.jwt.JWT;
@@ -8,16 +11,16 @@ import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.gateway.config.IotGatewayProperties;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVICE_TOKEN_EXPIRED;
 
 /**
  * IoT 设备 Token Service 实现类：调用远程的 device http 接口，进行设备 Token 生成、解析等逻辑
@@ -30,8 +33,7 @@ import static cn.iocoder.yudao.module.iot.gateway.enums.ErrorCodeConstants.DEVIC
 @Slf4j
 public class IotDeviceTokenServiceImpl implements IotDeviceTokenService {
 
-    @Resource
-    private IotGatewayProperties gatewayProperties;
+    @Resource private IotGatewayProperties gatewayProperties;
 
     @Override
     public String createToken(String productKey, String deviceName) {
@@ -41,7 +43,8 @@ public class IotDeviceTokenServiceImpl implements IotDeviceTokenService {
         Map<String, Object> payload = new HashMap<>();
         payload.put("productKey", productKey);
         payload.put("deviceName", deviceName);
-        LocalDateTime expireTime = LocalDateTimeUtils.addTime(gatewayProperties.getToken().getExpiration());
+        LocalDateTime expireTime =
+                LocalDateTimeUtils.addTime(gatewayProperties.getToken().getExpiration());
         payload.put("exp", LocalDateTimeUtils.toEpochSecond(expireTime)); // 过期时间（exp 是 JWT 规范推荐）
 
         // 生成 JWT Token
@@ -76,5 +79,4 @@ public class IotDeviceTokenServiceImpl implements IotDeviceTokenService {
     public IotDeviceIdentity parseUsername(String username) {
         return IotDeviceAuthUtils.parseUsername(username);
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.mail.vo.account;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Data
@@ -13,7 +14,10 @@ public class OaMailAccountRespVO {
     @Schema(description = "服务配置编号", example = "1024")
     private Long providerId;
 
-    @Schema(description = "邮箱地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "user@example.com")
+    @Schema(
+            description = "邮箱地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "user@example.com")
     private String mail;
 
     @Schema(description = "归属人姓名", example = "张三")
@@ -27,5 +31,4 @@ public class OaMailAccountRespVO {
 
     @Schema(description = "状态", example = "0")
     private Integer status;
-
 }

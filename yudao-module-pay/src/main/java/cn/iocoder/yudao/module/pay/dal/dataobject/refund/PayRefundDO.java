@@ -1,15 +1,17 @@
 package cn.iocoder.yudao.module.pay.dal.dataobject.refund;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
-import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefundRespDTO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.app.PayAppDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.channel.PayChannelDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderDO;
+import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
 import cn.iocoder.yudao.module.pay.enums.refund.PayRefundStatusEnum;
+import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefundRespDTO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -35,8 +37,8 @@ public class PayRefundDO extends BaseDO {
     /**
      * 退款单编号，数据库自增
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 外部退款号，根据规则生成
      *
@@ -52,24 +54,28 @@ public class PayRefundDO extends BaseDO {
      * 关联 {@link PayAppDO#getId()}
      */
     private Long appId;
+
     /**
      * 渠道编号
      *
      * 关联 {@link PayChannelDO#getId()}
      */
     private Long channelId;
+
     /**
      * 渠道编码
      *
      * 枚举 {@link PayChannelEnum}
      */
     private String channelCode;
+
     /**
      * 订单编号
      *
      * 关联 {@link PayOrderDO#getId()}
      */
     private Long orderId;
+
     /**
      * 支付订单编号
      *
@@ -81,6 +87,7 @@ public class PayRefundDO extends BaseDO {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -93,12 +100,14 @@ public class PayRefundDO extends BaseDO {
      * 例如说，内部系统 A 的订单号，需要保证每个 PayAppDO 唯一
      */
     private String merchantOrderId;
+
     /**
      * 商户退款订单号
      *
      * 例如说，内部系统 A 的订单号，需要保证每个 PayAppDO 唯一
      */
     private String merchantRefundId;
+
     /**
      * 异步通知地址
      */
@@ -116,6 +125,7 @@ public class PayRefundDO extends BaseDO {
      * 支付金额，单位：分
      */
     private Integer payPrice;
+
     /**
      * 退款金额，单位：分
      */
@@ -138,6 +148,7 @@ public class PayRefundDO extends BaseDO {
      * 冗余 {@link PayOrderDO#getChannelOrderNo()}
      */
     private String channelOrderNo;
+
     /**
      * 渠道退款单号
      *
@@ -145,6 +156,7 @@ public class PayRefundDO extends BaseDO {
      * 2. 支付宝退款：没有字段
      */
     private String channelRefundNo;
+
     /**
      * 退款成功时间
      */
@@ -154,6 +166,7 @@ public class PayRefundDO extends BaseDO {
      * 调用渠道的错误码
      */
     private String channelErrorCode;
+
     /**
      * 调用渠道的错误提示
      */
@@ -165,5 +178,4 @@ public class PayRefundDO extends BaseDO {
      * 对应 {@link PayRefundRespDTO#getRawData()}
      */
     private String channelNotifyData;
-
 }

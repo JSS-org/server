@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.mail.vo.template.MailTemplatePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.mail.vo.template.MailTemplateSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -101,5 +102,4 @@ public interface MailTemplateService {
      * @return 数量
      */
     long getMailTemplateCountByAccountId(Long accountId);
-
 }

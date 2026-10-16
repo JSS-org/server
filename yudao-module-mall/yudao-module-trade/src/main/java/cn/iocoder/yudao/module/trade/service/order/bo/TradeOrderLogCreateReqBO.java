@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.trade.service.order.bo;
 
-import lombok.Data;
-
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 订单日志的创建 Request BO
@@ -19,6 +19,7 @@ public class TradeOrderLogCreateReqBO {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -30,10 +31,12 @@ public class TradeOrderLogCreateReqBO {
      */
     @NotNull(message = "订单编号不能为空")
     private Long orderId;
+
     /**
      * 操作前状态
      */
     private Integer beforeStatus;
+
     /**
      * 操作后状态
      */
@@ -45,10 +48,10 @@ public class TradeOrderLogCreateReqBO {
      */
     @NotNull(message = "操作类型不能为空")
     private Integer operateType;
+
     /**
      * 操作明细
      */
     @NotEmpty(message = "操作明细不能为空")
     private String content;
-
 }

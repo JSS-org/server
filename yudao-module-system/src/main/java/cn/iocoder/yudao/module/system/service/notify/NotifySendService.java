@@ -20,8 +20,9 @@ public interface NotifySendService {
      * @param templateParams 短信模板参数
      * @return 发送日志编号
      */
-    Long sendSingleNotifyToAdmin(Long userId,
-                                 String templateCode, Map<String, Object> templateParams);
+    Long sendSingleNotifyToAdmin(
+            Long userId, String templateCode, Map<String, Object> templateParams);
+
     /**
      * 发送单条站内信给用户 APP 的用户
      *
@@ -32,8 +33,8 @@ public interface NotifySendService {
      * @param templateParams 站内信模板参数
      * @return 发送日志编号
      */
-    Long sendSingleNotifyToMember(Long userId,
-                                  String templateCode, Map<String, Object> templateParams);
+    Long sendSingleNotifyToMember(
+            Long userId, String templateCode, Map<String, Object> templateParams);
 
     /**
      * 发送单条站内信给用户
@@ -44,12 +45,15 @@ public interface NotifySendService {
      * @param templateParams 站内信模板参数
      * @return 发送日志编号
      */
-    Long sendSingleNotify( Long userId, Integer userType,
-                           String templateCode, Map<String, Object> templateParams);
+    Long sendSingleNotify(
+            Long userId, Integer userType, String templateCode, Map<String, Object> templateParams);
 
-    default void sendBatchNotify(List<String> mobiles, List<Long> userIds, Integer userType,
-                                 String templateCode, Map<String, Object> templateParams) {
+    default void sendBatchNotify(
+            List<String> mobiles,
+            List<Long> userIds,
+            Integer userType,
+            String templateCode,
+            Map<String, Object> templateParams) {
         throw new UnsupportedOperationException("暂时不支持该操作，感兴趣可以实现该功能哟！");
     }
-
 }

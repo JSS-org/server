@@ -66,5 +66,4 @@ public interface AiKnowledgeService {
      * @return 知识库列表
      */
     List<AiKnowledgeDO> getKnowledgeSimpleListByStatus(Integer status);
-
 }

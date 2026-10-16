@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate.FmsVoucherTemplateRespVO;
@@ -8,11 +12,14 @@ import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherTemplateCateg
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherTemplateDO;
 import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
 import cn.iocoder.yudao.module.fms.service.config.FmsVoucherTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,20 +34,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - FMS 凭证模板")
 @RestController
 @RequestMapping("/fms/config/voucher-template")
 @Validated
 public class FmsVoucherTemplateController {
 
-    @Resource
-    private FmsVoucherTemplateService voucherTemplateService;
-    @Resource
-    private FmsAccountSetService accountSetService;
+    @Resource private FmsVoucherTemplateService voucherTemplateService;
+    @Resource private FmsAccountSetService accountSetService;
 
     @PostMapping("/create")
     @Operation(summary = "创建凭证模板")
@@ -62,8 +63,9 @@ public class FmsVoucherTemplateController {
     @DeleteMapping("/delete")
     @Operation(summary = "删除凭证模板")
     @PreAuthorize("@ss.hasPermission('fms:config:voucher-template:delete')")
-    public CommonResult<Boolean> deleteVoucherTemplate(@RequestParam("accountSetId") @NotNull Long accountSetId,
-                                                       @RequestParam("id") @NotNull Long id) {
+    public CommonResult<Boolean> deleteVoucherTemplate(
+            @RequestParam("accountSetId") @NotNull Long accountSetId,
+            @RequestParam("id") @NotNull Long id) {
         voucherTemplateService.deleteVoucherTemplate(accountSetId, id, getLoginUserId());
         return success(true);
     }
@@ -90,11 +92,16 @@ public class FmsVoucherTemplateController {
     private List<FmsVoucherTemplateRespVO> buildVoucherTemplateRespVOList(Long accountSetId) {
         Map<Long, FmsVoucherTemplateCategoryDO> categoryMap =
                 voucherTemplateService.getTemplateCategoryMap(accountSetId);
-        List<FmsVoucherTemplateDO> templates = voucherTemplateService.getVoucherTemplateList(accountSetId);
-        return BeanUtils.toBean(templates, FmsVoucherTemplateRespVO.class, template -> {
-            findAndThen(categoryMap, template.getCategoryId(),
-                    category -> template.setCategoryName(category.getName()));
-        });
+        List<FmsVoucherTemplateDO> templates =
+                voucherTemplateService.getVoucherTemplateList(accountSetId);
+        return BeanUtils.toBean(
+                templates,
+                FmsVoucherTemplateRespVO.class,
+                template -> {
+                    findAndThen(
+                            categoryMap,
+                            template.getCategoryId(),
+                            category -> template.setCategoryName(category.getName()));
+                });
     }
-
 }

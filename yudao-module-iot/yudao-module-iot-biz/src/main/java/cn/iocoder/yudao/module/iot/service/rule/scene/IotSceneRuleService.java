@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.scene.IotSceneRuleSa
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -87,7 +88,8 @@ public interface IotSceneRuleService {
      * @param deviceId  设备 ID
      * @return 场景列表
      */
-    List<IotSceneRuleDO> getSceneRuleListByProductIdAndDeviceIdFromCache(Long productId, Long deviceId);
+    List<IotSceneRuleDO> getSceneRuleListByProductIdAndDeviceIdFromCache(
+            Long productId, Long deviceId);
 
     /**
      * 基于 {@link IotSceneRuleTriggerTypeEnum} 场景，执行规则场景
@@ -106,5 +108,4 @@ public interface IotSceneRuleService {
      * @param id 场景联动规则编号
      */
     void executeSceneRuleByTimer(Long id);
-
 }

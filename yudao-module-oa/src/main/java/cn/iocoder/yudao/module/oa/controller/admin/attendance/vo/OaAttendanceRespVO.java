@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.attendance.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -32,7 +33,12 @@ public class OaAttendanceRespVO {
     @Schema(description = "考勤状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer status;
 
-    @Schema(description = "考勤时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "考勤时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     private LocalDateTime attendanceTime;
 
     @Schema(description = "考勤 IP", example = "127.0.0.1")
@@ -41,7 +47,11 @@ public class OaAttendanceRespVO {
     @Schema(description = "考勤备注", example = "正常打卡")
     private String remark;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

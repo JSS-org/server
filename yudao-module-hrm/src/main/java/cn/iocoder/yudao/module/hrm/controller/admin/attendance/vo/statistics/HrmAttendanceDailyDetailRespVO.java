@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.clock.HrmAttendanceClockRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -100,5 +102,4 @@ public class HrmAttendanceDailyDetailRespVO {
 
     @Schema(description = "打卡列表")
     private List<HrmAttendanceClockRespVO> clockList;
-
 }

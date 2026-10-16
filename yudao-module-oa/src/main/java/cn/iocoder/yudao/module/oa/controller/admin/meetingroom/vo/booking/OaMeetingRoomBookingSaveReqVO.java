@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.booking;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.meetingroom.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,11 +28,21 @@ public class OaMeetingRoomBookingSaveReqVO {
     @Size(max = 200, message = "会议主题长度不能超过 {max} 个字符")
     private String title;
 
-    @Schema(description = "会议开始时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "1789351200000", type = "integer", format = "int64")
+    @Schema(
+            description = "会议开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1789351200000",
+            type = "integer",
+            format = "int64")
     @NotNull(message = "开始时间不能为空")
     private LocalDateTime startTime;
 
-    @Schema(description = "会议结束时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "1789354800000", type = "integer", format = "int64")
+    @Schema(
+            description = "会议结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1789354800000",
+            type = "integer",
+            format = "int64")
     @NotNull(message = "结束时间不能为空")
     private LocalDateTime endTime;
 
@@ -37,7 +50,10 @@ public class OaMeetingRoomBookingSaveReqVO {
     @NotNull(message = "主持人不能为空")
     private Long moderatorUserId;
 
-    @Schema(description = "参会人用户编号列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1,2]")
+    @Schema(
+            description = "参会人用户编号列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[1,2]")
     @NotNull(message = "参会人不能为空")
     private List<@NotNull(message = "参会人不能为空") Long> attendeeUserIds;
 
@@ -54,8 +70,10 @@ public class OaMeetingRoomBookingSaveReqVO {
     @Size(max = 500, message = "申请备注长度不能超过 {max} 个字符")
     private String remark;
 
-    @Schema(description = "附件地址列表", requiredMode = Schema.RequiredMode.REQUIRED, example = "[\"https://www.iocoder.cn/meeting.pdf\"]")
+    @Schema(
+            description = "附件地址列表",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[\"https://www.iocoder.cn/meeting.pdf\"]")
     @NotNull(message = "附件地址列表不能为空")
     private List<@NotBlank(message = "附件地址列表不能为空") String> fileUrls;
-
 }

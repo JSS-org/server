@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.system.controller.admin.auth.vo;
 
-
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.*;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "管理后台 - Register Request VO")
 @Data

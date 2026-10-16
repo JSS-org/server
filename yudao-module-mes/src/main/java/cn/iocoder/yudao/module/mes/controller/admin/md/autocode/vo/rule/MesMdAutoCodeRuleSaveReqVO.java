@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.autocode.vo.rule;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 编码规则新增/修改 Request VO")
@@ -12,7 +14,10 @@ public class MesMdAutoCodeRuleSaveReqVO {
     @Schema(description = "规则 ID", example = "1024")
     private Long id;
 
-    @Schema(description = "规则编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "ITEM_CODE")
+    @Schema(
+            description = "规则编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ITEM_CODE")
     @NotEmpty(message = "规则编码不能为空")
     private String code;
 
@@ -41,5 +46,4 @@ public class MesMdAutoCodeRuleSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

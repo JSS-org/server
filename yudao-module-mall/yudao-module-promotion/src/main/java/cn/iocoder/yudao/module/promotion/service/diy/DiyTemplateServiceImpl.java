@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.promotion.service.diy;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,15 +14,14 @@ import cn.iocoder.yudao.module.promotion.convert.diy.DiyPageConvert;
 import cn.iocoder.yudao.module.promotion.convert.diy.DiyTemplateConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.diy.DiyTemplateDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.diy.DiyTemplateMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 
 /**
  * 装修模板 Service 实现类
@@ -30,11 +32,9 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.*;
 @Validated
 public class DiyTemplateServiceImpl implements DiyTemplateService {
 
-    @Resource
-    private DiyTemplateMapper diyTemplateMapper;
+    @Resource private DiyTemplateMapper diyTemplateMapper;
 
-    @Resource
-    private DiyPageService diyPageService;
+    @Resource private DiyPageService diyPageService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -59,8 +59,10 @@ public class DiyTemplateServiceImpl implements DiyTemplateService {
      */
     private void createDefaultPage(DiyTemplateDO diyTemplate) {
         String remark = String.format("模板【%s】自动创建", diyTemplate.getName());
-        diyPageService.createDiyPage(DiyPageConvert.INSTANCE.convertCreateVo(diyTemplate.getId(), "首页", remark));
-        diyPageService.createDiyPage(DiyPageConvert.INSTANCE.convertCreateVo(diyTemplate.getId(), "我的", remark));
+        diyPageService.createDiyPage(
+                DiyPageConvert.INSTANCE.convertCreateVo(diyTemplate.getId(), "首页", remark));
+        diyPageService.createDiyPage(
+                DiyPageConvert.INSTANCE.convertCreateVo(diyTemplate.getId(), "我的", remark));
     }
 
     @Override
@@ -148,8 +150,7 @@ public class DiyTemplateServiceImpl implements DiyTemplateService {
      * @param usedTime 使用时间
      */
     private void updateTemplateUsed(Long id, Boolean used, LocalDateTime usedTime) {
-        DiyTemplateDO updateObj = new DiyTemplateDO().setId(id)
-                .setUsed(used).setUsedTime(usedTime);
+        DiyTemplateDO updateObj = new DiyTemplateDO().setId(id).setUsed(used).setUsedTime(usedTime);
         diyTemplateMapper.updateById(updateObj);
     }
 
@@ -167,5 +168,4 @@ public class DiyTemplateServiceImpl implements DiyTemplateService {
     public DiyTemplateDO getUsedDiyTemplate() {
         return diyTemplateMapper.selectByUsed(true);
     }
-
 }

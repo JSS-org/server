@@ -11,11 +11,9 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum SmsTemplateAuditStatusEnum {
-
     CHECKING(1),
     SUCCESS(2),
     FAIL(3);
 
     private final Integer status;
-
 }

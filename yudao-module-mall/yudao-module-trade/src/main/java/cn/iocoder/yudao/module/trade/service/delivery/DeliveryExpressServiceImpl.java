@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.trade.service.delivery;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.express.DeliveryExpressCreateReqVO;
@@ -9,14 +12,13 @@ import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.express.Delive
 import cn.iocoder.yudao.module.trade.convert.delivery.DeliveryExpressConvert;
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryExpressDO;
 import cn.iocoder.yudao.module.trade.dal.mysql.delivery.DeliveryExpressMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 
 /**
  * 快递公司 Service 实现类
@@ -27,12 +29,11 @@ import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.*;
 @Validated
 public class DeliveryExpressServiceImpl implements DeliveryExpressService {
 
-    @Resource
-    private DeliveryExpressMapper deliveryExpressMapper;
+    @Resource private DeliveryExpressMapper deliveryExpressMapper;
 
     @Override
     public Long createDeliveryExpress(DeliveryExpressCreateReqVO createReqVO) {
-        //校验编码是否唯一
+        // 校验编码是否唯一
         validateExpressCodeUnique(createReqVO.getCode(), null);
         // 插入
         DeliveryExpressDO deliveryExpress = DeliveryExpressConvert.INSTANCE.convert(createReqVO);
@@ -45,7 +46,7 @@ public class DeliveryExpressServiceImpl implements DeliveryExpressService {
     public void updateDeliveryExpress(DeliveryExpressUpdateReqVO updateReqVO) {
         // 校验存在
         validateDeliveryExpressExists(updateReqVO.getId());
-        //校验编码是否唯一
+        // 校验编码是否唯一
         validateExpressCodeUnique(updateReqVO.getCode(), updateReqVO.getId());
         // 更新
         DeliveryExpressDO updateObj = DeliveryExpressConvert.INSTANCE.convert(updateReqVO);
@@ -73,6 +74,7 @@ public class DeliveryExpressServiceImpl implements DeliveryExpressService {
             throw exception(EXPRESS_CODE_DUPLICATE);
         }
     }
+
     private void validateDeliveryExpressExists(Long id) {
         if (deliveryExpressMapper.selectById(id) == null) {
             throw exception(EXPRESS_NOT_EXISTS);
@@ -97,7 +99,8 @@ public class DeliveryExpressServiceImpl implements DeliveryExpressService {
     }
 
     @Override
-    public PageResult<DeliveryExpressDO> getDeliveryExpressPage(DeliveryExpressPageReqVO pageReqVO) {
+    public PageResult<DeliveryExpressDO> getDeliveryExpressPage(
+            DeliveryExpressPageReqVO pageReqVO) {
         return deliveryExpressMapper.selectPage(pageReqVO);
     }
 
@@ -110,5 +113,4 @@ public class DeliveryExpressServiceImpl implements DeliveryExpressService {
     public List<DeliveryExpressDO> getDeliveryExpressListByStatus(Integer status) {
         return deliveryExpressMapper.selectListByStatus(status);
     }
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.pm.iteration;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.iteration.vo.PmsIterationOverviewRespVO;
 import cn.iocoder.yudao.module.pms.controller.admin.pm.iteration.vo.PmsIterationPageReqVO;
@@ -8,12 +10,9 @@ import cn.iocoder.yudao.module.pms.controller.admin.pm.iteration.vo.PmsIteration
 import cn.iocoder.yudao.module.pms.controller.admin.pm.workbench.vo.PmsWorkbenchPageReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.iteration.PmsIterationDO;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * PMS 项目迭代 Service 接口
@@ -131,8 +130,8 @@ public interface PmsIterationService {
      * @param ownerUserId 负责人用户编号
      * @return 迭代分页
      */
-    PageResult<PmsIterationDO> getUncompletedIterationPage(PmsWorkbenchPageReqVO pageReqVO,
-                                                           Collection<Long> projectIds, Long ownerUserId);
+    PageResult<PmsIterationDO> getUncompletedIterationPage(
+            PmsWorkbenchPageReqVO pageReqVO, Collection<Long> projectIds, Long ownerUserId);
 
     /**
      * 获得指定项目范围内的未完成迭代数量
@@ -142,8 +141,8 @@ public interface PmsIterationService {
      * @param ownerUserId 负责人用户编号
      * @return 迭代数量
      */
-    Long getUncompletedIterationCount(PmsWorkbenchPageReqVO pageReqVO,
-                                      Collection<Long> projectIds, Long ownerUserId);
+    Long getUncompletedIterationCount(
+            PmsWorkbenchPageReqVO pageReqVO, Collection<Long> projectIds, Long ownerUserId);
 
     /**
      * 获得指定项目范围内按状态分组的迭代数量
@@ -152,5 +151,4 @@ public interface PmsIterationService {
      * @return 项目编号、状态和数量的映射
      */
     Map<Long, Map<Integer, Long>> getProjectIterationStatusCountMap(Collection<Long> projectIds);
-
 }

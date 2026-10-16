@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.erp.dal.mysql.stock;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpStockInItemDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -26,5 +27,4 @@ public interface ErpStockInItemMapper extends BaseMapperX<ErpStockInItemDO> {
     default int deleteByInId(Long inId) {
         return delete(ErpStockInItemDO::getInId, inId);
     }
-
 }

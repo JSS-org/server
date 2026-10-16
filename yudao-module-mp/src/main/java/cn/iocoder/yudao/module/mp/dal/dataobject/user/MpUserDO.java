@@ -5,10 +5,12 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.type.LongListTypeHandler;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.tag.MpTagDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -32,16 +34,18 @@ public class MpUserDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 粉丝标识
      */
     private String openid;
+
     /**
      * 微信生态唯一标识
      */
     private String unionId;
+
     /**
      * 关注状态
      *
@@ -50,46 +54,56 @@ public class MpUserDO extends BaseDO {
      * 2. 禁用 - 取消关注
      */
     private Integer subscribeStatus;
+
     /**
      * 关注时间
      */
     private LocalDateTime subscribeTime;
+
     /**
      * 取消关注时间
      */
     private LocalDateTime unsubscribeTime;
+
     /**
      * 昵称
      *
      * 注意，2021-12-27 公众号接口不再返回头像和昵称，只能通过微信公众号的网页登录获取
      */
     private String nickname;
+
     /**
      * 头像地址
      *
      * 注意，2021-12-27 公众号接口不再返回头像和昵称，只能通过微信公众号的网页登录获取
      */
     private String headImageUrl;
+
     /**
      * 语言
      */
     private String language;
+
     /**
      * 国家
      */
     private String country;
+
     /**
      * 省份
      */
     private String province;
+
     /**
      * 城市
      */
     private String city;
+
     /**
      * 备注
      */
     private String remark;
+
     /**
      * 标签编号数组
      *
@@ -104,11 +118,11 @@ public class MpUserDO extends BaseDO {
      * 关联 {@link MpAccountDO#getId()}
      */
     private Long accountId;
+
     /**
      * 公众号 appId
      *
      * 冗余 {@link MpAccountDO#getAppId()}
      */
     private String appId;
-
 }

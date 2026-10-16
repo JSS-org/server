@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.infra.controller.admin.job.vo.log;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -23,7 +25,10 @@ public class JobLogRespVO {
     @ExcelProperty("任务编号")
     private Long jobId;
 
-    @Schema(description = "处理器的名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "sysUserSessionTimeoutJob")
+    @Schema(
+            description = "处理器的名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "sysUserSessionTimeoutJob")
     @ExcelProperty("处理器的名字")
     private String handlerName;
 
@@ -47,7 +52,10 @@ public class JobLogRespVO {
     @ExcelProperty("执行时长")
     private Integer duration;
 
-    @Schema(description = "任务状态，参见 JobLogStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "任务状态，参见 JobLogStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @ExcelProperty(value = "任务状态", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.JOB_LOG_STATUS)
     private Integer status;
@@ -59,5 +67,4 @@ public class JobLogRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

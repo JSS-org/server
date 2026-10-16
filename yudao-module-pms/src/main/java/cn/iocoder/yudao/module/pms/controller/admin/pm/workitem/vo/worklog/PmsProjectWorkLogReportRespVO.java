@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.worklog;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -33,20 +34,28 @@ public class PmsProjectWorkLogReportRespVO {
 
         @Schema(description = "工作项列表")
         private List<Item> items;
-
     }
 
     @Schema(description = "管理后台 - PMS 项目工时报表工作项明细")
     @Data
     public static class Item {
 
-        @Schema(description = "工作项编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "工作项编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long workItemId;
 
-        @Schema(description = "项目内工作项序号", requiredMode = Schema.RequiredMode.REQUIRED, example = "12")
+        @Schema(
+                description = "项目内工作项序号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "12")
         private Integer serialNumber;
 
-        @Schema(description = "工作项标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "完成登录接口")
+        @Schema(
+                description = "工作项标题",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "完成登录接口")
         private String name;
 
         @Schema(description = "工作项类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
@@ -55,10 +64,10 @@ public class PmsProjectWorkLogReportRespVO {
         @Schema(description = "工作项总工时", requiredMode = Schema.RequiredMode.REQUIRED, example = "8")
         private Integer totalHours;
 
-        @Schema(description = "每日工时，键为日期，值为小时数", requiredMode = Schema.RequiredMode.REQUIRED,
+        @Schema(
+                description = "每日工时，键为日期，值为小时数",
+                requiredMode = Schema.RequiredMode.REQUIRED,
                 example = "{\"2026-08-22\": 4}")
         private Map<String, Integer> dailyHours;
-
     }
-
 }

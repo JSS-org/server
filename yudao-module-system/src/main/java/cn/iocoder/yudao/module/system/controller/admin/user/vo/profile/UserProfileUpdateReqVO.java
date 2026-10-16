@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.module.system.controller.admin.user.vo.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
-import org.hibernate.validator.constraints.URL;
 
+import lombok.Data;
+
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.URL;
 
 @Schema(description = "管理后台 - 用户个人信息更新 Request VO")
 @Data
@@ -32,5 +33,4 @@ public class UserProfileUpdateReqVO {
     @Schema(description = "角色头像", example = "https://www.iocoder.cn/1.png")
     @URL(message = "头像地址格式不正确")
     private String avatar;
-
 }

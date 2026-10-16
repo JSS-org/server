@@ -4,10 +4,12 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataSinkDO;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -37,32 +39,45 @@ public abstract class IotDataRuleCacheableAction<Config, Producer> implements Io
     /**
      * Producer 缓存
      */
-    private final LoadingCache<Config, Producer> PRODUCER_CACHE = CacheBuilder.newBuilder()
-            .expireAfterAccess(Duration.ofMinutes(30)) // 30 分钟未访问就提前过期
-            .removalListener((RemovalListener<Config, Producer>) notification -> {
-                Producer producer = notification.getValue();
-                try {
-                    closeProducer(producer);
-                    log.info("[PRODUCER_CACHE][配置({}) 对应的 producer 已关闭]", notification.getKey());
-                } catch (Exception e) {
-                    log.error("[PRODUCER_CACHE][配置({}) 对应的 producer 关闭失败]", notification.getKey(), e);
-                }
-            })
-            .build(new CacheLoader<Config, Producer>() {
+    private final LoadingCache<Config, Producer> PRODUCER_CACHE =
+            CacheBuilder.newBuilder()
+                    .expireAfterAccess(Duration.ofMinutes(30)) // 30 分钟未访问就提前过期
+                    .removalListener(
+                            (RemovalListener<Config, Producer>)
+                                    notification -> {
+                                        Producer producer = notification.getValue();
+                                        try {
+                                            closeProducer(producer);
+                                            log.info(
+                                                    "[PRODUCER_CACHE][配置({}) 对应的 producer 已关闭]",
+                                                    notification.getKey());
+                                        } catch (Exception e) {
+                                            log.error(
+                                                    "[PRODUCER_CACHE][配置({}) 对应的 producer 关闭失败]",
+                                                    notification.getKey(),
+                                                    e);
+                                        }
+                                    })
+                    .build(
+                            new CacheLoader<Config, Producer>() {
 
-                @Override
-                public Producer load(Config config) throws Exception {
-                    try {
-                        Producer producer = initProducer(config);
-                        log.info("[PRODUCER_CACHE][配置({}) 对应的 producer 已创建并启动]", config);
-                        return producer;
-                    } catch (Exception e) {
-                        log.error("[PRODUCER_CACHE][配置({}) 对应的 producer 创建启动失败]", config, e);
-                        throw e; // 抛出异常，触发缓存加载失败机制
-                    }
-                }
-
-            });
+                                @Override
+                                public Producer load(Config config) throws Exception {
+                                    try {
+                                        Producer producer = initProducer(config);
+                                        log.info(
+                                                "[PRODUCER_CACHE][配置({}) 对应的 producer 已创建并启动]",
+                                                config);
+                                        return producer;
+                                    } catch (Exception e) {
+                                        log.error(
+                                                "[PRODUCER_CACHE][配置({}) 对应的 producer 创建启动失败]",
+                                                config,
+                                                e);
+                                        throw e; // 抛出异常，触发缓存加载失败机制
+                                    }
+                                }
+                            });
 
     /**
      * 获取生产者
@@ -105,11 +120,16 @@ public abstract class IotDataRuleCacheableAction<Config, Producer> implements Io
     @Override
     @SuppressWarnings({"unchecked"})
     public void execute(IotDeviceMessage message, IotDataSinkDO dataSink) {
-        Assert.isTrue(ObjUtil.equal(dataSink.getType(), getType()), "类型({})不匹配", dataSink.getType());
+        Assert.isTrue(
+                ObjUtil.equal(dataSink.getType(), getType()), "类型({})不匹配", dataSink.getType());
         try {
             execute(message, (Config) dataSink.getConfig());
         } catch (Exception e) {
-            log.error("[execute][桥梁配置 config({}) 对应的 message({}) 发送异常]", dataSink.getConfig(), message, e);
+            log.error(
+                    "[execute][桥梁配置 config({}) 对应的 message({}) 发送异常]",
+                    dataSink.getConfig(),
+                    message,
+                    e);
         }
     }
 
@@ -120,5 +140,4 @@ public abstract class IotDataRuleCacheableAction<Config, Producer> implements Io
      * @param config  配置信息
      */
     protected abstract void execute(IotDeviceMessage message, Config config) throws Exception;
-
 }

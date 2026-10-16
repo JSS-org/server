@@ -18,5 +18,4 @@ public @interface DictFormat {
      * @return 字典类型
      */
     String value();
-
 }

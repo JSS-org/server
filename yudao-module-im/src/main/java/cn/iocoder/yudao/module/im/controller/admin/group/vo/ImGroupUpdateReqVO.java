@@ -1,11 +1,15 @@
 package cn.iocoder.yudao.module.im.controller.admin.group.vo;
 
 import cn.hutool.core.util.StrUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 群更新 Request VO")
@@ -42,5 +46,4 @@ public class ImGroupUpdateReqVO {
     public boolean isAvatarValid() {
         return avatar == null || StrUtil.isNotBlank(avatar);
     }
-
 }

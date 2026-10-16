@@ -3,9 +3,11 @@ package cn.iocoder.yudao.module.wms.dal.dataobject.order.movement;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.warehouse.WmsWarehouseDO;
 import cn.iocoder.yudao.module.wms.enums.DictTypeConstants;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -29,22 +31,25 @@ public class WmsMovementOrderDO extends BaseDO {
     /**
      * 主键编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 移库单号
      */
     private String no;
+
     /**
      * 单据日期
      */
     private LocalDateTime orderTime;
+
     /**
      * 移库状态
      *
      * 字典 {@link DictTypeConstants#ORDER_STATUS}
      */
     private Integer status;
+
     /**
      * 备注
      */
@@ -74,9 +79,9 @@ public class WmsMovementOrderDO extends BaseDO {
      * 总数量
      */
     private BigDecimal totalQuantity;
+
     /**
      * 总金额
      */
     private BigDecimal totalPrice;
-
 }

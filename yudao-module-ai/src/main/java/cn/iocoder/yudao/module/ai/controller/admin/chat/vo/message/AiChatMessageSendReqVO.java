@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.ai.controller.admin.chat.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -15,7 +17,10 @@ public class AiChatMessageSendReqVO {
     @NotNull(message = "聊天对话编号不能为空")
     private Long conversationId;
 
-    @Schema(description = "聊天内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "帮我写个 Java 算法")
+    @Schema(
+            description = "聊天内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "帮我写个 Java 算法")
     @NotEmpty(message = "聊天内容不能为空")
     private String content;
 
@@ -27,5 +32,4 @@ public class AiChatMessageSendReqVO {
 
     @Schema(description = "附件 URL 数组", example = "https://www.iocoder.cn/1.png")
     private List<String> attachmentUrls;
-
 }

@@ -1,11 +1,14 @@
 package cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.order;
 
 import cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.detail.WmsCheckOrderDetailSaveReqVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +21,10 @@ public class WmsCheckOrderSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "盘库单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "PK202605110001")
+    @Schema(
+            description = "盘库单号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "PK202605110001")
     @NotBlank(message = "盘库单号不能为空")
     @Size(max = 64, message = "盘库单号长度不能超过 64 个字符")
     private String no;
@@ -38,5 +44,4 @@ public class WmsCheckOrderSaveReqVO {
     @Schema(description = "盘库明细")
     @Valid
     private List<WmsCheckOrderDetailSaveReqVO> details;
-
 }

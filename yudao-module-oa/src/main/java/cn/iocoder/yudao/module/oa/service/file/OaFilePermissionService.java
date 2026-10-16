@@ -62,5 +62,4 @@ public interface OaFilePermissionService {
      * @param nodeIds 节点编号集合
      */
     void deleteFilePermissionsByNodeIds(Collection<Long> nodeIds);
-
 }

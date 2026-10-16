@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.oa.service.note;
 
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.oa.controller.admin.note.vo.category.OaNoteCategorySaveReqVO;
-import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteCategoryDO;
-import cn.iocoder.yudao.module.oa.dal.mysql.note.OaNoteCategoryMapper;
-import jakarta.annotation.Resource;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_NAME_DUPLICATE;
 import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_CATEGORY_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.oa.controller.admin.note.vo.category.OaNoteCategorySaveReqVO;
+import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteCategoryDO;
+import cn.iocoder.yudao.module.oa.dal.mysql.note.OaNoteCategoryMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * {@link OaNoteCategoryServiceImpl} 的单元测试类
@@ -27,14 +30,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Import(OaNoteCategoryServiceImpl.class)
 public class OaNoteCategoryServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaNoteCategoryServiceImpl noteCategoryService;
+    @Resource private OaNoteCategoryServiceImpl noteCategoryService;
 
-    @Resource
-    private OaNoteCategoryMapper noteCategoryMapper;
+    @Resource private OaNoteCategoryMapper noteCategoryMapper;
 
-    @MockitoBean
-    private OaNoteService noteService;
+    @MockitoBean private OaNoteService noteService;
 
     @Test
     public void testCreateNoteCategory_duplicateName() {
@@ -42,10 +42,12 @@ public class OaNoteCategoryServiceImplTest extends BaseDbUnitTest {
         OaNoteCategoryDO category = randomNoteCategoryDO();
         noteCategoryMapper.insert(category);
         // 准备参数
-        OaNoteCategorySaveReqVO reqVO = new OaNoteCategorySaveReqVO().setName(category.getName()).setSort(0);
+        OaNoteCategorySaveReqVO reqVO =
+                new OaNoteCategorySaveReqVO().setName(category.getName()).setSort(0);
 
         // 调用，并断言异常
-        assertServiceException(() -> noteCategoryService.createNoteCategory(reqVO, category.getUserId()),
+        assertServiceException(
+                () -> noteCategoryService.createNoteCategory(reqVO, category.getUserId()),
                 NOTE_CATEGORY_NAME_DUPLICATE);
     }
 
@@ -55,8 +57,8 @@ public class OaNoteCategoryServiceImplTest extends BaseDbUnitTest {
         OaNoteCategoryDO category = randomNoteCategoryDO();
         noteCategoryMapper.insert(category);
         // 准备参数
-        OaNoteCategorySaveReqVO reqVO = new OaNoteCategorySaveReqVO().setId(category.getId())
-                .setName("更新目录").setSort(2);
+        OaNoteCategorySaveReqVO reqVO =
+                new OaNoteCategorySaveReqVO().setId(category.getId()).setName("更新目录").setSort(2);
 
         // 调用
         noteCategoryService.updateNoteCategory(reqVO, category.getUserId());
@@ -89,7 +91,8 @@ public class OaNoteCategoryServiceImplTest extends BaseDbUnitTest {
         noteCategoryMapper.insert(category);
 
         // 调用，并断言异常
-        assertServiceException(() -> noteCategoryService.deleteNoteCategory(category.getId(), randomLongId()),
+        assertServiceException(
+                () -> noteCategoryService.deleteNoteCategory(category.getId(), randomLongId()),
                 NOTE_CATEGORY_NOT_EXISTS);
         verifyNoInteractions(noteService);
     }
@@ -104,5 +107,4 @@ public class OaNoteCategoryServiceImplTest extends BaseDbUnitTest {
     private static OaNoteCategoryDO randomNoteCategoryDO() {
         return randomPojo(OaNoteCategoryDO.class, o -> o.setId(null).setSort(0));
     }
-
 }

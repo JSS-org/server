@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.infra.framework.file.core.client.local;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_PATH_INVALID;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.AbstractFileClient;
@@ -7,9 +10,6 @@ import cn.iocoder.yudao.module.infra.framework.file.core.utils.FilePathUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.FILE_PATH_INVALID;
 
 /**
  * 本地文件客户端
@@ -23,8 +23,7 @@ public class LocalFileClient extends AbstractFileClient<LocalFileClientConfig> {
     }
 
     @Override
-    protected void doInit() {
-    }
+    protected void doInit() {}
 
     @Override
     public String upload(byte[] content, String path, String type) {
@@ -63,5 +62,4 @@ public class LocalFileClient extends AbstractFileClient<LocalFileClientConfig> {
         }
         return filePath.toString();
     }
-
 }

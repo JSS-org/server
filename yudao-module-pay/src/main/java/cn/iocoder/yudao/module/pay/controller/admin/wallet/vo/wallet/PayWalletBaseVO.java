@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.pay.controller.admin.wallet.vo.wallet;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 用户钱包 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -32,8 +33,10 @@ public class PayWalletBaseVO {
     @NotNull(message = "累计充值，单位分不能为空")
     private Integer totalRecharge;
 
-    @Schema(description = "冻结金额，单位分", requiredMode = Schema.RequiredMode.REQUIRED, example = "20737")
+    @Schema(
+            description = "冻结金额，单位分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "20737")
     @NotNull(message = "冻结金额，单位分不能为空")
     private Integer freezePrice;
-
 }

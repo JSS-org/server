@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.crm.dal.mysql.statistics;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceReqVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceSummaryRespVO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -21,7 +22,8 @@ public interface CrmStatisticsPerformanceMapper {
      * @param performanceReqVO 参数
      * @return 员工签约合同数量
      */
-    List<CrmStatisticsPerformanceRespVO> selectContractCountPerformance(CrmStatisticsPerformanceReqVO performanceReqVO);
+    List<CrmStatisticsPerformanceRespVO> selectContractCountPerformance(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 
     /**
      * 员工签约合同金额
@@ -29,7 +31,8 @@ public interface CrmStatisticsPerformanceMapper {
      * @param performanceReqVO 参数
      * @return 员工签约合同金额
      */
-    List<CrmStatisticsPerformanceRespVO> selectContractPricePerformance(CrmStatisticsPerformanceReqVO performanceReqVO);
+    List<CrmStatisticsPerformanceRespVO> selectContractPricePerformance(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 
     /**
      * 员工回款金额
@@ -37,7 +40,8 @@ public interface CrmStatisticsPerformanceMapper {
      * @param performanceReqVO 参数
      * @return 员工回款金额
      */
-    List<CrmStatisticsPerformanceRespVO> selectReceivablePricePerformance(CrmStatisticsPerformanceReqVO performanceReqVO);
+    List<CrmStatisticsPerformanceRespVO> selectReceivablePricePerformance(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 
     /**
      * 合同汇总表
@@ -45,6 +49,6 @@ public interface CrmStatisticsPerformanceMapper {
      * @param performanceReqVO 参数
      * @return 合同汇总表
      */
-    List<CrmStatisticsPerformanceSummaryRespVO> selectContractSummary(CrmStatisticsPerformanceReqVO performanceReqVO);
-
+    List<CrmStatisticsPerformanceSummaryRespVO> selectContractSummary(
+            CrmStatisticsPerformanceReqVO performanceReqVO);
 }

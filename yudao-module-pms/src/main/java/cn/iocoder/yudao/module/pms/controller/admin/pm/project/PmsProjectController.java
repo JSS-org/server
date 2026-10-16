@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -19,11 +24,14 @@ import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,29 +49,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 项目")
 @RestController
 @RequestMapping("/pms/pm/project")
 @Validated
 public class PmsProjectController {
 
-    @Resource
-    private PmsProjectService projectService;
-    @Resource
-    private PmsProjectMemberService projectMemberService;
-    @Resource
-    private PmsProjectFavoriteService projectFavoriteService;
-    @Resource
-    private PmsWorkItemService workItemService;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private PmsProjectService projectService;
+    @Resource private PmsProjectMemberService projectMemberService;
+    @Resource private PmsProjectFavoriteService projectFavoriteService;
+    @Resource private PmsWorkItemService workItemService;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private PermissionApi permissionApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建项目")
@@ -93,10 +90,14 @@ public class PmsProjectController {
     @GetMapping("/page")
     @Operation(summary = "获得项目分页")
     @PreAuthorize("@ss.hasPermission('pms:pm:project:query')")
-    public CommonResult<PageResult<PmsProjectRespVO>> getProjectPage(@Valid PmsProjectPageReqVO pageReqVO) {
+    public CommonResult<PageResult<PmsProjectRespVO>> getProjectPage(
+            @Valid PmsProjectPageReqVO pageReqVO) {
         Long userId = getLoginUserId();
         PageResult<PmsProjectDO> pageResult = projectService.getProjectPage(pageReqVO, userId);
-        return success(new PageResult<>(buildProjectRespVOList(pageResult.getList(), userId), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildProjectRespVOList(pageResult.getList(), userId),
+                        pageResult.getTotal()));
     }
 
     @GetMapping("/favorite-list")
@@ -104,14 +105,16 @@ public class PmsProjectController {
     @PreAuthorize("@ss.hasPermission('pms:pm:project:query')")
     public CommonResult<List<PmsProjectRespVO>> getFavoriteProjectList() {
         Long userId = getLoginUserId();
-        return success(buildProjectRespVOList(projectService.getFavoriteProjectList(userId), userId));
+        return success(
+                buildProjectRespVOList(projectService.getFavoriteProjectList(userId), userId));
     }
 
     @GetMapping("/overview")
     @Operation(summary = "获得项目概况")
     @Parameter(name = "projectId", description = "项目编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pms:pm:project:query')")
-    public CommonResult<PmsProjectOverviewRespVO> getProjectOverview(@RequestParam("projectId") Long projectId) {
+    public CommonResult<PmsProjectOverviewRespVO> getProjectOverview(
+            @RequestParam("projectId") Long projectId) {
         return success(projectService.getProjectOverview(projectId, getLoginUserId()));
     }
 
@@ -157,51 +160,81 @@ public class PmsProjectController {
         if (project == null) {
             return null;
         }
-        return CollUtil.getFirst(buildProjectRespVOList(Collections.singletonList(project), userId));
+        return CollUtil.getFirst(
+                buildProjectRespVOList(Collections.singletonList(project), userId));
     }
 
-    private List<PmsProjectRespVO> buildProjectRespVOList(List<PmsProjectDO> projects, Long userId) {
+    private List<PmsProjectRespVO> buildProjectRespVOList(
+            List<PmsProjectDO> projects, Long userId) {
         if (CollUtil.isEmpty(projects)) {
             return Collections.emptyList();
         }
         // 1. 批量查询创建人、项目管理员、成员数量和工作项完成度
         Set<Long> projectIds = convertSet(projects, PmsProjectDO::getId);
-        Map<Long, List<Long>> managerUserIdListMap = projectMemberService.getProjectManagerUserIdListMap(projectIds);
-        Map<Long, Integer> memberCountMap = projectMemberService.getProjectMemberCountMap(projectIds);
-        Map<Long, Map<Integer, Long>> projectStatusCountMap = workItemService
-                .getProjectWorkItemStatusCountMap(projectIds);
-        Set<Long> userIds = convertSet(projects, project ->
-                NumberUtils.parseLong(project.getCreator()));
+        Map<Long, List<Long>> managerUserIdListMap =
+                projectMemberService.getProjectManagerUserIdListMap(projectIds);
+        Map<Long, Integer> memberCountMap =
+                projectMemberService.getProjectMemberCountMap(projectIds);
+        Map<Long, Map<Integer, Long>> projectStatusCountMap =
+                workItemService.getProjectWorkItemStatusCountMap(projectIds);
+        Set<Long> userIds =
+                convertSet(projects, project -> NumberUtils.parseLong(project.getCreator()));
         managerUserIdListMap.values().forEach(userIds::addAll);
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
-        Set<Long> ownerProjectIds = convertSet(projectMemberService.getOwnerProjectIdListByUserId(userId));
-        Set<Long> managedProjectIds = convertSet(projectMemberService.getManagedProjectIdListByUserId(userId));
-        Set<Long> memberProjectIds = convertSet(projectMemberService.getProjectIdListByUserId(userId));
-        Set<Long> writableProjectIds = convertSet(projectMemberService.getWritableProjectIdListByUserId(userId));
-        Set<Long> favoriteProjectIds = convertSet(projectFavoriteService.getFavoriteProjectIdListByUserId(userId));
+        Set<Long> ownerProjectIds =
+                convertSet(projectMemberService.getOwnerProjectIdListByUserId(userId));
+        Set<Long> managedProjectIds =
+                convertSet(projectMemberService.getManagedProjectIdListByUserId(userId));
+        Set<Long> memberProjectIds =
+                convertSet(projectMemberService.getProjectIdListByUserId(userId));
+        Set<Long> writableProjectIds =
+                convertSet(projectMemberService.getWritableProjectIdListByUserId(userId));
+        Set<Long> favoriteProjectIds =
+                convertSet(projectFavoriteService.getFavoriteProjectIdListByUserId(userId));
         favoriteProjectIds.retainAll(projectIds);
         boolean superAdmin = permissionApi.hasAnyRoles(userId, RoleCodeEnum.SUPER_ADMIN.getCode());
         // 2. 转换项目响应，并拼接展示字段
-        return BeanUtils.toBean(projects, PmsProjectRespVO.class, projectVO -> {
-            findAndThen(userMap, NumberUtils.parseLong(projectVO.getCreator()),
-                    creator -> projectVO.setCreatorName(creator.getNickname()));
-            List<String> adminNames = new ArrayList<>();
-            for (Long adminUserId : managerUserIdListMap.getOrDefault(projectVO.getId(), Collections.emptyList())) {
-                findAndThen(userMap, adminUserId, admin -> adminNames.add(admin.getNickname()));
-            }
-            Map<Integer, Long> statusCountMap = projectStatusCountMap.getOrDefault(
-                    projectVO.getId(), Collections.emptyMap());
-            projectVO.setAdminNames(adminNames).setMemberCount(memberCountMap.getOrDefault(projectVO.getId(), 0))
-                    .setPendingWorkItemCount(statusCountMap.getOrDefault(PmsWorkItemStatusTypeEnum.PENDING.getType(), 0L))
-                    .setProcessingWorkItemCount(statusCountMap.getOrDefault(PmsWorkItemStatusTypeEnum.PROCESSING.getType(), 0L))
-                    .setCompletedWorkItemCount(statusCountMap.getOrDefault(PmsWorkItemStatusTypeEnum.COMPLETED.getType(), 0L))
-                    .setOwnerStatus(superAdmin || ownerProjectIds.contains(projectVO.getId()))
-                    .setAdminStatus(superAdmin || managedProjectIds.contains(projectVO.getId()))
-                    .setMemberStatus(memberProjectIds.contains(projectVO.getId()))
-                    .setExitStatus(memberProjectIds.contains(projectVO.getId()) && !ownerProjectIds.contains(projectVO.getId()))
-                    .setWriteStatus(superAdmin || writableProjectIds.contains(projectVO.getId()))
-                    .setFavoriteStatus(favoriteProjectIds.contains(projectVO.getId()));
-        });
+        return BeanUtils.toBean(
+                projects,
+                PmsProjectRespVO.class,
+                projectVO -> {
+                    findAndThen(
+                            userMap,
+                            NumberUtils.parseLong(projectVO.getCreator()),
+                            creator -> projectVO.setCreatorName(creator.getNickname()));
+                    List<String> adminNames = new ArrayList<>();
+                    for (Long adminUserId :
+                            managerUserIdListMap.getOrDefault(
+                                    projectVO.getId(), Collections.emptyList())) {
+                        findAndThen(
+                                userMap, adminUserId, admin -> adminNames.add(admin.getNickname()));
+                    }
+                    Map<Integer, Long> statusCountMap =
+                            projectStatusCountMap.getOrDefault(
+                                    projectVO.getId(), Collections.emptyMap());
+                    projectVO
+                            .setAdminNames(adminNames)
+                            .setMemberCount(memberCountMap.getOrDefault(projectVO.getId(), 0))
+                            .setPendingWorkItemCount(
+                                    statusCountMap.getOrDefault(
+                                            PmsWorkItemStatusTypeEnum.PENDING.getType(), 0L))
+                            .setProcessingWorkItemCount(
+                                    statusCountMap.getOrDefault(
+                                            PmsWorkItemStatusTypeEnum.PROCESSING.getType(), 0L))
+                            .setCompletedWorkItemCount(
+                                    statusCountMap.getOrDefault(
+                                            PmsWorkItemStatusTypeEnum.COMPLETED.getType(), 0L))
+                            .setOwnerStatus(
+                                    superAdmin || ownerProjectIds.contains(projectVO.getId()))
+                            .setAdminStatus(
+                                    superAdmin || managedProjectIds.contains(projectVO.getId()))
+                            .setMemberStatus(memberProjectIds.contains(projectVO.getId()))
+                            .setExitStatus(
+                                    memberProjectIds.contains(projectVO.getId())
+                                            && !ownerProjectIds.contains(projectVO.getId()))
+                            .setWriteStatus(
+                                    superAdmin || writableProjectIds.contains(projectVO.getId()))
+                            .setFavoriteStatus(favoriteProjectIds.contains(projectVO.getId()));
+                });
     }
-
 }

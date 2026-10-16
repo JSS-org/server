@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.wm.itemreceipt;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemreceipt.MesWmItemReceiptDetailDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -27,5 +28,4 @@ public interface MesWmItemReceiptDetailMapper extends BaseMapperX<MesWmItemRecei
     default void deleteByLineId(Long lineId) {
         delete(MesWmItemReceiptDetailDO::getLineId, lineId);
     }
-
 }

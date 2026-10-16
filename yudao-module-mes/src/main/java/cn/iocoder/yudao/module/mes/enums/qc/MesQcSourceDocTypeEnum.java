@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.enums.qc;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -31,12 +32,14 @@ public enum MesQcSourceDocTypeEnum implements ArrayValuable<Integer> {
     RETURN_SALES(MesBizTypeConstants.WM_RETURN_SALES, "销售退货单"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(MesQcSourceDocTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(MesQcSourceDocTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型值
      */
     private final Integer type;
+
     /**
      * 类型名
      */
@@ -46,5 +49,4 @@ public enum MesQcSourceDocTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

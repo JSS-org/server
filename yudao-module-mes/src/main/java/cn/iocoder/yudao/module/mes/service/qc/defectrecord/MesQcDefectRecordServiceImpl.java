@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.qc.defectrecord;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.defectrecord.vo.MesQcDefectRecordPageReqVO;
@@ -15,7 +18,9 @@ import cn.iocoder.yudao.module.mes.service.qc.oqc.MesQcOqcLineService;
 import cn.iocoder.yudao.module.mes.service.qc.oqc.MesQcOqcService;
 import cn.iocoder.yudao.module.mes.service.qc.rqc.MesQcRqcLineService;
 import cn.iocoder.yudao.module.mes.service.qc.rqc.MesQcRqcService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +28,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 质检缺陷记录 Service 实现类
@@ -36,39 +38,23 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesQcDefectRecordServiceImpl implements MesQcDefectRecordService {
 
-    @Resource
-    private MesQcDefectRecordMapper defectRecordMapper;
+    @Resource private MesQcDefectRecordMapper defectRecordMapper;
 
-    @Resource
-    @Lazy
-    private MesQcIqcService iqcService;
-    @Resource
-    @Lazy
-    private MesQcIqcLineService iqcLineService;
-    @Resource
-    @Lazy
-    private MesQcIpqcService ipqcService;
-    @Resource
-    @Lazy
-    private MesQcIpqcLineService ipqcLineService;
-    @Resource
-    @Lazy
-    private MesQcOqcService oqcService;
-    @Resource
-    @Lazy
-    private MesQcOqcLineService oqcLineService;
-    @Resource
-    @Lazy
-    private MesQcRqcService rqcService;
-    @Resource
-    @Lazy
-    private MesQcRqcLineService rqcLineService;
+    @Resource @Lazy private MesQcIqcService iqcService;
+    @Resource @Lazy private MesQcIqcLineService iqcLineService;
+    @Resource @Lazy private MesQcIpqcService ipqcService;
+    @Resource @Lazy private MesQcIpqcLineService ipqcLineService;
+    @Resource @Lazy private MesQcOqcService oqcService;
+    @Resource @Lazy private MesQcOqcLineService oqcLineService;
+    @Resource @Lazy private MesQcRqcService rqcService;
+    @Resource @Lazy private MesQcRqcLineService rqcLineService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createDefectRecord(MesQcDefectRecordSaveReqVO createReqVO) {
         // 1. 校验检验单和检验行存在
-        validateQcAndLineExists(createReqVO.getQcType(), createReqVO.getQcId(), createReqVO.getLineId());
+        validateQcAndLineExists(
+                createReqVO.getQcType(), createReqVO.getQcId(), createReqVO.getLineId());
 
         // 2. 插入
         MesQcDefectRecordDO record = BeanUtils.toBean(createReqVO, MesQcDefectRecordDO.class);
@@ -112,7 +98,8 @@ public class MesQcDefectRecordServiceImpl implements MesQcDefectRecordService {
     }
 
     @Override
-    public PageResult<MesQcDefectRecordDO> getDefectRecordPage(MesQcDefectRecordPageReqVO pageReqVO) {
+    public PageResult<MesQcDefectRecordDO> getDefectRecordPage(
+            MesQcDefectRecordPageReqVO pageReqVO) {
         return defectRecordMapper.selectPage(pageReqVO);
     }
 
@@ -158,7 +145,8 @@ public class MesQcDefectRecordServiceImpl implements MesQcDefectRecordService {
      * @param qcId   检验单 ID
      */
     private void recalculateDefectStats(Integer qcType, Long qcId) {
-        List<MesQcDefectRecordDO> records = defectRecordMapper.selectListByQcTypeAndQcId(qcType, qcId);
+        List<MesQcDefectRecordDO> records =
+                defectRecordMapper.selectListByQcTypeAndQcId(qcType, qcId);
         if (Objects.equals(qcType, MesQcTypeEnum.IQC.getType())) {
             iqcService.recalculateDefectStats(qcId, records);
         } else if (Objects.equals(qcType, MesQcTypeEnum.IPQC.getType())) {
@@ -171,5 +159,4 @@ public class MesQcDefectRecordServiceImpl implements MesQcDefectRecordService {
             throw exception(QC_DEFECT_RECORD_QC_TYPE_UNSUPPORTED);
         }
     }
-
 }

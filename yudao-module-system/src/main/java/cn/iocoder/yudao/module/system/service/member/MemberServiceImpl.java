@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.system.service.member;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -46,9 +47,13 @@ public class MemberServiceImpl implements MemberService {
 
     private Object getMemberUserApi() {
         if (memberUserApi == null) {
-            memberUserApi = SpringUtil.getBean(ClassUtil.loadClass(String.format("%s.module.member.api.user.MemberUserApi", basePackage)));
+            memberUserApi =
+                    SpringUtil.getBean(
+                            ClassUtil.loadClass(
+                                    String.format(
+                                            "%s.module.member.api.user.MemberUserApi",
+                                            basePackage)));
         }
         return memberUserApi;
     }
-
 }

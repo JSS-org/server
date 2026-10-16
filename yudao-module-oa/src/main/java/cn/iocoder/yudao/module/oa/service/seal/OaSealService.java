@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.oa.service.seal;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.seal.vo.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.seal.OaSealDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -49,5 +50,4 @@ public interface OaSealService {
      * @return 印章
      */
     OaSealDO validateSealExists(Long id);
-
 }

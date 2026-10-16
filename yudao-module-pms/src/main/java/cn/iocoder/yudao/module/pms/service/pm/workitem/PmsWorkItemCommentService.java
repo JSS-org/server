@@ -60,5 +60,4 @@ public interface PmsWorkItemCommentService {
      * @return 评论列表
      */
     List<PmsWorkItemCommentDO> getWorkItemCommentList(Long workItemId, Long userId);
-
 }

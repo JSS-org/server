@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -17,5 +18,4 @@ public class HrmEmployeeNotifyRespVO {
 
     @Schema(description = "发送失败数量", example = "1")
     private Integer failureCount;
-
 }

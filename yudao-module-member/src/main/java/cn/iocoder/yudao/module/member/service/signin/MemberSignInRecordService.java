@@ -45,6 +45,4 @@ public interface MemberSignInRecordService {
      * @return 个人签到统计信息
      */
     AppMemberSignInRecordSummaryRespVO getSignInRecordSummary(Long userId);
-
-
 }

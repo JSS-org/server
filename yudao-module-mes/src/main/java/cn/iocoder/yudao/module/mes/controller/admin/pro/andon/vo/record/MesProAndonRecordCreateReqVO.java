@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.pro.andon.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 安灯呼叫记录新增 Request VO")
@@ -28,5 +30,4 @@ public class MesProAndonRecordCreateReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.member.enums;
 
 import cn.hutool.core.util.EnumUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -31,21 +32,24 @@ public enum MemberExperienceBizTypeEnum {
      * 业务类型
      */
     private final int type;
+
     /**
      * 标题
      */
     private final String title;
+
     /**
      * 描述
      */
     private final String description;
+
     /**
      * 是否为扣减积分
      */
     private final boolean add;
 
     public static MemberExperienceBizTypeEnum getByType(Integer type) {
-        return EnumUtil.getBy(MemberExperienceBizTypeEnum.class,
-                e -> Objects.equals(type, e.getType()));
+        return EnumUtil.getBy(
+                MemberExperienceBizTypeEnum.class, e -> Objects.equals(type, e.getType()));
     }
 }

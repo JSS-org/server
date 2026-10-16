@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.salesnotice;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -15,12 +19,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.client.MesMdClientDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeDO;
 import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
 import cn.iocoder.yudao.module.mes.service.wm.salesnotice.MesWmSalesNoticeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,32 +37,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - MES 发货通知单")
 @RestController
 @RequestMapping("/mes/wm/sales-notice")
 @Validated
 public class MesWmSalesNoticeController {
 
-    @Resource
-    private MesWmSalesNoticeService salesNoticeService;
-    @Resource
-    private MesMdClientService clientService;
+    @Resource private MesWmSalesNoticeService salesNoticeService;
+    @Resource private MesMdClientService clientService;
 
     @PostMapping("/create")
     @Operation(summary = "创建发货通知单")
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:create')")
-    public CommonResult<Long> createSalesNotice(@Valid @RequestBody MesWmSalesNoticeSaveReqVO createReqVO) {
+    public CommonResult<Long> createSalesNotice(
+            @Valid @RequestBody MesWmSalesNoticeSaveReqVO createReqVO) {
         return success(salesNoticeService.createSalesNotice(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改发货通知单")
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:update')")
-    public CommonResult<Boolean> updateSalesNotice(@Valid @RequestBody MesWmSalesNoticeSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateSalesNotice(
+            @Valid @RequestBody MesWmSalesNoticeSaveReqVO updateReqVO) {
         salesNoticeService.updateSalesNotice(updateReqVO);
         return success(true);
     }
@@ -86,19 +89,27 @@ public class MesWmSalesNoticeController {
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:query')")
     public CommonResult<PageResult<MesWmSalesNoticeRespVO>> getSalesNoticePage(
             @Valid MesWmSalesNoticePageReqVO pageReqVO) {
-        PageResult<MesWmSalesNoticeDO> pageResult = salesNoticeService.getSalesNoticePage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<MesWmSalesNoticeDO> pageResult =
+                salesNoticeService.getSalesNoticePage(pageReqVO);
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出发货通知单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-sales-notice:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportSalesNoticeExcel(@Valid MesWmSalesNoticePageReqVO pageReqVO,
-                                        HttpServletResponse response) throws IOException {
+    public void exportSalesNoticeExcel(
+            @Valid MesWmSalesNoticePageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        PageResult<MesWmSalesNoticeDO> pageResult = salesNoticeService.getSalesNoticePage(pageReqVO);
-        ExcelUtils.write(response, "发货通知单.xls", "数据", MesWmSalesNoticeRespVO.class,
+        PageResult<MesWmSalesNoticeDO> pageResult =
+                salesNoticeService.getSalesNoticePage(pageReqVO);
+        ExcelUtils.write(
+                response,
+                "发货通知单.xls",
+                "数据",
+                MesWmSalesNoticeRespVO.class,
                 buildRespVOList(pageResult.getList()));
     }
 
@@ -118,13 +129,19 @@ public class MesWmSalesNoticeController {
             return Collections.emptyList();
         }
         // 1. 获得关联数据
-        Map<Long, MesMdClientDO> clientMap = clientService.getClientMap(
-                convertSet(list, MesWmSalesNoticeDO::getClientId));
+        Map<Long, MesMdClientDO> clientMap =
+                clientService.getClientMap(convertSet(list, MesWmSalesNoticeDO::getClientId));
         // 2. 构建结果
-        return BeanUtils.toBean(list, MesWmSalesNoticeRespVO.class, vo -> {
-            MapUtils.findAndThen(clientMap, vo.getClientId(), client ->
-                    vo.setClientCode(client.getCode()).setClientName(client.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmSalesNoticeRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            clientMap,
+                            vo.getClientId(),
+                            client ->
+                                    vo.setClientCode(client.getCode())
+                                            .setClientName(client.getName()));
+                });
     }
-
 }

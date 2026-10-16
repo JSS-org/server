@@ -1,18 +1,21 @@
 package cn.iocoder.yudao.module.crm.service.customer;
 
+import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.crm.controller.admin.customer.vo.poolconfig.CrmCustomerPoolConfigSaveReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.customer.CrmCustomerPoolConfigDO;
 import cn.iocoder.yudao.module.crm.dal.mysql.customer.CrmCustomerPoolConfigMapper;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Objects;
-
-import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 
 /**
  * 客户公海配置 Service 实现类
@@ -23,8 +26,7 @@ import static cn.iocoder.yudao.module.crm.enums.LogRecordConstants.*;
 @Validated
 public class CrmCustomerPoolConfigServiceImpl implements CrmCustomerPoolConfigService {
 
-    @Resource
-    private CrmCustomerPoolConfigMapper customerPoolConfigMapper;
+    @Resource private CrmCustomerPoolConfigMapper customerPoolConfigMapper;
 
     @Override
     public CrmCustomerPoolConfigDO getCustomerPoolConfig() {
@@ -32,12 +34,16 @@ public class CrmCustomerPoolConfigServiceImpl implements CrmCustomerPoolConfigSe
     }
 
     @Override
-    @LogRecord(type = CRM_CUSTOMER_POOL_CONFIG_TYPE, subType = CRM_CUSTOMER_POOL_CONFIG_SUB_TYPE, bizNo = "{{#poolConfigId}}",
+    @LogRecord(
+            type = CRM_CUSTOMER_POOL_CONFIG_TYPE,
+            subType = CRM_CUSTOMER_POOL_CONFIG_SUB_TYPE,
+            bizNo = "{{#poolConfigId}}",
             success = CRM_CUSTOMER_POOL_CONFIG_SUCCESS)
     public void saveCustomerPoolConfig(CrmCustomerPoolConfigSaveReqVO saveReqVO) {
         // 1. 存在，则进行更新
         CrmCustomerPoolConfigDO dbConfig = getCustomerPoolConfig();
-        CrmCustomerPoolConfigDO poolConfig = BeanUtils.toBean(saveReqVO, CrmCustomerPoolConfigDO.class);
+        CrmCustomerPoolConfigDO poolConfig =
+                BeanUtils.toBean(saveReqVO, CrmCustomerPoolConfigDO.class);
         if (Objects.nonNull(dbConfig)) {
             customerPoolConfigMapper.updateById(poolConfig.setId(dbConfig.getId()));
             // 记录操作日志上下文
@@ -52,5 +58,4 @@ public class CrmCustomerPoolConfigServiceImpl implements CrmCustomerPoolConfigSe
         LogRecordContext.putVariable("isPoolConfigUpdate", Boolean.FALSE);
         LogRecordContext.putVariable("poolConfigId", poolConfig.getId());
     }
-
 }

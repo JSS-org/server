@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.product.api.category;
 
 import cn.iocoder.yudao.module.product.service.category.ProductCategoryService;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 
 /**
@@ -16,12 +18,10 @@ import java.util.Collection;
 @Validated
 public class ProductCategoryApiImpl implements ProductCategoryApi {
 
-    @Resource
-    private ProductCategoryService productCategoryService;
+    @Resource private ProductCategoryService productCategoryService;
 
     @Override
     public void validateCategoryList(Collection<Long> ids) {
         productCategoryService.validateCategoryList(ids);
     }
-
 }

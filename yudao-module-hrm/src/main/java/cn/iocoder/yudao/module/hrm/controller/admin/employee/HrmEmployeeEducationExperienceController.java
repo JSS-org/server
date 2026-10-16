@@ -1,16 +1,21 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.educationexperience.HrmEmployeeEducationExperienceRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.educationexperience.HrmEmployeeEducationExperienceSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.experience.HrmEmployeeEducationExperienceDO;
 import cn.iocoder.yudao.module.hrm.service.employee.experience.HrmEmployeeEducationExperienceService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,16 +29,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - HRM 员工教育经历")
 @RestController
 @RequestMapping("/hrm/employee/education-experience")
 @Validated
 public class HrmEmployeeEducationExperienceController {
 
-    @Resource
-    private HrmEmployeeEducationExperienceService educationExperienceService;
+    @Resource private HrmEmployeeEducationExperienceService educationExperienceService;
 
     @GetMapping("/list")
     @Operation(summary = "获得员工教育经历列表")
@@ -43,7 +45,8 @@ public class HrmEmployeeEducationExperienceController {
             @RequestParam("employeeId") Long employeeId) {
         List<HrmEmployeeEducationExperienceDO> educationExperiences =
                 educationExperienceService.getEducationExperienceListByEmployeeId(employeeId);
-        return success(BeanUtils.toBean(educationExperiences, HrmEmployeeEducationExperienceRespVO.class));
+        return success(
+                BeanUtils.toBean(educationExperiences, HrmEmployeeEducationExperienceRespVO.class));
     }
 
     @PostMapping("/create")
@@ -71,5 +74,4 @@ public class HrmEmployeeEducationExperienceController {
         educationExperienceService.deleteEducationExperience(id);
         return success(true);
     }
-
 }

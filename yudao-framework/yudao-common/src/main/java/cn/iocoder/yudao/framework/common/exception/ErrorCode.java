@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.common.exception;
 
 import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
 import cn.iocoder.yudao.framework.common.exception.enums.ServiceErrorCodeRange;
+
 import lombok.Data;
 
 /**
@@ -19,6 +20,7 @@ public class ErrorCode {
      * 错误码
      */
     private final Integer code;
+
     /**
      * 错误提示
      */
@@ -28,5 +30,4 @@ public class ErrorCode {
         this.code = code;
         this.msg = message;
     }
-
 }

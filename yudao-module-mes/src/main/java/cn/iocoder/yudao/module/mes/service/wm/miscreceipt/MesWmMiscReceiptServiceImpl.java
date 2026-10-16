@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.miscreceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,23 +13,22 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.MesWmMiscR
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscreceipt.MesWmMiscReceiptDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscreceipt.MesWmMiscReceiptLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscreceipt.MesWmMiscReceiptMapper;
-import cn.iocoder.yudao.module.mes.enums.wm.MesWmMiscReceiptStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
+import cn.iocoder.yudao.module.mes.enums.wm.MesWmMiscReceiptStatusEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmTransactionTypeEnum;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSaveReqDTO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 杂项入库单 Service 实现类
@@ -35,14 +38,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MesWmMiscReceiptServiceImpl implements MesWmMiscReceiptService {
 
-    @Resource
-    private MesWmMiscReceiptMapper miscReceiptMapper;
+    @Resource private MesWmMiscReceiptMapper miscReceiptMapper;
 
-    @Resource
-    @Lazy
-    private MesWmMiscReceiptLineService miscReceiptLineService;
-    @Resource
-    private MesWmTransactionService wmTransactionService;
+    @Resource @Lazy private MesWmMiscReceiptLineService miscReceiptLineService;
+    @Resource private MesWmTransactionService wmTransactionService;
 
     @Override
     public Long createMiscReceipt(MesWmMiscReceiptSaveReqVO createReqVO) {
@@ -96,14 +95,17 @@ public class MesWmMiscReceiptServiceImpl implements MesWmMiscReceiptService {
         // 校验存在 + 草稿状态
         validateMiscReceiptExistsAndPrepare(id);
         // 校验至少有一条行
-        List<MesWmMiscReceiptLineDO> lines = miscReceiptLineService.getMiscReceiptLineListByReceiptId(id);
+        List<MesWmMiscReceiptLineDO> lines =
+                miscReceiptLineService.getMiscReceiptLineListByReceiptId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(WM_MISC_RECEIPT_NO_LINE);
         }
 
         // 提交审批（草稿 → 已审批）
-        miscReceiptMapper.updateById(new MesWmMiscReceiptDO()
-                .setId(id).setStatus(MesWmMiscReceiptStatusEnum.APPROVED.getStatus()));
+        miscReceiptMapper.updateById(
+                new MesWmMiscReceiptDO()
+                        .setId(id)
+                        .setStatus(MesWmMiscReceiptStatusEnum.APPROVED.getStatus()));
     }
 
     @Override
@@ -111,7 +113,8 @@ public class MesWmMiscReceiptServiceImpl implements MesWmMiscReceiptService {
     public void finishMiscReceipt(Long id) {
         // 校验存在
         MesWmMiscReceiptDO receipt = validateMiscReceiptExists(id);
-        if (ObjUtil.notEqual(MesWmMiscReceiptStatusEnum.APPROVED.getStatus(), receipt.getStatus())) {
+        if (ObjUtil.notEqual(
+                MesWmMiscReceiptStatusEnum.APPROVED.getStatus(), receipt.getStatus())) {
             throw exception(WM_MISC_RECEIPT_STATUS_NOT_APPROVED);
         }
 
@@ -119,17 +122,30 @@ public class MesWmMiscReceiptServiceImpl implements MesWmMiscReceiptService {
         createTransactionList(receipt);
 
         // 3. 执行入库（已审批 → 已完成）
-        miscReceiptMapper.updateById(new MesWmMiscReceiptDO()
-                .setId(id).setStatus(MesWmMiscReceiptStatusEnum.FINISHED.getStatus()));
+        miscReceiptMapper.updateById(
+                new MesWmMiscReceiptDO()
+                        .setId(id)
+                        .setStatus(MesWmMiscReceiptStatusEnum.FINISHED.getStatus()));
     }
 
     private void createTransactionList(MesWmMiscReceiptDO receipt) {
-        List<MesWmMiscReceiptLineDO> lines = miscReceiptLineService.getMiscReceiptLineListByReceiptId(receipt.getId());
-        wmTransactionService.createTransactionList(convertList(lines, line -> new MesWmTransactionSaveReqDTO()
-                .setType(MesWmTransactionTypeEnum.IN.getType()).setItemId(line.getItemId())
-                .setQuantity(line.getQuantity()) // 入库数量为正数
-                .setWarehouseId(line.getWarehouseId()).setLocationId(line.getLocationId()).setAreaId(line.getAreaId())
-                .setBizType(MesBizTypeConstants.WM_MISC_RECPT).setBizId(receipt.getId()).setBizCode(receipt.getCode()).setBizLineId(line.getId())));
+        List<MesWmMiscReceiptLineDO> lines =
+                miscReceiptLineService.getMiscReceiptLineListByReceiptId(receipt.getId());
+        wmTransactionService.createTransactionList(
+                convertList(
+                        lines,
+                        line ->
+                                new MesWmTransactionSaveReqDTO()
+                                        .setType(MesWmTransactionTypeEnum.IN.getType())
+                                        .setItemId(line.getItemId())
+                                        .setQuantity(line.getQuantity()) // 入库数量为正数
+                                        .setWarehouseId(line.getWarehouseId())
+                                        .setLocationId(line.getLocationId())
+                                        .setAreaId(line.getAreaId())
+                                        .setBizType(MesBizTypeConstants.WM_MISC_RECPT)
+                                        .setBizId(receipt.getId())
+                                        .setBizCode(receipt.getCode())
+                                        .setBizLineId(line.getId())));
     }
 
     @Override
@@ -140,13 +156,16 @@ public class MesWmMiscReceiptServiceImpl implements MesWmMiscReceiptService {
 
         // 已完成和已取消状态不允许取消
         if (ObjUtil.equal(MesWmMiscReceiptStatusEnum.FINISHED.getStatus(), receipt.getStatus())
-                || ObjUtil.equal(MesWmMiscReceiptStatusEnum.CANCELED.getStatus(), receipt.getStatus())) {
+                || ObjUtil.equal(
+                        MesWmMiscReceiptStatusEnum.CANCELED.getStatus(), receipt.getStatus())) {
             throw exception(WM_MISC_RECEIPT_CANCEL_NOT_ALLOWED);
         }
 
         // 取消
-        miscReceiptMapper.updateById(new MesWmMiscReceiptDO()
-                .setId(id).setStatus(MesWmMiscReceiptStatusEnum.CANCELED.getStatus()));
+        miscReceiptMapper.updateById(
+                new MesWmMiscReceiptDO()
+                        .setId(id)
+                        .setStatus(MesWmMiscReceiptStatusEnum.CANCELED.getStatus()));
     }
 
     @Override
@@ -184,5 +203,4 @@ public class MesWmMiscReceiptServiceImpl implements MesWmMiscReceiptService {
     public void validateMiscReceiptEditable(Long id) {
         validateMiscReceiptExistsAndPrepare(id);
     }
-
 }

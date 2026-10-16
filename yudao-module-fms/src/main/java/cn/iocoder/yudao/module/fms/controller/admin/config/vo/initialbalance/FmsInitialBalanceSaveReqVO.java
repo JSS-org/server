@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.initialbalance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -33,7 +35,6 @@ public class FmsInitialBalanceSaveReqVO {
         @Schema(description = "辅助核算余额数组")
         @Valid
         private List<AssistBalance> assistBalances;
-
     }
 
     @Data
@@ -87,5 +88,4 @@ public class FmsInitialBalanceSaveReqVO {
         @DecimalMin(value = "0", message = "实际损益发生数量不能小于 0")
         private BigDecimal profitLossQuantity;
     }
-
 }

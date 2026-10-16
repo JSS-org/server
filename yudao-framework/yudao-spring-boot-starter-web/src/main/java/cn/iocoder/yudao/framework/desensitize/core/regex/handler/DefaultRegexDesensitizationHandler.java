@@ -7,7 +7,8 @@ import cn.iocoder.yudao.framework.desensitize.core.regex.annotation.RegexDesensi
  *
  * @author gaibu
  */
-public class DefaultRegexDesensitizationHandler extends AbstractRegexDesensitizationHandler<RegexDesensitize> {
+public class DefaultRegexDesensitizationHandler
+        extends AbstractRegexDesensitizationHandler<RegexDesensitize> {
 
     @Override
     String getRegex(RegexDesensitize annotation) {
@@ -23,5 +24,4 @@ public class DefaultRegexDesensitizationHandler extends AbstractRegexDesensitiza
     public String getDisable(RegexDesensitize annotation) {
         return annotation.disable();
     }
-
 }

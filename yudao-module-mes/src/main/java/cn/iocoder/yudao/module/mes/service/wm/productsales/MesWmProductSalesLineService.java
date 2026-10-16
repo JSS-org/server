@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.line.MesWmProductSalesLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.line.MesWmProductSalesLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -66,7 +67,8 @@ public interface MesWmProductSalesLineService {
      * @param pageReqVO 分页查询
      * @return 销售出库单行分页
      */
-    PageResult<MesWmProductSalesLineDO> getProductSalesLinePage(MesWmProductSalesLinePageReqVO pageReqVO);
+    PageResult<MesWmProductSalesLineDO> getProductSalesLinePage(
+            MesWmProductSalesLinePageReqVO pageReqVO);
 
     /**
      * 校验销售出库单行存在
@@ -92,5 +94,4 @@ public interface MesWmProductSalesLineService {
      * @param qualityStatus 质量状态
      */
     void updateProductSalesLineQualityStatus(List<Long> ids, Integer qualityStatus);
-
 }

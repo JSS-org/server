@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.redis.core;
 
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.cache.RedisCache;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -22,7 +23,8 @@ public class TimeoutRedisCacheManager extends RedisCacheManager {
 
     private static final String SPLIT = "#";
 
-    public TimeoutRedisCacheManager(RedisCacheWriter cacheWriter, RedisCacheConfiguration defaultCacheConfiguration) {
+    public TimeoutRedisCacheManager(
+            RedisCacheWriter cacheWriter, RedisCacheConfiguration defaultCacheConfiguration) {
         super(cacheWriter, defaultCacheConfiguration);
     }
 
@@ -82,5 +84,4 @@ public class TimeoutRedisCacheManager extends RedisCacheManager {
     private Long removeDurationSuffix(String ttlStr) {
         return NumberUtil.parseLong(StrUtil.sub(ttlStr, 0, ttlStr.length() - 1));
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.stocktaking.plan;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -11,7 +14,9 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.plan.MesWmStock
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.plan.MesWmStockTakingPlanParamDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.stocktaking.plan.MesWmStockTakingPlanMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmStockTakingTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -19,9 +24,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 盘点方案 Service 实现类
@@ -32,11 +34,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmStockTakingPlanServiceImpl implements MesWmStockTakingPlanService {
 
-    @Resource
-    private MesWmStockTakingPlanMapper stockTakingPlanMapper;
+    @Resource private MesWmStockTakingPlanMapper stockTakingPlanMapper;
 
-    @Resource
-    private MesWmStockTakingPlanParamService stockTakingPlanParamService;
+    @Resource private MesWmStockTakingPlanParamService stockTakingPlanParamService;
 
     @Override
     public Long createStockTakingPlan(MesWmStockTakingPlanSaveReqVO createReqVO) {
@@ -58,7 +58,8 @@ public class MesWmStockTakingPlanServiceImpl implements MesWmStockTakingPlanServ
         validatePlanSaveData(updateReqVO);
 
         // 更新数据
-        MesWmStockTakingPlanDO updateObj = BeanUtils.toBean(updateReqVO, MesWmStockTakingPlanDO.class);
+        MesWmStockTakingPlanDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmStockTakingPlanDO.class);
         stockTakingPlanMapper.updateById(updateObj);
     }
 
@@ -80,7 +81,8 @@ public class MesWmStockTakingPlanServiceImpl implements MesWmStockTakingPlanServ
         validateStockTakingPlanExists(id);
         // 开启时，需要校验 params 非空
         if (CommonStatusEnum.isEnable(status)) {
-            List<MesWmStockTakingPlanParamDO> params = stockTakingPlanParamService.getStockTakingPlanParamListByPlanId(id);
+            List<MesWmStockTakingPlanParamDO> params =
+                    stockTakingPlanParamService.getStockTakingPlanParamListByPlanId(id);
             if (CollUtil.isEmpty(params)) {
                 throw exception(WM_STOCK_TAKING_PLAN_PARAM_EMPTY);
             }
@@ -118,7 +120,8 @@ public class MesWmStockTakingPlanServiceImpl implements MesWmStockTakingPlanServ
     }
 
     @Override
-    public PageResult<MesWmStockTakingPlanDO> getStockTakingPlanPage(MesWmStockTakingPlanPageReqVO pageReqVO) {
+    public PageResult<MesWmStockTakingPlanDO> getStockTakingPlanPage(
+            MesWmStockTakingPlanPageReqVO pageReqVO) {
         return stockTakingPlanMapper.selectPage(pageReqVO);
     }
 
@@ -159,11 +162,11 @@ public class MesWmStockTakingPlanServiceImpl implements MesWmStockTakingPlanServ
             saveReqVO.setStartTime(null);
             saveReqVO.setEndTime(null);
         } else {
-            if (saveReqVO.getStartTime() == null || saveReqVO.getEndTime() == null
+            if (saveReqVO.getStartTime() == null
+                    || saveReqVO.getEndTime() == null
                     || saveReqVO.getStartTime().compareTo(saveReqVO.getEndTime()) >= 0) {
                 throw exception(WM_STOCK_TAKING_PLAN_DYNAMIC_TIME_INVALID);
             }
         }
     }
-
 }

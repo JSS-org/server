@@ -14,5 +14,4 @@ public class GroupMemberCancelMutedNotification extends BaseGroupNotification {
      * 被取消禁言的用户编号
      */
     private Long mutedUserId;
-
 }

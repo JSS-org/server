@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpclient;
 import com.ghgande.j2mod.modbus.procimg.*;
 import com.ghgande.j2mod.modbus.slave.ModbusSlave;
 import com.ghgande.j2mod.modbus.slave.ModbusSlaveFactory;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -81,16 +83,21 @@ public class IoTModbusTcpClientIntegrationTest {
         // 3.2 启动从站
         slave.open();
 
-        log.info("[testStartSlaveSimulator][Modbus TCP 从站模拟器已启动, 端口: {}, 从站地址: {}]", PORT, SLAVE_ID);
-        log.info("[testStartSlaveSimulator][可用寄存器: 线圈(01/05) 0-9, 离散输入(02) 0-9, " +
-                "保持寄存器(03/06/16) 0-19, 输入寄存器(04) 0-19]");
+        log.info(
+                "[testStartSlaveSimulator][Modbus TCP 从站模拟器已启动, 端口: {}, 从站地址: {}]", PORT, SLAVE_ID);
+        log.info(
+                "[testStartSlaveSimulator][可用寄存器: 线圈(01/05) 0-9, 离散输入(02) 0-9, "
+                        + "保持寄存器(03/06/16) 0-19, 输入寄存器(04) 0-19]");
 
         // 4. 添加关闭钩子
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("[testStartSlaveSimulator][正在关闭模拟器...]");
-            slave.close();
-            log.info("[testStartSlaveSimulator][模拟器已关闭]");
-        }));
+        Runtime.getRuntime()
+                .addShutdownHook(
+                        new Thread(
+                                () -> {
+                                    log.info("[testStartSlaveSimulator][正在关闭模拟器...]");
+                                    slave.close();
+                                    log.info("[testStartSlaveSimulator][模拟器已关闭]");
+                                }));
 
         // 5. 保持运行，定时更新输入寄存器模拟数据变化
         int counter = 0;
@@ -106,9 +113,11 @@ public class IoTModbusTcpClientIntegrationTest {
 
             // 更新保持寄存器的第一个值
             spi.getRegister(0).setValue(counter * 100);
-            log.info("[testStartSlaveSimulator][数据已更新, counter={}, 保持寄存器[0]={}, 输入寄存器[0]={}]",
-                    counter, counter * 100, 1 + counter);
+            log.info(
+                    "[testStartSlaveSimulator][数据已更新, counter={}, 保持寄存器[0]={}, 输入寄存器[0]={}]",
+                    counter,
+                    counter * 100,
+                    1 + counter);
         }
     }
-
 }

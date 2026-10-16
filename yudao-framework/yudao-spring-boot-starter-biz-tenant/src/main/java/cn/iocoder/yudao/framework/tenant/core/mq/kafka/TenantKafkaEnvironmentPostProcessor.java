@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.tenant.core.mq.kafka;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -16,10 +18,12 @@ import org.springframework.core.env.ConfigurableEnvironment;
 @Slf4j
 public class TenantKafkaEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
-    private static final String PROPERTY_KEY_INTERCEPTOR_CLASSES = "spring.kafka.producer.properties.interceptor.classes";
+    private static final String PROPERTY_KEY_INTERCEPTOR_CLASSES =
+            "spring.kafka.producer.properties.interceptor.classes";
 
     @Override
-    public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
+    public void postProcessEnvironment(
+            ConfigurableEnvironment environment, SpringApplication application) {
         // 添加 TenantKafkaProducerInterceptor 拦截器
         try {
             String value = environment.getProperty(PROPERTY_KEY_INTERCEPTOR_CLASSES);
@@ -30,8 +34,8 @@ public class TenantKafkaEnvironmentPostProcessor implements EnvironmentPostProce
             }
             environment.getSystemProperties().put(PROPERTY_KEY_INTERCEPTOR_CLASSES, value);
         } catch (NoClassDefFoundError ignore) {
-            // 如果触发 NoClassDefFoundError 异常，说明 TenantKafkaProducerInterceptor 类不存在，即没引入 kafka-spring 依赖
+            // 如果触发 NoClassDefFoundError 异常，说明 TenantKafkaProducerInterceptor 类不存在，即没引入 kafka-spring
+            // 依赖
         }
     }
-
 }

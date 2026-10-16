@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.discussion;
 
 import cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.vote.OaVoteOptionRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -41,7 +43,10 @@ public class OaDiscussionRespVO {
     @Schema(description = "点赞数", requiredMode = Schema.RequiredMode.REQUIRED, example = "3")
     private Integer likeCount;
 
-    @Schema(description = "当前用户是否已点赞", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "当前用户是否已点赞",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     private Boolean liked;
 
     @Schema(description = "点赞人用户昵称列表", example = "[\"张三\", \"李四\"]")
@@ -59,7 +64,11 @@ public class OaDiscussionRespVO {
     @Schema(description = "投票选项列表")
     private List<OaVoteOptionRespVO> voteOptions;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
-
 }

@@ -1,24 +1,26 @@
 package cn.iocoder.yudao.module.mes.service.wm.returnvendor;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_RETURN_VENDOR_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo.line.MesWmReturnVendorLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo.line.MesWmReturnVendorLineSaveReqVO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnvendor.MesWmReturnVendorLineDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnvendor.MesWmReturnVendorDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnvendor.MesWmReturnVendorLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.returnvendor.MesWmReturnVendorLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_RETURN_VENDOR_LINE_NOT_EXISTS;
 
 /**
  * MES 供应商退货单行 Service 实现类
@@ -27,19 +29,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_RETURN_VEN
 @Validated
 public class MesWmReturnVendorLineServiceImpl implements MesWmReturnVendorLineService {
 
-    @Resource
-    private MesWmReturnVendorLineMapper returnVendorLineMapper;
+    @Resource private MesWmReturnVendorLineMapper returnVendorLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmReturnVendorService returnVendorService;
-    @Resource
-    @Lazy
-    private MesWmReturnVendorDetailService returnVendorDetailService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmBatchService batchService;
+    @Resource @Lazy private MesWmReturnVendorService returnVendorService;
+    @Resource @Lazy private MesWmReturnVendorDetailService returnVendorDetailService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmBatchService batchService;
 
     @Override
     public Long createReturnVendorLine(MesWmReturnVendorLineSaveReqVO createReqVO) {
@@ -62,7 +57,8 @@ public class MesWmReturnVendorLineServiceImpl implements MesWmReturnVendorLineSe
         validateReturnVendorLineSaveData(updateReqVO);
 
         // 更新
-        MesWmReturnVendorLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmReturnVendorLineDO.class);
+        MesWmReturnVendorLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmReturnVendorLineDO.class);
         returnVendorLineMapper.updateById(updateObj);
     }
 
@@ -86,7 +82,8 @@ public class MesWmReturnVendorLineServiceImpl implements MesWmReturnVendorLineSe
     }
 
     @Override
-    public PageResult<MesWmReturnVendorLineDO> getReturnVendorLinePage(MesWmReturnVendorLinePageReqVO pageReqVO) {
+    public PageResult<MesWmReturnVendorLineDO> getReturnVendorLinePage(
+            MesWmReturnVendorLinePageReqVO pageReqVO) {
         return returnVendorLineMapper.selectPage(pageReqVO);
     }
 
@@ -111,13 +108,14 @@ public class MesWmReturnVendorLineServiceImpl implements MesWmReturnVendorLineSe
 
     private void validateReturnVendorLineSaveData(MesWmReturnVendorLineSaveReqVO reqVO) {
         // 校验父数据存在且为草稿状态
-        MesWmReturnVendorDO returnVendor = returnVendorService.validateReturnVendorExistsAndPrepare(reqVO.getReturnId());
+        MesWmReturnVendorDO returnVendor =
+                returnVendorService.validateReturnVendorExistsAndPrepare(reqVO.getReturnId());
         // 校验物料存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
         // 校验批次存在且属于当前物料和供应商
         if (reqVO.getBatchId() != null) {
-            batchService.validateBatchExists(reqVO.getBatchId(), reqVO.getItemId(), null, returnVendor.getVendorId());
+            batchService.validateBatchExists(
+                    reqVO.getBatchId(), reqVO.getItemId(), null, returnVendor.getVendorId());
         }
     }
-
 }

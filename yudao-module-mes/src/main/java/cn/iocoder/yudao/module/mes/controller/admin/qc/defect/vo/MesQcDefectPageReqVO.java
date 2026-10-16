@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.defect.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -23,5 +25,4 @@ public class MesQcDefectPageReqVO extends PageParam {
 
     @Schema(description = "缺陷等级", example = "1")
     private Integer level;
-
 }

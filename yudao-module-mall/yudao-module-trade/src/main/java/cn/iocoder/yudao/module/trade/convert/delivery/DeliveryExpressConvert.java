@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.express.Delive
 import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.express.DeliveryExpressUpdateReqVO;
 import cn.iocoder.yudao.module.trade.controller.app.delivery.vo.express.AppDeliveryExpressRespVO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryExpressDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -33,5 +34,4 @@ public interface DeliveryExpressConvert {
     List<DeliveryExpressSimpleRespVO> convertList1(List<DeliveryExpressDO> list);
 
     List<AppDeliveryExpressRespVO> convertList03(List<DeliveryExpressDO> list);
-
 }

@@ -3,8 +3,10 @@ package cn.iocoder.yudao.module.iot.core.messagebus.core.local;
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageBus;
 import cn.iocoder.yudao.module.iot.core.messagebus.core.IotMessageSubscriber;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 
@@ -40,10 +42,14 @@ public class IotLocalMessageBus implements IotMessageBus {
     @Override
     public void register(IotMessageSubscriber<?> subscriber) {
         String topic = subscriber.getTopic();
-        List<IotMessageSubscriber<?>> topicSubscribers = subscribers.computeIfAbsent(topic, k -> new ArrayList<>());
+        List<IotMessageSubscriber<?>> topicSubscribers =
+                subscribers.computeIfAbsent(topic, k -> new ArrayList<>());
         topicSubscribers.add(subscriber);
-        log.info("[register][topic({}/{}) 注册消费者({})成功]",
-                topic, subscriber.getGroup(), subscriber.getClass().getName());
+        log.info(
+                "[register][topic({}/{}) 注册消费者({})成功]",
+                topic,
+                subscriber.getGroup(),
+                subscriber.getClass().getName());
     }
 
     @EventListener
@@ -58,10 +64,14 @@ public class IotLocalMessageBus implements IotMessageBus {
             try {
                 subscriber.onMessage(message.getMessage());
             } catch (Exception ex) {
-                log.error("[onMessage][topic({}/{}) message({}) 消费者({}) 处理异常]",
-                        subscriber.getTopic(), subscriber.getGroup(), message.getMessage(), subscriber.getClass().getName(), ex);
+                log.error(
+                        "[onMessage][topic({}/{}) message({}) 消费者({}) 处理异常]",
+                        subscriber.getTopic(),
+                        subscriber.getGroup(),
+                        message.getMessage(),
+                        subscriber.getClass().getName(),
+                        ex);
             }
         }
     }
-
 }

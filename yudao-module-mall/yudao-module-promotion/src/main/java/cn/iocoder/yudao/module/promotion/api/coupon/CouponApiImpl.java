@@ -1,11 +1,12 @@
 package cn.iocoder.yudao.module.promotion.api.coupon;
 
-
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.promotion.api.coupon.dto.CouponRespDTO;
 import cn.iocoder.yudao.module.promotion.api.coupon.dto.CouponUseReqDTO;
 import cn.iocoder.yudao.module.promotion.service.coupon.CouponService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,8 +22,7 @@ import java.util.Map;
 @Validated
 public class CouponApiImpl implements CouponApi {
 
-    @Resource
-    private CouponService couponService;
+    @Resource private CouponService couponService;
 
     @Override
     public List<CouponRespDTO> getCouponListByUserId(Long userId, Integer status) {
@@ -31,8 +31,7 @@ public class CouponApiImpl implements CouponApi {
 
     @Override
     public void useCoupon(CouponUseReqDTO useReqDTO) {
-        couponService.useCoupon(useReqDTO.getId(), useReqDTO.getUserId(),
-                useReqDTO.getOrderId());
+        couponService.useCoupon(useReqDTO.getId(), useReqDTO.getUserId(), useReqDTO.getOrderId());
     }
 
     @Override
@@ -49,5 +48,4 @@ public class CouponApiImpl implements CouponApi {
     public void invalidateCouponsByAdmin(List<Long> giveCouponIds, Long userId) {
         couponService.invalidateCouponsByAdmin(giveCouponIds, userId);
     }
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.channel;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -18,5 +20,4 @@ public class ImChannelPageReqVO extends PageParam {
 
     @Schema(description = "状态", example = "0")
     private Integer status; // 参见 CommonStatusEnum 枚举类
-
 }

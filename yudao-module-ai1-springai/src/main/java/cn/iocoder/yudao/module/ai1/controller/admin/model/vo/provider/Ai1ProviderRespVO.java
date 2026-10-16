@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
-import java.util.Map;
-
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Schema(description = "管理后台 - AI1 供应商 Response VO")
 @Data
@@ -17,7 +17,10 @@ public class Ai1ProviderRespVO {
     @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "DeepSeek")
     private String name;
 
-    @Schema(description = "接口地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://api.deepseek.com/v1")
+    @Schema(
+            description = "接口地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://api.deepseek.com/v1")
     private String baseUrl;
 
     @Schema(description = "API 密钥，脱敏展示", example = "sk-****abcd")
@@ -37,5 +40,4 @@ public class Ai1ProviderRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

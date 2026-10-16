@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.useritem;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,9 @@ public class ImFaceUserItemManagerRespVO {
     @Schema(description = "所属用户昵称", example = "张三")
     private String userNickname;
 
-    @Schema(description = "表情图 URL", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "表情图 URL",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "https://cdn.example.com/face/user/abc.gif")
     private String url;
 
@@ -33,5 +36,4 @@ public class ImFaceUserItemManagerRespVO {
 
     @Schema(description = "添加时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

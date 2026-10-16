@@ -34,5 +34,4 @@ public class IotDevicePropertyPostReqDTO extends HashMap<String, Object> {
     public static IotDevicePropertyPostReqDTO of(Map<String, Object> properties) {
         return new IotDevicePropertyPostReqDTO(properties);
     }
-
 }

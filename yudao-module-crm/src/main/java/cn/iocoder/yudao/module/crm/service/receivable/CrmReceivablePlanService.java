@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.plan.CrmReceiv
 import cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.plan.CrmReceivablePlanSaveReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.customer.CrmCustomerDO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.receivable.CrmReceivablePlanDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -72,7 +73,8 @@ public interface CrmReceivablePlanService {
      * @param userId    用户编号
      * @return 回款计划分页
      */
-    PageResult<CrmReceivablePlanDO> getReceivablePlanPage(CrmReceivablePlanPageReqVO pageReqVO, Long userId);
+    PageResult<CrmReceivablePlanDO> getReceivablePlanPage(
+            CrmReceivablePlanPageReqVO pageReqVO, Long userId);
 
     /**
      * 获得回款计划分页，基于指定客户
@@ -82,7 +84,8 @@ public interface CrmReceivablePlanService {
      * @param pageReqVO 分页查询
      * @return 回款计划分页
      */
-    PageResult<CrmReceivablePlanDO> getReceivablePlanPageByCustomerId(CrmReceivablePlanPageReqVO pageReqVO);
+    PageResult<CrmReceivablePlanDO> getReceivablePlanPageByCustomerId(
+            CrmReceivablePlanPageReqVO pageReqVO);
 
     /**
      * 获得待回款提醒数量
@@ -91,5 +94,4 @@ public interface CrmReceivablePlanService {
      * @return 提醒数量
      */
     Long getReceivablePlanRemindCount(Long userId);
-
 }

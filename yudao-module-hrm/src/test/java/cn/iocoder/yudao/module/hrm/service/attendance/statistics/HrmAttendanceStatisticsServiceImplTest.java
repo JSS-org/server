@@ -1,7 +1,13 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.statistics;
 
-import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics.HrmAttendanceDailyDetailReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics.HrmAttendanceDailyDetailRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics.HrmAttendanceMonthRecordPageReqVO;
@@ -18,6 +24,7 @@ import cn.iocoder.yudao.module.hrm.service.attendance.config.HrmAttendanceHolida
 import cn.iocoder.yudao.module.hrm.service.attendance.record.HrmAttendanceClockService;
 import cn.iocoder.yudao.module.hrm.service.attendance.record.HrmAttendanceLeaveService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -32,12 +39,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link HrmAttendanceStatisticsServiceImpl} 的单元测试类
  *
@@ -45,32 +46,33 @@ import static org.mockito.Mockito.when;
  */
 public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private HrmAttendanceStatisticsServiceImpl attendanceStatisticsService;
+    @InjectMocks private HrmAttendanceStatisticsServiceImpl attendanceStatisticsService;
 
-    @Mock
-    private HrmAttendanceClockService attendanceClockService;
-    @Mock
-    private HrmEmployeeService employeeService;
-    @Mock
-    private HrmAttendanceLeaveService attendanceLeaveService;
-    @Mock
-    private HrmAttendanceGroupService attendanceGroupService;
-    @Mock
-    private HrmAttendanceHolidayService attendanceHolidayService;
+    @Mock private HrmAttendanceClockService attendanceClockService;
+    @Mock private HrmEmployeeService employeeService;
+    @Mock private HrmAttendanceLeaveService attendanceLeaveService;
+    @Mock private HrmAttendanceGroupService attendanceGroupService;
+    @Mock private HrmAttendanceHolidayService attendanceHolidayService;
 
     @Test
     public void testGetAttendanceMonthRecordPage_fullAttendanceFilterUsesMemoryPage() {
         // mock 数据
         List<HrmEmployeeDO> employees = new ArrayList<>();
         for (long id = 1L; id <= 201L; id++) {
-            employees.add(new HrmEmployeeDO().setId(id).setName("员工" + id)
-                    .setEntryTime(LocalDateTime.of(2026, 1, 1, 9, 0)));
+            employees.add(
+                    new HrmEmployeeDO()
+                            .setId(id)
+                            .setName("员工" + id)
+                            .setEntryTime(LocalDateTime.of(2026, 1, 1, 9, 0)));
         }
-        when(employeeService.getEmployeeList(any(HrmEmployeeListReqVO.class))).thenReturn(employees);
-        when(attendanceGroupService.getAttendanceGroupMap(any())).thenReturn(Collections.emptyMap());
-        when(attendanceHolidayService.getAttendanceHolidayMap(any())).thenReturn(Collections.emptyMap());
-        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(any(), any()))
+        when(employeeService.getEmployeeList(any(HrmEmployeeListReqVO.class)))
+                .thenReturn(employees);
+        when(attendanceGroupService.getAttendanceGroupMap(any()))
+                .thenReturn(Collections.emptyMap());
+        when(attendanceHolidayService.getAttendanceHolidayMap(any()))
+                .thenReturn(Collections.emptyMap());
+        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
+                        any(), any()))
                 .thenReturn(Collections.emptyList());
         HrmAttendanceMonthRecordPageReqVO reqVO = new HrmAttendanceMonthRecordPageReqVO();
         reqVO.setYear(2026).setMonth(7).setFullAttendance(false);
@@ -92,27 +94,37 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     public void testGetAttendanceMonthRecordList_actualDaysUsesNetWorkDays() {
         // mock 数据
         LocalDate attendanceDate = LocalDate.of(2026, 7, 8);
-        HrmEmployeeDO employee = new HrmEmployeeDO().setId(1L).setName("张三")
-                .setEntryTime(LocalDate.of(2026, 1, 1).atStartOfDay());
+        HrmEmployeeDO employee =
+                new HrmEmployeeDO()
+                        .setId(1L)
+                        .setName("张三")
+                        .setEntryTime(LocalDate.of(2026, 1, 1).atStartOfDay());
         HrmAttendanceGroupDO attendanceGroup = new HrmAttendanceGroupDO().setId(10L);
         when(employeeService.getEmployeeMap(any()))
                 .thenReturn(Collections.singletonMap(employee.getId(), employee));
-        when(attendanceGroupService.getAttendanceGroupMap(Collections.singletonList(employee.getId())))
+        when(attendanceGroupService.getAttendanceGroupMap(
+                        Collections.singletonList(employee.getId())))
                 .thenReturn(Collections.singletonMap(employee.getId(), attendanceGroup));
         when(attendanceGroupService.getAttendanceGroupShiftMap(any(), any(), any()))
                 .thenReturn(Collections.singletonMap(attendanceDate, standardShift()));
-        when(attendanceHolidayService.getAttendanceHolidayMap(any())).thenReturn(Collections.emptyMap());
+        when(attendanceHolidayService.getAttendanceHolidayMap(any()))
+                .thenReturn(Collections.emptyMap());
         when(attendanceClockService.getAttendanceClockListByEmployeeIdsAndClockTime(any(), any()))
-                .thenReturn(Collections.singletonList(
-                        clock(attendanceDate.atTime(18, 0), 2).setEmployeeId(employee.getId())));
-        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(any(), any()))
-                .thenReturn(Collections.singletonList(
-                        leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(13, 0))
-                                .setEmployeeId(employee.getId())));
+                .thenReturn(
+                        Collections.singletonList(
+                                clock(attendanceDate.atTime(18, 0), 2)
+                                        .setEmployeeId(employee.getId())));
+        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
+                        any(), any()))
+                .thenReturn(
+                        Collections.singletonList(
+                                leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(13, 0))
+                                        .setEmployeeId(employee.getId())));
 
         // 调用
-        List<HrmAttendanceMonthRecordRespVO> result = attendanceStatisticsService
-                .getAttendanceMonthRecordList(2026, 7, Collections.singletonList(employee.getId()));
+        List<HrmAttendanceMonthRecordRespVO> result =
+                attendanceStatisticsService.getAttendanceMonthRecordList(
+                        2026, 7, Collections.singletonList(employee.getId()));
 
         // 断言
         assertEquals(1, result.size());
@@ -130,25 +142,32 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
         when(employeeService.getEmployee(employee.getId())).thenReturn(employee);
         when(attendanceClockService.getAttendanceClockListByEmployeeIdAndClockTime(any(), any()))
                 .thenReturn(Collections.emptyList());
-        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(any(), any()))
+        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
+                        any(), any()))
                 .thenReturn(Collections.emptyList());
-        when(attendanceHolidayService.getAttendanceHolidayMap(any())).thenReturn(Collections.emptyMap());
+        when(attendanceHolidayService.getAttendanceHolidayMap(any()))
+                .thenReturn(Collections.emptyMap());
         when(attendanceGroupService.getMyAttendanceGroup(employee.getId()))
                 .thenReturn(attendanceGroup)
                 .thenReturn(null);
         when(attendanceGroupService.getAttendanceGroupShiftMap(any(), any(), any()))
                 .thenReturn(Collections.singletonMap(attendanceDate, null));
-        HrmAttendanceDailyDetailReqVO reqVO = new HrmAttendanceDailyDetailReqVO()
-                .setEmployeeId(employee.getId()).setAttendanceTime(attendanceDate.atStartOfDay());
+        HrmAttendanceDailyDetailReqVO reqVO =
+                new HrmAttendanceDailyDetailReqVO()
+                        .setEmployeeId(employee.getId())
+                        .setAttendanceTime(attendanceDate.atStartOfDay());
 
         // 调用
-        HrmAttendanceDailyDetailRespVO restResult = attendanceStatisticsService.getAttendanceDailyDetail(reqVO);
+        HrmAttendanceDailyDetailRespVO restResult =
+                attendanceStatisticsService.getAttendanceDailyDetail(reqVO);
         HrmAttendanceDailyDetailRespVO notScheduledResult =
                 attendanceStatisticsService.getAttendanceDailyDetail(reqVO);
 
         // 断言
         assertEquals(HrmAttendanceResultEnum.REST.getFormat(), restResult.getAttendanceResult());
-        assertEquals(HrmAttendanceResultEnum.NOT_SCHEDULED.getFormat(), notScheduledResult.getAttendanceResult());
+        assertEquals(
+                HrmAttendanceResultEnum.NOT_SCHEDULED.getFormat(),
+                notScheduledResult.getAttendanceResult());
     }
 
     @Test
@@ -157,34 +176,46 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
         LocalDate attendanceDate = LocalDate.of(2026, 7, 31);
         HrmEmployeeDO employee = new HrmEmployeeDO().setId(1L).setName("张三");
         HrmAttendanceGroupDO attendanceGroup = new HrmAttendanceGroupDO().setId(10L);
-        HrmAttendanceGroupDO.Shift shift = HrmAttendanceGroupDO.Shift.builder()
-                .startTime(LocalTime.of(22, 0)).endTime(LocalTime.of(6, 0)).build();
-        HrmAttendanceClockDO offDutyClock = clock(attendanceDate.plusDays(1).atTime(6, 0), 2)
-                .setAttendanceTime(attendanceDate.plusDays(1).atTime(6, 0));
-        HrmAttendanceLeaveDO leave = leave(
-                attendanceDate.atTime(22, 0), attendanceDate.plusDays(1).atTime(3, 0));
+        HrmAttendanceGroupDO.Shift shift =
+                HrmAttendanceGroupDO.Shift.builder()
+                        .startTime(LocalTime.of(22, 0))
+                        .endTime(LocalTime.of(6, 0))
+                        .build();
+        HrmAttendanceClockDO offDutyClock =
+                clock(attendanceDate.plusDays(1).atTime(6, 0), 2)
+                        .setAttendanceTime(attendanceDate.plusDays(1).atTime(6, 0));
+        HrmAttendanceLeaveDO leave =
+                leave(attendanceDate.atTime(22, 0), attendanceDate.plusDays(1).atTime(3, 0));
         when(employeeService.getEmployee(employee.getId())).thenReturn(employee);
-        when(attendanceGroupService.getMyAttendanceGroup(employee.getId())).thenReturn(attendanceGroup);
-        when(attendanceHolidayService.getAttendanceHolidayMap(any())).thenReturn(Collections.emptyMap());
+        when(attendanceGroupService.getMyAttendanceGroup(employee.getId()))
+                .thenReturn(attendanceGroup);
+        when(attendanceHolidayService.getAttendanceHolidayMap(any()))
+                .thenReturn(Collections.emptyMap());
         when(attendanceGroupService.getAttendanceGroupShiftMap(any(), any(), any()))
                 .thenReturn(Collections.singletonMap(attendanceDate, shift));
         when(attendanceClockService.getAttendanceClockListByEmployeeIdAndClockTime(any(), any()))
                 .thenReturn(Collections.singletonList(offDutyClock));
-        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(any(), any()))
+        when(attendanceLeaveService.getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
+                        any(), any()))
                 .thenReturn(Collections.singletonList(leave));
-        HrmAttendanceDailyDetailReqVO reqVO = new HrmAttendanceDailyDetailReqVO()
-                .setEmployeeId(employee.getId()).setAttendanceTime(attendanceDate.atStartOfDay());
+        HrmAttendanceDailyDetailReqVO reqVO =
+                new HrmAttendanceDailyDetailReqVO()
+                        .setEmployeeId(employee.getId())
+                        .setAttendanceTime(attendanceDate.atStartOfDay());
 
         // 调用
-        HrmAttendanceDailyDetailRespVO result = attendanceStatisticsService.getAttendanceDailyDetail(reqVO);
+        HrmAttendanceDailyDetailRespVO result =
+                attendanceStatisticsService.getAttendanceDailyDetail(reqVO);
 
         // 断言
         assertEquals(1, result.getClockCount());
         assertEquals(300, result.getLeaveMinutes());
         assertDecimal("0.63", result.getLeaveDays());
-        ArgumentCaptor<LocalDateTime[]> leaveTimesCaptor = ArgumentCaptor.forClass(LocalDateTime[].class);
-        verify(attendanceLeaveService).getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
-                any(), leaveTimesCaptor.capture());
+        ArgumentCaptor<LocalDateTime[]> leaveTimesCaptor =
+                ArgumentCaptor.forClass(LocalDateTime[].class);
+        verify(attendanceLeaveService)
+                .getEffectiveAttendanceLeaveListByEmployeeIdsAndTimeRange(
+                        any(), leaveTimesCaptor.capture());
         assertEquals(attendanceDate.atTime(22, 0), leaveTimesCaptor.getValue()[0]);
         assertEquals(attendanceDate.plusDays(1).atTime(6, 0), leaveTimesCaptor.getValue()[1]);
     }
@@ -193,14 +224,19 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     public void testGetAttendanceDate_crossDayOffDutyBelongsToShiftBeginDate() {
         // 准备参数
         LocalDate attendanceDate = LocalDate.of(2026, 7, 31);
-        HrmAttendanceGroupDO.Shift shift = HrmAttendanceGroupDO.Shift.builder()
-                .startTime(LocalTime.of(22, 0)).endTime(LocalTime.of(6, 0)).build();
-        HrmAttendanceClockDO clock = clock(attendanceDate.plusDays(1).atTime(6, 0), 2)
-                .setAttendanceTime(attendanceDate.plusDays(1).atTime(6, 0));
+        HrmAttendanceGroupDO.Shift shift =
+                HrmAttendanceGroupDO.Shift.builder()
+                        .startTime(LocalTime.of(22, 0))
+                        .endTime(LocalTime.of(6, 0))
+                        .build();
+        HrmAttendanceClockDO clock =
+                clock(attendanceDate.plusDays(1).atTime(6, 0), 2)
+                        .setAttendanceTime(attendanceDate.plusDays(1).atTime(6, 0));
 
         // 调用
-        LocalDate result = attendanceStatisticsService.getAttendanceDate(
-                clock, Collections.singletonMap(attendanceDate, shift));
+        LocalDate result =
+                attendanceStatisticsService.getAttendanceDate(
+                        clock, Collections.singletonMap(attendanceDate, shift));
 
         // 断言
         assertEquals(attendanceDate, result);
@@ -209,8 +245,10 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     @Test
     public void testGetAttendanceDetail_employeeNotExists() {
         // 准备参数
-        HrmAttendanceDailyDetailReqVO dailyReqVO = new HrmAttendanceDailyDetailReqVO()
-                .setEmployeeId(1L).setAttendanceTime(LocalDateTime.of(2026, 8, 1, 0, 0));
+        HrmAttendanceDailyDetailReqVO dailyReqVO =
+                new HrmAttendanceDailyDetailReqVO()
+                        .setEmployeeId(1L)
+                        .setAttendanceTime(LocalDateTime.of(2026, 8, 1, 0, 0));
 
         // 调用，并断言
         assertNull(attendanceStatisticsService.getAttendanceDailyDetail(dailyReqVO));
@@ -221,12 +259,14 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     public void testGetAttendanceDate_normalOffDutyKeepsNaturalDate() {
         // 准备参数
         LocalDate attendanceDate = LocalDate.of(2026, 7, 31);
-        HrmAttendanceClockDO clock = clock(attendanceDate.atTime(18, 0), 2)
-                .setAttendanceTime(attendanceDate.atTime(18, 0));
+        HrmAttendanceClockDO clock =
+                clock(attendanceDate.atTime(18, 0), 2)
+                        .setAttendanceTime(attendanceDate.atTime(18, 0));
 
         // 调用
-        LocalDate result = attendanceStatisticsService.getAttendanceDate(
-                clock, Collections.singletonMap(attendanceDate, standardShift()));
+        LocalDate result =
+                attendanceStatisticsService.getAttendanceDate(
+                        clock, Collections.singletonMap(attendanceDate, standardShift()));
 
         // 断言
         assertEquals(attendanceDate, result);
@@ -237,12 +277,17 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
         // 准备参数
         LocalDate attendanceDate = LocalDate.of(2026, 7, 12);
         HrmAttendanceClockDO firstStageClock = clock(attendanceDate.atTime(9, 0), 1);
-        HrmAttendanceClockDO legacySecondStageClock = clock(attendanceDate.atTime(12, 0), 1).setStage(2);
+        HrmAttendanceClockDO legacySecondStageClock =
+                clock(attendanceDate.atTime(12, 0), 1).setStage(2);
 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, null,
-                        Arrays.asList(firstStageClock, legacySecondStageClock), Collections.emptyList(), null);
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        null,
+                        Arrays.asList(firstStageClock, legacySecondStageClock),
+                        Collections.emptyList(),
+                        null);
 
         // 断言
         assertEquals(1, result.getActualClockCount());
@@ -255,12 +300,17 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
 
         // 调用：打卡窗口结束边界仍允许打卡
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, standardShift(),
-                        Collections.emptyList(), Collections.emptyList(), attendanceDate.atTime(9, 30));
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        standardShift(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        attendanceDate.atTime(9, 30));
 
         // 断言
         assertEquals(0, result.getMisscardCount());
-        assertEquals(HrmAttendanceResultEnum.PENDING_CLOCK.getFormat(), result.getAttendanceResult());
+        assertEquals(
+                HrmAttendanceResultEnum.PENDING_CLOCK.getFormat(), result.getAttendanceResult());
     }
 
     @Test
@@ -270,8 +320,11 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, standardShift(),
-                        Collections.emptyList(), Collections.emptyList(),
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        standardShift(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
                         attendanceDate.atTime(9, 30, 0, 1));
 
         // 断言
@@ -286,13 +339,17 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
 
         // 调用：已有上班卡，但下班打卡窗口尚未结束
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, standardShift(),
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        standardShift(),
                         Collections.singletonList(clock(attendanceDate.atTime(9, 0), 1)),
-                        Collections.emptyList(), attendanceDate.atTime(18, 30));
+                        Collections.emptyList(),
+                        attendanceDate.atTime(18, 30));
 
         // 断言
         assertEquals(0, result.getMisscardCount());
-        assertEquals(HrmAttendanceResultEnum.PENDING_CLOCK.getFormat(), result.getAttendanceResult());
+        assertEquals(
+                HrmAttendanceResultEnum.PENDING_CLOCK.getFormat(), result.getAttendanceResult());
     }
 
     @Test
@@ -302,10 +359,12 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, standardShift(),
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        standardShift(),
                         Collections.singletonList(clock(attendanceDate.atTime(18, 0), 2)),
-                        Collections.singletonList(leave(
-                                attendanceDate.atTime(9, 0), attendanceDate.atTime(13, 0))),
+                        Collections.singletonList(
+                                leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(13, 0))),
                         attendanceDate.plusDays(1).atStartOfDay());
 
         // 断言
@@ -324,10 +383,14 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, standardShift(),
-                        Arrays.asList(clock(attendanceDate.atTime(10, 0), 1),
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        standardShift(),
+                        Arrays.asList(
+                                clock(attendanceDate.atTime(10, 0), 1),
                                 clock(attendanceDate.atTime(17, 0), 2)),
-                        Arrays.asList(leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(9, 30)),
+                        Arrays.asList(
+                                leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(9, 30)),
                                 leave(attendanceDate.atTime(17, 30), attendanceDate.atTime(18, 0))),
                         attendanceDate.plusDays(1).atStartOfDay());
 
@@ -348,9 +411,11 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
                 attendanceStatisticsService.calculateAttendanceDay(
-                        attendanceDate, standardShift(), Collections.emptyList(),
-                        Collections.singletonList(leave(
-                                attendanceDate.atTime(9, 0), attendanceDate.atTime(11, 0))),
+                        attendanceDate,
+                        standardShift(),
+                        Collections.emptyList(),
+                        Collections.singletonList(
+                                leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(11, 0))),
                         attendanceDate.plusDays(1).atStartOfDay());
 
         // 断言
@@ -370,8 +435,11 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
                 attendanceStatisticsService.calculateAttendanceDay(
-                        attendanceDate, standardShift(), Collections.emptyList(),
-                        Arrays.asList(leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(11, 0)),
+                        attendanceDate,
+                        standardShift(),
+                        Collections.emptyList(),
+                        Arrays.asList(
+                                leave(attendanceDate.atTime(9, 0), attendanceDate.atTime(11, 0)),
                                 leave(attendanceDate.atTime(10, 0), attendanceDate.atTime(12, 0))),
                         attendanceDate.plusDays(1).atStartOfDay());
 
@@ -385,16 +453,26 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     public void testCalculateAttendanceDay_crossDayShift() {
         // 准备参数
         LocalDate attendanceDate = LocalDate.of(2026, 7, 8);
-        HrmAttendanceGroupDO.Shift shift = HrmAttendanceGroupDO.Shift.builder()
-                .startTime(LocalTime.of(22, 0)).endTime(LocalTime.of(6, 0))
-                .excludeRestTime(true).restStartTime(LocalTime.of(2, 0)).restEndTime(LocalTime.of(3, 0)).build();
+        HrmAttendanceGroupDO.Shift shift =
+                HrmAttendanceGroupDO.Shift.builder()
+                        .startTime(LocalTime.of(22, 0))
+                        .endTime(LocalTime.of(6, 0))
+                        .excludeRestTime(true)
+                        .restStartTime(LocalTime.of(2, 0))
+                        .restEndTime(LocalTime.of(3, 0))
+                        .build();
 
         // 调用
         HrmAttendanceStatisticsServiceImpl.AttendanceDayCalculation result =
-                attendanceStatisticsService.calculateAttendanceDay(attendanceDate, shift,
-                        Collections.singletonList(clock(attendanceDate.plusDays(1).atTime(6, 0), 2)),
-                        Collections.singletonList(leave(
-                                attendanceDate.atTime(22, 0), attendanceDate.plusDays(1).atTime(3, 0))),
+                attendanceStatisticsService.calculateAttendanceDay(
+                        attendanceDate,
+                        shift,
+                        Collections.singletonList(
+                                clock(attendanceDate.plusDays(1).atTime(6, 0), 2)),
+                        Collections.singletonList(
+                                leave(
+                                        attendanceDate.atTime(22, 0),
+                                        attendanceDate.plusDays(1).atTime(3, 0))),
                         attendanceDate.plusDays(2).atStartOfDay());
 
         // 断言
@@ -408,18 +486,25 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     @Test
     public void testSetAttendanceDeductAmounts_configuredRule() {
         // 准备参数
-        HrmAttendanceMonthRecordRespVO respVO = new HrmAttendanceMonthRecordRespVO()
-                .setLateCount(3).setLateMinute(20)
-                .setEarlyCount(2).setEarlyMinute(10)
-                .setAbsenteeismDays(new BigDecimal("0.50")).setMisscardCount(2);
-        HrmAttendanceGroupDO.DeductRule deductRule = HrmAttendanceGroupDO.DeductRule.builder()
-                .lateMethod(HrmAttendanceLateEarlyDeductMethodEnum.BY_COUNT.getMethod())
-                .lateDeductMoney(new BigDecimal("5.00"))
-                .earlyMethod(HrmAttendanceLateEarlyDeductMethodEnum.BY_MINUTE.getMethod())
-                .earlyDeductMoney(new BigDecimal("2.00"))
-                .absenteeismMethod(1).absenteeismDeductMoney(new BigDecimal("100.00"))
-                .misscardMethod(1).misscardDeductMoney(new BigDecimal("8.00"))
-                .build();
+        HrmAttendanceMonthRecordRespVO respVO =
+                new HrmAttendanceMonthRecordRespVO()
+                        .setLateCount(3)
+                        .setLateMinute(20)
+                        .setEarlyCount(2)
+                        .setEarlyMinute(10)
+                        .setAbsenteeismDays(new BigDecimal("0.50"))
+                        .setMisscardCount(2);
+        HrmAttendanceGroupDO.DeductRule deductRule =
+                HrmAttendanceGroupDO.DeductRule.builder()
+                        .lateMethod(HrmAttendanceLateEarlyDeductMethodEnum.BY_COUNT.getMethod())
+                        .lateDeductMoney(new BigDecimal("5.00"))
+                        .earlyMethod(HrmAttendanceLateEarlyDeductMethodEnum.BY_MINUTE.getMethod())
+                        .earlyDeductMoney(new BigDecimal("2.00"))
+                        .absenteeismMethod(1)
+                        .absenteeismDeductMoney(new BigDecimal("100.00"))
+                        .misscardMethod(1)
+                        .misscardDeductMoney(new BigDecimal("8.00"))
+                        .build();
 
         // 调用
         attendanceStatisticsService.setAttendanceDeductAmounts(respVO, deductRule);
@@ -435,18 +520,25 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     @Test
     public void testSetAttendanceDeductAmounts_fixedMonthWithoutEarlyEvent() {
         // 准备参数
-        HrmAttendanceMonthRecordRespVO respVO = new HrmAttendanceMonthRecordRespVO()
-                .setLateCount(1).setLateMinute(5)
-                .setEarlyCount(0).setEarlyMinute(0)
-                .setAbsenteeismDays(BigDecimal.ZERO).setMisscardCount(0);
-        HrmAttendanceGroupDO.DeductRule deductRule = HrmAttendanceGroupDO.DeductRule.builder()
-                .lateMethod(HrmAttendanceLateEarlyDeductMethodEnum.FIXED_MONTH.getMethod())
-                .lateDeductMoney(new BigDecimal("30.00"))
-                .earlyMethod(HrmAttendanceLateEarlyDeductMethodEnum.FIXED_MONTH.getMethod())
-                .earlyDeductMoney(new BigDecimal("20.00"))
-                .absenteeismMethod(1).absenteeismDeductMoney(BigDecimal.ZERO)
-                .misscardMethod(1).misscardDeductMoney(BigDecimal.ZERO)
-                .build();
+        HrmAttendanceMonthRecordRespVO respVO =
+                new HrmAttendanceMonthRecordRespVO()
+                        .setLateCount(1)
+                        .setLateMinute(5)
+                        .setEarlyCount(0)
+                        .setEarlyMinute(0)
+                        .setAbsenteeismDays(BigDecimal.ZERO)
+                        .setMisscardCount(0);
+        HrmAttendanceGroupDO.DeductRule deductRule =
+                HrmAttendanceGroupDO.DeductRule.builder()
+                        .lateMethod(HrmAttendanceLateEarlyDeductMethodEnum.FIXED_MONTH.getMethod())
+                        .lateDeductMoney(new BigDecimal("30.00"))
+                        .earlyMethod(HrmAttendanceLateEarlyDeductMethodEnum.FIXED_MONTH.getMethod())
+                        .earlyDeductMoney(new BigDecimal("20.00"))
+                        .absenteeismMethod(1)
+                        .absenteeismDeductMoney(BigDecimal.ZERO)
+                        .misscardMethod(1)
+                        .misscardDeductMoney(BigDecimal.ZERO)
+                        .build();
 
         // 调用
         attendanceStatisticsService.setAttendanceDeductAmounts(respVO, deductRule);
@@ -459,10 +551,16 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
 
     private static HrmAttendanceGroupDO.Shift standardShift() {
         return HrmAttendanceGroupDO.Shift.builder()
-                .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(18, 0))
-                .clockInStartTime(LocalTime.of(8, 0)).clockInEndTime(LocalTime.of(9, 30))
-                .clockOutStartTime(LocalTime.of(17, 30)).clockOutEndTime(LocalTime.of(18, 30))
-                .excludeRestTime(true).restStartTime(LocalTime.of(12, 0)).restEndTime(LocalTime.of(13, 0)).build();
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(18, 0))
+                .clockInStartTime(LocalTime.of(8, 0))
+                .clockInEndTime(LocalTime.of(9, 30))
+                .clockOutStartTime(LocalTime.of(17, 30))
+                .clockOutEndTime(LocalTime.of(18, 30))
+                .excludeRestTime(true)
+                .restStartTime(LocalTime.of(12, 0))
+                .restEndTime(LocalTime.of(13, 0))
+                .build();
     }
 
     private static HrmAttendanceClockDO clock(LocalDateTime clockTime, int type) {
@@ -476,5 +574,4 @@ public class HrmAttendanceStatisticsServiceImplTest extends BaseMockitoUnitTest 
     private static void assertDecimal(String expected, BigDecimal actual) {
         assertEquals(0, new BigDecimal(expected).compareTo(actual));
     }
-
 }

@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.MesQcTemplatePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.template.MesQcTemplateDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -19,10 +20,11 @@ import java.util.List;
 public interface MesQcTemplateMapper extends BaseMapperX<MesQcTemplateDO> {
 
     default PageResult<MesQcTemplateDO> selectPage(MesQcTemplatePageReqVO reqVO) {
-        LambdaQueryWrapperX<MesQcTemplateDO> query = new LambdaQueryWrapperX<MesQcTemplateDO>()
-                .likeIfPresent(MesQcTemplateDO::getCode, reqVO.getCode())
-                .likeIfPresent(MesQcTemplateDO::getName, reqVO.getName())
-                .orderByDesc(MesQcTemplateDO::getId);
+        LambdaQueryWrapperX<MesQcTemplateDO> query =
+                new LambdaQueryWrapperX<MesQcTemplateDO>()
+                        .likeIfPresent(MesQcTemplateDO::getCode, reqVO.getCode())
+                        .likeIfPresent(MesQcTemplateDO::getName, reqVO.getName())
+                        .orderByDesc(MesQcTemplateDO::getId);
         if (reqVO.getType() != null) {
             query.apply(MyBatisUtils.findInSet("types"), reqVO.getType());
         }
@@ -35,8 +37,7 @@ public interface MesQcTemplateMapper extends BaseMapperX<MesQcTemplateDO> {
     }
 
     default List<MesQcTemplateDO> selectList() {
-        return selectList(new LambdaQueryWrapperX<MesQcTemplateDO>()
-                .orderByDesc(MesQcTemplateDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<MesQcTemplateDO>().orderByDesc(MesQcTemplateDO::getId));
     }
-
 }

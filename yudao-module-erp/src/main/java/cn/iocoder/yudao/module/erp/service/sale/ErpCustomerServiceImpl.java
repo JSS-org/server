@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.erp.service.sale;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.CUSTOMER_NOT_ENABLE;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.CUSTOMER_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,16 +11,14 @@ import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.customer.ErpCustomer
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.customer.ErpCustomerSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO;
 import cn.iocoder.yudao.module.erp.dal.mysql.sale.ErpCustomerMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.CUSTOMER_NOT_ENABLE;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.CUSTOMER_NOT_EXISTS;
 
 /**
  * ERP 客户 Service 实现类
@@ -27,8 +29,7 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.CUSTOMER_NOT_
 @Validated
 public class ErpCustomerServiceImpl implements ErpCustomerService {
 
-    @Resource
-    private ErpCustomerMapper customerMapper;
+    @Resource private ErpCustomerMapper customerMapper;
 
     @Override
     public Long createCustomer(ErpCustomerSaveReqVO createReqVO) {
@@ -93,5 +94,4 @@ public class ErpCustomerServiceImpl implements ErpCustomerService {
     public List<ErpCustomerDO> getCustomerListByStatus(Integer status) {
         return customerMapper.selectListByStatus(status);
     }
-
 }

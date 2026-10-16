@@ -18,13 +18,16 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpFrameCodec;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpFrameCodecFactory;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.json.IotJsonSerializer;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.parsetools.RecordParser;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -80,18 +83,19 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
     /**
      * TCP 帧编解码器
      */
-    private static final IotTcpFrameCodec FRAME_CODEC = IotTcpFrameCodecFactory.create(
-            new IotTcpConfig.CodecConfig()
-                    .setType(IotTcpCodecTypeEnum.DELIMITER.getType())
-                    .setDelimiter("\\n")
-//                    .setType(IotTcpCodecTypeEnum.LENGTH_FIELD.getType())
-//                    .setLengthFieldOffset(0)
-//                    .setLengthFieldLength(4)
-//                    .setLengthAdjustment(0)
-//                    .setInitialBytesToStrip(4)
-//                    .setType(IotTcpCodecTypeEnum.LENGTH_FIELD.getType())
-//                    .setFixedLength(256)
-    );
+    private static final IotTcpFrameCodec FRAME_CODEC =
+            IotTcpFrameCodecFactory.create(
+                    new IotTcpConfig.CodecConfig()
+                            .setType(IotTcpCodecTypeEnum.DELIMITER.getType())
+                            .setDelimiter("\\n")
+                    //                    .setType(IotTcpCodecTypeEnum.LENGTH_FIELD.getType())
+                    //                    .setLengthFieldOffset(0)
+                    //                    .setLengthFieldLength(4)
+                    //                    .setLengthAdjustment(0)
+                    //                    .setInitialBytesToStrip(4)
+                    //                    .setType(IotTcpCodecTypeEnum.LENGTH_FIELD.getType())
+                    //                    .setFixedLength(256)
+                    );
 
     // ===================== 网关设备信息（根据实际情况修改，从 iot_device 表查询网关设备） =====================
 
@@ -108,9 +112,8 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
     @BeforeAll
     static void setUp() {
         vertx = Vertx.vertx();
-        NetClientOptions options = new NetClientOptions()
-                .setConnectTimeout(TIMEOUT_MS)
-                .setIdleTimeout(TIMEOUT_MS);
+        NetClientOptions options =
+                new NetClientOptions().setConnectTimeout(TIMEOUT_MS).setIdleTimeout(TIMEOUT_MS);
         netClient = vertx.createNetClient(options);
     }
 
@@ -132,12 +135,14 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
     @Test
     public void testAuth() throws Exception {
         // 1. 构建认证消息
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(
-                GATEWAY_PRODUCT_KEY, GATEWAY_DEVICE_NAME, GATEWAY_DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(
+                        GATEWAY_PRODUCT_KEY, GATEWAY_DEVICE_NAME, GATEWAY_DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
         IotDeviceMessage request = IotDeviceMessage.requestOf("auth", authReqDTO);
 
         // 2. 发送并接收响应
@@ -164,19 +169,22 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
             log.info("[testTopoAdd][认证响应: {}]", authResponse);
 
             // 2.1 构建子设备认证信息
-            IotDeviceAuthReqDTO subAuthInfo = IotDeviceAuthUtils.getAuthInfo(
-                    SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME, SUB_DEVICE_SECRET);
-            IotDeviceAuthReqDTO subDeviceAuth = new IotDeviceAuthReqDTO()
-                    .setClientId(subAuthInfo.getClientId())
-                    .setUsername(subAuthInfo.getUsername())
-                    .setPassword(subAuthInfo.getPassword());
+            IotDeviceAuthReqDTO subAuthInfo =
+                    IotDeviceAuthUtils.getAuthInfo(
+                            SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME, SUB_DEVICE_SECRET);
+            IotDeviceAuthReqDTO subDeviceAuth =
+                    new IotDeviceAuthReqDTO()
+                            .setClientId(subAuthInfo.getClientId())
+                            .setUsername(subAuthInfo.getUsername())
+                            .setPassword(subAuthInfo.getPassword());
             // 2.2 构建请求参数
             IotDeviceTopoAddReqDTO params = new IotDeviceTopoAddReqDTO();
             params.setSubDevices(Collections.singletonList(subDeviceAuth));
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IdUtil.fastSimpleUUID(),
-                    IotDeviceMessageMethodEnum.TOPO_ADD.getMethod(),
-                    params);
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IdUtil.fastSimpleUUID(),
+                            IotDeviceMessageMethodEnum.TOPO_ADD.getMethod(),
+                            params);
 
             // 3. 发送并接收响应
             IotDeviceMessage response = sendAndReceive(socket, request);
@@ -199,11 +207,12 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
 
             // 2. 构建请求参数
             IotDeviceTopoDeleteReqDTO params = new IotDeviceTopoDeleteReqDTO();
-            params.setSubDevices(Collections.singletonList(
-                    new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME)));
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IotDeviceMessageMethodEnum.TOPO_DELETE.getMethod(),
-                    params);
+            params.setSubDevices(
+                    Collections.singletonList(
+                            new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME)));
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IotDeviceMessageMethodEnum.TOPO_DELETE.getMethod(), params);
 
             // 3. 发送并接收响应
             IotDeviceMessage response = sendAndReceive(socket, request);
@@ -226,9 +235,9 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
 
             // 2. 构建请求参数
             IotDeviceTopoGetReqDTO params = new IotDeviceTopoGetReqDTO();
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IotDeviceMessageMethodEnum.TOPO_GET.getMethod(),
-                    params);
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IotDeviceMessageMethodEnum.TOPO_GET.getMethod(), params);
 
             // 3. 发送并接收响应
             IotDeviceMessage response = sendAndReceive(socket, request);
@@ -252,12 +261,14 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
             log.info("[testSubDeviceRegister][认证响应: {}]", authResponse);
 
             // 2. 构建请求参数
-            IotSubDeviceRegisterReqDTO subDevice = new IotSubDeviceRegisterReqDTO()
-                    .setProductKey(SUB_DEVICE_PRODUCT_KEY)
-                    .setDeviceName("mougezishebei");
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IotDeviceMessageMethodEnum.SUB_DEVICE_REGISTER.getMethod(),
-                    Collections.singletonList(subDevice));
+            IotSubDeviceRegisterReqDTO subDevice =
+                    new IotSubDeviceRegisterReqDTO()
+                            .setProductKey(SUB_DEVICE_PRODUCT_KEY)
+                            .setDeviceName("mougezishebei");
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IotDeviceMessageMethodEnum.SUB_DEVICE_REGISTER.getMethod(),
+                            Collections.singletonList(subDevice));
 
             // 3. 发送并接收响应
             IotDeviceMessage response = sendAndReceive(socket, request);
@@ -281,40 +292,44 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
             log.info("[testPropertyPackPost][认证响应: {}]", authResponse);
 
             // 2.1 构建【网关设备】自身属性
-            Map<String, Object> gatewayProperties = MapUtil.<String, Object>builder()
-                    .put("temperature", 25.5)
-                    .build();
+            Map<String, Object> gatewayProperties =
+                    MapUtil.<String, Object>builder().put("temperature", 25.5).build();
             // 2.2 构建【网关设备】自身事件
-            IotDevicePropertyPackPostReqDTO.EventValue gatewayEvent = new IotDevicePropertyPackPostReqDTO.EventValue()
-                    .setValue(MapUtil.builder().put("message", "gateway started").build())
-                    .setTime(System.currentTimeMillis());
-            Map<String, IotDevicePropertyPackPostReqDTO.EventValue> gatewayEvents = MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
-                    .put("statusReport", gatewayEvent)
-                    .build();
+            IotDevicePropertyPackPostReqDTO.EventValue gatewayEvent =
+                    new IotDevicePropertyPackPostReqDTO.EventValue()
+                            .setValue(MapUtil.builder().put("message", "gateway started").build())
+                            .setTime(System.currentTimeMillis());
+            Map<String, IotDevicePropertyPackPostReqDTO.EventValue> gatewayEvents =
+                    MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
+                            .put("statusReport", gatewayEvent)
+                            .build();
             // 2.3 构建【网关子设备】属性
-            Map<String, Object> subDeviceProperties = MapUtil.<String, Object>builder()
-                    .put("power", 100)
-                    .build();
+            Map<String, Object> subDeviceProperties =
+                    MapUtil.<String, Object>builder().put("power", 100).build();
             // 2.4 构建【网关子设备】事件
-            IotDevicePropertyPackPostReqDTO.EventValue subDeviceEvent = new IotDevicePropertyPackPostReqDTO.EventValue()
-                    .setValue(MapUtil.builder().put("errorCode", 0).build())
-                    .setTime(System.currentTimeMillis());
-            Map<String, IotDevicePropertyPackPostReqDTO.EventValue> subDeviceEvents = MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
-                    .put("healthCheck", subDeviceEvent)
-                    .build();
+            IotDevicePropertyPackPostReqDTO.EventValue subDeviceEvent =
+                    new IotDevicePropertyPackPostReqDTO.EventValue()
+                            .setValue(MapUtil.builder().put("errorCode", 0).build())
+                            .setTime(System.currentTimeMillis());
+            Map<String, IotDevicePropertyPackPostReqDTO.EventValue> subDeviceEvents =
+                    MapUtil.<String, IotDevicePropertyPackPostReqDTO.EventValue>builder()
+                            .put("healthCheck", subDeviceEvent)
+                            .build();
             // 2.5 构建子设备数据
-            IotDevicePropertyPackPostReqDTO.SubDeviceData subDeviceData = new IotDevicePropertyPackPostReqDTO.SubDeviceData()
-                    .setIdentity(new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME))
-                    .setProperties(subDeviceProperties)
-                    .setEvents(subDeviceEvents);
+            IotDevicePropertyPackPostReqDTO.SubDeviceData subDeviceData =
+                    new IotDevicePropertyPackPostReqDTO.SubDeviceData()
+                            .setIdentity(
+                                    new IotDeviceIdentity(SUB_DEVICE_PRODUCT_KEY, SUB_DEVICE_NAME))
+                            .setProperties(subDeviceProperties)
+                            .setEvents(subDeviceEvents);
             // 2.6 构建请求参数
             IotDevicePropertyPackPostReqDTO params = new IotDevicePropertyPackPostReqDTO();
             params.setProperties(gatewayProperties);
             params.setEvents(gatewayEvents);
             params.setSubDevices(ListUtil.of(subDeviceData));
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IotDeviceMessageMethodEnum.PROPERTY_PACK_POST.getMethod(),
-                    params);
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IotDeviceMessageMethodEnum.PROPERTY_PACK_POST.getMethod(), params);
 
             // 3. 发送并接收响应
             IotDeviceMessage response = sendAndReceive(socket, request);
@@ -333,7 +348,8 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
      */
     private CompletableFuture<NetSocket> connect() {
         CompletableFuture<NetSocket> future = new CompletableFuture<>();
-        netClient.connect(SERVER_PORT, SERVER_HOST)
+        netClient
+                .connect(SERVER_PORT, SERVER_HOST)
                 .onSuccess(future::complete)
                 .onFailure(future::completeExceptionally);
         return future;
@@ -346,8 +362,9 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
      * @return 认证响应消息
      */
     private IotDeviceMessage authenticate(NetSocket socket) throws Exception {
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(
-                GATEWAY_PRODUCT_KEY, GATEWAY_DEVICE_NAME, GATEWAY_DEVICE_SECRET);
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(
+                        GATEWAY_PRODUCT_KEY, GATEWAY_DEVICE_NAME, GATEWAY_DEVICE_SECRET);
         IotDeviceMessage request = IotDeviceMessage.requestOf("auth", authInfo);
         return sendAndReceive(socket, request);
     }
@@ -359,18 +376,22 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
      * @param request 请求消息
      * @return 响应消息
      */
-    private IotDeviceMessage sendAndReceive(NetSocket socket, IotDeviceMessage request) throws Exception {
+    private IotDeviceMessage sendAndReceive(NetSocket socket, IotDeviceMessage request)
+            throws Exception {
         // 1. 使用 FRAME_CODEC 创建解码器（复用 gateway 的拆包逻辑）
         CompletableFuture<IotDeviceMessage> responseFuture = new CompletableFuture<>();
-        RecordParser parser = FRAME_CODEC.createDecodeParser(buffer -> {
-            try {
-                // 反序列化响应
-                IotDeviceMessage response = SERIALIZER.deserialize(buffer.getBytes());
-                responseFuture.complete(response);
-            } catch (Exception e) {
-                responseFuture.completeExceptionally(e);
-            }
-        });
+        RecordParser parser =
+                FRAME_CODEC.createDecodeParser(
+                        buffer -> {
+                            try {
+                                // 反序列化响应
+                                IotDeviceMessage response =
+                                        SERIALIZER.deserialize(buffer.getBytes());
+                                responseFuture.complete(response);
+                            } catch (Exception e) {
+                                responseFuture.completeExceptionally(e);
+                            }
+                        });
         socket.handler(parser);
 
         // 2.1 序列化 + 帧编码
@@ -382,9 +403,7 @@ public class IotGatewayDeviceTcpProtocolIntegrationTest {
 
         // 3. 等待响应
         IotDeviceMessage response = responseFuture.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        log.info("[sendAndReceive][收到响应，数据长度: {} 字节]",
-                SERIALIZER.serialize(response).length);
+        log.info("[sendAndReceive][收到响应，数据长度: {} 字节]", SERIALIZER.serialize(response).length);
         return response;
     }
-
 }

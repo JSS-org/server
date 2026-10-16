@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.erp.controller.admin.sale.vo.customer;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import java.util.*;
+
 import jakarta.validation.constraints.*;
+
+import lombok.*;
+
 import java.math.BigDecimal;
+import java.util.*;
 
 @Schema(description = "管理后台 - ERP 客户新增/修改 Request VO")
 @Data
@@ -57,5 +60,4 @@ public class ErpCustomerSaveReqVO {
 
     @Schema(description = "开户地址", example = "兴业银行浦东支行")
     private String bankAddress;
-
 }

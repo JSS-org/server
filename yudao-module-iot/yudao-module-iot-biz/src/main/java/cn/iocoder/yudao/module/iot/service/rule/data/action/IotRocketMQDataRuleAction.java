@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkRocketMQConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -20,8 +22,8 @@ import org.springframework.stereotype.Component;
 @ConditionalOnClass(name = "org.apache.rocketmq.client.producer.DefaultMQProducer")
 @Component
 @Slf4j
-public class IotRocketMQDataRuleAction extends
-        IotDataRuleCacheableAction<IotDataSinkRocketMQConfig, DefaultMQProducer> {
+public class IotRocketMQDataRuleAction
+        extends IotDataRuleCacheableAction<IotDataSinkRocketMQConfig, DefaultMQProducer> {
 
     @Override
     public Integer getType() {
@@ -29,12 +31,14 @@ public class IotRocketMQDataRuleAction extends
     }
 
     @Override
-    public void execute(IotDeviceMessage message, IotDataSinkRocketMQConfig config) throws Exception {
+    public void execute(IotDeviceMessage message, IotDataSinkRocketMQConfig config)
+            throws Exception {
         // 1. 获取或创建 Producer
         DefaultMQProducer producer = getProducer(config);
 
         // 2.1 创建消息对象，指定 Topic、Tag 和消息体
-        Message msg = new Message(config.getTopic(), config.getTags(), JsonUtils.toJsonByte(message));
+        Message msg =
+                new Message(config.getTopic(), config.getTags(), JsonUtils.toJsonByte(message));
         // 2.2 发送同步消息并处理结果
         SendResult sendResult = producer.send(msg);
         // 2.3 处理发送结果
@@ -57,5 +61,4 @@ public class IotRocketMQDataRuleAction extends
     protected void closeProducer(DefaultMQProducer producer) {
         producer.shutdown();
     }
-
 }

@@ -7,9 +7,11 @@ import cn.iocoder.yudao.module.promotion.api.bargain.BargainRecordApi;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderItemDO;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 /**
@@ -20,10 +22,8 @@ import java.util.List;
 @Component
 public class TradeBargainOrderHandler implements TradeOrderHandler {
 
-    @Resource
-    private BargainActivityApi bargainActivityApi;
-    @Resource
-    private BargainRecordApi bargainRecordApi;
+    @Resource private BargainActivityApi bargainActivityApi;
+    @Resource private BargainRecordApi bargainRecordApi;
 
     @Override
     public void beforeOrderCreate(TradeOrderDO order, List<TradeOrderItemDO> orderItems) {
@@ -34,8 +34,8 @@ public class TradeBargainOrderHandler implements TradeOrderHandler {
         Assert.isTrue(orderItems.size() == 1, "砍价时，只允许选择一个商品");
 
         // 扣减砍价活动的库存
-        bargainActivityApi.updateBargainActivityStock(order.getBargainActivityId(),
-                -orderItems.get(0).getCount());
+        bargainActivityApi.updateBargainActivityStock(
+                order.getBargainActivityId(), -orderItems.get(0).getCount());
     }
 
     @Override
@@ -72,7 +72,7 @@ public class TradeBargainOrderHandler implements TradeOrderHandler {
             return;
         }
         // 恢复（增加）砍价活动的库存
-        bargainActivityApi.updateBargainActivityStock(order.getBargainActivityId(), orderItem.getCount());
+        bargainActivityApi.updateBargainActivityStock(
+                order.getBargainActivityId(), orderItem.getCount());
     }
-
 }

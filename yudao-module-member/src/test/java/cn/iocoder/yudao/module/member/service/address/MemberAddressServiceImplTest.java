@@ -1,22 +1,24 @@
 package cn.iocoder.yudao.module.member.service.address;
 
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressCreateReqVO;
-import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
-import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
-import cn.iocoder.yudao.module.member.dal.mysql.address.MemberAddressMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-
-import jakarta.annotation.Resource;
-
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.ADDRESS_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressCreateReqVO;
+import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
+import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
+import cn.iocoder.yudao.module.member.dal.mysql.address.MemberAddressMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
 
 /**
  * {@link AddressServiceImpl} 的单元测试类
@@ -26,11 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @Import(AddressServiceImpl.class)
 public class MemberAddressServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private AddressServiceImpl addressService;
+    @Resource private AddressServiceImpl addressService;
 
-    @Resource
-    private MemberAddressMapper addressMapper;
+    @Resource private MemberAddressMapper addressMapper;
 
     @Test
     public void testCreateAddress_success() {
@@ -50,11 +50,14 @@ public class MemberAddressServiceImplTest extends BaseDbUnitTest {
     public void testUpdateAddress_success() {
         // mock 数据
         MemberAddressDO dbAddress = randomPojo(MemberAddressDO.class);
-        addressMapper.insert(dbAddress);// @Sql: 先插入出一条存在的数据
+        addressMapper.insert(dbAddress); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        AppAddressUpdateReqVO reqVO = randomPojo(AppAddressUpdateReqVO.class, o -> {
-            o.setId(dbAddress.getId()); // 设置更新的 ID
-        });
+        AppAddressUpdateReqVO reqVO =
+                randomPojo(
+                        AppAddressUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbAddress.getId()); // 设置更新的 ID
+                        });
 
         // 调用
         addressService.updateAddress(dbAddress.getUserId(), reqVO);
@@ -69,14 +72,15 @@ public class MemberAddressServiceImplTest extends BaseDbUnitTest {
         AppAddressUpdateReqVO reqVO = randomPojo(AppAddressUpdateReqVO.class);
 
         // 调用, 并断言异常
-        assertServiceException(() -> addressService.updateAddress(randomLongId(), reqVO), ADDRESS_NOT_EXISTS);
+        assertServiceException(
+                () -> addressService.updateAddress(randomLongId(), reqVO), ADDRESS_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteAddress_success() {
         // mock 数据
         MemberAddressDO dbAddress = randomPojo(MemberAddressDO.class);
-        addressMapper.insert(dbAddress);// @Sql: 先插入出一条存在的数据
+        addressMapper.insert(dbAddress); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbAddress.getId();
 
@@ -92,7 +96,7 @@ public class MemberAddressServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> addressService.deleteAddress(randomLongId(), id), ADDRESS_NOT_EXISTS);
+        assertServiceException(
+                () -> addressService.deleteAddress(randomLongId(), id), ADDRESS_NOT_EXISTS);
     }
-
 }

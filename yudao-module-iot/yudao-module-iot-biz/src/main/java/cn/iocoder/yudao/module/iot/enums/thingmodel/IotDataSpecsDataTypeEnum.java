@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.enums.thingmodel;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum IotDataSpecsDataTypeEnum implements ArrayValuable<String> {
-
     INT("int"),
     FLOAT("float"),
     DOUBLE("double"),
@@ -25,7 +25,10 @@ public enum IotDataSpecsDataTypeEnum implements ArrayValuable<String> {
     STRUCT("struct"),
     ARRAY("array");
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(IotDataSpecsDataTypeEnum::getDataType).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values())
+                    .map(IotDataSpecsDataTypeEnum::getDataType)
+                    .toArray(String[]::new);
 
     private final String dataType;
 
@@ -33,5 +36,4 @@ public enum IotDataSpecsDataTypeEnum implements ArrayValuable<String> {
     public String[] array() {
         return ARRAYS;
     }
-
 }

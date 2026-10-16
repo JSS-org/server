@@ -23,9 +23,9 @@ public class BrokerageWithdrawSummaryRespBO {
      * 提现次数
      */
     private Integer count;
+
     /**
      * 提现金额
      */
     private Integer price;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.report.framework.jmreport.core.service;
 
 import lombok.RequiredArgsConstructor;
+
 import org.jeecg.modules.drag.service.IOnlDragExternalService;
 import org.jeecg.modules.drag.vo.DragDictModel;
 import org.jeecg.modules.drag.vo.DragLogDTO;
@@ -27,7 +28,8 @@ public class JmOnlDragExternalServiceImpl implements IOnlDragExternalService {
     }
 
     @Override
-    public List<DragDictModel> getTableDictItems(String dictTable, String dictText, String dictCode) {
+    public List<DragDictModel> getTableDictItems(
+            String dictTable, String dictText, String dictCode) {
         return IOnlDragExternalService.super.getTableDictItems(dictTable, dictText, dictCode);
     }
 
@@ -57,5 +59,4 @@ public class JmOnlDragExternalServiceImpl implements IOnlDragExternalService {
     public void addLog(String logMsg, int logType, int operateType) {
         IOnlDragExternalService.super.addLog(logMsg, logType, operateType);
     }
-
 }

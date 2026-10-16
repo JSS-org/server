@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -127,5 +128,4 @@ public interface RoleService {
      * @param ids 角色编号数组
      */
     void validateRoleList(Collection<Long> ids);
-
 }

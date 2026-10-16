@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.bpm.enums.definition;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum BpmTriggerTypeEnum implements ArrayValuable<Integer> {
-
     HTTP_REQUEST(1, "发起 HTTP 请求"), // BPM => 业务，流程继续执行，无需等待业务
     HTTP_CALLBACK(2, "接收 HTTP 回调"), // BPM => 业务 => BPM，流程卡主，等待业务回调
 
@@ -33,7 +33,8 @@ public enum BpmTriggerTypeEnum implements ArrayValuable<Integer> {
      */
     private final String desc;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BpmTriggerTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(BpmTriggerTypeEnum::getType).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {

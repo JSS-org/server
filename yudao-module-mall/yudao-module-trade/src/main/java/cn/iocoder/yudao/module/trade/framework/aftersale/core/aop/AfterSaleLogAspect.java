@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.trade.framework.aftersale.core.aop;
 
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+
+import static java.util.Collections.emptyMap;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,16 +13,16 @@ import cn.iocoder.yudao.module.trade.enums.aftersale.AfterSaleOperateTypeEnum;
 import cn.iocoder.yudao.module.trade.framework.aftersale.core.annotations.AfterSaleLog;
 import cn.iocoder.yudao.module.trade.service.aftersale.AfterSaleLogService;
 import cn.iocoder.yudao.module.trade.service.aftersale.bo.AfterSaleLogCreateReqBO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
-import static java.util.Collections.emptyMap;
 
 /**
  * 售后订单的操作记录的 AOP 切面
@@ -36,33 +40,38 @@ public class AfterSaleLogAspect {
      * 目前的使用场景：支付回调时，需要强制设置下用户编号
      */
     private static final ThreadLocal<Long> USER_ID = new ThreadLocal<>();
+
     /**
      * 用户类型
      */
     private static final ThreadLocal<Integer> USER_TYPE = new ThreadLocal<>();
+
     /**
      * 订单编号
      */
     private static final ThreadLocal<Long> AFTER_SALE_ID = new ThreadLocal<>();
+
     /**
      * 操作前的状态
      */
     private static final ThreadLocal<Integer> BEFORE_STATUS = new ThreadLocal<>();
+
     /**
      * 操作后的状态
      */
     private static final ThreadLocal<Integer> AFTER_STATUS = new ThreadLocal<>();
+
     /**
      * 操作类型（仅“动态场景”需要使用）
      */
     private static final ThreadLocal<AfterSaleOperateTypeEnum> OPERATE_TYPE = new ThreadLocal<>();
+
     /**
      * 拓展参数 Map，用于格式化操作内容
      */
     private static final ThreadLocal<Map<String, Object>> EXTS = new ThreadLocal<>();
 
-    @Resource
-    private AfterSaleLogService afterSaleLogService;
+    @Resource private AfterSaleLogService afterSaleLogService;
 
     @AfterReturning(pointcut = "@annotation(afterSaleLog)")
     public void doAfterReturning(JoinPoint joinPoint, AfterSaleLog afterSaleLog) {
@@ -75,20 +84,29 @@ public class AfterSaleLogAspect {
             if (afterSaleId == null) { // 如果未设置，只有注解，说明不需要记录日志
                 return;
             }
-            AfterSaleOperateTypeEnum operateType = ObjUtil.defaultIfNull(OPERATE_TYPE.get(), afterSaleLog.operateType());
+            AfterSaleOperateTypeEnum operateType =
+                    ObjUtil.defaultIfNull(OPERATE_TYPE.get(), afterSaleLog.operateType());
             Integer beforeStatus = BEFORE_STATUS.get();
             Integer afterStatus = AFTER_STATUS.get();
             Map<String, Object> exts = ObjectUtil.defaultIfNull(EXTS.get(), emptyMap());
             String content = StrUtil.format(operateType.getContent(), exts);
 
             // 2. 记录日志
-            AfterSaleLogCreateReqBO createBO = new AfterSaleLogCreateReqBO()
-                    .setUserId(userId).setUserType(userType)
-                    .setAfterSaleId(afterSaleId).setBeforeStatus(beforeStatus).setAfterStatus(afterStatus)
-                    .setOperateType(operateType.getType()).setContent(content);
+            AfterSaleLogCreateReqBO createBO =
+                    new AfterSaleLogCreateReqBO()
+                            .setUserId(userId)
+                            .setUserType(userType)
+                            .setAfterSaleId(afterSaleId)
+                            .setBeforeStatus(beforeStatus)
+                            .setAfterStatus(afterStatus)
+                            .setOperateType(operateType.getType())
+                            .setContent(content);
             afterSaleLogService.createAfterSaleLog(createBO);
         } catch (Exception exception) {
-            log.error("[doAfterReturning][afterSaleLog({}) 日志记录错误]", toJsonString(afterSaleLog), exception);
+            log.error(
+                    "[doAfterReturning][afterSaleLog({}) 日志记录错误]",
+                    toJsonString(afterSaleLog),
+                    exception);
         } finally {
             clear();
         }
@@ -102,7 +120,8 @@ public class AfterSaleLogAspect {
      * @return 用户类型
      */
     private static Integer getUserType() {
-        return ObjectUtil.defaultIfNull(WebFrameworkUtils.getLoginUserType(), TradeOrderLogDO.USER_TYPE_SYSTEM);
+        return ObjectUtil.defaultIfNull(
+                WebFrameworkUtils.getLoginUserType(), TradeOrderLogDO.USER_TYPE_SYSTEM);
     }
 
     /**
@@ -116,10 +135,12 @@ public class AfterSaleLogAspect {
         if (USER_ID.get() != null) {
             return USER_ID.get();
         }
-        return ObjectUtil.defaultIfNull(WebFrameworkUtils.getLoginUserId(), TradeOrderLogDO.USER_ID_SYSTEM);
+        return ObjectUtil.defaultIfNull(
+                WebFrameworkUtils.getLoginUserId(), TradeOrderLogDO.USER_ID_SYSTEM);
     }
 
-    public static void setAfterSale(Long id, Integer beforeStatus, Integer afterStatus, Map<String, Object> exts) {
+    public static void setAfterSale(
+            Long id, Integer beforeStatus, Integer afterStatus, Map<String, Object> exts) {
         AFTER_SALE_ID.set(id);
         BEFORE_STATUS.set(beforeStatus);
         AFTER_STATUS.set(afterStatus);
@@ -144,5 +165,4 @@ public class AfterSaleLogAspect {
         OPERATE_TYPE.remove();
         EXTS.remove();
     }
-
 }

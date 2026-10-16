@@ -28,5 +28,4 @@ public @interface TenantIgnore {
      * 支持 Spring EL 表达式，如果返回 true 则满足条件，进行租户的忽略
      */
     String enable() default "true";
-
 }

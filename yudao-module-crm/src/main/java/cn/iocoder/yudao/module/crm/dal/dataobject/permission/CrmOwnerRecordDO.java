@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.crm.dal.dataobject.permission;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -25,25 +27,27 @@ public class CrmOwnerRecordDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * CRM 业务类型
      *
      * 枚举 {@link CrmBizTypeEnum}
      */
     private Integer bizType;
+
     /**
      * CRM 业务编号
      */
     private Long bizId;
+
     /**
      * 变更前负责人
      */
     private Long preOwnerUserId;
+
     /**
      * 变更后负责人
      */
     private Long postOwnerUserId;
-
 }

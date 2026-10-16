@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.enums.file;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,19 +15,19 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaFileScopeEnum implements ArrayValuable<String> {
-
     MY("my", "我的文件"),
     SHARED("shared", "共享文件"),
     FAVORITE("favorite", "我的收藏"),
     RECYCLE("recycle", "回收站");
 
-    public static final String[] ARRAYS = Arrays.stream(values())
-            .map(OaFileScopeEnum::getScope).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(OaFileScopeEnum::getScope).toArray(String[]::new);
 
     /**
      * 列表范围
      */
     private final String scope;
+
     /**
      * 名称
      */
@@ -36,5 +37,4 @@ public enum OaFileScopeEnum implements ArrayValuable<String> {
     public String[] array() {
         return ARRAYS;
     }
-
 }

@@ -30,5 +30,4 @@ public interface PayRefundApi {
      * @return 退款单
      */
     PayRefundRespDTO getRefund(Long id);
-
 }

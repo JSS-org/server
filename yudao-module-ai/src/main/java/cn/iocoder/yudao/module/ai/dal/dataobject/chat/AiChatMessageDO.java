@@ -7,15 +7,18 @@ import cn.iocoder.yudao.module.ai.dal.dataobject.knowledge.AiKnowledgeSegmentDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiChatRoleDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.framework.ai.core.webserch.AiWebSearchResponse;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.ai.chat.messages.MessageType;
 
 import java.util.List;
@@ -27,7 +30,8 @@ import java.util.List;
  * @since 2024/4/14 17:35
  */
 @TableName(value = "ai_chat_message", autoResultMap = true)
-@KeySequence("ai_chat_message_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@KeySequence(
+        "ai_chat_message_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
 @Data
 @Builder
 @NoArgsConstructor
@@ -37,8 +41,7 @@ public class AiChatMessageDO extends BaseDO {
     /**
      * 编号，作为每条聊天记录的唯一标识符
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 对话编号
@@ -46,6 +49,7 @@ public class AiChatMessageDO extends BaseDO {
      * 关联 {@link AiChatConversationDO#getId()} 字段
      */
     private Long conversationId;
+
     /**
      * 回复消息编号
      *
@@ -63,12 +67,14 @@ public class AiChatMessageDO extends BaseDO {
      * 枚举 {@link MessageType}
      */
     private String type;
+
     /**
      * 用户编号
      *
      * 关联 AdminUserDO 的 userId 字段
      */
     private Long userId;
+
     /**
      * 角色编号
      *
@@ -82,6 +88,7 @@ public class AiChatMessageDO extends BaseDO {
      * 冗余 {@link AiModelDO#getModel()}
      */
     private String model;
+
     /**
      * 模型编号
      *
@@ -93,6 +100,7 @@ public class AiChatMessageDO extends BaseDO {
      * 聊天内容
      */
     private String content;
+
     /**
      * 推理内容
      */
@@ -122,5 +130,4 @@ public class AiChatMessageDO extends BaseDO {
      */
     @TableField(typeHandler = StringListTypeHandler.class)
     private List<String> attachmentUrls;
-
 }

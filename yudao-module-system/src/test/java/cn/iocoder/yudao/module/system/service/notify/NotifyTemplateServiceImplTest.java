@@ -1,20 +1,5 @@
 package cn.iocoder.yudao.module.system.service.notify;
 
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.NotifyTemplatePageReqVO;
-import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.NotifyTemplateSaveReqVO;
-import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyTemplateDO;
-import cn.iocoder.yudao.module.system.dal.mysql.notify.NotifyTemplateMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-
-import jakarta.annotation.Resource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
 import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
@@ -22,7 +7,25 @@ import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEq
 import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.NOTIFY_TEMPLATE_NOT_EXISTS;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.NotifyTemplatePageReqVO;
+import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.NotifyTemplateSaveReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyTemplateDO;
+import cn.iocoder.yudao.module.system.dal.mysql.notify.NotifyTemplateMapper;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * {@link NotifyTemplateServiceImpl} 的单元测试类
@@ -32,18 +35,16 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(NotifyTemplateServiceImpl.class)
 public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private NotifyTemplateServiceImpl notifyTemplateService;
+    @Resource private NotifyTemplateServiceImpl notifyTemplateService;
 
-    @Resource
-    private NotifyTemplateMapper notifyTemplateMapper;
+    @Resource private NotifyTemplateMapper notifyTemplateMapper;
 
     @Test
     public void testCreateNotifyTemplate_success() {
         // 准备参数
-        NotifyTemplateSaveReqVO reqVO = randomPojo(NotifyTemplateSaveReqVO.class,
-                o -> o.setStatus(randomCommonStatus()))
-                .setId(null); // 防止 id 被赋值
+        NotifyTemplateSaveReqVO reqVO =
+                randomPojo(NotifyTemplateSaveReqVO.class, o -> o.setStatus(randomCommonStatus()))
+                        .setId(null); // 防止 id 被赋值
 
         // 调用
         Long notifyTemplateId = notifyTemplateService.createNotifyTemplate(reqVO);
@@ -58,12 +59,15 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
     public void testUpdateNotifyTemplate_success() {
         // mock 数据
         NotifyTemplateDO dbNotifyTemplate = randomPojo(NotifyTemplateDO.class);
-        notifyTemplateMapper.insert(dbNotifyTemplate);// @Sql: 先插入出一条存在的数据
+        notifyTemplateMapper.insert(dbNotifyTemplate); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        NotifyTemplateSaveReqVO reqVO = randomPojo(NotifyTemplateSaveReqVO.class, o -> {
-            o.setId(dbNotifyTemplate.getId()); // 设置更新的 ID
-            o.setStatus(randomCommonStatus());
-        });
+        NotifyTemplateSaveReqVO reqVO =
+                randomPojo(
+                        NotifyTemplateSaveReqVO.class,
+                        o -> {
+                            o.setId(dbNotifyTemplate.getId()); // 设置更新的 ID
+                            o.setStatus(randomCommonStatus());
+                        });
 
         // 调用
         notifyTemplateService.updateNotifyTemplate(reqVO);
@@ -78,14 +82,16 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
         NotifyTemplateSaveReqVO reqVO = randomPojo(NotifyTemplateSaveReqVO.class);
 
         // 调用, 并断言异常
-        assertServiceException(() -> notifyTemplateService.updateNotifyTemplate(reqVO), NOTIFY_TEMPLATE_NOT_EXISTS);
+        assertServiceException(
+                () -> notifyTemplateService.updateNotifyTemplate(reqVO),
+                NOTIFY_TEMPLATE_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteNotifyTemplate_success() {
         // mock 数据
         NotifyTemplateDO dbNotifyTemplate = randomPojo(NotifyTemplateDO.class);
-        notifyTemplateMapper.insert(dbNotifyTemplate);// @Sql: 先插入出一条存在的数据
+        notifyTemplateMapper.insert(dbNotifyTemplate); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbNotifyTemplate.getId();
 
@@ -101,27 +107,34 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> notifyTemplateService.deleteNotifyTemplate(id), NOTIFY_TEMPLATE_NOT_EXISTS);
+        assertServiceException(
+                () -> notifyTemplateService.deleteNotifyTemplate(id), NOTIFY_TEMPLATE_NOT_EXISTS);
     }
 
     @Test
     public void testGetNotifyTemplatePage() {
         // mock 数据
-        NotifyTemplateDO dbNotifyTemplate = randomPojo(NotifyTemplateDO.class, o -> { // 等会查询到
-            o.setName("芋头");
-            o.setCode("test_01");
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-            o.setCreateTime(buildTime(2022, 2, 3));
-        });
+        NotifyTemplateDO dbNotifyTemplate =
+                randomPojo(
+                        NotifyTemplateDO.class,
+                        o -> { // 等会查询到
+                            o.setName("芋头");
+                            o.setCode("test_01");
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                            o.setCreateTime(buildTime(2022, 2, 3));
+                        });
         notifyTemplateMapper.insert(dbNotifyTemplate);
         // 测试 name 不匹配
         notifyTemplateMapper.insert(cloneIgnoreId(dbNotifyTemplate, o -> o.setName("投")));
         // 测试 code 不匹配
         notifyTemplateMapper.insert(cloneIgnoreId(dbNotifyTemplate, o -> o.setCode("test_02")));
         // 测试 status 不匹配
-        notifyTemplateMapper.insert(cloneIgnoreId(dbNotifyTemplate, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        notifyTemplateMapper.insert(
+                cloneIgnoreId(
+                        dbNotifyTemplate, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
         // 测试 createTime 不匹配
-        notifyTemplateMapper.insert(cloneIgnoreId(dbNotifyTemplate, o -> o.setCreateTime(buildTime(2022, 1, 5))));
+        notifyTemplateMapper.insert(
+                cloneIgnoreId(dbNotifyTemplate, o -> o.setCreateTime(buildTime(2022, 1, 5))));
         // 准备参数
         NotifyTemplatePageReqVO reqVO = new NotifyTemplatePageReqVO();
         reqVO.setName("芋");
@@ -130,7 +143,8 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
         reqVO.setCreateTime(buildBetweenTime(2022, 2, 1, 2022, 2, 5));
 
         // 调用
-        PageResult<NotifyTemplateDO> pageResult = notifyTemplateService.getNotifyTemplatePage(reqVO);
+        PageResult<NotifyTemplateDO> pageResult =
+                notifyTemplateService.getNotifyTemplatePage(reqVO);
         // 断言
         assertEquals(1, pageResult.getTotal());
         assertEquals(1, pageResult.getList().size());
@@ -140,15 +154,19 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetNotifyTemplateListByStatus() {
         // mock 数据
-        NotifyTemplateDO dbNotifyTemplate = randomPojo(NotifyTemplateDO.class,
-                o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
+        NotifyTemplateDO dbNotifyTemplate =
+                randomPojo(
+                        NotifyTemplateDO.class,
+                        o -> o.setStatus(CommonStatusEnum.ENABLE.getStatus()));
         notifyTemplateMapper.insert(dbNotifyTemplate);
-        notifyTemplateMapper.insert(cloneIgnoreId(dbNotifyTemplate,
-                o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        notifyTemplateMapper.insert(
+                cloneIgnoreId(
+                        dbNotifyTemplate, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
 
         // 调用
-        List<NotifyTemplateDO> list = notifyTemplateService.getNotifyTemplateListByStatus(
-                CommonStatusEnum.ENABLE.getStatus());
+        List<NotifyTemplateDO> list =
+                notifyTemplateService.getNotifyTemplateListByStatus(
+                        CommonStatusEnum.ENABLE.getStatus());
         // 断言
         assertEquals(1, list.size());
         assertPojoEquals(dbNotifyTemplate, list.get(0));
@@ -177,7 +195,8 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
         String code = dbNotifyTemplate.getCode();
 
         // 调用
-        NotifyTemplateDO notifyTemplate = notifyTemplateService.getNotifyTemplateByCodeFromCache(code);
+        NotifyTemplateDO notifyTemplate =
+                notifyTemplateService.getNotifyTemplateByCodeFromCache(code);
         // 断言
         assertPojoEquals(dbNotifyTemplate, notifyTemplate);
     }
@@ -190,7 +209,8 @@ public class NotifyTemplateServiceImplTest extends BaseDbUnitTest {
         params.put("what", "饭");
 
         // 调用，并断言
-        assertEquals("小红，你好，饭吃了吗？",
+        assertEquals(
+                "小红，你好，饭吃了吗？",
                 notifyTemplateService.formatNotifyTemplateContent("{name}，你好，{what}吃了吗？", params));
     }
 }

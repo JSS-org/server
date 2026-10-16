@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.mes.service.pro.feedback;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationDO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.feedback.vo.MesProFeedbackPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.feedback.vo.MesProFeedbackSaveReqVO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.feedback.MesProFeedbackDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.route.MesProRouteProcessDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.task.MesProTaskDO;
@@ -24,7 +27,9 @@ import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.wm.itemconsume.MesWmItemConsumeService;
 import cn.iocoder.yudao.module.mes.service.wm.productproduce.MesWmProductProduceLineService;
 import cn.iocoder.yudao.module.mes.service.wm.productproduce.MesWmProductProduceService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +37,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 生产报工 Service 实现类
@@ -45,24 +47,16 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProFeedbackServiceImpl implements MesProFeedbackService {
 
-    @Resource
-    private MesProFeedbackMapper feedbackMapper;
+    @Resource private MesProFeedbackMapper feedbackMapper;
 
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesProRouteProcessService routeProcessService;
-    @Resource
-    private MesMdWorkstationService workstationService;
-    @Resource
-    @Lazy // 避免循环依赖
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesProRouteProcessService routeProcessService;
+    @Resource private MesMdWorkstationService workstationService;
+    @Resource @Lazy // 避免循环依赖
     private MesProTaskService taskService;
-    @Resource
-    private MesWmItemConsumeService itemConsumeService;
-    @Resource
-    private MesWmProductProduceService productProduceService;
-    @Resource
-    private MesWmProductProduceLineService produceLineService;
+    @Resource private MesWmItemConsumeService itemConsumeService;
+    @Resource private MesWmProductProduceService productProduceService;
+    @Resource private MesWmProductProduceLineService produceLineService;
 
     @Override
     public Long createFeedback(MesProFeedbackSaveReqVO createReqVO) {
@@ -70,9 +64,10 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         MesProTaskDO task = validateFeedbackData(createReqVO);
 
         // 2. 插入（自动填充 itemId）
-        MesProFeedbackDO feedback = BeanUtils.toBean(createReqVO, MesProFeedbackDO.class)
-                .setStatus(MesProFeedbackStatusEnum.PREPARE.getStatus())
-                .setItemId(task.getItemId());
+        MesProFeedbackDO feedback =
+                BeanUtils.toBean(createReqVO, MesProFeedbackDO.class)
+                        .setStatus(MesProFeedbackStatusEnum.PREPARE.getStatus())
+                        .setItemId(task.getItemId());
         feedbackMapper.insert(feedback);
         return feedback.getId();
     }
@@ -85,8 +80,8 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         MesProTaskDO task = validateFeedbackData(updateReqVO);
 
         // 2. 更新（自动填充 itemId）
-        MesProFeedbackDO updateObj = BeanUtils.toBean(updateReqVO, MesProFeedbackDO.class)
-                .setItemId(task.getItemId());
+        MesProFeedbackDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesProFeedbackDO.class).setItemId(task.getItemId());
         feedbackMapper.updateById(updateObj);
     }
 
@@ -115,8 +110,10 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         validateFeedbackStatusPrepare(id);
 
         // 2. 更新状态为审批中（报工人和报工时间由表单保存时确定，提交不覆盖）
-        feedbackMapper.updateById(new MesProFeedbackDO().setId(id)
-                .setStatus(MesProFeedbackStatusEnum.APPROVING.getStatus()));
+        feedbackMapper.updateById(
+                new MesProFeedbackDO()
+                        .setId(id)
+                        .setStatus(MesProFeedbackStatusEnum.APPROVING.getStatus()));
     }
 
     @Override
@@ -125,8 +122,10 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         validateFeedbackStatusApproving(id);
 
         // 2. 更新状态为草稿
-        feedbackMapper.updateById(new MesProFeedbackDO().setId(id)
-                .setStatus(MesProFeedbackStatusEnum.PREPARE.getStatus()));
+        feedbackMapper.updateById(
+                new MesProFeedbackDO()
+                        .setId(id)
+                        .setStatus(MesProFeedbackStatusEnum.PREPARE.getStatus()));
     }
 
     @Override
@@ -143,10 +142,12 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         taskService.validateTaskNotFinished(feedback.getTaskId());
 
         // 2.1 查询工序的关键工序标识 + 检验标识（需在 uncheckQuantity 校验之前，因为质检工序允许 uncheckQuantity > 0）
-        MesProRouteProcessDO routeProcess = routeProcessService.getRouteProcessByRouteIdAndProcessId(
-                feedback.getRouteId(), feedback.getProcessId());
+        MesProRouteProcessDO routeProcess =
+                routeProcessService.getRouteProcessByRouteIdAndProcessId(
+                        feedback.getRouteId(), feedback.getProcessId());
         boolean keyFlag = routeProcess != null && Boolean.TRUE.equals(routeProcess.getKeyFlag());
-        boolean checkFlag = routeProcess != null && Boolean.TRUE.equals(routeProcess.getCheckFlag());
+        boolean checkFlag =
+                routeProcess != null && Boolean.TRUE.equals(routeProcess.getCheckFlag());
         // 2.2 非质检工序：仍有待检数量时不能审批（质检工序的 uncheckQuantity > 0 是正常状态，不做拦截）
         if (!checkFlag
                 && feedback.getUncheckQuantity() != null
@@ -164,22 +165,28 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         if (keyFlag) {
             // 4.1 需要检验：生成产出单（质量状态=待检验），更新报工状态为待检验，等质检完成回调后再入库
             if (checkFlag) {
-                // 完成时回调见：MesQcIpqcServiceImpl#finishIpqc → splitPendingAndFinishProduce + completeFeedbackFromIpqc
+                // 完成时回调见：MesQcIpqcServiceImpl#finishIpqc → splitPendingAndFinishProduce +
+                // completeFeedbackFromIpqc
                 productProduceService.generateProductProduce(feedback, true);
-                feedbackMapper.updateById(new MesProFeedbackDO().setId(id)
-                        .setStatus(MesProFeedbackStatusEnum.UNCHECK.getStatus()));
+                feedbackMapper.updateById(
+                        new MesProFeedbackDO()
+                                .setId(id)
+                                .setStatus(MesProFeedbackStatusEnum.UNCHECK.getStatus()));
                 return false;
             }
             // 4.2 无需检验：生成产出单（按合格/不合格拆行），直接完成入库，并更新任务/工单的已生产数量
-            MesWmProductProduceDO produce = productProduceService.generateProductProduce(feedback, false);
+            MesWmProductProduceDO produce =
+                    productProduceService.generateProductProduce(feedback, false);
             productProduceService.finishProductProduce(produce.getId());
             updateTaskAndWorkOrderByFeedback(feedback);
         }
 
         // 5. 非关键工序 / 关键非质检工序：直接完成（清零 uncheckQuantity 防止 !key+check 留脏数据）
-        feedbackMapper.updateById(new MesProFeedbackDO().setId(id)
-                .setStatus(MesProFeedbackStatusEnum.FINISHED.getStatus())
-                .setUncheckQuantity(BigDecimal.ZERO));
+        feedbackMapper.updateById(
+                new MesProFeedbackDO()
+                        .setId(id)
+                        .setStatus(MesProFeedbackStatusEnum.FINISHED.getStatus())
+                        .setUncheckQuantity(BigDecimal.ZERO));
         return true; // 已完成
     }
 
@@ -198,7 +205,8 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         // 1. 查询该报工单关联的所有产出单行，按质量状态聚合数量
         BigDecimal qualifiedQty = BigDecimal.ZERO;
         BigDecimal unqualifiedQty = BigDecimal.ZERO;
-        List<MesWmProductProduceLineDO> lines = produceLineService.getProductProduceLineListByFeedbackId(feedback.getId());
+        List<MesWmProductProduceLineDO> lines =
+                produceLineService.getProductProduceLineListByFeedbackId(feedback.getId());
         for (MesWmProductProduceLineDO line : lines) {
             if (ObjUtil.equal(line.getQualityStatus(), MesWmQualityStatusEnum.FAIL.getStatus())) {
                 unqualifiedQty = unqualifiedQty.add(line.getQuantity());
@@ -209,11 +217,11 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         }
 
         // 2. 更新任务的已生产/合格/不合格数量
-        taskService.updateProducedQuantity(feedback.getTaskId(),
-                feedback.getFeedbackQuantity(), qualifiedQty, unqualifiedQty);
+        taskService.updateProducedQuantity(
+                feedback.getTaskId(), feedback.getFeedbackQuantity(), qualifiedQty, unqualifiedQty);
         // 3. 更新工单的已生产数量
-        workOrderService.updateProducedQuantity(feedback.getWorkOrderId(),
-                feedback.getFeedbackQuantity());
+        workOrderService.updateProducedQuantity(
+                feedback.getWorkOrderId(), feedback.getFeedbackQuantity());
     }
 
     // ==================== 校验方法 ====================
@@ -237,7 +245,8 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
 
     private MesProFeedbackDO validateFeedbackStatusApproving(Long id) {
         MesProFeedbackDO feedback = validateFeedbackExists(id);
-        if (ObjUtil.notEqual(feedback.getStatus(), MesProFeedbackStatusEnum.APPROVING.getStatus())) {
+        if (ObjUtil.notEqual(
+                feedback.getStatus(), MesProFeedbackStatusEnum.APPROVING.getStatus())) {
             throw exception(PRO_FEEDBACK_NOT_APPROVING);
         }
         return feedback;
@@ -251,14 +260,16 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
      */
     private MesProTaskDO validateFeedbackData(MesProFeedbackSaveReqVO reqVO) {
         // 1. 校验工作站存在
-        MesMdWorkstationDO workstation = workstationService.validateWorkstationExists(reqVO.getWorkstationId());
+        MesMdWorkstationDO workstation =
+                workstationService.validateWorkstationExists(reqVO.getWorkstationId());
         if (ObjUtil.notEqual(workstation.getProcessId(), reqVO.getProcessId())) {
             throw exception(PRO_WORKSTATION_PROCESS_MISMATCH);
         }
 
         // 2.1 校验工艺路线 + 工序配置有效
-        MesProRouteProcessDO routeProcess = routeProcessService.getRouteProcessByRouteIdAndProcessId(
-                reqVO.getRouteId(), reqVO.getProcessId());
+        MesProRouteProcessDO routeProcess =
+                routeProcessService.getRouteProcessByRouteIdAndProcessId(
+                        reqVO.getRouteId(), reqVO.getProcessId());
         if (routeProcess == null) {
             throw exception(PRO_FEEDBACK_ROUTE_PROCESS_INVALID);
         }
@@ -272,15 +283,18 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
             }
         } else {
             // 不需检验：需填合格品 + 不良品数量，合计 > 0
-            BigDecimal qualified = ObjectUtil.defaultIfNull(reqVO.getQualifiedQuantity(), BigDecimal.ZERO);
-            BigDecimal unqualified = ObjectUtil.defaultIfNull(reqVO.getUnqualifiedQuantity(), BigDecimal.ZERO);
+            BigDecimal qualified =
+                    ObjectUtil.defaultIfNull(reqVO.getQualifiedQuantity(), BigDecimal.ZERO);
+            BigDecimal unqualified =
+                    ObjectUtil.defaultIfNull(reqVO.getUnqualifiedQuantity(), BigDecimal.ZERO);
             if (qualified.add(unqualified).compareTo(BigDecimal.ZERO) <= 0) {
                 throw exception(PRO_FEEDBACK_QUALIFIED_UNQUALIFIED_REQUIRED);
             }
         }
 
         // 3. 校验工单已确认
-        MesProWorkOrderDO workOrder = workOrderService.validateWorkOrderConfirmed(reqVO.getWorkOrderId());
+        MesProWorkOrderDO workOrder =
+                workOrderService.validateWorkOrderConfirmed(reqVO.getWorkOrderId());
         if (ObjUtil.notEqual(workOrder.getProductId(), reqVO.getItemId())) {
             throw exception(PRO_WORK_ORDER_PRODUCT_MISMATCH);
         }
@@ -291,8 +305,11 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         return task;
     }
 
-    private void validateTaskRelation(MesProTaskDO task, MesMdWorkstationDO workstation,
-                                      MesProWorkOrderDO workOrder, MesProFeedbackSaveReqVO reqVO) {
+    private void validateTaskRelation(
+            MesProTaskDO task,
+            MesMdWorkstationDO workstation,
+            MesProWorkOrderDO workOrder,
+            MesProFeedbackSaveReqVO reqVO) {
         if (ObjUtil.notEqual(task.getWorkOrderId(), workOrder.getId())) {
             throw exception(PRO_TASK_WORK_ORDER_MISMATCH);
         }
@@ -310,9 +327,14 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateProFeedbackWhenIpqcFinish(Long feedbackId, Long sourceLineId,
-                                                BigDecimal qualifiedQty, BigDecimal unqualifiedQty,
-                                                BigDecimal laborScrapQty, BigDecimal materialScrapQty, BigDecimal otherScrapQty) {
+    public void updateProFeedbackWhenIpqcFinish(
+            Long feedbackId,
+            Long sourceLineId,
+            BigDecimal qualifiedQty,
+            BigDecimal unqualifiedQty,
+            BigDecimal laborScrapQty,
+            BigDecimal materialScrapQty,
+            BigDecimal otherScrapQty) {
         // 1. 校验报工单存在且为待检验状态
         MesProFeedbackDO feedback = validateFeedbackExists(feedbackId);
         if (ObjUtil.notEqual(feedback.getStatus(), MesProFeedbackStatusEnum.UNCHECK.getStatus())) {
@@ -320,21 +342,23 @@ public class MesProFeedbackServiceImpl implements MesProFeedbackService {
         }
 
         // 2. 拆分待检产出行（合格/不合格），生成明细，完成产出入库
-        productProduceService.splitPendingAndFinishProduce(feedbackId, sourceLineId, qualifiedQty, unqualifiedQty);
+        productProduceService.splitPendingAndFinishProduce(
+                feedbackId, sourceLineId, qualifiedQty, unqualifiedQty);
 
         // 3. 回写合格/不合格/废品数量，更新状态为已完成
-        feedbackMapper.updateById(new MesProFeedbackDO().setId(feedbackId)
-                .setQualifiedQuantity(qualifiedQty)
-                .setUnqualifiedQuantity(unqualifiedQty)
-                .setUncheckQuantity(BigDecimal.ZERO)
-                .setLaborScrapQuantity(laborScrapQty)
-                .setMaterialScrapQuantity(materialScrapQty)
-                .setOtherScrapQuantity(otherScrapQty)
-                .setStatus(MesProFeedbackStatusEnum.FINISHED.getStatus()));
+        feedbackMapper.updateById(
+                new MesProFeedbackDO()
+                        .setId(feedbackId)
+                        .setQualifiedQuantity(qualifiedQty)
+                        .setUnqualifiedQuantity(unqualifiedQty)
+                        .setUncheckQuantity(BigDecimal.ZERO)
+                        .setLaborScrapQuantity(laborScrapQty)
+                        .setMaterialScrapQuantity(materialScrapQty)
+                        .setOtherScrapQuantity(otherScrapQty)
+                        .setStatus(MesProFeedbackStatusEnum.FINISHED.getStatus()));
 
         // 4. 更新任务/工单的已生产数量
         feedback.setQualifiedQuantity(qualifiedQty).setUnqualifiedQuantity(unqualifiedQty);
         updateTaskAndWorkOrderByFeedback(feedback);
     }
-
 }

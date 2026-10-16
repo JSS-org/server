@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.expression.BpmProcessExpressionPageReqVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.expression.BpmProcessExpressionSaveReqVO;
-import jakarta.validation.*;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessExpressionDO;
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
+
+import jakarta.validation.*;
 
 /**
  * BPM 流程表达式 Service 接口
@@ -49,6 +50,6 @@ public interface BpmProcessExpressionService {
      * @param pageReqVO 分页查询
      * @return 流程表达式分页
      */
-    PageResult<BpmProcessExpressionDO> getProcessExpressionPage(BpmProcessExpressionPageReqVO pageReqVO);
-
+    PageResult<BpmProcessExpressionDO> getProcessExpressionPage(
+            BpmProcessExpressionPageReqVO pageReqVO);
 }

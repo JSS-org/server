@@ -32,5 +32,4 @@ public interface HrmSalaryConfigService {
      * @return 计薪配置
      */
     HrmSalaryConfigDO getSalaryConfig();
-
 }

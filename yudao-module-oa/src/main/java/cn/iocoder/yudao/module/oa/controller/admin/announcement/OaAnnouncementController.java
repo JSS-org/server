@@ -1,10 +1,15 @@
 package cn.iocoder.yudao.module.oa.controller.admin.announcement;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.announcement.vo.OaAnnouncementPageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.announcement.vo.OaAnnouncementRespVO;
@@ -16,11 +21,14 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,38 +47,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - OA 公告")
 @RestController
 @RequestMapping("/oa/announcement")
 @Validated
 public class OaAnnouncementController {
 
-    @Resource
-    private OaAnnouncementService announcementService;
+    @Resource private OaAnnouncementService announcementService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
 
     // ==================== 我发布的 ====================
 
     @PostMapping("/create")
     @Operation(summary = "创建公告")
     @PreAuthorize("@ss.hasPermission('oa:announcement:create')")
-    public CommonResult<Long> createAnnouncement(@Valid @RequestBody OaAnnouncementSaveReqVO createReqVO) {
+    public CommonResult<Long> createAnnouncement(
+            @Valid @RequestBody OaAnnouncementSaveReqVO createReqVO) {
         return success(announcementService.createAnnouncement(createReqVO, getLoginUserId()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新公告")
     @PreAuthorize("@ss.hasPermission('oa:announcement:update')")
-    public CommonResult<Boolean> updateAnnouncement(@Valid @RequestBody OaAnnouncementSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAnnouncement(
+            @Valid @RequestBody OaAnnouncementSaveReqVO updateReqVO) {
         announcementService.updateAnnouncement(updateReqVO, getLoginUserId());
         return success(true);
     }
@@ -90,10 +92,12 @@ public class OaAnnouncementController {
     public CommonResult<PageResult<OaAnnouncementRespVO>> getPublishedAnnouncementPage(
             @Valid OaAnnouncementPageReqVO pageReqVO) {
         Long userId = getLoginUserId();
-        PageResult<OaAnnouncementDO> pageResult = announcementService
-                .getPublishedAnnouncementPage(pageReqVO, userId);
-        return success(new PageResult<>(buildAnnouncementRespVOList(pageResult.getList(), userId),
-                pageResult.getTotal()));
+        PageResult<OaAnnouncementDO> pageResult =
+                announcementService.getPublishedAnnouncementPage(pageReqVO, userId);
+        return success(
+                new PageResult<>(
+                        buildAnnouncementRespVOList(pageResult.getList(), userId),
+                        pageResult.getTotal()));
     }
 
     // ==================== 我收到的 ====================
@@ -112,10 +116,12 @@ public class OaAnnouncementController {
     public CommonResult<PageResult<OaAnnouncementRespVO>> getReceivedAnnouncementPage(
             @Valid OaAnnouncementPageReqVO pageReqVO) {
         Long userId = getLoginUserId();
-        PageResult<OaAnnouncementDO> pageResult = announcementService
-                .getReceivedAnnouncementPage(pageReqVO, userId);
-        return success(new PageResult<>(buildAnnouncementRespVOList(pageResult.getList(), userId),
-                pageResult.getTotal()));
+        PageResult<OaAnnouncementDO> pageResult =
+                announcementService.getReceivedAnnouncementPage(pageReqVO, userId);
+        return success(
+                new PageResult<>(
+                        buildAnnouncementRespVOList(pageResult.getList(), userId),
+                        pageResult.getTotal()));
     }
 
     @PutMapping("/update-read-status")
@@ -154,11 +160,13 @@ public class OaAnnouncementController {
      * @param loginUserId 当前登录用户编号
      * @return 公告响应
      */
-    private OaAnnouncementRespVO buildAnnouncementRespVO(OaAnnouncementDO announcement, Long loginUserId) {
+    private OaAnnouncementRespVO buildAnnouncementRespVO(
+            OaAnnouncementDO announcement, Long loginUserId) {
         if (announcement == null) {
             return null;
         }
-        return CollUtil.getFirst(buildAnnouncementRespVOList(Collections.singletonList(announcement), loginUserId));
+        return CollUtil.getFirst(
+                buildAnnouncementRespVOList(Collections.singletonList(announcement), loginUserId));
     }
 
     /**
@@ -168,47 +176,79 @@ public class OaAnnouncementController {
      * @param loginUserId 当前登录用户编号
      * @return 公告响应列表
      */
-    private List<OaAnnouncementRespVO> buildAnnouncementRespVOList(List<OaAnnouncementDO> announcements,
-                                                                    Long loginUserId) {
+    private List<OaAnnouncementRespVO> buildAnnouncementRespVOList(
+            List<OaAnnouncementDO> announcements, Long loginUserId) {
         if (CollUtil.isEmpty(announcements)) {
             return Collections.emptyList();
         }
         // 1. 查询公告接收关系、发布人、接收人和发布人部门信息
-        Map<Long, List<OaAnnouncementReceiverDO>> receiverListMap = announcementService
-                .getAnnouncementReceiverListMap(convertSet(announcements, OaAnnouncementDO::getId));
-        Collection<Long> userIds = new ArrayList<>(convertSet(announcements,
-                announcement -> NumberUtils.parseLong(announcement.getCreator())));
-        receiverListMap.values().forEach(receivers -> userIds.addAll(
-                convertSet(receivers, OaAnnouncementReceiverDO::getReceiverUserId)));
+        Map<Long, List<OaAnnouncementReceiverDO>> receiverListMap =
+                announcementService.getAnnouncementReceiverListMap(
+                        convertSet(announcements, OaAnnouncementDO::getId));
+        Collection<Long> userIds =
+                new ArrayList<>(
+                        convertSet(
+                                announcements,
+                                announcement -> NumberUtils.parseLong(announcement.getCreator())));
+        receiverListMap
+                .values()
+                .forEach(
+                        receivers ->
+                                userIds.addAll(
+                                        convertSet(
+                                                receivers,
+                                                OaAnnouncementReceiverDO::getReceiverUserId)));
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
-        Set<Long> subordinateUserIds = convertSet(adminUserApi.getUserListBySubordinate(loginUserId), AdminUserRespDTO::getId);
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(userMap.values(), AdminUserRespDTO::getDeptId));
+        Set<Long> subordinateUserIds =
+                convertSet(
+                        adminUserApi.getUserListBySubordinate(loginUserId),
+                        AdminUserRespDTO::getId);
         // 2. 拼接公告、发布人、接收人和当前接收状态
-        return convertList(announcements, announcementDO -> {
-            OaAnnouncementRespVO announcement = BeanUtils.toBean(announcementDO, OaAnnouncementRespVO.class)
-                    .setPublisherUserId(NumberUtils.parseLong(announcementDO.getCreator()));
-            MapUtils.findAndThen(userMap, announcement.getPublisherUserId(), publisher -> {
-                announcement.setPublisherUserName(publisher.getNickname());
-                announcement.setPublisherDeptId(publisher.getDeptId());
-                MapUtils.findAndThen(deptMap, publisher.getDeptId(),
-                        dept -> announcement.setPublisherDeptName(dept.getName()));
-            });
-            List<OaAnnouncementReceiverDO> receivers = receiverListMap.getOrDefault(announcement.getId(),
-                    Collections.emptyList());
-            List<Long> receiverUserIds = convertList(receivers, OaAnnouncementReceiverDO::getReceiverUserId);
-            announcement.setReceiverUserIds(receiverUserIds);
-            announcement.setReceiverUserNames(convertList(receiverUserIds, receiverUserId -> {
-                AdminUserRespDTO receiverUser = userMap.get(receiverUserId);
-                return receiverUser != null ? receiverUser.getNickname() : null;
-            }));
-            OaAnnouncementReceiverDO loginUserReceiver = CollUtil.findOne(receivers,
-                    receiver -> receiver.getReceiverUserId().equals(loginUserId));
-            if (loginUserReceiver != null) {
-                announcement.setReadStatus(loginUserReceiver.getReadStatus());
-            }
-            announcement.setForwarded(CollUtil.containsAny(receiverUserIds, subordinateUserIds));
-            return announcement;
-        });
+        return convertList(
+                announcements,
+                announcementDO -> {
+                    OaAnnouncementRespVO announcement =
+                            BeanUtils.toBean(announcementDO, OaAnnouncementRespVO.class)
+                                    .setPublisherUserId(
+                                            NumberUtils.parseLong(announcementDO.getCreator()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            announcement.getPublisherUserId(),
+                            publisher -> {
+                                announcement.setPublisherUserName(publisher.getNickname());
+                                announcement.setPublisherDeptId(publisher.getDeptId());
+                                MapUtils.findAndThen(
+                                        deptMap,
+                                        publisher.getDeptId(),
+                                        dept -> announcement.setPublisherDeptName(dept.getName()));
+                            });
+                    List<OaAnnouncementReceiverDO> receivers =
+                            receiverListMap.getOrDefault(
+                                    announcement.getId(), Collections.emptyList());
+                    List<Long> receiverUserIds =
+                            convertList(receivers, OaAnnouncementReceiverDO::getReceiverUserId);
+                    announcement.setReceiverUserIds(receiverUserIds);
+                    announcement.setReceiverUserNames(
+                            convertList(
+                                    receiverUserIds,
+                                    receiverUserId -> {
+                                        AdminUserRespDTO receiverUser = userMap.get(receiverUserId);
+                                        return receiverUser != null
+                                                ? receiverUser.getNickname()
+                                                : null;
+                                    }));
+                    OaAnnouncementReceiverDO loginUserReceiver =
+                            CollUtil.findOne(
+                                    receivers,
+                                    receiver -> receiver.getReceiverUserId().equals(loginUserId));
+                    if (loginUserReceiver != null) {
+                        announcement.setReadStatus(loginUserReceiver.getReadStatus());
+                    }
+                    announcement.setForwarded(
+                            CollUtil.containsAny(receiverUserIds, subordinateUserIds));
+                    return announcement;
+                });
     }
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.packages.vo.line.MesWmPackageLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.packages.vo.line.MesWmPackageLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.packages.MesWmPackageLineDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -57,5 +58,4 @@ public interface MesWmPackageLineService {
      * @param packageId 装箱单 ID
      */
     void deletePackageLineByPackageId(Long packageId);
-
 }

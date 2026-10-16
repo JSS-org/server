@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.system.controller.admin.notify;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -10,19 +13,19 @@ import cn.iocoder.yudao.module.system.controller.admin.notify.vo.message.NotifyM
 import cn.iocoder.yudao.module.system.controller.admin.notify.vo.message.NotifyMessageRespVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyMessageDO;
 import cn.iocoder.yudao.module.system.service.notify.NotifyMessageService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 我的站内信")
 @RestController
@@ -30,8 +33,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class NotifyMessageController {
 
-    @Resource
-    private NotifyMessageService notifyMessageService;
+    @Resource private NotifyMessageService notifyMessageService;
 
     // ========== 管理所有的站内信 ==========
 
@@ -47,7 +49,8 @@ public class NotifyMessageController {
     @GetMapping("/page")
     @Operation(summary = "获得站内信分页")
     @PreAuthorize("@ss.hasPermission('system:notify-message:query')")
-    public CommonResult<PageResult<NotifyMessageRespVO>> getNotifyMessagePage(@Valid NotifyMessagePageReqVO pageVO) {
+    public CommonResult<PageResult<NotifyMessageRespVO>> getNotifyMessagePage(
+            @Valid NotifyMessagePageReqVO pageVO) {
         PageResult<NotifyMessageDO> pageResult = notifyMessageService.getNotifyMessagePage(pageVO);
         return success(BeanUtils.toBean(pageResult, NotifyMessageRespVO.class));
     }
@@ -56,9 +59,11 @@ public class NotifyMessageController {
 
     @GetMapping("/my-page")
     @Operation(summary = "获得我的站内信分页")
-    public CommonResult<PageResult<NotifyMessageRespVO>> getMyMyNotifyMessagePage(@Valid NotifyMessageMyPageReqVO pageVO) {
-        PageResult<NotifyMessageDO> pageResult = notifyMessageService.getMyMyNotifyMessagePage(pageVO,
-                getLoginUserId(), UserTypeEnum.ADMIN.getValue());
+    public CommonResult<PageResult<NotifyMessageRespVO>> getMyMyNotifyMessagePage(
+            @Valid NotifyMessageMyPageReqVO pageVO) {
+        PageResult<NotifyMessageDO> pageResult =
+                notifyMessageService.getMyMyNotifyMessagePage(
+                        pageVO, getLoginUserId(), UserTypeEnum.ADMIN.getValue());
         return success(BeanUtils.toBean(pageResult, NotifyMessageRespVO.class));
     }
 
@@ -66,14 +71,16 @@ public class NotifyMessageController {
     @Operation(summary = "标记站内信为已读")
     @Parameter(name = "ids", description = "编号列表", required = true, example = "1024,2048")
     public CommonResult<Boolean> updateNotifyMessageRead(@RequestParam("ids") List<Long> ids) {
-        notifyMessageService.updateNotifyMessageRead(ids, getLoginUserId(), UserTypeEnum.ADMIN.getValue());
+        notifyMessageService.updateNotifyMessageRead(
+                ids, getLoginUserId(), UserTypeEnum.ADMIN.getValue());
         return success(Boolean.TRUE);
     }
 
     @PutMapping("/update-all-read")
     @Operation(summary = "标记所有站内信为已读")
     public CommonResult<Boolean> updateAllNotifyMessageRead() {
-        notifyMessageService.updateAllNotifyMessageRead(getLoginUserId(), UserTypeEnum.ADMIN.getValue());
+        notifyMessageService.updateAllNotifyMessageRead(
+                getLoginUserId(), UserTypeEnum.ADMIN.getValue());
         return success(Boolean.TRUE);
     }
 
@@ -82,8 +89,9 @@ public class NotifyMessageController {
     @Parameter(name = "size", description = "10")
     public CommonResult<List<NotifyMessageRespVO>> getUnreadNotifyMessageList(
             @RequestParam(name = "size", defaultValue = "10") Integer size) {
-        List<NotifyMessageDO> list = notifyMessageService.getUnreadNotifyMessageList(
-                getLoginUserId(), UserTypeEnum.ADMIN.getValue(), size);
+        List<NotifyMessageDO> list =
+                notifyMessageService.getUnreadNotifyMessageList(
+                        getLoginUserId(), UserTypeEnum.ADMIN.getValue(), size);
         return success(BeanUtils.toBean(list, NotifyMessageRespVO.class));
     }
 
@@ -91,8 +99,8 @@ public class NotifyMessageController {
     @Operation(summary = "获得当前用户的未读站内信数量")
     @ApiAccessLog(enable = false) // 由于前端会不断轮询该接口，记录日志没有意义
     public CommonResult<Long> getUnreadNotifyMessageCount() {
-        return success(notifyMessageService.getUnreadNotifyMessageCount(
-                getLoginUserId(), UserTypeEnum.ADMIN.getValue()));
+        return success(
+                notifyMessageService.getUnreadNotifyMessageCount(
+                        getLoginUserId(), UserTypeEnum.ADMIN.getValue()));
     }
-
 }

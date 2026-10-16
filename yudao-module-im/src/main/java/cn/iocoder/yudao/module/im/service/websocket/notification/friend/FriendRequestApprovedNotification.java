@@ -14,5 +14,4 @@ public class FriendRequestApprovedNotification extends BaseFriendNotification {
      * 已处理的申请记录编号
      */
     private Long requestId;
-
 }

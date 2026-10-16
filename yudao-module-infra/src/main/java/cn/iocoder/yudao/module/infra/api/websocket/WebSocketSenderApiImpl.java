@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.infra.api.websocket;
 
 import cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,5 +31,4 @@ public class WebSocketSenderApiImpl implements WebSocketSenderApi {
     public void send(String sessionId, String messageType, String messageContent) {
         webSocketMessageSender.send(sessionId, messageType, messageContent);
     }
-
 }

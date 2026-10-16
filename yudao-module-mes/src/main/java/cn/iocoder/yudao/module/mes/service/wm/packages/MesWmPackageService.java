@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.packages.vo.MesWmPackagePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.packages.vo.MesWmPackageSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.packages.MesWmPackageDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -82,7 +83,6 @@ public interface MesWmPackageService {
      */
     void removeChildPackage(Long childId);
 
-
     /**
      * 获取指定装箱单及其所有子孙箱的 ID 列表
      *
@@ -90,5 +90,4 @@ public interface MesWmPackageService {
      * @return 装箱单及其所有子孙箱的 ID 集合
      */
     List<Long> getPackageAndDescendantIds(Long packageId);
-
 }

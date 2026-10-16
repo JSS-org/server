@@ -1,8 +1,8 @@
 package cn.iocoder.yudao.module.member.api.message.user;
 
-import lombok.Data;
-
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 /**
  * 会员用户创建消息
@@ -17,5 +17,4 @@ public class MemberUserCreateMessage {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
-
 }

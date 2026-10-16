@@ -2,10 +2,12 @@ package cn.iocoder.yudao.module.mp.framework.mp.core.util;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
-import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.api.WxConsts;
 
 import jakarta.validation.Validator;
+
+import lombok.extern.slf4j.Slf4j;
+
+import me.chanjar.weixin.common.api.WxConsts;
 
 /**
  * 公众号工具类
@@ -51,7 +53,8 @@ public class MpUtils {
         ValidationUtils.validate(validator, message, group);
     }
 
-    public static void validateButton(Validator validator, String type, String messageType, Object button) {
+    public static void validateButton(
+            Validator validator, String type, String messageType, Object button) {
         if (StrUtil.isBlank(type)) {
             return;
         }

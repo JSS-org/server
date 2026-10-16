@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.app.order.vo.item;
 
 import cn.iocoder.yudao.module.trade.controller.app.base.property.AppProductPropertyValueDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,7 +20,11 @@ public class AppTradeOrderItemRespVO {
 
     @Schema(description = "商品 SPU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long spuId;
-    @Schema(description = "商品 SPU 名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码")
+
+    @Schema(
+            description = "商品 SPU 名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "芋道源码")
     private String spuName;
 
     @Schema(description = "商品 SKU 编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -29,7 +35,10 @@ public class AppTradeOrderItemRespVO {
      */
     private List<AppProductPropertyValueDetailRespVO> properties;
 
-    @Schema(description = "商品图片", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/1.png")
+    @Schema(
+            description = "商品图片",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/1.png")
     private String picUrl;
 
     @Schema(description = "购买数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -43,7 +52,10 @@ public class AppTradeOrderItemRespVO {
     @Schema(description = "商品原价（单）", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer price;
 
-    @Schema(description = "应付金额（总），单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "50")
+    @Schema(
+            description = "应付金额（总），单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "50")
     private Integer payPrice;
 
     // ========== 营销基本信息 ==========
@@ -57,5 +69,4 @@ public class AppTradeOrderItemRespVO {
 
     @Schema(description = "售后状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer afterSaleStatus;
-
 }

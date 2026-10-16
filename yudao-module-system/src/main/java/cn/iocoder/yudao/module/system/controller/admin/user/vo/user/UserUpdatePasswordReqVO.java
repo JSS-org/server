@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.system.controller.admin.user.vo.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.Length;
 
 @Schema(description = "管理后台 - 用户更新密码 Request VO")
 @Data
@@ -19,5 +21,4 @@ public class UserUpdatePasswordReqVO {
     @NotEmpty(message = "密码不能为空")
     @Length(min = 4, max = 16, message = "密码长度为 4-16 位")
     private String password;
-
 }

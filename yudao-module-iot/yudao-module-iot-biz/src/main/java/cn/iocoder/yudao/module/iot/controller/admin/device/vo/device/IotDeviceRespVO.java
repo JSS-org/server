@@ -1,17 +1,19 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.device;
 
+import static cn.iocoder.yudao.module.iot.enums.DictTypeConstants.DEVICE_STATE;
+
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
-
-import static cn.iocoder.yudao.module.iot.enums.DictTypeConstants.DEVICE_STATE;
 
 @Schema(description = "管理后台 - IoT 设备 Response VO")
 @Data
@@ -91,5 +93,4 @@ public class IotDeviceRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

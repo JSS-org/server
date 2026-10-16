@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.crm.dal.mysql.business;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.crm.dal.dataobject.business.CrmBusinessStatusDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -23,8 +24,7 @@ public interface CrmBusinessStatusMapper extends BaseMapperX<CrmBusinessStatusDO
     }
 
     default CrmBusinessStatusDO selectByTypeIdAndId(Long statusTypeId, Long statusId) {
-        return selectOne(CrmBusinessStatusDO::getTypeId, statusTypeId,
-                CrmBusinessStatusDO::getId, statusId);
+        return selectOne(
+                CrmBusinessStatusDO::getTypeId, statusTypeId, CrmBusinessStatusDO::getId, statusId);
     }
-
 }

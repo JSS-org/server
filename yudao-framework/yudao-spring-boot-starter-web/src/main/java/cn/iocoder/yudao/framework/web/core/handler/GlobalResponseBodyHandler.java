@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.web.core.handler;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServerHttpRequest;
@@ -35,11 +36,16 @@ public class GlobalResponseBodyHandler implements ResponseBodyAdvice {
 
     @Override
     @SuppressWarnings("NullableProblems") // 避免 IDEA 警告
-    public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType, Class selectedConverterType,
-                                  ServerHttpRequest request, ServerHttpResponse response) {
+    public Object beforeBodyWrite(
+            Object body,
+            MethodParameter returnType,
+            MediaType selectedContentType,
+            Class selectedConverterType,
+            ServerHttpRequest request,
+            ServerHttpResponse response) {
         // 记录 Controller 结果
-        WebFrameworkUtils.setCommonResult(((ServletServerHttpRequest) request).getServletRequest(), (CommonResult<?>) body);
+        WebFrameworkUtils.setCommonResult(
+                ((ServletServerHttpRequest) request).getServletRequest(), (CommonResult<?>) body);
         return body;
     }
-
 }

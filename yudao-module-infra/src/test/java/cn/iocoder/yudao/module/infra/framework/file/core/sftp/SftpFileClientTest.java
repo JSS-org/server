@@ -4,6 +4,7 @@ import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.sftp.SftpFileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.sftp.SftpFileClientConfig;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -14,10 +15,10 @@ import org.junit.jupiter.api.Test;
  */
 public class SftpFileClientTest {
 
-//    docker run -p 2222:22 -d \
-//            -v $(pwd)/sftp-data:/home/foo/upload \
-//    atmoz/sftp \
-//    foo:pass:1001
+    //    docker run -p 2222:22 -d \
+    //            -v $(pwd)/sftp-data:/home/foo/upload \
+    //    atmoz/sftp \
+    //    foo:pass:1001
 
     @Test
     @Disabled
@@ -45,5 +46,4 @@ public class SftpFileClientTest {
             client.delete(path);
         }
     }
-
 }

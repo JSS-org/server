@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.enums.rule;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum IotSceneRuleConditionOperatorEnum implements ArrayValuable<String> {
-
     EQUALS("=", "#source == #value"),
     NOT_EQUALS("!=", "!(#source == #value)"),
 
@@ -38,29 +38,35 @@ public enum IotSceneRuleConditionOperatorEnum implements ArrayValuable<String> {
 
     DATE_TIME_GREATER_THAN("date_time_>", "#source > #value"), // 在时间之后：时间戳
     DATE_TIME_LESS_THAN("date_time_<", "#source < #value"), // 在时间之前：时间戳
-    DATE_TIME_BETWEEN("date_time_between", // 在时间之间：时间戳
+    DATE_TIME_BETWEEN(
+            "date_time_between", // 在时间之间：时间戳
             "(#source >= #values.get(0)) && (#source <= #values.get(1))"),
 
     TIME_GREATER_THAN("time_>", "#source.isAfter(#value)"), // 在当日时间之后：HH:mm:ss
     TIME_LESS_THAN("time_<", "#source.isBefore(#value)"), // 在当日时间之前：HH:mm:ss
-    TIME_BETWEEN("time_between", // 在当日时间之间：HH:mm:ss
+    TIME_BETWEEN(
+            "time_between", // 在当日时间之间：HH:mm:ss
             "(#source >= #values.get(0)) && (#source <= #values.get(1))"),
-
     ;
 
     private final String operator;
     private final String springExpression;
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(IotSceneRuleConditionOperatorEnum::getOperator).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values())
+                    .map(IotSceneRuleConditionOperatorEnum::getOperator)
+                    .toArray(String[]::new);
 
     /**
      * Spring 表达式 - 原始值
      */
     public static final String SPRING_EXPRESSION_SOURCE = "source";
+
     /**
      * Spring 表达式 - 目标值
      */
     public static final String SPRING_EXPRESSION_VALUE = "value";
+
     /**
      * Spring 表达式 - 目标值数组
      */
@@ -74,5 +80,4 @@ public enum IotSceneRuleConditionOperatorEnum implements ArrayValuable<String> {
     public String[] array() {
         return ARRAYS;
     }
-
 }

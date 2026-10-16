@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.module.trade.enums.aftersale;
 
+import static cn.hutool.core.util.ArrayUtil.firstMatch;
+
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.Collection;
-
-import static cn.hutool.core.util.ArrayUtil.firstMatch;
 
 /**
  * 售后状态的枚举
@@ -23,7 +24,7 @@ public enum AfterSaleStatusEnum implements ArrayValuable<Integer> {
     /**
      * 【申请售后】
      */
-    APPLY(10,"申请中", "会员申请退款"), // 有赞的状态提示：退款申请待商家处理
+    APPLY(10, "申请中", "会员申请退款"), // 有赞的状态提示：退款申请待商家处理
     /**
      * 卖家通过售后；【商品待退货】
      */
@@ -31,7 +32,7 @@ public enum AfterSaleStatusEnum implements ArrayValuable<Integer> {
     /**
      * 买家已退货，等待卖家收货；【商家待收货】
      */
-    BUYER_DELIVERY(30,"待卖家收货", "会员填写退货物流信息"), // 有赞的状态提示：退货退款申请待商家处理
+    BUYER_DELIVERY(30, "待卖家收货", "会员填写退货物流信息"), // 有赞的状态提示：退货退款申请待商家处理
     /**
      * 卖家已收货，等待平台退款；等待退款【等待退款】
      */
@@ -47,35 +48,38 @@ public enum AfterSaleStatusEnum implements ArrayValuable<Integer> {
     /**
      * 卖家拒绝售后；商家拒绝【商家拒绝】
      */
-    SELLER_DISAGREE(62,"卖家拒绝", "商家拒绝退款"), // 有赞的状态提示：商家不同意退款申请
+    SELLER_DISAGREE(62, "卖家拒绝", "商家拒绝退款"), // 有赞的状态提示：商家不同意退款申请
     /**
      * 卖家拒绝收货，终止售后；【商家拒收货】
      */
-    SELLER_REFUSE(63,"卖家拒绝收货", "商家拒绝收货"), // 有赞的状态提示：商家拒绝收货，不同意退款
+    SELLER_REFUSE(63, "卖家拒绝收货", "商家拒绝收货"), // 有赞的状态提示：商家拒绝收货，不同意退款
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(AfterSaleStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(AfterSaleStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 进行中的售后状态
      *
      * 不包括已经结束的状态
      */
-    public static final Collection<Integer> APPLYING_STATUSES = Arrays.asList(
-            APPLY.getStatus(),
-            SELLER_AGREE.getStatus(),
-            BUYER_DELIVERY.getStatus(),
-            WAIT_REFUND.getStatus()
-    );
+    public static final Collection<Integer> APPLYING_STATUSES =
+            Arrays.asList(
+                    APPLY.getStatus(),
+                    SELLER_AGREE.getStatus(),
+                    BUYER_DELIVERY.getStatus(),
+                    WAIT_REFUND.getStatus());
 
     /**
      * 状态
      */
     private final Integer status;
+
     /**
      * 状态名
      */
     private final String name;
+
     /**
      * 操作内容
      *
@@ -91,5 +95,4 @@ public enum AfterSaleStatusEnum implements ArrayValuable<Integer> {
     public static AfterSaleStatusEnum valueOf(Integer status) {
         return firstMatch(value -> value.getStatus().equals(status), values());
     }
-
 }

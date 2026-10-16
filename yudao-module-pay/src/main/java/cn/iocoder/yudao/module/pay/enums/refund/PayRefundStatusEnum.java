@@ -13,7 +13,6 @@ import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public enum PayRefundStatusEnum {
-
     WAITING(0, "未退款"),
     SUCCESS(10, "退款成功"),
     FAILURE(20, "退款失败");
@@ -28,5 +27,4 @@ public enum PayRefundStatusEnum {
     public static boolean isFailure(Integer status) {
         return Objects.equals(status, FAILURE.getStatus());
     }
-
 }

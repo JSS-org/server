@@ -12,5 +12,4 @@ public class GroupMessageUnpinNotification extends BaseGroupNotification {
      * 被取消置顶的消息编号
      */
     private Long messageId;
-
 }

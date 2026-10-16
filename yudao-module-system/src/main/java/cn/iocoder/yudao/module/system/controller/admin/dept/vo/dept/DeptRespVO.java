@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.dept.vo.dept;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -30,10 +31,12 @@ public class DeptRespVO {
     @Schema(description = "邮箱", example = "yudao@iocoder.cn")
     private String email;
 
-    @Schema(description = "状态,见 CommonStatusEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态,见 CommonStatusEnum 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Integer status;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     private LocalDateTime createTime;
-
 }

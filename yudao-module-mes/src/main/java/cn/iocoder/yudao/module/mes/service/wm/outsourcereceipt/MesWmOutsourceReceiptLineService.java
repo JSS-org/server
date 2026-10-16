@@ -48,7 +48,8 @@ public interface MesWmOutsourceReceiptLineService {
      * @param pageReqVO 分页查询
      * @return 外协入库单行分页
      */
-    PageResult<MesWmOutsourceReceiptLineDO> getOutsourceReceiptLinePage(MesWmOutsourceReceiptLinePageReqVO pageReqVO);
+    PageResult<MesWmOutsourceReceiptLineDO> getOutsourceReceiptLinePage(
+            MesWmOutsourceReceiptLinePageReqVO pageReqVO);
 
     /**
      * 获得外协入库单行列表（根据入库单编号）
@@ -78,5 +79,4 @@ public interface MesWmOutsourceReceiptLineService {
      * @param line 行 DO
      */
     void createOutsourceReceiptLineDO(MesWmOutsourceReceiptLineDO line);
-
 }

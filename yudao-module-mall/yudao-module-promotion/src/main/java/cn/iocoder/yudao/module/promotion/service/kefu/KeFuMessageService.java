@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.kefu.vo.message.KeFuMe
 import cn.iocoder.yudao.module.promotion.controller.app.kefu.vo.message.AppKeFuMessagePageReqVO;
 import cn.iocoder.yudao.module.promotion.controller.app.kefu.vo.message.AppKeFuMessageSendReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.kefu.KeFuMessageDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -57,5 +58,4 @@ public interface KeFuMessageService {
      * @return 客服消息分页
      */
     List<KeFuMessageDO> getKeFuMessageList(AppKeFuMessagePageReqVO pageReqVO, Long userId);
-
 }

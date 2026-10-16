@@ -99,5 +99,4 @@ public interface PmsKnowledgeGroupService {
      * @param libraryId 知识库编号
      */
     void deleteKnowledgeGroupRelationsByLibraryId(Long libraryId);
-
 }

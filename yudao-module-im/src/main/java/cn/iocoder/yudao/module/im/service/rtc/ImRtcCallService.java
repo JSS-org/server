@@ -111,7 +111,8 @@ public interface ImRtcCallService {
      *
      * @param event LiveKit Webhook 事件
      */
-    void handleLiveKitEvent(cn.iocoder.yudao.module.im.framework.rtc.core.LiveKitWebhookEventDTO event);
+    void handleLiveKitEvent(
+            cn.iocoder.yudao.module.im.framework.rtc.core.LiveKitWebhookEventDTO event);
 
     /**
      * 【定时任务调用】清理僵尸通话
@@ -165,5 +166,4 @@ public interface ImRtcCallService {
      * @return 参与者明细列表；通话不存在时返回空集合
      */
     List<ImRtcParticipantDO> getCallParticipantListByCallId(Long id);
-
 }

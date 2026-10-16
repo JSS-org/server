@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.sku;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -58,5 +60,4 @@ public class WmsItemSkuSaveReqVO {
     @Schema(description = "销售价，单位元", example = "5288.00")
     @DecimalMin(value = "0", message = "销售价不能小于 0")
     private BigDecimal sellingPrice;
-
 }

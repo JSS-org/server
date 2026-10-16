@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 销售出库单填写运单 Request VO")
@@ -17,5 +19,4 @@ public class MesWmProductSalesShippingReqVO {
 
     @Schema(description = "运输单号", example = "SF1234567890")
     private String shippingNumber;
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.detail;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -50,5 +52,4 @@ public class MesWmProductSalesDetailSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

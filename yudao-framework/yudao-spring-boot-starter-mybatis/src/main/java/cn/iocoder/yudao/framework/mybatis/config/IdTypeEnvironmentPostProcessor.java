@@ -3,9 +3,12 @@ package cn.iocoder.yudao.framework.mybatis.config;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.collection.SetUtils;
 import cn.iocoder.yudao.framework.mybatis.core.util.JdbcUtils;
+
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.annotation.IdType;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -27,13 +30,21 @@ public class IdTypeEnvironmentPostProcessor implements EnvironmentPostProcessor 
 
     private static final String DATASOURCE_DYNAMIC_KEY = "spring.datasource.dynamic";
 
-    private static final String QUARTZ_JOB_STORE_DRIVER_KEY = "spring.quartz.properties.org.quartz.jobStore.driverDelegateClass";
+    private static final String QUARTZ_JOB_STORE_DRIVER_KEY =
+            "spring.quartz.properties.org.quartz.jobStore.driverDelegateClass";
 
-    private static final Set<DbType> INPUT_ID_TYPES = SetUtils.asSet(DbType.ORACLE, DbType.ORACLE_12C,
-            DbType.POSTGRE_SQL, DbType.KINGBASE_ES, DbType.DB2, DbType.H2);
+    private static final Set<DbType> INPUT_ID_TYPES =
+            SetUtils.asSet(
+                    DbType.ORACLE,
+                    DbType.ORACLE_12C,
+                    DbType.POSTGRE_SQL,
+                    DbType.KINGBASE_ES,
+                    DbType.DB2,
+                    DbType.H2);
 
     @Override
-    public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
+    public void postProcessEnvironment(
+            ConfigurableEnvironment environment, SpringApplication application) {
         // 如果获取不到 DbType，则不进行处理
         DbType dbType = getDbType(environment);
         if (dbType == null) {
@@ -109,11 +120,11 @@ public class IdTypeEnvironmentPostProcessor implements EnvironmentPostProcessor 
         if (StrUtil.isEmpty(primary)) {
             return null;
         }
-        String url = environment.getProperty(DATASOURCE_DYNAMIC_KEY + ".datasource." + primary + ".url");
+        String url =
+                environment.getProperty(DATASOURCE_DYNAMIC_KEY + ".datasource." + primary + ".url");
         if (StrUtil.isEmpty(url)) {
             return null;
         }
         return JdbcUtils.getDbType(url);
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.pro.card;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -14,14 +17,13 @@ import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 生产流转卡 Service 实现类
@@ -32,18 +34,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesProCardServiceImpl implements MesProCardService {
 
-    @Resource
-    private MesProCardMapper cardMapper;
+    @Resource private MesProCardMapper cardMapper;
 
-    @Resource
-    @Lazy
-    private MesProCardProcessService cardProcessService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource @Lazy private MesProCardProcessService cardProcessService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     public Long createCard(MesProCardSaveReqVO createReqVO) {
@@ -51,13 +47,17 @@ public class MesProCardServiceImpl implements MesProCardService {
         validateCardSaveData(createReqVO);
 
         // 2. 插入
-        MesProCardDO card = BeanUtils.toBean(createReqVO, MesProCardDO.class)
-                .setStatus(MesProWorkOrderStatusEnum.PREPARE.getStatus());
+        MesProCardDO card =
+                BeanUtils.toBean(createReqVO, MesProCardDO.class)
+                        .setStatus(MesProWorkOrderStatusEnum.PREPARE.getStatus());
         cardMapper.insert(card);
 
         // 3. 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.PROCARD.getValue(),
-                card.getId(), card.getCode(), card.getCode());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.PROCARD.getValue(),
+                card.getId(),
+                card.getCode(),
+                card.getCode());
         return card.getId();
     }
 
@@ -100,8 +100,10 @@ public class MesProCardServiceImpl implements MesProCardService {
         validateCardExistsAndStatus(id, MesProWorkOrderStatusEnum.PREPARE);
 
         // 2. 提交（草稿 → 已确认）
-        cardMapper.updateById(new MesProCardDO()
-                .setId(id).setStatus(MesProWorkOrderStatusEnum.CONFIRMED.getStatus()));
+        cardMapper.updateById(
+                new MesProCardDO()
+                        .setId(id)
+                        .setStatus(MesProWorkOrderStatusEnum.CONFIRMED.getStatus()));
     }
 
     @Override
@@ -110,8 +112,10 @@ public class MesProCardServiceImpl implements MesProCardService {
         validateCardExistsAndStatus(id, MesProWorkOrderStatusEnum.CONFIRMED);
 
         // 2. 完成（已确认 → 已完成）
-        cardMapper.updateById(new MesProCardDO()
-                .setId(id).setStatus(MesProWorkOrderStatusEnum.FINISHED.getStatus()));
+        cardMapper.updateById(
+                new MesProCardDO()
+                        .setId(id)
+                        .setStatus(MesProWorkOrderStatusEnum.FINISHED.getStatus()));
     }
 
     @Override
@@ -119,15 +123,18 @@ public class MesProCardServiceImpl implements MesProCardService {
         // 1.1 校验存在
         MesProCardDO card = validateCardExistsInternal(id);
         // 1.2 已完成和已取消不允许取消
-        if (ObjectUtils.equalsAny(card.getStatus(),
+        if (ObjectUtils.equalsAny(
+                card.getStatus(),
                 MesProWorkOrderStatusEnum.FINISHED.getStatus(),
                 MesProWorkOrderStatusEnum.CANCELED.getStatus())) {
             throw exception(PRO_CARD_CANCEL_NOT_ALLOWED);
         }
 
         // 2. 取消
-        cardMapper.updateById(new MesProCardDO()
-                .setId(id).setStatus(MesProWorkOrderStatusEnum.CANCELED.getStatus()));
+        cardMapper.updateById(
+                new MesProCardDO()
+                        .setId(id)
+                        .setStatus(MesProWorkOrderStatusEnum.CANCELED.getStatus()));
     }
 
     // ==================== 校验方法 ====================
@@ -178,12 +185,12 @@ public class MesProCardServiceImpl implements MesProCardService {
         // 校验编码唯一
         validateCardCodeUnique(reqVO.getId(), reqVO.getCode());
         // 校验工单存在
-        MesProWorkOrderDO workOrder = workOrderService.validateWorkOrderConfirmed(reqVO.getWorkOrderId());
+        MesProWorkOrderDO workOrder =
+                workOrderService.validateWorkOrderConfirmed(reqVO.getWorkOrderId());
         // 校验物料存在
         itemService.validateItemExists(reqVO.getItemId());
         if (ObjUtil.notEqual(workOrder.getProductId(), reqVO.getItemId())) {
             throw exception(PRO_WORK_ORDER_PRODUCT_MISMATCH);
         }
     }
-
 }

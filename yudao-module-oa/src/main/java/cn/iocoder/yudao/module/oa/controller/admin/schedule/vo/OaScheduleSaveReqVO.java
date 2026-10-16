@@ -3,12 +3,16 @@ package cn.iocoder.yudao.module.oa.controller.admin.schedule.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.schedule.OaPriorityEnum;
 import cn.iocoder.yudao.module.oa.enums.schedule.OaScheduleTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -40,11 +44,21 @@ public class OaScheduleSaveReqVO {
     @Size(max = 1000, message = "描述长度不能超过 1000 个字符")
     private String description;
 
-    @Schema(description = "开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "开始时间不能为空")
     private LocalDateTime startTime;
 
-    @Schema(description = "结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     @NotNull(message = "结束时间不能为空")
     private LocalDateTime endTime;
 
@@ -60,5 +74,4 @@ public class OaScheduleSaveReqVO {
     public boolean isTimeRangeValid() {
         return startTime == null || endTime == null || startTime.isBefore(endTime);
     }
-
 }

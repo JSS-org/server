@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.line.MesWmProductReceiptLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productreceipt.vo.line.MesWmProductReceiptLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productreceipt.MesWmProductReceiptLineDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -49,7 +50,8 @@ public interface MesWmProductReceiptLineService {
      * @param pageReqVO 分页参数
      * @return 产品收货单行分页
      */
-    PageResult<MesWmProductReceiptLineDO> getProductReceiptLinePage(MesWmProductReceiptLinePageReqVO pageReqVO);
+    PageResult<MesWmProductReceiptLineDO> getProductReceiptLinePage(
+            MesWmProductReceiptLinePageReqVO pageReqVO);
 
     /**
      * 按收货单编号获得行列表
@@ -65,5 +67,4 @@ public interface MesWmProductReceiptLineService {
      * @param receiptId 收货单编号
      */
     void deleteProductReceiptLineByRecptId(Long receiptId);
-
 }

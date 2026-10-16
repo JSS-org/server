@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.iot.framework.tdengine.core;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.Test;
 
 public class TDengineTableFieldTest {
 
@@ -23,5 +23,4 @@ public class TDengineTableFieldTest {
         assertEquals("", TDengineTableField.buildFieldName(""));
         assertEquals(" ", TDengineTableField.buildFieldName(" "));
     }
-
 }

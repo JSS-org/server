@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.pay.api.order.dto;
 
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.Length;
 
 import java.io.Serializable;
@@ -35,6 +38,7 @@ public class PayOrderCreateReqDTO implements Serializable {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -48,12 +52,14 @@ public class PayOrderCreateReqDTO implements Serializable {
      */
     @NotEmpty(message = "商户订单编号不能为空")
     private String merchantOrderId;
+
     /**
      * 商品标题
      */
     @NotEmpty(message = "商品标题不能为空")
     @Length(max = SUBJECT_MAX_LENGTH, message = "商品标题不能超过 32")
     private String subject;
+
     /**
      * 商品描述
      */
@@ -74,5 +80,4 @@ public class PayOrderCreateReqDTO implements Serializable {
      */
     @NotNull(message = "支付过期时间不能为空")
     private LocalDateTime expireTime;
-
 }

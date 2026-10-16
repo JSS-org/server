@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.cal.team;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.team.vo.member.MesCalTeamMemberPageReqVO;
@@ -7,16 +10,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.cal.team.vo.member.MesCalTea
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.team.MesCalTeamMemberDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.cal.team.MesCalTeamMemberMapper;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 班组成员 Service 实现类
@@ -27,15 +29,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesCalTeamMemberServiceImpl implements MesCalTeamMemberService {
 
-    @Resource
-    private MesCalTeamMemberMapper teamMemberMapper;
+    @Resource private MesCalTeamMemberMapper teamMemberMapper;
 
-    @Resource
-    @Lazy
-    private MesCalTeamService teamService;
+    @Resource @Lazy private MesCalTeamService teamService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public Long createTeamMember(MesCalTeamMemberSaveReqVO createReqVO) {
@@ -107,5 +105,4 @@ public class MesCalTeamMemberServiceImpl implements MesCalTeamMemberService {
             throw exception(CAL_TEAM_MEMBER_USER_DUPLICATE);
         }
     }
-
 }

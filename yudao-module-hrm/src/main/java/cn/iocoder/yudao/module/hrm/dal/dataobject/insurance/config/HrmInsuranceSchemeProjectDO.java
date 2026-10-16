@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceProjectTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,43 +34,49 @@ public class HrmInsuranceSchemeProjectDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 社保方案编号
      *
      * 关联 {@link HrmInsuranceSchemeDO#getId()}
      */
     private Long schemeId;
+
     /**
      * 项目类型
      *
      * 枚举 {@link HrmInsuranceProjectTypeEnum}
      */
     private Integer type;
+
     /**
      * 项目名称
      */
     private String name;
+
     /**
      * 缴纳基数
      */
     private BigDecimal baseAmount;
+
     /**
      * 公司缴纳比例
      */
     private BigDecimal corporateRate;
+
     /**
      * 个人缴纳比例
      */
     private BigDecimal personalRate;
+
     /**
      * 公司缴纳金额
      */
     private BigDecimal corporateAmount;
+
     /**
      * 个人缴纳金额
      */
     private BigDecimal personalAmount;
-
 }

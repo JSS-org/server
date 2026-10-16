@@ -49,5 +49,4 @@ public interface MpMessageTemplateService {
      * @param sendReqVO 消息内容
      */
     void sendMessageTempalte(MpMessageTemplateSendReqVO sendReqVO);
-
 }

@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_KEY_EXISTS;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_KEY_VALID;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
@@ -10,6 +20,7 @@ import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.simple.B
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.simple.BpmSimpleModelUpdateReqVO;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmModelTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmSimpleModelNodeTypeEnum;
+
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.Model;
 import org.flowable.engine.repository.ModelQuery;
@@ -25,15 +36,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_KEY_EXISTS;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_KEY_VALID;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.MODEL_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.AdditionalMatchers.aryEq;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link BpmModelServiceImpl} 的单元测试
  *
@@ -44,15 +46,11 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
     private static final Long TENANT_ID = 1L;
     private static final String MODEL_ID = "model-id";
 
-    @InjectMocks
-    private BpmModelServiceImpl modelService;
+    @InjectMocks private BpmModelServiceImpl modelService;
 
-    @Mock
-    private RepositoryService repositoryService;
-    @Mock
-    private ModelQuery modelQuery;
-    @Mock
-    private BpmProcessDefinitionService processDefinitionService;
+    @Mock private RepositoryService repositoryService;
+    @Mock private ModelQuery modelQuery;
+    @Mock private BpmProcessDefinitionService processDefinitionService;
 
     @BeforeEach
     public void setUp() {
@@ -71,7 +69,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         String bpmnXml = "<definitions />";
         // mock 方法（repositoryService）
         mockGetModel(model);
-        when(repositoryService.getModelEditorSource(eq(MODEL_ID))).thenReturn(StrUtil.utf8Bytes(bpmnXml));
+        when(repositoryService.getModelEditorSource(eq(MODEL_ID)))
+                .thenReturn(StrUtil.utf8Bytes(bpmnXml));
 
         // 调用
         BpmModelSaveReqVO result = modelService.exportModel(MODEL_ID);
@@ -148,11 +147,12 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         assertEquals(MODEL_ID, result);
         verify(model).setTenantId(TENANT_ID.toString());
         verify(repositoryService).saveModel(same(model));
-        verify(repositoryService).addModelEditorSource(eq(MODEL_ID),
-                aryEq(StrUtil.utf8Bytes(reqVO.getBpmnXml())));
+        verify(repositoryService)
+                .addModelEditorSource(eq(MODEL_ID), aryEq(StrUtil.utf8Bytes(reqVO.getBpmnXml())));
         ArgumentCaptor<String> metaInfoCaptor = ArgumentCaptor.forClass(String.class);
         verify(model).setMetaInfo(metaInfoCaptor.capture());
-        BpmModelMetaInfoVO metaInfo = JsonUtils.parseObject(metaInfoCaptor.getValue(), BpmModelMetaInfoVO.class);
+        BpmModelMetaInfoVO metaInfo =
+                JsonUtils.parseObject(metaInfoCaptor.getValue(), BpmModelMetaInfoVO.class);
         assertNotNull(metaInfo);
         assertEquals(Arrays.asList(10L, 20L), metaInfo.getStartUserIds());
         assertEquals(Collections.singletonList(30L), metaInfo.getStartDeptIds());
@@ -183,7 +183,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         assertEquals(MODEL_ID, result);
         verify(repositoryService).saveModel(same(model));
         verify(repositoryService).addModelEditorSource(eq(MODEL_ID), any(byte[].class));
-        verify(repositoryService).addModelEditorSourceExtra(eq(MODEL_ID), aryEq(JsonUtils.toJsonByte(simpleModel)));
+        verify(repositoryService)
+                .addModelEditorSourceExtra(eq(MODEL_ID), aryEq(JsonUtils.toJsonByte(simpleModel)));
     }
 
     @Test
@@ -203,7 +204,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         mockModelKeyExists(reqVO.getKey());
 
         // 调用，并断言异常
-        assertServiceException(() -> modelService.createModel(reqVO), MODEL_KEY_EXISTS, reqVO.getKey());
+        assertServiceException(
+                () -> modelService.createModel(reqVO), MODEL_KEY_EXISTS, reqVO.getKey());
         verify(repositoryService, never()).newModel();
     }
 
@@ -231,7 +233,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         BpmSimpleModelNodeVO simpleModel = simpleModel();
         when(model.getId()).thenReturn(MODEL_ID);
         mockGetModel(model);
-        when(repositoryService.getModelEditorSourceExtra(eq(MODEL_ID))).thenReturn(JsonUtils.toJsonByte(simpleModel));
+        when(repositoryService.getModelEditorSourceExtra(eq(MODEL_ID)))
+                .thenReturn(JsonUtils.toJsonByte(simpleModel));
 
         // 调用
         BpmSimpleModelNodeVO result = modelService.getSimpleModel(MODEL_ID);
@@ -254,7 +257,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         metaInfo.setManagerUserIds(Collections.singletonList(10L));
         when(model.getMetaInfo()).thenReturn(JsonUtils.toJsonString(metaInfo));
         BpmSimpleModelNodeVO simpleModel = simpleModel();
-        BpmSimpleModelUpdateReqVO reqVO = new BpmSimpleModelUpdateReqVO().setId(MODEL_ID).setSimpleModel(simpleModel);
+        BpmSimpleModelUpdateReqVO reqVO =
+                new BpmSimpleModelUpdateReqVO().setId(MODEL_ID).setSimpleModel(simpleModel);
         mockGetModel(model);
 
         // 调用
@@ -262,7 +266,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
 
         // 断言
         verify(repositoryService).addModelEditorSource(eq(MODEL_ID), any(byte[].class));
-        verify(repositoryService).addModelEditorSourceExtra(eq(MODEL_ID), aryEq(JsonUtils.toJsonByte(simpleModel)));
+        verify(repositoryService)
+                .addModelEditorSourceExtra(eq(MODEL_ID), aryEq(JsonUtils.toJsonByte(simpleModel)));
     }
 
     @Test
@@ -274,7 +279,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         Model model3 = mockSortableModel("model-3");
         ModelQuery listQuery = mock(ModelQuery.class);
         ModelQuery managerQuery = mock(ModelQuery.class);
-        when(repositoryService.createModelQuery()).thenReturn(listQuery, managerQuery, managerQuery, managerQuery);
+        when(repositoryService.createModelQuery())
+                .thenReturn(listQuery, managerQuery, managerQuery, managerQuery);
         when(listQuery.modelTenantId(eq(TENANT_ID.toString()))).thenReturn(listQuery);
         when(listQuery.list()).thenReturn(Arrays.asList(model1, model2, model3));
         when(managerQuery.modelId(anyString())).thenReturn(managerQuery);
@@ -289,7 +295,8 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         ArgumentCaptor<String> modelIdCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Long> sortCaptor = ArgumentCaptor.forClass(Long.class);
         verify(processDefinitionService, times(3))
-                .updateProcessDefinitionSortByModelId(modelIdCaptor.capture(), sortCaptor.capture());
+                .updateProcessDefinitionSortByModelId(
+                        modelIdCaptor.capture(), sortCaptor.capture());
         assertEquals(Arrays.asList("model-3", "model-2", "model-1"), modelIdCaptor.getAllValues());
         List<Long> sorts = sortCaptor.getAllValues();
         assertTrue(sorts.get(0) > sorts.get(1) && sorts.get(1) > sorts.get(2));
@@ -310,10 +317,13 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
     }
 
     private BpmSimpleModelNodeVO simpleModel() {
-        return new BpmSimpleModelNodeVO().setId("start-user")
+        return new BpmSimpleModelNodeVO()
+                .setId("start-user")
                 .setType(BpmSimpleModelNodeTypeEnum.START_USER_NODE.getType())
-                .setChildNode(new BpmSimpleModelNodeVO().setId("end")
-                        .setType(BpmSimpleModelNodeTypeEnum.END_NODE.getType()));
+                .setChildNode(
+                        new BpmSimpleModelNodeVO()
+                                .setId("end")
+                                .setType(BpmSimpleModelNodeTypeEnum.END_NODE.getType()));
     }
 
     private Model mockModel(Integer type) {
@@ -344,5 +354,4 @@ public class BpmModelServiceImplTest extends BaseMockitoUnitTest {
         when(modelQuery.modelTenantId(eq(TENANT_ID.toString()))).thenReturn(modelQuery);
         when(modelQuery.singleResult()).thenReturn(model);
     }
-
 }

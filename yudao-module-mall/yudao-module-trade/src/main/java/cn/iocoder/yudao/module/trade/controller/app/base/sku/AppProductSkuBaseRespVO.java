@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.app.base.sku;
 
 import cn.iocoder.yudao.module.trade.controller.app.base.property.AppProductPropertyValueDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -30,5 +32,4 @@ public class AppProductSkuBaseRespVO {
      * 属性数组
      */
     private List<AppProductPropertyValueDetailRespVO> properties;
-
 }

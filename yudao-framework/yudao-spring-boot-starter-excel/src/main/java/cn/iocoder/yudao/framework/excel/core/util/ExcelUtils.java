@@ -7,7 +7,9 @@ import cn.idev.excel.read.listener.ReadListener;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.framework.excel.core.handler.ColumnWidthMatchStyleStrategy;
 import cn.iocoder.yudao.framework.excel.core.handler.SelectSheetWriteHandler;
+
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -35,17 +37,25 @@ public class ExcelUtils {
      * @param <T>       泛型，保证 head 和 data 类型的一致性
      * @throws IOException 写入失败的情况
      */
-    public static <T> void write(HttpServletResponse response, String filename, String sheetName,
-                                 Class<T> head, List<T> data) throws IOException {
+    public static <T> void write(
+            HttpServletResponse response,
+            String filename,
+            String sheetName,
+            Class<T> head,
+            List<T> data)
+            throws IOException {
         // 输出 Excel
         FastExcelFactory.write(response.getOutputStream(), head)
                 .autoCloseStream(false) // 不要自动关闭，交给 Servlet 自己处理
-                .registerWriteHandler(new ColumnWidthMatchStyleStrategy()) // 基于 column 长度，自动适配。最大 255 宽度
+                .registerWriteHandler(
+                        new ColumnWidthMatchStyleStrategy()) // 基于 column 长度，自动适配。最大 255 宽度
                 .registerWriteHandler(new SelectSheetWriteHandler(head)) // 基于固定 sheet 实现下拉框
                 .registerConverter(new LongStringConverter()) // 避免 Long 类型丢失精度
-                .sheet(sheetName).doWrite(data);
+                .sheet(sheetName)
+                .doWrite(data);
         // 设置 header 和 contentType。写在最后的原因是，避免报错时，响应 contentType 已经被修改了
-        response.addHeader("Content-Disposition", "attachment;filename=" + HttpUtils.encodeUtf8(filename));
+        response.addHeader(
+                "Content-Disposition", "attachment;filename=" + HttpUtils.encodeUtf8(filename));
         response.setContentType("application/vnd.ms-excel;charset=UTF-8");
     }
 
@@ -59,16 +69,25 @@ public class ExcelUtils {
      * @param data 数据列表
      * @throws IOException 写入失败的情况
      */
-    public static void write(HttpServletResponse response, String filename, String sheetName,
-                             List<List<String>> head, List<List<Object>> data) throws IOException {
+    public static void write(
+            HttpServletResponse response,
+            String filename,
+            String sheetName,
+            List<List<String>> head,
+            List<List<Object>> data)
+            throws IOException {
         // 输出 Excel
         FastExcelFactory.write(response.getOutputStream())
                 .autoCloseStream(false) // 不要自动关闭，交给 Servlet 自己处理
-                .registerWriteHandler(new ColumnWidthMatchStyleStrategy()) // 基于 column 长度，自动适配。最大 255 宽度
+                .registerWriteHandler(
+                        new ColumnWidthMatchStyleStrategy()) // 基于 column 长度，自动适配。最大 255 宽度
                 .registerConverter(new LongStringConverter()) // 避免 Long 类型丢失精度
-                .head(head).sheet(sheetName).doWrite(data);
+                .head(head)
+                .sheet(sheetName)
+                .doWrite(data);
         // 设置 header 和 contentType。写在最后的原因是，避免报错时，响应 contentType 已经被修改了
-        response.addHeader("Content-Disposition", "attachment;filename=" + HttpUtils.encodeUtf8(filename));
+        response.addHeader(
+                "Content-Disposition", "attachment;filename=" + HttpUtils.encodeUtf8(filename));
         response.setContentType("application/vnd.ms-excel;charset=UTF-8");
     }
 
@@ -92,7 +111,8 @@ public class ExcelUtils {
      * @param maxRowCount 最大读取行数
      * @return Excel 数据
      */
-    public static <T> List<T> read(MultipartFile file, Class<T> head, int maxRowCount) throws IOException {
+    public static <T> List<T> read(MultipartFile file, Class<T> head, int maxRowCount)
+            throws IOException {
         if (file == null || file.isEmpty()) {
             return Collections.emptyList();
         }
@@ -101,24 +121,28 @@ public class ExcelUtils {
         }
         List<T> rows = new ArrayList<>(Math.min(maxRowCount, 1024));
         try (InputStream inputStream = file.getInputStream()) {
-            FastExcelFactory.read(inputStream, head, new ReadListener<T>() {
+            FastExcelFactory.read(
+                            inputStream,
+                            head,
+                            new ReadListener<T>() {
 
-                @Override
-                public void invoke(T data, AnalysisContext context) {
-                    rows.add(data);
-                }
+                                @Override
+                                public void invoke(T data, AnalysisContext context) {
+                                    rows.add(data);
+                                }
 
-                @Override
-                public void doAfterAllAnalysed(AnalysisContext context) {
-                    // 无需处理
-                }
+                                @Override
+                                public void doAfterAllAnalysed(AnalysisContext context) {
+                                    // 无需处理
+                                }
 
-                @Override
-                public boolean hasNext(AnalysisContext context) {
-                    return rows.size() < maxRowCount;
-                }
-
-            }).autoCloseStream(false).doReadAll();
+                                @Override
+                                public boolean hasNext(AnalysisContext context) {
+                                    return rows.size() < maxRowCount;
+                                }
+                            })
+                    .autoCloseStream(false)
+                    .doReadAll();
         }
         return rows;
     }
@@ -143,5 +167,4 @@ public class ExcelUtils {
                     .doReadSync();
         }
     }
-
 }

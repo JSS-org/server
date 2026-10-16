@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.im.controller.admin.group;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -15,20 +19,19 @@ import cn.iocoder.yudao.module.im.dal.dataobject.message.ImGroupMessageDO;
 import cn.iocoder.yudao.module.im.service.group.ImGroupMemberService;
 import cn.iocoder.yudao.module.im.service.group.ImGroupService;
 import cn.iocoder.yudao.module.im.service.message.ImGroupMessageService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Stream;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 群")
 @RestController
@@ -36,18 +39,16 @@ import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLogi
 @Validated
 public class ImGroupController {
 
-    @Resource
-    private ImGroupService groupService;
-    @Resource
-    private ImGroupMemberService groupMemberService;
-    @Resource
-    private ImGroupMessageService groupMessageService;
+    @Resource private ImGroupService groupService;
+    @Resource private ImGroupMemberService groupMemberService;
+    @Resource private ImGroupMessageService groupMessageService;
 
     // ==================== 群的写操作 ====================
 
     @PostMapping("/create")
     @Operation(summary = "创建群")
-    public CommonResult<ImGroupRespVO> createGroup(@Valid @RequestBody ImGroupCreateReqVO createReqVO) {
+    public CommonResult<ImGroupRespVO> createGroup(
+            @Valid @RequestBody ImGroupCreateReqVO createReqVO) {
         ImGroupDO group = groupService.createGroup(createReqVO, getLoginUserId());
         // 新建群必无 pinnedMessages，跳过关联回填
         return success(BeanUtils.toBean(group, ImGroupRespVO.class));
@@ -55,7 +56,8 @@ public class ImGroupController {
 
     @PutMapping("/update")
     @Operation(summary = "更新群")
-    public CommonResult<ImGroupRespVO> updateGroup(@Valid @RequestBody ImGroupUpdateReqVO updateReqVO) {
+    public CommonResult<ImGroupRespVO> updateGroup(
+            @Valid @RequestBody ImGroupUpdateReqVO updateReqVO) {
         ImGroupDO group = groupService.updateGroup(updateReqVO, getLoginUserId());
         return success(buildGroupRespVO(group, getLoginUserId()));
     }
@@ -90,7 +92,8 @@ public class ImGroupController {
 
     @PostMapping("/invite")
     @Operation(summary = "邀请用户加入群")
-    public CommonResult<Boolean> inviteGroupMember(@Valid @RequestBody ImGroupMemberInviteReqVO inviteReqVO) {
+    public CommonResult<Boolean> inviteGroupMember(
+            @Valid @RequestBody ImGroupMemberInviteReqVO inviteReqVO) {
         groupService.inviteGroupMember(getLoginUserId(), inviteReqVO);
         return success(true);
     }
@@ -105,7 +108,8 @@ public class ImGroupController {
 
     @DeleteMapping("/kicking")
     @Operation(summary = "移除群成员")
-    public CommonResult<Boolean> removeGroupMember(@Valid @RequestBody ImGroupMemberRemoveReqVO removeReqVO) {
+    public CommonResult<Boolean> removeGroupMember(
+            @Valid @RequestBody ImGroupMemberRemoveReqVO removeReqVO) {
         groupService.removeGroupMember(getLoginUserId(), removeReqVO);
         return success(true);
     }
@@ -119,14 +123,16 @@ public class ImGroupController {
 
     @PutMapping("/remove-admin")
     @Operation(summary = "撤销群管理员")
-    public CommonResult<Boolean> removeGroupAdmin(@Valid @RequestBody ImGroupAdminRemoveReqVO reqVO) {
+    public CommonResult<Boolean> removeGroupAdmin(
+            @Valid @RequestBody ImGroupAdminRemoveReqVO reqVO) {
         groupService.removeGroupAdmin(getLoginUserId(), reqVO);
         return success(true);
     }
 
     @PutMapping("/transfer-owner")
     @Operation(summary = "转让群主")
-    public CommonResult<Boolean> transferGroupOwner(@Valid @RequestBody ImGroupTransferOwnerReqVO transferReqVO) {
+    public CommonResult<Boolean> transferGroupOwner(
+            @Valid @RequestBody ImGroupTransferOwnerReqVO transferReqVO) {
         groupService.transferGroupOwner(getLoginUserId(), transferReqVO);
         return success(true);
     }
@@ -142,7 +148,8 @@ public class ImGroupController {
 
     @PutMapping("/unpin-message")
     @Operation(summary = "取消置顶群消息（群主 / 管理员）")
-    public CommonResult<Boolean> unpinGroupMessage(@Valid @RequestBody ImGroupMessagePinReqVO reqVO) {
+    public CommonResult<Boolean> unpinGroupMessage(
+            @Valid @RequestBody ImGroupMessagePinReqVO reqVO) {
         groupService.unpinGroupMessage(getLoginUserId(), reqVO.getId(), reqVO.getMessageId());
         return success(true);
     }
@@ -165,7 +172,8 @@ public class ImGroupController {
 
     @PutMapping("/cancel-mute-member")
     @Operation(summary = "取消成员禁言")
-    public CommonResult<Boolean> cancelMuteMember(@Valid @RequestBody ImGroupCancelMuteMemberReqVO reqVO) {
+    public CommonResult<Boolean> cancelMuteMember(
+            @Valid @RequestBody ImGroupCancelMuteMemberReqVO reqVO) {
         groupService.cancelMuteMember(getLoginUserId(), reqVO);
         return success(true);
     }
@@ -188,28 +196,49 @@ public class ImGroupController {
             return Collections.emptyList();
         }
         // 仅当前用户是有效成员的群才允许回填置顶消息
-        Map<Long, ImGroupMemberDO> memberMap = convertMap(
-                groupMemberService.getGroupMemberListByUserId(loginUserId), ImGroupMemberDO::getGroupId);
-        Set<Long> activeGroupIds = convertSet(memberMap.values(), ImGroupMemberDO::getGroupId,
-                member -> CommonStatusEnum.ENABLE.getStatus().equals(member.getStatus()));
-        Set<Long> allMessageIds = convertSetByFlatMap(groups, group -> activeGroupIds.contains(group.getId())
-                ? CollUtil.emptyIfNull(group.getPinnedMessageIds()).stream() : Stream.empty());
-        Map<Long, ImGroupMessageDO> messageMap = groupMessageService.getGroupMessageMap(allMessageIds);
+        Map<Long, ImGroupMemberDO> memberMap =
+                convertMap(
+                        groupMemberService.getGroupMemberListByUserId(loginUserId),
+                        ImGroupMemberDO::getGroupId);
+        Set<Long> activeGroupIds =
+                convertSet(
+                        memberMap.values(),
+                        ImGroupMemberDO::getGroupId,
+                        member -> CommonStatusEnum.ENABLE.getStatus().equals(member.getStatus()));
+        Set<Long> allMessageIds =
+                convertSetByFlatMap(
+                        groups,
+                        group ->
+                                activeGroupIds.contains(group.getId())
+                                        ? CollUtil.emptyIfNull(group.getPinnedMessageIds()).stream()
+                                        : Stream.empty());
+        Map<Long, ImGroupMessageDO> messageMap =
+                groupMessageService.getGroupMessageMap(allMessageIds);
         // 转换输出
-        return convertList(groups, group -> {
-            ImGroupRespVO groupVO = BeanUtils.toBean(group, ImGroupRespVO.class);
-            // 标记登录用户在该群的成员状态，供前端区分当前群与历史退群
-            boolean joined = activeGroupIds.contains(group.getId());
-            groupVO.setJoinStatus(joined ? CommonStatusEnum.ENABLE.getStatus() : CommonStatusEnum.DISABLE.getStatus());
-            MapUtils.findAndThen(memberMap, group.getId(), member ->
-                    groupVO.setGroupRemark(member.getGroupRemark()).setSilent(Boolean.TRUE.equals(member.getSilent())));
-            if (!joined || CollUtil.isEmpty(group.getPinnedMessageIds())) {
-                return groupVO;
-            }
-            // 按 pin 顺序输出，已被删除的消息（messageMap 没命中）跳过
-            List<ImGroupMessageDO> pinnedMesages = convertList(group.getPinnedMessageIds(), messageMap::get);
-            return groupVO.setPinnedMessages(BeanUtils.toBean(pinnedMesages, ImGroupMessageRespVO.class));
-        });
+        return convertList(
+                groups,
+                group -> {
+                    ImGroupRespVO groupVO = BeanUtils.toBean(group, ImGroupRespVO.class);
+                    // 标记登录用户在该群的成员状态，供前端区分当前群与历史退群
+                    boolean joined = activeGroupIds.contains(group.getId());
+                    groupVO.setJoinStatus(
+                            joined
+                                    ? CommonStatusEnum.ENABLE.getStatus()
+                                    : CommonStatusEnum.DISABLE.getStatus());
+                    MapUtils.findAndThen(
+                            memberMap,
+                            group.getId(),
+                            member ->
+                                    groupVO.setGroupRemark(member.getGroupRemark())
+                                            .setSilent(Boolean.TRUE.equals(member.getSilent())));
+                    if (!joined || CollUtil.isEmpty(group.getPinnedMessageIds())) {
+                        return groupVO;
+                    }
+                    // 按 pin 顺序输出，已被删除的消息（messageMap 没命中）跳过
+                    List<ImGroupMessageDO> pinnedMesages =
+                            convertList(group.getPinnedMessageIds(), messageMap::get);
+                    return groupVO.setPinnedMessages(
+                            BeanUtils.toBean(pinnedMesages, ImGroupMessageRespVO.class));
+                });
     }
-
 }

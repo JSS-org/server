@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.rtc.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -35,5 +36,4 @@ public class ImRtcParticipantManagerRespVO {
 
     @Schema(description = "离开时间；未加入为空")
     private LocalDateTime leaveTime;
-
 }

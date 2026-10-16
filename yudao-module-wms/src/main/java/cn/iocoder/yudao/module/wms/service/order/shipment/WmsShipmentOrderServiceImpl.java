@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.wms.service.order.shipment;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,23 +15,21 @@ import cn.iocoder.yudao.module.wms.controller.admin.order.shipment.vo.order.WmsS
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.shipment.WmsShipmentOrderDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.shipment.WmsShipmentOrderDetailDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.order.shipment.WmsShipmentOrderMapper;
-import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.enums.order.WmsOrderStatusEnum;
+import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.service.inventory.WmsInventoryService;
 import cn.iocoder.yudao.module.wms.service.inventory.dto.WmsInventoryChangeReqDTO;
 import cn.iocoder.yudao.module.wms.service.md.merchant.WmsMerchantService;
 import cn.iocoder.yudao.module.wms.service.md.warehouse.WmsWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 出库单 Service 实现类
@@ -38,16 +40,11 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
 
-    @Resource
-    private WmsShipmentOrderMapper shipmentOrderMapper;
-    @Resource
-    private WmsShipmentOrderDetailService shipmentOrderDetailService;
-    @Resource
-    private WmsWarehouseService warehouseService;
-    @Resource
-    private WmsMerchantService merchantService;
-    @Resource
-    private WmsInventoryService inventoryService;
+    @Resource private WmsShipmentOrderMapper shipmentOrderMapper;
+    @Resource private WmsShipmentOrderDetailService shipmentOrderDetailService;
+    @Resource private WmsWarehouseService warehouseService;
+    @Resource private WmsMerchantService merchantService;
+    @Resource private WmsInventoryService inventoryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -73,11 +70,13 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
         validateShipmentOrderSaveData(updateReqVO);
 
         // 2.1 更新出库单
-        WmsShipmentOrderDO updateObj = BeanUtils.toBean(updateReqVO, WmsShipmentOrderDO.class)
-                .setStatus(WmsOrderStatusEnum.PREPARE.getStatus());
+        WmsShipmentOrderDO updateObj =
+                BeanUtils.toBean(updateReqVO, WmsShipmentOrderDO.class)
+                        .setStatus(WmsOrderStatusEnum.PREPARE.getStatus());
         fillShipmentOrderTotal(updateObj, updateReqVO);
-        int updateCount = shipmentOrderMapper.updateByIdAndStatus(updateReqVO.getId(),
-                WmsOrderStatusEnum.PREPARE.getStatus(), updateObj);
+        int updateCount =
+                shipmentOrderMapper.updateByIdAndStatus(
+                        updateReqVO.getId(), WmsOrderStatusEnum.PREPARE.getStatus(), updateObj);
         if (updateCount == 0) {
             throw exception(SHIPMENT_ORDER_STATUS_NOT_PREPARE);
         }
@@ -91,7 +90,8 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
         // 1. 校验存在，且可删除
         WmsShipmentOrderDO order = validateShipmentOrderExists(id);
         if (ObjectUtil.notEqual(order.getStatus(), WmsOrderStatusEnum.PREPARE.getStatus())
-                && ObjectUtil.notEqual(order.getStatus(), WmsOrderStatusEnum.CANCELED.getStatus())) {
+                && ObjectUtil.notEqual(
+                        order.getStatus(), WmsOrderStatusEnum.CANCELED.getStatus())) {
             throw exception(SHIPMENT_ORDER_STATUS_NOT_DELETABLE);
         }
 
@@ -107,11 +107,15 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
         // 1.1 校验存在，且草稿
         WmsShipmentOrderDO order = validateShipmentOrderPrepare(id);
         // 1.2 校验出库单明细存在
-        List<WmsShipmentOrderDetailDO> details = shipmentOrderDetailService.validateShipmentOrderDetailListExists(id);
+        List<WmsShipmentOrderDetailDO> details =
+                shipmentOrderDetailService.validateShipmentOrderDetailListExists(id);
 
         // 2. 完成出库单
-        if (shipmentOrderMapper.updateByIdAndStatus(id, WmsOrderStatusEnum.PREPARE.getStatus(),
-                new WmsShipmentOrderDO().setStatus(WmsOrderStatusEnum.FINISHED.getStatus())) == 0) {
+        if (shipmentOrderMapper.updateByIdAndStatus(
+                        id,
+                        WmsOrderStatusEnum.PREPARE.getStatus(),
+                        new WmsShipmentOrderDO().setStatus(WmsOrderStatusEnum.FINISHED.getStatus()))
+                == 0) {
             throw exception(SHIPMENT_ORDER_STATUS_NOT_PREPARE);
         }
 
@@ -126,8 +130,11 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
         validateShipmentOrderPrepare(id);
 
         // 2. 作废出库单
-        if (shipmentOrderMapper.updateByIdAndStatus(id, WmsOrderStatusEnum.PREPARE.getStatus(),
-                new WmsShipmentOrderDO().setStatus(WmsOrderStatusEnum.CANCELED.getStatus())) == 0) {
+        if (shipmentOrderMapper.updateByIdAndStatus(
+                        id,
+                        WmsOrderStatusEnum.PREPARE.getStatus(),
+                        new WmsShipmentOrderDO().setStatus(WmsOrderStatusEnum.CANCELED.getStatus()))
+                == 0) {
             throw exception(SHIPMENT_ORDER_STATUS_NOT_PREPARE);
         }
     }
@@ -138,7 +145,8 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
     }
 
     @Override
-    public PageResult<WmsShipmentOrderDO> getShipmentOrderPage(WmsShipmentOrderPageReqVO pageReqVO) {
+    public PageResult<WmsShipmentOrderDO> getShipmentOrderPage(
+            WmsShipmentOrderPageReqVO pageReqVO) {
         return shipmentOrderMapper.selectPage(pageReqVO);
     }
 
@@ -181,8 +189,9 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
                 if (detail.getQuantity() != null) {
                     totalQuantity = totalQuantity.add(detail.getQuantity());
                 }
-                BigDecimal detailTotalPrice = getDetailTotalPrice(detail.getQuantity(), detail.getPrice(),
-                        detail.getTotalPrice());
+                BigDecimal detailTotalPrice =
+                        getDetailTotalPrice(
+                                detail.getQuantity(), detail.getPrice(), detail.getTotalPrice());
                 if (detailTotalPrice != null) {
                     totalPrice = totalPrice.add(detailTotalPrice);
                 }
@@ -191,7 +200,8 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
         order.setTotalQuantity(totalQuantity).setTotalPrice(totalPrice);
     }
 
-    private static BigDecimal getDetailTotalPrice(BigDecimal quantity, BigDecimal price, BigDecimal totalPrice) {
+    private static BigDecimal getDetailTotalPrice(
+            BigDecimal quantity, BigDecimal price, BigDecimal totalPrice) {
         if (totalPrice != null) {
             return totalPrice;
         }
@@ -227,18 +237,27 @@ public class WmsShipmentOrderServiceImpl implements WmsShipmentOrderService {
      * @param details 出库单明细列表
      */
     private void changeInventory(WmsShipmentOrderDO order, List<WmsShipmentOrderDetailDO> details) {
-        List<WmsInventoryChangeReqDTO.Item> items = convertList(details,
-                detail -> BeanUtils.toBean(detail, WmsInventoryChangeReqDTO.Item.class)
-                        .setQuantity(detail.getQuantity().negate())
-                        .setTotalPrice(negate(getDetailTotalPrice(detail.getQuantity(), detail.getPrice(),
-                                detail.getTotalPrice()))));
-        inventoryService.changeInventory(new WmsInventoryChangeReqDTO()
-                .setOrderId(order.getId()).setOrderNo(order.getNo())
-                .setOrderType(WmsOrderTypeEnum.SHIPMENT.getType()).setItems(items));
+        List<WmsInventoryChangeReqDTO.Item> items =
+                convertList(
+                        details,
+                        detail ->
+                                BeanUtils.toBean(detail, WmsInventoryChangeReqDTO.Item.class)
+                                        .setQuantity(detail.getQuantity().negate())
+                                        .setTotalPrice(
+                                                negate(
+                                                        getDetailTotalPrice(
+                                                                detail.getQuantity(),
+                                                                detail.getPrice(),
+                                                                detail.getTotalPrice()))));
+        inventoryService.changeInventory(
+                new WmsInventoryChangeReqDTO()
+                        .setOrderId(order.getId())
+                        .setOrderNo(order.getNo())
+                        .setOrderType(WmsOrderTypeEnum.SHIPMENT.getType())
+                        .setItems(items));
     }
 
     private static BigDecimal negate(BigDecimal value) {
         return value == null ? null : value.negate();
     }
-
 }

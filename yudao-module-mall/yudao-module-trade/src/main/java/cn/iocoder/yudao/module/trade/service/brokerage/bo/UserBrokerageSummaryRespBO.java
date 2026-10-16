@@ -18,13 +18,14 @@ public class UserBrokerageSummaryRespBO {
      * 用户编号
      */
     private Long userId;
+
     /**
      * 推广数量
      */
     private Integer count;
+
     /**
      * 佣金总额
      */
     private Integer price;
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.sendrecord;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,5 +17,4 @@ public class HrmSalarySlipSendRecordPageReqVO extends PageParam {
 
     @Schema(description = "月份", example = "7")
     private Integer month;
-
 }

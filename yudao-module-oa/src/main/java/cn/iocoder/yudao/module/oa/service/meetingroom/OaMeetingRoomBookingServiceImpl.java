@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.meetingroom;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getMaxValue;
+import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.MEETING_ROOM_BOOKING;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.oa.enums.MessageTemplateConstants.MEETING_ROOM_BOOKING_REMINDER;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
@@ -22,8 +30,11 @@ import cn.iocoder.yudao.module.system.api.notify.NotifyMessageSendApi;
 import cn.iocoder.yudao.module.system.api.notify.dto.NotifySendSingleToUserReqDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,14 +42,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getMaxValue;
-import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.MEETING_ROOM_BOOKING;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.oa.enums.MessageTemplateConstants.MEETING_ROOM_BOOKING_REMINDER;
 
 /**
  * 会议室预定 Service 实现类
@@ -50,21 +53,15 @@ import static cn.iocoder.yudao.module.oa.enums.MessageTemplateConstants.MEETING_
 @Slf4j
 public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingService {
 
-    @Resource
-    private OaMeetingRoomBookingMapper meetingRoomBookingMapper;
+    @Resource private OaMeetingRoomBookingMapper meetingRoomBookingMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaMeetingRoomService meetingRoomService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
-    @Resource
-    private NotifyMessageSendApi notifyMessageSendApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private OaNoRedisDAO noRedisDAO;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
+    @Resource private NotifyMessageSendApi notifyMessageSendApi;
 
     @Override
     public Long createMeetingRoomBooking(OaMeetingRoomBookingSaveReqVO createReqVO, Long userId) {
@@ -79,9 +76,13 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         }
 
         // 2. 创建草稿
-        OaMeetingRoomBookingDO booking = BeanUtils.toBean(createReqVO, OaMeetingRoomBookingDO.class)
-                .setNo(no).setReminded(false)
-                .setDeptId(user.getDeptId()).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus()).setUseStatus(OaMeetingRoomUseStatusEnum.PENDING.getStatus());
+        OaMeetingRoomBookingDO booking =
+                BeanUtils.toBean(createReqVO, OaMeetingRoomBookingDO.class)
+                        .setNo(no)
+                        .setReminded(false)
+                        .setDeptId(user.getDeptId())
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
+                        .setUseStatus(OaMeetingRoomUseStatusEnum.PENDING.getStatus());
         meetingRoomBookingMapper.insert(booking);
         return booking.getId();
     }
@@ -97,7 +98,8 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         validateMeetingRoomBooking(updateReqVO);
 
         // 2. 更新草稿
-        meetingRoomBookingMapper.updateById(BeanUtils.toBean(updateReqVO, OaMeetingRoomBookingDO.class));
+        meetingRoomBookingMapper.updateById(
+                BeanUtils.toBean(updateReqVO, OaMeetingRoomBookingDO.class));
     }
 
     @Override
@@ -125,8 +127,10 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         // 1.3 校验房间状态与预定成员范围
         if (!Boolean.TRUE.equals(room.getAllowBooking())
                 || ObjUtil.notEqual(room.getStatus(), OaMeetingRoomStatusEnum.NORMAL.getStatus())
-                || (ObjUtil.equal(room.getBookingScope(), OaMeetingRoomBookingScopeEnum.SPECIFIED.getScope())
-                    && !CollUtil.contains(room.getBookingUserIds(), userId))) {
+                || (ObjUtil.equal(
+                                room.getBookingScope(),
+                                OaMeetingRoomBookingScopeEnum.SPECIFIED.getScope())
+                        && !CollUtil.contains(room.getBookingUserIds(), userId))) {
             throw exception(MEETING_ROOM_NOT_AVAILABLE);
         }
         // 1.4 提交时校验时间及人员仍有效
@@ -135,25 +139,38 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
             throw exception(MEETING_ROOM_BOOKING_TIME_INVALID);
         }
         // 1.5 检查有效预约，采用左闭右开区间，相邻会议不冲突
-        if (CollUtil.isNotEmpty(meetingRoomBookingMapper.selectListByRoomIdAndTimeOverlap(room.getId(),
-                booking.getStartTime(), booking.getEndTime()))) {
+        if (CollUtil.isNotEmpty(
+                meetingRoomBookingMapper.selectListByRoomIdAndTimeOverlap(
+                        room.getId(), booking.getStartTime(), booking.getEndTime()))) {
             throw exception(MEETING_ROOM_BOOKING_TIME_CONFLICT);
         }
 
         // 2. 更新审批状态，免审批直接通过
         boolean needApproval = Boolean.TRUE.equals(room.getNeedApproval());
-        meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setNeedApproval(needApproval)
-                .setStatus(needApproval ? BpmProcessInstanceStatusEnum.RUNNING.getStatus() : BpmProcessInstanceStatusEnum.APPROVE.getStatus()).setUseStatus(OaMeetingRoomUseStatusEnum.PENDING.getStatus()));
+        meetingRoomBookingMapper.updateById(
+                new OaMeetingRoomBookingDO()
+                        .setId(id)
+                        .setNeedApproval(needApproval)
+                        .setStatus(
+                                needApproval
+                                        ? BpmProcessInstanceStatusEnum.RUNNING.getStatus()
+                                        : BpmProcessInstanceStatusEnum.APPROVE.getStatus())
+                        .setUseStatus(OaMeetingRoomUseStatusEnum.PENDING.getStatus()));
         if (!needApproval) {
             return null;
         }
 
         // 3.1 发起审批
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(MEETING_ROOM_BOOKING)
-                        .setBusinessKey(id.toString()).setVariables(new HashMap<>()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(MEETING_ROOM_BOOKING)
+                                .setBusinessKey(id.toString())
+                                .setVariables(new HashMap<>()));
         // 3.2 绑定流程编号
-        meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setProcessInstanceId(processInstanceId));
+        meetingRoomBookingMapper.updateById(
+                new OaMeetingRoomBookingDO().setId(id).setProcessInstanceId(processInstanceId));
         return processInstanceId;
     }
 
@@ -166,13 +183,18 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
 
         // 2.1 审批中取消 BPM 流程
         if (ObjUtil.equal(booking.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
-            processInstanceApi.cancelProcessInstanceByStartUser(userId, booking.getProcessInstanceId(), "申请人取消会议室预定");
+            processInstanceApi.cancelProcessInstanceByStartUser(
+                    userId, booking.getProcessInstanceId(), "申请人取消会议室预定");
             return;
         }
         // 2.2 已通过且待使用时取消使用，保留审批结果
         if (ObjUtil.equal(booking.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())
-                && ObjUtil.equal(booking.getUseStatus(), OaMeetingRoomUseStatusEnum.PENDING.getStatus())) {
-            meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setUseStatus(OaMeetingRoomUseStatusEnum.CANCELLED.getStatus()));
+                && ObjUtil.equal(
+                        booking.getUseStatus(), OaMeetingRoomUseStatusEnum.PENDING.getStatus())) {
+            meetingRoomBookingMapper.updateById(
+                    new OaMeetingRoomBookingDO()
+                            .setId(id)
+                            .setUseStatus(OaMeetingRoomUseStatusEnum.CANCELLED.getStatus()));
             return;
         }
         throw exception(MEETING_ROOM_BOOKING_STATUS_INVALID);
@@ -186,8 +208,10 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         // 1.2 校验审批通过、待使用及当前处于会议时段
         LocalDateTime now = LocalDateTime.now();
         if (ObjUtil.notEqual(booking.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())
-                || ObjUtil.notEqual(booking.getUseStatus(), OaMeetingRoomUseStatusEnum.PENDING.getStatus())
-                || now.isBefore(booking.getStartTime()) || !now.isBefore(booking.getEndTime())) {
+                || ObjUtil.notEqual(
+                        booking.getUseStatus(), OaMeetingRoomUseStatusEnum.PENDING.getStatus())
+                || now.isBefore(booking.getStartTime())
+                || !now.isBefore(booking.getEndTime())) {
             throw exception(MEETING_ROOM_BOOKING_STATUS_INVALID);
         }
         // 1.3 开始使用前确认会议室仍可用，审批期间可能已停用或维修
@@ -198,7 +222,10 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         }
 
         // 2. 开始使用
-        meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setUseStatus(OaMeetingRoomUseStatusEnum.IN_USE.getStatus()));
+        meetingRoomBookingMapper.updateById(
+                new OaMeetingRoomBookingDO()
+                        .setId(id)
+                        .setUseStatus(OaMeetingRoomUseStatusEnum.IN_USE.getStatus()));
     }
 
     @Override
@@ -208,12 +235,16 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         OaMeetingRoomBookingDO booking = validateBookingOperator(id, userId);
         // 1.2 校验使用中
         if (ObjUtil.notEqual(booking.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())
-                || ObjUtil.notEqual(booking.getUseStatus(), OaMeetingRoomUseStatusEnum.IN_USE.getStatus())) {
+                || ObjUtil.notEqual(
+                        booking.getUseStatus(), OaMeetingRoomUseStatusEnum.IN_USE.getStatus())) {
             throw exception(MEETING_ROOM_BOOKING_STATUS_INVALID);
         }
 
         // 2. 完成使用并释放剩余时段
-        meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setUseStatus(OaMeetingRoomUseStatusEnum.COMPLETED.getStatus()));
+        meetingRoomBookingMapper.updateById(
+                new OaMeetingRoomBookingDO()
+                        .setId(id)
+                        .setUseStatus(OaMeetingRoomUseStatusEnum.COMPLETED.getStatus()));
     }
 
     @Override
@@ -221,15 +252,24 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
     public void updateMeetingRoomBookingStatus(Long id, Integer status) {
         // 1. 校验申请存在，已处理的审批结果不再重复更新业务状态
         OaMeetingRoomBookingDO booking = validateBookingExists(id);
-        if (ObjUtil.notEqual(booking.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
+        if (ObjUtil.notEqual(
+                booking.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
             return;
         }
 
         // 2. 回写结果，驳回、取消或已过结束时间的会议不再待使用
-        meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setStatus(status)
-                .setUseStatus(ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())
-                        && booking.getEndTime().isAfter(LocalDateTime.now())
-                        ? OaMeetingRoomUseStatusEnum.PENDING.getStatus() : OaMeetingRoomUseStatusEnum.CANCELLED.getStatus()));
+        meetingRoomBookingMapper.updateById(
+                new OaMeetingRoomBookingDO()
+                        .setId(id)
+                        .setStatus(status)
+                        .setUseStatus(
+                                ObjUtil.equal(
+                                                        status,
+                                                        BpmProcessInstanceStatusEnum.APPROVE
+                                                                .getStatus())
+                                                && booking.getEndTime().isAfter(LocalDateTime.now())
+                                        ? OaMeetingRoomUseStatusEnum.PENDING.getStatus()
+                                        : OaMeetingRoomUseStatusEnum.CANCELLED.getStatus()));
     }
 
     @Override
@@ -238,18 +278,25 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
     }
 
     @Override
-    public PageResult<OaMeetingRoomBookingDO> getMeetingRoomBookingPage(Long userId, OaMeetingRoomBookingPageReqVO reqVO) {
+    public PageResult<OaMeetingRoomBookingDO> getMeetingRoomBookingPage(
+            Long userId, OaMeetingRoomBookingPageReqVO reqVO) {
         // 1. 查询关联字段，空匹配直接返回，防止空集合导致筛选失效
         List<Long> roomIds = null;
         if (StrUtil.isNotBlank(reqVO.getRoomName())) {
-            roomIds = convertList(meetingRoomService.getMeetingRoomListByName(reqVO.getRoomName()), OaMeetingRoomDO::getId);
+            roomIds =
+                    convertList(
+                            meetingRoomService.getMeetingRoomListByName(reqVO.getRoomName()),
+                            OaMeetingRoomDO::getId);
             if (CollUtil.isEmpty(roomIds)) {
                 return new PageResult<>(Collections.emptyList(), 0L);
             }
         }
         List<Long> moderatorIds = null;
         if (StrUtil.isNotBlank(reqVO.getModeratorName())) {
-            moderatorIds = convertList(adminUserApi.getUserListByNickname(reqVO.getModeratorName()), AdminUserRespDTO::getId);
+            moderatorIds =
+                    convertList(
+                            adminUserApi.getUserListByNickname(reqVO.getModeratorName()),
+                            AdminUserRespDTO::getId);
             if (CollUtil.isEmpty(moderatorIds)) {
                 return new PageResult<>(Collections.emptyList(), 0L);
             }
@@ -259,12 +306,14 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
     }
 
     @Override
-    public List<OaMeetingRoomBookingDO> getMeetingRoomBookingListBySchedule(OaMeetingRoomBookingScheduleReqVO reqVO) {
+    public List<OaMeetingRoomBookingDO> getMeetingRoomBookingListBySchedule(
+            OaMeetingRoomBookingScheduleReqVO reqVO) {
         // 1. 校验房间和查询区间
         meetingRoomService.validateMeetingRoomExists(reqVO.getRoomId());
         validateMeetingTime(reqVO.getStartTime(), reqVO.getEndTime());
         // 2. 查询相交时段的预约
-        return meetingRoomBookingMapper.selectListByRoomIdAndTimeOverlap(reqVO.getRoomId(), reqVO.getStartTime(), reqVO.getEndTime());
+        return meetingRoomBookingMapper.selectListByRoomIdAndTimeOverlap(
+                reqVO.getRoomId(), reqVO.getStartTime(), reqVO.getEndTime());
     }
 
     @Override
@@ -278,21 +327,30 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         // 1. 查询最长提前时间内的待提醒会议，再按各会议的提醒选项判断
         LocalDateTime remindTime = LocalDateTime.now();
         // 不提醒类型没有提前分钟数，不参与扫描窗口计算。
-        List<OaMeetingRoomReminderTypeEnum> reminderTypes = filterList(
-                Arrays.asList(OaMeetingRoomReminderTypeEnum.values()), type -> type.getMinutes() != null);
+        List<OaMeetingRoomReminderTypeEnum> reminderTypes =
+                filterList(
+                        Arrays.asList(OaMeetingRoomReminderTypeEnum.values()),
+                        type -> type.getMinutes() != null);
         if (CollUtil.isEmpty(reminderTypes)) {
             return 0;
         }
         // 一次查询覆盖所有可用提醒选项，具体发送时再检查各会议的提前时间。
-        List<OaMeetingRoomBookingDO> bookings = meetingRoomBookingMapper.selectListByReminderTypesAndStartTime(
-                convertList(reminderTypes, OaMeetingRoomReminderTypeEnum::getType), remindTime,
-                remindTime.plusMinutes(getMaxValue(reminderTypes, OaMeetingRoomReminderTypeEnum::getMinutes)));
+        List<OaMeetingRoomBookingDO> bookings =
+                meetingRoomBookingMapper.selectListByReminderTypesAndStartTime(
+                        convertList(reminderTypes, OaMeetingRoomReminderTypeEnum::getType),
+                        remindTime,
+                        remindTime.plusMinutes(
+                                getMaxValue(
+                                        reminderTypes, OaMeetingRoomReminderTypeEnum::getMinutes)));
 
         // 2. 每个会议使用独立事务，单条失败不影响其他会议，下轮扫描重试
         int count = 0;
         for (OaMeetingRoomBookingDO booking : bookings) {
             try {
-                count += getSelf().sendMeetingRoomBookingReminder(booking.getId(), remindTime) ? 1 : 0;
+                count +=
+                        getSelf().sendMeetingRoomBookingReminder(booking.getId(), remindTime)
+                                ? 1
+                                : 0;
             } catch (Exception ex) {
                 log.error("[sendMeetingRoomBookingReminders][会议 ({}) 提醒失败]", booking.getId(), ex);
             }
@@ -313,15 +371,21 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
     public boolean sendMeetingRoomBookingReminder(Long id, LocalDateTime remindTime) {
         // 1. 校验提醒窗口，开始后不补发；刚好进入提前时间时允许提醒
         OaMeetingRoomBookingDO booking = meetingRoomBookingMapper.selectById(id);
-        if (booking == null || Boolean.TRUE.equals(booking.getReminded())
-                || ObjUtil.notEqual(booking.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())
-                || ObjUtil.notEqual(booking.getUseStatus(), OaMeetingRoomUseStatusEnum.PENDING.getStatus())) {
+        if (booking == null
+                || Boolean.TRUE.equals(booking.getReminded())
+                || ObjUtil.notEqual(
+                        booking.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())
+                || ObjUtil.notEqual(
+                        booking.getUseStatus(), OaMeetingRoomUseStatusEnum.PENDING.getStatus())) {
             return false;
         }
-        OaMeetingRoomReminderTypeEnum reminderType = OaMeetingRoomReminderTypeEnum.valueOf(booking.getReminderType());
-        if (reminderType == null || reminderType.getMinutes() == null
+        OaMeetingRoomReminderTypeEnum reminderType =
+                OaMeetingRoomReminderTypeEnum.valueOf(booking.getReminderType());
+        if (reminderType == null
+                || reminderType.getMinutes() == null
                 || !booking.getStartTime().isAfter(remindTime)
-                || booking.getStartTime().isAfter(remindTime.plusMinutes(reminderType.getMinutes()))) {
+                || booking.getStartTime()
+                        .isAfter(remindTime.plusMinutes(reminderType.getMinutes()))) {
             return false;
         }
 
@@ -337,14 +401,21 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
         templateParams.put("title", booking.getTitle());
         templateParams.put("roomName", room.getName());
         templateParams.put("location", room.getLocation());
-        templateParams.put("startTime", LocalDateTimeUtil.format(booking.getStartTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+        templateParams.put(
+                "startTime",
+                LocalDateTimeUtil.format(
+                        booking.getStartTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
         for (Long userId : userIds) {
-            notifyMessageSendApi.sendSingleMessageToAdmin(new NotifySendSingleToUserReqDTO()
-                    .setUserId(userId).setTemplateCode(MEETING_ROOM_BOOKING_REMINDER).setTemplateParams(templateParams));
+            notifyMessageSendApi.sendSingleMessageToAdmin(
+                    new NotifySendSingleToUserReqDTO()
+                            .setUserId(userId)
+                            .setTemplateCode(MEETING_ROOM_BOOKING_REMINDER)
+                            .setTemplateParams(templateParams));
         }
 
         // 3. 标记已通知
-        meetingRoomBookingMapper.updateById(new OaMeetingRoomBookingDO().setId(id).setReminded(true));
+        meetingRoomBookingMapper.updateById(
+                new OaMeetingRoomBookingDO().setId(id).setReminded(true));
         return true;
     }
 
@@ -359,7 +430,9 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
 
     @Override
     public boolean hasActiveMeetingRoomBooking(Long roomId) {
-        return meetingRoomBookingMapper.selectCountByRoomIdAndEndTimeAfter(roomId, LocalDateTime.now()) > 0;
+        return meetingRoomBookingMapper.selectCountByRoomIdAndEndTimeAfter(
+                        roomId, LocalDateTime.now())
+                > 0;
     }
 
     /**
@@ -423,7 +496,8 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
      * @param booking 预定
      */
     private void validateBookingDraft(OaMeetingRoomBookingDO booking) {
-        if (ObjUtil.notEqual(booking.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                booking.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(MEETING_ROOM_BOOKING_STATUS_INVALID);
         }
     }
@@ -437,7 +511,8 @@ public class OaMeetingRoomBookingServiceImpl implements OaMeetingRoomBookingServ
      */
     private OaMeetingRoomBookingDO validateBookingOperator(Long id, Long userId) {
         OaMeetingRoomBookingDO booking = validateBookingExists(id);
-        if (ObjUtil.notEqual(booking.getCreator(), userId.toString()) && ObjUtil.notEqual(booking.getModeratorUserId(), userId)) {
+        if (ObjUtil.notEqual(booking.getCreator(), userId.toString())
+                && ObjUtil.notEqual(booking.getModeratorUserId(), userId)) {
             throw exception(MEETING_ROOM_BOOKING_NOT_OWNER);
         }
         return booking;

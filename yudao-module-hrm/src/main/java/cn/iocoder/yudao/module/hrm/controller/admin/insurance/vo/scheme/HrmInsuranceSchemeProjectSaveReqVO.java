@@ -2,13 +2,16 @@ package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceProjectTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -56,5 +59,4 @@ public class HrmInsuranceSchemeProjectSaveReqVO {
     @DecimalMin(value = "0.00", message = "个人缴纳金额不能小于 0")
     @Digits(integer = 10, fraction = 2, message = "个人缴纳金额最多 10 位整数和 2 位小数")
     private BigDecimal personalAmount;
-
 }

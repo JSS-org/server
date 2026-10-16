@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kdniao;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 /**
@@ -18,11 +19,13 @@ public class KdNiaoExpressQueryReqDTO {
      */
     @JsonProperty("ShipperCode")
     private String expressCode;
+
     /**
      * 快递单号
      */
     @JsonProperty("LogisticCode")
     private String logisticsNo;
+
     /**
      * 订单编号
      */
@@ -34,5 +37,4 @@ public class KdNiaoExpressQueryReqDTO {
      */
     @JsonProperty("CustomerName")
     private String customerName;
-
 }

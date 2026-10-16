@@ -65,8 +65,8 @@ public interface PayWalletService {
      * @param price    扣减金额
      * @return 钱包流水
      */
-    PayWalletTransactionDO reduceWalletBalance(Long walletId, Long bizId,
-                                               PayWalletBizTypeEnum bizType, Integer price);
+    PayWalletTransactionDO reduceWalletBalance(
+            Long walletId, Long bizId, PayWalletBizTypeEnum bizType, Integer price);
 
     /**
      * 增加钱包余额
@@ -77,8 +77,8 @@ public interface PayWalletService {
      * @param price    增加金额
      * @return 钱包流水
      */
-    PayWalletTransactionDO addWalletBalance(Long walletId, String bizId,
-                                            PayWalletBizTypeEnum bizType, Integer price);
+    PayWalletTransactionDO addWalletBalance(
+            Long walletId, String bizId, PayWalletBizTypeEnum bizType, Integer price);
 
     /**
      * 冻结钱包部分余额
@@ -95,5 +95,4 @@ public interface PayWalletService {
      * @param price 解冻金额
      */
     void unfreezePrice(Long id, Integer price);
-
 }

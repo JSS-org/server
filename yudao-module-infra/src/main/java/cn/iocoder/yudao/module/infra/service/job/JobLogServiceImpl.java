@@ -5,8 +5,11 @@ import cn.iocoder.yudao.module.infra.controller.admin.job.vo.log.JobLogPageReqVO
 import cn.iocoder.yudao.module.infra.dal.dataobject.job.JobLogDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.job.JobLogMapper;
 import cn.iocoder.yudao.module.infra.enums.job.JobLogStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -23,30 +26,53 @@ import java.time.LocalDateTime;
 @Slf4j
 public class JobLogServiceImpl implements JobLogService {
 
-    @Resource
-    private JobLogMapper jobLogMapper;
+    @Resource private JobLogMapper jobLogMapper;
 
     @Override
-    public Long createJobLog(Long jobId, LocalDateTime beginTime,
-                             String jobHandlerName, String jobHandlerParam, Integer executeIndex) {
-        JobLogDO log = JobLogDO.builder().jobId(jobId).handlerName(jobHandlerName)
-                .handlerParam(jobHandlerParam).executeIndex(executeIndex)
-                .beginTime(beginTime).status(JobLogStatusEnum.RUNNING.getStatus()).build();
+    public Long createJobLog(
+            Long jobId,
+            LocalDateTime beginTime,
+            String jobHandlerName,
+            String jobHandlerParam,
+            Integer executeIndex) {
+        JobLogDO log =
+                JobLogDO.builder()
+                        .jobId(jobId)
+                        .handlerName(jobHandlerName)
+                        .handlerParam(jobHandlerParam)
+                        .executeIndex(executeIndex)
+                        .beginTime(beginTime)
+                        .status(JobLogStatusEnum.RUNNING.getStatus())
+                        .build();
         jobLogMapper.insert(log);
         return log.getId();
     }
 
     @Override
     @Async
-    public void updateJobLogResultAsync(Long logId, LocalDateTime endTime, Integer duration, boolean success, String result) {
+    public void updateJobLogResultAsync(
+            Long logId, LocalDateTime endTime, Integer duration, boolean success, String result) {
         try {
-            JobLogDO updateObj = JobLogDO.builder().id(logId).endTime(endTime).duration(duration)
-                    .status(success ? JobLogStatusEnum.SUCCESS.getStatus() : JobLogStatusEnum.FAILURE.getStatus())
-                    .result(result).build();
+            JobLogDO updateObj =
+                    JobLogDO.builder()
+                            .id(logId)
+                            .endTime(endTime)
+                            .duration(duration)
+                            .status(
+                                    success
+                                            ? JobLogStatusEnum.SUCCESS.getStatus()
+                                            : JobLogStatusEnum.FAILURE.getStatus())
+                            .result(result)
+                            .build();
             jobLogMapper.updateById(updateObj);
         } catch (Exception ex) {
-            log.error("[updateJobLogResultAsync][logId({}) endTime({}) duration({}) success({}) result({})]",
-                    logId, endTime, duration, success, result);
+            log.error(
+                    "[updateJobLogResultAsync][logId({}) endTime({}) duration({}) success({}) result({})]",
+                    logId,
+                    endTime,
+                    duration,
+                    success,
+                    result);
         }
     }
 
@@ -76,5 +102,4 @@ public class JobLogServiceImpl implements JobLogService {
     public PageResult<JobLogDO> getJobLogPage(JobLogPageReqVO pageReqVO) {
         return jobLogMapper.selectPage(pageReqVO);
     }
-
 }

@@ -1,14 +1,14 @@
 package cn.iocoder.yudao.module.hrm.service.insurance.config;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme.HrmInsuranceSchemeSaveReqVO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeProjectDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.insurance.config.HrmInsuranceSchemeProjectDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 社保方案 Service 接口
@@ -110,6 +110,6 @@ public interface HrmInsuranceSchemeService {
      * @param schemeIds 社保方案编号集合
      * @return 社保方案编号与项目列表的映射
      */
-    Map<Long, List<HrmInsuranceSchemeProjectDO>> getSchemeProjectListMap(Collection<Long> schemeIds);
-
+    Map<Long, List<HrmInsuranceSchemeProjectDO>> getSchemeProjectListMap(
+            Collection<Long> schemeIds);
 }

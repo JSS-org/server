@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.product.api.spu.dto.ProductSpuRespDTO;
 import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
 import cn.iocoder.yudao.module.product.service.spu.ProductSpuService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,8 +23,7 @@ import java.util.List;
 @Validated
 public class ProductSpuApiImpl implements ProductSpuApi {
 
-    @Resource
-    private ProductSpuService spuService;
+    @Resource private ProductSpuService spuService;
 
     @Override
     public List<ProductSpuRespDTO> getSpuList(Collection<Long> ids) {
@@ -41,5 +42,4 @@ public class ProductSpuApiImpl implements ProductSpuApi {
         ProductSpuDO spu = spuService.getSpu(id);
         return BeanUtils.toBean(spu, ProductSpuRespDTO.class);
     }
-
 }

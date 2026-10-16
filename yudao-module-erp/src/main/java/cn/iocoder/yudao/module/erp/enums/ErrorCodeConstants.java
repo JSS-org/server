@@ -21,10 +21,14 @@ public interface ErrorCodeConstants {
     ErrorCode PURCHASE_ORDER_NO_EXISTS = new ErrorCode(1_030_101_004, "生成采购单号失败，请重新提交");
     ErrorCode PURCHASE_ORDER_UPDATE_FAIL_APPROVE = new ErrorCode(1_030_101_005, "采购订单({})已审核，无法修改");
     ErrorCode PURCHASE_ORDER_NOT_APPROVE = new ErrorCode(1_030_101_006, "采购订单未审核，无法操作");
-    ErrorCode PURCHASE_ORDER_ITEM_IN_FAIL_PRODUCT_EXCEED = new ErrorCode(1_030_101_007, "采购订单项({})超过最大允许入库数量({})");
-    ErrorCode PURCHASE_ORDER_PROCESS_FAIL_EXISTS_IN = new ErrorCode(1_030_101_008, "反审核失败，已存在对应的采购入库单");
-ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_009, "采购订单项({})超过最大允许退货数量({})");
-    ErrorCode PURCHASE_ORDER_PROCESS_FAIL_EXISTS_RETURN = new ErrorCode(1_030_101_010, "反审核失败，已存在对应的采购退货单");
+    ErrorCode PURCHASE_ORDER_ITEM_IN_FAIL_PRODUCT_EXCEED =
+            new ErrorCode(1_030_101_007, "采购订单项({})超过最大允许入库数量({})");
+    ErrorCode PURCHASE_ORDER_PROCESS_FAIL_EXISTS_IN =
+            new ErrorCode(1_030_101_008, "反审核失败，已存在对应的采购入库单");
+    ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED =
+            new ErrorCode(1_030_101_009, "采购订单项({})超过最大允许退货数量({})");
+    ErrorCode PURCHASE_ORDER_PROCESS_FAIL_EXISTS_RETURN =
+            new ErrorCode(1_030_101_010, "反审核失败，已存在对应的采购退货单");
 
     // ========== ERP 采购入库（1-030-102-000） ==========
     ErrorCode PURCHASE_IN_NOT_EXISTS = new ErrorCode(1_030_102_000, "采购入库单不存在");
@@ -34,19 +38,25 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode PURCHASE_IN_NO_EXISTS = new ErrorCode(1_030_102_004, "生成入库单失败，请重新提交");
     ErrorCode PURCHASE_IN_UPDATE_FAIL_APPROVE = new ErrorCode(1_030_102_005, "采购入库单({})已审核，无法修改");
     ErrorCode PURCHASE_IN_NOT_APPROVE = new ErrorCode(1_030_102_006, "采购入库单未审核，无法操作");
-    ErrorCode PURCHASE_IN_FAIL_PAYMENT_PRICE_EXCEED = new ErrorCode(1_030_102_007, "付款金额({})超过采购入库单总金额({})");
-    ErrorCode PURCHASE_IN_PROCESS_FAIL_EXISTS_PAYMENT = new ErrorCode(1_030_102_008, "反审核失败，已存在对应的付款单");
+    ErrorCode PURCHASE_IN_FAIL_PAYMENT_PRICE_EXCEED =
+            new ErrorCode(1_030_102_007, "付款金额({})超过采购入库单总金额({})");
+    ErrorCode PURCHASE_IN_PROCESS_FAIL_EXISTS_PAYMENT =
+            new ErrorCode(1_030_102_008, "反审核失败，已存在对应的付款单");
 
     // ========== ERP 采购退货（1-030-103-000） ==========
     ErrorCode PURCHASE_RETURN_NOT_EXISTS = new ErrorCode(1_030_103_000, "采购退货单不存在");
-    ErrorCode PURCHASE_RETURN_DELETE_FAIL_APPROVE = new ErrorCode(1_030_103_001, "采购退货单({})已审核，无法删除");
+    ErrorCode PURCHASE_RETURN_DELETE_FAIL_APPROVE =
+            new ErrorCode(1_030_103_001, "采购退货单({})已审核，无法删除");
     ErrorCode PURCHASE_RETURN_PROCESS_FAIL = new ErrorCode(1_030_103_002, "反审核失败，只有已审核的退货单才能反审核");
     ErrorCode PURCHASE_RETURN_APPROVE_FAIL = new ErrorCode(1_030_103_003, "审核失败，只有未审核的退货单才能审核");
     ErrorCode PURCHASE_RETURN_NO_EXISTS = new ErrorCode(1_030_103_004, "生成退货单失败，请重新提交");
-    ErrorCode PURCHASE_RETURN_UPDATE_FAIL_APPROVE = new ErrorCode(1_030_103_005, "采购退货单({})已审核，无法修改");
+    ErrorCode PURCHASE_RETURN_UPDATE_FAIL_APPROVE =
+            new ErrorCode(1_030_103_005, "采购退货单({})已审核，无法修改");
     ErrorCode PURCHASE_RETURN_NOT_APPROVE = new ErrorCode(1_030_103_006, "采购退货单未审核，无法操作");
-    ErrorCode PURCHASE_RETURN_FAIL_REFUND_PRICE_EXCEED = new ErrorCode(1_030_103_007, "退款金额({})超过采购退货单总金额({})");
-    ErrorCode PURCHASE_RETURN_PROCESS_FAIL_EXISTS_REFUND = new ErrorCode(1_030_103_008, "反审核失败，已存在对应的退款单");
+    ErrorCode PURCHASE_RETURN_FAIL_REFUND_PRICE_EXCEED =
+            new ErrorCode(1_030_103_007, "退款金额({})超过采购退货单总金额({})");
+    ErrorCode PURCHASE_RETURN_PROCESS_FAIL_EXISTS_REFUND =
+            new ErrorCode(1_030_103_008, "反审核失败，已存在对应的退款单");
 
     // ========== ERP 客户（1-030-200-000）==========
     ErrorCode CUSTOMER_NOT_EXISTS = new ErrorCode(1_020_200_000, "客户不存在");
@@ -60,10 +70,14 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode SALE_ORDER_NO_EXISTS = new ErrorCode(1_020_201_004, "生成销售单号失败，请重新提交");
     ErrorCode SALE_ORDER_UPDATE_FAIL_APPROVE = new ErrorCode(1_020_201_005, "销售订单({})已审核，无法修改");
     ErrorCode SALE_ORDER_NOT_APPROVE = new ErrorCode(1_020_201_006, "销售订单未审核，无法操作");
-    ErrorCode SALE_ORDER_ITEM_OUT_FAIL_PRODUCT_EXCEED = new ErrorCode(1_020_201_007, "销售订单项({})超过最大允许出库数量({})");
-    ErrorCode SALE_ORDER_PROCESS_FAIL_EXISTS_OUT = new ErrorCode(1_020_201_008, "反审核失败，已存在对应的销售出库单");
-    ErrorCode SALE_ORDER_ITEM_RETURN_FAIL_OUT_EXCEED = new ErrorCode(1_020_201_009, "销售订单项({})超过最大允许退货数量({})");
-    ErrorCode SALE_ORDER_PROCESS_FAIL_EXISTS_RETURN = new ErrorCode(1_020_201_010, "反审核失败，已存在对应的销售退货单");
+    ErrorCode SALE_ORDER_ITEM_OUT_FAIL_PRODUCT_EXCEED =
+            new ErrorCode(1_020_201_007, "销售订单项({})超过最大允许出库数量({})");
+    ErrorCode SALE_ORDER_PROCESS_FAIL_EXISTS_OUT =
+            new ErrorCode(1_020_201_008, "反审核失败，已存在对应的销售出库单");
+    ErrorCode SALE_ORDER_ITEM_RETURN_FAIL_OUT_EXCEED =
+            new ErrorCode(1_020_201_009, "销售订单项({})超过最大允许退货数量({})");
+    ErrorCode SALE_ORDER_PROCESS_FAIL_EXISTS_RETURN =
+            new ErrorCode(1_020_201_010, "反审核失败，已存在对应的销售退货单");
 
     // ========== ERP 销售出库（1-030-202-000） ==========
     ErrorCode SALE_OUT_NOT_EXISTS = new ErrorCode(1_020_202_000, "销售出库单不存在");
@@ -73,8 +87,10 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode SALE_OUT_NO_EXISTS = new ErrorCode(1_020_202_004, "生成出库单失败，请重新提交");
     ErrorCode SALE_OUT_UPDATE_FAIL_APPROVE = new ErrorCode(1_020_202_005, "销售出库单({})已审核，无法修改");
     ErrorCode SALE_OUT_NOT_APPROVE = new ErrorCode(1_020_202_006, "销售出库单未审核，无法操作");
-    ErrorCode SALE_OUT_FAIL_RECEIPT_PRICE_EXCEED = new ErrorCode(1_020_202_007, "收款金额({})超过销售出库单总金额({})");
-    ErrorCode SALE_OUT_PROCESS_FAIL_EXISTS_RECEIPT = new ErrorCode(1_020_202_008, "反审核失败，已存在对应的收款单");
+    ErrorCode SALE_OUT_FAIL_RECEIPT_PRICE_EXCEED =
+            new ErrorCode(1_020_202_007, "收款金额({})超过销售出库单总金额({})");
+    ErrorCode SALE_OUT_PROCESS_FAIL_EXISTS_RECEIPT =
+            new ErrorCode(1_020_202_008, "反审核失败，已存在对应的收款单");
 
     // ========== ERP 销售退货（1-030-203-000） ==========
     ErrorCode SALE_RETURN_NOT_EXISTS = new ErrorCode(1_020_203_000, "销售退货单不存在");
@@ -84,8 +100,10 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode SALE_RETURN_NO_EXISTS = new ErrorCode(1_020_203_004, "生成退货单失败，请重新提交");
     ErrorCode SALE_RETURN_UPDATE_FAIL_APPROVE = new ErrorCode(1_020_203_005, "销售退货单({})已审核，无法修改");
     ErrorCode SALE_RETURN_NOT_APPROVE = new ErrorCode(1_020_203_006, "销售退货单未审核，无法操作");
-    ErrorCode SALE_RETURN_FAIL_REFUND_PRICE_EXCEED = new ErrorCode(1_020_203_007, "退款金额({})超过销售退货单总金额({})");
-    ErrorCode SALE_RETURN_PROCESS_FAIL_EXISTS_REFUND = new ErrorCode(1_020_203_008, "反审核失败，已存在对应的退款单");
+    ErrorCode SALE_RETURN_FAIL_REFUND_PRICE_EXCEED =
+            new ErrorCode(1_020_203_007, "退款金额({})超过销售退货单总金额({})");
+    ErrorCode SALE_RETURN_PROCESS_FAIL_EXISTS_REFUND =
+            new ErrorCode(1_020_203_008, "反审核失败，已存在对应的退款单");
 
     // ========== ERP 仓库 1-030-400-000 ==========
     ErrorCode WAREHOUSE_NOT_EXISTS = new ErrorCode(1_030_400_000, "仓库不存在");
@@ -124,23 +142,30 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode STOCK_CHECK_UPDATE_FAIL_APPROVE = new ErrorCode(1_030_403_005, "库存盘点单({})已审核，无法修改");
 
     // ========== ERP 产品库存 1-030-404-000 ==========
-    ErrorCode STOCK_COUNT_NEGATIVE = new ErrorCode(1_030_404_000, "操作失败，产品({})所在仓库({})的库存：{}，小于变更数量：{}");
+    ErrorCode STOCK_COUNT_NEGATIVE =
+            new ErrorCode(1_030_404_000, "操作失败，产品({})所在仓库({})的库存：{}，小于变更数量：{}");
     ErrorCode STOCK_COUNT_NEGATIVE2 = new ErrorCode(1_030_404_001, "操作失败，产品({})所在仓库({})的库存不足");
 
     // ========== ERP 产品 1-030-500-000 ==========
     ErrorCode PRODUCT_NOT_EXISTS = new ErrorCode(1_030_500_000, "产品不存在");
     ErrorCode PRODUCT_NOT_ENABLE = new ErrorCode(1_030_500_001, "产品({})未启用");
-    ErrorCode PRODUCT_DELETE_FAIL_PURCHASE_ORDER_EXISTS = new ErrorCode(1_030_500_002, "产品已被采购订单引用，无法删除");
-    ErrorCode PRODUCT_DELETE_FAIL_PURCHASE_IN_EXISTS = new ErrorCode(1_030_500_003, "产品已被采购入库单引用，无法删除");
-    ErrorCode PRODUCT_DELETE_FAIL_PURCHASE_RETURN_EXISTS = new ErrorCode(1_030_500_004, "产品已被采购退货单引用，无法删除");
-    ErrorCode PRODUCT_DELETE_FAIL_SALE_ORDER_EXISTS = new ErrorCode(1_030_500_005, "产品已被销售订单引用，无法删除");
-    ErrorCode PRODUCT_DELETE_FAIL_SALE_OUT_EXISTS = new ErrorCode(1_030_500_006, "产品已被销售出库单引用，无法删除");
-    ErrorCode PRODUCT_DELETE_FAIL_SALE_RETURN_EXISTS = new ErrorCode(1_030_500_007, "产品已被销售退货单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_PURCHASE_ORDER_EXISTS =
+            new ErrorCode(1_030_500_002, "产品已被采购订单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_PURCHASE_IN_EXISTS =
+            new ErrorCode(1_030_500_003, "产品已被采购入库单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_PURCHASE_RETURN_EXISTS =
+            new ErrorCode(1_030_500_004, "产品已被采购退货单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_SALE_ORDER_EXISTS =
+            new ErrorCode(1_030_500_005, "产品已被销售订单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_SALE_OUT_EXISTS =
+            new ErrorCode(1_030_500_006, "产品已被销售出库单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_SALE_RETURN_EXISTS =
+            new ErrorCode(1_030_500_007, "产品已被销售退货单引用，无法删除");
 
     // ========== ERP 产品分类 1-030-501-000 ==========
     ErrorCode PRODUCT_CATEGORY_NOT_EXISTS = new ErrorCode(1_030_501_000, "产品分类不存在");
     ErrorCode PRODUCT_CATEGORY_EXITS_CHILDREN = new ErrorCode(1_030_501_001, "存在存在子产品分类，无法删除");
-    ErrorCode PRODUCT_CATEGORY_PARENT_NOT_EXITS = new ErrorCode(1_030_501_002,"父级产品分类不存在");
+    ErrorCode PRODUCT_CATEGORY_PARENT_NOT_EXITS = new ErrorCode(1_030_501_002, "父级产品分类不存在");
     ErrorCode PRODUCT_CATEGORY_PARENT_ERROR = new ErrorCode(1_030_501_003, "不能设置自己为父产品分类");
     ErrorCode PRODUCT_CATEGORY_NAME_DUPLICATE = new ErrorCode(1_030_501_004, "已经存在该分类名称的产品分类");
     ErrorCode PRODUCT_CATEGORY_PARENT_IS_CHILD = new ErrorCode(1_030_501_005, "不能设置自己的子分类为父分类");
@@ -170,5 +195,4 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode FINANCE_RECEIPT_APPROVE_FAIL = new ErrorCode(1_030_602_003, "审核失败，只有未审核的收款单才能审核");
     ErrorCode FINANCE_RECEIPT_NO_EXISTS = new ErrorCode(1_030_602_004, "生成收款单号失败，请重新提交");
     ErrorCode FINANCE_RECEIPT_UPDATE_FAIL_APPROVE = new ErrorCode(1_030_602_005, "收款单({})已审核，无法修改");
-
 }

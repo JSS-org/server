@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.service.employee.employment;
 
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.quitinfo.HrmEmployeeQuitInfoSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeQuitInfoDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
@@ -62,5 +63,4 @@ public interface HrmEmployeeQuitInfoService {
      * @return 离职信息列表
      */
     List<HrmEmployeeQuitInfoDO> getDueQuitInfoList(LocalDateTime deadlineTime);
-
 }

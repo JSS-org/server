@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.worklog;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 工作项工时记录新增/修改 Request VO")
@@ -17,7 +19,10 @@ public class PmsWorkItemWorkLogSaveReqVO {
     @NotNull(message = "工作项编号不能为空")
     private Long workItemId;
 
-    @Schema(description = "实际投入工时，单位：小时", requiredMode = Schema.RequiredMode.REQUIRED, example = "4")
+    @Schema(
+            description = "实际投入工时，单位：小时",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "4")
     @NotNull(message = "实际投入工时不能为空")
     @Min(value = 1, message = "实际投入工时必须大于 0")
     private Integer actualHours;
@@ -29,5 +34,4 @@ public class PmsWorkItemWorkLogSaveReqVO {
     @Schema(description = "工时说明", example = "完成登录接口联调")
     @Size(max = 500, message = "工时说明不能超过 500 个字符")
     private String description;
-
 }

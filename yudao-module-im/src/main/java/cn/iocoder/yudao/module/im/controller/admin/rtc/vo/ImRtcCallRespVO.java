@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.rtc.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.Set;
@@ -41,5 +42,4 @@ public class ImRtcCallRespVO {
 
     @Schema(description = "已加入房间的成员编号集合")
     private Set<Long> joinedUserIds;
-
 }

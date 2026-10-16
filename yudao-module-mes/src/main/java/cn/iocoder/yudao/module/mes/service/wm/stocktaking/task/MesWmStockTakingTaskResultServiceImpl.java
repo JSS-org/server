@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.stocktaking.task;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKING_TASK_LINE_ALREADY_TAKEN;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKING_TASK_RESULT_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,16 +12,14 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo.resul
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.task.MesWmStockTakingTaskLineDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.stocktaking.task.MesWmStockTakingTaskResultDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.stocktaking.task.MesWmStockTakingTaskResultMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKING_TASK_LINE_ALREADY_TAKEN;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKING_TASK_RESULT_NOT_EXISTS;
 
 /**
  * MES 盘点结果 Service 实现类
@@ -28,13 +30,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_STOCK_TAKI
 @Validated
 public class MesWmStockTakingTaskResultServiceImpl implements MesWmStockTakingTaskResultService {
 
-    @Resource
-    private MesWmStockTakingTaskResultMapper stockTakingTaskResultMapper;
+    @Resource private MesWmStockTakingTaskResultMapper stockTakingTaskResultMapper;
 
-    @Resource
-    private MesWmStockTakingTaskLineService stockTakingTaskLineService;
-    @Resource
-    private MesWmStockTakingTaskService stockTakingTaskService;
+    @Resource private MesWmStockTakingTaskLineService stockTakingTaskLineService;
+    @Resource private MesWmStockTakingTaskService stockTakingTaskService;
 
     @Override
     public PageResult<MesWmStockTakingTaskResultDO> getStockTakingTaskResultPage(
@@ -58,8 +57,11 @@ public class MesWmStockTakingTaskResultServiceImpl implements MesWmStockTakingTa
         MesWmStockTakingTaskLineDO existingLine = null;
         if (lineId == null) {
             // 2.1 基于 taskId + itemId + areaId 查询已存在的 line
-            existingLine = stockTakingTaskLineService.getStockTakingTaskLine(
-                    createReqVO.getTaskId(), createReqVO.getItemId(), createReqVO.getAreaId());
+            existingLine =
+                    stockTakingTaskLineService.getStockTakingTaskLine(
+                            createReqVO.getTaskId(),
+                            createReqVO.getItemId(),
+                            createReqVO.getAreaId());
             if (existingLine != null) {
                 lineId = existingLine.getId();
             } else {
@@ -75,15 +77,20 @@ public class MesWmStockTakingTaskResultServiceImpl implements MesWmStockTakingTa
                 && existingLine.getTakingQuantity().compareTo(BigDecimal.ZERO) > 0) {
             throw exception(WM_STOCK_TAKING_TASK_LINE_ALREADY_TAKEN);
         }
-        BigDecimal quantity = existingLine != null ? existingLine.getQuantity() : BigDecimal.ZERO; // 账面数量
+        BigDecimal quantity =
+                existingLine != null ? existingLine.getQuantity() : BigDecimal.ZERO; // 账面数量
 
         // 3. 插入 result 记录
-        MesWmStockTakingTaskResultDO result = BeanUtils.toBean(createReqVO, MesWmStockTakingTaskResultDO.class)
-                .setLineId(lineId).setQuantity(ObjUtil.defaultIfNull(quantity, createReqVO.getTakingQuantity()));
+        MesWmStockTakingTaskResultDO result =
+                BeanUtils.toBean(createReqVO, MesWmStockTakingTaskResultDO.class)
+                        .setLineId(lineId)
+                        .setQuantity(
+                                ObjUtil.defaultIfNull(quantity, createReqVO.getTakingQuantity()));
         stockTakingTaskResultMapper.insert(result);
 
         // 4. 更新 line 的盘点数量和状态
-        stockTakingTaskLineService.updateStockTakingTaskLineTakingQuantity(lineId, createReqVO.getTakingQuantity());
+        stockTakingTaskLineService.updateStockTakingTaskLineTakingQuantity(
+                lineId, createReqVO.getTakingQuantity());
         return result.getId();
     }
 
@@ -92,12 +99,14 @@ public class MesWmStockTakingTaskResultServiceImpl implements MesWmStockTakingTa
     public void updateStockTakingTaskResult(MesWmStockTakingTaskResultSaveReqVO updateReqVO) {
         updateReqVO.setLineId(null); // lineId 不能修改，避免误操作
         // 1.1 校验记录存在
-        MesWmStockTakingTaskResultDO oldResult = validateStockTakingTaskResultExists(updateReqVO.getId());
+        MesWmStockTakingTaskResultDO oldResult =
+                validateStockTakingTaskResultExists(updateReqVO.getId());
         // 1.2 校验任务处于盘点中状态
         stockTakingTaskService.validateStockTakingTaskExistsAndApproving(oldResult.getTaskId());
 
         // 2. 更新 result 记录
-        MesWmStockTakingTaskResultDO result = BeanUtils.toBean(updateReqVO, MesWmStockTakingTaskResultDO.class);
+        MesWmStockTakingTaskResultDO result =
+                BeanUtils.toBean(updateReqVO, MesWmStockTakingTaskResultDO.class);
         stockTakingTaskResultMapper.updateById(result);
 
         // 3. 关联更新 line 的盘点数量（覆盖式更新）
@@ -139,5 +148,4 @@ public class MesWmStockTakingTaskResultServiceImpl implements MesWmStockTakingTa
         }
         return result;
     }
-
 }

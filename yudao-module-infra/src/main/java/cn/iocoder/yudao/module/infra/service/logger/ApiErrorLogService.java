@@ -51,5 +51,4 @@ public interface ApiErrorLogService {
      * @param deleteLimit 清理的间隔条数
      */
     Integer cleanErrorLog(Integer exceedDay, Integer deleteLimit);
-
 }

@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,13 +13,13 @@ import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmFormDO;
 import cn.iocoder.yudao.module.bpm.dal.mysql.definition.BpmFormMapper;
 import cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants;
 import cn.iocoder.yudao.module.bpm.service.definition.dto.BpmFormFieldRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 /**
  * 动态表单 Service 实现类
@@ -28,8 +30,7 @@ import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionU
 @Validated
 public class BpmFormServiceImpl implements BpmFormService {
 
-    @Resource
-    private BpmFormMapper formMapper;
+    @Resource private BpmFormMapper formMapper;
 
     @Override
     public Long createForm(BpmFormSaveReqVO createReqVO) {
@@ -107,8 +108,11 @@ public class BpmFormServiceImpl implements BpmFormService {
                 continue;
             }
             // 如果存在，则报错
-            throw exception(ErrorCodeConstants.FORM_FIELD_REPEAT, oldLabel, fieldDTO.getLabel(), fieldDTO.getVModel());
+            throw exception(
+                    ErrorCodeConstants.FORM_FIELD_REPEAT,
+                    oldLabel,
+                    fieldDTO.getLabel(),
+                    fieldDTO.getVModel());
         }
     }
-
 }

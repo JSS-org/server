@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.ai1.service.model;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider.Ai1ProviderConnectRespVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider.Ai1ProviderPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.model.vo.provider.Ai1ProviderSaveReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ProviderDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI1 供应商 Service 接口
@@ -106,5 +107,4 @@ public interface Ai1ProviderService {
      * @return 测试结果
      */
     Ai1ProviderConnectRespVO testProviderConnect(Long id);
-
 }

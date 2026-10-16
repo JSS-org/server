@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.crm.controller.admin.contact.vo;
 
 import cn.iocoder.yudao.module.crm.enums.permission.CrmPermissionLevelEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Schema(description = "管理后台 - CRM 联系人转移 Request VO")
@@ -21,7 +23,10 @@ public class CrmContactTransferReqVO {
     /**
      * 新负责人的用户编号
      */
-    @Schema(description = "新负责人的用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "10430")
+    @Schema(
+            description = "新负责人的用户编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "10430")
     @NotNull(message = "新负责人的用户编号不能为空")
     private Long newOwnerUserId;
 
@@ -30,7 +35,9 @@ public class CrmContactTransferReqVO {
      *
      * 关联 {@link CrmPermissionLevelEnum}
      */
-    @Schema(description = "老负责人加入团队后的权限级别", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
+    @Schema(
+            description = "老负责人加入团队后的权限级别",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2")
     private Integer oldOwnerPermissionLevel;
-
 }

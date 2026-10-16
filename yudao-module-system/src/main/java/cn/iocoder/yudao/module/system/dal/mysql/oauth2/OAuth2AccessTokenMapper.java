@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
 import cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.token.OAuth2AccessTokenPageReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
+
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -26,17 +27,19 @@ public interface OAuth2AccessTokenMapper extends BaseMapperX<OAuth2AccessTokenDO
     }
 
     default PageResult<OAuth2AccessTokenDO> selectPage(OAuth2AccessTokenPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<OAuth2AccessTokenDO>()
-                .eqIfPresent(OAuth2AccessTokenDO::getUserId, reqVO.getUserId())
-                .eqIfPresent(OAuth2AccessTokenDO::getUserType, reqVO.getUserType())
-                .likeIfPresent(OAuth2AccessTokenDO::getClientId, reqVO.getClientId())
-                .gt(OAuth2AccessTokenDO::getExpiresTime, LocalDateTime.now())
-                .orderByDesc(OAuth2AccessTokenDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<OAuth2AccessTokenDO>()
+                        .eqIfPresent(OAuth2AccessTokenDO::getUserId, reqVO.getUserId())
+                        .eqIfPresent(OAuth2AccessTokenDO::getUserType, reqVO.getUserType())
+                        .likeIfPresent(OAuth2AccessTokenDO::getClientId, reqVO.getClientId())
+                        .gt(OAuth2AccessTokenDO::getExpiresTime, LocalDateTime.now())
+                        .orderByDesc(OAuth2AccessTokenDO::getId));
     }
 
     default List<OAuth2AccessTokenDO> selectListByUserIdAndUserType(Long userId, Integer userType) {
-        return selectList(OAuth2AccessTokenDO::getUserId, userId,
-                OAuth2AccessTokenDO::getUserType, userType);
+        return selectList(
+                OAuth2AccessTokenDO::getUserId, userId, OAuth2AccessTokenDO::getUserType, userType);
     }
 
     /**
@@ -46,7 +49,8 @@ public interface OAuth2AccessTokenMapper extends BaseMapperX<OAuth2AccessTokenDO
      * @param limit       删除条数，防止一次删除太多
      * @return 删除条数
      */
-    @Delete("DELETE FROM system_oauth2_access_token WHERE expires_time < #{expiresTime} LIMIT #{limit}")
-    Integer deleteByExpiresTimeLt(@Param("expiresTime") LocalDateTime expiresTime, @Param("limit") Integer limit);
-
+    @Delete(
+            "DELETE FROM system_oauth2_access_token WHERE expires_time < #{expiresTime} LIMIT #{limit}")
+    Integer deleteByExpiresTimeLt(
+            @Param("expiresTime") LocalDateTime expiresTime, @Param("limit") Integer limit);
 }

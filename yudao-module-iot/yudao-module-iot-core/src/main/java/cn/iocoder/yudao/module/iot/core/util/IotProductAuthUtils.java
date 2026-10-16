@@ -36,7 +36,8 @@ public class IotProductAuthUtils {
      * @param sign          待验证的签名
      * @return 是否验证通过
      */
-    public static boolean verifySign(String productKey, String deviceName, String productSecret, String sign) {
+    public static boolean verifySign(
+            String productKey, String deviceName, String productSecret, String sign) {
         String expectedSign = buildSign(productKey, deviceName, productSecret);
         return expectedSign.equals(sign);
     }
@@ -51,5 +52,4 @@ public class IotProductAuthUtils {
     private static String buildContent(String productKey, String deviceName) {
         return "deviceName" + deviceName + "productKey" + productKey;
     }
-
 }

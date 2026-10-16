@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.util.collection.SetUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.bpm.service.task.BpmProcessInstanceService;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -24,8 +26,7 @@ import java.util.Set;
 @Component
 public class BpmTaskCandidateStartUserStrategy implements BpmTaskCandidateStrategy {
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private BpmProcessInstanceService processInstanceService;
 
     @Override
@@ -34,8 +35,7 @@ public class BpmTaskCandidateStartUserStrategy implements BpmTaskCandidateStrate
     }
 
     @Override
-    public void validateParam(String param) {
-    }
+    public void validateParam(String param) {}
 
     @Override
     public boolean isParamRequired() {
@@ -44,14 +44,19 @@ public class BpmTaskCandidateStartUserStrategy implements BpmTaskCandidateStrate
 
     @Override
     public Set<Long> calculateUsersByTask(DelegateExecution execution, String param) {
-        ProcessInstance processInstance = processInstanceService.getProcessInstance(execution.getProcessInstanceId());
+        ProcessInstance processInstance =
+                processInstanceService.getProcessInstance(execution.getProcessInstanceId());
         return SetUtils.asSet(Long.valueOf(processInstance.getStartUserId()));
     }
 
     @Override
-    public Set<Long> calculateUsersByActivity(BpmnModel bpmnModel, String activityId, String param,
-                                              Long startUserId, String processDefinitionId, Map<String, Object> processVariables) {
+    public Set<Long> calculateUsersByActivity(
+            BpmnModel bpmnModel,
+            String activityId,
+            String param,
+            Long startUserId,
+            String processDefinitionId,
+            Map<String, Object> processVariables) {
         return SetUtils.asSet(startUserId);
     }
-
 }

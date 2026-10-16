@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.user.AppBrokera
 import cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.user.AppBrokerageUserRankByUserCountRespVO;
 import cn.iocoder.yudao.module.trade.controller.app.brokerage.vo.user.AppBrokerageUserRankPageReqVO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.brokerage.BrokerageUserDO;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -131,7 +132,8 @@ public interface BrokerageUserService {
      * @param pageReqVO 分页查询
      * @return 推广人排行
      */
-    PageResult<AppBrokerageUserRankByUserCountRespVO> getBrokerageUserRankPageByUserCount(AppBrokerageUserRankPageReqVO pageReqVO);
+    PageResult<AppBrokerageUserRankByUserCountRespVO> getBrokerageUserRankPageByUserCount(
+            AppBrokerageUserRankPageReqVO pageReqVO);
 
     /**
      * 获得下级分销统计分页
@@ -140,6 +142,6 @@ public interface BrokerageUserService {
      * @param userId    用户编号
      * @return 下级分销统计分页
      */
-    PageResult<AppBrokerageUserChildSummaryRespVO> getBrokerageUserChildSummaryPage(AppBrokerageUserChildSummaryPageReqVO pageReqVO, Long userId);
-
+    PageResult<AppBrokerageUserChildSummaryRespVO> getBrokerageUserChildSummaryPage(
+            AppBrokerageUserChildSummaryPageReqVO pageReqVO, Long userId);
 }

@@ -1,8 +1,12 @@
 package cn.iocoder.yudao.module.mes.service.md.vendor;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,7 +14,6 @@ import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorImpo
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorImportRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.md.vendor.vo.MesMdVendorSaveReqVO;
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.vendor.MesMdVendorDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.md.vendor.MesMdVendorMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
@@ -22,7 +25,9 @@ import cn.iocoder.yudao.module.mes.service.wm.itemreceipt.MesWmItemReceiptServic
 import cn.iocoder.yudao.module.mes.service.wm.outsourceissue.MesWmOutsourceIssueService;
 import cn.iocoder.yudao.module.mes.service.wm.outsourcereceipt.MesWmOutsourceReceiptService;
 import cn.iocoder.yudao.module.mes.service.wm.returnvendor.MesWmReturnVendorService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +40,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 供应商 Service 实现类
  *
@@ -47,32 +49,16 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdVendorServiceImpl implements MesMdVendorService {
 
-    @Resource
-    private MesMdVendorMapper vendorMapper;
+    @Resource private MesMdVendorMapper vendorMapper;
 
-    @Resource
-    private MesWmBarcodeService barcodeService;
-    @Resource
-    @Lazy
-    private MesWmItemReceiptService itemReceiptService;
-    @Resource
-    @Lazy
-    private MesWmArrivalNoticeService arrivalNoticeService;
-    @Resource
-    @Lazy
-    private MesWmReturnVendorService returnVendorService;
-    @Resource
-    @Lazy
-    private MesQcIqcService iqcService;
-    @Resource
-    @Lazy
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    @Lazy
-    private MesWmOutsourceIssueService outsourceIssueService;
-    @Resource
-    @Lazy
-    private MesWmOutsourceReceiptService outsourceReceiptService;
+    @Resource private MesWmBarcodeService barcodeService;
+    @Resource @Lazy private MesWmItemReceiptService itemReceiptService;
+    @Resource @Lazy private MesWmArrivalNoticeService arrivalNoticeService;
+    @Resource @Lazy private MesWmReturnVendorService returnVendorService;
+    @Resource @Lazy private MesQcIqcService iqcService;
+    @Resource @Lazy private MesProWorkOrderService workOrderService;
+    @Resource @Lazy private MesWmOutsourceIssueService outsourceIssueService;
+    @Resource @Lazy private MesWmOutsourceReceiptService outsourceReceiptService;
 
     @Override
     public Long createVendor(MesMdVendorSaveReqVO createReqVO) {
@@ -84,8 +70,11 @@ public class MesMdVendorServiceImpl implements MesMdVendorService {
         vendorMapper.insert(vendor);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.VENDOR.getValue(),
-                vendor.getId(), vendor.getCode(), vendor.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.VENDOR.getValue(),
+                vendor.getId(),
+                vendor.getCode(),
+                vendor.getName());
         return vendor.getId();
     }
 
@@ -203,66 +192,77 @@ public class MesMdVendorServiceImpl implements MesMdVendorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MesMdVendorImportRespVO importVendorList(List<MesMdVendorImportExcelVO> importVendors, boolean updateSupport) {
+    public MesMdVendorImportRespVO importVendorList(
+            List<MesMdVendorImportExcelVO> importVendors, boolean updateSupport) {
         // 1. 参数校验
         if (CollUtil.isEmpty(importVendors)) {
             throw exception(MD_VENDOR_IMPORT_LIST_IS_EMPTY);
         }
 
         // 2. 遍历，逐个创建 or 更新
-        MesMdVendorImportRespVO respVO = MesMdVendorImportRespVO.builder()
-                .createCodes(new ArrayList<>()).updateCodes(new ArrayList<>())
-                .failureCodes(new LinkedHashMap<>()).build();
+        MesMdVendorImportRespVO respVO =
+                MesMdVendorImportRespVO.builder()
+                        .createCodes(new ArrayList<>())
+                        .updateCodes(new ArrayList<>())
+                        .failureCodes(new LinkedHashMap<>())
+                        .build();
         AtomicInteger index = new AtomicInteger(1);
-        importVendors.forEach(importVendor -> {
-            int currentIndex = index.getAndIncrement();
-            // 2.1 校验字段
-            String key = StrUtil.blankToDefault(importVendor.getCode(), "第 " + currentIndex + " 行");
-            if (StrUtil.isBlank(importVendor.getCode())) {
-                respVO.getFailureCodes().put(key, "供应商编码不能为空");
-                return;
-            }
-            if (StrUtil.isBlank(importVendor.getName())) {
-                respVO.getFailureCodes().put(key, "供应商名称不能为空");
-                return;
-            }
+        importVendors.forEach(
+                importVendor -> {
+                    int currentIndex = index.getAndIncrement();
+                    // 2.1 校验字段
+                    String key =
+                            StrUtil.blankToDefault(
+                                    importVendor.getCode(), "第 " + currentIndex + " 行");
+                    if (StrUtil.isBlank(importVendor.getCode())) {
+                        respVO.getFailureCodes().put(key, "供应商编码不能为空");
+                        return;
+                    }
+                    if (StrUtil.isBlank(importVendor.getName())) {
+                        respVO.getFailureCodes().put(key, "供应商名称不能为空");
+                        return;
+                    }
 
-            // 2.2 判断：创建 or 更新
-            MesMdVendorDO existVendor = vendorMapper.selectByCode(importVendor.getCode());
-            if (existVendor == null) {
-                // 2.2.1 创建
-                try {
-                    validateVendorNameUnique(null, importVendor.getName());
-                    validateVendorNicknameUnique(null, importVendor.getNickname());
-                } catch (ServiceException ex) {
-                    respVO.getFailureCodes().put(key, ex.getMessage());
-                    return;
-                }
-                MesMdVendorDO vendor = BeanUtils.toBean(importVendor, MesMdVendorDO.class);
-                vendorMapper.insert(vendor);
-                // 自动生成条码
-                barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.VENDOR.getValue(),
-                        vendor.getId(), vendor.getCode(), vendor.getName());
-                respVO.getCreateCodes().add(importVendor.getCode());
-            } else if (updateSupport) {
-                // 2.2.2 更新
-                try {
-                    validateVendorNameUnique(existVendor.getId(), importVendor.getName());
-                    validateVendorNicknameUnique(existVendor.getId(), importVendor.getNickname());
-                } catch (ServiceException ex) {
-                    respVO.getFailureCodes().put(key, ex.getMessage());
-                    return;
-                }
-                MesMdVendorDO updateObj = BeanUtils.toBean(importVendor, MesMdVendorDO.class);
-                updateObj.setId(existVendor.getId());
-                vendorMapper.updateById(updateObj);
-                respVO.getUpdateCodes().add(importVendor.getCode());
-            } else {
-                // 不支持更新
-                respVO.getFailureCodes().put(key, "供应商编码已存在");
-            }
-        });
+                    // 2.2 判断：创建 or 更新
+                    MesMdVendorDO existVendor = vendorMapper.selectByCode(importVendor.getCode());
+                    if (existVendor == null) {
+                        // 2.2.1 创建
+                        try {
+                            validateVendorNameUnique(null, importVendor.getName());
+                            validateVendorNicknameUnique(null, importVendor.getNickname());
+                        } catch (ServiceException ex) {
+                            respVO.getFailureCodes().put(key, ex.getMessage());
+                            return;
+                        }
+                        MesMdVendorDO vendor = BeanUtils.toBean(importVendor, MesMdVendorDO.class);
+                        vendorMapper.insert(vendor);
+                        // 自动生成条码
+                        barcodeService.autoGenerateBarcode(
+                                BarcodeBizTypeEnum.VENDOR.getValue(),
+                                vendor.getId(),
+                                vendor.getCode(),
+                                vendor.getName());
+                        respVO.getCreateCodes().add(importVendor.getCode());
+                    } else if (updateSupport) {
+                        // 2.2.2 更新
+                        try {
+                            validateVendorNameUnique(existVendor.getId(), importVendor.getName());
+                            validateVendorNicknameUnique(
+                                    existVendor.getId(), importVendor.getNickname());
+                        } catch (ServiceException ex) {
+                            respVO.getFailureCodes().put(key, ex.getMessage());
+                            return;
+                        }
+                        MesMdVendorDO updateObj =
+                                BeanUtils.toBean(importVendor, MesMdVendorDO.class);
+                        updateObj.setId(existVendor.getId());
+                        vendorMapper.updateById(updateObj);
+                        respVO.getUpdateCodes().add(importVendor.getCode());
+                    } else {
+                        // 不支持更新
+                        respVO.getFailureCodes().put(key, "供应商编码已存在");
+                    }
+                });
         return respVO;
     }
-
 }

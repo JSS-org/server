@@ -1,34 +1,37 @@
 package cn.iocoder.yudao.module.ai1.service.home;
 
+import static cn.hutool.core.util.RandomUtil.randomEle;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getDayBeginTime;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.ai1.controller.admin.home.vo.Ai1HomeMessageSummaryByAgentRespVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.home.vo.Ai1HomeMessageSummaryByDateRespVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.home.vo.Ai1HomeSummaryRespVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
-import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionDO;
-import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionMessageDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ModelDO;
+import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionDO;
+import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionMessageDO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.skill.Ai1SkillDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.agent.Ai1AgentMapper;
-import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMapper;
-import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMessageMapper;
 import cn.iocoder.yudao.module.ai1.dal.mysql.home.Ai1HomeMapper;
 import cn.iocoder.yudao.module.ai1.dal.mysql.mcp.Ai1McpMapper;
 import cn.iocoder.yudao.module.ai1.dal.mysql.model.Ai1ModelMapper;
+import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMapper;
+import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMessageMapper;
 import cn.iocoder.yudao.module.ai1.dal.mysql.skill.Ai1SkillMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-import static cn.hutool.core.util.RandomUtil.randomEle;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getDayBeginTime;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * {@link Ai1HomeServiceImpl} 的单元测试
@@ -38,25 +41,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Import(Ai1HomeServiceImpl.class)
 public class Ai1HomeServiceImplTest extends BaseDbUnitTest {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    @Resource
-    private Ai1HomeServiceImpl homeService;
+    @Resource private Ai1HomeServiceImpl homeService;
 
-    @Resource
-    private Ai1HomeMapper homeMapper;
-    @Resource
-    private Ai1AgentMapper agentMapper;
-    @Resource
-    private Ai1SkillMapper skillMapper;
-    @Resource
-    private Ai1McpMapper mcpMapper;
-    @Resource
-    private Ai1ModelMapper modelMapper;
-    @Resource
-    private Ai1SessionMapper sessionMapper;
-    @Resource
-    private Ai1SessionMessageMapper sessionMessageMapper;
+    @Resource private Ai1HomeMapper homeMapper;
+    @Resource private Ai1AgentMapper agentMapper;
+    @Resource private Ai1SkillMapper skillMapper;
+    @Resource private Ai1McpMapper mcpMapper;
+    @Resource private Ai1ModelMapper modelMapper;
+    @Resource private Ai1SessionMapper sessionMapper;
+    @Resource private Ai1SessionMessageMapper sessionMessageMapper;
 
     @Test
     public void testGetSummary() {
@@ -97,12 +93,14 @@ public class Ai1HomeServiceImplTest extends BaseDbUnitTest {
         List<Ai1HomeMessageSummaryByDateRespVO> list = homeService.getMessageSummaryByDate(7);
         // 断言
         assertEquals(7, list.size());
-        assertEquals(getDayBeginTime(now.minusDays(6)).format(DATE_FORMATTER), list.get(0).getDate());
+        assertEquals(
+                getDayBeginTime(now.minusDays(6)).format(DATE_FORMATTER), list.get(0).getDate());
         assertEquals(now.format(DATE_FORMATTER), list.get(6).getDate());
         assertEquals(2L, list.get(6).getCount());
         assertEquals(0L, list.get(5).getCount());
         assertEquals(1L, list.get(4).getCount());
-        assertEquals(3L, list.stream().mapToLong(Ai1HomeMessageSummaryByDateRespVO::getCount).sum());
+        assertEquals(
+                3L, list.stream().mapToLong(Ai1HomeMessageSummaryByDateRespVO::getCount).sum());
     }
 
     @Test
@@ -143,10 +141,12 @@ public class Ai1HomeServiceImplTest extends BaseDbUnitTest {
     // ========== 随机对象 ==========
 
     private static Ai1AgentDO randomAgent() {
-        return randomPojo(Ai1AgentDO.class, o -> {
-            o.setStatus(randomEle(new Integer[]{0, 1}));
-            o.setKnowledgeBaseIds(null).setMcpIds(null).setSkillIds(null);
-        });
+        return randomPojo(
+                Ai1AgentDO.class,
+                o -> {
+                    o.setStatus(randomEle(new Integer[] {0, 1}));
+                    o.setKnowledgeBaseIds(null).setMcpIds(null).setSkillIds(null);
+                });
     }
 
     private Long insertSession(Long agentId) {
@@ -156,12 +156,14 @@ public class Ai1HomeServiceImplTest extends BaseDbUnitTest {
     }
 
     private Long insertSessionMessage(Long sessionId, LocalDateTime createTime) {
-        Ai1SessionMessageDO message = randomPojo(Ai1SessionMessageDO.class, o -> {
-            o.setSessionId(sessionId).setRole("user").setStatus(1);
-            o.setCreateTime(createTime);
-        });
+        Ai1SessionMessageDO message =
+                randomPojo(
+                        Ai1SessionMessageDO.class,
+                        o -> {
+                            o.setSessionId(sessionId).setRole("user").setStatus(1);
+                            o.setCreateTime(createTime);
+                        });
         sessionMessageMapper.insert(message);
         return message.getId();
     }
-
 }

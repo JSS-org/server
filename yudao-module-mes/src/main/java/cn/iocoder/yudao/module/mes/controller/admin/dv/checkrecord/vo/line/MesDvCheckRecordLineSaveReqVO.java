@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.checkrecord.vo.line;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - MES 设备点检记录明细新增/修改 Request VO")
 @Data
@@ -29,5 +30,4 @@ public class MesDvCheckRecordLineSaveReqVO {
 
     @Schema(description = "备注", example = "测试备注")
     private String remark;
-
 }

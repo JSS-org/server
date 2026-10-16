@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.common.pojo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.io.Serializable;
@@ -17,8 +18,7 @@ public final class PageResult<T> implements Serializable {
     @Schema(description = "数据", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<T> list;
 
-    public PageResult() {
-    }
+    public PageResult() {}
 
     public PageResult(List<T> list, Long total) {
         this.list = list;
@@ -37,5 +37,4 @@ public final class PageResult<T> implements Serializable {
     public static <T> PageResult<T> empty(Long total) {
         return new PageResult<>(total);
     }
-
 }

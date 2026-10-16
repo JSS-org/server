@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,11 +16,17 @@ public class MesWmArrivalNoticeSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "通知单编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "AN2026020001")
+    @Schema(
+            description = "通知单编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "AN2026020001")
     @NotEmpty(message = "通知单编码不能为空")
     private String code;
 
-    @Schema(description = "通知单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "2 月份钢板到货")
+    @Schema(
+            description = "通知单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2 月份钢板到货")
     @NotEmpty(message = "通知单名称不能为空")
     private String name;
 
@@ -41,5 +49,4 @@ public class MesWmArrivalNoticeSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
-    }
+}

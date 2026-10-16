@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.product.controller.admin.property.vo.value;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -27,5 +29,4 @@ public class ProductPropertyValueRespVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
-
 }

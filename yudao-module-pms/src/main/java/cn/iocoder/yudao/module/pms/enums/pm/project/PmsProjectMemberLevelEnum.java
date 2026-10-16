@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.pms.enums.pm.project;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,28 +18,32 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public enum PmsProjectMemberLevelEnum implements ArrayValuable<Integer> {
-
     OWNER(1, "项目拥有者"),
     ADMIN(2, "项目管理员"),
     WRITE(3, "编辑"),
     READ(4, "只读");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(PmsProjectMemberLevelEnum::getLevel).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(PmsProjectMemberLevelEnum::getLevel)
+                    .toArray(Integer[]::new);
 
     /**
      * 可以管理项目的成员级别
      */
     public static final List<Integer> MANAGER_LEVELS = Arrays.asList(OWNER.level, ADMIN.level);
+
     /**
      * 可以编辑项目业务数据的成员级别
      */
-    public static final List<Integer> WRITABLE_LEVELS = Arrays.asList(OWNER.level, ADMIN.level, WRITE.level);
+    public static final List<Integer> WRITABLE_LEVELS =
+            Arrays.asList(OWNER.level, ADMIN.level, WRITE.level);
 
     /**
      * 权限级别
      */
     private final Integer level;
+
     /**
      * 权限级别名称
      */
@@ -72,5 +77,4 @@ public enum PmsProjectMemberLevelEnum implements ArrayValuable<Integer> {
     public static PmsProjectMemberLevelEnum valueOf(Integer level) {
         return ArrayUtil.firstMatch(item -> ObjUtil.equal(item.level, level), values());
     }
-
 }

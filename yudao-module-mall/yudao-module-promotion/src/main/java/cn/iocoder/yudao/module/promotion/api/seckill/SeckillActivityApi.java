@@ -38,5 +38,4 @@ public interface SeckillActivityApi {
      * @return 秒杀信息
      */
     SeckillValidateJoinRespDTO validateJoinSeckill(Long activityId, Long skuId, Integer count);
-
 }

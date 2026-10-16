@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply.vo.issue;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -71,5 +72,4 @@ public class OaSupplyIssueRespVO {
 
     @Schema(description = "申请时间", type = "integer", format = "int64", example = "1789347600000")
     private LocalDateTime createTime;
-
 }

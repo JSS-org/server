@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.employee.info;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeFileTypeEnum implements ArrayValuable<Integer> {
-
     ID_CARD_ORIGINAL(11, "身份证原件照片"),
     EDUCATION_CERTIFICATE(12, "学历证明"),
     PROFILE_PHOTO(13, "个人证件照"),
@@ -36,13 +36,14 @@ public enum HrmEmployeeFileTypeEnum implements ArrayValuable<Integer> {
     LEAVE_CERTIFICATE(32, "离职证明"),
     LEAVE_OTHER(33, "其他离职资料");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmEmployeeFileTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(HrmEmployeeFileTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -56,5 +57,4 @@ public enum HrmEmployeeFileTypeEnum implements ArrayValuable<Integer> {
     public static HrmEmployeeFileTypeEnum valueOf(Integer type) {
         return ArrayUtil.firstMatch(item -> item.getType().equals(type), values());
     }
-
 }

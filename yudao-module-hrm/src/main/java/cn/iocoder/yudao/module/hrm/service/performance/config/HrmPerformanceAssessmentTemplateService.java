@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessmenttemplate.HrmPerformanceAssessmentTemplatePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessmenttemplate.HrmPerformanceAssessmentTemplateSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.performance.config.HrmPerformanceAssessmentTemplateDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -21,14 +22,16 @@ public interface HrmPerformanceAssessmentTemplateService {
      * @param createReqVO 创建信息
      * @return 模板编号
      */
-    Long createPerformanceAssessmentTemplate(@Valid HrmPerformanceAssessmentTemplateSaveReqVO createReqVO);
+    Long createPerformanceAssessmentTemplate(
+            @Valid HrmPerformanceAssessmentTemplateSaveReqVO createReqVO);
 
     /**
      * 更新绩效考核模板
      *
      * @param updateReqVO 更新信息
      */
-    void updatePerformanceAssessmentTemplate(@Valid HrmPerformanceAssessmentTemplateSaveReqVO updateReqVO);
+    void updatePerformanceAssessmentTemplate(
+            @Valid HrmPerformanceAssessmentTemplateSaveReqVO updateReqVO);
 
     /**
      * 删除绩效考核模板
@@ -67,7 +70,8 @@ public interface HrmPerformanceAssessmentTemplateService {
      * @param status 状态
      * @return 绩效考核模板列表
      */
-    List<HrmPerformanceAssessmentTemplateDO> getPerformanceAssessmentTemplateListByStatus(Integer status);
+    List<HrmPerformanceAssessmentTemplateDO> getPerformanceAssessmentTemplateListByStatus(
+            Integer status);
 
     /**
      * 校验绩效考核模板存在
@@ -84,5 +88,4 @@ public interface HrmPerformanceAssessmentTemplateService {
      * @return 绩效考核模板
      */
     HrmPerformanceAssessmentTemplateDO validatePerformanceAssessmentTemplateEnabled(Long id);
-
 }

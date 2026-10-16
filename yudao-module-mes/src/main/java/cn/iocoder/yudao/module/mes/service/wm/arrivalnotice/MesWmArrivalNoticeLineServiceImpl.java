@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.arrivalnotice;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,16 +12,15 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo.line.Mes
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalNoticeLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.arrivalnotice.MesWmArrivalNoticeLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 到货通知单行 Service 实现类
@@ -27,14 +29,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmArrivalNoticeLineServiceImpl implements MesWmArrivalNoticeLineService {
 
-    @Resource
-    private MesWmArrivalNoticeLineMapper arrivalNoticeLineMapper;
+    @Resource private MesWmArrivalNoticeLineMapper arrivalNoticeLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmArrivalNoticeService arrivalNoticeService;
-    @Resource
-    private MesMdItemService itemService;
+    @Resource @Lazy private MesWmArrivalNoticeService arrivalNoticeService;
+    @Resource private MesMdItemService itemService;
 
     @Override
     public Long createArrivalNoticeLine(MesWmArrivalNoticeLineSaveReqVO createReqVO) {
@@ -42,7 +40,8 @@ public class MesWmArrivalNoticeLineServiceImpl implements MesWmArrivalNoticeLine
         validateArrivalNoticeLineSaveData(createReqVO);
 
         // 插入
-        MesWmArrivalNoticeLineDO line = BeanUtils.toBean(createReqVO, MesWmArrivalNoticeLineDO.class);
+        MesWmArrivalNoticeLineDO line =
+                BeanUtils.toBean(createReqVO, MesWmArrivalNoticeLineDO.class);
         initQualifiedQuantityIfNoIqc(line);
         arrivalNoticeLineMapper.insert(line);
         return line.getId();
@@ -57,7 +56,8 @@ public class MesWmArrivalNoticeLineServiceImpl implements MesWmArrivalNoticeLine
         validateArrivalNoticeLineSaveData(updateReqVO);
 
         // 更新
-        MesWmArrivalNoticeLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmArrivalNoticeLineDO.class);
+        MesWmArrivalNoticeLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmArrivalNoticeLineDO.class);
         initQualifiedQuantityIfNoIqc(updateObj);
         arrivalNoticeLineMapper.updateById(updateObj);
     }
@@ -97,7 +97,8 @@ public class MesWmArrivalNoticeLineServiceImpl implements MesWmArrivalNoticeLine
     }
 
     @Override
-    public PageResult<MesWmArrivalNoticeLineDO> getArrivalNoticeLinePage(MesWmArrivalNoticeLinePageReqVO pageReqVO) {
+    public PageResult<MesWmArrivalNoticeLineDO> getArrivalNoticeLinePage(
+            MesWmArrivalNoticeLinePageReqVO pageReqVO) {
         return arrivalNoticeLineMapper.selectPage(pageReqVO);
     }
 
@@ -112,12 +113,16 @@ public class MesWmArrivalNoticeLineServiceImpl implements MesWmArrivalNoticeLine
     }
 
     @Override
-    public void updateArrivalNoticeLineWhenIqcFinish(Long lineId, Long iqcId, BigDecimal qualifiedQuantity) {
+    public void updateArrivalNoticeLineWhenIqcFinish(
+            Long lineId, Long iqcId, BigDecimal qualifiedQuantity) {
         // 校验行存在
         validateArrivalNoticeLineExists(lineId);
         // 更新
-        arrivalNoticeLineMapper.updateById(new MesWmArrivalNoticeLineDO()
-                .setId(lineId).setIqcId(iqcId).setQualifiedQuantity(qualifiedQuantity));
+        arrivalNoticeLineMapper.updateById(
+                new MesWmArrivalNoticeLineDO()
+                        .setId(lineId)
+                        .setIqcId(iqcId)
+                        .setQualifiedQuantity(qualifiedQuantity));
     }
 
     @Override
@@ -138,5 +143,4 @@ public class MesWmArrivalNoticeLineServiceImpl implements MesWmArrivalNoticeLine
         }
         return line;
     }
-
 }

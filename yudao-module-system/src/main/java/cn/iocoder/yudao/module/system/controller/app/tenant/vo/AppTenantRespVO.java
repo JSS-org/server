@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.app.tenant.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户 App - 租户 Response VO")
@@ -12,5 +13,4 @@ public class AppTenantRespVO {
 
     @Schema(description = "租户名", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
     private String name;
-
 }

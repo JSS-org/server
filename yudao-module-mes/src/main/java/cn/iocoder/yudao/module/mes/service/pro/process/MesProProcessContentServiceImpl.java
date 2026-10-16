@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.mes.service.pro.process;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_PROCESS_CONTENT_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.pro.process.vo.content.MesProProcessContentSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.pro.process.MesProProcessContentDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.pro.process.MesProProcessContentMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_PROCESS_CONTENT_NOT_EXISTS;
 
 /**
  * MES 生产工序内容 Service 实现类
@@ -23,12 +25,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.PRO_PROCESS_C
 @Validated
 public class MesProProcessContentServiceImpl implements MesProProcessContentService {
 
-    @Resource
-    private MesProProcessContentMapper processContentMapper;
+    @Resource private MesProProcessContentMapper processContentMapper;
 
-    @Resource
-    @Lazy
-    private MesProProcessService processService;
+    @Resource @Lazy private MesProProcessService processService;
 
     @Override
     public Long createProcessContent(MesProProcessContentSaveReqVO createReqVO) {
@@ -36,7 +35,8 @@ public class MesProProcessContentServiceImpl implements MesProProcessContentServ
         processService.validateProcessExists(createReqVO.getProcessId());
 
         // 插入
-        MesProProcessContentDO content = BeanUtils.toBean(createReqVO, MesProProcessContentDO.class);
+        MesProProcessContentDO content =
+                BeanUtils.toBean(createReqVO, MesProProcessContentDO.class);
         processContentMapper.insert(content);
         return content.getId();
     }
@@ -47,7 +47,8 @@ public class MesProProcessContentServiceImpl implements MesProProcessContentServ
         validateProcessContentExists(updateReqVO.getId());
 
         // 更新
-        MesProProcessContentDO updateObj = BeanUtils.toBean(updateReqVO, MesProProcessContentDO.class);
+        MesProProcessContentDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesProProcessContentDO.class);
         processContentMapper.updateById(updateObj);
     }
 
@@ -80,5 +81,4 @@ public class MesProProcessContentServiceImpl implements MesProProcessContentServ
     public void deleteProcessContentByProcessId(Long processId) {
         processContentMapper.deleteByProcessId(processId);
     }
-
 }

@@ -33,5 +33,4 @@ public class IotJsonSerializer implements IotMessageSerializer {
         Assert.notNull(message, "消息解码失败");
         return message;
     }
-
 }

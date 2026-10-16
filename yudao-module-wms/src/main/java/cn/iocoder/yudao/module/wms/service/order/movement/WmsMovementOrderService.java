@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.order.movement.vo.order.WmsMovementOrderPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.order.movement.vo.order.WmsMovementOrderSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.movement.WmsMovementOrderDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -72,5 +73,4 @@ public interface WmsMovementOrderService {
      * @return 移库单数量
      */
     long getMovementOrderCountByWarehouseId(Long warehouseId);
-
 }

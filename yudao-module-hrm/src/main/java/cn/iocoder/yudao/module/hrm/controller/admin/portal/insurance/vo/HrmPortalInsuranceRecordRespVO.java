@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.insurance.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -58,5 +59,4 @@ public class HrmPortalInsuranceRecordRespVO {
 
     @Schema(description = "社保项目列表")
     private List<HrmPortalInsuranceProjectRespVO> projects;
-
 }

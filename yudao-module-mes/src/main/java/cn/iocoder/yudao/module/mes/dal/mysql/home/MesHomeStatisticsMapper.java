@@ -30,8 +30,8 @@ public interface MesHomeStatisticsMapper {
      * @param endTime   < 结束时间
      * @return [feedbackQuantity, qualifiedQuantity, unqualifiedQuantity]
      */
-    Map<String, BigDecimal> selectFeedbackSummary(@Param("beginTime") LocalDateTime beginTime,
-                                                  @Param("endTime") LocalDateTime endTime);
+    Map<String, BigDecimal> selectFeedbackSummary(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 
     /**
      * 按设备状态统计设备台数
@@ -61,7 +61,6 @@ public interface MesHomeStatisticsMapper {
      * @param endTime   < 结束时间
      * @return [{ "date": "2026-04-05", "quantity": 1234, "qualifiedQuantity": 1200, "unqualifiedQuantity": 34 }, ...]
      */
-    List<Map<String, Object>> selectDailyFeedbackTrend(@Param("beginTime") LocalDateTime beginTime,
-                                                       @Param("endTime") LocalDateTime endTime);
-
+    List<Map<String, Object>> selectDailyFeedbackTrend(
+            @Param("beginTime") LocalDateTime beginTime, @Param("endTime") LocalDateTime endTime);
 }

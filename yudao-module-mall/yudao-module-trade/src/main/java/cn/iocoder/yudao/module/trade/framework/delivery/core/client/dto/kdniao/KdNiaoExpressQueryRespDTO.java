@@ -1,16 +1,18 @@
 package cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.kdniao;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.TIME_ZONE_DEFAULT;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
+
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.TIME_ZONE_DEFAULT;
 
 /**
  * 快递鸟快递查询 Resp DTO
@@ -65,6 +67,7 @@ public class KdNiaoExpressQueryRespDTO {
      */
     @JsonProperty("Success")
     private Boolean success;
+
     /**
      * 失败原因
      */
@@ -84,7 +87,9 @@ public class KdNiaoExpressQueryRespDTO {
          * 发生时间
          */
         @JsonProperty("AcceptTime")
-        @JsonFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND, timezone = TIME_ZONE_DEFAULT)
+        @JsonFormat(
+                pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND,
+                timezone = TIME_ZONE_DEFAULT)
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         private LocalDateTime acceptTime;
 
@@ -93,7 +98,5 @@ public class KdNiaoExpressQueryRespDTO {
          */
         @JsonProperty("AcceptStation")
         private String acceptStation;
-
     }
-
 }

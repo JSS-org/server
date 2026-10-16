@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.framework.signature.core.aop;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.BooleanUtil;
@@ -11,9 +13,12 @@ import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstant
 import cn.iocoder.yudao.framework.common.util.servlet.ServletUtils;
 import cn.iocoder.yudao.framework.signature.core.annotation.ApiSignature;
 import cn.iocoder.yudao.framework.signature.core.redis.ApiSignatureRedisDAO;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -22,8 +27,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST;
 
 /**
  * 拦截声明了 {@link ApiSignature} 注解的方法，实现签名
@@ -45,9 +48,12 @@ public class ApiSignatureAspect {
         }
 
         // 2. 验证不通过，抛出异常
-        log.error("[beforePointCut][方法{} 参数({}) 签名失败]", joinPoint.getSignature().toString(),
+        log.error(
+                "[beforePointCut][方法{} 参数({}) 签名失败]",
+                joinPoint.getSignature().toString(),
                 joinPoint.getArgs());
-        throw new ServiceException(BAD_REQUEST.getCode(),
+        throw new ServiceException(
+                BAD_REQUEST.getCode(),
                 StrUtil.blankToDefault(signature.message(), BAD_REQUEST.getMsg()));
     }
 
@@ -63,7 +69,8 @@ public class ApiSignatureAspect {
 
         // 2. 校验签名【重要！】
         String clientSignature = request.getHeader(signature.sign()); // 客户端签名
-        String serverSignatureString = buildSignatureString(signature, request, appSecret); // 服务端签名字符串
+        String serverSignatureString =
+                buildSignatureString(signature, request, appSecret); // 服务端签名字符串
         String serverSignature = DigestUtil.sha256Hex(serverSignatureString); // 服务端签名
         if (ObjUtil.notEqual(clientSignature, serverSignature)) {
             return false;
@@ -71,10 +78,18 @@ public class ApiSignatureAspect {
 
         // 3. 将 nonce 记入缓存，防止重复使用（重点二：此处需要将 ttl 设定为允许 timestamp 时间差的值 x 2 ）
         String nonce = request.getHeader(signature.nonce());
-        if (BooleanUtil.isFalse(signatureRedisDAO.setNonce(appId, nonce, signature.timeout() * 2, signature.timeUnit()))) {
+        if (BooleanUtil.isFalse(
+                signatureRedisDAO.setNonce(
+                        appId, nonce, signature.timeout() * 2, signature.timeUnit()))) {
             String timestamp = request.getHeader(signature.timestamp());
-            log.info("[verifySignature][appId({}) timestamp({}) nonce({}) sign({}) 存在重复请求]", appId, timestamp, nonce, clientSignature);
-            throw new ServiceException(GlobalErrorCodeConstants.REPEATED_REQUESTS.getCode(), "存在重复请求");
+            log.info(
+                    "[verifySignature][appId({}) timestamp({}) nonce({}) sign({}) 存在重复请求]",
+                    appId,
+                    timestamp,
+                    nonce,
+                    clientSignature);
+            throw new ServiceException(
+                    GlobalErrorCodeConstants.REPEATED_REQUESTS.getCode(), "存在重复请求");
         }
         return true;
     }
@@ -132,7 +147,8 @@ public class ApiSignatureAspect {
      * @param appSecret appSecret
      * @return 签名字符串
      */
-    private String buildSignatureString(ApiSignature signature, HttpServletRequest request, String appSecret) {
+    private String buildSignatureString(
+            ApiSignature signature, HttpServletRequest request, String appSecret) {
         SortedMap<String, String> parameterMap = getRequestParameterMap(request); // 请求头
         SortedMap<String, String> headerMap = getRequestHeaderMap(signature, request); // 请求参数
         String requestBody = StrUtil.nullToDefault(ServletUtils.getBody(request), ""); // 请求体
@@ -149,7 +165,8 @@ public class ApiSignatureAspect {
      * @param signature 签名注解
      * @return signature params
      */
-    private static SortedMap<String, String> getRequestHeaderMap(ApiSignature signature, HttpServletRequest request) {
+    private static SortedMap<String, String> getRequestHeaderMap(
+            ApiSignature signature, HttpServletRequest request) {
         SortedMap<String, String> sortedMap = new TreeMap<>();
         sortedMap.put(signature.appId(), request.getHeader(signature.appId()));
         sortedMap.put(signature.timestamp(), request.getHeader(signature.timestamp()));
@@ -170,5 +187,4 @@ public class ApiSignatureAspect {
         }
         return sortedMap;
     }
-
 }

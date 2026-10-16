@@ -2,12 +2,15 @@ package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.scheme;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.insurance.config.HrmInsuranceSchemeTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -39,6 +42,6 @@ public class HrmInsuranceSchemeSaveReqVO {
 
     @Schema(description = "社保项目列表", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty(message = "社保项目不能为空")
-    private List<@NotNull(message = "社保项目不能为空") @Valid HrmInsuranceSchemeProjectSaveReqVO> projectList;
-
+    private List<@NotNull(message = "社保项目不能为空") @Valid HrmInsuranceSchemeProjectSaveReqVO>
+            projectList;
 }

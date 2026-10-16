@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.file.vo.permission;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,5 +30,4 @@ public class OaFilePermissionRespVO {
 
     @Schema(description = "到期时间", type = "integer", format = "int64", example = "1789347600000")
     private LocalDateTime expireTime;
-
 }

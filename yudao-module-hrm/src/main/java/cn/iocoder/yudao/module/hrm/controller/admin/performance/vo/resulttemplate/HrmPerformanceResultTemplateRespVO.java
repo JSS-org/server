@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -51,5 +52,4 @@ public class HrmPerformanceResultTemplateRespVO {
         @Schema(description = "绩效系数", example = "1.2")
         private BigDecimal coefficient;
     }
-
 }

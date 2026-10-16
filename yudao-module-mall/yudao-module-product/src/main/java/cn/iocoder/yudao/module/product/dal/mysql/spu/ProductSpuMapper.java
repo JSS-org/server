@@ -10,8 +10,10 @@ import cn.iocoder.yudao.module.product.controller.app.spu.vo.AppProductSpuPageRe
 import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
 import cn.iocoder.yudao.module.product.enums.ProductConstants;
 import cn.iocoder.yudao.module.product.enums.spu.ProductSpuStatusEnum;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import org.apache.ibatis.annotations.*;
 
 import java.util.Objects;
@@ -26,8 +28,14 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
      */
     @Select("SELECT * FROM product_spu WHERE id = #{id}")
     @Results({
-            @Result(column = "slider_pic_urls", property = "sliderPicUrls", typeHandler = Jackson3TypeHandler.class),
-            @Result(column = "delivery_types", property = "deliveryTypes", typeHandler = IntegerListTypeHandler.class),
+        @Result(
+                column = "slider_pic_urls",
+                property = "sliderPicUrls",
+                typeHandler = Jackson3TypeHandler.class),
+        @Result(
+                column = "delivery_types",
+                property = "deliveryTypes",
+                typeHandler = IntegerListTypeHandler.class),
     })
     ProductSpuDO selectByIdIncludeDeleted(@Param("id") Long id);
 
@@ -39,12 +47,13 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
      */
     default PageResult<ProductSpuDO> selectPage(ProductSpuPageReqVO reqVO) {
         Integer tabType = reqVO.getTabType();
-        LambdaQueryWrapperX<ProductSpuDO> queryWrapper = new LambdaQueryWrapperX<ProductSpuDO>()
-                .likeIfPresent(ProductSpuDO::getName, reqVO.getName())
-                .eqIfPresent(ProductSpuDO::getCategoryId, reqVO.getCategoryId())
-                .betweenIfPresent(ProductSpuDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(ProductSpuDO::getSort)
-                .orderByDesc(ProductSpuDO::getId);
+        LambdaQueryWrapperX<ProductSpuDO> queryWrapper =
+                new LambdaQueryWrapperX<ProductSpuDO>()
+                        .likeIfPresent(ProductSpuDO::getName, reqVO.getName())
+                        .eqIfPresent(ProductSpuDO::getCategoryId, reqVO.getCategoryId())
+                        .betweenIfPresent(ProductSpuDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(ProductSpuDO::getSort)
+                        .orderByDesc(ProductSpuDO::getId);
         appendTabQuery(tabType, queryWrapper);
         return selectPage(reqVO, queryWrapper);
     }
@@ -57,7 +66,8 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
     default Long selectCount() {
         LambdaQueryWrapperX<ProductSpuDO> queryWrapper = new LambdaQueryWrapperX<>();
         // 库存小于等于警戒库存
-        queryWrapper.le(ProductSpuDO::getStock, ProductConstants.ALERT_STOCK)
+        queryWrapper
+                .le(ProductSpuDO::getStock, ProductConstants.ALERT_STOCK)
                 // 如果库存触发警戒库存且状态为回收站的话则不计入触发警戒库存的个数
                 .notIn(ProductSpuDO::getStatus, ProductSpuStatusEnum.RECYCLE.getStatus());
         return selectCount(queryWrapper);
@@ -66,26 +76,35 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
     /**
      * 获得商品 SPU 分页，提供给用户 App 使用
      */
-    default PageResult<ProductSpuDO> selectPage(AppProductSpuPageReqVO pageReqVO, Set<Long> categoryIds) {
-        LambdaQueryWrapperX<ProductSpuDO> query = new LambdaQueryWrapperX<ProductSpuDO>()
-                // 关键字匹配，目前只匹配商品名
-                .likeIfPresent(ProductSpuDO::getName, pageReqVO.getKeyword())
-                // 分类
-                .inIfPresent(ProductSpuDO::getCategoryId, categoryIds);
+    default PageResult<ProductSpuDO> selectPage(
+            AppProductSpuPageReqVO pageReqVO, Set<Long> categoryIds) {
+        LambdaQueryWrapperX<ProductSpuDO> query =
+                new LambdaQueryWrapperX<ProductSpuDO>()
+                        // 关键字匹配，目前只匹配商品名
+                        .likeIfPresent(ProductSpuDO::getName, pageReqVO.getKeyword())
+                        // 分类
+                        .inIfPresent(ProductSpuDO::getCategoryId, categoryIds);
         // 上架状态 且有库存
         query.eq(ProductSpuDO::getStatus, ProductSpuStatusEnum.ENABLE.getStatus());
 
         // 排序逻辑
         Boolean sortAsc = pageReqVO.getSortAsc() != null ? pageReqVO.getSortAsc() : Boolean.TRUE;
-        if (Objects.equals(pageReqVO.getSortField(), AppProductSpuPageReqVO.SORT_FIELD_SALES_COUNT)) {
-            query.last(String.format(" ORDER BY (sales_count + virtual_sales_count) %s, sort DESC, id DESC",
-                    sortAsc ? "ASC" : "DESC"));
-        } else if (Objects.equals(pageReqVO.getSortField(), AppProductSpuPageReqVO.SORT_FIELD_PRICE)) {
+        if (Objects.equals(
+                pageReqVO.getSortField(), AppProductSpuPageReqVO.SORT_FIELD_SALES_COUNT)) {
+            query.last(
+                    String.format(
+                            " ORDER BY (sales_count + virtual_sales_count) %s, sort DESC, id DESC",
+                            sortAsc ? "ASC" : "DESC"));
+        } else if (Objects.equals(
+                pageReqVO.getSortField(), AppProductSpuPageReqVO.SORT_FIELD_PRICE)) {
             query.orderBy(true, sortAsc, ProductSpuDO::getPrice)
-                    .orderByDesc(ProductSpuDO::getSort).orderByDesc(ProductSpuDO::getId);
-        } else if (Objects.equals(pageReqVO.getSortField(), AppProductSpuPageReqVO.SORT_FIELD_CREATE_TIME)) {
+                    .orderByDesc(ProductSpuDO::getSort)
+                    .orderByDesc(ProductSpuDO::getId);
+        } else if (Objects.equals(
+                pageReqVO.getSortField(), AppProductSpuPageReqVO.SORT_FIELD_CREATE_TIME)) {
             query.orderBy(true, sortAsc, ProductSpuDO::getCreateTime)
-                    .orderByDesc(ProductSpuDO::getSort).orderByDesc(ProductSpuDO::getId);
+                    .orderByDesc(ProductSpuDO::getSort)
+                    .orderByDesc(ProductSpuDO::getId);
         } else {
             query.orderByDesc(ProductSpuDO::getSort).orderByDesc(ProductSpuDO::getId);
         }
@@ -107,12 +126,15 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
         if (incrCount > 0) {
             sql = " stock = stock + " + incrCount + ", sales_count = sales_count - " + incrCount;
         } else {
-            sql = " stock = stock - " + Math.abs(incrCount) + ", sales_count = sales_count + " + Math.abs(incrCount);
+            sql =
+                    " stock = stock - "
+                            + Math.abs(incrCount)
+                            + ", sales_count = sales_count + "
+                            + Math.abs(incrCount);
         }
         // 执行更新
-        LambdaUpdateWrapper<ProductSpuDO> updateWrapper = new LambdaUpdateWrapper<ProductSpuDO>()
-                .setSql(sql)
-                .eq(ProductSpuDO::getId, id);
+        LambdaUpdateWrapper<ProductSpuDO> updateWrapper =
+                new LambdaUpdateWrapper<ProductSpuDO>().setSql(sql).eq(ProductSpuDO::getId, id);
         update(null, updateWrapper);
     }
 
@@ -155,10 +177,11 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
      * @return 数量
      */
     default Long selectCountByTab(ProductSpuPageReqVO reqVO, Integer tabType) {
-        LambdaQueryWrapperX<ProductSpuDO> queryWrapper = new LambdaQueryWrapperX<ProductSpuDO>()
-                .likeIfPresent(ProductSpuDO::getName, reqVO.getName())
-                .eqIfPresent(ProductSpuDO::getCategoryId, reqVO.getCategoryId())
-                .betweenIfPresent(ProductSpuDO::getCreateTime, reqVO.getCreateTime());
+        LambdaQueryWrapperX<ProductSpuDO> queryWrapper =
+                new LambdaQueryWrapperX<ProductSpuDO>()
+                        .likeIfPresent(ProductSpuDO::getName, reqVO.getName())
+                        .eqIfPresent(ProductSpuDO::getCategoryId, reqVO.getCategoryId())
+                        .betweenIfPresent(ProductSpuDO::getCreateTime, reqVO.getCreateTime());
         appendTabQuery(tabType, queryWrapper);
         return selectCount(queryWrapper);
     }
@@ -170,10 +193,10 @@ public interface ProductSpuMapper extends BaseMapperX<ProductSpuDO> {
      * @param incrCount 增加的数量
      */
     default void updateBrowseCount(Long id, int incrCount) {
-        LambdaUpdateWrapper<ProductSpuDO> updateWrapper = new LambdaUpdateWrapper<ProductSpuDO>()
-                .setSql(" browse_count = browse_count +" + incrCount)
-                .eq(ProductSpuDO::getId, id);
+        LambdaUpdateWrapper<ProductSpuDO> updateWrapper =
+                new LambdaUpdateWrapper<ProductSpuDO>()
+                        .setSql(" browse_count = browse_count +" + incrCount)
+                        .eq(ProductSpuDO::getId, id);
         update(null, updateWrapper);
     }
-
 }

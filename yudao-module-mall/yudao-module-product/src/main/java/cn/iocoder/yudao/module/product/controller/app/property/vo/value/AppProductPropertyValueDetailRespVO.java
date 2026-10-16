@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.controller.app.property.vo.value;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "用户 App - 商品属性值的明细 Response VO")
@@ -18,5 +19,4 @@ public class AppProductPropertyValueDetailRespVO {
 
     @Schema(description = "属性值的名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "红色")
     private String valueName;
-
 }

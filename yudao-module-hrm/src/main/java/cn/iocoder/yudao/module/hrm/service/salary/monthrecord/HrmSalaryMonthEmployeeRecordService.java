@@ -1,14 +1,14 @@
 package cn.iocoder.yudao.module.hrm.service.salary.monthrecord;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionValueVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.employee.HrmSalaryEmployeeMonthRecordPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.employee.HrmSalaryMonthEmployeeRecordListReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.employee.HrmSalaryMonthEmployeeRecordPageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.employee.HrmSalaryMonthEmployeeRecordUpdateReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.monthrecord.employee.HrmSalaryPerformanceCoefficientReqVO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
+import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.option.HrmSalaryOptionValueVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryTaxRuleDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -52,7 +52,8 @@ public interface HrmSalaryMonthEmployeeRecordService {
      * @return 员工月度工资记录
      */
     HrmSalaryMonthEmployeeRecordDO calculateMonthEmployeeRecord(
-            HrmSalaryMonthEmployeeRecordDO employeeRecord, List<HrmSalaryOptionValueVO> optionValues);
+            HrmSalaryMonthEmployeeRecordDO employeeRecord,
+            List<HrmSalaryOptionValueVO> optionValues);
 
     /**
      * 批量修改员工月度工资
@@ -92,7 +93,8 @@ public interface HrmSalaryMonthEmployeeRecordService {
      * @param monthRecordId 月度工资表编号
      * @return 员工月度工资记录列表
      */
-    List<HrmSalaryMonthEmployeeRecordDO> getMonthEmployeeRecordListByMonthRecordId(Long monthRecordId);
+    List<HrmSalaryMonthEmployeeRecordDO> getMonthEmployeeRecordListByMonthRecordId(
+            Long monthRecordId);
 
     /**
      * 获得指定员工年月的工资记录
@@ -138,5 +140,4 @@ public interface HrmSalaryMonthEmployeeRecordService {
      */
     PageResult<HrmSalaryMonthEmployeeRecordDO> getEmployeeMonthRecordPage(
             HrmSalaryEmployeeMonthRecordPageReqVO reqVO);
-
 }

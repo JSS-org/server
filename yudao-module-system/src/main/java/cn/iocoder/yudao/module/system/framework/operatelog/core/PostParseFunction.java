@@ -4,9 +4,13 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
 import cn.iocoder.yudao.module.system.service.dept.PostService;
+
 import com.mzt.logapi.service.IParseFunction;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,8 +24,7 @@ public class PostParseFunction implements IParseFunction {
 
     public static final String NAME = "getPostById";
 
-    @Resource
-    private PostService postService;
+    @Resource private PostService postService;
 
     @Override
     public String functionName() {
@@ -42,5 +45,4 @@ public class PostParseFunction implements IParseFunction {
         }
         return post.getName();
     }
-
 }

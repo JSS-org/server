@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.checkplan.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,7 +24,10 @@ public class MesDvCheckPlanSaveReqVO {
     @NotEmpty(message = "方案名称不能为空")
     private String name;
 
-    @Schema(description = "方案类型（1=设备点检，2=设备保养）", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "方案类型（1=设备点检，2=设备保养）",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "方案类型不能为空")
     private Integer type;
 
@@ -32,7 +37,10 @@ public class MesDvCheckPlanSaveReqVO {
     @Schema(description = "结束日期")
     private LocalDateTime endDate;
 
-    @Schema(description = "周期类型（1=天，2=周，3=月，4=年）", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "周期类型（1=天，2=周，3=月，4=年）",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "周期类型不能为空")
     private Integer cycleType;
 
@@ -45,5 +53,4 @@ public class MesDvCheckPlanSaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
-    }
+}

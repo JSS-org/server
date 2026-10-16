@@ -1,5 +1,19 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.action;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
@@ -18,6 +32,7 @@ import cn.iocoder.yudao.module.system.api.notify.NotifyMessageSendApi;
 import cn.iocoder.yudao.module.system.api.notify.dto.NotifySendSingleToUserReqDTO;
 import cn.iocoder.yudao.module.system.api.sms.SmsSendApi;
 import cn.iocoder.yudao.module.system.api.sms.dto.send.SmsSendSingleToUserReqDTO;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -28,19 +43,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link IotAlertTriggerSceneRuleAction} 的单元测试
  *
@@ -48,22 +50,15 @@ import static org.mockito.Mockito.when;
  */
 public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private IotAlertTriggerSceneRuleAction action;
+    @InjectMocks private IotAlertTriggerSceneRuleAction action;
 
-    @Mock
-    private IotAlertConfigService alertConfigService;
-    @Mock
-    private IotAlertRecordService alertRecordService;
-    @Mock
-    private IotDeviceService deviceService;
+    @Mock private IotAlertConfigService alertConfigService;
+    @Mock private IotAlertRecordService alertRecordService;
+    @Mock private IotDeviceService deviceService;
 
-    @Mock
-    private SmsSendApi smsSendApi;
-    @Mock
-    private MailSendApi mailSendApi;
-    @Mock
-    private NotifyMessageSendApi notifyMessageSendApi;
+    @Mock private SmsSendApi smsSendApi;
+    @Mock private MailSendApi mailSendApi;
+    @Mock private NotifyMessageSendApi notifyMessageSendApi;
 
     @Test
     public void testGetType() {
@@ -79,7 +74,8 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         IotSceneRuleDO.Action actionConfig = randomPojo(IotSceneRuleDO.Action.class);
 
         // mock 行为：返回空列表
-        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
+        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(
+                        rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.emptyList());
 
         // 调用
@@ -100,20 +96,25 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         IotDeviceMessage message = createDeviceMessage();
         IotSceneRuleDO rule = randomPojo(IotSceneRuleDO.class);
         IotSceneRuleDO.Action actionConfig = randomPojo(IotSceneRuleDO.Action.class);
-        IotAlertConfigDO config = randomPojo(IotAlertConfigDO.class, c -> {
-            c.setReceiveUserIds(Collections.singletonList(userId));
-            c.setReceiveTypes(Arrays.asList(
-                    IotAlertReceiveTypeEnum.SMS.getType(),
-                    IotAlertReceiveTypeEnum.MAIL.getType(),
-                    IotAlertReceiveTypeEnum.NOTIFY.getType()));
-            c.setSmsTemplateCode("custom_sms");
-            c.setMailTemplateCode("custom_mail");
-            c.setNotifyTemplateCode("custom_notify");
-        });
+        IotAlertConfigDO config =
+                randomPojo(
+                        IotAlertConfigDO.class,
+                        c -> {
+                            c.setReceiveUserIds(Collections.singletonList(userId));
+                            c.setReceiveTypes(
+                                    Arrays.asList(
+                                            IotAlertReceiveTypeEnum.SMS.getType(),
+                                            IotAlertReceiveTypeEnum.MAIL.getType(),
+                                            IotAlertReceiveTypeEnum.NOTIFY.getType()));
+                            c.setSmsTemplateCode("custom_sms");
+                            c.setMailTemplateCode("custom_mail");
+                            c.setNotifyTemplateCode("custom_notify");
+                        });
         IotDeviceDO device = randomPojo(IotDeviceDO.class);
 
         // mock 行为
-        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
+        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(
+                        rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.singletonList(config));
         when(deviceService.getDeviceFromCache(message.getDeviceId())).thenReturn(device);
 
@@ -130,14 +131,17 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         verify(alertRecordService, times(1))
                 .createAlertRecord(eq(config), eq(rule.getId()), eq(message), eq(device));
         // 断言：三条通道各发一次，模板编号匹配
-        ArgumentCaptor<SmsSendSingleToUserReqDTO> smsCaptor = ArgumentCaptor.forClass(SmsSendSingleToUserReqDTO.class);
+        ArgumentCaptor<SmsSendSingleToUserReqDTO> smsCaptor =
+                ArgumentCaptor.forClass(SmsSendSingleToUserReqDTO.class);
         verify(smsSendApi, times(1)).sendSingleSmsToAdmin(smsCaptor.capture());
         assertEquals(userId, smsCaptor.getValue().getUserId());
         assertEquals("custom_sms", smsCaptor.getValue().getTemplateCode());
-        ArgumentCaptor<MailSendSingleToUserReqDTO> mailCaptor = ArgumentCaptor.forClass(MailSendSingleToUserReqDTO.class);
+        ArgumentCaptor<MailSendSingleToUserReqDTO> mailCaptor =
+                ArgumentCaptor.forClass(MailSendSingleToUserReqDTO.class);
         verify(mailSendApi, times(1)).sendSingleMailToAdmin(mailCaptor.capture());
         assertEquals("custom_mail", mailCaptor.getValue().getTemplateCode());
-        ArgumentCaptor<NotifySendSingleToUserReqDTO> notifyCaptor = ArgumentCaptor.forClass(NotifySendSingleToUserReqDTO.class);
+        ArgumentCaptor<NotifySendSingleToUserReqDTO> notifyCaptor =
+                ArgumentCaptor.forClass(NotifySendSingleToUserReqDTO.class);
         verify(notifyMessageSendApi, times(1)).sendSingleMessageToAdmin(notifyCaptor.capture());
         assertEquals("custom_notify", notifyCaptor.getValue().getTemplateCode());
     }
@@ -148,13 +152,19 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         Long userId = randomLongId();
         IotSceneRuleDO rule = randomPojo(IotSceneRuleDO.class);
         IotSceneRuleDO.Action actionConfig = randomPojo(IotSceneRuleDO.Action.class);
-        IotAlertConfigDO config = randomPojo(IotAlertConfigDO.class, c -> {
-            c.setReceiveUserIds(Collections.singletonList(userId));
-            c.setReceiveTypes(Collections.singletonList(IotAlertReceiveTypeEnum.NOTIFY.getType()));
-        });
+        IotAlertConfigDO config =
+                randomPojo(
+                        IotAlertConfigDO.class,
+                        c -> {
+                            c.setReceiveUserIds(Collections.singletonList(userId));
+                            c.setReceiveTypes(
+                                    Collections.singletonList(
+                                            IotAlertReceiveTypeEnum.NOTIFY.getType()));
+                        });
 
         // mock 行为
-        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
+        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(
+                        rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.singletonList(config));
 
         // 调用
@@ -168,7 +178,8 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         verify(deviceService, never()).getDeviceFromCache(anyLong());
         verify(alertRecordService, times(1))
                 .createAlertRecord(eq(config), eq(rule.getId()), eq(null), eq(null));
-        verify(notifyMessageSendApi, times(1)).sendSingleMessageToAdmin(any(NotifySendSingleToUserReqDTO.class));
+        verify(notifyMessageSendApi, times(1))
+                .sendSingleMessageToAdmin(any(NotifySendSingleToUserReqDTO.class));
     }
 
     @Test
@@ -177,14 +188,20 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         IotDeviceMessage message = createDeviceMessage();
         IotSceneRuleDO rule = randomPojo(IotSceneRuleDO.class);
         IotSceneRuleDO.Action actionConfig = randomPojo(IotSceneRuleDO.Action.class);
-        IotAlertConfigDO config = randomPojo(IotAlertConfigDO.class, c -> {
-            c.setReceiveUserIds(Collections.emptyList());
-            c.setReceiveTypes(Collections.singletonList(IotAlertReceiveTypeEnum.SMS.getType()));
-        });
+        IotAlertConfigDO config =
+                randomPojo(
+                        IotAlertConfigDO.class,
+                        c -> {
+                            c.setReceiveUserIds(Collections.emptyList());
+                            c.setReceiveTypes(
+                                    Collections.singletonList(
+                                            IotAlertReceiveTypeEnum.SMS.getType()));
+                        });
         IotDeviceDO device = randomPojo(IotDeviceDO.class);
 
         // mock 行为
-        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
+        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(
+                        rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.singletonList(config));
         when(deviceService.getDeviceFromCache(message.getDeviceId())).thenReturn(device);
 
@@ -204,14 +221,18 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         IotDeviceMessage message = createDeviceMessage();
         IotSceneRuleDO rule = randomPojo(IotSceneRuleDO.class);
         IotSceneRuleDO.Action actionConfig = randomPojo(IotSceneRuleDO.Action.class);
-        IotAlertConfigDO config = randomPojo(IotAlertConfigDO.class, c -> {
-            c.setReceiveUserIds(Collections.singletonList(userId));
-            c.setReceiveTypes(Collections.singletonList(99));
-        });
+        IotAlertConfigDO config =
+                randomPojo(
+                        IotAlertConfigDO.class,
+                        c -> {
+                            c.setReceiveUserIds(Collections.singletonList(userId));
+                            c.setReceiveTypes(Collections.singletonList(99));
+                        });
         IotDeviceDO device = randomPojo(IotDeviceDO.class);
 
         // mock 行为
-        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
+        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(
+                        rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.singletonList(config));
         when(deviceService.getDeviceFromCache(message.getDeviceId())).thenReturn(device);
 
@@ -235,16 +256,21 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         IotDeviceMessage message = createDeviceMessage();
         IotSceneRuleDO rule = randomPojo(IotSceneRuleDO.class);
         IotSceneRuleDO.Action actionConfig = randomPojo(IotSceneRuleDO.Action.class);
-        IotAlertConfigDO config = randomPojo(IotAlertConfigDO.class, c -> {
-            c.setReceiveUserIds(Collections.singletonList(userId));
-            c.setReceiveTypes(Arrays.asList(
-                    IotAlertReceiveTypeEnum.SMS.getType(),
-                    IotAlertReceiveTypeEnum.MAIL.getType()));
-        });
+        IotAlertConfigDO config =
+                randomPojo(
+                        IotAlertConfigDO.class,
+                        c -> {
+                            c.setReceiveUserIds(Collections.singletonList(userId));
+                            c.setReceiveTypes(
+                                    Arrays.asList(
+                                            IotAlertReceiveTypeEnum.SMS.getType(),
+                                            IotAlertReceiveTypeEnum.MAIL.getType()));
+                        });
         IotDeviceDO device = randomPojo(IotDeviceDO.class);
 
         // mock 行为：sms 抛异常
-        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
+        when(alertConfigService.getAlertConfigListBySceneRuleIdAndStatus(
+                        rule.getId(), CommonStatusEnum.ENABLE.getStatus()))
                 .thenReturn(Collections.singletonList(config));
         when(deviceService.getDeviceFromCache(message.getDeviceId())).thenReturn(device);
         when(smsSendApi.sendSingleSmsToAdmin(any())).thenThrow(new RuntimeException("sms 渠道异常"));
@@ -271,5 +297,4 @@ public class IotAlertTriggerSceneRuleActionTest extends BaseMockitoUnitTest {
         message.setReportTime(LocalDateTime.now());
         return message;
     }
-
 }

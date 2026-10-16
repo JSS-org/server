@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -10,10 +13,13 @@ import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeChange
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,11 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
 
 @Tag(name = "管理后台 - HRM 员工异动记录")
 @RestController
@@ -35,12 +37,9 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class HrmEmployeeChangeRecordController {
 
-    @Resource
-    private HrmEmployeeChangeRecordService changeRecordService;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private HrmEmployeeChangeRecordService changeRecordService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private DeptApi deptApi;
 
     @GetMapping("/list")
     @Operation(summary = "获得员工异动记录列表")
@@ -48,28 +47,51 @@ public class HrmEmployeeChangeRecordController {
     @PreAuthorize("@ss.hasPermission('hrm:employee:query')")
     public CommonResult<List<HrmEmployeeChangeRecordRespVO>> getEmployeeChangeRecordList(
             @RequestParam("employeeId") Long employeeId) {
-        return success(buildEmployeeChangeRecordRespVOList(
-                changeRecordService.getEmployeeChangeRecordListByEmployeeId(employeeId)));
+        return success(
+                buildEmployeeChangeRecordRespVOList(
+                        changeRecordService.getEmployeeChangeRecordListByEmployeeId(employeeId)));
     }
 
     // ==================== 拼接 VO ====================
 
     private List<HrmEmployeeChangeRecordRespVO> buildEmployeeChangeRecordRespVOList(
             List<HrmEmployeeChangeRecordDO> changeRecords) {
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSetByFlatMap(changeRecords, changeRecord -> Stream.of(changeRecord.getOldDeptId(), changeRecord.getNewDeptId())));
-        Map<Long, HrmEmployeeDO> leaderEmployeeMap = employeeService.getEmployeeMap(
-                convertSetByFlatMap(changeRecords, changeRecord -> Stream.of(changeRecord.getOldLeaderEmployeeId(), changeRecord.getNewLeaderEmployeeId())));
-        return BeanUtils.toBean(changeRecords, HrmEmployeeChangeRecordRespVO.class, changeRecord -> {
-            MapUtils.findAndThen(deptMap, changeRecord.getOldDeptId(),
-                    dept -> changeRecord.setOldDeptName(dept.getName()));
-            MapUtils.findAndThen(deptMap, changeRecord.getNewDeptId(),
-                    dept -> changeRecord.setNewDeptName(dept.getName()));
-            MapUtils.findAndThen(leaderEmployeeMap, changeRecord.getOldLeaderEmployeeId(),
-                    leader -> changeRecord.setOldLeaderEmployeeName(leader.getName()));
-            MapUtils.findAndThen(leaderEmployeeMap, changeRecord.getNewLeaderEmployeeId(),
-                    leader -> changeRecord.setNewLeaderEmployeeName(leader.getName()));
-        });
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(
+                        convertSetByFlatMap(
+                                changeRecords,
+                                changeRecord ->
+                                        Stream.of(
+                                                changeRecord.getOldDeptId(),
+                                                changeRecord.getNewDeptId())));
+        Map<Long, HrmEmployeeDO> leaderEmployeeMap =
+                employeeService.getEmployeeMap(
+                        convertSetByFlatMap(
+                                changeRecords,
+                                changeRecord ->
+                                        Stream.of(
+                                                changeRecord.getOldLeaderEmployeeId(),
+                                                changeRecord.getNewLeaderEmployeeId())));
+        return BeanUtils.toBean(
+                changeRecords,
+                HrmEmployeeChangeRecordRespVO.class,
+                changeRecord -> {
+                    MapUtils.findAndThen(
+                            deptMap,
+                            changeRecord.getOldDeptId(),
+                            dept -> changeRecord.setOldDeptName(dept.getName()));
+                    MapUtils.findAndThen(
+                            deptMap,
+                            changeRecord.getNewDeptId(),
+                            dept -> changeRecord.setNewDeptName(dept.getName()));
+                    MapUtils.findAndThen(
+                            leaderEmployeeMap,
+                            changeRecord.getOldLeaderEmployeeId(),
+                            leader -> changeRecord.setOldLeaderEmployeeName(leader.getName()));
+                    MapUtils.findAndThen(
+                            leaderEmployeeMap,
+                            changeRecord.getNewLeaderEmployeeId(),
+                            leader -> changeRecord.setNewLeaderEmployeeName(leader.getName()));
+                });
     }
-
 }

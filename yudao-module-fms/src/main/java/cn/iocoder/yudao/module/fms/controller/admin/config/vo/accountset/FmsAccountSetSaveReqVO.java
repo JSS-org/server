@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.accountset;
 
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - FMS 账套新增/修改 Request VO")
@@ -106,5 +109,4 @@ public class FmsAccountSetSaveReqVO {
     @Size(max = 255, message = "详细地址不能超过 255 个字符")
     @DiffLogField(name = "详细地址")
     private String address;
-
 }

@@ -1,5 +1,12 @@
 package cn.iocoder.yudao.module.trade.service.price.calculator;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import static java.util.Collections.singletonList;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.promotion.api.bargain.BargainRecordApi;
 import cn.iocoder.yudao.module.promotion.api.bargain.dto.BargainValidateJoinRespDTO;
@@ -7,17 +14,12 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.util.ArrayList;
-
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link TradeBargainActivityPriceCalculator} 的单元测试
@@ -26,34 +28,47 @@ import static org.mockito.Mockito.when;
  */
 public class TradeBargainActivityPriceCalculatorTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private TradeBargainActivityPriceCalculator tradeBargainActivityPriceCalculator;
+    @InjectMocks private TradeBargainActivityPriceCalculator tradeBargainActivityPriceCalculator;
 
-    @Mock
-    private BargainRecordApi bargainRecordApi;
+    @Mock private BargainRecordApi bargainRecordApi;
 
     @Test
     public void testCalculate_match() {
         // 准备参数：砍价订单，单 SKU、数量 1
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setUserId(1L).setBargainRecordId(2L)
-                .setItems(singletonList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(1).setSelected(true)
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.BARGAIN.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(singletonList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(1).setSelected(true)
-                                .setPrice(100).setSpuId(1L).setGivePoint(0)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setUserId(1L)
+                        .setBargainRecordId(2L)
+                        .setItems(
+                                singletonList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(1)
+                                                .setSelected(true)));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.BARGAIN.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                singletonList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(1)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L)
+                                                .setGivePoint(0)));
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
         // mock 方法：砍价后单价 30 分
-        when(bargainRecordApi.validateJoinBargain(eq(1L), eq(2L), eq(10L))).thenReturn(
-                new BargainValidateJoinRespDTO().setActivityId(1000L).setName("砍价 1000 号").setBargainPrice(30));
+        when(bargainRecordApi.validateJoinBargain(eq(1L), eq(2L), eq(10L)))
+                .thenReturn(
+                        new BargainValidateJoinRespDTO()
+                                .setActivityId(1000L)
+                                .setName("砍价 1000 号")
+                                .setBargainPrice(30));
 
         // 调用：100 - 30 * 1 = 70 优惠
         tradeBargainActivityPriceCalculator.calculate(param, result);
@@ -79,18 +94,27 @@ public class TradeBargainActivityPriceCalculatorTest extends BaseMockitoUnitTest
     @Test
     public void testCalculate_skipNonBargainOrder() {
         // 准备参数：普通订单
-        TradePriceCalculateReqBO param = new TradePriceCalculateReqBO()
-                .setItems(singletonList(
-                        new TradePriceCalculateReqBO.Item().setSkuId(10L).setCount(1).setSelected(true)
-                ));
-        TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
-                .setType(TradeOrderTypeEnum.NORMAL.getType())
-                .setPrice(new TradePriceCalculateRespBO.Price())
-                .setPromotions(new ArrayList<>())
-                .setItems(singletonList(
-                        new TradePriceCalculateRespBO.OrderItem().setSkuId(10L).setCount(1).setSelected(true)
-                                .setPrice(100).setSpuId(1L)
-                ));
+        TradePriceCalculateReqBO param =
+                new TradePriceCalculateReqBO()
+                        .setItems(
+                                singletonList(
+                                        new TradePriceCalculateReqBO.Item()
+                                                .setSkuId(10L)
+                                                .setCount(1)
+                                                .setSelected(true)));
+        TradePriceCalculateRespBO result =
+                new TradePriceCalculateRespBO()
+                        .setType(TradeOrderTypeEnum.NORMAL.getType())
+                        .setPrice(new TradePriceCalculateRespBO.Price())
+                        .setPromotions(new ArrayList<>())
+                        .setItems(
+                                singletonList(
+                                        new TradePriceCalculateRespBO.OrderItem()
+                                                .setSkuId(10L)
+                                                .setCount(1)
+                                                .setSelected(true)
+                                                .setPrice(100)
+                                                .setSpuId(1L)));
         TradePriceCalculatorHelper.recountPayPrice(result.getItems());
         TradePriceCalculatorHelper.recountAllPrice(result);
 
@@ -100,5 +124,4 @@ public class TradeBargainActivityPriceCalculatorTest extends BaseMockitoUnitTest
         // 断言：未产生促销
         assertEquals(result.getPromotions().size(), 0);
     }
-
 }

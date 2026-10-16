@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.salesnotice;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.mes.enums.wm.MesWmSalesNoticeStatusEnum.PREPARE;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,16 +16,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNotic
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.salesnotice.MesWmSalesNoticeLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.mes.enums.wm.MesWmSalesNoticeStatusEnum.PREPARE;
 
 /**
  * MES 发货通知单行 Service 实现类
@@ -30,16 +32,11 @@ import static cn.iocoder.yudao.module.mes.enums.wm.MesWmSalesNoticeStatusEnum.PR
 @Validated
 public class MesWmSalesNoticeLineServiceImpl implements MesWmSalesNoticeLineService {
 
-    @Resource
-    private MesWmSalesNoticeLineMapper salesNoticeLineMapper;
+    @Resource private MesWmSalesNoticeLineMapper salesNoticeLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmSalesNoticeService salesNoticeService;
-    @Resource
-    private MesWmBatchService batchService;
-    @Resource
-    private MesMdItemService itemService;
+    @Resource @Lazy private MesWmSalesNoticeService salesNoticeService;
+    @Resource private MesWmBatchService batchService;
+    @Resource private MesMdItemService itemService;
 
     @Override
     public Long createSalesNoticeLine(MesWmSalesNoticeLineSaveReqVO createReqVO) {
@@ -62,7 +59,8 @@ public class MesWmSalesNoticeLineServiceImpl implements MesWmSalesNoticeLineServ
         validateLineSaveData(updateReqVO);
 
         // 更新
-        MesWmSalesNoticeLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmSalesNoticeLineDO.class);
+        MesWmSalesNoticeLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmSalesNoticeLineDO.class);
         fillBatchId(updateObj);
         salesNoticeLineMapper.updateById(updateObj);
     }
@@ -84,7 +82,8 @@ public class MesWmSalesNoticeLineServiceImpl implements MesWmSalesNoticeLineServ
     }
 
     @Override
-    public PageResult<MesWmSalesNoticeLineDO> getSalesNoticeLinePage(MesWmSalesNoticeLinePageReqVO pageReqVO) {
+    public PageResult<MesWmSalesNoticeLineDO> getSalesNoticeLinePage(
+            MesWmSalesNoticeLinePageReqVO pageReqVO) {
         return salesNoticeLineMapper.selectPage(pageReqVO);
     }
 
@@ -151,5 +150,4 @@ public class MesWmSalesNoticeLineServiceImpl implements MesWmSalesNoticeLineServ
             line.setBatchId(batch.getId());
         }
     }
-
 }

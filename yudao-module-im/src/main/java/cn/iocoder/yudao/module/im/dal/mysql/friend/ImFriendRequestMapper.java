@@ -7,7 +7,9 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.im.controller.admin.manager.friend.vo.ImFriendRequestManagerPageReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.friend.ImFriendRequestDO;
 import cn.iocoder.yudao.module.im.enums.friend.ImFriendRequestHandleResultEnum;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -22,9 +24,10 @@ import java.util.List;
 public interface ImFriendRequestMapper extends BaseMapperX<ImFriendRequestDO> {
 
     default ImFriendRequestDO selectByFromUserIdAndToUserId(Long fromUserId, Long toUserId) {
-        return selectOne(new LambdaQueryWrapperX<ImFriendRequestDO>()
-                .eq(ImFriendRequestDO::getFromUserId, fromUserId)
-                .eq(ImFriendRequestDO::getToUserId, toUserId));
+        return selectOne(
+                new LambdaQueryWrapperX<ImFriendRequestDO>()
+                        .eq(ImFriendRequestDO::getFromUserId, fromUserId)
+                        .eq(ImFriendRequestDO::getToUserId, toUserId));
     }
 
     /**
@@ -36,15 +39,25 @@ public interface ImFriendRequestMapper extends BaseMapperX<ImFriendRequestDO> {
      * @param limit                拉取数量
      * @return 好友申请列表
      */
-    default List<ImFriendRequestDO> selectMyList(Long userId, LocalDateTime maxRequestUpdateTime,
-                                                 Long maxId, int limit) {
+    default List<ImFriendRequestDO> selectMyList(
+            Long userId, LocalDateTime maxRequestUpdateTime, Long maxId, int limit) {
         LambdaQueryWrapperX<ImFriendRequestDO> wrapper = new LambdaQueryWrapperX<>();
-        wrapper.and(w -> w.eq(ImFriendRequestDO::getFromUserId, userId)
-                        .or().eq(ImFriendRequestDO::getToUserId, userId));
+        wrapper.and(
+                w ->
+                        w.eq(ImFriendRequestDO::getFromUserId, userId)
+                                .or()
+                                .eq(ImFriendRequestDO::getToUserId, userId));
         if (maxRequestUpdateTime != null && maxId != null) {
-            wrapper.and(w -> w.lt(ImFriendRequestDO::getUpdateTime, maxRequestUpdateTime)
-                    .or(n -> n.eq(ImFriendRequestDO::getUpdateTime, maxRequestUpdateTime)
-                            .lt(ImFriendRequestDO::getId, maxId)));
+            wrapper.and(
+                    w ->
+                            w.lt(ImFriendRequestDO::getUpdateTime, maxRequestUpdateTime)
+                                    .or(
+                                            n ->
+                                                    n.eq(
+                                                                    ImFriendRequestDO
+                                                                            ::getUpdateTime,
+                                                                    maxRequestUpdateTime)
+                                                            .lt(ImFriendRequestDO::getId, maxId)));
         }
         wrapper.orderByDesc(ImFriendRequestDO::getUpdateTime)
                 .orderByDesc(ImFriendRequestDO::getId)
@@ -61,22 +74,37 @@ public interface ImFriendRequestMapper extends BaseMapperX<ImFriendRequestDO> {
      * @param limit          拉取数量
      * @return 好友申请列表
      */
-    default List<ImFriendRequestDO> selectPullListByUserId(Long userId, Long lastUpdateTime, Long lastId, Integer limit) {
+    default List<ImFriendRequestDO> selectPullListByUserId(
+            Long userId, Long lastUpdateTime, Long lastId, Integer limit) {
         LambdaQueryWrapperX<ImFriendRequestDO> query = new LambdaQueryWrapperX<>();
-        query.and(w -> w.eq(ImFriendRequestDO::getFromUserId, userId)
-                .or().eq(ImFriendRequestDO::getToUserId, userId));
+        query.and(
+                w ->
+                        w.eq(ImFriendRequestDO::getFromUserId, userId)
+                                .or()
+                                .eq(ImFriendRequestDO::getToUserId, userId));
         if (lastUpdateTime != null && lastId != null) {
             LocalDateTime lastTime = LocalDateTimeUtil.of(lastUpdateTime);
-            query.and(w -> w.gt(ImFriendRequestDO::getUpdateTime, lastTime)
-                    .or(n -> n.eq(ImFriendRequestDO::getUpdateTime, lastTime).gt(ImFriendRequestDO::getId, lastId)));
+            query.and(
+                    w ->
+                            w.gt(ImFriendRequestDO::getUpdateTime, lastTime)
+                                    .or(
+                                            n ->
+                                                    n.eq(ImFriendRequestDO::getUpdateTime, lastTime)
+                                                            .gt(ImFriendRequestDO::getId, lastId)));
         }
-        return selectList(query.orderByAsc(ImFriendRequestDO::getUpdateTime).orderByAsc(ImFriendRequestDO::getId)
-                .last("LIMIT " + limit));
+        return selectList(
+                query.orderByAsc(ImFriendRequestDO::getUpdateTime)
+                        .orderByAsc(ImFriendRequestDO::getId)
+                        .last("LIMIT " + limit));
     }
 
-    default int updateByIdAndHandleResult(Long id, Integer handleResult, ImFriendRequestDO updateObj) {
-        return update(updateObj, new LambdaUpdateWrapper<ImFriendRequestDO>()
-                .eq(ImFriendRequestDO::getId, id).eq(ImFriendRequestDO::getHandleResult, handleResult));
+    default int updateByIdAndHandleResult(
+            Long id, Integer handleResult, ImFriendRequestDO updateObj) {
+        return update(
+                updateObj,
+                new LambdaUpdateWrapper<ImFriendRequestDO>()
+                        .eq(ImFriendRequestDO::getId, id)
+                        .eq(ImFriendRequestDO::getHandleResult, handleResult));
     }
 
     /**
@@ -84,27 +112,36 @@ public interface ImFriendRequestMapper extends BaseMapperX<ImFriendRequestDO> {
      * <p>
      * handleContent / handleTime 走 LambdaUpdateWrapper.set 显式置 null，updateById 默认会忽略 null 字段
      */
-    default int updateByIdReset(Long id, String applyContent, String displayName, Integer addSource,
-                                LocalDateTime updateTime) {
-        return update(null, new LambdaUpdateWrapper<ImFriendRequestDO>()
-                .eq(ImFriendRequestDO::getId, id)
-                .set(ImFriendRequestDO::getApplyContent, applyContent)
-                .set(ImFriendRequestDO::getDisplayName, displayName)
-                .set(ImFriendRequestDO::getAddSource, addSource)
-                .set(ImFriendRequestDO::getHandleResult, ImFriendRequestHandleResultEnum.UNHANDLED.getResult())
-                .set(ImFriendRequestDO::getHandleContent, null)
-                .set(ImFriendRequestDO::getHandleTime, null)
-                .set(ImFriendRequestDO::getUpdateTime, updateTime));
+    default int updateByIdReset(
+            Long id,
+            String applyContent,
+            String displayName,
+            Integer addSource,
+            LocalDateTime updateTime) {
+        return update(
+                null,
+                new LambdaUpdateWrapper<ImFriendRequestDO>()
+                        .eq(ImFriendRequestDO::getId, id)
+                        .set(ImFriendRequestDO::getApplyContent, applyContent)
+                        .set(ImFriendRequestDO::getDisplayName, displayName)
+                        .set(ImFriendRequestDO::getAddSource, addSource)
+                        .set(
+                                ImFriendRequestDO::getHandleResult,
+                                ImFriendRequestHandleResultEnum.UNHANDLED.getResult())
+                        .set(ImFriendRequestDO::getHandleContent, null)
+                        .set(ImFriendRequestDO::getHandleTime, null)
+                        .set(ImFriendRequestDO::getUpdateTime, updateTime));
     }
 
     default PageResult<ImFriendRequestDO> selectPage(ImFriendRequestManagerPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ImFriendRequestDO>()
-                .eqIfPresent(ImFriendRequestDO::getFromUserId, reqVO.getFromUserId())
-                .eqIfPresent(ImFriendRequestDO::getToUserId, reqVO.getToUserId())
-                .eqIfPresent(ImFriendRequestDO::getHandleResult, reqVO.getHandleResult())
-                .eqIfPresent(ImFriendRequestDO::getAddSource, reqVO.getAddSource())
-                .betweenIfPresent(ImFriendRequestDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(ImFriendRequestDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<ImFriendRequestDO>()
+                        .eqIfPresent(ImFriendRequestDO::getFromUserId, reqVO.getFromUserId())
+                        .eqIfPresent(ImFriendRequestDO::getToUserId, reqVO.getToUserId())
+                        .eqIfPresent(ImFriendRequestDO::getHandleResult, reqVO.getHandleResult())
+                        .eqIfPresent(ImFriendRequestDO::getAddSource, reqVO.getAddSource())
+                        .betweenIfPresent(ImFriendRequestDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(ImFriendRequestDO::getId));
     }
-
 }

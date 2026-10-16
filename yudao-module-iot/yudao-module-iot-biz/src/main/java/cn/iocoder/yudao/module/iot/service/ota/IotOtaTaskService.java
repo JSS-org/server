@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.IotOtaTaskCreateReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.ota.vo.task.IotOtaTaskPageReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.ota.IotOtaTaskDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -50,5 +51,4 @@ public interface IotOtaTaskService {
      * @param id 任务编号
      */
     void updateOtaTaskStatusEnd(Long id);
-
 }

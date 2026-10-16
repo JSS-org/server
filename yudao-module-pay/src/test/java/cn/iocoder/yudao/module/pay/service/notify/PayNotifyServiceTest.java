@@ -1,5 +1,18 @@
 package cn.iocoder.yudao.module.pay.service.notify;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.*;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -18,7 +31,9 @@ import cn.iocoder.yudao.module.pay.framework.job.config.PayJobConfiguration;
 import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundServiceImpl;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -30,18 +45,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.Duration;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.*;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link PayRefundServiceImpl} 的单元测试类
  *
@@ -51,27 +54,22 @@ import static org.mockito.Mockito.*;
 @Import({PayJobConfiguration.class, PayNotifyServiceImpl.class, PayNotifyLockRedisDAO.class})
 public class PayNotifyServiceTest extends BaseDbUnitTest {
 
-    @Resource
-    private PayNotifyServiceImpl notifyService;
+    @Resource private PayNotifyServiceImpl notifyService;
 
-    @MockitoBean
-    private PayOrderService orderService;
-    @MockitoBean
-    private PayRefundService refundService;
+    @MockitoBean private PayOrderService orderService;
+    @MockitoBean private PayRefundService refundService;
 
-    @Resource
-    private PayNotifyTaskMapper notifyTaskMapper;
-    @Resource
-    private PayNotifyLogMapper notifyLogMapper;
+    @Resource private PayNotifyTaskMapper notifyTaskMapper;
+    @Resource private PayNotifyLogMapper notifyLogMapper;
 
-    @MockitoBean
-    private RedissonClient redissonClient;
+    @MockitoBean private RedissonClient redissonClient;
 
     @Test
     public void testCreatePayNotifyTask_order() {
         PayNotifyServiceImpl payNotifyService = mock(PayNotifyServiceImpl.class);
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PayNotifyServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PayNotifyServiceImpl.class)))
                     .thenReturn(payNotifyService);
 
             // 准备参数
@@ -89,10 +87,24 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
             PayNotifyTaskDO dbTask = notifyTaskMapper.selectOne(null);
             assertNotNull(dbTask.getNextNotifyTime());
             assertThat(dbTask)
-                    .extracting("type", "dataId", "status", "notifyTimes", "maxNotifyTimes",
-                            "appId", "merchantOrderId", "notifyUrl")
-                    .containsExactly(type, dataId, PayNotifyStatusEnum.WAITING.getStatus(), 0, 9,
-                            order.getAppId(), order.getMerchantOrderId(), order.getNotifyUrl());
+                    .extracting(
+                            "type",
+                            "dataId",
+                            "status",
+                            "notifyTimes",
+                            "maxNotifyTimes",
+                            "appId",
+                            "merchantOrderId",
+                            "notifyUrl")
+                    .containsExactly(
+                            type,
+                            dataId,
+                            PayNotifyStatusEnum.WAITING.getStatus(),
+                            0,
+                            9,
+                            order.getAppId(),
+                            order.getMerchantOrderId(),
+                            order.getNotifyUrl());
             // 断言，调用
             verify(payNotifyService).executeNotify0(eq(dbTask));
         }
@@ -102,7 +114,8 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     public void testCreatePayNotifyTask_refund() {
         PayNotifyServiceImpl payNotifyService = mock(PayNotifyServiceImpl.class);
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PayNotifyServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PayNotifyServiceImpl.class)))
                     .thenReturn(payNotifyService);
 
             // 准备参数
@@ -120,10 +133,24 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
             PayNotifyTaskDO dbTask = notifyTaskMapper.selectOne(null);
             assertNotNull(dbTask.getNextNotifyTime());
             assertThat(dbTask)
-                    .extracting("type", "dataId", "status", "notifyTimes", "maxNotifyTimes",
-                            "appId", "merchantOrderId", "notifyUrl")
-                    .containsExactly(type, dataId, PayNotifyStatusEnum.WAITING.getStatus(), 0, 9,
-                            refund.getAppId(), refund.getMerchantOrderId(), refund.getNotifyUrl());
+                    .extracting(
+                            "type",
+                            "dataId",
+                            "status",
+                            "notifyTimes",
+                            "maxNotifyTimes",
+                            "appId",
+                            "merchantOrderId",
+                            "notifyUrl")
+                    .containsExactly(
+                            type,
+                            dataId,
+                            PayNotifyStatusEnum.WAITING.getStatus(),
+                            0,
+                            9,
+                            refund.getAppId(),
+                            refund.getMerchantOrderId(),
+                            refund.getNotifyUrl());
             // 断言，调用
             verify(payNotifyService).executeNotify0(eq(dbTask));
         }
@@ -132,29 +159,47 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test
     public void testExecuteNotify() throws InterruptedException {
         // mock 数据（notify）
-        PayNotifyTaskDO dbTask01 = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setStatus(PayNotifyStatusEnum.WAITING.getStatus())
-                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
+        PayNotifyTaskDO dbTask01 =
+                randomPojo(
+                        PayNotifyTaskDO.class,
+                        o ->
+                                o.setStatus(PayNotifyStatusEnum.WAITING.getStatus())
+                                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
         notifyTaskMapper.insert(dbTask01);
-        PayNotifyTaskDO dbTask02 = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setStatus(PayNotifyStatusEnum.REQUEST_SUCCESS.getStatus())
-                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
+        PayNotifyTaskDO dbTask02 =
+                randomPojo(
+                        PayNotifyTaskDO.class,
+                        o ->
+                                o.setStatus(PayNotifyStatusEnum.REQUEST_SUCCESS.getStatus())
+                                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
         notifyTaskMapper.insert(dbTask02);
-        PayNotifyTaskDO dbTask03 = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setStatus(PayNotifyStatusEnum.REQUEST_FAILURE.getStatus())
-                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
+        PayNotifyTaskDO dbTask03 =
+                randomPojo(
+                        PayNotifyTaskDO.class,
+                        o ->
+                                o.setStatus(PayNotifyStatusEnum.REQUEST_FAILURE.getStatus())
+                                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
         notifyTaskMapper.insert(dbTask03);
-        PayNotifyTaskDO dbTask04 = randomPojo(PayNotifyTaskDO.class, // 不满足状态
-                o -> o.setStatus(PayNotifyStatusEnum.FAILURE.getStatus())
-                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
+        PayNotifyTaskDO dbTask04 =
+                randomPojo(
+                        PayNotifyTaskDO.class, // 不满足状态
+                        o ->
+                                o.setStatus(PayNotifyStatusEnum.FAILURE.getStatus())
+                                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
         notifyTaskMapper.insert(dbTask04);
-        PayNotifyTaskDO dbTask05 = randomPojo(PayNotifyTaskDO.class, // 不满足状态
-                o -> o.setStatus(PayNotifyStatusEnum.SUCCESS.getStatus())
-                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
+        PayNotifyTaskDO dbTask05 =
+                randomPojo(
+                        PayNotifyTaskDO.class, // 不满足状态
+                        o ->
+                                o.setStatus(PayNotifyStatusEnum.SUCCESS.getStatus())
+                                        .setNextNotifyTime(addTime(Duration.ofMinutes(-1))));
         notifyTaskMapper.insert(dbTask05);
-        PayNotifyTaskDO dbTask06 = randomPojo(PayNotifyTaskDO.class, // 不满足时间
-                o -> o.setStatus(PayNotifyStatusEnum.SUCCESS.getStatus())
-                        .setNextNotifyTime(addTime(Duration.ofMinutes(1))));
+        PayNotifyTaskDO dbTask06 =
+                randomPojo(
+                        PayNotifyTaskDO.class, // 不满足时间
+                        o ->
+                                o.setStatus(PayNotifyStatusEnum.SUCCESS.getStatus())
+                                        .setNextNotifyTime(addTime(Duration.ofMinutes(1))));
         notifyTaskMapper.insert(dbTask06);
         // mock 方法（lock）
         mockLock(dbTask01.getId());
@@ -170,8 +215,10 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test // 由于 HttpUtil 不好 mock，所以只测试异常的情况
     public void testExecuteNotify0_exception() {
         // mock 数据（task）
-        PayNotifyTaskDO task = randomPojo(PayNotifyTaskDO.class, o -> o.setType(-1)
-                .setNotifyTimes(0).setMaxNotifyTimes(9));
+        PayNotifyTaskDO task =
+                randomPojo(
+                        PayNotifyTaskDO.class,
+                        o -> o.setType(-1).setNotifyTimes(0).setMaxNotifyTimes(9));
         notifyTaskMapper.insert(task);
 
         // 调用
@@ -193,8 +240,8 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test
     public void testProcessNotifyResult_success() {
         // mock 数据（task）
-        PayNotifyTaskDO task = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setNotifyTimes(0).setMaxNotifyTimes(9));
+        PayNotifyTaskDO task =
+                randomPojo(PayNotifyTaskDO.class, o -> o.setNotifyTimes(0).setMaxNotifyTimes(9));
         notifyTaskMapper.insert(task);
         // 准备参数
         CommonResult<?> invokeResult = CommonResult.success(randomString());
@@ -212,8 +259,8 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test
     public void testProcessNotifyResult_failure() {
         // mock 数据（task）
-        PayNotifyTaskDO task = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setNotifyTimes(8).setMaxNotifyTimes(9));
+        PayNotifyTaskDO task =
+                randomPojo(PayNotifyTaskDO.class, o -> o.setNotifyTimes(8).setMaxNotifyTimes(9));
         notifyTaskMapper.insert(task);
         // 准备参数
         CommonResult<?> invokeResult = CommonResult.error(BAD_REQUEST);
@@ -231,8 +278,8 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test
     public void testProcessNotifyResult_requestFailure() {
         // mock 数据（task）
-        PayNotifyTaskDO task = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setNotifyTimes(0).setMaxNotifyTimes(9));
+        PayNotifyTaskDO task =
+                randomPojo(PayNotifyTaskDO.class, o -> o.setNotifyTimes(0).setMaxNotifyTimes(9));
         notifyTaskMapper.insert(task);
         // 准备参数
         CommonResult<?> invokeResult = CommonResult.error(BAD_REQUEST);
@@ -250,8 +297,8 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test
     public void testProcessNotifyResult_requestSuccess() {
         // mock 数据（task）
-        PayNotifyTaskDO task = randomPojo(PayNotifyTaskDO.class,
-                o -> o.setNotifyTimes(0).setMaxNotifyTimes(9));
+        PayNotifyTaskDO task =
+                randomPojo(PayNotifyTaskDO.class, o -> o.setNotifyTimes(0).setMaxNotifyTimes(9));
         notifyTaskMapper.insert(task);
         // 准备参数
         CommonResult<?> invokeResult = CommonResult.error(BAD_REQUEST);
@@ -284,23 +331,28 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetNotifyTaskPage() {
         // mock 数据
-        PayNotifyTaskDO dbTask = randomPojo(PayNotifyTaskDO.class, o -> { // 等会查询到
-            o.setAppId(1L);
-            o.setType(PayNotifyTypeEnum.REFUND.getType());
-            o.setDataId(100L);
-            o.setStatus(PayNotifyStatusEnum.SUCCESS.getStatus());
-            o.setMerchantOrderId("P110");
-            o.setCreateTime(buildTime(2023, 2, 3));
-        });
+        PayNotifyTaskDO dbTask =
+                randomPojo(
+                        PayNotifyTaskDO.class,
+                        o -> { // 等会查询到
+                            o.setAppId(1L);
+                            o.setType(PayNotifyTypeEnum.REFUND.getType());
+                            o.setDataId(100L);
+                            o.setStatus(PayNotifyStatusEnum.SUCCESS.getStatus());
+                            o.setMerchantOrderId("P110");
+                            o.setCreateTime(buildTime(2023, 2, 3));
+                        });
         notifyTaskMapper.insert(dbTask);
         // 测试 appId 不匹配
         notifyTaskMapper.insert(cloneIgnoreId(dbTask, o -> o.setAppId(2L)));
         // 测试 type 不匹配
-        notifyTaskMapper.insert(cloneIgnoreId(dbTask, o -> o.setType(PayNotifyTypeEnum.ORDER.getType())));
+        notifyTaskMapper.insert(
+                cloneIgnoreId(dbTask, o -> o.setType(PayNotifyTypeEnum.ORDER.getType())));
         // 测试 dataId 不匹配
         notifyTaskMapper.insert(cloneIgnoreId(dbTask, o -> o.setDataId(200L)));
         // 测试 status 不匹配
-        notifyTaskMapper.insert(cloneIgnoreId(dbTask, o -> o.setStatus(PayNotifyStatusEnum.FAILURE.getStatus())));
+        notifyTaskMapper.insert(
+                cloneIgnoreId(dbTask, o -> o.setStatus(PayNotifyStatusEnum.FAILURE.getStatus())));
         // 测试 merchantOrderId 不匹配
         notifyTaskMapper.insert(cloneIgnoreId(dbTask, o -> o.setMerchantOrderId(randomString())));
         // 测试 createTime 不匹配
@@ -342,12 +394,9 @@ public class PayNotifyServiceTest extends BaseDbUnitTest {
     private void mockLock(Long id) {
         RLock lock = mock(RLock.class);
         if (id == null) {
-            when(redissonClient.getLock(anyString()))
-                    .thenReturn(lock);
+            when(redissonClient.getLock(anyString())).thenReturn(lock);
         } else {
-            when(redissonClient.getLock(eq("pay_notify:lock:" + id)))
-                    .thenReturn(lock);
+            when(redissonClient.getLock(eq("pay_notify:lock:" + id))).thenReturn(lock);
         }
     }
-
 }

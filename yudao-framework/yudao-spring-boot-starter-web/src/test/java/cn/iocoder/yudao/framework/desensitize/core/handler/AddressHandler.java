@@ -1,8 +1,8 @@
 package cn.iocoder.yudao.framework.desensitize.core.handler;
 
 import cn.iocoder.yudao.framework.desensitize.core.DesensitizeTest;
-import cn.iocoder.yudao.framework.desensitize.core.base.handler.DesensitizationHandler;
 import cn.iocoder.yudao.framework.desensitize.core.annotation.Address;
+import cn.iocoder.yudao.framework.desensitize.core.base.handler.DesensitizationHandler;
 
 /**
  * {@link Address} 的脱敏处理器
@@ -15,5 +15,4 @@ public class AddressHandler implements DesensitizationHandler<Address> {
     public String desensitize(String origin, Address annotation) {
         return origin + annotation.replacer();
     }
-
 }

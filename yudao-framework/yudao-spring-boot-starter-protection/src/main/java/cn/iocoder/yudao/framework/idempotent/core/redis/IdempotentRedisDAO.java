@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.idempotent.core.redis;
 
 import lombok.AllArgsConstructor;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.concurrent.TimeUnit;
@@ -37,5 +38,4 @@ public class IdempotentRedisDAO {
     private static String formatKey(String key) {
         return String.format(IDEMPOTENT, key);
     }
-
 }

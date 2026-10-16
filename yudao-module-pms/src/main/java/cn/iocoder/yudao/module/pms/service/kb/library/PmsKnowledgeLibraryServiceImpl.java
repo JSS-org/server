@@ -11,7 +11,9 @@ import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentStatusEn
 import cn.iocoder.yudao.module.pms.service.kb.recycle.PmsKnowledgeRecycleService;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +23,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-
 
 /**
  * PMS 知识库 Service 实现类
@@ -33,38 +33,34 @@ import java.util.Objects;
 @Validated
 public class PmsKnowledgeLibraryServiceImpl implements PmsKnowledgeLibraryService {
 
-    @Resource
-    private PmsKnowledgeLibraryMapper libraryMapper;
+    @Resource private PmsKnowledgeLibraryMapper libraryMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeLibraryMemberService memberService;
-    @Resource
-    private PmsKnowledgeGroupService knowledgeGroupService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private PmsKnowledgeGroupService knowledgeGroupService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsKnowledgeRecycleService recycleService;
-    @Resource
-    private PmsKnowledgeLibraryTemplateService libraryTemplateService;
+    @Resource private PmsKnowledgeLibraryTemplateService libraryTemplateService;
 
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private PermissionApi permissionApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createLibrary(PmsKnowledgeLibrarySaveReqVO saveReqVO, Long userId) {
         // 1. 创建知识库
-        PmsKnowledgeLibraryDO library = BeanUtils.toBean(saveReqVO, PmsKnowledgeLibraryDO.class)
-                .setStatus(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
+        PmsKnowledgeLibraryDO library =
+                BeanUtils.toBean(saveReqVO, PmsKnowledgeLibraryDO.class)
+                        .setStatus(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
         libraryMapper.insert(library);
 
         // 2. 创建人和初始成员加入知识库
-        memberService.createLibraryMemberList(library.getId(), userId,
-                saveReqVO.getAdminUserIds(), saveReqVO.getMemberUserIds());
+        memberService.createLibraryMemberList(
+                library.getId(), userId, saveReqVO.getAdminUserIds(), saveReqVO.getMemberUserIds());
 
         // 3. 使用所选模板创建知识库文档
         if (saveReqVO.getTemplateId() != null) {
-            libraryTemplateService.createTemplateDocumentList(saveReqVO.getTemplateId(), library.getId(), userId);
+            libraryTemplateService.createTemplateDocumentList(
+                    saveReqVO.getTemplateId(), library.getId(), userId);
         }
         return library.getId();
     }
@@ -73,7 +69,8 @@ public class PmsKnowledgeLibraryServiceImpl implements PmsKnowledgeLibraryServic
     @Transactional(rollbackFor = Exception.class)
     public void updateLibrary(PmsKnowledgeLibrarySaveReqVO saveReqVO, Long userId) {
         // 1.1 普通库设置由管理员维护
-        PmsKnowledgeLibraryDO library = memberService.validateLibraryAdmin(saveReqVO.getId(), userId);
+        PmsKnowledgeLibraryDO library =
+                memberService.validateLibraryAdmin(saveReqVO.getId(), userId);
         // 1.2 公开库转私有仅限创建人
         if (Boolean.TRUE.equals(library.getOpenStatus())
                 && Boolean.FALSE.equals(saveReqVO.getOpenStatus())) {
@@ -96,9 +93,12 @@ public class PmsKnowledgeLibraryServiceImpl implements PmsKnowledgeLibraryServic
 
     @Override
     public void updateLibraryToRecycled(Long id, Long userId, LocalDateTime deleteTime) {
-        libraryMapper.updateById(new PmsKnowledgeLibraryDO().setId(id)
-                .setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
-                .setDeleteUserId(userId).setDeleteTime(deleteTime));
+        libraryMapper.updateById(
+                new PmsKnowledgeLibraryDO()
+                        .setId(id)
+                        .setStatus(PmsKnowledgeDocumentStatusEnum.RECYCLED.getStatus())
+                        .setDeleteUserId(userId)
+                        .setDeleteTime(deleteTime));
     }
 
     @Override
@@ -117,14 +117,16 @@ public class PmsKnowledgeLibraryServiceImpl implements PmsKnowledgeLibraryServic
     }
 
     @Override
-    public PageResult<PmsKnowledgeLibraryDO> getLibraryPage(PmsKnowledgeLibraryPageReqVO pageReqVO, Long userId) {
+    public PageResult<PmsKnowledgeLibraryDO> getLibraryPage(
+            PmsKnowledgeLibraryPageReqVO pageReqVO, Long userId) {
         // 1. 获得当前用户参与及可读的知识库，并按个人分组进一步过滤
         List<Long> memberLibraryIds = memberService.getJoinedLibraryIdList(userId);
         List<Long> filterLibraryIds = null;
         if (pageReqVO.getGroupId() != null) {
             List<Long> readableLibraryIds = memberService.getReadableLibraryIdList(userId);
-            filterLibraryIds = knowledgeGroupService.filterLibraryIdListByGroup(
-                    pageReqVO.getGroupId(), userId, readableLibraryIds);
+            filterLibraryIds =
+                    knowledgeGroupService.filterLibraryIdListByGroup(
+                            pageReqVO.getGroupId(), userId, readableLibraryIds);
             if (CollUtil.isEmpty(filterLibraryIds)) {
                 return PageResult.empty();
             }
@@ -133,7 +135,11 @@ public class PmsKnowledgeLibraryServiceImpl implements PmsKnowledgeLibraryServic
         boolean includeAll = permissionApi.hasAnyRoles(userId, RoleCodeEnum.SUPER_ADMIN.getCode());
 
         // 3. 执行分页查询
-        return libraryMapper.selectPage(pageReqVO, memberLibraryIds, includeAll, filterLibraryIds,
+        return libraryMapper.selectPage(
+                pageReqVO,
+                memberLibraryIds,
+                includeAll,
+                filterLibraryIds,
                 PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
     }
 
@@ -147,7 +153,7 @@ public class PmsKnowledgeLibraryServiceImpl implements PmsKnowledgeLibraryServic
 
     @Override
     public List<Long> getLibraryIdList(Boolean openStatus) {
-        return libraryMapper.selectIdList(openStatus, PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
+        return libraryMapper.selectIdList(
+                openStatus, PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus());
     }
-
 }

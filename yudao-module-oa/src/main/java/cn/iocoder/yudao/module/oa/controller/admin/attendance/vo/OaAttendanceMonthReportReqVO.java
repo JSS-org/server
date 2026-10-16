@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.oa.controller.admin.attendance.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - OA 考勤月报 Request VO")
@@ -23,5 +25,4 @@ public class OaAttendanceMonthReportReqVO {
 
     @Schema(description = "用户编号", example = "1")
     private Long userId;
-
 }

@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.length;
 
+import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.IotTcpConfig;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpCodecTypeEnum;
 import cn.iocoder.yudao.module.iot.gateway.protocol.tcp.codec.IotTcpFrameCodec;
+
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.parsetools.RecordParser;
+
 import lombok.extern.slf4j.Slf4j;
-import cn.hutool.core.lang.Assert;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,45 +68,49 @@ public class IotTcpLengthFieldFrameCodec implements IotTcpFrameCodec {
         // 创建状态机：先读取头部，再读取消息体
         RecordParser parser = RecordParser.newFixed(headerLength);
         parser.maxRecordSize(MAX_FRAME_LENGTH); // 设置最大记录大小，防止 DoS 攻击
-        final AtomicReference<Integer> bodyLength = new AtomicReference<>(null); // 消息体长度，null 表示读取头部阶段
+        final AtomicReference<Integer> bodyLength =
+                new AtomicReference<>(null); // 消息体长度，null 表示读取头部阶段
         final AtomicReference<Buffer> headerBuffer = new AtomicReference<>(null); // 头部消息
 
         // 处理读取到的数据
-        parser.handler(buffer -> {
-            if (bodyLength.get() == null) {
-                // 阶段 1: 读取头部，解析长度字段
-                headerBuffer.set(buffer.copy());
-                int length = readLength(buffer, lengthFieldOffset, lengthFieldLength);
-                int frameBodyLength = length + lengthAdjustment;
-                // 检查帧长度是否合法
-                if (frameBodyLength < 0) {
-                    throw new IllegalStateException(String.format(
-                            "[createDecodeParser][帧长度异常，length: %d, frameBodyLength: %d]",
-                            length, frameBodyLength));
-                }
-                // 消息体为空，抛出异常
-                if (frameBodyLength == 0) {
-                    throw new IllegalStateException("[createDecodeParser][消息体不能为空]");
-                }
+        parser.handler(
+                buffer -> {
+                    if (bodyLength.get() == null) {
+                        // 阶段 1: 读取头部，解析长度字段
+                        headerBuffer.set(buffer.copy());
+                        int length = readLength(buffer, lengthFieldOffset, lengthFieldLength);
+                        int frameBodyLength = length + lengthAdjustment;
+                        // 检查帧长度是否合法
+                        if (frameBodyLength < 0) {
+                            throw new IllegalStateException(
+                                    String.format(
+                                            "[createDecodeParser][帧长度异常，length: %d, frameBodyLength: %d]",
+                                            length, frameBodyLength));
+                        }
+                        // 消息体为空，抛出异常
+                        if (frameBodyLength == 0) {
+                            throw new IllegalStateException("[createDecodeParser][消息体不能为空]");
+                        }
 
-                // 【重要】切换到读取消息体模式
-                bodyLength.set(frameBodyLength);
-                parser.fixedSizeMode(frameBodyLength);
-            } else {
-                // 阶段 2: 读取消息体，组装完整帧
-                Buffer frame = processFrame(headerBuffer.get(), buffer);
-                // 重置状态，准备读取下一帧
-                bodyLength.set(null);
-                headerBuffer.set(null);
-                parser.fixedSizeMode(headerLength);
+                        // 【重要】切换到读取消息体模式
+                        bodyLength.set(frameBodyLength);
+                        parser.fixedSizeMode(frameBodyLength);
+                    } else {
+                        // 阶段 2: 读取消息体，组装完整帧
+                        Buffer frame = processFrame(headerBuffer.get(), buffer);
+                        // 重置状态，准备读取下一帧
+                        bodyLength.set(null);
+                        headerBuffer.set(null);
+                        parser.fixedSizeMode(headerLength);
 
-                // 【重要】处理完整消息
-                handler.handle(frame);
-            }
-        });
-        parser.exceptionHandler(ex -> {
-            throw new RuntimeException("[createDecodeParser][解析异常]", ex);
-        });
+                        // 【重要】处理完整消息
+                        handler.handle(frame);
+                    }
+                });
+        parser.exceptionHandler(
+                ex -> {
+                    throw new RuntimeException("[createDecodeParser][解析异常]", ex);
+                });
         return parser;
     }
 
@@ -177,5 +183,4 @@ public class IotTcpLengthFieldFrameCodec implements IotTcpFrameCodec {
         }
         return fullFrame;
     }
-
 }

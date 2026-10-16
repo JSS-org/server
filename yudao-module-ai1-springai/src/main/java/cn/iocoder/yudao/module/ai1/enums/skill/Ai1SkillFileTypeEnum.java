@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.ai1.enums.skill;
 
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,16 +16,17 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum Ai1SkillFileTypeEnum implements ArrayValuable<Integer> {
-
     DIRECTORY(0, "目录"),
     FILE(1, "文件");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(Ai1SkillFileTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(Ai1SkillFileTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -42,5 +44,4 @@ public enum Ai1SkillFileTypeEnum implements ArrayValuable<Integer> {
     public static boolean isFile(Integer type) {
         return ObjUtil.equal(FILE.type, type);
     }
-
 }

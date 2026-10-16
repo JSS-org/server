@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.iot.service.rule.data;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_DELETE_FAIL_USED_BY_RULE;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_NAME_EXISTS;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +14,9 @@ import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.data.sink.IotDataSin
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotDataSinkDO;
 import cn.iocoder.yudao.module.iot.dal.mysql.rule.IotDataSinkMapper;
 import cn.iocoder.yudao.module.iot.dal.redis.RedisKeyConstants;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -17,11 +24,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_DELETE_FAIL_USED_BY_RULE;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_NAME_EXISTS;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_NOT_EXISTS;
 
 /**
  * IoT 数据流转目的 Service 实现类
@@ -32,11 +34,9 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DATA_SINK_NOT
 @Validated
 public class IotDataSinkServiceImpl implements IotDataSinkService {
 
-    @Resource
-    private IotDataSinkMapper dataSinkMapper;
+    @Resource private IotDataSinkMapper dataSinkMapper;
 
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
+    @Resource @Lazy // 延迟，避免循环依赖报错
     private IotDataRuleService dataRuleService;
 
     @Override
@@ -132,5 +132,4 @@ public class IotDataSinkServiceImpl implements IotDataSinkService {
             throw exception(DATA_SINK_NOT_EXISTS);
         }
     }
-
 }

@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.oa.service.note;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_ACCESS_DENIED;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
@@ -14,7 +23,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.note.OaNoteReceiverMapper;
 import cn.iocoder.yudao.module.oa.enums.note.OaNoteTypeEnum;
 import cn.iocoder.yudao.module.oa.enums.schedule.OaPriorityEnum;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -26,15 +37,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import javax.sql.DataSource;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.NOTE_ACCESS_DENIED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.sql.DataSource;
 
 /**
  * {@link OaNoteServiceImpl} 的单元测试类
@@ -44,21 +48,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Import(OaNoteServiceImpl.class)
 public class OaNoteServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private DataSource dataSource;
+    @Resource private DataSource dataSource;
 
-    @Resource
-    private OaNoteServiceImpl noteService;
+    @Resource private OaNoteServiceImpl noteService;
 
-    @Resource
-    private OaNoteMapper noteMapper;
-    @Resource
-    private OaNoteReceiverMapper noteReceiverMapper;
+    @Resource private OaNoteMapper noteMapper;
+    @Resource private OaNoteReceiverMapper noteReceiverMapper;
 
-    @MockitoBean
-    private OaNoteCategoryService noteCategoryService;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
+    @MockitoBean private OaNoteCategoryService noteCategoryService;
+    @MockitoBean private AdminUserApi adminUserApi;
 
     @AfterEach
     public void tearDown() {
@@ -70,7 +68,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         // 准备参数：首页快捷笔记不传目录
         Long userId = randomLongId();
         OaNoteSaveReqVO reqVO = randomNoteSaveReqVO().setCategoryId(null);
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(userId), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(userId), new MockHttpServletRequest());
 
         // 调用
         Long id = noteService.createNote(reqVO, userId);
@@ -86,7 +85,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         OaNoteSaveReqVO reqVO = randomNoteSaveReqVO();
 
         // 调用
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(userId), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(userId), new MockHttpServletRequest());
         Long noteId = noteService.createNote(reqVO, userId);
 
         // 断言
@@ -96,7 +96,9 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         assertEquals(reqVO.getCategoryId(), note.getCategoryId());
         assertEquals(reqVO.getContent(), note.getContent());
         assertEquals(1, noteReceiverMapper.selectListByNoteId(noteId).size());
-        assertEquals(userId, CollUtil.getFirst(noteReceiverMapper.selectListByNoteId(noteId)).getUserId());
+        assertEquals(
+                userId,
+                CollUtil.getFirst(noteReceiverMapper.selectListByNoteId(noteId)).getUserId());
         assertEquals(noteId, noteService.getNote(noteId, userId).getId());
         assertEquals(1L, noteService.getMyNotePage(new OaNotePageReqVO(), userId).getTotal());
         assertEquals(0L, noteService.getReceivedNotePage(new OaNotePageReqVO(), userId).getTotal());
@@ -108,9 +110,12 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long receiverUserId = randomLongId();
         OaNoteDO note = randomNoteDO(randomLongId());
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverUserId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverUserId));
 
         // 调用
         OaNoteDO result = noteService.getNote(note.getId(), receiverUserId);
@@ -123,14 +128,23 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
     public void testUpdateNote_clearFileUrls() {
         // mock 数据
         Long userId = randomLongId();
-        OaNoteDO note = randomNoteDO(userId).setCategoryId(randomLongId()).setContent("旧内容")
-                .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
+        OaNoteDO note =
+                randomNoteDO(userId)
+                        .setCategoryId(randomLongId())
+                        .setContent("旧内容")
+                        .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
         // 准备参数
-        OaNoteSaveReqVO reqVO = randomNoteSaveReqVO().setId(note.getId())
-                .setCategoryId(randomLongId()).setContent("更新后的内容").setFileUrls(null);
+        OaNoteSaveReqVO reqVO =
+                randomNoteSaveReqVO()
+                        .setId(note.getId())
+                        .setCategoryId(randomLongId())
+                        .setContent("更新后的内容")
+                        .setFileUrls(null);
 
         // 调用
         noteService.updateNote(reqVO, userId);
@@ -149,17 +163,24 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long receiverUserId = randomLongId();
         OaNoteDO note = randomNoteDO(creatorUserId);
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverUserId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverUserId));
         // 准备参数
 
         // 调用
-        noteService.updateNoteShare(note.getId(), Collections.singletonList(receiverUserId), creatorUserId);
-        noteService.updateNoteShare(note.getId(), Collections.singletonList(receiverUserId), creatorUserId);
+        noteService.updateNoteShare(
+                note.getId(), Collections.singletonList(receiverUserId), creatorUserId);
+        noteService.updateNoteShare(
+                note.getId(), Collections.singletonList(receiverUserId), creatorUserId);
 
         // 断言
-        assertEquals(2, noteReceiverMapper.selectListByNoteIds(Collections.singleton(note.getId())).size());
+        assertEquals(
+                2,
+                noteReceiverMapper.selectListByNoteIds(Collections.singleton(note.getId())).size());
     }
 
     @Test
@@ -168,8 +189,10 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long userId = randomLongId();
         OaNoteDO note = randomNoteDO(userId);
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
         OaNoteReceiverDO receiver = new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(2L);
         noteReceiverMapper.insert(receiver);
 
@@ -178,7 +201,9 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertEquals(3, noteReceiverMapper.selectListByNoteId(note.getId()).size());
-        assertEquals(receiver.getId(), noteReceiverMapper.selectByNoteIdAndUserId(note.getId(), 2L).getId());
+        assertEquals(
+                receiver.getId(),
+                noteReceiverMapper.selectByNoteIdAndUserId(note.getId(), 2L).getId());
 
         // 调用：反复取消、添加同一接收人
         for (int i = 0; i < 3; i++) {
@@ -187,10 +212,21 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         }
 
         // 断言：历史关系仍保留，默认 Map 只返回未删除关系
-        assertTrue(new JdbcTemplate(dataSource).queryForObject("SELECT COUNT(*) FROM oa_note_receiver WHERE deleted = TRUE", Long.class) > 0);
-        assertEquals(new HashSet<>(Arrays.asList(userId, 2L)), new HashSet<>(noteService.getNoteReceiverUserIdListMap(
-                Collections.singleton(note.getId())).get(note.getId())));
-        assertTrue(CollUtil.isEmpty(noteService.getNoteReceiverUserIdListMap(Collections.emptyList())));
+        assertTrue(
+                new JdbcTemplate(dataSource)
+                                .queryForObject(
+                                        "SELECT COUNT(*) FROM oa_note_receiver WHERE deleted = TRUE",
+                                        Long.class)
+                        > 0);
+        assertEquals(
+                new HashSet<>(Arrays.asList(userId, 2L)),
+                new HashSet<>(
+                        noteService
+                                .getNoteReceiverUserIdListMap(Collections.singleton(note.getId()))
+                                .get(note.getId())));
+        assertTrue(
+                CollUtil.isEmpty(
+                        noteService.getNoteReceiverUserIdListMap(Collections.emptyList())));
     }
 
     @Test
@@ -200,10 +236,13 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long otherUserId = randomLongId();
         OaNoteDO note = randomNoteDO(randomLongId());
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
         noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(userId));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(otherUserId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(otherUserId));
 
         // 调用
         noteService.deleteReceivedNote(note.getId(), userId);
@@ -212,7 +251,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         assertNull(noteReceiverMapper.selectByNoteIdAndUserId(note.getId(), userId));
         assertEquals(note.getId(), noteService.getNote(note.getId(), otherUserId).getId());
         assertServiceException(() -> noteService.getNote(note.getId(), userId), NOTE_ACCESS_DENIED);
-        assertServiceException(() -> noteService.deleteReceivedNote(note.getId(), userId), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.deleteReceivedNote(note.getId(), userId), NOTE_ACCESS_DENIED);
     }
 
     @Test
@@ -222,9 +262,12 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long receiverId = randomLongId();
         OaNoteDO note = randomNoteDO(ownerId).setCategoryId(randomLongId());
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverId));
 
         // 调用
         noteService.deleteNote(note.getId(), ownerId);
@@ -232,14 +275,20 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         // 断言：作者退出所有入口，其他持有人及正文不受影响
         assertNull(noteReceiverMapper.selectByNoteIdAndUserId(note.getId(), ownerId));
         assertEquals(ownerId.toString(), noteMapper.selectById(note.getId()).getCreator());
-        assertServiceException(() -> noteService.updateNote(randomNoteSaveReqVO()
-                .setId(note.getId()), ownerId), NOTE_ACCESS_DENIED);
-        assertEquals(0L, noteService.getMyNotePage(new OaNotePageReqVO(), ownerId).getTotal());
-        assertServiceException(() -> noteService.getNote(note.getId(), ownerId), NOTE_ACCESS_DENIED);
-        assertServiceException(() -> noteService.updateNoteFavorite(note.getId(), true, ownerId), NOTE_ACCESS_DENIED);
-        assertServiceException(() -> noteService.updateNoteShare(note.getId(), Collections.emptyList(), ownerId),
+        assertServiceException(
+                () -> noteService.updateNote(randomNoteSaveReqVO().setId(note.getId()), ownerId),
                 NOTE_ACCESS_DENIED);
-        assertServiceException(() -> noteService.deleteNote(note.getId(), ownerId), NOTE_ACCESS_DENIED);
+        assertEquals(0L, noteService.getMyNotePage(new OaNotePageReqVO(), ownerId).getTotal());
+        assertServiceException(
+                () -> noteService.getNote(note.getId(), ownerId), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.updateNoteFavorite(note.getId(), true, ownerId),
+                NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.updateNoteShare(note.getId(), Collections.emptyList(), ownerId),
+                NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.deleteNote(note.getId(), ownerId), NOTE_ACCESS_DENIED);
         assertEquals(note.getId(), noteService.getNote(note.getId(), receiverId).getId());
         noteService.deleteNotesByCategoryId(note.getCategoryId(), ownerId);
         assertEquals(note.getId(), noteService.getNote(note.getId(), receiverId).getId());
@@ -253,10 +302,14 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long otherReceiverId = randomLongId();
         OaNoteDO note = randomNoteDO(ownerId);
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverId));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(otherReceiverId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(otherReceiverId));
 
         // 调用
         noteService.updateNoteFavorite(note.getId(), true, receiverId);
@@ -264,10 +317,18 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         // 断言：源产品的主表收藏状态对所有持有人一致，外人不能修改
         assertTrue(noteService.getNote(note.getId(), ownerId).getFavorite());
         assertTrue(noteService.getNote(note.getId(), otherReceiverId).getFavorite());
-        assertEquals(1L, noteService.getReceivedNotePage(new OaNotePageReqVO().setFavorite(true), receiverId).getTotal());
-        assertServiceException(() -> noteService.updateNoteFavorite(note.getId(), false, randomLongId()), NOTE_ACCESS_DENIED);
+        assertEquals(
+                1L,
+                noteService
+                        .getReceivedNotePage(new OaNotePageReqVO().setFavorite(true), receiverId)
+                        .getTotal());
+        assertServiceException(
+                () -> noteService.updateNoteFavorite(note.getId(), false, randomLongId()),
+                NOTE_ACCESS_DENIED);
         noteService.deleteReceivedNote(note.getId(), receiverId);
-        assertServiceException(() -> noteService.updateNoteFavorite(note.getId(), false, receiverId), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.updateNoteFavorite(note.getId(), false, receiverId),
+                NOTE_ACCESS_DENIED);
     }
 
     @Test
@@ -276,8 +337,10 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long ownerId = randomLongId();
         OaNoteDO note = randomNoteDO(ownerId);
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
 
         // 调用
         noteService.deleteNote(note.getId(), ownerId);
@@ -291,22 +354,30 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         OaNoteDO note = randomNoteDO(randomLongId());
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
 
         // 调用，并断言异常
-        assertServiceException(() -> noteService.deleteNote(note.getId(), randomLongId()), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.deleteNote(note.getId(), randomLongId()), NOTE_ACCESS_DENIED);
     }
 
     @Test
     public void testUpdateNoteFavorite_keepOtherFields() {
         // mock 数据
         Long userId = randomLongId();
-        OaNoteDO note = randomNoteDO(userId).setCategoryId(randomLongId()).setContent("原内容")
-                .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
+        OaNoteDO note =
+                randomNoteDO(userId)
+                        .setCategoryId(randomLongId())
+                        .setContent("原内容")
+                        .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
 
         // 调用
         noteService.updateNoteFavorite(note.getId(), true, userId);
@@ -326,14 +397,21 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long receiverUserId = randomLongId();
         OaNoteDO note = randomNoteDO(userId);
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
 
         // 调用
-        noteService.updateNoteShare(note.getId(), Arrays.asList(userId, receiverUserId, userId, receiverUserId), userId);
+        noteService.updateNoteShare(
+                note.getId(),
+                Arrays.asList(userId, receiverUserId, userId, receiverUserId),
+                userId);
 
         // 断言
-        assertEquals(2, noteReceiverMapper.selectListByNoteIds(Collections.singleton(note.getId())).size());
+        assertEquals(
+                2,
+                noteReceiverMapper.selectListByNoteIds(Collections.singleton(note.getId())).size());
     }
 
     @Test
@@ -341,11 +419,14 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         OaNoteDO note = randomNoteDO(randomLongId());
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
 
         // 调用，并断言异常
-        assertServiceException(() -> noteService.getNote(note.getId(), randomLongId()), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.getNote(note.getId(), randomLongId()), NOTE_ACCESS_DENIED);
     }
 
     @Test
@@ -357,7 +438,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(mine.getId()).setUserId(userId));
         OaNoteDO shared = randomNoteDO(randomLongId());
         noteMapper.insert(shared);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(shared.getId()).setUserId(userId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(shared.getId()).setUserId(userId));
         // 准备参数
         OaNotePageReqVO reqVO = new OaNotePageReqVO();
 
@@ -376,13 +458,17 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         OaNoteDO received = randomNoteDO(randomLongId()).setTitle("共享会议");
         noteMapper.insert(received);
         noteMapper.insert(randomNoteDO(randomLongId()));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(received.getId()).setUserId(userId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(received.getId()).setUserId(userId));
         // 准备参数
         OaNotePageReqVO reqVO = new OaNotePageReqVO();
 
         // 调用，并断言
         assertEquals(1L, noteService.getReceivedNotePage(reqVO, userId).getTotal());
-        assertEquals(received.getId(), CollUtil.getFirst(noteService.getReceivedNotePage(reqVO, userId).getList()).getId());
+        assertEquals(
+                received.getId(),
+                CollUtil.getFirst(noteService.getReceivedNotePage(reqVO, userId).getList())
+                        .getId());
         reqVO.setTitle("不存在");
         assertEquals(0L, noteService.getReceivedNotePage(reqVO, userId).getTotal());
     }
@@ -409,19 +495,26 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
     public void testUpdateNoteShare_clearAndKeepContent() {
         // mock 数据
         Long userId = randomLongId();
-        OaNoteDO note = randomNoteDO(userId).setCategoryId(randomLongId())
-                .setFileUrls(Collections.singletonList("https://example.com/note.txt"));
+        OaNoteDO note =
+                randomNoteDO(userId)
+                        .setCategoryId(randomLongId())
+                        .setFileUrls(Collections.singletonList("https://example.com/note.txt"));
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(randomLongId()));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(randomLongId()));
 
         // 调用
         noteService.updateNoteShare(note.getId(), Collections.emptyList(), userId);
 
         // 断言
         assertEquals(1, noteReceiverMapper.selectListByNoteId(note.getId()).size());
-        assertEquals(userId, CollUtil.getFirst(noteReceiverMapper.selectListByNoteId(note.getId())).getUserId());
+        assertEquals(
+                userId,
+                CollUtil.getFirst(noteReceiverMapper.selectListByNoteId(note.getId())).getUserId());
         assertEquals(note.getId(), noteService.getNote(note.getId(), userId).getId());
         OaNoteDO updated = noteMapper.selectById(note.getId());
         assertEquals(note.getContent(), updated.getContent());
@@ -434,11 +527,16 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         OaNoteDO note = randomNoteDO(randomLongId());
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
 
         // 调用，并断言异常
-        assertServiceException(() -> noteService.updateNoteShare(note.getId(), Collections.emptyList(), randomLongId()),
+        assertServiceException(
+                () ->
+                        noteService.updateNoteShare(
+                                note.getId(), Collections.emptyList(), randomLongId()),
                 NOTE_ACCESS_DENIED);
     }
 
@@ -449,9 +547,12 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         Long receiverId = randomLongId();
         OaNoteDO note = randomNoteDO(userId);
         noteMapper.insert(note);
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId())
-                .setUserId(Long.valueOf(note.getCreator())));
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO()
+                        .setNoteId(note.getId())
+                        .setUserId(Long.valueOf(note.getCreator())));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(receiverId));
         // 准备参数，内容编辑不应覆盖共享关系
         OaNoteSaveReqVO reqVO = randomNoteSaveReqVO().setId(note.getId());
 
@@ -460,7 +561,9 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertEquals(2, noteReceiverMapper.selectListByNoteId(note.getId()).size());
-        assertEquals(receiverId, noteReceiverMapper.selectByNoteIdAndUserId(note.getId(), receiverId).getUserId());
+        assertEquals(
+                receiverId,
+                noteReceiverMapper.selectByNoteIdAndUserId(note.getId(), receiverId).getUserId());
     }
 
     @Test
@@ -489,7 +592,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(note.getId()).setUserId(userId));
 
         // 调用，并断言：不能通过接收人入口绕过创建人的删除入口
-        assertServiceException(() -> noteService.deleteReceivedNote(note.getId(), userId), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.deleteReceivedNote(note.getId(), userId), NOTE_ACCESS_DENIED);
         assertEquals(note.getId(), noteService.getNote(note.getId(), userId).getId());
     }
 
@@ -504,7 +608,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         OaNoteDO exited = randomNoteDO(userId).setCategoryId(categoryId);
         noteMapper.insert(exited);
         Long receiverId = randomLongId();
-        noteReceiverMapper.insert(new OaNoteReceiverDO().setNoteId(exited.getId()).setUserId(receiverId));
+        noteReceiverMapper.insert(
+                new OaNoteReceiverDO().setNoteId(exited.getId()).setUserId(receiverId));
 
         // 调用
         noteService.deleteNotesByCategoryId(categoryId, userId);
@@ -513,7 +618,8 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
         assertNull(noteMapper.selectById(held.getId()));
         assertTrue(CollUtil.isEmpty(noteReceiverMapper.selectListByNoteId(held.getId())));
         assertEquals(exited.getId(), noteService.getNote(exited.getId(), receiverId).getId());
-        assertServiceException(() -> noteService.getNote(exited.getId(), userId), NOTE_ACCESS_DENIED);
+        assertServiceException(
+                () -> noteService.getNote(exited.getId(), userId), NOTE_ACCESS_DENIED);
     }
 
     // ========== 随机对象 ==========
@@ -524,9 +630,16 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
      * @return 保存参数
      */
     private static OaNoteSaveReqVO randomNoteSaveReqVO() {
-        return randomPojo(OaNoteSaveReqVO.class, o -> o.setId(null).setCategoryId(randomLongId())
-                .setType(OaNoteTypeEnum.SHARED.getType()).setPriority(OaPriorityEnum.NORMAL.getPriority())
-                .setTitle("会议纪要").setContent("会议结论").setFileUrls(null));
+        return randomPojo(
+                OaNoteSaveReqVO.class,
+                o ->
+                        o.setId(null)
+                                .setCategoryId(randomLongId())
+                                .setType(OaNoteTypeEnum.SHARED.getType())
+                                .setPriority(OaPriorityEnum.NORMAL.getPriority())
+                                .setTitle("会议纪要")
+                                .setContent("会议结论")
+                                .setFileUrls(null));
     }
 
     /**
@@ -536,12 +649,19 @@ public class OaNoteServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaNoteDO randomNoteDO(Long creatorUserId) {
-        OaNoteDO note = randomPojo(OaNoteDO.class, o -> o.setId(null)
-                .setCategoryId(null).setType(OaNoteTypeEnum.PRIVATE.getType())
-                .setPriority(OaPriorityEnum.NORMAL.getPriority()).setTitle("个人笔记")
-                .setContent("笔记内容").setFileUrls(null).setFavorite(false));
+        OaNoteDO note =
+                randomPojo(
+                        OaNoteDO.class,
+                        o ->
+                                o.setId(null)
+                                        .setCategoryId(null)
+                                        .setType(OaNoteTypeEnum.PRIVATE.getType())
+                                        .setPriority(OaPriorityEnum.NORMAL.getPriority())
+                                        .setTitle("个人笔记")
+                                        .setContent("笔记内容")
+                                        .setFileUrls(null)
+                                        .setFavorite(false));
         note.setCreator(creatorUserId.toString());
         return note;
     }
-
 }

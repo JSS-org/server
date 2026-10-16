@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.crm.framework.permission.core.aop;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
+import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CRM_PERMISSION_DENIED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,19 +18,17 @@ import cn.iocoder.yudao.module.crm.service.permission.CrmPermissionService;
 import cn.iocoder.yudao.module.crm.util.CrmPermissionUtils;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
-import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CRM_PERMISSION_DENIED;
 
 /**
  * Crm 数据权限校验 AOP 切面
@@ -37,11 +40,9 @@ import static cn.iocoder.yudao.module.crm.enums.ErrorCodeConstants.CRM_PERMISSIO
 @Slf4j
 public class CrmPermissionAspect {
 
-    @Resource
-    private CrmPermissionService crmPermissionService;
+    @Resource private CrmPermissionService crmPermissionService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Before("@annotation(crmPermission)")
     public void doBefore(JoinPoint joinPoint, CrmPermission crmPermission) {
@@ -55,25 +56,31 @@ public class CrmPermissionAspect {
         }
         // 1.1 获取相关属性值
         Map<String, Object> expressionValues = parseExpressions(joinPoint, crmPermission);
-        Integer bizType = StrUtil.isEmpty(crmPermission.bizTypeValue()) ?
-                crmPermission.bizType()[0].getType() : (Integer) expressionValues.get(crmPermission.bizTypeValue()); // 模块类型
+        Integer bizType =
+                StrUtil.isEmpty(crmPermission.bizTypeValue())
+                        ? crmPermission.bizType()[0].getType()
+                        : (Integer) expressionValues.get(crmPermission.bizTypeValue()); // 模块类型
         // 1.2 处理兼容多个 bizId 的情况
         Object object = expressionValues.get(crmPermission.bizId()); // 模块数据编号
         Set<Long> bizIds = new HashSet<>();
         if (object instanceof Collection<?>) {
-            bizIds.addAll(convertSet((Collection<?>) object, item -> Long.parseLong(item.toString())));
+            bizIds.addAll(
+                    convertSet((Collection<?>) object, item -> Long.parseLong(item.toString())));
         } else {
             bizIds.add(Long.parseLong(object.toString()));
         }
         Integer permissionLevel = crmPermission.level().getLevel(); // 需要的权限级别
 
         // 2. 逐个校验权限
-        List<CrmPermissionDO> permissionList = crmPermissionService.getPermissionListByBiz(bizType, bizIds);
-        Map<Long, List<CrmPermissionDO>> multiMap = convertMultiMap(permissionList, CrmPermissionDO::getBizId);
+        List<CrmPermissionDO> permissionList =
+                crmPermissionService.getPermissionListByBiz(bizType, bizIds);
+        Map<Long, List<CrmPermissionDO>> multiMap =
+                convertMultiMap(permissionList, CrmPermissionDO::getBizId);
         bizIds.forEach(bizId -> validatePermission(bizType, multiMap.get(bizId), permissionLevel));
     }
 
-    private void validatePermission(Integer bizType, List<CrmPermissionDO> bizPermissions, Integer permissionLevel) {
+    private void validatePermission(
+            Integer bizType, List<CrmPermissionDO> bizPermissions, Integer permissionLevel) {
         // 1. 如果是超级管理员则直接通过
         if (CrmPermissionUtils.isCrmAdmin()) {
             return;
@@ -88,14 +95,17 @@ public class CrmPermissionAspect {
             throw exception(CRM_PERMISSION_DENIED, CrmBizTypeEnum.getNameByType(bizType));
         } else { // 1.2 有数据权限但是没有负责人的情况
             if (!anyMatch(bizPermissions, item -> CrmPermissionLevelEnum.isOwner(item.getLevel()))
-                && CrmPermissionLevelEnum.isRead(permissionLevel)) {
+                    && CrmPermissionLevelEnum.isRead(permissionLevel)) {
                 return;
             }
         }
 
         // 2. 只考虑自的身权限
         Long userId = getUserId();
-        CrmPermissionDO userPermission = CollUtil.findOne(bizPermissions, permission -> ObjUtil.equal(permission.getUserId(), userId));
+        CrmPermissionDO userPermission =
+                CollUtil.findOne(
+                        bizPermissions,
+                        permission -> ObjUtil.equal(permission.getUserId(), userId));
         if (userPermission != null) {
             if (isUserPermissionValid(userPermission, permissionLevel)) {
                 return;
@@ -105,16 +115,22 @@ public class CrmPermissionAspect {
         // 3. 考虑下级的权限
         List<AdminUserRespDTO> subordinateUserIds = adminUserApi.getUserListBySubordinate(userId);
         for (Long subordinateUserId : convertSet(subordinateUserIds, AdminUserRespDTO::getId)) {
-            CrmPermissionDO subordinatePermission = CollUtil.findOne(bizPermissions,
-                    permission -> ObjUtil.equal(permission.getUserId(), subordinateUserId));
-            if (subordinatePermission != null && isUserPermissionValid(subordinatePermission, permissionLevel)) {
+            CrmPermissionDO subordinatePermission =
+                    CollUtil.findOne(
+                            bizPermissions,
+                            permission -> ObjUtil.equal(permission.getUserId(), subordinateUserId));
+            if (subordinatePermission != null
+                    && isUserPermissionValid(subordinatePermission, permissionLevel)) {
                 return;
             }
         }
 
         // 4. 没有权限，抛出异常
-        log.info("[doBefore][userId({}) 要求权限({}) 实际权限({}) 数据校验错误]", // 打个 info 日志，方便后续排查问题、审计
-                userId, permissionLevel, toJsonString(userPermission));
+        log.info(
+                "[doBefore][userId({}) 要求权限({}) 实际权限({}) 数据校验错误]", // 打个 info 日志，方便后续排查问题、审计
+                userId,
+                permissionLevel,
+                toJsonString(userPermission));
         throw exception(CRM_PERMISSION_DENIED, CrmBizTypeEnum.getNameByType(bizType));
     }
 
@@ -156,7 +172,8 @@ public class CrmPermissionAspect {
         return WebFrameworkUtils.getLoginUserId();
     }
 
-    private static Map<String, Object> parseExpressions(JoinPoint joinPoint, CrmPermission crmPermission) {
+    private static Map<String, Object> parseExpressions(
+            JoinPoint joinPoint, CrmPermission crmPermission) {
         // 1. 需要解析的表达式
         List<String> expressionStrings = new ArrayList<>(2);
         expressionStrings.add(crmPermission.bizId());
@@ -166,5 +183,4 @@ public class CrmPermissionAspect {
         // 2. 执行解析
         return SpringExpressionUtils.parseExpressions(joinPoint, expressionStrings);
     }
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.packages;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,17 +15,15 @@ import cn.iocoder.yudao.module.mes.dal.mysql.wm.packages.MesWmPackageMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmPackageStatusEnum;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 装箱单 Service 实现类
@@ -32,13 +34,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmPackageServiceImpl implements MesWmPackageService {
 
-    @Resource
-    private MesWmPackageMapper packageMapper;
+    @Resource private MesWmPackageMapper packageMapper;
 
-    @Resource
-    private MesWmPackageLineService packageLineService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource private MesWmPackageLineService packageLineService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     public Long createPackage(MesWmPackageSaveReqVO createReqVO) {
@@ -47,13 +46,17 @@ public class MesWmPackageServiceImpl implements MesWmPackageService {
 
         // 创建装箱单，默认为草稿状态
         MesWmPackageDO packageDO = BeanUtils.toBean(createReqVO, MesWmPackageDO.class);
-        packageDO.setStatus(MesWmPackageStatusEnum.PREPARE.getStatus())
+        packageDO
+                .setStatus(MesWmPackageStatusEnum.PREPARE.getStatus())
                 .setParentId(MesWmPackageDO.PARENT_ID_ROOT);
         packageMapper.insert(packageDO);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.PACKAGE.getValue(),
-                packageDO.getId(), packageDO.getCode(), null);
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.PACKAGE.getValue(),
+                packageDO.getId(),
+                packageDO.getCode(),
+                null);
         return packageDO.getId();
     }
 
@@ -102,8 +105,10 @@ public class MesWmPackageServiceImpl implements MesWmPackageService {
         validatePackageExistsAndDraft(id);
 
         // 更新状态为已完成
-        packageMapper.updateById(new MesWmPackageDO()
-                .setId(id).setStatus(MesWmPackageStatusEnum.FINISHED.getStatus()));
+        packageMapper.updateById(
+                new MesWmPackageDO()
+                        .setId(id)
+                        .setStatus(MesWmPackageStatusEnum.FINISHED.getStatus()));
     }
 
     @Override
@@ -135,7 +140,8 @@ public class MesWmPackageServiceImpl implements MesWmPackageService {
         }
 
         // 清除 parentId
-        packageMapper.updateById(new MesWmPackageDO().setId(childId).setParentId(MesWmPackageDO.PARENT_ID_ROOT));
+        packageMapper.updateById(
+                new MesWmPackageDO().setId(childId).setParentId(MesWmPackageDO.PARENT_ID_ROOT));
     }
 
     @Override
@@ -219,5 +225,4 @@ public class MesWmPackageServiceImpl implements MesWmPackageService {
             parentPackage = packageMapper.selectById(parentId);
         }
     }
-
 }

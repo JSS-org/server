@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.beforeOrEqualNow;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.beforeOrEqualNow;
 
 @Schema(description = "管理后台 - HRM 员工再入职 Request VO")
 @Data
@@ -23,5 +26,4 @@ public class HrmEmployeeRehireReqVO extends HrmEmployeeSaveReqVO {
     public boolean isEntryTimeValid() {
         return getEntryTime() == null || beforeOrEqualNow(getEntryTime());
     }
-
 }

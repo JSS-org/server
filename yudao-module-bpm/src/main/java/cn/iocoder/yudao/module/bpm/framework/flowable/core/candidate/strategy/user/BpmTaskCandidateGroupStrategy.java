@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.strategy.user;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmUserGroupDO;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.bpm.service.definition.BpmUserGroupService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
 
 /**
  * 用户组 {@link BpmTaskCandidateStrategy} 实现类
@@ -22,8 +24,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Component
 public class BpmTaskCandidateGroupStrategy implements BpmTaskCandidateStrategy {
 
-    @Resource
-    private BpmUserGroupService userGroupService;
+    @Resource private BpmUserGroupService userGroupService;
 
     @Override
     public BpmTaskCandidateStrategyEnum getStrategy() {
@@ -42,5 +43,4 @@ public class BpmTaskCandidateGroupStrategy implements BpmTaskCandidateStrategy {
         List<BpmUserGroupDO> groups = userGroupService.getUserGroupList(groupIds);
         return convertSetByFlatMap(groups, BpmUserGroupDO::getUserIds, Collection::stream);
     }
-
 }

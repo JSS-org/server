@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.im.framework.config;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -30,8 +32,7 @@ public class ImProperties {
 
     private Message message = new Message();
 
-    @Valid
-    private Rtc rtc = new Rtc();
+    @Valid private Rtc rtc = new Rtc();
 
     /**
      * 好友模块配置
@@ -46,7 +47,6 @@ public class ImProperties {
          * 如需细化到「仅特定用户自动通过」（如机器人 / AI 账号），请在 system 用户表加字段，并在 applyFriend 内按用户级开关短路
          */
         private boolean autoAccept = false;
-
     }
 
     /**
@@ -69,7 +69,6 @@ public class ImProperties {
          * 单群置顶消息条数上限
          */
         private int pinMaxCount = 5;
-
     }
 
     /**
@@ -82,7 +81,6 @@ public class ImProperties {
          * 个人表情数量上限
          */
         private int userItemMaxCount = 200;
-
     }
 
     /**
@@ -134,7 +132,6 @@ public class ImProperties {
          * 拉取时对历史退群群做大量查询。
          */
         private int groupPullMaxDays = 30;
-
     }
 
     /**
@@ -189,7 +186,5 @@ public class ImProperties {
          * 振铃超时阈值（分钟）；被叫 INVITING 超过此值未接通 → 标 NO_ANSWER + 推 RTC_CALL(REJECT) 让 banner 收敛
          */
         private int inviteTimeoutMinutes = 1;
-
     }
-
 }

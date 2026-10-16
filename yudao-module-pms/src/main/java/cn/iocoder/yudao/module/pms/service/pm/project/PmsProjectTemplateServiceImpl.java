@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_CONFIG_INVALID;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,21 +14,16 @@ import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.template.PmsPr
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectTemplateDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectTemplateMapper;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_CONFIG_INVALID;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPLATE_NOT_EXISTS;
 
 /**
  * PMS 项目模板 Service 实现类
@@ -33,13 +34,13 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_TEMPL
 @Validated
 public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService {
 
-    @Resource
-    private PmsProjectTemplateMapper projectTemplateMapper;
+    @Resource private PmsProjectTemplateMapper projectTemplateMapper;
 
     @Override
     public Long createProjectTemplate(PmsProjectTemplateSaveReqVO createReqVO) {
         // 1. 校验模板名称和协作配置
-        validateProjectTemplateNameDuplicate(createReqVO.getName(), createReqVO.getProjectType(), null);
+        validateProjectTemplateNameDuplicate(
+                createReqVO.getName(), createReqVO.getProjectType(), null);
         validateProjectTemplateConfig(createReqVO);
 
         // 2. 创建项目模板
@@ -52,7 +53,8 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
     public void updateProjectTemplate(PmsProjectTemplateSaveReqVO updateReqVO) {
         // 1. 校验模板存在、名称和协作配置
         validateProjectTemplateExists(updateReqVO.getId());
-        validateProjectTemplateNameDuplicate(updateReqVO.getName(), updateReqVO.getProjectType(), updateReqVO.getId());
+        validateProjectTemplateNameDuplicate(
+                updateReqVO.getName(), updateReqVO.getProjectType(), updateReqVO.getId());
         validateProjectTemplateConfig(updateReqVO);
 
         // 2. 更新项目模板
@@ -74,7 +76,8 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
     }
 
     @Override
-    public PageResult<PmsProjectTemplateDO> getProjectTemplatePage(PmsProjectTemplatePageReqVO pageReqVO) {
+    public PageResult<PmsProjectTemplateDO> getProjectTemplatePage(
+            PmsProjectTemplatePageReqVO pageReqVO) {
         return projectTemplateMapper.selectPage(pageReqVO);
     }
 
@@ -88,10 +91,18 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
      */
     private PmsProjectTemplateDO buildProjectTemplateDO(PmsProjectTemplateSaveReqVO saveReqVO) {
         return BeanUtils.toBean(saveReqVO, PmsProjectTemplateDO.class)
-                .setStatuses(convertList(saveReqVO.getStatuses(), status ->
-                        BeanUtils.toBean(status, PmsProjectTemplateDO.StatusTemplate.class)))
-                .setBoards(convertList(saveReqVO.getBoards(), board ->
-                        BeanUtils.toBean(board, PmsProjectTemplateDO.BoardTemplate.class)));
+                .setStatuses(
+                        convertList(
+                                saveReqVO.getStatuses(),
+                                status ->
+                                        BeanUtils.toBean(
+                                                status, PmsProjectTemplateDO.StatusTemplate.class)))
+                .setBoards(
+                        convertList(
+                                saveReqVO.getBoards(),
+                                board ->
+                                        BeanUtils.toBean(
+                                                board, PmsProjectTemplateDO.BoardTemplate.class)));
     }
 
     /**
@@ -112,12 +123,12 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
      * 校验同一项目类型下的模板名称唯一
      *
      * @param name 模板名称
-    * @param projectType 项目类型
-    * @param id 排除的模板编号
-    */
+     * @param projectType 项目类型
+     * @param id 排除的模板编号
+     */
     private void validateProjectTemplateNameDuplicate(String name, Integer projectType, Long id) {
-        PmsProjectTemplateDO template = projectTemplateMapper
-                .selectByNameAndProjectType(name, projectType);
+        PmsProjectTemplateDO template =
+                projectTemplateMapper.selectByNameAndProjectType(name, projectType);
         if (template == null) {
             return;
         }
@@ -145,14 +156,16 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
         Set<String> statusCodes = new HashSet<>();
         Map<Integer, Integer> defaultStatusCountMap = new HashMap<>();
         for (PmsProjectTemplateSaveReqVO.StatusTemplate status : saveReqVO.getStatuses()) {
-            if (!itemTypes.contains(status.getWorkItemType()) || !statusCodes.add(status.getCode())) {
+            if (!itemTypes.contains(status.getWorkItemType())
+                    || !statusCodes.add(status.getCode())) {
                 throw exception(PROJECT_TEMPLATE_CONFIG_INVALID, "状态类型不属于模板或状态编码重复");
             }
             if (Boolean.TRUE.equals(status.getDefaultStatus())) {
                 defaultStatusCountMap.merge(status.getWorkItemType(), 1, Integer::sum);
             }
         }
-        if (itemTypes.stream().anyMatch(type -> ObjectUtil.notEqual(defaultStatusCountMap.get(type), 1))) {
+        if (itemTypes.stream()
+                .anyMatch(type -> ObjectUtil.notEqual(defaultStatusCountMap.get(type), 1))) {
             throw exception(PROJECT_TEMPLATE_CONFIG_INVALID, "每种工作项必须且只能配置一个初始状态");
         }
 
@@ -162,13 +175,16 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
         Map<String, String> statusBoardCodeMap = new HashMap<>();
         saveReqVO.getStatuses().forEach(status -> statusMap.put(status.getCode(), status));
         for (PmsProjectTemplateSaveReqVO.BoardTemplate board : saveReqVO.getBoards()) {
-            if (!itemTypes.contains(board.getWorkItemType()) || !boardCodes.add(board.getCode())
-                    || new HashSet<>(board.getStatusCodes()).size() != board.getStatusCodes().size()) {
+            if (!itemTypes.contains(board.getWorkItemType())
+                    || !boardCodes.add(board.getCode())
+                    || new HashSet<>(board.getStatusCodes()).size()
+                            != board.getStatusCodes().size()) {
                 throw exception(PROJECT_TEMPLATE_CONFIG_INVALID, "看板列类型无效、编码重复或关联状态重复");
             }
             for (String statusCode : board.getStatusCodes()) {
                 PmsProjectTemplateSaveReqVO.StatusTemplate status = statusMap.get(statusCode);
-                if (status == null || ObjectUtil.notEqual(status.getWorkItemType(), board.getWorkItemType())
+                if (status == null
+                        || ObjectUtil.notEqual(status.getWorkItemType(), board.getWorkItemType())
                         || ObjectUtil.notEqual(status.getBoardCode(), board.getCode())
                         || statusBoardCodeMap.putIfAbsent(statusCode, board.getCode()) != null) {
                     throw exception(PROJECT_TEMPLATE_CONFIG_INVALID, "看板列与状态的类型或编码关系不一致");
@@ -177,10 +193,14 @@ public class PmsProjectTemplateServiceImpl implements PmsProjectTemplateService 
         }
 
         // 3. 校验每个状态都归属且只归属一个已配置的看板列
-        if (saveReqVO.getStatuses().stream().anyMatch(status -> !boardCodes.contains(status.getBoardCode())
-                || ObjectUtil.notEqual(statusBoardCodeMap.get(status.getCode()), status.getBoardCode()))) {
+        if (saveReqVO.getStatuses().stream()
+                .anyMatch(
+                        status ->
+                                !boardCodes.contains(status.getBoardCode())
+                                        || ObjectUtil.notEqual(
+                                                statusBoardCodeMap.get(status.getCode()),
+                                                status.getBoardCode()))) {
             throw exception(PROJECT_TEMPLATE_CONFIG_INVALID, "状态没有关联看板列或关联了多个看板列");
         }
     }
-
 }

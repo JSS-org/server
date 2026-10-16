@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.iot.service.rule.data.action;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkTcpConfig;
 import cn.iocoder.yudao.module.iot.service.rule.data.action.tcp.IotTcpClient;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotTcpDataRuleAction} 的单元测试
@@ -22,8 +23,7 @@ class IotTcpDataRuleActionTest {
 
     private IotTcpDataRuleAction tcpDataRuleAction;
 
-    @Mock
-    private IotTcpClient mockTcpClient;
+    @Mock private IotTcpClient mockTcpClient;
 
     @BeforeEach
     public void setUp() {
@@ -70,11 +70,13 @@ class IotTcpDataRuleActionTest {
         IotTcpDataRuleAction action = new IotTcpDataRuleAction();
 
         // 测试验证逻辑（通常在 initProducer 方法中）
-        assertThrows(IllegalArgumentException.class, () -> {
-            if (config.getHost() == null || config.getHost().trim().isEmpty()) {
-                throw new IllegalArgumentException("TCP 服务器地址不能为空");
-            }
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    if (config.getHost() == null || config.getHost().trim().isEmpty()) {
+                        throw new IllegalArgumentException("TCP 服务器地址不能为空");
+                    }
+                });
     }
 
     @Test
@@ -85,11 +87,15 @@ class IotTcpDataRuleActionTest {
         config.setPort(-1);
 
         // 调用方法 & 断言结果
-        assertThrows(IllegalArgumentException.class, () -> {
-            if (config.getPort() == null || config.getPort() <= 0 || config.getPort() > 65535) {
-                throw new IllegalArgumentException("TCP 服务器端口无效");
-            }
-        });
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> {
+                    if (config.getPort() == null
+                            || config.getPort() <= 0
+                            || config.getPort() > 65535) {
+                        throw new IllegalArgumentException("TCP 服务器端口无效");
+                    }
+                });
     }
 
     @Test
@@ -107,8 +113,9 @@ class IotTcpDataRuleActionTest {
     @Test
     public void testExecute_withValidConfig() {
         // 准备参数
-        IotDeviceMessage message = IotDeviceMessage.requestOf("thing.property.report",
-                "{\"temperature\": 25.5, \"humidity\": 60}");
+        IotDeviceMessage message =
+                IotDeviceMessage.requestOf(
+                        "thing.property.report", "{\"temperature\": 25.5, \"humidity\": 60}");
 
         IotDataSinkTcpConfig config = new IotDataSinkTcpConfig();
         config.setHost("localhost");
@@ -143,11 +150,12 @@ class IotTcpDataRuleActionTest {
     @Test
     public void testMessageSerialization() {
         // 准备参数
-        IotDeviceMessage message = IotDeviceMessage.builder()
-                .deviceId(123L)
-                .method("thing.property.report")
-                .params(MapUtil.of("temperature", 25.5))
-                .build();
+        IotDeviceMessage message =
+                IotDeviceMessage.builder()
+                        .deviceId(123L)
+                        .method("thing.property.report")
+                        .params(MapUtil.of("temperature", 25.5))
+                        .build();
 
         // 调用方法
         String json = JsonUtils.toJsonString(message);
@@ -158,5 +166,4 @@ class IotTcpDataRuleActionTest {
         assertTrue(json.contains("\"method\":\"thing.property.report\""));
         assertTrue(json.contains("\"temperature\":25.5"));
     }
-
 }

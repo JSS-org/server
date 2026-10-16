@@ -93,8 +93,11 @@ public interface PmsKnowledgeLibraryMemberService {
      * @param adminUserIds 初始管理员用户编号集合
      * @param memberUserIds 初始普通成员用户编号集合
      */
-    void createLibraryMemberList(Long libraryId, Long creatorUserId,
-                                 Collection<Long> adminUserIds, Collection<Long> memberUserIds);
+    void createLibraryMemberList(
+            Long libraryId,
+            Long creatorUserId,
+            Collection<Long> adminUserIds,
+            Collection<Long> memberUserIds);
 
     /**
      * 获得知识库成员列表
@@ -134,7 +137,8 @@ public interface PmsKnowledgeLibraryMemberService {
      * @param libraryIds 知识库编号集合
      * @return 知识库编号到成员列表的映射
      */
-    Map<Long, List<PmsKnowledgeLibraryMemberDO>> getLibraryMemberListMap(Collection<Long> libraryIds);
+    Map<Long, List<PmsKnowledgeLibraryMemberDO>> getLibraryMemberListMap(
+            Collection<Long> libraryIds);
 
     /**
      * 获得用户在知识库中的直接成员关系
@@ -162,5 +166,4 @@ public interface PmsKnowledgeLibraryMemberService {
      * @return 知识库编号列表
      */
     List<Long> getLibraryIdListByUserIdOrDeptId(Long userId, Long deptId);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.member;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 项目成员 Response VO")
@@ -21,5 +22,4 @@ public class PmsProjectMemberRespVO {
 
     @Schema(description = "是否项目创建人", example = "true")
     private Boolean creatorStatus;
-
 }

@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.outsourceissue.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,11 +16,17 @@ public class MesWmOutsourceIssueSaveReqVO {
     @Schema(description = "发料单ID", example = "1024")
     private Long id;
 
-    @Schema(description = "发料单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "WOS202603020001")
+    @Schema(
+            description = "发料单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "WOS202603020001")
     @NotEmpty(message = "发料单编号不能为空")
     private String code;
 
-    @Schema(description = "发料单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "外协发料单001")
+    @Schema(
+            description = "发料单名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "外协发料单001")
     @NotEmpty(message = "发料单名称不能为空")
     private String name;
 
@@ -34,5 +42,4 @@ public class MesWmOutsourceIssueSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

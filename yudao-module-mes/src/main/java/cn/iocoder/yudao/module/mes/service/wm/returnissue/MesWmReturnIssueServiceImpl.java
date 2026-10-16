@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.returnissue;
 
-import cn.hutool.core.collection.CollUtil;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
@@ -13,6 +15,9 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.item.MesMdItemDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueDetailDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssueLineDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseAreaDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.returnissue.MesWmReturnIssueMapper;
 import cn.iocoder.yudao.module.mes.enums.MesBizTypeConstants;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmQualityStatusEnum;
@@ -26,10 +31,9 @@ import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSa
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseLocationService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseAreaDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.warehouse.MesWmWarehouseLocationDO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -39,9 +43,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 生产退料单 Service 实现类
  */
@@ -49,27 +50,17 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
 
-    @Resource
-    private MesWmReturnIssueMapper issueMapper;
+    @Resource private MesWmReturnIssueMapper issueMapper;
 
-    @Resource
-    private MesWmReturnIssueLineService issueLineService;
-    @Resource
-    private MesWmReturnIssueDetailService issueDetailService;
-    @Resource
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmTransactionService wmTransactionService;
-    @Resource
-    private MesWmWarehouseService warehouseService;
-    @Resource
-    private MesWmWarehouseLocationService locationService;
-    @Resource
-    private MesWmWarehouseAreaService areaService;
+    @Resource private MesWmReturnIssueLineService issueLineService;
+    @Resource private MesWmReturnIssueDetailService issueDetailService;
+    @Resource private MesMdWorkstationService workstationService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmTransactionService wmTransactionService;
+    @Resource private MesWmWarehouseService warehouseService;
+    @Resource private MesWmWarehouseLocationService locationService;
+    @Resource private MesWmWarehouseAreaService areaService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -98,7 +89,8 @@ public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
 
         // 3. 退料类型变更时，刷新所有行的质量状态
         if (ObjUtil.notEqual(oldIssue.getType(), updateReqVO.getType())) {
-            issueLineService.updateReturnIssueQualityStatusByIssueId(updateReqVO.getId(), updateReqVO.getType());
+            issueLineService.updateReturnIssueQualityStatusByIssueId(
+                    updateReqVO.getId(), updateReqVO.getType());
         }
     }
 
@@ -138,10 +130,17 @@ public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
         }
 
         // 2.1 确定目标状态：1）有待检验物料 → 待检验状态；2）无待检验物料 → 待上架状态
-        boolean hasPendingQc = CollUtil.contains(lines,
-                line -> MesWmQualityStatusEnum.PENDING.getStatus().equals(line.getQualityStatus()));
-        Integer targetStatus = hasPendingQc ? MesWmReturnIssueStatusEnum.CONFIRMED.getStatus()
-                : MesWmReturnIssueStatusEnum.APPROVING.getStatus();
+        boolean hasPendingQc =
+                CollUtil.contains(
+                        lines,
+                        line ->
+                                MesWmQualityStatusEnum.PENDING
+                                        .getStatus()
+                                        .equals(line.getQualityStatus()));
+        Integer targetStatus =
+                hasPendingQc
+                        ? MesWmReturnIssueStatusEnum.CONFIRMED.getStatus()
+                        : MesWmReturnIssueStatusEnum.APPROVING.getStatus();
         // 2.2 提交（草稿 → 待检验/待上架）
         issueMapper.updateById(new MesWmReturnIssueDO().setId(id).setStatus(targetStatus));
     }
@@ -158,26 +157,36 @@ public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
         List<MesWmReturnIssueLineDO> lines = issueLineService.getReturnIssueLineListByIssueId(id);
         if (CollUtil.isNotEmpty(lines)) {
             // 批量查询所有明细
-            List<MesWmReturnIssueDetailDO> allDetails = issueDetailService.getReturnIssueDetailListByIssueId(id);
-            Map<Long, List<MesWmReturnIssueDetailDO>> detailMap = CollectionUtils.convertMultiMap(
-                    allDetails, MesWmReturnIssueDetailDO::getLineId);
+            List<MesWmReturnIssueDetailDO> allDetails =
+                    issueDetailService.getReturnIssueDetailListByIssueId(id);
+            Map<Long, List<MesWmReturnIssueDetailDO>> detailMap =
+                    CollectionUtils.convertMultiMap(
+                            allDetails, MesWmReturnIssueDetailDO::getLineId);
             // 检查每行的明细数量
             for (MesWmReturnIssueLineDO line : lines) {
-                List<MesWmReturnIssueDetailDO> details = detailMap.getOrDefault(line.getId(), Collections.emptyList());
-                BigDecimal totalDetailQuantity = CollectionUtils.getSumValue(details,
-                        MesWmReturnIssueDetailDO::getQuantity, BigDecimal::add, BigDecimal.ZERO);
+                List<MesWmReturnIssueDetailDO> details =
+                        detailMap.getOrDefault(line.getId(), Collections.emptyList());
+                BigDecimal totalDetailQuantity =
+                        CollectionUtils.getSumValue(
+                                details,
+                                MesWmReturnIssueDetailDO::getQuantity,
+                                BigDecimal::add,
+                                BigDecimal.ZERO);
                 // 对比行数量与明细总数量，不满足直接抛出
                 if (line.getQuantity().compareTo(totalDetailQuantity) > 0) {
                     MesMdItemDO item = itemService.validateItemExistsAndEnable(line.getItemId());
-                    throw exception(WM_RETURN_ISSUE_DETAIL_QUANTITY_MISMATCH,
+                    throw exception(
+                            WM_RETURN_ISSUE_DETAIL_QUANTITY_MISMATCH,
                             item.getCode() + " " + item.getName() + " 未完成上架");
                 }
             }
         }
 
         // 2. 入库上架（待上架 → 待执行退料）
-        issueMapper.updateById(new MesWmReturnIssueDO()
-                .setId(id).setStatus(MesWmReturnIssueStatusEnum.APPROVED.getStatus()));
+        issueMapper.updateById(
+                new MesWmReturnIssueDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnIssueStatusEnum.APPROVED.getStatus()));
     }
 
     @Override
@@ -193,37 +202,59 @@ public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
         createTransactionList(issue);
 
         // 3. 更新退料单状态
-        issueMapper.updateById(new MesWmReturnIssueDO()
-                .setId(id).setStatus(MesWmReturnIssueStatusEnum.FINISHED.getStatus()));
+        issueMapper.updateById(
+                new MesWmReturnIssueDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnIssueStatusEnum.FINISHED.getStatus()));
     }
 
     private void createTransactionList(MesWmReturnIssueDO issue) {
         // 1. 查询虚拟线边库
-        MesWmWarehouseDO virtualWarehouse = warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
-        MesWmWarehouseLocationDO virtualLocation = locationService.getWarehouseLocationByCode(MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION);
-        MesWmWarehouseAreaDO virtualArea = areaService.getWarehouseAreaByCode(MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA);
+        MesWmWarehouseDO virtualWarehouse =
+                warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
+        MesWmWarehouseLocationDO virtualLocation =
+                locationService.getWarehouseLocationByCode(
+                        MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION);
+        MesWmWarehouseAreaDO virtualArea =
+                areaService.getWarehouseAreaByCode(MesWmWarehouseAreaDO.WIP_VIRTUAL_AREA);
 
         // 2. 遍历明细，每条明细产生 OUT（虚拟线边库扣减）+ IN（实际仓库增加）
-        List<MesWmReturnIssueDetailDO> details = issueDetailService.getReturnIssueDetailListByIssueId(issue.getId());
+        List<MesWmReturnIssueDetailDO> details =
+                issueDetailService.getReturnIssueDetailListByIssueId(issue.getId());
         for (MesWmReturnIssueDetailDO detail : details) {
             // 2.1 先从虚拟线边库出库（库存减少）
-            Long outTransactionId = wmTransactionService.createTransaction(new MesWmTransactionSaveReqDTO()
-                    .setType(MesWmTransactionTypeEnum.OUT.getType()).setItemId(detail.getItemId())
-                    .setQuantity(detail.getQuantity().negate()) // 库存减少
-                    .setBatchId(detail.getBatchId()).setBatchCode(detail.getBatchCode())
-                    .setWarehouseId(virtualWarehouse.getId()).setLocationId(virtualLocation.getId()).setAreaId(virtualArea.getId())
-                    .setCheckFlag(false) // 线边库允许负库存
-                    .setBizType(MesBizTypeConstants.WM_RETURN_ISSUE).setBizId(issue.getId())
-                    .setBizCode(issue.getCode()).setBizLineId(detail.getLineId()));
+            Long outTransactionId =
+                    wmTransactionService.createTransaction(
+                            new MesWmTransactionSaveReqDTO()
+                                    .setType(MesWmTransactionTypeEnum.OUT.getType())
+                                    .setItemId(detail.getItemId())
+                                    .setQuantity(detail.getQuantity().negate()) // 库存减少
+                                    .setBatchId(detail.getBatchId())
+                                    .setBatchCode(detail.getBatchCode())
+                                    .setWarehouseId(virtualWarehouse.getId())
+                                    .setLocationId(virtualLocation.getId())
+                                    .setAreaId(virtualArea.getId())
+                                    .setCheckFlag(false) // 线边库允许负库存
+                                    .setBizType(MesBizTypeConstants.WM_RETURN_ISSUE)
+                                    .setBizId(issue.getId())
+                                    .setBizCode(issue.getCode())
+                                    .setBizLineId(detail.getLineId()));
             // 2.2 再入实际仓库（库存增加）
-            wmTransactionService.createTransaction(new MesWmTransactionSaveReqDTO()
-                    .setType(MesWmTransactionTypeEnum.IN.getType()).setItemId(detail.getItemId())
-                    .setQuantity(detail.getQuantity()) // 库存增加（退料回仓）
-                    .setBatchId(detail.getBatchId()).setBatchCode(detail.getBatchCode())
-                    .setWarehouseId(detail.getWarehouseId()).setLocationId(detail.getLocationId()).setAreaId(detail.getAreaId())
-                    .setBizType(MesBizTypeConstants.WM_RETURN_ISSUE).setBizId(issue.getId())
-                    .setBizCode(issue.getCode()).setBizLineId(detail.getLineId())
-                    .setRelatedTransactionId(outTransactionId)); // 关联出库事务
+            wmTransactionService.createTransaction(
+                    new MesWmTransactionSaveReqDTO()
+                            .setType(MesWmTransactionTypeEnum.IN.getType())
+                            .setItemId(detail.getItemId())
+                            .setQuantity(detail.getQuantity()) // 库存增加（退料回仓）
+                            .setBatchId(detail.getBatchId())
+                            .setBatchCode(detail.getBatchCode())
+                            .setWarehouseId(detail.getWarehouseId())
+                            .setLocationId(detail.getLocationId())
+                            .setAreaId(detail.getAreaId())
+                            .setBizType(MesBizTypeConstants.WM_RETURN_ISSUE)
+                            .setBizId(issue.getId())
+                            .setBizCode(issue.getCode())
+                            .setBizLineId(detail.getLineId())
+                            .setRelatedTransactionId(outTransactionId)); // 关联出库事务
         }
     }
 
@@ -233,15 +264,18 @@ public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
         // 校验存在
         MesWmReturnIssueDO issue = validateReturnIssueExists(id);
         // 已完成和已取消不允许取消
-        if (ObjectUtils.equalsAny(issue.getStatus(),
+        if (ObjectUtils.equalsAny(
+                issue.getStatus(),
                 MesWmReturnIssueStatusEnum.FINISHED.getStatus(),
                 MesWmReturnIssueStatusEnum.CANCELED.getStatus())) {
             throw exception(WM_RETURN_ISSUE_CANCEL_NOT_ALLOWED);
         }
 
         // 取消
-        issueMapper.updateById(new MesWmReturnIssueDO()
-                .setId(id).setStatus(MesWmReturnIssueStatusEnum.CANCELED.getStatus()));
+        issueMapper.updateById(
+                new MesWmReturnIssueDO()
+                        .setId(id)
+                        .setStatus(MesWmReturnIssueStatusEnum.CANCELED.getStatus()));
     }
 
     @Override
@@ -294,5 +328,4 @@ public class MesWmReturnIssueServiceImpl implements MesWmReturnIssueService {
             workstationService.validateWorkstationExistsAndEnable(reqVO.getWorkstationId());
         }
     }
-
 }

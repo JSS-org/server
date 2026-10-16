@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.biz.dto;
 
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,5 +33,4 @@ public class IotDeviceAuthReqDTO {
      */
     @NotEmpty(message = "密码不能为空")
     private String password;
-
 }

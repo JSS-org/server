@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.qc.indicatorresult.vo;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,5 +28,4 @@ public class MesQcIndicatorResultPageReqVO extends PageParam {
 
     @Schema(description = "产品物料ID", example = "1")
     private Long itemId;
-
 }

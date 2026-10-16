@@ -1,22 +1,33 @@
 package cn.iocoder.yudao.module.hrm.service.home;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetBySupplier;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.count;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.distinctCount;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.sum;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.HOME_CALENDAR_DATE_RANGE_ILLEGAL;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
-import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeListReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHomeCalendarItemRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHrHomeStatisticsRespVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO.AnalysisItem;
-import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO.TeamOverview;
-import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO.TeamSurvey;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHrHomeStatisticsRespVO.EmployeeSurvey;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHrHomeStatisticsRespVO.RecruitSurvey;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHrHomeStatisticsRespVO.SalaryDept;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHrHomeStatisticsRespVO.SalarySurvey;
 import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmHrHomeStatisticsRespVO.TodoSurvey;
+import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO.AnalysisItem;
+import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO.TeamOverview;
+import cn.iocoder.yudao.module.hrm.controller.admin.home.vo.HrmTeamHomeStatisticsRespVO.TeamSurvey;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.candidate.HrmRecruitCandidatePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.post.HrmRecruitPostPageReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.record.HrmAttendanceClockDO;
@@ -28,21 +39,22 @@ import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.candidate.HrmRecruitCa
 import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.candidate.HrmRecruitInterviewDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthRecordDO;
-import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusTabEnum;
-import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeSurveyTypeEnum;
-import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTodoTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeChangeTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
+import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusTabEnum;
+import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeSurveyTypeEnum;
+import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTodoTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.home.HrmHomeAgeRangeEnum;
 import cn.iocoder.yudao.module.hrm.enums.home.HrmHomeCalendarItemTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.home.HrmHomeCompanyAgeRangeEnum;
 import cn.iocoder.yudao.module.hrm.enums.recruit.candidate.HrmRecruitCandidateStatusEnum;
+import cn.iocoder.yudao.module.hrm.enums.recruit.candidate.HrmRecruitInterviewResultEnum;
 import cn.iocoder.yudao.module.hrm.enums.recruit.post.HrmRecruitPostStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.salary.monthrecord.HrmSalaryMonthRecordStatusEnum;
 import cn.iocoder.yudao.module.hrm.service.attendance.record.HrmAttendanceClockService;
-import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeContractService;
 import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeChangeRecordService;
+import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeContractService;
 import cn.iocoder.yudao.module.hrm.service.employee.employment.HrmEmployeeQuitInfoService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeePersonalNoteService;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
@@ -54,8 +66,9 @@ import cn.iocoder.yudao.module.hrm.service.salary.monthrecord.HrmSalaryMonthReco
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.enums.common.SexEnum;
-import cn.iocoder.yudao.module.hrm.enums.recruit.candidate.HrmRecruitInterviewResultEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -77,17 +90,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetBySupplier;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.count;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.distinctCount;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.sum;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.HOME_CALENDAR_DATE_RANGE_ILLEGAL;
-
 /**
  * HRM 首页 Service 实现类
  *
@@ -100,33 +102,22 @@ public class HrmHomeServiceImpl implements HrmHomeService {
     /**
      * 首页日历面试时间格式
      */
-    private static final DateTimeFormatter INTERVIEW_TIME_FORMATTER = DatePattern.createFormatter("HH:mm");
+    private static final DateTimeFormatter INTERVIEW_TIME_FORMATTER =
+            DatePattern.createFormatter("HH:mm");
 
-    @Resource
-    private HrmEmployeeContractService employeeContractService;
-    @Resource
-    private HrmEmployeeChangeRecordService employeeChangeRecordService;
-    @Resource
-    private HrmEmployeeQuitInfoService employeeQuitInfoService;
-    @Resource
-    private HrmEmployeeService employeeService;
-    @Resource
-    private HrmEmployeePersonalNoteService personalNoteService;
-    @Resource
-    private HrmRecruitPostService recruitPostService;
-    @Resource
-    private HrmRecruitCandidateService recruitCandidateService;
-    @Resource
-    private HrmRecruitInterviewService recruitInterviewService;
-    @Resource
-    private HrmAttendanceClockService attendanceClockService;
-    @Resource
-    private HrmSalaryMonthRecordService salaryMonthRecordService;
-    @Resource
-    private HrmSalaryMonthEmployeeRecordService salaryMonthEmployeeRecordService;
+    @Resource private HrmEmployeeContractService employeeContractService;
+    @Resource private HrmEmployeeChangeRecordService employeeChangeRecordService;
+    @Resource private HrmEmployeeQuitInfoService employeeQuitInfoService;
+    @Resource private HrmEmployeeService employeeService;
+    @Resource private HrmEmployeePersonalNoteService personalNoteService;
+    @Resource private HrmRecruitPostService recruitPostService;
+    @Resource private HrmRecruitCandidateService recruitCandidateService;
+    @Resource private HrmRecruitInterviewService recruitInterviewService;
+    @Resource private HrmAttendanceClockService attendanceClockService;
+    @Resource private HrmSalaryMonthRecordService salaryMonthRecordService;
+    @Resource private HrmSalaryMonthEmployeeRecordService salaryMonthEmployeeRecordService;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
     @Override
     public HrmHrHomeStatisticsRespVO getHrHomeStatisticsSummary() {
@@ -146,10 +137,16 @@ public class HrmHomeServiceImpl implements HrmHomeService {
     public HrmTeamHomeStatisticsRespVO getTeamHomeStatisticsSummary(Long loginUserId) {
         // 1. 查询当前登录员工及其直属下属
         HrmEmployeeDO loginEmployee = employeeService.getEmployeeByUserId(loginUserId);
-        List<HrmEmployeeDO> teamEmployees = loginEmployee == null ? Collections.emptyList()
-                : employeeService.getEmployeeListByLeaderEmployeeId(loginEmployee.getId());
-        List<HrmEmployeeDO> activeTeamEmployees = filterList(teamEmployees,
-                employee -> HrmEmployeeEntryStatusEnum.ACTIVE_STATUSES.contains(employee.getEntryStatus()));
+        List<HrmEmployeeDO> teamEmployees =
+                loginEmployee == null
+                        ? Collections.emptyList()
+                        : employeeService.getEmployeeListByLeaderEmployeeId(loginEmployee.getId());
+        List<HrmEmployeeDO> activeTeamEmployees =
+                filterList(
+                        teamEmployees,
+                        employee ->
+                                HrmEmployeeEntryStatusEnum.ACTIVE_STATUSES.contains(
+                                        employee.getEntryStatus()));
 
         // 2. 统计本月团队人数变动
         HrmTeamHomeStatisticsRespVO summary = new HrmTeamHomeStatisticsRespVO();
@@ -181,8 +178,11 @@ public class HrmHomeServiceImpl implements HrmHomeService {
         // 2. 收集本人备忘及直属下属的人事日历事项
         List<HrmHomeCalendarItemRespVO> items = new ArrayList<>();
         addPersonalNoteItems(items, loginEmployee, startDate, endDate);
-        addEmployeeItems(items, employeeService.getEmployeeListByLeaderEmployeeId(
-                loginEmployee.getId()), startDate, endDate);
+        addEmployeeItems(
+                items,
+                employeeService.getEmployeeListByLeaderEmployeeId(loginEmployee.getId()),
+                startDate,
+                endDate);
 
         // 3. 对日历事项稳定排序
         sortCalendarItems(items);
@@ -210,33 +210,55 @@ public class HrmHomeServiceImpl implements HrmHomeService {
      * @param activeTeamEmployees 当前在职的直属团队员工列表
      * @return 团队人员变动概况
      */
-    private TeamOverview buildTeamOverview(List<HrmEmployeeDO> teamEmployees,
-                                           List<HrmEmployeeDO> activeTeamEmployees) {
+    private TeamOverview buildTeamOverview(
+            List<HrmEmployeeDO> teamEmployees, List<HrmEmployeeDO> activeTeamEmployees) {
         // 1. 统计团队人数和本月入离职人数
         LocalDate now = LocalDate.now();
-        LocalDateTime[] monthTimes = LocalDateTimeUtils.getMonthDateTimeRange(
-                now.getYear(), now.getMonthValue());
+        LocalDateTime[] monthTimes =
+                LocalDateTimeUtils.getMonthDateTimeRange(now.getYear(), now.getMonthValue());
         TeamOverview overview = new TeamOverview();
         overview.setEmployeeCount((long) activeTeamEmployees.size());
-        overview.setEntryThisMonthCount(count(teamEmployees,
-                employee -> !HrmEmployeeEntryStatusEnum.PENDING_ENTRY.getStatus()
-                        .equals(employee.getEntryStatus())
-                        && LocalDateTimeUtils.isBetween(monthTimes[0], monthTimes[1], employee.getEntryTime())));
-        overview.setLeaveThisMonthCount(count(teamEmployees,
-                employee -> HrmEmployeeEntryStatusEnum.LEFT.getStatus().equals(employee.getEntryStatus())
-                        && LocalDateTimeUtils.isBetween(monthTimes[0], monthTimes[1], employee.getLeaveTime())));
+        overview.setEntryThisMonthCount(
+                count(
+                        teamEmployees,
+                        employee ->
+                                !HrmEmployeeEntryStatusEnum.PENDING_ENTRY
+                                                .getStatus()
+                                                .equals(employee.getEntryStatus())
+                                        && LocalDateTimeUtils.isBetween(
+                                                monthTimes[0],
+                                                monthTimes[1],
+                                                employee.getEntryTime())));
+        overview.setLeaveThisMonthCount(
+                count(
+                        teamEmployees,
+                        employee ->
+                                HrmEmployeeEntryStatusEnum.LEFT
+                                                .getStatus()
+                                                .equals(employee.getEntryStatus())
+                                        && LocalDateTimeUtils.isBetween(
+                                                monthTimes[0],
+                                                monthTimes[1],
+                                                employee.getLeaveTime())));
 
         // 2. 按异动记录去重统计本月转正人数
         if (CollUtil.isEmpty(teamEmployees)) {
             overview.setRegularThisMonthCount(0L);
             return overview;
         }
-        List<HrmEmployeeChangeRecordDO> changeRecords = employeeChangeRecordService
-                .getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
-                        convertSet(teamEmployees, HrmEmployeeDO::getId), monthTimes);
-        overview.setRegularThisMonthCount(distinctCount(filterList(changeRecords,
-                        record -> HrmEmployeeChangeTypeEnum.REGULAR.getType().equals(record.getType())),
-                HrmEmployeeChangeRecordDO::getEmployeeId));
+        List<HrmEmployeeChangeRecordDO> changeRecords =
+                employeeChangeRecordService
+                        .getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
+                                convertSet(teamEmployees, HrmEmployeeDO::getId), monthTimes);
+        overview.setRegularThisMonthCount(
+                distinctCount(
+                        filterList(
+                                changeRecords,
+                                record ->
+                                        HrmEmployeeChangeTypeEnum.REGULAR
+                                                .getType()
+                                                .equals(record.getType())),
+                        HrmEmployeeChangeRecordDO::getEmployeeId));
         return overview;
     }
 
@@ -281,7 +303,9 @@ public class HrmHomeServiceImpl implements HrmHomeService {
         for (HrmEmployeeDO employee : teamEmployees) {
             Integer age = employee.getAge();
             if (employee.getBirthday() != null) {
-                age = LocalDateTimeUtils.getYearsBetween(employee.getBirthday().toLocalDate(), LocalDate.now());
+                age =
+                        LocalDateTimeUtils.getYearsBetween(
+                                employee.getBirthday().toLocalDate(), LocalDate.now());
             }
             countMap.merge(HrmHomeAgeRangeEnum.getType(age), 1L, Long::sum);
         }
@@ -295,67 +319,91 @@ public class HrmHomeServiceImpl implements HrmHomeService {
             countMap.put(range.getType(), 0L);
         }
         for (HrmEmployeeDO employee : teamEmployees) {
-            long companyAgeDays = employee.getCompanyAgeStartTime() != null
-                    ? ChronoUnit.DAYS.between(employee.getCompanyAgeStartTime().toLocalDate(), LocalDate.now())
-                    : employee.getCompanyAge() == null ? -1L : employee.getCompanyAge() * 365L;
+            long companyAgeDays =
+                    employee.getCompanyAgeStartTime() != null
+                            ? ChronoUnit.DAYS.between(
+                                    employee.getCompanyAgeStartTime().toLocalDate(),
+                                    LocalDate.now())
+                            : employee.getCompanyAge() == null
+                                    ? -1L
+                                    : employee.getCompanyAge() * 365L;
             countMap.merge(HrmHomeCompanyAgeRangeEnum.getType(companyAgeDays), 1L, Long::sum);
         }
         return countMap;
     }
 
     private List<AnalysisItem> buildAnalysis(Map<Integer, Long> countMap) {
-        return convertList(countMap.entrySet(), entry -> new AnalysisItem()
-                .setType(entry.getKey()).setCount(entry.getValue()));
+        return convertList(
+                countMap.entrySet(),
+                entry -> new AnalysisItem().setType(entry.getKey()).setCount(entry.getValue()));
     }
 
     private EmployeeSurvey buildEmployeeSurvey() {
         EmployeeSurvey survey = new EmployeeSurvey();
         // 1. 统计当前在职员工总数
-        survey.setActiveCount(employeeService.getEmployeeStatusCount(new HrmEmployeePageReqVO())
-                .getOrDefault(HrmEmployeeStatusTabEnum.ACTIVE.getStatus(), 0L));
+        survey.setActiveCount(
+                employeeService
+                        .getEmployeeStatusCount(new HrmEmployeePageReqVO())
+                        .getOrDefault(HrmEmployeeStatusTabEnum.ACTIVE.getStatus(), 0L));
         // 2. 按员工主档、离职状态和异动记录聚合统计本月六类人员变动
         Map<Integer, Long> surveyCountMap = employeeService.getEmployeeSurveyCountMap();
-        survey.setEntryThisMonthCount(surveyCountMap.getOrDefault(
-                HrmEmployeeSurveyTypeEnum.ENTRY.getType(), 0L));
-        survey.setPendingEntryThisMonthCount(surveyCountMap.getOrDefault(
-                HrmEmployeeSurveyTypeEnum.PENDING_ENTRY.getType(), 0L));
-        survey.setLeaveThisMonthCount(surveyCountMap.getOrDefault(
-                HrmEmployeeSurveyTypeEnum.LEAVE.getType(), 0L));
-        survey.setPendingLeaveThisMonthCount(surveyCountMap.getOrDefault(
-                HrmEmployeeSurveyTypeEnum.PENDING_LEAVE.getType(), 0L));
-        survey.setRegularThisMonthCount(surveyCountMap.getOrDefault(
-                HrmEmployeeSurveyTypeEnum.REGULAR.getType(), 0L));
-        survey.setTransferThisMonthCount(surveyCountMap.getOrDefault(
-                HrmEmployeeSurveyTypeEnum.TRANSFER.getType(), 0L));
+        survey.setEntryThisMonthCount(
+                surveyCountMap.getOrDefault(HrmEmployeeSurveyTypeEnum.ENTRY.getType(), 0L));
+        survey.setPendingEntryThisMonthCount(
+                surveyCountMap.getOrDefault(HrmEmployeeSurveyTypeEnum.PENDING_ENTRY.getType(), 0L));
+        survey.setLeaveThisMonthCount(
+                surveyCountMap.getOrDefault(HrmEmployeeSurveyTypeEnum.LEAVE.getType(), 0L));
+        survey.setPendingLeaveThisMonthCount(
+                surveyCountMap.getOrDefault(HrmEmployeeSurveyTypeEnum.PENDING_LEAVE.getType(), 0L));
+        survey.setRegularThisMonthCount(
+                surveyCountMap.getOrDefault(HrmEmployeeSurveyTypeEnum.REGULAR.getType(), 0L));
+        survey.setTransferThisMonthCount(
+                surveyCountMap.getOrDefault(HrmEmployeeSurveyTypeEnum.TRANSFER.getType(), 0L));
         return survey;
     }
 
     private RecruitSurvey buildRecruitSurvey() {
         // 1. 统计招聘中的职位和流程中的候选人
         LocalDateTime currentTime = LocalDateTime.now();
-        LocalDateTime[] recentSixMonthTimes = new LocalDateTime[]{currentTime.minusMonths(6), currentTime};
+        LocalDateTime[] recentSixMonthTimes =
+                new LocalDateTime[] {currentTime.minusMonths(6), currentTime};
         RecruitSurvey survey = new RecruitSurvey();
-        survey.setRecruitingPostCount(recruitPostService.getRecruitPostStatusCount(new HrmRecruitPostPageReqVO())
-                .getOrDefault(HrmRecruitPostStatusEnum.RECRUITING.getStatus(), 0L));
-        Map<Integer, Long> candidateStatusCount = recruitCandidateService.getRecruitCandidateStatusCount(new HrmRecruitCandidatePageReqVO());
-        survey.setCandidateInProcessCount(sum(candidateStatusCount.entrySet(), entry ->
-                HrmRecruitCandidateStatusEnum.PROCESSING_STATUSES.contains(entry.getKey()) ? entry.getValue() : 0L));
+        survey.setRecruitingPostCount(
+                recruitPostService
+                        .getRecruitPostStatusCount(new HrmRecruitPostPageReqVO())
+                        .getOrDefault(HrmRecruitPostStatusEnum.RECRUITING.getStatus(), 0L));
+        Map<Integer, Long> candidateStatusCount =
+                recruitCandidateService.getRecruitCandidateStatusCount(
+                        new HrmRecruitCandidatePageReqVO());
+        survey.setCandidateInProcessCount(
+                sum(
+                        candidateStatusCount.entrySet(),
+                        entry ->
+                                HrmRecruitCandidateStatusEnum.PROCESSING_STATUSES.contains(
+                                                entry.getKey())
+                                        ? entry.getValue()
+                                        : 0L));
 
         // 2. 统计近六个月待入职和已入职候选人
-        survey.setPendingEntryCount(recruitCandidateService.getRecruitCandidateCountByStatusAndStatusUpdateTimeBetween(
-                HrmRecruitCandidateStatusEnum.PENDING_ENTRY.getStatus(), recentSixMonthTimes));
-        survey.setJoinedCount(recruitCandidateService.getRecruitCandidateCountByStatusAndEntryTimeBetween(
-                HrmRecruitCandidateStatusEnum.JOINED.getStatus(), recentSixMonthTimes));
+        survey.setPendingEntryCount(
+                recruitCandidateService.getRecruitCandidateCountByStatusAndStatusUpdateTimeBetween(
+                        HrmRecruitCandidateStatusEnum.PENDING_ENTRY.getStatus(),
+                        recentSixMonthTimes));
+        survey.setJoinedCount(
+                recruitCandidateService.getRecruitCandidateCountByStatusAndEntryTimeBetween(
+                        HrmRecruitCandidateStatusEnum.JOINED.getStatus(), recentSixMonthTimes));
         return survey;
     }
 
     private SalarySurvey buildSalarySurvey() {
         SalarySurvey survey = new SalarySurvey();
         LocalDate lastMonth = LocalDate.now().minusMonths(1);
-        HrmSalaryMonthRecordDO record = salaryMonthRecordService.getMonthRecordByYearMonth(
-                lastMonth.getYear(), lastMonth.getMonthValue());
-        if (record == null || ObjUtil.notEqual(HrmSalaryMonthRecordStatusEnum.HISTORY.getStatus(),
-                record.getStatus())) {
+        HrmSalaryMonthRecordDO record =
+                salaryMonthRecordService.getMonthRecordByYearMonth(
+                        lastMonth.getYear(), lastMonth.getMonthValue());
+        if (record == null
+                || ObjUtil.notEqual(
+                        HrmSalaryMonthRecordStatusEnum.HISTORY.getStatus(), record.getStatus())) {
             fillSalaryDefaults(survey);
             return survey;
         }
@@ -370,17 +418,20 @@ public class HrmHomeServiceImpl implements HrmHomeService {
      * @param survey 薪资概况
      * @param record 月度工资表
      */
-    private void fillSalaryDeptProportion(SalarySurvey survey,
-                                          HrmSalaryMonthRecordDO record) {
+    private void fillSalaryDeptProportion(SalarySurvey survey, HrmSalaryMonthRecordDO record) {
         // 1. 查询员工工资明细和员工部门
-        List<HrmSalaryMonthEmployeeRecordDO> employeeRecords = salaryMonthEmployeeRecordService
-                .getMonthEmployeeRecordListByMonthRecordId(record.getId());
+        List<HrmSalaryMonthEmployeeRecordDO> employeeRecords =
+                salaryMonthEmployeeRecordService.getMonthEmployeeRecordListByMonthRecordId(
+                        record.getId());
         if (CollUtil.isEmpty(employeeRecords)) {
             fillSalaryDefaults(survey);
             return;
         }
-        Map<Long, HrmEmployeeDO> employeeMap = employeeService.getEmployeeMap(employeeRecords.stream()
-                .map(HrmSalaryMonthEmployeeRecordDO::getEmployeeId).collect(Collectors.toSet()));
+        Map<Long, HrmEmployeeDO> employeeMap =
+                employeeService.getEmployeeMap(
+                        employeeRecords.stream()
+                                .map(HrmSalaryMonthEmployeeRecordDO::getEmployeeId)
+                                .collect(Collectors.toSet()));
 
         // 2. 按员工当前部门汇总实发工资
         Map<Long, BigDecimal> deptSalaryMap = new LinkedHashMap<>();
@@ -388,12 +439,16 @@ public class HrmHomeServiceImpl implements HrmHomeService {
         for (HrmSalaryMonthEmployeeRecordDO employeeRecord : employeeRecords) {
             BigDecimal realPaySalary = defaultAmount(employeeRecord.getRealPaySalary());
             HrmEmployeeDO employee = employeeMap.get(employeeRecord.getEmployeeId());
-            Long deptId = employee == null || employee.getDeptId() == null ? 0L : employee.getDeptId();
+            Long deptId =
+                    employee == null || employee.getDeptId() == null ? 0L : employee.getDeptId();
             deptSalaryMap.merge(deptId, realPaySalary, BigDecimal::add);
             totalSalary = totalSalary.add(realPaySalary);
         }
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(deptSalaryMap.keySet().stream()
-                .filter(deptId -> ObjUtil.notEqual(deptId, 0L)).collect(Collectors.toSet()));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(
+                        deptSalaryMap.keySet().stream()
+                                .filter(deptId -> ObjUtil.notEqual(deptId, 0L))
+                                .collect(Collectors.toSet()));
 
         // 3. 计算部门薪资占比
         List<SalaryDept> deptProportions = new ArrayList<>();
@@ -401,15 +456,19 @@ public class HrmHomeServiceImpl implements HrmHomeService {
             SalaryDept deptProportion = new SalaryDept();
             deptProportion.setDeptId(entry.getKey());
             DeptRespDTO dept = deptMap.get(entry.getKey());
-            deptProportion.setDeptName(Objects.equals(entry.getKey(), 0L)
-                    ? "无部门" : dept == null ? "部门已删除" : dept.getName());
+            deptProportion.setDeptName(
+                    Objects.equals(entry.getKey(), 0L)
+                            ? "无部门"
+                            : dept == null ? "部门已删除" : dept.getName());
             deptProportion.setTotalSalary(entry.getValue());
-            deptProportion.setProportion(totalSalary.signum() == 0 ? BigDecimal.ZERO
-                    : entry.getValue().divide(totalSalary, 4, RoundingMode.UP));
+            deptProportion.setProportion(
+                    totalSalary.signum() == 0
+                            ? BigDecimal.ZERO
+                            : entry.getValue().divide(totalSalary, 4, RoundingMode.UP));
             deptProportions.add(deptProportion);
         }
-        deptProportions.sort((first, second) ->
-                second.getTotalSalary().compareTo(first.getTotalSalary()));
+        deptProportions.sort(
+                (first, second) -> second.getTotalSalary().compareTo(first.getTotalSalary()));
         survey.setEmployeeCount(employeeRecords.size());
         survey.setRealPaySalary(totalSalary);
         survey.setDeptProportions(deptProportions);
@@ -420,20 +479,27 @@ public class HrmHomeServiceImpl implements HrmHomeService {
         TodoSurvey survey = new TodoSurvey();
         survey.setToEntryCount(employeeSurvey.getPendingEntryThisMonthCount());
         survey.setToLeaveCount(employeeSurvey.getPendingLeaveThisMonthCount());
-        survey.setToExpireContractCount(employeeContractService.getExpireEmployeeCountInMonth(
-                LocalDateTimeUtils.getMonthDateTimeRange(monthStartDate.getYear(), monthStartDate.getMonthValue())));
-        survey.setToRegularCount(getEmployeeTodoCount(
-                HrmEmployeeTodoTypeEnum.REGULAR));
-        survey.setToSalaryComputeCount((long) salaryMonthRecordService.getMonthRecordListByStatus(
-                HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus()).size());
-        survey.setToBirthdayCount(getEmployeeTodoCount(
-                HrmEmployeeTodoTypeEnum.BIRTHDAY));
+        survey.setToExpireContractCount(
+                employeeContractService.getExpireEmployeeCountInMonth(
+                        LocalDateTimeUtils.getMonthDateTimeRange(
+                                monthStartDate.getYear(), monthStartDate.getMonthValue())));
+        survey.setToRegularCount(getEmployeeTodoCount(HrmEmployeeTodoTypeEnum.REGULAR));
+        survey.setToSalaryComputeCount(
+                (long)
+                        salaryMonthRecordService
+                                .getMonthRecordListByStatus(
+                                        HrmSalaryMonthRecordStatusEnum.UNCOMPUTED.getStatus())
+                                .size());
+        survey.setToBirthdayCount(getEmployeeTodoCount(HrmEmployeeTodoTypeEnum.BIRTHDAY));
         return survey;
     }
 
     private Long getEmployeeTodoCount(HrmEmployeeTodoTypeEnum todoType) {
-        Map<Integer, Long> employeeStatusCountMap = employeeService.getEmployeeStatusCount(new HrmEmployeePageReqVO()
-                .setTodoType(todoType.getType()).setStatusCategory(HrmEmployeeStatusTabEnum.ACTIVE.getStatus()));
+        Map<Integer, Long> employeeStatusCountMap =
+                employeeService.getEmployeeStatusCount(
+                        new HrmEmployeePageReqVO()
+                                .setTodoType(todoType.getType())
+                                .setStatusCategory(HrmEmployeeStatusTabEnum.ACTIVE.getStatus()));
         return employeeStatusCountMap.getOrDefault(HrmEmployeeStatusTabEnum.ACTIVE.getStatus(), 0L);
     }
 
@@ -442,7 +508,9 @@ public class HrmHomeServiceImpl implements HrmHomeService {
     }
 
     private void fillSalaryDefaults(SalarySurvey survey) {
-        survey.setEmployeeCount(0).setRealPaySalary(BigDecimal.ZERO).setDeptProportions(Collections.emptyList());
+        survey.setEmployeeCount(0)
+                .setRealPaySalary(BigDecimal.ZERO)
+                .setDeptProportions(Collections.emptyList());
     }
 
     // ==================== 首页日历 ====================
@@ -451,7 +519,8 @@ public class HrmHomeServiceImpl implements HrmHomeService {
             Long loginUserId, LocalDate startDate, LocalDate endDate) {
         // 1. 收集各业务域的日历事项
         List<HrmHomeCalendarItemRespVO> items = new ArrayList<>();
-        addPersonalNoteItems(items, employeeService.getEmployeeByUserId(loginUserId), startDate, endDate);
+        addPersonalNoteItems(
+                items, employeeService.getEmployeeByUserId(loginUserId), startDate, endDate);
         addEmployeeItems(items, startDate, endDate);
         addRecruitItems(items, startDate, endDate);
 
@@ -461,57 +530,93 @@ public class HrmHomeServiceImpl implements HrmHomeService {
     }
 
     private void addPersonalNoteItems(
-            List<HrmHomeCalendarItemRespVO> items, HrmEmployeeDO loginEmployee,
-            LocalDate startDate, LocalDate endDate) {
+            List<HrmHomeCalendarItemRespVO> items,
+            HrmEmployeeDO loginEmployee,
+            LocalDate startDate,
+            LocalDate endDate) {
         if (loginEmployee == null) {
             return;
         }
-        List<HrmEmployeePersonalNoteDO> personalNotes = personalNoteService.getPersonalNoteList(
-                loginEmployee.getId(), LocalDateTimeUtils.getDateTimeRange(startDate, endDate));
+        List<HrmEmployeePersonalNoteDO> personalNotes =
+                personalNoteService.getPersonalNoteList(
+                        loginEmployee.getId(),
+                        LocalDateTimeUtils.getDateTimeRange(startDate, endDate));
         for (HrmEmployeePersonalNoteDO personalNote : personalNotes) {
             items.add(buildPersonalNoteItem(personalNote));
         }
     }
 
-    private void addEmployeeItems(List<HrmHomeCalendarItemRespVO> items, LocalDate startDate, LocalDate endDate) {
-        addEmployeeItems(items, employeeService.getEmployeeList(new HrmEmployeeListReqVO()),
-                startDate, endDate);
+    private void addEmployeeItems(
+            List<HrmHomeCalendarItemRespVO> items, LocalDate startDate, LocalDate endDate) {
+        addEmployeeItems(
+                items,
+                employeeService.getEmployeeList(new HrmEmployeeListReqVO()),
+                startDate,
+                endDate);
     }
 
-    private void addEmployeeItems(List<HrmHomeCalendarItemRespVO> items,
-                                  List<HrmEmployeeDO> employees,
-                                  LocalDate startDate, LocalDate endDate) {
-        Set<Long> pendingLeaveEmployeeIds = convertSet(filterList(employees, employee ->
-                        HrmEmployeeEntryStatusEnum.PENDING_LEAVE.getStatus().equals(employee.getEntryStatus())),
-                HrmEmployeeDO::getId);
-        Map<Long, HrmEmployeeQuitInfoDO> quitInfoMap = CollUtil.isEmpty(pendingLeaveEmployeeIds)
-                ? Collections.emptyMap()
-                : convertMap(employeeQuitInfoService.getQuitInfoListByEmployeeIds(pendingLeaveEmployeeIds),
-                        HrmEmployeeQuitInfoDO::getEmployeeId);
+    private void addEmployeeItems(
+            List<HrmHomeCalendarItemRespVO> items,
+            List<HrmEmployeeDO> employees,
+            LocalDate startDate,
+            LocalDate endDate) {
+        Set<Long> pendingLeaveEmployeeIds =
+                convertSet(
+                        filterList(
+                                employees,
+                                employee ->
+                                        HrmEmployeeEntryStatusEnum.PENDING_LEAVE
+                                                .getStatus()
+                                                .equals(employee.getEntryStatus())),
+                        HrmEmployeeDO::getId);
+        Map<Long, HrmEmployeeQuitInfoDO> quitInfoMap =
+                CollUtil.isEmpty(pendingLeaveEmployeeIds)
+                        ? Collections.emptyMap()
+                        : convertMap(
+                                employeeQuitInfoService.getQuitInfoListByEmployeeIds(
+                                        pendingLeaveEmployeeIds),
+                                HrmEmployeeQuitInfoDO::getEmployeeId);
         for (HrmEmployeeDO employee : employees) {
             Integer entryStatus = employee.getEntryStatus();
             if (!HrmEmployeeEntryStatusEnum.LEFT.getStatus().equals(entryStatus)) {
                 addBirthdayItems(items, employee, startDate, endDate);
             }
             if (HrmEmployeeEntryStatusEnum.PENDING_ENTRY.getStatus().equals(entryStatus)) {
-                addEmployeeDateItem(items, HrmHomeCalendarItemTypeEnum.ENTRY,
-                        employee, employee.getEntryTime(), startDate, endDate);
+                addEmployeeDateItem(
+                        items,
+                        HrmHomeCalendarItemTypeEnum.ENTRY,
+                        employee,
+                        employee.getEntryTime(),
+                        startDate,
+                        endDate);
             }
             if (HrmEmployeeEntryStatusEnum.ACTIVE_STATUSES.contains(entryStatus)) {
-                addEmployeeDateItem(items, HrmHomeCalendarItemTypeEnum.REGULAR,
-                        employee, employee.getRegularTime(), startDate, endDate);
+                addEmployeeDateItem(
+                        items,
+                        HrmHomeCalendarItemTypeEnum.REGULAR,
+                        employee,
+                        employee.getRegularTime(),
+                        startDate,
+                        endDate);
             }
             HrmEmployeeQuitInfoDO quitInfo = quitInfoMap.get(employee.getId());
             if (quitInfo != null) {
-                addEmployeeDateItem(items, HrmHomeCalendarItemTypeEnum.LEAVE,
-                        employee, quitInfo.getPlanQuitTime(), startDate, endDate);
+                addEmployeeDateItem(
+                        items,
+                        HrmHomeCalendarItemTypeEnum.LEAVE,
+                        employee,
+                        quitInfo.getPlanQuitTime(),
+                        startDate,
+                        endDate);
             }
         }
     }
 
     private void addBirthdayItems(
-            List<HrmHomeCalendarItemRespVO> items, HrmEmployeeDO employee,
-            LocalDate startDate, LocalDate endDate) {
+            List<HrmHomeCalendarItemRespVO> items,
+            HrmEmployeeDO employee,
+            LocalDate startDate,
+            LocalDate endDate) {
         if (employee.getBirthday() == null) {
             return;
         }
@@ -523,26 +628,43 @@ public class HrmHomeServiceImpl implements HrmHomeService {
             }
             LocalDate birthdayDate = employeeBirthday.atYear(year);
             if (birthdayDate.isBefore(birthDate)
-                    || birthdayDate.isBefore(startDate) || birthdayDate.isAfter(endDate)) {
+                    || birthdayDate.isBefore(startDate)
+                    || birthdayDate.isAfter(endDate)) {
                 continue;
             }
-            String content = employee.getName()
-                    + LocalDateTimeUtils.getYearsBetween(birthDate, birthdayDate) + "岁生日";
-            items.add(buildCalendarItem(HrmHomeCalendarItemTypeEnum.BIRTHDAY, content,
-                    employee.getId(), birthdayDate, birthdayDate.atStartOfDay()));
+            String content =
+                    employee.getName()
+                            + LocalDateTimeUtils.getYearsBetween(birthDate, birthdayDate)
+                            + "岁生日";
+            items.add(
+                    buildCalendarItem(
+                            HrmHomeCalendarItemTypeEnum.BIRTHDAY,
+                            content,
+                            employee.getId(),
+                            birthdayDate,
+                            birthdayDate.atStartOfDay()));
         }
     }
 
     private void addEmployeeDateItem(
-            List<HrmHomeCalendarItemRespVO> items, HrmHomeCalendarItemTypeEnum type,
-            HrmEmployeeDO employee, LocalDateTime eventTime,
-            LocalDate startDate, LocalDate endDate) {
-        if (eventTime == null || eventTime.toLocalDate().isBefore(startDate)
+            List<HrmHomeCalendarItemRespVO> items,
+            HrmHomeCalendarItemTypeEnum type,
+            HrmEmployeeDO employee,
+            LocalDateTime eventTime,
+            LocalDate startDate,
+            LocalDate endDate) {
+        if (eventTime == null
+                || eventTime.toLocalDate().isBefore(startDate)
                 || eventTime.toLocalDate().isAfter(endDate)) {
             return;
         }
-        items.add(buildCalendarItem(type, employee.getName() + type.getName() + "日",
-                employee.getId(), eventTime.toLocalDate(), eventTime));
+        items.add(
+                buildCalendarItem(
+                        type,
+                        employee.getName() + type.getName() + "日",
+                        employee.getId(),
+                        eventTime.toLocalDate(),
+                        eventTime));
     }
 
     private void addRecruitItems(
@@ -550,54 +672,95 @@ public class HrmHomeServiceImpl implements HrmHomeService {
         List<HrmRecruitInterviewDO> interviews =
                 recruitInterviewService.getRecruitInterviewListByInterviewTimeBetween(
                         LocalDateTimeUtils.getDateTimeRange(startDate, endDate));
-        Map<Long, HrmRecruitCandidateDO> candidateMap = recruitCandidateService.getRecruitCandidateMap(
-                convertSet(interviews, HrmRecruitInterviewDO::getCandidateId));
+        Map<Long, HrmRecruitCandidateDO> candidateMap =
+                recruitCandidateService.getRecruitCandidateMap(
+                        convertSet(interviews, HrmRecruitInterviewDO::getCandidateId));
 
         // 根据候选人当前状态过滤已结束或已取消展示的历史面试
         for (HrmRecruitInterviewDO interview : interviews) {
             HrmRecruitCandidateDO candidate = candidateMap.get(interview.getCandidateId());
             if (candidate == null
-                    || !HrmRecruitCandidateStatusEnum.CALENDAR_STATUSES.contains(candidate.getStatus())
-                    || HrmRecruitInterviewResultEnum.CANCEL.getResult().equals(interview.getResult())
+                    || !HrmRecruitCandidateStatusEnum.CALENDAR_STATUSES.contains(
+                            candidate.getStatus())
+                    || HrmRecruitInterviewResultEnum.CANCEL
+                            .getResult()
+                            .equals(interview.getResult())
                     || !Objects.equals(candidate.getStageNumber(), interview.getStageNumber())) {
                 continue;
             }
             LocalDateTime interviewTime = interview.getInterviewTime();
             String period = interviewTime.getHour() < 12 ? "上午" : "下午";
-            String content = candidate.getName() + period + interviewTime.format(INTERVIEW_TIME_FORMATTER) + "面试";
-            items.add(buildCalendarItem(HrmHomeCalendarItemTypeEnum.RECRUIT, content, candidate.getId(), interviewTime.toLocalDate(), interviewTime));
+            String content =
+                    candidate.getName()
+                            + period
+                            + interviewTime.format(INTERVIEW_TIME_FORMATTER)
+                            + "面试";
+            items.add(
+                    buildCalendarItem(
+                            HrmHomeCalendarItemTypeEnum.RECRUIT,
+                            content,
+                            candidate.getId(),
+                            interviewTime.toLocalDate(),
+                            interviewTime));
         }
     }
 
     private void addAttendanceItems(
-            List<HrmHomeCalendarItemRespVO> items, HrmEmployeeDO loginEmployee,
-            LocalDate startDate, LocalDate endDate) {
+            List<HrmHomeCalendarItemRespVO> items,
+            HrmEmployeeDO loginEmployee,
+            LocalDate startDate,
+            LocalDate endDate) {
         if (loginEmployee == null) {
             return;
         }
-        List<HrmAttendanceClockDO> attendanceClocks = attendanceClockService
-                .getAttendanceClockListByEmployeeIdAndClockTime(loginEmployee.getId(),
+        List<HrmAttendanceClockDO> attendanceClocks =
+                attendanceClockService.getAttendanceClockListByEmployeeIdAndClockTime(
+                        loginEmployee.getId(),
                         LocalDateTimeUtils.getDateTimeRange(startDate, endDate));
-        Set<LocalDate> attendanceDates = convertSetBySupplier(attendanceClocks,
-                clock -> clock.getClockTime() == null ? null : clock.getClockTime().toLocalDate(), TreeSet::new);
+        Set<LocalDate> attendanceDates =
+                convertSetBySupplier(
+                        attendanceClocks,
+                        clock ->
+                                clock.getClockTime() == null
+                                        ? null
+                                        : clock.getClockTime().toLocalDate(),
+                        TreeSet::new);
         // 按去重且有序的打卡日期生成考勤事项
-        attendanceDates.forEach(date -> items.add(buildCalendarItem(
-                HrmHomeCalendarItemTypeEnum.ATTENDANCE, "考勤打卡", loginEmployee.getId(), date, date.atStartOfDay())));
+        attendanceDates.forEach(
+                date ->
+                        items.add(
+                                buildCalendarItem(
+                                        HrmHomeCalendarItemTypeEnum.ATTENDANCE,
+                                        "考勤打卡",
+                                        loginEmployee.getId(),
+                                        date,
+                                        date.atStartOfDay())));
     }
 
     private HrmHomeCalendarItemRespVO buildPersonalNoteItem(
             HrmEmployeePersonalNoteDO personalNote) {
         return buildCalendarItem(
-                HrmHomeCalendarItemTypeEnum.NOTE, personalNote.getContent(), null,
-                personalNote.getReminderTime().toLocalDate(), personalNote.getReminderTime())
+                        HrmHomeCalendarItemTypeEnum.NOTE,
+                        personalNote.getContent(),
+                        null,
+                        personalNote.getReminderTime().toLocalDate(),
+                        personalNote.getReminderTime())
                 .setPersonalNoteId(personalNote.getId());
     }
 
     private HrmHomeCalendarItemRespVO buildCalendarItem(
-            HrmHomeCalendarItemTypeEnum type, String content, Long typeId,
-            LocalDate date, LocalDateTime eventTime) {
-        return new HrmHomeCalendarItemRespVO().setType(type.getType()).setTypeName(type.getName())
-                .setContent(content).setTypeId(typeId).setDate(date).setEventTime(eventTime);
+            HrmHomeCalendarItemTypeEnum type,
+            String content,
+            Long typeId,
+            LocalDate date,
+            LocalDateTime eventTime) {
+        return new HrmHomeCalendarItemRespVO()
+                .setType(type.getType())
+                .setTypeName(type.getName())
+                .setContent(content)
+                .setTypeId(typeId)
+                .setDate(date)
+                .setEventTime(eventTime);
     }
 
     /**
@@ -606,18 +769,20 @@ public class HrmHomeServiceImpl implements HrmHomeService {
      * @param items 日历事项
      */
     private void sortCalendarItems(List<HrmHomeCalendarItemRespVO> items) {
-        items.sort(Comparator
-                .comparing(HrmHomeCalendarItemRespVO::getEventTime,
-                        Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(HrmHomeCalendarItemRespVO::getType)
-                .thenComparing(HrmHomeCalendarItemRespVO::getContent));
+        items.sort(
+                Comparator.comparing(
+                                HrmHomeCalendarItemRespVO::getEventTime,
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(HrmHomeCalendarItemRespVO::getType)
+                        .thenComparing(HrmHomeCalendarItemRespVO::getContent));
     }
 
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
-        if (startDate == null || endDate == null || endDate.isBefore(startDate)
+        if (startDate == null
+                || endDate == null
+                || endDate.isBefore(startDate)
                 || ChronoUnit.DAYS.between(startDate, endDate) > 370) {
             throw exception(HOME_CALENDAR_DATE_RANGE_ILLEGAL);
         }
     }
-
 }

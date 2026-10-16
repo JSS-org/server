@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.QueryWrapperX;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.slip.HrmSalarySlipTemplateDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -12,9 +13,10 @@ import java.util.List;
 public interface HrmSalarySlipTemplateMapper extends BaseMapperX<HrmSalarySlipTemplateDO> {
 
     default List<HrmSalarySlipTemplateDO> selectListByDefaultStatusDesc() {
-        return selectList(new LambdaQueryWrapperX<HrmSalarySlipTemplateDO>()
-                .orderByDesc(HrmSalarySlipTemplateDO::getDefaultStatus)
-                .orderByDesc(HrmSalarySlipTemplateDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<HrmSalarySlipTemplateDO>()
+                        .orderByDesc(HrmSalarySlipTemplateDO::getDefaultStatus)
+                        .orderByDesc(HrmSalarySlipTemplateDO::getId));
     }
 
     /**
@@ -25,11 +27,11 @@ public interface HrmSalarySlipTemplateMapper extends BaseMapperX<HrmSalarySlipTe
      * @return 平台级默认工资条模板
      */
     default HrmSalarySlipTemplateDO selectGlobalDefaultTemplate() {
-        return selectOne(new QueryWrapperX<HrmSalarySlipTemplateDO>()
-                .eq("tenant_id", 0L)
-                .eq("default_status", true)
-                .orderByDesc("id")
-                .limitN(1));
+        return selectOne(
+                new QueryWrapperX<HrmSalarySlipTemplateDO>()
+                        .eq("tenant_id", 0L)
+                        .eq("default_status", true)
+                        .orderByDesc("id")
+                        .limitN(1));
     }
-
 }

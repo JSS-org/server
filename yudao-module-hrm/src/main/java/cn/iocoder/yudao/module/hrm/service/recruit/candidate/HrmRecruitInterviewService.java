@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.candidate;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.interview.HrmRecruitInterviewResultReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.recruit.vo.interview.HrmRecruitInterviewSaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.candidate.HrmRecruitInterviewDO;
@@ -8,8 +10,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 招聘面试 Service 接口
@@ -62,8 +62,11 @@ public interface HrmRecruitInterviewService {
      * @param candidateIds 候选人编号集合
      * @return 候选人编号与最新面试的映射
      */
-    default Map<Long, HrmRecruitInterviewDO> getLatestRecruitInterviewMapByCandidateIds(Collection<Long> candidateIds) {
-        return convertMap(getRecruitInterviewListByCandidateIds(candidateIds), HrmRecruitInterviewDO::getCandidateId);
+    default Map<Long, HrmRecruitInterviewDO> getLatestRecruitInterviewMapByCandidateIds(
+            Collection<Long> candidateIds) {
+        return convertMap(
+                getRecruitInterviewListByCandidateIds(candidateIds),
+                HrmRecruitInterviewDO::getCandidateId);
     }
 
     /**
@@ -72,7 +75,8 @@ public interface HrmRecruitInterviewService {
      * @param candidateIds 候选人编号集合
      * @return 招聘面试列表
      */
-    List<HrmRecruitInterviewDO> getRecruitInterviewListByCandidateIds(Collection<Long> candidateIds);
+    List<HrmRecruitInterviewDO> getRecruitInterviewListByCandidateIds(
+            Collection<Long> candidateIds);
 
     /**
      * 获得指定面试时间范围内的招聘面试列表
@@ -104,5 +108,4 @@ public interface HrmRecruitInterviewService {
      * @param reqVO 招聘面试结果信息
      */
     void updateRecruitInterviewResult(HrmRecruitInterviewResultReqVO reqVO);
-
 }

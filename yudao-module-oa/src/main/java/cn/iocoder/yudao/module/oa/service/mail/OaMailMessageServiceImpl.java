@@ -1,26 +1,32 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.map.MapUtil;
-import cn.iocoder.yudao.module.oa.enums.mail.OaMailFolderTypeEnum;
-import cn.iocoder.yudao.module.oa.enums.mail.OaMailFolderKeyEnum;
-import cn.iocoder.yudao.module.oa.enums.mail.OaMailComposeModeEnum;
-import cn.iocoder.yudao.module.oa.enums.mail.OaMailCapabilityEnum;
-import lombok.extern.slf4j.Slf4j;
-import cn.hutool.core.lang.Pair;
-import org.springframework.validation.annotation.Validated;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.*;
 import cn.iocoder.yudao.module.oa.dal.mysql.mail.*;
+import cn.iocoder.yudao.module.oa.enums.mail.OaMailCapabilityEnum;
+import cn.iocoder.yudao.module.oa.enums.mail.OaMailComposeModeEnum;
+import cn.iocoder.yudao.module.oa.enums.mail.OaMailFolderKeyEnum;
+import cn.iocoder.yudao.module.oa.enums.mail.OaMailFolderTypeEnum;
+
 import jakarta.annotation.Resource;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.search.HeaderTerm;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.angus.mail.imap.AppendUID;
 import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.eclipse.angus.mail.imap.IMAPStore;
@@ -30,16 +36,13 @@ import org.jsoup.nodes.Entities;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 企业邮箱邮件 Service 实现类
@@ -65,16 +68,12 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
         STANDARD_FOLDER_TYPES = new ArrayList<>(STANDARD_FOLDER_NAMES.keySet());
     }
 
-    @Resource
-    private OaMailMessageMapper mailMessageMapper;
+    @Resource private OaMailMessageMapper mailMessageMapper;
 
-    @Resource
-    private OaMailAccountService mailAccountService;
-    @Resource
-    private OaMailFolderService mailFolderService;
+    @Resource private OaMailAccountService mailAccountService;
+    @Resource private OaMailFolderService mailFolderService;
 
-    @Resource
-    private OaMailMessageClient mailMessageClient;
+    @Resource private OaMailMessageClient mailMessageClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -83,19 +82,34 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
         OaMailMessageDO source = getMailMessage(id, userId);
         // 编辑器处于主页面中，引用内容额外移除邮件 CSS，避免样式泄漏和外链资源请求。
         String editableContent = getEditableContent(source.getContent());
-        OaMailAccountDO account = mailAccountService.validateMailAccount(source.getAccountId(), userId);
-        OaMailMessageSaveReqVO result = new OaMailMessageSaveReqVO().setAccountId(source.getAccountId())
-                .setMode(OaMailComposeModeEnum.DRAFT.getValue().equals(mode) ? OaMailComposeModeEnum.NEW.getValue() : mode);
-        if (StrUtil.equalsAny(mode, OaMailComposeModeEnum.DRAFT.getValue(), OaMailComposeModeEnum.FORWARD.getValue())) {
-            result.setAttachments(source.getAttachments()).setAttachmentParts(
-                    convertList(source.getAttachments(), OaMailMessageDO.Attachment::getPart));
+        OaMailAccountDO account =
+                mailAccountService.validateMailAccount(source.getAccountId(), userId);
+        OaMailMessageSaveReqVO result =
+                new OaMailMessageSaveReqVO()
+                        .setAccountId(source.getAccountId())
+                        .setMode(
+                                OaMailComposeModeEnum.DRAFT.getValue().equals(mode)
+                                        ? OaMailComposeModeEnum.NEW.getValue()
+                                        : mode);
+        if (StrUtil.equalsAny(
+                mode,
+                OaMailComposeModeEnum.DRAFT.getValue(),
+                OaMailComposeModeEnum.FORWARD.getValue())) {
+            result.setAttachments(source.getAttachments())
+                    .setAttachmentParts(
+                            convertList(
+                                    source.getAttachments(), OaMailMessageDO.Attachment::getPart));
         }
         if (OaMailComposeModeEnum.DRAFT.getValue().equals(mode)) {
-            if (ObjUtil.notEqual(OaMailFolderTypeEnum.DRAFTS.getType(), validateFolder(source).getType())) {
+            if (ObjUtil.notEqual(
+                    OaMailFolderTypeEnum.DRAFTS.getType(), validateFolder(source).getType())) {
                 throw exception(MAIL_NOT_DRAFT);
             }
-            return result.setDraftId(id).setRecipients(source.getRecipients()).setCcs(source.getCcs())
-                    .setSubject(source.getSubject()).setContent(editableContent);
+            return result.setDraftId(id)
+                    .setRecipients(source.getRecipients())
+                    .setCcs(source.getCcs())
+                    .setSubject(source.getSubject())
+                    .setContent(editableContent);
         }
 
         // 2. 回复地址使用 Reply-To；回复全部排除当前邮箱并去重
@@ -111,7 +125,10 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             if (ObjUtil.notEqual(OaMailComposeModeEnum.FORWARD.getValue(), mode)) {
                 addReplyAddresses(recipients, source.getReplyTos(), account.getMail());
                 if (MapUtil.isEmpty(recipients)) {
-                    addReplyAddresses(recipients, Collections.singletonList(source.getSender()), account.getMail());
+                    addReplyAddresses(
+                            recipients,
+                            Collections.singletonList(source.getSender()),
+                            account.getMail());
                 }
             }
             if (OaMailComposeModeEnum.REPLY_ALL.getValue().equals(mode)) {
@@ -127,10 +144,13 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
         }
 
         // 3. 引用正文保留安全 HTML，原始邮件头以文本转义
-        return result.setContent("<p><br></p><blockquote><p>发件人：" + Entities.escape(source.getSender())
-                + "</p>" + editableContent + "</blockquote>");
+        return result.setContent(
+                "<p><br></p><blockquote><p>发件人："
+                        + Entities.escape(source.getSender())
+                        + "</p>"
+                        + editableContent
+                        + "</blockquote>");
     }
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -143,13 +163,20 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             Map<String, String> remoteFolders = mailMessageClient.getFolders(store);
             int total = 0;
             for (Map.Entry<String, String> entry : remoteFolders.entrySet()) {
-                total += syncFolder(store, accountId,
-                        entry.getKey().startsWith("CUSTOM:") ? OaMailFolderTypeEnum.CUSTOM.getType() : entry.getKey(), entry.getValue());
+                total +=
+                        syncFolder(
+                                store,
+                                accountId,
+                                entry.getKey().startsWith("CUSTOM:")
+                                        ? OaMailFolderTypeEnum.CUSTOM.getType()
+                                        : entry.getKey(),
+                                entry.getValue());
             }
             // 3. 不再存在的远端文件夹标记不可用，保留旧索引但不再展示
             for (OaMailFolderDO folder : mailFolderService.getMailFolderList(accountId)) {
                 if (!remoteFolders.containsValue(folder.getName())) {
-                    mailFolderService.updateMailFolder(new OaMailFolderDO().setId(folder.getId()).setAvailable(false));
+                    mailFolderService.updateMailFolder(
+                            new OaMailFolderDO().setId(folder.getId()).setAvailable(false));
                 }
             }
             return total;
@@ -164,40 +191,59 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
         // 1. 校验账号归属，批量查询目录及未读数量
         mailAccountService.validateMailAccount(accountId, userId);
         List<OaMailFolderDO> folders = mailFolderService.getMailFolderList(accountId);
-        Map<Long, Long> counts = mailMessageMapper.selectCountMapByAccountIdAndReadStatus(accountId, false);
+        Map<Long, Long> counts =
+                mailMessageMapper.selectCountMapByAccountIdAndReadStatus(accountId, false);
 
         // 2. 标准目录统一中文展示，自建目录保留完整名称；未读是虚拟入口
         Map<String, String> names = STANDARD_FOLDER_NAMES;
         List<String> types = STANDARD_FOLDER_TYPES;
-        folders.sort(Comparator.comparingInt((OaMailFolderDO f) ->
-                types.contains(f.getType()) ? types.indexOf(f.getType()) : types.size())
-                .thenComparing(OaMailFolderDO::getName));
+        folders.sort(
+                Comparator.comparingInt(
+                                (OaMailFolderDO f) ->
+                                        types.contains(f.getType())
+                                                ? types.indexOf(f.getType())
+                                                : types.size())
+                        .thenComparing(OaMailFolderDO::getName));
         List<OaMailFolderRespVO> result = new ArrayList<>();
         for (OaMailFolderDO folder : folders) {
             if (Boolean.FALSE.equals(folder.getAvailable())) {
                 continue;
             }
             Long unreadCount = counts.getOrDefault(folder.getId(), 0L);
-            result.add(new OaMailFolderRespVO()
-                    .setKey(names.containsKey(folder.getType()) ? folder.getType() : folder.getId().toString())
-                    .setName(names.getOrDefault(folder.getType(), folder.getName())).setUnreadCount(unreadCount));
+            result.add(
+                    new OaMailFolderRespVO()
+                            .setKey(
+                                    names.containsKey(folder.getType())
+                                            ? folder.getType()
+                                            : folder.getId().toString())
+                            .setName(names.getOrDefault(folder.getType(), folder.getName()))
+                            .setUnreadCount(unreadCount));
             if (OaMailFolderTypeEnum.INBOX.getType().equals(folder.getType())) {
-                result.add(new OaMailFolderRespVO().setKey(OaMailFolderKeyEnum.UNREAD.getKey()).setName("未读邮件").setUnreadCount(unreadCount));
+                result.add(
+                        new OaMailFolderRespVO()
+                                .setKey(OaMailFolderKeyEnum.UNREAD.getKey())
+                                .setName("未读邮件")
+                                .setUnreadCount(unreadCount));
             }
         }
         return result;
     }
 
     @Override
-    public PageResult<OaMailMessageDO> getMailMessagePage(OaMailMessagePageReqVO reqVO, Long userId) {
+    public PageResult<OaMailMessageDO> getMailMessagePage(
+            OaMailMessagePageReqVO reqVO, Long userId) {
         // 1. 校验本人归属，未读入口固定在收件箱内筛选
         mailAccountService.validateMailAccount(reqVO.getAccountId(), userId);
-        String type = OaMailFolderKeyEnum.UNREAD.getKey().equals(reqVO.getFolderKey()) ? OaMailFolderTypeEnum.INBOX.getType() : reqVO.getFolderKey();
+        String type =
+                OaMailFolderKeyEnum.UNREAD.getKey().equals(reqVO.getFolderKey())
+                        ? OaMailFolderTypeEnum.INBOX.getType()
+                        : reqVO.getFolderKey();
         OaMailFolderDO folder;
         if (StrUtil.isNumeric(type)) {
             folder = mailFolderService.getMailFolder(Long.valueOf(type));
-            if (folder != null && (ObjUtil.notEqual(folder.getAccountId(), reqVO.getAccountId())
-                    || Boolean.FALSE.equals(folder.getAvailable()))) {
+            if (folder != null
+                    && (ObjUtil.notEqual(folder.getAccountId(), reqVO.getAccountId())
+                            || Boolean.FALSE.equals(folder.getAvailable()))) {
                 folder = null;
             }
         } else {
@@ -240,10 +286,16 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             try {
                 folder.open(Folder.READ_ONLY);
                 OaMailMessageDO detail = mailMessageClient.getDetail(folder, index);
-                detail.setContent(detail.getContent() == null ? "" : mailMessageClient.sanitizeHtml(detail.getContent()));
-                mailMessageMapper.updateById(new OaMailMessageDO().setId(id)
-                        .setContent(detail.getContent())
-                        .setReplyTos(detail.getReplyTos()).setAttachments(detail.getAttachments()));
+                detail.setContent(
+                        detail.getContent() == null
+                                ? ""
+                                : mailMessageClient.sanitizeHtml(detail.getContent()));
+                mailMessageMapper.updateById(
+                        new OaMailMessageDO()
+                                .setId(id)
+                                .setContent(detail.getContent())
+                                .setReplyTos(detail.getReplyTos())
+                                .setAttachments(detail.getAttachments()));
                 return detail;
             } finally {
                 if (folder.isOpen()) {
@@ -260,14 +312,16 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
     public Pair<String, byte[]> getMailMessageAttachment(Long id, String part, Long userId) {
         // 1. 校验本人邮件和所属邮箱、文件夹
         OaMailMessageDO message = validateMessage(id, userId);
-        OaMailAccountDO account = mailAccountService.validateMailAccount(message.getAccountId(), userId);
+        OaMailAccountDO account =
+                mailAccountService.validateMailAccount(message.getAccountId(), userId);
         OaMailFolderDO localFolder = validateFolder(message);
 
         // 2. 校验远端 UID 并读取附件；文件夹关闭前读取完整内容
         try (Store store = mailMessageClient.openStore(account);
-             Folder folder = store.getFolder(localFolder.getName())) {
+                Folder folder = store.getFolder(localFolder.getName())) {
             folder.open(Folder.READ_ONLY);
-            return mailMessageClient.getAttachment(mailMessageClient.getMessage(folder, message), part);
+            return mailMessageClient.getAttachment(
+                    mailMessageClient.getMessage(folder, message), part);
         } catch (MessagingException | IOException e) {
             log.warn("[mail][附件读取失败，异常类型({})]", e.getClass().getSimpleName());
             throw exception(MAIL_ATTACHMENT_READ_FAILED);
@@ -287,8 +341,11 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             Folder folder = store.getFolder(localFolder.getName());
             try {
                 folder.open(Folder.READ_WRITE);
-                mailMessageClient.getMessage(folder, index).setFlag(Flags.Flag.SEEN, Boolean.TRUE.equals(readStatus));
-                mailMessageMapper.updateById(new OaMailMessageDO().setId(id).setReadStatus(readStatus));
+                mailMessageClient
+                        .getMessage(folder, index)
+                        .setFlag(Flags.Flag.SEEN, Boolean.TRUE.equals(readStatus));
+                mailMessageMapper.updateById(
+                        new OaMailMessageDO().setId(id).setReadStatus(readStatus));
             } finally {
                 if (folder.isOpen()) {
                     folder.close(false);
@@ -313,8 +370,14 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             Folder folder = store.getFolder(localFolder.getName());
             try {
                 folder.open(Folder.READ_WRITE);
-                mailMessageClient.deleteMessage(store, folder, mailMessageClient.getMessage(folder, index),
-                        mailMessageClient.getFolders(store).get(OaMailFolderTypeEnum.TRASH.getType()), OaMailFolderTypeEnum.TRASH.getType().equals(localFolder.getType()));
+                mailMessageClient.deleteMessage(
+                        store,
+                        folder,
+                        mailMessageClient.getMessage(folder, index),
+                        mailMessageClient
+                                .getFolders(store)
+                                .get(OaMailFolderTypeEnum.TRASH.getType()),
+                        OaMailFolderTypeEnum.TRASH.getType().equals(localFolder.getType()));
                 mailMessageMapper.deleteById(id);
             } finally {
                 if (folder.isOpen()) {
@@ -340,14 +403,16 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
 
         // 2. 移回收件箱，旧 UID 索引删除，新索引由同步生成
         try (Store store = mailMessageClient.openStore(account)) {
-            String inbox = mailMessageClient.getFolders(store).get(OaMailFolderTypeEnum.INBOX.getType());
+            String inbox =
+                    mailMessageClient.getFolders(store).get(OaMailFolderTypeEnum.INBOX.getType());
             if (inbox == null) {
                 throw exception(MAIL_FOLDER_NOT_AVAILABLE);
             }
             Folder folder = store.getFolder(localFolder.getName());
             try {
                 folder.open(Folder.READ_WRITE);
-                mailMessageClient.moveMessage(store, folder, mailMessageClient.getMessage(folder, index), inbox);
+                mailMessageClient.moveMessage(
+                        store, folder, mailMessageClient.getMessage(folder, index), inbox);
                 mailMessageMapper.deleteById(id);
             } finally {
                 if (folder.isOpen()) {
@@ -370,7 +435,8 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
         // 2. 先追加新草稿，再按 UID 清理旧草稿；不允许全文件夹 expunge
         try (Store store = mailMessageClient.openStore(account)) {
             // 2.1 校验草稿目录及按 UID 安全替换能力
-            String name = mailMessageClient.getFolders(store).get(OaMailFolderTypeEnum.DRAFTS.getType());
+            String name =
+                    mailMessageClient.getFolders(store).get(OaMailFolderTypeEnum.DRAFTS.getType());
             if (name == null) {
                 throw exception(MAIL_DRAFT_FOLDER_NOT_EXISTS);
             }
@@ -387,14 +453,19 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
                 if (oldDraft != null) {
                     mailMessageClient.getMessage(folder, oldDraft);
                 }
-                AppendUID[] appended = folder.appendUIDMessages(new Message[]{message});
+                AppendUID[] appended = folder.appendUIDMessages(new Message[] {message});
                 if (appended == null || appended.length != 1 || appended[0] == null) {
                     throw exception(MAIL_DRAFT_SAVE_UNCONFIRMED);
                 }
                 uid = appended[0].uid;
                 // 2.3 新草稿成功追加后，才清理指定旧草稿
                 if (oldDraft != null) {
-                    mailMessageClient.deleteMessage(store, folder, mailMessageClient.getMessage(folder, oldDraft), null, true);
+                    mailMessageClient.deleteMessage(
+                            store,
+                            folder,
+                            mailMessageClient.getMessage(folder, oldDraft),
+                            null,
+                            true);
                 }
             } finally {
                 if (folder.isOpen()) {
@@ -404,8 +475,10 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
 
             // 3. 同步草稿索引并返回新编号
             syncFolder(store, account.getId(), OaMailFolderTypeEnum.DRAFTS.getType(), name);
-            OaMailFolderDO savedFolder = getFolder(account.getId(), OaMailFolderTypeEnum.DRAFTS.getType());
-            List<OaMailMessageDO> drafts = mailMessageMapper.selectListByFolderId(savedFolder.getId());
+            OaMailFolderDO savedFolder =
+                    getFolder(account.getId(), OaMailFolderTypeEnum.DRAFTS.getType());
+            List<OaMailMessageDO> drafts =
+                    mailMessageMapper.selectListByFolderId(savedFolder.getId());
             OaMailMessageDO savedDraft = CollUtil.findOne(drafts, item -> item.getUid() == uid);
             if (savedDraft == null) {
                 throw exception(MAIL_DRAFT_INDEX_NOT_FOUND);
@@ -451,8 +524,9 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             // 部分服务商自动保存已发送副本，按 Message-ID 检查后再追加。
             try {
                 sentFolder.open(Folder.READ_ONLY);
-                if (sentFolder.search(new HeaderTerm("Message-ID", message.getMessageID())).length == 0) {
-                    sentFolder.appendMessages(new Message[]{message});
+                if (sentFolder.search(new HeaderTerm("Message-ID", message.getMessageID())).length
+                        == 0) {
+                    sentFolder.appendMessages(new Message[] {message});
                 }
             } finally {
                 if (sentFolder.isOpen()) {
@@ -463,7 +537,12 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
                 Folder draftFolder = store.getFolder(validateFolder(draft).getName());
                 try {
                     draftFolder.open(Folder.READ_WRITE);
-                    mailMessageClient.deleteMessage(store, draftFolder, mailMessageClient.getMessage(draftFolder, draft), null, true);
+                    mailMessageClient.deleteMessage(
+                            store,
+                            draftFolder,
+                            mailMessageClient.getMessage(draftFolder, draft),
+                            null,
+                            true);
                     mailMessageMapper.deleteById(draft.getId());
                 } finally {
                     if (draftFolder.isOpen()) {
@@ -490,12 +569,19 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
      * @return 本次文件夹同步的邮件索引数量
      * @throws MessagingException 读取远端文件夹或邮件失败
      */
-    private int syncFolder(Store store, Long accountId, String type, String name) throws MessagingException {
+    private int syncFolder(Store store, Long accountId, String type, String name)
+            throws MessagingException {
         // 1. 查询并定位远端目录对应的本地索引
         List<OaMailFolderDO> folders = mailFolderService.getMailFolderList(accountId);
-        OaMailFolderDO localFolder = CollUtil.findOne(folders, folder -> name.equals(folder.getName()));
+        OaMailFolderDO localFolder =
+                CollUtil.findOne(folders, folder -> name.equals(folder.getName()));
         if (localFolder == null) {
-            localFolder = new OaMailFolderDO().setAccountId(accountId).setName(name).setType(type).setAvailable(true);
+            localFolder =
+                    new OaMailFolderDO()
+                            .setAccountId(accountId)
+                            .setName(name)
+                            .setType(type)
+                            .setAvailable(true);
             mailFolderService.createMailFolder(localFolder);
         }
         Folder folder = store.getFolder(name);
@@ -503,10 +589,15 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             folder.open(Folder.READ_ONLY);
             List<OaMailMessageDO> remote = mailMessageClient.getMessageList(folder);
             long validity = ((UIDFolder) folder).getUIDValidity();
-            Map<String, OaMailMessageDO> existing = mailMessageMapper.selectListByFolderId(localFolder.getId()).stream()
-                    .collect(Collectors.toMap(index -> index.getUidValidity() + ":" + index.getUid(), Function.identity()));
+            Map<String, OaMailMessageDO> existing =
+                    mailMessageMapper.selectListByFolderId(localFolder.getId()).stream()
+                            .collect(
+                                    Collectors.toMap(
+                                            index -> index.getUidValidity() + ":" + index.getUid(),
+                                            Function.identity()));
             for (OaMailMessageDO message : remote) {
-                OaMailMessageDO old = existing.remove(message.getUidValidity() + ":" + message.getUid());
+                OaMailMessageDO old =
+                        existing.remove(message.getUidValidity() + ":" + message.getUid());
                 message.setAccountId(accountId).setFolderId(localFolder.getId());
                 if (old == null) {
                     mailMessageMapper.insert(message);
@@ -518,8 +609,13 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             for (OaMailMessageDO removed : existing.values()) {
                 mailMessageMapper.deleteById(removed.getId());
             }
-            mailFolderService.updateMailFolder(new OaMailFolderDO().setId(localFolder.getId()).setType(type).setAvailable(true)
-                    .setUidValidity(validity).setSyncTime(LocalDateTime.now()));
+            mailFolderService.updateMailFolder(
+                    new OaMailFolderDO()
+                            .setId(localFolder.getId())
+                            .setType(type)
+                            .setAvailable(true)
+                            .setUidValidity(validity)
+                            .setSyncTime(LocalDateTime.now()));
             return remote.size();
         } finally {
             if (folder.isOpen()) {
@@ -565,7 +661,11 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
      */
     private OaMailFolderDO getFolder(Long accountId, String type) {
         List<OaMailFolderDO> folders = mailFolderService.getMailFolderList(accountId);
-        return CollUtil.findOne(folders, folder -> type.equals(folder.getType()) && Boolean.TRUE.equals(folder.getAvailable()));
+        return CollUtil.findOne(
+                folders,
+                folder ->
+                        type.equals(folder.getType())
+                                && Boolean.TRUE.equals(folder.getAvailable()));
     }
 
     /**
@@ -581,7 +681,8 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
         }
         OaMailMessageDO draft = validateMessage(reqVO.getDraftId(), userId);
         if (ObjUtil.notEqual(draft.getAccountId(), reqVO.getAccountId())
-                || ObjUtil.notEqual(OaMailFolderTypeEnum.DRAFTS.getType(), validateFolder(draft).getType())) {
+                || ObjUtil.notEqual(
+                        OaMailFolderTypeEnum.DRAFTS.getType(), validateFolder(draft).getType())) {
             throw exception(MAIL_DRAFT_NOT_OWNED);
         }
         return draft;
@@ -599,8 +700,9 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
      * @return MIME 邮件
      * @throws MessagingException 构建邮件或读取原邮件失败
      */
-    private MimeMessage buildOutgoingMessage(OaMailAccountDO account, OaMailMessageSaveReqVO reqVO,
-                                            Long userId, boolean send) throws MessagingException {
+    private MimeMessage buildOutgoingMessage(
+            OaMailAccountDO account, OaMailMessageSaveReqVO reqVO, Long userId, boolean send)
+            throws MessagingException {
         // 1.1 构建本次邮件正文
         MimeMessage message = mailMessageClient.createMessage(account, reqVO, send);
         Long originalId = ObjUtil.defaultIfNull(reqVO.getDraftId(), reqVO.getSourceId());
@@ -619,12 +721,18 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
             try {
                 folder.open(Folder.READ_ONLY);
                 // 2.1 读取原邮件，转发和编辑草稿时保留附件
-                MimeMessage original = mailMessageClient.copyMessage(mailMessageClient.getMessage(folder, source));
-                if (reqVO.getDraftId() != null || OaMailComposeModeEnum.FORWARD.getValue().equals(reqVO.getMode())) {
-                    mailMessageClient.copyAttachments(message, original, reqVO.getAttachmentParts());
+                MimeMessage original =
+                        mailMessageClient.copyMessage(mailMessageClient.getMessage(folder, source));
+                if (reqVO.getDraftId() != null
+                        || OaMailComposeModeEnum.FORWARD.getValue().equals(reqVO.getMode())) {
+                    mailMessageClient.copyAttachments(
+                            message, original, reqVO.getAttachmentParts());
                 }
                 // 2.2 回复时补充线程标识
-                if (StrUtil.equalsAny(reqVO.getMode(), OaMailComposeModeEnum.REPLY.getValue(), OaMailComposeModeEnum.REPLY_ALL.getValue())) {
+                if (StrUtil.equalsAny(
+                        reqVO.getMode(),
+                        OaMailComposeModeEnum.REPLY.getValue(),
+                        OaMailComposeModeEnum.REPLY_ALL.getValue())) {
                     String messageId = original.getMessageID();
                     if (messageId != null) {
                         message.setHeader("In-Reply-To", messageId);
@@ -654,7 +762,8 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
      * @param self 当前发件账号的邮箱地址
      * @throws MessagingException 邮箱地址解析失败
      */
-    private void addReplyAddresses(Map<String, InternetAddress> target, List<String> values, String self)
+    private void addReplyAddresses(
+            Map<String, InternetAddress> target, List<String> values, String self)
             throws MessagingException {
         for (InternetAddress address : mailMessageClient.parseAddresses(values)) {
             if (!address.getAddress().equalsIgnoreCase(self)) {
@@ -672,7 +781,7 @@ public class OaMailMessageServiceImpl implements OaMailMessageService {
     private String getEditableContent(String content) {
         Document editable = Jsoup.parse(StrUtil.nullToEmpty(content));
         editable.select("style").remove();
-        return Jsoup.clean(editable.body().html(), Safelist.relaxed().addTags("details", "summary"));
+        return Jsoup.clean(
+                editable.body().html(), Safelist.relaxed().addTags("details", "summary"));
     }
-
 }

@@ -3,10 +3,13 @@ package cn.iocoder.yudao.module.oa.controller.admin.announcement.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.announcement.OaAnnouncementTypeEnum;
 import cn.iocoder.yudao.module.oa.enums.schedule.OaPriorityEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - OA 公告新增/修改 Request VO")
@@ -41,5 +44,4 @@ public class OaAnnouncementSaveReqVO {
     @Schema(description = "是否置顶", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
     @NotNull(message = "是否置顶不能为空")
     private Boolean top;
-
 }

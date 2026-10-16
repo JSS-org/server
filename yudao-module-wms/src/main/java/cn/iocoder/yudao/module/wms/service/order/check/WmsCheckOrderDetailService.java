@@ -67,5 +67,4 @@ public interface WmsCheckOrderDetailService {
      * @return 盘库单明细数量
      */
     long getCheckOrderDetailCountBySkuId(Long skuId);
-
 }

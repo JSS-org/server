@@ -1,18 +1,18 @@
 package cn.iocoder.yudao.module.im.util;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.MESSAGE_CONTENT_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
 import cn.iocoder.yudao.module.im.dal.dataobject.message.content.QuoteMessage;
+import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.MESSAGE_CONTENT_INVALID;
 
 /**
  * IM 消息内容相关工具类
@@ -23,10 +23,12 @@ public class ImMessageUtils {
      * 文本消息最大长度
      */
     private static final int TEXT_MAX_LENGTH = 4096;
+
     /**
      * URL 最大长度
      */
     private static final int URL_MAX_LENGTH = 2048;
+
     /**
      * 合并消息最大条数
      */
@@ -54,7 +56,8 @@ public class ImMessageUtils {
         }
         if (ImContentTypeEnum.TEXT == messageType) {
             validateTextContent(map);
-        } else if (ImContentTypeEnum.IMAGE == messageType || ImContentTypeEnum.FACE == messageType) {
+        } else if (ImContentTypeEnum.IMAGE == messageType
+                || ImContentTypeEnum.FACE == messageType) {
             validateUrl(getString(map, "url"));
         } else if (ImContentTypeEnum.VOICE == messageType) {
             validateUrl(getString(map, "url"));
@@ -190,7 +193,8 @@ public class ImMessageUtils {
      * @return remove quote 后的 content(JSON)
      */
     public static String removeQuote(String content) {
-        if (StrUtil.isBlank(content) || !StrUtil.contains(content, "\"" + QuoteMessage.FIELD_NAME + "\"")) {
+        if (StrUtil.isBlank(content)
+                || !StrUtil.contains(content, "\"" + QuoteMessage.FIELD_NAME + "\"")) {
             return content;
         }
         Map<String, Object> map = JsonUtils.parseMap(content);
@@ -210,9 +214,12 @@ public class ImMessageUtils {
      * @param originalContent 被引用消息原 content(JSON)，服务端会 removeQuote 防止嵌套
      * @return QuoteMessage 对象
      */
-    public static QuoteMessage buildQuote(Long messageId, Long senderId, Integer type, String originalContent) {
-        return new QuoteMessage().setMessageId(messageId).setSenderId(senderId).setType(type)
+    public static QuoteMessage buildQuote(
+            Long messageId, Long senderId, Integer type, String originalContent) {
+        return new QuoteMessage()
+                .setMessageId(messageId)
+                .setSenderId(senderId)
+                .setType(type)
                 .setContent(removeQuote(originalContent));
     }
-
 }

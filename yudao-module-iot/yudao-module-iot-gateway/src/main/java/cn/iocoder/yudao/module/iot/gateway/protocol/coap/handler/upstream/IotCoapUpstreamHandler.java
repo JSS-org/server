@@ -8,7 +8,9 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.server.resources.CoapExchange;
 
 import java.util.List;
@@ -72,5 +74,4 @@ public class IotCoapUpstreamHandler extends IotCoapAbstractHandler {
         // 路径格式：/topic/sys/{productKey}/{deviceName}/...
         return CollUtil.get(uriPath, 3);
     }
-
 }

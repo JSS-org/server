@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
 import cn.iocoder.yudao.module.pay.enums.refund.PayRefundStatusEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,16 +16,16 @@ import java.time.LocalDateTime;
 /**
  * 会员钱包充值
  */
-@TableName(value ="pay_wallet_recharge")
-@KeySequence("pay_wallet_recharge_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
+@TableName(value = "pay_wallet_recharge")
+@KeySequence("pay_wallet_recharge_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL
+// 等数据库，可不写。
 @Data
 public class PayWalletRechargeDO extends BaseDO {
 
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 钱包编号
@@ -38,10 +40,12 @@ public class PayWalletRechargeDO extends BaseDO {
      * 例如充 100 送 20，则该值是 120
      */
     private Integer totalPrice;
+
     /**
      * 实际支付金额
      */
     private Integer payPrice;
+
     /**
      * 钱包赠送金额
      */
@@ -75,6 +79,7 @@ public class PayWalletRechargeDO extends BaseDO {
      * 冗余 {@link PayOrderDO#getChannelCode()}
      */
     private String payChannelCode;
+
     /**
      * 订单支付时间
      */
@@ -91,6 +96,7 @@ public class PayWalletRechargeDO extends BaseDO {
      * 退款金额，包含赠送金额
      */
     private Integer refundTotalPrice;
+
     /**
      * 退款支付金额
      */
@@ -112,5 +118,4 @@ public class PayWalletRechargeDO extends BaseDO {
      * 枚举 {@link PayRefundStatusEnum}
      */
     private Integer refundStatus;
-
 }

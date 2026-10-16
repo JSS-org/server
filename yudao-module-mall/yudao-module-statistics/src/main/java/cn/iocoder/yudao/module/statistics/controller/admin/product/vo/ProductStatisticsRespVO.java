@@ -1,14 +1,17 @@
 package cn.iocoder.yudao.module.statistics.controller.admin.product.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
+
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDate;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
 
 @Schema(description = "管理后台 - 商品统计 Response VO")
 @Data
@@ -18,7 +21,10 @@ public class ProductStatisticsRespVO {
     @Schema(description = "编号，主键自增", requiredMode = Schema.RequiredMode.REQUIRED, example = "12393")
     private Long id;
 
-    @Schema(description = "统计日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2023-12-16")
+    @Schema(
+            description = "统计日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2023-12-16")
     @JsonFormat(pattern = FORMAT_YEAR_MONTH_DAY)
     @ExcelProperty("统计日期")
     private LocalDate time;
@@ -63,7 +69,10 @@ public class ProductStatisticsRespVO {
     @ExcelProperty("支付件数")
     private Integer orderPayCount;
 
-    @Schema(description = "支付金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "11595")
+    @Schema(
+            description = "支付金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "11595")
     @ExcelProperty("支付金额，单位：分")
     private Integer orderPayPrice;
 
@@ -71,11 +80,16 @@ public class ProductStatisticsRespVO {
     @ExcelProperty("退款件数")
     private Integer afterSaleCount;
 
-    @Schema(description = "退款金额，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "21709")
+    @Schema(
+            description = "退款金额，单位：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "21709")
     @ExcelProperty("退款金额，单位：分")
     private Integer afterSaleRefundPrice;
 
-    @Schema(description = "访客支付转化率（百分比）", requiredMode = Schema.RequiredMode.REQUIRED, example = "15")
+    @Schema(
+            description = "访客支付转化率（百分比）",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15")
     private Integer browseConvertPercent;
-
 }

@@ -73,5 +73,4 @@ public interface HrmSalaryOptionService {
      * @return 薪资项列表
      */
     List<HrmSalaryOptionDO> getSalaryOptionList();
-
 }

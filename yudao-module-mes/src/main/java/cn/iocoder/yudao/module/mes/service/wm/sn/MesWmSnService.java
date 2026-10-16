@@ -44,5 +44,4 @@ public interface MesWmSnService {
      * @param uuid 批次 UUID
      */
     void deleteSnByUuid(String uuid);
-
 }

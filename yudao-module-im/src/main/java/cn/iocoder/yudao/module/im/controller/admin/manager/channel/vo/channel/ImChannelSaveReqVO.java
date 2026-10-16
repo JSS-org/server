@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.im.controller.admin.manager.channel.vo.channel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IM 频道新增 / 修改 Request VO")
@@ -14,7 +16,10 @@ public class ImChannelSaveReqVO {
     @Schema(description = "编号（修改时必填）", example = "1024")
     private Long id;
 
-    @Schema(description = "频道业务码；唯一", requiredMode = Schema.RequiredMode.REQUIRED, example = "system_notice")
+    @Schema(
+            description = "频道业务码；唯一",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "system_notice")
     @NotBlank(message = "频道编码不能为空")
     @Size(max = 64, message = "频道编码长度不能超过 64")
     @Pattern(regexp = "^[a-z][a-z0-9_]*$", message = "频道编码只能由小写字母 / 数字 / 下划线组成，且必须以字母开头")
@@ -36,5 +41,4 @@ public class ImChannelSaveReqVO {
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
     @NotNull(message = "状态不能为空")
     private Integer status; // 参见 CommonStatusEnum 枚举类（0 启用 / 1 禁用）
-
 }

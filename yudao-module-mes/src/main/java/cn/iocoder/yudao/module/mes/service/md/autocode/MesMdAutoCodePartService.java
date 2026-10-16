@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.md.autocode;
 
 import cn.iocoder.yudao.module.mes.controller.admin.md.autocode.vo.part.MesMdAutoCodePartSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePartDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -50,5 +51,4 @@ public interface MesMdAutoCodePartService {
      * @return 规则组成列表
      */
     List<MesMdAutoCodePartDO> getAutoCodePartListByRuleId(Long ruleId);
-
 }

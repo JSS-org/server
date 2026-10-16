@@ -10,12 +10,15 @@ import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.core.util.IotProductAuthUtils;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.json.IotJsonSerializer;
+
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.mqtt.MqttClient;
 import io.vertx.mqtt.MqttClientOptions;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -87,15 +90,21 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
     @Test
     public void testAuth() throws Exception {
         // 1. 构建认证信息
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        log.info("[testAuth][认证信息: clientId={}, username={}, password={}]",
-                authInfo.getClientId(), authInfo.getUsername(), authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        log.info(
+                "[testAuth][认证信息: clientId={}, username={}, password={}]",
+                authInfo.getClientId(),
+                authInfo.getUsername(),
+                authInfo.getPassword());
 
         // 2. 创建客户端并连接
         MqttClient client = createClient(authInfo);
         try {
             client.connect(SERVER_PORT, SERVER_HOST)
-                    .toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    .toCompletionStage()
+                    .toCompletableFuture()
+                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
             log.info("[testAuth][连接成功，客户端 ID: {}]", client.clientId());
         } finally {
             disconnect(client);
@@ -115,19 +124,23 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
 
         try {
             // 2.1 构建属性上报消息
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
-                    IotDevicePropertyPostReqDTO.of(MapUtil.<String, Object>builder()
-                            .put("width", 1)
-                            .put("height", "2")
-                            .build()));
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
+                            IotDevicePropertyPostReqDTO.of(
+                                    MapUtil.<String, Object>builder()
+                                            .put("width", 1)
+                                            .put("height", "2")
+                                            .build()));
 
             // 2.2 订阅 _reply 主题
-            String replyTopic = String.format("/sys/%s/%s/thing/property/post_reply", PRODUCT_KEY, DEVICE_NAME);
+            String replyTopic =
+                    String.format("/sys/%s/%s/thing/property/post_reply", PRODUCT_KEY, DEVICE_NAME);
             subscribe(client, replyTopic);
 
             // 2.2 发布消息并等待响应
-            String topic = String.format("/sys/%s/%s/thing/property/post", PRODUCT_KEY, DEVICE_NAME);
+            String topic =
+                    String.format("/sys/%s/%s/thing/property/post", PRODUCT_KEY, DEVICE_NAME);
             IotDeviceMessage response = publishAndWaitReply(client, topic, request);
             log.info("[testPropertyPost][响应消息: {}]", response);
         } finally {
@@ -148,15 +161,17 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
 
         try {
             // 2.1 构建事件上报消息
-            IotDeviceMessage request = IotDeviceMessage.requestOf(
-                    IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
-                    IotDeviceEventPostReqDTO.of(
-                            "eat",
-                            MapUtil.<String, Object>builder().put("rice", 3).build(),
-                            System.currentTimeMillis()));
+            IotDeviceMessage request =
+                    IotDeviceMessage.requestOf(
+                            IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
+                            IotDeviceEventPostReqDTO.of(
+                                    "eat",
+                                    MapUtil.<String, Object>builder().put("rice", 3).build(),
+                                    System.currentTimeMillis()));
 
             // 2.2 订阅 _reply 主题
-            String replyTopic = String.format("/sys/%s/%s/thing/event/post_reply", PRODUCT_KEY, DEVICE_NAME);
+            String replyTopic =
+                    String.format("/sys/%s/%s/thing/event/post_reply", PRODUCT_KEY, DEVICE_NAME);
             subscribe(client, replyTopic);
 
             // 3. 发布消息并等待响应
@@ -187,35 +202,47 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
         String productSecret = "test-product-secret"; // 替换为实际的 productSecret
         String sign = IotProductAuthUtils.buildSign(PRODUCT_KEY, deviceName, productSecret);
         // 1.2 构建 MQTT 连接参数（clientId 需要添加 |authType=register| 后缀）
-        String clientId = IotDeviceAuthUtils.buildClientId(PRODUCT_KEY, deviceName) + "|authType=register|";
+        String clientId =
+                IotDeviceAuthUtils.buildClientId(PRODUCT_KEY, deviceName) + "|authType=register|";
         String username = IotDeviceAuthUtils.buildUsername(PRODUCT_KEY, deviceName);
-        log.info("[testDeviceRegister][注册参数: clientId={}, username={}, sign={}]",
-                clientId, username, sign);
+        log.info(
+                "[testDeviceRegister][注册参数: clientId={}, username={}, sign={}]",
+                clientId,
+                username,
+                sign);
         // 1.3 创建客户端并连接（连接时服务端自动处理注册）
-        MqttClientOptions options = new MqttClientOptions()
-                .setClientId(clientId)
-                .setUsername(username)
-                .setPassword(sign)
-                .setCleanSession(true)
-                .setKeepAliveInterval(60);
+        MqttClientOptions options =
+                new MqttClientOptions()
+                        .setClientId(clientId)
+                        .setUsername(username)
+                        .setPassword(sign)
+                        .setCleanSession(true)
+                        .setKeepAliveInterval(60);
         MqttClient client = MqttClient.create(vertx, options);
 
         try {
             // 2. 连接服务器（连接成功后服务端会自动处理注册并发送响应）
             client.connect(SERVER_PORT, SERVER_HOST)
-                    .toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    .toCompletionStage()
+                    .toCompletableFuture()
+                    .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
             log.info("[testDeviceRegister][连接成功，等待注册响应...]");
 
             // 3.1 设置消息处理器，接收注册响应
             CompletableFuture<IotDeviceMessage> responseFuture = new CompletableFuture<>();
-            client.publishHandler(message -> {
-                log.info("[testDeviceRegister][收到响应: topic={}, payload={}]",
-                        message.topicName(), message.payload().toString());
-                IotDeviceMessage response = SERIALIZER.deserialize(message.payload().getBytes());
-                responseFuture.complete(response);
-            });
+            client.publishHandler(
+                    message -> {
+                        log.info(
+                                "[testDeviceRegister][收到响应: topic={}, payload={}]",
+                                message.topicName(),
+                                message.payload().toString());
+                        IotDeviceMessage response =
+                                SERIALIZER.deserialize(message.payload().getBytes());
+                        responseFuture.complete(response);
+                    });
             // 3.2 订阅 _reply 主题
-            String replyTopic = String.format("/sys/%s/%s/thing/auth/register_reply", PRODUCT_KEY, deviceName);
+            String replyTopic =
+                    String.format("/sys/%s/%s/thing/auth/register_reply", PRODUCT_KEY, deviceName);
             subscribe(client, replyTopic);
 
             // 4. 等待注册响应
@@ -240,24 +267,41 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
 
         try {
             // 2. 设置消息处理器：收到属性设置时，回复 _reply 消息
-            client.publishHandler(message -> {
-                log.info("[testSubscribe][收到消息: topic={}, payload={}]",
-                        message.topicName(), message.payload().toString());
-                // 收到属性设置消息时，回复 _reply
-                if (message.topicName().endsWith("/thing/property/set")) {
-                    try {
-                        IotDeviceMessage received = SERIALIZER.deserialize(message.payload().getBytes());
-                        IotDeviceMessage reply = IotDeviceMessage.replyOf(
-                                received.getRequestId(), "thing.property.set_reply", null, 0, null);
-                        String replyTopic = String.format("/sys/%s/%s/thing/property/set_reply", PRODUCT_KEY, DEVICE_NAME);
-                        byte[] replyPayload = SERIALIZER.serialize(reply);
-                        client.publish(replyTopic, Buffer.buffer(replyPayload), MqttQoS.AT_LEAST_ONCE, false, false);
-                        log.info("[testSubscribe][已回复属性设置: topic={}]", replyTopic);
-                    } catch (Exception e) {
-                        log.error("[testSubscribe][回复属性设置异常]", e);
-                    }
-                }
-            });
+            client.publishHandler(
+                    message -> {
+                        log.info(
+                                "[testSubscribe][收到消息: topic={}, payload={}]",
+                                message.topicName(),
+                                message.payload().toString());
+                        // 收到属性设置消息时，回复 _reply
+                        if (message.topicName().endsWith("/thing/property/set")) {
+                            try {
+                                IotDeviceMessage received =
+                                        SERIALIZER.deserialize(message.payload().getBytes());
+                                IotDeviceMessage reply =
+                                        IotDeviceMessage.replyOf(
+                                                received.getRequestId(),
+                                                "thing.property.set_reply",
+                                                null,
+                                                0,
+                                                null);
+                                String replyTopic =
+                                        String.format(
+                                                "/sys/%s/%s/thing/property/set_reply",
+                                                PRODUCT_KEY, DEVICE_NAME);
+                                byte[] replyPayload = SERIALIZER.serialize(reply);
+                                client.publish(
+                                        replyTopic,
+                                        Buffer.buffer(replyPayload),
+                                        MqttQoS.AT_LEAST_ONCE,
+                                        false,
+                                        false);
+                                log.info("[testSubscribe][已回复属性设置: topic={}]", replyTopic);
+                            } catch (Exception e) {
+                                log.error("[testSubscribe][回复属性设置异常]", e);
+                            }
+                        }
+                    });
 
             // 3. 订阅下行主题（属性设置 + 服务调用）
             String topic = String.format("/sys/%s/%s/#", PRODUCT_KEY, DEVICE_NAME);
@@ -281,12 +325,13 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
      * @return MQTT 客户端
      */
     private MqttClient createClient(IotDeviceAuthReqDTO authInfo) {
-        MqttClientOptions options = new MqttClientOptions()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword())
-                .setCleanSession(true)
-                .setKeepAliveInterval(60);
+        MqttClientOptions options =
+                new MqttClientOptions()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword())
+                        .setCleanSession(true)
+                        .setKeepAliveInterval(60);
         return MqttClient.create(vertx, options);
     }
 
@@ -296,10 +341,13 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
      * @return 已认证的 MQTT 客户端
      */
     private MqttClient connectAndAuth() throws Exception {
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
         MqttClient client = createClient(authInfo);
         client.connect(SERVER_PORT, SERVER_HOST)
-                .toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                .toCompletionStage()
+                .toCompletableFuture()
+                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         return client;
     }
 
@@ -311,7 +359,9 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
      */
     private void subscribe(MqttClient client, String topic) throws Exception {
         client.subscribe(topic, MqttQoS.AT_LEAST_ONCE.value())
-                .toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                .toCompletionStage()
+                .toCompletableFuture()
+                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         log.info("[subscribe][订阅主题成功: {}]", topic);
     }
 
@@ -323,23 +373,32 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
      * @param request 请求消息
      * @return 响应消息
      */
-    private IotDeviceMessage publishAndWaitReply(MqttClient client, String topic, IotDeviceMessage request)
-            throws Exception {
+    private IotDeviceMessage publishAndWaitReply(
+            MqttClient client, String topic, IotDeviceMessage request) throws Exception {
         // 1. 设置消息处理器，接收响应
         CompletableFuture<IotDeviceMessage> responseFuture = new CompletableFuture<>();
-        client.publishHandler(message -> {
-            log.info("[publishAndWaitReply][收到响应: topic={}, payload={}]",
-                    message.topicName(), message.payload().toString());
-            IotDeviceMessage response = SERIALIZER.deserialize(message.payload().getBytes());
-            responseFuture.complete(response);
-        });
+        client.publishHandler(
+                message -> {
+                    log.info(
+                            "[publishAndWaitReply][收到响应: topic={}, payload={}]",
+                            message.topicName(),
+                            message.payload().toString());
+                    IotDeviceMessage response =
+                            SERIALIZER.deserialize(message.payload().getBytes());
+                    responseFuture.complete(response);
+                });
 
         // 2. 序列化并发布消息
         byte[] payload = SERIALIZER.serialize(request);
-        log.info("[publishAndWaitReply][Serializer: {}, 发送消息: topic={}, payload={}]",
-                SERIALIZER.getType(), topic, new String(payload));
+        log.info(
+                "[publishAndWaitReply][Serializer: {}, 发送消息: topic={}, payload={}]",
+                SERIALIZER.getType(),
+                topic,
+                new String(payload));
         client.publish(topic, Buffer.buffer(payload), MqttQoS.AT_LEAST_ONCE, false, false)
-                .toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                .toCompletionStage()
+                .toCompletableFuture()
+                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         log.info("[publishAndWaitReply][消息发布成功]");
 
         // 3. 等待响应
@@ -358,8 +417,9 @@ public class IotDirectDeviceMqttProtocolIntegrationTest {
      */
     private void disconnect(MqttClient client) throws Exception {
         client.disconnect()
-                .toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                .toCompletionStage()
+                .toCompletableFuture()
+                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         log.info("[disconnect][断开连接成功]");
     }
-
 }

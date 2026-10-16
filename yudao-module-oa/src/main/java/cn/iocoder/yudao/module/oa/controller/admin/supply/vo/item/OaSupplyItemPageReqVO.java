@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,5 +26,4 @@ public class OaSupplyItemPageReqVO extends PageParam {
 
     @Schema(description = "状态", example = "0")
     private Integer status;
-
 }

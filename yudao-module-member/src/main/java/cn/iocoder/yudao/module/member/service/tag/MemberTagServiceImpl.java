@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.member.service.tag;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,15 +14,14 @@ import cn.iocoder.yudao.module.member.convert.tag.MemberTagConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.tag.MemberTagDO;
 import cn.iocoder.yudao.module.member.dal.mysql.tag.MemberTagMapper;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 
 /**
  * 会员标签 Service 实现类
@@ -30,11 +32,9 @@ import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
 @Validated
 public class MemberTagServiceImpl implements MemberTagService {
 
-    @Resource
-    private MemberTagMapper memberTagMapper;
+    @Resource private MemberTagMapper memberTagMapper;
 
-    @Resource
-    private MemberUserService memberUserService;
+    @Resource private MemberUserService memberUserService;
 
     @Override
     public Long createTag(MemberTagCreateReqVO createReqVO) {
@@ -121,5 +121,4 @@ public class MemberTagServiceImpl implements MemberTagService {
     public List<MemberTagDO> getTagList() {
         return memberTagMapper.selectList();
     }
-
 }

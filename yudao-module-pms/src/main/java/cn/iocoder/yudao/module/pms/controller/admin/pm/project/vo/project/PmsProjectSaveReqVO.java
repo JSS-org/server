@@ -1,21 +1,26 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.project;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectLevelEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - PMS 项目新增/修改 Request VO")
 @Data
@@ -47,7 +52,10 @@ public class PmsProjectSaveReqVO {
     @NotNull(message = "项目可见范围不能为空")
     private Boolean openStatus;
 
-    @Schema(description = "项目图标", requiredMode = Schema.RequiredMode.REQUIRED, example = "ep:folder")
+    @Schema(
+            description = "项目图标",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ep:folder")
     @NotBlank(message = "项目图标不能为空")
     private String icon;
 
@@ -69,5 +77,4 @@ public class PmsProjectSaveReqVO {
         return startTime == null && endTime == null
                 || startTime != null && endTime != null && startTime.isBefore(endTime);
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.im.service.group;
 
 import cn.iocoder.yudao.module.im.controller.admin.group.vo.member.ImGroupMemberUpdateReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupMemberDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
@@ -130,7 +131,8 @@ public interface ImGroupMemberService {
      * @return 群成员记录
      */
     @SuppressWarnings("UnusedReturnValue")
-    ImGroupMemberDO addGroupMember(Long groupId, Long userId, Integer role, Integer addSource, Long inviterUserId);
+    ImGroupMemberDO addGroupMember(
+            Long groupId, Long userId, Integer role, Integer addSource, Long inviterUserId);
 
     /**
      * 批量添加群成员（入群）
@@ -148,7 +150,8 @@ public interface ImGroupMemberService {
      * @param addSource     加入来源
      * @param inviterUserId 邀请人用户编号；NULL 表示主动申请
      */
-    void addGroupMembers(Long groupId, Collection<Long> userIds, Integer addSource, Long inviterUserId);
+    void addGroupMembers(
+            Long groupId, Collection<Long> userIds, Integer addSource, Long inviterUserId);
 
     /**
      * 校验用户是否为群的有效成员
@@ -240,5 +243,4 @@ public interface ImGroupMemberService {
      * @param muteEndTime 禁言到期时间；null 表示取消禁言
      */
     void updateGroupMemberMuteEndTime(Long groupId, Long userId, LocalDateTime muteEndTime);
-
 }

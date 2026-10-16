@@ -1,24 +1,31 @@
 package cn.iocoder.yudao.module.mes.service.wm.productsales;
 
-import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.line.MesWmProductSalesLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.line.MesWmProductSalesLineSaveReqVO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.batch.MesWmBatchDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productsales.MesWmProductSalesLineDO;
+import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productsales.MesWmProductSalesLineMapper;
 import cn.iocoder.yudao.module.mes.enums.qc.MesQcCheckResultEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.MesWmQualityStatusEnum;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.batch.MesWmBatchDO;
-import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeLineDO;
 import cn.iocoder.yudao.module.mes.service.wm.salesnotice.MesWmSalesNoticeLineService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +33,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 销售出库单行 Service 实现类
@@ -41,21 +44,13 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Slf4j
 public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineService {
 
-    @Resource
-    private MesWmProductSalesLineMapper productSalesLineMapper;
+    @Resource private MesWmProductSalesLineMapper productSalesLineMapper;
 
-    @Resource
-    private MesWmProductSalesDetailService productSalesDetailService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmBatchService batchService;
-    @Resource
-    @Lazy
-    private MesWmProductSalesService productSalesService;
-    @Resource
-    @Lazy
-    private MesWmSalesNoticeLineService salesNoticeLineService;
+    @Resource private MesWmProductSalesDetailService productSalesDetailService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmBatchService batchService;
+    @Resource @Lazy private MesWmProductSalesService productSalesService;
+    @Resource @Lazy private MesWmSalesNoticeLineService salesNoticeLineService;
 
     @Override
     public Long createProductSalesLine(MesWmProductSalesLineSaveReqVO createReqVO) {
@@ -77,7 +72,8 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
         validateLineSaveData(updateReqVO);
 
         // 更新
-        MesWmProductSalesLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmProductSalesLineDO.class);
+        MesWmProductSalesLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmProductSalesLineDO.class);
         productSalesLineMapper.updateById(updateObj);
     }
 
@@ -111,11 +107,12 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
     }
 
     @Override
-    public cn.iocoder.yudao.framework.common.pojo.PageResult<MesWmProductSalesLineDO> getProductSalesLinePage(
-            MesWmProductSalesLinePageReqVO pageReqVO) {
+    public cn.iocoder.yudao.framework.common.pojo.PageResult<MesWmProductSalesLineDO>
+            getProductSalesLinePage(MesWmProductSalesLinePageReqVO pageReqVO) {
         // 如果传了 clientId，先查出该客户的所有出库单 ID，设置到 salesIds
         if (pageReqVO.getSalesId() == null && pageReqVO.getClientId() != null) {
-            List<MesWmProductSalesDO> salesList = productSalesService.getProductSalesListByClientId(pageReqVO.getClientId());
+            List<MesWmProductSalesDO> salesList =
+                    productSalesService.getProductSalesListByClientId(pageReqVO.getClientId());
             if (CollUtil.isEmpty(salesList)) {
                 return cn.iocoder.yudao.framework.common.pojo.PageResult.empty();
             }
@@ -151,7 +148,8 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
      */
     private void validateLineSaveData(MesWmProductSalesLineSaveReqVO reqVO) {
         // 校验主单存在且为草稿状态
-        MesWmProductSalesDO sales = productSalesService.validateProductSalesExistsAndDraft(reqVO.getSalesId());
+        MesWmProductSalesDO sales =
+                productSalesService.validateProductSalesExistsAndDraft(reqVO.getSalesId());
         // 校验物料存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
         // 校验关联发货通知单行（存在性 + 归属 + 字段一致性）
@@ -166,20 +164,23 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
      * @param sales 出库单
      * @param reqVO 出库行请求
      */
-    private void validateSalesNoticeLine(MesWmProductSalesDO sales, MesWmProductSalesLineSaveReqVO reqVO) {
+    private void validateSalesNoticeLine(
+            MesWmProductSalesDO sales, MesWmProductSalesLineSaveReqVO reqVO) {
         Long noticeLineId = reqVO.getNoticeLineId();
         // 情况一：如果出库单关联了发货通知单，则必须关联发货通知单行
         if (sales.getNoticeId() != null) {
             if (noticeLineId == null) {
                 throw exception(WM_PRODUCT_SALES_LINE_SALES_NOTICE_LINE_REQUIRED);
             }
-            MesWmSalesNoticeLineDO noticeLine = salesNoticeLineService.validateSalesNoticeLineExists(
-                    noticeLineId, sales.getNoticeId());
+            MesWmSalesNoticeLineDO noticeLine =
+                    salesNoticeLineService.validateSalesNoticeLineExists(
+                            noticeLineId, sales.getNoticeId());
             // 校验关键字段一致性：物料、数量、批次号、OQC 检验标识
             if (ObjUtil.notEqual(reqVO.getItemId(), noticeLine.getItemId())) {
                 throw exception(WM_PRODUCT_SALES_LINE_NOTICE_LINE_ITEM_MISMATCH);
             }
-            if (noticeLine.getQuantity() != null && reqVO.getQuantity() != null
+            if (noticeLine.getQuantity() != null
+                    && reqVO.getQuantity() != null
                     && reqVO.getQuantity().compareTo(noticeLine.getQuantity()) != 0) {
                 throw exception(WM_PRODUCT_SALES_LINE_NOTICE_LINE_QUANTITY_MISMATCH);
             }
@@ -204,10 +205,15 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
     @Transactional(rollbackFor = Exception.class)
     public void updateProductSalesLineWhenOqcFinish(Long id, Long oqcId, Integer checkResult) {
         // 1. 更新行的 oqcId + qualityStatus
-        Integer qualityStatus = Objects.equals(checkResult, MesQcCheckResultEnum.PASS.getType())
-                ? MesWmQualityStatusEnum.PASS.getStatus() : MesWmQualityStatusEnum.FAIL.getStatus();
-        productSalesLineMapper.updateById(new MesWmProductSalesLineDO()
-                .setId(id).setOqcId(oqcId).setQualityStatus(qualityStatus));
+        Integer qualityStatus =
+                Objects.equals(checkResult, MesQcCheckResultEnum.PASS.getType())
+                        ? MesWmQualityStatusEnum.PASS.getStatus()
+                        : MesWmQualityStatusEnum.FAIL.getStatus();
+        productSalesLineMapper.updateById(
+                new MesWmProductSalesLineDO()
+                        .setId(id)
+                        .setOqcId(oqcId)
+                        .setQualityStatus(qualityStatus));
 
         // 2. 检查同一出库单下所有需要 OQC 检验的行
         MesWmProductSalesLineDO currentLine = productSalesLineMapper.selectById(id);
@@ -215,12 +221,18 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
             return;
         }
         Long salesId = currentLine.getSalesId();
-        List<MesWmProductSalesLineDO> allLines = productSalesLineMapper.selectListBySalesId(salesId);
+        List<MesWmProductSalesLineDO> allLines =
+                productSalesLineMapper.selectListBySalesId(salesId);
 
         // 2.1 检查是否有不合格行 → 取消出库单
-        boolean hasNg = CollectionUtils.anyMatch(allLines,
-                line -> Boolean.TRUE.equals(line.getOqcCheckFlag())
-                        && Objects.equals(line.getQualityStatus(), MesWmQualityStatusEnum.FAIL.getStatus()));
+        boolean hasNg =
+                CollectionUtils.anyMatch(
+                        allLines,
+                        line ->
+                                Boolean.TRUE.equals(line.getOqcCheckFlag())
+                                        && Objects.equals(
+                                                line.getQualityStatus(),
+                                                MesWmQualityStatusEnum.FAIL.getStatus()));
         if (hasNg) {
             log.info("[updateProductSalesLineWhenOqcFinish][销售出库单({}) 存在质检不合格行，取消出库单]", salesId);
             productSalesService.cancelProductSales(salesId);
@@ -228,10 +240,16 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
         }
 
         // 2.2 检查是否所有 OQC 行都已完成，自动流转 CONFIRMED → APPROVING
-        boolean hasUnchecked = CollectionUtils.anyMatch(allLines,
-                line -> Boolean.TRUE.equals(line.getOqcCheckFlag()) && line.getOqcId() == null);
+        boolean hasUnchecked =
+                CollectionUtils.anyMatch(
+                        allLines,
+                        line ->
+                                Boolean.TRUE.equals(line.getOqcCheckFlag())
+                                        && line.getOqcId() == null);
         if (!hasUnchecked) {
-            log.info("[updateProductSalesLineWhenOqcFinish][销售出库单({}) 所有 OQC 行检验完成，流转到待拣货]", salesId);
+            log.info(
+                    "[updateProductSalesLineWhenOqcFinish][销售出库单({}) 所有 OQC 行检验完成，流转到待拣货]",
+                    salesId);
             productSalesService.confirmProductSales(salesId);
         }
     }
@@ -243,6 +261,4 @@ public class MesWmProductSalesLineServiceImpl implements MesWmProductSalesLineSe
         }
         productSalesLineMapper.updateQualityStatusByIds(ids, qualityStatus);
     }
-
 }
-

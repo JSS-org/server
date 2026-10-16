@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.hrm.controller.admin.portal.performance.vo.task;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.assessment.HrmPerformanceAssessmentStageStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -18,8 +21,6 @@ public class HrmPortalPerformanceTaskPageReqVO extends PageParam {
 
     @Schema(description = "阶段处理状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "阶段处理状态不能为空")
-    @InEnum(value = HrmPerformanceAssessmentStageStatusEnum.class,
-            message = "阶段处理状态必须是 {value}")
+    @InEnum(value = HrmPerformanceAssessmentStageStatusEnum.class, message = "阶段处理状态必须是 {value}")
     private Integer stageStatus;
-
 }

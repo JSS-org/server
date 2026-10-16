@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.oa;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,17 +11,17 @@ import cn.iocoder.yudao.module.bpm.controller.admin.oa.vo.BpmOALeavePageReqVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.oa.vo.BpmOALeaveRespVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.oa.BpmOALeaveDO;
 import cn.iocoder.yudao.module.bpm.service.oa.BpmOALeaveService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 /**
  * OA 请假申请 Controller，用于演示自己存储数据，接入工作流的例子
@@ -32,8 +35,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class BpmOALeaveController {
 
-    @Resource
-    private BpmOALeaveService leaveService;
+    @Resource private BpmOALeaveService leaveService;
 
     @PostMapping("/create")
     @PreAuthorize("@ss.hasPermission('bpm:oa-leave:create')")
@@ -54,9 +56,9 @@ public class BpmOALeaveController {
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPermission('bpm:oa-leave:query')")
     @Operation(summary = "获得请假申请分页")
-    public CommonResult<PageResult<BpmOALeaveRespVO>> getLeavePage(@Valid BpmOALeavePageReqVO pageVO) {
+    public CommonResult<PageResult<BpmOALeaveRespVO>> getLeavePage(
+            @Valid BpmOALeavePageReqVO pageVO) {
         PageResult<BpmOALeaveDO> pageResult = leaveService.getLeavePage(getLoginUserId(), pageVO);
         return success(BeanUtils.toBean(pageResult, BpmOALeaveRespVO.class));
     }
-
 }

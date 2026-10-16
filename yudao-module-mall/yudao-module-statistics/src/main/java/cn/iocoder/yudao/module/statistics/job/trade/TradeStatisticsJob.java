@@ -7,9 +7,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.statistics.service.trade.TradeStatisticsService;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
  * 交易统计 Job
@@ -19,8 +20,7 @@ import jakarta.annotation.Resource;
 @Component
 public class TradeStatisticsJob implements JobHandler {
 
-    @Resource
-    private TradeStatisticsService tradeStatisticsService;
+    @Resource private TradeStatisticsService tradeStatisticsService;
 
     /**
      * 执行交易统计任务
@@ -44,5 +44,4 @@ public class TradeStatisticsJob implements JobHandler {
         String result = tradeStatisticsService.statisticsTrade(days);
         return StrUtil.format("交易统计:\n{}", result);
     }
-
 }

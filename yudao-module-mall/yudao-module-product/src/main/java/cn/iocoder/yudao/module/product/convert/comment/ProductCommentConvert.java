@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.product.controller.admin.comment.vo.ProductCommen
 import cn.iocoder.yudao.module.product.dal.dataobject.comment.ProductCommentDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.sku.ProductSkuDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -23,12 +24,21 @@ public interface ProductCommentConvert {
 
     ProductCommentConvert INSTANCE = Mappers.getMapper(ProductCommentConvert.class);
 
-    default ProductCommentDO convert(ProductCommentCreateReqDTO createReqDTO,
-                                     ProductSpuDO spu, ProductSkuDO sku, MemberUserRespDTO user) {
-        ProductCommentDO comment = BeanUtils.toBean(createReqDTO, ProductCommentDO.class)
-                .setScores(convertScores(createReqDTO.getDescriptionScores(), createReqDTO.getBenefitScores()));
+    default ProductCommentDO convert(
+            ProductCommentCreateReqDTO createReqDTO,
+            ProductSpuDO spu,
+            ProductSkuDO sku,
+            MemberUserRespDTO user) {
+        ProductCommentDO comment =
+                BeanUtils.toBean(createReqDTO, ProductCommentDO.class)
+                        .setScores(
+                                convertScores(
+                                        createReqDTO.getDescriptionScores(),
+                                        createReqDTO.getBenefitScores()));
         if (user != null) {
-            comment.setUserId(user.getId()).setUserNickname(user.getNickname()).setUserAvatar(user.getAvatar());
+            comment.setUserId(user.getId())
+                    .setUserNickname(user.getNickname())
+                    .setUserAvatar(user.getAvatar());
         }
         if (spu != null) {
             comment.setSpuId(spu.getId()).setSpuName(spu.getName());
@@ -39,10 +49,17 @@ public interface ProductCommentConvert {
         return comment;
     }
 
-    default ProductCommentDO convert(ProductCommentCreateReqVO createReq, ProductSpuDO spu, ProductSkuDO sku) {
-        ProductCommentDO comment = BeanUtils.toBean(createReq, ProductCommentDO.class)
-                .setVisible(true).setUserId(0L).setAnonymous(false)
-                .setScores(convertScores(createReq.getDescriptionScores(), createReq.getBenefitScores()));
+    default ProductCommentDO convert(
+            ProductCommentCreateReqVO createReq, ProductSpuDO spu, ProductSkuDO sku) {
+        ProductCommentDO comment =
+                BeanUtils.toBean(createReq, ProductCommentDO.class)
+                        .setVisible(true)
+                        .setUserId(0L)
+                        .setAnonymous(false)
+                        .setScores(
+                                convertScores(
+                                        createReq.getDescriptionScores(),
+                                        createReq.getBenefitScores()));
         if (spu != null) {
             comment.setSpuId(spu.getId()).setSpuName(spu.getName());
         }
@@ -58,5 +75,4 @@ public interface ProductCommentConvert {
         BigDecimal divide = sumScore.divide(BigDecimal.valueOf(2L), 0, RoundingMode.DOWN);
         return divide.intValue();
     }
-
 }

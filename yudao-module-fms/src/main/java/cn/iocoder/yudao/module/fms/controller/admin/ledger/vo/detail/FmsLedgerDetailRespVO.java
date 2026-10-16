@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.detail;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -90,5 +93,4 @@ public class FmsLedgerDetailRespVO {
 
     @Schema(description = "多栏账科目金额")
     private java.util.Map<Long, BigDecimal> columnAmounts;
-
 }

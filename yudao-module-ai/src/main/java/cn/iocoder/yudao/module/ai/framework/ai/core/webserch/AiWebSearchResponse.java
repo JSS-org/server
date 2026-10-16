@@ -29,6 +29,7 @@ public class AiWebSearchResponse {
          * 例如说：搜狐网
          */
         private String name;
+
         /**
          * 图标
          */
@@ -40,6 +41,7 @@ public class AiWebSearchResponse {
          * 例如说：186页|阿里巴巴：2024年环境、社会和治理（ESG）报告
          */
         private String title;
+
         /**
          * URL
          *
@@ -52,11 +54,10 @@ public class AiWebSearchResponse {
          * 内容的简短描述
          */
         private String snippet;
+
         /**
          * 内容的文本摘要
          */
         private String summary;
-
     }
-
 }

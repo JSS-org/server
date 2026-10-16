@@ -1,11 +1,19 @@
 package cn.iocoder.yudao.module.infra.service.codegen.inner;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
+
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import com.baomidou.mybatisplus.generator.config.rules.IColumnType;
+
 import org.apache.ibatis.type.JdbcType;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,15 +21,9 @@ import org.mockito.InjectMocks;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class CodegenBuilderTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private CodegenBuilder codegenBuilder;
+    @InjectMocks private CodegenBuilder codegenBuilder;
 
     @Test
     public void testBuildTable() {
@@ -98,5 +100,4 @@ public class CodegenBuilderTest extends BaseMockitoUnitTest {
         // 5. 双 / 单引号混合
         assertEquals("“混‘搭“‘", codegenBuilder.sanitizeComment("\"混'搭\"'"));
     }
-
 }

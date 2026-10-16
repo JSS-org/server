@@ -6,9 +6,10 @@ import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.gateway.protocol.mqtt.manager.IotMqttConnectionManager;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.gateway.util.IotMqttTopicUtils;
-import io.vertx.mqtt.MqttEndpoint;
-import lombok.extern.slf4j.Slf4j;
 
+import io.vertx.mqtt.MqttEndpoint;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * IoT 网关 MQTT 上行消息处理器：处理业务消息（属性上报、事件上报等）
@@ -20,9 +21,10 @@ public class IotMqttUpstreamHandler extends IotMqttAbstractHandler {
 
     private final String serverId;
 
-    public IotMqttUpstreamHandler(IotMqttConnectionManager connectionManager,
-                                  IotDeviceMessageService deviceMessageService,
-                                  String serverId) {
+    public IotMqttUpstreamHandler(
+            IotMqttConnectionManager connectionManager,
+            IotDeviceMessageService deviceMessageService,
+            String serverId) {
         super(connectionManager, deviceMessageService);
         this.serverId = serverId;
     }
@@ -48,7 +50,8 @@ public class IotMqttUpstreamHandler extends IotMqttAbstractHandler {
             Assert.notBlank(productKey, "产品 Key 不能为空");
             Assert.notBlank(deviceName, "设备名称不能为空");
             // 1.3 校验设备信息，防止伪造设备消息
-            IotMqttConnectionManager.ConnectionInfo connectionInfo = connectionManager.getConnectionInfo(endpoint);
+            IotMqttConnectionManager.ConnectionInfo connectionInfo =
+                    connectionManager.getConnectionInfo(endpoint);
             Assert.notNull(connectionInfo, "无法获取连接信息");
             Assert.equals(productKey, connectionInfo.getProductKey(), "产品 Key 不匹配");
             Assert.equals(deviceName, connectionInfo.getDeviceName(), "设备名称不匹配");
@@ -59,7 +62,8 @@ public class IotMqttUpstreamHandler extends IotMqttAbstractHandler {
             }
 
             // 2.1 反序列化消息
-            IotDeviceMessage message = deviceMessageService.deserializeDeviceMessage(payload, productKey, deviceName);
+            IotDeviceMessage message =
+                    deviceMessageService.deserializeDeviceMessage(payload, productKey, deviceName);
             if (message == null) {
                 log.warn("[handleBusinessRequest][消息解码失败，客户端 ID: {}，主题: {}]", clientId, topic);
                 return;
@@ -71,9 +75,12 @@ public class IotMqttUpstreamHandler extends IotMqttAbstractHandler {
             deviceMessageService.sendDeviceMessage(message, productKey, deviceName, serverId);
             log.debug("[handleBusinessRequest][消息处理成功，客户端 ID: {}，主题: {}]", clientId, topic);
         } catch (Exception e) {
-            log.error("[handleBusinessRequest][消息处理异常，客户端 ID: {}，主题: {}，错误: {}]",
-                    clientId, topic, e.getMessage(), e);
+            log.error(
+                    "[handleBusinessRequest][消息处理异常，客户端 ID: {}，主题: {}，错误: {}]",
+                    clientId,
+                    topic,
+                    e.getMessage(),
+                    e);
         }
     }
-
 }

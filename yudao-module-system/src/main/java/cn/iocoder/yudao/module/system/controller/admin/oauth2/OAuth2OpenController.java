@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.system.controller.admin.oauth2;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception0;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -21,26 +27,24 @@ import cn.iocoder.yudao.module.system.service.oauth2.OAuth2ClientService;
 import cn.iocoder.yudao.module.system.service.oauth2.OAuth2GrantService;
 import cn.iocoder.yudao.module.system.service.oauth2.OAuth2TokenService;
 import cn.iocoder.yudao.module.system.util.oauth2.OAuth2Utils;
-import io.swagger.v3.oas.annotations.tags.Tag;
+
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.BAD_REQUEST;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception0;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 /**
  * 提供给外部应用调用为主
@@ -61,14 +65,10 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Slf4j
 public class OAuth2OpenController {
 
-    @Resource
-    private OAuth2GrantService oauth2GrantService;
-    @Resource
-    private OAuth2ClientService oauth2ClientService;
-    @Resource
-    private OAuth2ApproveService oauth2ApproveService;
-    @Resource
-    private OAuth2TokenService oauth2TokenService;
+    @Resource private OAuth2GrantService oauth2GrantService;
+    @Resource private OAuth2ClientService oauth2ClientService;
+    @Resource private OAuth2ApproveService oauth2ApproveService;
+    @Resource private OAuth2TokenService oauth2TokenService;
 
     /**
      * 对应 Spring Security OAuth 的 TokenEndpoint 类的 postAccessToken 方法
@@ -83,27 +83,33 @@ public class OAuth2OpenController {
      */
     @PostMapping("/token")
     @PermitAll
-    @Operation(summary = "获得访问令牌", description = "适合 code 授权码模式，或者 implicit 简化模式；在 sso.vue 单点登录界面被【获取】调用")
+    @Operation(
+            summary = "获得访问令牌",
+            description = "适合 code 授权码模式，或者 implicit 简化模式；在 sso.vue 单点登录界面被【获取】调用")
     @Parameters({
-            @Parameter(name = "grant_type", required = true, description = "授权类型", example = "code"),
-            @Parameter(name = "code", description = "授权范围", example = "userinfo.read"),
-            @Parameter(name = "redirect_uri", description = "重定向 URI", example = "https://www.iocoder.cn"),
-            @Parameter(name = "state", description = "状态", example = "1"),
-            @Parameter(name = "username", example = "tudou"),
-            @Parameter(name = "password", example = "cai"), // 多个使用空格分隔
-            @Parameter(name = "scope", example = "user_info"),
-            @Parameter(name = "refresh_token", example = "123424233"),
+        @Parameter(name = "grant_type", required = true, description = "授权类型", example = "code"),
+        @Parameter(name = "code", description = "授权范围", example = "userinfo.read"),
+        @Parameter(
+                name = "redirect_uri",
+                description = "重定向 URI",
+                example = "https://www.iocoder.cn"),
+        @Parameter(name = "state", description = "状态", example = "1"),
+        @Parameter(name = "username", example = "tudou"),
+        @Parameter(name = "password", example = "cai"), // 多个使用空格分隔
+        @Parameter(name = "scope", example = "user_info"),
+        @Parameter(name = "refresh_token", example = "123424233"),
     })
     @SuppressWarnings("EnhancedSwitchMigration")
-    public CommonResult<OAuth2OpenAccessTokenRespVO> postAccessToken(HttpServletRequest request,
-                                                                     @RequestParam("grant_type") String grantType,
-                                                                     @RequestParam(value = "code", required = false) String code, // 授权码模式
-                                                                     @RequestParam(value = "redirect_uri", required = false) String redirectUri, // 授权码模式
-                                                                     @RequestParam(value = "state", required = false) String state, // 授权码模式
-                                                                     @RequestParam(value = "username", required = false) String username, // 密码模式
-                                                                     @RequestParam(value = "password", required = false) String password, // 密码模式
-                                                                     @RequestParam(value = "scope", required = false) String scope, // 密码模式
-                                                                     @RequestParam(value = "refresh_token", required = false) String refreshToken) { // 刷新模式
+    public CommonResult<OAuth2OpenAccessTokenRespVO> postAccessToken(
+            HttpServletRequest request,
+            @RequestParam("grant_type") String grantType,
+            @RequestParam(value = "code", required = false) String code, // 授权码模式
+            @RequestParam(value = "redirect_uri", required = false) String redirectUri, // 授权码模式
+            @RequestParam(value = "state", required = false) String state, // 授权码模式
+            @RequestParam(value = "username", required = false) String username, // 密码模式
+            @RequestParam(value = "password", required = false) String password, // 密码模式
+            @RequestParam(value = "scope", required = false) String scope, // 密码模式
+            @RequestParam(value = "refresh_token", required = false) String refreshToken) { // 刷新模式
         List<String> scopes = OAuth2Utils.buildScopes(scope);
         // 1.1 校验授权类型
         OAuth2GrantTypeEnum grantTypeEnum = OAuth2GrantTypeEnum.getByGrantType(grantType);
@@ -116,23 +122,30 @@ public class OAuth2OpenController {
 
         // 1.2 校验客户端
         String[] clientIdAndSecret = obtainBasicAuthorization(request);
-        OAuth2ClientDO client = oauth2ClientService.validOAuthClientFromCache(clientIdAndSecret[0], clientIdAndSecret[1],
-                grantType, scopes, redirectUri);
+        OAuth2ClientDO client =
+                oauth2ClientService.validOAuthClientFromCache(
+                        clientIdAndSecret[0], clientIdAndSecret[1], grantType, scopes, redirectUri);
 
         // 2. 根据授权模式，获取访问令牌
         OAuth2AccessTokenDO accessTokenDO;
         switch (grantTypeEnum) {
             case AUTHORIZATION_CODE:
-                accessTokenDO = oauth2GrantService.grantAuthorizationCodeForAccessToken(client.getClientId(), code, redirectUri, state);
+                accessTokenDO =
+                        oauth2GrantService.grantAuthorizationCodeForAccessToken(
+                                client.getClientId(), code, redirectUri, state);
                 break;
             case PASSWORD:
-                accessTokenDO = oauth2GrantService.grantPassword(username, password, client.getClientId(), scopes);
+                accessTokenDO =
+                        oauth2GrantService.grantPassword(
+                                username, password, client.getClientId(), scopes);
                 break;
             case CLIENT_CREDENTIALS:
-                accessTokenDO = oauth2GrantService.grantClientCredentials(client.getClientId(), scopes);
+                accessTokenDO =
+                        oauth2GrantService.grantClientCredentials(client.getClientId(), scopes);
                 break;
             case REFRESH_TOKEN:
-                accessTokenDO = oauth2GrantService.grantRefreshToken(refreshToken, client.getClientId());
+                accessTokenDO =
+                        oauth2GrantService.grantRefreshToken(refreshToken, client.getClientId());
                 break;
             default:
                 throw new IllegalArgumentException("未知授权类型：" + grantType);
@@ -145,12 +158,13 @@ public class OAuth2OpenController {
     @PermitAll
     @Operation(summary = "删除访问令牌")
     @Parameter(name = "token", required = true, description = "访问令牌", example = "biu")
-    public CommonResult<Boolean> revokeToken(HttpServletRequest request,
-                                             @RequestParam("token") String token) {
+    public CommonResult<Boolean> revokeToken(
+            HttpServletRequest request, @RequestParam("token") String token) {
         // 校验客户端
         String[] clientIdAndSecret = obtainBasicAuthorization(request);
-        OAuth2ClientDO client = oauth2ClientService.validOAuthClientFromCache(clientIdAndSecret[0], clientIdAndSecret[1],
-                null, null, null);
+        OAuth2ClientDO client =
+                oauth2ClientService.validOAuthClientFromCache(
+                        clientIdAndSecret[0], clientIdAndSecret[1], null, null, null);
 
         // 删除访问令牌
         return success(oauth2GrantService.revokeToken(client.getClientId(), token));
@@ -163,12 +177,12 @@ public class OAuth2OpenController {
     @PermitAll
     @Operation(summary = "校验访问令牌")
     @Parameter(name = "token", required = true, description = "访问令牌", example = "biu")
-    public CommonResult<OAuth2OpenCheckTokenRespVO> checkToken(HttpServletRequest request,
-                                                               @RequestParam("token") String token) {
+    public CommonResult<OAuth2OpenCheckTokenRespVO> checkToken(
+            HttpServletRequest request, @RequestParam("token") String token) {
         // 校验客户端
         String[] clientIdAndSecret = obtainBasicAuthorization(request);
-        oauth2ClientService.validOAuthClientFromCache(clientIdAndSecret[0], clientIdAndSecret[1],
-                null, null, null);
+        oauth2ClientService.validOAuthClientFromCache(
+                clientIdAndSecret[0], clientIdAndSecret[1], null, null, null);
 
         // 校验令牌
         OAuth2AccessTokenDO accessTokenDO = oauth2TokenService.checkAccessToken(token);
@@ -180,15 +194,19 @@ public class OAuth2OpenController {
      * 对应 Spring Security OAuth 的 AuthorizationEndpoint 类的 authorize 方法
      */
     @GetMapping("/authorize")
-    @Operation(summary = "获得授权信息", description = "适合 code 授权码模式，或者 implicit 简化模式；在 sso.vue 单点登录界面被【获取】调用")
+    @Operation(
+            summary = "获得授权信息",
+            description = "适合 code 授权码模式，或者 implicit 简化模式；在 sso.vue 单点登录界面被【获取】调用")
     @Parameter(name = "clientId", required = true, description = "客户端编号", example = "tudou")
-    public CommonResult<OAuth2OpenAuthorizeInfoRespVO> authorize(@RequestParam("clientId") String clientId) {
+    public CommonResult<OAuth2OpenAuthorizeInfoRespVO> authorize(
+            @RequestParam("clientId") String clientId) {
         // 0. 校验用户已经登录。通过 Spring Security 实现
 
         // 1. 获得 Client 客户端的信息
         OAuth2ClientDO client = oauth2ClientService.validOAuthClientFromCache(clientId);
         // 2. 获得用户已经授权的信息
-        List<OAuth2ApproveDO> approves = oauth2ApproveService.getApproveList(getLoginUserId(), getUserType(), clientId);
+        List<OAuth2ApproveDO> approves =
+                oauth2ApproveService.getApproveList(getLoginUserId(), getUserType(), clientId);
         // 拼接返回
         return success(OAuth2OpenConvert.INSTANCE.convert(client, approves));
     }
@@ -204,21 +222,35 @@ public class OAuth2OpenController {
      * 因为前后端分离，Axios 无法很好的处理 302 重定向，所以和 Spring Security OAuth 略有不同，返回结果是重定向的 URL，剩余交给前端处理
      */
     @PostMapping("/authorize")
-    @Operation(summary = "申请授权", description = "适合 code 授权码模式，或者 implicit 简化模式；在 sso.vue 单点登录界面被【提交】调用")
+    @Operation(
+            summary = "申请授权",
+            description = "适合 code 授权码模式，或者 implicit 简化模式；在 sso.vue 单点登录界面被【提交】调用")
     @Parameters({
-            @Parameter(name = "response_type", required = true, description = "响应类型", example = "code"),
-            @Parameter(name = "client_id", required = true, description = "客户端编号", example = "tudou"),
-            @Parameter(name = "scope", description = "授权范围", example = "userinfo.read"), // 使用 Map<String, Boolean> 格式，Spring MVC 暂时不支持这么接收参数
-            @Parameter(name = "redirect_uri", required = true, description = "重定向 URI", example = "https://www.iocoder.cn"),
-            @Parameter(name = "auto_approve", required = true, description = "用户是否接受", example = "true"),
-            @Parameter(name = "state", example = "1")
+        @Parameter(name = "response_type", required = true, description = "响应类型", example = "code"),
+        @Parameter(name = "client_id", required = true, description = "客户端编号", example = "tudou"),
+        @Parameter(
+                name = "scope",
+                description = "授权范围",
+                example = "userinfo.read"), // 使用 Map<String, Boolean> 格式，Spring MVC 暂时不支持这么接收参数
+        @Parameter(
+                name = "redirect_uri",
+                required = true,
+                description = "重定向 URI",
+                example = "https://www.iocoder.cn"),
+        @Parameter(
+                name = "auto_approve",
+                required = true,
+                description = "用户是否接受",
+                example = "true"),
+        @Parameter(name = "state", example = "1")
     })
-    public CommonResult<String> approveOrDeny(@RequestParam("response_type") String responseType,
-                                              @RequestParam("client_id") String clientId,
-                                              @RequestParam(value = "scope", required = false) String scope,
-                                              @RequestParam("redirect_uri") String redirectUri,
-                                              @RequestParam(value = "auto_approve") Boolean autoApprove,
-                                              @RequestParam(value = "state", required = false) String state) {
+    public CommonResult<String> approveOrDeny(
+            @RequestParam("response_type") String responseType,
+            @RequestParam("client_id") String clientId,
+            @RequestParam(value = "scope", required = false) String scope,
+            @RequestParam("redirect_uri") String redirectUri,
+            @RequestParam(value = "auto_approve") Boolean autoApprove,
+            @RequestParam(value = "state", required = false) String state) {
         @SuppressWarnings("unchecked")
         Map<String, Boolean> scopes = JsonUtils.parseObject(scope, Map.class);
         scopes = ObjectUtil.defaultIfNull(scopes, Collections.emptyMap());
@@ -227,30 +259,43 @@ public class OAuth2OpenController {
         // 1.1 校验 responseType 是否满足 code 或者 token 值
         OAuth2GrantTypeEnum grantTypeEnum = getGrantTypeEnum(responseType);
         // 1.2 校验 redirectUri 重定向域名是否合法 + 校验 scope 是否在 Client 授权范围内
-        OAuth2ClientDO client = oauth2ClientService.validOAuthClientFromCache(clientId, null,
-                grantTypeEnum.getGrantType(), scopes.keySet(), redirectUri);
+        OAuth2ClientDO client =
+                oauth2ClientService.validOAuthClientFromCache(
+                        clientId, null, grantTypeEnum.getGrantType(), scopes.keySet(), redirectUri);
 
         // 2.1 假设 approved 为 null，说明是场景一
         if (Boolean.TRUE.equals(autoApprove)) {
             // 如果无法自动授权通过，则返回空 url，前端不进行跳转
-            if (!oauth2ApproveService.checkForPreApproval(getLoginUserId(), getUserType(), clientId, scopes.keySet())) {
+            if (!oauth2ApproveService.checkForPreApproval(
+                    getLoginUserId(), getUserType(), clientId, scopes.keySet())) {
                 return success(null);
             }
         } else { // 2.2 假设 approved 非 null，说明是场景二
             // 如果计算后不通过，则跳转一个错误链接
-            if (!oauth2ApproveService.updateAfterApproval(getLoginUserId(), getUserType(), clientId, scopes)) {
-                return success(OAuth2Utils.buildUnsuccessfulRedirect(redirectUri, responseType, state,
-                        "access_denied", "User denied access"));
+            if (!oauth2ApproveService.updateAfterApproval(
+                    getLoginUserId(), getUserType(), clientId, scopes)) {
+                return success(
+                        OAuth2Utils.buildUnsuccessfulRedirect(
+                                redirectUri,
+                                responseType,
+                                state,
+                                "access_denied",
+                                "User denied access"));
             }
         }
 
         // 3.1 如果是 code 授权码模式，则发放 code 授权码，并重定向
-        List<String> approveScopes = convertList(scopes.entrySet(), Map.Entry::getKey, Map.Entry::getValue);
+        List<String> approveScopes =
+                convertList(scopes.entrySet(), Map.Entry::getKey, Map.Entry::getValue);
         if (grantTypeEnum == OAuth2GrantTypeEnum.AUTHORIZATION_CODE) {
-            return success(getAuthorizationCodeRedirect(getLoginUserId(), client, approveScopes, redirectUri, state));
+            return success(
+                    getAuthorizationCodeRedirect(
+                            getLoginUserId(), client, approveScopes, redirectUri, state));
         }
         // 3.2 如果是 token 则是 implicit 简化模式，则发送 accessToken 访问令牌，并重定向
-        return success(getImplicitGrantRedirect(getLoginUserId(), client, approveScopes, redirectUri, state));
+        return success(
+                getImplicitGrantRedirect(
+                        getLoginUserId(), client, approveScopes, redirectUri, state));
     }
 
     private static OAuth2GrantTypeEnum getGrantTypeEnum(String responseType) {
@@ -263,22 +308,38 @@ public class OAuth2OpenController {
         throw exception0(BAD_REQUEST.getCode(), "response_type 参数值只允许 code 和 token");
     }
 
-    private String getImplicitGrantRedirect(Long userId, OAuth2ClientDO client,
-                                            List<String> scopes, String redirectUri, String state) {
+    private String getImplicitGrantRedirect(
+            Long userId,
+            OAuth2ClientDO client,
+            List<String> scopes,
+            String redirectUri,
+            String state) {
         // 1. 创建 access token 访问令牌
-        OAuth2AccessTokenDO accessTokenDO = oauth2GrantService.grantImplicit(userId, getUserType(), client.getClientId(), scopes);
+        OAuth2AccessTokenDO accessTokenDO =
+                oauth2GrantService.grantImplicit(
+                        userId, getUserType(), client.getClientId(), scopes);
         Assert.notNull(accessTokenDO, "访问令牌不能为空"); // 防御性检查
         // 2. 拼接重定向的 URL
         // noinspection unchecked
-        return OAuth2Utils.buildImplicitRedirectUri(redirectUri, accessTokenDO.getAccessToken(), state, accessTokenDO.getExpiresTime(),
-                scopes, JsonUtils.parseObject(client.getAdditionalInformation(), Map.class));
+        return OAuth2Utils.buildImplicitRedirectUri(
+                redirectUri,
+                accessTokenDO.getAccessToken(),
+                state,
+                accessTokenDO.getExpiresTime(),
+                scopes,
+                JsonUtils.parseObject(client.getAdditionalInformation(), Map.class));
     }
 
-    private String getAuthorizationCodeRedirect(Long userId, OAuth2ClientDO client,
-                                                List<String> scopes, String redirectUri, String state) {
+    private String getAuthorizationCodeRedirect(
+            Long userId,
+            OAuth2ClientDO client,
+            List<String> scopes,
+            String redirectUri,
+            String state) {
         // 1. 创建 code 授权码
-        String authorizationCode = oauth2GrantService.grantAuthorizationCodeForCode(userId, getUserType(), client.getClientId(), scopes,
-                redirectUri, state);
+        String authorizationCode =
+                oauth2GrantService.grantAuthorizationCodeForCode(
+                        userId, getUserType(), client.getClientId(), scopes, redirectUri, state);
         // 2. 拼接重定向的 URL
         return OAuth2Utils.buildAuthorizationCodeRedirectUri(redirectUri, authorizationCode, state);
     }
@@ -294,5 +355,4 @@ public class OAuth2OpenController {
         }
         return clientIdAndSecret;
     }
-
 }

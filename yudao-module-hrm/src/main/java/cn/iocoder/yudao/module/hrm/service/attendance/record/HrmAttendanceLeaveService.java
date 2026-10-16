@@ -102,5 +102,4 @@ public interface HrmAttendanceLeaveService {
      */
     void updateLeaveApprovalStatus(
             Long id, String processInstanceId, Integer status, String reason);
-
 }

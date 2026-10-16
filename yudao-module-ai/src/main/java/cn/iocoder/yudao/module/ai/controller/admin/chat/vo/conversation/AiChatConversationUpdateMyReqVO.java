@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.controller.admin.chat.vo.conversation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI 聊天对话更新【我的】 Request VO")
@@ -35,5 +37,4 @@ public class AiChatConversationUpdateMyReqVO {
 
     @Schema(description = "上下文的最大 Message 数量", example = "10")
     private Integer maxContexts;
-
 }

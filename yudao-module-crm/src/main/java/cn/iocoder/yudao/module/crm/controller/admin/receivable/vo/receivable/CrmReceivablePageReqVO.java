@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmAuditStatusEnum;
 import cn.iocoder.yudao.module.crm.enums.common.CrmSceneTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -34,5 +36,4 @@ public class CrmReceivablePageReqVO extends PageParam {
     @Schema(description = "审批状态", example = "20")
     @InEnum(CrmAuditStatusEnum.class)
     private Integer auditStatus;
-
 }

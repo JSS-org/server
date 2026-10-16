@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -16,5 +17,4 @@ public class CrmStatisticsPerformanceTargetActualRespVO {
 
     @Schema(description = "完成金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "8000.00")
     private BigDecimal currentPrice;
-
 }

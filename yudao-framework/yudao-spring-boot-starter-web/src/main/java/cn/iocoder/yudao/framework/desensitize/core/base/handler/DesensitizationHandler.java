@@ -36,5 +36,4 @@ public interface DesensitizationHandler<T extends Annotation> {
             return "";
         }
     }
-
 }

@@ -19,5 +19,4 @@ public interface RewardActivityApi {
      * @return 满减送活动列表
      */
     List<RewardActivityMatchRespDTO> getMatchRewardActivityListBySpuIds(Collection<Long> spuIds);
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.cal.holiday;
 
 import cn.iocoder.yudao.module.mes.controller.admin.cal.holiday.vo.MesCalHolidaySaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.holiday.MesCalHolidayDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
@@ -38,5 +39,4 @@ public interface MesCalHolidayService {
      * @return 假期设置，不存在则返回 null
      */
     MesCalHolidayDO getHolidayByDay(LocalDateTime day);
-
 }

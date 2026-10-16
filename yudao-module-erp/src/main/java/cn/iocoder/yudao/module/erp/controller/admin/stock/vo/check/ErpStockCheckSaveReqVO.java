@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.check;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -49,21 +51,28 @@ public class ErpStockCheckSaveReqVO {
         @Schema(description = "产品单价", example = "100.00")
         private BigDecimal productPrice;
 
-        @Schema(description = "账面数量（当前库存）", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "账面数量（当前库存）",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "账面数量不能为空")
         private BigDecimal stockCount;
 
-        @Schema(description = "实际数量（实际库存）", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "实际数量（实际库存）",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "实际数量不能为空")
         private BigDecimal actualCount;
 
-        @Schema(description = "盈亏数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @Schema(
+                description = "盈亏数量",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "100.00")
         @NotNull(message = "盈亏数量不能为空")
         private BigDecimal count;
 
         @Schema(description = "备注", example = "随便")
         private String remark;
-
     }
-
 }

@@ -1,11 +1,13 @@
 package cn.iocoder.yudao.module.pms.dal.dataobject.pm.project;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,22 +29,23 @@ public class PmsProjectAnnouncementDO extends BaseDO {
     /**
      * 公告编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 项目编号
      *
      * 关联 {@link PmsProjectDO#getId()}
      */
     private Long projectId;
+
     /**
      * 公告内容
      */
     private String content;
+
     /**
      * 附件地址列表
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<String> fileUrls;
-
 }

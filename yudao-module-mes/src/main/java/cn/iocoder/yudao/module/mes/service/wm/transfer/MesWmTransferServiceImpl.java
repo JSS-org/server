@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.mes.service.wm.transfer;
 
-import cn.hutool.core.collection.CollUtil;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -17,7 +20,9 @@ import cn.iocoder.yudao.module.mes.enums.wm.MesWmTransferStatusEnum;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.MesWmTransactionService;
 import cn.iocoder.yudao.module.mes.service.wm.transaction.dto.MesWmTransactionSaveReqDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -27,10 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 转移单 Service 实现类
  */
@@ -38,17 +39,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmTransferServiceImpl implements MesWmTransferService {
 
-    @Resource
-    private MesWmTransferMapper transferMapper;
+    @Resource private MesWmTransferMapper transferMapper;
 
-    @Resource
-    private MesWmTransferLineService transferLineService;
-    @Resource
-    private MesWmTransferDetailService transferDetailService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
-    @Resource
-    private MesWmTransactionService wmTransactionService;
+    @Resource private MesWmTransferLineService transferLineService;
+    @Resource private MesWmTransferDetailService transferDetailService;
+    @Resource private MesWmMaterialStockService materialStockService;
+    @Resource private MesWmTransactionService wmTransactionService;
 
     @Override
     public Long createTransfer(MesWmTransferSaveReqVO createReqVO) {
@@ -108,8 +104,10 @@ public class MesWmTransferServiceImpl implements MesWmTransferService {
         }
 
         // 配送模式下，提交后如果未确认，则进入待确认状态；否则直接进入待上架状态
-        if (Boolean.TRUE.equals(transfer.getDeliveryFlag()) && !Boolean.TRUE.equals(transfer.getConfirmFlag())) {
-            transfer.setStatus(MesWmTransferStatusEnum.UNCONFIRMED.getStatus()).setConfirmFlag(false);
+        if (Boolean.TRUE.equals(transfer.getDeliveryFlag())
+                && !Boolean.TRUE.equals(transfer.getConfirmFlag())) {
+            transfer.setStatus(MesWmTransferStatusEnum.UNCONFIRMED.getStatus())
+                    .setConfirmFlag(false);
             // DONE @AI：冻结库存属于主单状态流转的一部分，保留在主单 service 统一处理
             freezeTransferLineStocks(id, true);
         } else {
@@ -141,9 +139,14 @@ public class MesWmTransferServiceImpl implements MesWmTransferService {
         }
         // 1.2 检查每个行的明细数量是否完成上架
         for (MesWmTransferLineDO line : lines) {
-            List<MesWmTransferDetailDO> details = transferDetailService.getTransferDetailListByLineId(line.getId());
-            BigDecimal totalDetailQty = CollectionUtils.getSumValue(details,
-                    MesWmTransferDetailDO::getQuantity, BigDecimal::add, BigDecimal.ZERO);
+            List<MesWmTransferDetailDO> details =
+                    transferDetailService.getTransferDetailListByLineId(line.getId());
+            BigDecimal totalDetailQty =
+                    CollectionUtils.getSumValue(
+                            details,
+                            MesWmTransferDetailDO::getQuantity,
+                            BigDecimal::add,
+                            BigDecimal.ZERO);
             if (line.getQuantity() != null && totalDetailQty.compareTo(line.getQuantity()) != 0) {
                 throw exception(WM_TRANSFER_DETAIL_QUANTITY_MISMATCH);
             }
@@ -181,32 +184,50 @@ public class MesWmTransferServiceImpl implements MesWmTransferService {
      * 创建调拨事务：基于 detail (明细) 的视角，不是纯粹的 line（行）的视角。
      * 因为明细才代表了实际调往各个目标仓位的动作，所以每条明細产生一笔出库（MOVE_OUT）和一笔入库（MOVE_IN）。
      */
-    private void createTransferTransactions(MesWmTransferDO transfer, List<MesWmTransferLineDO> lines) {
+    private void createTransferTransactions(
+            MesWmTransferDO transfer, List<MesWmTransferLineDO> lines) {
         // 1. 预加载所有明细，按 lineId 分组，避免 N+1 查询
-        List<MesWmTransferDetailDO> allDetails = transferDetailService.getTransferDetailListByTransferId(transfer.getId());
-        Map<Long, List<MesWmTransferDetailDO>> detailMap = CollectionUtils.convertMultiMap(
-                allDetails, MesWmTransferDetailDO::getLineId);
+        List<MesWmTransferDetailDO> allDetails =
+                transferDetailService.getTransferDetailListByTransferId(transfer.getId());
+        Map<Long, List<MesWmTransferDetailDO>> detailMap =
+                CollectionUtils.convertMultiMap(allDetails, MesWmTransferDetailDO::getLineId);
         // 2. 遍历行和对应的明细，创建事务
         for (MesWmTransferLineDO line : lines) {
-            List<MesWmTransferDetailDO> details = detailMap.getOrDefault(line.getId(), Collections.emptyList());
+            List<MesWmTransferDetailDO> details =
+                    detailMap.getOrDefault(line.getId(), Collections.emptyList());
             for (MesWmTransferDetailDO detail : details) {
                 // 2.1 先执行出库：调拨移出（从源仓库扣减库存），出库数量基于当前明细的数量
-                Long outTransactionId = wmTransactionService.createTransaction(new MesWmTransactionSaveReqDTO()
-                        .setType(MesWmTransactionTypeEnum.MOVE_OUT.getType()).setItemId(line.getItemId())
-                        .setQuantity(detail.getQuantity().negate()) // 库存减少（按 detail 的数量出）
-                        .setBatchId(line.getBatchId())
-                        .setWarehouseId(line.getFromWarehouseId()).setLocationId(line.getFromLocationId()).setAreaId(line.getFromAreaId())
-                        .setBizType(MesBizTypeConstants.WM_TRANSFER_OUT).setBizId(transfer.getId())
-                        .setBizCode(transfer.getCode()).setBizLineId(line.getId()));
+                Long outTransactionId =
+                        wmTransactionService.createTransaction(
+                                new MesWmTransactionSaveReqDTO()
+                                        .setType(MesWmTransactionTypeEnum.MOVE_OUT.getType())
+                                        .setItemId(line.getItemId())
+                                        .setQuantity(
+                                                detail.getQuantity()
+                                                        .negate()) // 库存减少（按 detail 的数量出）
+                                        .setBatchId(line.getBatchId())
+                                        .setWarehouseId(line.getFromWarehouseId())
+                                        .setLocationId(line.getFromLocationId())
+                                        .setAreaId(line.getFromAreaId())
+                                        .setBizType(MesBizTypeConstants.WM_TRANSFER_OUT)
+                                        .setBizId(transfer.getId())
+                                        .setBizCode(transfer.getCode())
+                                        .setBizLineId(line.getId()));
                 // 2.2 再执行入库：调拨移入（向目标仓库增加库存），入库数量等于相同明细的数量
-                wmTransactionService.createTransaction(new MesWmTransactionSaveReqDTO()
-                        .setType(MesWmTransactionTypeEnum.MOVE_IN.getType()).setItemId(line.getItemId()) // 物料信息来自 line
-                        .setQuantity(detail.getQuantity()) // 库存增加（按 detail 的数量入）
-                        .setBatchId(line.getBatchId()) // 批次信息来自 line
-                        .setWarehouseId(detail.getToWarehouseId()).setLocationId(detail.getToLocationId()).setAreaId(detail.getToAreaId())
-                        .setBizType(MesBizTypeConstants.WM_TRANSFER_IN).setBizId(transfer.getId())
-                        .setBizCode(transfer.getCode()).setBizLineId(line.getId())
-                        .setRelatedTransactionId(outTransactionId)); // 关联本次的具体出库事务
+                wmTransactionService.createTransaction(
+                        new MesWmTransactionSaveReqDTO()
+                                .setType(MesWmTransactionTypeEnum.MOVE_IN.getType())
+                                .setItemId(line.getItemId()) // 物料信息来自 line
+                                .setQuantity(detail.getQuantity()) // 库存增加（按 detail 的数量入）
+                                .setBatchId(line.getBatchId()) // 批次信息来自 line
+                                .setWarehouseId(detail.getToWarehouseId())
+                                .setLocationId(detail.getToLocationId())
+                                .setAreaId(detail.getToAreaId())
+                                .setBizType(MesBizTypeConstants.WM_TRANSFER_IN)
+                                .setBizId(transfer.getId())
+                                .setBizCode(transfer.getCode())
+                                .setBizLineId(line.getId())
+                                .setRelatedTransactionId(outTransactionId)); // 关联本次的具体出库事务
             }
         }
     }
@@ -313,13 +334,16 @@ public class MesWmTransferServiceImpl implements MesWmTransferService {
     }
 
     private void freezeTransferLineStocks(Long transferId, boolean frozen) {
-        List<MesWmTransferLineDO> lines = transferLineService.getTransferLineListByTransferId(transferId);
+        List<MesWmTransferLineDO> lines =
+                transferLineService.getTransferLineListByTransferId(transferId);
         if (CollUtil.isEmpty(lines)) {
             return;
         }
-        List<Long> materialStockIds = convertList(lines,
-                MesWmTransferLineDO::getMaterialStockId, line -> line.getMaterialStockId() != null);
+        List<Long> materialStockIds =
+                convertList(
+                        lines,
+                        MesWmTransferLineDO::getMaterialStockId,
+                        line -> line.getMaterialStockId() != null);
         materialStockService.updateMaterialStockFrozen(materialStockIds, frozen);
     }
-
 }

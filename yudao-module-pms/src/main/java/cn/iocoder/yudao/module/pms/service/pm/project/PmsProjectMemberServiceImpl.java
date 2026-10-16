@@ -1,5 +1,19 @@
 package cn.iocoder.yudao.module.pms.service.pm.project;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertLinkedSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ADMIN_REQUIRED;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_CREATOR_CANNOT_REMOVE;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_OWNER_CANNOT_EXIT;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_OWNER_LEVEL_CANNOT_ASSIGN;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_WRITE_ACCESS_DENIED;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
@@ -15,7 +29,9 @@ import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectStatusEnum;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.enums.permission.RoleCodeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,20 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertLinkedSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_ADMIN_REQUIRED;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_CREATOR_CANNOT_REMOVE;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_OWNER_CANNOT_EXIT;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_MEMBER_OWNER_LEVEL_CANNOT_ASSIGN;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_WRITE_ACCESS_DENIED;
-
 /**
  * PMS 项目成员 Service 实现类
  *
@@ -51,17 +53,13 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.PROJECT_WRITE
 @Validated
 public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
 
-    @Resource
-    private PmsProjectMemberMapper projectMemberMapper;
+    @Resource private PmsProjectMemberMapper projectMemberMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private PmsProjectService projectService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private PermissionApi permissionApi;
 
     @Override
     public List<Long> getActiveProjectIdListByUserId(Long userId) {
@@ -74,7 +72,9 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
 
         // 2. 只保留进行中的项目
         List<PmsProjectDO> projects = projectService.getProjectList(projectIds);
-        return convertList(projects, PmsProjectDO::getId,
+        return convertList(
+                projects,
+                PmsProjectDO::getId,
                 project -> PmsProjectStatusEnum.ACTIVE.getStatus().equals(project.getStatus()));
     }
 
@@ -84,7 +84,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         PmsProjectDO project = validateProjectExists(projectId);
 
         // 2. 校验用户是项目成员
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         if (member == null) {
             throw exception(PROJECT_ACCESS_DENIED);
         }
@@ -115,7 +116,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         }
 
         // 2. 校验项目成员权限级别允许编辑
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         if (member == null || !PmsProjectMemberLevelEnum.isWritable(member.getLevel())) {
             throw exception(PROJECT_WRITE_ACCESS_DENIED);
         }
@@ -124,7 +126,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createProjectMemberList(Long projectId, Long creatorId, Collection<Long> memberUserIds) {
+    public void createProjectMemberList(
+            Long projectId, Long creatorId, Collection<Long> memberUserIds) {
         // 1. 校验初始成员
         Set<Long> userIds = new LinkedHashSet<>();
         CollectionUtils.addIfNotNull(userIds, creatorId);
@@ -134,9 +137,18 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         adminUserApi.validateUserList(userIds);
 
         // 2. 创建人作为项目拥有者，其余成员使用默认编辑级别
-        List<PmsProjectMemberDO> members = convertList(userIds, userId -> new PmsProjectMemberDO()
-                .setProjectId(projectId).setUserId(userId)
-                .setLevel(ObjectUtil.equal(creatorId, userId) ? PmsProjectMemberLevelEnum.OWNER.getLevel() : PmsProjectMemberLevelEnum.WRITE.getLevel()));
+        List<PmsProjectMemberDO> members =
+                convertList(
+                        userIds,
+                        userId ->
+                                new PmsProjectMemberDO()
+                                        .setProjectId(projectId)
+                                        .setUserId(userId)
+                                        .setLevel(
+                                                ObjectUtil.equal(creatorId, userId)
+                                                        ? PmsProjectMemberLevelEnum.OWNER.getLevel()
+                                                        : PmsProjectMemberLevelEnum.WRITE
+                                                                .getLevel()));
         projectMemberMapper.insertBatch(members);
     }
 
@@ -146,7 +158,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         // 1.1 校验操作人可以管理项目
         PmsProjectDO project = validateProjectManager(saveReqVO.getProjectId(), operatorUserId);
         // 1.2 校验成员编号不重复
-        List<Long> userIdList = convertList(saveReqVO.getMembers(), PmsProjectMemberSaveReqVO.Member::getUserId);
+        List<Long> userIdList =
+                convertList(saveReqVO.getMembers(), PmsProjectMemberSaveReqVO.Member::getUserId);
         Set<Long> userIds = new LinkedHashSet<>(userIdList);
         if (userIds.size() != userIdList.size()) {
             throw exception(PROJECT_MEMBER_NOT_EXISTS);
@@ -166,8 +179,12 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
 
         // 2. 删除后按请求保存每名成员的权限级别
         projectMemberMapper.deleteByProjectIdAndUserIds(saveReqVO.getProjectId(), userIds);
-        projectMemberMapper.insertBatch(convertList(saveReqVO.getMembers(), member ->
-                BeanUtils.toBean(member, PmsProjectMemberDO.class).setProjectId(saveReqVO.getProjectId())));
+        projectMemberMapper.insertBatch(
+                convertList(
+                        saveReqVO.getMembers(),
+                        member ->
+                                BeanUtils.toBean(member, PmsProjectMemberDO.class)
+                                        .setProjectId(saveReqVO.getProjectId())));
     }
 
     @Override
@@ -176,7 +193,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         // 1.1 校验操作人可以管理项目
         PmsProjectDO project = validateProjectManager(projectId, operatorUserId);
         // 1.2 校验待移除成员存在
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         if (member == null) {
             throw exception(PROJECT_MEMBER_NOT_EXISTS);
         }
@@ -195,7 +213,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         // 1.1 校验项目可访问
         validateProjectReadable(projectId, userId);
         // 1.2 校验当前账号是直接成员
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         if (member == null) {
             throw exception(PROJECT_MEMBER_NOT_EXISTS);
         }
@@ -221,9 +240,13 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         // 2. 转换项目成员
         Long creatorId = NumberUtils.parseLong(project.getCreator());
         List<PmsProjectMemberDO> members = projectMemberMapper.selectListByProjectId(projectId);
-        return convertList(members, member -> new PmsProjectMemberRespVO()
-                .setUserId(member.getUserId()).setLevel(member.getLevel())
-                .setCreatorStatus(ObjectUtil.equal(member.getUserId(), creatorId)));
+        return convertList(
+                members,
+                member ->
+                        new PmsProjectMemberRespVO()
+                                .setUserId(member.getUserId())
+                                .setLevel(member.getLevel())
+                                .setCreatorStatus(ObjectUtil.equal(member.getUserId(), creatorId)));
     }
 
     @Override
@@ -234,22 +257,25 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
 
     @Override
     public List<Long> getOwnerProjectIdListByUserId(Long userId) {
-        List<PmsProjectMemberDO> members = projectMemberMapper.selectListByUserIdAndLevels(userId,
-                Collections.singleton(PmsProjectMemberLevelEnum.OWNER.getLevel()));
+        List<PmsProjectMemberDO> members =
+                projectMemberMapper.selectListByUserIdAndLevels(
+                        userId, Collections.singleton(PmsProjectMemberLevelEnum.OWNER.getLevel()));
         return convertList(members, PmsProjectMemberDO::getProjectId);
     }
 
     @Override
     public List<Long> getManagedProjectIdListByUserId(Long userId) {
-        List<PmsProjectMemberDO> members = projectMemberMapper.selectListByUserIdAndLevels(
-                userId, PmsProjectMemberLevelEnum.MANAGER_LEVELS);
+        List<PmsProjectMemberDO> members =
+                projectMemberMapper.selectListByUserIdAndLevels(
+                        userId, PmsProjectMemberLevelEnum.MANAGER_LEVELS);
         return convertList(members, PmsProjectMemberDO::getProjectId);
     }
 
     @Override
     public List<Long> getWritableProjectIdListByUserId(Long userId) {
-        List<PmsProjectMemberDO> members = projectMemberMapper.selectListByUserIdAndLevels(
-                userId, PmsProjectMemberLevelEnum.WRITABLE_LEVELS);
+        List<PmsProjectMemberDO> members =
+                projectMemberMapper.selectListByUserIdAndLevels(
+                        userId, PmsProjectMemberLevelEnum.WRITABLE_LEVELS);
         return convertList(members, PmsProjectMemberDO::getProjectId);
     }
 
@@ -258,9 +284,11 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         if (CollUtil.isEmpty(projectIds)) {
             return Collections.emptyMap();
         }
-        List<PmsProjectMemberDO> members = projectMemberMapper.selectListByProjectIdsAndLevels(
-                projectIds, PmsProjectMemberLevelEnum.MANAGER_LEVELS);
-        return convertMultiMap(members, PmsProjectMemberDO::getProjectId, PmsProjectMemberDO::getUserId);
+        List<PmsProjectMemberDO> members =
+                projectMemberMapper.selectListByProjectIdsAndLevels(
+                        projectIds, PmsProjectMemberLevelEnum.MANAGER_LEVELS);
+        return convertMultiMap(
+                members, PmsProjectMemberDO::getProjectId, PmsProjectMemberDO::getUserId);
     }
 
     @Override
@@ -277,7 +305,8 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         if (isSuperAdmin(userId)) {
             return true;
         }
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         return member != null && PmsProjectMemberLevelEnum.isOwner(member.getLevel());
     }
 
@@ -286,13 +315,15 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         if (isSuperAdmin(userId)) {
             return true;
         }
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         return member != null && PmsProjectMemberLevelEnum.isManager(member.getLevel());
     }
 
     @Override
     public void validateProjectMemberExists(Long projectId, Long userId) {
-        PmsProjectMemberDO member = projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
+        PmsProjectMemberDO member =
+                projectMemberMapper.selectByProjectIdAndUserId(projectId, userId);
         if (member == null) {
             throw exception(PROJECT_MEMBER_NOT_EXISTS);
         }
@@ -348,5 +379,4 @@ public class PmsProjectMemberServiceImpl implements PmsProjectMemberService {
         }
         return project;
     }
-
 }

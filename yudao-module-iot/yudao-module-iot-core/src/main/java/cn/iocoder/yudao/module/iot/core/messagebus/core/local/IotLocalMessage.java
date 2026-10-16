@@ -10,5 +10,4 @@ public class IotLocalMessage {
     private String topic;
 
     private Object message;
-
 }

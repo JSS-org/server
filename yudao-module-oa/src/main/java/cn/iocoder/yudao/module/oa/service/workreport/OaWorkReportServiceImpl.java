@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.oa.service.workreport;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_NO_DUPLICATE;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_STATUS_INVALID;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -22,7 +32,9 @@ import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -36,16 +48,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_NO_DUPLICATE;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.WORK_REPORT_STATUS_INVALID;
 
 /**
  * OA 工作汇报 Service 实现类
@@ -61,17 +63,12 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
      */
     private static final String WORK_REPORT_STATISTICS_PERMISSION = "oa:work-report:statistics";
 
-    @Resource
-    private OaWorkReportMapper workReportMapper;
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaWorkReportMapper workReportMapper;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private DeptApi deptApi;
-    @Resource
-    private PermissionApi permissionApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private DeptApi deptApi;
+    @Resource private PermissionApi permissionApi;
 
     @Override
     public Long createWorkReport(OaWorkReportSaveReqVO createReqVO, Long userId) {
@@ -84,11 +81,16 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
         }
 
         // 2. 创建工作汇报草稿
-        OaWorkReportDO workReport = BeanUtils.toBean(createReqVO, OaWorkReportDO.class)
-                .setNo(no)
-                .setTitle(buildTitle(createReqVO.getTitle(), createReqVO.getType(), createReqVO.getStartTime()))
-                .setStatus(OaWorkReportStatusEnum.DRAFT.getStatus())
-                .setDeptId(user != null ? user.getDeptId() : null);
+        OaWorkReportDO workReport =
+                BeanUtils.toBean(createReqVO, OaWorkReportDO.class)
+                        .setNo(no)
+                        .setTitle(
+                                buildTitle(
+                                        createReqVO.getTitle(),
+                                        createReqVO.getType(),
+                                        createReqVO.getStartTime()))
+                        .setStatus(OaWorkReportStatusEnum.DRAFT.getStatus())
+                        .setDeptId(user != null ? user.getDeptId() : null);
         workReportMapper.insert(workReport);
         return workReport.getId();
     }
@@ -101,8 +103,13 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
         validateWorkReportStatus(workReport, OaWorkReportStatusEnum.DRAFT);
 
         // 2. 更新工作汇报草稿
-        workReportMapper.updateById(BeanUtils.toBean(updateReqVO, OaWorkReportDO.class)
-                .setTitle(buildTitle(updateReqVO.getTitle(), updateReqVO.getType(), updateReqVO.getStartTime())));
+        workReportMapper.updateById(
+                BeanUtils.toBean(updateReqVO, OaWorkReportDO.class)
+                        .setTitle(
+                                buildTitle(
+                                        updateReqVO.getTitle(),
+                                        updateReqVO.getType(),
+                                        updateReqVO.getStartTime())));
     }
 
     @Override
@@ -124,8 +131,10 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
         validateWorkReportStatus(workReport, OaWorkReportStatusEnum.DRAFT);
 
         // 2. 提交工作汇报
-        workReportMapper.updateById(new OaWorkReportDO().setId(id)
-                .setStatus(OaWorkReportStatusEnum.SUBMITTED.getStatus()));
+        workReportMapper.updateById(
+                new OaWorkReportDO()
+                        .setId(id)
+                        .setStatus(OaWorkReportStatusEnum.SUBMITTED.getStatus()));
     }
 
     @Override
@@ -136,8 +145,8 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
         validateWorkReportStatus(workReport, OaWorkReportStatusEnum.SUBMITTED);
 
         // 2. 取消提交工作汇报
-        workReportMapper.updateById(new OaWorkReportDO().setId(id)
-                .setStatus(OaWorkReportStatusEnum.DRAFT.getStatus()));
+        workReportMapper.updateById(
+                new OaWorkReportDO().setId(id).setStatus(OaWorkReportStatusEnum.DRAFT.getStatus()));
     }
 
     @Override
@@ -152,7 +161,8 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
         List<AdminUserRespDTO> subordinateUsers = adminUserApi.getUserListBySubordinate(userId);
         Set<Long> subordinateUserIds = convertSet(subordinateUsers, AdminUserRespDTO::getId);
         if (!permissionApi.hasAnyPermissions(userId, WORK_REPORT_STATISTICS_PERMISSION)
-                || ObjUtil.notEqual(workReport.getStatus(), OaWorkReportStatusEnum.SUBMITTED.getStatus())
+                || ObjUtil.notEqual(
+                        workReport.getStatus(), OaWorkReportStatusEnum.SUBMITTED.getStatus())
                 || !subordinateUserIds.contains(NumberUtils.parseLong(workReport.getCreator()))) {
             throw exception(WORK_REPORT_ACCESS_DENIED);
         }
@@ -160,38 +170,61 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
     }
 
     @Override
-    public PageResult<OaWorkReportDO> getWorkReportPage(OaWorkReportPageReqVO pageReqVO, Long userId) {
+    public PageResult<OaWorkReportDO> getWorkReportPage(
+            OaWorkReportPageReqVO pageReqVO, Long userId) {
         return workReportMapper.selectPage(pageReqVO, userId);
     }
 
     @Override
-    public OaWorkReportStatisticsRespVO getWorkReportStatistics(OaWorkReportStatisticsReqVO reqVO, Long userId) {
+    public OaWorkReportStatisticsRespVO getWorkReportStatistics(
+            OaWorkReportStatisticsReqVO reqVO, Long userId) {
         // 1.1 按所选日期范围生成应填周期，包含范围内的未来日期
-        List<String> expectedPeriodKeys = buildPeriodKeys(reqVO.getType(), reqVO.getStartTime(), reqVO.getEndTime());
+        List<String> expectedPeriodKeys =
+                buildPeriodKeys(reqVO.getType(), reqVO.getStartTime(), reqVO.getEndTime());
         // 1.2 查询管理范围内的员工
         List<AdminUserRespDTO> users = getStatisticsUsers(reqVO, userId);
 
         // 2. 按完整自然周期查询，避免统计从周中或月中开始时漏掉汇报
-        List<OaWorkReportDO> workReports = CollUtil.isEmpty(users)
-                ? Collections.emptyList()
-                : workReportMapper.selectListByCreatorsAndTypeAndStatusAndStartTimeBetween(
-                        convertList(users, user -> user.getId().toString()), reqVO.getType(),
-                        OaWorkReportStatusEnum.SUBMITTED.getStatus(),
-                        reqVO.getQueryStartTime(), reqVO.getQueryEndTime());
+        List<OaWorkReportDO> workReports =
+                CollUtil.isEmpty(users)
+                        ? Collections.emptyList()
+                        : workReportMapper.selectListByCreatorsAndTypeAndStatusAndStartTimeBetween(
+                                convertList(users, user -> user.getId().toString()),
+                                reqVO.getType(),
+                                OaWorkReportStatusEnum.SUBMITTED.getStatus(),
+                                reqVO.getQueryStartTime(),
+                                reqVO.getQueryEndTime());
 
         // 3. 汇总每位员工的已填、未填及汇报明细
-        Map<Long, List<OaWorkReportDO>> userWorkReportMap = convertMultiMap(workReports,
-                report -> NumberUtils.parseLong(report.getCreator()));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(convertSet(users, AdminUserRespDTO::getDeptId));
-        List<OaWorkReportStatisticsRespVO.UserStatistics> userStatisticsList = convertList(users, user ->
-                buildUserStatistics(user, deptMap.get(user.getDeptId()), userWorkReportMap.getOrDefault(user.getId(), Collections.emptyList()), expectedPeriodKeys));
+        Map<Long, List<OaWorkReportDO>> userWorkReportMap =
+                convertMultiMap(workReports, report -> NumberUtils.parseLong(report.getCreator()));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(users, AdminUserRespDTO::getDeptId));
+        List<OaWorkReportStatisticsRespVO.UserStatistics> userStatisticsList =
+                convertList(
+                        users,
+                        user ->
+                                buildUserStatistics(
+                                        user,
+                                        deptMap.get(user.getDeptId()),
+                                        userWorkReportMap.getOrDefault(
+                                                user.getId(), Collections.emptyList()),
+                                        expectedPeriodKeys));
 
         // 4. 汇总整体统计
-        int expectedCount = userStatisticsList.stream().mapToInt(OaWorkReportStatisticsRespVO.UserStatistics::getExpectedCount).sum();
-        int submittedCount = userStatisticsList.stream().mapToInt(OaWorkReportStatisticsRespVO.UserStatistics::getSubmittedCount).sum();
+        int expectedCount =
+                userStatisticsList.stream()
+                        .mapToInt(OaWorkReportStatisticsRespVO.UserStatistics::getExpectedCount)
+                        .sum();
+        int submittedCount =
+                userStatisticsList.stream()
+                        .mapToInt(OaWorkReportStatisticsRespVO.UserStatistics::getSubmittedCount)
+                        .sum();
         return new OaWorkReportStatisticsRespVO()
-                .setUserCount(users.size()).setExpectedCount(expectedCount)
-                .setSubmittedCount(submittedCount).setMissingCount(Math.max(0, expectedCount - submittedCount))
+                .setUserCount(users.size())
+                .setExpectedCount(expectedCount)
+                .setSubmittedCount(submittedCount)
+                .setMissingCount(Math.max(0, expectedCount - submittedCount))
                 .setUsers(userStatisticsList);
     }
 
@@ -202,7 +235,8 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
      * @param userId 当前用户编号
      * @return 管理范围内符合部门和启用状态条件的员工列表
      */
-    private List<AdminUserRespDTO> getStatisticsUsers(OaWorkReportStatisticsReqVO reqVO, Long userId) {
+    private List<AdminUserRespDTO> getStatisticsUsers(
+            OaWorkReportStatisticsReqVO reqVO, Long userId) {
         // 1. 查询所选部门及子部门范围，未选部门时不限制部门
         Set<Long> deptIds = null;
         if (reqVO.getDeptId() != null) {
@@ -215,9 +249,13 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
         List<AdminUserRespDTO> subordinateUsers = adminUserApi.getUserListBySubordinate(userId);
         // 2.2 保留启用且属于所选部门的员工，按用户编号稳定排序
         Set<Long> finalDeptIds = deptIds;
-        List<AdminUserRespDTO> users = filterList(subordinateUsers, user ->
-                CommonStatusEnum.ENABLE.getStatus().equals(user.getStatus())
-                        && (finalDeptIds == null || finalDeptIds.contains(user.getDeptId())));
+        List<AdminUserRespDTO> users =
+                filterList(
+                        subordinateUsers,
+                        user ->
+                                CommonStatusEnum.ENABLE.getStatus().equals(user.getStatus())
+                                        && (finalDeptIds == null
+                                                || finalDeptIds.contains(user.getDeptId())));
         users.sort(Comparator.comparing(AdminUserRespDTO::getId));
         return users;
     }
@@ -231,29 +269,50 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
      * @param expectedPeriodKeys 应填周期列表
      * @return 员工汇报统计及明细
      */
-    private OaWorkReportStatisticsRespVO.UserStatistics buildUserStatistics(AdminUserRespDTO user, DeptRespDTO dept,
-                                                                             List<OaWorkReportDO> workReports,
-                                                                             List<String> expectedPeriodKeys) {
+    private OaWorkReportStatisticsRespVO.UserStatistics buildUserStatistics(
+            AdminUserRespDTO user,
+            DeptRespDTO dept,
+            List<OaWorkReportDO> workReports,
+            List<String> expectedPeriodKeys) {
         // 1. 按周期去重统计已填数量，并计算未填周期
-        Set<String> submittedPeriodKeys = convertSet(workReports, report -> OaWorkReportTypeEnum.valueOf(report.getType())
-                .formatPeriod(report.getStartTime()));
-        List<String> missingPeriodKeys = filterList(expectedPeriodKeys, periodKey -> !submittedPeriodKeys.contains(periodKey));
+        Set<String> submittedPeriodKeys =
+                convertSet(
+                        workReports,
+                        report ->
+                                OaWorkReportTypeEnum.valueOf(report.getType())
+                                        .formatPeriod(report.getStartTime()));
+        List<String> missingPeriodKeys =
+                filterList(
+                        expectedPeriodKeys, periodKey -> !submittedPeriodKeys.contains(periodKey));
         int submittedCount = expectedPeriodKeys.size() - missingPeriodKeys.size();
 
         // 2. 转换已提交汇报明细，同一周期的多份汇报均保留展示
-        List<OaWorkReportStatisticsRespVO.Report> submittedReports = convertList(workReports, workReport ->
-                new OaWorkReportStatisticsRespVO.Report().setId(workReport.getId()).setNo(workReport.getNo())
-                        .setTitle(workReport.getTitle()).setStatus(workReport.getStatus())
-                        .setStartTime(workReport.getStartTime()).setCreateTime(workReport.getCreateTime())
-                        .setPeriodKey(OaWorkReportTypeEnum.valueOf(workReport.getType()).formatPeriod(workReport.getStartTime())));
+        List<OaWorkReportStatisticsRespVO.Report> submittedReports =
+                convertList(
+                        workReports,
+                        workReport ->
+                                new OaWorkReportStatisticsRespVO.Report()
+                                        .setId(workReport.getId())
+                                        .setNo(workReport.getNo())
+                                        .setTitle(workReport.getTitle())
+                                        .setStatus(workReport.getStatus())
+                                        .setStartTime(workReport.getStartTime())
+                                        .setCreateTime(workReport.getCreateTime())
+                                        .setPeriodKey(
+                                                OaWorkReportTypeEnum.valueOf(workReport.getType())
+                                                        .formatPeriod(workReport.getStartTime())));
 
         // 3. 拼接员工、部门及统计数量
         return new OaWorkReportStatisticsRespVO.UserStatistics()
-                .setUserId(user.getId()).setUserName(user.getNickname())
-                .setDeptId(user.getDeptId()).setDeptName(dept != null ? dept.getName() : null)
-                .setExpectedCount(expectedPeriodKeys.size()).setSubmittedCount(submittedCount)
+                .setUserId(user.getId())
+                .setUserName(user.getNickname())
+                .setDeptId(user.getDeptId())
+                .setDeptName(dept != null ? dept.getName() : null)
+                .setExpectedCount(expectedPeriodKeys.size())
+                .setSubmittedCount(submittedCount)
                 .setMissingCount(Math.max(0, expectedPeriodKeys.size() - submittedCount))
-                .setSubmittedReports(submittedReports).setMissingPeriodKeys(missingPeriodKeys);
+                .setSubmittedReports(submittedReports)
+                .setMissingPeriodKeys(missingPeriodKeys);
     }
 
     /**
@@ -264,7 +323,8 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
      * @param endTime 统计结束时间
      * @return 去重后的应填周期列表，日报不包含周末
      */
-    private List<String> buildPeriodKeys(Integer type, LocalDateTime startTime, LocalDateTime endTime) {
+    private List<String> buildPeriodKeys(
+            Integer type, LocalDateTime startTime, LocalDateTime endTime) {
         // 1. 按自然日统一到零点，避免时分秒不同导致末日漏计
         LocalDateTime dayStartTime = LocalDateTimeUtils.getDayBeginTime(startTime);
         LocalDateTime dayEndTime = LocalDateTimeUtils.getDayBeginTime(endTime);
@@ -274,9 +334,12 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
 
         // 2. 遍历自然日，日报排除周末，周报、月报按所属周期去重
         Set<String> periodKeys = new LinkedHashSet<>();
-        for (LocalDateTime dateTime = dayStartTime; !dateTime.isAfter(dayEndTime); dateTime = dateTime.plusDays(1)) {
+        for (LocalDateTime dateTime = dayStartTime;
+                !dateTime.isAfter(dayEndTime);
+                dateTime = dateTime.plusDays(1)) {
             if (OaWorkReportTypeEnum.DAILY.getType().equals(type)) {
-                if (dateTime.getDayOfWeek() != DayOfWeek.SATURDAY && dateTime.getDayOfWeek() != DayOfWeek.SUNDAY) {
+                if (dateTime.getDayOfWeek() != DayOfWeek.SATURDAY
+                        && dateTime.getDayOfWeek() != DayOfWeek.SUNDAY) {
                     periodKeys.add(dateTime.toLocalDate().toString());
                 }
             } else if (OaWorkReportTypeEnum.WEEKLY.getType().equals(type)) {
@@ -349,10 +412,10 @@ public class OaWorkReportServiceImpl implements OaWorkReportService {
      * @param workReport 工作汇报
      * @param status 预期状态
      */
-    private void validateWorkReportStatus(OaWorkReportDO workReport, OaWorkReportStatusEnum status) {
+    private void validateWorkReportStatus(
+            OaWorkReportDO workReport, OaWorkReportStatusEnum status) {
         if (ObjUtil.notEqual(workReport.getStatus(), status.getStatus())) {
             throw exception(WORK_REPORT_STATUS_INVALID);
         }
     }
-
 }

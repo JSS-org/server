@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.enums.brokerage;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -29,12 +30,14 @@ public enum BrokerageBindModeEnum implements ArrayValuable<Integer> {
     OVERRIDE(3, "覆盖绑定"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BrokerageBindModeEnum::getMode).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(BrokerageBindModeEnum::getMode).toArray(Integer[]::new);
 
     /**
      * 模式
      */
     private final Integer mode;
+
     /**
      * 名字
      */
@@ -44,5 +47,4 @@ public enum BrokerageBindModeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

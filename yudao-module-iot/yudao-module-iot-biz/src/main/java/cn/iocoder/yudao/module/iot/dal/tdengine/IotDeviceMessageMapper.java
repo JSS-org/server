@@ -3,8 +3,10 @@ package cn.iocoder.yudao.module.iot.dal.tdengine;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.message.IotDeviceMessagePageReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceMessageDO;
 import cn.iocoder.yudao.module.iot.framework.tdengine.core.annotation.TDengineDS;
+
 import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -47,8 +49,8 @@ public interface IotDeviceMessageMapper {
      * @param reqVO 分页查询条件
      * @return 设备消息列表
      */
-    IPage<IotDeviceMessageDO> selectPage(IPage<IotDeviceMessageDO> page,
-                                         @Param("reqVO") IotDeviceMessagePageReqVO reqVO);
+    IPage<IotDeviceMessageDO> selectPage(
+            IPage<IotDeviceMessageDO> page, @Param("reqVO") IotDeviceMessagePageReqVO reqVO);
 
     /**
      * 统计设备消息数量
@@ -66,14 +68,14 @@ public interface IotDeviceMessageMapper {
      * @param reply 是否回复消息
      * @return 消息列表
      */
-    List<IotDeviceMessageDO> selectListByRequestIdsAndReply(@Param("deviceId") Long deviceId,
-                                                            @Param("requestIds") Collection<String> requestIds,
-                                                            @Param("reply") Boolean reply);
+    List<IotDeviceMessageDO> selectListByRequestIdsAndReply(
+            @Param("deviceId") Long deviceId,
+            @Param("requestIds") Collection<String> requestIds,
+            @Param("reply") Boolean reply);
 
     /**
      * 按照时间范围（小时），统计设备的消息数量
      */
-    List<Map<String, Object>> selectDeviceMessageCountGroupByDate(@Param("startTime") Long startTime,
-                                                                  @Param("endTime") Long endTime);
-
+    List<Map<String, Object>> selectDeviceMessageCountGroupByDate(
+            @Param("startTime") Long startTime, @Param("endTime") Long endTime);
 }

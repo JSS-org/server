@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.template.vo.item;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -17,7 +19,10 @@ public class MesQcTemplateItemSaveReqVO {
     @NotNull(message = "质检方案ID不能为空")
     private Long templateId;
 
-    @Schema(description = "产品物料ID（关联 mes_md_item）", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "产品物料ID（关联 mes_md_item）",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @NotNull(message = "产品物料ID不能为空")
     private Long itemId;
 
@@ -38,5 +43,4 @@ public class MesQcTemplateItemSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

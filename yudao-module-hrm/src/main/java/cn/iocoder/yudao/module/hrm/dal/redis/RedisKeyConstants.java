@@ -22,5 +22,4 @@ public interface RedisKeyConstants {
      * VALUE 数据格式：标准参保项目列表
      */
     String INSURANCE_STANDARD_PROJECT = "hrm:insurance_standard_project";
-
 }

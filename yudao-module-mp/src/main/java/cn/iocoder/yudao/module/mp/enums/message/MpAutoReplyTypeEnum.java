@@ -11,7 +11,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MpAutoReplyTypeEnum {
-
     SUBSCRIBE(1, "关注时回复"),
     MESSAGE(2, "收到消息回复"),
     KEYWORD(3, "关键词回复"),
@@ -21,9 +20,9 @@ public enum MpAutoReplyTypeEnum {
      * 来源
      */
     private final Integer type;
+
     /**
      * 类型的名字
      */
     private final String name;
-
 }

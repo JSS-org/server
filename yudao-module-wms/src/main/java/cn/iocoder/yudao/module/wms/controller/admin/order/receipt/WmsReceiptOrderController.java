@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.wms.controller.admin.order.receipt;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
@@ -27,12 +32,15 @@ import cn.iocoder.yudao.module.wms.service.md.merchant.WmsMerchantService;
 import cn.iocoder.yudao.module.wms.service.md.warehouse.WmsWarehouseService;
 import cn.iocoder.yudao.module.wms.service.order.receipt.WmsReceiptOrderDetailService;
 import cn.iocoder.yudao.module.wms.service.order.receipt.WmsReceiptOrderService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,44 +51,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-
 @Tag(name = "管理后台 - WMS 入库单")
 @RestController
 @RequestMapping("/wms/receipt-order")
 @Validated
 public class WmsReceiptOrderController {
 
-    @Resource
-    private WmsReceiptOrderService receiptOrderService;
-    @Resource
-    private WmsReceiptOrderDetailService receiptOrderDetailService;
-    @Resource
-    private WmsMerchantService merchantService;
-    @Resource
-    private WmsWarehouseService warehouseService;
-    @Resource
-    private WmsItemService itemService;
-    @Resource
-    private WmsItemSkuService itemSkuService;
+    @Resource private WmsReceiptOrderService receiptOrderService;
+    @Resource private WmsReceiptOrderDetailService receiptOrderDetailService;
+    @Resource private WmsMerchantService merchantService;
+    @Resource private WmsWarehouseService warehouseService;
+    @Resource private WmsItemService itemService;
+    @Resource private WmsItemSkuService itemSkuService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建入库单")
     @PreAuthorize("@ss.hasPermission('wms:receipt-order:create')")
-    public CommonResult<Long> createReceiptOrder(@Valid @RequestBody WmsReceiptOrderSaveReqVO createReqVO) {
+    public CommonResult<Long> createReceiptOrder(
+            @Valid @RequestBody WmsReceiptOrderSaveReqVO createReqVO) {
         return success(receiptOrderService.createReceiptOrder(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新入库单")
     @PreAuthorize("@ss.hasPermission('wms:receipt-order:update')")
-    public CommonResult<Boolean> updateReceiptOrder(@Valid @RequestBody WmsReceiptOrderSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateReceiptOrder(
+            @Valid @RequestBody WmsReceiptOrderSaveReqVO updateReqVO) {
         receiptOrderService.updateReceiptOrder(updateReqVO);
         return success(true);
     }
@@ -122,30 +120,41 @@ public class WmsReceiptOrderController {
             return success(null);
         }
         // 获得入库单的明细列表
-        List<WmsReceiptOrderDetailDO> detailList = receiptOrderDetailService.getReceiptOrderDetailList(id);
+        List<WmsReceiptOrderDetailDO> detailList =
+                receiptOrderDetailService.getReceiptOrderDetailList(id);
         // 拼接结果返回
-        WmsReceiptOrderRespVO respVO = buildReceiptOrderRespVO(order)
-                .setDetails(buildReceiptOrderDetailRespVOList(detailList));
+        WmsReceiptOrderRespVO respVO =
+                buildReceiptOrderRespVO(order)
+                        .setDetails(buildReceiptOrderDetailRespVOList(detailList));
         return success(respVO);
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得入库单分页")
     @PreAuthorize("@ss.hasPermission('wms:receipt-order:query')")
-    public CommonResult<PageResult<WmsReceiptOrderRespVO>> getReceiptOrderPage(@Valid WmsReceiptOrderPageReqVO pageReqVO) {
-        PageResult<WmsReceiptOrderDO> pageResult = receiptOrderService.getReceiptOrderPage(pageReqVO);
-        return success(new PageResult<>(buildReceiptOrderRespVOList(pageResult.getList()), pageResult.getTotal()));
+    public CommonResult<PageResult<WmsReceiptOrderRespVO>> getReceiptOrderPage(
+            @Valid WmsReceiptOrderPageReqVO pageReqVO) {
+        PageResult<WmsReceiptOrderDO> pageResult =
+                receiptOrderService.getReceiptOrderPage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        buildReceiptOrderRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出入库单 Excel")
     @PreAuthorize("@ss.hasPermission('wms:receipt-order:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportReceiptOrderExcel(@Valid WmsReceiptOrderPageReqVO pageReqVO,
-                                        HttpServletResponse response) throws IOException {
+    public void exportReceiptOrderExcel(
+            @Valid WmsReceiptOrderPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<WmsReceiptOrderDO> list = receiptOrderService.getReceiptOrderPage(pageReqVO).getList();
-        ExcelUtils.write(response, "入库单.xls", "数据", WmsReceiptOrderRespVO.class,
+        ExcelUtils.write(
+                response,
+                "入库单.xls",
+                "数据",
+                WmsReceiptOrderRespVO.class,
                 buildReceiptOrderRespVOList(list));
     }
 
@@ -155,7 +164,8 @@ public class WmsReceiptOrderController {
         if (order == null) {
             return null;
         }
-        List<WmsReceiptOrderRespVO> list = buildReceiptOrderRespVOList(Collections.singletonList(order));
+        List<WmsReceiptOrderRespVO> list =
+                buildReceiptOrderRespVOList(Collections.singletonList(order));
         return CollUtil.getFirst(list);
     }
 
@@ -164,41 +174,84 @@ public class WmsReceiptOrderController {
             return Collections.emptyList();
         }
         // 获取相关的商户、仓库、用户等数据
-        Map<Long, WmsMerchantDO> merchantMap = merchantService.getMerchantMap(convertSet(list, WmsReceiptOrderDO::getMerchantId));
-        Map<Long, WmsWarehouseDO> warehouseMap = warehouseService.getWarehouseMap(convertSet(list, WmsReceiptOrderDO::getWarehouseId));
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertSetByFlatMap(list,
-                order -> Stream.of(parseUserId(order.getCreator()), parseUserId(order.getUpdater()))));
+        Map<Long, WmsMerchantDO> merchantMap =
+                merchantService.getMerchantMap(convertSet(list, WmsReceiptOrderDO::getMerchantId));
+        Map<Long, WmsWarehouseDO> warehouseMap =
+                warehouseService.getWarehouseMap(
+                        convertSet(list, WmsReceiptOrderDO::getWarehouseId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(
+                        convertSetByFlatMap(
+                                list,
+                                order ->
+                                        Stream.of(
+                                                parseUserId(order.getCreator()),
+                                                parseUserId(order.getUpdater()))));
         // 拼接数据
-        return BeanUtils.toBean(list, WmsReceiptOrderRespVO.class, vo -> {
-            MapUtils.findAndThen(merchantMap, vo.getMerchantId(), merchant -> vo.setMerchantName(merchant.getName()));
-            MapUtils.findAndThen(warehouseMap, vo.getWarehouseId(), warehouse -> vo.setWarehouseName(warehouse.getName()));
-            MapUtils.findAndThen(userMap, parseUserId(vo.getCreator()), user -> vo.setCreatorName(user.getNickname()));
-            MapUtils.findAndThen(userMap, parseUserId(vo.getUpdater()), user -> vo.setUpdaterName(user.getNickname()));
-        });
+        return BeanUtils.toBean(
+                list,
+                WmsReceiptOrderRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            merchantMap,
+                            vo.getMerchantId(),
+                            merchant -> vo.setMerchantName(merchant.getName()));
+                    MapUtils.findAndThen(
+                            warehouseMap,
+                            vo.getWarehouseId(),
+                            warehouse -> vo.setWarehouseName(warehouse.getName()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            parseUserId(vo.getCreator()),
+                            user -> vo.setCreatorName(user.getNickname()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            parseUserId(vo.getUpdater()),
+                            user -> vo.setUpdaterName(user.getNickname()));
+                });
     }
 
     private Long parseUserId(String userId) {
         return NumberUtil.parseLong(userId, null);
     }
 
-    private List<WmsReceiptOrderDetailRespVO> buildReceiptOrderDetailRespVOList(List<WmsReceiptOrderDetailDO> list) {
+    private List<WmsReceiptOrderDetailRespVO> buildReceiptOrderDetailRespVOList(
+            List<WmsReceiptOrderDetailDO> list) {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
         // 获取相关的商品、SKU、仓库等数据
-        Map<Long, WmsItemSkuDO> skuMap = itemSkuService.getItemSkuMap(convertSet(list, WmsReceiptOrderDetailDO::getSkuId));
-        Map<Long, WmsItemDO> itemMap = itemService.getItemMap(convertSet(skuMap.values(), WmsItemSkuDO::getItemId));
-        Map<Long, WmsWarehouseDO> warehouseMap = warehouseService.getWarehouseMap(
-                convertSet(list, WmsReceiptOrderDetailDO::getWarehouseId));
+        Map<Long, WmsItemSkuDO> skuMap =
+                itemSkuService.getItemSkuMap(convertSet(list, WmsReceiptOrderDetailDO::getSkuId));
+        Map<Long, WmsItemDO> itemMap =
+                itemService.getItemMap(convertSet(skuMap.values(), WmsItemSkuDO::getItemId));
+        Map<Long, WmsWarehouseDO> warehouseMap =
+                warehouseService.getWarehouseMap(
+                        convertSet(list, WmsReceiptOrderDetailDO::getWarehouseId));
         // 拼接数据
-        return BeanUtils.toBean(list, WmsReceiptOrderDetailRespVO.class, vo -> {
-            MapUtils.findAndThen(skuMap, vo.getSkuId(), sku -> {
-                vo.setSkuCode(sku.getCode()).setSkuName(sku.getName()).setItemId(sku.getItemId());
-                MapUtils.findAndThen(itemMap, sku.getItemId(), item -> vo.setItemCode(item.getCode())
-                        .setItemName(item.getName()).setUnit(item.getUnit()));
-            });
-            MapUtils.findAndThen(warehouseMap, vo.getWarehouseId(), warehouse -> vo.setWarehouseName(warehouse.getName()));
-        });
+        return BeanUtils.toBean(
+                list,
+                WmsReceiptOrderDetailRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            skuMap,
+                            vo.getSkuId(),
+                            sku -> {
+                                vo.setSkuCode(sku.getCode())
+                                        .setSkuName(sku.getName())
+                                        .setItemId(sku.getItemId());
+                                MapUtils.findAndThen(
+                                        itemMap,
+                                        sku.getItemId(),
+                                        item ->
+                                                vo.setItemCode(item.getCode())
+                                                        .setItemName(item.getName())
+                                                        .setUnit(item.getUnit()));
+                            });
+                    MapUtils.findAndThen(
+                            warehouseMap,
+                            vo.getWarehouseId(),
+                            warehouse -> vo.setWarehouseName(warehouse.getName()));
+                });
     }
-
 }

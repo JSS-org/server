@@ -29,5 +29,4 @@ public class ProductPropertyValueDetailRespDTO {
      * 属性值的名称
      */
     private String valueName;
-
 }

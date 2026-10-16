@@ -1,10 +1,22 @@
 package cn.iocoder.yudao.module.hrm.service.employee.info;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_PERSONAL_NOTE_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verify;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.personalnote.HrmEmployeePersonalNoteCreateReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeePersonalNoteDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.employee.info.HrmEmployeePersonalNoteMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -12,15 +24,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.EMPLOYEE_PERSONAL_NOTE_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.verify;
 
 /**
  * {@link HrmEmployeePersonalNoteServiceImpl} 的单元测试类
@@ -30,13 +33,10 @@ import static org.mockito.Mockito.verify;
 @Import(HrmEmployeePersonalNoteServiceImpl.class)
 public class HrmEmployeePersonalNoteServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private HrmEmployeePersonalNoteServiceImpl personalNoteService;
-    @Resource
-    private HrmEmployeePersonalNoteMapper personalNoteMapper;
+    @Resource private HrmEmployeePersonalNoteServiceImpl personalNoteService;
+    @Resource private HrmEmployeePersonalNoteMapper personalNoteMapper;
 
-    @MockitoBean
-    private HrmEmployeeService employeeService;
+    @MockitoBean private HrmEmployeeService employeeService;
 
     @Test
     public void testCreatePersonalNote_success() {
@@ -80,7 +80,8 @@ public class HrmEmployeePersonalNoteServiceImplTest extends BaseDbUnitTest {
         personalNoteMapper.insert(personalNote);
 
         // 调用，并断言异常
-        assertServiceException(() -> personalNoteService.deletePersonalNote(randomLongId(), personalNote.getId()),
+        assertServiceException(
+                () -> personalNoteService.deletePersonalNote(randomLongId(), personalNote.getId()),
                 EMPLOYEE_PERSONAL_NOTE_NOT_EXISTS);
     }
 
@@ -99,12 +100,13 @@ public class HrmEmployeePersonalNoteServiceImplTest extends BaseDbUnitTest {
         HrmEmployeePersonalNoteDO endBoundaryNote =
                 personalNote(employeeId, "结束边界事项", beginTime.plusDays(1));
         personalNoteMapper.insert(endBoundaryNote);
-        personalNoteMapper.insert(personalNote(employeeId, "范围外事项", beginTime.plusDays(1).plusSeconds(1)));
+        personalNoteMapper.insert(
+                personalNote(employeeId, "范围外事项", beginTime.plusDays(1).plusSeconds(1)));
 
         // 调用
         List<HrmEmployeePersonalNoteDO> result =
                 personalNoteService.getPersonalNoteList(
-                        employeeId, new LocalDateTime[]{beginTime, beginTime.plusDays(1)});
+                        employeeId, new LocalDateTime[] {beginTime, beginTime.plusDays(1)});
 
         // 断言
         assertEquals(3, result.size());
@@ -121,5 +123,4 @@ public class HrmEmployeePersonalNoteServiceImplTest extends BaseDbUnitTest {
         personalNote.setReminderTime(reminderTime);
         return personalNote;
     }
-
 }

@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.trade.service.order;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_NOT_EXISTS;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_NOT_FOUND;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -24,16 +29,13 @@ import cn.iocoder.yudao.module.trade.framework.delivery.core.client.ExpressClien
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressTrackQueryReqDTO;
 import cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto.ExpressTrackRespDTO;
 import cn.iocoder.yudao.module.trade.service.delivery.DeliveryExpressService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.EXPRESS_NOT_EXISTS;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_NOT_FOUND;
 
 /**
  * 交易订单【读】 Service 实现类
@@ -43,19 +45,14 @@ import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.ORDER_NOT_F
 @Service
 public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
 
-    @Resource
-    private ExpressClientFactory expressClientFactory;
+    @Resource private ExpressClientFactory expressClientFactory;
 
-    @Resource
-    private TradeOrderMapper tradeOrderMapper;
-    @Resource
-    private TradeOrderItemMapper tradeOrderItemMapper;
+    @Resource private TradeOrderMapper tradeOrderMapper;
+    @Resource private TradeOrderItemMapper tradeOrderItemMapper;
 
-    @Resource
-    private DeliveryExpressService deliveryExpressService;
+    @Resource private DeliveryExpressService deliveryExpressService;
 
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private MemberUserApi memberUserApi;
 
     // =================== Order ===================
 
@@ -67,16 +64,17 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
     @Override
     public TradeOrderDO getOrder(Long userId, Long id) {
         TradeOrderDO order = tradeOrderMapper.selectById(id);
-        if (order != null
-                && ObjectUtil.notEqual(order.getUserId(), userId)) {
+        if (order != null && ObjectUtil.notEqual(order.getUserId(), userId)) {
             return null;
         }
         return order;
     }
 
     @Override
-    public TradeOrderDO getOrderByUserIdAndStatusAndCombination(Long userId, Long combinationActivityId, Integer status) {
-        return tradeOrderMapper.selectByUserIdAndCombinationActivityIdAndStatus(userId, combinationActivityId, status);
+    public TradeOrderDO getOrderByUserIdAndStatusAndCombination(
+            Long userId, Long combinationActivityId, Integer status) {
+        return tradeOrderMapper.selectByUserIdAndCombinationActivityIdAndStatus(
+                userId, combinationActivityId, status);
     }
 
     @Override
@@ -110,7 +108,8 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
             userIds.add(user.getId());
         }
         if (StrUtil.isNotEmpty(reqVO.getUserNickname())) {
-            List<MemberUserRespDTO> users = memberUserApi.getUserListByNickname(reqVO.getUserNickname());
+            List<MemberUserRespDTO> users =
+                    memberUserApi.getUserListByNickname(reqVO.getUserNickname());
             if (CollUtil.isEmpty(users)) { // 没查询到用户，说明肯定也没他的订单
                 return null;
             }
@@ -127,17 +126,22 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
             return new TradeOrderSummaryRespVO();
         }
         // 查询每个售后状态对应的数量、金额
-        List<Map<String, Object>> list = tradeOrderMapper.selectOrderSummaryGroupByRefundStatus(reqVO, userIds);
+        List<Map<String, Object>> list =
+                tradeOrderMapper.selectOrderSummaryGroupByRefundStatus(reqVO, userIds);
 
-        TradeOrderSummaryRespVO vo = new TradeOrderSummaryRespVO().setAfterSaleCount(0L).setAfterSalePrice(0L);
+        TradeOrderSummaryRespVO vo =
+                new TradeOrderSummaryRespVO().setAfterSaleCount(0L).setAfterSalePrice(0L);
         for (Map<String, Object> map : list) {
             Long count = MapUtil.getLong(map, "count", 0L);
             Long price = MapUtil.getLong(map, "price", 0L);
             // 未退款的计入订单，部分退款、全部退款计入售后
-            if (TradeOrderRefundStatusEnum.NONE.getStatus().equals(MapUtil.getInt(map, "refundStatus"))) {
+            if (TradeOrderRefundStatusEnum.NONE
+                    .getStatus()
+                    .equals(MapUtil.getInt(map, "refundStatus"))) {
                 vo.setOrderCount(count).setOrderPayPrice(price);
             } else {
-                vo.setAfterSaleCount(vo.getAfterSaleCount() + count).setAfterSalePrice(vo.getAfterSalePrice() + price);
+                vo.setAfterSaleCount(vo.getAfterSaleCount() + count)
+                        .setAfterSalePrice(vo.getAfterSalePrice() + price);
             }
         }
         return vo;
@@ -178,13 +182,15 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
     @Override
     public int getActivityProductCount(Long userId, Long activityId, TradeOrderTypeEnum type) {
         // 获得订单列表
-        List<TradeOrderDO> orders = tradeOrderMapper.selectListByUserIdAndActivityId(userId, activityId, type);
+        List<TradeOrderDO> orders =
+                tradeOrderMapper.selectListByUserIdAndActivityId(userId, activityId, type);
         orders.removeIf(order -> TradeOrderStatusEnum.isCanceled(order.getStatus())); // 过滤掉【已取消】的订单
         if (CollUtil.isEmpty(orders)) {
             return 0;
         }
         // 获得订单项列表
-        return tradeOrderItemMapper.selectProductSumByOrderId(convertSet(orders, TradeOrderDO::getId));
+        return tradeOrderItemMapper.selectProductSumByOrderId(
+                convertSet(orders, TradeOrderDO::getId));
     }
 
     /**
@@ -198,12 +204,15 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
             return Collections.emptyList();
         }
         // 查询物流公司
-        DeliveryExpressDO express = deliveryExpressService.getDeliveryExpress(order.getLogisticsId());
+        DeliveryExpressDO express =
+                deliveryExpressService.getDeliveryExpress(order.getLogisticsId());
         if (express == null) {
             throw exception(EXPRESS_NOT_EXISTS);
         }
         // 查询物流轨迹
-        return getSelf().getExpressTrackList(express.getCode(), order.getLogisticsNo(), order.getReceiverMobile());
+        return getSelf()
+                .getExpressTrackList(
+                        express.getCode(), order.getLogisticsNo(), order.getReceiverMobile());
     }
 
     /**
@@ -216,11 +225,19 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
      * @param receiverMobile 收、寄件人的电话号码
      * @return 物流轨迹
      */
-    @Cacheable(cacheNames = RedisKeyConstants.EXPRESS_TRACK, key = "#code + '-' + #logisticsNo + '-' + #receiverMobile",
+    @Cacheable(
+            cacheNames = RedisKeyConstants.EXPRESS_TRACK,
+            key = "#code + '-' + #logisticsNo + '-' + #receiverMobile",
             unless = "#result == null")
-    public List<ExpressTrackRespDTO> getExpressTrackList(String code, String logisticsNo, String receiverMobile) {
-        return expressClientFactory.getDefaultExpressClient().getExpressTrackList(new ExpressTrackQueryReqDTO()
-                .setExpressCode(code).setLogisticsNo(logisticsNo).setPhone(receiverMobile));
+    public List<ExpressTrackRespDTO> getExpressTrackList(
+            String code, String logisticsNo, String receiverMobile) {
+        return expressClientFactory
+                .getDefaultExpressClient()
+                .getExpressTrackList(
+                        new ExpressTrackQueryReqDTO()
+                                .setExpressCode(code)
+                                .setLogisticsNo(logisticsNo)
+                                .setPhone(receiverMobile));
     }
 
     // =================== Order Item ===================
@@ -228,8 +245,7 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
     @Override
     public TradeOrderItemDO getOrderItem(Long userId, Long itemId) {
         TradeOrderItemDO orderItem = tradeOrderItemMapper.selectById(itemId);
-        if (orderItem != null
-                && ObjectUtil.notEqual(orderItem.getUserId(), userId)) {
+        if (orderItem != null && ObjectUtil.notEqual(orderItem.getUserId(), userId)) {
             return null;
         }
         return orderItem;
@@ -256,5 +272,4 @@ public class TradeOrderQueryServiceImpl implements TradeOrderQueryService {
     private TradeOrderQueryServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }
-
 }

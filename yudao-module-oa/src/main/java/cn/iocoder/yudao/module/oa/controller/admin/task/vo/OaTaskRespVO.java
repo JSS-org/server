@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.task.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,16 +35,29 @@ public class OaTaskRespVO {
     @Schema(description = "标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "本周办公用品盘点")
     private String title;
 
-    @Schema(description = "任务描述", requiredMode = Schema.RequiredMode.REQUIRED, example = "完成本周办公用品盘点并提交结果")
+    @Schema(
+            description = "任务描述",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "完成本周办公用品盘点并提交结果")
     private String description;
 
     @Schema(description = "任务评价", example = "已按期完成，盘点结果准确")
     private String comment;
 
-    @Schema(description = "开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime startTime;
 
-    @Schema(description = "结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     private LocalDateTime endTime;
 
     @Schema(description = "是否置顶", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
@@ -58,13 +72,27 @@ public class OaTaskRespVO {
     @Schema(description = "反馈日志列表")
     private List<OaTaskLogRespVO> logs;
 
-    @Schema(description = "发布时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "发布时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime publishTime;
 
-    @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "创建时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime createTime;
 
-    @Schema(description = "修改时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "修改时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime updateTime;
-
 }

@@ -14,5 +14,4 @@ public interface RedisKeyConstants {
      * VALUE 数据格式：流水号自增
      */
     String AUTO_CODE = "mes:md:auto_code:";
-
 }

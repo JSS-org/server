@@ -33,12 +33,14 @@ public interface ImStatisticsManagerService {
     /**
      * 获取区间内每日新增用户数 Map（key 为 yyyy-MM-dd 日期）
      */
-    Map<LocalDateTime, Long> getNewUserDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime);
+    Map<LocalDateTime, Long> getNewUserDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime);
 
     /**
      * 获取区间内每日活跃用户数 Map
      */
-    Map<LocalDateTime, Long> getActiveUserDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime);
+    Map<LocalDateTime, Long> getActiveUserDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime);
 
     // ==================== 群 ====================
 
@@ -72,12 +74,14 @@ public interface ImStatisticsManagerService {
     /**
      * 获取区间内每日私聊消息数 Map
      */
-    Map<LocalDateTime, Long> getPrivateMessageDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime);
+    Map<LocalDateTime, Long> getPrivateMessageDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime);
 
     /**
      * 获取区间内每日群聊消息数 Map
      */
-    Map<LocalDateTime, Long> getGroupMessageDailyCountMap(LocalDateTime beginTime, LocalDateTime endTime);
+    Map<LocalDateTime, Long> getGroupMessageDailyCountMap(
+            LocalDateTime beginTime, LocalDateTime endTime);
 
     /**
      * 获取区间内内容类型分布 Map（key 为消息类型）
@@ -88,5 +92,4 @@ public interface ImStatisticsManagerService {
      * 获取区间内 TOP 发送者 Map（key 为 userId，value 为消息数；按消息数倒序）
      */
     Map<Long, Long> getTopSenderCountMap(LocalDateTime beginTime, LocalDateTime endTime, int limit);
-
 }

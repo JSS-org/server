@@ -1,11 +1,11 @@
 package cn.iocoder.yudao.module.oa.service.note;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.OaNotePageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.note.vo.OaNoteSaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteDO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteReceiverDO;
-import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -104,7 +104,8 @@ public interface OaNoteService {
      */
     default Map<Long, List<Long>> getNoteReceiverUserIdListMap(Collection<Long> noteIds) {
         List<OaNoteReceiverDO> receivers = getNoteReceiverList(noteIds);
-        return CollectionUtils.convertMultiMap(receivers, OaNoteReceiverDO::getNoteId, OaNoteReceiverDO::getUserId);
+        return CollectionUtils.convertMultiMap(
+                receivers, OaNoteReceiverDO::getNoteId, OaNoteReceiverDO::getUserId);
     }
 
     /**
@@ -122,5 +123,4 @@ public interface OaNoteService {
      * @param userId 用户编号
      */
     void deleteNotesByCategoryId(Long categoryId, Long userId);
-
 }

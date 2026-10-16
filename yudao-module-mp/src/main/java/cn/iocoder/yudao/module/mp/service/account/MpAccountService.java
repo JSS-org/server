@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mp.service.account;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.ACCOUNT_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.account.vo.MpAccountCreateReqVO;
 import cn.iocoder.yudao.module.mp.controller.admin.account.vo.MpAccountPageReqVO;
@@ -7,10 +10,8 @@ import cn.iocoder.yudao.module.mp.controller.admin.account.vo.MpAccountUpdateReq
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.ACCOUNT_NOT_EXISTS;
+import java.util.List;
 
 /**
  * 公众号账号 Service 接口
@@ -106,5 +107,4 @@ public interface MpAccountService {
      * @param id 编号
      */
     void clearAccountQuota(Long id);
-
 }

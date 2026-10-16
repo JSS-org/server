@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.crm.controller.admin.business.vo.status;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -44,7 +46,5 @@ public class CrmBusinessStatusSaveReqVO {
 
         @Schema(description = "排序", hidden = true, example = "1")
         private Integer sort;
-
     }
-
 }

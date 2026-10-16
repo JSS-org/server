@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.infra.controller.admin.job.vo.job;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.infra.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,7 +32,10 @@ public class JobRespVO {
     @DictFormat(DictTypeConstants.JOB_STATUS)
     private Integer status;
 
-    @Schema(description = "处理器的名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "sysUserSessionTimeoutJob")
+    @Schema(
+            description = "处理器的名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "sysUserSessionTimeoutJob")
     @ExcelProperty("处理器的名字")
     private String handlerName;
 
@@ -37,7 +43,10 @@ public class JobRespVO {
     @ExcelProperty("处理器的参数")
     private String handlerParam;
 
-    @Schema(description = "CRON 表达式", requiredMode = Schema.RequiredMode.REQUIRED, example = "0/10 * * * * ? *")
+    @Schema(
+            description = "CRON 表达式",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "0/10 * * * * ? *")
     @ExcelProperty("CRON 表达式")
     private String cronExpression;
 
@@ -55,5 +64,4 @@ public class JobRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

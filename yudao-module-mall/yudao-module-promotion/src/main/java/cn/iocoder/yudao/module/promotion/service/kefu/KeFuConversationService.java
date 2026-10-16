@@ -89,5 +89,4 @@ public interface KeFuConversationService {
      * @return 客服会话
      */
     KeFuConversationDO getConversationByUserId(Long userId);
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.framework.excel.core;
 
 import cn.iocoder.yudao.framework.excel.core.function.ExcelColumnSelectFunction;
+
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -25,5 +26,4 @@ public class HrmEmployeeProbationExcelColumnSelectFunction implements ExcelColum
     public List<String> getOptions() {
         return Arrays.asList("0", "1", "2", "3", "4", "5", "6");
     }
-
 }

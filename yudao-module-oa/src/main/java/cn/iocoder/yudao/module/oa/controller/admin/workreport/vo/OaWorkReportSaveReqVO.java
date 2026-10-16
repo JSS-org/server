@@ -4,8 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.workreport.OaWorkReportTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
@@ -13,6 +16,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,11 +38,21 @@ public class OaWorkReportSaveReqVO {
     @Size(max = 255, message = "汇报标题不能超过 255 个字符")
     private String title;
 
-    @Schema(description = "周期开始时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "周期开始时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     @NotNull(message = "周期开始时间不能为空")
     private LocalDateTime startTime;
 
-    @Schema(description = "周期结束时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789380000000")
+    @Schema(
+            description = "周期结束时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789380000000")
     @NotNull(message = "周期结束时间不能为空")
     private LocalDateTime endTime;
 
@@ -66,7 +80,10 @@ public class OaWorkReportSaveReqVO {
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
     @Size(max = 10, message = "附件不能超过 10 个")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 1024, message = "附件地址不能超过 1024 个字符") String> fileUrls;
+    private List<
+                    @NotBlank(message = "附件地址不能为空") @Size(max = 1024, message = "附件地址不能超过 1024 个字符")
+                    String>
+            fileUrls;
 
     @Schema(description = "备注", example = "请提前联系行政部确认")
     @Size(max = 1000, message = "备注不能超过 1000 个字符")
@@ -91,15 +108,20 @@ public class OaWorkReportSaveReqVO {
     @JsonIgnore
     @AssertTrue(message = "请填写工作总结、计划说明或工作明细")
     public boolean isContentValid() {
-        return StrUtil.isNotBlank(summary) || StrUtil.isNotBlank(plan)
-                || CollUtil.isNotEmpty(workItems) || CollUtil.isNotEmpty(planItems);
+        return StrUtil.isNotBlank(summary)
+                || StrUtil.isNotBlank(plan)
+                || CollUtil.isNotEmpty(workItems)
+                || CollUtil.isNotEmpty(planItems);
     }
 
     @Schema(description = "管理后台 - 工作汇报已完成工作项 Request VO")
     @Data
     public static class WorkItem {
 
-        @Schema(description = "工作内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "完成办公用品库存盘点")
+        @Schema(
+                description = "工作内容",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "完成办公用品库存盘点")
         @NotBlank(message = "工作内容不能为空")
         @Size(max = 1000, message = "内容不能超过 1000 个字符")
         private String content;
@@ -109,18 +131,18 @@ public class OaWorkReportSaveReqVO {
         @Min(value = 0, message = "完成进度不能小于 0")
         @Max(value = 100, message = "完成进度不能大于 100")
         private Integer progress;
-
     }
 
     @Schema(description = "管理后台 - 工作汇报工作计划项 Request VO")
     @Data
     public static class PlanItem {
 
-        @Schema(description = "计划内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "下周完成各部门办公用品盘点差异核实，并按实际需求补充库存。")
+        @Schema(
+                description = "计划内容",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "下周完成各部门办公用品盘点差异核实，并按实际需求补充库存。")
         @NotBlank(message = "计划内容不能为空")
         @Size(max = 1000, message = "内容不能超过 1000 个字符")
         private String content;
-
     }
-
 }

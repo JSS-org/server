@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.hrm.dal.mysql.salary.config;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryTaxRuleDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -15,7 +16,8 @@ public interface HrmSalaryTaxRuleMapper extends BaseMapperX<HrmSalaryTaxRuleDO> 
     }
 
     default List<HrmSalaryTaxRuleDO> selectList() {
-        return selectList(new LambdaQueryWrapperX<HrmSalaryTaxRuleDO>().orderByAsc(HrmSalaryTaxRuleDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<HrmSalaryTaxRuleDO>()
+                        .orderByAsc(HrmSalaryTaxRuleDO::getId));
     }
-
 }

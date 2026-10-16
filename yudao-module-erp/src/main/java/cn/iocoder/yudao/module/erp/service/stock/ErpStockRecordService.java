@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.erp.controller.admin.stock.vo.record.ErpStockRecordPageReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpStockRecordDO;
 import cn.iocoder.yudao.module.erp.service.stock.bo.ErpStockRecordCreateReqBO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -35,5 +36,4 @@ public interface ErpStockRecordService {
      * @param createReqBO 创建库存明细 BO
      */
     void createStockRecord(@Valid ErpStockRecordCreateReqBO createReqBO);
-
 }

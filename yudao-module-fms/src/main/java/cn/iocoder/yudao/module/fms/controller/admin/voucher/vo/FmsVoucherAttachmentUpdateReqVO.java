@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.fms.controller.admin.voucher.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -22,5 +24,4 @@ public class FmsVoucherAttachmentUpdateReqVO {
     @Schema(description = "附件地址数组")
     @Size(max = 100, message = "凭证附件不能超过 100 个")
     private List<String> attachmentUrls;
-
 }

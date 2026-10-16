@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.oa.service.supply;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -19,16 +22,14 @@ import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.oa.enums.supply.*;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 用品领用申请 Service 实现类
@@ -39,34 +40,31 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
 
-    @Resource
-    private OaSupplyApplyMapper supplyApplyMapper;
-    @Resource
-    private OaSupplyApplyItemMapper supplyApplyItemMapper;
-    @Resource
-    private OaSupplyItemService supplyItemService;
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaSupplyApplyMapper supplyApplyMapper;
+    @Resource private OaSupplyApplyItemMapper supplyApplyItemMapper;
+    @Resource private OaSupplyItemService supplyItemService;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
     @Override
     public Long getUnreturnedSupplyItemCount(Long itemId) {
-        return supplyApplyItemMapper.selectCountByItemIdAndUnreturned(itemId, OaSupplyManageTypeEnum.BORROWABLE.getType());
+        return supplyApplyItemMapper.selectCountByItemIdAndUnreturned(
+                itemId, OaSupplyManageTypeEnum.BORROWABLE.getType());
     }
 
     @Override
     public Long getPendingSupplyItemCount(Long itemId) {
-        return supplyApplyItemMapper.selectCountByItemIdAndStatus(itemId, OaSupplyApplyItemStatusEnum.PENDING.getStatus());
+        return supplyApplyItemMapper.selectCountByItemIdAndStatus(
+                itemId, OaSupplyApplyItemStatusEnum.PENDING.getStatus());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createSupplyApply(OaSupplyApplySaveReqVO createReqVO, Long userId) {
         // 1.1 校验领用物品有效性，必填信息由保存 VO 校验
-        List<OaSupplyApplyItemDO> applyItems = BeanUtils.toBean(createReqVO.getItems(), OaSupplyApplyItemDO.class);
+        List<OaSupplyApplyItemDO> applyItems =
+                BeanUtils.toBean(createReqVO.getItems(), OaSupplyApplyItemDO.class);
         Map<Long, OaSupplyItemDO> items = validateSupplyApplyItems(applyItems);
         // 1.2 查询申请人部门
         AdminUserRespDTO user = adminUserApi.validateUser(userId);
@@ -77,8 +75,12 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
         }
 
         // 2.1 保存草稿，创建人由公共审计字段填写
-        OaSupplyApplyDO apply = BeanUtils.toBean(createReqVO, OaSupplyApplyDO.class).setId(null)
-                .setNo(no).setDeptId(user.getDeptId()).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
+        OaSupplyApplyDO apply =
+                BeanUtils.toBean(createReqVO, OaSupplyApplyDO.class)
+                        .setId(null)
+                        .setNo(no)
+                        .setDeptId(user.getDeptId())
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
         supplyApplyMapper.insert(apply);
         // 2.2 保存领用明细
         saveSupplyApplyItems(apply.getId(), applyItems, items);
@@ -93,7 +95,8 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
         validateSupplyApplyOwner(apply, userId);
         validateSupplyApplyEditable(apply);
         // 1.2 校验新的领用明细
-        List<OaSupplyApplyItemDO> applyItems = BeanUtils.toBean(updateReqVO.getItems(), OaSupplyApplyItemDO.class);
+        List<OaSupplyApplyItemDO> applyItems =
+                BeanUtils.toBean(updateReqVO.getItems(), OaSupplyApplyItemDO.class);
         Map<Long, OaSupplyItemDO> items = validateSupplyApplyItems(applyItems);
 
         // 2.1 更新申请内容
@@ -129,17 +132,24 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
         validateSupplyApplyItems(items);
 
         // 2. 更新审批中状态
-        int count = supplyApplyMapper.updateStatusAndClearProcessInstanceId(id, apply.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus());
+        int count =
+                supplyApplyMapper.updateStatusAndClearProcessInstanceId(
+                        id, apply.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus());
         if (count == 0) {
             throw exception(SUPPLY_APPLY_STATUS_INVALID);
         }
 
         // 3.1 发起审批
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.SUPPLY_APPLY)
-                        .setBusinessKey(id.toString()).setVariables(new HashMap<>()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.SUPPLY_APPLY)
+                                .setBusinessKey(id.toString())
+                                .setVariables(new HashMap<>()));
         // 3.2 绑定流程编号
-        supplyApplyMapper.updateById(new OaSupplyApplyDO().setId(id).setProcessInstanceId(processInstanceId));
+        supplyApplyMapper.updateById(
+                new OaSupplyApplyDO().setId(id).setProcessInstanceId(processInstanceId));
         return processInstanceId;
     }
 
@@ -154,7 +164,8 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
         }
 
         // 2. 取消流程，由监听器回写结果
-        processInstanceApi.cancelProcessInstanceByStartUser(userId, apply.getProcessInstanceId(), "申请人取消用品申请");
+        processInstanceApi.cancelProcessInstanceByStartUser(
+                userId, apply.getProcessInstanceId(), "申请人取消用品申请");
     }
 
     @Override
@@ -163,15 +174,18 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
         // 1. 校验审批结果属于当前申请
         OaSupplyApplyDO apply = validateSupplyApplyExists(id);
         // 忽略不属于当前流程的审批结果
-        if (apply.getProcessInstanceId() != null && ObjUtil.notEqual(apply.getProcessInstanceId(), processInstanceId)) {
+        if (apply.getProcessInstanceId() != null
+                && ObjUtil.notEqual(apply.getProcessInstanceId(), processInstanceId)) {
             return;
         }
 
         // 2.1 保存审批状态
         supplyApplyMapper.updateById(new OaSupplyApplyDO().setId(id).setStatus(status));
         // 2.2 审批通过后允许发放，重复回调不重置已发放明细
-        if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus()) && ObjUtil.notEqual(apply.getStatus(), status)) {
-            supplyApplyItemMapper.updateStatusByApplyId(id, OaSupplyApplyItemStatusEnum.PENDING.getStatus());
+        if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())
+                && ObjUtil.notEqual(apply.getStatus(), status)) {
+            supplyApplyItemMapper.updateStatusByApplyId(
+                    id, OaSupplyApplyItemStatusEnum.PENDING.getStatus());
         }
     }
 
@@ -181,7 +195,8 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
     }
 
     @Override
-    public PageResult<OaSupplyApplyDO> getSupplyApplyPage(OaSupplyApplyPageReqVO reqVO, Long userId) {
+    public PageResult<OaSupplyApplyDO> getSupplyApplyPage(
+            OaSupplyApplyPageReqVO reqVO, Long userId) {
         return supplyApplyMapper.selectPage(reqVO, userId);
     }
 
@@ -197,7 +212,6 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
     public List<OaSupplyApplyItemDO> getSupplyApplyItemList(Long applyId) {
         return supplyApplyItemMapper.selectListByApplyId(applyId);
     }
-
 
     /**
      * 校验用品申请存在
@@ -232,8 +246,11 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
      */
     private void validateSupplyApplyEditable(OaSupplyApplyDO apply) {
         // 草稿、驳回和取消的申请允许编辑
-        if (ObjectUtils.notEqualsAny(apply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
-                BpmProcessInstanceStatusEnum.REJECT.getStatus(), BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
+        if (ObjectUtils.notEqualsAny(
+                apply.getStatus(),
+                BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
+                BpmProcessInstanceStatusEnum.REJECT.getStatus(),
+                BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
             throw exception(SUPPLY_APPLY_STATUS_INVALID);
         }
     }
@@ -255,7 +272,9 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
         }
         for (OaSupplyApplyItemDO item : items) {
             // TODO DONE @AI：用品启用状态使用 CommonStatusEnum，避免魔法值
-            if (ObjUtil.notEqual(itemMap.get(item.getItemId()).getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
+            if (ObjUtil.notEqual(
+                    itemMap.get(item.getItemId()).getStatus(),
+                    CommonStatusEnum.ENABLE.getStatus())) {
                 throw exception(SUPPLY_APPLY_ITEM_INVALID);
             }
         }
@@ -269,18 +288,23 @@ public class OaSupplyApplyServiceImpl implements OaSupplyApplyService {
      * @param applyItems 领用明细
      * @param items 物品映射
      */
-    private void saveSupplyApplyItems(Long applyId, List<OaSupplyApplyItemDO> applyItems,
-                                      Map<Long, OaSupplyItemDO> items) {
+    private void saveSupplyApplyItems(
+            Long applyId, List<OaSupplyApplyItemDO> applyItems, Map<Long, OaSupplyItemDO> items) {
         if (CollUtil.isEmpty(applyItems)) {
             return;
         }
         for (OaSupplyApplyItemDO applyItem : applyItems) {
             OaSupplyItemDO item = items.get(applyItem.getItemId());
-            applyItem.setApplyId(applyId).setItemName(item.getName()).setModel(item.getModel())
-                    .setUnit(item.getUnit()).setManageType(item.getManageType())
-                    .setIssuedQuantity(0).setReturnedQuantity(0).setStatus(OaSupplyApplyItemStatusEnum.APPLYING.getStatus());
+            applyItem
+                    .setApplyId(applyId)
+                    .setItemName(item.getName())
+                    .setModel(item.getModel())
+                    .setUnit(item.getUnit())
+                    .setManageType(item.getManageType())
+                    .setIssuedQuantity(0)
+                    .setReturnedQuantity(0)
+                    .setStatus(OaSupplyApplyItemStatusEnum.APPLYING.getStatus());
             supplyApplyItemMapper.insert(applyItem);
         }
     }
-
 }

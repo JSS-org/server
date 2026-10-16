@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.enums.employee.employment;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeQuitReasonEnum implements ArrayValuable<Integer> {
-
     FAMILY(HrmEmployeeQuitTypeEnum.VOLUNTARY.getType(), 1, "家庭原因"),
     HEALTH(HrmEmployeeQuitTypeEnum.VOLUNTARY.getType(), 2, "身体原因"),
     SALARY(HrmEmployeeQuitTypeEnum.VOLUNTARY.getType(), 3, "薪资原因"),
@@ -33,8 +33,10 @@ public enum HrmEmployeeQuitReasonEnum implements ArrayValuable<Integer> {
     CONTRACT_NOT_RENEWED(HrmEmployeeQuitTypeEnum.INVOLUNTARY.getType(), 15, "合同到期不续签"),
     OTHER_INVOLUNTARY_REASON(HrmEmployeeQuitTypeEnum.INVOLUNTARY.getType(), 16, "其他原因");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmEmployeeQuitReasonEnum::getReason).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(HrmEmployeeQuitReasonEnum::getReason)
+                    .toArray(Integer[]::new);
 
     /**
      * 离职类型
@@ -42,10 +44,12 @@ public enum HrmEmployeeQuitReasonEnum implements ArrayValuable<Integer> {
      * 枚举 {@link HrmEmployeeQuitTypeEnum}
      */
     private final Integer quitType;
+
     /**
      * 原因
      */
     private final Integer reason;
+
     /**
      * 名字
      */
@@ -59,5 +63,4 @@ public enum HrmEmployeeQuitReasonEnum implements ArrayValuable<Integer> {
     public static HrmEmployeeQuitReasonEnum valueOf(Integer reason) {
         return ArrayUtil.firstMatch(item -> item.getReason().equals(reason), values());
     }
-
 }

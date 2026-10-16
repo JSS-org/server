@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.ai.controller.admin.workflow.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - AI 工作流新增/修改 Request VO")
@@ -30,5 +32,4 @@ public class AiWorkflowSaveReqVO {
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "FLOW")
     @NotNull(message = "状态不能为空")
     private Integer status;
-
 }

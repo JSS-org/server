@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.oa.service.officialdoc;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,16 +18,15 @@ import cn.iocoder.yudao.module.oa.dal.mysql.officialdoc.OaOfficialDocSendMapper;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 公文发文 Service 实现类
@@ -35,22 +37,16 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
 
-    @Resource
-    private OaOfficialDocSendMapper officialDocSendMapper;
+    @Resource private OaOfficialDocSendMapper officialDocSendMapper;
 
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
-    @Resource
-    private OaOfficialDocTemplateService officialDocTemplateService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private OaOfficialDocTemplateService officialDocTemplateService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private OaOfficialDocReceiveService officialDocReceiveService;
 
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
-    @Resource
-    private DeptApi deptApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
+    @Resource private DeptApi deptApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,9 +60,12 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         }
 
         // 2. 保存发文草稿，单号及审批状态由服务端生成
-        OaOfficialDocSendDO send = BeanUtils.toBean(reqVO, OaOfficialDocSendDO.class).setId(null)
-                .setNo(no)
-                .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus()).setDocumentNo(buildOfficialDocSendDocumentNo(reqVO));
+        OaOfficialDocSendDO send =
+                BeanUtils.toBean(reqVO, OaOfficialDocSendDO.class)
+                        .setId(null)
+                        .setNo(no)
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus())
+                        .setDocumentNo(buildOfficialDocSendDocumentNo(reqVO));
         officialDocSendMapper.insert(send);
         return send.getId();
     }
@@ -84,8 +83,9 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         validateOfficialDocSend(reqVO, send.getId());
 
         // 2. 更新表单字段，不覆盖流程状态和归属
-        officialDocSendMapper.updateById(BeanUtils.toBean(reqVO, OaOfficialDocSendDO.class)
-                .setDocumentNo(buildOfficialDocSendDocumentNo(reqVO)));
+        officialDocSendMapper.updateById(
+                BeanUtils.toBean(reqVO, OaOfficialDocSendDO.class)
+                        .setDocumentNo(buildOfficialDocSendDocumentNo(reqVO)));
     }
 
     @Override
@@ -97,8 +97,11 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         validateOfficialDocSendOwner(send, userId);
         // 1.3 未提交、审批不通过和已取消的单据允许删除
         // TODO @AI：notEqualsAny
-        if (!ObjectUtils.equalsAny(send.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
-                BpmProcessInstanceStatusEnum.REJECT.getStatus(), BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
+        if (!ObjectUtils.equalsAny(
+                send.getStatus(),
+                BpmProcessInstanceStatusEnum.NOT_START.getStatus(),
+                BpmProcessInstanceStatusEnum.REJECT.getStatus(),
+                BpmProcessInstanceStatusEnum.CANCEL.getStatus())) {
             throw exception(OFFICIAL_DOC_STATUS_INVALID);
         }
 
@@ -120,7 +123,8 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
     }
 
     @Override
-    public PageResult<OaOfficialDocSendDO> getOfficialDocSendPage(OaOfficialDocSendPageReqVO reqVO, Long userId) {
+    public PageResult<OaOfficialDocSendDO> getOfficialDocSendPage(
+            OaOfficialDocSendPageReqVO reqVO, Long userId) {
         return officialDocSendMapper.selectPage(userId, reqVO);
     }
 
@@ -134,17 +138,26 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         // 1.3 校验草稿状态
         validateOfficialDocSendDraft(send);
         // 1.4 校验发文关联数据
-        validateOfficialDocSend(BeanUtils.toBean(send, OaOfficialDocSendSaveReqVO.class), send.getId());
+        validateOfficialDocSend(
+                BeanUtils.toBean(send, OaOfficialDocSendSaveReqVO.class), send.getId());
 
         // 2. 更新审批状态
-        officialDocSendMapper.updateById(new OaOfficialDocSendDO().setId(id).setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        officialDocSendMapper.updateById(
+                new OaOfficialDocSendDO()
+                        .setId(id)
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.OFFICIAL_DOC_SEND)
-                        .setBusinessKey(id.toString()).setVariables(new HashMap<>()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.OFFICIAL_DOC_SEND)
+                                .setBusinessKey(id.toString())
+                                .setVariables(new HashMap<>()));
         // 3.2 绑定流程编号
-        officialDocSendMapper.updateById(new OaOfficialDocSendDO().setId(id).setProcessInstanceId(processInstanceId));
+        officialDocSendMapper.updateById(
+                new OaOfficialDocSendDO().setId(id).setProcessInstanceId(processInstanceId));
         return processInstanceId;
     }
 
@@ -161,7 +174,8 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         }
 
         // 2. 撤销审批流程，审批事件同步单据状态
-        processInstanceApi.cancelProcessInstanceByStartUser(userId, send.getProcessInstanceId(), "申请人撤销公文发文");
+        processInstanceApi.cancelProcessInstanceByStartUser(
+                userId, send.getProcessInstanceId(), "申请人撤销公文发文");
     }
 
     @Override
@@ -170,8 +184,9 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         // 1.1 校验发文存在
         OaOfficialDocSendDO send = validateOfficialDocSendExists(id);
         // 1.2 校验单据与回调流程一致
-        if (StrUtil.isEmpty(processInstanceId) || (send.getProcessInstanceId() != null
-                && ObjUtil.notEqual(send.getProcessInstanceId(), processInstanceId))) {
+        if (StrUtil.isEmpty(processInstanceId)
+                || (send.getProcessInstanceId() != null
+                        && ObjUtil.notEqual(send.getProcessInstanceId(), processInstanceId))) {
             throw exception(OFFICIAL_DOC_PROCESS_MISMATCH);
         }
         // 1.3 已处理的审批结果不再生成收文记录
@@ -180,7 +195,11 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
         }
 
         // 2.1 更新审批结果
-        officialDocSendMapper.updateById(new OaOfficialDocSendDO().setId(id).setStatus(status).setProcessInstanceId(processInstanceId));
+        officialDocSendMapper.updateById(
+                new OaOfficialDocSendDO()
+                        .setId(id)
+                        .setStatus(status)
+                        .setProcessInstanceId(processInstanceId));
         // 2.2 审批通过后发送至主送和抄送部门
         if (ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())) {
             officialDocReceiveService.createOfficialDocReceiveListByOfficialDocSend(send);
@@ -219,7 +238,8 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
      * @param send 公文发文
      */
     private void validateOfficialDocSendDraft(OaOfficialDocSendDO send) {
-        if (ObjUtil.notEqual(send.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                send.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(OFFICIAL_DOC_STATUS_INVALID);
         }
     }
@@ -240,8 +260,12 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
             deptApi.validateDeptList(reqVO.getCopyDeptIds());
         }
         // 3. 完整发文字号不能重复，尚未编号的草稿不参与查重
-        if (StrUtil.isNotBlank(reqVO.getNoPrefix()) && reqVO.getYear() != null && reqVO.getSequence() != null
-                && officialDocSendMapper.selectCountByDocumentNoAndIdNot(buildOfficialDocSendDocumentNo(reqVO), id) > 0) {
+        if (StrUtil.isNotBlank(reqVO.getNoPrefix())
+                && reqVO.getYear() != null
+                && reqVO.getSequence() != null
+                && officialDocSendMapper.selectCountByDocumentNoAndIdNot(
+                                buildOfficialDocSendDocumentNo(reqVO), id)
+                        > 0) {
             throw exception(OFFICIAL_DOC_SEND_DOCUMENT_NO_DUPLICATE);
         }
     }
@@ -262,5 +286,4 @@ public class OaOfficialDocSendServiceImpl implements OaOfficialDocSendService {
     public Long getOfficialDocSendCountByTemplateId(Long id) {
         return officialDocSendMapper.selectCountByTemplateId(id);
     }
-
 }

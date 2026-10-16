@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -30,5 +31,4 @@ public class HrmSalarySlipOptionRespVO {
 
     @Schema(description = "子工资条项")
     private List<HrmSalarySlipOptionRespVO> children;
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.core.topic.topo;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
+
 import lombok.Data;
 
 import java.util.List;
@@ -21,5 +22,4 @@ public class IotDeviceTopoGetRespDTO {
      * 子设备列表
      */
     private List<IotDeviceIdentity> subDevices;
-
 }

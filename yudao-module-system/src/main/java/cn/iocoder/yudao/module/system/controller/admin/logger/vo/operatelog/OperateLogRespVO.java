@@ -1,16 +1,20 @@
 package cn.iocoder.yudao.module.system.controller.admin.logger.vo.operatelog;
 
-import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
-import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
+import cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
+
 import org.dromara.core.trans.anno.Trans;
 import org.dromara.core.trans.constant.TransType;
 import org.dromara.core.trans.vo.VO;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
@@ -23,17 +27,29 @@ public class OperateLogRespVO implements VO {
     @ExcelProperty("日志编号")
     private Long id;
 
-    @Schema(description = "链路追踪编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "89aca178-a370-411c-ae02-3f0d672be4ab")
+    @Schema(
+            description = "链路追踪编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "89aca178-a370-411c-ae02-3f0d672be4ab")
     private String traceId;
 
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
-    @Trans(type = TransType.SIMPLE, target = AdminUserDO.class, fields = "nickname", ref = "userName")
+    @Trans(
+            type = TransType.SIMPLE,
+            target = AdminUserDO.class,
+            fields = "nickname",
+            ref = "userName")
     private Long userId;
+
     @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋艿")
     @ExcelProperty("操作人")
     private String userName;
 
-    @Schema(description = "用户类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1", implementation = Integer.class)
+    @Schema(
+            description = "用户类型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1",
+            implementation = Integer.class)
     @ExcelProperty("用户类型")
     @DictFormat(DictTypeConstants.USER_TYPE)
     private Integer userType;
@@ -63,13 +79,18 @@ public class OperateLogRespVO implements VO {
     @Schema(description = "请求地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "/xxx/yyy")
     private String requestUrl;
 
-    @Schema(description = "用户 IP", requiredMode = Schema.RequiredMode.REQUIRED, example = "127.0.0.1")
+    @Schema(
+            description = "用户 IP",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "127.0.0.1")
     private String userIp;
 
-    @Schema(description = "浏览器 UserAgent", requiredMode = Schema.RequiredMode.REQUIRED, example = "Mozilla/5.0")
+    @Schema(
+            description = "浏览器 UserAgent",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "Mozilla/5.0")
     private String userAgent;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

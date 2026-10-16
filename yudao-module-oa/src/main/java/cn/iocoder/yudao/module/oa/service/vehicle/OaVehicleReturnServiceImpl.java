@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.oa.service.vehicle;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.VEHICLE_RETURN;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,17 +17,15 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.vehicle.OaVehicleReturnDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.vehicle.OaVehicleReturnMapper;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.oa.enums.vehicle.OaVehicleReturnStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.BpmModelConstants.VEHICLE_RETURN;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 还车申请 Service 实现类
@@ -34,22 +36,19 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
 
-    @Resource
-    private OaNoRedisDAO noRedisDAO;
+    @Resource private OaNoRedisDAO noRedisDAO;
 
-    @Resource
-    private OaVehicleReturnMapper vehicleReturnMapper;
+    @Resource private OaVehicleReturnMapper vehicleReturnMapper;
 
-    @Resource
-    private OaVehicleApplyService vehicleApplyService;
+    @Resource private OaVehicleApplyService vehicleApplyService;
 
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     public Long createVehicleReturn(OaVehicleReturnSaveReqVO createReqVO, Long userId) {
         // 1.1 查询关联用车申请
-        OaVehicleApplyDO apply = vehicleApplyService.validateVehicleApplyExists(createReqVO.getApplyId());
+        OaVehicleApplyDO apply =
+                vehicleApplyService.validateVehicleApplyExists(createReqVO.getApplyId());
         // 1.2 校验申请归属及待还车状态
         validateVehicleApplyReturnable(apply, userId);
         // 1.3 校验实际回车时间，同一用车申请允许保存多个草稿
@@ -59,9 +58,13 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
         validateVehicleReturnNoUnique(no);
 
         // 2. 创建草稿
-        OaVehicleReturnDO vehicleReturn = BeanUtils.toBean(createReqVO, OaVehicleReturnDO.class).setNo(no)
-                .setVehicleId(apply.getVehicleId()).setUserId(userId).setDeptId(apply.getDeptId())
-                .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
+        OaVehicleReturnDO vehicleReturn =
+                BeanUtils.toBean(createReqVO, OaVehicleReturnDO.class)
+                        .setNo(no)
+                        .setVehicleId(apply.getVehicleId())
+                        .setUserId(userId)
+                        .setDeptId(apply.getDeptId())
+                        .setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
         vehicleReturnMapper.insert(vehicleReturn);
         return vehicleReturn.getId();
     }
@@ -75,15 +78,19 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
         // 1.3 只能编辑草稿
         validateVehicleReturnDraft(vehicleReturn);
         // 1.4 校验本次选择的用车申请存在
-        OaVehicleApplyDO apply = vehicleApplyService.validateVehicleApplyExists(updateReqVO.getApplyId());
+        OaVehicleApplyDO apply =
+                vehicleApplyService.validateVehicleApplyExists(updateReqVO.getApplyId());
         // 1.5 校验申请归属及待还车状态
         validateVehicleApplyReturnable(apply, userId);
         // 1.6 校验实际回车时间
         validateVehicleReturn(updateReqVO);
 
         // 2. 保存草稿
-        vehicleReturnMapper.updateById(BeanUtils.toBean(updateReqVO, OaVehicleReturnDO.class)
-                .setVehicleId(apply.getVehicleId()).setUserId(userId).setDeptId(apply.getDeptId()));
+        vehicleReturnMapper.updateById(
+                BeanUtils.toBean(updateReqVO, OaVehicleReturnDO.class)
+                        .setVehicleId(apply.getVehicleId())
+                        .setUserId(userId)
+                        .setDeptId(apply.getDeptId()));
     }
 
     @Override
@@ -109,24 +116,37 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
         // 1.3 仅未提交申请允许发起
         validateVehicleReturnDraft(vehicleReturn);
         // 1.4 校验原用车申请存在
-        OaVehicleApplyDO apply = vehicleApplyService.validateVehicleApplyExists(vehicleReturn.getApplyId());
+        OaVehicleApplyDO apply =
+                vehicleApplyService.validateVehicleApplyExists(vehicleReturn.getApplyId());
         // 1.5 校验原申请归属及待还车状态
         validateVehicleApplyReturnable(apply, userId);
         // 1.6 重新校验实际回车时间
-        OaVehicleReturnSaveReqVO reqVO = BeanUtils.toBean(vehicleReturn, OaVehicleReturnSaveReqVO.class);
+        OaVehicleReturnSaveReqVO reqVO =
+                BeanUtils.toBean(vehicleReturn, OaVehicleReturnSaveReqVO.class);
         validateVehicleReturn(reqVO);
 
         // 2.1 原用车申请切换为还车中，仍然占用车辆
-        vehicleApplyService.updateVehicleApplyReturnStatus(apply.getId(), OaVehicleReturnStatusEnum.PENDING_RETURN.getStatus(), OaVehicleReturnStatusEnum.RETURNING.getStatus());
+        vehicleApplyService.updateVehicleApplyReturnStatus(
+                apply.getId(),
+                OaVehicleReturnStatusEnum.PENDING_RETURN.getStatus(),
+                OaVehicleReturnStatusEnum.RETURNING.getStatus());
         // 2.2 更新还车申请为审批中
-        vehicleReturnMapper.updateById(new OaVehicleReturnDO().setId(id).setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        vehicleReturnMapper.updateById(
+                new OaVehicleReturnDO()
+                        .setId(id)
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(VEHICLE_RETURN)
-                        .setBusinessKey(id.toString()).setVariables(new HashMap<>()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(VEHICLE_RETURN)
+                                .setBusinessKey(id.toString())
+                                .setVariables(new HashMap<>()));
         // 3.2 绑定流程编号
-        vehicleReturnMapper.updateById(new OaVehicleReturnDO().setId(id).setProcessInstanceId(processInstanceId));
+        vehicleReturnMapper.updateById(
+                new OaVehicleReturnDO().setId(id).setProcessInstanceId(processInstanceId));
         return processInstanceId;
     }
 
@@ -138,13 +158,14 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
         // 1.2 校验本人归属
         validateVehicleReturnOwner(vehicleReturn, userId);
         // 1.3 仅允许取消审批中的还车申请
-        if (ObjUtil.notEqual(vehicleReturn.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
+        if (ObjUtil.notEqual(
+                vehicleReturn.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
             throw exception(VEHICLE_RETURN_STATUS_INVALID);
         }
 
         // 2. 取消流程，结果事件将原用车单恢复为待还车
-        processInstanceApi.cancelProcessInstanceByStartUser(userId, vehicleReturn.getProcessInstanceId(),
-                "申请人取消还车申请");
+        processInstanceApi.cancelProcessInstanceByStartUser(
+                userId, vehicleReturn.getProcessInstanceId(), "申请人取消还车申请");
     }
 
     @Override
@@ -152,13 +173,18 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
     public void updateVehicleReturnStatus(Long id, Integer status) {
         // 1. 校验申请存在，已处理的审批结果不再重复更新业务状态
         OaVehicleReturnDO vehicleReturn = validateVehicleReturnExists(id);
-        if (ObjUtil.notEqual(vehicleReturn.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
+        if (ObjUtil.notEqual(
+                vehicleReturn.getStatus(), BpmProcessInstanceStatusEnum.RUNNING.getStatus())) {
             return;
         }
 
         // 2.1 还车通过后结束占用；拒绝或取消则恢复为待还车，允许再次发起
-        vehicleApplyService.updateVehicleApplyReturnStatus(vehicleReturn.getApplyId(), OaVehicleReturnStatusEnum.RETURNING.getStatus(),
-                ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus()) ? OaVehicleReturnStatusEnum.RETURNED.getStatus() : OaVehicleReturnStatusEnum.PENDING_RETURN.getStatus());
+        vehicleApplyService.updateVehicleApplyReturnStatus(
+                vehicleReturn.getApplyId(),
+                OaVehicleReturnStatusEnum.RETURNING.getStatus(),
+                ObjUtil.equal(status, BpmProcessInstanceStatusEnum.APPROVE.getStatus())
+                        ? OaVehicleReturnStatusEnum.RETURNED.getStatus()
+                        : OaVehicleReturnStatusEnum.PENDING_RETURN.getStatus());
         // 2.2 保存审批结果，与原用车单更新共同提交或回滚
         vehicleReturnMapper.updateById(new OaVehicleReturnDO().setId(id).setStatus(status));
     }
@@ -169,7 +195,8 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
     }
 
     @Override
-    public PageResult<OaVehicleReturnDO> getVehicleReturnPage(Long userId, OaVehicleReturnPageReqVO pageReqVO) {
+    public PageResult<OaVehicleReturnDO> getVehicleReturnPage(
+            Long userId, OaVehicleReturnPageReqVO pageReqVO) {
         return vehicleReturnMapper.selectPage(userId, pageReqVO);
     }
 
@@ -217,7 +244,8 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
      * @param vehicleReturn 还车申请
      */
     private void validateVehicleReturnDraft(OaVehicleReturnDO vehicleReturn) {
-        if (ObjUtil.notEqual(vehicleReturn.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                vehicleReturn.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(VEHICLE_RETURN_STATUS_INVALID);
         }
     }
@@ -233,7 +261,9 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
             throw exception(VEHICLE_RETURN_NOT_OWNER);
         }
         if (ObjUtil.notEqual(apply.getStatus(), BpmProcessInstanceStatusEnum.APPROVE.getStatus())
-                || ObjUtil.notEqual(apply.getReturnStatus(), OaVehicleReturnStatusEnum.PENDING_RETURN.getStatus())) {
+                || ObjUtil.notEqual(
+                        apply.getReturnStatus(),
+                        OaVehicleReturnStatusEnum.PENDING_RETURN.getStatus())) {
             throw exception(VEHICLE_RETURN_STATUS_INVALID);
         }
     }
@@ -250,5 +280,4 @@ public class OaVehicleReturnServiceImpl implements OaVehicleReturnService {
             throw exception(VEHICLE_RETURN_TIME_INVALID);
         }
     }
-
 }

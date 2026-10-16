@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.trade.controller.app.order.vo.AppTradeOrderSettle
 import cn.iocoder.yudao.module.trade.controller.app.order.vo.AppTradeOrderSettlementRespVO;
 import cn.iocoder.yudao.module.trade.controller.app.order.vo.item.AppTradeOrderItemCommentCreateReqVO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -30,7 +31,8 @@ public interface TradeOrderUpdateService {
      * @param settlementReqVO 订单结算请求
      * @return 订单结算结果
      */
-    AppTradeOrderSettlementRespVO settlementOrder(Long userId, AppTradeOrderSettlementReqVO settlementReqVO);
+    AppTradeOrderSettlementRespVO settlementOrder(
+            Long userId, AppTradeOrderSettlementReqVO settlementReqVO);
 
     /**
      * 【会员】创建交易订单
@@ -181,7 +183,8 @@ public interface TradeOrderUpdateService {
      * @param createReqVO 创建请求
      * @return 得到评价 id
      */
-    Long createOrderItemCommentByMember(Long userId, AppTradeOrderItemCommentCreateReqVO createReqVO);
+    Long createOrderItemCommentByMember(
+            Long userId, AppTradeOrderItemCommentCreateReqVO createReqVO);
 
     /**
      * 【系统】创建订单项的评论
@@ -198,7 +201,8 @@ public interface TradeOrderUpdateService {
      * @param combinationRecordId 拼团记录编号
      * @param headId              团长编号
      */
-    void updateOrderCombinationInfo(Long orderId, Long activityId, Long combinationRecordId, Long headId);
+    void updateOrderCombinationInfo(
+            Long orderId, Long activityId, Long combinationRecordId, Long headId);
 
     /**
      * 取消支付订单
@@ -225,5 +229,4 @@ public interface TradeOrderUpdateService {
      * @param giveCouponIds 赠送的优惠券编号列表
      */
     void updateOrderGiveCouponIds(Long userId, Long orderId, List<Long> giveCouponIds);
-
 }

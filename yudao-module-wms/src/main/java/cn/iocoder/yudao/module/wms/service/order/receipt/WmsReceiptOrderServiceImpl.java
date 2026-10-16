@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.wms.service.order.receipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -11,23 +15,21 @@ import cn.iocoder.yudao.module.wms.controller.admin.order.receipt.vo.order.WmsRe
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.receipt.WmsReceiptOrderDO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.receipt.WmsReceiptOrderDetailDO;
 import cn.iocoder.yudao.module.wms.dal.mysql.order.receipt.WmsReceiptOrderMapper;
-import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.enums.order.WmsOrderStatusEnum;
+import cn.iocoder.yudao.module.wms.enums.order.WmsOrderTypeEnum;
 import cn.iocoder.yudao.module.wms.service.inventory.WmsInventoryService;
 import cn.iocoder.yudao.module.wms.service.inventory.dto.WmsInventoryChangeReqDTO;
 import cn.iocoder.yudao.module.wms.service.md.merchant.WmsMerchantService;
 import cn.iocoder.yudao.module.wms.service.md.warehouse.WmsWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 
 /**
  * WMS 入库单 Service 实现类
@@ -38,16 +40,11 @@ import static cn.iocoder.yudao.module.wms.enums.ErrorCodeConstants.*;
 @Validated
 public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
 
-    @Resource
-    private WmsReceiptOrderMapper receiptOrderMapper;
-    @Resource
-    private WmsReceiptOrderDetailService receiptOrderDetailService;
-    @Resource
-    private WmsWarehouseService warehouseService;
-    @Resource
-    private WmsMerchantService merchantService;
-    @Resource
-    private WmsInventoryService inventoryService;
+    @Resource private WmsReceiptOrderMapper receiptOrderMapper;
+    @Resource private WmsReceiptOrderDetailService receiptOrderDetailService;
+    @Resource private WmsWarehouseService warehouseService;
+    @Resource private WmsMerchantService merchantService;
+    @Resource private WmsInventoryService inventoryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -73,11 +70,13 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
         validateReceiptOrderSaveData(updateReqVO);
 
         // 2.1 更新入库单
-        WmsReceiptOrderDO updateObj = BeanUtils.toBean(updateReqVO, WmsReceiptOrderDO.class)
-                .setStatus(WmsOrderStatusEnum.PREPARE.getStatus());
+        WmsReceiptOrderDO updateObj =
+                BeanUtils.toBean(updateReqVO, WmsReceiptOrderDO.class)
+                        .setStatus(WmsOrderStatusEnum.PREPARE.getStatus());
         fillReceiptOrderTotal(updateObj, updateReqVO);
-        int updateCount = receiptOrderMapper.updateByIdAndStatus(updateReqVO.getId(),
-                WmsOrderStatusEnum.PREPARE.getStatus(), updateObj);
+        int updateCount =
+                receiptOrderMapper.updateByIdAndStatus(
+                        updateReqVO.getId(), WmsOrderStatusEnum.PREPARE.getStatus(), updateObj);
         if (updateCount == 0) {
             throw exception(RECEIPT_ORDER_STATUS_NOT_PREPARE);
         }
@@ -91,7 +90,8 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
         // 1. 校验存在，且可删除
         WmsReceiptOrderDO order = validateReceiptOrderExists(id);
         if (ObjectUtil.notEqual(order.getStatus(), WmsOrderStatusEnum.PREPARE.getStatus())
-                && ObjectUtil.notEqual(order.getStatus(), WmsOrderStatusEnum.CANCELED.getStatus())) {
+                && ObjectUtil.notEqual(
+                        order.getStatus(), WmsOrderStatusEnum.CANCELED.getStatus())) {
             throw exception(RECEIPT_ORDER_STATUS_NOT_DELETABLE);
         }
 
@@ -107,11 +107,15 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
         // 1.1 校验存在，且草稿
         WmsReceiptOrderDO order = validateReceiptOrderPrepare(id);
         // 1.2 校验入库单明细存在
-        List<WmsReceiptOrderDetailDO> details = receiptOrderDetailService.validateReceiptOrderDetailListExists(id);
+        List<WmsReceiptOrderDetailDO> details =
+                receiptOrderDetailService.validateReceiptOrderDetailListExists(id);
 
         // 2. 完成入库单
-        if (receiptOrderMapper.updateByIdAndStatus(id, WmsOrderStatusEnum.PREPARE.getStatus(),
-                new WmsReceiptOrderDO().setStatus(WmsOrderStatusEnum.FINISHED.getStatus())) == 0) {
+        if (receiptOrderMapper.updateByIdAndStatus(
+                        id,
+                        WmsOrderStatusEnum.PREPARE.getStatus(),
+                        new WmsReceiptOrderDO().setStatus(WmsOrderStatusEnum.FINISHED.getStatus()))
+                == 0) {
             throw exception(RECEIPT_ORDER_STATUS_NOT_PREPARE);
         }
 
@@ -126,8 +130,11 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
         validateReceiptOrderPrepare(id);
 
         // 2. 作废入库单
-        if (receiptOrderMapper.updateByIdAndStatus(id, WmsOrderStatusEnum.PREPARE.getStatus(),
-                new WmsReceiptOrderDO().setStatus(WmsOrderStatusEnum.CANCELED.getStatus())) == 0) {
+        if (receiptOrderMapper.updateByIdAndStatus(
+                        id,
+                        WmsOrderStatusEnum.PREPARE.getStatus(),
+                        new WmsReceiptOrderDO().setStatus(WmsOrderStatusEnum.CANCELED.getStatus()))
+                == 0) {
             throw exception(RECEIPT_ORDER_STATUS_NOT_PREPARE);
         }
     }
@@ -181,8 +188,9 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
                 if (detail.getQuantity() != null) {
                     totalQuantity = totalQuantity.add(detail.getQuantity());
                 }
-                BigDecimal detailTotalPrice = getDetailTotalPrice(detail.getQuantity(), detail.getPrice(),
-                        detail.getTotalPrice());
+                BigDecimal detailTotalPrice =
+                        getDetailTotalPrice(
+                                detail.getQuantity(), detail.getPrice(), detail.getTotalPrice());
                 if (detailTotalPrice != null) {
                     totalPrice = totalPrice.add(detailTotalPrice);
                 }
@@ -191,7 +199,8 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
         order.setTotalQuantity(totalQuantity).setTotalPrice(totalPrice);
     }
 
-    private static BigDecimal getDetailTotalPrice(BigDecimal quantity, BigDecimal price, BigDecimal totalPrice) {
+    private static BigDecimal getDetailTotalPrice(
+            BigDecimal quantity, BigDecimal price, BigDecimal totalPrice) {
         if (totalPrice != null) {
             return totalPrice;
         }
@@ -229,13 +238,21 @@ public class WmsReceiptOrderServiceImpl implements WmsReceiptOrderService {
      * @param details 入库单明细列表
      */
     private void createInventory(WmsReceiptOrderDO order, List<WmsReceiptOrderDetailDO> details) {
-        List<WmsInventoryChangeReqDTO.Item> items = convertList(details,
-                detail -> BeanUtils.toBean(detail, WmsInventoryChangeReqDTO.Item.class)
-                        .setTotalPrice(getDetailTotalPrice(detail.getQuantity(), detail.getPrice(),
-                                detail.getTotalPrice())));
-        inventoryService.changeInventory(new WmsInventoryChangeReqDTO()
-                .setOrderId(order.getId()).setOrderNo(order.getNo())
-                .setOrderType(WmsOrderTypeEnum.RECEIPT.getType()).setItems(items));
+        List<WmsInventoryChangeReqDTO.Item> items =
+                convertList(
+                        details,
+                        detail ->
+                                BeanUtils.toBean(detail, WmsInventoryChangeReqDTO.Item.class)
+                                        .setTotalPrice(
+                                                getDetailTotalPrice(
+                                                        detail.getQuantity(),
+                                                        detail.getPrice(),
+                                                        detail.getTotalPrice())));
+        inventoryService.changeInventory(
+                new WmsInventoryChangeReqDTO()
+                        .setOrderId(order.getId())
+                        .setOrderNo(order.getNo())
+                        .setOrderType(WmsOrderTypeEnum.RECEIPT.getType())
+                        .setItems(items));
     }
-
 }

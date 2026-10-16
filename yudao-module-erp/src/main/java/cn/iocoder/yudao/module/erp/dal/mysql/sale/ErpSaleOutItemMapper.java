@@ -1,9 +1,13 @@
 package cn.iocoder.yudao.module.erp.dal.mysql.sale;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOutItemDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.math.BigDecimal;
@@ -11,8 +15,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * ERP 销售出库项 Mapper
@@ -45,12 +47,16 @@ public interface ErpSaleOutItemMapper extends BaseMapperX<ErpSaleOutItemDO> {
             return Collections.emptyMap();
         }
         // SQL sum 查询
-        List<Map<String, Object>> result = selectMaps(new QueryWrapper<ErpSaleOutItemDO>()
-                .select("order_item_id, SUM(count) AS sum_count")
-                .groupBy("order_item_id")
-                .in("out_id", outIds));
+        List<Map<String, Object>> result =
+                selectMaps(
+                        new QueryWrapper<ErpSaleOutItemDO>()
+                                .select("order_item_id, SUM(count) AS sum_count")
+                                .groupBy("order_item_id")
+                                .in("out_id", outIds));
         // 获得数量
-        return convertMap(result, obj -> (Long) obj.get("order_item_id"), obj -> (BigDecimal) obj.get("sum_count"));
+        return convertMap(
+                result,
+                obj -> (Long) obj.get("order_item_id"),
+                obj -> (BigDecimal) obj.get("sum_count"));
     }
-
 }

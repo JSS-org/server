@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -13,11 +16,14 @@ import cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status.PmsWor
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemBoardDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemStatusDO;
 import cn.iocoder.yudao.module.pms.service.pm.workitem.PmsWorkItemStatusService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,17 +42,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 工作项状态")
 @RestController
 @RequestMapping("/pms/pm/work-item-status")
 @Validated
 public class PmsWorkItemStatusController {
 
-    @Resource
-    private PmsWorkItemStatusService workItemStatusService;
+    @Resource private PmsWorkItemStatusService workItemStatusService;
 
     @PostMapping("/create")
     @Operation(summary = "创建工作项状态")
@@ -115,8 +117,9 @@ public class PmsWorkItemStatusController {
     @PreAuthorize("@ss.hasPermission('pms:pm:work-item:query')")
     public CommonResult<List<PmsWorkItemStatusRespVO>> getWorkItemStatusList(
             @RequestParam("projectId") Long projectId, @RequestParam("type") Integer workItemType) {
-        List<PmsWorkItemStatusDO> statuses = workItemStatusService.getWorkItemStatusList(projectId, workItemType,
-                getLoginUserId());
+        List<PmsWorkItemStatusDO> statuses =
+                workItemStatusService.getWorkItemStatusList(
+                        projectId, workItemType, getLoginUserId());
         return success(BeanUtils.toBean(statuses, PmsWorkItemStatusRespVO.class));
     }
 
@@ -126,15 +129,19 @@ public class PmsWorkItemStatusController {
     public CommonResult<PmsWorkItemBoardConfigRespVO> getWorkItemBoardConfig(
             @RequestParam("projectId") Long projectId, @RequestParam("type") Integer workItemType) {
         // 1. 校验项目可读并查询已保存的看板列、状态
-        List<PmsWorkItemStatusDO> statuses = workItemStatusService
-                .getWorkItemStatusList(projectId, workItemType, getLoginUserId());
-        List<PmsWorkItemBoardDO> boards = workItemStatusService.getWorkItemBoardList(projectId, workItemType);
+        List<PmsWorkItemStatusDO> statuses =
+                workItemStatusService.getWorkItemStatusList(
+                        projectId, workItemType, getLoginUserId());
+        List<PmsWorkItemBoardDO> boards =
+                workItemStatusService.getWorkItemBoardList(projectId, workItemType);
 
         // 2.1 按看板列名称聚合状态编号
         Map<String, List<Long>> statusIdMap = new LinkedHashMap<>();
         for (PmsWorkItemStatusDO status : statuses) {
             if (StrUtil.isNotBlank(status.getBoardName())) {
-                statusIdMap.computeIfAbsent(status.getBoardName(), key -> new ArrayList<>()).add(status.getId());
+                statusIdMap
+                        .computeIfAbsent(status.getBoardName(), key -> new ArrayList<>())
+                        .add(status.getId());
             }
         }
         // 2.2 按看板列顺序组装响应，并保留空列
@@ -143,8 +150,11 @@ public class PmsWorkItemStatusController {
         for (PmsWorkItemBoardDO board : boards) {
             List<Long> statusIds = statusIdMap.getOrDefault(board.getName(), new ArrayList<>());
             assignedStatusIds.addAll(statusIds);
-            boardVOs.add(new PmsWorkItemBoardConfigRespVO.Board().setId(board.getId())
-                    .setName(board.getName()).setStatusIds(statusIds));
+            boardVOs.add(
+                    new PmsWorkItemBoardConfigRespVO.Board()
+                            .setId(board.getId())
+                            .setName(board.getName())
+                            .setStatusIds(statusIds));
         }
         // 2.3 收集未分配到看板列的状态
         List<Long> unassignedStatusIds = new ArrayList<>();
@@ -153,7 +163,9 @@ public class PmsWorkItemStatusController {
                 unassignedStatusIds.add(status.getId());
             }
         }
-        return success(new PmsWorkItemBoardConfigRespVO().setBoards(boardVOs).setUnassignedStatusIds(unassignedStatusIds));
+        return success(
+                new PmsWorkItemBoardConfigRespVO()
+                        .setBoards(boardVOs)
+                        .setUnassignedStatusIds(unassignedStatusIds));
     }
-
 }

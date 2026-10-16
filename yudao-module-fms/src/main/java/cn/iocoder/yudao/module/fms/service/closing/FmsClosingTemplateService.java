@@ -64,5 +64,4 @@ public interface FmsClosingTemplateService {
      * @param userId 用户编号
      */
     void deleteClosingTemplate(Long accountSetId, Long id, Long userId);
-
 }

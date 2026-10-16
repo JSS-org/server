@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl;
 
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.PayClientConfig;
-import lombok.Data;
 
 import jakarta.validation.Validator;
+
+import lombok.Data;
 
 /**
  * 无需任何配置 PayClientConfig 实现类
@@ -20,7 +21,7 @@ public class NonePayClientConfig implements PayClientConfig {
      */
     private String name;
 
-    public NonePayClientConfig(){
+    public NonePayClientConfig() {
         this.name = "none-config";
     }
 

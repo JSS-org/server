@@ -5,10 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.iocoder.yudao.framework.common.util.json.databind.TimestampLocalDateTimeDeserializer;
 import cn.iocoder.yudao.framework.common.util.json.databind.TimestampLocalDateTimeSerializer;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.DeserializationFeature;
@@ -32,18 +35,23 @@ import java.util.Map;
 @Slf4j
 public class JsonUtils {
 
-    @Getter
-    private static ObjectMapper objectMapper = buildObjectMapper();
+    @Getter private static ObjectMapper objectMapper = buildObjectMapper();
 
     private static ObjectMapper buildObjectMapper() {
-        SimpleModule simpleModule = new SimpleModule()
-                // 解决 LocalDateTime 的序列化
-                .addSerializer(LocalDateTime.class, TimestampLocalDateTimeSerializer.INSTANCE)
-                .addDeserializer(LocalDateTime.class, TimestampLocalDateTimeDeserializer.INSTANCE);
+        SimpleModule simpleModule =
+                new SimpleModule()
+                        // 解决 LocalDateTime 的序列化
+                        .addSerializer(
+                                LocalDateTime.class, TimestampLocalDateTimeSerializer.INSTANCE)
+                        .addDeserializer(
+                                LocalDateTime.class, TimestampLocalDateTimeDeserializer.INSTANCE);
         return JsonMapper.builder()
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .changeDefaultPropertyInclusion(value -> JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(
+                        value ->
+                                JsonInclude.Value.construct(
+                                        JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL))
                 .addModule(simpleModule)
                 .build();
     }
@@ -216,7 +224,8 @@ public class JsonUtils {
             return new ArrayList<>();
         }
         try {
-            return objectMapper.readValue(text, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            return objectMapper.readValue(
+                    text, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
         } catch (JacksonException e) {
             log.error("json parse err,json:{}", text, e);
             throw new RuntimeException(e);
@@ -230,7 +239,9 @@ public class JsonUtils {
         try {
             JsonNode treeNode = objectMapper.readTree(text);
             JsonNode pathNode = treeNode.path(path);
-            return objectMapper.readValue(pathNode.toString(), objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            return objectMapper.readValue(
+                    pathNode.toString(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
         } catch (JacksonException e) {
             log.error("json parse err,json:{}", text, e);
             throw new RuntimeException(e);
@@ -321,7 +332,7 @@ public class JsonUtils {
         if (obj == null) {
             return new ArrayList<>();
         }
-        return objectMapper.convertValue(obj, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+        return objectMapper.convertValue(
+                obj, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
     }
-
 }

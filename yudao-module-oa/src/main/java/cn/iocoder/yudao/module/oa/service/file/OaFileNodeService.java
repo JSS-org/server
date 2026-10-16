@@ -133,5 +133,4 @@ public interface OaFileNodeService {
      * @return 文件节点
      */
     OaFileNodeDO validateFileNodeAvailable(Long id);
-
 }

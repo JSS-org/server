@@ -5,14 +5,18 @@ import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.framework.common.validation.Mobile;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -30,7 +34,10 @@ public class HrmEmployeeCreateFromUserReqVO {
     @Size(max = 64, message = "工号不能超过 64 个字符")
     private String jobNumber;
 
-    @Schema(description = "员工手机号", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601691300")
+    @Schema(
+            description = "员工手机号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601691300")
     @NotBlank(message = "员工手机号不能为空")
     @Mobile
     private String mobile;
@@ -95,7 +102,7 @@ public class HrmEmployeeCreateFromUserReqVO {
     @JsonIgnore
     public boolean isStatusValid() {
         return ObjUtil.notEqual(HrmEmployeeTypeEnum.INFORMAL.getType(), type)
-                || status == null || HrmEmployeeStatusEnum.INFORMAL_STATUSES.contains(status);
+                || status == null
+                || HrmEmployeeStatusEnum.INFORMAL_STATUSES.contains(status);
     }
-
 }

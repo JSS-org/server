@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.coap;
 
+import static cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream.IotCoapAbstractHandler.OPTION_TOKEN;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
@@ -10,7 +12,9 @@ import cn.iocoder.yudao.module.iot.core.topic.event.IotDeviceEventPostReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.property.IotDevicePropertyPostReqDTO;
 import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.core.util.IotProductAuthUtils;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
@@ -22,8 +26,6 @@ import org.eclipse.californium.elements.config.UdpConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import static cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream.IotCoapAbstractHandler.OPTION_TOKEN;
 
 /**
  * IoT 直连设备 CoAP 协议集成测试（手动测试）
@@ -61,7 +63,8 @@ public class IotDirectDeviceCoapProtocolIntegrationTest {
     /**
      * 直连设备 Token：从 {@link #testAuth()} 方法获取后，粘贴到这里
      */
-    private static final String TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiNGF5bVpnT1RPT0NyREtSVCIsImV4cCI6MTc2OTk5MjgxOSwiZGV2aWNlTmFtZSI6InNtYWxsIn0.UHLCXsoGNsKbtJcbTV3n1psp03G75hVcVpV4wwd39r4";
+    private static final String TOKEN =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9kdWN0S2V5IjoiNGF5bVpnT1RPT0NyREtSVCIsImV4cCI6MTc2OTk5MjgxOSwiZGV2aWNlTmFtZSI6InNtYWxsIn0.UHLCXsoGNsKbtJcbTV3n1psp03G75hVcVpV4wwd39r4";
 
     @BeforeAll
     public static void initCaliforniumConfig() {
@@ -81,11 +84,13 @@ public class IotDirectDeviceCoapProtocolIntegrationTest {
     public void testAuth() throws Exception {
         // 1.1 构建请求
         String uri = String.format("coap://%s:%d/auth", SERVER_HOST, SERVER_PORT);
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
         String payload = JsonUtils.toJsonString(authReqDTO);
         // 1.2 输出请求
         log.info("[testAuth][请求 URI: {}]", uri);
@@ -113,18 +118,24 @@ public class IotDirectDeviceCoapProtocolIntegrationTest {
     @SuppressWarnings("deprecation")
     public void testPropertyPost() throws Exception {
         // 1.1 构建请求
-        String uri = String.format("coap://%s:%d/topic/sys/%s/%s/thing/property/post",
-                SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
-        String payload = JsonUtils.toJsonString(MapUtil.builder()
-                .put("id", IdUtil.fastSimpleUUID())
-                .put("method", IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
-                .put("version", "1.0")
-                .put("params", IotDevicePropertyPostReqDTO.of(MapUtil.<String, Object>builder()
-                        .put("width", 1)
-                        .put("height", "2")
-                        .build())
-                )
-                .build());
+        String uri =
+                String.format(
+                        "coap://%s:%d/topic/sys/%s/%s/thing/property/post",
+                        SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
+        String payload =
+                JsonUtils.toJsonString(
+                        MapUtil.builder()
+                                .put("id", IdUtil.fastSimpleUUID())
+                                .put("method", IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())
+                                .put("version", "1.0")
+                                .put(
+                                        "params",
+                                        IotDevicePropertyPostReqDTO.of(
+                                                MapUtil.<String, Object>builder()
+                                                        .put("width", 1)
+                                                        .put("height", "2")
+                                                        .build()))
+                                .build());
         // 1.2 输出请求
         log.info("[testPropertyPost][请求 URI: {}]", uri);
         log.info("[testPropertyPost][请求体: {}]", payload);
@@ -156,18 +167,25 @@ public class IotDirectDeviceCoapProtocolIntegrationTest {
     @SuppressWarnings("deprecation")
     public void testEventPost() throws Exception {
         // 1.1 构建请求
-        String uri = String.format("coap://%s:%d/topic/sys/%s/%s/thing/event/post",
-                SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
-        String payload = JsonUtils.toJsonString(MapUtil.builder()
-                .put("id", IdUtil.fastSimpleUUID())
-                .put("method", IotDeviceMessageMethodEnum.EVENT_POST.getMethod())
-                .put("version", "1.0")
-                .put("params", IotDeviceEventPostReqDTO.of(
-                        "eat",
-                        MapUtil.<String, Object>builder().put("rice", 3).build(),
-                        System.currentTimeMillis())
-                )
-                .build());
+        String uri =
+                String.format(
+                        "coap://%s:%d/topic/sys/%s/%s/thing/event/post",
+                        SERVER_HOST, SERVER_PORT, PRODUCT_KEY, DEVICE_NAME);
+        String payload =
+                JsonUtils.toJsonString(
+                        MapUtil.builder()
+                                .put("id", IdUtil.fastSimpleUUID())
+                                .put("method", IotDeviceMessageMethodEnum.EVENT_POST.getMethod())
+                                .put("version", "1.0")
+                                .put(
+                                        "params",
+                                        IotDeviceEventPostReqDTO.of(
+                                                "eat",
+                                                MapUtil.<String, Object>builder()
+                                                        .put("rice", 3)
+                                                        .build(),
+                                                System.currentTimeMillis()))
+                                .build());
         // 1.2 输出请求
         log.info("[testEventPost][请求 URI: {}]", uri);
         log.info("[testEventPost][请求体: {}]", payload);
@@ -207,10 +225,11 @@ public class IotDirectDeviceCoapProtocolIntegrationTest {
         String deviceName = "test-" + System.currentTimeMillis();
         String productSecret = "test-product-secret"; // 替换为实际的 productSecret
         String sign = IotProductAuthUtils.buildSign(PRODUCT_KEY, deviceName, productSecret);
-        IotDeviceRegisterReqDTO reqDTO = new IotDeviceRegisterReqDTO()
-                .setProductKey(PRODUCT_KEY)
-                .setDeviceName(deviceName)
-                .setSign(sign);
+        IotDeviceRegisterReqDTO reqDTO =
+                new IotDeviceRegisterReqDTO()
+                        .setProductKey(PRODUCT_KEY)
+                        .setDeviceName(deviceName)
+                        .setSign(sign);
         String payload = JsonUtils.toJsonString(reqDTO);
         // 1.3 输出请求
         log.info("[testDeviceRegister][请求 URI: {}]", uri);
@@ -228,5 +247,4 @@ public class IotDirectDeviceCoapProtocolIntegrationTest {
             client.shutdown();
         }
     }
-
 }

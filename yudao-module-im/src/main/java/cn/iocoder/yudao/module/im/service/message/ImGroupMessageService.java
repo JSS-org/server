@@ -49,7 +49,8 @@ public interface ImGroupMessageService {
      * @param dto           消息 DTO
      * @return 构造的消息 DO（持久化时 id 已回填）
      */
-    ImGroupMessageDO sendGroupMessage(Long senderId, Collection<Long> targetUserIds, ImGroupMessageSendDTO dto);
+    ImGroupMessageDO sendGroupMessage(
+            Long senderId, Collection<Long> targetUserIds, ImGroupMessageSendDTO dto);
 
     /**
      * 【用户调用】撤回群聊消息
@@ -125,6 +126,4 @@ public interface ImGroupMessageService {
      * @return 消息 Map（key = 消息编号）
      */
     Map<Long, ImGroupMessageDO> getGroupMessageMap(Collection<Long> ids);
-
 }
-

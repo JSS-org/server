@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.pay.enums;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,7 +17,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum PayChannelEnum implements ArrayValuable<String> {
-
     WX_PUB("wx_pub", "微信 JSAPI 支付"), // 公众号网页
     WX_LITE("wx_lite", "微信小程序支付"),
     WX_APP("wx_app", "微信 App 支付"),
@@ -35,7 +35,8 @@ public enum PayChannelEnum implements ArrayValuable<String> {
 
     WALLET("wallet", "钱包支付");
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(PayChannelEnum::getCode).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(PayChannelEnum::getCode).toArray(String[]::new);
 
     /**
      * 编码
@@ -43,6 +44,7 @@ public enum PayChannelEnum implements ArrayValuable<String> {
      * 参考 <a href="https://www.pingxx.com/api/支付渠道属性值.html">支付渠道属性值</a>
      */
     private final String code;
+
     /**
      * 名字
      */
@@ -64,5 +66,4 @@ public enum PayChannelEnum implements ArrayValuable<String> {
     public static boolean isWeixin(String channelCode) {
         return StrUtil.startWith(channelCode, "wx_");
     }
-
 }

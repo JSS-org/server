@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.im.service.face;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_HAS_ITEMS;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,16 +12,14 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.pack.ImFacePa
 import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.pack.ImFacePackSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackDO;
 import cn.iocoder.yudao.module.im.dal.mysql.face.ImFacePackMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_HAS_ITEMS;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_NOT_EXISTS;
 
 /**
  * IM 表情包 Service 实现类
@@ -28,15 +30,12 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_NOT_
 @Validated
 public class ImFacePackServiceImpl implements ImFacePackService {
 
-    @Resource
-    private ImFacePackMapper facePackMapper;
+    @Resource private ImFacePackMapper facePackMapper;
 
     /**
      * @Lazy 解决与 ImFacePackItemServiceImpl 的循环依赖（item.create / update 校验所属包存在 → 反向调用本类）
      */
-    @Resource
-    @Lazy
-    private ImFacePackItemService facePackItemService;
+    @Resource @Lazy private ImFacePackItemService facePackItemService;
 
     // ==================== 用户端 ====================
 
@@ -109,5 +108,4 @@ public class ImFacePackServiceImpl implements ImFacePackService {
         // 2. 删除
         facePackMapper.deleteByIds(ids);
     }
-
 }

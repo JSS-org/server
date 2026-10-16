@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.dict.vo.data.DictDataSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dict.DictDataDO;
+
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -113,5 +114,4 @@ public interface DictDataService {
      * @return 字典数据列表
      */
     List<DictDataDO> getDictDataListByDictType(String dictType);
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnsales.vo.detail;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -23,5 +25,4 @@ public class MesWmReturnSalesDetailPageReqVO extends PageParam {
 
     @Schema(description = "物料ID", example = "1")
     private Long itemId;
-
 }

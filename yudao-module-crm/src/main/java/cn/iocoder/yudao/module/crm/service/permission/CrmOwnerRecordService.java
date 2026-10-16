@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmSt
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmStatisticsPoolSummaryByDateRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmStatisticsPoolSummaryByUserRespVO;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmOwnerRecordCreateReqBO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -36,7 +37,8 @@ public interface CrmOwnerRecordService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerPutCountByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerPutCountByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 公海领取客户数(按日期)
@@ -44,7 +46,8 @@ public interface CrmOwnerRecordService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerTakeCountByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerTakeCountByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 进入公海客户数(按用户)
@@ -52,7 +55,8 @@ public interface CrmOwnerRecordService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerPutCountByUser(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerPutCountByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 公海领取客户数(按用户)
@@ -60,6 +64,6 @@ public interface CrmOwnerRecordService {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerTakeCountByUser(CrmStatisticsCustomerReqVO reqVO);
-
+    List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerTakeCountByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 }

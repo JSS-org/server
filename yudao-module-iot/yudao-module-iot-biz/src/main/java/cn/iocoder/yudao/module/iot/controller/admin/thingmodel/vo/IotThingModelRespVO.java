@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.iot.controller.admin.thingmodel.vo;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelEvent;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelProperty;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,10 +20,16 @@ public class IotThingModelRespVO {
     @Schema(description = "产品标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long productId;
 
-    @Schema(description = "产品标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "temperature_sensor")
+    @Schema(
+            description = "产品标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "temperature_sensor")
     private String productKey;
 
-    @Schema(description = "功能标识", requiredMode = Schema.RequiredMode.REQUIRED, example = "temperature")
+    @Schema(
+            description = "功能标识",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "temperature")
     private String identifier;
 
     @Schema(description = "功能名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "温度")
@@ -44,5 +52,4 @@ public class IotThingModelRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

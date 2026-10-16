@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.recycle.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -36,6 +37,5 @@ public class PmsKnowledgeRecycleDetailRespVO {
 
         @Schema(description = "删除时间")
         private LocalDateTime deleteTime;
-
     }
 }

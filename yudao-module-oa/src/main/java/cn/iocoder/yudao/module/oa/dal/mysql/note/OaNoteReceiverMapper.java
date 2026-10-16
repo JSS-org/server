@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.oa.dal.mysql.note;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.oa.dal.dataobject.note.OaNoteReceiverDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -17,9 +18,10 @@ import java.util.List;
 public interface OaNoteReceiverMapper extends BaseMapperX<OaNoteReceiverDO> {
 
     default void deleteByNoteIdAndUserIds(Long noteId, Collection<Long> userIds) {
-        delete(new LambdaQueryWrapperX<OaNoteReceiverDO>()
-                .eq(OaNoteReceiverDO::getNoteId, noteId)
-                .in(OaNoteReceiverDO::getUserId, userIds));
+        delete(
+                new LambdaQueryWrapperX<OaNoteReceiverDO>()
+                        .eq(OaNoteReceiverDO::getNoteId, noteId)
+                        .in(OaNoteReceiverDO::getUserId, userIds));
     }
 
     default List<OaNoteReceiverDO> selectListByNoteId(Long noteId) {
@@ -35,7 +37,9 @@ public interface OaNoteReceiverMapper extends BaseMapperX<OaNoteReceiverDO> {
     }
 
     default List<OaNoteReceiverDO> selectListByNoteIds(Collection<Long> noteIds) {
-        return selectList(new LambdaQueryWrapperX<OaNoteReceiverDO>().in(OaNoteReceiverDO::getNoteId, noteIds));
+        return selectList(
+                new LambdaQueryWrapperX<OaNoteReceiverDO>()
+                        .in(OaNoteReceiverDO::getNoteId, noteIds));
     }
 
     default void deleteByNoteId(Long noteId) {
@@ -43,7 +47,8 @@ public interface OaNoteReceiverMapper extends BaseMapperX<OaNoteReceiverDO> {
     }
 
     default void deleteByNoteIds(Collection<Long> noteIds) {
-        delete(new LambdaQueryWrapperX<OaNoteReceiverDO>().in(OaNoteReceiverDO::getNoteId, noteIds));
+        delete(
+                new LambdaQueryWrapperX<OaNoteReceiverDO>()
+                        .in(OaNoteReceiverDO::getNoteId, noteIds));
     }
-
 }

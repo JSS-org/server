@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.message.vo.privates;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,5 +39,4 @@ public class ImPrivateMessageRespVO {
 
     @Schema(description = "发送时间")
     private LocalDateTime sendTime;
-
 }

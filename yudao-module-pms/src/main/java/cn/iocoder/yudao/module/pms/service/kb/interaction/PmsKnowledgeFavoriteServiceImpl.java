@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.pms.service.kb.interaction;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_FAVORITE_DUPLICATE;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,7 +14,9 @@ import cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.favorite.P
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.interaction.PmsKnowledgeFavoriteDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.interaction.PmsKnowledgeFavoriteMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.PmsKnowledgeObjectTypeEnum;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,11 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_FAVORITE_DUPLICATE;
-
 /**
  * PMS 知识收藏（关注）Service 实现类
  *
@@ -35,31 +37,34 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_FAV
 @Validated
 public class PmsKnowledgeFavoriteServiceImpl implements PmsKnowledgeFavoriteService {
 
-    @Resource
-    private PmsKnowledgeFavoriteMapper favoriteMapper;
-    @Resource
-    private PmsKnowledgeInteractionTargetService interactionTargetService;
+    @Resource private PmsKnowledgeFavoriteMapper favoriteMapper;
+    @Resource private PmsKnowledgeInteractionTargetService interactionTargetService;
 
     @Override
     public void createFavorite(PmsKnowledgeFavoriteSaveReqVO saveReqVO, Long userId) {
         // 1.1 校验关注对象可读
-        Long libraryId = interactionTargetService.validateTargetReadable(
-                saveReqVO.getType(), saveReqVO.getEntityId(), userId);
+        Long libraryId =
+                interactionTargetService.validateTargetReadable(
+                        saveReqVO.getType(), saveReqVO.getEntityId(), userId);
         // 1.2 校验关注关系不存在
         if (favoriteMapper.selectByUserIdAndTypeAndEntityId(
-                userId, saveReqVO.getType(), saveReqVO.getEntityId()) != null) {
+                        userId, saveReqVO.getType(), saveReqVO.getEntityId())
+                != null) {
             throw exception(KNOWLEDGE_FAVORITE_DUPLICATE);
         }
 
         // 2. 新增关注关系
-        favoriteMapper.insert(BeanUtils.toBean(saveReqVO, PmsKnowledgeFavoriteDO.class)
-                .setLibraryId(libraryId).setUserId(userId));
+        favoriteMapper.insert(
+                BeanUtils.toBean(saveReqVO, PmsKnowledgeFavoriteDO.class)
+                        .setLibraryId(libraryId)
+                        .setUserId(userId));
     }
 
     @Override
     public void deleteFavorite(Integer type, Long entityId, Long userId) {
         // 1. 查询当前用户的关注关系
-        PmsKnowledgeFavoriteDO favorite = favoriteMapper.selectByUserIdAndTypeAndEntityId(userId, type, entityId);
+        PmsKnowledgeFavoriteDO favorite =
+                favoriteMapper.selectByUserIdAndTypeAndEntityId(userId, type, entityId);
         // 2. 存在时删除关注关系，未关注时不做任何处理
         if (favorite != null) {
             favoriteMapper.deleteById(favorite.getId());
@@ -67,11 +72,11 @@ public class PmsKnowledgeFavoriteServiceImpl implements PmsKnowledgeFavoriteServ
     }
 
     @Override
-    public PageResult<PmsKnowledgeInteractionItemRespVO> getFavoritePage(PmsKnowledgeFavoritePageReqVO pageReqVO,
-                                                                         Long userId) {
+    public PageResult<PmsKnowledgeInteractionItemRespVO> getFavoritePage(
+            PmsKnowledgeFavoritePageReqVO pageReqVO, Long userId) {
         // 1. 先批量判定全部关注对象的可读性
-        List<PmsKnowledgeInteractionItemRespVO> allItems = getReadableFavoriteList(
-                favoriteMapper.selectListByUserId(userId), userId);
+        List<PmsKnowledgeInteractionItemRespVO> allItems =
+                getReadableFavoriteList(favoriteMapper.selectListByUserId(userId), userId);
         if (CollUtil.isEmpty(allItems)) {
             return PageResult.empty();
         }
@@ -79,16 +84,19 @@ public class PmsKnowledgeFavoriteServiceImpl implements PmsKnowledgeFavoriteServ
         allItems.forEach(item -> itemMap.put(item.getId(), item));
 
         // 2. 将类型、排序和分页交给数据库，再按页拼接已批量解析的展示对象
-        PageResult<PmsKnowledgeFavoriteDO> favoritePage = favoriteMapper.selectPage(
-                pageReqVO, userId, itemMap.keySet());
-        return new PageResult<>(convertList(favoritePage.getList(), favorite -> itemMap.get(favorite.getId())),
+        PageResult<PmsKnowledgeFavoriteDO> favoritePage =
+                favoriteMapper.selectPage(pageReqVO, userId, itemMap.keySet());
+        return new PageResult<>(
+                convertList(favoritePage.getList(), favorite -> itemMap.get(favorite.getId())),
                 favoritePage.getTotal());
     }
 
     @Override
-    public List<PmsKnowledgeInteractionItemRespVO> getFavoriteListByLibraryId(Long libraryId, Long userId) {
+    public List<PmsKnowledgeInteractionItemRespVO> getFavoriteListByLibraryId(
+            Long libraryId, Long userId) {
         // 1. 查询指定知识库内当前用户的关注对象
-        List<PmsKnowledgeFavoriteDO> favorites = favoriteMapper.selectListByUserIdAndLibraryId(userId, libraryId);
+        List<PmsKnowledgeFavoriteDO> favorites =
+                favoriteMapper.selectListByUserIdAndLibraryId(userId, libraryId);
         // 2. 复用统一的对象可读校验和展示字段组装
         return getReadableFavoriteList(favorites, userId);
     }
@@ -105,10 +113,16 @@ public class PmsKnowledgeFavoriteServiceImpl implements PmsKnowledgeFavoriteServ
         if (CollUtil.isEmpty(favorites)) {
             return Collections.emptyList();
         }
-        List<PmsKnowledgeInteractionItemRespVO> items = convertList(favorites, favorite ->
-                new PmsKnowledgeInteractionItemRespVO().setId(favorite.getId()).setType(favorite.getType())
-                        .setEntityId(favorite.getEntityId()).setLibraryId(favorite.getLibraryId())
-                        .setCreateTime(favorite.getCreateTime()));
+        List<PmsKnowledgeInteractionItemRespVO> items =
+                convertList(
+                        favorites,
+                        favorite ->
+                                new PmsKnowledgeInteractionItemRespVO()
+                                        .setId(favorite.getId())
+                                        .setType(favorite.getType())
+                                        .setEntityId(favorite.getEntityId())
+                                        .setLibraryId(favorite.getLibraryId())
+                                        .setCreateTime(favorite.getCreateTime()));
         return interactionTargetService.getReadableItemList(items, userId);
     }
 
@@ -117,8 +131,8 @@ public class PmsKnowledgeFavoriteServiceImpl implements PmsKnowledgeFavoriteServ
         if (CollUtil.isEmpty(entityIds)) {
             return Collections.emptySet();
         }
-        List<PmsKnowledgeFavoriteDO> favorites = favoriteMapper
-                .selectListByUserIdAndTypeAndEntityIds(userId, type, entityIds);
+        List<PmsKnowledgeFavoriteDO> favorites =
+                favoriteMapper.selectListByUserIdAndTypeAndEntityIds(userId, type, entityIds);
         return convertSet(favorites, PmsKnowledgeFavoriteDO::getEntityId);
     }
 
@@ -133,28 +147,37 @@ public class PmsKnowledgeFavoriteServiceImpl implements PmsKnowledgeFavoriteServ
     }
 
     @Override
-    public void deleteFavoritesByEntityIds(Collection<Long> folderIds, Collection<Long> documentIds) {
+    public void deleteFavoritesByEntityIds(
+            Collection<Long> folderIds, Collection<Long> documentIds) {
         if (CollUtil.isNotEmpty(folderIds)) {
             favoriteMapper.deleteByTypeAndEntityIds(
                     Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()), folderIds);
         }
         if (CollUtil.isNotEmpty(documentIds)) {
-            favoriteMapper.deleteByTypeAndEntityIds(Arrays.asList(PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
-                    PmsKnowledgeObjectTypeEnum.FILE.getType()), documentIds);
+            favoriteMapper.deleteByTypeAndEntityIds(
+                    Arrays.asList(
+                            PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+                            PmsKnowledgeObjectTypeEnum.FILE.getType()),
+                    documentIds);
         }
     }
 
     @Override
-    public void updateFavoriteLibraryIdByEntityIds(Collection<Long> folderIds, Collection<Long> documentIds,
-                                                   Long libraryId) {
+    public void updateFavoriteLibraryIdByEntityIds(
+            Collection<Long> folderIds, Collection<Long> documentIds, Long libraryId) {
         if (CollUtil.isNotEmpty(folderIds)) {
-            favoriteMapper.updateLibraryIdByTypeAndEntityIds(libraryId,
-                    Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()), folderIds);
+            favoriteMapper.updateLibraryIdByTypeAndEntityIds(
+                    libraryId,
+                    Collections.singleton(PmsKnowledgeObjectTypeEnum.FOLDER.getType()),
+                    folderIds);
         }
         if (CollUtil.isNotEmpty(documentIds)) {
-            favoriteMapper.updateLibraryIdByTypeAndEntityIds(libraryId,
-                    Arrays.asList(PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(), PmsKnowledgeObjectTypeEnum.FILE.getType()), documentIds);
+            favoriteMapper.updateLibraryIdByTypeAndEntityIds(
+                    libraryId,
+                    Arrays.asList(
+                            PmsKnowledgeObjectTypeEnum.DOCUMENT.getType(),
+                            PmsKnowledgeObjectTypeEnum.FILE.getType()),
+                    documentIds);
         }
     }
-
 }

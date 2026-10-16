@@ -10,6 +10,7 @@ import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup.Deliver
 import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup.DeliveryPickUpStoreUpdateReqVO;
 import cn.iocoder.yudao.module.trade.controller.app.delivery.vo.pickup.AppDeliveryPickUpStoreRespVO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryPickUpStoreDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -34,6 +35,7 @@ public interface DeliveryPickUpStoreConvert {
     DeliveryPickUpStoreRespVO convert01(DeliveryPickUpStoreDO bean);
 
     List<DeliveryPickUpStoreSimpleRespVO> convertList1(List<DeliveryPickUpStoreDO> list);
+
     @Mapping(source = "areaId", target = "areaName", qualifiedByName = "convertAreaIdToAreaName")
     DeliveryPickUpStoreSimpleRespVO convert02(DeliveryPickUpStoreDO bean);
 
@@ -42,17 +44,24 @@ public interface DeliveryPickUpStoreConvert {
         return AreaUtils.format(areaId);
     }
 
-    default List<AppDeliveryPickUpStoreRespVO> convertList(List<DeliveryPickUpStoreDO> list,
-                                                           Double latitude, Double longitude) {
-        return CollectionUtils.convertList(list, store -> {
-            AppDeliveryPickUpStoreRespVO storeVO = convert03(store);
-            if (latitude != null && longitude != null) {
-                storeVO.setDistance(NumberUtils.getDistance(latitude, longitude, storeVO.getLatitude(), storeVO.getLongitude()));
-            }
-            return storeVO;
-        });
+    default List<AppDeliveryPickUpStoreRespVO> convertList(
+            List<DeliveryPickUpStoreDO> list, Double latitude, Double longitude) {
+        return CollectionUtils.convertList(
+                list,
+                store -> {
+                    AppDeliveryPickUpStoreRespVO storeVO = convert03(store);
+                    if (latitude != null && longitude != null) {
+                        storeVO.setDistance(
+                                NumberUtils.getDistance(
+                                        latitude,
+                                        longitude,
+                                        storeVO.getLatitude(),
+                                        storeVO.getLongitude()));
+                    }
+                    return storeVO;
+                });
     }
+
     @Mapping(source = "areaId", target = "areaName", qualifiedByName = "convertAreaIdToAreaName")
     AppDeliveryPickUpStoreRespVO convert03(DeliveryPickUpStoreDO bean);
-
 }

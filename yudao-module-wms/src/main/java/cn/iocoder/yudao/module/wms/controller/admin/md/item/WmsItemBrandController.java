@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.item;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
@@ -11,12 +14,15 @@ import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.brand.WmsItemBran
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.brand.WmsItemBrandSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemBrandDO;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemBrandService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,29 +30,27 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - WMS 商品品牌")
 @RestController
 @RequestMapping("/wms/item-brand")
 @Validated
 public class WmsItemBrandController {
 
-    @Resource
-    private WmsItemBrandService brandService;
+    @Resource private WmsItemBrandService brandService;
 
     @PostMapping("/create")
     @Operation(summary = "创建商品品牌")
     @PreAuthorize("@ss.hasPermission('wms:item-brand:create')")
-    public CommonResult<Long> createItemBrand(@Valid @RequestBody WmsItemBrandSaveReqVO createReqVO) {
+    public CommonResult<Long> createItemBrand(
+            @Valid @RequestBody WmsItemBrandSaveReqVO createReqVO) {
         return success(brandService.createItemBrand(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新商品品牌")
     @PreAuthorize("@ss.hasPermission('wms:item-brand:update')")
-    public CommonResult<Boolean> updateItemBrand(@Valid @RequestBody WmsItemBrandSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateItemBrand(
+            @Valid @RequestBody WmsItemBrandSaveReqVO updateReqVO) {
         brandService.updateItemBrand(updateReqVO);
         return success(true);
     }
@@ -72,7 +76,8 @@ public class WmsItemBrandController {
     @GetMapping("/page")
     @Operation(summary = "获得商品品牌分页")
     @PreAuthorize("@ss.hasPermission('wms:item-brand:query')")
-    public CommonResult<PageResult<WmsItemBrandRespVO>> getItemBrandPage(@Valid WmsItemBrandPageReqVO pageReqVO) {
+    public CommonResult<PageResult<WmsItemBrandRespVO>> getItemBrandPage(
+            @Valid WmsItemBrandPageReqVO pageReqVO) {
         PageResult<WmsItemBrandDO> pageResult = brandService.getItemBrandPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, WmsItemBrandRespVO.class));
     }
@@ -89,12 +94,16 @@ public class WmsItemBrandController {
     @Operation(summary = "导出商品品牌 Excel")
     @PreAuthorize("@ss.hasPermission('wms:item-brand:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportItemBrandExcel(@Valid WmsItemBrandPageReqVO pageReqVO,
-                                     HttpServletResponse response) throws IOException {
+    public void exportItemBrandExcel(
+            @Valid WmsItemBrandPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<WmsItemBrandDO> list = brandService.getItemBrandPage(pageReqVO).getList();
-        ExcelUtils.write(response, "商品品牌.xls", "数据", WmsItemBrandRespVO.class,
+        ExcelUtils.write(
+                response,
+                "商品品牌.xls",
+                "数据",
+                WmsItemBrandRespVO.class,
                 BeanUtils.toBean(list, WmsItemBrandRespVO.class));
     }
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.framework.security.config;
 
 import cn.iocoder.yudao.framework.web.config.WebProperties;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.core.Ordered;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,10 +16,12 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
  * @author 芋道源码
  */
 public abstract class AuthorizeRequestsCustomizer
-        implements Customizer<AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry>, Ordered {
+        implements Customizer<
+                        AuthorizeHttpRequestsConfigurer<HttpSecurity>
+                                .AuthorizationManagerRequestMatcherRegistry>,
+                Ordered {
 
-    @Resource
-    private WebProperties webProperties;
+    @Resource private WebProperties webProperties;
 
     protected String buildAdminApi(String url) {
         return webProperties.getAdminApi().getPrefix() + url;
@@ -31,5 +35,4 @@ public abstract class AuthorizeRequestsCustomizer
     public int getOrder() {
         return 0;
     }
-
 }

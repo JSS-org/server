@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.wms.dal.dataobject.md.item;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.*;
 
 /**
@@ -24,15 +26,15 @@ public class WmsItemBrandDO extends BaseDO {
     /**
      * 主键编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 品牌编号
      */
     private String code;
+
     /**
      * 品牌名称
      */
     private String name;
-
 }

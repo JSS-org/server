@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.config;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,7 +26,10 @@ public class MesWmBarcodeConfigRespVO {
     @ExcelProperty("业务类型")
     private Integer bizType;
 
-    @Schema(description = "内容格式模板", requiredMode = Schema.RequiredMode.REQUIRED, example = "WH-{BUSINESSCODE}")
+    @Schema(
+            description = "内容格式模板",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "WH-{BUSINESSCODE}")
     @ExcelProperty("内容格式模板")
     private String contentFormat;
 
@@ -51,5 +56,4 @@ public class MesWmBarcodeConfigRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai.controller.admin.mindmap.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,10 @@ public class AiMindMapRespVO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "4325")
     private Long userId;
 
-    @Schema(description = "生成内容提示", requiredMode = Schema.RequiredMode.REQUIRED, example = "Java 学习路线")
+    @Schema(
+            description = "生成内容提示",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "Java 学习路线")
     private String prompt;
 
     @Schema(description = "生成的思维导图内容")
@@ -24,7 +28,10 @@ public class AiMindMapRespVO {
     @Schema(description = "平台", requiredMode = Schema.RequiredMode.REQUIRED, example = "OpenAI")
     private String platform;
 
-    @Schema(description = "模型", requiredMode = Schema.RequiredMode.REQUIRED, example = "gpt-3.5-turbo-0125")
+    @Schema(
+            description = "模型",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "gpt-3.5-turbo-0125")
     private String model;
 
     @Schema(description = "错误信息")
@@ -32,5 +39,4 @@ public class AiMindMapRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

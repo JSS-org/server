@@ -5,8 +5,10 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.mq.redis.core.RedisMQTemplate;
 import cn.iocoder.yudao.framework.mq.redis.core.interceptor.RedisMessageInterceptor;
 import cn.iocoder.yudao.framework.mq.redis.core.message.AbstractRedisMessage;
+
 import lombok.Setter;
 import lombok.SneakyThrows;
+
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 
@@ -20,21 +22,23 @@ import java.util.List;
  *
  * @author 芋道源码
  */
-public abstract class AbstractRedisChannelMessageListener<T extends AbstractRedisChannelMessage> implements MessageListener {
+public abstract class AbstractRedisChannelMessageListener<T extends AbstractRedisChannelMessage>
+        implements MessageListener {
 
     /**
      * 消息类型
      */
     private final Class<T> messageType;
+
     /**
      * Redis Channel
      */
     private final String channel;
+
     /**
      * RedisMQTemplate
      */
-    @Setter
-    private RedisMQTemplate redisMQTemplate;
+    @Setter private RedisMQTemplate redisMQTemplate;
 
     @SneakyThrows
     protected AbstractRedisChannelMessageListener() {
@@ -99,5 +103,4 @@ public abstract class AbstractRedisChannelMessageListener<T extends AbstractRedi
             interceptors.get(i).consumeMessageAfter(message);
         }
     }
-
 }

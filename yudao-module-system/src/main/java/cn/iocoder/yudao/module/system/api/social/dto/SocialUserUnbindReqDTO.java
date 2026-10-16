@@ -3,11 +3,12 @@ package cn.iocoder.yudao.module.system.api.social.dto;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.system.enums.social.SocialTypeEnum;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
@@ -25,6 +26,7 @@ public class SocialUserUnbindReqDTO {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
+
     /**
      * 用户类型
      */
@@ -44,5 +46,4 @@ public class SocialUserUnbindReqDTO {
      */
     @NotEmpty(message = "社交平台的 openid 不能为空")
     private String openid;
-
 }

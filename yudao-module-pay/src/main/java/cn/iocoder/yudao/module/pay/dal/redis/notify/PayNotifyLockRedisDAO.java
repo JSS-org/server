@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.module.pay.dal.redis.notify;
 
+import static cn.iocoder.yudao.module.pay.dal.redis.RedisKeyConstants.PAY_NOTIFY_LOCK;
+
+import jakarta.annotation.Resource;
+
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Repository;
 
-import jakarta.annotation.Resource;
 import java.util.concurrent.TimeUnit;
-
-import static cn.iocoder.yudao.module.pay.dal.redis.RedisKeyConstants.PAY_NOTIFY_LOCK;
 
 /**
  * 支付通知的锁 Redis DAO
@@ -17,8 +18,7 @@ import static cn.iocoder.yudao.module.pay.dal.redis.RedisKeyConstants.PAY_NOTIFY
 @Repository
 public class PayNotifyLockRedisDAO {
 
-    @Resource
-    private RedissonClient redissonClient;
+    @Resource private RedissonClient redissonClient;
 
     public void lock(Long id, Long timeoutMillis, Runnable runnable) {
         String lockKey = formatKey(id);
@@ -35,5 +35,4 @@ public class PayNotifyLockRedisDAO {
     private static String formatKey(Long id) {
         return String.format(PAY_NOTIFY_LOCK, id);
     }
-
 }

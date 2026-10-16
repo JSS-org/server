@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.enums.knowledge;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,17 +15,20 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum Ai1KnowledgeDocumentStatusEnum implements ArrayValuable<Integer> {
-
     UNPROCESSED(0, "未处理"),
     VECTORIZED(1, "已向量化"),
     FAILED(2, "失败");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(Ai1KnowledgeDocumentStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(Ai1KnowledgeDocumentStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态
      */
     private final Integer status;
+
     /**
      * 名称
      */
@@ -34,5 +38,4 @@ public enum Ai1KnowledgeDocumentStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

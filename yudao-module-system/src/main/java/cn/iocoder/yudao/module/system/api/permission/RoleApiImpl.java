@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.api.permission.dto.RoleRespDTO;
 import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -18,8 +20,7 @@ import java.util.List;
 @Service
 public class RoleApiImpl implements RoleApi {
 
-    @Resource
-    private RoleService roleService;
+    @Resource private RoleService roleService;
 
     @Override
     public void validRoleList(Collection<Long> ids) {

@@ -39,5 +39,4 @@ public interface IotTcpFrameCodec {
      * @return 编码后的数据（带帧头/分隔符）
      */
     Buffer encode(byte[] data);
-
 }

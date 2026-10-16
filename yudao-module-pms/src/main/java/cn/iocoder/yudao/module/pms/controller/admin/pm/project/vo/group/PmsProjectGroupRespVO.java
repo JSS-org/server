@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,5 +27,4 @@ public class PmsProjectGroupRespVO {
 
     @Schema(description = "项目数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     private Integer projectCount;
-
 }

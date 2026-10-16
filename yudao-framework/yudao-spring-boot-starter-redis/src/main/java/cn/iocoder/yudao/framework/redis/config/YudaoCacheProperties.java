@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.redis.config;
 
 import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -23,5 +24,4 @@ public class YudaoCacheProperties {
      * redis scan 一次返回数量
      */
     private Integer redisScanBatchSize = REDIS_SCAN_BATCH_SIZE_DEFAULT;
-
 }

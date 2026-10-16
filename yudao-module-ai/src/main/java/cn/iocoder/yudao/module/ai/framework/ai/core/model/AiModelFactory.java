@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.ai.framework.ai.core.model;
 import cn.iocoder.yudao.module.ai.enums.model.AiPlatformEnum;
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api.MidjourneyApi;
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.suno.api.SunoApi;
+
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.image.ImageModel;
@@ -94,7 +95,8 @@ public interface AiModelFactory {
      * @param model     模型
      * @return ChatModel 对象
      */
-    EmbeddingModel getOrCreateEmbeddingModel(AiPlatformEnum platform, String apiKey, String url, String model);
+    EmbeddingModel getOrCreateEmbeddingModel(
+            AiPlatformEnum platform, String apiKey, String url, String model);
 
     /**
      * 基于指定配置，获得 VectorStore 对象
@@ -106,8 +108,8 @@ public interface AiModelFactory {
      * @param metadataFields 元数据字段
      * @return VectorStore 对象
      */
-    VectorStore getOrCreateVectorStore(Class<? extends VectorStore> type,
-                                       EmbeddingModel embeddingModel,
-                                       Map<String, Class<?>> metadataFields);
-
+    VectorStore getOrCreateVectorStore(
+            Class<? extends VectorStore> type,
+            EmbeddingModel embeddingModel,
+            Map<String, Class<?>> metadataFields);
 }

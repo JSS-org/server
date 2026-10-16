@@ -42,5 +42,4 @@ public interface MesWmMiscIssueDetailService {
      * @param id 编号
      */
     void validateMiscIssueDetailExists(Long id);
-
 }

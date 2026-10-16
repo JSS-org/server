@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.hrm.dal.dataobject.config;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.module.hrm.enums.config.HrmConfigTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,21 +32,22 @@ public class HrmConfigDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 配置类型
      *
      * 枚举 {@link HrmConfigTypeEnum}
      */
     private Integer type;
+
     /**
      * 配置值
      */
     private String value;
+
     /**
      * 显示顺序
      */
     private Integer sort;
-
 }

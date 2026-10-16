@@ -30,5 +30,4 @@ public interface SmsSendApi {
      * @return 发送日志编号
      */
     Long sendSingleSmsToMember(@Valid SmsSendSingleToUserReqDTO reqDTO);
-
 }

@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.iot.service.device;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_GROUP_DELETE_FAIL_DEVICE_EXISTS;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_GROUP_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.group.IotDeviceGroupPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.group.IotDeviceGroupSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceGroupDO;
 import cn.iocoder.yudao.module.iot.dal.mysql.device.IotDeviceGroupMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_GROUP_DELETE_FAIL_DEVICE_EXISTS;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_GROUP_NOT_EXISTS;
 
 /**
  * IoT 设备分组 Service 实现类
@@ -25,11 +27,9 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.DEVICE_GROUP_
 @Validated
 public class IotDeviceGroupServiceImpl implements IotDeviceGroupService {
 
-    @Resource
-    private IotDeviceGroupMapper deviceGroupMapper;
+    @Resource private IotDeviceGroupMapper deviceGroupMapper;
 
-    @Resource
-    private IotDeviceService deviceService;
+    @Resource private IotDeviceService deviceService;
 
     @Override
     public Long createDeviceGroup(IotDeviceGroupSaveReqVO createReqVO) {
@@ -90,5 +90,4 @@ public class IotDeviceGroupServiceImpl implements IotDeviceGroupService {
     public List<IotDeviceGroupDO> getDeviceGroupListByStatus(Integer status) {
         return deviceGroupMapper.selectListByStatus(status);
     }
-
 }

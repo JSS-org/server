@@ -8,6 +8,7 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
 
 import java.util.*;
@@ -17,12 +18,11 @@ import java.util.*;
  *
  * @author jason
  */
-public abstract class AbstractBpmTaskCandidateDeptLeaderStrategy implements BpmTaskCandidateStrategy {
+public abstract class AbstractBpmTaskCandidateDeptLeaderStrategy
+        implements BpmTaskCandidateStrategy {
 
-    @Resource
-    protected DeptApi deptApi;
-    @Resource
-    protected AdminUserApi adminUserApi;
+    @Resource protected DeptApi deptApi;
+    @Resource protected AdminUserApi adminUserApi;
 
     /**
      * 获得指定层级的部门负责人，只有第 level 的负责人
@@ -103,5 +103,4 @@ public abstract class AbstractBpmTaskCandidateDeptLeaderStrategy implements BpmT
         }
         return getStartUserDept(startUserId);
     }
-
 }

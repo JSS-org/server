@@ -1,17 +1,24 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.digest.FmsDigestRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.digest.FmsDigestSaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsDigestDO;
 import cn.iocoder.yudao.module.fms.service.config.FmsDigestService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,10 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 /**
  * FMS 常用摘要 Controller
  *
@@ -40,8 +43,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class FmsDigestController {
 
-    @Resource
-    private FmsDigestService digestService;
+    @Resource private FmsDigestService digestService;
 
     @PostMapping("/create")
     @Operation(summary = "创建常用摘要")
@@ -62,8 +64,9 @@ public class FmsDigestController {
     @Operation(summary = "删除常用摘要")
     @Parameter(name = "id", description = "常用摘要编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('fms:config:digest:delete')")
-    public CommonResult<Boolean> deleteDigest(@RequestParam("accountSetId") @NotNull Long accountSetId,
-                                              @RequestParam("id") @NotNull Long id) {
+    public CommonResult<Boolean> deleteDigest(
+            @RequestParam("accountSetId") @NotNull Long accountSetId,
+            @RequestParam("id") @NotNull Long id) {
         digestService.deleteDigest(accountSetId, id, getLoginUserId());
         return success(true);
     }
@@ -84,8 +87,13 @@ public class FmsDigestController {
     public CommonResult<List<FmsDigestRespVO>> getDigestSimpleList(
             @RequestParam("accountSetId") @NotNull Long accountSetId) {
         List<FmsDigestDO> list = digestService.getDigestList(accountSetId, getLoginUserId());
-        return success(convertList(list, digest -> new FmsDigestRespVO()
-                .setId(digest.getId()).setAccountSetId(digest.getAccountSetId()).setContent(digest.getContent())));
+        return success(
+                convertList(
+                        list,
+                        digest ->
+                                new FmsDigestRespVO()
+                                        .setId(digest.getId())
+                                        .setAccountSetId(digest.getAccountSetId())
+                                        .setContent(digest.getContent())));
     }
-
 }

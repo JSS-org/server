@@ -2,10 +2,13 @@ package cn.iocoder.yudao.module.fms.controller.admin.report.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.fms.enums.report.FmsFormulaRuleEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -45,7 +48,5 @@ public class FmsReportFormulaUpdateReqVO {
         @NotNull(message = "取数规则不能为空")
         @InEnum(value = FmsFormulaRuleEnum.class, message = "取数规则必须是 {value}")
         private Integer rules;
-
     }
-
 }

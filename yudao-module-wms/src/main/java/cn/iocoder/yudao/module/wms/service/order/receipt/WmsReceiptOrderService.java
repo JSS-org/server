@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.order.receipt.vo.order.WmsReceiptOrderPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.order.receipt.vo.order.WmsReceiptOrderSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.receipt.WmsReceiptOrderDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -80,5 +81,4 @@ public interface WmsReceiptOrderService {
      * @return 入库单数量
      */
     long getReceiptOrderCountByWarehouseId(Long warehouseId);
-
 }

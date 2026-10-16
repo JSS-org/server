@@ -1,34 +1,35 @@
 package cn.iocoder.yudao.module.hrm.service.employee.info;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord.HrmEmployeeConvertToFullTimeReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord.HrmEmployeeDemoteReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord.HrmEmployeePromoteReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord.HrmEmployeeRegularReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord.HrmEmployeeTransferReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeImportExcelVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeImportRespVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeCreateFromUserReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeListReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeCancelQuitReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeConfirmEntryReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeCreateFromUserReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeImportExcelVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeImportRespVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeListReqVO;
+import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeNotifyRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeePageReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeQuitReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeRehireReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeSaveReqVO;
-import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee.HrmEmployeeNotifyRespVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.portal.employee.vo.employee.HrmPortalEmployeeUpdateReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeChangeRecordDO;
-import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeQuitInfoDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.info.HrmEmployeeDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * HRM 员工档案 Service 接口
@@ -268,7 +269,8 @@ public interface HrmEmployeeService {
      * @return 招聘候选人编号与员工的映射
      */
     default Map<Long, HrmEmployeeDO> getEmployeeMapByCandidateIds(Collection<Long> candidateIds) {
-        return convertMap(getEmployeeListByCandidateIds(candidateIds), HrmEmployeeDO::getCandidateId);
+        return convertMap(
+                getEmployeeListByCandidateIds(candidateIds), HrmEmployeeDO::getCandidateId);
     }
 
     /**
@@ -336,8 +338,8 @@ public interface HrmEmployeeService {
      * @param duplicateStrategy 重复员工处理策略
      * @return 导入结果
      */
-    HrmEmployeeImportRespVO importEmployeeList(List<HrmEmployeeImportExcelVO> importEmployees,
-                                               Integer duplicateStrategy);
+    HrmEmployeeImportRespVO importEmployeeList(
+            List<HrmEmployeeImportExcelVO> importEmployees, Integer duplicateStrategy);
 
     /**
      * 获得员工状态数量
@@ -378,5 +380,4 @@ public interface HrmEmployeeService {
      * @param updateReqVO 员工档案信息
      */
     void updateEmployeeBySelf(Long userId, @Valid HrmPortalEmployeeUpdateReqVO updateReqVO);
-
 }

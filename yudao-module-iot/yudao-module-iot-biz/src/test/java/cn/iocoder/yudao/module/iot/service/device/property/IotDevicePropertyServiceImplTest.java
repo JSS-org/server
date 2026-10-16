@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.iot.service.device.property;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import static java.util.Collections.singletonList;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
@@ -15,6 +21,7 @@ import cn.iocoder.yudao.module.iot.enums.thingmodel.IotThingModelTypeEnum;
 import cn.iocoder.yudao.module.iot.framework.tdengine.core.TDengineTableField;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
 import cn.iocoder.yudao.module.iot.service.thingmodel.IotThingModelService;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -28,11 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * {@link IotDevicePropertyServiceImpl} 的单元测试
  *
@@ -40,23 +42,19 @@ import static org.mockito.Mockito.*;
  */
 public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private IotDevicePropertyServiceImpl service;
+    @InjectMocks private IotDevicePropertyServiceImpl service;
 
-    @Mock
-    private IotThingModelService thingModelService;
-    @Mock
-    private IotProductService productService;
-    @Mock
-    private IotDevicePropertyMapper devicePropertyMapper;
-    @Mock
-    private DevicePropertyRedisDAO deviceDataRedisDAO;
+    @Mock private IotThingModelService thingModelService;
+    @Mock private IotProductService productService;
+    @Mock private IotDevicePropertyMapper devicePropertyMapper;
+    @Mock private DevicePropertyRedisDAO deviceDataRedisDAO;
 
     @Test
     public void testSaveDeviceProperty_identifierCaseInsensitive() {
         // 准备参数：物模型 identifier 是 "LightStatus"，设备上报的 key 是 "LIGHTSTATUS"（全大写）
         IotDeviceDO device = buildDevice();
-        IotThingModelDO thingModel = buildThingModel("LightStatus", IotDataSpecsDataTypeEnum.INT.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("LightStatus", IotDataSpecsDataTypeEnum.INT.getDataType());
         Map<String, Object> params = new HashMap<>();
         params.put("LIGHTSTATUS", 100);
         IotDeviceMessage message = buildMessage(params);
@@ -75,7 +73,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
         assertFalse(dbProperties.containsKey("LIGHTSTATUS"));
         assertEquals(100, dbProperties.get("LightStatus"));
 
-        Map<String, IotDevicePropertyDO> redisProperties = captureRedisPutAllProperties(device.getId());
+        Map<String, IotDevicePropertyDO> redisProperties =
+                captureRedisPutAllProperties(device.getId());
         assertTrue(redisProperties.containsKey("LightStatus"));
         assertFalse(redisProperties.containsKey("LIGHTSTATUS"));
     }
@@ -84,7 +83,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
     public void testSaveDeviceProperty_identifierNotInThingModel() {
         // 准备参数：上报的 key 在物模型里完全不存在（连忽略大小写都匹配不到）
         IotDeviceDO device = buildDevice();
-        IotThingModelDO thingModel = buildThingModel("LightStatus", IotDataSpecsDataTypeEnum.INT.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("LightStatus", IotDataSpecsDataTypeEnum.INT.getDataType());
         Map<String, Object> params = new HashMap<>();
         params.put("UnknownProperty", 1);
         IotDeviceMessage message = buildMessage(params);
@@ -105,7 +105,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
     public void testSaveDeviceProperty_convertValueFailed() {
         // 准备参数：物模型存在，但是属性值无法按物模型转换
         IotDeviceDO device = buildDevice();
-        IotThingModelDO temperature = buildThingModel("Temperature", IotDataSpecsDataTypeEnum.INT.getDataType());
+        IotThingModelDO temperature =
+                buildThingModel("Temperature", IotDataSpecsDataTypeEnum.INT.getDataType());
         Map<String, Object> params = new HashMap<>();
         params.put("Temperature", "abc");
         IotDeviceMessage message = buildMessage(params);
@@ -127,7 +128,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
     public void testSaveDeviceProperty_skipNullValue() {
         // 准备参数：属性值为空，不能写入 TDengine 与 Redis
         IotDeviceDO device = buildDevice();
-        IotThingModelDO thingModel = buildThingModel("Temperature", IotDataSpecsDataTypeEnum.INT.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("Temperature", IotDataSpecsDataTypeEnum.INT.getDataType());
         Map<String, Object> params = new HashMap<>();
         params.put("Temperature", null);
         IotDeviceMessage message = buildMessage(params);
@@ -149,7 +151,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
     public void testSaveDeviceProperty_skipInvalidKeyType() {
         // 准备参数：Map 中包含非字符串 key，不能因为强转失败影响其它合法属性
         IotDeviceDO device = buildDevice();
-        IotThingModelDO thingModel = buildThingModel("PowerSwitch", IotDataSpecsDataTypeEnum.BOOL.getDataType());
+        IotThingModelDO thingModel =
+                buildThingModel("PowerSwitch", IotDataSpecsDataTypeEnum.BOOL.getDataType());
         Map<Object, Object> params = new HashMap<>();
         params.put(123, 1);
         params.put("PowerSwitch", true);
@@ -158,7 +161,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
         // mock 方法
         when(thingModelService.getThingModelListByProductIdFromCache(device.getProductId()))
                 .thenReturn(singletonList(thingModel));
-        when(thingModelService.convertThingModelPropertyValue(thingModel, true)).thenReturn((byte) 1);
+        when(thingModelService.convertThingModelPropertyValue(thingModel, true))
+                .thenReturn((byte) 1);
 
         // 调用，并断言：非字符串 key 不影响其它合法属性
         assertDoesNotThrow(() -> service.saveDeviceProperty(device, message));
@@ -174,17 +178,20 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
         // 准备参数：全大写缩写和驼峰缩写都需要转换为 TDengine 实际的小写字段名
         Long productId = 2L;
         IotProductDO product = IotProductDO.builder().id(productId).build();
-        List<IotThingModelDO> thingModels = Arrays.asList(
-                buildThingModel("Ua", IotDataSpecsDataTypeEnum.FLOAT.getDataType()),
-                buildThingModel("PfT", IotDataSpecsDataTypeEnum.FLOAT.getDataType()),
-                buildThingModel("PT", IotDataSpecsDataTypeEnum.FLOAT.getDataType()),
-                buildThingModel("PA", IotDataSpecsDataTypeEnum.FLOAT.getDataType()));
-        thingModels.forEach(thingModel -> thingModel.setType(IotThingModelTypeEnum.PROPERTY.getType()));
+        List<IotThingModelDO> thingModels =
+                Arrays.asList(
+                        buildThingModel("Ua", IotDataSpecsDataTypeEnum.FLOAT.getDataType()),
+                        buildThingModel("PfT", IotDataSpecsDataTypeEnum.FLOAT.getDataType()),
+                        buildThingModel("PT", IotDataSpecsDataTypeEnum.FLOAT.getDataType()),
+                        buildThingModel("PA", IotDataSpecsDataTypeEnum.FLOAT.getDataType()));
+        thingModels.forEach(
+                thingModel -> thingModel.setType(IotThingModelTypeEnum.PROPERTY.getType()));
 
         // mock 方法
         when(productService.validateProductExists(productId)).thenReturn(product);
         when(thingModelService.getThingModelListByProductId(productId)).thenReturn(thingModels);
-        when(devicePropertyMapper.getProductPropertySTableFieldList(productId)).thenReturn(Collections.emptyList());
+        when(devicePropertyMapper.getProductPropertySTableFieldList(productId))
+                .thenReturn(Collections.emptyList());
 
         // 调用
         service.defineDevicePropertyData(productId);
@@ -192,9 +199,11 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
         // 断言：字段名统一为小写下划线，避免 PT 和数据库中的 pt 被误判为不同字段
         ArgumentCaptor<List<TDengineTableField>> captor = ArgumentCaptor.forClass(List.class);
         verify(devicePropertyMapper).createProductPropertySTable(eq(productId), captor.capture());
-        assertEquals(Arrays.asList("ua", "pf_t", "pt", "pa"), captor.getValue().stream()
-                .map(TDengineTableField::getField)
-                .collect(Collectors.toList()));
+        assertEquals(
+                Arrays.asList("ua", "pf_t", "pt", "pa"),
+                captor.getValue().stream()
+                        .map(TDengineTableField::getField)
+                        .collect(Collectors.toList()));
     }
 
     // ========== 辅助方法 ==========
@@ -233,7 +242,8 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
     @SuppressWarnings("unchecked")
     private Map<String, Object> captureMapperInsertProperties() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-        verify(devicePropertyMapper).insert(any(IotDeviceDO.class), captor.capture(), anyLong(), anyLong());
+        verify(devicePropertyMapper)
+                .insert(any(IotDeviceDO.class), captor.capture(), anyLong(), anyLong());
         return captor.getValue();
     }
 
@@ -242,9 +252,9 @@ public class IotDevicePropertyServiceImplTest extends BaseMockitoUnitTest {
      */
     @SuppressWarnings("unchecked")
     private Map<String, IotDevicePropertyDO> captureRedisPutAllProperties(Long deviceId) {
-        ArgumentCaptor<Map<String, IotDevicePropertyDO>> captor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<String, IotDevicePropertyDO>> captor =
+                ArgumentCaptor.forClass(Map.class);
         verify(deviceDataRedisDAO).putAll(eq(deviceId), captor.capture());
         return captor.getValue();
     }
-
 }

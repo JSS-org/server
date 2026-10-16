@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.holiday;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.attendance.config.HrmAttendanceHolidayTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -23,5 +26,4 @@ public class HrmAttendanceHolidaySaveReqVO {
     @NotNull(message = "类型不能为空")
     @InEnum(value = HrmAttendanceHolidayTypeEnum.class, message = "节假日类型必须是 {value}")
     private Integer type;
-
 }

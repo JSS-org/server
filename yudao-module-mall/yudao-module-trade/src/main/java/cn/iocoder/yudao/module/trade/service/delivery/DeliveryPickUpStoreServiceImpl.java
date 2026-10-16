@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.trade.service.delivery;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PICK_UP_STORE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
@@ -10,15 +13,14 @@ import cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup.Deliver
 import cn.iocoder.yudao.module.trade.convert.delivery.DeliveryPickUpStoreConvert;
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryPickUpStoreDO;
 import cn.iocoder.yudao.module.trade.dal.mysql.delivery.DeliveryPickUpStoreMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PICK_UP_STORE_NOT_EXISTS;
 
 /**
  * 自提门店 Service 实现类
@@ -29,16 +31,15 @@ import static cn.iocoder.yudao.module.trade.enums.ErrorCodeConstants.PICK_UP_STO
 @Validated
 public class DeliveryPickUpStoreServiceImpl implements DeliveryPickUpStoreService {
 
-    @Resource
-    private DeliveryPickUpStoreMapper deliveryPickUpStoreMapper;
+    @Resource private DeliveryPickUpStoreMapper deliveryPickUpStoreMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public Long createDeliveryPickUpStore(DeliveryPickUpStoreCreateReqVO createReqVO) {
         // 插入
-        DeliveryPickUpStoreDO deliveryPickUpStore = DeliveryPickUpStoreConvert.INSTANCE.convert(createReqVO);
+        DeliveryPickUpStoreDO deliveryPickUpStore =
+                DeliveryPickUpStoreConvert.INSTANCE.convert(createReqVO);
         deliveryPickUpStoreMapper.insert(deliveryPickUpStore);
         // 返回
         return deliveryPickUpStore.getId();
@@ -84,7 +85,8 @@ public class DeliveryPickUpStoreServiceImpl implements DeliveryPickUpStoreServic
     }
 
     @Override
-    public PageResult<DeliveryPickUpStoreDO> getDeliveryPickUpStorePage(DeliveryPickUpStorePageReqVO pageReqVO) {
+    public PageResult<DeliveryPickUpStoreDO> getDeliveryPickUpStorePage(
+            DeliveryPickUpStorePageReqVO pageReqVO) {
         return deliveryPickUpStoreMapper.selectPage(pageReqVO);
     }
 
@@ -99,5 +101,4 @@ public class DeliveryPickUpStoreServiceImpl implements DeliveryPickUpStoreServic
         DeliveryPickUpStoreDO updateObj = BeanUtils.toBean(bindReqVO, DeliveryPickUpStoreDO.class);
         deliveryPickUpStoreMapper.updateById(updateObj);
     }
-
 }

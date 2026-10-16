@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,16 +10,17 @@ import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.listener.BpmPr
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.listener.BpmProcessListenerSaveReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessListenerDO;
 import cn.iocoder.yudao.module.bpm.service.definition.BpmProcessListenerService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - BPM 流程监听器")
 @RestController
@@ -25,20 +28,21 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class BpmProcessListenerController {
 
-    @Resource
-    private BpmProcessListenerService processListenerService;
+    @Resource private BpmProcessListenerService processListenerService;
 
     @PostMapping("/create")
     @Operation(summary = "创建流程监听器")
     @PreAuthorize("@ss.hasPermission('bpm:process-listener:create')")
-    public CommonResult<Long> createProcessListener(@Valid @RequestBody BpmProcessListenerSaveReqVO createReqVO) {
+    public CommonResult<Long> createProcessListener(
+            @Valid @RequestBody BpmProcessListenerSaveReqVO createReqVO) {
         return success(processListenerService.createProcessListener(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新流程监听器")
     @PreAuthorize("@ss.hasPermission('bpm:process-listener:update')")
-    public CommonResult<Boolean> updateProcessListener(@Valid @RequestBody BpmProcessListenerSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateProcessListener(
+            @Valid @RequestBody BpmProcessListenerSaveReqVO updateReqVO) {
         processListenerService.updateProcessListener(updateReqVO);
         return success(true);
     }
@@ -66,8 +70,8 @@ public class BpmProcessListenerController {
     @PreAuthorize("@ss.hasPermission('bpm:process-listener:query')")
     public CommonResult<PageResult<BpmProcessListenerRespVO>> getProcessListenerPage(
             @Valid BpmProcessListenerPageReqVO pageReqVO) {
-        PageResult<BpmProcessListenerDO> pageResult = processListenerService.getProcessListenerPage(pageReqVO);
+        PageResult<BpmProcessListenerDO> pageResult =
+                processListenerService.getProcessListenerPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, BpmProcessListenerRespVO.class));
     }
-
 }

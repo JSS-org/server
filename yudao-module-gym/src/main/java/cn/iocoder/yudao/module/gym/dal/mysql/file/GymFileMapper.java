@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.gym.dal.mysql.file;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -25,5 +26,4 @@ import org.apache.ibatis.annotations.Mapper;
  * @author JSS
  */
 @Mapper
-public interface GymFileMapper extends BaseMapperX<GymFileDO> {
-}
+public interface GymFileMapper extends BaseMapperX<GymFileDO> {}

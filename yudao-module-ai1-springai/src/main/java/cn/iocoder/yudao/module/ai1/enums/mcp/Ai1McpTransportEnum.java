@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.ai1.enums.mcp;
 
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,16 +18,17 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum Ai1McpTransportEnum implements ArrayValuable<String> {
-
     HTTP("http", "远程（Streamable HTTP）"),
     STDIO("stdio", "本地进程（stdio）");
 
-    public static final String[] ARRAYS = Arrays.stream(values()).map(Ai1McpTransportEnum::getTransport).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(Ai1McpTransportEnum::getTransport).toArray(String[]::new);
 
     /**
      * 传输方式
      */
     private final String transport;
+
     /**
      * 名称
      */
@@ -40,5 +42,4 @@ public enum Ai1McpTransportEnum implements ArrayValuable<String> {
     public static boolean isStdio(String transport) {
         return ObjUtil.equal(STDIO.transport, transport);
     }
-
 }

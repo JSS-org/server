@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.dal.redis.md.autocode;
 
 import cn.iocoder.yudao.module.mes.dal.redis.RedisKeyConstants;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -15,8 +17,7 @@ import java.time.Duration;
 @Repository
 public class MesMdAutoCodeRedisDAO {
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Resource private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 递增序号（带初始值和循环）
@@ -27,7 +28,7 @@ public class MesMdAutoCodeRedisDAO {
      * @param start 起始值（仅在 key 不存在时使用）
      * @return 递增后的值
      */
-    public Long increment(String keySuffix, Duration duration,  Integer start, Integer step) {
+    public Long increment(String keySuffix, Duration duration, Integer start, Integer step) {
         String key = RedisKeyConstants.AUTO_CODE + keySuffix;
 
         // 情况一：如果 key 不存在，初始化为 startNo
@@ -47,5 +48,4 @@ public class MesMdAutoCodeRedisDAO {
         }
         return value;
     }
-
 }

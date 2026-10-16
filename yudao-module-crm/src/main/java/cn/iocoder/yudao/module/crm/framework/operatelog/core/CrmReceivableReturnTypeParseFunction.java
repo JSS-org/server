@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.crm.framework.operatelog.core;
 
+import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_RECEIVABLE_RETURN_TYPE;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.dict.core.DictFrameworkUtils;
-import com.mzt.logapi.service.IParseFunction;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
-import static cn.iocoder.yudao.module.crm.enums.DictTypeConstants.CRM_RECEIVABLE_RETURN_TYPE;
+import com.mzt.logapi.service.IParseFunction;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Component;
 
 /**
  * CRM 回款方式的 {@link IParseFunction} 实现类
@@ -36,5 +39,4 @@ public class CrmReceivableReturnTypeParseFunction implements IParseFunction {
         }
         return DictFrameworkUtils.parseDictDataLabel(CRM_RECEIVABLE_RETURN_TYPE, value.toString());
     }
-
 }

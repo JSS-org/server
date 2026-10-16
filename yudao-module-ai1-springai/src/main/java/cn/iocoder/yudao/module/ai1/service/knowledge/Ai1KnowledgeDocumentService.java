@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.ai1.service.knowledge;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.document.Ai1KnowledgeDocumentPageReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.document.Ai1KnowledgeDocumentSaveReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.knowledge.vo.document.Ai1KnowledgeDocumentVectorizeRespVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.knowledge.Ai1KnowledgeDocumentDO;
+
 import jakarta.validation.Valid;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI1 知识文档 Service 接口
@@ -80,7 +82,8 @@ public interface Ai1KnowledgeDocumentService {
      * @param pageReqVO 分页查询
      * @return 文档分页
      */
-    PageResult<Ai1KnowledgeDocumentDO> getKnowledgeDocumentPage(Ai1KnowledgeDocumentPageReqVO pageReqVO);
+    PageResult<Ai1KnowledgeDocumentDO> getKnowledgeDocumentPage(
+            Ai1KnowledgeDocumentPageReqVO pageReqVO);
 
     /**
      * 获得文档列表
@@ -114,6 +117,6 @@ public interface Ai1KnowledgeDocumentService {
      * @param knowledgeBaseId 知识库编号
      * @return 成功、失败数量
      */
-    Ai1KnowledgeDocumentVectorizeRespVO vectorizeKnowledgeDocumentListByKnowledgeBaseId(Long knowledgeBaseId);
-
+    Ai1KnowledgeDocumentVectorizeRespVO vectorizeKnowledgeDocumentListByKnowledgeBaseId(
+            Long knowledgeBaseId);
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.promotion.service.banner;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.BANNER_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerCreateReqVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerPageReqVO;
@@ -7,14 +10,13 @@ import cn.iocoder.yudao.module.promotion.controller.admin.banner.vo.BannerUpdate
 import cn.iocoder.yudao.module.promotion.convert.banner.BannerConvert;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.banner.BannerDO;
 import cn.iocoder.yudao.module.promotion.dal.mysql.banner.BannerMapper;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import jakarta.annotation.Resource;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.BANNER_NOT_EXISTS;
 
 /**
  * 首页 banner 实现类
@@ -25,8 +27,7 @@ import static cn.iocoder.yudao.module.promotion.enums.ErrorCodeConstants.BANNER_
 @Validated
 public class BannerServiceImpl implements BannerService {
 
-    @Resource
-    private BannerMapper bannerMapper;
+    @Resource private BannerMapper bannerMapper;
 
     @Override
     public Long createBanner(BannerCreateReqVO createReqVO) {
@@ -82,5 +83,4 @@ public class BannerServiceImpl implements BannerService {
     public List<BannerDO> getBannerListByPosition(Integer position) {
         return bannerMapper.selectBannerListByPosition(position);
     }
-
 }

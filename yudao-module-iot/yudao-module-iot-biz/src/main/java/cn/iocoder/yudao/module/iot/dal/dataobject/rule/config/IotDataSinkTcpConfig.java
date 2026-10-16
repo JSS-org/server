@@ -14,26 +14,32 @@ public class IotDataSinkTcpConfig extends IotAbstractDataSinkConfig {
      * 默认连接超时时间（毫秒）
      */
     public static final int DEFAULT_CONNECT_TIMEOUT_MS = 5000;
+
     /**
      * 默认读取超时时间（毫秒）
      */
     public static final int DEFAULT_READ_TIMEOUT_MS = 10000;
+
     /**
      * 默认是否启用 SSL
      */
     public static final boolean DEFAULT_SSL = false;
+
     /**
      * 默认数据格式
      */
     public static final String DEFAULT_DATA_FORMAT = "JSON";
+
     /**
      * 默认心跳间隔时间（毫秒）
      */
     public static final long DEFAULT_HEARTBEAT_INTERVAL_MS = 30000L;
+
     /**
      * 默认重连间隔时间（毫秒）
      */
     public static final long DEFAULT_RECONNECT_INTERVAL_MS = 5000L;
+
     /**
      * 默认最大重连次数
      */
@@ -88,5 +94,4 @@ public class IotDataSinkTcpConfig extends IotAbstractDataSinkConfig {
      * 最大重连次数
      */
     private Integer maxReconnectAttempts = DEFAULT_MAX_RECONNECT_ATTEMPTS;
-
 }

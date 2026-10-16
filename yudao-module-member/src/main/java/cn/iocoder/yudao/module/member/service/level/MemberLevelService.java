@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.enums.MemberExperienceBizTypeEnum;
 
 import jakarta.validation.Valid;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -97,6 +98,6 @@ public interface MemberLevelService {
      * @param bizType    业务类型
      * @param bizId      业务编号
      */
-    void addExperience(Long userId, Integer experience, MemberExperienceBizTypeEnum bizType, String bizId);
-
+    void addExperience(
+            Long userId, Integer experience, MemberExperienceBizTypeEnum bizType, String bizId);
 }

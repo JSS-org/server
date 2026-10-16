@@ -27,7 +27,8 @@ public class OAuth2Utils {
      * @param state 状态
      * @return 授权码模式下的重定向 URI
      */
-    public static String buildAuthorizationCodeRedirectUri(String redirectUri, String authorizationCode, String state) {
+    public static String buildAuthorizationCodeRedirectUri(
+            String redirectUri, String authorizationCode, String state) {
         Map<String, String> query = new LinkedHashMap<>();
         query.put("code", authorizationCode);
         if (state != null) {
@@ -49,8 +50,13 @@ public class OAuth2Utils {
      * @param additionalInformation 附加信息
      * @return 简化授权模式下的重定向 URI
      */
-    public static String buildImplicitRedirectUri(String redirectUri, String accessToken, String state, LocalDateTime expireTime,
-                                                  Collection<String> scopes, Map<String, Object> additionalInformation) {
+    public static String buildImplicitRedirectUri(
+            String redirectUri,
+            String accessToken,
+            String state,
+            LocalDateTime expireTime,
+            Collection<String> scopes,
+            Map<String, Object> additionalInformation) {
         Map<String, Object> vars = new LinkedHashMap<String, Object>();
         Map<String, String> keys = new HashMap<String, String>();
         vars.put("access_token", accessToken);
@@ -77,8 +83,12 @@ public class OAuth2Utils {
         return HttpUtils.append(redirectUri, vars, keys, true);
     }
 
-    public static String buildUnsuccessfulRedirect(String redirectUri, String responseType, String state,
-                                                   String error, String description) {
+    public static String buildUnsuccessfulRedirect(
+            String redirectUri,
+            String responseType,
+            String state,
+            String error,
+            String description) {
         Map<String, String> query = new LinkedHashMap<String, String>();
         query.put("error", error);
         query.put("error_description", description);
@@ -99,5 +109,4 @@ public class OAuth2Utils {
     public static List<String> buildScopes(String scope) {
         return StrUtil.split(scope, ' ');
     }
-
 }

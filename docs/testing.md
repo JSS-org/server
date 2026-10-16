@@ -425,3 +425,13 @@ verify-migrations.py完整脚本双轮通过58表/35页/61页面授权；包含S
 SQL47在用户明确批准之后应用实库，读查gym_hq_admin=1条单数编辑授权、gym_store_manager=0、gym_self_qa=0。浏览器admin刷新权限后，member24专用未来生效黑名单新增、编辑原因、撤销、刷新重读通过，截图/tmp/gym-blacklist-permission-browser.png，资料保留。
 
 SELF从本人产品“申请改价”入口已在原前端提交BROWSER-SELF-PRICE-product9-20261015，由既有gymstore批准，课程产品9实际149.99→150，截图/tmp/gym-self-price-browser-submitted.png、/tmp/gym-self-price-browser-approved.png、/tmp/gym-self-price-browser-price.png；不能将审批列表通用发起下拉限制泛化为所有SELF发起路径失败。已恢复admin。前端未改，本轮review已完成，用户授权的第三方和独立前端/旧外部存储限制见progress最终审计。
+
+
+## 2026-10-16 格式化验证
+
+- `mvn -N spotless:apply`：官方Maven插件依赖已下载并执行。最终根目录配置采用Spotless3.10.4/google-java-format1.36.1/AOSP；全部7,723个Java源/测试文件中7,504个变化，219个未变。
+- `mvn -B -ntp -N spotless:apply spotless:check`：最终配置连续修正/检查通过，检查无待格式化文件；日志`/tmp/server-spotless-final.log`。
+- 现有完整相关回归命令（Gym*Test及infra文件三组）通过301项：Gym256+infra45，0失败/错误/跳过，日志`/tmp/server-format-tests.log`。最终AOSP import次序统一后，再次`mvn -B -ntp -q -DskipTests -pl yudao-server -am test-compile`通过，日志`/tmp/server-format-final-compile.log`。
+- 使用当前JDK词法扫描器与原Git源码核对，忽略注释、空白和import声明后，唯一差异为CRM类CrmReceivablePlanPageReqVO的三处`final static`规范化成`static final`，已逐项检查等价；其余声明/语句token及字面量值未变。import排序/未使用import清理由引擎处理，不把所有改动笼统称为仅空白。
+- `verify-controller-permissions.py`兼容多行注解参数，离线逐方法比对150个PreAuthorize表达式前后完全一致。运行HTTP核对尝试遇当前48080未启动而连接拒绝，未将其记为本轮HTTP通过，也未为格式化任务自动启动服务。
+- `git diff --check`通过，前端Git状态为空。原有未跟踪`script/gym/__pycache__/`保留。未提交、暂存或重置用户工作区；没有改业务规则。

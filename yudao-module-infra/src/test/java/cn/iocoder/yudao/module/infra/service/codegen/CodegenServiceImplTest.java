@@ -1,5 +1,18 @@
 package cn.iocoder.yudao.module.infra.service.codegen;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -22,10 +35,13 @@ import cn.iocoder.yudao.module.infra.service.codegen.inner.CodegenBuilder;
 import cn.iocoder.yudao.module.infra.service.codegen.inner.CodegenEngine;
 import cn.iocoder.yudao.module.infra.service.db.DataSourceConfigService;
 import cn.iocoder.yudao.module.infra.service.db.DatabaseTableService;
+
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -35,18 +51,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link CodegenServiceImpl} 的单元测试类
  *
@@ -55,37 +59,32 @@ import static org.mockito.Mockito.when;
 @Import(CodegenServiceImpl.class)
 public class CodegenServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private CodegenServiceImpl codegenService;
+    @Resource private CodegenServiceImpl codegenService;
 
-    @Resource
-    private CodegenTableMapper codegenTableMapper;
-    @Resource
-    private CodegenColumnMapper codegenColumnMapper;
+    @Resource private CodegenTableMapper codegenTableMapper;
+    @Resource private CodegenColumnMapper codegenColumnMapper;
 
-    @MockitoBean
-    private DatabaseTableService databaseTableService;
-    @MockitoBean
-    private DataSourceConfigService dataSourceConfigService;
+    @MockitoBean private DatabaseTableService databaseTableService;
+    @MockitoBean private DataSourceConfigService dataSourceConfigService;
 
-    @MockitoBean
-    private CodegenBuilder codegenBuilder;
-    @MockitoBean
-    private CodegenEngine codegenEngine;
+    @MockitoBean private CodegenBuilder codegenBuilder;
+    @MockitoBean private CodegenEngine codegenEngine;
 
-    @MockitoBean
-    private CodegenProperties codegenProperties;
+    @MockitoBean private CodegenProperties codegenProperties;
 
     @Test
     public void testCreateCodegenList() {
         // 准备参数
         String author = randomString();
-        CodegenCreateListReqVO reqVO = randomPojo(CodegenCreateListReqVO.class,
-                o -> o.setDataSourceConfigId(1L).setTableNames(Collections.singletonList("t_yunai")));
+        CodegenCreateListReqVO reqVO =
+                randomPojo(
+                        CodegenCreateListReqVO.class,
+                        o ->
+                                o.setDataSourceConfigId(1L)
+                                        .setTableNames(Collections.singletonList("t_yunai")));
         // mock 方法（TableInfo）
         TableInfo tableInfo = mock(TableInfo.class);
-        when(databaseTableService.getTable(eq(1L), eq("t_yunai")))
-                .thenReturn(tableInfo);
+        when(databaseTableService.getTable(eq(1L), eq("t_yunai"))).thenReturn(tableInfo);
         when(tableInfo.getComment()).thenReturn("芋艿");
         // mock 方法（TableInfo fields）
         TableField field01 = mock(TableField.class);
@@ -99,10 +98,10 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
         when(codegenBuilder.buildTable(same(tableInfo))).thenReturn(table);
         // mock 方法（CodegenColumnDO）
         List<CodegenColumnDO> columns = randomPojoList(CodegenColumnDO.class);
-        when(codegenBuilder.buildColumns(eq(table.getId()), same(fields)))
-                .thenReturn(columns);
+        when(codegenBuilder.buildColumns(eq(table.getId()), same(fields))).thenReturn(columns);
         // mock 方法（CodegenProperties）
-        when(codegenProperties.getFrontType()).thenReturn(CodegenFrontTypeEnum.VUE3_ELEMENT_PLUS.getType());
+        when(codegenProperties.getFrontType())
+                .thenReturn(CodegenFrontTypeEnum.VUE3_ELEMENT_PLUS.getType());
 
         // 调用
         List<Long> result = codegenService.createCodegenList(author, reqVO);
@@ -127,22 +126,25 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testValidateTableInfo() {
         // 情况一
-        assertServiceException(() -> codegenService.validateTableInfo(null),
-                CODEGEN_IMPORT_TABLE_NULL);
+        assertServiceException(
+                () -> codegenService.validateTableInfo(null), CODEGEN_IMPORT_TABLE_NULL);
         // 情况二
         TableInfo tableInfo = mock(TableInfo.class);
-        assertServiceException(() -> codegenService.validateTableInfo(tableInfo),
+        assertServiceException(
+                () -> codegenService.validateTableInfo(tableInfo),
                 CODEGEN_TABLE_INFO_TABLE_COMMENT_IS_NULL);
         // 情况三
         when(tableInfo.getComment()).thenReturn("芋艿");
-        assertServiceException(() -> codegenService.validateTableInfo(tableInfo),
-                CODEGEN_IMPORT_COLUMNS_NULL);
+        assertServiceException(
+                () -> codegenService.validateTableInfo(tableInfo), CODEGEN_IMPORT_COLUMNS_NULL);
         // 情况四
         TableField field = mock(TableField.class);
         when(field.getName()).thenReturn("name");
         when(tableInfo.getFields()).thenReturn(Collections.singletonList(field));
-        assertServiceException(() -> codegenService.validateTableInfo(tableInfo),
-                CODEGEN_TABLE_INFO_COLUMN_COMMENT_IS_NULL, field.getName());
+        assertServiceException(
+                () -> codegenService.validateTableInfo(tableInfo),
+                CODEGEN_TABLE_INFO_COLUMN_COMMENT_IS_NULL,
+                field.getName());
     }
 
     @Test
@@ -152,71 +154,107 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
         // mock 方法
 
         // 调用，并断言
-        assertServiceException(() -> codegenService.updateCodegen(updateReqVO),
-                CODEGEN_TABLE_NOT_EXISTS);
+        assertServiceException(
+                () -> codegenService.updateCodegen(updateReqVO), CODEGEN_TABLE_NOT_EXISTS);
     }
 
     @Test
     public void testUpdateCodegen_sub_masterNotExists() {
         // mock 数据
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(table);
         // 准备参数
-        CodegenUpdateReqVO updateReqVO = randomPojo(CodegenUpdateReqVO.class,
-                o -> o.getTable().setId(table.getId())
-                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType()));
+        CodegenUpdateReqVO updateReqVO =
+                randomPojo(
+                        CodegenUpdateReqVO.class,
+                        o ->
+                                o.getTable()
+                                        .setId(table.getId())
+                                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType()));
 
         // 调用，并断言
-        assertServiceException(() -> codegenService.updateCodegen(updateReqVO),
-                CODEGEN_MASTER_TABLE_NOT_EXISTS, updateReqVO.getTable().getMasterTableId());
+        assertServiceException(
+                () -> codegenService.updateCodegen(updateReqVO),
+                CODEGEN_MASTER_TABLE_NOT_EXISTS,
+                updateReqVO.getTable().getMasterTableId());
     }
 
     @Test
     public void testUpdateCodegen_sub_columnNotExists() {
         // mock 数据
-        CodegenTableDO subTable = randomPojo(CodegenTableDO.class,
-                o -> o.setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO subTable =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(subTable);
         // mock 数据（master）
-        CodegenTableDO masterTable = randomPojo(CodegenTableDO.class,
-                o -> o.setTemplateType(CodegenTemplateTypeEnum.MASTER_ERP.getType())
-                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO masterTable =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setTemplateType(CodegenTemplateTypeEnum.MASTER_ERP.getType())
+                                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(masterTable);
         // 准备参数
-        CodegenUpdateReqVO updateReqVO = randomPojo(CodegenUpdateReqVO.class,
-                o -> o.getTable().setId(subTable.getId())
-                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                        .setMasterTableId(masterTable.getId()));
+        CodegenUpdateReqVO updateReqVO =
+                randomPojo(
+                        CodegenUpdateReqVO.class,
+                        o ->
+                                o.getTable()
+                                        .setId(subTable.getId())
+                                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                                        .setMasterTableId(masterTable.getId()));
 
         // 调用，并断言
-        assertServiceException(() -> codegenService.updateCodegen(updateReqVO),
-                CODEGEN_SUB_COLUMN_NOT_EXISTS, updateReqVO.getTable().getSubJoinColumnId());
+        assertServiceException(
+                () -> codegenService.updateCodegen(updateReqVO),
+                CODEGEN_SUB_COLUMN_NOT_EXISTS,
+                updateReqVO.getTable().getSubJoinColumnId());
     }
 
     @Test
     public void testUpdateCodegen_success() {
         // mock 数据
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setTemplateType(CodegenTemplateTypeEnum.ONE.getType())
-                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setTemplateType(CodegenTemplateTypeEnum.ONE.getType())
+                                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(table);
-        CodegenColumnDO column01 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
+        CodegenColumnDO column01 =
+                randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
         codegenColumnMapper.insert(column01);
-        CodegenColumnDO column02 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
+        CodegenColumnDO column02 =
+                randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
         codegenColumnMapper.insert(column02);
         // 准备参数
-        CodegenUpdateReqVO updateReqVO = randomPojo(CodegenUpdateReqVO.class,
-                o -> o.getTable().setId(table.getId())
-                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType())
-                        .setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setModuleName("infra").setBusinessName("codegen").setClassName("CodegenTable"));
-        CodegenColumnSaveReqVO columnVO01 = randomPojo(CodegenColumnSaveReqVO.class,
-                o -> o.setId(column01.getId()).setTableId(table.getId()));
-        CodegenColumnSaveReqVO columnVO02 = randomPojo(CodegenColumnSaveReqVO.class,
-                o -> o.setId(column02.getId()).setTableId(table.getId()));
+        CodegenUpdateReqVO updateReqVO =
+                randomPojo(
+                        CodegenUpdateReqVO.class,
+                        o ->
+                                o.getTable()
+                                        .setId(table.getId())
+                                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType())
+                                        .setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setModuleName("infra")
+                                        .setBusinessName("codegen")
+                                        .setClassName("CodegenTable"));
+        CodegenColumnSaveReqVO columnVO01 =
+                randomPojo(
+                        CodegenColumnSaveReqVO.class,
+                        o -> o.setId(column01.getId()).setTableId(table.getId()));
+        CodegenColumnSaveReqVO columnVO02 =
+                randomPojo(
+                        CodegenColumnSaveReqVO.class,
+                        o -> o.setId(column02.getId()).setTableId(table.getId()));
         updateReqVO.setColumns(Arrays.asList(columnVO01, columnVO02));
 
         // 调用
@@ -233,21 +271,36 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testSyncCodegenFromDB() {
         // mock 数据（CodegenTableDO）
-        CodegenTableDO table = randomPojo(CodegenTableDO.class, o -> o.setTableName("t_yunai")
-                .setDataSourceConfigId(1L).setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setTableName("t_yunai")
+                                        .setDataSourceConfigId(1L)
+                                        .setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(table);
-        CodegenColumnDO column01 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId())
-                .setColumnName("id").setPrimaryKey(true).setOrdinalPosition(0));
+        CodegenColumnDO column01 =
+                randomPojo(
+                        CodegenColumnDO.class,
+                        o ->
+                                o.setTableId(table.getId())
+                                        .setColumnName("id")
+                                        .setPrimaryKey(true)
+                                        .setOrdinalPosition(0));
         codegenColumnMapper.insert(column01);
-        CodegenColumnDO column02 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId())
-                .setColumnName("name").setOrdinalPosition(1));
+        CodegenColumnDO column02 =
+                randomPojo(
+                        CodegenColumnDO.class,
+                        o ->
+                                o.setTableId(table.getId())
+                                        .setColumnName("name")
+                                        .setOrdinalPosition(1));
         codegenColumnMapper.insert(column02);
         // 准备参数
         Long tableId = table.getId();
         // mock 方法（TableInfo）
         TableInfo tableInfo = mock(TableInfo.class);
-        when(databaseTableService.getTable(eq(1L), eq("t_yunai")))
-                .thenReturn(tableInfo);
+        when(databaseTableService.getTable(eq(1L), eq("t_yunai"))).thenReturn(tableInfo);
         when(tableInfo.getComment()).thenReturn("芋艿");
         // mock 方法（TableInfo fields）
         TableField field01 = mock(TableField.class);
@@ -256,15 +309,18 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
         when(field03.getComment()).thenReturn("分类");
         List<TableField> fields = Arrays.asList(field01, field03);
         when(tableInfo.getFields()).thenReturn(fields);
-        when(databaseTableService.getTable(eq(1L), eq("t_yunai")))
-                .thenReturn(tableInfo);
+        when(databaseTableService.getTable(eq(1L), eq("t_yunai"))).thenReturn(tableInfo);
         // mock 方法（CodegenTableDO）
         List<CodegenColumnDO> newColumns = randomPojoList(CodegenColumnDO.class, 2);
-        when(codegenBuilder.buildColumns(eq(table.getId()), argThat(tableFields -> {
-            assertEquals(2, tableFields.size());
-            assertSame(tableInfo.getFields(), tableFields);
-            return true;
-        }))).thenReturn(newColumns);
+        when(codegenBuilder.buildColumns(
+                        eq(table.getId()),
+                        argThat(
+                                tableFields -> {
+                                    assertEquals(2, tableFields.size());
+                                    assertSame(tableInfo.getFields(), tableFields);
+                                    return true;
+                                })))
+                .thenReturn(newColumns);
 
         // 调用
         codegenService.syncCodegenFromDB(tableId);
@@ -277,17 +333,19 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testDeleteCodegen_notExists() {
-        assertServiceException(() -> codegenService.deleteCodegen(randomLongId()),
-                CODEGEN_TABLE_NOT_EXISTS);
+        assertServiceException(
+                () -> codegenService.deleteCodegen(randomLongId()), CODEGEN_TABLE_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteCodegen_success() {
         // mock 数据
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class, o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(table);
-        CodegenColumnDO column = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
+        CodegenColumnDO column =
+                randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
         codegenColumnMapper.insert(column);
         // 准备参数
         Long tableId = table.getId();
@@ -302,11 +360,13 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetCodegenTableList() {
         // mock 数据
-        CodegenTableDO table01 = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO table01 =
+                randomPojo(
+                        CodegenTableDO.class, o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(table01);
-        CodegenTableDO table02 = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO table02 =
+                randomPojo(
+                        CodegenTableDO.class, o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(table02);
         // 准备参数
         Long dataSourceConfigId = table01.getDataSourceConfigId();
@@ -321,12 +381,16 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetCodegenTablePage() {
         // mock 数据
-        CodegenTableDO tableDO = randomPojo(CodegenTableDO.class, o -> {
-            o.setTableName("t_yunai");
-            o.setTableComment("芋艿");
-            o.setClassName("SystemYunai");
-            o.setCreateTime(buildTime(2021, 3, 10));
-        }).setScene(CodegenSceneEnum.ADMIN.getScene());
+        CodegenTableDO tableDO =
+                randomPojo(
+                                CodegenTableDO.class,
+                                o -> {
+                                    o.setTableName("t_yunai");
+                                    o.setTableComment("芋艿");
+                                    o.setClassName("SystemYunai");
+                                    o.setCreateTime(buildTime(2021, 3, 10));
+                                })
+                        .setScene(CodegenSceneEnum.ADMIN.getScene());
         codegenTableMapper.insert(tableDO);
         // 测试 tableName 不匹配
         codegenTableMapper.insert(cloneIgnoreId(tableDO, o -> o.setTableName(randomString())));
@@ -335,7 +399,8 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
         // 测试 className 不匹配
         codegenTableMapper.insert(cloneIgnoreId(tableDO, o -> o.setClassName(randomString())));
         // 测试 createTime 不匹配
-        codegenTableMapper.insert(cloneIgnoreId(tableDO, logDO -> logDO.setCreateTime(buildTime(2021, 4, 10))));
+        codegenTableMapper.insert(
+                cloneIgnoreId(tableDO, logDO -> logDO.setCreateTime(buildTime(2021, 4, 10))));
         // 准备参数
         CodegenTablePageReqVO reqVO = new CodegenTablePageReqVO();
         reqVO.setTableName("yunai");
@@ -354,7 +419,9 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetCodegenTable() {
         // mock 数据
-        CodegenTableDO tableDO = randomPojo(CodegenTableDO.class, o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
+        CodegenTableDO tableDO =
+                randomPojo(
+                        CodegenTableDO.class, o -> o.setScene(CodegenSceneEnum.ADMIN.getScene()));
         codegenTableMapper.insert(tableDO);
         // 准备参数
         Long id = tableDO.getId();
@@ -384,92 +451,126 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
 
     @Test
     public void testGenerationCodes_tableNotExists() {
-        assertServiceException(() -> codegenService.generationCodes(randomLongId()),
-                CODEGEN_TABLE_NOT_EXISTS);
+        assertServiceException(
+                () -> codegenService.generationCodes(randomLongId()), CODEGEN_TABLE_NOT_EXISTS);
     }
 
     @Test
     public void testGenerationCodes_columnNotExists() {
         // mock 数据（CodegenTableDO）
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(
+                                                CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
         codegenTableMapper.insert(table);
         // 准备参数
         Long tableId = table.getId();
 
         // 调用，并断言
-        assertServiceException(() -> codegenService.generationCodes(tableId),
-                CODEGEN_COLUMN_NOT_EXISTS);
+        assertServiceException(
+                () -> codegenService.generationCodes(tableId), CODEGEN_COLUMN_NOT_EXISTS);
     }
 
     @Test
     public void testGenerationCodes_sub_tableNotExists() {
         // mock 数据（CodegenTableDO）
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(
+                                                CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
         codegenTableMapper.insert(table);
         // mock 数据（CodegenColumnDO）
-        CodegenColumnDO column01 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
+        CodegenColumnDO column01 =
+                randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
         codegenColumnMapper.insert(column01);
         // 准备参数
         Long tableId = table.getId();
 
         // 调用，并断言
-        assertServiceException(() -> codegenService.generationCodes(tableId),
+        assertServiceException(
+                () -> codegenService.generationCodes(tableId),
                 CODEGEN_MASTER_GENERATION_FAIL_NO_SUB_TABLE);
     }
 
     @Test
     public void testGenerationCodes_sub_columnNotExists() {
         // mock 数据（CodegenTableDO）
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(
+                                                CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
         codegenTableMapper.insert(table);
         // mock 数据（CodegenColumnDO）
-        CodegenColumnDO column01 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
+        CodegenColumnDO column01 =
+                randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId()));
         codegenColumnMapper.insert(column01);
         // mock 数据（sub CodegenTableDO）
-        CodegenTableDO subTable = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                        .setMasterTableId(table.getId()));
+        CodegenTableDO subTable =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                                        .setMasterTableId(table.getId()));
         codegenTableMapper.insert(subTable);
         // 准备参数
         Long tableId = table.getId();
 
         // 调用，并断言
-        assertServiceException(() -> codegenService.generationCodes(tableId),
-                CODEGEN_SUB_COLUMN_NOT_EXISTS, subTable.getId());
+        assertServiceException(
+                () -> codegenService.generationCodes(tableId),
+                CODEGEN_SUB_COLUMN_NOT_EXISTS,
+                subTable.getId());
     }
 
     @Test
     public void testGenerationCodes_one_success() {
         // mock 数据（CodegenTableDO）
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(CodegenTemplateTypeEnum.ONE.getType()));
         codegenTableMapper.insert(table);
         // mock 数据（CodegenColumnDO）
-        CodegenColumnDO column01 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId())
-                .setOrdinalPosition(1));
+        CodegenColumnDO column01 =
+                randomPojo(
+                        CodegenColumnDO.class,
+                        o -> o.setTableId(table.getId()).setOrdinalPosition(1));
         codegenColumnMapper.insert(column01);
-        CodegenColumnDO column02 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId())
-                .setOrdinalPosition(2));
+        CodegenColumnDO column02 =
+                randomPojo(
+                        CodegenColumnDO.class,
+                        o -> o.setTableId(table.getId()).setOrdinalPosition(2));
         codegenColumnMapper.insert(column02);
         // mock 数据（DataSourceConfigDO）
         when(dataSourceConfigService.getDataSourceConfig(eq(table.getDataSourceConfigId())))
                 .thenReturn(randomPojo(DataSourceConfigDO.class, o -> o.setUrl("jdbc:mysql://")));
         // mock 执行生成
         Map<String, String> codes = MapUtil.of(randomString(), randomString());
-        when(codegenEngine.execute(eq(DbType.MYSQL), eq(table), argThat(columns -> {
-            assertEquals(2, columns.size());
-            assertEquals(column01, columns.get(0));
-            assertEquals(column02, columns.get(1));
-            return true;
-        }), isNull(), isNull())).thenReturn(codes);
+        when(codegenEngine.execute(
+                        eq(DbType.MYSQL),
+                        eq(table),
+                        argThat(
+                                columns -> {
+                                    assertEquals(2, columns.size());
+                                    assertEquals(column01, columns.get(0));
+                                    assertEquals(column02, columns.get(1));
+                                    return true;
+                                }),
+                        isNull(),
+                        isNull()))
+                .thenReturn(codes);
         // 准备参数
         Long tableId = table.getId();
 
@@ -482,46 +583,67 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGenerationCodes_master_success() {
         // mock 数据（CodegenTableDO）
-        CodegenTableDO table = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
+        CodegenTableDO table =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(
+                                                CodegenTemplateTypeEnum.MASTER_NORMAL.getType()));
         codegenTableMapper.insert(table);
         // mock 数据（CodegenColumnDO）
-        CodegenColumnDO column01 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId())
-                .setOrdinalPosition(1));
+        CodegenColumnDO column01 =
+                randomPojo(
+                        CodegenColumnDO.class,
+                        o -> o.setTableId(table.getId()).setOrdinalPosition(1));
         codegenColumnMapper.insert(column01);
-        CodegenColumnDO column02 = randomPojo(CodegenColumnDO.class, o -> o.setTableId(table.getId())
-                .setOrdinalPosition(2));
+        CodegenColumnDO column02 =
+                randomPojo(
+                        CodegenColumnDO.class,
+                        o -> o.setTableId(table.getId()).setOrdinalPosition(2));
         codegenColumnMapper.insert(column02);
         // mock 数据（sub CodegenTableDO）
-        CodegenTableDO subTable = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
-                        .setMasterTableId(table.getId())
-                        .setSubJoinColumnId(1024L));
+        CodegenTableDO subTable =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTemplateType(CodegenTemplateTypeEnum.SUB.getType())
+                                        .setMasterTableId(table.getId())
+                                        .setSubJoinColumnId(1024L));
         codegenTableMapper.insert(subTable);
         // mock 数据（sub CodegenColumnDO）
-        CodegenColumnDO subColumn01 = randomPojo(CodegenColumnDO.class, o -> o.setId(1024L).setTableId(subTable.getId()));
+        CodegenColumnDO subColumn01 =
+                randomPojo(CodegenColumnDO.class, o -> o.setId(1024L).setTableId(subTable.getId()));
         codegenColumnMapper.insert(subColumn01);
         // mock 数据（DataSourceConfigDO）
         when(dataSourceConfigService.getDataSourceConfig(eq(table.getDataSourceConfigId())))
                 .thenReturn(randomPojo(DataSourceConfigDO.class, o -> o.setUrl("jdbc:mysql://")));
         // mock 执行生成
         Map<String, String> codes = MapUtil.of(randomString(), randomString());
-        when(codegenEngine.execute(eq(DbType.MYSQL), eq(table), argThat(columns -> {
-            assertEquals(2, columns.size());
-            assertEquals(column01, columns.get(0));
-            assertEquals(column02, columns.get(1));
-            return true;
-        }), argThat(tables -> {
-            assertEquals(1, tables.size());
-            assertPojoEquals(subTable, tables.get(0));
-            return true;
-        }), argThat(columns -> {
-            assertEquals(1, columns.size());
-            assertPojoEquals(subColumn01, columns.size());
-            return true;
-        }))).thenReturn(codes);
+        when(codegenEngine.execute(
+                        eq(DbType.MYSQL),
+                        eq(table),
+                        argThat(
+                                columns -> {
+                                    assertEquals(2, columns.size());
+                                    assertEquals(column01, columns.get(0));
+                                    assertEquals(column02, columns.get(1));
+                                    return true;
+                                }),
+                        argThat(
+                                tables -> {
+                                    assertEquals(1, tables.size());
+                                    assertPojoEquals(subTable, tables.get(0));
+                                    return true;
+                                }),
+                        argThat(
+                                columns -> {
+                                    assertEquals(1, columns.size());
+                                    assertPojoEquals(subColumn01, columns.size());
+                                    return true;
+                                })))
+                .thenReturn(codes);
         // 准备参数
         Long tableId = table.getId();
 
@@ -547,18 +669,21 @@ public class CodegenServiceImplTest extends BaseDbUnitTest {
         when(databaseTableService.getTableList(eq(dataSourceConfigId), eq(name), eq(comment)))
                 .thenReturn(ListUtil.toList(tableInfo01, tableInfo02));
         // mock 数据
-        CodegenTableDO tableDO = randomPojo(CodegenTableDO.class,
-                o -> o.setScene(CodegenSceneEnum.ADMIN.getScene())
-                        .setTableName("t_yunai_02")
-                        .setDataSourceConfigId(dataSourceConfigId));
+        CodegenTableDO tableDO =
+                randomPojo(
+                        CodegenTableDO.class,
+                        o ->
+                                o.setScene(CodegenSceneEnum.ADMIN.getScene())
+                                        .setTableName("t_yunai_02")
+                                        .setDataSourceConfigId(dataSourceConfigId));
         codegenTableMapper.insert(tableDO);
 
         // 调用
-        List<DatabaseTableRespVO> result = codegenService.getDatabaseTableList(dataSourceConfigId, name, comment);
+        List<DatabaseTableRespVO> result =
+                codegenService.getDatabaseTableList(dataSourceConfigId, name, comment);
         // 断言
         assertEquals(1, result.size());
         assertEquals("t_yunai", result.get(0).getName());
         assertEquals("芋艿", result.get(0).getComment());
     }
-
 }

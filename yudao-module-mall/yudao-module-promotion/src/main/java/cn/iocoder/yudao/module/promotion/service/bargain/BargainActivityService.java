@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.promotion.controller.admin.bargain.vo.activity.Ba
 import cn.iocoder.yudao.module.promotion.controller.admin.bargain.vo.activity.BargainActivityPageReqVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.bargain.vo.activity.BargainActivityUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.bargain.BargainActivityDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -112,5 +113,4 @@ public interface BargainActivityService {
      * @return 砍价活动
      */
     BargainActivityDO getMatchBargainActivityBySpuId(Long spuId);
-
 }

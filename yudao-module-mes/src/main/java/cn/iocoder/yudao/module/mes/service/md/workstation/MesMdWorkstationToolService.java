@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.md.workstation;
 
 import cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.tool.MesMdWorkstationToolSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationToolDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -57,5 +58,4 @@ public interface MesMdWorkstationToolService {
      * @return 数量
      */
     Long getWorkstationToolCountByToolTypeId(Long toolTypeId);
-
 }

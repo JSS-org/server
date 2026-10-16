@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.oa.controller.admin.workreport.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "管理后台 - OA 工作汇报统计 Response VO")
 @Data
@@ -55,7 +56,6 @@ public class OaWorkReportStatisticsRespVO {
 
         @Schema(description = "未填周期", example = "[\"2026-09-14\"]")
         private List<String> missingPeriodKeys;
-
     }
 
     @Schema(description = "管理后台 - 已提交汇报摘要 Response VO")
@@ -82,7 +82,5 @@ public class OaWorkReportStatisticsRespVO {
 
         @Schema(description = "汇报周期", example = "2026-09-14")
         private String periodKey;
-
     }
-
 }

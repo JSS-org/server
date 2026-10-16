@@ -2,7 +2,6 @@ package cn.iocoder.yudao.module.system.api.social.dto;
 
 import lombok.Data;
 
-
 /**
  * 小程序订阅消息模版 Response DTO
  *
@@ -38,5 +37,4 @@ public class SocialWxaSubscribeTemplateRespDTO {
      * 3：为长期订阅
      */
     private Integer type;
-
 }

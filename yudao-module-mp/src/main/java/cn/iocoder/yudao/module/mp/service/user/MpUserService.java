@@ -1,16 +1,17 @@
 package cn.iocoder.yudao.module.mp.service.user;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.USER_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.user.vo.MpUserPageReqVO;
 import cn.iocoder.yudao.module.mp.controller.admin.user.vo.MpUserUpdateReqVO;
 import cn.iocoder.yudao.module.mp.dal.dataobject.user.MpUserDO;
+
 import me.chanjar.weixin.mp.bean.result.WxMpUser;
 
 import java.util.Collection;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mp.enums.ErrorCodeConstants.USER_NOT_EXISTS;
 
 /**
  * 公众号粉丝 Service 接口
@@ -98,5 +99,4 @@ public interface MpUserService {
      * @param updateReqVO 更新信息
      */
     void updateUser(MpUserUpdateReqVO updateReqVO);
-
 }

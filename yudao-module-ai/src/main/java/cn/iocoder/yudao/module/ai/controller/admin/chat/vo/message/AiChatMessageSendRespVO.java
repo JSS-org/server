@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.ai.controller.admin.chat.vo.message;
 
 import cn.iocoder.yudao.module.ai.framework.ai.core.webserch.AiWebSearchResponse;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -27,7 +29,10 @@ public class AiChatMessageSendRespVO {
         @Schema(description = "消息类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "role")
         private String type; // 参见 MessageType 枚举类
 
-        @Schema(description = "聊天内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "你好，你好啊")
+        @Schema(
+                description = "聊天内容",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "你好，你好啊")
         private String content;
 
         @Schema(description = "推理内容", example = "要达到这个目标，你需要...")
@@ -44,7 +49,5 @@ public class AiChatMessageSendRespVO {
 
         @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
         private LocalDateTime createTime;
-
     }
-
 }

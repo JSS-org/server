@@ -8,7 +8,9 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -32,8 +34,9 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
     }
 
     default List<MemberUserDO> selectListByNicknameLike(String nickname) {
-        return selectList(new LambdaQueryWrapperX<MemberUserDO>()
-                .likeIfPresent(MemberUserDO::getNickname, nickname));
+        return selectList(
+                new LambdaQueryWrapperX<MemberUserDO>()
+                        .likeIfPresent(MemberUserDO::getNickname, nickname));
     }
 
     default PageResult<MemberUserDO> selectPage(MemberUserPageReqVO reqVO) {
@@ -41,22 +44,26 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
         String tagIdSql = "";
         Object[] tagIdParams = new Object[0];
         if (CollUtil.isNotEmpty(reqVO.getTagIds())) {
-            tagIdSql = IntStream.range(0, reqVO.getTagIds().size())
-                    .mapToObj(index -> MyBatisUtils.findInSetWithParamIndex("tag_ids", index))
-                    .collect(Collectors.joining(" OR "));
+            tagIdSql =
+                    IntStream.range(0, reqVO.getTagIds().size())
+                            .mapToObj(
+                                    index -> MyBatisUtils.findInSetWithParamIndex("tag_ids", index))
+                            .collect(Collectors.joining(" OR "));
             tagIdParams = reqVO.getTagIds().toArray();
         }
         // 分页查询
-        return selectPage(reqVO, new LambdaQueryWrapperX<MemberUserDO>()
-                .likeIfPresent(MemberUserDO::getMobile, reqVO.getMobile())
-                .likeIfPresent(MemberUserDO::getEmail, reqVO.getEmail())
-                .betweenIfPresent(MemberUserDO::getLoginDate, reqVO.getLoginDate())
-                .likeIfPresent(MemberUserDO::getNickname, reqVO.getNickname())
-                .betweenIfPresent(MemberUserDO::getCreateTime, reqVO.getCreateTime())
-                .eqIfPresent(MemberUserDO::getLevelId, reqVO.getLevelId())
-                .eqIfPresent(MemberUserDO::getGroupId, reqVO.getGroupId())
-                .apply(CollUtil.isNotEmpty(reqVO.getTagIds()), tagIdSql, tagIdParams)
-                .orderByDesc(MemberUserDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MemberUserDO>()
+                        .likeIfPresent(MemberUserDO::getMobile, reqVO.getMobile())
+                        .likeIfPresent(MemberUserDO::getEmail, reqVO.getEmail())
+                        .betweenIfPresent(MemberUserDO::getLoginDate, reqVO.getLoginDate())
+                        .likeIfPresent(MemberUserDO::getNickname, reqVO.getNickname())
+                        .betweenIfPresent(MemberUserDO::getCreateTime, reqVO.getCreateTime())
+                        .eqIfPresent(MemberUserDO::getLevelId, reqVO.getLevelId())
+                        .eqIfPresent(MemberUserDO::getGroupId, reqVO.getGroupId())
+                        .apply(CollUtil.isNotEmpty(reqVO.getTagIds()), tagIdSql, tagIdParams)
+                        .orderByDesc(MemberUserDO::getId));
     }
 
     default Long selectCountByGroupId(Long groupId) {
@@ -68,8 +75,9 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
     }
 
     default Long selectCountByTagId(Long tagId) {
-        return selectCount(new LambdaQueryWrapperX<MemberUserDO>()
-                .apply(MyBatisUtils.findInSet("tag_ids"), tagId));
+        return selectCount(
+                new LambdaQueryWrapperX<MemberUserDO>()
+                        .apply(MyBatisUtils.findInSet("tag_ids"), tagId));
     }
 
     /**
@@ -80,9 +88,10 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
      */
     default void updatePointIncr(Long id, Integer incrCount) {
         Assert.isTrue(incrCount > 0);
-        LambdaUpdateWrapper<MemberUserDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<MemberUserDO>()
-                .setSql(" point = point + " + incrCount)
-                .eq(MemberUserDO::getId, id);
+        LambdaUpdateWrapper<MemberUserDO> lambdaUpdateWrapper =
+                new LambdaUpdateWrapper<MemberUserDO>()
+                        .setSql(" point = point + " + incrCount)
+                        .eq(MemberUserDO::getId, id);
         update(null, lambdaUpdateWrapper);
     }
 
@@ -95,10 +104,10 @@ public interface MemberUserMapper extends BaseMapperX<MemberUserDO> {
      */
     default int updatePointDecr(Long id, Integer incrCount) {
         Assert.isTrue(incrCount < 0);
-        LambdaUpdateWrapper<MemberUserDO> lambdaUpdateWrapper = new LambdaUpdateWrapper<MemberUserDO>()
-                .setSql(" point = point + " + incrCount) // 负数，所以使用 + 号
-                .eq(MemberUserDO::getId, id);
+        LambdaUpdateWrapper<MemberUserDO> lambdaUpdateWrapper =
+                new LambdaUpdateWrapper<MemberUserDO>()
+                        .setSql(" point = point + " + incrCount) // 负数，所以使用 + 号
+                        .eq(MemberUserDO::getId, id);
         return update(null, lambdaUpdateWrapper);
     }
-
 }

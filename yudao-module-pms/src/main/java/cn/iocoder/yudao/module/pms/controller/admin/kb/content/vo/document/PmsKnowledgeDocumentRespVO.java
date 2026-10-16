@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.document;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -94,7 +95,5 @@ public class PmsKnowledgeDocumentRespVO {
 
         @Schema(description = "用户头像")
         private String avatar;
-
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.warehouse;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,7 +16,9 @@ import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
 import cn.iocoder.yudao.module.mes.service.md.workstation.MesMdWorkstationService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -22,9 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 库区 Service 实现类
  */
@@ -32,21 +34,13 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmWarehouseLocationServiceImpl implements MesWmWarehouseLocationService {
 
-    @Resource
-    private MesWmWarehouseLocationMapper locationMapper;
+    @Resource private MesWmWarehouseLocationMapper locationMapper;
 
-    @Resource
-    private MesWmWarehouseAreaService areaService;
-    @Resource
-    @Lazy
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
-    @Resource
-    @Lazy
-    private MesWmWarehouseService warehouseService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource private MesWmWarehouseAreaService areaService;
+    @Resource @Lazy private MesMdWorkstationService workstationService;
+    @Resource private MesWmMaterialStockService materialStockService;
+    @Resource @Lazy private MesWmWarehouseService warehouseService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     public Long createWarehouseLocation(MesWmWarehouseLocationSaveReqVO createReqVO) {
@@ -56,12 +50,16 @@ public class MesWmWarehouseLocationServiceImpl implements MesWmWarehouseLocation
         validateWarehouseLocationSaveData(createReqVO);
 
         // 插入
-        MesWmWarehouseLocationDO location = BeanUtils.toBean(createReqVO, MesWmWarehouseLocationDO.class);
+        MesWmWarehouseLocationDO location =
+                BeanUtils.toBean(createReqVO, MesWmWarehouseLocationDO.class);
         locationMapper.insert(location);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.LOCATION.getValue(),
-                location.getId(), location.getCode(), location.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.LOCATION.getValue(),
+                location.getId(),
+                location.getCode(),
+                location.getName());
         return location.getId();
     }
 
@@ -75,7 +73,8 @@ public class MesWmWarehouseLocationServiceImpl implements MesWmWarehouseLocation
         validateWarehouseLocationSaveData(updateReqVO);
 
         // 更新
-        MesWmWarehouseLocationDO updateObj = BeanUtils.toBean(updateReqVO, MesWmWarehouseLocationDO.class);
+        MesWmWarehouseLocationDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmWarehouseLocationDO.class);
         locationMapper.updateById(updateObj);
     }
 
@@ -152,7 +151,8 @@ public class MesWmWarehouseLocationServiceImpl implements MesWmWarehouseLocation
     }
 
     @Override
-    public PageResult<MesWmWarehouseLocationDO> getWarehouseLocationPage(MesWmWarehouseLocationPageReqVO pageReqVO) {
+    public PageResult<MesWmWarehouseLocationDO> getWarehouseLocationPage(
+            MesWmWarehouseLocationPageReqVO pageReqVO) {
         return locationMapper.selectPage(pageReqVO);
     }
 
@@ -185,17 +185,21 @@ public class MesWmWarehouseLocationServiceImpl implements MesWmWarehouseLocation
         // 2. 如果是虚拟线边库区编码，则自动初始化
         if (MesWmWarehouseLocationDO.WIP_VIRTUAL_LOCATION.equals(code)) {
             // 2.1 先确保虚拟仓库存在（getWarehouseByCode 会级联创建仓库）
-            MesWmWarehouseDO warehouse = warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
+            MesWmWarehouseDO warehouse =
+                    warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
             cn.hutool.core.lang.Assert.notNull(warehouse, "虚拟仓库必须存在");
             // 2.2 自动初始化
-            MesWmWarehouseLocationDO newLocation = MesWmWarehouseLocationDO.builder()
-                    .warehouseId(warehouse.getId()).code(code).name("虚拟线边库区")
-                    .frozen(false).remark("系统自动初始化的虚拟线边库区")
-                    .build();
+            MesWmWarehouseLocationDO newLocation =
+                    MesWmWarehouseLocationDO.builder()
+                            .warehouseId(warehouse.getId())
+                            .code(code)
+                            .name("虚拟线边库区")
+                            .frozen(false)
+                            .remark("系统自动初始化的虚拟线边库区")
+                            .build();
             locationMapper.insert(newLocation);
             return newLocation;
         }
         return null;
     }
-
 }

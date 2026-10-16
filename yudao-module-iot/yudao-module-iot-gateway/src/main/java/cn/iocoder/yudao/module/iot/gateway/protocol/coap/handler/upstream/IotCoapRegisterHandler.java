@@ -6,7 +6,9 @@ import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.biz.IotDeviceCommonApi;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterReqDTO;
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotDeviceRegisterRespDTO;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.server.resources.CoapExchange;
 
 /**
@@ -29,7 +31,8 @@ public class IotCoapRegisterHandler extends IotCoapAbstractHandler {
     @Override
     protected CommonResult<Object> handle0(CoapExchange exchange) {
         // 1. 解析参数
-        IotDeviceRegisterReqDTO request = deserializeRequest(exchange, IotDeviceRegisterReqDTO.class);
+        IotDeviceRegisterReqDTO request =
+                deserializeRequest(exchange, IotDeviceRegisterReqDTO.class);
         Assert.notNull(request, "请求体不能为空");
         Assert.notBlank(request.getProductKey(), "productKey 不能为空");
         Assert.notBlank(request.getDeviceName(), "deviceName 不能为空");
@@ -42,5 +45,4 @@ public class IotCoapRegisterHandler extends IotCoapAbstractHandler {
         // 3. 构建响应数据
         return CommonResult.success(result.getData());
     }
-
 }

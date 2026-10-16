@@ -3,11 +3,14 @@ package cn.iocoder.yudao.module.oa.controller.admin.note.vo;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.note.OaNoteTypeEnum;
 import cn.iocoder.yudao.module.oa.enums.schedule.OaPriorityEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
+
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.util.List;
@@ -38,11 +41,16 @@ public class OaNoteSaveReqVO {
     @Size(max = 255, message = "标题长度不能超过 255 个字符")
     private String title;
 
-    @Schema(description = "内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "记录本周会议结论与待办事项。")
+    @Schema(
+            description = "内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "记录本周会议结论与待办事项。")
     @NotBlank(message = "笔记内容不能为空")
     private String content;
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 512, message = "附件地址长度不能超过 512 个字符") String> fileUrls;
-
+    private List<
+                    @NotBlank(message = "附件地址不能为空") @Size(max = 512, message = "附件地址长度不能超过 512 个字符")
+                    String>
+            fileUrls;
 }

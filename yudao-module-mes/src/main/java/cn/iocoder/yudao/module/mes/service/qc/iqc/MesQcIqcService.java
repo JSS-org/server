@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.iqc.vo.MesQcIqcPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.iqc.vo.MesQcIqcSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.defectrecord.MesQcDefectRecordDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.iqc.MesQcIqcDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -94,5 +95,4 @@ public interface MesQcIqcService {
      * @return 数量
      */
     Long getIqcCountByVendorId(Long vendorId);
-
 }

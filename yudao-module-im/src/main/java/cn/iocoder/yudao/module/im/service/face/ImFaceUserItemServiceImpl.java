@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.im.service.face;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_DUPLICATED;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_MAX_LIMIT;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_NOT_EXISTS;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_NOT_OWN;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -8,18 +14,14 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.useritem.ImFa
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFaceUserItemDO;
 import cn.iocoder.yudao.module.im.dal.mysql.face.ImFaceUserItemMapper;
 import cn.iocoder.yudao.module.im.framework.config.ImProperties;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_DUPLICATED;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_MAX_LIMIT;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_NOT_EXISTS;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM_NOT_OWN;
 
 /**
  * IM 用户私有表情 Service 实现类
@@ -30,10 +32,8 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_USER_ITEM
 @Validated
 public class ImFaceUserItemServiceImpl implements ImFaceUserItemService {
 
-    @Resource
-    private ImFaceUserItemMapper faceUserItemMapper;
-    @Resource
-    private ImProperties imProperties;
+    @Resource private ImFaceUserItemMapper faceUserItemMapper;
+    @Resource private ImProperties imProperties;
 
     @Override
     public List<ImFaceUserItemDO> getFaceUserItemList(Long userId) {
@@ -95,5 +95,4 @@ public class ImFaceUserItemServiceImpl implements ImFaceUserItemService {
         // 2. 删除
         faceUserItemMapper.deleteById(id);
     }
-
 }

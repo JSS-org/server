@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.ratelimiter.core.redis;
 
 import lombok.AllArgsConstructor;
+
 import org.redisson.api.*;
 
 import java.time.Duration;
@@ -53,7 +54,8 @@ public class RateLimiterRedisDAO {
         // 2. 如果存在，并且配置相同，则直接返回
         if (config.getRateType() == RateType.OVERALL
                 && Objects.equals(config.getRate(), count)
-                && Objects.equals(config.getRateInterval(), TimeUnit.SECONDS.toMillis(rateInterval))) {
+                && Objects.equals(
+                        config.getRateInterval(), TimeUnit.SECONDS.toMillis(rateInterval))) {
             return rateLimiter;
         }
         // 3. 如果存在，并且配置不同，则进行新建
@@ -62,5 +64,4 @@ public class RateLimiterRedisDAO {
         rateLimiter.expire(duration);
         return rateLimiter;
     }
-
 }

@@ -1,16 +1,18 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model.image;
 
+import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
+
 import cn.hutool.system.SystemUtil;
+
 import com.alibaba.cloud.ai.dashscope.api.DashScopeImageApi;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.image.ImageOptions;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
-
-import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
 
 /**
  * {@link DashScopeImageModel} 集成测试类
@@ -27,14 +29,13 @@ import static cn.iocoder.yudao.module.ai.util.AiUtils.validateApiKey;
  */
 public class TongYiImagesModelTest {
 
-    private static final String API_KEY = SystemUtil.get("DASHSCOPE_API_KEY",
-            "sk-xxxx"); // 按需改成你的 DashScope API Key
+    private static final String API_KEY =
+            SystemUtil.get("DASHSCOPE_API_KEY", "sk-xxxx"); // 按需改成你的 DashScope API Key
 
-    private final DashScopeImageModel imageModel = DashScopeImageModel.builder()
-            .dashScopeApi(DashScopeImageApi.builder()
-                    .apiKey(API_KEY)
-                    .build())
-            .build();
+    private final DashScopeImageModel imageModel =
+            DashScopeImageModel.builder()
+                    .dashScopeApi(DashScopeImageApi.builder().apiKey(API_KEY).build())
+                    .build();
 
     // TODO @芋艿：
     @Test
@@ -42,12 +43,14 @@ public class TongYiImagesModelTest {
     public void imageCallTest() {
         validateApiKey(API_KEY);
         // 准备参数
-        ImageOptions options = DashScopeImageOptions.builder()
-                .model("wan2.7-image")
-//                .withSize("2k")
-                .height(768).width(768)
-                .n(1)
-                .build();
+        ImageOptions options =
+                DashScopeImageOptions.builder()
+                        .model("wan2.7-image")
+                        //                .withSize("2k")
+                        .height(768)
+                        .width(768)
+                        .n(1)
+                        .build();
         ImagePrompt prompt = new ImagePrompt("中国长城!", options);
 
         // 方法调用
@@ -55,5 +58,4 @@ public class TongYiImagesModelTest {
         // 打印结果
         System.out.println(response);
     }
-
 }

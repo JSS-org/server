@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_TEMPLATE_CODE_EXISTS;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_TEMPLATE_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
@@ -10,10 +14,14 @@ import cn.iocoder.yudao.module.system.controller.admin.mail.vo.template.MailTemp
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailTemplateDO;
 import cn.iocoder.yudao.module.system.dal.mysql.mail.MailTemplateMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -24,10 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_TEMPLATE_CODE_EXISTS;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_TEMPLATE_NOT_EXISTS;
 
 /**
  * 邮箱模版 Service 实现类
@@ -45,8 +49,7 @@ public class MailTemplateServiceImpl implements MailTemplateService {
      */
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
-    @Resource
-    private MailTemplateMapper mailTemplateMapper;
+    @Resource private MailTemplateMapper mailTemplateMapper;
 
     @Override
     public Long createMailTemplate(MailTemplateSaveReqVO createReqVO) {
@@ -54,24 +57,31 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         validateCodeUnique(null, createReqVO.getCode());
 
         // 插入
-        MailTemplateDO template = BeanUtils.toBean(createReqVO, MailTemplateDO.class)
-                .setParams(parseTemplateTitleAndContentParams(createReqVO.getTitle(), createReqVO.getContent()));
+        MailTemplateDO template =
+                BeanUtils.toBean(createReqVO, MailTemplateDO.class)
+                        .setParams(
+                                parseTemplateTitleAndContentParams(
+                                        createReqVO.getTitle(), createReqVO.getContent()));
         mailTemplateMapper.insert(template);
         return template.getId();
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为可能修改到 code 字段，不好清理
     public void updateMailTemplate(@Valid MailTemplateSaveReqVO updateReqVO) {
         // 校验是否存在
         validateMailTemplateExists(updateReqVO.getId());
         // 校验 code 是否唯一
-        validateCodeUnique(updateReqVO.getId(),updateReqVO.getCode());
+        validateCodeUnique(updateReqVO.getId(), updateReqVO.getCode());
 
         // 更新
-        MailTemplateDO updateObj = BeanUtils.toBean(updateReqVO, MailTemplateDO.class)
-                .setParams(parseTemplateTitleAndContentParams(updateReqVO.getTitle(), updateReqVO.getContent()));
+        MailTemplateDO updateObj =
+                BeanUtils.toBean(updateReqVO, MailTemplateDO.class)
+                        .setParams(
+                                parseTemplateTitleAndContentParams(
+                                        updateReqVO.getTitle(), updateReqVO.getContent()));
         mailTemplateMapper.updateById(updateObj);
     }
 
@@ -89,7 +99,8 @@ public class MailTemplateServiceImpl implements MailTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteMailTemplate(Long id) {
         // 校验是否存在
@@ -100,7 +111,8 @@ public class MailTemplateServiceImpl implements MailTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.MAIL_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteMailTemplateList(List<Long> ids) {
         mailTemplateMapper.deleteByIds(ids);
@@ -166,7 +178,8 @@ public class MailTemplateServiceImpl implements MailTemplateService {
             // 提取 <pre> 标签内的内容
             String innerContent = matcher.group(1);
             // 返回 div 标签包裹的内容
-            matcher.appendReplacement(sb, Matcher.quoteReplacement("<div>" + innerContent + "</div>"));
+            matcher.appendReplacement(
+                    sb, Matcher.quoteReplacement("<div>" + innerContent + "</div>"));
         }
         matcher.appendTail(sb);
         return sb.toString();
@@ -182,8 +195,7 @@ public class MailTemplateServiceImpl implements MailTemplateService {
         if (StrUtil.isEmpty(input)) {
             return input;
         }
-        return input
-                .replace("&amp;", "&")
+        return input.replace("&amp;", "&")
                 .replace("&lt;", "<")
                 .replace("&gt;", ">")
                 .replace("&quot;", "\"")
@@ -199,15 +211,20 @@ public class MailTemplateServiceImpl implements MailTemplateService {
      */
     private String formatHtmlCodeBlocks(String content) {
         // 匹配 <pre><code> 标签的代码块
-        Pattern codeBlockPattern = Pattern.compile("<pre\\s*.*?><code\\s*.*?>(.*?)</code></pre>", Pattern.DOTALL);
+        Pattern codeBlockPattern =
+                Pattern.compile("<pre\\s*.*?><code\\s*.*?>(.*?)</code></pre>", Pattern.DOTALL);
         Matcher matcher = codeBlockPattern.matcher(content);
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             // 获取代码块内容
             String codeBlock = matcher.group(1);
             // 为代码块添加样式
-            String replacement = "<pre style=\"background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\"><code>" + codeBlock + "</code></pre>";
-            // 代码块内容可能包含 $ 或 \\，需要 quoteReplacement，否则会抛 IllegalArgumentException: Illegal group reference
+            String replacement =
+                    "<pre style=\"background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;\"><code>"
+                            + codeBlock
+                            + "</code></pre>";
+            // 代码块内容可能包含 $ 或 \\，需要 quoteReplacement，否则会抛 IllegalArgumentException: Illegal group
+            // reference
             matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(sb);
@@ -245,5 +262,4 @@ public class MailTemplateServiceImpl implements MailTemplateService {
     List<String> parseTemplateContentParams(String content) {
         return ReUtil.findAllGroup1(PATTERN_PARAMS, content);
     }
-
 }

@@ -1,13 +1,19 @@
 package cn.iocoder.yudao.module.member.controller.admin.address;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.member.controller.admin.address.vo.AddressRespVO;
 import cn.iocoder.yudao.module.member.convert.address.AddressConvert;
 import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
 import cn.iocoder.yudao.module.member.service.address.AddressService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.annotation.Resource;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 用户收件地址")
 @RestController
@@ -26,8 +29,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class AddressController {
 
-    @Resource
-    private AddressService addressService;
+    @Resource private AddressService addressService;
 
     @GetMapping("/list")
     @Operation(summary = "获得用户收件地址列表")
@@ -37,5 +39,4 @@ public class AddressController {
         List<MemberAddressDO> list = addressService.getAddressList(userId);
         return success(AddressConvert.INSTANCE.convertList2(list));
     }
-
 }

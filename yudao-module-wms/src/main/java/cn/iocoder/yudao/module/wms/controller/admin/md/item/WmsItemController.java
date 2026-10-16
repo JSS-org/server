@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.item;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -21,12 +25,15 @@ import cn.iocoder.yudao.module.wms.service.md.item.WmsItemBrandService;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemCategoryService;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemService;
 import cn.iocoder.yudao.module.wms.service.md.item.WmsItemSkuService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,24 +43,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-
 @Tag(name = "管理后台 - WMS 商品")
 @RestController
 @RequestMapping("/wms/item")
 @Validated
 public class WmsItemController {
 
-    @Resource
-    private WmsItemService itemService;
-    @Resource
-    private WmsItemCategoryService categoryService;
-    @Resource
-    private WmsItemBrandService brandService;
-    @Resource
-    private WmsItemSkuService itemSkuService;
+    @Resource private WmsItemService itemService;
+    @Resource private WmsItemCategoryService categoryService;
+    @Resource private WmsItemBrandService brandService;
+    @Resource private WmsItemSkuService itemSkuService;
 
     @PostMapping("/create")
     @Operation(summary = "创建商品")
@@ -93,7 +92,8 @@ public class WmsItemController {
     @PreAuthorize("@ss.hasPermission('wms:item:query')")
     public CommonResult<PageResult<WmsItemRespVO>> getItemPage(@Valid WmsItemPageReqVO pageReqVO) {
         PageResult<WmsItemDO> pageResult = itemService.getItemPage(pageReqVO);
-        return success(new PageResult<>(buildItemRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildItemRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
@@ -108,12 +108,11 @@ public class WmsItemController {
     @Operation(summary = "导出商品 Excel")
     @PreAuthorize("@ss.hasPermission('wms:item:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportItemExcel(@Valid WmsItemPageReqVO pageReqVO,
-                                HttpServletResponse response) throws IOException {
+    public void exportItemExcel(@Valid WmsItemPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<WmsItemDO> list = itemService.getItemPage(pageReqVO).getList();
-        ExcelUtils.write(response, "商品.xls", "数据", WmsItemRespVO.class,
-                buildItemRespVOList(list));
+        ExcelUtils.write(response, "商品.xls", "数据", WmsItemRespVO.class, buildItemRespVOList(list));
     }
 
     // ==================== 拼接 VO ====================
@@ -130,21 +129,27 @@ public class WmsItemController {
             return Collections.emptyList();
         }
         // 查询关联数据
-        Map<Long, WmsItemCategoryDO> categoryMap = categoryService.getItemCategoryMap(
-                convertSet(list, WmsItemDO::getCategoryId));
-        Map<Long, WmsItemBrandDO> brandMap = brandService.getItemBrandMap(
-                convertSet(list, WmsItemDO::getBrandId));
-        Map<Long, List<WmsItemSkuDO>> skuMap = itemSkuService.getItemSkuMultiMap(
-                convertSet(list, WmsItemDO::getId));
+        Map<Long, WmsItemCategoryDO> categoryMap =
+                categoryService.getItemCategoryMap(convertSet(list, WmsItemDO::getCategoryId));
+        Map<Long, WmsItemBrandDO> brandMap =
+                brandService.getItemBrandMap(convertSet(list, WmsItemDO::getBrandId));
+        Map<Long, List<WmsItemSkuDO>> skuMap =
+                itemSkuService.getItemSkuMultiMap(convertSet(list, WmsItemDO::getId));
         // 拼接 VO
-        return BeanUtils.toBean(list, WmsItemRespVO.class, vo -> {
-            MapUtils.findAndThen(categoryMap, vo.getCategoryId(), category ->
-                    vo.setCategoryName(category.getName()));
-            MapUtils.findAndThen(brandMap, vo.getBrandId(), brand ->
-                    vo.setBrandName(brand.getName()));
-            vo.setSkus(BeanUtils.toBean(skuMap.getOrDefault(vo.getId(), Collections.emptyList()),
-                    WmsItemSkuRespVO.class));
-        });
+        return BeanUtils.toBean(
+                list,
+                WmsItemRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            categoryMap,
+                            vo.getCategoryId(),
+                            category -> vo.setCategoryName(category.getName()));
+                    MapUtils.findAndThen(
+                            brandMap, vo.getBrandId(), brand -> vo.setBrandName(brand.getName()));
+                    vo.setSkus(
+                            BeanUtils.toBean(
+                                    skuMap.getOrDefault(vo.getId(), Collections.emptyList()),
+                                    WmsItemSkuRespVO.class));
+                });
     }
-
 }

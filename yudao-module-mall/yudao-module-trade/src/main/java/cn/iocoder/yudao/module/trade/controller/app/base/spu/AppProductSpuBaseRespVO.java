@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.app.base.spu;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 /**
@@ -28,5 +29,4 @@ public class AppProductSpuBaseRespVO {
 
     @Schema(description = "商品状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer status;
-
 }

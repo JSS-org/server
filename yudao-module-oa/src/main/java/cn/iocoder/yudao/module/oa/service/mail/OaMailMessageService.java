@@ -1,13 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.mail;
 
+import cn.hutool.core.lang.Pair;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.*;
+import cn.iocoder.yudao.module.oa.enums.mail.OaMailComposeModeEnum;
 
 import java.util.List;
-import cn.hutool.core.lang.Pair;
-import cn.iocoder.yudao.framework.common.validation.InEnum;
-import cn.iocoder.yudao.module.oa.enums.mail.OaMailComposeModeEnum;
 
 /**
  * 企业邮箱邮件 Service 接口
@@ -24,7 +24,10 @@ public interface OaMailMessageService {
      * @param userId 当前用户编号
      * @return 写信预填数据
      */
-    OaMailMessageSaveReqVO getMailMessageCompose(Long id, @InEnum(value = OaMailComposeModeEnum.class, message = "写信方式必须是 {value}") String mode, Long userId);
+    OaMailMessageSaveReqVO getMailMessageCompose(
+            Long id,
+            @InEnum(value = OaMailComposeModeEnum.class, message = "写信方式必须是 {value}") String mode,
+            Long userId);
 
     /**
      * 手动同步本人账号的邮件文件夹和索引
@@ -114,5 +117,4 @@ public interface OaMailMessageService {
      * @return 投递及副本处理结果
      */
     String sendMailMessage(OaMailMessageSaveReqVO reqVO, Long userId);
-
 }

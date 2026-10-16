@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLeve
 import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLevelUpdateReqVO;
 import cn.iocoder.yudao.module.member.controller.app.level.vo.level.AppMemberLevelRespVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -35,5 +36,4 @@ public interface MemberLevelConvert {
     List<AppMemberLevelRespVO> convertList02(List<MemberLevelDO> list);
 
     MemberLevelRespDTO convert02(MemberLevelDO bean);
-
 }

@@ -9,8 +9,7 @@ import jakarta.validation.ConstraintValidatorContext;
 public class MobileValidator implements ConstraintValidator<Mobile, String> {
 
     @Override
-    public void initialize(Mobile annotation) {
-    }
+    public void initialize(Mobile annotation) {}
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -21,5 +20,4 @@ public class MobileValidator implements ConstraintValidator<Mobile, String> {
         // 校验手机
         return ValidationUtils.isMobile(value);
     }
-
 }

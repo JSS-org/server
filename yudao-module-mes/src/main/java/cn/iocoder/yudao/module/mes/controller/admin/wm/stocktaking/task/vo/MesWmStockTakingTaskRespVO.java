@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,11 +18,17 @@ public class MesWmStockTakingTaskRespVO {
     @ExcelProperty("编号")
     private Long id;
 
-    @Schema(description = "任务编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "ST202603080001")
+    @Schema(
+            description = "任务编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ST202603080001")
     @ExcelProperty("任务编码")
     private String code;
 
-    @Schema(description = "任务名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "原料仓月度盘点任务")
+    @Schema(
+            description = "任务名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "原料仓月度盘点任务")
     @ExcelProperty("任务名称")
     private String name;
 
@@ -77,5 +85,4 @@ public class MesWmStockTakingTaskRespVO {
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
-
 }

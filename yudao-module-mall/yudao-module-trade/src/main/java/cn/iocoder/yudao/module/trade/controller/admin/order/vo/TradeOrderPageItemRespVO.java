@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.trade.controller.admin.order.vo;
 
 import cn.iocoder.yudao.module.trade.controller.admin.base.member.user.MemberUserRespVO;
 import cn.iocoder.yudao.module.trade.controller.admin.base.product.property.ProductPropertyValueDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -11,7 +13,10 @@ import java.util.List;
 @Data
 public class TradeOrderPageItemRespVO extends TradeOrderBaseVO {
 
-    @Schema(description = "收件人地区名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "上海 上海市 普陀区")
+    @Schema(
+            description = "收件人地区名字",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "上海 上海市 普陀区")
     private String receiverAreaName;
 
     @Schema(description = "订单项列表", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -29,7 +34,5 @@ public class TradeOrderPageItemRespVO extends TradeOrderBaseVO {
 
         @Schema(description = "属性列表", requiredMode = Schema.RequiredMode.REQUIRED)
         private List<ProductPropertyValueDetailRespVO> properties;
-
     }
-
 }

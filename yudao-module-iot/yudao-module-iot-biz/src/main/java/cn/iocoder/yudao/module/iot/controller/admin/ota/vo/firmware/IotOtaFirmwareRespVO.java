@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.controller.admin.ota.vo.firmware;
 
-import org.dromara.core.trans.vo.VO;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
+import org.dromara.core.trans.vo.VO;
 
 import java.time.LocalDateTime;
 
@@ -28,7 +30,10 @@ public class IotOtaFirmwareRespVO implements VO {
     @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "智能设备")
     private String productName;
 
-    @Schema(description = "固件文件 URL", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/firmware.bin")
+    @Schema(
+            description = "固件文件 URL",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/firmware.bin")
     private String fileUrl;
 
     @Schema(description = "固件文件大小", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
@@ -45,5 +50,4 @@ public class IotOtaFirmwareRespVO implements VO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

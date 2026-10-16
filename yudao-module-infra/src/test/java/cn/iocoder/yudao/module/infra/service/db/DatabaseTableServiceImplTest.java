@@ -1,11 +1,20 @@
 package cn.iocoder.yudao.module.infra.service.db;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.infra.dal.dataobject.db.DataSourceConfigDO;
+
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import com.baomidou.mybatisplus.generator.config.rules.DbColumnType;
+
 import jakarta.annotation.Resource;
+
 import org.apache.ibatis.type.JdbcType;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -13,33 +22,29 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-
 @Import(DatabaseTableServiceImpl.class)
 public class DatabaseTableServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private DatabaseTableServiceImpl databaseTableService;
+    @Resource private DatabaseTableServiceImpl databaseTableService;
 
-    @MockitoBean
-    private DataSourceConfigService dataSourceConfigService;
+    @MockitoBean private DataSourceConfigService dataSourceConfigService;
 
     @Test
     public void testGetTableList() {
         // 准备参数
         Long dataSourceConfigId = randomLongId();
         // mock 方法
-        DataSourceConfigDO dataSourceConfig = new DataSourceConfigDO().setUsername("sa").setPassword("")
-                .setUrl("jdbc:h2:mem:testdb");
+        DataSourceConfigDO dataSourceConfig =
+                new DataSourceConfigDO()
+                        .setUsername("sa")
+                        .setPassword("")
+                        .setUrl("jdbc:h2:mem:testdb");
         when(dataSourceConfigService.getDataSourceConfig(eq(dataSourceConfigId)))
                 .thenReturn(dataSourceConfig);
 
         // 调用
-        List<TableInfo> tables = databaseTableService.getTableList(dataSourceConfigId,
-                "config", "参数");
+        List<TableInfo> tables =
+                databaseTableService.getTableList(dataSourceConfigId, "config", "参数");
         // 断言
         assertEquals(1, tables.size());
         assertTableInfo(tables.get(0));
@@ -50,8 +55,11 @@ public class DatabaseTableServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         Long dataSourceConfigId = randomLongId();
         // mock 方法
-        DataSourceConfigDO dataSourceConfig = new DataSourceConfigDO().setUsername("sa").setPassword("")
-                .setUrl("jdbc:h2:mem:testdb");
+        DataSourceConfigDO dataSourceConfig =
+                new DataSourceConfigDO()
+                        .setUsername("sa")
+                        .setPassword("")
+                        .setUrl("jdbc:h2:mem:testdb");
         when(dataSourceConfigService.getDataSourceConfig(eq(dataSourceConfigId)))
                 .thenReturn(dataSourceConfig);
 

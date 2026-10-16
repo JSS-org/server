@@ -1,20 +1,23 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeEntryStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusTabEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeSurveyTypeEnum;
-import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTodoTypeEnum;
+import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - HRM 员工档案列表 Request VO")
 @Data
@@ -93,5 +96,4 @@ public class HrmEmployeeListReqVO {
 
     @Schema(hidden = true)
     private LocalDateTime[] activeTime;
-
 }

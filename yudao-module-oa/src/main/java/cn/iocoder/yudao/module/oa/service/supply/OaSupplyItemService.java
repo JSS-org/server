@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.supply;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.supply.vo.item.*;
 import cn.iocoder.yudao.module.oa.dal.dataobject.supply.*;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 办公用品 Service 接口
@@ -86,5 +86,4 @@ public interface OaSupplyItemService {
      * @param quantity 库存增量，扣减时为负数
      */
     void updateSupplyItemStockQuantity(Long id, Integer quantity);
-
 }

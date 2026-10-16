@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliaryitem;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 /**
@@ -31,7 +33,10 @@ public class FmsAuxiliaryItemSaveReqVO {
     @Size(max = 64, message = "编码长度不能超过 64 个字符")
     private String code;
 
-    @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "上海测试数字科技有限公司")
+    @Schema(
+            description = "名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "上海测试数字科技有限公司")
     @NotBlank(message = "名称不能为空")
     @Size(max = 255, message = "名称长度不能超过 255 个字符")
     private String name;
@@ -47,5 +52,4 @@ public class FmsAuxiliaryItemSaveReqVO {
     @Schema(description = "单位", example = "台")
     @Size(max = 255, message = "单位长度不能超过 255 个字符")
     private String unit;
-
 }

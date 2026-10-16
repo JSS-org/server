@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.pay.controller.admin.refund;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.collection.CollectionUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -11,12 +15,15 @@ import cn.iocoder.yudao.module.pay.dal.dataobject.app.PayAppDO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
 import cn.iocoder.yudao.module.pay.service.app.PayAppService;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,20 +35,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @Tag(name = "管理后台 - 退款订单")
 @RestController
 @RequestMapping("/pay/refund")
 @Validated
 public class PayRefundController {
 
-    @Resource
-    private PayRefundService refundService;
-    @Resource
-    private PayAppService appService;
+    @Resource private PayRefundService refundService;
+    @Resource private PayAppService appService;
 
     @GetMapping("/get")
     @Operation(summary = "获得退款订单")
@@ -61,14 +62,16 @@ public class PayRefundController {
     @GetMapping("/page")
     @Operation(summary = "获得退款订单分页")
     @PreAuthorize("@ss.hasPermission('pay:refund:query')")
-    public CommonResult<PageResult<PayRefundPageItemRespVO>> getRefundPage(@Valid PayRefundPageReqVO pageVO) {
+    public CommonResult<PageResult<PayRefundPageItemRespVO>> getRefundPage(
+            @Valid PayRefundPageReqVO pageVO) {
         PageResult<PayRefundDO> pageResult = refundService.getRefundPage(pageVO);
         if (CollectionUtil.isEmpty(pageResult.getList())) {
             return success(new PageResult<>(pageResult.getTotal()));
         }
 
         // 处理应用ID数据
-        Map<Long, PayAppDO> appMap = appService.getAppMap(convertList(pageResult.getList(), PayRefundDO::getAppId));
+        Map<Long, PayAppDO> appMap =
+                appService.getAppMap(convertList(pageResult.getList(), PayRefundDO::getAppId));
         return success(PayRefundConvert.INSTANCE.convertPage(pageResult, appMap));
     }
 
@@ -76,8 +79,9 @@ public class PayRefundController {
     @Operation(summary = "导出退款订单 Excel")
     @PreAuthorize("@ss.hasPermission('pay:refund:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportRefundExcel(@Valid PayRefundExportReqVO exportReqVO,
-                                  HttpServletResponse response) throws IOException {
+    public void exportRefundExcel(
+            @Valid PayRefundExportReqVO exportReqVO, HttpServletResponse response)
+            throws IOException {
         List<PayRefundDO> list = refundService.getRefundList(exportReqVO);
 
         // 拼接返回
@@ -86,5 +90,4 @@ public class PayRefundController {
         // 导出 Excel
         ExcelUtils.write(response, "退款订单.xls", "数据", PayRefundExcelVO.class, excelList);
     }
-
 }

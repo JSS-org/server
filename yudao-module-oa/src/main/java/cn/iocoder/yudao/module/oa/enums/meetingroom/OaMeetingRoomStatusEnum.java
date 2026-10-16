@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.oa.enums.meetingroom;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,18 +16,18 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum OaMeetingRoomStatusEnum implements ArrayValuable<Integer> {
-
     NORMAL(0, "正常"),
     MAINTENANCE(1, "维修中"),
     DISABLED(2, "不可用");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(OaMeetingRoomStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(OaMeetingRoomStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 会议室可用状态
      */
     private final Integer status;
+
     /**
      * 名称
      */
@@ -46,5 +47,4 @@ public enum OaMeetingRoomStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

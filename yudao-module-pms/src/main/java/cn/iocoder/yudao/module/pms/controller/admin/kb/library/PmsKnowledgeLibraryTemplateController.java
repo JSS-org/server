@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.library;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,11 +12,14 @@ import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.template.PmsKn
 import cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.template.PmsKnowledgeLibraryTemplateSaveReqVO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.library.PmsKnowledgeLibraryTemplateDO;
 import cn.iocoder.yudao.module.pms.service.kb.library.PmsKnowledgeLibraryTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,9 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 /**
  * 管理后台 - PMS 知识库模板 Controller
  *
@@ -41,8 +44,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class PmsKnowledgeLibraryTemplateController {
 
-    @Resource
-    private PmsKnowledgeLibraryTemplateService libraryTemplateService;
+    @Resource private PmsKnowledgeLibraryTemplateService libraryTemplateService;
 
     @PostMapping("/create")
     @Operation(summary = "创建知识库模板")
@@ -74,7 +76,8 @@ public class PmsKnowledgeLibraryTemplateController {
     @Operation(summary = "获得知识库模板")
     @Parameter(name = "id", description = "模板编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pms:kb:library-template:query')")
-    public CommonResult<PmsKnowledgeLibraryTemplateRespVO> getLibraryTemplate(@RequestParam("id") Long id) {
+    public CommonResult<PmsKnowledgeLibraryTemplateRespVO> getLibraryTemplate(
+            @RequestParam("id") Long id) {
         PmsKnowledgeLibraryTemplateDO template = libraryTemplateService.getLibraryTemplate(id);
         return success(BeanUtils.toBean(template, PmsKnowledgeLibraryTemplateRespVO.class));
     }
@@ -82,11 +85,25 @@ public class PmsKnowledgeLibraryTemplateController {
     @GetMapping("/simple-list")
     @Operation(summary = "获取知识库模板全列表", description = "只包含开启状态模板，返回模板选择所需的基本信息和文档标题")
     public CommonResult<List<PmsKnowledgeLibraryTemplateRespVO>> getSimpleLibraryTemplateList() {
-        return success(convertList(libraryTemplateService.getLibraryTemplateList(CommonStatusEnum.ENABLE.getStatus()),
-                template -> new PmsKnowledgeLibraryTemplateRespVO().setId(template.getId())
-                        .setName(template.getName()).setCoverUrl(template.getCoverUrl()).setDescription(template.getDescription())
-                        .setDocuments(convertList(template.getDocuments(), document ->
-                                new PmsKnowledgeLibraryTemplateSaveReqVO.Document().setTitle(document.getTitle())))));
+        return success(
+                convertList(
+                        libraryTemplateService.getLibraryTemplateList(
+                                CommonStatusEnum.ENABLE.getStatus()),
+                        template ->
+                                new PmsKnowledgeLibraryTemplateRespVO()
+                                        .setId(template.getId())
+                                        .setName(template.getName())
+                                        .setCoverUrl(template.getCoverUrl())
+                                        .setDescription(template.getDescription())
+                                        .setDocuments(
+                                                convertList(
+                                                        template.getDocuments(),
+                                                        document ->
+                                                                new PmsKnowledgeLibraryTemplateSaveReqVO
+                                                                                .Document()
+                                                                        .setTitle(
+                                                                                document
+                                                                                        .getTitle())))));
     }
 
     @GetMapping("/page")
@@ -94,10 +111,12 @@ public class PmsKnowledgeLibraryTemplateController {
     @PreAuthorize("@ss.hasPermission('pms:kb:library-template:query')")
     public CommonResult<PageResult<PmsKnowledgeLibraryTemplateRespVO>> getLibraryTemplatePage(
             @Valid PmsKnowledgeLibraryTemplatePageReqVO pageReqVO) {
-        PageResult<PmsKnowledgeLibraryTemplateDO> pageResult = libraryTemplateService
-                .getLibraryTemplatePage(pageReqVO);
-        return success(new PageResult<>(BeanUtils.toBean(pageResult.getList(), PmsKnowledgeLibraryTemplateRespVO.class),
-                pageResult.getTotal()));
+        PageResult<PmsKnowledgeLibraryTemplateDO> pageResult =
+                libraryTemplateService.getLibraryTemplatePage(pageReqVO);
+        return success(
+                new PageResult<>(
+                        BeanUtils.toBean(
+                                pageResult.getList(), PmsKnowledgeLibraryTemplateRespVO.class),
+                        pageResult.getTotal()));
     }
-
 }

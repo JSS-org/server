@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.crm.framework.excel.core;
 import cn.iocoder.yudao.framework.excel.core.function.ExcelColumnSelectFunction;
 import cn.iocoder.yudao.framework.ip.core.Area;
 import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,5 +30,4 @@ public class AreaExcelColumnSelectFunction implements ExcelColumnSelectFunction 
         Area area = AreaUtils.getArea(Area.ID_CHINA);
         return AreaUtils.getAreaNodePathList(area.getChildren());
     }
-
 }

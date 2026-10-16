@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.iot.service.rule.data.action.websocket;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkWebSocketConfig;
+
 import lombok.extern.slf4j.Slf4j;
+
 import okhttp3.*;
 
 import java.util.concurrent.CountDownLatch;
@@ -40,11 +42,19 @@ public class IotWebSocketClient {
      */
     private static final int NORMAL_CLOSURE_STATUS = 1000;
 
-    public IotWebSocketClient(String serverUrl, Integer connectTimeoutMs, Integer sendTimeoutMs, String dataFormat) {
+    public IotWebSocketClient(
+            String serverUrl, Integer connectTimeoutMs, Integer sendTimeoutMs, String dataFormat) {
         this.serverUrl = serverUrl;
-        this.connectTimeoutMs = connectTimeoutMs != null ? connectTimeoutMs : IotDataSinkWebSocketConfig.DEFAULT_CONNECT_TIMEOUT_MS;
-        this.sendTimeoutMs = sendTimeoutMs != null ? sendTimeoutMs : IotDataSinkWebSocketConfig.DEFAULT_SEND_TIMEOUT_MS;
-        this.dataFormat = dataFormat != null ? dataFormat : IotDataSinkWebSocketConfig.DEFAULT_DATA_FORMAT;
+        this.connectTimeoutMs =
+                connectTimeoutMs != null
+                        ? connectTimeoutMs
+                        : IotDataSinkWebSocketConfig.DEFAULT_CONNECT_TIMEOUT_MS;
+        this.sendTimeoutMs =
+                sendTimeoutMs != null
+                        ? sendTimeoutMs
+                        : IotDataSinkWebSocketConfig.DEFAULT_SEND_TIMEOUT_MS;
+        this.dataFormat =
+                dataFormat != null ? dataFormat : IotDataSinkWebSocketConfig.DEFAULT_DATA_FORMAT;
     }
 
     /**
@@ -60,22 +70,23 @@ public class IotWebSocketClient {
 
         try {
             // 创建 OkHttpClient
-            okHttpClient = new OkHttpClient.Builder()
-                    .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
-                    .readTimeout(sendTimeoutMs, TimeUnit.MILLISECONDS)
-                    .writeTimeout(sendTimeoutMs, TimeUnit.MILLISECONDS)
-                    .build();
+            okHttpClient =
+                    new OkHttpClient.Builder()
+                            .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
+                            .readTimeout(sendTimeoutMs, TimeUnit.MILLISECONDS)
+                            .writeTimeout(sendTimeoutMs, TimeUnit.MILLISECONDS)
+                            .build();
 
             // 创建 WebSocket 请求
-            Request request = new Request.Builder()
-                    .url(serverUrl)
-                    .build();
+            Request request = new Request.Builder().url(serverUrl).build();
 
             // 使用 CountDownLatch 等待连接完成
             CountDownLatch connectLatch = new CountDownLatch(1);
             AtomicBoolean connectSuccess = new AtomicBoolean(false);
             // 创建 WebSocket 连接
-            webSocket = okHttpClient.newWebSocket(request, new IotWebSocketListener(connectLatch, connectSuccess));
+            webSocket =
+                    okHttpClient.newWebSocket(
+                            request, new IotWebSocketListener(connectLatch, connectSuccess));
 
             // 等待连接完成
             boolean await = connectLatch.await(connectTimeoutMs, TimeUnit.MILLISECONDS);
@@ -116,8 +127,10 @@ public class IotWebSocketClient {
             if (!success) {
                 throw new Exception("WebSocket 发送消息失败，消息队列已满或连接已关闭");
             }
-            log.debug("[sendMessage][发送消息成功，设备 ID: {}，消息长度: {}]",
-                    message.getDeviceId(), messageData.length());
+            log.debug(
+                    "[sendMessage][发送消息成功，设备 ID: {}，消息长度: {}]",
+                    message.getDeviceId(),
+                    messageData.length());
         } catch (Exception e) {
             log.error("[sendMessage][发送消息失败，设备 ID: {}]", message.getDeviceId(), e);
             throw e;
@@ -158,11 +171,16 @@ public class IotWebSocketClient {
 
     @Override
     public String toString() {
-        return "IotWebSocketClient{" +
-                "serverUrl='" + serverUrl + '\'' +
-                ", dataFormat='" + dataFormat + '\'' +
-                ", connected=" + connected.get() +
-                '}';
+        return "IotWebSocketClient{"
+                + "serverUrl='"
+                + serverUrl
+                + '\''
+                + ", dataFormat='"
+                + dataFormat
+                + '\''
+                + ", connected="
+                + connected.get()
+                + '}';
     }
 
     /**
@@ -211,5 +229,4 @@ public class IotWebSocketClient {
             log.error("[onFailure][WebSocket 连接失败]", t);
         }
     }
-
 }

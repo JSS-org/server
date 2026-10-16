@@ -1,17 +1,19 @@
 package cn.iocoder.yudao.module.mes.service.wm.productproduce;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.productproduce.vo.MesWmProductProduceLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productproduce.MesWmProductProduceLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.productproduce.MesWmProductProduceLineMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 生产入库单行 Service 实现类
@@ -20,8 +22,7 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmProductProduceLineServiceImpl implements MesWmProductProduceLineService {
 
-    @Resource
-    private MesWmProductProduceLineMapper productProduceLineMapper;
+    @Resource private MesWmProductProduceLineMapper productProduceLineMapper;
 
     @Override
     public void createProductProduceLine(MesWmProductProduceLineDO line) {
@@ -53,8 +54,8 @@ public class MesWmProductProduceLineServiceImpl implements MesWmProductProduceLi
     }
 
     @Override
-    public PageResult<MesWmProductProduceLineDO> getProductProduceLinePage(MesWmProductProduceLinePageReqVO pageReqVO) {
+    public PageResult<MesWmProductProduceLineDO> getProductProduceLinePage(
+            MesWmProductProduceLinePageReqVO pageReqVO) {
         return productProduceLineMapper.selectPage(pageReqVO);
     }
-
 }

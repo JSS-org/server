@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -166,5 +167,4 @@ public class HrmPerformanceAssessmentRespVO {
 
     @Schema(description = "当前待处理阶段")
     private HrmPerformanceAssessmentStageRespVO currentStage;
-
 }

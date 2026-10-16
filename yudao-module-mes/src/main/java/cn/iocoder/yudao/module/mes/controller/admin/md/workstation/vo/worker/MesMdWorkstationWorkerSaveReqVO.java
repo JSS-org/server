@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.workstation.vo.worker;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 人力资源新增/修改 Request VO")
@@ -25,5 +27,4 @@ public class MesMdWorkstationWorkerSaveReqVO {
 
     @Schema(description = "备注")
     private String remark;
-
 }

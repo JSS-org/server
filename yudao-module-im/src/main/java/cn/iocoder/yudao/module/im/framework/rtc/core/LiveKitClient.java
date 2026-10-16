@@ -14,6 +14,7 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import cn.iocoder.yudao.framework.common.util.http.HttpUtils;
 import cn.iocoder.yudao.module.im.framework.config.ImProperties;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -40,7 +41,9 @@ public class LiveKitClient {
      * Twirp 端点路径
      */
     private static final String TWIRP_DELETE_ROOM = "/twirp/livekit.RoomService/DeleteRoom";
-    private static final String TWIRP_LIST_PARTICIPANTS = "/twirp/livekit.RoomService/ListParticipants";
+
+    private static final String TWIRP_LIST_PARTICIPANTS =
+            "/twirp/livekit.RoomService/ListParticipants";
 
     /**
      * 管理 Token 有效期；Server API 一次调用即弃，10 秒足够
@@ -76,21 +79,24 @@ public class LiveKitClient {
 
         // video claim：限定客户端能在该房间内做什么
         Map<String, Object> video = new HashMap<>();
-        video.put("roomJoin", true);              // 允许加入房间
-        video.put("room", room);              // 限定只能加入这个房间
-        video.put("canPublish", true);            // 允许发布媒体（推流）
-        video.put("canSubscribe", true);          // 允许订阅媒体（拉流）
-        video.put("canPublishData", true);        // 允许发送 data channel 消息
+        video.put("roomJoin", true); // 允许加入房间
+        video.put("room", room); // 限定只能加入这个房间
+        video.put("canPublish", true); // 允许发布媒体（推流）
+        video.put("canSubscribe", true); // 允许订阅媒体（拉流）
+        video.put("canPublishData", true); // 允许发送 data channel 消息
 
         long nowSec = Instant.now().getEpochSecond();
         long ttlSec = Duration.ofHours(cfg.getTokenTtlHours()).getSeconds();
-        JWT jwt = JWT.create()
-                .setIssuer(cfg.getApiKey())
-                .setSubject(identity)
-                .setNotBefore(new Date(nowSec * 1000))
-                .setExpiresAt(new Date((nowSec + ttlSec) * 1000))
-                .setPayload("video", video)
-                .setSigner(JWTSignerUtil.hs256(cfg.getApiSecret().getBytes(StandardCharsets.UTF_8)));
+        JWT jwt =
+                JWT.create()
+                        .setIssuer(cfg.getApiKey())
+                        .setSubject(identity)
+                        .setNotBefore(new Date(nowSec * 1000))
+                        .setExpiresAt(new Date((nowSec + ttlSec) * 1000))
+                        .setPayload("video", video)
+                        .setSigner(
+                                JWTSignerUtil.hs256(
+                                        cfg.getApiSecret().getBytes(StandardCharsets.UTF_8)));
         if (StrUtil.isNotEmpty(displayName)) {
             jwt.setPayload("name", displayName);
         }
@@ -123,11 +129,15 @@ public class LiveKitClient {
                 return 0;
             }
             if (!response.isOk()) {
-                log.warn("[listParticipants][LiveKit 返回非 2xx status={} room={} body={}]",
-                        response.getStatus(), room, response.body());
+                log.warn(
+                        "[listParticipants][LiveKit 返回非 2xx status={} room={} body={}]",
+                        response.getStatus(),
+                        room,
+                        response.body());
                 return -1;
             }
-            JSONArray participants = JSONUtil.parseObj(response.body()).getJSONArray("participants");
+            JSONArray participants =
+                    JSONUtil.parseObj(response.body()).getJSONArray("participants");
             return CollUtil.size(participants);
         }
     }
@@ -199,8 +209,10 @@ public class LiveKitClient {
             String actualSha = Base64.encode(DigestUtil.sha256(rawBody));
             return Objects.equals(expectedSha.toString(), actualSha);
         } catch (Exception e) {
-            log.warn("[verifyWebhookSignature][签名解析异常 bodyLength={}]",
-                    rawBody == null ? 0 : rawBody.length(), e);
+            log.warn(
+                    "[verifyWebhookSignature][签名解析异常 bodyLength={}]",
+                    rawBody == null ? 0 : rawBody.length(),
+                    e);
             return false;
         }
     }
@@ -244,5 +256,4 @@ public class LiveKitClient {
                 .timeout(SERVER_API_TIMEOUT_MS)
                 .execute();
     }
-
 }

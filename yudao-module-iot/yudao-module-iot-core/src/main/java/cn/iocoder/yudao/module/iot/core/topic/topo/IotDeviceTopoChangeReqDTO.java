@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.core.topic.topo;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,5 +42,4 @@ public class IotDeviceTopoChangeReqDTO {
     public static IotDeviceTopoChangeReqDTO ofDelete(List<IotDeviceIdentity> subList) {
         return new IotDeviceTopoChangeReqDTO(STATUS_DELETE, subList);
     }
-
 }

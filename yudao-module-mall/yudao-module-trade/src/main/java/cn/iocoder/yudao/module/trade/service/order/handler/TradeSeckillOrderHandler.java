@@ -6,9 +6,11 @@ import cn.iocoder.yudao.module.promotion.api.seckill.SeckillActivityApi;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderItemDO;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 /**
@@ -19,8 +21,7 @@ import java.util.List;
 @Component
 public class TradeSeckillOrderHandler implements TradeOrderHandler {
 
-    @Resource
-    private SeckillActivityApi seckillActivityApi;
+    @Resource private SeckillActivityApi seckillActivityApi;
 
     @Override
     public void beforeOrderCreate(TradeOrderDO order, List<TradeOrderItemDO> orderItems) {
@@ -31,8 +32,10 @@ public class TradeSeckillOrderHandler implements TradeOrderHandler {
         Assert.isTrue(orderItems.size() == 1, "秒杀时，只允许选择一个商品");
 
         // 扣减秒杀活动的库存
-        seckillActivityApi.updateSeckillStockDecr(order.getSeckillActivityId(),
-                orderItems.get(0).getSkuId(), orderItems.get(0).getCount());
+        seckillActivityApi.updateSeckillStockDecr(
+                order.getSeckillActivityId(),
+                orderItems.get(0).getSkuId(),
+                orderItems.get(0).getCount());
     }
 
     @Override
@@ -57,8 +60,7 @@ public class TradeSeckillOrderHandler implements TradeOrderHandler {
             return;
         }
         // 恢复秒杀活动的库存
-        seckillActivityApi.updateSeckillStockIncr(order.getSeckillActivityId(),
-                orderItem.getSkuId(), orderItem.getCount());
+        seckillActivityApi.updateSeckillStockIncr(
+                order.getSeckillActivityId(), orderItem.getSkuId(), orderItem.getCount());
     }
-
 }

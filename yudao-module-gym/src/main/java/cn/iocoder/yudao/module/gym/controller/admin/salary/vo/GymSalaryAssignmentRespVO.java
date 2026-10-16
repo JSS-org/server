@@ -1,6 +1,9 @@
 package cn.iocoder.yudao.module.gym.controller.admin.salary.vo;
+
 import lombok.Data;
+
 import java.time.LocalDate;
+
 @Data
 public class GymSalaryAssignmentRespVO {
     private String id;

@@ -1,6 +1,5 @@
 package cn.iocoder.yudao.module.trade.framework.aftersale.core.utils;
 
-
 import cn.iocoder.yudao.module.trade.enums.aftersale.AfterSaleOperateTypeEnum;
 import cn.iocoder.yudao.module.trade.framework.aftersale.core.aop.AfterSaleLogAspect;
 
@@ -22,9 +21,8 @@ public class AfterSaleLogUtils {
         setAfterSaleInfo(id, beforeStatus, afterStatus, null);
     }
 
-    public static void setAfterSaleInfo(Long id, Integer beforeStatus, Integer afterStatus,
-                                        Map<String, Object> exts) {
+    public static void setAfterSaleInfo(
+            Long id, Integer beforeStatus, Integer afterStatus, Map<String, Object> exts) {
         AfterSaleLogAspect.setAfterSale(id, beforeStatus, afterStatus, exts);
     }
-
 }

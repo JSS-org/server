@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pay.controller.admin.refund.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -34,7 +35,5 @@ public class PayRefundDetailsRespVO extends PayRefundBaseVO {
 
         @Schema(description = "商品标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "土豆")
         private String subject;
-
     }
-
 }

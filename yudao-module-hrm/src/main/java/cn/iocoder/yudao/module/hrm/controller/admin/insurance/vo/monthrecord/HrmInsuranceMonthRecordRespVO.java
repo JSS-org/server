@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.insurance.vo.monthrecord;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -34,16 +35,24 @@ public class HrmInsuranceMonthRecordRespVO {
     @Schema(description = "个人社保金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "800.00")
     private BigDecimal personalInsuranceAmount;
 
-    @Schema(description = "个人公积金金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "700.00")
+    @Schema(
+            description = "个人公积金金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "700.00")
     private BigDecimal personalProvidentFundAmount;
 
-    @Schema(description = "企业社保金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "1600.00")
+    @Schema(
+            description = "企业社保金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1600.00")
     private BigDecimal corporateInsuranceAmount;
 
-    @Schema(description = "企业公积金金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "700.00")
+    @Schema(
+            description = "企业公积金金额",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "700.00")
     private BigDecimal corporateProvidentFundAmount;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

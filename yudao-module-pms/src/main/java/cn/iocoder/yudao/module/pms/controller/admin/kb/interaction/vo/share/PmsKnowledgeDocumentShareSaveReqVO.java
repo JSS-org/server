@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pms.controller.admin.kb.interaction.vo.share;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -16,5 +18,4 @@ public class PmsKnowledgeDocumentShareSaveReqVO {
 
     @Schema(description = "内部分享成员用户编号列表")
     private List<@NotNull(message = "分享成员用户编号不能为空") Long> shareUserIds;
-
 }

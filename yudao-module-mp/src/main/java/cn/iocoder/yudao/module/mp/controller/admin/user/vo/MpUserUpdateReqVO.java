@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.mp.controller.admin.user.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.util.List;
 
 @Schema(description = "管理后台 - 公众号粉丝更新 Request VO")
@@ -22,5 +24,4 @@ public class MpUserUpdateReqVO {
 
     @Schema(description = "标签编号数组", example = "1,2,3")
     private List<Long> tagIds;
-
 }

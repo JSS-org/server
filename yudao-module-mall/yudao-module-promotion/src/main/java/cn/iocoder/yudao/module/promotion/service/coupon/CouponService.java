@@ -48,7 +48,8 @@ public interface CouponService {
      * @param takeType   领取方式
      * @return key: userId, value: 优惠券编号列表
      */
-    Map<Long, List<Long>> takeCoupon(Long templateId, Set<Long> userIds, CouponTakeTypeEnum takeType);
+    Map<Long, List<Long>> takeCoupon(
+            Long templateId, Set<Long> userIds, CouponTakeTypeEnum takeType);
 
     /**
      * 【管理员】给用户发送优惠券
@@ -146,7 +147,8 @@ public interface CouponService {
      * @return 领取优惠券的数量
      */
     default Integer getTakeCount(Long templateId, Long userId) {
-        Map<Long, Integer> map = getTakeCountMapByTemplateIds(Collections.singleton(templateId), userId);
+        Map<Long, Integer> map =
+                getTakeCountMapByTemplateIds(Collections.singleton(templateId), userId);
         return MapUtil.getInt(map, templateId, 0);
     }
 
@@ -175,5 +177,4 @@ public interface CouponService {
      * @return 优惠劵
      */
     CouponDO getCoupon(Long id);
-
 }

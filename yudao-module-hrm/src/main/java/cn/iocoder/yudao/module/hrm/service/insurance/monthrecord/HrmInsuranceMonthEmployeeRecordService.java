@@ -87,7 +87,8 @@ public interface HrmInsuranceMonthEmployeeRecordService {
      * @param monthRecordId 月度社保表编号
      * @return 员工月度社保记录列表
      */
-    List<HrmInsuranceMonthEmployeeRecordDO> getMonthEmployeeRecordListByMonthRecordId(Long monthRecordId);
+    List<HrmInsuranceMonthEmployeeRecordDO> getMonthEmployeeRecordListByMonthRecordId(
+            Long monthRecordId);
 
     /**
      * 获得使用指定社保方案的月度记录数量
@@ -128,6 +129,6 @@ public interface HrmInsuranceMonthEmployeeRecordService {
      * @param month 月份
      * @return 员工编号与月度社保记录的映射
      */
-    Map<Long, HrmInsuranceMonthEmployeeRecordDO> getNormalMonthEmployeeRecordMap(Integer year, Integer month);
-
+    Map<Long, HrmInsuranceMonthEmployeeRecordDO> getNormalMonthEmployeeRecordMap(
+            Integer year, Integer month);
 }

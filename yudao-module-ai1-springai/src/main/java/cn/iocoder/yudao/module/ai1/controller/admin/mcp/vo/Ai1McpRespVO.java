@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.mcp.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,7 +26,9 @@ public class Ai1McpRespVO {
     @Schema(description = "请求头", example = "{\"Authorization\":\"Bearer xxx\"}")
     private Map<String, String> headers;
 
-    @Schema(description = "完整 MCP 配置，JSON 对象", example = "{\"transport\":\"http\",\"url\":\"http://127.0.0.1:8081/mcp\"}")
+    @Schema(
+            description = "完整 MCP 配置，JSON 对象",
+            example = "{\"transport\":\"http\",\"url\":\"http://127.0.0.1:8081/mcp\"}")
     private String config;
 
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
@@ -39,5 +42,4 @@ public class Ai1McpRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

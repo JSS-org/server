@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.framework.delivery.core.client.dto;
 
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryExpressDO;
+
 import lombok.Data;
 
 /**
@@ -32,5 +33,4 @@ public class ExpressTrackQueryReqDTO {
      * 自定义名称（顺丰专用）
      */
     private String customerName;
-
 }

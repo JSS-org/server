@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.product.controller.admin.property.vo.property;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 属性项新增/更新 Request VO")
@@ -17,5 +19,4 @@ public class ProductPropertySaveReqVO {
 
     @Schema(description = "备注", example = "颜色")
     private String remark;
-
 }

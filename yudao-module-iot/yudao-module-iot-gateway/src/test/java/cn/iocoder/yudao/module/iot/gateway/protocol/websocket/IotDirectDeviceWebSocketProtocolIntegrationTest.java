@@ -13,11 +13,14 @@ import cn.iocoder.yudao.module.iot.core.util.IotDeviceAuthUtils;
 import cn.iocoder.yudao.module.iot.core.util.IotProductAuthUtils;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.json.IotJsonSerializer;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.WebSocketConnectOptions;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -90,12 +93,15 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
     @Test
     public void testAuth() throws Exception {
         // 1.1 构建认证消息
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
-        IotDeviceMessage request = IotDeviceMessage.of(IdUtil.fastSimpleUUID(), "auth", authReqDTO, null, null, null);
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
+        IotDeviceMessage request =
+                IotDeviceMessage.of(IdUtil.fastSimpleUUID(), "auth", authReqDTO, null, null, null);
         // 1.2 序列化
         byte[] payload = SERIALIZER.serialize(request);
         String jsonMessage = StrUtil.utf8Str(payload);
@@ -135,12 +141,19 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
         String deviceName = "test-ws-" + System.currentTimeMillis();
         String productSecret = "test-product-secret"; // 替换为实际的 productSecret
         String sign = IotProductAuthUtils.buildSign(PRODUCT_KEY, deviceName, productSecret);
-        IotDeviceRegisterReqDTO registerReqDTO = new IotDeviceRegisterReqDTO()
-                .setProductKey(PRODUCT_KEY)
-                .setDeviceName(deviceName)
-                .setSign(sign);
-        IotDeviceMessage request = IotDeviceMessage.of(IdUtil.fastSimpleUUID(),
-                IotDeviceMessageMethodEnum.DEVICE_REGISTER.getMethod(), registerReqDTO, null, null, null);
+        IotDeviceRegisterReqDTO registerReqDTO =
+                new IotDeviceRegisterReqDTO()
+                        .setProductKey(PRODUCT_KEY)
+                        .setDeviceName(deviceName)
+                        .setSign(sign);
+        IotDeviceMessage request =
+                IotDeviceMessage.of(
+                        IdUtil.fastSimpleUUID(),
+                        IotDeviceMessageMethodEnum.DEVICE_REGISTER.getMethod(),
+                        registerReqDTO,
+                        null,
+                        null,
+                        null);
         // 1.2 序列化
         byte[] payload = SERIALIZER.serialize(request);
         String jsonMessage = StrUtil.utf8Str(payload);
@@ -182,14 +195,18 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
         log.info("[testPropertyPost][认证响应: {}]", authResponse);
 
         // 2.1 构建属性上报消息
-        IotDeviceMessage request = IotDeviceMessage.of(
-                IdUtil.fastSimpleUUID(),
-                IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
-                IotDevicePropertyPostReqDTO.of(MapUtil.<String, Object>builder()
-                        .put("width", 1)
-                        .put("height", "2")
-                        .build()),
-                null, null, null);
+        IotDeviceMessage request =
+                IotDeviceMessage.of(
+                        IdUtil.fastSimpleUUID(),
+                        IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod(),
+                        IotDevicePropertyPostReqDTO.of(
+                                MapUtil.<String, Object>builder()
+                                        .put("width", 1)
+                                        .put("height", "2")
+                                        .build()),
+                        null,
+                        null,
+                        null);
         // 2.2 序列化
         byte[] payload = SERIALIZER.serialize(request);
         String jsonMessage = StrUtil.utf8Str(payload);
@@ -225,14 +242,17 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
         log.info("[testEventPost][认证响应: {}]", authResponse);
 
         // 2.1 构建事件上报消息
-        IotDeviceMessage request = IotDeviceMessage.of(
-                IdUtil.fastSimpleUUID(),
-                IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
-                IotDeviceEventPostReqDTO.of(
-                        "eat",
-                        MapUtil.<String, Object>builder().put("rice", 3).build(),
-                        System.currentTimeMillis()),
-                null, null, null);
+        IotDeviceMessage request =
+                IotDeviceMessage.of(
+                        IdUtil.fastSimpleUUID(),
+                        IotDeviceMessageMethodEnum.EVENT_POST.getMethod(),
+                        IotDeviceEventPostReqDTO.of(
+                                "eat",
+                                MapUtil.<String, Object>builder().put("rice", 3).build(),
+                                System.currentTimeMillis()),
+                        null,
+                        null,
+                        null);
         // 2.2 序列化
         byte[] payload = SERIALIZER.serialize(request);
         String jsonMessage = StrUtil.utf8Str(payload);
@@ -261,11 +281,15 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
      */
     private WebSocket createWebSocketConnection() throws Exception {
         WebSocketClient wsClient = vertx.createWebSocketClient();
-        WebSocketConnectOptions options = new WebSocketConnectOptions()
-                .setHost(SERVER_HOST)
-                .setPort(SERVER_PORT)
-                .setURI(WS_PATH);
-        return wsClient.connect(options).toCompletionStage().toCompletableFuture().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        WebSocketConnectOptions options =
+                new WebSocketConnectOptions()
+                        .setHost(SERVER_HOST)
+                        .setPort(SERVER_PORT)
+                        .setURI(WS_PATH);
+        return wsClient.connect(options)
+                .toCompletionStage()
+                .toCompletableFuture()
+                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
@@ -280,11 +304,12 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
         AtomicReference<String> responseRef = new AtomicReference<>();
 
         // 设置消息处理器
-        ws.textMessageHandler(response -> {
-            log.info("[sendAndReceive][收到响应: {}]", response);
-            responseRef.set(response);
-            latch.countDown();
-        });
+        ws.textMessageHandler(
+                response -> {
+                    log.info("[sendAndReceive][收到响应: {}]", response);
+                    responseRef.set(response);
+                    latch.countDown();
+                });
 
         // 发送请求
         log.info("[sendAndReceive][发送请求: {}]", message);
@@ -305,12 +330,15 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
      * @return 认证响应消息
      */
     private IotDeviceMessage authenticate(WebSocket ws) throws Exception {
-        IotDeviceAuthReqDTO authInfo = IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
-        IotDeviceAuthReqDTO authReqDTO = new IotDeviceAuthReqDTO()
-                .setClientId(authInfo.getClientId())
-                .setUsername(authInfo.getUsername())
-                .setPassword(authInfo.getPassword());
-        IotDeviceMessage request = IotDeviceMessage.of(IdUtil.fastSimpleUUID(), "auth", authReqDTO, null, null, null);
+        IotDeviceAuthReqDTO authInfo =
+                IotDeviceAuthUtils.getAuthInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET);
+        IotDeviceAuthReqDTO authReqDTO =
+                new IotDeviceAuthReqDTO()
+                        .setClientId(authInfo.getClientId())
+                        .setUsername(authInfo.getUsername())
+                        .setPassword(authInfo.getPassword());
+        IotDeviceMessage request =
+                IotDeviceMessage.of(IdUtil.fastSimpleUUID(), "auth", authReqDTO, null, null, null);
 
         byte[] payload = SERIALIZER.serialize(request);
         String jsonMessage = StrUtil.utf8Str(payload);
@@ -322,5 +350,4 @@ public class IotDirectDeviceWebSocketProtocolIntegrationTest {
         }
         return null;
     }
-
 }

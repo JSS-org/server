@@ -4,7 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.redis.core.TimeoutRedisCacheManager;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.Cache;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
@@ -26,9 +28,10 @@ public class TenantRedisCacheManager extends TimeoutRedisCacheManager {
 
     private final Set<String> ignoreCaches;
 
-    public TenantRedisCacheManager(RedisCacheWriter cacheWriter,
-                                   RedisCacheConfiguration defaultCacheConfiguration,
-                                   Set<String> ignoreCaches) {
+    public TenantRedisCacheManager(
+            RedisCacheWriter cacheWriter,
+            RedisCacheConfiguration defaultCacheConfiguration,
+            Set<String> ignoreCaches) {
         super(cacheWriter, defaultCacheConfiguration);
         this.ignoreCaches = ignoreCaches;
     }
@@ -46,5 +49,4 @@ public class TenantRedisCacheManager extends TimeoutRedisCacheManager {
         // 继续基于父方法
         return super.getCache(name);
     }
-
 }

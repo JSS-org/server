@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.service.mail;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_ACCOUNT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_ACCOUNT_RELATE_TEMPLATE_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.controller.admin.mail.vo.account.MailAccountPageReqVO;
@@ -7,18 +11,17 @@ import cn.iocoder.yudao.module.system.controller.admin.mail.vo.account.MailAccou
 import cn.iocoder.yudao.module.system.dal.dataobject.mail.MailAccountDO;
 import cn.iocoder.yudao.module.system.dal.mysql.mail.MailAccountMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_ACCOUNT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_ACCOUNT_RELATE_TEMPLATE_EXISTS;
 
 /**
  * 邮箱账号 Service 实现类
@@ -31,11 +34,9 @@ import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.MAIL_ACCOU
 @Slf4j
 public class MailAccountServiceImpl implements MailAccountService {
 
-    @Resource
-    private MailAccountMapper mailAccountMapper;
+    @Resource private MailAccountMapper mailAccountMapper;
 
-    @Resource
-    private MailTemplateService mailTemplateService;
+    @Resource private MailTemplateService mailTemplateService;
 
     @Override
     public Long createMailAccount(MailAccountSaveReqVO createReqVO) {
@@ -70,7 +71,8 @@ public class MailAccountServiceImpl implements MailAccountService {
     }
 
     @Override
-    @CacheEvict(value = RedisKeyConstants.MAIL_ACCOUNT,
+    @CacheEvict(
+            value = RedisKeyConstants.MAIL_ACCOUNT,
             allEntries = true) // allEntries 清空所有缓存，因为 Spring Cache 不支持按照 ids 批量删除
     public void deleteMailAccountList(List<Long> ids) {
         // 1. 校验是否存在关联模版
@@ -110,5 +112,4 @@ public class MailAccountServiceImpl implements MailAccountService {
     public List<MailAccountDO> getMailAccountList() {
         return mailAccountMapper.selectList();
     }
-
 }

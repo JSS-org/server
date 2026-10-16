@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.common.util.io;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
+
 import lombok.SneakyThrows;
 
 import java.io.File;
@@ -57,5 +58,4 @@ public class FileUtils {
         file.deleteOnExit();
         return file;
     }
-
 }

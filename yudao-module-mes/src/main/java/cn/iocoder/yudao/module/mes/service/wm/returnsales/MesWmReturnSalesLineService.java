@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnsales.vo.line.MesWmReturnSalesLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.returnsales.vo.line.MesWmReturnSalesLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnsales.MesWmReturnSalesLineDO;
+
 import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
@@ -52,7 +53,8 @@ public interface MesWmReturnSalesLineService {
      * @param pageReqVO 分页查询
      * @return 销售退货单行分页
      */
-    PageResult<MesWmReturnSalesLineDO> getReturnSalesLinePage(MesWmReturnSalesLinePageReqVO pageReqVO);
+    PageResult<MesWmReturnSalesLineDO> getReturnSalesLinePage(
+            MesWmReturnSalesLinePageReqVO pageReqVO);
 
     /**
      * 根据退货单ID获取行列表
@@ -102,7 +104,10 @@ public interface MesWmReturnSalesLineService {
      * @param qualifiedQuantity   合格品数量
      * @param unqualifiedQuantity 不合格品数量
      */
-    void updateReturnSalesLineWhenRqcFinish(Long sourceLineId, Long sourceDocId, Integer checkResult,
-                                            BigDecimal qualifiedQuantity, BigDecimal unqualifiedQuantity);
-
+    void updateReturnSalesLineWhenRqcFinish(
+            Long sourceLineId,
+            Long sourceDocId,
+            Integer checkResult,
+            BigDecimal qualifiedQuantity,
+            BigDecimal unqualifiedQuantity);
 }

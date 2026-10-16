@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.fms.service.report;
 
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaUpdateReqVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportItemRespVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportListReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowAdjustmentRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowAdjustmentUpdateReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowCheckRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowStatementUpdateReqVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaUpdateReqVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportItemRespVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportListReqVO;
 
 import java.util.List;
 
@@ -52,7 +52,8 @@ public interface FmsCashFlowStatementService {
      * @param userId 用户编号
      * @return 现金流量辅助数据列表
      */
-    List<FmsCashFlowAdjustmentRespVO> getCashFlowAdjustmentList(FmsReportListReqVO listReqVO, Long userId);
+    List<FmsCashFlowAdjustmentRespVO> getCashFlowAdjustmentList(
+            FmsReportListReqVO listReqVO, Long userId);
 
     /**
      * 更新现金流量辅助数据的人工调整金额
@@ -69,5 +70,4 @@ public interface FmsCashFlowStatementService {
      * @param userId 用户编号
      */
     void updateCashFlowAdjustmentFormula(FmsReportFormulaUpdateReqVO updateReqVO, Long userId);
-
 }

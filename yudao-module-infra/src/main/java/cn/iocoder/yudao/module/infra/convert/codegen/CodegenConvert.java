@@ -8,8 +8,10 @@ import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column.CodegenC
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.CodegenTableRespVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
+
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+
 import org.apache.ibatis.type.JdbcType;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -28,21 +30,24 @@ public interface CodegenConvert {
     // ========== TableInfo 相关 ==========
 
     @Mappings({
-            @Mapping(source = "name", target = "tableName"),
-            @Mapping(source = "comment", target = "tableComment"),
+        @Mapping(source = "name", target = "tableName"),
+        @Mapping(source = "comment", target = "tableComment"),
     })
     CodegenTableDO convert(TableInfo bean);
 
     List<CodegenColumnDO> convertList(List<TableField> list);
 
     @Mappings({
-            @Mapping(source = "name", target = "columnName"),
-            @Mapping(source = "metaInfo.jdbcType", target = "dataType", qualifiedByName = "getDataType"),
-            @Mapping(source = "comment", target = "columnComment"),
-            @Mapping(source = "metaInfo.nullable", target = "nullable"),
-            @Mapping(source = "keyFlag", target = "primaryKey"),
-            @Mapping(source = "columnType.type", target = "javaType"),
-            @Mapping(source = "propertyName", target = "javaField"),
+        @Mapping(source = "name", target = "columnName"),
+        @Mapping(
+                source = "metaInfo.jdbcType",
+                target = "dataType",
+                qualifiedByName = "getDataType"),
+        @Mapping(source = "comment", target = "columnComment"),
+        @Mapping(source = "metaInfo.nullable", target = "nullable"),
+        @Mapping(source = "keyFlag", target = "primaryKey"),
+        @Mapping(source = "columnType.type", target = "javaType"),
+        @Mapping(source = "propertyName", target = "javaField"),
     })
     CodegenColumnDO convert(TableField bean);
 
@@ -61,8 +66,11 @@ public interface CodegenConvert {
     }
 
     default List<CodegenPreviewRespVO> convert(Map<String, String> codes) {
-        return CollectionUtils.convertList(codes.entrySet(),
-                entry -> new CodegenPreviewRespVO().setFilePath(entry.getKey()).setCode(entry.getValue()));
+        return CollectionUtils.convertList(
+                codes.entrySet(),
+                entry ->
+                        new CodegenPreviewRespVO()
+                                .setFilePath(entry.getKey())
+                                .setCode(entry.getValue()));
     }
-
 }

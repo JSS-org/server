@@ -19,7 +19,8 @@ public interface WmsInventoryHistoryService {
      * @param pageReqVO 分页查询
      * @return 库存流水分页
      */
-    PageResult<WmsInventoryHistoryDO> getInventoryHistoryPage(WmsInventoryHistoryPageReqVO pageReqVO);
+    PageResult<WmsInventoryHistoryDO> getInventoryHistoryPage(
+            WmsInventoryHistoryPageReqVO pageReqVO);
 
     /**
      * 创建库存流水列表
@@ -27,5 +28,4 @@ public interface WmsInventoryHistoryService {
      * @param list 库存流水列表
      */
     void createInventoryHistoryList(List<WmsInventoryHistoryDO> list);
-
 }

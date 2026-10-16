@@ -36,5 +36,4 @@ public interface TradeOrderApi {
      * @param cancelType 取消类型
      */
     void cancelPaidOrder(Long userId, Long orderId, Integer cancelType);
-
 }

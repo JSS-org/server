@@ -91,9 +91,10 @@ public interface TradeOrderHandler {
      * @param orderItems 订单项列表
      * @return 过滤后的订单项列表
      */
-    default List<TradeOrderItemDO> filterOrderItemListByNoneAfterSale(List<TradeOrderItemDO> orderItems) {
-        return CollectionUtils.filterList(orderItems,
+    default List<TradeOrderItemDO> filterOrderItemListByNoneAfterSale(
+            List<TradeOrderItemDO> orderItems) {
+        return CollectionUtils.filterList(
+                orderItems,
                 item -> TradeOrderItemAfterSaleStatusEnum.isNone(item.getAfterSaleStatus()));
     }
-
 }

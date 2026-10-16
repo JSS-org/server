@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -24,5 +25,4 @@ public class DiyTemplateRespVO extends DiyTemplateBaseVO {
 
     @Schema(description = "使用时间", example = "使用时间")
     private LocalDateTime usedTime;
-
 }

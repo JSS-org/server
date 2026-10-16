@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.mes.dal.mysql.md.workstation;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationToolDO;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -19,10 +21,12 @@ public interface MesMdWorkstationToolMapper extends BaseMapperX<MesMdWorkstation
         return selectList(MesMdWorkstationToolDO::getWorkstationId, workstationId);
     }
 
-    default MesMdWorkstationToolDO selectByWorkstationIdAndToolTypeId(Long workstationId, Long toolTypeId) {
-        return selectOne(new LambdaQueryWrapper<MesMdWorkstationToolDO>()
-                .eq(MesMdWorkstationToolDO::getWorkstationId, workstationId)
-                .eq(MesMdWorkstationToolDO::getToolTypeId, toolTypeId));
+    default MesMdWorkstationToolDO selectByWorkstationIdAndToolTypeId(
+            Long workstationId, Long toolTypeId) {
+        return selectOne(
+                new LambdaQueryWrapper<MesMdWorkstationToolDO>()
+                        .eq(MesMdWorkstationToolDO::getWorkstationId, workstationId)
+                        .eq(MesMdWorkstationToolDO::getToolTypeId, toolTypeId));
     }
 
     default void deleteByWorkstationId(Long workstationId) {
@@ -32,5 +36,4 @@ public interface MesMdWorkstationToolMapper extends BaseMapperX<MesMdWorkstation
     default Long selectCountByToolTypeId(Long toolTypeId) {
         return selectCount(MesMdWorkstationToolDO::getToolTypeId, toolTypeId);
     }
-
 }

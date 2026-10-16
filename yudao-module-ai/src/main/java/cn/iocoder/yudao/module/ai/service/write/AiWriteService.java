@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.write.vo.AiWriteGenerateReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.write.vo.AiWritePageReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.write.AiWriteDO;
+
 import reactor.core.publisher.Flux;
 
 /**
@@ -21,7 +22,8 @@ public interface AiWriteService {
      * @param userId        用户编号
      * @return 生成结果
      */
-    Flux<CommonResult<String>> generateWriteContent(AiWriteGenerateReqVO generateReqVO, Long userId);
+    Flux<CommonResult<String>> generateWriteContent(
+            AiWriteGenerateReqVO generateReqVO, Long userId);
 
     /**
      * 删除写作
@@ -45,5 +47,4 @@ public interface AiWriteService {
      * @return AI 写作分页
      */
     PageResult<AiWriteDO> getWritePage(AiWritePageReqVO pageReqVO);
-
 }

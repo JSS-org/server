@@ -48,7 +48,8 @@ public interface PayClient<Config> {
      * @param headers HTTP 回调接口的 request headers
      * @return 支付订单信息
      */
-    PayOrderRespDTO parseOrderNotify(Map<String, String> params, String body, Map<String, String> headers);
+    PayOrderRespDTO parseOrderNotify(
+            Map<String, String> params, String body, Map<String, String> headers);
 
     /**
      * 获得支付订单信息
@@ -84,7 +85,8 @@ public interface PayClient<Config> {
      * @param headers HTTP 回调接口的 request headers
      * @return 支付订单信息
      */
-    PayRefundRespDTO parseRefundNotify(Map<String, String> params, String body, Map<String, String> headers);
+    PayRefundRespDTO parseRefundNotify(
+            Map<String, String> params, String body, Map<String, String> headers);
 
     /**
      * 获得退款订单信息
@@ -121,6 +123,6 @@ public interface PayClient<Config> {
      * @param headers HTTP 回调接口的 request headers
      * @return 转账信息
      */
-    PayTransferRespDTO parseTransferNotify(Map<String, String> params, String body, Map<String, String> headers);
-
+    PayTransferRespDTO parseTransferNotify(
+            Map<String, String> params, String body, Map<String, String> headers);
 }

@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.home.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 @Schema(description = "管理后台 - HRM 首页日历事项 Response VO")
 @Data
 public class HrmHomeCalendarItemRespVO {
@@ -29,5 +31,4 @@ public class HrmHomeCalendarItemRespVO {
 
     @Schema(description = "事项时间")
     private LocalDateTime eventTime;
-
 }

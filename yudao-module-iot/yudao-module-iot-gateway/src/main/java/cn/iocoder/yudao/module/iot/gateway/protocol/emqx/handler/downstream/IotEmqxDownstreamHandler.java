@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.iot.gateway.protocol.emqx.IotEmqxProtocol;
 import cn.iocoder.yudao.module.iot.gateway.service.device.IotDeviceService;
 import cn.iocoder.yudao.module.iot.gateway.service.device.message.IotDeviceMessageService;
 import cn.iocoder.yudao.module.iot.gateway.util.IotMqttTopicUtils;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -47,14 +48,16 @@ public class IotEmqxDownstreamHandler {
         }
 
         // 2.1 根据方法构建主题
-        String topic = buildTopicByMethod(message, deviceInfo.getProductKey(), deviceInfo.getDeviceName());
+        String topic =
+                buildTopicByMethod(message, deviceInfo.getProductKey(), deviceInfo.getDeviceName());
         if (StrUtil.isBlank(topic)) {
             log.warn("[handle][未知的消息方法: {}]", message.getMethod());
             return;
         }
         // 2.2 构建载荷
-        byte[] payload = deviceMessageService.serializeDeviceMessage(message, deviceInfo.getProductKey(),
-                deviceInfo.getDeviceName());
+        byte[] payload =
+                deviceMessageService.serializeDeviceMessage(
+                        message, deviceInfo.getProductKey(), deviceInfo.getDeviceName());
 
         // 3. 发布消息
         protocol.publishMessage(topic, payload);
@@ -68,11 +71,12 @@ public class IotEmqxDownstreamHandler {
      * @param deviceName 设备名称
      * @return 构建的主题，如果方法不支持返回 null
      */
-    private String buildTopicByMethod(IotDeviceMessage message, String productKey, String deviceName) {
+    private String buildTopicByMethod(
+            IotDeviceMessage message, String productKey, String deviceName) {
         // 1. 判断是否为回复消息
         boolean isReply = IotDeviceMessageUtils.isReplyMessage(message);
         // 2. 根据消息方法类型构建对应的主题
-        return IotMqttTopicUtils.buildTopicByMethod(message.getMethod(), productKey, deviceName, isReply);
+        return IotMqttTopicUtils.buildTopicByMethod(
+                message.getMethod(), productKey, deviceName, isReply);
     }
-
 }

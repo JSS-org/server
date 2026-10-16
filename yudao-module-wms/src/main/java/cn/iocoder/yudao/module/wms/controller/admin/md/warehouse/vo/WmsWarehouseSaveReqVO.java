@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.wms.controller.admin.md.warehouse.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - WMS 仓库新增/修改 Request VO")
@@ -28,5 +30,4 @@ public class WmsWarehouseSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

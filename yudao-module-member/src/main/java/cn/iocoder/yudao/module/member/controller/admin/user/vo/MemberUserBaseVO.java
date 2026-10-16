@@ -1,17 +1,20 @@
 package cn.iocoder.yudao.module.member.controller.admin.user.vo;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import org.hibernate.validator.constraints.URL;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.URL;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
 
 /**
  * 会员用户 Base VO，提供给添加、修改、详细的子 VO 使用
@@ -20,7 +23,10 @@ import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_
 @Data
 public class MemberUserBaseVO {
 
-    @Schema(description = "手机号", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601691300")
+    @Schema(
+            description = "手机号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "15601691300")
     @NotNull(message = "手机号不能为空")
     private String mobile;
 
@@ -37,7 +43,10 @@ public class MemberUserBaseVO {
     @NotNull(message = "用户昵称不能为空")
     private String nickname;
 
-    @Schema(description = "头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/x.png")
+    @Schema(
+            description = "头像",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "https://www.iocoder.cn/x.png")
     @URL(message = "头像必须是 URL 格式")
     private String avatar;
 
@@ -68,5 +77,4 @@ public class MemberUserBaseVO {
 
     @Schema(description = "用户分组编号", example = "1")
     private Long groupId;
-
 }

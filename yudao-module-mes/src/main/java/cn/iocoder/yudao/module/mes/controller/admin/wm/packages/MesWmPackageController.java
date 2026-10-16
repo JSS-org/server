@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.packages;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -16,11 +20,14 @@ import cn.iocoder.yudao.module.mes.service.md.unitmeasure.MesMdUnitMeasureServic
 import cn.iocoder.yudao.module.mes.service.wm.packages.MesWmPackageService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,25 +35,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-
 @Tag(name = "管理后台 - MES 装箱单")
 @RestController
 @RequestMapping("/mes/wm/package")
 @Validated
 public class MesWmPackageController {
 
-    @Resource
-    private MesWmPackageService packageService;
-    @Resource
-    private MesMdClientService clientService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesWmPackageService packageService;
+    @Resource private MesMdClientService clientService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建装箱单")
@@ -58,7 +57,8 @@ public class MesWmPackageController {
     @PutMapping("/update")
     @Operation(summary = "修改装箱单")
     @PreAuthorize("@ss.hasPermission('mes:wm-package:update')")
-    public CommonResult<Boolean> updatePackage(@Valid @RequestBody MesWmPackageSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updatePackage(
+            @Valid @RequestBody MesWmPackageSaveReqVO updateReqVO) {
         packageService.updatePackage(updateReqVO);
         return success(true);
     }
@@ -90,7 +90,8 @@ public class MesWmPackageController {
     public CommonResult<PageResult<MesWmPackageRespVO>> getPackagePage(
             @Valid MesWmPackagePageReqVO pageReqVO) {
         PageResult<MesWmPackageDO> pageResult = packageService.getPackagePage(pageReqVO);
-        return success(new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @PutMapping("/finish")
@@ -105,8 +106,8 @@ public class MesWmPackageController {
     @PutMapping("/add-child-package")
     @Operation(summary = "添加子箱")
     @PreAuthorize("@ss.hasPermission('mes:wm-package:update')")
-    public CommonResult<Boolean> addChildPackage(@RequestParam("parentId") Long parentId,
-            @RequestParam("childId") Long childId) {
+    public CommonResult<Boolean> addChildPackage(
+            @RequestParam("parentId") Long parentId, @RequestParam("childId") Long childId) {
         packageService.addChildPackage(parentId, childId);
         return success(true);
     }
@@ -120,7 +121,6 @@ public class MesWmPackageController {
         return success(true);
     }
 
-
     // ========== 私有方法 ==========
 
     private List<MesWmPackageRespVO> buildRespVOList(List<MesWmPackageDO> list) {
@@ -128,26 +128,40 @@ public class MesWmPackageController {
             return Collections.emptyList();
         }
         // 批量查询客户
-        Map<Long, MesMdClientDO> clientMap = clientService.getClientMap(
-                convertSet(list, MesWmPackageDO::getClientId));
+        Map<Long, MesMdClientDO> clientMap =
+                clientService.getClientMap(convertSet(list, MesWmPackageDO::getClientId));
         // 批量查询计量单位（尺寸 + 重量）
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSetByFlatMap(list, p -> Stream.of(p.getSizeUnitId(), p.getWeightUnitId())));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSetByFlatMap(
+                                list, p -> Stream.of(p.getSizeUnitId(), p.getWeightUnitId())));
         // 批量查询检查员
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesWmPackageDO::getInspectorUserId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesWmPackageDO::getInspectorUserId));
         // 构建返回结果
-        return BeanUtils.toBean(list, MesWmPackageRespVO.class, vo -> {
-            MapUtils.findAndThen(clientMap, vo.getClientId(),
-                    client -> vo.setClientCode(client.getCode()).setClientName(client.getName())
-                            .setClientNickname(client.getNickname()));
-            MapUtils.findAndThen(unitMeasureMap, vo.getSizeUnitId(),
-                    unit -> vo.setSizeUnitName(unit.getName()));
-            MapUtils.findAndThen(unitMeasureMap, vo.getWeightUnitId(),
-                    unit -> vo.setWeightUnitName(unit.getName()));
-            MapUtils.findAndThen(userMap, vo.getInspectorUserId(),
-                    user -> vo.setInspectorName(user.getNickname()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesWmPackageRespVO.class,
+                vo -> {
+                    MapUtils.findAndThen(
+                            clientMap,
+                            vo.getClientId(),
+                            client ->
+                                    vo.setClientCode(client.getCode())
+                                            .setClientName(client.getName())
+                                            .setClientNickname(client.getNickname()));
+                    MapUtils.findAndThen(
+                            unitMeasureMap,
+                            vo.getSizeUnitId(),
+                            unit -> vo.setSizeUnitName(unit.getName()));
+                    MapUtils.findAndThen(
+                            unitMeasureMap,
+                            vo.getWeightUnitId(),
+                            unit -> vo.setWeightUnitName(unit.getName()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            vo.getInspectorUserId(),
+                            user -> vo.setInspectorName(user.getNickname()));
+                });
     }
-
 }

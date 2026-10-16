@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.enums.wm;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.module.mes.enums.MesOrderStatusConstants;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -30,12 +31,16 @@ public enum MesWmSalesNoticeStatusEnum implements ArrayValuable<Integer> {
     APPROVED(MesOrderStatusConstants.APPROVED, "待出库");
     // TODO @芋艿：【对齐】暂时无后续流程，看看后续要怎么支持下。
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(MesWmSalesNoticeStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(MesWmSalesNoticeStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -45,5 +50,4 @@ public enum MesWmSalesNoticeStatusEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

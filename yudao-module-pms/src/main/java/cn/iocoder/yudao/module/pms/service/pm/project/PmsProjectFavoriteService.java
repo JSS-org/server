@@ -39,5 +39,4 @@ public interface PmsProjectFavoriteService {
      * @param projectId 项目编号
      */
     void deleteProjectFavoriteListByProjectId(Long projectId);
-
 }

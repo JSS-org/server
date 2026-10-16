@@ -1,25 +1,26 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.USER_GROUP_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.framework.test.core.util.AssertUtils;
 import cn.iocoder.yudao.framework.test.core.util.RandomUtils;
-import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.group.BpmUserGroupSaveReqVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.group.BpmUserGroupPageReqVO;
+import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.group.BpmUserGroupSaveReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmUserGroupDO;
 import cn.iocoder.yudao.module.bpm.dal.mysql.definition.BpmUserGroupMapper;
+
+import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 
-import jakarta.annotation.Resource;
-
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.USER_GROUP_NOT_EXISTS;
 
 /**
  * {@link BpmUserGroupServiceImpl} 的单元测试类
@@ -29,10 +30,8 @@ import static cn.iocoder.yudao.module.bpm.enums.ErrorCodeConstants.USER_GROUP_NO
 @Import(BpmUserGroupServiceImpl.class)
 public class BpmUserGroupServiceTest extends BaseDbUnitTest {
 
-    @Resource
-    private BpmUserGroupServiceImpl userGroupService;
-    @Resource
-    private BpmUserGroupMapper userGroupMapper;
+    @Resource private BpmUserGroupServiceImpl userGroupService;
+    @Resource private BpmUserGroupMapper userGroupMapper;
 
     @Test
     public void testCreateUserGroup_success() {
@@ -52,11 +51,14 @@ public class BpmUserGroupServiceTest extends BaseDbUnitTest {
     public void testUpdateUserGroup_success() {
         // mock 数据
         BpmUserGroupDO dbUserGroup = RandomUtils.randomPojo(BpmUserGroupDO.class);
-        userGroupMapper.insert(dbUserGroup);// @Sql: 先插入出一条存在的数据
+        userGroupMapper.insert(dbUserGroup); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        BpmUserGroupSaveReqVO reqVO = RandomUtils.randomPojo(BpmUserGroupSaveReqVO.class, o -> {
-            o.setId(dbUserGroup.getId()); // 设置更新的 ID
-        });
+        BpmUserGroupSaveReqVO reqVO =
+                RandomUtils.randomPojo(
+                        BpmUserGroupSaveReqVO.class,
+                        o -> {
+                            o.setId(dbUserGroup.getId()); // 设置更新的 ID
+                        });
 
         // 调用
         userGroupService.updateUserGroup(reqVO);
@@ -71,21 +73,22 @@ public class BpmUserGroupServiceTest extends BaseDbUnitTest {
         BpmUserGroupSaveReqVO reqVO = RandomUtils.randomPojo(BpmUserGroupSaveReqVO.class);
 
         // 调用, 并断言异常
-        AssertUtils.assertServiceException(() -> userGroupService.updateUserGroup(reqVO), USER_GROUP_NOT_EXISTS);
+        AssertUtils.assertServiceException(
+                () -> userGroupService.updateUserGroup(reqVO), USER_GROUP_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteUserGroup_success() {
         // mock 数据
         BpmUserGroupDO dbUserGroup = RandomUtils.randomPojo(BpmUserGroupDO.class);
-        userGroupMapper.insert(dbUserGroup);// @Sql: 先插入出一条存在的数据
+        userGroupMapper.insert(dbUserGroup); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbUserGroup.getId();
 
         // 调用
         userGroupService.deleteUserGroup(id);
-       // 校验数据不存在了
-       Assertions.assertNull(userGroupMapper.selectById(id));
+        // 校验数据不存在了
+        Assertions.assertNull(userGroupMapper.selectById(id));
     }
 
     @Test
@@ -94,36 +97,42 @@ public class BpmUserGroupServiceTest extends BaseDbUnitTest {
         Long id = RandomUtils.randomLongId();
 
         // 调用, 并断言异常
-        AssertUtils.assertServiceException(() -> userGroupService.deleteUserGroup(id), USER_GROUP_NOT_EXISTS);
+        AssertUtils.assertServiceException(
+                () -> userGroupService.deleteUserGroup(id), USER_GROUP_NOT_EXISTS);
     }
 
     @Test
     public void testGetUserGroupPage() {
-       // mock 数据
-       BpmUserGroupDO dbUserGroup = RandomUtils.randomPojo(BpmUserGroupDO.class, o -> { // 等会查询到
-           o.setName("芋道源码");
-           o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-           o.setCreateTime(buildTime(2021, 11, 11));
-       });
-       userGroupMapper.insert(dbUserGroup);
-       // 测试 name 不匹配
-       userGroupMapper.insert(cloneIgnoreId(dbUserGroup, o -> o.setName("芋道")));
-       // 测试 status 不匹配
-       userGroupMapper.insert(cloneIgnoreId(dbUserGroup, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
-       // 测试 createTime 不匹配
-       userGroupMapper.insert(cloneIgnoreId(dbUserGroup, o -> o.setCreateTime(buildTime(2021, 12, 12))));
-       // 准备参数
-       BpmUserGroupPageReqVO reqVO = new BpmUserGroupPageReqVO();
-       reqVO.setName("源码");
-       reqVO.setStatus(CommonStatusEnum.ENABLE.getStatus());
-       reqVO.setCreateTime((new LocalDateTime[]{buildTime(2021, 11, 10),buildTime(2021, 11, 12)}));
+        // mock 数据
+        BpmUserGroupDO dbUserGroup =
+                RandomUtils.randomPojo(
+                        BpmUserGroupDO.class,
+                        o -> { // 等会查询到
+                            o.setName("芋道源码");
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                            o.setCreateTime(buildTime(2021, 11, 11));
+                        });
+        userGroupMapper.insert(dbUserGroup);
+        // 测试 name 不匹配
+        userGroupMapper.insert(cloneIgnoreId(dbUserGroup, o -> o.setName("芋道")));
+        // 测试 status 不匹配
+        userGroupMapper.insert(
+                cloneIgnoreId(dbUserGroup, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        // 测试 createTime 不匹配
+        userGroupMapper.insert(
+                cloneIgnoreId(dbUserGroup, o -> o.setCreateTime(buildTime(2021, 12, 12))));
+        // 准备参数
+        BpmUserGroupPageReqVO reqVO = new BpmUserGroupPageReqVO();
+        reqVO.setName("源码");
+        reqVO.setStatus(CommonStatusEnum.ENABLE.getStatus());
+        reqVO.setCreateTime(
+                (new LocalDateTime[] {buildTime(2021, 11, 10), buildTime(2021, 11, 12)}));
 
-       // 调用
-       PageResult<BpmUserGroupDO> pageResult = userGroupService.getUserGroupPage(reqVO);
-       // 断言
-       Assertions.assertEquals(1, pageResult.getTotal());
-       Assertions.assertEquals(1, pageResult.getList().size());
-       AssertUtils.assertPojoEquals(dbUserGroup, pageResult.getList().get(0));
+        // 调用
+        PageResult<BpmUserGroupDO> pageResult = userGroupService.getUserGroupPage(reqVO);
+        // 断言
+        Assertions.assertEquals(1, pageResult.getTotal());
+        Assertions.assertEquals(1, pageResult.getList().size());
+        AssertUtils.assertPojoEquals(dbUserGroup, pageResult.getList().get(0));
     }
-
 }

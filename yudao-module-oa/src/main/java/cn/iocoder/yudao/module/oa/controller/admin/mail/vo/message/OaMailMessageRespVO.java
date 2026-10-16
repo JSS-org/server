@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.mail.vo.message;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -70,7 +71,5 @@ public class OaMailMessageRespVO {
 
         @Schema(description = "附件大小（字节）", example = "1024")
         private Integer size;
-
     }
-
 }

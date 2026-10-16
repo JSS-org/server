@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.framework.job.config;
 
 import cn.iocoder.yudao.module.iot.framework.job.core.IotSchedulerManager;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,9 +17,8 @@ import javax.sql.DataSource;
 public class IotJobConfiguration {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
-    public IotSchedulerManager iotSchedulerManager(DataSource dataSource,
-                                                   ApplicationContext applicationContext) {
+    public IotSchedulerManager iotSchedulerManager(
+            DataSource dataSource, ApplicationContext applicationContext) {
         return new IotSchedulerManager(dataSource, applicationContext);
     }
-
 }

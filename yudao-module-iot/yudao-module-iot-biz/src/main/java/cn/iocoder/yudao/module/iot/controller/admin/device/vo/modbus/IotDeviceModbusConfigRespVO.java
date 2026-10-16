@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,10 @@ public class IotDeviceModbusConfigRespVO {
     @Schema(description = "设备名称", example = "温湿度传感器")
     private String deviceName;
 
-    @Schema(description = "Modbus 服务器 IP 地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "192.168.1.100")
+    @Schema(
+            description = "Modbus 服务器 IP 地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "192.168.1.100")
     private String ip;
 
     @Schema(description = "Modbus 端口", requiredMode = Schema.RequiredMode.REQUIRED, example = "502")
@@ -44,5 +48,4 @@ public class IotDeviceModbusConfigRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

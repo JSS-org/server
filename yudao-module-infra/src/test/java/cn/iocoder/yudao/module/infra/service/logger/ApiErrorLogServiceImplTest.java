@@ -1,20 +1,5 @@
 package cn.iocoder.yudao.module.infra.service.logger;
 
-import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
-import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.framework.common.biz.infra.logger.dto.ApiErrorLogCreateReqDTO;
-import cn.iocoder.yudao.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
-import cn.iocoder.yudao.module.infra.dal.dataobject.logger.ApiErrorLogDO;
-import cn.iocoder.yudao.module.infra.dal.mysql.logger.ApiErrorLogMapper;
-import cn.iocoder.yudao.module.infra.enums.logger.ApiErrorLogProcessStatusEnum;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
-
-import jakarta.annotation.Resource;
-import java.time.Duration;
-import java.util.List;
-
 import static cn.hutool.core.util.RandomUtil.randomEle;
 import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.*;
 import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
@@ -24,42 +9,68 @@ import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId
 import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
 import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_NOT_FOUND;
 import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.API_ERROR_LOG_PROCESSED;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import cn.iocoder.yudao.framework.common.biz.infra.logger.dto.ApiErrorLogCreateReqDTO;
+import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
+import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
+import cn.iocoder.yudao.module.infra.dal.dataobject.logger.ApiErrorLogDO;
+import cn.iocoder.yudao.module.infra.dal.mysql.logger.ApiErrorLogMapper;
+import cn.iocoder.yudao.module.infra.enums.logger.ApiErrorLogProcessStatusEnum;
+
+import jakarta.annotation.Resource;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
+
+import java.time.Duration;
+import java.util.List;
 
 @Import(ApiErrorLogServiceImpl.class)
 public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private ApiErrorLogServiceImpl apiErrorLogService;
+    @Resource private ApiErrorLogServiceImpl apiErrorLogService;
 
-    @Resource
-    private ApiErrorLogMapper apiErrorLogMapper;
+    @Resource private ApiErrorLogMapper apiErrorLogMapper;
 
     @Test
     public void testGetApiErrorLogPage() {
         // mock 数据
-        ApiErrorLogDO apiErrorLogDO = randomPojo(ApiErrorLogDO.class, o -> {
-            o.setUserId(2233L);
-            o.setUserType(UserTypeEnum.ADMIN.getValue());
-            o.setApplicationName("yudao-test");
-            o.setRequestUrl("foo");
-            o.setExceptionTime(buildTime(2021, 3, 13));
-            o.setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus());
-        });
+        ApiErrorLogDO apiErrorLogDO =
+                randomPojo(
+                        ApiErrorLogDO.class,
+                        o -> {
+                            o.setUserId(2233L);
+                            o.setUserType(UserTypeEnum.ADMIN.getValue());
+                            o.setApplicationName("yudao-test");
+                            o.setRequestUrl("foo");
+                            o.setExceptionTime(buildTime(2021, 3, 13));
+                            o.setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus());
+                        });
         apiErrorLogMapper.insert(apiErrorLogDO);
         // 测试 userId 不匹配
         apiErrorLogMapper.insert(cloneIgnoreId(apiErrorLogDO, o -> o.setUserId(3344L)));
         // 测试 userType 不匹配
-        apiErrorLogMapper.insert(cloneIgnoreId(apiErrorLogDO, o -> o.setUserType(UserTypeEnum.MEMBER.getValue())));
+        apiErrorLogMapper.insert(
+                cloneIgnoreId(apiErrorLogDO, o -> o.setUserType(UserTypeEnum.MEMBER.getValue())));
         // 测试 applicationName 不匹配
         apiErrorLogMapper.insert(cloneIgnoreId(apiErrorLogDO, o -> o.setApplicationName("test")));
         // 测试 requestUrl 不匹配
         apiErrorLogMapper.insert(cloneIgnoreId(apiErrorLogDO, o -> o.setRequestUrl("bar")));
         // 测试 exceptionTime 不匹配：构造一个早期时间 2021-02-06 00:00:00
-        apiErrorLogMapper.insert(cloneIgnoreId(apiErrorLogDO, o -> o.setExceptionTime(buildTime(2021, 2, 6))));
+        apiErrorLogMapper.insert(
+                cloneIgnoreId(apiErrorLogDO, o -> o.setExceptionTime(buildTime(2021, 2, 6))));
         // 测试 progressStatus 不匹配
-        apiErrorLogMapper.insert(cloneIgnoreId(apiErrorLogDO, logDO -> logDO.setProcessStatus(ApiErrorLogProcessStatusEnum.DONE.getStatus())));
+        apiErrorLogMapper.insert(
+                cloneIgnoreId(
+                        apiErrorLogDO,
+                        logDO ->
+                                logDO.setProcessStatus(
+                                        ApiErrorLogProcessStatusEnum.DONE.getStatus())));
         // 准备参数
         ApiErrorLogPageReqVO reqVO = new ApiErrorLogPageReqVO();
         reqVO.setUserId(2233L);
@@ -87,14 +98,17 @@ public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
         // 断言
         ApiErrorLogDO apiErrorLogDO = apiErrorLogMapper.selectOne(null);
         assertPojoEquals(createDTO, apiErrorLogDO);
-        assertEquals(ApiErrorLogProcessStatusEnum.INIT.getStatus(), apiErrorLogDO.getProcessStatus());
+        assertEquals(
+                ApiErrorLogProcessStatusEnum.INIT.getStatus(), apiErrorLogDO.getProcessStatus());
     }
 
     @Test
     public void testUpdateApiErrorLogProcess_success() {
         // 准备参数
-        ApiErrorLogDO apiErrorLogDO = randomPojo(ApiErrorLogDO.class,
-                o -> o.setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus()));
+        ApiErrorLogDO apiErrorLogDO =
+                randomPojo(
+                        ApiErrorLogDO.class,
+                        o -> o.setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus()));
         apiErrorLogMapper.insert(apiErrorLogDO);
         // 准备参数
         Long id = apiErrorLogDO.getId();
@@ -113,8 +127,10 @@ public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateApiErrorLogProcess_processed() {
         // 准备参数
-        ApiErrorLogDO apiErrorLogDO = randomPojo(ApiErrorLogDO.class,
-                o -> o.setProcessStatus(ApiErrorLogProcessStatusEnum.DONE.getStatus()));
+        ApiErrorLogDO apiErrorLogDO =
+                randomPojo(
+                        ApiErrorLogDO.class,
+                        o -> o.setProcessStatus(ApiErrorLogProcessStatusEnum.DONE.getStatus()));
         apiErrorLogMapper.insert(apiErrorLogDO);
         // 准备参数
         Long id = apiErrorLogDO.getId();
@@ -122,8 +138,8 @@ public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
         Long processUserId = randomLongId();
 
         // 调用，并断言异常
-        assertServiceException(() ->
-                apiErrorLogService.updateApiErrorLogProcess(id, processStatus, processUserId),
+        assertServiceException(
+                () -> apiErrorLogService.updateApiErrorLogProcess(id, processStatus, processUserId),
                 API_ERROR_LOG_PROCESSED);
     }
 
@@ -135,17 +151,19 @@ public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
         Long processUserId = randomLongId();
 
         // 调用，并断言异常
-        assertServiceException(() ->
-                apiErrorLogService.updateApiErrorLogProcess(id, processStatus, processUserId),
+        assertServiceException(
+                () -> apiErrorLogService.updateApiErrorLogProcess(id, processStatus, processUserId),
                 API_ERROR_LOG_NOT_FOUND);
     }
 
     @Test
     public void testCleanJobLog() {
         // mock 数据
-        ApiErrorLogDO log01 = randomPojo(ApiErrorLogDO.class, o -> o.setCreateTime(addTime(Duration.ofDays(-3))));
+        ApiErrorLogDO log01 =
+                randomPojo(ApiErrorLogDO.class, o -> o.setCreateTime(addTime(Duration.ofDays(-3))));
         apiErrorLogMapper.insert(log01);
-        ApiErrorLogDO log02 = randomPojo(ApiErrorLogDO.class, o -> o.setCreateTime(addTime(Duration.ofDays(-1))));
+        ApiErrorLogDO log02 =
+                randomPojo(ApiErrorLogDO.class, o -> o.setCreateTime(addTime(Duration.ofDays(-1))));
         apiErrorLogMapper.insert(log02);
         // 准备参数
         Integer exceedDay = 2;
@@ -160,5 +178,4 @@ public class ApiErrorLogServiceImplTest extends BaseDbUnitTest {
         // TODO @芋艿：createTime updateTime 被屏蔽，仅 win11 会复现，建议后续修复。
         assertPojoEquals(log02, logs.get(0), "createTime", "updateTime");
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.erp.enums.stock;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum ErpStockRecordBizTypeEnum implements ArrayValuable<Integer> {
-
     OTHER_IN(10, "其它入库"),
     OTHER_IN_CANCEL(11, "其它入库（作废）"),
 
@@ -44,12 +44,14 @@ public enum ErpStockRecordBizTypeEnum implements ArrayValuable<Integer> {
     PURCHASE_RETURN_CANCEL(81, "采购退货出库（作废）"),
     ;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ErpStockRecordBizTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ErpStockRecordBizTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -59,5 +61,4 @@ public enum ErpStockRecordBizTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.api.mail.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.io.File;
@@ -27,21 +28,23 @@ public class MailSendSingleToUserReqDTO {
      * 收件邮箱
      */
     private List<@Email String> toMails;
+
     /**
      * 抄送邮箱
      */
     private List<@Email String> ccMails;
+
     /**
      * 密送邮箱
      */
     private List<@Email String> bccMails;
-
 
     /**
      * 邮件模板编号
      */
     @NotNull(message = "邮件模板编号不能为空")
     private String templateCode;
+
     /**
      * 邮件模板参数
      */
@@ -51,5 +54,4 @@ public class MailSendSingleToUserReqDTO {
      * 附件
      */
     private File[] attachments;
-
 }

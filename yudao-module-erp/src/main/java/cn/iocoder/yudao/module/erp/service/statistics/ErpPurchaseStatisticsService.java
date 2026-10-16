@@ -20,5 +20,4 @@ public interface ErpPurchaseStatisticsService {
      * @return 采购金额
      */
     BigDecimal getPurchasePrice(LocalDateTime beginTime, LocalDateTime endTime);
-
 }

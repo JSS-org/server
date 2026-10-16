@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_LABEL_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -12,7 +21,9 @@ import cn.iocoder.yudao.module.pms.dal.mysql.kb.content.PmsKnowledgeDocumentMapp
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentStatusEnum;
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentTypeEnum;
 import cn.iocoder.yudao.module.pms.service.kb.library.PmsKnowledgeLibraryMemberService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -22,14 +33,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_LABEL_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link PmsKnowledgeDocumentLabelServiceImpl} 的单元测试类
  *
@@ -38,24 +41,19 @@ import static org.mockito.Mockito.when;
 @Import(PmsKnowledgeDocumentLabelServiceImpl.class)
 public class PmsKnowledgeDocumentLabelServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsKnowledgeDocumentLabelServiceImpl documentLabelService;
+    @Resource private PmsKnowledgeDocumentLabelServiceImpl documentLabelService;
 
-    @Resource
-    private PmsKnowledgeDocumentLabelMapper documentLabelMapper;
-    @Resource
-    private PmsKnowledgeDocumentMapper documentMapper;
+    @Resource private PmsKnowledgeDocumentLabelMapper documentLabelMapper;
+    @Resource private PmsKnowledgeDocumentMapper documentMapper;
 
-    @MockitoBean
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
-    @MockitoBean
-    private PmsKnowledgeContentPermissionService contentPermissionService;
+    @MockitoBean private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @MockitoBean private PmsKnowledgeContentPermissionService contentPermissionService;
 
     @Test
     public void testCreateDocumentLabel_success() {
         // 准备参数
-        PmsKnowledgeDocumentLabelSaveReqVO reqVO = new PmsKnowledgeDocumentLabelSaveReqVO()
-                .setName("  产品  ").setColor("  #409EFF  ");
+        PmsKnowledgeDocumentLabelSaveReqVO reqVO =
+                new PmsKnowledgeDocumentLabelSaveReqVO().setName("  产品  ").setColor("  #409EFF  ");
 
         // 调用
         Long id = documentLabelService.createDocumentLabel(reqVO);
@@ -69,11 +67,15 @@ public class PmsKnowledgeDocumentLabelServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateDocumentLabel_notExists() {
         // 准备参数
-        PmsKnowledgeDocumentLabelSaveReqVO reqVO = new PmsKnowledgeDocumentLabelSaveReqVO()
-                .setId(randomLongId()).setName("产品").setColor("#409EFF");
+        PmsKnowledgeDocumentLabelSaveReqVO reqVO =
+                new PmsKnowledgeDocumentLabelSaveReqVO()
+                        .setId(randomLongId())
+                        .setName("产品")
+                        .setColor("#409EFF");
 
         // 调用，并断言异常
-        assertServiceException(() -> documentLabelService.updateDocumentLabel(reqVO),
+        assertServiceException(
+                () -> documentLabelService.updateDocumentLabel(reqVO),
                 KNOWLEDGE_DOCUMENT_LABEL_NOT_EXISTS);
     }
 
@@ -97,7 +99,8 @@ public class PmsKnowledgeDocumentLabelServiceImplTest extends BaseDbUnitTest {
         documentLabelMapper.insert(documentLabel);
 
         // 调用
-        PmsKnowledgeDocumentLabelDO result = documentLabelService.getDocumentLabel(documentLabel.getId());
+        PmsKnowledgeDocumentLabelDO result =
+                documentLabelService.getDocumentLabel(documentLabel.getId());
 
         // 断言
         assertEquals(documentLabel.getId(), result.getId());
@@ -114,21 +117,27 @@ public class PmsKnowledgeDocumentLabelServiceImplTest extends BaseDbUnitTest {
         documentLabelMapper.insert(targetLabel);
         PmsKnowledgeDocumentLabelDO otherLabel = randomDocumentLabelDO();
         documentLabelMapper.insert(otherLabel);
-        PmsKnowledgeDocumentDO targetDocument = randomDocumentDO(libraryId,
-                Arrays.asList(targetLabel.getId(), otherLabel.getId()));
-        PmsKnowledgeDocumentDO otherDocument = randomDocumentDO(libraryId,
-                Collections.singletonList(otherLabel.getId()));
-        PmsKnowledgeDocumentDO unreadableDocument = randomDocumentDO(libraryId,
-                Collections.singletonList(targetLabel.getId()));
+        PmsKnowledgeDocumentDO targetDocument =
+                randomDocumentDO(libraryId, Arrays.asList(targetLabel.getId(), otherLabel.getId()));
+        PmsKnowledgeDocumentDO otherDocument =
+                randomDocumentDO(libraryId, Collections.singletonList(otherLabel.getId()));
+        PmsKnowledgeDocumentDO unreadableDocument =
+                randomDocumentDO(libraryId, Collections.singletonList(targetLabel.getId()));
         documentMapper.insert(targetDocument);
         documentMapper.insert(otherDocument);
         documentMapper.insert(unreadableDocument);
-        when(libraryMemberService.getReadableLibraryIdList(userId)).thenReturn(Collections.singletonList(libraryId));
-        when(contentPermissionService.getReadableContentPermissionIdSet(Collections.singletonList(libraryId), userId))
-                .thenReturn(new HashSet<>(Arrays.asList(targetDocument.getPermissionId(), otherDocument.getPermissionId())));
+        when(libraryMemberService.getReadableLibraryIdList(userId))
+                .thenReturn(Collections.singletonList(libraryId));
+        when(contentPermissionService.getReadableContentPermissionIdSet(
+                        Collections.singletonList(libraryId), userId))
+                .thenReturn(
+                        new HashSet<>(
+                                Arrays.asList(
+                                        targetDocument.getPermissionId(),
+                                        otherDocument.getPermissionId())));
         // 准备参数
-        PmsKnowledgeDocumentLabelPageReqVO pageReqVO = new PmsKnowledgeDocumentLabelPageReqVO()
-                .setLabelId(targetLabel.getId());
+        PmsKnowledgeDocumentLabelPageReqVO pageReqVO =
+                new PmsKnowledgeDocumentLabelPageReqVO().setLabelId(targetLabel.getId());
         pageReqVO.setPageNo(1).setPageSize(10);
 
         // 调用
@@ -137,22 +146,31 @@ public class PmsKnowledgeDocumentLabelServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertEquals(1, pageResult.getTotal());
-        assertEquals(targetLabel.getId(), CollUtil.getFirst(CollUtil.getFirst(pageResult.getList()).getLabelIds()));
+        assertEquals(
+                targetLabel.getId(),
+                CollUtil.getFirst(CollUtil.getFirst(pageResult.getList()).getLabelIds()));
     }
 
     // ========== 随机对象 ==========
 
     private PmsKnowledgeDocumentLabelDO randomDocumentLabelDO() {
-        return randomPojo(PmsKnowledgeDocumentLabelDO.class,
+        return randomPojo(
+                PmsKnowledgeDocumentLabelDO.class,
                 documentLabel -> documentLabel.setId(null).setName("产品").setColor("#409EFF"));
     }
 
     private PmsKnowledgeDocumentDO randomDocumentDO(Long libraryId, List<Long> labelIds) {
-        return randomPojo(PmsKnowledgeDocumentDO.class, document -> document.setId(null).setLibraryId(libraryId)
-                .setPermissionId(randomLongId())
-                .setFolderId(0L).setParentId(0L).setTitle("测试文档")
-                .setType(PmsKnowledgeDocumentTypeEnum.RICH_TEXT.getType())
-                .setStatus(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus()).setLabelIds(labelIds));
+        return randomPojo(
+                PmsKnowledgeDocumentDO.class,
+                document ->
+                        document.setId(null)
+                                .setLibraryId(libraryId)
+                                .setPermissionId(randomLongId())
+                                .setFolderId(0L)
+                                .setParentId(0L)
+                                .setTitle("测试文档")
+                                .setType(PmsKnowledgeDocumentTypeEnum.RICH_TEXT.getType())
+                                .setStatus(PmsKnowledgeDocumentStatusEnum.NORMAL.getStatus())
+                                .setLabelIds(labelIds));
     }
-
 }

@@ -1,22 +1,25 @@
 package cn.iocoder.yudao.module.oa.controller.admin.file;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.oa.controller.admin.file.vo.node.*;
 import cn.iocoder.yudao.module.oa.service.file.OaFileNodeService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 云盘文件")
 @RestController
@@ -24,8 +27,7 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Validated
 public class OaFileNodeController {
 
-    @Resource
-    private OaFileNodeService fileNodeService;
+    @Resource private OaFileNodeService fileNodeService;
 
     @GetMapping("/get-storage")
     @Operation(summary = "获得本人云盘空间")
@@ -37,7 +39,8 @@ public class OaFileNodeController {
     @GetMapping("/page")
     @Operation(summary = "获得云盘文件分页")
     @PreAuthorize("@ss.hasPermission('oa:file:query')")
-    public CommonResult<PageResult<OaFileNodeRespVO>> getFileNodePage(@Valid OaFileNodePageReqVO pageReqVO) {
+    public CommonResult<PageResult<OaFileNodeRespVO>> getFileNodePage(
+            @Valid OaFileNodePageReqVO pageReqVO) {
         return success(fileNodeService.getFileNodePage(pageReqVO, getLoginUserId()));
     }
 
@@ -58,7 +61,8 @@ public class OaFileNodeController {
     @PutMapping("/update-name")
     @Operation(summary = "重命名云盘文件")
     @PreAuthorize("@ss.hasPermission('oa:file:update')")
-    public CommonResult<Boolean> updateFileNodeName(@Valid @RequestBody OaFileNodeRenameReqVO reqVO) {
+    public CommonResult<Boolean> updateFileNodeName(
+            @Valid @RequestBody OaFileNodeRenameReqVO reqVO) {
         fileNodeService.updateFileNodeName(reqVO, getLoginUserId());
         return success(true);
     }
@@ -66,7 +70,8 @@ public class OaFileNodeController {
     @PutMapping("/update-parent")
     @Operation(summary = "移动云盘文件")
     @PreAuthorize("@ss.hasPermission('oa:file:update')")
-    public CommonResult<Boolean> updateFileNodeParent(@Valid @RequestBody OaFileNodeMoveReqVO reqVO) {
+    public CommonResult<Boolean> updateFileNodeParent(
+            @Valid @RequestBody OaFileNodeMoveReqVO reqVO) {
         fileNodeService.updateFileNodeParent(reqVO, getLoginUserId());
         return success(true);
     }
@@ -112,5 +117,4 @@ public class OaFileNodeController {
     public CommonResult<OaFileNodeRespVO> getFileNode(@RequestParam("id") Long id) {
         return success(fileNodeService.getFileNode(id, getLoginUserId()));
     }
-
 }

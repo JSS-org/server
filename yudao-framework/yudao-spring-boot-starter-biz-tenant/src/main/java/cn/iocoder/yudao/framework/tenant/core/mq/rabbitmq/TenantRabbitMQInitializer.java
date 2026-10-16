@@ -13,12 +13,12 @@ public class TenantRabbitMQInitializer implements BeanPostProcessor {
 
     @Override
     @SuppressWarnings("PatternVariableCanBeUsed")
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName)
+            throws BeansException {
         if (bean instanceof RabbitTemplate) {
             RabbitTemplate rabbitTemplate = (RabbitTemplate) bean;
             rabbitTemplate.addBeforePublishPostProcessors(new TenantRabbitMQMessagePostProcessor());
         }
         return bean;
     }
-
 }

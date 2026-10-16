@@ -25,5 +25,4 @@ public interface MesWmItemConsumeDetailService {
      * @return 消耗明细列表
      */
     List<MesWmItemConsumeDetailDO> getItemConsumeDetailListByConsumeId(Long consumeId);
-
 }

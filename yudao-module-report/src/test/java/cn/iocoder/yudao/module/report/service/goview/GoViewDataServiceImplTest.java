@@ -1,8 +1,15 @@
 package cn.iocoder.yudao.module.report.service.goview;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.report.controller.admin.goview.vo.data.GoViewDataRespVO;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,19 +19,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 @Import(GoViewDataServiceImpl.class)
 public class GoViewDataServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private GoViewDataServiceImpl goViewDataService;
+    @Resource private GoViewDataServiceImpl goViewDataService;
 
-    @MockitoBean
-    private JdbcTemplate jdbcTemplate;
+    @MockitoBean private JdbcTemplate jdbcTemplate;
 
     @Test
     public void testGetDataBySQL() {
@@ -36,7 +36,7 @@ public class GoViewDataServiceImplTest extends BaseDbUnitTest {
         // mock 元数据
         SqlRowSetMetaData metaData = mock(SqlRowSetMetaData.class);
         when(sqlRowSet.getMetaData()).thenReturn(metaData);
-        when(metaData.getColumnNames()).thenReturn(new String[]{"id", "name"});
+        when(metaData.getColumnNames()).thenReturn(new String[] {"id", "name"});
         // mock 数据明细
         when(sqlRowSet.next()).thenReturn(true).thenReturn(true).thenReturn(false);
         when(sqlRowSet.getObject("id")).thenReturn(1L).thenReturn(2L);
@@ -54,5 +54,4 @@ public class GoViewDataServiceImplTest extends BaseDbUnitTest {
         assertEquals(2L, dataBySQL.getSource().get(1).get("id"));
         assertEquals("芋道", dataBySQL.getSource().get(1).get("name"));
     }
-
 }

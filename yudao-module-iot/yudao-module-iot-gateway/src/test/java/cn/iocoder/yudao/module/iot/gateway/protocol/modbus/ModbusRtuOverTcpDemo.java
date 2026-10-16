@@ -39,10 +39,12 @@ public class ModbusRtuOverTcpDemo {
      * Master（主站）TCP Server 监听端口
      */
     private static final int PORT = 5021;
+
     /**
      * Slave 内部端口（仅本地中转用，不对外暴露）
      */
     private static final int SLAVE_INTERNAL_PORT = PORT + 100;
+
     /**
      * Modbus 从站地址
      */
@@ -71,14 +73,14 @@ public class ModbusRtuOverTcpDemo {
             System.out.println("[Master] RTU over TCP 通道已建立\n");
 
             // 1. 读操作演示：4 种功能码
-            demoReadCoils(transport);           // 功能码 01：读线圈
-            demoReadDiscreteInputs(transport);  // 功能码 02：读离散输入
+            demoReadCoils(transport); // 功能码 01：读线圈
+            demoReadDiscreteInputs(transport); // 功能码 02：读离散输入
             demoReadHoldingRegisters(transport); // 功能码 03：读保持寄存器
-            demoReadInputRegisters(transport);   // 功能码 04：读输入寄存器
+            demoReadInputRegisters(transport); // 功能码 04：读输入寄存器
 
             // 2. 写操作演示 + 读回验证
-            demoWriteCoil(transport);            // 功能码 05：写单个线圈
-            demoWriteRegister(transport);        // 功能码 06：写单个保持寄存器
+            demoWriteCoil(transport); // 功能码 05：写单个线圈
+            demoWriteRegister(transport); // 功能码 06：写单个保持寄存器
 
             System.out.println("\n===================================================");
             System.out.println("所有 RTU over TCP 读写操作执行成功！");
@@ -127,23 +129,37 @@ public class ModbusRtuOverTcpDemo {
         System.out.println("[Slave] 从站模拟器已启动（内部端口: " + SLAVE_INTERNAL_PORT + "）");
 
         // 3. 启动桥接线程：TCP Client 连接 Master Server，同时连接 Slave 内部端口，双向转发
-        Thread bridgeThread = new Thread(() -> {
-            try {
-                Socket toMaster = new Socket("127.0.0.1", PORT);
-                Socket toSlave = new Socket("127.0.0.1", SLAVE_INTERNAL_PORT);
-                System.out.println("[Bridge] 已建立桥接: Master(" + PORT + ") <-> Slave(" + SLAVE_INTERNAL_PORT + ")");
+        Thread bridgeThread =
+                new Thread(
+                        () -> {
+                            try {
+                                Socket toMaster = new Socket("127.0.0.1", PORT);
+                                Socket toSlave = new Socket("127.0.0.1", SLAVE_INTERNAL_PORT);
+                                System.out.println(
+                                        "[Bridge] 已建立桥接: Master("
+                                                + PORT
+                                                + ") <-> Slave("
+                                                + SLAVE_INTERNAL_PORT
+                                                + ")");
 
-                // 双向桥接：Master ↔ Bridge ↔ Slave
-                Thread forward = new Thread(() -> bridge(toMaster, toSlave), "bridge-master→slave");
-                Thread backward = new Thread(() -> bridge(toSlave, toMaster), "bridge-slave→master");
-                forward.setDaemon(true);
-                backward.setDaemon(true);
-                forward.start();
-                backward.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }, "bridge-setup");
+                                // 双向桥接：Master ↔ Bridge ↔ Slave
+                                Thread forward =
+                                        new Thread(
+                                                () -> bridge(toMaster, toSlave),
+                                                "bridge-master→slave");
+                                Thread backward =
+                                        new Thread(
+                                                () -> bridge(toSlave, toMaster),
+                                                "bridge-slave→master");
+                                forward.setDaemon(true);
+                                backward.setDaemon(true);
+                                forward.start();
+                                backward.start();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        },
+                        "bridge-setup");
         bridgeThread.setDaemon(true);
         bridgeThread.start();
 
@@ -173,7 +189,8 @@ public class ModbusRtuOverTcpDemo {
     /**
      * 发送请求并接收响应（通用方法）
      */
-    private static ModbusResponse sendRequest(ModbusRTUTCPTransport transport, ModbusRequest request) throws Exception {
+    private static ModbusResponse sendRequest(
+            ModbusRTUTCPTransport transport, ModbusRequest request) throws Exception {
         request.setUnitID(SLAVE_ID);
         transport.writeRequest(request);
         return transport.readResponse();
@@ -201,7 +218,8 @@ public class ModbusRtuOverTcpDemo {
      */
     private static void demoReadDiscreteInputs(ModbusRTUTCPTransport transport) throws Exception {
         ReadInputDiscretesRequest request = new ReadInputDiscretesRequest(0, 5);
-        ReadInputDiscretesResponse response = (ReadInputDiscretesResponse) sendRequest(transport, request);
+        ReadInputDiscretesResponse response =
+                (ReadInputDiscretesResponse) sendRequest(transport, request);
 
         StringBuilder sb = new StringBuilder("[功能码 02] 读离散输入(0~4): ");
         for (int i = 0; i < 5; i++) {
@@ -218,7 +236,8 @@ public class ModbusRtuOverTcpDemo {
      */
     private static void demoReadHoldingRegisters(ModbusRTUTCPTransport transport) throws Exception {
         ReadMultipleRegistersRequest request = new ReadMultipleRegistersRequest(0, 5);
-        ReadMultipleRegistersResponse response = (ReadMultipleRegistersResponse) sendRequest(transport, request);
+        ReadMultipleRegistersResponse response =
+                (ReadMultipleRegistersResponse) sendRequest(transport, request);
 
         StringBuilder sb = new StringBuilder("[功能码 03] 读保持寄存器(0~4): ");
         for (int i = 0; i < response.getWordCount(); i++) {
@@ -235,7 +254,8 @@ public class ModbusRtuOverTcpDemo {
      */
     private static void demoReadInputRegisters(ModbusRTUTCPTransport transport) throws Exception {
         ReadInputRegistersRequest request = new ReadInputRegistersRequest(0, 5);
-        ReadInputRegistersResponse response = (ReadInputRegistersResponse) sendRequest(transport, request);
+        ReadInputRegistersResponse response =
+                (ReadInputRegistersResponse) sendRequest(transport, request);
 
         StringBuilder sb = new StringBuilder("[功能码 04] 读输入寄存器(0~4): ");
         for (int i = 0; i < response.getWordCount(); i++) {
@@ -267,11 +287,16 @@ public class ModbusRtuOverTcpDemo {
         ReadCoilsResponse verifyResp = (ReadCoilsResponse) sendRequest(transport, readReq);
         boolean afterValue = verifyResp.getCoilStatus(0);
 
-        System.out.println("[功能码 05] 写线圈: 地址=" + address
-                + ", 写入前=" + (beforeValue ? "ON" : "OFF")
-                + ", 写入值=" + (writeValue ? "ON" : "OFF")
-                + ", 读回值=" + (afterValue ? "ON" : "OFF")
-                + (afterValue == writeValue ? " ✓ 验证通过" : " ✗ 验证失败"));
+        System.out.println(
+                "[功能码 05] 写线圈: 地址="
+                        + address
+                        + ", 写入前="
+                        + (beforeValue ? "ON" : "OFF")
+                        + ", 写入值="
+                        + (writeValue ? "ON" : "OFF")
+                        + ", 读回值="
+                        + (afterValue ? "ON" : "OFF")
+                        + (afterValue == writeValue ? " ✓ 验证通过" : " ✗ 验证失败"));
     }
 
     /**
@@ -283,22 +308,29 @@ public class ModbusRtuOverTcpDemo {
 
         // 1. 先读取当前值
         ReadMultipleRegistersRequest readReq = new ReadMultipleRegistersRequest(address, 1);
-        ReadMultipleRegistersResponse readResp = (ReadMultipleRegistersResponse) sendRequest(transport, readReq);
+        ReadMultipleRegistersResponse readResp =
+                (ReadMultipleRegistersResponse) sendRequest(transport, readReq);
         int beforeValue = readResp.getRegisterValue(0);
 
         // 2. 写入新值
-        WriteSingleRegisterRequest writeReq = new WriteSingleRegisterRequest(address, new SimpleRegister(writeValue));
+        WriteSingleRegisterRequest writeReq =
+                new WriteSingleRegisterRequest(address, new SimpleRegister(writeValue));
         sendRequest(transport, writeReq);
 
         // 3. 读回验证
-        ReadMultipleRegistersResponse verifyResp = (ReadMultipleRegistersResponse) sendRequest(transport, readReq);
+        ReadMultipleRegistersResponse verifyResp =
+                (ReadMultipleRegistersResponse) sendRequest(transport, readReq);
         int afterValue = verifyResp.getRegisterValue(0);
 
-        System.out.println("[功能码 06] 写保持寄存器: 地址=" + address
-                + ", 写入前=" + beforeValue
-                + ", 写入值=" + writeValue
-                + ", 读回值=" + afterValue
-                + (afterValue == writeValue ? " ✓ 验证通过" : " ✗ 验证失败"));
+        System.out.println(
+                "[功能码 06] 写保持寄存器: 地址="
+                        + address
+                        + ", 写入前="
+                        + beforeValue
+                        + ", 写入值="
+                        + writeValue
+                        + ", 读回值="
+                        + afterValue
+                        + (afterValue == writeValue ? " ✓ 验证通过" : " ✗ 验证失败"));
     }
-
 }

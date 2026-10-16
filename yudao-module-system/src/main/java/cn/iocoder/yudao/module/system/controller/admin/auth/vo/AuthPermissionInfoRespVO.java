@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.auth.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,18 +42,23 @@ public class AuthPermissionInfoRespVO {
         @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码")
         private String nickname;
 
-        @Schema(description = "用户头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.jpg")
+        @Schema(
+                description = "用户头像",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "https://www.iocoder.cn/xx.jpg")
         private String avatar;
 
         @Schema(description = "部门编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
         private Long deptId;
 
-        @Schema(description = "用户账号", requiredMode = Schema.RequiredMode.REQUIRED, example = "yudao")
+        @Schema(
+                description = "用户账号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "yudao")
         private String username;
 
         @Schema(description = "用户邮箱", example = "yudao@iocoder.cn")
         private String email;
-
     }
 
     @Schema(description = "管理后台 - 登录用户的菜单信息 Response VO")
@@ -65,7 +71,10 @@ public class AuthPermissionInfoRespVO {
         @Schema(description = "菜单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
         private Long id;
 
-        @Schema(description = "父菜单 ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "父菜单 ID",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Long parentId;
 
         @Schema(description = "菜单名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
@@ -83,10 +92,16 @@ public class AuthPermissionInfoRespVO {
         @Schema(description = "菜单图标,仅菜单类型为菜单或者目录时，才需要传", example = "/menu/list")
         private String icon;
 
-        @Schema(description = "是否可见", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+        @Schema(
+                description = "是否可见",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "false")
         private Boolean visible;
 
-        @Schema(description = "是否缓存", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+        @Schema(
+                description = "是否缓存",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "false")
         private Boolean keepAlive;
 
         @Schema(description = "是否总是显示", example = "false")
@@ -96,7 +111,5 @@ public class AuthPermissionInfoRespVO {
          * 子路由
          */
         private List<MenuVO> children;
-
     }
-
 }

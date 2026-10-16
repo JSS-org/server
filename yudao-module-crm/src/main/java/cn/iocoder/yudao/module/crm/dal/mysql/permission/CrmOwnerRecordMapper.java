@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmSt
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmStatisticsPoolSummaryByDateRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmStatisticsPoolSummaryByUserRespVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.permission.CrmOwnerRecordDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -23,7 +24,8 @@ public interface CrmOwnerRecordMapper extends BaseMapperX<CrmOwnerRecordDO> {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByDateRespVO> selectPoolCustomerPutCountByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByDateRespVO> selectPoolCustomerPutCountByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 公海领取客户数(按日期)
@@ -31,7 +33,8 @@ public interface CrmOwnerRecordMapper extends BaseMapperX<CrmOwnerRecordDO> {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByDateRespVO> selectPoolCustomerTakeCountByDate(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByDateRespVO> selectPoolCustomerTakeCountByDate(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 进入公海客户数(按用户)
@@ -39,7 +42,8 @@ public interface CrmOwnerRecordMapper extends BaseMapperX<CrmOwnerRecordDO> {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByUserRespVO> selectPoolCustomerPutCountByUser(CrmStatisticsCustomerReqVO reqVO);
+    List<CrmStatisticsPoolSummaryByUserRespVO> selectPoolCustomerPutCountByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 
     /**
      * 公海领取客户数(按用户)
@@ -47,6 +51,6 @@ public interface CrmOwnerRecordMapper extends BaseMapperX<CrmOwnerRecordDO> {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    List<CrmStatisticsPoolSummaryByUserRespVO> selectPoolCustomerTakeCountByUser(CrmStatisticsCustomerReqVO reqVO);
-
+    List<CrmStatisticsPoolSummaryByUserRespVO> selectPoolCustomerTakeCountByUser(
+            CrmStatisticsCustomerReqVO reqVO);
 }

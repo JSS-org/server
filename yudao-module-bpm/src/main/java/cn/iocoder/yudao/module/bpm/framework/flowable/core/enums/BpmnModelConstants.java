@@ -20,6 +20,7 @@ public interface BpmnModelConstants {
      * BPMN UserTask 的扩展属性，用于标记候选人策略
      */
     String USER_TASK_CANDIDATE_STRATEGY = "candidateStrategy";
+
     /**
      * BPMN UserTask 的扩展属性，用于标记候选人参数
      */
@@ -44,6 +45,7 @@ public interface BpmnModelConstants {
      * BPMN ExtensionElement 的扩展属性，用于标记用户任务的空处理类型
      */
     String USER_TASK_ASSIGN_EMPTY_HANDLER_TYPE = "assignEmptyHandlerType";
+
     /**
      * BPMN ExtensionElement 的扩展属性，用于标记用户任务的空处理的指定用户编号数组
      */
@@ -53,6 +55,7 @@ public interface BpmnModelConstants {
      * BPMN ExtensionElement 的扩展属性，用于标记用户任务拒绝处理类型
      */
     String USER_TASK_REJECT_HANDLER_TYPE = "rejectHandlerType";
+
     /**
      * BPMN ExtensionElement 的扩展属性，用于标记用户任务拒绝后的退回的任务 Id
      */
@@ -82,6 +85,7 @@ public interface BpmnModelConstants {
      * BPMN ExtensionElement Attribute, 用于标记表单字段
      */
     String FORM_FIELD_PERMISSION_ELEMENT_FIELD_ATTRIBUTE = "field";
+
     /**
      * BPMN ExtensionElement Attribute, 用于标记表单权限
      */
@@ -111,6 +115,7 @@ public interface BpmnModelConstants {
      * BPMN ExtensionElement 的扩展属性，用于标记触发器的类型
      */
     String TRIGGER_TYPE = "triggerType";
+
     /**
      * BPMN ExtensionElement 的扩展属性，用于标记触发器参数
      */
@@ -142,5 +147,4 @@ public interface BpmnModelConstants {
      * 目前只有 {@link BpmModelTypeEnum#SIMPLE} 的 UserTask 节点会设置该属性，用于区分是审批节点、还是办理节点
      */
     String NODE_TYPE = "nodeType";
-
 }

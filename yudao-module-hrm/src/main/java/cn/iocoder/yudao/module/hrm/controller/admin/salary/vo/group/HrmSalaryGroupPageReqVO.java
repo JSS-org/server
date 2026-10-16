@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.group;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,5 +17,4 @@ public class HrmSalaryGroupPageReqVO extends PageParam {
 
     @Schema(description = "计税规则编号", example = "1024")
     private Long taxRuleId;
-
 }

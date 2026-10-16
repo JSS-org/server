@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.enums.rule;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 @Getter
 public enum IotDataSinkTypeEnum implements ArrayValuable<Integer> {
-
     HTTP(1, "HTTP"),
     TCP(2, "TCP"),
     WEBSOCKET(3, "WebSocket"),
@@ -32,11 +32,11 @@ public enum IotDataSinkTypeEnum implements ArrayValuable<Integer> {
 
     private final String name;
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(IotDataSinkTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(IotDataSinkTypeEnum::getType).toArray(Integer[]::new);
 
     @Override
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

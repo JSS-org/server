@@ -2,17 +2,21 @@ package cn.iocoder.yudao.module.ai.framework.ai.core.model.midjourney.api;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
@@ -32,13 +36,24 @@ public class MidjourneyApi {
 
     private final Predicate<HttpStatusCode> STATUS_PREDICATE = status -> !status.is2xxSuccessful();
 
-    private final Function<Object, Function<ClientResponse, Mono<? extends Throwable>>> EXCEPTION_FUNCTION =
-            reqParam -> response -> response.bodyToMono(String.class).handle((responseBody, sink) -> {
-                HttpRequest request = response.request();
-                log.error("[midjourney-api] 调用失败！请求方式:[{}]，请求地址:[{}]，请求参数:[{}]，响应数据: [{}]",
-                        request.getMethod(), request.getURI(), reqParam, responseBody);
-                sink.error(new IllegalStateException("[midjourney-api] 调用失败！"));
-            });
+    private final Function<Object, Function<ClientResponse, Mono<? extends Throwable>>>
+            EXCEPTION_FUNCTION =
+                    reqParam ->
+                            response ->
+                                    response.bodyToMono(String.class)
+                                            .handle(
+                                                    (responseBody, sink) -> {
+                                                        HttpRequest request = response.request();
+                                                        log.error(
+                                                                "[midjourney-api] 调用失败！请求方式:[{}]，请求地址:[{}]，请求参数:[{}]，响应数据: [{}]",
+                                                                request.getMethod(),
+                                                                request.getURI(),
+                                                                reqParam,
+                                                                responseBody);
+                                                        sink.error(
+                                                                new IllegalStateException(
+                                                                        "[midjourney-api] 调用失败！"));
+                                                    });
 
     private final WebClient webClient;
 
@@ -48,13 +63,15 @@ public class MidjourneyApi {
     private final String notifyUrl;
 
     public MidjourneyApi(String baseUrl, String apiKey, String notifyUrl) {
-        this.webClient = WebClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeaders(httpHeaders -> {
-                    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-                    httpHeaders.setBearerAuth(apiKey);
-                })
-                .build();
+        this.webClient =
+                WebClient.builder()
+                        .baseUrl(baseUrl)
+                        .defaultHeaders(
+                                httpHeaders -> {
+                                    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                                    httpHeaders.setBearerAuth(apiKey);
+                                })
+                        .build();
         this.notifyUrl = notifyUrl;
     }
 
@@ -98,7 +115,8 @@ public class MidjourneyApi {
     }
 
     private String post(String uri, Object body) {
-        return webClient.post()
+        return webClient
+                .post()
                 .uri(uri)
                 .body(Mono.just(JsonUtils.toJsonString(body)), String.class)
                 .retrieve()
@@ -119,27 +137,32 @@ public class MidjourneyApi {
          * 垫图(参考图) base64 数组
          */
         private List<String> base64Array;
+
         /**
          * 提示词
          */
         private String prompt;
+
         /**
          * 通知地址
          */
         private String notifyHook;
+
         /**
          * 自定义参数
          */
         private String state;
 
-        public ImagineRequest(List<String> base64Array, String prompt, String notifyHook, String state) {
+        public ImagineRequest(
+                List<String> base64Array, String prompt, String notifyHook, String state) {
             this.base64Array = base64Array;
             this.prompt = prompt;
             this.notifyHook = notifyHook;
             this.state = state;
         }
 
-        public static String buildState(Integer width, Integer height, String version, String model) {
+        public static String buildState(
+                Integer width, Integer height, String version, String model) {
             StringBuilder params = new StringBuilder();
             //  --ar 来设置尺寸
             params.append(String.format(" --ar %s:%s ", width, height));
@@ -151,7 +174,6 @@ public class MidjourneyApi {
             }
             return params.toString();
         }
-
     }
 
     /**
@@ -169,7 +191,6 @@ public class MidjourneyApi {
             this.taskId = taskId;
             this.notifyHook = notifyHook;
         }
-
     }
 
     /**
@@ -180,11 +201,8 @@ public class MidjourneyApi {
      * @param properties 扩展字段
      * @param result 任务ID
      */
-    public record SubmitResponse(String code,
-                                 String description,
-                                 Map<String, Object> properties,
-                                 String result) {
-    }
+    public record SubmitResponse(
+            String code, String description, Map<String, Object> properties, String result) {}
 
     /**
      * 通知 request
@@ -204,26 +222,21 @@ public class MidjourneyApi {
      * @param failReason 失败原因
      * @param buttons 任务完成后的可执行按钮
      */
-    public record Notify(String id,
-                         String action,
-                         String status,
-
-                         String prompt,
-                         String promptEn,
-
-                         String description,
-                         String state,
-
-                         Long submitTime,
-                         Long startTime,
-                         Long finishTime,
-
-                         String imageUrl,
-                         String progress,
-                         String failReason,
-                         List<Button> buttons) {
-
-    }
+    public record Notify(
+            String id,
+            String action,
+            String status,
+            String prompt,
+            String promptEn,
+            String description,
+            String state,
+            Long submitTime,
+            Long startTime,
+            Long finishTime,
+            String imageUrl,
+            String progress,
+            String failReason,
+            List<Button> buttons) {}
 
     /**
      * button
@@ -234,12 +247,7 @@ public class MidjourneyApi {
      * @param type 类型，系统内部使用
      * @param style 样式: 2（Primary）、3（Green）
      */
-    public record Button(String customId,
-                         String emoji,
-                         String label,
-                         String type,
-                         String style) {
-    }
+    public record Button(String customId, String emoji, String label, String type, String style) {}
 
     // ============ enums ============
 
@@ -249,14 +257,12 @@ public class MidjourneyApi {
     @AllArgsConstructor
     @Getter
     public enum ModelEnum {
-
         MIDJOURNEY("midjourney", "midjourney"),
         NIJI("niji", "niji"),
         ;
 
         private final String model;
         private final String name;
-
     }
 
     /**
@@ -265,21 +271,16 @@ public class MidjourneyApi {
     @Getter
     @AllArgsConstructor
     public enum SubmitCodeEnum {
-
         SUBMIT_SUCCESS("1", "提交成功"),
         ALREADY_EXISTS("21", "已存在"),
         QUEUING("22", "排队中"),
         ;
 
-        public static final List<String> SUCCESS_CODES = Lists.newArrayList(
-                SUBMIT_SUCCESS.code,
-                ALREADY_EXISTS.code,
-                QUEUING.code
-        );
+        public static final List<String> SUCCESS_CODES =
+                Lists.newArrayList(SUBMIT_SUCCESS.code, ALREADY_EXISTS.code, QUEUING.code);
 
         private final String code;
         private final String name;
-
     }
 
     /**
@@ -313,7 +314,6 @@ public class MidjourneyApi {
          * 多图混合
          */
         BLEND
-
     }
 
     /**
@@ -345,7 +345,5 @@ public class MidjourneyApi {
         SUCCESS(4);
 
         private final int order;
-
     }
-
 }

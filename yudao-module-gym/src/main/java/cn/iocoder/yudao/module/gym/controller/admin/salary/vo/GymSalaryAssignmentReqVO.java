@@ -1,7 +1,11 @@
 package cn.iocoder.yudao.module.gym.controller.admin.salary.vo;
-import lombok.Data;
+
 import jakarta.validation.constraints.*;
+
+import lombok.Data;
+
 import java.time.LocalDate;
+
 @Data
 public class GymSalaryAssignmentReqVO {
     @Positive private Long employeeId;
@@ -9,8 +13,10 @@ public class GymSalaryAssignmentReqVO {
     @NotNull @Positive private Long templateId;
     @NotNull private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private boolean effectiveToPresent;
-    public void setEffectiveTo(LocalDate value) { effectiveTo = value; effectiveToPresent = true; }
+    @com.fasterxml.jackson.annotation.JsonIgnore private boolean effectiveToPresent;
 
+    public void setEffectiveTo(LocalDate value) {
+        effectiveTo = value;
+        effectiveToPresent = true;
+    }
 }

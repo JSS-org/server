@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.returnissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,16 +12,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.returnissue.MesWmReturnIssu
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.returnissue.MesWmReturnIssueDetailMapper;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 生产退料明细 Service 实现类
@@ -27,24 +29,19 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmReturnIssueDetailServiceImpl implements MesWmReturnIssueDetailService {
 
-    @Resource
-    private MesWmReturnIssueDetailMapper issueDetailMapper;
+    @Resource private MesWmReturnIssueDetailMapper issueDetailMapper;
 
-    @Resource
-    @Lazy
-    private MesWmReturnIssueLineService issueLineService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
-    @Resource
-    @Lazy
-    private MesWmMaterialStockService materialStockService;
+    @Resource @Lazy private MesWmReturnIssueLineService issueLineService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource @Lazy private MesWmMaterialStockService materialStockService;
 
     @Override
     public Long createReturnIssueDetail(MesWmReturnIssueDetailSaveReqVO createReqVO) {
         validateReturnIssueDetailSaveData(createReqVO);
 
         // 插入
-        MesWmReturnIssueDetailDO detail = BeanUtils.toBean(createReqVO, MesWmReturnIssueDetailDO.class);
+        MesWmReturnIssueDetailDO detail =
+                BeanUtils.toBean(createReqVO, MesWmReturnIssueDetailDO.class);
         issueDetailMapper.insert(detail);
         return detail.getId();
     }
@@ -56,7 +53,8 @@ public class MesWmReturnIssueDetailServiceImpl implements MesWmReturnIssueDetail
         validateReturnIssueDetailSaveData(updateReqVO);
 
         // 更新
-        MesWmReturnIssueDetailDO updateObj = BeanUtils.toBean(updateReqVO, MesWmReturnIssueDetailDO.class);
+        MesWmReturnIssueDetailDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmReturnIssueDetailDO.class);
         issueDetailMapper.updateById(updateObj);
     }
 
@@ -104,7 +102,8 @@ public class MesWmReturnIssueDetailServiceImpl implements MesWmReturnIssueDetail
      */
     private void validateReturnIssueDetailSaveData(MesWmReturnIssueDetailSaveReqVO reqVO) {
         // 校验父数据存在
-        MesWmReturnIssueLineDO line = issueLineService.validateReturnIssueLineExists(reqVO.getLineId());
+        MesWmReturnIssueLineDO line =
+                issueLineService.validateReturnIssueLineExists(reqVO.getLineId());
         if (ObjUtil.notEqual(line.getIssueId(), reqVO.getIssueId())) {
             throw exception(WM_RETURN_ISSUE_DETAIL_LINE_NOT_MATCH);
         }
@@ -115,13 +114,21 @@ public class MesWmReturnIssueDetailServiceImpl implements MesWmReturnIssueDetail
         warehouseAreaService.validateWarehouseAreaExists(
                 reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
         // 校验库位物料/批次混放规则
-        materialStockService.checkAreaMixingRule(reqVO.getAreaId(), reqVO.getItemId(), reqVO.getBatchId());
+        materialStockService.checkAreaMixingRule(
+                reqVO.getAreaId(), reqVO.getItemId(), reqVO.getBatchId());
         // 校验库存记录
         materialStockService.validateSelectedStock(
-                reqVO.getMaterialStockId(), reqVO.getItemId(), reqVO.getBatchId(), reqVO.getBatchCode(),
-                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId(), reqVO.getQuantity());
+                reqVO.getMaterialStockId(),
+                reqVO.getItemId(),
+                reqVO.getBatchId(),
+                reqVO.getBatchCode(),
+                reqVO.getWarehouseId(),
+                reqVO.getLocationId(),
+                reqVO.getAreaId(),
+                reqVO.getQuantity());
         // 校验明细总数量不超过行数量（排除自身）
-        validateDetailQuantityNotExceed(reqVO.getLineId(), reqVO.getQuantity(), reqVO.getId(), line);
+        validateDetailQuantityNotExceed(
+                reqVO.getLineId(), reqVO.getQuantity(), reqVO.getId(), line);
     }
 
     /**
@@ -132,18 +139,25 @@ public class MesWmReturnIssueDetailServiceImpl implements MesWmReturnIssueDetail
      * @param excludeDetailId 排除的明细 ID（更新时排除自身，新增时传 null）
      * @param line 退料单行
      */
-    private void validateDetailQuantityNotExceed(Long lineId, BigDecimal newQuantity,
-                                                  Long excludeDetailId, MesWmReturnIssueLineDO line) {
+    private void validateDetailQuantityNotExceed(
+            Long lineId,
+            BigDecimal newQuantity,
+            Long excludeDetailId,
+            MesWmReturnIssueLineDO line) {
         // 计算已有明细总数量（排除自身）
         List<MesWmReturnIssueDetailDO> details = issueDetailMapper.selectListByLineId(lineId);
-        BigDecimal existingTotal = CollectionUtils.getSumValue(details,
-                detail -> excludeDetailId != null && excludeDetailId.equals(detail.getId())
-                        ? BigDecimal.ZERO : detail.getQuantity(),
-                BigDecimal::add, BigDecimal.ZERO);
+        BigDecimal existingTotal =
+                CollectionUtils.getSumValue(
+                        details,
+                        detail ->
+                                excludeDetailId != null && excludeDetailId.equals(detail.getId())
+                                        ? BigDecimal.ZERO
+                                        : detail.getQuantity(),
+                        BigDecimal::add,
+                        BigDecimal.ZERO);
         // 校验：已有 + 本次 <= 行数量
         if (existingTotal.add(newQuantity).compareTo(line.getQuantity()) > 0) {
             throw exception(WM_RETURN_ISSUE_DETAIL_QUANTITY_EXCEED);
         }
     }
-
 }

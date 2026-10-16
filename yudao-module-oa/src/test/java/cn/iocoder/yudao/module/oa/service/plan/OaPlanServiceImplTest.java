@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.oa.service.plan;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_ACCESS_DENIED;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
@@ -14,8 +24,10 @@ import cn.iocoder.yudao.module.oa.enums.plan.OaPlanStatusEnum;
 import cn.iocoder.yudao.module.oa.enums.plan.OaPlanTypeEnum;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.ConstraintViolationException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
@@ -28,15 +40,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_ACCESS_DENIED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link OaPlanServiceImpl} 的单元测试类
  *
@@ -45,14 +48,11 @@ import static org.mockito.Mockito.when;
 @Import(OaPlanServiceImpl.class)
 public class OaPlanServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaPlanServiceImpl planService;
+    @Resource private OaPlanServiceImpl planService;
 
-    @Resource
-    private OaPlanMapper planMapper;
+    @Resource private OaPlanMapper planMapper;
 
-    @MockitoBean
-    private AdminUserApi adminUserApi;
+    @MockitoBean private AdminUserApi adminUserApi;
 
     @AfterEach
     public void tearDown() {
@@ -63,12 +63,16 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
     public void testCreatePlan_success() {
         // 准备参数
         Long userId = randomLongId();
-        OaPlanSaveReqVO reqVO = buildPlanSaveReqVO()
-                .setFileUrls(Arrays.asList("https://example.com/a.txt", "https://example.com/b.txt"));
+        OaPlanSaveReqVO reqVO =
+                buildPlanSaveReqVO()
+                        .setFileUrls(
+                                Arrays.asList(
+                                        "https://example.com/a.txt", "https://example.com/b.txt"));
         ValidationUtils.validate(reqVO);
 
         // 调用
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(userId), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(userId), new MockHttpServletRequest());
         Long planId = planService.createPlan(reqVO);
 
         // 断言
@@ -82,12 +86,19 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
     public void testUpdatePlan_ignoreNullFields() {
         // mock 数据
         Long userId = randomLongId();
-        OaPlanDO plan = buildPlanDO(userId).setLabel("重点").setSummary("已完成")
-                .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
+        OaPlanDO plan =
+                buildPlanDO(userId)
+                        .setLabel("重点")
+                        .setSummary("已完成")
+                        .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
         planMapper.insert(plan);
         // 准备参数
-        OaPlanSaveReqVO reqVO = buildPlanSaveReqVO().setId(plan.getId())
-                .setLabel(null).setSummary(null).setFileUrls(null);
+        OaPlanSaveReqVO reqVO =
+                buildPlanSaveReqVO()
+                        .setId(plan.getId())
+                        .setLabel(null)
+                        .setSummary(null)
+                        .setFileUrls(null);
 
         // 调用
         planService.updatePlan(reqVO, userId);
@@ -107,7 +118,8 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         planMapper.insert(plan);
         // 准备参数
         OaPlanSaveReqVO reqVO = buildPlanSaveReqVO().setId(plan.getId());
-        SecurityFrameworkUtils.setLoginUser(new LoginUser().setId(userId), new MockHttpServletRequest());
+        SecurityFrameworkUtils.setLoginUser(
+                new LoginUser().setId(userId), new MockHttpServletRequest());
 
         // 调用
         planService.updatePlan(reqVO, userId);
@@ -128,15 +140,19 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         OaPlanSaveReqVO reqVO = buildPlanSaveReqVO().setId(plan.getId());
 
         // 调用，并断言异常
-        assertServiceException(() -> planService.updatePlan(reqVO, randomLongId()), PLAN_ACCESS_DENIED);
+        assertServiceException(
+                () -> planService.updatePlan(reqVO, randomLongId()), PLAN_ACCESS_DENIED);
     }
 
     @Test
     public void testGetLatestPlanMap_emptyUsers() {
 
         // 调用
-        Map<Long, OaPlanDO> result = planService.getLatestPlanMap(Collections.emptyList(),
-                OaPlanTypeEnum.WEEK.getType(), new LocalDateTime[]{LocalDateTime.now(), LocalDateTime.now()});
+        Map<Long, OaPlanDO> result =
+                planService.getLatestPlanMap(
+                        Collections.emptyList(),
+                        OaPlanTypeEnum.WEEK.getType(),
+                        new LocalDateTime[] {LocalDateTime.now(), LocalDateTime.now()});
 
         // 断言
         assertEquals(Collections.emptyMap(), result);
@@ -149,7 +165,8 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         planMapper.insert(plan);
 
         // 调用，并断言异常
-        assertServiceException(() -> planService.deletePlan(plan.getId(), randomLongId()), PLAN_ACCESS_DENIED);
+        assertServiceException(
+                () -> planService.deletePlan(plan.getId(), randomLongId()), PLAN_ACCESS_DENIED);
     }
 
     @Test
@@ -159,7 +176,8 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         planMapper.insert(plan);
 
         // 调用，并断言异常
-        assertServiceException(() -> planService.getPlan(plan.getId(), randomLongId()), PLAN_ACCESS_DENIED);
+        assertServiceException(
+                () -> planService.getPlan(plan.getId(), randomLongId()), PLAN_ACCESS_DENIED);
     }
 
     @Test
@@ -167,12 +185,16 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long managerUserId = randomLongId();
         Long subordinateUserId = randomLongId();
-        OaPlanDO plan = buildPlanDO(subordinateUserId).setLabel("重点").setSummary("原总结")
-                .setComment("第一次点评")
-                .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
+        OaPlanDO plan =
+                buildPlanDO(subordinateUserId)
+                        .setLabel("重点")
+                        .setSummary("原总结")
+                        .setComment("第一次点评")
+                        .setFileUrls(Collections.singletonList("https://example.com/a.txt"));
         planMapper.insert(plan);
-        when(adminUserApi.getUserListBySubordinate(managerUserId)).thenReturn(
-                Collections.singletonList(new AdminUserRespDTO().setId(subordinateUserId)));
+        when(adminUserApi.getUserListBySubordinate(managerUserId))
+                .thenReturn(
+                        Collections.singletonList(new AdminUserRespDTO().setId(subordinateUserId)));
 
         // 调用
         planService.addPlanComment(plan.getId(), "验收通过", managerUserId);
@@ -190,17 +212,20 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         // mock 数据：已有点评与本次追加内容按字符数计算
         Long ownerId = randomLongId();
         Long managerId = randomLongId();
-        OaPlanDO plan = buildPlanDO(ownerId).setComment(StrUtil.repeat("a", 998 - System.lineSeparator().length()));
+        OaPlanDO plan =
+                buildPlanDO(ownerId)
+                        .setComment(StrUtil.repeat("a", 998 - System.lineSeparator().length()));
         planMapper.insert(plan);
         // mock 方法
-        when(adminUserApi.getUserListBySubordinate(managerId)).thenReturn(
-                Collections.singletonList(new AdminUserRespDTO().setId(ownerId)));
+        when(adminUserApi.getUserListBySubordinate(managerId))
+                .thenReturn(Collections.singletonList(new AdminUserRespDTO().setId(ownerId)));
 
         // 调用：包含换行后恰好达到 1000 个字符
         planService.addPlanComment(plan.getId(), "ab", managerId);
 
         // 断言
-        assertEquals(plan.getComment() + System.lineSeparator() + "ab",
+        assertEquals(
+                plan.getComment() + System.lineSeparator() + "ab",
                 planMapper.selectById(plan.getId()).getComment());
     }
 
@@ -209,18 +234,26 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         // mock 数据：已有点评与本次追加内容按字符数计算
         Long ownerId = randomLongId();
         Long managerId = randomLongId();
-        OaPlanDO plan = buildPlanDO(ownerId).setComment(StrUtil.repeat("a", 998 - System.lineSeparator().length()));
+        OaPlanDO plan =
+                buildPlanDO(ownerId)
+                        .setComment(StrUtil.repeat("a", 998 - System.lineSeparator().length()));
         planMapper.insert(plan);
         // mock 方法
-        when(adminUserApi.getUserListBySubordinate(managerId)).thenReturn(
-                Collections.singletonList(new AdminUserRespDTO().setId(ownerId)));
+        when(adminUserApi.getUserListBySubordinate(managerId))
+                .thenReturn(Collections.singletonList(new AdminUserRespDTO().setId(ownerId)));
 
         // 调用，并断言：累计字符数超限时保留原点评
-        ConstraintViolationException exception = assertThrows(ConstraintViolationException.class,
-                () -> planService.addPlanComment(plan.getId(), "abc", managerId));
-        assertTrue(exception.getConstraintViolations().stream().anyMatch(violation ->
-                "comment".equals(violation.getPropertyPath().toString())
-                        && "点评内容长度不能超过 1000 个字符".equals(violation.getMessage())));
+        ConstraintViolationException exception =
+                assertThrows(
+                        ConstraintViolationException.class,
+                        () -> planService.addPlanComment(plan.getId(), "abc", managerId));
+        assertTrue(
+                exception.getConstraintViolations().stream()
+                        .anyMatch(
+                                violation ->
+                                        "comment".equals(violation.getPropertyPath().toString())
+                                                && "点评内容长度不能超过 1000 个字符"
+                                                        .equals(violation.getMessage())));
         assertEquals(plan.getComment(), planMapper.selectById(plan.getId()).getComment());
     }
 
@@ -230,10 +263,12 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         Long managerUserId = randomLongId();
         OaPlanDO plan = buildPlanDO(randomLongId());
         planMapper.insert(plan);
-        when(adminUserApi.getUserListBySubordinate(managerUserId)).thenReturn(Collections.emptyList());
+        when(adminUserApi.getUserListBySubordinate(managerUserId))
+                .thenReturn(Collections.emptyList());
 
         // 调用，并断言异常
-        assertServiceException(() -> planService.addPlanComment(plan.getId(), "验收通过", managerUserId),
+        assertServiceException(
+                () -> planService.addPlanComment(plan.getId(), "验收通过", managerUserId),
                 PLAN_ACCESS_DENIED);
     }
 
@@ -255,8 +290,11 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         planMapper.insert(secondUserPlan);
 
         // 调用
-        Map<Long, OaPlanDO> result = planService.getLatestPlanMap(Arrays.asList(firstUserId, secondUserId),
-                OaPlanTypeEnum.WEEK.getType(), new LocalDateTime[]{beginTime, endTime});
+        Map<Long, OaPlanDO> result =
+                planService.getLatestPlanMap(
+                        Arrays.asList(firstUserId, secondUserId),
+                        OaPlanTypeEnum.WEEK.getType(),
+                        new LocalDateTime[] {beginTime, endTime});
 
         // 断言
         assertEquals(2, result.size());
@@ -283,7 +321,8 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         assertEquals(2, result.getTotal());
-        assertEquals(Arrays.asList(monthPlan.getId(), dayPlan.getId()),
+        assertEquals(
+                Arrays.asList(monthPlan.getId(), dayPlan.getId()),
                 convertList(result.getList(), OaPlanDO::getId));
     }
 
@@ -304,8 +343,11 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
         planMapper.insert(nextMonthPlan);
 
         // 调用
-        Map<Long, OaPlanDO> result = planService.getLatestPlanMap(Collections.singletonList(userId),
-                OaPlanTypeEnum.WEEK.getType(), new LocalDateTime[]{beginTime, endTime});
+        Map<Long, OaPlanDO> result =
+                planService.getLatestPlanMap(
+                        Collections.singletonList(userId),
+                        OaPlanTypeEnum.WEEK.getType(),
+                        new LocalDateTime[] {beginTime, endTime});
 
         // 断言：包含结束边界，相同创建时间取编号较大的记录，不包含下一个周期
         assertEquals(1, result.size());
@@ -321,10 +363,13 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
      */
     private static OaPlanSaveReqVO buildPlanSaveReqVO() {
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
-        return new OaPlanSaveReqVO().setType(OaPlanTypeEnum.WEEK.getType())
-                .setStatus(OaPlanStatusEnum.UNFINISHED.getStatus()).setTitle("本周工作计划")
+        return new OaPlanSaveReqVO()
+                .setType(OaPlanTypeEnum.WEEK.getType())
+                .setStatus(OaPlanStatusEnum.UNFINISHED.getStatus())
+                .setTitle("本周工作计划")
                 .setContent("完成 OA 工作计划管理功能迁移与自动化测试")
-                .setStartTime(startTime).setEndTime(startTime.plusDays(7));
+                .setStartTime(startTime)
+                .setEndTime(startTime.plusDays(7));
     }
 
     /**
@@ -335,12 +380,15 @@ public class OaPlanServiceImplTest extends BaseDbUnitTest {
      */
     private static OaPlanDO buildPlanDO(Long userId) {
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
-        OaPlanDO plan = new OaPlanDO().setType(OaPlanTypeEnum.WEEK.getType())
-                .setStatus(OaPlanStatusEnum.UNFINISHED.getStatus()).setTitle("旧计划")
-                .setContent("完成 OA 工作计划管理功能迁移与自动化测试")
-                .setStartTime(startTime).setEndTime(startTime.plusDays(7));
+        OaPlanDO plan =
+                new OaPlanDO()
+                        .setType(OaPlanTypeEnum.WEEK.getType())
+                        .setStatus(OaPlanStatusEnum.UNFINISHED.getStatus())
+                        .setTitle("旧计划")
+                        .setContent("完成 OA 工作计划管理功能迁移与自动化测试")
+                        .setStartTime(startTime)
+                        .setEndTime(startTime.plusDays(7));
         plan.setCreator(userId.toString());
         return plan;
     }
-
 }

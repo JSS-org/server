@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.ai.framework.ai.core.model;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.lang.Singleton;
@@ -27,6 +29,7 @@ import cn.iocoder.yudao.module.ai.framework.ai.core.model.xinghuo.XingHuoChatMod
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.yiyan.YiYanChatModel;
 import cn.iocoder.yudao.module.ai.framework.ai.core.model.zhipu.ZhiPuChatModel;
 import cn.iocoder.yudao.module.ai.util.AiUtils;
+
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeChatAutoConfiguration;
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeEmbeddingAutoConfiguration;
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeImageAutoConfiguration;
@@ -35,11 +38,14 @@ import com.alibaba.cloud.ai.dashscope.embedding.text.DashScopeEmbeddingModel;
 import com.alibaba.cloud.ai.dashscope.image.DashScopeImageModel;
 import com.google.genai.Client;
 import com.google.genai.types.HttpOptions;
+
 import io.micrometer.observation.ObservationRegistry;
 import io.milvus.client.MilvusServiceClient;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
+
 import lombok.SneakyThrows;
+
 import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.anthropic.AnthropicChatOptions;
 import org.springframework.ai.chat.model.ChatModel;
@@ -88,6 +94,7 @@ import org.springframework.ai.vectorstore.redis.autoconfigure.RedisVectorStorePr
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
+
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisClientConfig;
@@ -100,8 +107,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 /**
  * AI Model 模型工厂的实现类
  *
@@ -110,53 +115,58 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 public class AiModelFactoryImpl implements AiModelFactory {
 
     @Override
-    public ChatModel getOrCreateChatModel(AiPlatformEnum platform, String rawApiKey, String rawUrl) {
+    public ChatModel getOrCreateChatModel(
+            AiPlatformEnum platform, String rawApiKey, String rawUrl) {
         final String apiKey = resolveSpringPlaceholders(rawApiKey);
         final String url = resolveSpringPlaceholders(rawUrl);
         String cacheKey = buildClientCacheKey(ChatModel.class, platform, apiKey, url);
-        return Singleton.get(cacheKey, (Func0<ChatModel>) () -> {
-            // noinspection EnhancedSwitchMigration
-            switch (platform) {
-                case TONG_YI:
-                    return buildTongYiChatModel(apiKey);
-                case YI_YAN:
-                    return buildYiYanChatModel(apiKey);
-                case DEEP_SEEK:
-                    return buildDeepSeekChatModel(apiKey);
-                case DOU_BAO:
-                    return buildDouBaoChatModel(apiKey);
-                case HUN_YUAN:
-                    return buildHunYuanChatModel(apiKey, url);
-                case SILICON_FLOW:
-                    return buildSiliconFlowChatModel(apiKey);
-                case ZHI_PU:
-                    return buildZhiPuChatModel(apiKey, url);
-                case MINI_MAX:
-                    return buildMiniMaxChatModel(apiKey, url);
-                case MOONSHOT:
-                    return buildMoonshotChatModel(apiKey, url);
-                case STEP_FUN:
-                    return buildStepFunChatModel(apiKey, url);
-                case XING_HUO:
-                    return buildXingHuoChatModel(apiKey);
-                case BAI_CHUAN:
-                    return buildBaiChuanChatModel(apiKey);
-                case OPENAI:
-                    return buildOpenAiChatModel(apiKey, url);
-                case AZURE_OPENAI:
-                    return buildAzureOpenAiChatModel(apiKey, url);
-                case ANTHROPIC:
-                    return buildAnthropicChatModel(apiKey, url);
-                case GEMINI:
-                    return buildGeminiChatModel(apiKey, url);
-                case OLLAMA:
-                    return buildOllamaChatModel(url);
-                case GROK:
-                    return buildGrokChatModel(apiKey, url);
-                default:
-                    throw new IllegalArgumentException(StrUtil.format("未知平台({})", platform));
-            }
-        });
+        return Singleton.get(
+                cacheKey,
+                (Func0<ChatModel>)
+                        () -> {
+                            // noinspection EnhancedSwitchMigration
+                            switch (platform) {
+                                case TONG_YI:
+                                    return buildTongYiChatModel(apiKey);
+                                case YI_YAN:
+                                    return buildYiYanChatModel(apiKey);
+                                case DEEP_SEEK:
+                                    return buildDeepSeekChatModel(apiKey);
+                                case DOU_BAO:
+                                    return buildDouBaoChatModel(apiKey);
+                                case HUN_YUAN:
+                                    return buildHunYuanChatModel(apiKey, url);
+                                case SILICON_FLOW:
+                                    return buildSiliconFlowChatModel(apiKey);
+                                case ZHI_PU:
+                                    return buildZhiPuChatModel(apiKey, url);
+                                case MINI_MAX:
+                                    return buildMiniMaxChatModel(apiKey, url);
+                                case MOONSHOT:
+                                    return buildMoonshotChatModel(apiKey, url);
+                                case STEP_FUN:
+                                    return buildStepFunChatModel(apiKey, url);
+                                case XING_HUO:
+                                    return buildXingHuoChatModel(apiKey);
+                                case BAI_CHUAN:
+                                    return buildBaiChuanChatModel(apiKey);
+                                case OPENAI:
+                                    return buildOpenAiChatModel(apiKey, url);
+                                case AZURE_OPENAI:
+                                    return buildAzureOpenAiChatModel(apiKey, url);
+                                case ANTHROPIC:
+                                    return buildAnthropicChatModel(apiKey, url);
+                                case GEMINI:
+                                    return buildGeminiChatModel(apiKey, url);
+                                case OLLAMA:
+                                    return buildOllamaChatModel(url);
+                                case GROK:
+                                    return buildGrokChatModel(apiKey, url);
+                                default:
+                                    throw new IllegalArgumentException(
+                                            StrUtil.format("未知平台({})", platform));
+                            }
+                        });
     }
 
     @Override
@@ -218,7 +228,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
     }
 
     @Override
-    public ImageModel getOrCreateImageModel(AiPlatformEnum platform, String rawApiKey, String rawUrl) {
+    public ImageModel getOrCreateImageModel(
+            AiPlatformEnum platform, String rawApiKey, String rawUrl) {
         String apiKey = resolveSpringPlaceholders(rawApiKey);
         String url = resolveSpringPlaceholders(rawUrl);
         // noinspection EnhancedSwitchMigration
@@ -240,65 +251,79 @@ public class AiModelFactoryImpl implements AiModelFactory {
     public MidjourneyApi getOrCreateMidjourneyApi(String rawApiKey, String rawUrl) {
         final String apiKey = resolveSpringPlaceholders(rawApiKey);
         final String url = resolveSpringPlaceholders(rawUrl);
-        String cacheKey = buildClientCacheKey(MidjourneyApi.class, AiPlatformEnum.MIDJOURNEY.getPlatform(),
-                apiKey, url);
-        return Singleton.get(cacheKey, (Func0<MidjourneyApi>) () -> {
-            YudaoAiProperties.Midjourney properties = SpringUtil.getBean(YudaoAiProperties.class)
-                    .getMidjourney();
-            return new MidjourneyApi(url, apiKey, properties.getNotifyUrl());
-        });
+        String cacheKey =
+                buildClientCacheKey(
+                        MidjourneyApi.class, AiPlatformEnum.MIDJOURNEY.getPlatform(), apiKey, url);
+        return Singleton.get(
+                cacheKey,
+                (Func0<MidjourneyApi>)
+                        () -> {
+                            YudaoAiProperties.Midjourney properties =
+                                    SpringUtil.getBean(YudaoAiProperties.class).getMidjourney();
+                            return new MidjourneyApi(url, apiKey, properties.getNotifyUrl());
+                        });
     }
 
     @Override
     public SunoApi getOrCreateSunoApi(String rawApiKey, String rawUrl) {
         final String apiKey = resolveSpringPlaceholders(rawApiKey);
         final String url = resolveSpringPlaceholders(rawUrl);
-        String cacheKey = buildClientCacheKey(SunoApi.class, AiPlatformEnum.SUNO.getPlatform(), apiKey, url);
+        String cacheKey =
+                buildClientCacheKey(SunoApi.class, AiPlatformEnum.SUNO.getPlatform(), apiKey, url);
         return Singleton.get(cacheKey, (Func0<SunoApi>) () -> new SunoApi(url));
     }
 
     @Override
     @SuppressWarnings("EnhancedSwitchMigration")
-    public EmbeddingModel getOrCreateEmbeddingModel(AiPlatformEnum platform, String rawApiKey, String rawUrl, String model) {
+    public EmbeddingModel getOrCreateEmbeddingModel(
+            AiPlatformEnum platform, String rawApiKey, String rawUrl, String model) {
         final String apiKey = resolveSpringPlaceholders(rawApiKey);
         final String url = resolveSpringPlaceholders(rawUrl);
         String cacheKey = buildClientCacheKey(EmbeddingModel.class, platform, apiKey, url, model);
-        return Singleton.get(cacheKey, (Func0<EmbeddingModel>) () -> {
-            switch (platform) {
-                case TONG_YI:
-                    return buildTongYiEmbeddingModel(apiKey, model);
-                case OPENAI:
-                    return buildOpenAiEmbeddingModel(apiKey, url, model);
-                case AZURE_OPENAI:
-                    return buildAzureOpenAiEmbeddingModel(apiKey, url, model);
-                case OLLAMA:
-                    return buildOllamaEmbeddingModel(url, model);
-                default:
-                    throw new IllegalArgumentException(StrUtil.format("未知平台({})", platform));
-            }
-        });
+        return Singleton.get(
+                cacheKey,
+                (Func0<EmbeddingModel>)
+                        () -> {
+                            switch (platform) {
+                                case TONG_YI:
+                                    return buildTongYiEmbeddingModel(apiKey, model);
+                                case OPENAI:
+                                    return buildOpenAiEmbeddingModel(apiKey, url, model);
+                                case AZURE_OPENAI:
+                                    return buildAzureOpenAiEmbeddingModel(apiKey, url, model);
+                                case OLLAMA:
+                                    return buildOllamaEmbeddingModel(url, model);
+                                default:
+                                    throw new IllegalArgumentException(
+                                            StrUtil.format("未知平台({})", platform));
+                            }
+                        });
     }
 
     @Override
-    public VectorStore getOrCreateVectorStore(Class<? extends VectorStore> type,
-                                              EmbeddingModel embeddingModel,
-                                              Map<String, Class<?>> metadataFields) {
+    public VectorStore getOrCreateVectorStore(
+            Class<? extends VectorStore> type,
+            EmbeddingModel embeddingModel,
+            Map<String, Class<?>> metadataFields) {
         String cacheKey = buildClientCacheKey(VectorStore.class, embeddingModel, type);
-        return Singleton.get(cacheKey, (Func0<VectorStore>) () -> {
-            if (type == SimpleVectorStore.class) {
-                return buildSimpleVectorStore(embeddingModel);
-            }
-            if (type == QdrantVectorStore.class) {
-                return buildQdrantVectorStore(embeddingModel);
-            }
-            if (type == RedisVectorStore.class) {
-                return buildRedisVectorStore(embeddingModel, metadataFields);
-            }
-            if (type == MilvusVectorStore.class) {
-                return buildMilvusVectorStore(embeddingModel);
-            }
-            throw new IllegalArgumentException(StrUtil.format("未知类型({})", type));
-        });
+        return Singleton.get(
+                cacheKey,
+                (Func0<VectorStore>)
+                        () -> {
+                            if (type == SimpleVectorStore.class) {
+                                return buildSimpleVectorStore(embeddingModel);
+                            }
+                            if (type == QdrantVectorStore.class) {
+                                return buildQdrantVectorStore(embeddingModel);
+                            }
+                            if (type == RedisVectorStore.class) {
+                                return buildRedisVectorStore(embeddingModel, metadataFields);
+                            }
+                            if (type == MilvusVectorStore.class) {
+                                return buildMilvusVectorStore(embeddingModel);
+                            }
+                            throw new IllegalArgumentException(StrUtil.format("未知类型({})", type));
+                        });
     }
 
     private static String buildClientCacheKey(Class<?> clazz, Object... params) {
@@ -330,8 +355,7 @@ public class AiModelFactoryImpl implements AiModelFactory {
     }
 
     private ChatModel buildYiYanChatModel(String apiKey) {
-        YudaoAiProperties.YiYan properties = new YudaoAiProperties.YiYan()
-                .setApiKey(apiKey);
+        YudaoAiProperties.YiYan properties = new YudaoAiProperties.YiYan().setApiKey(apiKey);
         return new AiAutoConfiguration().buildYiYanChatClient(properties);
     }
 
@@ -340,20 +364,19 @@ public class AiModelFactoryImpl implements AiModelFactory {
      */
     private static DeepSeekChatModel buildDeepSeekChatModel(String apiKey) {
         DeepSeekApi deepSeekApi = DeepSeekApi.builder().apiKey(apiKey).build();
-        DeepSeekChatOptions options = DeepSeekChatOptions.builder().model(DeepSeekApi.DEFAULT_CHAT_MODEL)
-                .temperature(0.7).build();
-        return DeepSeekChatModel.builder()
-                .deepSeekApi(deepSeekApi)
-                .options(options)
-                .build();
+        DeepSeekChatOptions options =
+                DeepSeekChatOptions.builder()
+                        .model(DeepSeekApi.DEFAULT_CHAT_MODEL)
+                        .temperature(0.7)
+                        .build();
+        return DeepSeekChatModel.builder().deepSeekApi(deepSeekApi).options(options).build();
     }
 
     /**
      * 可参考 {@link AiAutoConfiguration#douBaoChatClient(YudaoAiProperties)}
      */
     private ChatModel buildDouBaoChatModel(String apiKey) {
-        YudaoAiProperties.DouBao properties = new YudaoAiProperties.DouBao()
-                .setApiKey(apiKey);
+        YudaoAiProperties.DouBao properties = new YudaoAiProperties.DouBao().setApiKey(apiKey);
         return new AiAutoConfiguration().buildDouBaoChatClient(properties);
     }
 
@@ -361,8 +384,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#hunYuanChatClient(YudaoAiProperties)}
      */
     private ChatModel buildHunYuanChatModel(String apiKey, String url) {
-        YudaoAiProperties.HunYuan properties = new YudaoAiProperties.HunYuan()
-                .setBaseUrl(url).setApiKey(apiKey);
+        YudaoAiProperties.HunYuan properties =
+                new YudaoAiProperties.HunYuan().setBaseUrl(url).setApiKey(apiKey);
         return new AiAutoConfiguration().buildHunYuanChatClient(properties);
     }
 
@@ -370,8 +393,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#siliconFlowChatClient(YudaoAiProperties)}
      */
     private ChatModel buildSiliconFlowChatModel(String apiKey) {
-        YudaoAiProperties.SiliconFlow properties = new YudaoAiProperties.SiliconFlow()
-                .setApiKey(apiKey);
+        YudaoAiProperties.SiliconFlow properties =
+                new YudaoAiProperties.SiliconFlow().setApiKey(apiKey);
         return new AiAutoConfiguration().buildSiliconFlowChatClient(properties);
     }
 
@@ -379,8 +402,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#zhiPuChatClient(YudaoAiProperties)}
      */
     private ZhiPuChatModel buildZhiPuChatModel(String apiKey, String url) {
-        YudaoAiProperties.ZhiPu properties = new YudaoAiProperties.ZhiPu()
-                .setBaseUrl(url).setApiKey(apiKey);
+        YudaoAiProperties.ZhiPu properties =
+                new YudaoAiProperties.ZhiPu().setBaseUrl(url).setApiKey(apiKey);
         return new AiAutoConfiguration().buildZhiPuChatClient(properties);
     }
 
@@ -388,8 +411,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#miniMaxChatClient(YudaoAiProperties)}
      */
     private MiniMaxChatModel buildMiniMaxChatModel(String apiKey, String url) {
-        YudaoAiProperties.MiniMax properties = new YudaoAiProperties.MiniMax()
-                .setBaseUrl(url).setApiKey(apiKey);
+        YudaoAiProperties.MiniMax properties =
+                new YudaoAiProperties.MiniMax().setBaseUrl(url).setApiKey(apiKey);
         return new AiAutoConfiguration().buildMiniMaxChatClient(properties);
     }
 
@@ -397,8 +420,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#moonshotChatClient(YudaoAiProperties)}
      */
     private MoonshotChatModel buildMoonshotChatModel(String apiKey, String url) {
-        YudaoAiProperties.Moonshot properties = new YudaoAiProperties.Moonshot()
-                .setBaseUrl(url).setApiKey(apiKey);
+        YudaoAiProperties.Moonshot properties =
+                new YudaoAiProperties.Moonshot().setBaseUrl(url).setApiKey(apiKey);
         return new AiAutoConfiguration().buildMoonshotChatClient(properties);
     }
 
@@ -406,8 +429,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#stepFunChatClient(YudaoAiProperties)}
      */
     private StepFunChatModel buildStepFunChatModel(String apiKey, String url) {
-        YudaoAiProperties.StepFun properties = new YudaoAiProperties.StepFun()
-                .setBaseUrl(url).setApiKey(apiKey);
+        YudaoAiProperties.StepFun properties =
+                new YudaoAiProperties.StepFun().setBaseUrl(url).setApiKey(apiKey);
         return new AiAutoConfiguration().buildStepFunChatClient(properties);
     }
 
@@ -415,8 +438,10 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#xingHuoChatClient(YudaoAiProperties)}
      */
     private static XingHuoChatModel buildXingHuoChatModel(String apiKey) {
-        YudaoAiProperties.XingHuo properties = new YudaoAiProperties.XingHuo()
-                .setApiKey(apiKey).setModel(XingHuoChatModel.MODEL_DEFAULT);
+        YudaoAiProperties.XingHuo properties =
+                new YudaoAiProperties.XingHuo()
+                        .setApiKey(apiKey)
+                        .setModel(XingHuoChatModel.MODEL_DEFAULT);
         return new AiAutoConfiguration().buildXingHuoChatClient(properties);
     }
 
@@ -424,8 +449,7 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link AiAutoConfiguration#baiChuanChatClient(YudaoAiProperties)}
      */
     private BaiChuanChatModel buildBaiChuanChatModel(String apiKey) {
-        YudaoAiProperties.BaiChuan properties = new YudaoAiProperties.BaiChuan()
-                .setApiKey(apiKey);
+        YudaoAiProperties.BaiChuan properties = new YudaoAiProperties.BaiChuan().setApiKey(apiKey);
         return new AiAutoConfiguration().buildBaiChuanChatClient(properties);
     }
 
@@ -440,9 +464,7 @@ public class AiModelFactoryImpl implements AiModelFactory {
 
     private static OpenAiChatModel buildAzureOpenAiChatModel(String openAiToken, String url) {
         return OpenAiChatModel.builder()
-                .options(buildOpenAiChatOptions(openAiToken, url)
-                        .azure(true)
-                        .build())
+                .options(buildOpenAiChatOptions(openAiToken, url).azure(true).build())
                 .build();
     }
 
@@ -462,9 +484,7 @@ public class AiModelFactoryImpl implements AiModelFactory {
         if (StrUtil.isNotEmpty(url)) {
             optionsBuilder.baseUrl(url);
         }
-        return AnthropicChatModel.builder()
-                .options(optionsBuilder.build())
-                .build();
+        return AnthropicChatModel.builder().options(optionsBuilder.build()).build();
     }
 
     /**
@@ -473,17 +493,16 @@ public class AiModelFactoryImpl implements AiModelFactory {
     private static GoogleGenAiChatModel buildGeminiChatModel(String apiKey, String url) {
         Client.Builder clientBuilder = Client.builder().apiKey(apiKey);
         if (StrUtil.isNotBlank(url)) {
-            clientBuilder.httpOptions(HttpOptions.builder()
-                    .baseUrl(url)
-                    // TeamOrouter 的 Gemini 原生协议使用 Authorization Bearer 鉴权
-                    .headers(Collections.singletonMap("Authorization", "Bearer " + apiKey))
-                    .build());
+            clientBuilder.httpOptions(
+                    HttpOptions.builder()
+                            .baseUrl(url)
+                            // TeamOrouter 的 Gemini 原生协议使用 Authorization Bearer 鉴权
+                            .headers(Collections.singletonMap("Authorization", "Bearer " + apiKey))
+                            .build());
         }
         return GoogleGenAiChatModel.builder()
                 .genAiClient(clientBuilder.build())
-                .options(GoogleGenAiChatOptions.builder()
-                        .model("gemini-2.5-flash")
-                        .build())
+                .options(GoogleGenAiChatOptions.builder().model("gemini-2.5-flash").build())
                 .toolCallingManager(SpringUtil.getBean(ToolCallingManager.class))
                 .retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
                 .observationRegistry(SpringUtil.getBean(ObservationRegistry.class))
@@ -494,13 +513,12 @@ public class AiModelFactoryImpl implements AiModelFactory {
      * 可参考 {@link OpenAiImageAutoConfiguration} 的 openAiImageModel 方法
      */
     private OpenAiImageModel buildOpenAiImageModel(String openAiToken, String url) {
-        OpenAiImageOptions.Builder optionsBuilder = OpenAiImageOptions.builder().apiKey(openAiToken);
+        OpenAiImageOptions.Builder optionsBuilder =
+                OpenAiImageOptions.builder().apiKey(openAiToken);
         if (StrUtil.isNotEmpty(url)) {
             optionsBuilder.baseUrl(url);
         }
-        return OpenAiImageModel.builder()
-                .options(optionsBuilder.build())
-                .build();
+        return OpenAiImageModel.builder().options(optionsBuilder.build()).build();
     }
 
     /**
@@ -517,9 +535,7 @@ public class AiModelFactoryImpl implements AiModelFactory {
      */
     private static OllamaChatModel buildOllamaChatModel(String url) {
         OllamaApi ollamaApi = OllamaApi.builder().baseUrl(url).build();
-        return OllamaChatModel.builder()
-                .ollamaApi(ollamaApi)
-                .build();
+        return OllamaChatModel.builder().ollamaApi(ollamaApi).build();
     }
 
     /**
@@ -527,14 +543,14 @@ public class AiModelFactoryImpl implements AiModelFactory {
      */
     private StabilityAiImageModel buildStabilityAiImageModel(String apiKey, String url) {
         url = StrUtil.blankToDefault(url, StabilityAiApi.DEFAULT_BASE_URL);
-        StabilityAiApi stabilityAiApi = new StabilityAiApi(apiKey, StabilityAiApi.DEFAULT_IMAGE_MODEL, url);
+        StabilityAiApi stabilityAiApi =
+                new StabilityAiApi(apiKey, StabilityAiApi.DEFAULT_IMAGE_MODEL, url);
         return new StabilityAiImageModel(stabilityAiApi);
     }
 
-    private ChatModel buildGrokChatModel(String apiKey,String url) {
-        YudaoAiProperties.Grok properties = new YudaoAiProperties.Grok()
-                .setBaseUrl(url)
-                .setApiKey(apiKey);
+    private ChatModel buildGrokChatModel(String apiKey, String url) {
+        YudaoAiProperties.Grok properties =
+                new YudaoAiProperties.Grok().setBaseUrl(url).setApiKey(apiKey);
         return new AiAutoConfiguration().buildGrokChatClient(properties);
     }
 
@@ -549,20 +565,18 @@ public class AiModelFactoryImpl implements AiModelFactory {
 
     private OllamaEmbeddingModel buildOllamaEmbeddingModel(String url, String model) {
         OllamaApi ollamaApi = OllamaApi.builder().baseUrl(url).build();
-        OllamaEmbeddingOptions ollamaOptions = OllamaEmbeddingOptions.builder().model(model).build();
-        return OllamaEmbeddingModel.builder()
-                .ollamaApi(ollamaApi)
-                .options(ollamaOptions)
-                .build();
+        OllamaEmbeddingOptions ollamaOptions =
+                OllamaEmbeddingOptions.builder().model(model).build();
+        return OllamaEmbeddingModel.builder().ollamaApi(ollamaApi).options(ollamaOptions).build();
     }
 
     /**
      * 可参考 {@link OpenAiEmbeddingAutoConfiguration} 的 openAiEmbeddingModel 方法
      */
-    private OpenAiEmbeddingModel buildOpenAiEmbeddingModel(String openAiToken, String url, String model) {
-        OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder()
-                .apiKey(openAiToken)
-                .model(model);
+    private OpenAiEmbeddingModel buildOpenAiEmbeddingModel(
+            String openAiToken, String url, String model) {
+        OpenAiEmbeddingOptions.Builder optionsBuilder =
+                OpenAiEmbeddingOptions.builder().apiKey(openAiToken).model(model);
         if (StrUtil.isNotEmpty(url)) {
             optionsBuilder.baseUrl(url);
         }
@@ -572,12 +586,14 @@ public class AiModelFactoryImpl implements AiModelFactory {
                 .build();
     }
 
-    private OpenAiEmbeddingModel buildAzureOpenAiEmbeddingModel(String openAiToken, String url, String model) {
-        OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder()
-                .apiKey(openAiToken)
-                .model(model)
-                .deploymentName(model)
-                .azure(true);
+    private OpenAiEmbeddingModel buildAzureOpenAiEmbeddingModel(
+            String openAiToken, String url, String model) {
+        OpenAiEmbeddingOptions.Builder optionsBuilder =
+                OpenAiEmbeddingOptions.builder()
+                        .apiKey(openAiToken)
+                        .model(model)
+                        .deploymentName(model)
+                        .azure(true);
         if (StrUtil.isNotEmpty(url)) {
             optionsBuilder.baseUrl(url);
         }
@@ -597,8 +613,12 @@ public class AiModelFactoryImpl implements AiModelFactory {
     private SimpleVectorStore buildSimpleVectorStore(EmbeddingModel embeddingModel) {
         SimpleVectorStore vectorStore = SimpleVectorStore.builder(embeddingModel).build();
         // 启动加载
-        File file = new File(StrUtil.format("{}/vector_store/simple_{}.json",
-                FileUtil.getUserHomePath(), embeddingModel.getClass().getSimpleName()));
+        File file =
+                new File(
+                        StrUtil.format(
+                                "{}/vector_store/simple_{}.json",
+                                FileUtil.getUserHomePath(),
+                                embeddingModel.getClass().getSimpleName()));
         if (!file.exists()) {
             FileUtil.mkParentDirs(file);
             file.createNewFile();
@@ -607,14 +627,16 @@ public class AiModelFactoryImpl implements AiModelFactory {
         }
         // 定时持久化，每分钟一次
         Timer timer = new Timer("SimpleVectorStoreTimer-" + file.getAbsolutePath());
-        timer.scheduleAtFixedRate(new TimerTask() {
+        timer.scheduleAtFixedRate(
+                new TimerTask() {
 
-            @Override
-            public void run() {
-                vectorStore.save(file);
-            }
-
-        }, Duration.ofMinutes(1).toMillis(), Duration.ofMinutes(1).toMillis());
+                    @Override
+                    public void run() {
+                        vectorStore.save(file);
+                    }
+                },
+                Duration.ofMinutes(1).toMillis(),
+                Duration.ofMinutes(1).toMillis());
         // 关闭时，进行持久化
         RuntimeUtil.addShutdownHook(() -> vectorStore.save(file));
         return vectorStore;
@@ -626,17 +648,25 @@ public class AiModelFactoryImpl implements AiModelFactory {
     @SneakyThrows
     private QdrantVectorStore buildQdrantVectorStore(EmbeddingModel embeddingModel) {
         QdrantVectorStoreAutoConfiguration configuration = new QdrantVectorStoreAutoConfiguration();
-        QdrantVectorStoreProperties properties = SpringUtil.getBean(QdrantVectorStoreProperties.class);
+        QdrantVectorStoreProperties properties =
+                SpringUtil.getBean(QdrantVectorStoreProperties.class);
         // 参考 QdrantVectorStoreAutoConfiguration 实现，创建 QdrantClient 对象
-        QdrantGrpcClient.Builder grpcClientBuilder = QdrantGrpcClient.newBuilder(
-                properties.getHost(), properties.getPort(), properties.isUseTls());
+        QdrantGrpcClient.Builder grpcClientBuilder =
+                QdrantGrpcClient.newBuilder(
+                        properties.getHost(), properties.getPort(), properties.isUseTls());
         if (StrUtil.isNotEmpty(properties.getApiKey())) {
             grpcClientBuilder.withApiKey(properties.getApiKey());
         }
         QdrantClient qdrantClient = new QdrantClient(grpcClientBuilder.build());
         // 创建 QdrantVectorStore 对象
-        QdrantVectorStore vectorStore = configuration.vectorStore(embeddingModel, properties, qdrantClient,
-                getObservationRegistry(), getCustomObservationConvention(), getBatchingStrategy());
+        QdrantVectorStore vectorStore =
+                configuration.vectorStore(
+                        embeddingModel,
+                        properties,
+                        qdrantClient,
+                        getObservationRegistry(),
+                        getCustomObservationConvention(),
+                        getBatchingStrategy());
         // 初始化索引
         vectorStore.afterPropertiesSet();
         return vectorStore;
@@ -645,30 +675,38 @@ public class AiModelFactoryImpl implements AiModelFactory {
     /**
      * 参考 {@link RedisVectorStoreAutoConfiguration} 的 vectorStore 方法
      */
-    private RedisVectorStore buildRedisVectorStore(EmbeddingModel embeddingModel,
-                                                   Map<String, Class<?>> metadataFields) {
+    private RedisVectorStore buildRedisVectorStore(
+            EmbeddingModel embeddingModel, Map<String, Class<?>> metadataFields) {
         // 创建 RedisClient 对象
         RedisClient redisClient = buildRedisClient();
         // 创建 RedisVectorStoreProperties 对象
-        RedisVectorStoreProperties properties = SpringUtil.getBean(RedisVectorStoreProperties.class);
-        RedisVectorStore redisVectorStore = RedisVectorStore.builder(redisClient, embeddingModel)
-                .indexName(properties.getIndexName()).prefix(properties.getPrefix())
-                .initializeSchema(properties.isInitializeSchema())
-                .metadataFields(convertList(metadataFields.entrySet(), entry -> {
-                    String fieldName = entry.getKey();
-                    Class<?> fieldType = entry.getValue();
-                    if (Number.class.isAssignableFrom(fieldType)) {
-                        return RedisVectorStore.MetadataField.numeric(fieldName);
-                    }
-                    if (Boolean.class.isAssignableFrom(fieldType)) {
-                        return RedisVectorStore.MetadataField.tag(fieldName);
-                    }
-                    return RedisVectorStore.MetadataField.text(fieldName);
-                }))
-                .observationRegistry(getObservationRegistry().getObject())
-                .customObservationConvention(getCustomObservationConvention().getObject())
-                .batchingStrategy(getBatchingStrategy())
-                .build();
+        RedisVectorStoreProperties properties =
+                SpringUtil.getBean(RedisVectorStoreProperties.class);
+        RedisVectorStore redisVectorStore =
+                RedisVectorStore.builder(redisClient, embeddingModel)
+                        .indexName(properties.getIndexName())
+                        .prefix(properties.getPrefix())
+                        .initializeSchema(properties.isInitializeSchema())
+                        .metadataFields(
+                                convertList(
+                                        metadataFields.entrySet(),
+                                        entry -> {
+                                            String fieldName = entry.getKey();
+                                            Class<?> fieldType = entry.getValue();
+                                            if (Number.class.isAssignableFrom(fieldType)) {
+                                                return RedisVectorStore.MetadataField.numeric(
+                                                        fieldName);
+                                            }
+                                            if (Boolean.class.isAssignableFrom(fieldType)) {
+                                                return RedisVectorStore.MetadataField.tag(
+                                                        fieldName);
+                                            }
+                                            return RedisVectorStore.MetadataField.text(fieldName);
+                                        }))
+                        .observationRegistry(getObservationRegistry().getObject())
+                        .customObservationConvention(getCustomObservationConvention().getObject())
+                        .batchingStrategy(getBatchingStrategy())
+                        .build();
         // 初始化索引
         redisVectorStore.afterPropertiesSet();
         return redisVectorStore;
@@ -678,13 +716,16 @@ public class AiModelFactoryImpl implements AiModelFactory {
         DataRedisProperties redisProperties = SpringUtil.getBean(DataRedisProperties.class);
         Assert.isNull(redisProperties.getCluster(), "RedisVectorStore 暂不支持 Redis Cluster 模式");
         Assert.isNull(redisProperties.getSentinel(), "RedisVectorStore 暂不支持 Redis Sentinel 模式");
-        Assert.isNull(redisProperties.getMasterreplica(), "RedisVectorStore 暂不支持 Redis Master-Replica 模式");
+        Assert.isNull(
+                redisProperties.getMasterreplica(),
+                "RedisVectorStore 暂不支持 Redis Master-Replica 模式");
         if (StrUtil.isNotEmpty(redisProperties.getUrl())) {
             return RedisClient.create(redisProperties.getUrl());
         }
-        DefaultJedisClientConfig.Builder clientConfigBuilder = DefaultJedisClientConfig.builder()
-                .ssl(redisProperties.getSsl().isEnabled())
-                .database(redisProperties.getDatabase());
+        DefaultJedisClientConfig.Builder clientConfigBuilder =
+                DefaultJedisClientConfig.builder()
+                        .ssl(redisProperties.getSsl().isEnabled())
+                        .database(redisProperties.getDatabase());
         if (StrUtil.isNotEmpty(redisProperties.getUsername())) {
             clientConfigBuilder.user(redisProperties.getUsername());
         }
@@ -698,7 +739,8 @@ public class AiModelFactoryImpl implements AiModelFactory {
             clientConfigBuilder.socketTimeoutMillis(toMillis(redisProperties.getTimeout()));
         }
         if (redisProperties.getConnectTimeout() != null) {
-            clientConfigBuilder.connectionTimeoutMillis(toMillis(redisProperties.getConnectTimeout()));
+            clientConfigBuilder.connectionTimeoutMillis(
+                    toMillis(redisProperties.getConnectTimeout()));
         }
         JedisClientConfig clientConfig = clientConfigBuilder.build();
         return RedisClient.builder()
@@ -718,28 +760,37 @@ public class AiModelFactoryImpl implements AiModelFactory {
     private MilvusVectorStore buildMilvusVectorStore(EmbeddingModel embeddingModel) {
         MilvusVectorStoreAutoConfiguration configuration = new MilvusVectorStoreAutoConfiguration();
         // 获取配置属性
-        MilvusVectorStoreProperties serverProperties = SpringUtil.getBean(MilvusVectorStoreProperties.class);
-        MilvusServiceClientProperties clientProperties = SpringUtil.getBean(MilvusServiceClientProperties.class);
+        MilvusVectorStoreProperties serverProperties =
+                SpringUtil.getBean(MilvusVectorStoreProperties.class);
+        MilvusServiceClientProperties clientProperties =
+                SpringUtil.getBean(MilvusServiceClientProperties.class);
 
         // 创建 MilvusServiceClient 对象
-        MilvusServiceClient milvusClient = configuration.milvusClient(serverProperties, clientProperties,
-                new MilvusServiceClientConnectionDetails() {
+        MilvusServiceClient milvusClient =
+                configuration.milvusClient(
+                        serverProperties,
+                        clientProperties,
+                        new MilvusServiceClientConnectionDetails() {
 
-                    @Override
-                    public String getHost() {
-                        return clientProperties.getHost();
-                    }
+                            @Override
+                            public String getHost() {
+                                return clientProperties.getHost();
+                            }
 
-                    @Override
-                    public int getPort() {
-                        return clientProperties.getPort();
-                    }
-
-                }
-        );
+                            @Override
+                            public int getPort() {
+                                return clientProperties.getPort();
+                            }
+                        });
         // 创建 MilvusVectorStore 对象
-        MilvusVectorStore vectorStore = configuration.vectorStore(milvusClient, embeddingModel, serverProperties,
-                getBatchingStrategy(), getObservationRegistry(), getCustomObservationConvention());
+        MilvusVectorStore vectorStore =
+                configuration.vectorStore(
+                        milvusClient,
+                        embeddingModel,
+                        serverProperties,
+                        getBatchingStrategy(),
+                        getObservationRegistry(),
+                        getCustomObservationConvention());
 
         // 初始化索引
         vectorStore.afterPropertiesSet();
@@ -753,18 +804,17 @@ public class AiModelFactoryImpl implements AiModelFactory {
             public ObservationRegistry getObject() throws BeansException {
                 return SpringUtil.getBean(ObservationRegistry.class);
             }
-
         };
     }
 
-    private static ObjectProvider<VectorStoreObservationConvention> getCustomObservationConvention() {
+    private static ObjectProvider<VectorStoreObservationConvention>
+            getCustomObservationConvention() {
         return new ObjectProvider<>() {
 
             @Override
             public VectorStoreObservationConvention getObject() throws BeansException {
                 return new DefaultVectorStoreObservationConvention();
             }
-
         };
     }
 
@@ -772,15 +822,14 @@ public class AiModelFactoryImpl implements AiModelFactory {
         return SpringUtil.getBean(BatchingStrategy.class);
     }
 
-    private static ObjectProvider<EmbeddingModelObservationConvention> getEmbeddingModelObservationConvention() {
+    private static ObjectProvider<EmbeddingModelObservationConvention>
+            getEmbeddingModelObservationConvention() {
         return new ObjectProvider<>() {
 
             @Override
             public EmbeddingModelObservationConvention getObject() throws BeansException {
                 return SpringUtil.getBean(EmbeddingModelObservationConvention.class);
             }
-
         };
     }
-
 }

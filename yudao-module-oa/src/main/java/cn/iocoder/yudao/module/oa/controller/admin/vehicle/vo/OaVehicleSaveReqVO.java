@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.oa.controller.admin.vehicle.vo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.vehicle.OaVehicleStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -47,7 +50,10 @@ public class OaVehicleSaveReqVO {
     @DecimalMin(value = "1", message = "座位数不能小于 1")
     private Integer seatCount;
 
-    @Schema(description = "裸车价格（元）", requiredMode = Schema.RequiredMode.REQUIRED, example = "250000.00")
+    @Schema(
+            description = "裸车价格（元）",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "250000.00")
     @NotNull(message = "裸车价格（元）不能为空")
     @DecimalMin(value = "0", message = "裸车价格（元）不能小于 0")
     @Digits(integer = 16, fraction = 2, message = "裸车价格整数位不能超过 {integer} 位，小数位不能超过 {fraction} 位")
@@ -78,5 +84,4 @@ public class OaVehicleSaveReqVO {
     @Schema(description = "备注", example = "部门公务用车")
     @Size(max = 500, message = "备注长度不能超过 500 个字符")
     private String remark;
-
 }

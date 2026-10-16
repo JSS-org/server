@@ -6,8 +6,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -41,19 +43,23 @@ public class TenantJobAspect {
 
         // 逐个租户，执行 Job
         Map<Long, String> results = new ConcurrentHashMap<>();
-        tenantIds.parallelStream().forEach(tenantId -> {
-            // TODO 芋艿：先通过 parallel 实现并行；1）多个租户，是一条执行日志；2）异常的情况
-            TenantUtils.execute(tenantId, () -> {
-                try {
-                    Object result = joinPoint.proceed();
-                    results.put(tenantId, StrUtil.toStringOrEmpty(result));
-                } catch (Throwable e) {
-                    log.error("[execute][租户({}) 执行 Job 发生异常", tenantId, e);
-                    results.put(tenantId, ExceptionUtil.getRootCauseMessage(e));
-                }
-            });
-        });
+        tenantIds.parallelStream()
+                .forEach(
+                        tenantId -> {
+                            // TODO 芋艿：先通过 parallel 实现并行；1）多个租户，是一条执行日志；2）异常的情况
+                            TenantUtils.execute(
+                                    tenantId,
+                                    () -> {
+                                        try {
+                                            Object result = joinPoint.proceed();
+                                            results.put(tenantId, StrUtil.toStringOrEmpty(result));
+                                        } catch (Throwable e) {
+                                            log.error("[execute][租户({}) 执行 Job 发生异常", tenantId, e);
+                                            results.put(
+                                                    tenantId, ExceptionUtil.getRootCauseMessage(e));
+                                        }
+                                    });
+                        });
         return JsonUtils.toJsonString(results);
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.calendar.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +17,10 @@ import java.util.List;
 @AllArgsConstructor
 public class MesCalCalendarRespVO {
 
-    @Schema(description = "日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2025-01-15 00:00:00")
+    @Schema(
+            description = "日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2025-01-15 00:00:00")
     private LocalDateTime day;
 
     @Schema(description = "轮班方式", example = "2")
@@ -46,7 +50,5 @@ public class MesCalCalendarRespVO {
 
         @Schema(description = "排序", example = "1")
         private Integer sort;
-
     }
-
 }

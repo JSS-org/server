@@ -1,9 +1,10 @@
 package cn.iocoder.yudao.module.trade.controller.admin.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Schema(description = "管理后台 - 订单发货 Request VO")
 @Data
@@ -19,5 +20,4 @@ public class TradeOrderDeliveryReqVO {
 
     @Schema(description = "发货物流单号", example = "SF123456789")
     private String logisticsNo;
-
 }

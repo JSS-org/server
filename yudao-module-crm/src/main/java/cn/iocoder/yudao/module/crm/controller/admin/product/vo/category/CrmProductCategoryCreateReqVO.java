@@ -1,14 +1,16 @@
 package cn.iocoder.yudao.module.crm.controller.admin.product.vo.category;
 
 import com.mzt.logapi.starter.annotation.DiffLogField;
-import lombok.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
 
+import lombok.*;
+
 @Schema(description = "管理后台 - CRM 产品分类创建/更新 Request VO")
 @Data
-public class CrmProductCategoryCreateReqVO{
+public class CrmProductCategoryCreateReqVO {
 
     @Schema(description = "分类编号", example = "23902")
     private Long id;
@@ -21,5 +23,4 @@ public class CrmProductCategoryCreateReqVO{
     @Schema(description = "父级编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "4680")
     @NotNull(message = "父级编号不能为空")
     private Long parentId;
-
 }

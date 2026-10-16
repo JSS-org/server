@@ -3,7 +3,9 @@ package cn.iocoder.yudao.framework.websocket.core.sender.kafka;
 import cn.iocoder.yudao.framework.websocket.core.sender.AbstractWebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.sender.WebSocketMessageSender;
 import cn.iocoder.yudao.framework.websocket.core.session.WebSocketSessionManager;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.concurrent.ExecutionException;
@@ -20,9 +22,10 @@ public class KafkaWebSocketMessageSender extends AbstractWebSocketMessageSender 
 
     private final String topic;
 
-    public KafkaWebSocketMessageSender(WebSocketSessionManager sessionManager,
-                                       KafkaTemplate<Object, Object> kafkaTemplate,
-                                       String topic) {
+    public KafkaWebSocketMessageSender(
+            WebSocketSessionManager sessionManager,
+            KafkaTemplate<Object, Object> kafkaTemplate,
+            String topic) {
         super(sessionManager);
         this.kafkaTemplate = kafkaTemplate;
         this.topic = topic;
@@ -52,16 +55,23 @@ public class KafkaWebSocketMessageSender extends AbstractWebSocketMessageSender 
      * @param messageType 消息类型
      * @param messageContent 消息内容
      */
-    private void sendKafkaMessage(String sessionId, Long userId, Integer userType,
-                                  String messageType, String messageContent) {
-        KafkaWebSocketMessage mqMessage = new KafkaWebSocketMessage()
-                .setSessionId(sessionId).setUserId(userId).setUserType(userType)
-                .setMessageType(messageType).setMessageContent(messageContent);
+    private void sendKafkaMessage(
+            String sessionId,
+            Long userId,
+            Integer userType,
+            String messageType,
+            String messageContent) {
+        KafkaWebSocketMessage mqMessage =
+                new KafkaWebSocketMessage()
+                        .setSessionId(sessionId)
+                        .setUserId(userId)
+                        .setUserType(userType)
+                        .setMessageType(messageType)
+                        .setMessageContent(messageContent);
         try {
             kafkaTemplate.send(topic, mqMessage).get();
         } catch (InterruptedException | ExecutionException e) {
             log.error("[sendKafkaMessage][发送消息({}) 到 Kafka 失败]", mqMessage, e);
         }
     }
-
 }

@@ -20,5 +20,4 @@ public interface ErpSaleStatisticsService {
      * @return 销售金额
      */
     BigDecimal getSalePrice(LocalDateTime beginTime, LocalDateTime endTime);
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.controller.admin.auth;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -20,25 +24,25 @@ import cn.iocoder.yudao.module.system.service.permission.PermissionService;
 import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import cn.iocoder.yudao.module.system.service.social.SocialClientService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 @Tag(name = "管理后台 - 认证")
 @RestController
@@ -47,21 +51,14 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Slf4j
 public class AuthController {
 
-    @Resource
-    private AdminAuthService authService;
-    @Resource
-    private AdminUserService userService;
-    @Resource
-    private RoleService roleService;
-    @Resource
-    private MenuService menuService;
-    @Resource
-    private PermissionService permissionService;
-    @Resource
-    private SocialClientService socialClientService;
+    @Resource private AdminAuthService authService;
+    @Resource private AdminUserService userService;
+    @Resource private RoleService roleService;
+    @Resource private MenuService menuService;
+    @Resource private PermissionService permissionService;
+    @Resource private SocialClientService socialClientService;
 
-    @Resource
-    private SecurityProperties securityProperties;
+    @Resource private SecurityProperties securityProperties;
 
     @PostMapping("/login")
     @PermitAll
@@ -74,8 +71,11 @@ public class AuthController {
     @PermitAll
     @Operation(summary = "登出系统")
     public CommonResult<Boolean> logout(HttpServletRequest request) {
-        String token = SecurityFrameworkUtils.obtainAuthorization(request,
-                securityProperties.getTokenHeader(), securityProperties.getTokenParameter());
+        String token =
+                SecurityFrameworkUtils.obtainAuthorization(
+                        request,
+                        securityProperties.getTokenHeader(),
+                        securityProperties.getTokenParameter());
         if (StrUtil.isNotBlank(token)) {
             authService.logout(token, LoginLogTypeEnum.LOGOUT_SELF.getType());
         }
@@ -86,7 +86,8 @@ public class AuthController {
     @PermitAll
     @Operation(summary = "刷新令牌")
     @Parameter(name = "refreshToken", description = "刷新令牌", required = true)
-    public CommonResult<AuthLoginRespVO> refreshToken(@RequestParam("refreshToken") String refreshToken) {
+    public CommonResult<AuthLoginRespVO> refreshToken(
+            @RequestParam("refreshToken") String refreshToken) {
         return success(authService.refreshToken(refreshToken));
     }
 
@@ -103,13 +104,17 @@ public class AuthController {
         // 1.2 获得角色列表
         Set<Long> roleIds = permissionService.getUserRoleIdListByUserId(getLoginUserId());
         if (CollUtil.isEmpty(roleIds)) {
-            return success(AuthConvert.INSTANCE.convert(user, Collections.emptyList(), Collections.emptyList()));
+            return success(
+                    AuthConvert.INSTANCE.convert(
+                            user, Collections.emptyList(), Collections.emptyList()));
         }
         List<RoleDO> roles = roleService.getRoleList(roleIds);
-        roles.removeIf(role -> !CommonStatusEnum.ENABLE.getStatus().equals(role.getStatus())); // 移除禁用的角色
+        roles.removeIf(
+                role -> !CommonStatusEnum.ENABLE.getStatus().equals(role.getStatus())); // 移除禁用的角色
 
         // 1.3 获得菜单列表
-        Set<Long> menuIds = permissionService.getRoleMenuListByRoleId(convertSet(roles, RoleDO::getId));
+        Set<Long> menuIds =
+                permissionService.getRoleMenuListByRoleId(convertSet(roles, RoleDO::getId));
         List<MenuDO> menuList = menuService.getMenuList(menuIds);
         menuList = menuService.filterDisableMenus(menuList);
 
@@ -120,7 +125,8 @@ public class AuthController {
     @PostMapping("/register")
     @PermitAll
     @Operation(summary = "注册用户")
-    public CommonResult<AuthLoginRespVO> register(@RequestBody @Valid AuthRegisterReqVO registerReqVO) {
+    public CommonResult<AuthLoginRespVO> register(
+            @RequestBody @Valid AuthRegisterReqVO registerReqVO) {
         return success(authService.register(registerReqVO));
     }
 
@@ -130,7 +136,8 @@ public class AuthController {
     @PermitAll
     @Operation(summary = "使用短信验证码登录")
     // 可按需开启限流：https://github.com/YunaiV/ruoyi-vue-pro/issues/851
-    // @RateLimiter(time = 60, count = 6, keyResolver = ExpressionRateLimiterKeyResolver.class, keyArg = "#reqVO.mobile")
+    // @RateLimiter(time = 60, count = 6, keyResolver = ExpressionRateLimiterKeyResolver.class,
+    // keyArg = "#reqVO.mobile")
     public CommonResult<AuthLoginRespVO> smsLogin(@RequestBody @Valid AuthSmsLoginReqVO reqVO) {
         return success(authService.smsLogin(reqVO));
     }
@@ -157,20 +164,21 @@ public class AuthController {
     @PermitAll
     @Operation(summary = "社交授权的跳转")
     @Parameters({
-            @Parameter(name = "type", description = "社交类型", required = true),
-            @Parameter(name = "redirectUri", description = "回调路径")
+        @Parameter(name = "type", description = "社交类型", required = true),
+        @Parameter(name = "redirectUri", description = "回调路径")
     })
-    public CommonResult<String> socialLogin(@RequestParam("type") Integer type,
-                                            @RequestParam("redirectUri") String redirectUri) {
-        return success(socialClientService.getAuthorizeUrl(
-                type, UserTypeEnum.ADMIN.getValue(), redirectUri));
+    public CommonResult<String> socialLogin(
+            @RequestParam("type") Integer type, @RequestParam("redirectUri") String redirectUri) {
+        return success(
+                socialClientService.getAuthorizeUrl(
+                        type, UserTypeEnum.ADMIN.getValue(), redirectUri));
     }
 
     @PostMapping("/social-login")
     @PermitAll
     @Operation(summary = "社交快捷登录，使用 code 授权码", description = "适合未登录的用户，但是社交账号已绑定用户")
-    public CommonResult<AuthLoginRespVO> socialQuickLogin(@RequestBody @Valid AuthSocialLoginReqVO reqVO) {
+    public CommonResult<AuthLoginRespVO> socialQuickLogin(
+            @RequestBody @Valid AuthSocialLoginReqVO reqVO) {
         return success(authService.socialLogin(reqVO));
     }
-
 }

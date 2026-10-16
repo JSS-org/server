@@ -12,10 +12,12 @@ import cn.iocoder.yudao.module.trade.enums.order.TradeOrderCancelTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderRefundStatusEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderStatusEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -47,66 +49,79 @@ public class TradeOrderDO extends BaseDO {
      * 订单编号，主键自增
      */
     private Long id;
+
     /**
      * 订单流水号
      *
      * 例如说，1146347329394184195
      */
     private String no;
+
     /**
      * 订单类型
      *
      * 枚举 {@link TradeOrderTypeEnum}
      */
     private Integer type;
+
     /**
      * 订单来源
      *
      * 枚举 {@link TerminalEnum}
      */
     private Integer terminal;
+
     /**
      * 用户编号
      *
      * 关联 MemberUserDO 的 id 编号
      */
     private Long userId;
+
     /**
      * 用户 IP
      */
     private String userIp;
+
     /**
      * 用户备注
      */
     private String userRemark;
+
     /**
      * 订单状态
      *
      * 枚举 {@link TradeOrderStatusEnum}
      */
     private Integer status;
+
     /**
      * 购买的商品数量
      */
     private Integer productCount;
+
     /**
      * 订单完成时间
      */
     private LocalDateTime finishTime;
+
     /**
      * 订单取消时间
      */
     private LocalDateTime cancelTime;
+
     /**
      * 取消类型
      *
      * 枚举 {@link TradeOrderCancelTypeEnum}
      */
     private Integer cancelType;
+
     /**
      * 商家备注
      */
     private String remark;
+
     /**
      * 是否评价
      *
@@ -125,7 +140,8 @@ public class TradeOrderDO extends BaseDO {
     // ========== 价格 + 支付基本信息 ==========
 
     // 价格文档 - 淘宝：https://open.taobao.com/docV3.htm?docId=108471&docType=1
-    // 价格文档 - 京东到家：https://openo2o.jddj.com/api/getApiDetail/182/4d1494c5e7ac4679bfdaaed950c5bc7f.htm
+    // 价格文档 -
+    // 京东到家：https://openo2o.jddj.com/api/getApiDetail/182/4d1494c5e7ac4679bfdaaed950c5bc7f.htm
     // 价格文档 - 有赞：https://doc.youzanyun.com/detail/API/0/906
 
     /**
@@ -134,6 +150,7 @@ public class TradeOrderDO extends BaseDO {
      * 对接 pay-module-biz 支付服务的支付订单编号，即 PayOrderDO 的 id 编号
      */
     private Long payOrderId;
+
     /**
      * 是否已支付
      *
@@ -141,10 +158,12 @@ public class TradeOrderDO extends BaseDO {
      * false - 没有支付过
      */
     private Boolean payStatus;
+
     /**
      * 付款时间
      */
     private LocalDateTime payTime;
+
     /**
      * 支付渠道
      *
@@ -160,22 +179,26 @@ public class TradeOrderDO extends BaseDO {
      * 对应 taobao 的 trade.total_fee 字段
      */
     private Integer totalPrice;
+
     /**
      * 优惠金额，单位：分
      *
      * 对应 taobao 的 order.discount_fee 字段
      */
     private Integer discountPrice;
+
     /**
      * 运费金额，单位：分
      */
     private Integer deliveryPrice;
+
     /**
      * 订单调价，单位：分
      *
      * 正数，加价；负数，减价
      */
     private Integer adjustPrice;
+
     /**
      * 应付金额（总），单位：分
      *
@@ -196,6 +219,7 @@ public class TradeOrderDO extends BaseDO {
      * 枚举 {@link DeliveryTypeEnum}
      */
     private Integer deliveryType;
+
     /**
      * 发货物流公司编号
      *
@@ -204,12 +228,14 @@ public class TradeOrderDO extends BaseDO {
      * 关联 {@link DeliveryExpressDO#getId()}
      */
     private Long logisticsId;
+
     /**
      * 发货物流单号
      *
      * 如果无需发货，则 logisticsNo 设置 ""。原因是，不想再添加额外字段
      */
     private String logisticsNo;
+
     /**
      * 发货时间
      */
@@ -219,18 +245,22 @@ public class TradeOrderDO extends BaseDO {
      * 收货时间
      */
     private LocalDateTime receiveTime;
+
     /**
      * 收件人名称
      */
     private String receiverName;
+
     /**
      * 收件人手机
      */
     private String receiverMobile;
+
     /**
      * 收件人地区编号
      */
     private Integer receiverAreaId;
+
     /**
      * 收件人详细地址
      */
@@ -242,6 +272,7 @@ public class TradeOrderDO extends BaseDO {
      * 关联 {@link DeliveryPickUpStoreDO#getId()}
      */
     private Long pickUpStoreId;
+
     /**
      * 自提核销码
      */
@@ -254,6 +285,7 @@ public class TradeOrderDO extends BaseDO {
      * 枚举 {@link TradeOrderRefundStatusEnum}
      */
     private Integer refundStatus;
+
     /**
      * 退款金额，单位：分
      *
@@ -267,30 +299,36 @@ public class TradeOrderDO extends BaseDO {
      * 优惠劵编号
      */
     private Long couponId;
+
     /**
      * 优惠劵减免金额，单位：分
      *
      * 对应 taobao 的 trade.coupon_fee 字段
      */
     private Integer couponPrice;
+
     /**
      * 使用的积分
      */
     private Integer usePoint;
+
     /**
      * 积分抵扣的金额，单位：分
      *
      * 对应 taobao 的 trade.point_fee 字段
      */
     private Integer pointPrice;
+
     /**
      * 赠送的积分
      */
     private Integer givePoint;
+
     /**
      * 退还的使用的积分
      */
     private Integer refundPoint;
+
     /**
      * VIP 减免金额，单位：分
      */
@@ -306,6 +344,7 @@ public class TradeOrderDO extends BaseDO {
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private Map<Long, Integer> giveCouponTemplateCounts;
+
     /**
      * 赠送的优惠劵编号
      *
@@ -327,6 +366,7 @@ public class TradeOrderDO extends BaseDO {
      * 关联 BargainActivityDO 的 id 字段
      */
     private Long bargainActivityId;
+
     /**
      * 砍价记录编号
      *
@@ -340,12 +380,14 @@ public class TradeOrderDO extends BaseDO {
      * 关联 CombinationActivityDO 的 id 字段
      */
     private Long combinationActivityId;
+
     /**
      * 拼团团长编号
      *
      * 关联 CombinationRecordDO 的 headId 字段
      */
     private Long combinationHeadId;
+
     /**
      * 拼团记录编号
      *
@@ -359,5 +401,4 @@ public class TradeOrderDO extends BaseDO {
      * 关联 PointActivityDO 的 id 字段
      */
     private Long pointActivityId;
-
 }

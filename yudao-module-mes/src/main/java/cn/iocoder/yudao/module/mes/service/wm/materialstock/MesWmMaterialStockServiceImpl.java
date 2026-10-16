@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.materialstock;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjUtil;
@@ -18,7 +22,9 @@ import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemTypeService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -27,10 +33,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 库存台账 Service 实现类
  */
@@ -38,18 +40,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService {
 
-    @Resource
-    private MesWmMaterialStockMapper materialStockMapper;
+    @Resource private MesWmMaterialStockMapper materialStockMapper;
 
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdItemTypeService itemTypeService;
-    @Resource
-    private MesWmWarehouseAreaService areaService;
-    @Resource
-    @Lazy
-    private MesWmWarehouseService warehouseService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdItemTypeService itemTypeService;
+    @Resource private MesWmWarehouseAreaService areaService;
+    @Resource @Lazy private MesWmWarehouseService warehouseService;
 
     @Override
     public MesWmMaterialStockDO getMaterialStock(Long id) {
@@ -70,13 +66,15 @@ public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService 
     }
 
     @Override
-    public PageResult<MesWmMaterialStockDO> getMaterialStockPage(MesWmMaterialStockPageReqVO pageReqVO) {
+    public PageResult<MesWmMaterialStockDO> getMaterialStockPage(
+            MesWmMaterialStockPageReqVO pageReqVO) {
         // 1.1 解析 itemTypeId：包含子分类
         Set<Long> itemTypeIds = null;
         if (pageReqVO.getItemTypeId() != null) {
             itemTypeIds = new HashSet<>();
             itemTypeIds.add(pageReqVO.getItemTypeId());
-            List<MesMdItemTypeDO> children = itemTypeService.getItemTypeChildrenList(pageReqVO.getItemTypeId());
+            List<MesMdItemTypeDO> children =
+                    itemTypeService.getItemTypeChildrenList(pageReqVO.getItemTypeId());
             itemTypeIds.addAll(convertSet(children, MesMdItemTypeDO::getId));
         }
         // 1.2 解析 itemId
@@ -89,8 +87,8 @@ public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService 
         String virtualFilter = pageReqVO.getVirtualFilter();
         if (MesWmMaterialStockPageReqVO.VIRTUAL_FILTER_EXCLUDE.equals(virtualFilter)
                 || MesWmMaterialStockPageReqVO.VIRTUAL_FILTER_ONLY.equals(virtualFilter)) {
-            MesWmWarehouseDO virtualWarehouse = warehouseService.getWarehouseByCode(
-                    MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
+            MesWmWarehouseDO virtualWarehouse =
+                    warehouseService.getWarehouseByCode(MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE);
             Assert.notNull(virtualWarehouse, "虚拟仓库（WIP_VIRTUAL_WAREHOUSE）不存在");
             virtualWarehouseId = virtualWarehouse.getId();
         }
@@ -105,8 +103,10 @@ public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService 
         validateMaterialStockExists(updateReqVO.getId());
 
         // 更新冻结状态
-        materialStockMapper.updateById(new MesWmMaterialStockDO()
-                .setId(updateReqVO.getId()).setFrozen(updateReqVO.getFrozen()));
+        materialStockMapper.updateById(
+                new MesWmMaterialStockDO()
+                        .setId(updateReqVO.getId())
+                        .setFrozen(updateReqVO.getFrozen()));
     }
 
     @Override
@@ -146,25 +146,39 @@ public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService 
     }
 
     @Override
-    public MesWmMaterialStockDO getOrCreateMaterialStock(Long itemId, Long warehouseId, Long locationId, Long areaId,
-                                                         Long batchId, String batchCode, Long vendorId, LocalDateTime receiptTime) {
+    public MesWmMaterialStockDO getOrCreateMaterialStock(
+            Long itemId,
+            Long warehouseId,
+            Long locationId,
+            Long areaId,
+            Long batchId,
+            String batchCode,
+            Long vendorId,
+            LocalDateTime receiptTime) {
         // 1. 查找已有库存记录
-        MesWmMaterialStockDO stock = materialStockMapper.selectByCompositeKey(
-                itemId, warehouseId, locationId, areaId, batchId);
+        MesWmMaterialStockDO stock =
+                materialStockMapper.selectByCompositeKey(
+                        itemId, warehouseId, locationId, areaId, batchId);
         if (stock != null) {
             return stock;
         }
 
         // 2. 不存在则新建
         MesMdItemDO item = itemService.validateItemExists(itemId);
-        MesWmMaterialStockDO newStock = MesWmMaterialStockDO.builder()
-                .itemId(itemId).itemTypeId(item.getItemTypeId())
-                .warehouseId(warehouseId).locationId(locationId).areaId(areaId)
-                .batchId(batchId).batchCode(batchCode).vendorId(vendorId)
-                .quantity(BigDecimal.ZERO) // 初始数量为 0，由 updateMaterialStockQuantity 更新
-                .receiptTime(receiptTime != null ? receiptTime : LocalDateTime.now())
-                .frozen(false)
-                .build();
+        MesWmMaterialStockDO newStock =
+                MesWmMaterialStockDO.builder()
+                        .itemId(itemId)
+                        .itemTypeId(item.getItemTypeId())
+                        .warehouseId(warehouseId)
+                        .locationId(locationId)
+                        .areaId(areaId)
+                        .batchId(batchId)
+                        .batchCode(batchCode)
+                        .vendorId(vendorId)
+                        .quantity(BigDecimal.ZERO) // 初始数量为 0，由 updateMaterialStockQuantity 更新
+                        .receiptTime(receiptTime != null ? receiptTime : LocalDateTime.now())
+                        .frozen(false)
+                        .build();
         materialStockMapper.insert(newStock);
         return newStock;
     }
@@ -196,21 +210,23 @@ public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService 
         }
         // 2.2 检查批次混放
         if (Boolean.FALSE.equals(area.getAllowBatchMixing()) && batchId != null) {
-            if (CollUtil.anyMatch(stockList, item -> ObjUtil.notEqual(batchId, item.getBatchId()))) {
+            if (CollUtil.anyMatch(
+                    stockList, item -> ObjUtil.notEqual(batchId, item.getBatchId()))) {
                 throw exception(WM_MATERIAL_STOCK_AREA_BATCH_MIXING_NOT_ALLOWED, area.getName());
             }
         }
     }
 
     @Override
-    public MesWmMaterialStockDO validateSelectedStock(Long materialStockId,
-                                                      Long itemId,
-                                                      Long batchId,
-                                                      String batchCode,
-                                                      Long warehouseId,
-                                                      Long locationId,
-                                                      Long areaId,
-                                                      BigDecimal quantity) {
+    public MesWmMaterialStockDO validateSelectedStock(
+            Long materialStockId,
+            Long itemId,
+            Long batchId,
+            String batchCode,
+            Long warehouseId,
+            Long locationId,
+            Long areaId,
+            BigDecimal quantity) {
         // 1. 校验库存记录必须存在
         if (materialStockId == null) {
             throw exception(WM_MATERIAL_STOCK_REQUIRED);
@@ -226,10 +242,11 @@ public class MesWmMaterialStockServiceImpl implements MesWmMaterialStockService 
             throw exception(WM_MATERIAL_STOCK_SELECTION_MISMATCH);
         }
         // 3. 校验库存数量充足（如果前端传了 quantity，则必须保证库存数量 >= quantity）
-        if (quantity != null && stock.getQuantity() != null && stock.getQuantity().compareTo(quantity) < 0) {
+        if (quantity != null
+                && stock.getQuantity() != null
+                && stock.getQuantity().compareTo(quantity) < 0) {
             throw exception(WM_MATERIAL_STOCK_INSUFFICIENT);
         }
         return stock;
     }
-
 }

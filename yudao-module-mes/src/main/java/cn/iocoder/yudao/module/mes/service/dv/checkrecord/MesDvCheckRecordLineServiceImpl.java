@@ -1,20 +1,22 @@
 package cn.iocoder.yudao.module.mes.service.dv.checkrecord;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.DV_CHECK_RECORD_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.checkrecord.vo.line.MesDvCheckRecordLinePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.dv.checkrecord.vo.line.MesDvCheckRecordLineSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkrecord.MesDvCheckRecordLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.checkrecord.MesDvCheckRecordLineMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.DV_CHECK_RECORD_LINE_NOT_EXISTS;
 
 /**
  * MES 设备点检记录明细 Service 实现类
@@ -25,12 +27,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.DV_CHECK_RECO
 @Validated
 public class MesDvCheckRecordLineServiceImpl implements MesDvCheckRecordLineService {
 
-    @Resource
-    private MesDvCheckRecordLineMapper checkRecordLineMapper;
+    @Resource private MesDvCheckRecordLineMapper checkRecordLineMapper;
 
-    @Resource
-    @Lazy
-    private MesDvCheckRecordService checkRecordService;
+    @Resource @Lazy private MesDvCheckRecordService checkRecordService;
 
     @Override
     public Long createCheckRecordLine(MesDvCheckRecordLineSaveReqVO createReqVO) {
@@ -51,7 +50,8 @@ public class MesDvCheckRecordLineServiceImpl implements MesDvCheckRecordLineServ
         checkRecordService.validateCheckRecordDraft(updateReqVO.getRecordId());
 
         // 2. 更新
-        MesDvCheckRecordLineDO updateObj = BeanUtils.toBean(updateReqVO, MesDvCheckRecordLineDO.class);
+        MesDvCheckRecordLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesDvCheckRecordLineDO.class);
         checkRecordLineMapper.updateById(updateObj);
     }
 
@@ -90,7 +90,8 @@ public class MesDvCheckRecordLineServiceImpl implements MesDvCheckRecordLineServ
     }
 
     @Override
-    public PageResult<MesDvCheckRecordLineDO> getCheckRecordLinePage(MesDvCheckRecordLinePageReqVO pageReqVO) {
+    public PageResult<MesDvCheckRecordLineDO> getCheckRecordLinePage(
+            MesDvCheckRecordLinePageReqVO pageReqVO) {
         return checkRecordLineMapper.selectPage(pageReqVO);
     }
 
@@ -98,5 +99,4 @@ public class MesDvCheckRecordLineServiceImpl implements MesDvCheckRecordLineServ
     public List<MesDvCheckRecordLineDO> getCheckRecordLineListByRecordId(Long recordId) {
         return checkRecordLineMapper.selectListByRecordId(recordId);
     }
-
 }

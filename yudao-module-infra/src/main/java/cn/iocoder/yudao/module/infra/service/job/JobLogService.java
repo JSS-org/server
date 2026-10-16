@@ -35,5 +35,4 @@ public interface JobLogService extends JobLogFrameworkService {
      * @param deleteLimit 清理的间隔条数
      */
     Integer cleanJobLog(Integer exceedDay, Integer deleteLimit);
-
 }

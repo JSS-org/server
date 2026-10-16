@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.item.vo.sop;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,5 +22,4 @@ public class MesMdProductSopPageReqVO extends PageParam {
 
     @Schema(description = "标题", example = "步骤一")
     private String title;
-
 }

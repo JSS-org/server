@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.pms.service.pm.workitem;
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemBoardDO;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemBoardMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -19,8 +21,7 @@ import java.util.List;
 @Validated
 public class PmsWorkItemBoardServiceImpl implements PmsWorkItemBoardService {
 
-    @Resource
-    private PmsWorkItemBoardMapper workItemBoardMapper;
+    @Resource private PmsWorkItemBoardMapper workItemBoardMapper;
 
     @Override
     public List<PmsWorkItemBoardDO> getWorkItemBoardList(Long projectId, Integer workItemType) {
@@ -60,5 +61,4 @@ public class PmsWorkItemBoardServiceImpl implements PmsWorkItemBoardService {
     public void deleteWorkItemBoardListByProjectId(Long projectId) {
         workItemBoardMapper.deleteByProjectId(projectId);
     }
-
 }

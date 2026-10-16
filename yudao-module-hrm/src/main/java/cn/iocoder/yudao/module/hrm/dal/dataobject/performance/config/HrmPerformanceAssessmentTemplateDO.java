@@ -2,15 +2,17 @@ package cn.iocoder.yudao.module.hrm.dal.dataobject.performance.config;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceQuotaScoreTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceQuotaTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceScoreCalculationEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceUpperLimitTypeEnum;
+import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceQuotaScoreTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,46 +41,53 @@ public class HrmPerformanceAssessmentTemplateDO extends BaseDO {
     /**
      * 绩效考核模板编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
 
     /**
      * 模板名称
      */
     private String name;
+
     /**
      * 模板说明
      */
     private String illustrate;
+
     /**
      * 计分方式
      *
      * 枚举 {@link HrmPerformanceScoreCalculationEnum}
      */
     private Integer scoreCalculation;
+
     /**
      * 分数上限类型
      *
      * 枚举 {@link HrmPerformanceUpperLimitTypeEnum}
      */
     private Integer upperLimitType;
+
     /**
      * 分数上限
      */
     private BigDecimal upperLimitScore;
+
     /**
      * 维度数量
      */
     private Integer dimensionCount;
+
     /**
      * 指标数量
      */
     private Integer quotaCount;
+
     /**
      * 考核维度配置
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<Dimension> dimensions;
+
     /**
      * 状态
      *
@@ -99,22 +108,26 @@ public class HrmPerformanceAssessmentTemplateDO extends BaseDO {
          * 模板名称
          */
         private String name;
+
         /**
          * 计分方式
          *
          * 枚举 {@link HrmPerformanceScoreCalculationEnum}
          */
         private Integer scoreCalculation;
+
         /**
          * 分数上限类型
          *
          * 枚举 {@link HrmPerformanceUpperLimitTypeEnum}
          */
         private Integer upperLimitType;
+
         /**
          * 分数上限
          */
         private BigDecimal upperLimitScore;
+
         /**
          * 考核维度配置
          */
@@ -134,24 +147,29 @@ public class HrmPerformanceAssessmentTemplateDO extends BaseDO {
          * 维度名称
          */
         private String name;
+
         /**
          * 指标类型
          *
          * 枚举 {@link HrmPerformanceQuotaTypeEnum}
          */
         private Integer quotaType;
+
         /**
          * 维度权重
          */
         private BigDecimal weight;
+
         /**
          * 备注
          */
         private String remark;
+
         /**
          * 是否允许员工编辑
          */
         private Boolean allowEdit;
+
         /**
          * 考核指标配置
          */
@@ -171,18 +189,22 @@ public class HrmPerformanceAssessmentTemplateDO extends BaseDO {
          * 指标名称
          */
         private String name;
+
         /**
          * 指标说明
          */
         private String illustrate;
+
         /**
          * 评分标准
          */
         private String standard;
+
         /**
          * 指标权重
          */
         private BigDecimal weight;
+
         /**
          * 评分类型
          *
@@ -190,5 +212,4 @@ public class HrmPerformanceAssessmentTemplateDO extends BaseDO {
          */
         private Integer scoreType;
     }
-
 }

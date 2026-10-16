@@ -1,25 +1,28 @@
 package cn.iocoder.yudao.module.system.service.oauth2;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_EXPIRE;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.util.RandomUtil;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.util.date.DateUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2CodeDO;
 import cn.iocoder.yudao.module.system.dal.mysql.oauth2.OAuth2CodeMapper;
+
+import jakarta.annotation.Resource;
+
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_EXPIRE;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.OAUTH2_CODE_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link OAuth2CodeServiceImpl} 的单元测试类
@@ -29,11 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(OAuth2CodeServiceImpl.class)
 class OAuth2CodeServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OAuth2CodeServiceImpl oauth2CodeService;
+    @Resource private OAuth2CodeServiceImpl oauth2CodeService;
 
-    @Resource
-    private OAuth2CodeMapper oauth2CodeMapper;
+    @Resource private OAuth2CodeMapper oauth2CodeMapper;
 
     @Test
     public void testCreateAuthorizationCode() {
@@ -46,8 +47,9 @@ class OAuth2CodeServiceImplTest extends BaseDbUnitTest {
         String state = randomString();
 
         // 调用
-        OAuth2CodeDO codeDO = oauth2CodeService.createAuthorizationCode(userId, userType, clientId,
-                scopes, redirectUri, state);
+        OAuth2CodeDO codeDO =
+                oauth2CodeService.createAuthorizationCode(
+                        userId, userType, clientId, scopes, redirectUri, state);
         // 断言
         OAuth2CodeDO dbCodeDO = oauth2CodeMapper.selectByCode(codeDO.getCode());
         // TODO @芋艿：expiresTime 被屏蔽，仅 win11 会复现，建议后续修复。
@@ -64,7 +66,8 @@ class OAuth2CodeServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testConsumeAuthorizationCode_null() {
         // 调用，并断言
-        assertServiceException(() -> oauth2CodeService.consumeAuthorizationCode(randomString()),
+        assertServiceException(
+                () -> oauth2CodeService.consumeAuthorizationCode(randomString()),
                 OAUTH2_CODE_NOT_EXISTS);
     }
 
@@ -73,13 +76,15 @@ class OAuth2CodeServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         String code = "test_code";
         // mock 数据
-        OAuth2CodeDO codeDO = randomPojo(OAuth2CodeDO.class).setCode(code)
-                .setExpiresTime(LocalDateTime.now().minusDays(1));
+        OAuth2CodeDO codeDO =
+                randomPojo(OAuth2CodeDO.class)
+                        .setCode(code)
+                        .setExpiresTime(LocalDateTime.now().minusDays(1));
         oauth2CodeMapper.insert(codeDO);
 
         // 调用，并断言
-        assertServiceException(() -> oauth2CodeService.consumeAuthorizationCode(code),
-                OAUTH2_CODE_EXPIRE);
+        assertServiceException(
+                () -> oauth2CodeService.consumeAuthorizationCode(code), OAUTH2_CODE_EXPIRE);
     }
 
     @Test
@@ -87,8 +92,10 @@ class OAuth2CodeServiceImplTest extends BaseDbUnitTest {
         // 准备参数
         String code = "test_code";
         // mock 数据
-        OAuth2CodeDO codeDO = randomPojo(OAuth2CodeDO.class).setCode(code)
-                .setExpiresTime(LocalDateTime.now().plusDays(1));
+        OAuth2CodeDO codeDO =
+                randomPojo(OAuth2CodeDO.class)
+                        .setCode(code)
+                        .setExpiresTime(LocalDateTime.now().plusDays(1));
         oauth2CodeMapper.insert(codeDO);
 
         // 调用
@@ -97,5 +104,4 @@ class OAuth2CodeServiceImplTest extends BaseDbUnitTest {
         assertPojoEquals(codeDO, result, "expiresTime");
         assertNull(oauth2CodeMapper.selectByCode(code));
     }
-
 }

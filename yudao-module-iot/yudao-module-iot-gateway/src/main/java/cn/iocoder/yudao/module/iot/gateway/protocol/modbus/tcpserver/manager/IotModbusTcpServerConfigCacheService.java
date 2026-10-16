@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.modbus.tcpserver.manager;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.iot.core.biz.IotDeviceCommonApi;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigListReqDTO;
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotModbusDeviceConfigRespDTO;
-import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusModeEnum;
 import cn.iocoder.yudao.module.iot.core.enums.IotProtocolTypeEnum;
+import cn.iocoder.yudao.module.iot.core.enums.modbus.IotModbusModeEnum;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 /**
  * IoT Modbus TCP Server 配置缓存：认证时按需加载，断连时清理，定时刷新已连接设备
@@ -45,12 +46,14 @@ public class IotModbusTcpServerConfigCacheService {
     public IotModbusDeviceConfigRespDTO loadDeviceConfig(Long deviceId) {
         try {
             // 1. 从远程 API 获取配置
-            IotModbusDeviceConfigListReqDTO reqDTO = new IotModbusDeviceConfigListReqDTO()
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus())
-                    .setMode(IotModbusModeEnum.POLLING.getMode())
-                    .setProtocolType(IotProtocolTypeEnum.MODBUS_TCP_SERVER.getType())
-                    .setDeviceIds(Collections.singleton(deviceId));
-            CommonResult<List<IotModbusDeviceConfigRespDTO>> result = deviceApi.getModbusDeviceConfigList(reqDTO);
+            IotModbusDeviceConfigListReqDTO reqDTO =
+                    new IotModbusDeviceConfigListReqDTO()
+                            .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                            .setMode(IotModbusModeEnum.POLLING.getMode())
+                            .setProtocolType(IotProtocolTypeEnum.MODBUS_TCP_SERVER.getType())
+                            .setDeviceIds(Collections.singleton(deviceId));
+            CommonResult<List<IotModbusDeviceConfigRespDTO>> result =
+                    deviceApi.getModbusDeviceConfigList(reqDTO);
             result.checkError();
             IotModbusDeviceConfigRespDTO modbusConfig = CollUtil.getFirst(result.getData());
             if (modbusConfig == null) {
@@ -75,17 +78,21 @@ public class IotModbusTcpServerConfigCacheService {
      * @param connectedDeviceIds 当前已连接的设备 ID 集合
      * @return 已连接设备的最新配置列表
      */
-    public List<IotModbusDeviceConfigRespDTO> refreshConnectedDeviceConfigList(Set<Long> connectedDeviceIds) {
+    public List<IotModbusDeviceConfigRespDTO> refreshConnectedDeviceConfigList(
+            Set<Long> connectedDeviceIds) {
         if (CollUtil.isEmpty(connectedDeviceIds)) {
             return Collections.emptyList();
         }
         try {
             // 1. 从远程获取已连接设备的配置
-            CommonResult<List<IotModbusDeviceConfigRespDTO>> result = deviceApi.getModbusDeviceConfigList(
-                    new IotModbusDeviceConfigListReqDTO().setStatus(CommonStatusEnum.ENABLE.getStatus())
-                            .setMode(IotModbusModeEnum.POLLING.getMode())
-                            .setProtocolType(IotProtocolTypeEnum.MODBUS_TCP_SERVER.getType())
-                            .setDeviceIds(connectedDeviceIds));
+            CommonResult<List<IotModbusDeviceConfigRespDTO>> result =
+                    deviceApi.getModbusDeviceConfigList(
+                            new IotModbusDeviceConfigListReqDTO()
+                                    .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                    .setMode(IotModbusModeEnum.POLLING.getMode())
+                                    .setProtocolType(
+                                            IotProtocolTypeEnum.MODBUS_TCP_SERVER.getType())
+                                    .setDeviceIds(connectedDeviceIds));
             List<IotModbusDeviceConfigRespDTO> modbusConfigs = result.getCheckedData();
 
             // 2. 更新缓存并返回
@@ -106,12 +113,13 @@ public class IotModbusTcpServerConfigCacheService {
      * @param currentConfigs     本轮远端返回的有效配置
      * @return 本轮已不再有效的设备编号
      */
-    public Set<Long> cleanupMissingConfigs(Set<Long> refreshedDeviceIds,
-                                           List<IotModbusDeviceConfigRespDTO> currentConfigs) {
+    public Set<Long> cleanupMissingConfigs(
+            Set<Long> refreshedDeviceIds, List<IotModbusDeviceConfigRespDTO> currentConfigs) {
         if (CollUtil.isEmpty(refreshedDeviceIds)) {
             return Collections.emptySet();
         }
-        Set<Long> currentDeviceIds = convertSet(currentConfigs, IotModbusDeviceConfigRespDTO::getDeviceId);
+        Set<Long> currentDeviceIds =
+                convertSet(currentConfigs, IotModbusDeviceConfigRespDTO::getDeviceId);
         Set<Long> missingDeviceIds = new HashSet<>(refreshedDeviceIds);
         missingDeviceIds.removeAll(currentDeviceIds);
         for (Long deviceId : missingDeviceIds) {
@@ -138,5 +146,4 @@ public class IotModbusTcpServerConfigCacheService {
     public void removeConfig(Long deviceId) {
         configCache.remove(deviceId);
     }
-
 }

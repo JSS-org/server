@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.meetingroom.vo.booking;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,10 +20,20 @@ public class OaMeetingRoomBookingRespVO {
     @Schema(description = "会议主题", example = "产品需求评审", requiredMode = Schema.RequiredMode.REQUIRED)
     private String title;
 
-    @Schema(description = "会议开始时间", example = "1789351200000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "会议开始时间",
+            example = "1789351200000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime startTime;
 
-    @Schema(description = "会议结束时间", example = "1789354800000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "会议结束时间",
+            example = "1789354800000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime endTime;
 
     @Schema(description = "主持人用户编号", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -43,7 +54,10 @@ public class OaMeetingRoomBookingRespVO {
     @Schema(description = "附件地址列表", example = "[\"https://www.iocoder.cn/meeting.pdf\"]")
     private List<String> fileUrls;
 
-    @Schema(description = "申请单号", example = "HY20260914000001", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            description = "申请单号",
+            example = "HY20260914000001",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private String no;
 
     @Schema(description = "会议室名称", example = "101 项目讨论室")
@@ -82,7 +96,11 @@ public class OaMeetingRoomBookingRespVO {
     @Schema(description = "流程实例编号", example = "process-1024")
     private String processInstanceId;
 
-    @Schema(description = "创建时间", example = "1789347600000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "创建时间",
+            example = "1789347600000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime createTime;
-
 }

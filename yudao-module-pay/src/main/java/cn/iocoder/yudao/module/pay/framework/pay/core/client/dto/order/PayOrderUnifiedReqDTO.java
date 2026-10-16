@@ -1,13 +1,16 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order;
 
 import cn.iocoder.yudao.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
-import lombok.Data;
-import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.URL;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -34,23 +37,27 @@ public class PayOrderUnifiedReqDTO {
      */
     @NotEmpty(message = "外部订单编号不能为空")
     private String outTradeNo;
+
     /**
      * 商品标题
      */
     @NotEmpty(message = "商品标题不能为空")
     @Length(max = 32, message = "商品标题不能超过 32")
     private String subject;
+
     /**
      * 商品描述信息
      */
     @Length(max = 128, message = "商品描述信息长度不能超过128")
     private String body;
+
     /**
      * 支付结果的 notify 回调地址
      */
     @NotEmpty(message = "支付结果的回调地址不能为空")
     @URL(message = "支付结果的 notify 回调地址必须是 URL 格式")
     private String notifyUrl;
+
     /**
      * 支付结果的 return 回调地址
      */
@@ -88,5 +95,4 @@ public class PayOrderUnifiedReqDTO {
      * 枚举 {@link PayOrderDisplayModeEnum}
      */
     private String displayMode;
-
 }

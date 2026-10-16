@@ -14,10 +14,12 @@ public class FriendRequestNotification extends BaseFriendNotification {
      * 申请记录编号
      */
     private Long requestId;
+
     /**
      * 申请理由
      */
     private String applyContent;
+
     /**
      * 添加来源
      */
@@ -29,9 +31,9 @@ public class FriendRequestNotification extends BaseFriendNotification {
      * 申请方昵称
      */
     private String fromNickname;
+
     /**
      * 申请方头像
      */
     private String fromAvatar;
-
 }

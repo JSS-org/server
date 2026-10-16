@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.notify;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -13,18 +15,19 @@ import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.Notify
 import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyTemplateDO;
 import cn.iocoder.yudao.module.system.service.notify.NotifySendService;
 import cn.iocoder.yudao.module.system.service.notify.NotifyTemplateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 站内信模版")
 @RestController
@@ -32,23 +35,23 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class NotifyTemplateController {
 
-    @Resource
-    private NotifyTemplateService notifyTemplateService;
+    @Resource private NotifyTemplateService notifyTemplateService;
 
-    @Resource
-    private NotifySendService notifySendService;
+    @Resource private NotifySendService notifySendService;
 
     @PostMapping("/create")
     @Operation(summary = "创建站内信模版")
     @PreAuthorize("@ss.hasPermission('system:notify-template:create')")
-    public CommonResult<Long> createNotifyTemplate(@Valid @RequestBody NotifyTemplateSaveReqVO createReqVO) {
+    public CommonResult<Long> createNotifyTemplate(
+            @Valid @RequestBody NotifyTemplateSaveReqVO createReqVO) {
         return success(notifyTemplateService.createNotifyTemplate(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新站内信模版")
     @PreAuthorize("@ss.hasPermission('system:notify-template:update')")
-    public CommonResult<Boolean> updateNotifyTemplate(@Valid @RequestBody NotifyTemplateSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateNotifyTemplate(
+            @Valid @RequestBody NotifyTemplateSaveReqVO updateReqVO) {
         notifyTemplateService.updateNotifyTemplate(updateReqVO);
         return success(true);
     }
@@ -83,16 +86,19 @@ public class NotifyTemplateController {
     @GetMapping("/page")
     @Operation(summary = "获得站内信模版分页")
     @PreAuthorize("@ss.hasPermission('system:notify-template:query')")
-    public CommonResult<PageResult<NotifyTemplateRespVO>> getNotifyTemplatePage(@Valid NotifyTemplatePageReqVO pageVO) {
-        PageResult<NotifyTemplateDO> pageResult = notifyTemplateService.getNotifyTemplatePage(pageVO);
+    public CommonResult<PageResult<NotifyTemplateRespVO>> getNotifyTemplatePage(
+            @Valid NotifyTemplatePageReqVO pageVO) {
+        PageResult<NotifyTemplateDO> pageResult =
+                notifyTemplateService.getNotifyTemplatePage(pageVO);
         return success(BeanUtils.toBean(pageResult, NotifyTemplateRespVO.class));
     }
 
     @GetMapping({"/list-all-simple", "/simple-list"})
     @Operation(summary = "获得站内信模版精简列表", description = "只包含被开启的站内信模版，主要用于前端的下拉选项")
     public CommonResult<List<NotifyTemplateSimpleRespVO>> getSimpleNotifyTemplateList() {
-        List<NotifyTemplateDO> list = notifyTemplateService.getNotifyTemplateListByStatus(
-                CommonStatusEnum.ENABLE.getStatus());
+        List<NotifyTemplateDO> list =
+                notifyTemplateService.getNotifyTemplateListByStatus(
+                        CommonStatusEnum.ENABLE.getStatus());
         return success(BeanUtils.toBean(list, NotifyTemplateSimpleRespVO.class));
     }
 
@@ -101,11 +107,17 @@ public class NotifyTemplateController {
     @PreAuthorize("@ss.hasPermission('system:notify-template:send-notify')")
     public CommonResult<Long> sendNotify(@Valid @RequestBody NotifyTemplateSendReqVO sendReqVO) {
         if (UserTypeEnum.MEMBER.getValue().equals(sendReqVO.getUserType())) {
-            return success(notifySendService.sendSingleNotifyToMember(sendReqVO.getUserId(),
-                    sendReqVO.getTemplateCode(), sendReqVO.getTemplateParams()));
+            return success(
+                    notifySendService.sendSingleNotifyToMember(
+                            sendReqVO.getUserId(),
+                            sendReqVO.getTemplateCode(),
+                            sendReqVO.getTemplateParams()));
         } else {
-            return success(notifySendService.sendSingleNotifyToAdmin(sendReqVO.getUserId(),
-                    sendReqVO.getTemplateCode(), sendReqVO.getTemplateParams()));
+            return success(
+                    notifySendService.sendSingleNotifyToAdmin(
+                            sendReqVO.getUserId(),
+                            sendReqVO.getTemplateCode(),
+                            sendReqVO.getTemplateParams()));
         }
     }
 }

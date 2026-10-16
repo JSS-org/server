@@ -35,5 +35,4 @@ public interface PostApi {
         List<PostRespDTO> list = getPostList(ids);
         return CollectionUtils.convertMap(list, PostRespDTO::getId);
     }
-
 }

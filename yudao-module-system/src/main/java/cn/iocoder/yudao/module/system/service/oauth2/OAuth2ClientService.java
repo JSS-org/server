@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.client.OAuth2ClientPageReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.oauth2.vo.client.OAuth2ClientSaveReqVO;
 import cn.iocoder.yudao.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -92,7 +93,10 @@ public interface OAuth2ClientService {
      * @param redirectUri 重定向地址
      * @return 客户端
      */
-    OAuth2ClientDO validOAuthClientFromCache(String clientId, String clientSecret, String authorizedGrantType,
-                                             Collection<String> scopes, String redirectUri);
-
+    OAuth2ClientDO validOAuthClientFromCache(
+            String clientId,
+            String clientSecret,
+            String authorizedGrantType,
+            Collection<String> scopes,
+            String redirectUri);
 }

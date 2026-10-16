@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.im.dal.mysql.statistics;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.im.dal.dataobject.group.ImGroupDO;
@@ -10,19 +12,20 @@ import cn.iocoder.yudao.module.im.dal.mysql.group.ImGroupMapper;
 import cn.iocoder.yudao.module.im.dal.mysql.group.ImGroupMemberMapper;
 import cn.iocoder.yudao.module.im.dal.mysql.message.ImGroupMessageMapper;
 import cn.iocoder.yudao.module.im.dal.mysql.message.ImPrivateMessageMapper;
-import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
 import cn.iocoder.yudao.module.im.enums.ImContentTypeEnum;
+import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import javax.sql.DataSource;
 
 /**
  * {@link ImStatisticsManagerMapper} 的单元测试
@@ -34,19 +37,13 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
     private static final LocalDateTime WINDOW_BEGIN = LocalDateTime.of(2026, 1, 1, 0, 0);
     private static final LocalDateTime WINDOW_END = LocalDateTime.of(2026, 2, 1, 0, 0);
 
-    @Resource
-    private ImStatisticsManagerMapper mapper;
+    @Resource private ImStatisticsManagerMapper mapper;
 
-    @Resource
-    private ImPrivateMessageMapper privateMessageMapper;
-    @Resource
-    private ImGroupMessageMapper groupMessageMapper;
-    @Resource
-    private ImGroupMapper groupMapper;
-    @Resource
-    private ImGroupMemberMapper groupMemberMapper;
-    @Resource
-    private DataSource dataSource;
+    @Resource private ImPrivateMessageMapper privateMessageMapper;
+    @Resource private ImGroupMessageMapper groupMessageMapper;
+    @Resource private ImGroupMapper groupMapper;
+    @Resource private ImGroupMemberMapper groupMemberMapper;
+    @Resource private DataSource dataSource;
 
     private JdbcTemplate jdbcTemplate;
 
@@ -85,8 +82,9 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
         privateMessageMapper.insert(buildPrivate(1L, 2L, WINDOW_BEGIN.plusDays(1)));
         privateMessageMapper.insert(buildPrivate(1L, 2L, WINDOW_BEGIN.plusDays(2)));
         groupMessageMapper.insert(buildGroupMessage(2L, 100L, WINDOW_BEGIN.plusDays(3)));
-        groupMessageMapper.insert(buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(4))); // 用户 1 已计一次
-        privateMessageMapper.insert(buildPrivate(3L, 4L, WINDOW_BEGIN.minusDays(1)));     // 窗口外
+        groupMessageMapper.insert(
+                buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(4))); // 用户 1 已计一次
+        privateMessageMapper.insert(buildPrivate(3L, 4L, WINDOW_BEGIN.minusDays(1))); // 窗口外
 
         // 调用 + 断言：去重后 = 2
         assertEquals(2L, mapper.selectActiveUserCount(WINDOW_BEGIN, WINDOW_END));
@@ -117,7 +115,8 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
         groupMessageMapper.insert(buildGroupMessage(2L, 100L, WINDOW_BEGIN.plusDays(2)));
 
         // 调用
-        List<Map<String, Object>> list = mapper.selectActiveUserDailyCount(WINDOW_BEGIN, WINDOW_END);
+        List<Map<String, Object>> list =
+                mapper.selectActiveUserDailyCount(WINDOW_BEGIN, WINDOW_END);
 
         // 断言：两天合计 2 名活跃用户（同一天 user 1 去重 + 第二天 user 2）
         assertEquals(2, list.size());
@@ -163,8 +162,12 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
         List<Map<String, Object>> dist = mapper.selectGroupSizeDistribution();
 
         // 断言：分桶包含「1-9 人」和「10-49 人」
-        Map<Object, Long> byRange = dist.stream().collect(java.util.stream.Collectors.toMap(
-                m -> m.get("range"), m -> ((Number) m.get("count")).longValue()));
+        Map<Object, Long> byRange =
+                dist.stream()
+                        .collect(
+                                java.util.stream.Collectors.toMap(
+                                        m -> m.get("range"),
+                                        m -> ((Number) m.get("count")).longValue()));
         assertEquals(1L, byRange.get("1-9 人"));
         assertEquals(1L, byRange.get("10-49 人"));
     }
@@ -194,17 +197,30 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
     @Test
     public void testSelectMessageTypeDistribution_mergePrivateAndGroup() {
         // 准备：私聊 type=0 ×1，群聊 type=0 ×2、type=1 ×1
-        privateMessageMapper.insert(buildPrivate(1L, 2L, WINDOW_BEGIN.plusDays(1)).setType(ImContentTypeEnum.TEXT.getType()));
-        groupMessageMapper.insert(buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(1)).setType(ImContentTypeEnum.TEXT.getType()));
-        groupMessageMapper.insert(buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(1)).setType(ImContentTypeEnum.TEXT.getType()));
-        groupMessageMapper.insert(buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(1)).setType(ImContentTypeEnum.IMAGE.getType()));
+        privateMessageMapper.insert(
+                buildPrivate(1L, 2L, WINDOW_BEGIN.plusDays(1))
+                        .setType(ImContentTypeEnum.TEXT.getType()));
+        groupMessageMapper.insert(
+                buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(1))
+                        .setType(ImContentTypeEnum.TEXT.getType()));
+        groupMessageMapper.insert(
+                buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(1))
+                        .setType(ImContentTypeEnum.TEXT.getType()));
+        groupMessageMapper.insert(
+                buildGroupMessage(1L, 100L, WINDOW_BEGIN.plusDays(1))
+                        .setType(ImContentTypeEnum.IMAGE.getType()));
 
         // 调用
-        List<Map<String, Object>> dist = mapper.selectMessageTypeDistribution(WINDOW_BEGIN, WINDOW_END);
+        List<Map<String, Object>> dist =
+                mapper.selectMessageTypeDistribution(WINDOW_BEGIN, WINDOW_END);
 
         // 断言：type=TEXT(0) → 3；type=IMAGE(1) → 1
-        Map<Object, Long> byType = dist.stream().collect(java.util.stream.Collectors.toMap(
-                m -> ((Number) m.get("type")).intValue(), m -> ((Number) m.get("count")).longValue()));
+        Map<Object, Long> byType =
+                dist.stream()
+                        .collect(
+                                java.util.stream.Collectors.toMap(
+                                        m -> ((Number) m.get("type")).intValue(),
+                                        m -> ((Number) m.get("count")).longValue()));
         assertEquals(3L, byType.get(ImContentTypeEnum.TEXT.getType()));
         assertEquals(1L, byType.get(ImContentTypeEnum.IMAGE.getType()));
     }
@@ -234,25 +250,34 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
 
     private void insertUser(Long id, LocalDateTime createTime) {
         jdbcTemplate.update(
-                "INSERT INTO system_users (id, username, password, nickname, status, create_time, update_time, deleted, tenant_id) " +
-                        "VALUES (?, ?, '', ?, 0, ?, ?, FALSE, 0)",
-                id, "u" + id, "n" + id, createTime, createTime);
+                "INSERT INTO system_users (id, username, password, nickname, status, create_time, update_time, deleted, tenant_id) "
+                        + "VALUES (?, ?, '', ?, 0, ?, ?, FALSE, 0)",
+                id,
+                "u" + id,
+                "n" + id,
+                createTime,
+                createTime);
     }
 
-    private static ImPrivateMessageDO buildPrivate(Long senderId, Long receiverId, LocalDateTime sendTime) {
+    private static ImPrivateMessageDO buildPrivate(
+            Long senderId, Long receiverId, LocalDateTime sendTime) {
         return ImPrivateMessageDO.builder()
                 .clientMessageId("uuid-" + System.nanoTime())
-                .senderId(senderId).receiverId(receiverId)
+                .senderId(senderId)
+                .receiverId(receiverId)
                 .type(ImContentTypeEnum.TEXT.getType())
                 .content("{}")
                 .status(ImMessageStatusEnum.NORMAL.getStatus())
-                .sendTime(sendTime).build();
+                .sendTime(sendTime)
+                .build();
     }
 
-    private static ImGroupMessageDO buildGroupMessage(Long senderId, Long groupId, LocalDateTime sendTime) {
+    private static ImGroupMessageDO buildGroupMessage(
+            Long senderId, Long groupId, LocalDateTime sendTime) {
         return new ImGroupMessageDO()
                 .setClientMessageId("uuid-" + System.nanoTime())
-                .setSenderId(senderId).setGroupId(groupId)
+                .setSenderId(senderId)
+                .setGroupId(groupId)
                 .setType(ImContentTypeEnum.TEXT.getType())
                 .setContent("{}")
                 .setStatus(ImMessageStatusEnum.NORMAL.getStatus())
@@ -260,19 +285,24 @@ public class ImStatisticsManagerMapperTest extends BaseDbUnitTest {
     }
 
     private static ImGroupDO buildGroup(CommonStatusEnum status) {
-        return ImGroupDO.builder().name("g" + System.nanoTime()).ownerUserId(1L)
-                .status(status.getStatus()).build();
+        return ImGroupDO.builder()
+                .name("g" + System.nanoTime())
+                .ownerUserId(1L)
+                .status(status.getStatus())
+                .build();
     }
 
     private Long insertGroupAndMembers(int memberCount) {
         ImGroupDO group = buildGroup(CommonStatusEnum.ENABLE);
         groupMapper.insert(group);
         for (int i = 0; i < memberCount; i++) {
-            groupMemberMapper.insert(new ImGroupMemberDO()
-                    .setGroupId(group.getId()).setUserId((long) (1000 + i))
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()).setRole(3));
+            groupMemberMapper.insert(
+                    new ImGroupMemberDO()
+                            .setGroupId(group.getId())
+                            .setUserId((long) (1000 + i))
+                            .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                            .setRole(3));
         }
         return group.getId();
     }
-
 }

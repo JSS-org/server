@@ -1,5 +1,18 @@
 package cn.iocoder.yudao.module.system.service.permission;
 
+import static cn.hutool.core.collection.ListUtil.toList;
+import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
@@ -16,7 +29,9 @@ import cn.iocoder.yudao.module.system.dal.mysql.permission.UserRoleMapper;
 import cn.iocoder.yudao.module.system.enums.permission.DataScopeEnum;
 import cn.iocoder.yudao.module.system.service.dept.DeptService;
 import cn.iocoder.yudao.module.system.service.user.AdminUserService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.springframework.context.annotation.Import;
@@ -26,50 +41,35 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static cn.hutool.core.collection.ListUtil.toList;
-import static cn.iocoder.yudao.framework.common.util.collection.SetUtils.asSet;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 @Import({PermissionServiceImpl.class})
 public class PermissionServiceTest extends BaseDbUnitTest {
 
-    @Resource
-    private PermissionServiceImpl permissionService;
+    @Resource private PermissionServiceImpl permissionService;
 
-    @Resource
-    private RoleMenuMapper roleMenuMapper;
-    @Resource
-    private UserRoleMapper userRoleMapper;
+    @Resource private RoleMenuMapper roleMenuMapper;
+    @Resource private UserRoleMapper userRoleMapper;
 
-    @MockitoBean
-    private RoleService roleService;
-    @MockitoBean
-    private MenuService menuService;
-    @MockitoBean
-    private DeptService deptService;
-    @MockitoBean
-    private AdminUserService userService;
+    @MockitoBean private RoleService roleService;
+    @MockitoBean private MenuService menuService;
+    @MockitoBean private DeptService deptService;
+    @MockitoBean private AdminUserService userService;
 
     @Test
     public void testHasAnyPermissions_superAdmin() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
             Long userId = 1L;
-            String[] roles = new String[]{"system:user:query", "system:user:create"};
+            String[] roles = new String[] {"system:user:query", "system:user:create"};
             // mock 用户登录的角色
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(100L));
-            RoleDO role = randomPojo(RoleDO.class, o -> o.setId(100L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO role =
+                    randomPojo(
+                            RoleDO.class,
+                            o -> o.setId(100L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(100L)))).thenReturn(toList(role));
             // mock 其它方法
             when(roleService.hasAnySuperAdmin(eq(asSet(100L)))).thenReturn(true);
@@ -82,21 +82,24 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testHasAnyPermissions_normal() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
             Long userId = 1L;
-            String[] roles = new String[]{"system:user:query", "system:user:create"};
+            String[] roles = new String[] {"system:user:query", "system:user:create"};
             // mock 用户登录的角色
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(100L));
-            RoleDO role = randomPojo(RoleDO.class, o -> o.setId(100L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO role =
+                    randomPojo(
+                            RoleDO.class,
+                            o -> o.setId(100L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(100L)))).thenReturn(toList(role));
             // mock 菜单
             Long menuId = 1000L;
-            when(menuService.getMenuIdListByPermissionFromCache(
-                    eq("system:user:create"))).thenReturn(singletonList(menuId));
+            when(menuService.getMenuIdListByPermissionFromCache(eq("system:user:create")))
+                    .thenReturn(singletonList(menuId));
             roleMenuMapper.insert(randomPojo(RoleMenuDO.class).setRoleId(100L).setMenuId(1000L));
 
             // 调用，并断言
@@ -107,16 +110,22 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testHasAnyRoles() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
             Long userId = 1L;
-            String[] roles = new String[]{"yunai", "tudou"};
+            String[] roles = new String[] {"yunai", "tudou"};
             // mock 用户与角色的缓存
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(100L));
-            RoleDO role = randomPojo(RoleDO.class, o -> o.setId(100L).setCode("tudou")
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO role =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setId(100L)
+                                            .setCode("tudou")
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(100L)))).thenReturn(toList(role));
 
             // 调用，并断言
@@ -349,7 +358,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetEnableUserRoleListByUserIdFromCache() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -357,10 +367,14 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户登录的角色
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(100L));
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(200L));
-            RoleDO role01 = randomPojo(RoleDO.class, o -> o.setId(100L)
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
-            RoleDO role02 = randomPojo(RoleDO.class, o -> o.setId(200L)
-                    .setStatus(CommonStatusEnum.DISABLE.getStatus()));
+            RoleDO role01 =
+                    randomPojo(
+                            RoleDO.class,
+                            o -> o.setId(100L).setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO role02 =
+                    randomPojo(
+                            RoleDO.class,
+                            o -> o.setId(200L).setStatus(CommonStatusEnum.DISABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(asSet(100L, 200L))))
                     .thenReturn(toList(role01, role02));
 
@@ -390,7 +404,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_All() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -398,8 +413,12 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.ALL.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.ALL.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
 
             // 调用
@@ -414,7 +433,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_DeptCustom() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -422,12 +442,17 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.DEPT_CUSTOM.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.DEPT_CUSTOM.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
             // mock 部门的返回
-            when(userService.getUser(eq(1L))).thenReturn(new AdminUserDO().setDeptId(3L),
-                    null, null); // 最后返回 null 的目的，看看会不会重复调用
+            when(userService.getUser(eq(1L)))
+                    .thenReturn(
+                            new AdminUserDO().setDeptId(3L), null, null); // 最后返回 null 的目的，看看会不会重复调用
 
             // 调用
             DeptDataPermissionRespDTO result = permissionService.getDeptDataPermission(userId);
@@ -443,7 +468,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_DeptCustom_userDeptIdNull() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -451,8 +477,12 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.DEPT_CUSTOM.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.DEPT_CUSTOM.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
             // mock 部门的返回：用户未设置部门
             when(userService.getUser(eq(1L))).thenReturn(new AdminUserDO()); // deptId 为 null
@@ -471,7 +501,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_DeptOnly() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -479,12 +510,17 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.DEPT_ONLY.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.DEPT_ONLY.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
             // mock 部门的返回
-            when(userService.getUser(eq(1L))).thenReturn(new AdminUserDO().setDeptId(3L),
-                    null, null); // 最后返回 null 的目的，看看会不会重复调用
+            when(userService.getUser(eq(1L)))
+                    .thenReturn(
+                            new AdminUserDO().setDeptId(3L), null, null); // 最后返回 null 的目的，看看会不会重复调用
 
             // 调用
             DeptDataPermissionRespDTO result = permissionService.getDeptDataPermission(userId);
@@ -499,7 +535,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_DeptAndChild() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -507,15 +544,21 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.DEPT_AND_CHILD.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.DEPT_AND_CHILD.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
             // mock 部门的返回
-            when(userService.getUser(eq(1L))).thenReturn(new AdminUserDO().setDeptId(3L),
-                    null, null); // 最后返回 null 的目的，看看会不会重复调用
+            when(userService.getUser(eq(1L)))
+                    .thenReturn(
+                            new AdminUserDO().setDeptId(3L), null, null); // 最后返回 null 的目的，看看会不会重复调用
             // mock 方法（部门)
             DeptDO deptDO = randomPojo(DeptDO.class);
-            when(deptService.getChildDeptIdListFromCache(eq(3L))).thenReturn(singleton(deptDO.getId()));
+            when(deptService.getChildDeptIdListFromCache(eq(3L)))
+                    .thenReturn(singleton(deptDO.getId()));
 
             // 调用
             DeptDataPermissionRespDTO result = permissionService.getDeptDataPermission(userId);
@@ -531,7 +574,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_DeptAndChild_userDeptIdNull() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -539,8 +583,12 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.DEPT_AND_CHILD.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.DEPT_AND_CHILD.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
             // mock 部门的返回：用户未设置部门
             when(userService.getUser(eq(1L))).thenReturn(new AdminUserDO()); // deptId 为 null
@@ -558,7 +606,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     @Test
     public void testGetDeptDataPermission_Self() {
         try (MockedStatic<SpringUtil> springUtilMockedStatic = mockStatic(SpringUtil.class)) {
-            springUtilMockedStatic.when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
+            springUtilMockedStatic
+                    .when(() -> SpringUtil.getBean(eq(PermissionServiceImpl.class)))
                     .thenReturn(permissionService);
 
             // 准备参数
@@ -566,8 +615,12 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             // mock 用户的角色编号
             userRoleMapper.insert(randomPojo(UserRoleDO.class).setUserId(userId).setRoleId(2L));
             // mock 获得用户的角色
-            RoleDO roleDO = randomPojo(RoleDO.class, o -> o.setDataScope(DataScopeEnum.SELF.getScope())
-                    .setStatus(CommonStatusEnum.ENABLE.getStatus()));
+            RoleDO roleDO =
+                    randomPojo(
+                            RoleDO.class,
+                            o ->
+                                    o.setDataScope(DataScopeEnum.SELF.getScope())
+                                            .setStatus(CommonStatusEnum.ENABLE.getStatus()));
             when(roleService.getRoleListFromCache(eq(singleton(2L)))).thenReturn(toList(roleDO));
 
             // 调用
@@ -578,5 +631,4 @@ public class PermissionServiceTest extends BaseDbUnitTest {
             assertTrue(CollUtil.isEmpty(result.getDeptIds()));
         }
     }
-
 }

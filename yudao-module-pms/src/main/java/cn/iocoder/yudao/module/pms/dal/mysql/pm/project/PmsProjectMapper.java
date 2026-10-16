@@ -8,7 +8,9 @@ import cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.project.PmsPro
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.project.PmsProjectDO;
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectSortTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.project.PmsProjectStatusEnum;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -20,11 +22,12 @@ import java.util.List;
 public interface PmsProjectMapper extends BaseMapperX<PmsProjectDO> {
 
     default List<PmsProjectDO> selectListByIdsAndStatus(Collection<Long> ids, Integer status) {
-        return selectList(new LambdaQueryWrapperX<PmsProjectDO>()
-                .in(PmsProjectDO::getId, ids)
-                .eq(PmsProjectDO::getStatus, status)
-                .orderByDesc(PmsProjectDO::getAccessTime)
-                .orderByDesc(PmsProjectDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<PmsProjectDO>()
+                        .in(PmsProjectDO::getId, ids)
+                        .eq(PmsProjectDO::getStatus, status)
+                        .orderByDesc(PmsProjectDO::getAccessTime)
+                        .orderByDesc(PmsProjectDO::getId));
     }
 
     /**
@@ -36,19 +39,24 @@ public interface PmsProjectMapper extends BaseMapperX<PmsProjectDO> {
      * @param includeAllProject 是否包含全部项目
      * @return 项目分页结果
      */
-    default PageResult<PmsProjectDO> selectPage(PmsProjectPageReqVO pageReqVO, Collection<Long> projectIds,
-                                                boolean includeOpenProject, boolean includeAllProject) {
-        LambdaQueryWrapperX<PmsProjectDO> query = new LambdaQueryWrapperX<PmsProjectDO>()
-                .likeIfPresent(PmsProjectDO::getName, pageReqVO.getName())
-                .eq(PmsProjectDO::getStatus, pageReqVO.getStatus());
+    default PageResult<PmsProjectDO> selectPage(
+            PmsProjectPageReqVO pageReqVO,
+            Collection<Long> projectIds,
+            boolean includeOpenProject,
+            boolean includeAllProject) {
+        LambdaQueryWrapperX<PmsProjectDO> query =
+                new LambdaQueryWrapperX<PmsProjectDO>()
+                        .likeIfPresent(PmsProjectDO::getName, pageReqVO.getName())
+                        .eq(PmsProjectDO::getStatus, pageReqVO.getStatus());
         if (!includeAllProject) {
             if (includeOpenProject) {
-                query.and(wrapper -> {
-                    wrapper.eq(PmsProjectDO::getOpenStatus, true);
-                    if (CollUtil.isNotEmpty(projectIds)) {
-                        wrapper.or().in(PmsProjectDO::getId, projectIds);
-                    }
-                });
+                query.and(
+                        wrapper -> {
+                            wrapper.eq(PmsProjectDO::getOpenStatus, true);
+                            if (CollUtil.isNotEmpty(projectIds)) {
+                                wrapper.or().in(PmsProjectDO::getId, projectIds);
+                            }
+                        });
             } else {
                 query.in(PmsProjectDO::getId, projectIds);
             }
@@ -62,29 +70,37 @@ public interface PmsProjectMapper extends BaseMapperX<PmsProjectDO> {
         return selectPage(pageReqVO, query);
     }
 
-    default int updateStatusAndArchiveTimeById(Long id, Integer sourceStatus, Integer status,
-                                               LocalDateTime archiveTime) {
-        return update(new LambdaUpdateWrapper<PmsProjectDO>().eq(PmsProjectDO::getId, id)
-                .eq(PmsProjectDO::getStatus, sourceStatus)
-                .set(PmsProjectDO::getStatus, status)
-                .set(PmsProjectDO::getArchiveTime, archiveTime));
+    default int updateStatusAndArchiveTimeById(
+            Long id, Integer sourceStatus, Integer status, LocalDateTime archiveTime) {
+        return update(
+                new LambdaUpdateWrapper<PmsProjectDO>()
+                        .eq(PmsProjectDO::getId, id)
+                        .eq(PmsProjectDO::getStatus, sourceStatus)
+                        .set(PmsProjectDO::getStatus, status)
+                        .set(PmsProjectDO::getArchiveTime, archiveTime));
     }
 
-    default int updateStatusAndRecycleTimeById(Long id, Integer sourceStatus, Integer status,
-                                               LocalDateTime recycleTime) {
-        return update(new LambdaUpdateWrapper<PmsProjectDO>().eq(PmsProjectDO::getId, id)
-                .eq(PmsProjectDO::getStatus, sourceStatus)
-                .set(PmsProjectDO::getStatus, status)
-                .set(PmsProjectDO::getRecycleTime, recycleTime));
+    default int updateStatusAndRecycleTimeById(
+            Long id, Integer sourceStatus, Integer status, LocalDateTime recycleTime) {
+        return update(
+                new LambdaUpdateWrapper<PmsProjectDO>()
+                        .eq(PmsProjectDO::getId, id)
+                        .eq(PmsProjectDO::getStatus, sourceStatus)
+                        .set(PmsProjectDO::getStatus, status)
+                        .set(PmsProjectDO::getRecycleTime, recycleTime));
     }
 
     default int updateToRestoreById(Long id, Integer status) {
-        return update(new LambdaUpdateWrapper<PmsProjectDO>().eq(PmsProjectDO::getId, id)
-                .in(PmsProjectDO::getStatus, Arrays.asList(PmsProjectStatusEnum.ARCHIVED.getStatus(),
-                        PmsProjectStatusEnum.RECYCLED.getStatus()))
-                .set(PmsProjectDO::getStatus, status)
-                .set(PmsProjectDO::getArchiveTime, null)
-                .set(PmsProjectDO::getRecycleTime, null));
+        return update(
+                new LambdaUpdateWrapper<PmsProjectDO>()
+                        .eq(PmsProjectDO::getId, id)
+                        .in(
+                                PmsProjectDO::getStatus,
+                                Arrays.asList(
+                                        PmsProjectStatusEnum.ARCHIVED.getStatus(),
+                                        PmsProjectStatusEnum.RECYCLED.getStatus()))
+                        .set(PmsProjectDO::getStatus, status)
+                        .set(PmsProjectDO::getArchiveTime, null)
+                        .set(PmsProjectDO::getRecycleTime, null));
     }
-
 }

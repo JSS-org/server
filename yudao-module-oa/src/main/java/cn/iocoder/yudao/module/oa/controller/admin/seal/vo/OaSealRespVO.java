@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.seal.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -63,7 +64,11 @@ public class OaSealRespVO {
     @Schema(description = "备注", example = "合同签署完成后归档")
     private String remark;
 
-    @Schema(description = "创建时间", example = "1789088400000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "创建时间",
+            example = "1789088400000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     private LocalDateTime createTime;
-
 }

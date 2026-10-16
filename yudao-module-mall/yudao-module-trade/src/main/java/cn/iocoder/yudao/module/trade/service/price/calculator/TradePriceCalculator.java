@@ -22,12 +22,14 @@ public interface TradePriceCalculator {
     int ORDER_REWARD_ACTIVITY = 20;
     int ORDER_COUPON = 30;
     int ORDER_POINT_USE = 40;
+
     /**
      * 快递运费的计算
      *
      * 放在各种营销活动、优惠劵后面
      */
     int ORDER_DELIVERY = 50;
+
     /**
      * 赠送积分，放最后
      *
@@ -36,5 +38,4 @@ public interface TradePriceCalculator {
     int ORDER_POINT_GIVE = 999;
 
     void calculate(TradePriceCalculateReqBO param, TradePriceCalculateRespBO result);
-
 }

@@ -2,7 +2,9 @@ package cn.iocoder.yudao.module.iot.core.topic.topo;
 
 import cn.iocoder.yudao.module.iot.core.biz.dto.IotDeviceAuthReqDTO;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 
 import java.util.List;
@@ -25,5 +27,4 @@ public class IotDeviceTopoAddReqDTO {
      */
     @NotEmpty(message = "子设备认证信息列表不能为空")
     private List<IotDeviceAuthReqDTO> subDevices;
-
 }

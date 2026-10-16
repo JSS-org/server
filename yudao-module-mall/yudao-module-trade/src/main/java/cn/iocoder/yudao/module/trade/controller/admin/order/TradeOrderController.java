@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.trade.controller.admin.order;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,11 +18,15 @@ import cn.iocoder.yudao.module.trade.dal.dataobject.order.TradeOrderLogDO;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderLogService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderQueryService;
 import cn.iocoder.yudao.module.trade.service.order.TradeOrderUpdateService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,11 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - 交易订单")
 @RestController
 @RequestMapping("/trade/order")
@@ -39,20 +43,17 @@ import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUti
 @Slf4j
 public class TradeOrderController {
 
-    @Resource
-    private TradeOrderUpdateService tradeOrderUpdateService;
-    @Resource
-    private TradeOrderQueryService tradeOrderQueryService;
-    @Resource
-    private TradeOrderLogService tradeOrderLogService;
+    @Resource private TradeOrderUpdateService tradeOrderUpdateService;
+    @Resource private TradeOrderQueryService tradeOrderQueryService;
+    @Resource private TradeOrderLogService tradeOrderLogService;
 
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private MemberUserApi memberUserApi;
 
     @GetMapping("/page")
     @Operation(summary = "获得交易订单分页")
     @PreAuthorize("@ss.hasPermission('trade:order:query')")
-    public CommonResult<PageResult<TradeOrderPageItemRespVO>> getOrderPage(TradeOrderPageReqVO reqVO) {
+    public CommonResult<PageResult<TradeOrderPageItemRespVO>> getOrderPage(
+            TradeOrderPageReqVO reqVO) {
         // 查询订单
         PageResult<TradeOrderDO> pageResult = tradeOrderQueryService.getOrderPage(reqVO);
         if (CollUtil.isEmpty(pageResult.getList())) {
@@ -60,12 +61,18 @@ public class TradeOrderController {
         }
 
         // 查询用户信息
-        Set<Long> userIds = CollUtil.unionDistinct(convertList(pageResult.getList(), TradeOrderDO::getUserId),
-                convertList(pageResult.getList(), TradeOrderDO::getBrokerageUserId, Objects::nonNull));
+        Set<Long> userIds =
+                CollUtil.unionDistinct(
+                        convertList(pageResult.getList(), TradeOrderDO::getUserId),
+                        convertList(
+                                pageResult.getList(),
+                                TradeOrderDO::getBrokerageUserId,
+                                Objects::nonNull));
         Map<Long, MemberUserRespDTO> userMap = memberUserApi.getUserMap(userIds);
         // 查询订单项
-        List<TradeOrderItemDO> orderItems = tradeOrderQueryService.getOrderItemListByOrderId(
-                convertSet(pageResult.getList(), TradeOrderDO::getId));
+        List<TradeOrderItemDO> orderItems =
+                tradeOrderQueryService.getOrderItemListByOrderId(
+                        convertSet(pageResult.getList(), TradeOrderDO::getId));
         // 最终组合
         return success(TradeOrderConvert.INSTANCE.convertPage(pageResult, orderItems, userMap));
     }
@@ -92,10 +99,14 @@ public class TradeOrderController {
 
         // 拼接数据
         MemberUserRespDTO user = memberUserApi.getUser(order.getUserId());
-        MemberUserRespDTO brokerageUser = order.getBrokerageUserId() != null ?
-                memberUserApi.getUser(order.getBrokerageUserId()) : null;
+        MemberUserRespDTO brokerageUser =
+                order.getBrokerageUserId() != null
+                        ? memberUserApi.getUser(order.getBrokerageUserId())
+                        : null;
         List<TradeOrderLogDO> orderLogs = tradeOrderLogService.getOrderLogListByOrderId(id);
-        return success(TradeOrderConvert.INSTANCE.convert(order, orderItems, orderLogs, user, brokerageUser));
+        return success(
+                TradeOrderConvert.INSTANCE.convert(
+                        order, orderItems, orderLogs, user, brokerageUser));
     }
 
     @GetMapping("/get-express-track-list")
@@ -103,8 +114,9 @@ public class TradeOrderController {
     @Parameter(name = "id", description = "交易订单编号")
     @PreAuthorize("@ss.hasPermission('trade:order:query')")
     public CommonResult<List<?>> getOrderExpressTrackList(@RequestParam("id") Long id) {
-        return success(TradeOrderConvert.INSTANCE.convertList02(
-                tradeOrderQueryService.getExpressTrackList(id)));
+        return success(
+                TradeOrderConvert.INSTANCE.convertList02(
+                        tradeOrderQueryService.getExpressTrackList(id)));
     }
 
     @PutMapping("/delivery")
@@ -134,7 +146,8 @@ public class TradeOrderController {
     @PutMapping("/update-address")
     @Operation(summary = "修改订单收货地址")
     @PreAuthorize("@ss.hasPermission('trade:order:update')")
-    public CommonResult<Boolean> updateOrderAddress(@RequestBody TradeOrderUpdateAddressReqVO reqVO) {
+    public CommonResult<Boolean> updateOrderAddress(
+            @RequestBody TradeOrderUpdateAddressReqVO reqVO) {
         tradeOrderUpdateService.updateOrderAddress(reqVO);
         return success(true);
     }
@@ -152,7 +165,8 @@ public class TradeOrderController {
     @Operation(summary = "订单核销")
     @Parameter(name = "pickUpVerifyCode", description = "自提核销码")
     @PreAuthorize("@ss.hasPermission('trade:order:pick-up')")
-    public CommonResult<Boolean> pickUpOrderByVerifyCode(@RequestParam("pickUpVerifyCode") String pickUpVerifyCode) {
+    public CommonResult<Boolean> pickUpOrderByVerifyCode(
+            @RequestParam("pickUpVerifyCode") String pickUpVerifyCode) {
         tradeOrderUpdateService.pickUpOrderByAdmin(getLoginUserId(), pickUpVerifyCode);
         return success(true);
     }
@@ -161,9 +175,9 @@ public class TradeOrderController {
     @Operation(summary = "查询核销码对应的订单")
     @Parameter(name = "pickUpVerifyCode", description = "自提核销码")
     @PreAuthorize("@ss.hasPermission('trade:order:query')")
-    public CommonResult<TradeOrderDetailRespVO> getByPickUpVerifyCode(@RequestParam("pickUpVerifyCode") String pickUpVerifyCode) {
+    public CommonResult<TradeOrderDetailRespVO> getByPickUpVerifyCode(
+            @RequestParam("pickUpVerifyCode") String pickUpVerifyCode) {
         TradeOrderDO tradeOrder = tradeOrderUpdateService.getByPickUpVerifyCode(pickUpVerifyCode);
         return success(TradeOrderConvert.INSTANCE.convert2(tradeOrder, null));
     }
-
 }

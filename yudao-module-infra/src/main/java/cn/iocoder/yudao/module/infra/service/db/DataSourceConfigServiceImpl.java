@@ -1,22 +1,25 @@
 package cn.iocoder.yudao.module.infra.service.db;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DATA_SOURCE_CONFIG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DATA_SOURCE_CONFIG_NOT_OK;
+
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.mybatis.core.util.JdbcUtils;
 import cn.iocoder.yudao.module.infra.controller.admin.db.vo.DataSourceConfigSaveReqVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.db.DataSourceConfigDO;
 import cn.iocoder.yudao.module.infra.dal.mysql.db.DataSourceConfigMapper;
+
 import com.baomidou.dynamic.datasource.creator.DataSourceProperty;
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DATA_SOURCE_CONFIG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DATA_SOURCE_CONFIG_NOT_OK;
 
 /**
  * 数据源配置 Service 实现类
@@ -27,11 +30,9 @@ import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.DATA_SOURCE
 @Validated
 public class DataSourceConfigServiceImpl implements DataSourceConfigService {
 
-    @Resource
-    private DataSourceConfigMapper dataSourceConfigMapper;
+    @Resource private DataSourceConfigMapper dataSourceConfigMapper;
 
-    @Resource
-    private DynamicDataSourceProperties dynamicDataSourceProperties;
+    @Resource private DynamicDataSourceProperties dynamicDataSourceProperties;
 
     @Override
     public Long createDataSourceConfig(DataSourceConfigSaveReqVO createReqVO) {
@@ -93,7 +94,9 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
     }
 
     private void validateConnectionOK(DataSourceConfigDO config) {
-        boolean success = JdbcUtils.isConnectionOK(config.getUrl(), config.getUsername(), config.getPassword());
+        boolean success =
+                JdbcUtils.isConnectionOK(
+                        config.getUrl(), config.getUsername(), config.getPassword());
         if (!success) {
             throw exception(DATA_SOURCE_CONFIG_NOT_OK);
         }
@@ -101,11 +104,13 @@ public class DataSourceConfigServiceImpl implements DataSourceConfigService {
 
     private DataSourceConfigDO buildMasterDataSourceConfig() {
         String primary = dynamicDataSourceProperties.getPrimary();
-        DataSourceProperty dataSourceProperty = dynamicDataSourceProperties.getDatasource().get(primary);
-        return new DataSourceConfigDO().setId(DataSourceConfigDO.ID_MASTER).setName(primary)
+        DataSourceProperty dataSourceProperty =
+                dynamicDataSourceProperties.getDatasource().get(primary);
+        return new DataSourceConfigDO()
+                .setId(DataSourceConfigDO.ID_MASTER)
+                .setName(primary)
                 .setUrl(dataSourceProperty.getUrl())
                 .setUsername(dataSourceProperty.getUsername())
                 .setPassword(dataSourceProperty.getPassword());
     }
-
 }

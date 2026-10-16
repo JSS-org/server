@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.iot.core.biz.dto;
 
 import cn.iocoder.yudao.module.iot.core.topic.auth.IotSubDeviceRegisterReqDTO;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -34,5 +36,4 @@ public class IotSubDeviceRegisterFullReqDTO {
      */
     @NotNull(message = "子设备注册列表不能为空")
     private List<IotSubDeviceRegisterReqDTO> subDevices;
-
 }

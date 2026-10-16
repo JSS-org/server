@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.auxiliarytype;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 /**
@@ -26,5 +27,4 @@ public class FmsAuxiliaryTypeRespVO {
 
     @Schema(description = "类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Integer type;
-
 }

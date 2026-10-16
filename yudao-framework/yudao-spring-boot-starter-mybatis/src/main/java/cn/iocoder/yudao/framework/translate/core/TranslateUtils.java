@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.framework.translate.core;
 
 import cn.hutool.core.collection.CollUtil;
+
 import org.dromara.core.trans.vo.VO;
 import org.dromara.trans.service.impl.TransService;
 
@@ -33,5 +34,4 @@ public class TranslateUtils {
         }
         return data;
     }
-
 }

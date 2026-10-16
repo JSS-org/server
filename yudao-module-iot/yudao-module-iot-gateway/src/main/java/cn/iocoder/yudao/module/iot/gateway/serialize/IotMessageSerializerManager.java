@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.iot.gateway.serialize;
 import cn.iocoder.yudao.module.iot.core.enums.IotSerializeTypeEnum;
 import cn.iocoder.yudao.module.iot.gateway.serialize.binary.IotBinarySerializer;
 import cn.iocoder.yudao.module.iot.gateway.serialize.json.IotJsonSerializer;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.EnumMap;
@@ -18,7 +19,8 @@ import java.util.Map;
 @Slf4j
 public class IotMessageSerializerManager {
 
-    private final Map<IotSerializeTypeEnum, IotMessageSerializer> serializerMap = new EnumMap<>(IotSerializeTypeEnum.class);
+    private final Map<IotSerializeTypeEnum, IotMessageSerializer> serializerMap =
+            new EnumMap<>(IotSerializeTypeEnum.class);
 
     public IotMessageSerializerManager() {
         // 遍历枚举，创建对应的序列化器
@@ -56,5 +58,4 @@ public class IotMessageSerializerManager {
     public IotMessageSerializer get(IotSerializeTypeEnum type) {
         return serializerMap.get(type);
     }
-
 }

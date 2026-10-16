@@ -15,13 +15,12 @@ public class TradeOrderLogUtils {
         TradeOrderLogAspect.setOrderInfo(id, beforeStatus, afterStatus, null);
     }
 
-    public static void setOrderInfo(Long id, Integer beforeStatus, Integer afterStatus,
-                                    Map<String, Object> exts) {
+    public static void setOrderInfo(
+            Long id, Integer beforeStatus, Integer afterStatus, Map<String, Object> exts) {
         TradeOrderLogAspect.setOrderInfo(id, beforeStatus, afterStatus, exts);
     }
 
     public static void setUserInfo(Long userId, Integer userType) {
         TradeOrderLogAspect.setUserInfo(userId, userType);
     }
-
 }

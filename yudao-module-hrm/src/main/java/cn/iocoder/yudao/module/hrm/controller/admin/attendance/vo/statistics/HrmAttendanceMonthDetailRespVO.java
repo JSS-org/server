@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.statistics;
 
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.leave.HrmAttendanceLeaveRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,5 +20,4 @@ public class HrmAttendanceMonthDetailRespVO {
 
     @Schema(description = "请假记录")
     private List<HrmAttendanceLeaveRespVO> leaves;
-
 }

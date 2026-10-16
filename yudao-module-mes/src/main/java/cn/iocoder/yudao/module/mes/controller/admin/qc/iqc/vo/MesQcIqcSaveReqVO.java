@@ -1,12 +1,16 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.iqc.vo;
 
 import cn.hutool.core.util.ObjUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -19,7 +23,10 @@ public class MesQcIqcSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "检验单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "IQC20250101001")
+    @Schema(
+            description = "检验单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "IQC20250101001")
     @NotEmpty(message = "检验单编号不能为空")
     private String code;
 
@@ -97,5 +104,4 @@ public class MesQcIqcSaveReqVO {
         }
         return qualifiedQuantity.add(unqualifiedQuantity).compareTo(receivedQuantity) == 0;
     }
-
 }

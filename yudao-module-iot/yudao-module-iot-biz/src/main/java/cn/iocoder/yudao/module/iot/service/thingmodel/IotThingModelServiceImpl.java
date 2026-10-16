@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.iot.service.thingmodel;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DatePattern;
@@ -28,8 +32,11 @@ import cn.iocoder.yudao.module.iot.enums.thingmodel.IotDataSpecsDataTypeEnum;
 import cn.iocoder.yudao.module.iot.framework.tdengine.core.TDengineTableField;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceModbusPointService;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -50,10 +57,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.*;
-
 /**
  * IoT 产品物模型 Service 实现类
  *
@@ -64,14 +67,11 @@ import static cn.iocoder.yudao.module.iot.enums.ErrorCodeConstants.*;
 @Slf4j
 public class IotThingModelServiceImpl implements IotThingModelService {
 
-    @Resource
-    private IotThingModelMapper thingModelMapper;
+    @Resource private IotThingModelMapper thingModelMapper;
 
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖
+    @Resource @Lazy // 延迟加载，解决循环依赖
     private IotProductService productService;
-    @Resource
-    @Lazy // 延迟加载，解决循环依赖
+    @Resource @Lazy // 延迟加载，解决循环依赖
     private IotDeviceModbusPointService deviceModbusPointService;
 
     @Override
@@ -99,7 +99,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
         // 1.1 校验功能是否存在
         validateProductThingModelMapperExists(updateReqVO.getId());
         // 1.2 校验功能标识符是否唯一
-        validateIdentifierUnique(updateReqVO.getId(), updateReqVO.getProductId(), updateReqVO.getIdentifier());
+        validateIdentifierUnique(
+                updateReqVO.getId(), updateReqVO.getProductId(), updateReqVO.getIdentifier());
         // 1.3 校验产品状态，发布状态下，不允许操作功能
         validateProductStatus(updateReqVO.getProductId());
 
@@ -144,7 +145,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
     }
 
     @Override
-    public List<IotThingModelDO> getThingModelListByProductIdAndIdentifiers(Long productId, Collection<String> identifiers) {
+    public List<IotThingModelDO> getThingModelListByProductIdAndIdentifiers(
+            Long productId, Collection<String> identifiers) {
         return thingModelMapper.selectListByProductIdAndIdentifiers(productId, identifiers);
     }
 
@@ -175,8 +177,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
         if (CollUtil.isEmpty(identifiers)) {
             return;
         }
-        List<IotThingModelDO> thingModels = thingModelMapper.selectListByProductIdAndIdentifiers(
-            productId, identifiers);
+        List<IotThingModelDO> thingModels =
+                thingModelMapper.selectListByProductIdAndIdentifiers(productId, identifiers);
         Set<String> foundIdentifiers = convertSet(thingModels, IotThingModelDO::getIdentifier);
         for (String identifier : identifiers) {
             if (!foundIdentifiers.contains(identifier)) {
@@ -191,10 +193,13 @@ public class IotThingModelServiceImpl implements IotThingModelService {
             return null;
         }
         String dataType = thingModel.getProperty().getDataType();
-        if (ObjectUtils.equalsAny(dataType,
-                IotDataSpecsDataTypeEnum.STRUCT.getDataType(), IotDataSpecsDataTypeEnum.ARRAY.getDataType())) {
+        if (ObjectUtils.equalsAny(
+                dataType,
+                IotDataSpecsDataTypeEnum.STRUCT.getDataType(),
+                IotDataSpecsDataTypeEnum.ARRAY.getDataType())) {
             // 特殊：STRUCT 和 ARRAY 类型，在 TDengine 里，没有对应数据类型，只能通过 JSON 来存储
-            return convertToVarchar(JsonUtils.toJsonString(value), TDengineTableField.LENGTH_VARCHAR);
+            return convertToVarchar(
+                    JsonUtils.toJsonString(value), TDengineTableField.LENGTH_VARCHAR);
         }
         if (IotDataSpecsDataTypeEnum.INT.getDataType().equals(dataType)) {
             return convertToInt(value);
@@ -303,7 +308,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
         return dataSpecs != null ? dataSpecs.getValue() : null;
     }
 
-    private ThingModelBoolOrEnumDataSpecs getEnumDataSpecsByName(IotThingModelDO thingModel, String name) {
+    private ThingModelBoolOrEnumDataSpecs getEnumDataSpecsByName(
+            IotThingModelDO thingModel, String name) {
         if (CollUtil.isEmpty(thingModel.getProperty().getDataSpecsList())) {
             return null;
         }
@@ -319,7 +325,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
         return null;
     }
 
-    private ThingModelBoolOrEnumDataSpecs getEnumDataSpecsByValue(IotThingModelDO thingModel, Integer value) {
+    private ThingModelBoolOrEnumDataSpecs getEnumDataSpecsByValue(
+            IotThingModelDO thingModel, Integer value) {
         if (CollUtil.isEmpty(thingModel.getProperty().getDataSpecsList())) {
             return null;
         }
@@ -395,7 +402,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
             // 尝试本地时间格式，例如 yyyy-MM-dd HH:mm:ss
         }
         try {
-            return LocalDateTimeUtil.toEpochMilli(LocalDateTimeUtil.parse(text, DatePattern.NORM_DATETIME_PATTERN));
+            return LocalDateTimeUtil.toEpochMilli(
+                    LocalDateTimeUtil.parse(text, DatePattern.NORM_DATETIME_PATTERN));
         } catch (Exception ignored) {
             // 尝试其它 Hutool 支持的本地时间格式
         }
@@ -428,11 +436,13 @@ public class IotThingModelServiceImpl implements IotThingModelService {
         // 1. 情况一：创建时校验
         if (id == null) {
             // 1.1 系统保留字段，不能用于标识符定义
-            if (StrUtil.equalsAny(identifier, "set", "get", "post", "property", "event", "time", "value")) {
+            if (StrUtil.equalsAny(
+                    identifier, "set", "get", "post", "property", "event", "time", "value")) {
                 throw exception(THING_MODEL_IDENTIFIER_INVALID);
             }
             // 1.2 校验唯一
-            IotThingModelDO thingModel = thingModelMapper.selectByProductIdAndIdentifier(productId, identifier);
+            IotThingModelDO thingModel =
+                    thingModelMapper.selectByProductIdAndIdentifier(productId, identifier);
             if (thingModel != null) {
                 throw exception(THING_MODEL_IDENTIFIER_EXISTS);
             }
@@ -440,7 +450,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
         }
 
         // 2. 情况二：更新时校验
-        IotThingModelDO thingModel = thingModelMapper.selectByProductIdAndIdentifier(productId, identifier);
+        IotThingModelDO thingModel =
+                thingModelMapper.selectByProductIdAndIdentifier(productId, identifier);
         if (thingModel != null && ObjectUtil.notEqual(thingModel.getId(), id)) {
             throw exception(THING_MODEL_IDENTIFIER_EXISTS);
         }
@@ -467,11 +478,9 @@ public class IotThingModelServiceImpl implements IotThingModelService {
 
     @CacheEvict(value = RedisKeyConstants.THING_MODEL_LIST, key = "#productId")
     @TenantIgnore // 忽略租户信息
-    public void deleteThingModelListCache0(Long productId) {
-    }
+    public void deleteThingModelListCache0(Long productId) {}
 
     private IotThingModelServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }
-
 }

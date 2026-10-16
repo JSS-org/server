@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.fms.controller.admin.closing.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -54,7 +55,10 @@ public class FmsClosingTemplateRespVO {
         @Schema(description = "科目编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
         private Long subjectId;
 
-        @Schema(description = "科目编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "560107")
+        @Schema(
+                description = "科目编码",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "560107")
         private String subjectCode;
 
         @Schema(description = "摘要", requiredMode = Schema.RequiredMode.REQUIRED, example = "报销差旅费")
@@ -66,5 +70,4 @@ public class FmsClosingTemplateRespVO {
         @Schema(description = "金额比例", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
         private BigDecimal amountRatio;
     }
-
 }

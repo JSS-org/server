@@ -4,6 +4,7 @@ import cn.iocoder.yudao.module.trade.controller.admin.config.vo.TradeConfigRespV
 import cn.iocoder.yudao.module.trade.controller.admin.config.vo.TradeConfigSaveReqVO;
 import cn.iocoder.yudao.module.trade.controller.app.config.vo.AppTradeConfigRespVO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.config.TradeConfigDO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

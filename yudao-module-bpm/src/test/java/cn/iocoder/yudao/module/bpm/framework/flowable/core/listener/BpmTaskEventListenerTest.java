@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable.core.listener;
 
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmBoundaryEventTypeEnum;
 import cn.iocoder.yudao.module.bpm.enums.definition.BpmUserTaskTimeoutHandlerTypeEnum;
@@ -7,6 +9,7 @@ import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmnModelConsta
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.util.BpmnModelUtils;
 import cn.iocoder.yudao.module.bpm.service.definition.BpmModelService;
 import cn.iocoder.yudao.module.bpm.service.task.BpmTaskService;
+
 import org.flowable.bpmn.model.BoundaryEvent;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.Process;
@@ -16,8 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import static org.mockito.Mockito.*;
-
 /**
  * {@link BpmTaskEventListener} 的单元测试
  *
@@ -25,13 +26,10 @@ import static org.mockito.Mockito.*;
  */
 public class BpmTaskEventListenerTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private BpmTaskEventListener taskEventListener;
+    @InjectMocks private BpmTaskEventListener taskEventListener;
 
-    @Mock
-    private BpmModelService modelService;
-    @Mock
-    private BpmTaskService taskService;
+    @Mock private BpmModelService modelService;
+    @Mock private BpmTaskService taskService;
 
     @Test
     public void testTimerFired_elementIdFromJobHandlerConfiguration() {
@@ -39,9 +37,13 @@ public class BpmTaskEventListenerTest extends BaseMockitoUnitTest {
         BoundaryEvent boundaryEvent = new BoundaryEvent();
         boundaryEvent.setId("timeout-boundary");
         boundaryEvent.setAttachedToRefId("task");
-        BpmnModelUtils.addExtensionElement(boundaryEvent, BpmnModelConstants.BOUNDARY_EVENT_TYPE,
+        BpmnModelUtils.addExtensionElement(
+                boundaryEvent,
+                BpmnModelConstants.BOUNDARY_EVENT_TYPE,
                 BpmBoundaryEventTypeEnum.USER_TASK_TIMEOUT.getType());
-        BpmnModelUtils.addExtensionElement(boundaryEvent, BpmnModelConstants.USER_TASK_TIMEOUT_HANDLER_TYPE,
+        BpmnModelUtils.addExtensionElement(
+                boundaryEvent,
+                BpmnModelConstants.USER_TASK_TIMEOUT_HANDLER_TYPE,
                 BpmUserTaskTimeoutHandlerTypeEnum.REMINDER.getType());
         Process process = new Process();
         process.addFlowElement(boundaryEvent);
@@ -60,8 +62,10 @@ public class BpmTaskEventListenerTest extends BaseMockitoUnitTest {
         taskEventListener.timerFired(event);
 
         // 断言：使用解析出的 activityId 查找边界事件，并触发用户任务超时处理
-        verify(taskService).processTaskTimeout("process-instance-1", "task",
-                BpmUserTaskTimeoutHandlerTypeEnum.REMINDER.getType());
+        verify(taskService)
+                .processTaskTimeout(
+                        "process-instance-1",
+                        "task",
+                        BpmUserTaskTimeoutHandlerTypeEnum.REMINDER.getType());
     }
-
 }

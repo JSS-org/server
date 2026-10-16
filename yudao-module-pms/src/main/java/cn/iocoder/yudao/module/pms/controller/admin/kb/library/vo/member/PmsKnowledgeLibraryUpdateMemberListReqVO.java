@@ -2,11 +2,15 @@ package cn.iocoder.yudao.module.pms.controller.admin.kb.library.vo.member;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.kb.library.PmsKnowledgeLibraryMemberLevelEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -44,7 +48,5 @@ public class PmsKnowledgeLibraryUpdateMemberListReqVO {
         public boolean isUserOrDeptValid() {
             return (userId != null && deptId == null) || (userId == null && deptId != null);
         }
-
     }
-
 }

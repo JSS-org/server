@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.mes.service.qc.indicatorresult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.indicatorresult.MesQcIndicatorResultDetailDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.qc.indicatorresult.MesQcIndicatorResultDetailMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,8 +20,7 @@ import java.util.List;
 @Validated
 public class MesQcIndicatorResultDetailServiceImpl implements MesQcIndicatorResultDetailService {
 
-    @Resource
-    private MesQcIndicatorResultDetailMapper detailMapper;
+    @Resource private MesQcIndicatorResultDetailMapper detailMapper;
 
     @Override
     public void createDetailList(List<MesQcIndicatorResultDetailDO> details) {
@@ -38,8 +39,8 @@ public class MesQcIndicatorResultDetailServiceImpl implements MesQcIndicatorResu
 
     @Override
     public void deleteDetailByResultId(Long resultId) {
-        detailMapper.delete(new LambdaQueryWrapperX<MesQcIndicatorResultDetailDO>()
-                .eq(MesQcIndicatorResultDetailDO::getResultId, resultId));
+        detailMapper.delete(
+                new LambdaQueryWrapperX<MesQcIndicatorResultDetailDO>()
+                        .eq(MesQcIndicatorResultDetailDO::getResultId, resultId));
     }
-
 }

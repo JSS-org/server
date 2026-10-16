@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo.result;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -24,5 +26,4 @@ public class MesWmStockTakingTaskResultPageReqVO extends PageParam {
 
     @Schema(description = "库位编号", example = "1")
     private Long areaId;
-
 }

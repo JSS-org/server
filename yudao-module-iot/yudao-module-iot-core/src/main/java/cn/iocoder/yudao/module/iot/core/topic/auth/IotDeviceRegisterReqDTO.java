@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.iot.core.topic.auth;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import jakarta.validation.constraints.NotEmpty;
+
 import lombok.Data;
 
 /**
@@ -36,5 +38,4 @@ public class IotDeviceRegisterReqDTO {
      */
     @NotEmpty(message = "签名不能为空")
     private String sign;
-
 }

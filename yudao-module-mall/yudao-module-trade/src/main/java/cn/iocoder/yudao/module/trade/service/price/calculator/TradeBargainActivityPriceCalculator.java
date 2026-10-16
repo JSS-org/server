@@ -9,10 +9,11 @@ import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
 /**
  * 砍价活动的 {@link TradePriceCalculator} 实现类
@@ -23,8 +24,7 @@ import jakarta.annotation.Resource;
 @Order(TradePriceCalculator.ORDER_BARGAIN_ACTIVITY)
 public class TradeBargainActivityPriceCalculator implements TradePriceCalculator {
 
-    @Resource
-    private BargainRecordApi bargainRecordApi;
+    @Resource private BargainRecordApi bargainRecordApi;
 
     @Override
     public void calculate(TradePriceCalculateReqBO param, TradePriceCalculateRespBO result) {
@@ -36,15 +36,22 @@ public class TradeBargainActivityPriceCalculator implements TradePriceCalculator
         Assert.isTrue(param.getItems().get(0).getCount() == 1, "砍价时，商品数量只允许为 1");
         // 2. 校验是否可以参与砍价
         TradePriceCalculateRespBO.OrderItem orderItem = result.getItems().get(0);
-        BargainValidateJoinRespDTO bargainActivity = bargainRecordApi.validateJoinBargain(
-                param.getUserId(), param.getBargainRecordId(), orderItem.getSkuId());
+        BargainValidateJoinRespDTO bargainActivity =
+                bargainRecordApi.validateJoinBargain(
+                        param.getUserId(), param.getBargainRecordId(), orderItem.getSkuId());
 
         // 3.1 记录优惠明细
-        Integer discountPrice = orderItem.getPayPrice() - bargainActivity.getBargainPrice() * orderItem.getCount();
+        Integer discountPrice =
+                orderItem.getPayPrice() - bargainActivity.getBargainPrice() * orderItem.getCount();
         // TODO 芋艿：极端情况，优惠金额为负数，需要处理
-        TradePriceCalculatorHelper.addPromotion(result, orderItem,
-                bargainActivity.getActivityId(), bargainActivity.getName(), PromotionTypeEnum.BARGAIN_ACTIVITY.getType(),
-                StrUtil.format("砍价活动：省 {} 元", TradePriceCalculatorHelper.formatPrice(discountPrice)),
+        TradePriceCalculatorHelper.addPromotion(
+                result,
+                orderItem,
+                bargainActivity.getActivityId(),
+                bargainActivity.getName(),
+                PromotionTypeEnum.BARGAIN_ACTIVITY.getType(),
+                StrUtil.format(
+                        "砍价活动：省 {} 元", TradePriceCalculatorHelper.formatPrice(discountPrice)),
                 discountPrice);
         // 3.2 更新 SKU 优惠金额
         orderItem.setDiscountPrice(orderItem.getDiscountPrice() + discountPrice);
@@ -53,5 +60,4 @@ public class TradeBargainActivityPriceCalculator implements TradePriceCalculator
         // 4. 特殊：设置对应的砍价活动编号
         result.setBargainActivityId(bargainActivity.getActivityId());
     }
-
 }

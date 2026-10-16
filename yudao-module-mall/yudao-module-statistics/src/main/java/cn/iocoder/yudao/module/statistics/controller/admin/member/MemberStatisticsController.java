@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.statistics.controller.admin.member;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
@@ -10,20 +12,22 @@ import cn.iocoder.yudao.module.statistics.convert.member.MemberStatisticsConvert
 import cn.iocoder.yudao.module.statistics.service.infra.ApiAccessLogStatisticsService;
 import cn.iocoder.yudao.module.statistics.service.member.MemberStatisticsService;
 import cn.iocoder.yudao.module.statistics.service.trade.TradeOrderStatisticsService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 会员统计")
 @RestController
@@ -32,12 +36,9 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Slf4j
 public class MemberStatisticsController {
 
-    @Resource
-    private MemberStatisticsService memberStatisticsService;
-    @Resource
-    private TradeOrderStatisticsService tradeOrderStatisticsService;
-    @Resource
-    private ApiAccessLogStatisticsService apiAccessLogStatisticsService;
+    @Resource private MemberStatisticsService memberStatisticsService;
+    @Resource private TradeOrderStatisticsService tradeOrderStatisticsService;
+    @Resource private ApiAccessLogStatisticsService apiAccessLogStatisticsService;
 
     @GetMapping("/summary")
     @Operation(summary = "获得会员统计（实时统计）")
@@ -54,7 +55,8 @@ public class MemberStatisticsController {
         LocalDateTime beginTime = ArrayUtil.get(reqVO.getTimes(), 0);
         LocalDateTime endTime = ArrayUtil.get(reqVO.getTimes(), 1);
         // 1.1 查询分析对照数据
-        DataComparisonRespVO<MemberAnalyseDataRespVO> comparisonData = memberStatisticsService.getMemberAnalyseComparisonData(beginTime, endTime);
+        DataComparisonRespVO<MemberAnalyseDataRespVO> comparisonData =
+                memberStatisticsService.getMemberAnalyseComparisonData(beginTime, endTime);
         // TODO @疯狂：这个可能有点特殊，要按照 create_time 来查询；不然它的漏斗就不统一；因为是访问数量 > 今日下单人 > 今日支付人；是一个统一的维度；
         // 1.2 查询成交用户数量
         Integer payUserCount = tradeOrderStatisticsService.getPayUserCount(beginTime, endTime);
@@ -66,12 +68,16 @@ public class MemberStatisticsController {
             atv = NumberUtil.div(payPrice, payUserCount).intValue();
         }
         // 1.4 查询访客数量
-        Integer visitUserCount = apiAccessLogStatisticsService.getIpCount(UserTypeEnum.MEMBER.getValue(), beginTime, endTime);
+        Integer visitUserCount =
+                apiAccessLogStatisticsService.getIpCount(
+                        UserTypeEnum.MEMBER.getValue(), beginTime, endTime);
         // 1.5 下单用户数量
         Integer orderUserCount = tradeOrderStatisticsService.getOrderUserCount(beginTime, endTime);
 
         // 2. 拼接返回
-        return success(MemberStatisticsConvert.INSTANCE.convert(visitUserCount, orderUserCount, payUserCount, atv, comparisonData));
+        return success(
+                MemberStatisticsConvert.INSTANCE.convert(
+                        visitUserCount, orderUserCount, payUserCount, atv, comparisonData));
     }
 
     @GetMapping("/area-statistics-list")
@@ -106,9 +112,10 @@ public class MemberStatisticsController {
     @GetMapping("/register-count-list")
     @Operation(summary = "获得会员注册数量列表")
     @PreAuthorize("@ss.hasPermission('statistics:member:query')")
-    public CommonResult<List<MemberRegisterCountRespVO>> getMemberRegisterCountList(MemberAnalyseReqVO reqVO) {
-        return success(memberStatisticsService.getMemberRegisterCountList(
-                ArrayUtil.get(reqVO.getTimes(), 0), ArrayUtil.get(reqVO.getTimes(), 1)));
+    public CommonResult<List<MemberRegisterCountRespVO>> getMemberRegisterCountList(
+            MemberAnalyseReqVO reqVO) {
+        return success(
+                memberStatisticsService.getMemberRegisterCountList(
+                        ArrayUtil.get(reqVO.getTimes(), 0), ArrayUtil.get(reqVO.getTimes(), 1)));
     }
-
 }

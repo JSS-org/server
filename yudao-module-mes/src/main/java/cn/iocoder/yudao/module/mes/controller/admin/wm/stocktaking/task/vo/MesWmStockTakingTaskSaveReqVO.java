@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.stocktaking.task.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,11 +16,17 @@ public class MesWmStockTakingTaskSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "任务编码", requiredMode = Schema.RequiredMode.REQUIRED, example = "ST202603080001")
+    @Schema(
+            description = "任务编码",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ST202603080001")
     @NotEmpty(message = "任务编码不能为空")
     private String code;
 
-    @Schema(description = "任务名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "原料仓月度盘点任务")
+    @Schema(
+            description = "任务名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "原料仓月度盘点任务")
     @NotEmpty(message = "任务名称不能为空")
     private String name;
 
@@ -53,5 +61,4 @@ public class MesWmStockTakingTaskSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo.MesWmTransferPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo.MesWmTransferSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.transfer.MesWmTransferDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -65,5 +66,4 @@ public interface MesWmTransferService {
      * 校验转移单存在且处于可编辑状态
      */
     MesWmTransferDO validateTransferEditable(Long id);
-
 }

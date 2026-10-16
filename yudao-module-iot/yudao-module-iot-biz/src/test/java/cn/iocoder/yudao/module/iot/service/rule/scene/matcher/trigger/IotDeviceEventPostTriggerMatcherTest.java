@@ -1,21 +1,23 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene.matcher.trigger;
 
+import static cn.hutool.core.util.RandomUtil.randomInt;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.hutool.core.map.MapUtil;
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.IotSceneRuleDO;
 import cn.iocoder.yudao.module.iot.enums.rule.IotSceneRuleTriggerTypeEnum;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotBaseConditionMatcherTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.hutool.core.util.RandomUtil.randomInt;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomString;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * {@link IotDeviceEventPostTriggerMatcher} 的单元测试
@@ -71,13 +73,16 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_alarmEventSuccess() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .put("message", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .put("message", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(eventIdentifier);
 
@@ -92,13 +97,16 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_errorEventSuccess() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("code", randomInt())
-                        .put("description", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("code", randomInt())
+                                        .put("description", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(eventIdentifier);
 
@@ -113,13 +121,16 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_infoEventSuccess() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("status", randomString())
-                        .put("timestamp", System.currentTimeMillis())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("status", randomString())
+                                        .put("timestamp", System.currentTimeMillis())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(eventIdentifier);
 
@@ -135,12 +146,15 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
         // 准备参数
         String messageIdentifier = randomString();
         String triggerIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", messageIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", messageIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(triggerIdentifier);
 
@@ -155,12 +169,15 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_wrongMessageMethod() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = new IotDeviceMessage();
         message.setDeviceId(randomLongId());
         message.setMethod(IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod()); // 错误的方法
@@ -178,12 +195,15 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_nullTriggerIdentifier() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(IotSceneRuleTriggerTypeEnum.DEVICE_EVENT_POST.getType());
@@ -234,11 +254,14 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_missingEventIdentifierInParams() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build()) // 缺少 identifier 字段
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build()) // 缺少 identifier 字段
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(eventIdentifier);
 
@@ -253,12 +276,15 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_nullTrigger() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
 
         // 调用
@@ -272,12 +298,15 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_nullTriggerType() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = new IotSceneRuleDO.Trigger();
         trigger.setType(null);
@@ -294,15 +323,20 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_complexEventValueSuccess() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("type", randomString())
-                        .put("duration", randomInt())
-                        .put("components", new String[]{randomString(), randomString()})
-                        .put("priority", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("type", randomString())
+                                        .put("duration", randomInt())
+                                        .put(
+                                                "components",
+                                                new String[] {randomString(), randomString()})
+                                        .put("priority", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(eventIdentifier);
 
@@ -317,10 +351,11 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
     public void testMatches_emptyEventValueSuccess() {
         // 准备参数
         String eventIdentifier = randomString();
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.ofEntries()) // 空的事件值
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put("value", MapUtil.ofEntries()) // 空的事件值
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(eventIdentifier);
 
@@ -336,12 +371,15 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
         // 准备参数
         String eventIdentifier = randomString().toUpperCase(); // 大写
         String triggerIdentifier = eventIdentifier.toLowerCase(); // 小写
-        Map<String, Object> eventParams = MapUtil.builder(new HashMap<String, Object>())
-                .put("identifier", eventIdentifier)
-                .put("value", MapUtil.builder(new HashMap<String, Object>())
-                        .put("level", randomString())
-                        .build())
-                .build();
+        Map<String, Object> eventParams =
+                MapUtil.builder(new HashMap<String, Object>())
+                        .put("identifier", eventIdentifier)
+                        .put(
+                                "value",
+                                MapUtil.builder(new HashMap<String, Object>())
+                                        .put("level", randomString())
+                                        .build())
+                        .build();
         IotDeviceMessage message = createEventPostMessage(eventParams);
         IotSceneRuleDO.Trigger trigger = createValidTrigger(triggerIdentifier);
 
@@ -376,5 +414,4 @@ public class IotDeviceEventPostTriggerMatcherTest extends IotBaseConditionMatche
         trigger.setIdentifier(identifier);
         return trigger;
     }
-
 }

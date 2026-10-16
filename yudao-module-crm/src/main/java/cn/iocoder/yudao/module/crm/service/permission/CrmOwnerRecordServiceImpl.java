@@ -8,7 +8,9 @@ import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.customer.CrmSt
 import cn.iocoder.yudao.module.crm.dal.dataobject.permission.CrmOwnerRecordDO;
 import cn.iocoder.yudao.module.crm.dal.mysql.permission.CrmOwnerRecordMapper;
 import cn.iocoder.yudao.module.crm.service.permission.bo.CrmOwnerRecordCreateReqBO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -23,8 +25,7 @@ import java.util.List;
 @Validated
 public class CrmOwnerRecordServiceImpl implements CrmOwnerRecordService {
 
-    @Resource
-    private CrmOwnerRecordMapper ownerRecordMapper;
+    @Resource private CrmOwnerRecordMapper ownerRecordMapper;
 
     @Override
     public Long createOwnerRecord(CrmOwnerRecordCreateReqBO createReqBO) {
@@ -43,23 +44,26 @@ public class CrmOwnerRecordServiceImpl implements CrmOwnerRecordService {
     }
 
     @Override
-    public List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerPutCountByDate(CrmStatisticsCustomerReqVO reqVO) {
+    public List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerPutCountByDate(
+            CrmStatisticsCustomerReqVO reqVO) {
         return ownerRecordMapper.selectPoolCustomerPutCountByDate(reqVO);
     }
 
     @Override
-    public List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerTakeCountByDate(CrmStatisticsCustomerReqVO reqVO) {
+    public List<CrmStatisticsPoolSummaryByDateRespVO> getPoolCustomerTakeCountByDate(
+            CrmStatisticsCustomerReqVO reqVO) {
         return ownerRecordMapper.selectPoolCustomerTakeCountByDate(reqVO);
     }
 
     @Override
-    public List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerPutCountByUser(CrmStatisticsCustomerReqVO reqVO) {
+    public List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerPutCountByUser(
+            CrmStatisticsCustomerReqVO reqVO) {
         return ownerRecordMapper.selectPoolCustomerPutCountByUser(reqVO);
     }
 
     @Override
-    public List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerTakeCountByUser(CrmStatisticsCustomerReqVO reqVO) {
+    public List<CrmStatisticsPoolSummaryByUserRespVO> getPoolCustomerTakeCountByUser(
+            CrmStatisticsCustomerReqVO reqVO) {
         return ownerRecordMapper.selectPoolCustomerTakeCountByUser(reqVO);
     }
-
 }

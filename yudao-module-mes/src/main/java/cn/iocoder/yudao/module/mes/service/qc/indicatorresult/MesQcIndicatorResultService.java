@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.indicatorresult.vo.MesQcI
 import cn.iocoder.yudao.module.mes.controller.admin.qc.indicatorresult.vo.MesQcIndicatorResultSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.indicatorresult.MesQcIndicatorResultDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.indicatorresult.MesQcIndicatorResultDetailDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -52,7 +53,8 @@ public interface MesQcIndicatorResultService {
      * @param pageReqVO 分页查询
      * @return 检验结果分页
      */
-    PageResult<MesQcIndicatorResultDO> getIndicatorResultPage(MesQcIndicatorResultPageReqVO pageReqVO);
+    PageResult<MesQcIndicatorResultDO> getIndicatorResultPage(
+            MesQcIndicatorResultPageReqVO pageReqVO);
 
     /**
      * 获取检验结果明细列表
@@ -78,5 +80,4 @@ public interface MesQcIndicatorResultService {
      * @param qcType 质检类型
      */
     void validateIndicatorResultExistsByQcIdAndType(Long qcId, Integer qcType);
-
 }

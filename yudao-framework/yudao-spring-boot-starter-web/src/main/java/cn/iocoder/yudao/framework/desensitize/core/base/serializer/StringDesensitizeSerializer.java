@@ -7,8 +7,10 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.desensitize.core.base.annotation.DesensitizeBy;
 import cn.iocoder.yudao.framework.desensitize.core.base.handler.DesensitizationHandler;
+
 import lombok.Getter;
 import lombok.Setter;
+
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.BeanProperty;
@@ -29,16 +31,15 @@ import java.lang.reflect.Field;
 @SuppressWarnings("rawtypes")
 public class StringDesensitizeSerializer extends StdSerializer<String> {
 
-    @Getter
-    @Setter
-    private DesensitizationHandler desensitizationHandler;
+    @Getter @Setter private DesensitizationHandler desensitizationHandler;
 
     protected StringDesensitizeSerializer() {
         super(String.class);
     }
 
     @Override
-    public ValueSerializer<?> createContextual(SerializationContext serializerProvider, BeanProperty beanProperty) {
+    public ValueSerializer<?> createContextual(
+            SerializationContext serializerProvider, BeanProperty beanProperty) {
         DesensitizeBy annotation = beanProperty.getAnnotation(DesensitizeBy.class);
         if (annotation == null) {
             return this;
@@ -51,7 +52,8 @@ public class StringDesensitizeSerializer extends StdSerializer<String> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void serialize(String value, JsonGenerator gen, SerializationContext serializerProvider) throws JacksonException {
+    public void serialize(String value, JsonGenerator gen, SerializationContext serializerProvider)
+            throws JacksonException {
         if (StrUtil.isBlank(value)) {
             gen.writeNull();
             return;
@@ -60,7 +62,8 @@ public class StringDesensitizeSerializer extends StdSerializer<String> {
         Field field = getField(gen);
 
         // 自定义处理器
-        DesensitizeBy[] annotations = AnnotationUtil.getCombinationAnnotations(field, DesensitizeBy.class);
+        DesensitizeBy[] annotations =
+                AnnotationUtil.getCombinationAnnotations(field, DesensitizeBy.class);
         if (ArrayUtil.isEmpty(annotations)) {
             gen.writeString(value);
             return;
@@ -87,5 +90,4 @@ public class StringDesensitizeSerializer extends StdSerializer<String> {
         Class<?> currentValueClass = currentValue.getClass();
         return ReflectUtil.getField(currentValueClass, currentName);
     }
-
 }

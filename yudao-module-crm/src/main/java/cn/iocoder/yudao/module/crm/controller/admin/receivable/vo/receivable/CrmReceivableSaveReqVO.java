@@ -3,9 +3,13 @@ package cn.iocoder.yudao.module.crm.controller.admin.receivable.vo.receivable;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.crm.enums.receivable.CrmReceivableReturnTypeEnum;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.*;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -46,7 +50,10 @@ public class CrmReceivableSaveReqVO {
     @NotNull(message = "回款金额不能为空")
     private BigDecimal price;
 
-    @Schema(description = "回款日期", requiredMode = Schema.RequiredMode.REQUIRED, example = "2024-02-02")
+    @Schema(
+            description = "回款日期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "2024-02-02")
     @NotNull(message = "回款日期不能为空")
     @DiffLogField(name = "回款日期")
     private LocalDateTime returnTime;
@@ -54,5 +61,4 @@ public class CrmReceivableSaveReqVO {
     @Schema(description = "备注", example = "备注")
     @DiffLogField(name = "备注")
     private String remark;
-
 }

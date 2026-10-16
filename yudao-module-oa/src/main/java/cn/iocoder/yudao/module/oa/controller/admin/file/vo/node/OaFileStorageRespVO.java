@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.file.vo.node;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 云盘空间 Response VO")
@@ -21,5 +22,4 @@ public class OaFileStorageRespVO {
 
     @Schema(description = "收到的共享入口数量，不重复统计子节点", example = "1")
     private Long receivedCount;
-
 }

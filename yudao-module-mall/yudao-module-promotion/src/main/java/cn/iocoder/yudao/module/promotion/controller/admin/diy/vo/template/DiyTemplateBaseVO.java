@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
+
 import java.util.List;
 
 /**
@@ -22,5 +24,4 @@ public class DiyTemplateBaseVO {
 
     @Schema(description = "预览图", example = "[https://www.iocoder.cn/1.jpg]")
     private List<String> previewPicUrls;
-
 }

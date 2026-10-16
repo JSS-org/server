@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertListByFlatMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -19,11 +29,14 @@ import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformancePlanScop
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceStageTypeEnum;
 import cn.iocoder.yudao.module.hrm.service.performance.assessment.HrmPerformanceAssessmentService;
 import cn.iocoder.yudao.module.hrm.service.performance.plan.HrmPerformancePlanService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,26 +55,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertListByFlatMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.getSumValue;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - HRM 绩效计划")
 @RestController
 @RequestMapping("/hrm/performance/plan")
 @Validated
 public class HrmPerformancePlanController {
 
-    @Resource
-    private HrmPerformancePlanService performancePlanService;
-    @Resource
-    private HrmPerformanceAssessmentService performanceAssessmentService;
+    @Resource private HrmPerformancePlanService performancePlanService;
+    @Resource private HrmPerformanceAssessmentService performanceAssessmentService;
 
     @PostMapping("/create")
     @Operation(summary = "创建绩效计划")
@@ -74,7 +75,8 @@ public class HrmPerformancePlanController {
     @PutMapping("/update")
     @Operation(summary = "更新绩效计划")
     @PreAuthorize("@ss.hasPermission('hrm:performance:plan:update')")
-    public CommonResult<Boolean> updatePerformancePlan(@Valid @RequestBody HrmPerformancePlanSaveReqVO reqVO) {
+    public CommonResult<Boolean> updatePerformancePlan(
+            @Valid @RequestBody HrmPerformancePlanSaveReqVO reqVO) {
         performancePlanService.updatePerformancePlan(reqVO);
         return success(true);
     }
@@ -101,8 +103,10 @@ public class HrmPerformancePlanController {
     @PreAuthorize("@ss.hasPermission('hrm:performance:plan:query')")
     public CommonResult<PageResult<HrmPerformancePlanRespVO>> getPerformancePlanPage(
             @Validated HrmPerformancePlanPageReqVO reqVO) {
-        PageResult<HrmPerformancePlanDO> pageResult = performancePlanService.getPerformancePlanPage(reqVO);
-        return success(new PageResult<>(buildPlanRespVOList(pageResult.getList()), pageResult.getTotal()));
+        PageResult<HrmPerformancePlanDO> pageResult =
+                performancePlanService.getPerformancePlanPage(reqVO);
+        return success(
+                new PageResult<>(buildPlanRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @PostMapping("/start")
@@ -169,22 +173,30 @@ public class HrmPerformancePlanController {
         List<HrmPerformanceAssessmentDO> assessments =
                 performanceAssessmentService.getPerformanceAssessmentListByPlanId(planId);
         // 1.2 按考核阶段统计
-        Map<Integer, Long> countMap = convertMap(
-                filterList(assessments, assessment -> assessment.getStageType() != null),
-                HrmPerformanceAssessmentDO::getStageType, assessment -> 1L, Long::sum, LinkedHashMap::new);
+        Map<Integer, Long> countMap =
+                convertMap(
+                        filterList(assessments, assessment -> assessment.getStageType() != null),
+                        HrmPerformanceAssessmentDO::getStageType,
+                        assessment -> 1L,
+                        Long::sum,
+                        LinkedHashMap::new);
         // 2. 转换响应
-        return success(convertList(Arrays.asList(HrmPerformanceStageTypeEnum.ARRAYS),
-                stageType -> new HrmPerformancePlanStageCountRespVO()
-                        .setStageType(stageType).setCount(countMap.get(stageType)),
-                stageType -> countMap.getOrDefault(stageType, 0L) > 0));
+        return success(
+                convertList(
+                        Arrays.asList(HrmPerformanceStageTypeEnum.ARRAYS),
+                        stageType ->
+                                new HrmPerformancePlanStageCountRespVO()
+                                        .setStageType(stageType)
+                                        .setCount(countMap.get(stageType)),
+                        stageType -> countMap.getOrDefault(stageType, 0L) > 0));
     }
 
     @GetMapping("/level-count")
     @Operation(summary = "获得绩效结果等级统计")
     @Parameter(name = "planId", description = "绩效计划编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('hrm:performance:plan:query')")
-    public CommonResult<List<HrmPerformancePlanResultLevelCountRespVO>> getPerformancePlanLevelCount(
-            @RequestParam("planId") Long planId) {
+    public CommonResult<List<HrmPerformancePlanResultLevelCountRespVO>>
+            getPerformancePlanLevelCount(@RequestParam("planId") Long planId) {
         HrmPerformancePlanDO plan = performancePlanService.getPerformancePlan(planId);
         if (plan == null) {
             return success(Collections.emptyList());
@@ -196,16 +208,25 @@ public class HrmPerformancePlanController {
         Map<String, Long> levelCountMap = new LinkedHashMap<>();
         plan.getResultConfig().getLevels().forEach(level -> levelCountMap.put(level.getName(), 0L));
         filterList(assessments, assessment -> StrUtil.isNotBlank(assessment.getResultLevel()))
-                .forEach(assessment -> levelCountMap.merge(assessment.getResultLevel(), 1L, Long::sum));
+                .forEach(
+                        assessment ->
+                                levelCountMap.merge(assessment.getResultLevel(), 1L, Long::sum));
         // 2. 转换响应
-        return success(convertList(levelCountMap.entrySet(), entry -> new HrmPerformancePlanResultLevelCountRespVO()
-                .setLevelName(entry.getKey()).setCount(entry.getValue())));
+        return success(
+                convertList(
+                        levelCountMap.entrySet(),
+                        entry ->
+                                new HrmPerformancePlanResultLevelCountRespVO()
+                                        .setLevelName(entry.getKey())
+                                        .setCount(entry.getValue())));
     }
 
     // ==================== 拼接 VO ====================
 
     private HrmPerformancePlanRespVO buildPlanRespVO(HrmPerformancePlanDO plan) {
-        return plan == null ? null : CollUtil.getFirst(buildPlanRespVOList(Collections.singletonList(plan)));
+        return plan == null
+                ? null
+                : CollUtil.getFirst(buildPlanRespVOList(Collections.singletonList(plan)));
     }
 
     private List<HrmPerformancePlanRespVO> buildPlanRespVOList(List<HrmPerformancePlanDO> plans) {
@@ -215,44 +236,83 @@ public class HrmPerformancePlanController {
                         convertList(plans, HrmPerformancePlanDO::getId));
         Map<Long, List<HrmPerformanceAssessmentDO>> assessmentMap =
                 convertMultiMap(assessments, HrmPerformanceAssessmentDO::getPlanId);
-        List<HrmPerformanceAssessmentStageDO> stages = performanceAssessmentService.getPerformanceAssessmentStageList(
-                convertSet(assessments, HrmPerformanceAssessmentDO::getId));
+        List<HrmPerformanceAssessmentStageDO> stages =
+                performanceAssessmentService.getPerformanceAssessmentStageList(
+                        convertSet(assessments, HrmPerformanceAssessmentDO::getId));
         Map<Long, List<HrmPerformanceAssessmentStageDO>> stageMap =
                 convertMultiMap(stages, HrmPerformanceAssessmentStageDO::getAssessmentId);
         // 2. 拼接响应
         Map<Long, HrmPerformancePlanDO> planMap = convertMap(plans, HrmPerformancePlanDO::getId);
-        return BeanUtils.toBean(plans, HrmPerformancePlanRespVO.class, respVO -> {
-            HrmPerformancePlanDO plan = planMap.get(respVO.getId());
-            // 排除员工范围只用于计划内部维护，不返回给前端编辑
-            respVO.setScopes(filterList(respVO.getScopes(), scope -> ObjUtil.notEqual(scope.getType(),
-                    HrmPerformancePlanScopeTypeEnum.EXCLUDED_EMPLOYEE.getType())));
-            if (plan.getAssessmentConfig() != null) {
-                respVO.setAssessmentTemplateName(plan.getAssessmentConfig().getName());
-            }
-            if (plan.getResultConfig() != null) {
-                respVO.setResultTemplateName(plan.getResultConfig().getName());
-            }
-            // 获得当前计划的员工考核和处理阶段，用于统计执行进度并判断后续可操作节点
-            List<HrmPerformanceAssessmentDO> planAssessments =
-                    assessmentMap.getOrDefault(plan.getId(), Collections.emptyList());
-            List<HrmPerformanceAssessmentStageDO> planStages = convertListByFlatMap(
-                    planAssessments, assessment -> stageMap.getOrDefault(
-                            assessment.getId(), Collections.emptyList()).stream());
-            int finishedCount = getSumValue(planAssessments, assessment -> Objects.equals(
-                    assessment.getProcessStatus(),
-                    HrmPerformanceAssessmentProcessStatusEnum.FINISHED.getStatus()) ? 1 : 0, Integer::sum, 0);
-            Map<Integer, Long> stageCountMap = convertMap(
-                    filterList(planAssessments, assessment -> assessment.getStageType() != null),
-                    HrmPerformanceAssessmentDO::getStageType, assessment -> 1L, Long::sum, LinkedHashMap::new);
-            respVO.setEmployeeCount(planAssessments.size()).setFinishedCount(finishedCount)
-                    .setStageCountMap(stageCountMap)
-                    .setScoringReady(performanceAssessmentService
-                            .isPerformanceAssessmentScoringReady(plan, planAssessments))
-                    .setInterviewReady(performanceAssessmentService
-                            .isPerformanceAssessmentInterviewReady(plan, planAssessments, planStages))
-                    .setArchiveReady(performanceAssessmentService
-                            .isPerformanceAssessmentArchiveReady(plan, planAssessments));
-        });
+        return BeanUtils.toBean(
+                plans,
+                HrmPerformancePlanRespVO.class,
+                respVO -> {
+                    HrmPerformancePlanDO plan = planMap.get(respVO.getId());
+                    // 排除员工范围只用于计划内部维护，不返回给前端编辑
+                    respVO.setScopes(
+                            filterList(
+                                    respVO.getScopes(),
+                                    scope ->
+                                            ObjUtil.notEqual(
+                                                    scope.getType(),
+                                                    HrmPerformancePlanScopeTypeEnum
+                                                            .EXCLUDED_EMPLOYEE
+                                                            .getType())));
+                    if (plan.getAssessmentConfig() != null) {
+                        respVO.setAssessmentTemplateName(plan.getAssessmentConfig().getName());
+                    }
+                    if (plan.getResultConfig() != null) {
+                        respVO.setResultTemplateName(plan.getResultConfig().getName());
+                    }
+                    // 获得当前计划的员工考核和处理阶段，用于统计执行进度并判断后续可操作节点
+                    List<HrmPerformanceAssessmentDO> planAssessments =
+                            assessmentMap.getOrDefault(plan.getId(), Collections.emptyList());
+                    List<HrmPerformanceAssessmentStageDO> planStages =
+                            convertListByFlatMap(
+                                    planAssessments,
+                                    assessment ->
+                                            stageMap
+                                                    .getOrDefault(
+                                                            assessment.getId(),
+                                                            Collections.emptyList())
+                                                    .stream());
+                    int finishedCount =
+                            getSumValue(
+                                    planAssessments,
+                                    assessment ->
+                                            Objects.equals(
+                                                            assessment.getProcessStatus(),
+                                                            HrmPerformanceAssessmentProcessStatusEnum
+                                                                    .FINISHED
+                                                                    .getStatus())
+                                                    ? 1
+                                                    : 0,
+                                    Integer::sum,
+                                    0);
+                    Map<Integer, Long> stageCountMap =
+                            convertMap(
+                                    filterList(
+                                            planAssessments,
+                                            assessment -> assessment.getStageType() != null),
+                                    HrmPerformanceAssessmentDO::getStageType,
+                                    assessment -> 1L,
+                                    Long::sum,
+                                    LinkedHashMap::new);
+                    respVO.setEmployeeCount(planAssessments.size())
+                            .setFinishedCount(finishedCount)
+                            .setStageCountMap(stageCountMap)
+                            .setScoringReady(
+                                    performanceAssessmentService
+                                            .isPerformanceAssessmentScoringReady(
+                                                    plan, planAssessments))
+                            .setInterviewReady(
+                                    performanceAssessmentService
+                                            .isPerformanceAssessmentInterviewReady(
+                                                    plan, planAssessments, planStages))
+                            .setArchiveReady(
+                                    performanceAssessmentService
+                                            .isPerformanceAssessmentArchiveReady(
+                                                    plan, planAssessments));
+                });
     }
-
 }

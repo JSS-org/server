@@ -2,9 +2,11 @@ package cn.iocoder.yudao.module.ai.dal.dataobject.workflow;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 /**
@@ -20,12 +22,13 @@ public class AiWorkflowDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 工作流名称
      */
     private String name;
+
     /**
      * 工作流标识
      */
@@ -47,5 +50,4 @@ public class AiWorkflowDO extends BaseDO {
      * 枚举 {@link CommonStatusEnum}
      */
     private Integer status;
-
 }

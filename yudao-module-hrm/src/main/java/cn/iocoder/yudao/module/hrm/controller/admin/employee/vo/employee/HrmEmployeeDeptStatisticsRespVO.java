@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.employee;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -20,5 +21,4 @@ public class HrmEmployeeDeptStatisticsRespVO {
 
     @Schema(description = "非全职员工人数", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private Long nonFullTimeCount;
-
 }

@@ -23,9 +23,12 @@ public interface PmsWorkItemActivityService {
      * @param newMemberUserIds 更新后参与人用户编号
      * @param userId 操作人编号
      */
-    void createWorkItemUpdateActivities(PmsWorkItemDO oldWorkItem, PmsWorkItemDO newWorkItem,
-                                        Collection<Long> oldMemberUserIds, Collection<Long> newMemberUserIds,
-                                        Long userId);
+    void createWorkItemUpdateActivities(
+            PmsWorkItemDO oldWorkItem,
+            PmsWorkItemDO newWorkItem,
+            Collection<Long> oldMemberUserIds,
+            Collection<Long> newMemberUserIds,
+            Long userId);
 
     /**
      * 字段发生变化时记录工作项动态
@@ -38,9 +41,14 @@ public interface PmsWorkItemActivityService {
      * @param oldValue 旧展示值
      * @param newValue 新展示值
      */
-    void createWorkItemFieldActivityIfChanged(PmsWorkItemDO workItem, Long userId, String fieldName,
-                                               Object oldFieldValue, Object newFieldValue,
-                                               String oldValue, String newValue);
+    void createWorkItemFieldActivityIfChanged(
+            PmsWorkItemDO workItem,
+            Long userId,
+            String fieldName,
+            Object oldFieldValue,
+            Object newFieldValue,
+            String oldValue,
+            String newValue);
 
     /**
      * 按迭代编号变化记录工作项动态
@@ -50,8 +58,8 @@ public interface PmsWorkItemActivityService {
      * @param oldIterationId 更新前迭代编号
      * @param newIterationId 更新后迭代编号
      */
-    void createWorkItemIterationActivityIfChanged(PmsWorkItemDO workItem, Long userId,
-                                                   Long oldIterationId, Long newIterationId);
+    void createWorkItemIterationActivityIfChanged(
+            PmsWorkItemDO workItem, Long userId, Long oldIterationId, Long newIterationId);
 
     /**
      * 记录一条工作项动态
@@ -62,8 +70,12 @@ public interface PmsWorkItemActivityService {
      * @param content 动态内容枚举
      * @param arguments 动态内容参数
      */
-    void createWorkItemActivity(Long projectId, Long workItemId, Long operatorUserId,
-                                PmsWorkItemActivityContentEnum content, Object... arguments);
+    void createWorkItemActivity(
+            Long projectId,
+            Long workItemId,
+            Long operatorUserId,
+            PmsWorkItemActivityContentEnum content,
+            Object... arguments);
 
     /**
      * 获得工作项的动态列表
@@ -80,7 +92,8 @@ public interface PmsWorkItemActivityService {
      * @param limit 最大数量
      * @return 工作项动态列表
      */
-    List<PmsWorkItemActivityDO> getWorkItemActivityListByWorkItemIds(Collection<Long> workItemIds, int limit);
+    List<PmsWorkItemActivityDO> getWorkItemActivityListByWorkItemIds(
+            Collection<Long> workItemIds, int limit);
 
     /**
      * 删除工作项的全部动态
@@ -95,5 +108,4 @@ public interface PmsWorkItemActivityService {
      * @param projectId 项目编号
      */
     void deleteWorkItemActivityListByProjectId(Long projectId);
-
 }

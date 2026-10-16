@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.product.controller.app.spu.vo;
 
 import cn.iocoder.yudao.module.product.controller.app.property.vo.value.AppProductPropertyValueDetailRespVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -40,10 +42,16 @@ public class AppProductSpuDetailRespVO {
     @Schema(description = "规格类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
     private Boolean specType;
 
-    @Schema(description = "商品价格，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "商品价格，单位使用：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Integer price;
 
-    @Schema(description = "市场价，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    @Schema(
+            description = "市场价，单位使用：分",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1024")
     private Integer marketPrice;
 
     @Schema(description = "库存", requiredMode = Schema.RequiredMode.REQUIRED, example = "666")
@@ -71,16 +79,28 @@ public class AppProductSpuDetailRespVO {
          */
         private List<AppProductPropertyValueDetailRespVO> properties;
 
-        @Schema(description = "销售价格，单位：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "销售价格，单位：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Integer price;
 
-        @Schema(description = "市场价，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+        @Schema(
+                description = "市场价，单位使用：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1024")
         private Integer marketPrice;
 
-        @Schema(description = "VIP 价格，单位使用：分", requiredMode = Schema.RequiredMode.REQUIRED, example = "968") // 通过会员等级，计算出折扣后价格
+        @Schema(
+                description = "VIP 价格，单位使用：分",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "968") // 通过会员等级，计算出折扣后价格
         private Integer vipPrice;
 
-        @Schema(description = "图片地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xx.png")
+        @Schema(
+                description = "图片地址",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "https://www.iocoder.cn/xx.png")
         private String picUrl;
 
         @Schema(description = "库存", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
@@ -91,7 +111,5 @@ public class AppProductSpuDetailRespVO {
 
         @Schema(description = "商品体积", example = "1024") // 单位：m^3 平米
         private Double volume;
-
     }
-
 }

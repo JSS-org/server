@@ -5,11 +5,14 @@ import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
 import cn.iocoder.yudao.module.oa.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.oa.enums.supply.*;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
 import org.flowable.engine.history.HistoricProcessInstance;
 
 import java.time.LocalDateTime;
@@ -30,58 +33,66 @@ public class OaSupplyApplyDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 申请单号
      */
     private String no;
+
     /**
      * 申请部门编号
      *
      * 关联 {@link DeptRespDTO#getId()}
      */
     private Long deptId;
+
     /**
      * 领用日期
      */
     private LocalDateTime applyTime;
+
     /**
      * 使用类型
      *
      * 枚举 {@link OaSupplyUseTypeEnum}
      */
     private Integer useType;
+
     /**
      * 领取方式
      *
      * 字典 {@link DictTypeConstants#SUPPLY_PICKUP_METHOD}
      */
     private Integer pickupMethod;
+
     /**
      * 申请事由
      */
     private String reason;
+
     /**
      * 审批状态
      *
      * 枚举 {@link BpmProcessInstanceStatusEnum}
      */
     private Integer status;
+
     /**
      * BPM 流程实例编号
      *
      * 关联 {@link HistoricProcessInstance#getId()}
      */
     private String processInstanceId;
+
     /**
      * 附件地址列表
      */
     @TableField(typeHandler = Jackson3TypeHandler.class)
     private List<String> fileUrls;
+
     /**
      * 备注
      */
     private String remark;
-
 }

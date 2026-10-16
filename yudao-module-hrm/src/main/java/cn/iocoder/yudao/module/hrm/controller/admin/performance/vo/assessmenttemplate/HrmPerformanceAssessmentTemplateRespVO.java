@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessmenttemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -95,5 +96,4 @@ public class HrmPerformanceAssessmentTemplateRespVO {
         @Schema(description = "评分类型", example = "1")
         private Integer scoreType;
     }
-
 }

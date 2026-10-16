@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.iqc.vo.line.MesQcIqcLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.iqc.MesQcIqcLineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.List;
 public interface MesQcIqcLineMapper extends BaseMapperX<MesQcIqcLineDO> {
 
     default PageResult<MesQcIqcLineDO> selectPage(MesQcIqcLinePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesQcIqcLineDO>()
-                .eqIfPresent(MesQcIqcLineDO::getIqcId, reqVO.getIqcId())
-                .orderByAsc(MesQcIqcLineDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesQcIqcLineDO>()
+                        .eqIfPresent(MesQcIqcLineDO::getIqcId, reqVO.getIqcId())
+                        .orderByAsc(MesQcIqcLineDO::getId));
     }
 
     default List<MesQcIqcLineDO> selectListByIqcId(Long iqcId) {
@@ -28,12 +31,10 @@ public interface MesQcIqcLineMapper extends BaseMapperX<MesQcIqcLineDO> {
     }
 
     default void deleteByIqcId(Long iqcId) {
-        delete(new LambdaQueryWrapperX<MesQcIqcLineDO>()
-                .eq(MesQcIqcLineDO::getIqcId, iqcId));
+        delete(new LambdaQueryWrapperX<MesQcIqcLineDO>().eq(MesQcIqcLineDO::getIqcId, iqcId));
     }
 
     default Long selectCountByUnitMeasureId(Long unitMeasureId) {
         return selectCount(MesQcIqcLineDO::getUnitMeasureId, unitMeasureId);
     }
-
 }

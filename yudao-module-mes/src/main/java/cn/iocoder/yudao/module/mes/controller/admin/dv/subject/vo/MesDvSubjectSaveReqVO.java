@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.dv.subject.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 点检保养项目新增/修改 Request VO")
@@ -23,7 +25,10 @@ public class MesDvSubjectSaveReqVO {
     @NotNull(message = "项目类型不能为空")
     private Integer type;
 
-    @Schema(description = "项目内容", requiredMode = Schema.RequiredMode.REQUIRED, example = "检查注塑机外壳是否有裂纹")
+    @Schema(
+            description = "项目内容",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "检查注塑机外壳是否有裂纹")
     @NotEmpty(message = "项目内容不能为空")
     private String content;
 
@@ -36,5 +41,4 @@ public class MesDvSubjectSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
-    }
+}

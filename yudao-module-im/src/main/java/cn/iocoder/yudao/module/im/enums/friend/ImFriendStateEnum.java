@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums.friend;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -19,17 +20,18 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImFriendStateEnum implements ArrayValuable<Integer> {
-
     NONE(0, "非好友 / 已删除"),
     FRIEND(1, "好友"),
     BLOCKED(2, "好友且已被对方拉黑");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImFriendStateEnum::getState).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImFriendStateEnum::getState).toArray(Integer[]::new);
 
     /**
      * 状态值
      */
     private final Integer state;
+
     /**
      * 名字
      */
@@ -51,5 +53,4 @@ public enum ImFriendStateEnum implements ArrayValuable<Integer> {
     public static boolean isBlocked(Integer state) {
         return Objects.equals(BLOCKED.state, state);
     }
-
 }

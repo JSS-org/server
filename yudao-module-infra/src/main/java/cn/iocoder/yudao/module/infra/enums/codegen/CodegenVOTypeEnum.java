@@ -14,7 +14,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum CodegenVOTypeEnum {
-
     VO(10, "VO"),
     DO(20, "DO");
 
@@ -22,9 +21,9 @@ public enum CodegenVOTypeEnum {
      * 场景
      */
     private final Integer type;
+
     /**
      * 场景名
      */
     private final String name;
-
 }

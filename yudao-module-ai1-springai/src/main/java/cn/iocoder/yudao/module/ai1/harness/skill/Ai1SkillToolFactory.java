@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.ai1.harness.skill;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -12,12 +14,16 @@ import cn.iocoder.yudao.module.ai1.enums.skill.Ai1SkillFileTypeEnum;
 import cn.iocoder.yudao.module.ai1.framework.ai.config.YudaoAi1Properties;
 import cn.iocoder.yudao.module.ai1.service.skill.Ai1SkillFileService;
 import cn.iocoder.yudao.module.ai1.service.skill.Ai1SkillService;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import jakarta.annotation.Resource;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springaicommunity.agent.tools.*;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Component;
@@ -27,8 +33,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI1 SKILL 工具工厂（spring-ai-agent-utils SkillsTool）
@@ -64,21 +68,19 @@ public class Ai1SkillToolFactory {
      */
     private static final int SNAPSHOT_CACHE_MAX_SIZE = 1000;
 
-    @Resource
-    private YudaoAi1Properties ai1Properties;
+    @Resource private YudaoAi1Properties ai1Properties;
 
-    @Resource
-    private Ai1SkillService skillService;
-    @Resource
-    private Ai1SkillFileService skillFileService;
+    @Resource private Ai1SkillService skillService;
+    @Resource private Ai1SkillFileService skillFileService;
 
     /**
      * Agent 物化快照缓存：Agent 编号 → 快照
      *
      * 集群下各节点独立缓存，每次使用前按「编号:更新时间」指纹校验，Agent 换绑或 SKILL 变更后自动重建，无需跨节点失效
      */
-    private final Cache<Long, SkillSnapshot> snapshotCache = CacheBuilder.newBuilder()
-            .maximumSize(SNAPSHOT_CACHE_MAX_SIZE).build();
+    private final Cache<Long, SkillSnapshot> snapshotCache =
+            CacheBuilder.newBuilder().maximumSize(SNAPSHOT_CACHE_MAX_SIZE).build();
+
     /**
      * 按 Agent 串行物化的锁，避免并发重建互相破坏目录
      */
@@ -109,7 +111,8 @@ public class Ai1SkillToolFactory {
         tools.add(FileSystemTools.builder().allowedDirectory(root).build());
         tools.add(GlobTool.builder().workingDirectory(root).allowedDirectory(root).build());
         tools.add(GrepTool.builder().workingDirectory(root).allowedDirectory(root).build());
-        tools.add(ListDirectoryTool.builder().workingDirectory(root).allowedDirectory(root).build());
+        tools.add(
+                ListDirectoryTool.builder().workingDirectory(root).allowedDirectory(root).build());
         return tools;
     }
 
@@ -159,16 +162,22 @@ public class Ai1SkillToolFactory {
                 FileUtil.mkdir(root.toFile());
                 List<String> skillDirectories = new ArrayList<>();
                 // 固定注册顺序；同名 frontmatter 按 agent-utils 的首次注册规则处理。
-                for (Ai1SkillDO skill : skills.stream().sorted(Comparator.comparing(Ai1SkillDO::getId)).toList()) {
+                for (Ai1SkillDO skill :
+                        skills.stream().sorted(Comparator.comparing(Ai1SkillDO::getId)).toList()) {
                     if (CommonStatusEnum.isEnable(skill.getStatus())
-                            && materializeSkill(root.resolve(sanitize(skill.getName())), skill.getId())) {
+                            && materializeSkill(
+                                    root.resolve(sanitize(skill.getName())), skill.getId())) {
                         skillDirectories.add(root.resolve(sanitize(skill.getName())).toString());
                     }
                 }
                 // 2.2 写入指纹标记，构建技能工具并缓存快照
                 FileUtil.writeUtf8String(fingerprint, root.resolve(FILE_NAME_FINGERPRINT).toFile());
-                ToolCallback skillsTool = skillDirectories.isEmpty() ? null
-                        : SkillsTool.builder().addSkillsDirectories(skillDirectories).build();
+                ToolCallback skillsTool =
+                        skillDirectories.isEmpty()
+                                ? null
+                                : SkillsTool.builder()
+                                        .addSkillsDirectories(skillDirectories)
+                                        .build();
                 SkillSnapshot snapshot = new SkillSnapshot(fingerprint, root, skillsTool);
                 snapshotCache.put(agent.getId(), snapshot);
                 log.info("[sync][Agent({}) SKILL 物化完成，目录({})]", agent.getId(), root);
@@ -187,7 +196,8 @@ public class Ai1SkillToolFactory {
      * @return 指纹
      */
     private static String buildFingerprint(List<Ai1SkillDO> skills) {
-        return skills.stream().sorted(Comparator.comparing(Ai1SkillDO::getId))
+        return skills.stream()
+                .sorted(Comparator.comparing(Ai1SkillDO::getId))
                 .map(skill -> skill.getId() + ":" + skill.getUpdateTime())
                 .collect(Collectors.joining(";"));
     }
@@ -219,11 +229,13 @@ public class Ai1SkillToolFactory {
         Map<Long, Path> pathCache = new HashMap<>();
         boolean hasSkillFile = false;
         for (Ai1SkillFileDO file : files) {
-            File target = skillDirectory.resolve(resolveRelativePath(file, fileMap, pathCache)).toFile();
+            File target =
+                    skillDirectory.resolve(resolveRelativePath(file, fileMap, pathCache)).toFile();
             if (Ai1SkillFileTypeEnum.isFile(file.getType())) {
                 // 根级的 SKILL.md 是技能入口
-                hasSkillFile |= Ai1SkillFileDO.NAME_SKILL.equals(file.getName())
-                        && ObjUtil.equal(file.getParentId(), Ai1SkillFileDO.PARENT_ID_ROOT);
+                hasSkillFile |=
+                        Ai1SkillFileDO.NAME_SKILL.equals(file.getName())
+                                && ObjUtil.equal(file.getParentId(), Ai1SkillFileDO.PARENT_ID_ROOT);
                 FileUtil.writeUtf8String(StrUtil.nullToEmpty(file.getContent()), target);
             } else {
                 FileUtil.mkdir(target);
@@ -240,7 +252,8 @@ public class Ai1SkillToolFactory {
     /**
      * 解析节点相对路径：沿 parentId 链自底向上拼接，每段名称净化以防目录穿越
      */
-    private static Path resolveRelativePath(Ai1SkillFileDO file, Map<Long, Ai1SkillFileDO> fileMap, Map<Long, Path> pathCache) {
+    private static Path resolveRelativePath(
+            Ai1SkillFileDO file, Map<Long, Ai1SkillFileDO> fileMap, Map<Long, Path> pathCache) {
         Path cached = pathCache.get(file.getId());
         if (cached != null) {
             return cached;
@@ -248,8 +261,10 @@ public class Ai1SkillToolFactory {
         Path segment = Path.of(sanitize(file.getName()));
         Ai1SkillFileDO parent = fileMap.get(file.getParentId());
         // 父节点为自身时（异常数据）按根级处理，避免无限递归
-        Path path = parent == null || ObjUtil.equal(parent.getId(), file.getId())
-                ? segment : resolveRelativePath(parent, fileMap, pathCache).resolve(segment);
+        Path path =
+                parent == null || ObjUtil.equal(parent.getId(), file.getId())
+                        ? segment
+                        : resolveRelativePath(parent, fileMap, pathCache).resolve(segment);
         pathCache.put(file.getId(), path);
         return path;
     }
@@ -265,7 +280,7 @@ public class Ai1SkillToolFactory {
         if (StrUtil.isBlank(name)) {
             return "_";
         }
-        return StrUtil.replace(StrUtil.replaceChars(name, new char[]{'\\', '/'}, "_"), "..", "_");
+        return StrUtil.replace(StrUtil.replaceChars(name, new char[] {'\\', '/'}, "_"), "..", "_");
     }
 
     /**
@@ -279,15 +294,15 @@ public class Ai1SkillToolFactory {
          * 指纹
          */
         private final String fingerprint;
+
         /**
          * Agent 物化根目录
          */
         private final Path root;
+
         /**
          * 技能工具；无有效 SKILL.md 时为空
          */
         private final ToolCallback skillsTool;
-
     }
-
 }

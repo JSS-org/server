@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums.channel;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -24,7 +25,8 @@ public enum ImChannelMaterialTypeEnum implements ArrayValuable<Integer> {
      */
     LINK(2, "外链");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImChannelMaterialTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImChannelMaterialTypeEnum::getType).toArray(Integer[]::new);
 
     private final Integer type;
     private final String name;
@@ -33,5 +35,4 @@ public enum ImChannelMaterialTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

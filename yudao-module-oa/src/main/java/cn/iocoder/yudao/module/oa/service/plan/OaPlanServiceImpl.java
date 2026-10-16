@@ -1,10 +1,17 @@
 package cn.iocoder.yudao.module.oa.service.plan;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.validation.ValidationUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.plan.vo.OaPlanCommentReqVO;
@@ -14,7 +21,9 @@ import cn.iocoder.yudao.module.oa.dal.dataobject.plan.OaPlanDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.plan.OaPlanMapper;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -23,13 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_NOT_EXISTS;
 
 /**
  * OA 工作计划 Service 实现类
@@ -40,11 +42,9 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.PLAN_NOT_EXIST
 @Validated
 public class OaPlanServiceImpl implements OaPlanService {
 
-    @Resource
-    private OaPlanMapper planMapper;
+    @Resource private OaPlanMapper planMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public Long createPlan(OaPlanSaveReqVO createReqVO) {
@@ -90,25 +90,30 @@ public class OaPlanServiceImpl implements OaPlanService {
         OaPlanDO plan = validatePlanExists(id);
         // 1.2 校验计划属于当前用户的管理范围
         List<AdminUserRespDTO> subordinateUsers = adminUserApi.getUserListBySubordinate(userId);
-        if (!convertSet(subordinateUsers, AdminUserRespDTO::getId).contains(NumberUtils.parseLong(plan.getCreator()))) {
+        if (!convertSet(subordinateUsers, AdminUserRespDTO::getId)
+                .contains(NumberUtils.parseLong(plan.getCreator()))) {
             throw exception(PLAN_ACCESS_DENIED);
         }
 
         // 2. 追加工作计划点评
-        String updatedComment = StrUtil.isEmpty(plan.getComment()) ? comment
-                : plan.getComment() + System.lineSeparator() + comment;
+        String updatedComment =
+                StrUtil.isEmpty(plan.getComment())
+                        ? comment
+                        : plan.getComment() + System.lineSeparator() + comment;
         ValidationUtils.validate(new OaPlanCommentReqVO().setId(id).setComment(updatedComment));
         planMapper.updateById(new OaPlanDO().setId(id).setComment(updatedComment));
     }
 
     @Override
-    public Map<Long, OaPlanDO> getLatestPlanMap(Collection<Long> userIds, Integer type, LocalDateTime[] createTime) {
+    public Map<Long, OaPlanDO> getLatestPlanMap(
+            Collection<Long> userIds, Integer type, LocalDateTime[] createTime) {
         if (CollUtil.isEmpty(userIds)) {
             return Collections.emptyMap();
         }
         // 1. 查询指定成员在统计周期内的工作计划
-        List<OaPlanDO> plans = planMapper.selectListByCreatorsAndTypeAndCreateTime(
-                convertList(userIds, String::valueOf), type, createTime);
+        List<OaPlanDO> plans =
+                planMapper.selectListByCreatorsAndTypeAndCreateTime(
+                        convertList(userIds, String::valueOf), type, createTime);
         // 2. 每位成员只保留创建时间最新的工作计划
         return convertMap(plans, plan -> NumberUtils.parseLong(plan.getCreator()));
     }
@@ -141,5 +146,4 @@ public class OaPlanServiceImpl implements OaPlanService {
         }
         return plan;
     }
-
 }

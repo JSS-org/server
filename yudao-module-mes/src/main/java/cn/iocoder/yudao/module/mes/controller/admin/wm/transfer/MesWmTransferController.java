@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.transfer;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
@@ -11,20 +14,20 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo.MesWmTransfer
 import cn.iocoder.yudao.module.mes.controller.admin.wm.transfer.vo.MesWmTransferSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.transfer.MesWmTransferDO;
 import cn.iocoder.yudao.module.mes.service.wm.transfer.MesWmTransferService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - MES 转移单")
 @RestController
@@ -32,20 +35,21 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MesWmTransferController {
 
-    @Resource
-    private MesWmTransferService transferService;
+    @Resource private MesWmTransferService transferService;
 
     @PostMapping("/create")
     @Operation(summary = "创建转移单")
     @PreAuthorize("@ss.hasPermission('mes:wm-transfer:create')")
-    public CommonResult<Long> createTransfer(@Valid @RequestBody MesWmTransferSaveReqVO createReqVO) {
+    public CommonResult<Long> createTransfer(
+            @Valid @RequestBody MesWmTransferSaveReqVO createReqVO) {
         return success(transferService.createTransfer(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改转移单")
     @PreAuthorize("@ss.hasPermission('mes:wm-transfer:update')")
-    public CommonResult<Boolean> updateTransfer(@Valid @RequestBody MesWmTransferSaveReqVO updateReqVO) {
+    public CommonResult<Boolean> updateTransfer(
+            @Valid @RequestBody MesWmTransferSaveReqVO updateReqVO) {
         transferService.updateTransfer(updateReqVO);
         return success(true);
     }
@@ -81,11 +85,16 @@ public class MesWmTransferController {
     @Operation(summary = "导出转移单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:wm-transfer:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportTransferExcel(@Valid MesWmTransferPageReqVO pageReqVO,
-                                    HttpServletResponse response) throws IOException {
+    public void exportTransferExcel(
+            @Valid MesWmTransferPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         PageResult<MesWmTransferDO> pageResult = transferService.getTransferPage(pageReqVO);
-        ExcelUtils.write(response, "转移单.xls", "数据", MesWmTransferRespVO.class,
+        ExcelUtils.write(
+                response,
+                "转移单.xls",
+                "数据",
+                MesWmTransferRespVO.class,
                 BeanUtils.toBean(pageResult.getList(), MesWmTransferRespVO.class));
     }
 
@@ -133,5 +142,4 @@ public class MesWmTransferController {
         transferService.cancelTransfer(id);
         return success(true);
     }
-
 }

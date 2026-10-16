@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.ai.service.knowledge;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.document.AiKnowledgeDocumentCreateListReqVO;
 import cn.iocoder.yudao.module.ai.controller.admin.knowledge.vo.document.AiKnowledgeDocumentPageReqVO;
@@ -11,8 +13,6 @@ import cn.iocoder.yudao.module.ai.dal.dataobject.knowledge.AiKnowledgeDocumentDO
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * AI 知识库文档 Service 接口
@@ -43,7 +43,8 @@ public interface AiKnowledgeDocumentService {
      * @param pageReqVO 分页参数
      * @return 文档分页
      */
-    PageResult<AiKnowledgeDocumentDO> getKnowledgeDocumentPage(AiKnowledgeDocumentPageReqVO pageReqVO);
+    PageResult<AiKnowledgeDocumentDO> getKnowledgeDocumentPage(
+            AiKnowledgeDocumentPageReqVO pageReqVO);
 
     /**
      * 获取文档详情
@@ -122,5 +123,4 @@ public interface AiKnowledgeDocumentService {
     default Map<Long, AiKnowledgeDocumentDO> getKnowledgeDocumentMap(Collection<Long> ids) {
         return convertMap(getKnowledgeDocumentList(ids), AiKnowledgeDocumentDO::getId);
     }
-
 }

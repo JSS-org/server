@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.im.controller.admin.group;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -17,25 +21,24 @@ import cn.iocoder.yudao.module.im.service.group.ImGroupRequestService;
 import cn.iocoder.yudao.module.im.service.group.ImGroupService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Stream;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLoginUserId;
 
 /**
  * IM 加群申请 Controller
@@ -48,15 +51,11 @@ import static cn.iocoder.yudao.framework.web.core.util.WebFrameworkUtils.getLogi
 @Validated
 public class ImGroupRequestController {
 
-    @Resource
-    private ImGroupRequestService groupRequestService;
-    @Resource
-    private ImGroupService groupService;
-    @Resource
-    private ImGroupMemberService groupMemberService;
+    @Resource private ImGroupRequestService groupRequestService;
+    @Resource private ImGroupService groupService;
+    @Resource private ImGroupMemberService groupMemberService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/apply")
     @Operation(summary = "申请加群")
@@ -79,7 +78,8 @@ public class ImGroupRequestController {
     public CommonResult<Boolean> refuseGroupRequest(
             @RequestParam("id") @NotNull(message = "申请编号不能为空") Long id,
             @RequestParam(value = "handleContent", required = false)
-            @Size(max = 255, message = "处理理由最多 255 个字符") String handleContent) {
+                    @Size(max = 255, message = "处理理由最多 255 个字符")
+                    String handleContent) {
         groupRequestService.refuseGroupRequest(getLoginUserId(), id, handleContent);
         return success(true);
     }
@@ -87,23 +87,25 @@ public class ImGroupRequestController {
     @GetMapping("/unhandled-list")
     @Operation(summary = "查询「我管理的所有群」下的未处理加群申请列表（不分页）；前端 store 据此派生横幅红点 + Drawer 列表")
     public CommonResult<List<ImGroupRequestRespVO>> getUnhandledRequestList() {
-        List<ImGroupRequestDO> list = groupRequestService.getUnhandledRequestListByOwnerOrAdmin(getLoginUserId());
+        List<ImGroupRequestDO> list =
+                groupRequestService.getUnhandledRequestListByOwnerOrAdmin(getLoginUserId());
         return success(buildVOList(list));
     }
 
     @GetMapping("/pull")
     @Operation(summary = "增量拉取「我管理的群」下的加群申请（重连 / 离线补偿）")
     @Parameters({
-            @Parameter(name = "lastUpdateTime", description = "上次拉取到的最新更新时间（毫秒时间戳）；首次拉取不传"),
-            @Parameter(name = "lastId", description = "上次拉取到的最后一条记录 id；首次拉取不传"),
-            @Parameter(name = "limit", description = "单次拉取条数", required = true)
+        @Parameter(name = "lastUpdateTime", description = "上次拉取到的最新更新时间（毫秒时间戳）；首次拉取不传"),
+        @Parameter(name = "lastId", description = "上次拉取到的最后一条记录 id；首次拉取不传"),
+        @Parameter(name = "limit", description = "单次拉取条数", required = true)
     })
     public CommonResult<List<ImGroupRequestRespVO>> pullMyGroupRequestList(
             @RequestParam(value = "lastUpdateTime", required = false) Long lastUpdateTime,
             @RequestParam(value = "lastId", required = false) Long lastId,
             @RequestParam("limit") @Min(1) @Max(200) Integer limit) {
-        List<ImGroupRequestDO> list = groupRequestService.pullGroupRequestList(
-                getLoginUserId(), lastUpdateTime, lastId, limit);
+        List<ImGroupRequestDO> list =
+                groupRequestService.pullGroupRequestList(
+                        getLoginUserId(), lastUpdateTime, lastId, limit);
         return success(buildVOList(list));
     }
 
@@ -112,7 +114,8 @@ public class ImGroupRequestController {
     @Parameter(name = "groupId", description = "群编号", required = true, example = "1024")
     public CommonResult<List<ImGroupRequestRespVO>> getGroupRequestListByGroupId(
             @RequestParam("groupId") @NotNull(message = "群编号不能为空") Long groupId) {
-        List<ImGroupRequestDO> list = groupRequestService.getGroupRequestListByGroupId(getLoginUserId(), groupId);
+        List<ImGroupRequestDO> list =
+                groupRequestService.getGroupRequestListByGroupId(getLoginUserId(), groupId);
         return success(buildVOList(list));
     }
 
@@ -126,9 +129,10 @@ public class ImGroupRequestController {
         }
         // 越权过滤：申请人 / 邀请人 / 群主 / 管理员之外，当不存在返回 null
         Long currentUserId = getLoginUserId();
-        boolean canSee = ObjUtil.equal(request.getUserId(), currentUserId)
-                || ObjUtil.equal(request.getInviterUserId(), currentUserId)
-                || isGroupOwnerOrAdmin(request.getGroupId(), currentUserId);
+        boolean canSee =
+                ObjUtil.equal(request.getUserId(), currentUserId)
+                        || ObjUtil.equal(request.getInviterUserId(), currentUserId)
+                        || isGroupOwnerOrAdmin(request.getGroupId(), currentUserId);
         if (!canSee) {
             return success(null);
         }
@@ -153,22 +157,37 @@ public class ImGroupRequestController {
             return Collections.emptyList();
         }
         // 1. 聚合 user / inviter 用户信息；convertSetByFlatMap 内部已过滤 null
-        Set<Long> userIds = convertSetByFlatMap(list,
-                request -> Stream.of(request.getUserId(), request.getInviterUserId()));
+        Set<Long> userIds =
+                convertSetByFlatMap(
+                        list,
+                        request -> Stream.of(request.getUserId(), request.getInviterUserId()));
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(userIds);
         // 2. 聚合群信息（封禁 / 解散群也要回填，便于前端展示历史）
         Set<Long> groupIds = convertSet(list, ImGroupRequestDO::getGroupId);
         Map<Long, ImGroupDO> groupMap = groupService.getGroupMap(groupIds);
-        return convertList(list, request -> {
-            ImGroupRequestRespVO vo = BeanUtils.toBean(request, ImGroupRequestRespVO.class);
-            MapUtils.findAndThen(userMap, request.getUserId(), user ->
-                    vo.setUserNickname(user.getNickname()).setUserAvatar(user.getAvatar()));
-            MapUtils.findAndThen(userMap, request.getInviterUserId(), user ->
-                    vo.setInviterNickname(user.getNickname()).setInviterAvatar(user.getAvatar()));
-            MapUtils.findAndThen(groupMap, request.getGroupId(), group ->
-                    vo.setGroupName(group.getName()).setGroupAvatar(group.getAvatar()));
-            return vo;
-        });
+        return convertList(
+                list,
+                request -> {
+                    ImGroupRequestRespVO vo = BeanUtils.toBean(request, ImGroupRequestRespVO.class);
+                    MapUtils.findAndThen(
+                            userMap,
+                            request.getUserId(),
+                            user ->
+                                    vo.setUserNickname(user.getNickname())
+                                            .setUserAvatar(user.getAvatar()));
+                    MapUtils.findAndThen(
+                            userMap,
+                            request.getInviterUserId(),
+                            user ->
+                                    vo.setInviterNickname(user.getNickname())
+                                            .setInviterAvatar(user.getAvatar()));
+                    MapUtils.findAndThen(
+                            groupMap,
+                            request.getGroupId(),
+                            group ->
+                                    vo.setGroupName(group.getName())
+                                            .setGroupAvatar(group.getAvatar()));
+                    return vo;
+                });
     }
-
 }

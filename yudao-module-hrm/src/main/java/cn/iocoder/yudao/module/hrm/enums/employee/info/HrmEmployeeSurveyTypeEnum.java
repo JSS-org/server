@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.enums.employee.info;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum HrmEmployeeSurveyTypeEnum implements ArrayValuable<Integer> {
-
     ENTRY(1, "入职"),
     LEAVE(2, "离职"),
     REGULAR(3, "转正"),
@@ -22,13 +22,14 @@ public enum HrmEmployeeSurveyTypeEnum implements ArrayValuable<Integer> {
     PENDING_ENTRY(5, "待入职"),
     PENDING_LEAVE(6, "待离职");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmEmployeeSurveyTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(HrmEmployeeSurveyTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名称
      */
@@ -38,5 +39,4 @@ public enum HrmEmployeeSurveyTypeEnum implements ArrayValuable<Integer> {
     public Integer[] array() {
         return ARRAYS;
     }
-
 }

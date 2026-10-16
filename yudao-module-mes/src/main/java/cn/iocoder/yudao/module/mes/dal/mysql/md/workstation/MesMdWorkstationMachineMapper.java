@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.md.workstation;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkstationMachineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -25,5 +26,4 @@ public interface MesMdWorkstationMachineMapper extends BaseMapperX<MesMdWorkstat
     default void deleteByWorkstationId(Long workstationId) {
         delete(MesMdWorkstationMachineDO::getWorkstationId, workstationId);
     }
-
 }

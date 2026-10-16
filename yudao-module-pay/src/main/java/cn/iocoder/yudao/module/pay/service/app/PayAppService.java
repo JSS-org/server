@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.pay.controller.admin.app.vo.PayAppCreateReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.app.vo.PayAppPageReqVO;
 import cn.iocoder.yudao.module.pay.controller.admin.app.vo.PayAppUpdateReqVO;
 import cn.iocoder.yudao.module.pay.dal.dataobject.app.PayAppDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -111,5 +112,4 @@ public interface PayAppService {
      * @return 应用
      */
     PayAppDO validPayApp(String appKey);
-
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.dv.checkplan;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.checkplan.MesDvCheckPlanSubjectDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -24,8 +25,9 @@ public interface MesDvCheckPlanSubjectMapper extends BaseMapperX<MesDvCheckPlanS
     }
 
     default void deleteByPlanId(Long planId) {
-        delete(new LambdaQueryWrapperX<MesDvCheckPlanSubjectDO>()
-                .eq(MesDvCheckPlanSubjectDO::getPlanId, planId));
+        delete(
+                new LambdaQueryWrapperX<MesDvCheckPlanSubjectDO>()
+                        .eq(MesDvCheckPlanSubjectDO::getPlanId, planId));
     }
 
     default Long selectCountBySubjectId(Long subjectId) {
@@ -33,9 +35,9 @@ public interface MesDvCheckPlanSubjectMapper extends BaseMapperX<MesDvCheckPlanS
     }
 
     default MesDvCheckPlanSubjectDO selectByPlanIdAndSubjectId(Long planId, Long subjectId) {
-        return selectOne(new LambdaQueryWrapperX<MesDvCheckPlanSubjectDO>()
-                .eq(MesDvCheckPlanSubjectDO::getPlanId, planId)
-                .eq(MesDvCheckPlanSubjectDO::getSubjectId, subjectId));
+        return selectOne(
+                new LambdaQueryWrapperX<MesDvCheckPlanSubjectDO>()
+                        .eq(MesDvCheckPlanSubjectDO::getPlanId, planId)
+                        .eq(MesDvCheckPlanSubjectDO::getSubjectId, subjectId));
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.task.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,7 +25,11 @@ public class OaTaskReceiverRespVO {
     @Schema(description = "接收状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private Integer status;
 
-    @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64", example = "1789347600000")
+    @Schema(
+            description = "更新时间",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64",
+            example = "1789347600000")
     private LocalDateTime updateTime;
-
 }

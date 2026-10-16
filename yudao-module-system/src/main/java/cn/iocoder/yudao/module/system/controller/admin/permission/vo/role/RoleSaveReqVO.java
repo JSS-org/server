@@ -2,11 +2,15 @@ package cn.iocoder.yudao.module.system.controller.admin.permission.vo.role;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 角色创建/更新 Request VO")
@@ -43,5 +47,4 @@ public class RoleSaveReqVO {
     @Size(max = 500, message = "备注长度不能超过 500 个字符")
     @DiffLogField(name = "备注")
     private String remark;
-
 }

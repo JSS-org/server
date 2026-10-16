@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.reply;
 
 import cn.iocoder.yudao.framework.common.pojo.SortablePageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,5 +20,4 @@ public class OaDiscussionReplyPageReqVO extends SortablePageParam {
 
     @Schema(description = "回复人用户编号", example = "1")
     private Long userId;
-
 }

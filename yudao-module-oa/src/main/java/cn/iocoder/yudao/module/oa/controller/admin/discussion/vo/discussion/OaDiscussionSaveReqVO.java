@@ -1,17 +1,21 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.discussion;
 
-import cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.vote.OaVoteOptionSaveReqVO;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
+import cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.vote.OaVoteOptionSaveReqVO;
 import cn.iocoder.yudao.module.oa.enums.discussion.OaDiscussionTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,7 +42,10 @@ public class OaDiscussionSaveReqVO {
     private String content;
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/file.pdf\"]")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 512, message = "附件地址长度不能超过 512 个字符") String> fileUrls;
+    private List<
+                    @NotBlank(message = "附件地址不能为空") @Size(max = 512, message = "附件地址长度不能超过 512 个字符")
+                    String>
+            fileUrls;
 
     @Schema(description = "投票是否允许多选", example = "false")
     private Boolean voteMultiple;
@@ -65,5 +72,4 @@ public class OaDiscussionSaveReqVO {
         }
         return voteEndTime.isAfter(voteStartTime) && CollUtil.size(voteOptions) >= 2;
     }
-
 }

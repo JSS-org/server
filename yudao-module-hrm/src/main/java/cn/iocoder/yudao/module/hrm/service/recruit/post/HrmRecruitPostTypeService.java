@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.hrm.service.recruit.post;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.hrm.dal.dataobject.recruit.post.HrmRecruitPostTypeDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 招聘职位类型 Service 接口
@@ -47,5 +47,4 @@ public interface HrmRecruitPostTypeService {
     default Map<Long, HrmRecruitPostTypeDO> getRecruitPostTypeMap(Collection<Long> ids) {
         return convertMap(getRecruitPostTypeListByIds(ids), HrmRecruitPostTypeDO::getId);
     }
-
 }

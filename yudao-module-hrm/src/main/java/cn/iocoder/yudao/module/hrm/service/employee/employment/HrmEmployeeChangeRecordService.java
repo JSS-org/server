@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.hrm.service.employee.employment;
 
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord.HrmEmployeeChangeRecordCreateReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.employee.employment.HrmEmployeeChangeRecordDO;
+
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,8 @@ public interface HrmEmployeeChangeRecordService {
      *
      * @param createReqVO 异动记录
      */
-    HrmEmployeeChangeRecordDO createEmployeeChangeRecord(@Valid HrmEmployeeChangeRecordCreateReqVO createReqVO);
+    HrmEmployeeChangeRecordDO createEmployeeChangeRecord(
+            @Valid HrmEmployeeChangeRecordCreateReqVO createReqVO);
 
     /**
      * 获得员工的异动记录列表
@@ -55,5 +57,4 @@ public interface HrmEmployeeChangeRecordService {
      */
     List<HrmEmployeeChangeRecordDO> getEmployeeChangeRecordListByEmployeeIdsAndEffectTimeBetween(
             Collection<Long> employeeIds, LocalDateTime[] effectTimes);
-
 }

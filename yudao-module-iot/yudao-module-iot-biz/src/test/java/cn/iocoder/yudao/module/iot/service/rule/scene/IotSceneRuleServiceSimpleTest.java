@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.iot.service.rule.scene;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseMockitoUnitTest;
 import cn.iocoder.yudao.module.iot.controller.admin.rule.vo.scene.IotSceneRuleSaveReqVO;
@@ -11,19 +19,13 @@ import cn.iocoder.yudao.module.iot.service.rule.scene.action.IotSceneRuleAction;
 import cn.iocoder.yudao.module.iot.service.rule.scene.matcher.IotSceneRuleMatcherManager;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotSceneRuleTimerHandler;
 import cn.iocoder.yudao.module.iot.service.rule.scene.timer.IotTimerConditionEvaluator;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link IotSceneRuleServiceImpl} 的简化单元测试类
@@ -33,47 +35,48 @@ import static org.mockito.Mockito.*;
  */
 public class IotSceneRuleServiceSimpleTest extends BaseMockitoUnitTest {
 
-    @InjectMocks
-    private IotSceneRuleServiceImpl sceneRuleService;
+    @InjectMocks private IotSceneRuleServiceImpl sceneRuleService;
 
-    @Mock
-    private IotSceneRuleMapper sceneRuleMapper;
+    @Mock private IotSceneRuleMapper sceneRuleMapper;
 
-    @Mock
-    private List<IotSceneRuleAction> sceneRuleActions;
+    @Mock private List<IotSceneRuleAction> sceneRuleActions;
 
-    @Mock
-    private IotSceneRuleTimerHandler timerHandler;
+    @Mock private IotSceneRuleTimerHandler timerHandler;
 
-    @Mock
-    private IotTimerConditionEvaluator timerConditionEvaluator;
+    @Mock private IotTimerConditionEvaluator timerConditionEvaluator;
 
-    @Mock
-    private IotSceneRuleMatcherManager sceneRuleMatcherManager;
+    @Mock private IotSceneRuleMatcherManager sceneRuleMatcherManager;
 
-    @Mock
-    private IotProductService productService;
+    @Mock private IotProductService productService;
 
-    @Mock
-    private IotDeviceService deviceService;
+    @Mock private IotDeviceService deviceService;
 
     @Test
     public void testCreateScene_rule_success() {
         // 准备参数
-        IotSceneRuleSaveReqVO createReqVO = randomPojo(IotSceneRuleSaveReqVO.class, o -> {
-            o.setId(null);
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-            o.setTriggers(Collections.singletonList(randomPojo(IotSceneRuleDO.Trigger.class)));
-            o.setActions(Collections.singletonList(randomPojo(IotSceneRuleDO.Action.class)));
-        });
+        IotSceneRuleSaveReqVO createReqVO =
+                randomPojo(
+                        IotSceneRuleSaveReqVO.class,
+                        o -> {
+                            o.setId(null);
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                            o.setTriggers(
+                                    Collections.singletonList(
+                                            randomPojo(IotSceneRuleDO.Trigger.class)));
+                            o.setActions(
+                                    Collections.singletonList(
+                                            randomPojo(IotSceneRuleDO.Action.class)));
+                        });
 
         // Mock 行为
         Long expectedId = randomLongId();
-        when(sceneRuleMapper.insert(any(IotSceneRuleDO.class))).thenAnswer(invocation -> {
-            IotSceneRuleDO sceneRule = invocation.getArgument(0);
-            sceneRule.setId(expectedId);
-            return 1;
-        });
+        when(sceneRuleMapper.insert(any(IotSceneRuleDO.class)))
+                .thenAnswer(
+                        invocation -> {
+                            IotSceneRuleDO sceneRule = invocation.getArgument(0);
+                            sceneRule.setId(expectedId);
+                            return 1;
+                        });
 
         // 调用
         Long sceneRuleId = sceneRuleService.createSceneRule(createReqVO);
@@ -87,12 +90,19 @@ public class IotSceneRuleServiceSimpleTest extends BaseMockitoUnitTest {
     public void testUpdateScene_rule_success() {
         // 准备参数
         Long id = randomLongId();
-        IotSceneRuleSaveReqVO updateReqVO = randomPojo(IotSceneRuleSaveReqVO.class, o -> {
-            o.setId(id);
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-            o.setTriggers(Collections.singletonList(randomPojo(IotSceneRuleDO.Trigger.class)));
-            o.setActions(Collections.singletonList(randomPojo(IotSceneRuleDO.Action.class)));
-        });
+        IotSceneRuleSaveReqVO updateReqVO =
+                randomPojo(
+                        IotSceneRuleSaveReqVO.class,
+                        o -> {
+                            o.setId(id);
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                            o.setTriggers(
+                                    Collections.singletonList(
+                                            randomPojo(IotSceneRuleDO.Trigger.class)));
+                            o.setActions(
+                                    Collections.singletonList(
+                                            randomPojo(IotSceneRuleDO.Action.class)));
+                        });
 
         // Mock 行为
         IotSceneRuleDO existingSceneRule = randomPojo(IotSceneRuleDO.class, o -> o.setId(id));
@@ -149,10 +159,13 @@ public class IotSceneRuleServiceSimpleTest extends BaseMockitoUnitTest {
         Integer status = CommonStatusEnum.DISABLE.getStatus();
 
         // Mock 行为
-        IotSceneRuleDO existingSceneRule = randomPojo(IotSceneRuleDO.class, o -> {
-            o.setId(id);
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-        });
+        IotSceneRuleDO existingSceneRule =
+                randomPojo(
+                        IotSceneRuleDO.class,
+                        o -> {
+                            o.setId(id);
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                        });
         when(sceneRuleMapper.selectById(id)).thenReturn(existingSceneRule);
         when(sceneRuleMapper.updateById(any(IotSceneRuleDO.class))).thenReturn(1);
 
@@ -170,10 +183,13 @@ public class IotSceneRuleServiceSimpleTest extends BaseMockitoUnitTest {
         Long id = randomLongId();
 
         // Mock 行为
-        IotSceneRuleDO sceneRule = randomPojo(IotSceneRuleDO.class, o -> {
-            o.setId(id);
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-        });
+        IotSceneRuleDO sceneRule =
+                randomPojo(
+                        IotSceneRuleDO.class,
+                        o -> {
+                            o.setId(id);
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                        });
         when(sceneRuleMapper.selectById(id)).thenReturn(sceneRule);
 
         // 调用
@@ -204,10 +220,13 @@ public class IotSceneRuleServiceSimpleTest extends BaseMockitoUnitTest {
         Long id = randomLongId();
 
         // Mock 行为
-        IotSceneRuleDO sceneRule = randomPojo(IotSceneRuleDO.class, o -> {
-            o.setId(id);
-            o.setStatus(CommonStatusEnum.DISABLE.getStatus());
-        });
+        IotSceneRuleDO sceneRule =
+                randomPojo(
+                        IotSceneRuleDO.class,
+                        o -> {
+                            o.setId(id);
+                            o.setStatus(CommonStatusEnum.DISABLE.getStatus());
+                        });
         when(sceneRuleMapper.selectById(id)).thenReturn(sceneRule);
 
         // 调用 - 禁用的场景规则应该不会执行，只是记录日志

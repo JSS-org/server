@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -17,11 +21,14 @@ import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.hrm.service.salary.slip.HrmSalarySlipService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,23 +44,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - HRM 工资条")
 @RestController
 @RequestMapping("/hrm/salary/slip")
 @Validated
 public class HrmSalarySlipController {
 
-    @Resource
-    private HrmSalarySlipService salarySlipService;
-    @Resource
-    private HrmEmployeeService employeeService;
+    @Resource private HrmSalarySlipService salarySlipService;
+    @Resource private HrmEmployeeService employeeService;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
     @GetMapping("/page")
     @Operation(summary = "获得工资条分页")
@@ -65,8 +65,9 @@ public class HrmSalarySlipController {
             HrmEmployeeListReqVO employeeReqVO = new HrmEmployeeListReqVO();
             employeeReqVO.setSearch(reqVO.getSearch());
             employeeReqVO.setDeptId(reqVO.getDeptId());
-            Set<Long> employeeIds = convertSet(
-                    employeeService.getEmployeeList(employeeReqVO), HrmEmployeeDO::getId);
+            Set<Long> employeeIds =
+                    convertSet(
+                            employeeService.getEmployeeList(employeeReqVO), HrmEmployeeDO::getId);
             if (CollUtil.isNotEmpty(reqVO.getEmployeeIds())) {
                 employeeIds.retainAll(reqVO.getEmployeeIds());
             }
@@ -78,7 +79,9 @@ public class HrmSalarySlipController {
 
         // 2. 查询工资条并拼接响应
         PageResult<HrmSalarySlipDO> pageResult = salarySlipService.getSalarySlipPage(reqVO);
-        return success(new PageResult<>(buildSalarySlipRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildSalarySlipRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/get")
@@ -112,24 +115,34 @@ public class HrmSalarySlipController {
             return Collections.emptyList();
         }
         // 1. 获取员工、部门信息
-        Map<Long, HrmEmployeeDO> employeeMap = employeeService.getEmployeeMap(
-                convertSet(salarySlips, HrmSalarySlipDO::getEmployeeId));
-        Map<Long, DeptRespDTO> deptMap = deptApi.getDeptMap(
-                convertSet(employeeMap.values(), HrmEmployeeDO::getDeptId));
+        Map<Long, HrmEmployeeDO> employeeMap =
+                employeeService.getEmployeeMap(
+                        convertSet(salarySlips, HrmSalarySlipDO::getEmployeeId));
+        Map<Long, DeptRespDTO> deptMap =
+                deptApi.getDeptMap(convertSet(employeeMap.values(), HrmEmployeeDO::getDeptId));
 
         // 2. 拼接响应
-        return convertList(salarySlips, salarySlip -> {
-            HrmSalarySlipRespVO respVO = BeanUtils.toBean(salarySlip, HrmSalarySlipRespVO.class);
-            HrmEmployeeDO employee = employeeMap.get(salarySlip.getEmployeeId());
-            if (employee != null) {
-                respVO.setEmployeeName(employee.getName()).setJobNumber(employee.getJobNumber())
-                        .setMobile(employee.getMobile()).setDeptId(employee.getDeptId())
-                        .setPostName(employee.getPostName());
-                MapUtils.findAndThen(deptMap, employee.getDeptId(), dept -> respVO.setDeptName(dept.getName()));
-            }
-            respVO.setOptions(BeanUtils.toBean(salarySlip.getOptions(), HrmSalarySlipOptionRespVO.class));
-            return respVO;
-        });
+        return convertList(
+                salarySlips,
+                salarySlip -> {
+                    HrmSalarySlipRespVO respVO =
+                            BeanUtils.toBean(salarySlip, HrmSalarySlipRespVO.class);
+                    HrmEmployeeDO employee = employeeMap.get(salarySlip.getEmployeeId());
+                    if (employee != null) {
+                        respVO.setEmployeeName(employee.getName())
+                                .setJobNumber(employee.getJobNumber())
+                                .setMobile(employee.getMobile())
+                                .setDeptId(employee.getDeptId())
+                                .setPostName(employee.getPostName());
+                        MapUtils.findAndThen(
+                                deptMap,
+                                employee.getDeptId(),
+                                dept -> respVO.setDeptName(dept.getName()));
+                    }
+                    respVO.setOptions(
+                            BeanUtils.toBean(
+                                    salarySlip.getOptions(), HrmSalarySlipOptionRespVO.class));
+                    return respVO;
+                });
     }
-
 }

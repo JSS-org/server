@@ -2,10 +2,14 @@ package cn.iocoder.yudao.module.oa.controller.admin.mail.vo.account;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
-import lombok.Data;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.*;
+
+import lombok.Data;
 import lombok.ToString;
 
 @Data
@@ -19,13 +23,19 @@ public class OaMailAccountSaveReqVO {
     @NotNull(message = "服务配置编号不能为空")
     private Long providerId;
 
-    @Schema(description = "邮箱地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "user@example.com")
+    @Schema(
+            description = "邮箱地址",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "user@example.com")
     @NotBlank(message = "邮箱地址不能为空")
     @Email(message = "邮箱地址格式不正确")
     @Size(max = 255, message = "邮箱地址长度不能超过 {max} 个字符")
     private String mail;
 
-    @Schema(description = "登录用户名", requiredMode = Schema.RequiredMode.REQUIRED, example = "user@example.com")
+    @Schema(
+            description = "登录用户名",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "user@example.com")
     @NotBlank(message = "登录用户名不能为空")
     @Size(max = 255, message = "登录用户名长度不能超过 {max} 个字符")
     private String username;
@@ -35,7 +45,10 @@ public class OaMailAccountSaveReqVO {
     @Size(max = 4096, message = "密码或授权码长度不能超过 {max} 个字符")
     private String password;
 
-    @Schema(description = "是否默认发件账号", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "是否默认发件账号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     @NotNull(message = "是否默认发件账号不能为空")
     private Boolean defaultStatus;
 
@@ -52,7 +65,7 @@ public class OaMailAccountSaveReqVO {
     @AssertTrue(message = "默认邮箱账号必须启用")
     @JsonIgnore
     public boolean isDefaultStatusValid() {
-        return !Boolean.TRUE.equals(defaultStatus) || CommonStatusEnum.ENABLE.getStatus().equals(status);
+        return !Boolean.TRUE.equals(defaultStatus)
+                || CommonStatusEnum.ENABLE.getStatus().equals(status);
     }
-
 }

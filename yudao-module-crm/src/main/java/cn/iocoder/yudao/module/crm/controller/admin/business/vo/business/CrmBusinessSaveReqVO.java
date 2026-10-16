@@ -1,20 +1,25 @@
 package cn.iocoder.yudao.module.crm.controller.admin.business.vo.business;
 
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.CrmCustomerParseFunction;
 import cn.iocoder.yudao.module.crm.framework.operatelog.core.SysAdminUserParseFunction;
+
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
 @Schema(description = "管理后台 - CRM 商机创建/更新 Request VO")
 @Data
@@ -74,22 +79,29 @@ public class CrmBusinessSaveReqVO {
     @AllArgsConstructor
     public static class BusinessProduct {
 
-        @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "20529")
+        @Schema(
+                description = "产品编号",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "20529")
         @NotNull(message = "产品编号不能为空")
         private Long productId;
 
-        @Schema(description = "产品单价", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "产品单价",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         @NotNull(message = "产品单价不能为空")
         private BigDecimal productPrice;
 
-        @Schema(description = "商机价格", requiredMode = Schema.RequiredMode.REQUIRED, example = "123.00")
+        @Schema(
+                description = "商机价格",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "123.00")
         @NotNull(message = "商机价格不能为空")
         private BigDecimal businessPrice;
 
         @Schema(description = "产品数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "8911")
         @NotNull(message = "产品数量不能为空")
         private Integer count;
-
     }
-
 }

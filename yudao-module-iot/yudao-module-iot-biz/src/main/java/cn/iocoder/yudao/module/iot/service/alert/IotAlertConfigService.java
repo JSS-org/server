@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.alert.vo.config.IotAlertConfigPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.alert.vo.config.IotAlertConfigSaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.alert.IotAlertConfigDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -67,6 +68,6 @@ public interface IotAlertConfigService {
      * @param sceneRuleId 场景流动规则编号
      * @return 告警配置列表
      */
-    List<IotAlertConfigDO> getAlertConfigListBySceneRuleIdAndStatus(Long sceneRuleId, Integer status);
-
+    List<IotAlertConfigDO> getAlertConfigListBySceneRuleIdAndStatus(
+            Long sceneRuleId, Integer status);
 }

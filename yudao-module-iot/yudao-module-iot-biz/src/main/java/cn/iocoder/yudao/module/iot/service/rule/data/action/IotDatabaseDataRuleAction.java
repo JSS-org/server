@@ -5,9 +5,12 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.rule.config.IotDataSinkDatabaseConfig;
 import cn.iocoder.yudao.module.iot.enums.rule.IotDataSinkTypeEnum;
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +25,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class IotDatabaseDataRuleAction extends
-        IotDataRuleCacheableAction<IotDataSinkDatabaseConfig, JdbcTemplate> {
+public class IotDatabaseDataRuleAction
+        extends IotDataRuleCacheableAction<IotDataSinkDatabaseConfig, JdbcTemplate> {
 
     @Override
     public Integer getType() {
@@ -31,25 +34,31 @@ public class IotDatabaseDataRuleAction extends
     }
 
     @Override
-    public void execute(IotDeviceMessage message, IotDataSinkDatabaseConfig config) throws Exception {
+    public void execute(IotDeviceMessage message, IotDataSinkDatabaseConfig config)
+            throws Exception {
         try {
             // 1. 获取或创建 JdbcTemplate
             JdbcTemplate jdbcTemplate = getProducer(config);
 
             // 2. 构建并执行 INSERT SQL
-            String sql = StrUtil.format(
-                    "INSERT INTO {} (id, device_id, tenant_id, method, report_time, data, create_time) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-                    config.getTableName());
+            String sql =
+                    StrUtil.format(
+                            "INSERT INTO {} (id, device_id, tenant_id, method, report_time, data, create_time) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+                            config.getTableName());
             String messageJson = JsonUtils.toJsonString(message);
-            jdbcTemplate.update(sql,
+            jdbcTemplate.update(
+                    sql,
                     message.getId(),
                     message.getDeviceId(),
                     message.getTenantId(),
                     message.getMethod(),
                     message.getReportTime(),
                     messageJson);
-            log.info("[execute][message({}) config({}) 写入数据库成功，table: {}]",
-                    message.getId(), config, config.getTableName());
+            log.info(
+                    "[execute][message({}) config({}) 写入数据库成功，table: {}]",
+                    message.getId(),
+                    config,
+                    config.getTableName());
         } catch (Exception e) {
             log.error("[execute][message({}) config({}) 写入数据库失败]", message, config, e);
             throw e;
@@ -80,5 +89,4 @@ public class IotDatabaseDataRuleAction extends
             ((HikariDataSource) producer.getDataSource()).close();
         }
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.bpm.framework.flowable;
 
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessDefinitionInfoDO;
 import cn.iocoder.yudao.module.bpm.dal.redis.BpmProcessIdRedisDAO;
@@ -20,14 +23,16 @@ import cn.iocoder.yudao.module.bpm.service.task.listener.BpmCallActivityListener
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.flowable.engine.RepositoryService;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
@@ -40,9 +45,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * 依赖 Flowable 引擎的单元测试
  *
@@ -53,42 +55,43 @@ import static org.mockito.Mockito.*;
  *
  * @author HUIHUI
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
         classes = BaseFlowableUnitTest.Application.class)
 @ActiveProfiles("unit-test")
-@TestPropertySource(properties = {
-        // Flowable 8 的 H2 脚本使用旧式 identity 语法，LEGACY 模式兼容该语法；业务表脚本在需要时由测试显式导入。
-        "spring.datasource.url=jdbc:h2:mem:bpm-flowable-testdb;MODE=LEGACY;DATABASE_TO_UPPER=false;NON_KEYWORDS=value",
-        "spring.sql.init.mode=never",
-        // 关闭异步执行器，定时器由测试显式触发，避免后台线程与测试交错执行
-        "flowable.async-executor-activate=false"
-})
+@TestPropertySource(
+        properties = {
+            // Flowable 8 的 H2 脚本使用旧式 identity 语法，LEGACY 模式兼容该语法；业务表脚本在需要时由测试显式导入。
+            "spring.datasource.url=jdbc:h2:mem:bpm-flowable-testdb;MODE=LEGACY;DATABASE_TO_UPPER=false;NON_KEYWORDS=value",
+            "spring.sql.init.mode=never",
+            // 关闭异步执行器，定时器由测试显式触发，避免后台线程与测试交错执行
+            "flowable.async-executor-activate=false"
+        })
 public abstract class BaseFlowableUnitTest {
 
-    @MockitoBean
-    protected BpmProcessDefinitionService processDefinitionService;
-    @MockitoBean
-    protected BpmModelService modelService;
-    @MockitoBean
-    protected BpmCommentService commentService;
-    @MockitoBean
-    protected BpmMessageService messageService;
-    @MockitoBean
-    protected BpmFormService formService;
-    @MockitoBean
-    protected BpmProcessInstanceCopyService processInstanceCopyService;
-    @MockitoBean
-    protected BpmProcessIdRedisDAO processIdRedisDAO;
-    @MockitoBean
-    protected AdminUserApi adminUserApi;
-    @MockitoBean
-    protected DeptApi deptApi;
+    @MockitoBean protected BpmProcessDefinitionService processDefinitionService;
+    @MockitoBean protected BpmModelService modelService;
+    @MockitoBean protected BpmCommentService commentService;
+    @MockitoBean protected BpmMessageService messageService;
+    @MockitoBean protected BpmFormService formService;
+    @MockitoBean protected BpmProcessInstanceCopyService processInstanceCopyService;
+    @MockitoBean protected BpmProcessIdRedisDAO processIdRedisDAO;
+    @MockitoBean protected AdminUserApi adminUserApi;
+    @MockitoBean protected DeptApi deptApi;
 
-    @Import({BaseDbUnitTest.Application.class, BpmFlowableConfiguration.class,
-            BpmTaskServiceImpl.class, BpmProcessInstanceServiceImpl.class,
-            BpmTaskEventListener.class, BpmProcessInstanceEventListener.class})
-    @ImportAutoConfiguration({ProcessEngineAutoConfiguration.class, ProcessEngineServicesAutoConfiguration.class,
-            TransactionAutoConfiguration.class})
+    @Import({
+        BaseDbUnitTest.Application.class,
+        BpmFlowableConfiguration.class,
+        BpmTaskServiceImpl.class,
+        BpmProcessInstanceServiceImpl.class,
+        BpmTaskEventListener.class,
+        BpmProcessInstanceEventListener.class
+    })
+    @ImportAutoConfiguration({
+        ProcessEngineAutoConfiguration.class,
+        ProcessEngineServicesAutoConfiguration.class,
+        TransactionAutoConfiguration.class
+    })
     public static class Application {
 
         @Bean("testBpmTaskCandidateInvoker")
@@ -128,30 +131,54 @@ public abstract class BaseFlowableUnitTest {
      */
     @SuppressWarnings("unchecked")
     protected void mockFlowableBackedServices(RepositoryService repositoryService) {
-        when(processDefinitionService.getActiveProcessDefinition(anyString())).thenAnswer(invocation ->
-                repositoryService.createProcessDefinitionQuery().processDefinitionKey(invocation.getArgument(0))
-                        .latestVersion().singleResult());
-        when(processDefinitionService.getProcessDefinition(anyString())).thenAnswer(invocation ->
-                repositoryService.createProcessDefinitionQuery().processDefinitionId(invocation.getArgument(0))
-                        .singleResult());
-        when(processDefinitionService.getProcessDefinitionBpmnModel(anyString())).thenAnswer(invocation ->
-                repositoryService.getBpmnModel(invocation.getArgument(0)));
-        when(processDefinitionService.getProcessDefinitionInfo(anyString())).thenAnswer(invocation ->
-                new BpmProcessDefinitionInfoDO().setProcessDefinitionId(invocation.getArgument(0))
-                        .setModelType(BpmModelTypeEnum.BPMN.getType()).setAllowWithdrawTask(true));
+        when(processDefinitionService.getActiveProcessDefinition(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                repositoryService
+                                        .createProcessDefinitionQuery()
+                                        .processDefinitionKey(invocation.getArgument(0))
+                                        .latestVersion()
+                                        .singleResult());
+        when(processDefinitionService.getProcessDefinition(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                repositoryService
+                                        .createProcessDefinitionQuery()
+                                        .processDefinitionId(invocation.getArgument(0))
+                                        .singleResult());
+        when(processDefinitionService.getProcessDefinitionBpmnModel(anyString()))
+                .thenAnswer(
+                        invocation -> repositoryService.getBpmnModel(invocation.getArgument(0)));
+        when(processDefinitionService.getProcessDefinitionInfo(anyString()))
+                .thenAnswer(
+                        invocation ->
+                                new BpmProcessDefinitionInfoDO()
+                                        .setProcessDefinitionId(invocation.getArgument(0))
+                                        .setModelType(BpmModelTypeEnum.BPMN.getType())
+                                        .setAllowWithdrawTask(true));
         when(processDefinitionService.canUserStartProcessDefinition(any(), any())).thenReturn(true);
-        when(modelService.getBpmnModelByDefinitionId(anyString())).thenAnswer(invocation ->
-                repositoryService.getBpmnModel(invocation.getArgument(0)));
-        when(adminUserApi.getUser(any())).thenAnswer(invocation -> buildUser(invocation.getArgument(0)));
-        when(adminUserApi.getUserList(anyCollection())).thenAnswer(invocation ->
-                ((Collection<Long>) invocation.getArgument(0)).stream().map(BaseFlowableUnitTest::buildUser).toList());
-        when(adminUserApi.getUserMap(anyCollection())).thenAnswer(invocation ->
-                ((Collection<Long>) invocation.getArgument(0)).stream()
-                        .collect(Collectors.toMap(Function.identity(), BaseFlowableUnitTest::buildUser)));
+        when(modelService.getBpmnModelByDefinitionId(anyString()))
+                .thenAnswer(
+                        invocation -> repositoryService.getBpmnModel(invocation.getArgument(0)));
+        when(adminUserApi.getUser(any()))
+                .thenAnswer(invocation -> buildUser(invocation.getArgument(0)));
+        when(adminUserApi.getUserList(anyCollection()))
+                .thenAnswer(
+                        invocation ->
+                                ((Collection<Long>) invocation.getArgument(0))
+                                        .stream().map(BaseFlowableUnitTest::buildUser).toList());
+        when(adminUserApi.getUserMap(anyCollection()))
+                .thenAnswer(
+                        invocation ->
+                                ((Collection<Long>) invocation.getArgument(0))
+                                        .stream()
+                                                .collect(
+                                                        Collectors.toMap(
+                                                                Function.identity(),
+                                                                BaseFlowableUnitTest::buildUser)));
     }
 
     private static AdminUserRespDTO buildUser(Long id) {
         return new AdminUserRespDTO().setId(id).setNickname("用户" + id);
     }
-
 }

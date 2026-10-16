@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.pickup;
 
 import cn.iocoder.yudao.module.trade.controller.admin.base.system.user.UserSimpleBaseVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,5 +28,4 @@ public class DeliveryPickUpStoreRespVO extends DeliveryPickUpStoreBaseVO {
 
     @Schema(description = "核销用户数组", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<UserSimpleBaseVO> verifyUsers;
-
 }

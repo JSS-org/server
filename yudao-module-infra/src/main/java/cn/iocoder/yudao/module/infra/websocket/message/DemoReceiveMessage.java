@@ -14,6 +14,7 @@ public class DemoReceiveMessage {
      * 接收人的编号
      */
     private Long fromUserId;
+
     /**
      * 内容
      */
@@ -23,5 +24,4 @@ public class DemoReceiveMessage {
      * 是否单聊
      */
     private Boolean single;
-
 }

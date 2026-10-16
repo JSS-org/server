@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.admin.delivery.vo.expresstemplate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -21,5 +22,4 @@ public class DeliveryExpressTemplateDetailRespVO extends DeliveryExpressTemplate
 
     @Schema(description = "运费模板包邮区域", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<DeliveryExpressTemplateFreeBaseVO> frees;
-
 }

@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.im.controller.admin.group.vo.member;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -22,5 +24,4 @@ public class ImGroupMemberUpdateReqVO {
 
     @Schema(description = "是否免打扰")
     private Boolean silent;
-
 }

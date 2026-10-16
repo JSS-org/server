@@ -1,8 +1,11 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.portal.salary.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Data;
+
 import org.hibernate.validator.constraints.Range;
 
 @Schema(description = "管理后台 - HRM 员工端工资条列表 Request VO")
@@ -24,5 +27,4 @@ public class HrmPortalSalarySlipListReqVO {
     @Schema(description = "排序方向", example = "1")
     @Range(min = 1, max = 2, message = "排序方向必须在 1 到 2 之间")
     private Integer order;
-
 }

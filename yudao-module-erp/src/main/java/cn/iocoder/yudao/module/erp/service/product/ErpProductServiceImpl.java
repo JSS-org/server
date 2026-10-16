@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.erp.service.product;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -18,16 +22,14 @@ import cn.iocoder.yudao.module.erp.service.purchase.ErpPurchaseReturnService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleOrderService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleOutService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleReturnService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 /**
  * ERP 产品 Service 实现类
@@ -38,30 +40,21 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 @Validated
 public class ErpProductServiceImpl implements ErpProductService {
 
-    @Resource
-    private ErpProductMapper productMapper;
+    @Resource private ErpProductMapper productMapper;
 
-    @Resource
-    private ErpProductCategoryService productCategoryService;
-    @Resource
-    private ErpProductUnitService productUnitService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private ErpProductCategoryService productCategoryService;
+    @Resource private ErpProductUnitService productUnitService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpPurchaseOrderService purchaseOrderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpPurchaseInService purchaseInService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpPurchaseReturnService purchaseReturnService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpSaleOrderService saleOrderService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpSaleOutService saleOutService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private ErpSaleReturnService saleReturnService;
 
     @Override
@@ -166,16 +159,24 @@ public class ErpProductServiceImpl implements ErpProductService {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        Map<Long, ErpProductCategoryDO> categoryMap = productCategoryService.getProductCategoryMap(
-                convertSet(list, ErpProductDO::getCategoryId));
-        Map<Long, ErpProductUnitDO> unitMap = productUnitService.getProductUnitMap(
-                convertSet(list, ErpProductDO::getUnitId));
-        return BeanUtils.toBean(list, ErpProductRespVO.class, product -> {
-            MapUtils.findAndThen(categoryMap, product.getCategoryId(),
-                    category -> product.setCategoryName(category.getName()));
-            MapUtils.findAndThen(unitMap, product.getUnitId(),
-                    unit -> product.setUnitName(unit.getName()));
-        });
+        Map<Long, ErpProductCategoryDO> categoryMap =
+                productCategoryService.getProductCategoryMap(
+                        convertSet(list, ErpProductDO::getCategoryId));
+        Map<Long, ErpProductUnitDO> unitMap =
+                productUnitService.getProductUnitMap(convertSet(list, ErpProductDO::getUnitId));
+        return BeanUtils.toBean(
+                list,
+                ErpProductRespVO.class,
+                product -> {
+                    MapUtils.findAndThen(
+                            categoryMap,
+                            product.getCategoryId(),
+                            category -> product.setCategoryName(category.getName()));
+                    MapUtils.findAndThen(
+                            unitMap,
+                            product.getUnitId(),
+                            unit -> product.setUnitName(unit.getName()));
+                });
     }
 
     @Override
@@ -187,5 +188,4 @@ public class ErpProductServiceImpl implements ErpProductService {
     public Long getProductCountByUnitId(Long unitId) {
         return productMapper.selectCountByUnitId(unitId);
     }
-
 }

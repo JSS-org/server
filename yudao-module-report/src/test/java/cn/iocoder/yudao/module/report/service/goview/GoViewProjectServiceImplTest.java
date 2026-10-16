@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.report.service.goview;
 
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.report.enums.ErrorCodeConstants.GO_VIEW_PROJECT_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -7,17 +15,11 @@ import cn.iocoder.yudao.module.report.controller.admin.goview.vo.project.GoViewP
 import cn.iocoder.yudao.module.report.controller.admin.goview.vo.project.GoViewProjectUpdateReqVO;
 import cn.iocoder.yudao.module.report.dal.dataobject.goview.GoViewProjectDO;
 import cn.iocoder.yudao.module.report.dal.mysql.goview.GoViewProjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Import;
 
 import jakarta.annotation.Resource;
 
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.report.enums.ErrorCodeConstants.GO_VIEW_PROJECT_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Import;
 
 /**
  * {@link GoViewProjectServiceImpl} 的单元测试类
@@ -27,11 +29,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(GoViewProjectServiceImpl.class)
 public class GoViewProjectServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private GoViewProjectServiceImpl goViewProjectService;
+    @Resource private GoViewProjectServiceImpl goViewProjectService;
 
-    @Resource
-    private GoViewProjectMapper goViewProjectMapper;
+    @Resource private GoViewProjectMapper goViewProjectMapper;
 
     @Test
     public void testCreateProject_success() {
@@ -51,12 +51,15 @@ public class GoViewProjectServiceImplTest extends BaseDbUnitTest {
     public void testUpdateProject_success() {
         // mock 数据
         GoViewProjectDO dbGoViewProject = randomPojo(GoViewProjectDO.class);
-        goViewProjectMapper.insert(dbGoViewProject);// @Sql: 先插入出一条存在的数据
+        goViewProjectMapper.insert(dbGoViewProject); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        GoViewProjectUpdateReqVO reqVO = randomPojo(GoViewProjectUpdateReqVO.class, o -> {
-            o.setId(dbGoViewProject.getId()); // 设置更新的 ID
-            o.setStatus(randomCommonStatus());
-        });
+        GoViewProjectUpdateReqVO reqVO =
+                randomPojo(
+                        GoViewProjectUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbGoViewProject.getId()); // 设置更新的 ID
+                            o.setStatus(randomCommonStatus());
+                        });
 
         // 调用
         goViewProjectService.updateProject(reqVO);
@@ -71,14 +74,15 @@ public class GoViewProjectServiceImplTest extends BaseDbUnitTest {
         GoViewProjectUpdateReqVO reqVO = randomPojo(GoViewProjectUpdateReqVO.class);
 
         // 调用, 并断言异常
-        assertServiceException(() -> goViewProjectService.updateProject(reqVO), GO_VIEW_PROJECT_NOT_EXISTS);
+        assertServiceException(
+                () -> goViewProjectService.updateProject(reqVO), GO_VIEW_PROJECT_NOT_EXISTS);
     }
 
     @Test
     public void testDeleteProject_success() {
         // mock 数据
         GoViewProjectDO dbGoViewProject = randomPojo(GoViewProjectDO.class);
-        goViewProjectMapper.insert(dbGoViewProject);// @Sql: 先插入出一条存在的数据
+        goViewProjectMapper.insert(dbGoViewProject); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbGoViewProject.getId();
 
@@ -94,14 +98,15 @@ public class GoViewProjectServiceImplTest extends BaseDbUnitTest {
         Long id = randomLongId();
 
         // 调用, 并断言异常
-        assertServiceException(() -> goViewProjectService.deleteProject(id), GO_VIEW_PROJECT_NOT_EXISTS);
+        assertServiceException(
+                () -> goViewProjectService.deleteProject(id), GO_VIEW_PROJECT_NOT_EXISTS);
     }
 
     @Test
     public void testGetProject() {
         // mock 数据
         GoViewProjectDO dbGoViewProject = randomPojo(GoViewProjectDO.class);
-        goViewProjectMapper.insert(dbGoViewProject);// @Sql: 先插入出一条存在的数据
+        goViewProjectMapper.insert(dbGoViewProject); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbGoViewProject.getId();
 
@@ -114,9 +119,12 @@ public class GoViewProjectServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetMyGoViewProjectPage() {
         // mock 数据
-        GoViewProjectDO dbGoViewProject = randomPojo(GoViewProjectDO.class, o -> { // 等会查询到
-            o.setCreator("1");
-        });
+        GoViewProjectDO dbGoViewProject =
+                randomPojo(
+                        GoViewProjectDO.class,
+                        o -> { // 等会查询到
+                            o.setCreator("1");
+                        });
         goViewProjectMapper.insert(dbGoViewProject);
         // 测试 userId 不匹配
         goViewProjectMapper.insert(cloneIgnoreId(dbGoViewProject, o -> o.setCreator("2")));
@@ -125,11 +133,11 @@ public class GoViewProjectServiceImplTest extends BaseDbUnitTest {
         Long userId = 1L;
 
         // 调用
-        PageResult<GoViewProjectDO> pageResult = goViewProjectService.getMyProjectPage(reqVO, userId);
+        PageResult<GoViewProjectDO> pageResult =
+                goViewProjectService.getMyProjectPage(reqVO, userId);
         // 断言
         assertEquals(1, pageResult.getTotal());
         assertEquals(1, pageResult.getList().size());
         assertPojoEquals(dbGoViewProject, pageResult.getList().get(0));
     }
-
 }

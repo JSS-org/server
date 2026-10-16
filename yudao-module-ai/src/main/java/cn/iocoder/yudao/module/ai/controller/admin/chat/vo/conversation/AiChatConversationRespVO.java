@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.ai.controller.admin.chat.vo.conversation;
 
-import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiChatRoleDO;
+import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiModelDO;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.Data;
+
 import org.dromara.core.trans.anno.Trans;
 import org.dromara.core.trans.constant.TransType;
 import org.dromara.core.trans.vo.VO;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
@@ -27,14 +30,21 @@ public class AiChatConversationRespVO implements VO {
     private Boolean pinned;
 
     @Schema(description = "角色编号", example = "1")
-    @Trans(type = TransType.SIMPLE, target = AiChatRoleDO.class, fields = {"name", "avatar"}, refs = {"roleName", "roleAvatar"})
+    @Trans(
+            type = TransType.SIMPLE,
+            target = AiChatRoleDO.class,
+            fields = {"name", "avatar"},
+            refs = {"roleName", "roleAvatar"})
     private Long roleId;
 
     @Schema(description = "模型编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @Trans(type = TransType.SIMPLE, target = AiModelDO.class, fields = "name", ref = "modelName")
     private Long modelId;
 
-    @Schema(description = "模型标志", requiredMode = Schema.RequiredMode.REQUIRED, example = "ERNIE-Bot-turbo-0922")
+    @Schema(
+            description = "模型标志",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "ERNIE-Bot-turbo-0922")
     private String model;
 
     @Schema(description = "模型名字", requiredMode = Schema.RequiredMode.REQUIRED, example = "张三")
@@ -46,10 +56,16 @@ public class AiChatConversationRespVO implements VO {
     @Schema(description = "温度参数", requiredMode = Schema.RequiredMode.REQUIRED, example = "0.8")
     private Double temperature;
 
-    @Schema(description = "单条回复的最大 Token 数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "4096")
+    @Schema(
+            description = "单条回复的最大 Token 数量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "4096")
     private Integer maxTokens;
 
-    @Schema(description = "上下文的最大 Message 数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "10")
+    @Schema(
+            description = "上下文的最大 Message 数量",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "10")
     private Integer maxContexts;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -67,5 +83,4 @@ public class AiChatConversationRespVO implements VO {
 
     @Schema(description = "消息数量", example = "20")
     private Integer messageCount;
-
 }

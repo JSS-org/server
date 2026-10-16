@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.hrm.util;
 
+import static cn.iocoder.yudao.framework.common.util.number.MoneyUtils.priceScale;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.defaultIfNull;
+
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
@@ -12,9 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.number.MoneyUtils.priceScale;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.defaultIfNull;
-
 /**
  * HRM Excel 工具类
  *
@@ -24,11 +24,12 @@ public class HrmExcelUtils {
 
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("9999999.99");
 
-    private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
-            DateTimeFormatter.ISO_LOCAL_DATE,
-            DateTimeFormatter.ofPattern("yyyy/M/d"),
-            DateTimeFormatter.ofPattern("yyyy.M.d"),
-            DateTimeFormatter.BASIC_ISO_DATE);
+    private static final List<DateTimeFormatter> DATE_FORMATTERS =
+            Arrays.asList(
+                    DateTimeFormatter.ISO_LOCAL_DATE,
+                    DateTimeFormatter.ofPattern("yyyy/M/d"),
+                    DateTimeFormatter.ofPattern("yyyy.M.d"),
+                    DateTimeFormatter.BASIC_ISO_DATE);
 
     /**
      * 获得并清理单元格文本
@@ -90,7 +91,5 @@ public class HrmExcelUtils {
         return priceScale(amount);
     }
 
-    private HrmExcelUtils() {
-    }
-
+    private HrmExcelUtils() {}
 }

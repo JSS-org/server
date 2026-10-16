@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.dal.mysql.wm.productissue;
 
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.productissue.MesWmProductIssueDetailDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -27,5 +28,4 @@ public interface MesWmProductIssueDetailMapper extends BaseMapperX<MesWmProductI
     default void deleteByLineId(Long lineId) {
         delete(MesWmProductIssueDetailDO::getLineId, lineId);
     }
-
 }

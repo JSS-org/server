@@ -1,16 +1,22 @@
 package cn.iocoder.yudao.module.mes.controller.admin.cal.holiday;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.holiday.vo.MesCalHolidayRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.cal.holiday.vo.MesCalHolidaySaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.holiday.MesCalHolidayDO;
 import cn.iocoder.yudao.module.mes.service.cal.holiday.MesCalHolidayService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -19,18 +25,13 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - MES 假期设置")
 @RestController
 @RequestMapping("/mes/cal/holiday")
 @Validated
 public class MesCalHolidayController {
 
-    @Resource
-    private MesCalHolidayService holidayService;
+    @Resource private MesCalHolidayService holidayService;
 
     @PostMapping("/save")
     @Operation(summary = "保存假期设置", description = "如果该日期已存在记录，则更新")
@@ -44,7 +45,8 @@ public class MesCalHolidayController {
     @Parameter(name = "day", description = "日期", required = true)
     @PreAuthorize("@ss.hasPermission('mes:cal-holiday:query')")
     public CommonResult<MesCalHolidayRespVO> getHolidayByDay(
-            @RequestParam("day") @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND) LocalDateTime day) {
+            @RequestParam("day") @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
+                    LocalDateTime day) {
         MesCalHolidayDO holiday = holidayService.getHolidayByDay(day);
         return success(BeanUtils.toBean(holiday, MesCalHolidayRespVO.class));
     }
@@ -54,11 +56,12 @@ public class MesCalHolidayController {
     @PreAuthorize("@ss.hasPermission('mes:cal-holiday:query')")
     public CommonResult<List<MesCalHolidayRespVO>> getHolidayList(
             @RequestParam(value = "startDay", required = false)
-            @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND) LocalDateTime startDay,
+                    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
+                    LocalDateTime startDay,
             @RequestParam(value = "endDay", required = false)
-            @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND) LocalDateTime endDay) {
+                    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
+                    LocalDateTime endDay) {
         List<MesCalHolidayDO> list = holidayService.getHolidayList(startDay, endDay);
         return success(BeanUtils.toBean(list, MesCalHolidayRespVO.class));
     }
-
 }

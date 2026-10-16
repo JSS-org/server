@@ -8,9 +8,12 @@ import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.module.iot.controller.admin.device.vo.device.IotDevicePageReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
 import cn.iocoder.yudao.module.iot.enums.product.IotProductDeviceTypeEnum;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import jakarta.annotation.Nullable;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -28,15 +31,20 @@ import java.util.stream.Collectors;
 public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
 
     default PageResult<IotDeviceDO> selectPage(IotDevicePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<IotDeviceDO>()
-                .likeIfPresent(IotDeviceDO::getDeviceName, reqVO.getDeviceName())
-                .eqIfPresent(IotDeviceDO::getProductId, reqVO.getProductId())
-                .eqIfPresent(IotDeviceDO::getDeviceType, reqVO.getDeviceType())
-                .likeIfPresent(IotDeviceDO::getNickname, reqVO.getNickname())
-                .eqIfPresent(IotDeviceDO::getState, reqVO.getStatus())
-                .eqIfPresent(IotDeviceDO::getGatewayId, reqVO.getGatewayId())
-                .apply(ObjectUtil.isNotNull(reqVO.getGroupId()), MyBatisUtils.findInSet("group_ids"), reqVO.getGroupId())
-                .orderByDesc(IotDeviceDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .likeIfPresent(IotDeviceDO::getDeviceName, reqVO.getDeviceName())
+                        .eqIfPresent(IotDeviceDO::getProductId, reqVO.getProductId())
+                        .eqIfPresent(IotDeviceDO::getDeviceType, reqVO.getDeviceType())
+                        .likeIfPresent(IotDeviceDO::getNickname, reqVO.getNickname())
+                        .eqIfPresent(IotDeviceDO::getState, reqVO.getStatus())
+                        .eqIfPresent(IotDeviceDO::getGatewayId, reqVO.getGatewayId())
+                        .apply(
+                                ObjectUtil.isNotNull(reqVO.getGroupId()),
+                                MyBatisUtils.findInSet("group_ids"),
+                                reqVO.getGroupId())
+                        .orderByDesc(IotDeviceDO::getId));
     }
 
     default IotDeviceDO selectByDeviceName(String deviceName) {
@@ -44,8 +52,8 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
     }
 
     default IotDeviceDO selectByProductKeyAndDeviceName(String productKey, String deviceName) {
-        return selectOne(IotDeviceDO::getProductKey, productKey,
-                IotDeviceDO::getDeviceName, deviceName);
+        return selectOne(
+                IotDeviceDO::getProductKey, productKey, IotDeviceDO::getDeviceName, deviceName);
     }
 
     default long selectCountByGatewayId(Long id) {
@@ -56,11 +64,12 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
         return selectCount(IotDeviceDO::getProductId, productId);
     }
 
-    default List<IotDeviceDO> selectListByCondition(@Nullable Integer deviceType,
-                                                    @Nullable Long productId) {
-        return selectList(new LambdaQueryWrapperX<IotDeviceDO>()
-                .eqIfPresent(IotDeviceDO::getDeviceType, deviceType)
-                .eqIfPresent(IotDeviceDO::getProductId, productId));
+    default List<IotDeviceDO> selectListByCondition(
+            @Nullable Integer deviceType, @Nullable Long productId) {
+        return selectList(
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .eqIfPresent(IotDeviceDO::getDeviceType, deviceType)
+                        .eqIfPresent(IotDeviceDO::getProductId, productId));
     }
 
     default List<IotDeviceDO> selectListByState(Integer state) {
@@ -72,19 +81,23 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
     }
 
     default Long selectCountByGroupId(Long groupId) {
-        return selectCount(new LambdaQueryWrapperX<IotDeviceDO>()
-                .apply(MyBatisUtils.findInSet("group_ids"), groupId));
+        return selectCount(
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .apply(MyBatisUtils.findInSet("group_ids"), groupId));
     }
 
     default Long selectCountByCreateTime(@Nullable LocalDateTime createTime) {
-        return selectCount(new LambdaQueryWrapperX<IotDeviceDO>()
-                .geIfPresent(IotDeviceDO::getCreateTime, createTime));
+        return selectCount(
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .geIfPresent(IotDeviceDO::getCreateTime, createTime));
     }
 
-    default List<IotDeviceDO> selectByProductKeyAndDeviceNames(String productKey, Collection<String> deviceNames) {
-        return selectList(new LambdaQueryWrapperX<IotDeviceDO>()
-                .eq(IotDeviceDO::getProductKey, productKey)
-                .in(IotDeviceDO::getDeviceName, deviceNames));
+    default List<IotDeviceDO> selectByProductKeyAndDeviceNames(
+            String productKey, Collection<String> deviceNames) {
+        return selectList(
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .eq(IotDeviceDO::getProductKey, productKey)
+                        .in(IotDeviceDO::getDeviceName, deviceNames));
     }
 
     default IotDeviceDO selectBySerialNumber(String serialNumber) {
@@ -97,13 +110,16 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
      * @return 产品编号 -> 设备数量的映射
      */
     default Map<Long, Integer> selectDeviceCountMapByProductId() {
-        List<Map<String, Object>> result = selectMaps(new QueryWrapper<IotDeviceDO>()
-                .select("product_id AS productId", "COUNT(1) AS deviceCount")
-                .groupBy("product_id"));
-        return result.stream().collect(Collectors.toMap(
-            map -> Long.valueOf(map.get("productId").toString()),
-            map -> Integer.valueOf(map.get("deviceCount").toString())
-        ));
+        List<Map<String, Object>> result =
+                selectMaps(
+                        new QueryWrapper<IotDeviceDO>()
+                                .select("product_id AS productId", "COUNT(1) AS deviceCount")
+                                .groupBy("product_id"));
+        return result.stream()
+                .collect(
+                        Collectors.toMap(
+                                map -> Long.valueOf(map.get("productId").toString()),
+                                map -> Integer.valueOf(map.get("deviceCount").toString())));
     }
 
     /**
@@ -112,13 +128,16 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
      * @return 设备状态 -> 设备数量的映射
      */
     default Map<Integer, Long> selectDeviceCountGroupByState() {
-        List<Map<String, Object>> result = selectMaps(new QueryWrapper<IotDeviceDO>()
-                .select("state", "COUNT(1) AS deviceCount")
-                .groupBy("state"));
-        return result.stream().collect(Collectors.toMap(
-            map -> Integer.valueOf(map.get("state").toString()),
-            map -> Long.valueOf(map.get("deviceCount").toString())
-        ));
+        List<Map<String, Object>> result =
+                selectMaps(
+                        new QueryWrapper<IotDeviceDO>()
+                                .select("state", "COUNT(1) AS deviceCount")
+                                .groupBy("state"));
+        return result.stream()
+                .collect(
+                        Collectors.toMap(
+                                map -> Integer.valueOf(map.get("state").toString()),
+                                map -> Long.valueOf(map.get("deviceCount").toString())));
     }
 
     /**
@@ -127,9 +146,10 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
      * @return 设备列表
      */
     default List<IotDeviceDO> selectListByHasLocation() {
-        return selectList(new LambdaQueryWrapperX<IotDeviceDO>()
-                .isNotNull(IotDeviceDO::getLatitude)
-                .isNotNull(IotDeviceDO::getLongitude));
+        return selectList(
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .isNotNull(IotDeviceDO::getLatitude)
+                        .isNotNull(IotDeviceDO::getLongitude));
     }
 
     // ========== 网关-子设备绑定相关 ==========
@@ -151,14 +171,18 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
      * @return 子设备分页
      */
     default PageResult<IotDeviceDO> selectUnboundSubDevicePage(IotDevicePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<IotDeviceDO>()
-                .likeIfPresent(IotDeviceDO::getDeviceName, reqVO.getDeviceName())
-                .likeIfPresent(IotDeviceDO::getNickname, reqVO.getNickname())
-                .eqIfPresent(IotDeviceDO::getProductId, reqVO.getProductId())
-                // 仅查询子设备 + 未绑定网关
-                .eq(IotDeviceDO::getDeviceType, IotProductDeviceTypeEnum.GATEWAY_SUB.getType())
-                .isNull(IotDeviceDO::getGatewayId)
-                .orderByDesc(IotDeviceDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<IotDeviceDO>()
+                        .likeIfPresent(IotDeviceDO::getDeviceName, reqVO.getDeviceName())
+                        .likeIfPresent(IotDeviceDO::getNickname, reqVO.getNickname())
+                        .eqIfPresent(IotDeviceDO::getProductId, reqVO.getProductId())
+                        // 仅查询子设备 + 未绑定网关
+                        .eq(
+                                IotDeviceDO::getDeviceType,
+                                IotProductDeviceTypeEnum.GATEWAY_SUB.getType())
+                        .isNull(IotDeviceDO::getGatewayId)
+                        .orderByDesc(IotDeviceDO::getId));
     }
 
     /**
@@ -168,9 +192,10 @@ public interface IotDeviceMapper extends BaseMapperX<IotDeviceDO> {
      * @param gatewayId 网关设备编号（可以为 null，表示解绑）
      */
     default void updateGatewayIdBatch(Collection<Long> ids, Long gatewayId) {
-        update(null, new LambdaUpdateWrapper<IotDeviceDO>()
-                .set(IotDeviceDO::getGatewayId, gatewayId)
-                .in(IotDeviceDO::getId, ids));
+        update(
+                null,
+                new LambdaUpdateWrapper<IotDeviceDO>()
+                        .set(IotDeviceDO::getGatewayId, gatewayId)
+                        .in(IotDeviceDO::getId, ids));
     }
-
 }

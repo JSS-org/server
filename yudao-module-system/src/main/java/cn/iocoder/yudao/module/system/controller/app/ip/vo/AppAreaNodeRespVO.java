@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.app.ip.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -19,5 +20,4 @@ public class AppAreaNodeRespVO {
      * 子节点
      */
     private List<AppAreaNodeRespVO> children;
-
 }

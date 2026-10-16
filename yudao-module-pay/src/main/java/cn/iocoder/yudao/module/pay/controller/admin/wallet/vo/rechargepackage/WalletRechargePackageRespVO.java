@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pay.controller.admin.wallet.vo.rechargepackage;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - 充值套餐 Response VO")
@@ -15,5 +17,4 @@ public class WalletRechargePackageRespVO extends WalletRechargePackageBaseVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

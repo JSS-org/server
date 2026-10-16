@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.plan;
 
+import static cn.iocoder.yudao.framework.common.util.number.MoneyUtils.PERCENT_100;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,6 +13,8 @@ import cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttemplat
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeStatusEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.info.HrmEmployeeTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.assessment.HrmPerformanceAppealTimeoutActionEnum;
+import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceScoreCalculationEnum;
+import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceUpperLimitTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceCycleTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformancePlanScopeTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceQuarterEnum;
@@ -18,10 +22,11 @@ import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceQuotaSet
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceRaterTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceReviewScoringTypeEnum;
 import cn.iocoder.yudao.module.hrm.enums.performance.plan.HrmPerformanceReviewVisibleContentEnum;
-import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceScoreCalculationEnum;
-import cn.iocoder.yudao.module.hrm.enums.performance.config.HrmPerformanceUpperLimitTypeEnum;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
@@ -32,6 +37,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -46,8 +52,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.util.number.MoneyUtils.PERCENT_100;
-
 @Schema(description = "管理后台 - HRM 绩效计划保存 Request VO")
 @Data
 public class HrmPerformancePlanSaveReqVO {
@@ -55,7 +59,9 @@ public class HrmPerformancePlanSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "绩效计划名称", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "绩效计划名称",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "2026 年第三季度绩效计划")
     @NotBlank(message = "计划名称不能为空")
     @Size(max = 50, message = "计划名称不能超过 50 个字符")
@@ -207,7 +213,10 @@ public class HrmPerformancePlanSaveReqVO {
     @Data
     public static class ReviewStage {
 
-        @Schema(description = "评分阶段名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "直属上级评分")
+        @Schema(
+                description = "评分阶段名称",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "直属上级评分")
         @NotBlank(message = "评分阶段名称不能为空")
         @Size(max = 50, message = "评分阶段名称不能超过 50 个字符")
         private String name;
@@ -228,16 +237,27 @@ public class HrmPerformancePlanSaveReqVO {
         @InEnum(value = HrmPerformanceReviewScoringTypeEnum.class, message = "评分方式必须是 {value}")
         private Integer scoringType;
 
-        @Schema(description = "评分内容可见范围", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+        @Schema(
+                description = "评分内容可见范围",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "1")
         @NotNull(message = "评分内容可见范围不能为空")
-        @InEnum(value = HrmPerformanceReviewVisibleContentEnum.class, message = "评分内容可见范围必须是 {value}")
+        @InEnum(
+                value = HrmPerformanceReviewVisibleContentEnum.class,
+                message = "评分内容可见范围必须是 {value}")
         private Integer visibleContent;
 
-        @Schema(description = "评语是否必填", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+        @Schema(
+                description = "评语是否必填",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "true")
         @NotNull(message = "评语是否必填不能为空")
         private Boolean requiredSetting;
 
-        @Schema(description = "是否允许驳回", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+        @Schema(
+                description = "是否允许驳回",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "true")
         @NotNull(message = "是否允许驳回不能为空")
         private Boolean rejectAuthority;
     }
@@ -246,7 +266,10 @@ public class HrmPerformancePlanSaveReqVO {
     @Data
     public static class AssessmentConfig {
 
-        @Schema(description = "模板名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "季度绩效模板")
+        @Schema(
+                description = "模板名称",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "季度绩效模板")
         @NotBlank(message = "模板名称不能为空")
         @Size(max = 50, message = "模板名称不能超过 50 个字符")
         private String name;
@@ -280,7 +303,8 @@ public class HrmPerformancePlanSaveReqVO {
             }
             Set<String> names = new HashSet<>();
             for (Dimension dimension : dimensions) {
-                if (dimension != null && StrUtil.isNotBlank(dimension.getName())
+                if (dimension != null
+                        && StrUtil.isNotBlank(dimension.getName())
                         && !names.add(dimension.getName().trim())) {
                     return false;
                 }
@@ -300,7 +324,8 @@ public class HrmPerformancePlanSaveReqVO {
                     continue;
                 }
                 for (Quota quota : dimension.getQuotas()) {
-                    if (quota != null && StrUtil.isNotBlank(quota.getName())
+                    if (quota != null
+                            && StrUtil.isNotBlank(quota.getName())
                             && !names.add(quota.getName().trim())) {
                         return false;
                     }
@@ -332,7 +357,8 @@ public class HrmPerformancePlanSaveReqVO {
                 return true;
             }
             for (Dimension dimension : dimensions) {
-                if (dimension == null || ObjUtil.notEqual(Boolean.FALSE, dimension.getAllowEdit())
+                if (dimension == null
+                        || ObjUtil.notEqual(Boolean.FALSE, dimension.getAllowEdit())
                         || CollUtil.isEmpty(dimension.getQuotas())) {
                     continue;
                 }
@@ -357,7 +383,8 @@ public class HrmPerformancePlanSaveReqVO {
                 return true;
             }
             for (Dimension dimension : dimensions) {
-                if (dimension == null || ObjUtil.notEqual(Boolean.TRUE, dimension.getAllowEdit())
+                if (dimension == null
+                        || ObjUtil.notEqual(Boolean.TRUE, dimension.getAllowEdit())
                         || CollUtil.isEmpty(dimension.getQuotas())) {
                     continue;
                 }
@@ -384,7 +411,10 @@ public class HrmPerformancePlanSaveReqVO {
         private static final BigDecimal MAX_SCORE = BigDecimal.valueOf(100);
         private static final BigDecimal SCORE_STEP = new BigDecimal("0.01");
 
-        @Schema(description = "模板名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "绩效结果模板")
+        @Schema(
+                description = "模板名称",
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                example = "绩效结果模板")
         @NotBlank(message = "结果模板名称不能为空")
         @Size(max = 255, message = "结果模板名称不能超过 255 个字符")
         private String name;
@@ -402,7 +432,8 @@ public class HrmPerformancePlanSaveReqVO {
             }
             Set<String> names = new HashSet<>();
             for (Level level : levels) {
-                if (level != null && StrUtil.isNotBlank(level.getName())
+                if (level != null
+                        && StrUtil.isNotBlank(level.getName())
                         && !names.add(level.getName().trim())) {
                     return false;
                 }
@@ -417,8 +448,12 @@ public class HrmPerformancePlanSaveReqVO {
                 return true;
             }
             List<Level> sortedLevels = new ArrayList<>(levels);
-            if (sortedLevels.stream().anyMatch(level -> level == null
-                    || level.getMinScore() == null || level.getMaxScore() == null)) {
+            if (sortedLevels.stream()
+                    .anyMatch(
+                            level ->
+                                    level == null
+                                            || level.getMinScore() == null
+                                            || level.getMaxScore() == null)) {
                 return true;
             }
             sortedLevels.sort(Comparator.comparing(Level::getMinScore));
@@ -447,16 +482,20 @@ public class HrmPerformancePlanSaveReqVO {
             if (scope == null || scope.getType() == null) {
                 continue;
             }
-            if (Objects.equals(scope.getType(), HrmPerformancePlanScopeTypeEnum.EMPLOYEE_DEPT.getType())) {
-                if (CollUtil.isEmpty(scope.getEmployeeIds()) && CollUtil.isEmpty(scope.getDeptIds())) {
+            if (Objects.equals(
+                    scope.getType(), HrmPerformancePlanScopeTypeEnum.EMPLOYEE_DEPT.getType())) {
+                if (CollUtil.isEmpty(scope.getEmployeeIds())
+                        && CollUtil.isEmpty(scope.getDeptIds())) {
                     return false;
                 }
-            } else if (Objects.equals(scope.getType(), HrmPerformancePlanScopeTypeEnum.EMPLOYMENT.getType())) {
-                if (scope.getEmployeeType() == null || CollUtil.isEmpty(scope.getEmployeeStatuses())) {
+            } else if (Objects.equals(
+                    scope.getType(), HrmPerformancePlanScopeTypeEnum.EMPLOYMENT.getType())) {
+                if (scope.getEmployeeType() == null
+                        || CollUtil.isEmpty(scope.getEmployeeStatuses())) {
                     return false;
                 }
-            } else if (Objects.equals(scope.getType(),
-                    HrmPerformancePlanScopeTypeEnum.EXCLUDED_EMPLOYEE.getType())) {
+            } else if (Objects.equals(
+                    scope.getType(), HrmPerformancePlanScopeTypeEnum.EXCLUDED_EMPLOYEE.getType())) {
                 return false;
             }
         }
@@ -474,8 +513,10 @@ public class HrmPerformancePlanSaveReqVO {
                 continue;
             }
             if (!isHandlerStageValid(reviewStage.getRater(), true)
-                    || Objects.equals(reviewStage.getRater().getType(), HrmPerformanceRaterTypeEnum.SELF.getType())
-                    && Boolean.TRUE.equals(reviewStage.getRejectAuthority())) {
+                    || Objects.equals(
+                                    reviewStage.getRater().getType(),
+                                    HrmPerformanceRaterTypeEnum.SELF.getType())
+                            && Boolean.TRUE.equals(reviewStage.getRejectAuthority())) {
                 return false;
             }
         }
@@ -522,20 +563,23 @@ public class HrmPerformancePlanSaveReqVO {
         if (Objects.equals(quotaSettingType, HrmPerformanceQuotaSettingTypeEnum.SYSTEM.getType())) {
             return !targetConfirmation;
         }
-        return !targetConfirmation || targetConfirmationStage != null
-                && isHandlerStageValid(targetConfirmationStage, true);
+        return !targetConfirmation
+                || targetConfirmationStage != null
+                        && isHandlerStageValid(targetConfirmationStage, true);
     }
 
     @AssertTrue(message = "结果审核节点配置不正确")
     @JsonIgnore
     public boolean isResultAuditConfigValid() {
-        return ObjUtil.notEqual(Boolean.TRUE, resultAudit) || isHandlerStagesValid(resultAuditStages);
+        return ObjUtil.notEqual(Boolean.TRUE, resultAudit)
+                || isHandlerStagesValid(resultAuditStages);
     }
 
     @AssertTrue(message = "申诉节点配置不正确")
     @JsonIgnore
     public boolean isResultConfirmationConfigValid() {
-        return ObjUtil.notEqual(Boolean.TRUE, resultConfirmation) || isHandlerStagesValid(appealStages);
+        return ObjUtil.notEqual(Boolean.TRUE, resultConfirmation)
+                || isHandlerStagesValid(appealStages);
     }
 
     @AssertTrue(message = "计薪月份配置不正确")
@@ -570,7 +614,8 @@ public class HrmPerformancePlanSaveReqVO {
         try {
             if (Objects.equals(cycleType, HrmPerformanceCycleTypeEnum.MONTH.getType())) {
                 YearMonth month = YearMonth.parse(cycle);
-                return quarter == null && startTime.toLocalDate().equals(month.atDay(1))
+                return quarter == null
+                        && startTime.toLocalDate().equals(month.atDay(1))
                         && endTime.toLocalDate().equals(month.atEndOfMonth());
             }
             Year year = Year.parse(cycle);
@@ -582,11 +627,11 @@ public class HrmPerformancePlanSaveReqVO {
                 }
                 beginMonth = (quarter - 1) * 3 + 1;
                 endMonth = beginMonth + 2;
-            } else if (Objects.equals(cycleType,
-                    HrmPerformanceCycleTypeEnum.FIRST_HALF_YEAR.getType())) {
+            } else if (Objects.equals(
+                    cycleType, HrmPerformanceCycleTypeEnum.FIRST_HALF_YEAR.getType())) {
                 endMonth = 6;
-            } else if (Objects.equals(cycleType,
-                    HrmPerformanceCycleTypeEnum.SECOND_HALF_YEAR.getType())) {
+            } else if (Objects.equals(
+                    cycleType, HrmPerformanceCycleTypeEnum.SECOND_HALF_YEAR.getType())) {
                 beginMonth = 7;
             }
             if (!Objects.equals(cycleType, HrmPerformanceCycleTypeEnum.QUARTER.getType())
@@ -621,7 +666,9 @@ public class HrmPerformancePlanSaveReqVO {
         if (Objects.equals(stage.getType(), HrmPerformanceRaterTypeEnum.SELF.getType())) {
             return allowSelf;
         }
-        if (ObjectUtils.equalsAny(stage.getType(), HrmPerformanceRaterTypeEnum.SUPERIOR.getType(),
+        if (ObjectUtils.equalsAny(
+                stage.getType(),
+                HrmPerformanceRaterTypeEnum.SUPERIOR.getType(),
                 HrmPerformanceRaterTypeEnum.DEPT_LEADER.getType())) {
             return stage.getLevel() != null && stage.getLevel() >= 1 && stage.getLevel() <= 10;
         }
@@ -653,13 +700,16 @@ public class HrmPerformancePlanSaveReqVO {
             return String.valueOf(stage.getType());
         }
         if (Objects.equals(stage.getType(), HrmPerformanceRaterTypeEnum.SPECIFIED.getType())) {
-            return stage.getEmployeeId() == null ? null : stage.getType() + ":" + stage.getEmployeeId();
+            return stage.getEmployeeId() == null
+                    ? null
+                    : stage.getType() + ":" + stage.getEmployeeId();
         }
-        if (ObjectUtils.equalsAny(stage.getType(), HrmPerformanceRaterTypeEnum.SUPERIOR.getType(),
+        if (ObjectUtils.equalsAny(
+                stage.getType(),
+                HrmPerformanceRaterTypeEnum.SUPERIOR.getType(),
                 HrmPerformanceRaterTypeEnum.DEPT_LEADER.getType())) {
             return stage.getLevel() == null ? null : stage.getType() + ":" + stage.getLevel();
         }
         return null;
     }
-
 }

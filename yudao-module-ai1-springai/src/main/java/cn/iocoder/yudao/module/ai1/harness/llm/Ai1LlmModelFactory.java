@@ -2,9 +2,12 @@ package cn.iocoder.yudao.module.ai1.harness.llm;
 
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -40,6 +43,7 @@ public class Ai1LlmModelFactory {
      * 请求 Header 会话占位符：构建模型时替换为当前会话编号
      */
     public static final String SESSION_PLACEHOLDER = "{session}";
+
     /**
      * 缓存上限，达到后逐出最久未访问的模型
      */
@@ -58,13 +62,14 @@ public class Ai1LlmModelFactory {
     /**
      * 对话模型缓存：providerId:modelId:sessionKey → ChatModel
      */
-    private final Cache<String, OpenAiChatModel> chatModelCache = CacheBuilder.newBuilder()
-            .maximumSize(CACHE_MAX).expireAfterWrite(CACHE_EXPIRE).build();
+    private final Cache<String, OpenAiChatModel> chatModelCache =
+            CacheBuilder.newBuilder().maximumSize(CACHE_MAX).expireAfterWrite(CACHE_EXPIRE).build();
+
     /**
      * 嵌入模型缓存：providerId:modelId → EmbeddingModel
      */
-    private final Cache<String, OpenAiEmbeddingModel> embeddingModelCache = CacheBuilder.newBuilder()
-            .maximumSize(CACHE_MAX).expireAfterWrite(CACHE_EXPIRE).build();
+    private final Cache<String, OpenAiEmbeddingModel> embeddingModelCache =
+            CacheBuilder.newBuilder().maximumSize(CACHE_MAX).expireAfterWrite(CACHE_EXPIRE).build();
 
     /**
      * 获取（或构建）对话模型，并包装为 ChatClient
@@ -84,16 +89,24 @@ public class Ai1LlmModelFactory {
      * @return 嵌入模型
      */
     public EmbeddingModel getOrCreateEmbeddingModel(Ai1ModelRespBO model) {
-        return embeddingModelCache.asMap().computeIfAbsent(buildCacheKey(model), key -> {
-            OpenAiEmbeddingOptions options = OpenAiEmbeddingOptions.builder()
-                    .baseUrl(normalizeBaseUrl(model.getBaseUrl()))
-                    .apiKey(model.getApiKey())
-                    .model(model.getModel())
-                    .customHeaders(buildHeaders(model.getHeaders(), null))
-                    .build();
-            log.debug("[getOrCreateEmbeddingModel][providerId({}) modelId({}) 嵌入模型构建完成]", model.getProviderId(), model.getModelId());
-            return OpenAiEmbeddingModel.builder().options(options).build();
-        });
+        return embeddingModelCache
+                .asMap()
+                .computeIfAbsent(
+                        buildCacheKey(model),
+                        key -> {
+                            OpenAiEmbeddingOptions options =
+                                    OpenAiEmbeddingOptions.builder()
+                                            .baseUrl(normalizeBaseUrl(model.getBaseUrl()))
+                                            .apiKey(model.getApiKey())
+                                            .model(model.getModel())
+                                            .customHeaders(buildHeaders(model.getHeaders(), null))
+                                            .build();
+                            log.debug(
+                                    "[getOrCreateEmbeddingModel][providerId({}) modelId({}) 嵌入模型构建完成]",
+                                    model.getProviderId(),
+                                    model.getModelId());
+                            return OpenAiEmbeddingModel.builder().options(options).build();
+                        });
     }
 
     /**
@@ -134,21 +147,32 @@ public class Ai1LlmModelFactory {
      */
     private OpenAiChatModel getOrCreateChatModel(Ai1ModelRespBO model, Long sessionId) {
         // 1. 计算缓存 key：Header 含 {session} 占位符时按会话隔离，否则跨会话共享
-        String sessionKey = usesSessionHeader(model.getHeaders()) && sessionId != null
-                ? String.valueOf(sessionId) : "";
+        String sessionKey =
+                usesSessionHeader(model.getHeaders()) && sessionId != null
+                        ? String.valueOf(sessionId)
+                        : "";
         String cacheKey = buildCacheKey(model) + KEY_SEPARATOR + sessionKey;
 
         // 2. 命中缓存直接复用；未命中时按运行时快照构建 OpenAI 兼容对话模型并缓存
-        return chatModelCache.asMap().computeIfAbsent(cacheKey, key -> {
-            OpenAiChatOptions options = OpenAiChatOptions.builder()
-                    .baseUrl(normalizeBaseUrl(model.getBaseUrl()))
-                    .apiKey(model.getApiKey())
-                    .model(model.getModel())
-                    .customHeaders(buildHeaders(model.getHeaders(), sessionId))
-                    .build();
-            log.debug("[getOrCreateChatModel][providerId({}) modelId({}) 对话模型构建完成]", model.getProviderId(), model.getModelId());
-            return OpenAiChatModel.builder().options(options).build();
-        });
+        return chatModelCache
+                .asMap()
+                .computeIfAbsent(
+                        cacheKey,
+                        key -> {
+                            OpenAiChatOptions options =
+                                    OpenAiChatOptions.builder()
+                                            .baseUrl(normalizeBaseUrl(model.getBaseUrl()))
+                                            .apiKey(model.getApiKey())
+                                            .model(model.getModel())
+                                            .customHeaders(
+                                                    buildHeaders(model.getHeaders(), sessionId))
+                                            .build();
+                            log.debug(
+                                    "[getOrCreateChatModel][providerId({}) modelId({}) 对话模型构建完成]",
+                                    model.getProviderId(),
+                                    model.getModelId());
+                            return OpenAiChatModel.builder().options(options).build();
+                        });
     }
 
     /**
@@ -160,8 +184,16 @@ public class Ai1LlmModelFactory {
      * @return 缓存 key
      */
     private static String buildCacheKey(Ai1ModelRespBO model) {
-        return model.getProviderId() + KEY_SEPARATOR + model.getModelId() + KEY_SEPARATOR
-                + Objects.hash(model.getBaseUrl(), model.getApiKey(), model.getModel(), model.getModelType(), model.getHeaders());
+        return model.getProviderId()
+                + KEY_SEPARATOR
+                + model.getModelId()
+                + KEY_SEPARATOR
+                + Objects.hash(
+                        model.getBaseUrl(),
+                        model.getApiKey(),
+                        model.getModel(),
+                        model.getModelType(),
+                        model.getHeaders());
     }
 
     /**
@@ -192,7 +224,9 @@ public class Ai1LlmModelFactory {
      * 请求 Header 是否使用 {session} 占位符
      */
     private static boolean usesSessionHeader(Map<String, String> headers) {
-        return headers != null && headers.values().stream().anyMatch(value -> StrUtil.contains(value, SESSION_PLACEHOLDER));
+        return headers != null
+                && headers.values().stream()
+                        .anyMatch(value -> StrUtil.contains(value, SESSION_PLACEHOLDER));
     }
 
     /**
@@ -219,5 +253,4 @@ public class Ai1LlmModelFactory {
         }
         return result;
     }
-
 }

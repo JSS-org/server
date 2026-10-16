@@ -5,7 +5,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.wm.itemconsume.vo.MesWmItemC
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemconsume.MesWmItemConsumeDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.itemconsume.MesWmItemConsumeLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.itemconsume.MesWmItemConsumeLineMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -21,12 +23,9 @@ import java.util.List;
 @Validated
 public class MesWmItemConsumeLineServiceImpl implements MesWmItemConsumeLineService {
 
-    @Resource
-    private MesWmItemConsumeLineMapper itemConsumeLineMapper;
+    @Resource private MesWmItemConsumeLineMapper itemConsumeLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmItemConsumeService itemConsumeService;
+    @Resource @Lazy private MesWmItemConsumeService itemConsumeService;
 
     @Override
     public void createItemConsumeLineBatch(List<MesWmItemConsumeLineDO> lines) {
@@ -34,7 +33,8 @@ public class MesWmItemConsumeLineServiceImpl implements MesWmItemConsumeLineServ
     }
 
     @Override
-    public PageResult<MesWmItemConsumeLineDO> getItemConsumeLinePage(MesWmItemConsumeLinePageReqVO pageReqVO) {
+    public PageResult<MesWmItemConsumeLineDO> getItemConsumeLinePage(
+            MesWmItemConsumeLinePageReqVO pageReqVO) {
         // 1. 先通过 feedbackId 找到消耗头（通过 Service 调用，不直接注入 Mapper）
         MesWmItemConsumeDO consume = itemConsumeService.getByFeedbackId(pageReqVO.getFeedbackId());
         if (consume == null) {
@@ -48,5 +48,4 @@ public class MesWmItemConsumeLineServiceImpl implements MesWmItemConsumeLineServ
     public List<MesWmItemConsumeLineDO> getItemConsumeLineListByConsumeId(Long consumeId) {
         return itemConsumeLineMapper.selectListByConsumeId(consumeId);
     }
-
 }

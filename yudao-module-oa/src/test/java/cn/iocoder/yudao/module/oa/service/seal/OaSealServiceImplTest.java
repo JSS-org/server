@@ -1,5 +1,13 @@
 package cn.iocoder.yudao.module.oa.service.seal;
 
+import static cn.iocoder.yudao.framework.common.util.object.BeanUtils.toBean;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
@@ -10,7 +18,9 @@ import cn.iocoder.yudao.module.oa.dal.mysql.seal.OaSealMapper;
 import cn.iocoder.yudao.module.oa.dal.redis.no.OaNoRedisDAO;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -18,13 +28,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
-
-import static cn.iocoder.yudao.framework.common.util.object.BeanUtils.toBean;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * {@link OaSealServiceImpl} 的单元测试类
@@ -34,20 +37,14 @@ import static org.mockito.Mockito.*;
 @Import(OaSealServiceImpl.class)
 public class OaSealServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private OaSealService sealService;
+    @Resource private OaSealService sealService;
 
-    @Resource
-    private OaSealMapper sealMapper;
+    @Resource private OaSealMapper sealMapper;
 
-    @MockitoBean
-    private OaNoRedisDAO noRedisDAO;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private DeptApi deptApi;
-    @MockitoBean
-    private OaSealApplyService sealApplyService;
+    @MockitoBean private OaNoRedisDAO noRedisDAO;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private DeptApi deptApi;
+    @MockitoBean private OaSealApplyService sealApplyService;
 
     @Test
     public void testDeleteSeal_inUse() {
@@ -177,9 +174,9 @@ public class OaSealServiceImplTest extends BaseDbUnitTest {
         // 调用
         PageResult<OaSealDO> pageResult = sealService.getSealPage(reqVO);
         // 断言
-        assertEquals(Arrays.asList(30L, 20L, 10L),
-                CollectionUtils.convertList(
-                        pageResult.getList(), OaSealDO::getId));
+        assertEquals(
+                Arrays.asList(30L, 20L, 10L),
+                CollectionUtils.convertList(pageResult.getList(), OaSealDO::getId));
     }
 
     @Test
@@ -187,22 +184,43 @@ public class OaSealServiceImplTest extends BaseDbUnitTest {
         // mock 数据：分别排除类型、保管人和三个时间范围不匹配的印章
         LocalDateTime beginTime = LocalDateTime.of(2026, 9, 1, 0, 0);
         LocalDateTime endTime = LocalDateTime.of(2026, 9, 30, 23, 59, 59);
-        OaSealDO seal = randomSealDO().setType(1).setKeeperUserId(10L)
-                .setPurchaseTime(beginTime).setEnableTime(endTime).setDisableTime(endTime);
+        OaSealDO seal =
+                randomSealDO()
+                        .setType(1)
+                        .setKeeperUserId(10L)
+                        .setPurchaseTime(beginTime)
+                        .setEnableTime(endTime)
+                        .setDisableTime(endTime);
         sealMapper.insert(seal);
         sealMapper.insert(toBean(seal, OaSealDO.class).setId(null).setNo("FILTER-TYPE").setType(2));
-        sealMapper.insert(toBean(seal, OaSealDO.class).setId(null).setNo("FILTER-KEEPER").setKeeperUserId(11L));
-        sealMapper.insert(toBean(seal, OaSealDO.class).setId(null).setNo("FILTER-PURCHASE")
-                .setPurchaseTime(beginTime.minusSeconds(1)));
-        sealMapper.insert(toBean(seal, OaSealDO.class).setId(null).setNo("FILTER-ENABLE")
-                .setEnableTime(endTime.plusSeconds(1)));
-        sealMapper.insert(toBean(seal, OaSealDO.class).setId(null).setNo("FILTER-DISABLE")
-                .setDisableTime(endTime.plusSeconds(1)));
+        sealMapper.insert(
+                toBean(seal, OaSealDO.class)
+                        .setId(null)
+                        .setNo("FILTER-KEEPER")
+                        .setKeeperUserId(11L));
+        sealMapper.insert(
+                toBean(seal, OaSealDO.class)
+                        .setId(null)
+                        .setNo("FILTER-PURCHASE")
+                        .setPurchaseTime(beginTime.minusSeconds(1)));
+        sealMapper.insert(
+                toBean(seal, OaSealDO.class)
+                        .setId(null)
+                        .setNo("FILTER-ENABLE")
+                        .setEnableTime(endTime.plusSeconds(1)));
+        sealMapper.insert(
+                toBean(seal, OaSealDO.class)
+                        .setId(null)
+                        .setNo("FILTER-DISABLE")
+                        .setDisableTime(endTime.plusSeconds(1)));
         // 准备参数
-        OaSealPageReqVO reqVO = new OaSealPageReqVO().setType(1).setKeeperUserId(10L)
-                .setPurchaseTime(new LocalDateTime[]{beginTime, endTime})
-                .setEnableTime(new LocalDateTime[]{beginTime, endTime})
-                .setDisableTime(new LocalDateTime[]{beginTime, endTime});
+        OaSealPageReqVO reqVO =
+                new OaSealPageReqVO()
+                        .setType(1)
+                        .setKeeperUserId(10L)
+                        .setPurchaseTime(new LocalDateTime[] {beginTime, endTime})
+                        .setEnableTime(new LocalDateTime[] {beginTime, endTime})
+                        .setDisableTime(new LocalDateTime[] {beginTime, endTime});
 
         // 调用
         PageResult<OaSealDO> pageResult = sealService.getSealPage(reqVO);
@@ -236,7 +254,16 @@ public class OaSealServiceImplTest extends BaseDbUnitTest {
      * @return 未入库的测试对象
      */
     private static OaSealDO randomSealDO() {
-        return randomPojo(OaSealDO.class, seal -> seal.setId(null).setType(1).setCategory(1)
-                .setDeptId(30L).setKeeperUserId(10L).setKeeperDeptId(20L).setStatus(0).setSort(0));
+        return randomPojo(
+                OaSealDO.class,
+                seal ->
+                        seal.setId(null)
+                                .setType(1)
+                                .setCategory(1)
+                                .setDeptId(30L)
+                                .setKeeperUserId(10L)
+                                .setKeeperDeptId(20L)
+                                .setStatus(0)
+                                .setSort(0));
     }
 }

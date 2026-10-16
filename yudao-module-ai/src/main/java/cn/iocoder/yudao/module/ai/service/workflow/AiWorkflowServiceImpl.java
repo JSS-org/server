@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.ai.service.workflow;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.WORKFLOW_CODE_EXISTS;
+import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.WORKFLOW_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,18 +14,19 @@ import cn.iocoder.yudao.module.ai.controller.admin.workflow.vo.AiWorkflowTestReq
 import cn.iocoder.yudao.module.ai.dal.dataobject.workflow.AiWorkflowDO;
 import cn.iocoder.yudao.module.ai.dal.mysql.workflow.AiWorkflowMapper;
 import cn.iocoder.yudao.module.ai.service.model.AiModelService;
+
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+
 import dev.tinyflow.core.Tinyflow;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.WORKFLOW_CODE_EXISTS;
-import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.WORKFLOW_NOT_EXISTS;
 
 /**
  * AI 工作流 Service 实现类
@@ -32,11 +37,9 @@ import static cn.iocoder.yudao.module.ai.enums.ErrorCodeConstants.WORKFLOW_NOT_E
 @Slf4j
 public class AiWorkflowServiceImpl implements AiWorkflowService {
 
-    @Resource
-    private AiWorkflowMapper workflowMapper;
+    @Resource private AiWorkflowMapper workflowMapper;
 
-    @Resource
-    private AiModelService apiModelService;
+    @Resource private AiModelService apiModelService;
 
     @Override
     public Long createWorkflow(AiWorkflowSaveReqVO createReqVO) {
@@ -109,8 +112,10 @@ public class AiWorkflowServiceImpl implements AiWorkflowService {
     @Override
     public Object testWorkflow(AiWorkflowTestReqVO testReqVO) {
         // 加载 graph
-        String graph = testReqVO.getGraph() != null ? testReqVO.getGraph()
-                : validateWorkflowExists(testReqVO.getId()).getGraph();
+        String graph =
+                testReqVO.getGraph() != null
+                        ? testReqVO.getGraph()
+                        : validateWorkflowExists(testReqVO.getId()).getGraph();
 
         // 构建 TinyFlow 执行链
         Tinyflow tinyflow = parseFlowParam(graph);
@@ -140,5 +145,4 @@ public class AiWorkflowServiceImpl implements AiWorkflowService {
         }
         return tinyflow;
     }
-
 }

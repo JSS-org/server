@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.resulttempla
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
@@ -13,6 +16,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -54,7 +58,8 @@ public class HrmPerformanceResultTemplateSaveReqVO {
         }
         Set<String> names = new HashSet<>();
         for (Level level : levels) {
-            if (level != null && StrUtil.isNotBlank(level.getName())
+            if (level != null
+                    && StrUtil.isNotBlank(level.getName())
                     && !names.add(level.getName().trim())) {
                 return false;
             }
@@ -72,8 +77,12 @@ public class HrmPerformanceResultTemplateSaveReqVO {
             return true;
         }
         List<Level> sortedLevels = new ArrayList<>(levels);
-        if (sortedLevels.stream().anyMatch(level -> level == null
-                || level.getMinScore() == null || level.getMaxScore() == null)) {
+        if (sortedLevels.stream()
+                .anyMatch(
+                        level ->
+                                level == null
+                                        || level.getMinScore() == null
+                                        || level.getMaxScore() == null)) {
             return true;
         }
         sortedLevels.sort(Comparator.comparing(Level::getMinScore));
@@ -125,5 +134,4 @@ public class HrmPerformanceResultTemplateSaveReqVO {
             return minScore == null || maxScore == null || minScore.compareTo(maxScore) <= 0;
         }
     }
-
 }

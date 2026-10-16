@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.common.validation;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -35,10 +36,10 @@ public class InEnumCollectionValidator implements ConstraintValidator<InEnum, Co
         }
         // 校验不通过，自定义提示语句
         context.disableDefaultConstraintViolation(); // 禁用默认的 message 的值
-        context.buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate()
-                .replaceAll("\\{value}", CollUtil.join(list, ","))).addConstraintViolation(); // 重新添加错误提示语句
+        context.buildConstraintViolationWithTemplate(
+                        context.getDefaultConstraintMessageTemplate()
+                                .replaceAll("\\{value}", CollUtil.join(list, ",")))
+                .addConstraintViolation(); // 重新添加错误提示语句
         return false;
     }
-
 }
-

@@ -1,4 +1,5 @@
 package cn.iocoder.yudao.module.oa.service.mail;
+
 import cn.iocoder.yudao.module.oa.controller.admin.mail.vo.account.OaMailAccountSaveReqVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.mail.OaMailAccountDO;
 
@@ -98,5 +99,4 @@ public interface OaMailAccountService {
      * @return IMAP、SMTP 协议与连接是否成功的映射
      */
     Map<String, Boolean> testMailAccountConnection(Long id, Long userId);
-
 }

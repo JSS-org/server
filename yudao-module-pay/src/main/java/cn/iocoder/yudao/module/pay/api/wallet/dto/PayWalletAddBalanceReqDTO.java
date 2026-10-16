@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pay.api.wallet.dto;
 
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 /**
@@ -19,6 +21,7 @@ public class PayWalletAddBalanceReqDTO {
      */
     @NotNull(message = "用户编号不能为空")
     private Long userId;
+
     /**
      * 用户类型
      *
@@ -32,6 +35,7 @@ public class PayWalletAddBalanceReqDTO {
      */
     @NotNull(message = "关联业务分类不能为空")
     private Integer bizType;
+
     /**
      * 关联业务编号
      */
@@ -45,5 +49,4 @@ public class PayWalletAddBalanceReqDTO {
      */
     @NotNull(message = "交易金额不能为空")
     private Integer price;
-
 }

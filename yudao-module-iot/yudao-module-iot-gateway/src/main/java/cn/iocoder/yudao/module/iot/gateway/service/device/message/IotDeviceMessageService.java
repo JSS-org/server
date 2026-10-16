@@ -18,8 +18,7 @@ public interface IotDeviceMessageService {
      * @param deviceName 设备名称
      * @return 序列化后的消息内容
      */
-    byte[] serializeDeviceMessage(IotDeviceMessage message,
-                                  String productKey, String deviceName);
+    byte[] serializeDeviceMessage(IotDeviceMessage message, String productKey, String deviceName);
 
     /**
      * 序列化消息
@@ -28,8 +27,7 @@ public interface IotDeviceMessageService {
      * @param serializeType 序列化类型
      * @return 序列化后的消息内容
      */
-    byte[] serializeDeviceMessage(IotDeviceMessage message,
-                                  IotSerializeTypeEnum serializeType);
+    byte[] serializeDeviceMessage(IotDeviceMessage message, IotSerializeTypeEnum serializeType);
 
     /**
      * 反序列化消息
@@ -39,8 +37,7 @@ public interface IotDeviceMessageService {
      * @param deviceName 设备名称
      * @return 反序列化后的消息内容
      */
-    IotDeviceMessage deserializeDeviceMessage(byte[] bytes,
-                                              String productKey, String deviceName);
+    IotDeviceMessage deserializeDeviceMessage(byte[] bytes, String productKey, String deviceName);
 
     /**
      * 反序列化消息
@@ -59,7 +56,6 @@ public interface IotDeviceMessageService {
      * @param deviceName 设备名称
      * @param serverId   设备连接的 serverId
      */
-    void sendDeviceMessage(IotDeviceMessage message,
-                           String productKey, String deviceName, String serverId);
-
+    void sendDeviceMessage(
+            IotDeviceMessage message, String productKey, String deviceName, String serverId);
 }

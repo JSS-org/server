@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.wms.dal.mysql.order.shipment;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.shipment.WmsShipmentOrderDetailDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -21,10 +22,11 @@ public interface WmsShipmentOrderDetailMapper extends BaseMapperX<WmsShipmentOrd
     }
 
     default List<WmsShipmentOrderDetailDO> selectListByOrderIds(Collection<Long> orderIds) {
-        return selectList(new LambdaQueryWrapperX<WmsShipmentOrderDetailDO>()
-                .inIfPresent(WmsShipmentOrderDetailDO::getOrderId, orderIds)
-                .orderByAsc(WmsShipmentOrderDetailDO::getOrderId)
-                .orderByAsc(WmsShipmentOrderDetailDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<WmsShipmentOrderDetailDO>()
+                        .inIfPresent(WmsShipmentOrderDetailDO::getOrderId, orderIds)
+                        .orderByAsc(WmsShipmentOrderDetailDO::getOrderId)
+                        .orderByAsc(WmsShipmentOrderDetailDO::getId));
     }
 
     default void deleteByOrderId(Long orderId) {
@@ -34,5 +36,4 @@ public interface WmsShipmentOrderDetailMapper extends BaseMapperX<WmsShipmentOrd
     default Long selectCountBySkuId(Long skuId) {
         return selectCount(WmsShipmentOrderDetailDO::getSkuId, skuId);
     }
-
 }

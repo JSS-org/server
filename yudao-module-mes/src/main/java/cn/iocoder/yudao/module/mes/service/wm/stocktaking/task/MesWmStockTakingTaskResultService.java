@@ -18,7 +18,8 @@ public interface MesWmStockTakingTaskResultService {
      * @param pageReqVO 分页查询条件
      * @return 盘点结果分页结果
      */
-    PageResult<MesWmStockTakingTaskResultDO> getStockTakingTaskResultPage(MesWmStockTakingTaskResultPageReqVO pageReqVO);
+    PageResult<MesWmStockTakingTaskResultDO> getStockTakingTaskResultPage(
+            MesWmStockTakingTaskResultPageReqVO pageReqVO);
 
     /**
      * 获得盘点结果
@@ -56,5 +57,4 @@ public interface MesWmStockTakingTaskResultService {
      * @param taskId 任务编号
      */
     void deleteStockTakingTaskResultByTaskId(Long taskId);
-
 }

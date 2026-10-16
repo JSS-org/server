@@ -1,12 +1,21 @@
 package cn.iocoder.yudao.module.ai1.service.session;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session.Ai1SessionCreateMyReqVO;
 import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session.Ai1SessionUpdateMyReqVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMapper;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -14,12 +23,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * {@link Ai1SessionServiceImpl} 的单元测试
@@ -29,16 +32,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Import(Ai1SessionServiceImpl.class)
 public class Ai1SessionServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private Ai1SessionServiceImpl sessionService;
+    @Resource private Ai1SessionServiceImpl sessionService;
 
-    @Resource
-    private Ai1SessionMapper sessionMapper;
+    @Resource private Ai1SessionMapper sessionMapper;
 
-    @MockitoBean
-    private Ai1AgentService agentService;
-    @MockitoBean
-    private Ai1SessionMessageService sessionMessageService;
+    @MockitoBean private Ai1AgentService agentService;
+    @MockitoBean private Ai1SessionMessageService sessionMessageService;
 
     @Test
     public void testCreateSessionMy_success() {
@@ -57,11 +56,15 @@ public class Ai1SessionServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testUpdateSessionMy_otherUser() {
         // mock 数据
-        Long id = sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
+        Long id =
+                sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
 
         // 调用，并断言异常
-        assertServiceException(() -> sessionService.updateSessionMy(200L,
-                new Ai1SessionUpdateMyReqVO().setId(id).setTitle("改标题")), SESSION_NOT_EXISTS);
+        assertServiceException(
+                () ->
+                        sessionService.updateSessionMy(
+                                200L, new Ai1SessionUpdateMyReqVO().setId(id).setTitle("改标题")),
+                SESSION_NOT_EXISTS);
         // 断言
         assertEquals(Ai1SessionDO.TITLE_DEFAULT, sessionMapper.selectById(id).getTitle());
     }
@@ -69,7 +72,8 @@ public class Ai1SessionServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteSessionMy_otherUser() {
         // mock 数据
-        Long id = sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
+        Long id =
+                sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
 
         // 调用，并断言异常
         assertServiceException(() -> sessionService.deleteSessionMy(200L, id), SESSION_NOT_EXISTS);
@@ -81,20 +85,24 @@ public class Ai1SessionServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteSessionMy_success() {
         // mock 数据
-        Long id = sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
+        Long id =
+                sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
 
         // 调用
         sessionService.deleteSessionMy(100L, id);
         // 断言
         assertNull(sessionMapper.selectById(id));
-        verify(sessionMessageService).deleteSessionMessageListBySessionIds(Collections.singletonList(id));
+        verify(sessionMessageService)
+                .deleteSessionMessageListBySessionIds(Collections.singletonList(id));
     }
 
     @Test
     public void testGetSessionListByAgentIdAndUserId() {
         // mock 数据
-        Long id1 = sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
-        Long id2 = sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
+        Long id1 =
+                sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
+        Long id2 =
+                sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
         sessionService.createSessionMy(200L, new Ai1SessionCreateMyReqVO().setAgentId(1L));
         sessionService.createSessionMy(100L, new Ai1SessionCreateMyReqVO().setAgentId(2L));
 
@@ -103,5 +111,4 @@ public class Ai1SessionServiceImplTest extends BaseDbUnitTest {
         // 断言
         assertEquals(Arrays.asList(id2, id1), list.stream().map(Ai1SessionDO::getId).toList());
     }
-
 }

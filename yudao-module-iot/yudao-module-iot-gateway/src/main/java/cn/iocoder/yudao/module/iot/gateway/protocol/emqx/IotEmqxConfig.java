@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -124,22 +125,19 @@ public class IotEmqxConfig {
     /**
      * 遗嘱消息配置 (用于网关异常下线时通知其他系统)
      */
-    @Valid
-    private Will will = new Will();
+    @Valid private Will will = new Will();
 
     /**
      * 高级 SSL/TLS 配置 (用于生产环境)
      */
-    @Valid
-    private Ssl sslOptions = new Ssl();
+    @Valid private Ssl sslOptions = new Ssl();
 
     // ========== HTTP Hook 配置（网关提供给 EMQX 调用） ==========
 
     /**
      * HTTP Hook 服务配置（用于 /mqtt/auth、/mqtt/event）
      */
-    @Valid
-    private Http http = new Http();
+    @Valid private Http http = new Http();
 
     /**
      * 遗嘱消息 (Last Will and Testament)
@@ -151,25 +149,28 @@ public class IotEmqxConfig {
          * 是否启用遗嘱消息
          */
         private boolean enabled = false;
+
         /**
          * 遗嘱消息主题
          */
         private String topic;
+
         /**
          * 遗嘱消息内容
          */
         private String payload;
+
         /**
          * 遗嘱消息 QoS 等级
          */
         @Min(value = 0, message = "遗嘱消息 QoS 不能小于 0")
         @Max(value = 2, message = "遗嘱消息 QoS 不能大于 2")
         private Integer qos = 1;
+
         /**
          * 遗嘱消息是否作为保留消息发布
          */
         private boolean retain = true;
-
     }
 
     /**
@@ -183,20 +184,22 @@ public class IotEmqxConfig {
          * 包含客户端自己的证书和私钥，用于向服务端证明身份（双向认证）。
          */
         private String keyStorePath;
+
         /**
          * 密钥库密码
          */
         private String keyStorePassword;
+
         /**
          * 信任库（TrustStore）路径，例如：classpath:certs/trust.jks
          * 包含服务端信任的 CA 证书，用于验证服务端的身份，防止中间人攻击。
          */
         private String trustStorePath;
+
         /**
          * 信任库密码
          */
         private String trustStorePassword;
-
     }
 
     /**
@@ -219,7 +222,5 @@ public class IotEmqxConfig {
          * SSL 私钥路径
          */
         private String sslKeyPath;
-
     }
-
 }

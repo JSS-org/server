@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -27,5 +28,4 @@ public class BpmUserGroupRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -19,5 +19,4 @@ public interface ExpressClient {
      */
     // TODO @jason：返回字段可以参考 https://doc.youzanyun.com/detail/API/0/5 响应的 data
     List<ExpressTrackRespDTO> getExpressTrackList(ExpressTrackQueryReqDTO reqDTO);
-
 }

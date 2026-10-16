@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.tm.tool;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -11,7 +14,9 @@ import cn.iocoder.yudao.module.mes.enums.tm.MesTmMaintenTypeEnum;
 import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
 import cn.iocoder.yudao.module.mes.service.wm.batch.MesWmBatchService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -20,9 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 工具台账 Service 实现类
@@ -33,17 +35,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesTmToolServiceImpl implements MesTmToolService {
 
-    @Resource
-    private MesTmToolMapper toolMapper;
+    @Resource private MesTmToolMapper toolMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private MesTmToolTypeService toolTypeService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
-    @Resource
-    @Lazy
-    private MesWmBatchService batchService;
+    @Resource private MesWmBarcodeService barcodeService;
+    @Resource @Lazy private MesWmBatchService batchService;
 
     @Override
     public Long createTool(MesTmToolSaveReqVO createReqVO) {
@@ -55,8 +52,8 @@ public class MesTmToolServiceImpl implements MesTmToolService {
         toolMapper.insert(tool);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.TOOL.getValue(),
-                tool.getId(), tool.getCode(), tool.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.TOOL.getValue(), tool.getId(), tool.getCode(), tool.getName());
         return tool.getId();
     }
 
@@ -70,7 +67,8 @@ public class MesTmToolServiceImpl implements MesTmToolService {
         // 2.1 保养类型互斥清理
         if (Objects.equals(updateReqVO.getMaintenType(), MesTmMaintenTypeEnum.REGULAR.getType())) {
             updateReqVO.setNextMaintenPeriod(null);
-        } else if (Objects.equals(updateReqVO.getMaintenType(), MesTmMaintenTypeEnum.USAGE.getType())) {
+        } else if (Objects.equals(
+                updateReqVO.getMaintenType(), MesTmMaintenTypeEnum.USAGE.getType())) {
             updateReqVO.setNextMaintenDate(null);
         }
         // 2.2 更新
@@ -144,5 +142,4 @@ public class MesTmToolServiceImpl implements MesTmToolService {
         }
         return toolMapper.selectByIds(ids);
     }
-
 }

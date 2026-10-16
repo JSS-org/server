@@ -1,23 +1,26 @@
 package cn.iocoder.yudao.module.mp.controller.admin.account;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mp.controller.admin.account.vo.*;
 import cn.iocoder.yudao.module.mp.convert.account.MpAccountConvert;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
 import cn.iocoder.yudao.module.mp.service.account.MpAccountService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 
 @Tag(name = "管理后台 - 公众号账号")
 @RestController
@@ -25,8 +28,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 @Validated
 public class MpAccountController {
 
-    @Resource
-    private MpAccountService mpAccountService;
+    @Resource private MpAccountService mpAccountService;
 
     @PostMapping("/create")
     @Operation(summary = "创建公众号账号")
@@ -38,7 +40,8 @@ public class MpAccountController {
     @PutMapping("/update")
     @Operation(summary = "更新公众号账号")
     @PreAuthorize("@ss.hasPermission('mp:account:update')")
-    public CommonResult<Boolean> updateAccount(@Valid @RequestBody MpAccountUpdateReqVO updateReqVO) {
+    public CommonResult<Boolean> updateAccount(
+            @Valid @RequestBody MpAccountUpdateReqVO updateReqVO) {
         mpAccountService.updateAccount(updateReqVO);
         return success(true);
     }
@@ -64,7 +67,8 @@ public class MpAccountController {
     @GetMapping("/page")
     @Operation(summary = "获得公众号账号分页")
     @PreAuthorize("@ss.hasPermission('mp:account:query')")
-    public CommonResult<PageResult<MpAccountRespVO>> getAccountPage(@Valid MpAccountPageReqVO pageVO) {
+    public CommonResult<PageResult<MpAccountRespVO>> getAccountPage(
+            @Valid MpAccountPageReqVO pageVO) {
         PageResult<MpAccountDO> pageResult = mpAccountService.getAccountPage(pageVO);
         return success(MpAccountConvert.INSTANCE.convertPage(pageResult));
     }
@@ -94,5 +98,4 @@ public class MpAccountController {
         mpAccountService.clearAccountQuota(id);
         return success(true);
     }
-
 }

@@ -5,7 +5,9 @@ import cn.iocoder.yudao.framework.common.util.string.StrUtils;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.candidate.BpmTaskCandidateStrategy;
 import cn.iocoder.yudao.module.bpm.framework.flowable.core.enums.BpmTaskCandidateStrategyEnum;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashSet;
@@ -18,8 +20,7 @@ import java.util.LinkedHashSet;
 @Component
 public class BpmTaskCandidateUserStrategy implements BpmTaskCandidateStrategy {
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     public BpmTaskCandidateStrategyEnum getStrategy() {
@@ -35,5 +36,4 @@ public class BpmTaskCandidateUserStrategy implements BpmTaskCandidateStrategy {
     public LinkedHashSet<Long> calculateUsers(String param) {
         return new LinkedHashSet<>(StrUtils.splitToLong(param, StrPool.COMMA));
     }
-
 }

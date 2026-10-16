@@ -9,7 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum CodegenColumnHtmlTypeEnum {
-
     INPUT("input"), // 文本框
     TEXTAREA("textarea"), // 文本域
     SELECT("select"), // 下拉框
@@ -25,5 +24,4 @@ public enum CodegenColumnHtmlTypeEnum {
      * 条件
      */
     private final String type;
-
 }

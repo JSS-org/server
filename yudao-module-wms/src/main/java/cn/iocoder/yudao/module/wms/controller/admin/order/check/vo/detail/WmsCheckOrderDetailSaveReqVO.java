@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.wms.controller.admin.order.check.vo.detail;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -38,5 +40,4 @@ public class WmsCheckOrderDetailSaveReqVO {
     @Schema(description = "单价", example = "1000.00")
     @DecimalMin(value = "0", message = "单价不能小于 0")
     private BigDecimal price;
-
 }

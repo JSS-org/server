@@ -1,5 +1,20 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.content.PmsKnowledgeContentPermissionDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.kb.content.PmsKnowledgeContentPermissionMemberDO;
@@ -16,7 +31,9 @@ import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,20 +44,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomLongId;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * {@link PmsKnowledgeContentPermissionServiceImpl} 的单元测试类
  *
@@ -49,30 +52,19 @@ import static org.mockito.Mockito.when;
 @Import(PmsKnowledgeContentPermissionServiceImpl.class)
 public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private PmsKnowledgeContentPermissionServiceImpl permissionService;
+    @Resource private PmsKnowledgeContentPermissionServiceImpl permissionService;
 
-    @Resource
-    private PmsKnowledgeContentPermissionMapper permissionMapper;
-    @Resource
-    private PmsKnowledgeContentPermissionMemberMapper permissionMemberMapper;
-    @Resource
-    private PmsKnowledgeFolderMapper folderMapper;
-    @Resource
-    private PmsKnowledgeLibraryMemberMapper libraryMemberMapper;
+    @Resource private PmsKnowledgeContentPermissionMapper permissionMapper;
+    @Resource private PmsKnowledgeContentPermissionMemberMapper permissionMemberMapper;
+    @Resource private PmsKnowledgeFolderMapper folderMapper;
+    @Resource private PmsKnowledgeLibraryMemberMapper libraryMemberMapper;
 
-    @MockitoBean
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
-    @MockitoBean
-    private PmsKnowledgeFolderService folderService;
-    @MockitoBean
-    private PmsKnowledgeDocumentService documentService;
-    @MockitoBean
-    private AdminUserApi adminUserApi;
-    @MockitoBean
-    private DeptApi deptApi;
-    @MockitoBean
-    private PermissionApi permissionApi;
+    @MockitoBean private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @MockitoBean private PmsKnowledgeFolderService folderService;
+    @MockitoBean private PmsKnowledgeDocumentService documentService;
+    @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private DeptApi deptApi;
+    @MockitoBean private PermissionApi permissionApi;
 
     @Test
     public void testCreateDefaultPermission() {
@@ -89,7 +81,8 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         assertEquals(libraryId, permission.getLibraryId());
         assertTrue(permission.getOpenStatus());
         assertEquals(PmsKnowledgeContentLevelEnum.PREVIEW.getLevel(), permission.getOpenLevel());
-        PmsKnowledgeContentPermissionMemberDO owner = permissionMemberMapper.selectByPermissionIdAndUserId(permissionId, userId);
+        PmsKnowledgeContentPermissionMemberDO owner =
+                permissionMemberMapper.selectByPermissionIdAndUserId(permissionId, userId);
         assertNotNull(owner);
         assertEquals(PmsKnowledgeContentLevelEnum.MANAGE.getLevel(), owner.getLevel());
     }
@@ -100,20 +93,30 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         Long libraryId = randomLongId();
         Long userId = randomLongId();
         Long deptId = randomLongId();
-        PmsKnowledgeContentPermissionDO permission = randomPermissionDO(libraryId, true,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO permission =
+                randomPermissionDO(
+                        libraryId, true, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(permission);
-        permissionMemberMapper.insert(new PmsKnowledgeContentPermissionMemberDO().setPermissionId(permission.getId()).setDeptId(deptId)
-                .setLevel(PmsKnowledgeContentLevelEnum.DOWNLOAD.getLevel()));
-        permissionMemberMapper.insert(new PmsKnowledgeContentPermissionMemberDO().setPermissionId(permission.getId()).setUserId(userId)
-                .setLevel(PmsKnowledgeContentLevelEnum.EDIT.getLevel()));
+        permissionMemberMapper.insert(
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(permission.getId())
+                        .setDeptId(deptId)
+                        .setLevel(PmsKnowledgeContentLevelEnum.DOWNLOAD.getLevel()));
+        permissionMemberMapper.insert(
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(permission.getId())
+                        .setUserId(userId)
+                        .setLevel(PmsKnowledgeContentLevelEnum.EDIT.getLevel()));
 
         // mock 方法
         when(libraryMemberService.isLibraryAdmin(libraryId, userId)).thenReturn(false);
-        when(adminUserApi.getUser(userId)).thenReturn(new AdminUserRespDTO().setId(userId).setDeptId(deptId));
+        when(adminUserApi.getUser(userId))
+                .thenReturn(new AdminUserRespDTO().setId(userId).setDeptId(deptId));
 
         // 调用
-        Integer level = permissionService.getCurrentUserContentPermissionLevel(permission.getId(), libraryId, userId);
+        Integer level =
+                permissionService.getCurrentUserContentPermissionLevel(
+                        permission.getId(), libraryId, userId);
 
         // 断言
         assertEquals(PmsKnowledgeContentLevelEnum.PREVIEW.getLevel(), level);
@@ -125,12 +128,15 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         Long libraryId = randomLongId();
         Long userId = randomLongId();
         Long collaboratorUserId = randomLongId();
-        PmsKnowledgeContentPermissionDO permission = randomPermissionDO(libraryId, true,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO permission =
+                randomPermissionDO(
+                        libraryId, true, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(permission);
-        permissionMemberMapper.insert(new PmsKnowledgeContentPermissionMemberDO()
-                .setPermissionId(permission.getId()).setUserId(collaboratorUserId)
-                .setLevel(PmsKnowledgeContentLevelEnum.EDIT.getLevel()));
+        permissionMemberMapper.insert(
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(permission.getId())
+                        .setUserId(collaboratorUserId)
+                        .setLevel(PmsKnowledgeContentLevelEnum.EDIT.getLevel()));
 
         // mock 方法
         when(libraryMemberService.isLibraryAdmin(libraryId, userId)).thenReturn(false);
@@ -138,7 +144,8 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
 
         // 调用
         Set<Long> memberUserIds = new LinkedHashSet<>();
-        permissionService.getContentPermissionMemberList(permission.getId(), userId)
+        permissionService
+                .getContentPermissionMemberList(permission.getId(), userId)
                 .forEach(member -> memberUserIds.add(member.getUserId()));
 
         // 断言
@@ -151,8 +158,9 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         // mock 数据
         Long libraryId = randomLongId();
         Long userId = randomLongId();
-        PmsKnowledgeContentPermissionDO permission = randomPermissionDO(libraryId, false,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO permission =
+                randomPermissionDO(
+                        libraryId, false, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(permission);
 
         // mock 方法
@@ -160,7 +168,9 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         when(adminUserApi.getUser(userId)).thenReturn(new AdminUserRespDTO().setId(userId));
 
         // 调用
-        Integer level = permissionService.getCurrentUserContentPermissionLevel(permission.getId(), libraryId, userId);
+        Integer level =
+                permissionService.getCurrentUserContentPermissionLevel(
+                        permission.getId(), libraryId, userId);
 
         // 断言
         assertNull(level);
@@ -172,15 +182,20 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         Long sourceLibraryId = randomLongId();
         Long targetLibraryId = randomLongId();
         Long userId = randomLongId();
-        PmsKnowledgeContentPermissionDO source = randomPermissionDO(sourceLibraryId, false,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO source =
+                randomPermissionDO(
+                        sourceLibraryId, false, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(source);
-        permissionMemberMapper.insert(new PmsKnowledgeContentPermissionMemberDO().setPermissionId(source.getId()).setUserId(userId)
-                .setLevel(PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
+        permissionMemberMapper.insert(
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(source.getId())
+                        .setUserId(userId)
+                        .setLevel(PmsKnowledgeContentLevelEnum.MANAGE.getLevel()));
 
         // 调用
-        Map<Long, Long> clonedPermissionIdMap = permissionService.cloneContentPermissions(
-                Collections.singleton(source.getId()), targetLibraryId);
+        Map<Long, Long> clonedPermissionIdMap =
+                permissionService.cloneContentPermissions(
+                        Collections.singleton(source.getId()), targetLibraryId);
 
         // 断言
         Long targetPermissionId = clonedPermissionIdMap.get(source.getId());
@@ -189,7 +204,8 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         PmsKnowledgeContentPermissionDO target = permissionMapper.selectById(targetPermissionId);
         assertEquals(targetLibraryId, target.getLibraryId());
         assertFalse(target.getOpenStatus());
-        assertNotNull(permissionMemberMapper.selectByPermissionIdAndUserId(targetPermissionId, userId));
+        assertNotNull(
+                permissionMemberMapper.selectByPermissionIdAndUserId(targetPermissionId, userId));
     }
 
     @Test
@@ -200,30 +216,45 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
         Long adminLibraryId = randomLongId();
         Long collaboratorLibraryId = randomLongId();
         Long deniedLibraryId = randomLongId();
-        PmsKnowledgeContentPermissionDO adminPermission = randomPermissionDO(adminLibraryId, false,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO adminPermission =
+                randomPermissionDO(
+                        adminLibraryId, false, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(adminPermission);
-        PmsKnowledgeContentPermissionDO collaboratorPermission = randomPermissionDO(collaboratorLibraryId, false,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO collaboratorPermission =
+                randomPermissionDO(
+                        collaboratorLibraryId,
+                        false,
+                        PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(collaboratorPermission);
-        PmsKnowledgeContentPermissionDO deniedPermission = randomPermissionDO(deniedLibraryId, false,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO deniedPermission =
+                randomPermissionDO(
+                        deniedLibraryId, false, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(deniedPermission);
-        libraryMemberMapper.insert(new PmsKnowledgeLibraryMemberDO().setLibraryId(adminLibraryId).setUserId(userId)
-                .setLevel(PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel()));
-        permissionMemberMapper.insert(new PmsKnowledgeContentPermissionMemberDO()
-                .setPermissionId(collaboratorPermission.getId()).setDeptId(deptId)
-                .setLevel(PmsKnowledgeContentLevelEnum.PREVIEW.getLevel()));
+        libraryMemberMapper.insert(
+                new PmsKnowledgeLibraryMemberDO()
+                        .setLibraryId(adminLibraryId)
+                        .setUserId(userId)
+                        .setLevel(PmsKnowledgeLibraryMemberLevelEnum.ADMIN.getLevel()));
+        permissionMemberMapper.insert(
+                new PmsKnowledgeContentPermissionMemberDO()
+                        .setPermissionId(collaboratorPermission.getId())
+                        .setDeptId(deptId)
+                        .setLevel(PmsKnowledgeContentLevelEnum.PREVIEW.getLevel()));
 
         // mock 方法
-        when(adminUserApi.getUser(userId)).thenReturn(new AdminUserRespDTO().setId(userId).setDeptId(deptId));
+        when(adminUserApi.getUser(userId))
+                .thenReturn(new AdminUserRespDTO().setId(userId).setDeptId(deptId));
 
         // 调用
-        Set<Long> permissionIds = permissionService.getReadableContentPermissionIdSet(
-                Arrays.asList(adminLibraryId, collaboratorLibraryId, deniedLibraryId), userId);
+        Set<Long> permissionIds =
+                permissionService.getReadableContentPermissionIdSet(
+                        Arrays.asList(adminLibraryId, collaboratorLibraryId, deniedLibraryId),
+                        userId);
 
         // 断言
-        assertEquals(new LinkedHashSet<>(Arrays.asList(adminPermission.getId(), collaboratorPermission.getId())),
+        assertEquals(
+                new LinkedHashSet<>(
+                        Arrays.asList(adminPermission.getId(), collaboratorPermission.getId())),
                 permissionIds);
         verify(libraryMemberService, never()).isLibraryAdmin(anyLong(), anyLong());
     }
@@ -232,22 +263,29 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
     public void testDeleteUnusedPermissions_preservesReferencedPermission() {
         // mock 数据
         Long libraryId = randomLongId();
-        PmsKnowledgeContentPermissionDO referenced = randomPermissionDO(libraryId, true,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO referenced =
+                randomPermissionDO(
+                        libraryId, true, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(referenced);
-        PmsKnowledgeContentPermissionDO unused = randomPermissionDO(libraryId, true,
-                PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
+        PmsKnowledgeContentPermissionDO unused =
+                randomPermissionDO(
+                        libraryId, true, PmsKnowledgeContentLevelEnum.PREVIEW.getLevel());
         permissionMapper.insert(unused);
-        folderMapper.insert(new PmsKnowledgeFolderDO().setLibraryId(libraryId).setPermissionId(referenced.getId())
-                .setParentId(0L).setTitle("测试目录").setStatus(1));
+        folderMapper.insert(
+                new PmsKnowledgeFolderDO()
+                        .setLibraryId(libraryId)
+                        .setPermissionId(referenced.getId())
+                        .setParentId(0L)
+                        .setTitle("测试目录")
+                        .setStatus(1));
         when(folderService.getExistingContentPermissionIdSet(anyCollection()))
                 .thenReturn(Collections.singleton(referenced.getId()));
         when(documentService.getExistingContentPermissionIdSet(anyCollection()))
                 .thenReturn(Collections.emptySet());
 
         // 调用
-        permissionService.deleteUnusedContentPermissions(new LinkedHashSet<>(
-                Arrays.asList(referenced.getId(), unused.getId())));
+        permissionService.deleteUnusedContentPermissions(
+                new LinkedHashSet<>(Arrays.asList(referenced.getId(), unused.getId())));
 
         // 断言
         assertNotNull(permissionMapper.selectById(referenced.getId()));
@@ -256,11 +294,16 @@ public class PmsKnowledgeContentPermissionServiceImplTest extends BaseDbUnitTest
 
     // ========== 随机对象 ==========
 
-    private PmsKnowledgeContentPermissionDO randomPermissionDO(Long libraryId, boolean openStatus,
-                                                               Integer openLevel) {
-        return randomPojo(PmsKnowledgeContentPermissionDO.class, permission -> permission.setId(null)
-                .setLibraryId(libraryId).setOpenStatus(openStatus).setOpenLevel(openLevel)
-                .setCreator(String.valueOf(randomLongId())));
+    private PmsKnowledgeContentPermissionDO randomPermissionDO(
+            Long libraryId, boolean openStatus, Integer openLevel) {
+        return randomPojo(
+                PmsKnowledgeContentPermissionDO.class,
+                permission ->
+                        permission
+                                .setId(null)
+                                .setLibraryId(libraryId)
+                                .setOpenStatus(openStatus)
+                                .setOpenLevel(openLevel)
+                                .setCreator(String.valueOf(randomLongId())));
     }
-
 }

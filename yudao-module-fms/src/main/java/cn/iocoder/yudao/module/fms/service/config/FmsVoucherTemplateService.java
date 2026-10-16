@@ -1,15 +1,15 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
-import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplatecategory.FmsVoucherTemplateCategorySaveReqVO;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate.FmsVoucherTemplateSaveReqVO;
+import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplatecategory.FmsVoucherTemplateCategorySaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherTemplateCategoryDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherTemplateDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * FMS 凭证模板 Service 接口
@@ -59,7 +59,8 @@ public interface FmsVoucherTemplateService {
      * @return 凭证模板分类 Map
      */
     default Map<Long, FmsVoucherTemplateCategoryDO> getTemplateCategoryMap(Long accountSetId) {
-        return convertMap(getTemplateCategoryList(accountSetId), FmsVoucherTemplateCategoryDO::getId);
+        return convertMap(
+                getTemplateCategoryList(accountSetId), FmsVoucherTemplateCategoryDO::getId);
     }
 
     /**
@@ -123,5 +124,4 @@ public interface FmsVoucherTemplateService {
      * @return 凭证模板数量
      */
     Long getVoucherTemplateCountByAuxiliaryTypeId(Long accountSetId, Long auxiliaryTypeId);
-
 }

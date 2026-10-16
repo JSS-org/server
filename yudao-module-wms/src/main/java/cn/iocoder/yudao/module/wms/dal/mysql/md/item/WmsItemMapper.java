@@ -6,6 +6,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemListReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.item.vo.item.WmsItemPageReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.item.WmsItemDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -20,23 +21,26 @@ import java.util.List;
 public interface WmsItemMapper extends BaseMapperX<WmsItemDO> {
 
     default PageResult<WmsItemDO> selectPage(WmsItemPageReqVO reqVO, Collection<Long> categoryIds) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<WmsItemDO>()
-                .likeIfPresent(WmsItemDO::getCode, reqVO.getCode())
-                .likeIfPresent(WmsItemDO::getName, reqVO.getName())
-                .inIfPresent(WmsItemDO::getCategoryId, categoryIds)
-                .eqIfPresent(WmsItemDO::getBrandId, reqVO.getBrandId())
-                .betweenIfPresent(WmsItemDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(WmsItemDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<WmsItemDO>()
+                        .likeIfPresent(WmsItemDO::getCode, reqVO.getCode())
+                        .likeIfPresent(WmsItemDO::getName, reqVO.getName())
+                        .inIfPresent(WmsItemDO::getCategoryId, categoryIds)
+                        .eqIfPresent(WmsItemDO::getBrandId, reqVO.getBrandId())
+                        .betweenIfPresent(WmsItemDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(WmsItemDO::getId));
     }
 
     default List<WmsItemDO> selectList(WmsItemListReqVO reqVO, Collection<Long> categoryIds) {
-        return selectList(new LambdaQueryWrapperX<WmsItemDO>()
-                .likeIfPresent(WmsItemDO::getCode, reqVO.getCode())
-                .likeIfPresent(WmsItemDO::getName, reqVO.getName())
-                .inIfPresent(WmsItemDO::getCategoryId, categoryIds)
-                .eqIfPresent(WmsItemDO::getBrandId, reqVO.getBrandId())
-                .betweenIfPresent(WmsItemDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(WmsItemDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<WmsItemDO>()
+                        .likeIfPresent(WmsItemDO::getCode, reqVO.getCode())
+                        .likeIfPresent(WmsItemDO::getName, reqVO.getName())
+                        .inIfPresent(WmsItemDO::getCategoryId, categoryIds)
+                        .eqIfPresent(WmsItemDO::getBrandId, reqVO.getBrandId())
+                        .betweenIfPresent(WmsItemDO::getCreateTime, reqVO.getCreateTime())
+                        .orderByDesc(WmsItemDO::getId));
     }
 
     default WmsItemDO selectByName(String name) {
@@ -54,5 +58,4 @@ public interface WmsItemMapper extends BaseMapperX<WmsItemDO> {
     default Long selectCountByBrandId(Long brandId) {
         return selectCount(WmsItemDO::getBrandId, brandId);
     }
-
 }

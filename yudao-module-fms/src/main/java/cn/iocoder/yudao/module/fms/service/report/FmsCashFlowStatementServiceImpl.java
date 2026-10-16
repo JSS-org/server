@@ -1,5 +1,19 @@
 package cn.iocoder.yudao.module.fms.service.report;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_ADJUSTMENT_NOT_EXISTS;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_AMOUNT_NOT_ADJUSTABLE;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EDITABLE;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EXISTS;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUB_TYPE;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUCCESS;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUB_TYPE;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUCCESS;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_STATEMENT_TYPE;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_STATEMENT_UPDATE_SUB_TYPE;
+import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_STATEMENT_UPDATE_SUCCESS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -8,15 +22,16 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.subjectbalance.FmsLedgerSubjectBalanceRespVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaRespVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaUpdateReqVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportItemRespVO;
+import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportListReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.balance.FmsBalanceSheetCheckRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowAdjustmentRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowAdjustmentUpdateReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowCheckRespVO;
 import cn.iocoder.yudao.module.fms.controller.admin.report.vo.cashflow.FmsCashFlowStatementUpdateReqVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaRespVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportFormulaUpdateReqVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportItemRespVO;
-import cn.iocoder.yudao.module.fms.controller.admin.report.vo.FmsReportListReqVO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.report.FmsReportTemplateDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.report.cashflow.FmsCashFlowExtendConfigDO;
@@ -32,13 +47,15 @@ import cn.iocoder.yudao.module.fms.enums.report.FmsCashFlowExtendTypeEnum;
 import cn.iocoder.yudao.module.fms.enums.report.FmsCashFlowParamTypeEnum;
 import cn.iocoder.yudao.module.fms.enums.report.FmsFormulaRuleEnum;
 import cn.iocoder.yudao.module.fms.enums.report.FmsReportTypeEnum;
-import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAccountSetDO;
 import cn.iocoder.yudao.module.fms.service.config.FmsAccountSetService;
 import cn.iocoder.yudao.module.fms.service.config.FmsSubjectService;
 import cn.iocoder.yudao.module.fms.util.FmsPeriodUtils;
+
 import com.googlecode.aviator.AviatorEvaluator;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -55,21 +72,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_ADJUSTMENT_NOT_EXISTS;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_AMOUNT_NOT_ADJUSTABLE;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EXISTS;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.REPORT_CONFIG_NOT_EDITABLE;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUB_TYPE;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUCCESS;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUB_TYPE;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUCCESS;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_STATEMENT_TYPE;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_STATEMENT_UPDATE_SUB_TYPE;
-import static cn.iocoder.yudao.module.fms.enums.LogRecordConstants.FMS_CASH_FLOW_STATEMENT_UPDATE_SUCCESS;
 
 /**
  * FMS 现金流量表 Service 实现类
@@ -84,80 +86,111 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * 现金流量表主表分类
      */
     private static final Integer CASH_FLOW_CATEGORY_MAIN = 1;
+
     /**
      * 其他经营活动现金行次，未明确归类的经营活动现金流归入该行
      */
     private static final int OTHER_OPERATING_ROW_NO = 6;
+
     /**
      * 期末现金及现金等价物余额行次
      */
     private static final int ENDING_CASH_ROW_NO = 22;
 
     private static final Pattern LINE_FORMULA_PATTERN = Pattern.compile("([+-]?)(L\\d+)");
-    private static final Pattern CASH_FLOW_PARAM_PATTERN = Pattern.compile("BA\\[\\d+,[12]]|IN\\d+|EX\\d+|L\\d+");
-    private static final Pattern CASH_FLOW_EXPRESSION_PATTERN = Pattern.compile("[A-Z0-9_+\\-*/().?:<>=\\s]+");
+    private static final Pattern CASH_FLOW_PARAM_PATTERN =
+            Pattern.compile("BA\\[\\d+,[12]]|IN\\d+|EX\\d+|L\\d+");
+    private static final Pattern CASH_FLOW_EXPRESSION_PATTERN =
+            Pattern.compile("[A-Z0-9_+\\-*/().?:<>=\\s]+");
 
-    @Resource
-    private FmsCashFlowStatementConfigMapper cashFlowStatementConfigMapper;
-    @Resource
-    private FmsCashFlowStatementReportMapper cashFlowStatementReportMapper;
-    @Resource
-    private FmsCashFlowExtendConfigMapper cashFlowExtendConfigMapper;
-    @Resource
-    private FmsCashFlowExtendDataMapper cashFlowExtendDataMapper;
-    @Resource
-    private FmsReportTemplateMapper reportTemplateMapper;
+    @Resource private FmsCashFlowStatementConfigMapper cashFlowStatementConfigMapper;
+    @Resource private FmsCashFlowStatementReportMapper cashFlowStatementReportMapper;
+    @Resource private FmsCashFlowExtendConfigMapper cashFlowExtendConfigMapper;
+    @Resource private FmsCashFlowExtendDataMapper cashFlowExtendDataMapper;
+    @Resource private FmsReportTemplateMapper reportTemplateMapper;
 
-    @Resource
-    private FmsAccountSetService accountSetService;
-    @Resource
-    private FmsReportCommonService reportCommonService;
-    @Resource
-    private FmsSubjectService subjectService;
-    @Resource
-    private FmsBalanceSheetService balanceSheetService;
-    @Resource
-    private FmsIncomeStatementService incomeStatementService;
+    @Resource private FmsAccountSetService accountSetService;
+    @Resource private FmsReportCommonService reportCommonService;
+    @Resource private FmsSubjectService subjectService;
+    @Resource private FmsBalanceSheetService balanceSheetService;
+    @Resource private FmsIncomeStatementService incomeStatementService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<FmsReportItemRespVO> getCashFlowStatement(FmsReportListReqVO listReqVO, Long userId) {
+    public List<FmsReportItemRespVO> getCashFlowStatement(
+            FmsReportListReqVO listReqVO, Long userId) {
         // 1.1 校验账套读权限
-        FmsAccountSetDO accountSet = accountSetService.validateAccountSetReadPermission(
-                listReqVO.getAccountSetId(), userId);
+        FmsAccountSetDO accountSet =
+                accountSetService.validateAccountSetReadPermission(
+                        listReqVO.getAccountSetId(), userId);
         // 1.2 初始化报表配置
-        List<FmsCashFlowStatementConfigDO> configs = getOrInitCashFlowConfigs(listReqVO.getAccountSetId());
+        List<FmsCashFlowStatementConfigDO> configs =
+                getOrInitCashFlowConfigs(listReqVO.getAccountSetId());
         List<FmsCashFlowStatementReportDO> reports = getOrCreateCashFlowReports(listReqVO, configs);
 
         // 2. 查询本期和本年的资产负债、利润表和辅助数据取数
         YearMonth startMonth = LocalDateTimeUtils.parseYearMonth(listReqVO.getStartMonth());
         YearMonth endMonth = LocalDateTimeUtils.parseYearMonth(listReqVO.getEndMonth());
-        Map<Integer, FmsReportItemRespVO> currentBalanceMap = balanceSheetService.getBalanceSheetLineMap(
-                listReqVO, startMonth, endMonth, userId);
-        Map<Integer, FmsReportItemRespVO> yearBalanceMap = balanceSheetService.getBalanceSheetLineMap(
-                listReqVO, FmsPeriodUtils.getYearStartMonth(accountSet, endMonth), endMonth, userId);
-        List<FmsReportItemRespVO> incomeItems = incomeStatementService.getIncomeStatement(listReqVO, userId);
-        Map<Integer, FmsReportItemRespVO> incomeMap = convertMap(
-                filterList(incomeItems, item -> item.getRowNo() != null && item.getRowNo() > 0),
-                FmsReportItemRespVO::getRowNo, Function.identity(), (first, second) -> first);
-        List<FmsCashFlowAdjustmentRespVO> adjustments = getCashFlowAdjustmentListInternal(listReqVO, userId);
-        Map<Integer, FmsCashFlowAdjustmentRespVO> adjustmentMap = convertMap(
-                filterList(adjustments, item -> item.getRowNo() != null && item.getRowNo() > 0),
-                FmsCashFlowAdjustmentRespVO::getRowNo, Function.identity(), (first, second) -> first);
+        Map<Integer, FmsReportItemRespVO> currentBalanceMap =
+                balanceSheetService.getBalanceSheetLineMap(listReqVO, startMonth, endMonth, userId);
+        Map<Integer, FmsReportItemRespVO> yearBalanceMap =
+                balanceSheetService.getBalanceSheetLineMap(
+                        listReqVO,
+                        FmsPeriodUtils.getYearStartMonth(accountSet, endMonth),
+                        endMonth,
+                        userId);
+        List<FmsReportItemRespVO> incomeItems =
+                incomeStatementService.getIncomeStatement(listReqVO, userId);
+        Map<Integer, FmsReportItemRespVO> incomeMap =
+                convertMap(
+                        filterList(
+                                incomeItems,
+                                item -> item.getRowNo() != null && item.getRowNo() > 0),
+                        FmsReportItemRespVO::getRowNo,
+                        Function.identity(),
+                        (first, second) -> first);
+        List<FmsCashFlowAdjustmentRespVO> adjustments =
+                getCashFlowAdjustmentListInternal(listReqVO, userId);
+        Map<Integer, FmsCashFlowAdjustmentRespVO> adjustmentMap =
+                convertMap(
+                        filterList(
+                                adjustments,
+                                item -> item.getRowNo() != null && item.getRowNo() > 0),
+                        FmsCashFlowAdjustmentRespVO::getRowNo,
+                        Function.identity(),
+                        (first, second) -> first);
 
         // 3. 计算现金流量表项目
-        Map<Integer, FmsCashFlowStatementReportDO> reportMap = convertMap(
-                filterList(reports, report -> report.getRowNo() != null && report.getRowNo() > 0),
-                FmsCashFlowStatementReportDO::getRowNo, Function.identity(), (first, second) -> first);
+        Map<Integer, FmsCashFlowStatementReportDO> reportMap =
+                convertMap(
+                        filterList(
+                                reports,
+                                report -> report.getRowNo() != null && report.getRowNo() > 0),
+                        FmsCashFlowStatementReportDO::getRowNo,
+                        Function.identity(),
+                        (first, second) -> first);
         Map<Integer, FmsReportItemRespVO> lineMap = new LinkedHashMap<>();
         List<FmsReportItemRespVO> result = new ArrayList<>();
         for (FmsCashFlowStatementReportDO report : reports) {
-            FmsCashFlowStatementConfigDO config = BeanUtils.toBean(report, FmsCashFlowStatementConfigDO.class);
+            FmsCashFlowStatementConfigDO config =
+                    BeanUtils.toBean(report, FmsCashFlowStatementConfigDO.class);
             FmsReportItemRespVO item = BeanUtils.toBean(report, FmsReportItemRespVO.class);
-            BigDecimal currentAmount = calculateCashFlowFormula(config.getFormula(), currentBalanceMap,
-                    incomeMap, adjustmentMap, lineMap, true);
-            BigDecimal yearAmount = calculateCashFlowFormula(config.getFormula(), yearBalanceMap,
-                    incomeMap, adjustmentMap, lineMap, false);
+            BigDecimal currentAmount =
+                    calculateCashFlowFormula(
+                            config.getFormula(),
+                            currentBalanceMap,
+                            incomeMap,
+                            adjustmentMap,
+                            lineMap,
+                            true);
+            BigDecimal yearAmount =
+                    calculateCashFlowFormula(
+                            config.getFormula(),
+                            yearBalanceMap,
+                            incomeMap,
+                            adjustmentMap,
+                            lineMap,
+                            false);
             if (isAmountAdjustable(report)) {
                 currentAmount = getSavedAmount(report.getCurrentAmount(), currentAmount);
                 yearAmount = getSavedAmount(report.getYearAmount(), yearAmount);
@@ -170,15 +203,18 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         }
 
         // 4. 将未明确归类的经营活动现金流归入其他经营活动
-        reconcileCashFlow(result, lineMap, currentBalanceMap, yearBalanceMap, adjustmentMap, reportMap);
+        reconcileCashFlow(
+                result, lineMap, currentBalanceMap, yearBalanceMap, adjustmentMap, reportMap);
         return result;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = FMS_CASH_FLOW_STATEMENT_TYPE,
+    @LogRecord(
+            type = FMS_CASH_FLOW_STATEMENT_TYPE,
             subType = FMS_CASH_FLOW_STATEMENT_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.accountSetId}}", success = FMS_CASH_FLOW_STATEMENT_UPDATE_SUCCESS)
+            bizNo = "{{#updateReqVO.accountSetId}}",
+            success = FMS_CASH_FLOW_STATEMENT_UPDATE_SUCCESS)
     public void updateCashFlowStatement(FmsCashFlowStatementUpdateReqVO updateReqVO, Long userId) {
         // 1.1 校验账套写权限
         accountSetService.validateAccountSetWritePermission(updateReqVO.getAccountSetId(), userId);
@@ -186,11 +222,13 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         Integer fromPeriod = reportCommonService.parsePeriod(updateReqVO.getStartMonth());
         Integer toPeriod = reportCommonService.parsePeriod(updateReqVO.getEndMonth());
         Integer periodType = reportCommonService.getPeriodType(fromPeriod, toPeriod);
-        List<Long> ids = convertList(updateReqVO.getItems(), FmsCashFlowStatementUpdateReqVO.Item::getId);
-        List<FmsCashFlowStatementReportDO> reports = cashFlowStatementReportMapper.selectListByIdsAndPeriod(
-                ids, updateReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType);
-        Map<Long, FmsCashFlowStatementReportDO> reportMap = convertMap(
-                reports, FmsCashFlowStatementReportDO::getId);
+        List<Long> ids =
+                convertList(updateReqVO.getItems(), FmsCashFlowStatementUpdateReqVO.Item::getId);
+        List<FmsCashFlowStatementReportDO> reports =
+                cashFlowStatementReportMapper.selectListByIdsAndPeriod(
+                        ids, updateReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType);
+        Map<Long, FmsCashFlowStatementReportDO> reportMap =
+                convertMap(reports, FmsCashFlowStatementReportDO::getId);
         if (reportMap.size() != new LinkedHashSet<>(ids).size()) {
             throw exception(REPORT_CONFIG_NOT_EXISTS);
         }
@@ -202,22 +240,29 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         }
 
         // 2. 更新现金流量表金额，金额为零时重新按公式计算
-        cashFlowStatementReportMapper.updateBatch(convertList(updateReqVO.getItems(), item ->
-                new FmsCashFlowStatementReportDO().setId(item.getId())
-                        .setCurrentAmount(item.getCurrentAmount())
-                        .setYearAmount(item.getYearAmount())));
+        cashFlowStatementReportMapper.updateBatch(
+                convertList(
+                        updateReqVO.getItems(),
+                        item ->
+                                new FmsCashFlowStatementReportDO()
+                                        .setId(item.getId())
+                                        .setCurrentAmount(item.getCurrentAmount())
+                                        .setYearAmount(item.getYearAmount())));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public FmsCashFlowCheckRespVO checkCashFlowStatement(FmsReportListReqVO listReqVO, Long userId) {
+    public FmsCashFlowCheckRespVO checkCashFlowStatement(
+            FmsReportListReqVO listReqVO, Long userId) {
         // 现金流量表本身无独立平衡关系，直接复用资产负债表检查，并汇总是否满足取数条件
-        FmsBalanceSheetCheckRespVO balanceCheck = balanceSheetService.checkBalanceSheet(listReqVO, userId);
+        FmsBalanceSheetCheckRespVO balanceCheck =
+                balanceSheetService.checkBalanceSheet(listReqVO, userId);
         return BeanUtils.toBean(balanceCheck, FmsCashFlowCheckRespVO.class)
-                .setBalanceSheetReady(Boolean.TRUE.equals(balanceCheck.getBalanced())
-                        && Boolean.TRUE.equals(balanceCheck.getInitialBalanceBalanced())
-                        && Boolean.TRUE.equals(balanceCheck.getProfitLossTransferred())
-                        && CollUtil.isEmpty(balanceCheck.getUnmappedSubjects()));
+                .setBalanceSheetReady(
+                        Boolean.TRUE.equals(balanceCheck.getBalanced())
+                                && Boolean.TRUE.equals(balanceCheck.getInitialBalanceBalanced())
+                                && Boolean.TRUE.equals(balanceCheck.getProfitLossTransferred())
+                                && CollUtil.isEmpty(balanceCheck.getUnmappedSubjects()));
     }
 
     @Override
@@ -233,18 +278,23 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = FMS_CASH_FLOW_STATEMENT_TYPE,
+    @LogRecord(
+            type = FMS_CASH_FLOW_STATEMENT_TYPE,
             subType = FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.accountSetId}}", success = FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUCCESS)
+            bizNo = "{{#updateReqVO.accountSetId}}",
+            success = FMS_CASH_FLOW_ADJUSTMENT_UPDATE_SUCCESS)
     public void updateCashFlowAdjustment(
             FmsCashFlowAdjustmentUpdateReqVO updateReqVO, Long userId) {
         // 1.1 校验账套写权限
         accountSetService.validateAccountSetWritePermission(updateReqVO.getAccountSetId(), userId);
         // 1.2 校验现金流量辅助数据
-        List<Long> ids = convertList(updateReqVO.getItems(), FmsCashFlowAdjustmentUpdateReqVO.Item::getId);
-        List<FmsCashFlowExtendDataDO> dataList = cashFlowExtendDataMapper.selectListByIdsAndAccountSetId(
-                ids, updateReqVO.getAccountSetId());
-        Map<Long, FmsCashFlowExtendDataDO> dataMap = convertMap(dataList, FmsCashFlowExtendDataDO::getId);
+        List<Long> ids =
+                convertList(updateReqVO.getItems(), FmsCashFlowAdjustmentUpdateReqVO.Item::getId);
+        List<FmsCashFlowExtendDataDO> dataList =
+                cashFlowExtendDataMapper.selectListByIdsAndAccountSetId(
+                        ids, updateReqVO.getAccountSetId());
+        Map<Long, FmsCashFlowExtendDataDO> dataMap =
+                convertMap(dataList, FmsCashFlowExtendDataDO::getId);
         if (dataMap.size() != new LinkedHashSet<>(ids).size()) {
             throw exception(REPORT_ADJUSTMENT_NOT_EXISTS);
         }
@@ -256,27 +306,39 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         }
 
         // 2. 批量更新可编辑金额
-        cashFlowExtendDataMapper.updateBatch(convertList(updateReqVO.getItems(),
-                item -> new FmsCashFlowExtendDataDO().setId(item.getId())
-                        .setCurrentAmount(item.getCurrentAmount()).setYearAmount(item.getYearAmount())));
+        cashFlowExtendDataMapper.updateBatch(
+                convertList(
+                        updateReqVO.getItems(),
+                        item ->
+                                new FmsCashFlowExtendDataDO()
+                                        .setId(item.getId())
+                                        .setCurrentAmount(item.getCurrentAmount())
+                                        .setYearAmount(item.getYearAmount())));
 
         // 3. 辅助资料变化后，主表人工调整失效，下次查询重新按公式计算
         FmsCashFlowExtendDataDO periodData = CollUtil.getFirst(dataList);
-        cashFlowStatementReportMapper.clearAdjustedAmounts(updateReqVO.getAccountSetId(),
-                periodData.getFromPeriod(), periodData.getToPeriod(), periodData.getType());
+        cashFlowStatementReportMapper.clearAdjustedAmounts(
+                updateReqVO.getAccountSetId(),
+                periodData.getFromPeriod(),
+                periodData.getToPeriod(),
+                periodData.getType());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @LogRecord(type = FMS_CASH_FLOW_STATEMENT_TYPE,
+    @LogRecord(
+            type = FMS_CASH_FLOW_STATEMENT_TYPE,
             subType = FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.accountSetId}}", success = FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUCCESS)
-    public void updateCashFlowAdjustmentFormula(FmsReportFormulaUpdateReqVO updateReqVO, Long userId) {
+            bizNo = "{{#updateReqVO.accountSetId}}",
+            success = FMS_CASH_FLOW_ADJUSTMENT_FORMULA_UPDATE_SUCCESS)
+    public void updateCashFlowAdjustmentFormula(
+            FmsReportFormulaUpdateReqVO updateReqVO, Long userId) {
         // 1.1 校验账套写权限
         accountSetService.validateAccountSetWritePermission(updateReqVO.getAccountSetId(), userId);
         // 1.2 校验现金流量辅助数据
         FmsCashFlowExtendDataDO data = cashFlowExtendDataMapper.selectById(updateReqVO.getId());
-        if (data == null || ObjUtil.notEqual(data.getAccountSetId(), updateReqVO.getAccountSetId())) {
+        if (data == null
+                || ObjUtil.notEqual(data.getAccountSetId(), updateReqVO.getAccountSetId())) {
             throw exception(REPORT_ADJUSTMENT_NOT_EXISTS);
         }
         if (Boolean.FALSE.equals(data.getEditable())) {
@@ -284,14 +346,20 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         }
 
         // 2. 校验并构造辅助数据公式
-        List<FmsReportFormulaRespVO> formulas = reportCommonService.buildReportFormulaList(updateReqVO,
-                FmsFormulaRuleEnum.DEBIT_AMOUNT.getRule(),
-                FmsFormulaRuleEnum.PROFIT_LOSS_AMOUNT.getRule(), userId);
+        List<FmsReportFormulaRespVO> formulas =
+                reportCommonService.buildReportFormulaList(
+                        updateReqVO,
+                        FmsFormulaRuleEnum.DEBIT_AMOUNT.getRule(),
+                        FmsFormulaRuleEnum.PROFIT_LOSS_AMOUNT.getRule(),
+                        userId);
 
         // 3. 更新当前期间公式并清空人工调整金额
-        cashFlowExtendDataMapper.updateById(new FmsCashFlowExtendDataDO().setId(data.getId())
-                .setFormula(JsonUtils.toJsonString(formulas))
-                .setCurrentAmount(BigDecimal.ZERO).setYearAmount(BigDecimal.ZERO));
+        cashFlowExtendDataMapper.updateById(
+                new FmsCashFlowExtendDataDO()
+                        .setId(data.getId())
+                        .setFormula(JsonUtils.toJsonString(formulas))
+                        .setCurrentAmount(BigDecimal.ZERO)
+                        .setYearAmount(BigDecimal.ZERO));
     }
 
     /**
@@ -304,37 +372,60 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
     private List<FmsCashFlowAdjustmentRespVO> getCashFlowAdjustmentListInternal(
             FmsReportListReqVO listReqVO, Long userId) {
         // 1. 初始化当前期间辅助数据
-        List<FmsSubjectDO> subjects = subjectService.getSubjectList(listReqVO.getAccountSetId(), null, userId);
-        List<FmsCashFlowExtendConfigDO> configs = getOrInitCashFlowExtendConfigs(listReqVO.getAccountSetId(), subjects);
+        List<FmsSubjectDO> subjects =
+                subjectService.getSubjectList(listReqVO.getAccountSetId(), null, userId);
+        List<FmsCashFlowExtendConfigDO> configs =
+                getOrInitCashFlowExtendConfigs(listReqVO.getAccountSetId(), subjects);
         Integer fromPeriod = reportCommonService.parsePeriod(listReqVO.getStartMonth());
         Integer toPeriod = reportCommonService.parsePeriod(listReqVO.getEndMonth());
         Integer periodType = reportCommonService.getPeriodType(fromPeriod, toPeriod);
-        List<FmsCashFlowExtendDataDO> dataList = cashFlowExtendDataMapper.selectListByPeriod(
-                listReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType, CASH_FLOW_CATEGORY_MAIN);
+        List<FmsCashFlowExtendDataDO> dataList =
+                cashFlowExtendDataMapper.selectListByPeriod(
+                        listReqVO.getAccountSetId(),
+                        fromPeriod,
+                        toPeriod,
+                        periodType,
+                        CASH_FLOW_CATEGORY_MAIN);
         if (CollUtil.isEmpty(dataList) && CollUtil.isNotEmpty(configs)) {
             accountSetService.lockAccountSet(listReqVO.getAccountSetId());
-            dataList = cashFlowExtendDataMapper.selectListByPeriod(
-                    listReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType, CASH_FLOW_CATEGORY_MAIN);
+            dataList =
+                    cashFlowExtendDataMapper.selectListByPeriod(
+                            listReqVO.getAccountSetId(),
+                            fromPeriod,
+                            toPeriod,
+                            periodType,
+                            CASH_FLOW_CATEGORY_MAIN);
             if (CollUtil.isEmpty(dataList)) {
-                dataList = convertList(configs, config -> BeanUtils.toBean(config,
-                        FmsCashFlowExtendDataDO.class).setId(null)
-                        .setFromPeriod(fromPeriod).setToPeriod(toPeriod).setType(periodType)
-                        .setCurrentAmount(BigDecimal.ZERO).setYearAmount(BigDecimal.ZERO));
+                dataList =
+                        convertList(
+                                configs,
+                                config ->
+                                        BeanUtils.toBean(config, FmsCashFlowExtendDataDO.class)
+                                                .setId(null)
+                                                .setFromPeriod(fromPeriod)
+                                                .setToPeriod(toPeriod)
+                                                .setType(periodType)
+                                                .setCurrentAmount(BigDecimal.ZERO)
+                                                .setYearAmount(BigDecimal.ZERO));
                 cashFlowExtendDataMapper.insertBatch(dataList);
             }
         }
 
         // 2. 查询科目发生额
-        Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap = reportCommonService.getSubjectBalanceMap(
-                listReqVO.getAccountSetId(), LocalDateTimeUtils.parseYearMonth(listReqVO.getStartMonth()),
-                LocalDateTimeUtils.parseYearMonth(listReqVO.getEndMonth()), userId);
+        Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap =
+                reportCommonService.getSubjectBalanceMap(
+                        listReqVO.getAccountSetId(),
+                        LocalDateTimeUtils.parseYearMonth(listReqVO.getStartMonth()),
+                        LocalDateTimeUtils.parseYearMonth(listReqVO.getEndMonth()),
+                        userId);
         Map<Long, FmsSubjectDO> subjectMap = convertMap(subjects, FmsSubjectDO::getId);
 
         // 3. 计算辅助数据项目
         Map<Integer, FmsCashFlowAdjustmentRespVO> lineMap = new LinkedHashMap<>();
         List<FmsCashFlowAdjustmentRespVO> result = new ArrayList<>();
         for (FmsCashFlowExtendDataDO data : dataList) {
-            FmsCashFlowAdjustmentRespVO item = buildCashFlowAdjustmentItem(data, subjectMap, balanceMap, lineMap);
+            FmsCashFlowAdjustmentRespVO item =
+                    buildCashFlowAdjustmentItem(data, subjectMap, balanceMap, lineMap);
             if (data.getRowNo() != null && data.getRowNo() > 0) {
                 lineMap.put(data.getRowNo(), item);
             }
@@ -352,35 +443,55 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @param subjects 账套下的科目列表
      * @return 辅助数据配置列表
      */
-    private List<FmsCashFlowExtendConfigDO> getOrInitCashFlowExtendConfigs(Long accountSetId, List<FmsSubjectDO> subjects) {
+    private List<FmsCashFlowExtendConfigDO> getOrInitCashFlowExtendConfigs(
+            Long accountSetId, List<FmsSubjectDO> subjects) {
         // 1. 已初始化时直接返回
-        List<FmsCashFlowExtendConfigDO> configs = cashFlowExtendConfigMapper.selectListByAccountSetIdAndCategory(
-                accountSetId, CASH_FLOW_CATEGORY_MAIN);
+        List<FmsCashFlowExtendConfigDO> configs =
+                cashFlowExtendConfigMapper.selectListByAccountSetIdAndCategory(
+                        accountSetId, CASH_FLOW_CATEGORY_MAIN);
         if (CollUtil.isNotEmpty(configs)) {
             return configs;
         }
         // 2. 锁定账套后二次查询，避免并发首次查询重复初始化
         accountSetService.lockAccountSet(accountSetId);
-        configs = cashFlowExtendConfigMapper.selectListByAccountSetIdAndCategory(
-                accountSetId, CASH_FLOW_CATEGORY_MAIN);
+        configs =
+                cashFlowExtendConfigMapper.selectListByAccountSetIdAndCategory(
+                        accountSetId, CASH_FLOW_CATEGORY_MAIN);
         if (CollUtil.isNotEmpty(configs)) {
             return configs;
         }
         // 3. 按报表模板初始化，模板为空时返回空列表
-        List<FmsReportTemplateDO> templates = reportTemplateMapper.selectListByType(FmsReportTypeEnum.CASH_FLOW_ADJUSTMENT.getType());
+        List<FmsReportTemplateDO> templates =
+                reportTemplateMapper.selectListByType(
+                        FmsReportTypeEnum.CASH_FLOW_ADJUSTMENT.getType());
         if (CollUtil.isEmpty(templates)) {
             return Collections.emptyList();
         }
         // 4. 模板公式中的科目编码绑定为账套下的科目编号后批量插入
-        Map<String, FmsSubjectDO> subjectMap = convertMap(subjects, FmsSubjectDO::getCode,
-                Function.identity(), (first, second) -> first);
-        configs = convertList(templates, template -> BeanUtils.toBean(template,
-                        FmsCashFlowExtendConfigDO.class).setId(null).setAccountSetId(accountSetId)
-                .setType(reportCommonService.isLineFormula(template.getFormula())
-                        ? FmsCashFlowExtendTypeEnum.FIXED.getType()
-                        : FmsCashFlowExtendTypeEnum.CUSTOM.getType())
-                .setCurrentAmount(BigDecimal.ZERO).setYearAmount(BigDecimal.ZERO)
-                .setFormula(reportCommonService.bindSubjectFormula(template.getFormula(), subjectMap)));
+        Map<String, FmsSubjectDO> subjectMap =
+                convertMap(
+                        subjects,
+                        FmsSubjectDO::getCode,
+                        Function.identity(),
+                        (first, second) -> first);
+        configs =
+                convertList(
+                        templates,
+                        template ->
+                                BeanUtils.toBean(template, FmsCashFlowExtendConfigDO.class)
+                                        .setId(null)
+                                        .setAccountSetId(accountSetId)
+                                        .setType(
+                                                reportCommonService.isLineFormula(
+                                                                template.getFormula())
+                                                        ? FmsCashFlowExtendTypeEnum.FIXED.getType()
+                                                        : FmsCashFlowExtendTypeEnum.CUSTOM
+                                                                .getType())
+                                        .setCurrentAmount(BigDecimal.ZERO)
+                                        .setYearAmount(BigDecimal.ZERO)
+                                        .setFormula(
+                                                reportCommonService.bindSubjectFormula(
+                                                        template.getFormula(), subjectMap)));
         cashFlowExtendConfigMapper.insertBatch(configs);
         return configs;
     }
@@ -395,30 +506,48 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @return 辅助数据项目
      */
     private FmsCashFlowAdjustmentRespVO buildCashFlowAdjustmentItem(
-            FmsCashFlowExtendDataDO data, Map<Long, FmsSubjectDO> subjectMap,
+            FmsCashFlowExtendDataDO data,
+            Map<Long, FmsSubjectDO> subjectMap,
             Map<Long, FmsLedgerSubjectBalanceRespVO> balanceMap,
             Map<Integer, FmsCashFlowAdjustmentRespVO> lineMap) {
-        FmsCashFlowAdjustmentRespVO item = new FmsCashFlowAdjustmentRespVO()
-                .setId(data.getId()).setName(data.getName()).setRowNo(data.getRowNo())
-                .setFormula(data.getFormula()).setRemark(data.getRemark())
-                .setEditable(data.getEditable()).setLevel(data.getLevel())
-                .setCurrentAmount(BigDecimal.ZERO).setYearAmount(BigDecimal.ZERO);
+        FmsCashFlowAdjustmentRespVO item =
+                new FmsCashFlowAdjustmentRespVO()
+                        .setId(data.getId())
+                        .setName(data.getName())
+                        .setRowNo(data.getRowNo())
+                        .setFormula(data.getFormula())
+                        .setRemark(data.getRemark())
+                        .setEditable(data.getEditable())
+                        .setLevel(data.getLevel())
+                        .setCurrentAmount(BigDecimal.ZERO)
+                        .setYearAmount(BigDecimal.ZERO);
         // 行次公式直接引用前面已计算的行次金额，例如 ["L1+L2"]
         if (reportCommonService.isLineFormula(data.getFormula())) {
-            return item.setCurrentAmount(calculateAdjustmentLineFormula(data.getFormula(), lineMap, true))
-                    .setYearAmount(calculateAdjustmentLineFormula(data.getFormula(), lineMap, false));
+            return item.setCurrentAmount(
+                            calculateAdjustmentLineFormula(data.getFormula(), lineMap, true))
+                    .setYearAmount(
+                            calculateAdjustmentLineFormula(data.getFormula(), lineMap, false));
         }
         // 科目公式逐项取数，按运算符累加到本期、本年累计金额
-        List<FmsReportFormulaRespVO> formulas = reportCommonService.parseSubjectFormula(data.getFormula());
+        List<FmsReportFormulaRespVO> formulas =
+                reportCommonService.parseSubjectFormula(data.getFormula());
         for (FmsReportFormulaRespVO formula : formulas) {
             FmsLedgerSubjectBalanceRespVO balance = balanceMap.get(formula.getSubjectId());
             FmsSubjectDO subject = subjectMap.get(formula.getSubjectId());
             reportCommonService.normalizeSubjectFormula(formula, subject);
-            BigDecimal currentAmount = reportCommonService.calculateOccurrenceAmount(formula.getRules(), subject, balance, true);
-            BigDecimal yearAmount = reportCommonService.calculateOccurrenceAmount(formula.getRules(), subject, balance, false);
+            BigDecimal currentAmount =
+                    reportCommonService.calculateOccurrenceAmount(
+                            formula.getRules(), subject, balance, true);
+            BigDecimal yearAmount =
+                    reportCommonService.calculateOccurrenceAmount(
+                            formula.getRules(), subject, balance, false);
             formula.setCurrentAmount(currentAmount).setYearAmount(yearAmount);
-            item.setCurrentAmount(reportCommonService.applyOperator(item.getCurrentAmount(), currentAmount, formula.getOperator()))
-                    .setYearAmount(reportCommonService.applyOperator(item.getYearAmount(), yearAmount, formula.getOperator()));
+            item.setCurrentAmount(
+                            reportCommonService.applyOperator(
+                                    item.getCurrentAmount(), currentAmount, formula.getOperator()))
+                    .setYearAmount(
+                            reportCommonService.applyOperator(
+                                    item.getYearAmount(), yearAmount, formula.getOperator()));
         }
         // 人工调整金额非零时覆盖公式计算结果
         if (NumberUtils.zeroIfNull(data.getCurrentAmount()).signum() != 0) {
@@ -438,7 +567,8 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @param current 是否取本期金额，否则取本年累计金额
      * @return 金额
      */
-    private BigDecimal calculateAdjustmentLineFormula(String formula, Map<Integer, FmsCashFlowAdjustmentRespVO> lineMap, boolean current) {
+    private BigDecimal calculateAdjustmentLineFormula(
+            String formula, Map<Integer, FmsCashFlowAdjustmentRespVO> lineMap, boolean current) {
         // 逐个匹配 L 行次引用，按运算符累加对应行次金额
         String expression = CollUtil.getFirst(reportCommonService.parseLineFormula(formula));
         if (StrUtil.isEmpty(expression)) {
@@ -447,10 +577,14 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         BigDecimal result = BigDecimal.ZERO;
         Matcher matcher = LINE_FORMULA_PATTERN.matcher(expression);
         while (matcher.find()) {
-            FmsCashFlowAdjustmentRespVO item = lineMap.get(Integer.valueOf(matcher.group(2).substring(1)));
-            BigDecimal amount = item == null ? BigDecimal.ZERO : current
-                    ? NumberUtils.zeroIfNull(item.getCurrentAmount())
-                    : NumberUtils.zeroIfNull(item.getYearAmount());
+            FmsCashFlowAdjustmentRespVO item =
+                    lineMap.get(Integer.valueOf(matcher.group(2).substring(1)));
+            BigDecimal amount =
+                    item == null
+                            ? BigDecimal.ZERO
+                            : current
+                                    ? NumberUtils.zeroIfNull(item.getCurrentAmount())
+                                    : NumberUtils.zeroIfNull(item.getYearAmount());
             result = reportCommonService.applyOperator(result, amount, matcher.group(1));
         }
         return result;
@@ -470,10 +604,13 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @param current 是否取本期金额，否则取本年累计金额
      * @return 金额
      */
-    private BigDecimal calculateCashFlowFormula(String formula, Map<Integer, FmsReportItemRespVO> balanceMap,
-                                                Map<Integer, FmsReportItemRespVO> incomeMap,
-                                                Map<Integer, FmsCashFlowAdjustmentRespVO> adjustmentMap,
-                                                Map<Integer, FmsReportItemRespVO> lineMap, boolean current) {
+    private BigDecimal calculateCashFlowFormula(
+            String formula,
+            Map<Integer, FmsReportItemRespVO> balanceMap,
+            Map<Integer, FmsReportItemRespVO> incomeMap,
+            Map<Integer, FmsCashFlowAdjustmentRespVO> adjustmentMap,
+            Map<Integer, FmsReportItemRespVO> lineMap,
+            boolean current) {
         String expression = CollUtil.getFirst(reportCommonService.parseLineFormula(formula));
         if (StrUtil.isEmpty(expression)) {
             return BigDecimal.ZERO;
@@ -485,8 +622,10 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         while (matcher.find()) {
             String param = matcher.group();
             String variable = param.replace("[", "_").replace(",", "_").replace("]", "");
-            environment.put(variable, getCashFlowParamValue(
-                    param, balanceMap, incomeMap, adjustmentMap, lineMap, current));
+            environment.put(
+                    variable,
+                    getCashFlowParamValue(
+                            param, balanceMap, incomeMap, adjustmentMap, lineMap, current));
             matcher.appendReplacement(normalizedExpression, variable);
         }
         matcher.appendTail(normalizedExpression);
@@ -508,7 +647,8 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @return 是否允许调整金额
      */
     private boolean isAmountAdjustable(FmsCashFlowStatementReportDO report) {
-        return report.getRowNo() != null && report.getRowNo() > 0
+        return report.getRowNo() != null
+                && report.getRowNo() > 0
                 && !reportCommonService.isLineFormula(report.getFormula());
     }
 
@@ -523,47 +663,59 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @param current 是否取本期金额，否则取本年累计金额
      * @return 金额
      */
-    private BigDecimal getCashFlowParamValue(String param,
+    private BigDecimal getCashFlowParamValue(
+            String param,
             Map<Integer, FmsReportItemRespVO> balanceMap,
             Map<Integer, FmsReportItemRespVO> incomeMap,
             Map<Integer, FmsCashFlowAdjustmentRespVO> adjustmentMap,
-            Map<Integer, FmsReportItemRespVO> lineMap, boolean current) {
+            Map<Integer, FmsReportItemRespVO> lineMap,
+            boolean current) {
         FmsCashFlowParamTypeEnum paramType = FmsCashFlowParamTypeEnum.of(param);
         if (paramType == null) {
             return BigDecimal.ZERO;
         }
         // BA[行次,1期初|2期末]：资产负债行次金额
         if (paramType == FmsCashFlowParamTypeEnum.BALANCE) {
-            String[] parts = param.substring(paramType.getPrefix().length() + 1, param.length() - 1).split(",");
+            String[] parts =
+                    param.substring(paramType.getPrefix().length() + 1, param.length() - 1)
+                            .split(",");
             FmsReportItemRespVO item = balanceMap.get(Integer.valueOf(parts[0]));
             if (item == null) {
                 return BigDecimal.ZERO;
             }
-            return "1".equals(parts[1]) ? NumberUtils.zeroIfNull(item.getOpeningAmount())
+            return "1".equals(parts[1])
+                    ? NumberUtils.zeroIfNull(item.getOpeningAmount())
                     : NumberUtils.zeroIfNull(item.getClosingAmount());
         }
         // IN行次：利润表行次金额
         if (paramType == FmsCashFlowParamTypeEnum.INCOME) {
-            FmsReportItemRespVO item = incomeMap.get(
-                    Integer.valueOf(param.substring(paramType.getPrefix().length())));
-            return item == null ? BigDecimal.ZERO : current
-                    ? NumberUtils.zeroIfNull(item.getCurrentAmount())
-                    : NumberUtils.zeroIfNull(item.getYearAmount());
+            FmsReportItemRespVO item =
+                    incomeMap.get(Integer.valueOf(param.substring(paramType.getPrefix().length())));
+            return item == null
+                    ? BigDecimal.ZERO
+                    : current
+                            ? NumberUtils.zeroIfNull(item.getCurrentAmount())
+                            : NumberUtils.zeroIfNull(item.getYearAmount());
         }
         // EX行次：辅助数据行次金额
         if (paramType == FmsCashFlowParamTypeEnum.EXTEND) {
-            FmsCashFlowAdjustmentRespVO item = adjustmentMap.get(
-                    Integer.valueOf(param.substring(paramType.getPrefix().length())));
-            return item == null ? BigDecimal.ZERO : current
-                    ? NumberUtils.zeroIfNull(item.getCurrentAmount())
-                    : NumberUtils.zeroIfNull(item.getYearAmount());
+            FmsCashFlowAdjustmentRespVO item =
+                    adjustmentMap.get(
+                            Integer.valueOf(param.substring(paramType.getPrefix().length())));
+            return item == null
+                    ? BigDecimal.ZERO
+                    : current
+                            ? NumberUtils.zeroIfNull(item.getCurrentAmount())
+                            : NumberUtils.zeroIfNull(item.getYearAmount());
         }
         // L行次：本表已计算行次金额
-        FmsReportItemRespVO item = lineMap.get(
-                Integer.valueOf(param.substring(paramType.getPrefix().length())));
-        return item == null ? BigDecimal.ZERO : current
-                ? NumberUtils.zeroIfNull(item.getCurrentAmount())
-                : NumberUtils.zeroIfNull(item.getYearAmount());
+        FmsReportItemRespVO item =
+                lineMap.get(Integer.valueOf(param.substring(paramType.getPrefix().length())));
+        return item == null
+                ? BigDecimal.ZERO
+                : current
+                        ? NumberUtils.zeroIfNull(item.getCurrentAmount())
+                        : NumberUtils.zeroIfNull(item.getYearAmount());
     }
 
     /**
@@ -590,7 +742,8 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      * @param yearBalanceMap 本年资产负债行次到报表项目的 Map
      * @param adjustmentMap 辅助数据行次到项目的 Map
      */
-    private void reconcileCashFlow(List<FmsReportItemRespVO> result,
+    private void reconcileCashFlow(
+            List<FmsReportItemRespVO> result,
             Map<Integer, FmsReportItemRespVO> lineMap,
             Map<Integer, FmsReportItemRespVO> currentBalanceMap,
             Map<Integer, FmsReportItemRespVO> yearBalanceMap,
@@ -602,16 +755,26 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
             return;
         }
         // 1. 按资产负债表的货币资金期末余额，倒挤其他经营活动现金流
-        FmsReportItemRespVO currentCashItem = currentBalanceMap.get(FmsBalanceSheetServiceImpl.MONETARY_CASH_ROW_NO);
-        FmsReportItemRespVO yearCashItem = yearBalanceMap.get(FmsBalanceSheetServiceImpl.MONETARY_CASH_ROW_NO);
-        BigDecimal currentCash = currentCashItem == null ? BigDecimal.ZERO
-                : NumberUtils.zeroIfNull(currentCashItem.getClosingAmount());
-        BigDecimal yearCash = yearCashItem == null ? BigDecimal.ZERO
-                : NumberUtils.zeroIfNull(yearCashItem.getClosingAmount());
-        BigDecimal currentAmount = NumberUtils.zeroIfNull(otherOperating.getCurrentAmount())
-                .add(NumberUtils.zeroIfNull(endingCash.getCurrentAmount())).subtract(currentCash);
-        BigDecimal yearAmount = NumberUtils.zeroIfNull(otherOperating.getYearAmount())
-                .add(NumberUtils.zeroIfNull(endingCash.getYearAmount())).subtract(yearCash);
+        FmsReportItemRespVO currentCashItem =
+                currentBalanceMap.get(FmsBalanceSheetServiceImpl.MONETARY_CASH_ROW_NO);
+        FmsReportItemRespVO yearCashItem =
+                yearBalanceMap.get(FmsBalanceSheetServiceImpl.MONETARY_CASH_ROW_NO);
+        BigDecimal currentCash =
+                currentCashItem == null
+                        ? BigDecimal.ZERO
+                        : NumberUtils.zeroIfNull(currentCashItem.getClosingAmount());
+        BigDecimal yearCash =
+                yearCashItem == null
+                        ? BigDecimal.ZERO
+                        : NumberUtils.zeroIfNull(yearCashItem.getClosingAmount());
+        BigDecimal currentAmount =
+                NumberUtils.zeroIfNull(otherOperating.getCurrentAmount())
+                        .add(NumberUtils.zeroIfNull(endingCash.getCurrentAmount()))
+                        .subtract(currentCash);
+        BigDecimal yearAmount =
+                NumberUtils.zeroIfNull(otherOperating.getYearAmount())
+                        .add(NumberUtils.zeroIfNull(endingCash.getYearAmount()))
+                        .subtract(yearCash);
         // 2. 倒挤差额为正时，覆盖其他经营活动的原计算值
         FmsCashFlowStatementReportDO otherOperatingReport = reportMap.get(OTHER_OPERATING_ROW_NO);
         if (currentAmount.signum() > 0
@@ -624,14 +787,27 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         }
         // 3. 重算其他经营活动之后的行次公式项目，使净额和余额联动更新
         for (FmsReportItemRespVO item : result) {
-            if (item.getRowNo() == null || item.getRowNo() <= OTHER_OPERATING_ROW_NO
+            if (item.getRowNo() == null
+                    || item.getRowNo() <= OTHER_OPERATING_ROW_NO
                     || !reportCommonService.isLineFormula(item.getFormula())) {
                 continue;
             }
-            item.setCurrentAmount(calculateCashFlowFormula(item.getFormula(), currentBalanceMap,
-                            Collections.emptyMap(), adjustmentMap, lineMap, true))
-                    .setYearAmount(calculateCashFlowFormula(item.getFormula(), yearBalanceMap,
-                            Collections.emptyMap(), adjustmentMap, lineMap, false));
+            item.setCurrentAmount(
+                            calculateCashFlowFormula(
+                                    item.getFormula(),
+                                    currentBalanceMap,
+                                    Collections.emptyMap(),
+                                    adjustmentMap,
+                                    lineMap,
+                                    true))
+                    .setYearAmount(
+                            calculateCashFlowFormula(
+                                    item.getFormula(),
+                                    yearBalanceMap,
+                                    Collections.emptyMap(),
+                                    adjustmentMap,
+                                    lineMap,
+                                    false));
             lineMap.put(item.getRowNo(), item);
         }
     }
@@ -644,8 +820,8 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
      */
     private List<FmsCashFlowStatementConfigDO> getOrInitCashFlowConfigs(Long accountSetId) {
         // 1. 已初始化时直接返回
-        List<FmsCashFlowStatementConfigDO> configs = cashFlowStatementConfigMapper
-                .selectListByAccountSetId(accountSetId);
+        List<FmsCashFlowStatementConfigDO> configs =
+                cashFlowStatementConfigMapper.selectListByAccountSetId(accountSetId);
         if (CollUtil.isNotEmpty(configs)) {
             return configs;
         }
@@ -656,14 +832,20 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
             return configs;
         }
         // 3. 按报表模板初始化，模板为空时返回空列表
-        List<FmsReportTemplateDO> templates = reportTemplateMapper.selectListByType(
-                FmsReportTypeEnum.CASH_FLOW_STATEMENT.getType());
+        List<FmsReportTemplateDO> templates =
+                reportTemplateMapper.selectListByType(
+                        FmsReportTypeEnum.CASH_FLOW_STATEMENT.getType());
         if (CollUtil.isEmpty(templates)) {
             return Collections.emptyList();
         }
         // 4. 现金流量表公式使用跨报表表达式，不涉及科目绑定，直接复制模板配置
-        configs = convertList(templates, template -> BeanUtils.toBean(template,
-                        FmsCashFlowStatementConfigDO.class).setId(null).setAccountSetId(accountSetId));
+        configs =
+                convertList(
+                        templates,
+                        template ->
+                                BeanUtils.toBean(template, FmsCashFlowStatementConfigDO.class)
+                                        .setId(null)
+                                        .setAccountSetId(accountSetId));
         cashFlowStatementConfigMapper.insertBatch(configs);
         return configs;
     }
@@ -681,24 +863,33 @@ public class FmsCashFlowStatementServiceImpl implements FmsCashFlowStatementServ
         Integer fromPeriod = reportCommonService.parsePeriod(listReqVO.getStartMonth());
         Integer toPeriod = reportCommonService.parsePeriod(listReqVO.getEndMonth());
         Integer periodType = reportCommonService.getPeriodType(fromPeriod, toPeriod);
-        List<FmsCashFlowStatementReportDO> reports = cashFlowStatementReportMapper.selectListByPeriod(
-                listReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType);
+        List<FmsCashFlowStatementReportDO> reports =
+                cashFlowStatementReportMapper.selectListByPeriod(
+                        listReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType);
         if (CollUtil.isNotEmpty(reports) || CollUtil.isEmpty(configs)) {
             return reports;
         }
         // 2. 锁定账套后二次查询，避免并发首次查询重复生成期间快照
         accountSetService.lockAccountSet(listReqVO.getAccountSetId());
-        reports = cashFlowStatementReportMapper.selectListByPeriod(
-                listReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType);
+        reports =
+                cashFlowStatementReportMapper.selectListByPeriod(
+                        listReqVO.getAccountSetId(), fromPeriod, toPeriod, periodType);
         if (CollUtil.isNotEmpty(reports)) {
             return reports;
         }
         // 3. 按当前配置创建期间快照，金额初始化为零
-        reports = convertList(configs, config -> BeanUtils.toBean(config, FmsCashFlowStatementReportDO.class)
-                .setId(null).setFromPeriod(fromPeriod).setToPeriod(toPeriod).setType(periodType)
-                .setCurrentAmount(BigDecimal.ZERO).setYearAmount(BigDecimal.ZERO));
+        reports =
+                convertList(
+                        configs,
+                        config ->
+                                BeanUtils.toBean(config, FmsCashFlowStatementReportDO.class)
+                                        .setId(null)
+                                        .setFromPeriod(fromPeriod)
+                                        .setToPeriod(toPeriod)
+                                        .setType(periodType)
+                                        .setCurrentAmount(BigDecimal.ZERO)
+                                        .setYearAmount(BigDecimal.ZERO));
         cashFlowStatementReportMapper.insertBatch(reports);
         return reports;
     }
-
 }

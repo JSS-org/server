@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.core.topic.config;
 
 import cn.iocoder.yudao.module.iot.core.enums.IotDeviceMessageMethodEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -50,5 +51,4 @@ public class IotDeviceConfigPushReqDTO {
      * content: 内容
      */
     private String getType;
-
 }

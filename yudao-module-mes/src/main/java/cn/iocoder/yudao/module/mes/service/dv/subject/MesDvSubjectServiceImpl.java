@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.dv.subject;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
@@ -10,7 +13,9 @@ import cn.iocoder.yudao.module.mes.controller.admin.dv.subject.vo.MesDvSubjectSa
 import cn.iocoder.yudao.module.mes.dal.dataobject.dv.subject.MesDvSubjectDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.subject.MesDvSubjectMapper;
 import cn.iocoder.yudao.module.mes.service.dv.checkplan.MesDvCheckPlanSubjectService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -18,9 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 点检保养项目 Service 实现类
@@ -31,12 +33,9 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesDvSubjectServiceImpl implements MesDvSubjectService {
 
-    @Resource
-    private MesDvSubjectMapper subjectMapper;
+    @Resource private MesDvSubjectMapper subjectMapper;
 
-    @Resource
-    @Lazy
-    private MesDvCheckPlanSubjectService checkPlanSubjectService;
+    @Resource @Lazy private MesDvCheckPlanSubjectService checkPlanSubjectService;
 
     @Override
     public Long createSubject(MesDvSubjectSaveReqVO createReqVO) {
@@ -127,5 +126,4 @@ public class MesDvSubjectServiceImpl implements MesDvSubjectService {
         }
         return subjectMapper.selectByIds(ids);
     }
-
 }

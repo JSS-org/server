@@ -24,5 +24,4 @@ public interface MesMdAutoCodePartStrategy {
      * @return 分段内容
      */
     String generate(MesMdAutoCodePartDO part, MesMdAutoCodeContext context);
-
 }

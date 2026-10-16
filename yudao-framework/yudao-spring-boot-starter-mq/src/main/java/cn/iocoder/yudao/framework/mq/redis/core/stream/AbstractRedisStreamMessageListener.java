@@ -5,9 +5,11 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.mq.redis.core.RedisMQTemplate;
 import cn.iocoder.yudao.framework.mq.redis.core.interceptor.RedisMessageInterceptor;
 import cn.iocoder.yudao.framework.mq.redis.core.message.AbstractRedisMessage;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.stream.StreamListener;
@@ -29,11 +31,11 @@ public abstract class AbstractRedisStreamMessageListener<T extends AbstractRedis
      * 消息类型
      */
     private final Class<T> messageType;
+
     /**
      * Redis Channel
      */
-    @Getter
-    private final String streamKey;
+    @Getter private final String streamKey;
 
     /**
      * Redis 消费者分组，默认使用 spring.application.name 名字
@@ -41,11 +43,11 @@ public abstract class AbstractRedisStreamMessageListener<T extends AbstractRedis
     @Value("${spring.application.name}")
     @Getter
     private String group;
+
     /**
      * RedisMQTemplate
      */
-    @Setter
-    private RedisMQTemplate redisMQTemplate;
+    @Setter private RedisMQTemplate redisMQTemplate;
 
     @SneakyThrows
     protected AbstractRedisStreamMessageListener() {
@@ -115,5 +117,4 @@ public abstract class AbstractRedisStreamMessageListener<T extends AbstractRedis
             interceptors.get(i).consumeMessageAfter(message);
         }
     }
-
 }

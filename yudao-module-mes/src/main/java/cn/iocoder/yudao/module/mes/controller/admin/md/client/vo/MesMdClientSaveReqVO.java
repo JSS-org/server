@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.mes.controller.admin.md.client.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - MES 客户新增/修改 Request VO")
@@ -98,5 +100,4 @@ public class MesMdClientSaveReqVO {
     @Schema(description = "备注", example = "备注")
     @Size(max = 500, message = "备注长度不能超过 500 个字符")
     private String remark;
-
 }

@@ -3,9 +3,12 @@ package cn.iocoder.yudao.framework.common.util.json.databind;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.extern.slf4j.Slf4j;
+
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.SerializationContext;
@@ -27,7 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class TimestampLocalDateTimeSerializer extends StdScalarSerializer<LocalDateTime> {
 
-    public static final TimestampLocalDateTimeSerializer INSTANCE = new TimestampLocalDateTimeSerializer();
+    public static final TimestampLocalDateTimeSerializer INSTANCE =
+            new TimestampLocalDateTimeSerializer();
 
     private static final Map<Class<?>, Map<String, Field>> FIELD_CACHE = new ConcurrentHashMap<>();
 
@@ -36,25 +40,31 @@ public class TimestampLocalDateTimeSerializer extends StdScalarSerializer<LocalD
     }
 
     @Override
-    public void serialize(LocalDateTime value, JsonGenerator gen, SerializationContext serializers) throws JacksonException {
+    public void serialize(LocalDateTime value, JsonGenerator gen, SerializationContext serializers)
+            throws JacksonException {
         // 情况一：有 JsonFormat 自定义注解，则使用它。https://github.com/YunaiV/ruoyi-vue-pro/pull/1019
         String fieldName = gen.streamWriteContext().currentName();
         if (fieldName != null) {
             Object currentValue = gen.currentValue();
             if (currentValue != null) {
                 Class<?> clazz = currentValue.getClass();
-                Map<String, Field> fieldMap = FIELD_CACHE.computeIfAbsent(clazz, this::buildFieldMap);
+                Map<String, Field> fieldMap =
+                        FIELD_CACHE.computeIfAbsent(clazz, this::buildFieldMap);
                 Field field = fieldMap.get(fieldName);
                 // 进一步修复：https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1480
                 if (field != null && field.isAnnotationPresent(JsonFormat.class)) {
                     JsonFormat jsonFormat = field.getAnnotation(JsonFormat.class);
                     try {
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(jsonFormat.pattern());
+                        DateTimeFormatter formatter =
+                                DateTimeFormatter.ofPattern(jsonFormat.pattern());
                         gen.writeString(formatter.format(value));
                         return;
                     } catch (Exception ex) {
-                        log.warn("[serialize][({}#{}) 使用 JsonFormat pattern 失败，尝试使用默认的 Long 时间戳]",
-                                clazz.getName(), fieldName, ex);
+                        log.warn(
+                                "[serialize][({}#{}) 使用 JsonFormat pattern 失败，尝试使用默认的 Long 时间戳]",
+                                clazz.getName(),
+                                fieldName,
+                                ex);
                     }
                 }
             }
@@ -85,5 +95,4 @@ public class TimestampLocalDateTimeSerializer extends StdScalarSerializer<LocalD
         }
         return fieldMap;
     }
-
 }

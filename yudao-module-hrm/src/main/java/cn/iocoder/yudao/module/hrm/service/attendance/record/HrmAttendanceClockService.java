@@ -107,5 +107,4 @@ public interface HrmAttendanceClockService {
      * @return 打卡记录列表
      */
     List<HrmAttendanceClockDO> getAttendanceClockList(HrmAttendanceClockPageReqVO reqVO);
-
 }

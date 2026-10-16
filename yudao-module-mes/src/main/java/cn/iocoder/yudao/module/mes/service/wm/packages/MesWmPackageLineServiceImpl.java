@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.packages;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PACKAGE_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.packages.vo.line.MesWmPackageLinePageReqVO;
@@ -8,15 +11,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.packages.MesWmPackageLineDO
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.packages.MesWmPackageLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PACKAGE_LINE_NOT_EXISTS;
 
 /**
  * MES 装箱明细 Service 实现类
@@ -27,16 +29,11 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_PACKAGE_LI
 @Validated
 public class MesWmPackageLineServiceImpl implements MesWmPackageLineService {
 
-    @Resource
-    private MesWmPackageLineMapper packageLineMapper;
+    @Resource private MesWmPackageLineMapper packageLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmPackageService packageService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
+    @Resource @Lazy private MesWmPackageService packageService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesProWorkOrderService workOrderService;
 
     @Override
     public Long createPackageLine(MesWmPackageLineSaveReqVO createReqVO) {
@@ -113,5 +110,4 @@ public class MesWmPackageLineServiceImpl implements MesWmPackageLineService {
         }
         return line;
     }
-
 }

@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.mes.controller.admin.tm.tool.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -61,5 +63,4 @@ public class MesTmToolSaveReqVO {
     @Schema(description = "备注", example = "备注")
     @Size(max = 500, message = "备注长度不能超过 500 个字符")
     private String remark;
-
 }

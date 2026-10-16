@@ -59,11 +59,13 @@ public interface DictTypeConstants {
     // ========== 仓储移库与盘点 (WM Transfer) ==========
     String MES_WM_TRANSFER_STATUS = "mes_wm_transfer_status"; // MES 转移单状态
     String MES_WM_TRANSFER_TYPE = "mes_wm_transfer_type"; // MES 转移单类型
-    String MES_WM_STOCK_TAKING_PLAN_PARAM_TYPE = "mes_wm_stock_taking_plan_param_type"; // MES 盘点参数值类型
+    String MES_WM_STOCK_TAKING_PLAN_PARAM_TYPE =
+            "mes_wm_stock_taking_plan_param_type"; // MES 盘点参数值类型
     String MES_WM_STOCK_TAKING_TYPE = "mes_wm_stock_taking_type"; // MES 盘点类型
     String MES_WM_STOCK_TAKING_TASK_STATUS = "mes_wm_stock_taking_task_status"; // MES 盘点任务状态
-    String MES_WM_STOCK_TAKING_TASK_LINE_STATUS = "mes_wm_stock_taking_task_line_status"; // MES 盘点任务明细状态
-    
+    String MES_WM_STOCK_TAKING_TASK_LINE_STATUS =
+            "mes_wm_stock_taking_task_line_status"; // MES 盘点任务明细状态
+
     // ========== 其它仓储 (WM Misc) ==========
     String MES_WM_PACKAGE_STATUS = "mes_wm_package_status"; // MES 打包状态
     String MES_WM_ITEM_CONSUME_STATUS = "mes_wm_item_consume_status"; // MES 物料消耗状态

@@ -1,12 +1,14 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.currency;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -43,5 +45,4 @@ public class FmsCurrencySaveReqVO {
     @DecimalMin(value = "0", inclusive = false, message = "汇率必须大于 0")
     @Digits(integer = 12, fraction = 6, message = "汇率最多 12 位整数和 6 位小数")
     private BigDecimal exchangeRate;
-
 }

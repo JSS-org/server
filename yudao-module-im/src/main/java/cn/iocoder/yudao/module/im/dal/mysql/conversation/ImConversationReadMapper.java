@@ -4,7 +4,9 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.im.dal.dataobject.conversation.ImConversationReadDO;
+
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -19,25 +21,30 @@ import java.util.List;
 @Mapper
 public interface ImConversationReadMapper extends BaseMapperX<ImConversationReadDO> {
 
-    default ImConversationReadDO selectByUserIdAndConversation(Long userId, Integer conversationType, Long conversationId) {
-        return selectOne(new LambdaQueryWrapperX<ImConversationReadDO>()
-                .eq(ImConversationReadDO::getUserId, userId)
-                .eq(ImConversationReadDO::getConversationType, conversationType)
-                .eq(ImConversationReadDO::getTargetId, conversationId));
+    default ImConversationReadDO selectByUserIdAndConversation(
+            Long userId, Integer conversationType, Long conversationId) {
+        return selectOne(
+                new LambdaQueryWrapperX<ImConversationReadDO>()
+                        .eq(ImConversationReadDO::getUserId, userId)
+                        .eq(ImConversationReadDO::getConversationType, conversationType)
+                        .eq(ImConversationReadDO::getTargetId, conversationId));
     }
 
-    default List<ImConversationReadDO> selectListByConversation(Integer conversationType, Long conversationId) {
-        return selectList(new LambdaQueryWrapperX<ImConversationReadDO>()
-                .eq(ImConversationReadDO::getConversationType, conversationType)
-                .eq(ImConversationReadDO::getTargetId, conversationId));
+    default List<ImConversationReadDO> selectListByConversation(
+            Integer conversationType, Long conversationId) {
+        return selectList(
+                new LambdaQueryWrapperX<ImConversationReadDO>()
+                        .eq(ImConversationReadDO::getConversationType, conversationType)
+                        .eq(ImConversationReadDO::getTargetId, conversationId));
     }
 
-    default List<ImConversationReadDO> selectListByUserIdAndConversations(Long userId, Integer conversationType,
-                                                                          Collection<Long> conversationIds) {
-        return selectList(new LambdaQueryWrapperX<ImConversationReadDO>()
-                .eq(ImConversationReadDO::getUserId, userId)
-                .eq(ImConversationReadDO::getConversationType, conversationType)
-                .in(ImConversationReadDO::getTargetId, conversationIds));
+    default List<ImConversationReadDO> selectListByUserIdAndConversations(
+            Long userId, Integer conversationType, Collection<Long> conversationIds) {
+        return selectList(
+                new LambdaQueryWrapperX<ImConversationReadDO>()
+                        .eq(ImConversationReadDO::getUserId, userId)
+                        .eq(ImConversationReadDO::getConversationType, conversationType)
+                        .in(ImConversationReadDO::getTargetId, conversationIds));
     }
 
     /**
@@ -49,16 +56,30 @@ public interface ImConversationReadMapper extends BaseMapperX<ImConversationRead
      * @param limit          拉取数量
      * @return 会话读位置列表
      */
-    default List<ImConversationReadDO> selectPullListByUserId(Long userId, Long lastUpdateTime, Long lastId, Integer limit) {
-        LambdaQueryWrapperX<ImConversationReadDO> query = new LambdaQueryWrapperX<ImConversationReadDO>()
-                .eq(ImConversationReadDO::getUserId, userId);
+    default List<ImConversationReadDO> selectPullListByUserId(
+            Long userId, Long lastUpdateTime, Long lastId, Integer limit) {
+        LambdaQueryWrapperX<ImConversationReadDO> query =
+                new LambdaQueryWrapperX<ImConversationReadDO>()
+                        .eq(ImConversationReadDO::getUserId, userId);
         if (lastUpdateTime != null && lastId != null) {
             LocalDateTime lastTime = LocalDateTimeUtil.of(lastUpdateTime);
-            query.and(w -> w.gt(ImConversationReadDO::getUpdateTime, lastTime)
-                    .or(n -> n.eq(ImConversationReadDO::getUpdateTime, lastTime).gt(ImConversationReadDO::getId, lastId)));
+            query.and(
+                    w ->
+                            w.gt(ImConversationReadDO::getUpdateTime, lastTime)
+                                    .or(
+                                            n ->
+                                                    n.eq(
+                                                                    ImConversationReadDO
+                                                                            ::getUpdateTime,
+                                                                    lastTime)
+                                                            .gt(
+                                                                    ImConversationReadDO::getId,
+                                                                    lastId)));
         }
-        return selectList(query.orderByAsc(ImConversationReadDO::getUpdateTime).orderByAsc(ImConversationReadDO::getId)
-                .last("LIMIT " + limit));
+        return selectList(
+                query.orderByAsc(ImConversationReadDO::getUpdateTime)
+                        .orderByAsc(ImConversationReadDO::getId)
+                        .last("LIMIT " + limit));
     }
 
     /**
@@ -72,12 +93,13 @@ public interface ImConversationReadMapper extends BaseMapperX<ImConversationRead
      * @return 影响行数；0 表示新位置不大于已有位置，未更新
      */
     default int updateReadMessageIdToLarger(Long id, Long messageId, LocalDateTime readTime) {
-        return update(null, Wrappers.<ImConversationReadDO>lambdaUpdate()
-                .set(ImConversationReadDO::getMessageId, messageId)
-                .set(ImConversationReadDO::getReadTime, readTime)
-                .set(ImConversationReadDO::getUpdateTime, readTime)
-                .eq(ImConversationReadDO::getId, id)
-                .lt(ImConversationReadDO::getMessageId, messageId));
+        return update(
+                null,
+                Wrappers.<ImConversationReadDO>lambdaUpdate()
+                        .set(ImConversationReadDO::getMessageId, messageId)
+                        .set(ImConversationReadDO::getReadTime, readTime)
+                        .set(ImConversationReadDO::getUpdateTime, readTime)
+                        .eq(ImConversationReadDO::getId, id)
+                        .lt(ImConversationReadDO::getMessageId, messageId));
     }
-
 }

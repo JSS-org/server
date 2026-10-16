@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.trade.controller.admin.brokerage;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
+import static java.util.Arrays.asList;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.member.api.user.MemberUserApi;
@@ -15,11 +21,14 @@ import cn.iocoder.yudao.module.trade.service.brokerage.BrokerageUserService;
 import cn.iocoder.yudao.module.trade.service.brokerage.BrokerageWithdrawService;
 import cn.iocoder.yudao.module.trade.service.brokerage.bo.BrokerageWithdrawSummaryRespBO;
 import cn.iocoder.yudao.module.trade.service.brokerage.bo.UserBrokerageSummaryRespBO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,46 +36,41 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static java.util.Arrays.asList;
-
 @Tag(name = "管理后台 - 分销用户")
 @RestController
 @RequestMapping("/trade/brokerage-user")
 @Validated
 public class BrokerageUserController {
 
-    @Resource
-    private BrokerageUserService brokerageUserService;
-    @Resource
-    private BrokerageRecordService brokerageRecordService;
-    @Resource
-    private BrokerageWithdrawService brokerageWithdrawService;
+    @Resource private BrokerageUserService brokerageUserService;
+    @Resource private BrokerageRecordService brokerageRecordService;
+    @Resource private BrokerageWithdrawService brokerageWithdrawService;
 
-    @Resource
-    private MemberUserApi memberUserApi;
+    @Resource private MemberUserApi memberUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建分销用户")
     @PreAuthorize("@ss.hasPermission('trade:brokerage-user:create')")
-    public CommonResult<Long> createBrokerageUser(@Valid @RequestBody BrokerageUserCreateReqVO createReqVO) {
+    public CommonResult<Long> createBrokerageUser(
+            @Valid @RequestBody BrokerageUserCreateReqVO createReqVO) {
         return success(brokerageUserService.createBrokerageUser(createReqVO));
     }
 
     @PutMapping("/update-bind-user")
     @Operation(summary = "修改推广员")
     @PreAuthorize("@ss.hasPermission('trade:brokerage-user:update-bind-user')")
-    public CommonResult<Boolean> updateBindUser(@Valid @RequestBody BrokerageUserUpdateBrokerageUserReqVO updateReqVO) {
-        brokerageUserService.updateBrokerageUserId(updateReqVO.getId(), updateReqVO.getBindUserId());
+    public CommonResult<Boolean> updateBindUser(
+            @Valid @RequestBody BrokerageUserUpdateBrokerageUserReqVO updateReqVO) {
+        brokerageUserService.updateBrokerageUserId(
+                updateReqVO.getId(), updateReqVO.getBindUserId());
         return success(true);
     }
 
     @PutMapping("/clear-bind-user")
     @Operation(summary = "清除推广员")
     @PreAuthorize("@ss.hasPermission('trade:brokerage-user:clear-bind-user')")
-    public CommonResult<Boolean> clearBindUser(@Valid @RequestBody BrokerageUserClearBrokerageUserReqVO updateReqVO) {
+    public CommonResult<Boolean> clearBindUser(
+            @Valid @RequestBody BrokerageUserClearBrokerageUserReqVO updateReqVO) {
         brokerageUserService.updateBrokerageUserId(updateReqVO.getId(), null);
         return success(true);
     }
@@ -74,8 +78,10 @@ public class BrokerageUserController {
     @PutMapping("/update-brokerage-enable")
     @Operation(summary = "修改推广资格")
     @PreAuthorize("@ss.hasPermission('trade:brokerage-user:update-brokerage-enable')")
-    public CommonResult<Boolean> updateBrokerageEnabled(@Valid @RequestBody BrokerageUserUpdateBrokerageEnabledReqVO updateReqVO) {
-        brokerageUserService.updateBrokerageUserEnabled(updateReqVO.getId(), updateReqVO.getEnabled());
+    public CommonResult<Boolean> updateBrokerageEnabled(
+            @Valid @RequestBody BrokerageUserUpdateBrokerageEnabledReqVO updateReqVO) {
+        brokerageUserService.updateBrokerageUserEnabled(
+                updateReqVO.getId(), updateReqVO.getEnabled());
         return success(true);
     }
 
@@ -93,7 +99,8 @@ public class BrokerageUserController {
     @GetMapping("/page")
     @Operation(summary = "获得分销用户分页")
     @PreAuthorize("@ss.hasPermission('trade:brokerage-user:query')")
-    public CommonResult<PageResult<BrokerageUserRespVO>> getBrokerageUserPage(@Valid BrokerageUserPageReqVO pageVO) {
+    public CommonResult<PageResult<BrokerageUserRespVO>> getBrokerageUserPage(
+            @Valid BrokerageUserPageReqVO pageVO) {
         // 分页查询
         PageResult<BrokerageUserDO> pageResult = brokerageUserService.getBrokerageUserPage(pageVO);
 
@@ -101,20 +108,35 @@ public class BrokerageUserController {
         Set<Long> userIds = convertSet(pageResult.getList(), BrokerageUserDO::getId);
         Map<Long, MemberUserRespDTO> userMap = memberUserApi.getUserMap(userIds);
         // 合计分佣的推广订单
-        Map<Long, UserBrokerageSummaryRespBO> brokerageOrderSummaryMap = brokerageRecordService.getUserBrokerageSummaryMapByUserId(
-                userIds, BrokerageRecordBizTypeEnum.ORDER.getType(), BrokerageRecordStatusEnum.SETTLEMENT.getStatus());
+        Map<Long, UserBrokerageSummaryRespBO> brokerageOrderSummaryMap =
+                brokerageRecordService.getUserBrokerageSummaryMapByUserId(
+                        userIds,
+                        BrokerageRecordBizTypeEnum.ORDER.getType(),
+                        BrokerageRecordStatusEnum.SETTLEMENT.getStatus());
         // 合计分佣的推广用户
         // TODO @疯狂：转成 map 批量读取
-        Map<Long, Long> brokerageUserCountMap = convertMap(userIds,
-                userId -> userId,
-                userId -> brokerageUserService.getBrokerageUserCountByBindUserId(userId, null));
+        Map<Long, Long> brokerageUserCountMap =
+                convertMap(
+                        userIds,
+                        userId -> userId,
+                        userId ->
+                                brokerageUserService.getBrokerageUserCountByBindUserId(
+                                        userId, null));
         // 合计分佣的提现
         // TODO @疯狂：如果未来支持了打款这个动作，可能 status 会不对；
-        Map<Long, BrokerageWithdrawSummaryRespBO> withdrawMap = brokerageWithdrawService.getWithdrawSummaryMapByUserId(
-                userIds, asList(BrokerageWithdrawStatusEnum.AUDIT_SUCCESS, BrokerageWithdrawStatusEnum.WITHDRAW_SUCCESS));
+        Map<Long, BrokerageWithdrawSummaryRespBO> withdrawMap =
+                brokerageWithdrawService.getWithdrawSummaryMapByUserId(
+                        userIds,
+                        asList(
+                                BrokerageWithdrawStatusEnum.AUDIT_SUCCESS,
+                                BrokerageWithdrawStatusEnum.WITHDRAW_SUCCESS));
         // 拼接返回
-        return success(BrokerageUserConvert.INSTANCE.convertPage(pageResult, userMap, brokerageUserCountMap,
-                brokerageOrderSummaryMap, withdrawMap));
+        return success(
+                BrokerageUserConvert.INSTANCE.convertPage(
+                        pageResult,
+                        userMap,
+                        brokerageUserCountMap,
+                        brokerageOrderSummaryMap,
+                        withdrawMap));
     }
-
 }

@@ -2,12 +2,15 @@ package cn.iocoder.yudao.module.mp.controller.admin.message.vo.message;
 
 import cn.iocoder.yudao.module.mp.dal.dataobject.message.MpMessageDO;
 import cn.iocoder.yudao.module.mp.framework.mp.core.util.MpUtils.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
+
 import java.util.List;
 
 @Schema(description = "管理后台 - 公众号消息发送 Request VO")
@@ -20,7 +23,10 @@ public class MpMessageSendReqVO {
 
     // ========== 消息内容 ==========
 
-    @Schema(description = "消息类型 TEXT/IMAGE/VOICE/VIDEO/NEWS", requiredMode = Schema.RequiredMode.REQUIRED, example = "text")
+    @Schema(
+            description = "消息类型 TEXT/IMAGE/VOICE/VIDEO/NEWS",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "text")
     @NotEmpty(message = "消息类型不能为空")
     public String type;
 
@@ -28,8 +34,13 @@ public class MpMessageSendReqVO {
     @NotEmpty(message = "消息内容不能为空", groups = TextMessageGroup.class)
     private String content;
 
-    @Schema(description = "媒体 ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "qqc_2Fot30Jse-HDoZmo5RrUDijz2nGUkP")
-    @NotEmpty(message = "消息内容不能为空", groups = {ImageMessageGroup.class, VoiceMessageGroup.class, VideoMessageGroup.class})
+    @Schema(
+            description = "媒体 ID",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "qqc_2Fot30Jse-HDoZmo5RrUDijz2nGUkP")
+    @NotEmpty(
+            message = "消息内容不能为空",
+            groups = {ImageMessageGroup.class, VoiceMessageGroup.class, VideoMessageGroup.class})
     private String mediaId;
 
     @Schema(description = "标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "没有标题")
@@ -40,7 +51,10 @@ public class MpMessageSendReqVO {
     @NotEmpty(message = "消息描述不能为空", groups = VideoMessageGroup.class)
     private String description;
 
-    @Schema(description = "缩略图的媒体 id", requiredMode = Schema.RequiredMode.REQUIRED, example = "qqc_2Fot30Jse-HDoZmo5RrUDijz2nGUkP")
+    @Schema(
+            description = "缩略图的媒体 id",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "qqc_2Fot30Jse-HDoZmo5RrUDijz2nGUkP")
     @NotEmpty(message = "缩略图的媒体 id 不能为空", groups = MusicMessageGroup.class)
     private String thumbMediaId;
 
@@ -54,5 +68,4 @@ public class MpMessageSendReqVO {
 
     @Schema(description = "高质量音乐链接 消息类型为 MUSIC 时", example = "https://www.iocoder.cn/music.mp3")
     private String hqMusicUrl;
-
 }

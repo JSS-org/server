@@ -4,9 +4,10 @@ import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEvent;
 import cn.iocoder.yudao.module.bpm.api.event.BpmProcessInstanceStatusEventListener;
 import cn.iocoder.yudao.module.bpm.service.oa.BpmOALeaveService;
 import cn.iocoder.yudao.module.bpm.service.oa.BpmOALeaveServiceImpl;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
  * OA 请假单的结果的监听器实现类
@@ -16,8 +17,7 @@ import jakarta.annotation.Resource;
 @Component
 public class BpmOALeaveStatusListener extends BpmProcessInstanceStatusEventListener {
 
-    @Resource
-    private BpmOALeaveService leaveService;
+    @Resource private BpmOALeaveService leaveService;
 
     @Override
     protected String getProcessDefinitionKey() {
@@ -28,5 +28,4 @@ public class BpmOALeaveStatusListener extends BpmProcessInstanceStatusEventListe
     protected void onEvent(BpmProcessInstanceStatusEvent event) {
         leaveService.updateLeaveStatus(Long.parseLong(event.getBusinessKey()), event.getStatus());
     }
-
 }

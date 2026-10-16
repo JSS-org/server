@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.iot.gateway.protocol.coap.handler.upstream;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.*;
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -10,16 +13,15 @@ import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.iot.core.topic.IotDeviceIdentity;
 import cn.iocoder.yudao.module.iot.gateway.service.auth.IotDeviceTokenService;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Option;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.*;
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 /**
  * IoT 网关 CoAP 协议的处理器抽象基类：提供通用的前置处理（认证）、请求解析、响应处理、全局的异常捕获等
@@ -36,7 +38,8 @@ public abstract class IotCoapAbstractHandler {
      */
     public static final int OPTION_TOKEN = 2088;
 
-    private final IotDeviceTokenService deviceTokenService = SpringUtil.getBean(IotDeviceTokenService.class);
+    private final IotDeviceTokenService deviceTokenService =
+            SpringUtil.getBean(IotDeviceTokenService.class);
 
     /**
      * 处理 CoAP 请求（模板方法）
@@ -151,8 +154,10 @@ public abstract class IotCoapAbstractHandler {
      * @return Token 值，如果不存在则返回 null
      */
     protected String getTokenFromOption(CoapExchange exchange) {
-        Option option = CollUtil.findOne(exchange.getRequestOptions().getOthers(),
-                o -> o.getNumber() == OPTION_TOKEN);
+        Option option =
+                CollUtil.findOne(
+                        exchange.getRequestOptions().getOthers(),
+                        o -> o.getNumber() == OPTION_TOKEN);
         return option != null ? new String(option.getValue()) : null;
     }
 
@@ -182,5 +187,4 @@ public abstract class IotCoapAbstractHandler {
         String json = serializeResponse(data);
         exchange.respond(CoAP.ResponseCode.CONTENT, json, MediaTypeRegistry.APPLICATION_JSON);
     }
-
 }

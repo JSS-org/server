@@ -12,5 +12,4 @@ public abstract class BaseGroupNotification {
      * 操作人用户编号
      */
     private Long operatorUserId;
-
 }

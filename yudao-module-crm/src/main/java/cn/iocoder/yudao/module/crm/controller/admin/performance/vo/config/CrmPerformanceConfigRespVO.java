@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.crm.controller.admin.performance.vo.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -61,8 +62,7 @@ public class CrmPerformanceConfigRespVO {
     @Schema(description = "十二月目标金额", requiredMode = Schema.RequiredMode.REQUIRED)
     private BigDecimal decemberTargetPrice;
 
-    @Schema(description = "目标类型",
-            requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
+    @Schema(description = "目标类型", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     private Integer bizType;
 
     @Schema(description = "年度目标金额", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -70,5 +70,4 @@ public class CrmPerformanceConfigRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

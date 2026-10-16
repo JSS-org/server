@@ -16,22 +16,27 @@ public class GroupRequestReceivedNotification extends BaseGroupNotification {
      * 申请记录编号
      */
     private Long requestId;
+
     /**
      * 群编号
      */
     private Long groupId;
+
     /**
      * 申请人 / 被邀请人用户编号
      */
     private Long userId;
+
     /**
      * 邀请人用户编号；NULL 表示用户主动申请
      */
     private Long inviterUserId;
+
     /**
      * 申请理由
      */
     private String applyContent;
+
     /**
      * 加入来源
      */
@@ -43,9 +48,9 @@ public class GroupRequestReceivedNotification extends BaseGroupNotification {
      * 申请方 / 被邀请人昵称
      */
     private String userNickname;
+
     /**
      * 申请方 / 被邀请人头像
      */
     private String userAvatar;
-
 }

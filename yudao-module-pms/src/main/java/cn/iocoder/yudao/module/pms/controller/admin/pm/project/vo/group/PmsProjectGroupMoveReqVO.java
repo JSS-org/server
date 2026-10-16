@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.project.vo.group;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - PMS 项目移动分组 Request VO")
@@ -14,5 +16,4 @@ public class PmsProjectGroupMoveReqVO {
 
     @Schema(description = "目标项目分组编号；不传表示移动到未分组", example = "2048")
     private Long groupId;
-
 }

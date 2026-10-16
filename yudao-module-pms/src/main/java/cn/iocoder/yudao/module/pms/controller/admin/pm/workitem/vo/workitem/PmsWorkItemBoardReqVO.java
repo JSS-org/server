@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.workitem;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -17,5 +19,4 @@ public class PmsWorkItemBoardReqVO extends PmsWorkItemPageReqVO {
     public Integer getType() {
         return super.getType();
     }
-
 }

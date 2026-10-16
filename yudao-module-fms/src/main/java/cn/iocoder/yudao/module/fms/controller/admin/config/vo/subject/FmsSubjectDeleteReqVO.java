@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.fms.controller.admin.config.vo.subject;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -23,5 +25,4 @@ public class FmsSubjectDeleteReqVO {
     @Schema(description = "科目编号数组", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty(message = "科目编号数组不能为空")
     private List<Long> ids;
-
 }

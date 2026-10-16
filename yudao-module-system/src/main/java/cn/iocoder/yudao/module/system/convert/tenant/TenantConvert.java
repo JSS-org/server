@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.system.convert.tenant;
 
 import cn.iocoder.yudao.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.user.vo.user.UserSaveReqVO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -22,5 +23,4 @@ public interface TenantConvert {
         reqVO.setNickname(bean.getContactName()).setMobile(bean.getContactMobile());
         return reqVO;
     }
-
 }

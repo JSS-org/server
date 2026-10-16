@@ -33,5 +33,4 @@ public interface IotMessageBus {
         // TODO 芋艿：暂时不实现，需求量不大，但是
         // throw new UnsupportedOperationException("取消注册消息订阅者功能，尚未实现");
     }
-
 }

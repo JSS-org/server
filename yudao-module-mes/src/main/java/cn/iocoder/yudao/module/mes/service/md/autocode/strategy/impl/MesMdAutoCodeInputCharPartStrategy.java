@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePartD
 import cn.iocoder.yudao.module.mes.enums.md.autocode.MesMdAutoCodePartTypeEnum;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodeContext;
 import cn.iocoder.yudao.module.mes.service.md.autocode.strategy.MesMdAutoCodePartStrategy;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,5 +26,4 @@ public class MesMdAutoCodeInputCharPartStrategy implements MesMdAutoCodePartStra
         String inputChar = context.getInputChar();
         return StrUtil.emptyToDefault(inputChar, "");
     }
-
 }

@@ -1,12 +1,20 @@
 package cn.iocoder.yudao.module.oa.service.schedule;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.SCHEDULE_ACCESS_DENIED;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.SCHEDULE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.oa.enums.MessageTemplateConstants.SCHEDULE_REMINDER;
+
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.oa.controller.admin.schedule.vo.OaSchedulePageReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.schedule.vo.OaScheduleSaveReqVO;
@@ -18,9 +26,13 @@ import cn.iocoder.yudao.module.oa.framework.config.OaProperties;
 import cn.iocoder.yudao.module.system.api.notify.NotifyMessageSendApi;
 import cn.iocoder.yudao.module.system.api.notify.dto.NotifySendSingleToUserReqDTO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import com.google.common.collect.Maps;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -30,14 +42,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.SCHEDULE_ACCESS_DENIED;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.SCHEDULE_NOT_EXISTS;
-import static cn.iocoder.yudao.module.oa.enums.MessageTemplateConstants.SCHEDULE_REMINDER;
 
 /**
  * OA 日程 Service 实现类
@@ -49,18 +53,13 @@ import static cn.iocoder.yudao.module.oa.enums.MessageTemplateConstants.SCHEDULE
 @Slf4j
 public class OaScheduleServiceImpl implements OaScheduleService {
 
-    @Resource
-    private OaProperties properties;
+    @Resource private OaProperties properties;
 
-    @Resource
-    private OaScheduleMapper scheduleMapper;
-    @Resource
-    private OaScheduleParticipantMapper scheduleParticipantMapper;
+    @Resource private OaScheduleMapper scheduleMapper;
+    @Resource private OaScheduleParticipantMapper scheduleParticipantMapper;
 
-    @Resource
-    private AdminUserApi adminUserApi;
-    @Resource
-    private NotifyMessageSendApi notifyMessageSendApi;
+    @Resource private AdminUserApi adminUserApi;
+    @Resource private NotifyMessageSendApi notifyMessageSendApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -69,8 +68,8 @@ public class OaScheduleServiceImpl implements OaScheduleService {
         adminUserApi.validateUserList(createReqVO.getParticipantUserIds());
 
         // 2. 新增日程
-        OaScheduleDO schedule = BeanUtils.toBean(createReqVO, OaScheduleDO.class)
-                .setReminded(false);
+        OaScheduleDO schedule =
+                BeanUtils.toBean(createReqVO, OaScheduleDO.class).setReminded(false);
         scheduleMapper.insert(schedule);
 
         // 3. 新增参与人
@@ -87,22 +86,36 @@ public class OaScheduleServiceImpl implements OaScheduleService {
         adminUserApi.validateUserList(updateReqVO.getParticipantUserIds());
 
         // 2. 修改日程
-        scheduleMapper.updateById(BeanUtils.toBean(updateReqVO, OaScheduleDO.class).setReminded(false));
+        scheduleMapper.updateById(
+                BeanUtils.toBean(updateReqVO, OaScheduleDO.class).setReminded(false));
         // 编辑保存后重新进入提醒周期，不清空阅读回执
 
         // 3.1 查询参与关系并计算差异
-        List<OaScheduleParticipantDO> oldParticipants = scheduleParticipantMapper.selectListByScheduleId(updateReqVO.getId());
-        List<OaScheduleParticipantDO> newParticipants = convertList(CollUtil.distinct(updateReqVO.getParticipantUserIds()),
-                user -> new OaScheduleParticipantDO().setScheduleId(updateReqVO.getId()).setUserId(user).setReadStatus(false));
-        List<List<OaScheduleParticipantDO>> diffParticipants = diffList(oldParticipants, newParticipants,
-                (oldParticipant, newParticipant) -> ObjectUtil.equal(oldParticipant.getUserId(), newParticipant.getUserId()));
+        List<OaScheduleParticipantDO> oldParticipants =
+                scheduleParticipantMapper.selectListByScheduleId(updateReqVO.getId());
+        List<OaScheduleParticipantDO> newParticipants =
+                convertList(
+                        CollUtil.distinct(updateReqVO.getParticipantUserIds()),
+                        user ->
+                                new OaScheduleParticipantDO()
+                                        .setScheduleId(updateReqVO.getId())
+                                        .setUserId(user)
+                                        .setReadStatus(false));
+        List<List<OaScheduleParticipantDO>> diffParticipants =
+                diffList(
+                        oldParticipants,
+                        newParticipants,
+                        (oldParticipant, newParticipant) ->
+                                ObjectUtil.equal(
+                                        oldParticipant.getUserId(), newParticipant.getUserId()));
         // 3.2 新增参与关系
         if (CollUtil.isNotEmpty(diffParticipants.get(0))) {
             scheduleParticipantMapper.insertBatch(diffParticipants.get(0));
         }
         // 3.3 删除取消的参与关系
         if (CollUtil.isNotEmpty(diffParticipants.get(2))) {
-            scheduleParticipantMapper.deleteByScheduleIdAndUserIds(updateReqVO.getId(),
+            scheduleParticipantMapper.deleteByScheduleIdAndUserIds(
+                    updateReqVO.getId(),
                     convertList(diffParticipants.get(2), OaScheduleParticipantDO::getUserId));
         }
     }
@@ -130,8 +143,8 @@ public class OaScheduleServiceImpl implements OaScheduleService {
         }
 
         // 3. 校验当前用户是日程参与人
-        List<OaScheduleParticipantDO> participants = scheduleParticipantMapper.selectListByScheduleIds(
-                Collections.singleton(id));
+        List<OaScheduleParticipantDO> participants =
+                scheduleParticipantMapper.selectListByScheduleIds(Collections.singleton(id));
         if (!convertSet(participants, OaScheduleParticipantDO::getUserId).contains(userId)) {
             throw exception(SCHEDULE_ACCESS_DENIED);
         }
@@ -148,7 +161,8 @@ public class OaScheduleServiceImpl implements OaScheduleService {
         // 1.1 未选择本人日程时，只查询共享日程或返回空列表
         if (Boolean.FALSE.equals(pageReqVO.getIncludeMine())) {
             return Boolean.TRUE.equals(pageReqVO.getIncludeReceived())
-                    ? getReceivedSchedulePage(pageReqVO, userId) : PageResult.empty();
+                    ? getReceivedSchedulePage(pageReqVO, userId)
+                    : PageResult.empty();
         }
         // 1.2 仅选择本人日程时，复用本人分页查询
         if (Boolean.FALSE.equals(pageReqVO.getIncludeReceived())) {
@@ -156,13 +170,16 @@ public class OaScheduleServiceImpl implements OaScheduleService {
         }
 
         // 2. 查询本人参与关系，没有共享日程时只查本人日程
-        List<OaScheduleParticipantDO> participants = scheduleParticipantMapper.selectListByUserId(userId);
+        List<OaScheduleParticipantDO> participants =
+                scheduleParticipantMapper.selectListByUserId(userId);
         if (CollUtil.isEmpty(participants)) {
             return getMySchedulePage(pageReqVO, userId);
         }
 
         // 3. 按创建人或参与关系统一分页，同一日程只返回一次
-        return scheduleMapper.selectPageByCreatorOrIds(pageReqVO, userId,
+        return scheduleMapper.selectPageByCreatorOrIds(
+                pageReqVO,
+                userId,
                 convertList(participants, OaScheduleParticipantDO::getScheduleId));
     }
 
@@ -171,14 +188,18 @@ public class OaScheduleServiceImpl implements OaScheduleService {
         // 1.1 校验当前用户可访问日程
         getSchedule(id, userId);
         // 1.2 查询本人参与关系，创建人未参与或已经阅读时无需更新
-        OaScheduleParticipantDO participant = scheduleParticipantMapper.selectByScheduleIdAndUserId(id, userId);
+        OaScheduleParticipantDO participant =
+                scheduleParticipantMapper.selectByScheduleIdAndUserId(id, userId);
         if (participant == null || Boolean.TRUE.equals(participant.getReadStatus())) {
             return;
         }
 
         // 2. 标记本人已读，记录阅读时间
-        scheduleParticipantMapper.updateById(new OaScheduleParticipantDO().setId(participant.getId())
-                .setReadStatus(true).setReadTime(LocalDateTime.now()));
+        scheduleParticipantMapper.updateById(
+                new OaScheduleParticipantDO()
+                        .setId(participant.getId())
+                        .setReadStatus(true)
+                        .setReadTime(LocalDateTime.now()));
     }
 
     @Override
@@ -187,9 +208,11 @@ public class OaScheduleServiceImpl implements OaScheduleService {
     }
 
     @Override
-    public PageResult<OaScheduleDO> getReceivedSchedulePage(OaSchedulePageReqVO pageReqVO, Long userId) {
+    public PageResult<OaScheduleDO> getReceivedSchedulePage(
+            OaSchedulePageReqVO pageReqVO, Long userId) {
         // 1. 查询当前用户的参与关系
-        List<OaScheduleParticipantDO> participants = scheduleParticipantMapper.selectListByUserId(userId);
+        List<OaScheduleParticipantDO> participants =
+                scheduleParticipantMapper.selectListByUserId(userId);
         if (CollUtil.isEmpty(participants)) {
             return PageResult.empty();
         }
@@ -202,8 +225,14 @@ public class OaScheduleServiceImpl implements OaScheduleService {
     public int sendScheduleReminders() {
         // 1. 查询待提醒日程
         LocalDateTime remindTime = LocalDateTime.now();
-        List<OaScheduleDO> schedules = scheduleMapper.selectListByRemindAndRemindedAndStartTime(true, false,
-                new LocalDateTime[]{remindTime, remindTime.plusHours(properties.getSchedule().getRemindBeforeHours())});
+        List<OaScheduleDO> schedules =
+                scheduleMapper.selectListByRemindAndRemindedAndStartTime(
+                        true,
+                        false,
+                        new LocalDateTime[] {
+                            remindTime,
+                            remindTime.plusHours(properties.getSchedule().getRemindBeforeHours())
+                        });
 
         // 2. 逐条发送，通过代理调用保证每条日程独立事务，失败不影响其他日程
         int count = 0;
@@ -230,25 +259,35 @@ public class OaScheduleServiceImpl implements OaScheduleService {
     public boolean sendScheduleReminder(Long id, LocalDateTime remindTime) {
         // 1. 校验日程当前仍需提醒，编辑或其他执行已处理时不重复发送
         OaScheduleDO schedule = validateScheduleExists(id);
-        if (Boolean.FALSE.equals(schedule.getRemind()) || Boolean.TRUE.equals(schedule.getReminded())
+        if (Boolean.FALSE.equals(schedule.getRemind())
+                || Boolean.TRUE.equals(schedule.getReminded())
                 || !schedule.getStartTime().isAfter(remindTime)
-                || !schedule.getStartTime().isBefore(
-                        remindTime.plusHours(properties.getSchedule().getRemindBeforeHours()))) {
+                || !schedule.getStartTime()
+                        .isBefore(
+                                remindTime.plusHours(
+                                        properties.getSchedule().getRemindBeforeHours()))) {
             return false;
         }
 
         // 2.1 查询参与人并合并创建人，同一用户只接收一次提醒
-        List<OaScheduleParticipantDO> participants = scheduleParticipantMapper.selectListByScheduleId(id);
+        List<OaScheduleParticipantDO> participants =
+                scheduleParticipantMapper.selectListByScheduleId(id);
         List<Long> userIds = convertList(participants, OaScheduleParticipantDO::getUserId);
         userIds.add(NumberUtils.parseLong(schedule.getCreator()));
         Map<String, Object> templateParams = Maps.newHashMapWithExpectedSize(3);
         templateParams.put("scheduleTitle", schedule.getTitle());
-        templateParams.put("startTime", LocalDateTimeUtil.format(schedule.getStartTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
+        templateParams.put(
+                "startTime",
+                LocalDateTimeUtil.format(
+                        schedule.getStartTime(), DatePattern.NORM_DATETIME_MINUTE_PATTERN));
         templateParams.put("route", "/oa/schedule/calendar");
         // 2.2 逐个通知
         for (Long userId : CollUtil.distinct(userIds)) {
-            notifyMessageSendApi.sendSingleMessageToAdmin(new NotifySendSingleToUserReqDTO()
-                    .setUserId(userId).setTemplateCode(SCHEDULE_REMINDER).setTemplateParams(templateParams));
+            notifyMessageSendApi.sendSingleMessageToAdmin(
+                    new NotifySendSingleToUserReqDTO()
+                            .setUserId(userId)
+                            .setTemplateCode(SCHEDULE_REMINDER)
+                            .setTemplateParams(templateParams));
         }
         scheduleMapper.updateById(new OaScheduleDO().setId(id).setReminded(true));
         return true;
@@ -306,14 +345,19 @@ public class OaScheduleServiceImpl implements OaScheduleService {
      * @param scheduleId 日程编号
      * @param participantUserIds 参与人编号集合
      */
-    private void createScheduleParticipantList(Long scheduleId, Collection<Long> participantUserIds) {
+    private void createScheduleParticipantList(
+            Long scheduleId, Collection<Long> participantUserIds) {
         if (CollUtil.isEmpty(participantUserIds)) {
             return;
         }
-        List<OaScheduleParticipantDO> participants = convertList(CollUtil.distinct(participantUserIds),
-                participantUserId -> new OaScheduleParticipantDO().setScheduleId(scheduleId).setUserId(participantUserId)
-                        .setReadStatus(false));
+        List<OaScheduleParticipantDO> participants =
+                convertList(
+                        CollUtil.distinct(participantUserIds),
+                        participantUserId ->
+                                new OaScheduleParticipantDO()
+                                        .setScheduleId(scheduleId)
+                                        .setUserId(participantUserId)
+                                        .setReadStatus(false));
         scheduleParticipantMapper.insertBatch(participants);
     }
-
 }

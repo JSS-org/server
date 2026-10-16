@@ -3,7 +3,9 @@ package cn.iocoder.yudao.module.fms.controller.admin.ledger.vo.quantitygeneral;
 import cn.idev.excel.annotation.ExcelIgnore;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -116,5 +118,4 @@ public class FmsLedgerQuantityGeneralRespVO {
 
     @Schema(description = "下级科目")
     private List<FmsLedgerQuantityGeneralRespVO> children = new ArrayList<>();
-
 }

@@ -14,5 +14,4 @@ public interface BargainActivityApi {
      * @param count 购买数量
      */
     void updateBargainActivityStock(Long id, Integer count);
-
 }

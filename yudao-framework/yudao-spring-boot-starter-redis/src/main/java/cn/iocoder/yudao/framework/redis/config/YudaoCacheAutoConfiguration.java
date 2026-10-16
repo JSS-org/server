@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.framework.redis.config;
 
+import static cn.iocoder.yudao.framework.redis.config.YudaoRedisAutoConfiguration.buildRedisSerializer;
+
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.redis.core.TimeoutRedisCacheManager;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.cache.autoconfigure.CacheProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,8 +21,6 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.util.StringUtils;
 
 import java.util.Objects;
-
-import static cn.iocoder.yudao.framework.redis.config.YudaoRedisAutoConfiguration.buildRedisSerializer;
 
 /**
  * Cache 配置类，基于 Redis 实现
@@ -41,17 +42,24 @@ public class YudaoCacheAutoConfiguration {
         // 设置使用 : 单冒号，而不是双 :: 冒号，避免 Redis Desktop Manager 多余空格
         // 详细可见 https://blog.csdn.net/chuixue24/article/details/103928965 博客
         // 再次修复单冒号，而不是双 :: 冒号问题，Issues 详情：https://gitee.com/zhijiantianya/yudao-cloud/issues/I86VY2
-        config = config.computePrefixWith(cacheName -> {
-            String keyPrefix = cacheProperties.getRedis().getKeyPrefix();
-            if (StringUtils.hasText(keyPrefix)) {
-                keyPrefix = keyPrefix.lastIndexOf(StrUtil.COLON) == -1 ? keyPrefix + StrUtil.COLON : keyPrefix;
-                return keyPrefix + cacheName + StrUtil.COLON;
-            }
-            return cacheName + StrUtil.COLON;
-        });
+        config =
+                config.computePrefixWith(
+                        cacheName -> {
+                            String keyPrefix = cacheProperties.getRedis().getKeyPrefix();
+                            if (StringUtils.hasText(keyPrefix)) {
+                                keyPrefix =
+                                        keyPrefix.lastIndexOf(StrUtil.COLON) == -1
+                                                ? keyPrefix + StrUtil.COLON
+                                                : keyPrefix;
+                                return keyPrefix + cacheName + StrUtil.COLON;
+                            }
+                            return cacheName + StrUtil.COLON;
+                        });
         // 设置使用 JSON 序列化方式
-        config = config.serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(buildRedisSerializer()));
+        config =
+                config.serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(
+                                buildRedisSerializer()));
 
         // 设置 CacheProperties.Redis 的属性
         CacheProperties.Redis redisProperties = cacheProperties.getRedis();
@@ -68,19 +76,23 @@ public class YudaoCacheAutoConfiguration {
     }
 
     @Bean
-    public RedisCacheManager redisCacheManager(RedisTemplate<String, Object> redisTemplate,
-                                               RedisCacheConfiguration redisCacheConfiguration,
-                                               YudaoCacheProperties yudaoCacheProperties) {
+    public RedisCacheManager redisCacheManager(
+            RedisTemplate<String, Object> redisTemplate,
+            RedisCacheConfiguration redisCacheConfiguration,
+            YudaoCacheProperties yudaoCacheProperties) {
         // 创建 RedisCacheWriter 对象
-        RedisConnectionFactory connectionFactory = Objects.requireNonNull(redisTemplate.getConnectionFactory());
-        RedisCacheWriter cacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory,
-                BatchStrategies.scan(yudaoCacheProperties.getRedisScanBatchSize()));
+        RedisConnectionFactory connectionFactory =
+                Objects.requireNonNull(redisTemplate.getConnectionFactory());
+        RedisCacheWriter cacheWriter =
+                RedisCacheWriter.nonLockingRedisCacheWriter(
+                        connectionFactory,
+                        BatchStrategies.scan(yudaoCacheProperties.getRedisScanBatchSize()));
         // 创建 TimeoutRedisCacheManager 对象
-        TimeoutRedisCacheManager cacheManager = new TimeoutRedisCacheManager(cacheWriter, redisCacheConfiguration);
+        TimeoutRedisCacheManager cacheManager =
+                new TimeoutRedisCacheManager(cacheWriter, redisCacheConfiguration);
         // 开启事务感知：@Transactional 方法内的 @CacheEvict / @CachePut 自动延迟到 afterCommit，
         //             避免事务未提交就清缓存被并发读穿写脏值；无事务时立即生效，行为不变
         cacheManager.setTransactionAware(true);
         return cacheManager;
     }
-
 }

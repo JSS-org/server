@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdate
 import cn.iocoder.yudao.module.member.dal.dataobject.address.MemberAddressDO;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 /**
@@ -63,5 +64,4 @@ public interface AddressService {
      * @return 用户收件地址
      */
     MemberAddressDO getDefaultUserAddress(Long userId);
-
 }

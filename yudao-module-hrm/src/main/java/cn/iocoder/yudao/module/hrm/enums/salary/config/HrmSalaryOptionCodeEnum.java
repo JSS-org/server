@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.hrm.enums.salary.config;
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.framework.common.util.collection.SetUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -19,7 +20,6 @@ import java.util.Set;
 @Getter
 @AllArgsConstructor
 public enum HrmSalaryOptionCodeEnum implements ArrayValuable<Integer> {
-
     BASIC_SALARY(10101, "基本工资"),
     POST_SALARY(10102, "岗位工资"),
     MEAL_ALLOWANCE(20104, "餐补"),
@@ -61,48 +61,69 @@ public enum HrmSalaryOptionCodeEnum implements ArrayValuable<Integer> {
     CURRENT_CUMULATIVE_TAXABLE(270105, "累计应纳税所得额"),
     CURRENT_CUMULATIVE_TAX(270106, "累计应纳税额");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(HrmSalaryOptionCodeEnum::getCode).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(HrmSalaryOptionCodeEnum::getCode).toArray(Integer[]::new);
 
     /**
      * 系统计算的薪资项编码集合
      */
-    public static final Set<Integer> COMPUTED_CODES = Collections.unmodifiableSet(SetUtils.asSet(
-            EXPECTED_PAY.getCode(), TAXABLE.getCode(), PERSONAL_TAX.getCode(), REAL_PAY.getCode(),
-            CURRENT_CUMULATIVE_INCOME.getCode(), CURRENT_CUMULATIVE_DEDUCT_EXPENSE.getCode(),
-            CURRENT_CUMULATIVE_SPECIAL_DEDUCTION.getCode(), CURRENT_CUMULATIVE_ADDITIONAL_DEDUCTION.getCode(),
-            CURRENT_CUMULATIVE_TAXABLE.getCode(), CURRENT_CUMULATIVE_TAX.getCode()));
+    public static final Set<Integer> COMPUTED_CODES =
+            Collections.unmodifiableSet(
+                    SetUtils.asSet(
+                            EXPECTED_PAY.getCode(),
+                            TAXABLE.getCode(),
+                            PERSONAL_TAX.getCode(),
+                            REAL_PAY.getCode(),
+                            CURRENT_CUMULATIVE_INCOME.getCode(),
+                            CURRENT_CUMULATIVE_DEDUCT_EXPENSE.getCode(),
+                            CURRENT_CUMULATIVE_SPECIAL_DEDUCTION.getCode(),
+                            CURRENT_CUMULATIVE_ADDITIONAL_DEDUCTION.getCode(),
+                            CURRENT_CUMULATIVE_TAXABLE.getCode(),
+                            CURRENT_CUMULATIVE_TAX.getCode()));
 
     /**
      * 默认工资条模板的薪资项编码
      */
-    public static final List<Integer> SALARY_SLIP_DEFAULT_CODES = Collections.unmodifiableList(Arrays.asList(
-            BASIC_SALARY.getCode(), POST_SALARY.getCode(), EXPECTED_PAY.getCode(),
-            PERSONAL_TAX.getCode(), REAL_PAY.getCode()));
+    public static final List<Integer> SALARY_SLIP_DEFAULT_CODES =
+            Collections.unmodifiableList(
+                    Arrays.asList(
+                            BASIC_SALARY.getCode(),
+                            POST_SALARY.getCode(),
+                            EXPECTED_PAY.getCode(),
+                            PERSONAL_TAX.getCode(),
+                            REAL_PAY.getCode()));
 
     /**
      * 默认工资条模板基本项编码
      */
-    public static final Set<Integer> SALARY_SLIP_BASIC_CODES = Collections.unmodifiableSet(SetUtils.asSet(
-            EXPECTED_PAY.getCode(), PERSONAL_TAX.getCode(), REAL_PAY.getCode()));
+    public static final Set<Integer> SALARY_SLIP_BASIC_CODES =
+            Collections.unmodifiableSet(
+                    SetUtils.asSet(
+                            EXPECTED_PAY.getCode(), PERSONAL_TAX.getCode(), REAL_PAY.getCode()));
 
     /**
      * 上月累计薪资项编码集合
      */
-    public static final List<Integer> LAST_MONTH_CUMULATIVE_CODES = Collections.unmodifiableList(Arrays.asList(
-            LAST_MONTH_CUMULATIVE_INCOME.getCode(), LAST_MONTH_CUMULATIVE_DEDUCT_EXPENSE.getCode(),
-            LAST_MONTH_CUMULATIVE_SPECIAL_DEDUCTION.getCode(), LAST_MONTH_PREPAID_TAX.getCode()));
+    public static final List<Integer> LAST_MONTH_CUMULATIVE_CODES =
+            Collections.unmodifiableList(
+                    Arrays.asList(
+                            LAST_MONTH_CUMULATIVE_INCOME.getCode(),
+                                    LAST_MONTH_CUMULATIVE_DEDUCT_EXPENSE.getCode(),
+                            LAST_MONTH_CUMULATIVE_SPECIAL_DEDUCTION.getCode(),
+                                    LAST_MONTH_PREPAID_TAX.getCode()));
 
     /**
      * 员工薪资信息导入排除的父薪资项编码集合
      */
     public static final Set<Integer> EMPLOYEE_INFO_IMPORT_EXCLUDED_PARENT_CODES =
-            Collections.unmodifiableSet(SetUtils.asSet(180, 190, 200, 210, 220, 230, 240, 250, 260));
+            Collections.unmodifiableSet(
+                    SetUtils.asSet(180, 190, 200, 210, 220, 230, 240, 250, 260));
 
     /**
      * 编码
      */
     private final Integer code;
+
     /**
      * 名称
      */
@@ -116,5 +137,4 @@ public enum HrmSalaryOptionCodeEnum implements ArrayValuable<Integer> {
     public static HrmSalaryOptionCodeEnum valueOf(Integer code) {
         return ArrayUtil.firstMatch(item -> item.getCode().equals(code), values());
     }
-
 }

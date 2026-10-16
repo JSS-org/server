@@ -13,6 +13,7 @@ import cn.iocoder.yudao.module.infra.framework.file.core.client.s3.S3FileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.s3.S3FileClientConfig;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.sftp.SftpFileClient;
 import cn.iocoder.yudao.module.infra.framework.file.core.client.sftp.SftpFileClientConfig;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -24,7 +25,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum FileStorageEnum {
-
     DB(1, DBFileClientConfig.class, DBFileClient.class),
 
     LOCAL(10, LocalFileClientConfig.class, LocalFileClient.class),
@@ -43,6 +43,7 @@ public enum FileStorageEnum {
      * 配置类
      */
     private final Class<? extends FileClientConfig> configClass;
+
     /**
      * 客户端类
      */
@@ -51,5 +52,4 @@ public enum FileStorageEnum {
     public static FileStorageEnum getByStorage(Integer storage) {
         return ArrayUtil.firstMatch(o -> o.getStorage().equals(storage), values());
     }
-
 }

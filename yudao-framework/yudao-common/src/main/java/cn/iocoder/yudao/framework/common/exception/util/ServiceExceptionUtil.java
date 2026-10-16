@@ -3,7 +3,9 @@ package cn.iocoder.yudao.framework.common.exception.util;
 import cn.iocoder.yudao.framework.common.exception.ErrorCode;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,7 +28,8 @@ public class ServiceExceptionUtil {
         return exception0(errorCode.getCode(), errorCode.getMsg(), params);
     }
 
-    public static ServiceException exception0(Integer code, String messagePattern, Object... params) {
+    public static ServiceException exception0(
+            Integer code, String messagePattern, Object... params) {
         String message = doFormat(code, messagePattern, params);
         return new ServiceException(code, message);
     }
@@ -73,5 +76,4 @@ public class ServiceExceptionUtil {
         sbuf.append(messagePattern.substring(i));
         return sbuf.toString();
     }
-
 }

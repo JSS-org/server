@@ -19,6 +19,7 @@ public @interface BizTrace {
      * 业务编号 tag 名
      */
     String ID_TAG = "biz.id";
+
     /**
      * 业务类型 tag 名
      */
@@ -38,5 +39,4 @@ public @interface BizTrace {
      * @return 业务类型
      */
     String type();
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.oa.controller.admin.discussion.vo.vote;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -24,10 +25,12 @@ public class OaVoteOptionRespVO {
     @Schema(description = "投票数", requiredMode = Schema.RequiredMode.REQUIRED, example = "5")
     private Integer voteCount;
 
-    @Schema(description = "当前用户是否已选择", requiredMode = Schema.RequiredMode.REQUIRED, example = "false")
+    @Schema(
+            description = "当前用户是否已选择",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "false")
     private Boolean voted;
 
     @Schema(description = "投票人用户昵称列表", example = "[\"张三\", \"李四\"]")
     private List<String> voterUserNames;
-
 }

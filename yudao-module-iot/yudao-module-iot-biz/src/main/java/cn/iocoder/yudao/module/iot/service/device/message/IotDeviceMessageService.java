@@ -7,11 +7,13 @@ import cn.iocoder.yudao.module.iot.controller.admin.statistics.vo.IotStatisticsD
 import cn.iocoder.yudao.module.iot.core.mq.message.IotDeviceMessage;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.device.IotDeviceMessageDO;
+
 import jakarta.validation.constraints.NotNull;
 
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 /**
  * IoT 设备消息 Service 接口
@@ -73,9 +75,7 @@ public interface IotDeviceMessageService {
      * @return 设备消息列表
      */
     List<IotDeviceMessageDO> getDeviceMessageListByRequestIdsAndReply(
-            @NotNull(message = "设备编号不能为空") Long deviceId,
-            List<String> requestIds,
-            Boolean reply);
+            @NotNull(message = "设备编号不能为空") Long deviceId, List<String> requestIds, Boolean reply);
 
     /**
      * 获得设备消息数量
@@ -93,5 +93,4 @@ public interface IotDeviceMessageService {
      */
     List<IotStatisticsDeviceMessageSummaryByDateRespVO> getDeviceMessageSummaryByDate(
             IotStatisticsDeviceMessageReqVO reqVO);
-
 }

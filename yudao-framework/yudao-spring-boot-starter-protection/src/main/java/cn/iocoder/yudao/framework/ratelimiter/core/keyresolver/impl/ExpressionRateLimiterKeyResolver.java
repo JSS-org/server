@@ -3,6 +3,7 @@ package cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.impl;
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.ratelimiter.core.annotation.RateLimiter;
 import cn.iocoder.yudao.framework.ratelimiter.core.keyresolver.RateLimiterKeyResolver;
+
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -21,7 +22,8 @@ import java.lang.reflect.Method;
  */
 public class ExpressionRateLimiterKeyResolver implements RateLimiterKeyResolver {
 
-    private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private final ParameterNameDiscoverer parameterNameDiscoverer =
+            new DefaultParameterNameDiscoverer();
 
     private final ExpressionParser expressionParser = new SpelExpressionParser();
 
@@ -54,11 +56,11 @@ public class ExpressionRateLimiterKeyResolver implements RateLimiterKeyResolver 
 
         // 处理，声明在接口上的情况
         try {
-            return point.getTarget().getClass().getDeclaredMethod(
-                    point.getSignature().getName(), method.getParameterTypes());
+            return point.getTarget()
+                    .getClass()
+                    .getDeclaredMethod(point.getSignature().getName(), method.getParameterTypes());
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
-
 }

@@ -5,6 +5,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.arrivalnotice.vo.line.MesWmArrivalNoticeLinePageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.arrivalnotice.MesWmArrivalNoticeLineDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -16,9 +17,11 @@ import java.util.List;
 public interface MesWmArrivalNoticeLineMapper extends BaseMapperX<MesWmArrivalNoticeLineDO> {
 
     default PageResult<MesWmArrivalNoticeLineDO> selectPage(MesWmArrivalNoticeLinePageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<MesWmArrivalNoticeLineDO>()
-                .eqIfPresent(MesWmArrivalNoticeLineDO::getNoticeId, reqVO.getNoticeId())
-                .orderByDesc(MesWmArrivalNoticeLineDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<MesWmArrivalNoticeLineDO>()
+                        .eqIfPresent(MesWmArrivalNoticeLineDO::getNoticeId, reqVO.getNoticeId())
+                        .orderByDesc(MesWmArrivalNoticeLineDO::getId));
     }
 
     default List<MesWmArrivalNoticeLineDO> selectListByNoticeId(Long noticeId) {
@@ -30,10 +33,10 @@ public interface MesWmArrivalNoticeLineMapper extends BaseMapperX<MesWmArrivalNo
     }
 
     default List<MesWmArrivalNoticeLineDO> selectListByIqcPending(List<Long> noticeIds) {
-        return selectList(new LambdaQueryWrapperX<MesWmArrivalNoticeLineDO>()
-                .in(MesWmArrivalNoticeLineDO::getNoticeId, noticeIds)
-                .eq(MesWmArrivalNoticeLineDO::getIqcCheckFlag, true)
-                .isNull(MesWmArrivalNoticeLineDO::getIqcId));
+        return selectList(
+                new LambdaQueryWrapperX<MesWmArrivalNoticeLineDO>()
+                        .in(MesWmArrivalNoticeLineDO::getNoticeId, noticeIds)
+                        .eq(MesWmArrivalNoticeLineDO::getIqcCheckFlag, true)
+                        .isNull(MesWmArrivalNoticeLineDO::getIqcId));
     }
-
 }

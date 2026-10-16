@@ -1,15 +1,21 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.salary;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.changerecord.HrmSalaryChangeRecordRespVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.employee.HrmSalaryChangeRecordDO;
 import cn.iocoder.yudao.module.hrm.enums.salary.employee.HrmSalaryChangeRecordTypeEnum;
 import cn.iocoder.yudao.module.hrm.service.salary.employee.HrmSalaryChangeRecordService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,25 +27,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-
 @Tag(name = "管理后台 - HRM 定薪/调薪记录")
 @RestController
 @RequestMapping("/hrm/salary/change-record")
 @Validated
 public class HrmSalaryChangeRecordController {
 
-    @Resource
-    private HrmSalaryChangeRecordService salaryChangeRecordService;
+    @Resource private HrmSalaryChangeRecordService salaryChangeRecordService;
 
     @GetMapping("/get")
     @Operation(summary = "获得定薪/调薪记录")
     @Parameter(name = "id", description = "记录编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('hrm:salary:employee-info:query')")
-    public CommonResult<HrmSalaryChangeRecordRespVO> getSalaryChangeRecord(@RequestParam("id") Long id) {
-        return success(buildSalaryChangeRecordRespVO(
-                salaryChangeRecordService.getSalaryChangeRecord(id)));
+    public CommonResult<HrmSalaryChangeRecordRespVO> getSalaryChangeRecord(
+            @RequestParam("id") Long id) {
+        return success(
+                buildSalaryChangeRecordRespVO(salaryChangeRecordService.getSalaryChangeRecord(id)));
     }
 
     @GetMapping("/list")
@@ -48,8 +51,10 @@ public class HrmSalaryChangeRecordController {
     @PreAuthorize("@ss.hasPermission('hrm:salary:employee-info:query')")
     public CommonResult<List<HrmSalaryChangeRecordRespVO>> getSalaryChangeRecordList(
             @RequestParam("employeeId") Long employeeId) {
-        return success(convertList(salaryChangeRecordService.getSalaryChangeRecordList(employeeId),
-                this::buildSalaryChangeRecordRespVO));
+        return success(
+                convertList(
+                        salaryChangeRecordService.getSalaryChangeRecordList(employeeId),
+                        this::buildSalaryChangeRecordRespVO));
     }
 
     @PutMapping("/cancel")
@@ -77,7 +82,8 @@ public class HrmSalaryChangeRecordController {
         if (changeRecord == null) {
             return null;
         }
-        HrmSalaryChangeRecordRespVO respVO = BeanUtils.toBean(changeRecord, HrmSalaryChangeRecordRespVO.class);
+        HrmSalaryChangeRecordRespVO respVO =
+                BeanUtils.toBean(changeRecord, HrmSalaryChangeRecordRespVO.class);
         respVO.setRecordType(changeRecord.getType());
         respVO.setChangeReason(changeRecord.getReason());
         HrmSalaryChangeRecordTypeEnum recordType =
@@ -85,5 +91,4 @@ public class HrmSalaryChangeRecordController {
         respVO.setRecordTypeName(recordType == null ? null : recordType.getName());
         return respVO;
     }
-
 }

@@ -5,9 +5,11 @@ import cn.iocoder.yudao.module.oa.enums.file.OaFileCategoryEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileNodeStatusEnum;
 import cn.iocoder.yudao.module.oa.enums.file.OaFileNodeTypeEnum;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -32,28 +34,32 @@ public class OaFileNodeDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 父目录编号，根目录为 {@link #PARENT_ID_ROOT}
      *
      * 关联 {@link OaFileNodeDO#getId()}
      */
     private Long parentId;
+
     /**
      * 节点类型
      *
      * 枚举 {@link OaFileNodeTypeEnum}
      */
     private Integer type;
+
     /**
      * 节点名称
      */
     private String name;
+
     /**
      * 扩展名
      */
     private String extension;
+
     /**
      * 文件分类
      *
@@ -61,22 +67,26 @@ public class OaFileNodeDO extends BaseDO {
      * 文件上传时通过 {@link OaFileCategoryEnum#getByExtension(String)} 计算
      */
     private Integer category;
+
     /**
      * 文件大小，单位字节
      */
     private Long size;
+
     /**
      * 文件访问地址
      *
      * 由服务端文件上传结果设置，文件夹为空
      */
     private String url;
+
     /**
      * 所属部门编号
      *
      * 关联 {@link DeptRespDTO#getId()}
      */
     private Long deptId;
+
     /**
      * 节点状态，区分正常节点与回收站节点
      *
@@ -86,5 +96,4 @@ public class OaFileNodeDO extends BaseDO {
      * 3、后续访问节点需校验祖先状态，恢复目录不改变此前单独回收的子节点状态
      */
     private Integer status;
-
 }

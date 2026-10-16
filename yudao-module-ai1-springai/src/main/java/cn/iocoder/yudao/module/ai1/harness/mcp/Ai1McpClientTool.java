@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai1.harness.mcp;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholders;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.map.MapUtil;
@@ -9,9 +12,11 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.module.ai1.controller.admin.mcp.vo.Ai1McpConnectRespVO;
 import cn.iocoder.yudao.module.ai1.dal.dataobject.mcp.Ai1McpDO;
 import cn.iocoder.yudao.module.ai1.enums.mcp.Ai1McpTransportEnum;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
+
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
@@ -22,18 +27,18 @@ import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
+
 import jakarta.annotation.PreDestroy;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholders;
 
 /**
  * AI1 MCP 客户端工具（官方 Java MCP SDK）：连接、列举工具、调用工具、连通测试
@@ -54,10 +59,12 @@ public class Ai1McpClientTool {
      * 远程服务默认的消息端点
      */
     private static final String DEFAULT_HTTP_ENDPOINT = "/mcp";
+
     /**
      * 缓存 key 分隔符
      */
     private static final String KEY_SEPARATOR = ":";
+
     /**
      * 缓存的闲置过期时间：超过该时间未使用的客户端自动关闭，释放连接与子进程
      *
@@ -70,16 +77,20 @@ public class Ai1McpClientTool {
      *
      * key 带上配置指纹，配置变化后自然命中不到旧客户端，不需要额外的缓存项对象
      */
-    private final Cache<String, McpSyncClient> clientCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(CACHE_EXPIRE_AFTER_ACCESS)
-            .removalListener((RemovalListener<String, McpSyncClient>) notification -> closeQuietly(notification.getValue()))
-            .build();
+    private final Cache<String, McpSyncClient> clientCache =
+            CacheBuilder.newBuilder()
+                    .expireAfterAccess(CACHE_EXPIRE_AFTER_ACCESS)
+                    .removalListener(
+                            (RemovalListener<String, McpSyncClient>)
+                                    notification -> closeQuietly(notification.getValue()))
+                    .build();
+
     /**
      * 工具列表缓存：MCP 编号:配置指纹 → 工具列表
      */
-    private final Cache<String, List<McpSchema.Tool>> toolsCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(CACHE_EXPIRE_AFTER_ACCESS)
-            .build();
+    private final Cache<String, List<McpSchema.Tool>> toolsCache =
+            CacheBuilder.newBuilder().expireAfterAccess(CACHE_EXPIRE_AFTER_ACCESS).build();
+
     /**
      * 按 MCP 串行建连的锁，避免不同服务的初始化互相阻塞
      */
@@ -104,8 +115,10 @@ public class Ai1McpClientTool {
         // 2. 调用 tools/list 拉取工具列表；失败时记录日志，按空列表处理
         try {
             McpSchema.ListToolsResult result = getOrCreateClient(mcp).listTools();
-            List<McpSchema.Tool> tools = result != null && result.tools() != null
-                    ? result.tools() : Collections.emptyList();
+            List<McpSchema.Tool> tools =
+                    result != null && result.tools() != null
+                            ? result.tools()
+                            : Collections.emptyList();
             // 3. 仅缓存成功的结果（包含服务确实没有工具的空列表），失败后允许下次会话重试
             toolsCache.put(cacheKey, tools);
             return tools;
@@ -127,8 +140,10 @@ public class Ai1McpClientTool {
         McpSyncClient client = getOrCreateClient(mcp);
         // 同一客户端的调用串行执行，避免 stdio 管道并发读写错乱
         synchronized (client) {
-            McpSchema.CallToolRequest request = McpSchema.CallToolRequest.builder(toolName)
-                    .arguments(MapUtil.emptyIfNull(arguments)).build();
+            McpSchema.CallToolRequest request =
+                    McpSchema.CallToolRequest.builder(toolName)
+                            .arguments(MapUtil.emptyIfNull(arguments))
+                            .build();
             McpSchema.CallToolResult result;
             try {
                 result = client.callTool(request);
@@ -165,22 +180,31 @@ public class Ai1McpClientTool {
             if (transport == null) {
                 return buildConnectFailResult("配置不完整（缺少必要参数）", startTime);
             }
-            client = McpClient.sync(transport)
-                    .requestTimeout(Duration.ofSeconds(30))
-                    .initializationTimeout(Duration.ofSeconds(15))
-                    .build();
+            client =
+                    McpClient.sync(transport)
+                            .requestTimeout(Duration.ofSeconds(30))
+                            .initializationTimeout(Duration.ofSeconds(15))
+                            .build();
             client.initialize();
 
             // 2. 读取服务信息与工具列表
-            Ai1McpConnectRespVO result = new Ai1McpConnectRespVO().setConnectable(true)
-                    .setInstructions(client.getServerInstructions());
+            Ai1McpConnectRespVO result =
+                    new Ai1McpConnectRespVO()
+                            .setConnectable(true)
+                            .setInstructions(client.getServerInstructions());
             McpSchema.Implementation serverInfo = client.getServerInfo();
             if (serverInfo != null) {
                 result.setServerName(serverInfo.name()).setServerVersion(serverInfo.version());
             }
             McpSchema.ListToolsResult listResult = client.listTools();
-            result.setTools(convertList(listResult != null ? listResult.tools() : null, tool -> new Ai1McpConnectRespVO.Tool()
-                    .setName(tool.name()).setTitle(tool.title()).setDescription(tool.description())));
+            result.setTools(
+                    convertList(
+                            listResult != null ? listResult.tools() : null,
+                            tool ->
+                                    new Ai1McpConnectRespVO.Tool()
+                                            .setName(tool.name())
+                                            .setTitle(tool.title())
+                                            .setDescription(tool.description())));
             return result.setToolCount(result.getTools().size())
                     .setMessage("连接成功，发现 " + result.getTools().size() + " 个工具")
                     .setElapsedMs(System.currentTimeMillis() - startTime);
@@ -208,8 +232,14 @@ public class Ai1McpClientTool {
      */
     private void evictExcept(Long mcpId, String currentKey) {
         String prefix = mcpId + KEY_SEPARATOR;
-        toolsCache.asMap().keySet().removeIf(key -> key.startsWith(prefix) && !key.equals(currentKey));
-        clientCache.asMap().keySet().removeIf(key -> key.startsWith(prefix) && !key.equals(currentKey));
+        toolsCache
+                .asMap()
+                .keySet()
+                .removeIf(key -> key.startsWith(prefix) && !key.equals(currentKey));
+        clientCache
+                .asMap()
+                .keySet()
+                .removeIf(key -> key.startsWith(prefix) && !key.equals(currentKey));
     }
 
     @PreDestroy
@@ -240,10 +270,11 @@ public class Ai1McpClientTool {
             if (transport == null) {
                 throw new IllegalStateException("MCP(" + mcp.getName() + ") 配置不完整（缺少必要参数）");
             }
-            McpSyncClient client = McpClient.sync(transport)
-                    .requestTimeout(Duration.ofSeconds(60))
-                    .initializationTimeout(Duration.ofSeconds(15))
-                    .build();
+            McpSyncClient client =
+                    McpClient.sync(transport)
+                            .requestTimeout(Duration.ofSeconds(60))
+                            .initializationTimeout(Duration.ofSeconds(15))
+                            .build();
             try {
                 client.initialize();
             } catch (Exception e) {
@@ -263,7 +294,9 @@ public class Ai1McpClientTool {
     private McpClientTransport buildTransport(Ai1McpDO mcp) {
         McpConfig config = resolveConfig(parseConfig(mcp));
         try {
-            return Ai1McpTransportEnum.isStdio(config.getTransport()) ? buildStdioTransport(config) : buildHttpTransport(config);
+            return Ai1McpTransportEnum.isStdio(config.getTransport())
+                    ? buildStdioTransport(config)
+                    : buildHttpTransport(config);
         } catch (ServiceException ex) {
             throw ex;
         } catch (Exception e) {
@@ -286,7 +319,10 @@ public class Ai1McpClientTool {
             URI uri = URI.create(config.getUrl());
             if (uri.getScheme() != null && uri.getAuthority() != null) {
                 baseUri = uri.getScheme() + "://" + uri.getAuthority();
-                endpoint = StrUtil.isEmpty(uri.getRawPath()) ? DEFAULT_HTTP_ENDPOINT : uri.getRawPath();
+                endpoint =
+                        StrUtil.isEmpty(uri.getRawPath())
+                                ? DEFAULT_HTTP_ENDPOINT
+                                : uri.getRawPath();
                 if (uri.getRawQuery() != null) {
                     endpoint += "?" + uri.getRawQuery();
                 }
@@ -294,9 +330,12 @@ public class Ai1McpClientTool {
         } catch (IllegalArgumentException e) {
             log.warn("[buildHttpTransport][服务地址({}) 解析失败，按原值使用]", config.getUrl(), e);
         }
-        HttpClientStreamableHttpTransport.Builder builder = HttpClientStreamableHttpTransport.builder(baseUri)
-                .endpoint(endpoint)
-                .customizeClient(clientBuilder -> clientBuilder.connectTimeout(Duration.ofSeconds(10)));
+        HttpClientStreamableHttpTransport.Builder builder =
+                HttpClientStreamableHttpTransport.builder(baseUri)
+                        .endpoint(endpoint)
+                        .customizeClient(
+                                clientBuilder ->
+                                        clientBuilder.connectTimeout(Duration.ofSeconds(10)));
         if (MapUtil.isNotEmpty(config.getHeaders())) {
             builder.httpRequestCustomizer(buildHeaderCustomizer(config.getHeaders()));
         }
@@ -323,12 +362,15 @@ public class Ai1McpClientTool {
     /**
      * 请求头自定义器：为 MCP HTTP 请求统一追加 headers
      */
-    private static McpSyncHttpClientRequestCustomizer buildHeaderCustomizer(Map<String, String> headers) {
-        return (builder, method, uri, protocolVersion, context) -> headers.forEach((key, value) -> {
-            if (StrUtil.isNotEmpty(key) && value != null) {
-                builder.header(key, value);
-            }
-        });
+    private static McpSyncHttpClientRequestCustomizer buildHeaderCustomizer(
+            Map<String, String> headers) {
+        return (builder, method, uri, protocolVersion, context) ->
+                headers.forEach(
+                        (key, value) -> {
+                            if (StrUtil.isNotEmpty(key) && value != null) {
+                                builder.header(key, value);
+                            }
+                        });
     }
 
     private static void closeQuietly(McpSyncClient client) {
@@ -350,8 +392,12 @@ public class Ai1McpClientTool {
     private static McpConfig parseConfig(Ai1McpDO mcp) {
         Map<String, Object> configMap = MapUtil.emptyIfNull(JsonUtils.parseMap(mcp.getConfig()));
         McpConfig config = new McpConfig();
-        config.setTransport(StrUtil.blankToDefault(mcp.getTransport(),
-                StrUtil.blankToDefault(MapUtil.getStr(configMap, "transport"), Ai1McpTransportEnum.HTTP.getTransport())));
+        config.setTransport(
+                StrUtil.blankToDefault(
+                        mcp.getTransport(),
+                        StrUtil.blankToDefault(
+                                MapUtil.getStr(configMap, "transport"),
+                                Ai1McpTransportEnum.HTTP.getTransport())));
         config.setUrl(StrUtil.blankToDefault(MapUtil.getStr(configMap, "url"), mcp.getUrl()));
         Map<String, String> headers = parseStringMap(configMap.get("headers"));
         config.setHeaders(headers != null ? headers : mcp.getHeaders());
@@ -381,7 +427,9 @@ public class Ai1McpClientTool {
         if (value instanceof String) {
             value = JsonUtils.parseMap((String) value);
         }
-        return value instanceof Map ? MapUtil.removeNullValue(Convert.toMap(String.class, String.class, value)) : null;
+        return value instanceof Map
+                ? MapUtil.removeNullValue(Convert.toMap(String.class, String.class, value))
+                : null;
     }
 
     /**
@@ -391,8 +439,15 @@ public class Ai1McpClientTool {
         if (result == null) {
             return "";
         }
-        String text = CollUtil.join(convertList(result.content(), content -> content instanceof McpSchema.TextContent
-                ? ((McpSchema.TextContent) content).text() : null), "");
+        String text =
+                CollUtil.join(
+                        convertList(
+                                result.content(),
+                                content ->
+                                        content instanceof McpSchema.TextContent
+                                                ? ((McpSchema.TextContent) content).text()
+                                                : null),
+                        "");
         if (StrUtil.isNotEmpty(text)) {
             return text;
         }
@@ -408,7 +463,8 @@ public class Ai1McpClientTool {
      * 多节点下，各节点加载到的 MCP 配置变化后指纹不同，自然重建客户端
      */
     private static String buildCacheKey(Ai1McpDO mcp) {
-        return mcp.getId() + KEY_SEPARATOR
+        return mcp.getId()
+                + KEY_SEPARATOR
                 + Objects.hash(mcp.getTransport(), mcp.getConfig(), mcp.getUrl(), mcp.getHeaders());
     }
 
@@ -416,8 +472,12 @@ public class Ai1McpClientTool {
      * 构建连通测试失败结果
      */
     private static Ai1McpConnectRespVO buildConnectFailResult(String message, long startTime) {
-        return new Ai1McpConnectRespVO().setConnectable(false).setToolCount(0).setTools(new ArrayList<>())
-                .setMessage(message).setElapsedMs(System.currentTimeMillis() - startTime);
+        return new Ai1McpConnectRespVO()
+                .setConnectable(false)
+                .setToolCount(0)
+                .setTools(new ArrayList<>())
+                .setMessage(message)
+                .setElapsedMs(System.currentTimeMillis() - startTime);
     }
 
     /**
@@ -430,27 +490,30 @@ public class Ai1McpClientTool {
          * 传输方式
          */
         private String transport;
+
         /**
          * 服务地址
          */
         private String url;
+
         /**
          * 请求头
          */
         private Map<String, String> headers;
+
         /**
          * stdio 命令
          */
         private String command;
+
         /**
          * stdio 参数
          */
         private List<String> args;
+
         /**
          * stdio 环境变量
          */
         private Map<String, String> env;
-
     }
-
 }

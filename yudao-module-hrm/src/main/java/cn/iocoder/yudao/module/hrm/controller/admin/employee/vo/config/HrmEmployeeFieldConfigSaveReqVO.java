@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.config;
 
 import com.mzt.logapi.starter.annotation.DiffLogField;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - HRM 员工字段配置保存 Request VO")
@@ -25,5 +28,4 @@ public class HrmEmployeeFieldConfigSaveReqVO {
     @Schema(description = "是否允许员工编辑", example = "true")
     @DiffLogField(name = "是否允许员工编辑")
     private Boolean editable;
-
 }

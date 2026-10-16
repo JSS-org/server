@@ -1,5 +1,14 @@
 package cn.iocoder.yudao.module.member.service.level;
 
+import static cn.hutool.core.util.RandomUtil.randomInt;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -9,21 +18,15 @@ import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.MemberLeve
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberLevelMapper;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 import java.util.function.Consumer;
-
-import static cn.hutool.core.util.RandomUtil.randomInt;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 // TODO 芋艿：完全 review 完，在去 review 单测
 /**
@@ -34,28 +37,26 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(MemberLevelServiceImpl.class)
 public class MemberLevelServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MemberLevelServiceImpl levelService;
+    @Resource private MemberLevelServiceImpl levelService;
 
-    @Resource
-    private MemberLevelMapper memberlevelMapper;
+    @Resource private MemberLevelMapper memberlevelMapper;
 
-    @MockitoBean
-    private MemberLevelRecordService memberLevelRecordService;
-    @MockitoBean
-    private MemberExperienceRecordService memberExperienceRecordService;
-    @MockitoBean
-    private MemberUserService memberUserService;
+    @MockitoBean private MemberLevelRecordService memberLevelRecordService;
+    @MockitoBean private MemberExperienceRecordService memberExperienceRecordService;
+    @MockitoBean private MemberUserService memberUserService;
 
     @Test
     public void testCreateLevel_success() {
         // 准备参数
-        MemberLevelCreateReqVO reqVO = randomPojo(MemberLevelCreateReqVO.class, o -> {
-            o.setDiscountPercent(randomInt());
-            o.setIcon(randomURL());
-            o.setBackgroundUrl(randomURL());
-            o.setStatus(randomCommonStatus());
-        });
+        MemberLevelCreateReqVO reqVO =
+                randomPojo(
+                        MemberLevelCreateReqVO.class,
+                        o -> {
+                            o.setDiscountPercent(randomInt());
+                            o.setIcon(randomURL());
+                            o.setBackgroundUrl(randomURL());
+                            o.setStatus(randomCommonStatus());
+                        });
 
         // 调用
         Long levelId = levelService.createLevel(reqVO);
@@ -70,20 +71,23 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
     public void testUpdateLevel_success() {
         // mock 数据
         MemberLevelDO dbLevel = randomPojo(MemberLevelDO.class);
-        memberlevelMapper.insert(dbLevel);// @Sql: 先插入出一条存在的数据
+        memberlevelMapper.insert(dbLevel); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        MemberLevelUpdateReqVO reqVO = randomPojo(MemberLevelUpdateReqVO.class, o -> {
-            o.setId(dbLevel.getId()); // 设置更新的 ID
-            //以下要保持一致
-            o.setName(dbLevel.getName());
-            o.setLevel(dbLevel.getLevel());
-            o.setExperience(dbLevel.getExperience());
-            //以下是要修改的字段
-            o.setDiscountPercent(randomInt());
-            o.setIcon(randomURL());
-            o.setBackgroundUrl(randomURL());
-            o.setStatus(randomCommonStatus());
-        });
+        MemberLevelUpdateReqVO reqVO =
+                randomPojo(
+                        MemberLevelUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbLevel.getId()); // 设置更新的 ID
+                            // 以下要保持一致
+                            o.setName(dbLevel.getName());
+                            o.setLevel(dbLevel.getLevel());
+                            o.setExperience(dbLevel.getExperience());
+                            // 以下是要修改的字段
+                            o.setDiscountPercent(randomInt());
+                            o.setIcon(randomURL());
+                            o.setBackgroundUrl(randomURL());
+                            o.setStatus(randomCommonStatus());
+                        });
 
         // 调用
         levelService.updateLevel(reqVO);
@@ -105,7 +109,7 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
     public void testDeleteLevel_success() {
         // mock 数据
         MemberLevelDO dbLevel = randomPojo(MemberLevelDO.class);
-        memberlevelMapper.insert(dbLevel);// @Sql: 先插入出一条存在的数据
+        memberlevelMapper.insert(dbLevel); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbLevel.getId();
 
@@ -127,10 +131,13 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testGetLevelList() {
         // mock 数据
-        MemberLevelDO dbLevel = randomPojo(MemberLevelDO.class, o -> { // 等会查询到
-            o.setName("黄金会员");
-            o.setStatus(1);
-        });
+        MemberLevelDO dbLevel =
+                randomPojo(
+                        MemberLevelDO.class,
+                        o -> { // 等会查询到
+                            o.setName("黄金会员");
+                            o.setStatus(1);
+                        });
         memberlevelMapper.insert(dbLevel);
         // 测试 name 不匹配
         memberlevelMapper.insert(cloneIgnoreId(dbLevel, o -> o.setName("")));
@@ -158,7 +165,8 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
 
         // 调用，校验异常
         List<MemberLevelDO> list = memberlevelMapper.selectList();
-        assertServiceException(() -> levelService.validateNameUnique(list, null, name), LEVEL_NAME_EXISTS, name);
+        assertServiceException(
+                () -> levelService.validateNameUnique(list, null, name), LEVEL_NAME_EXISTS, name);
     }
 
     @Test
@@ -172,7 +180,8 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
 
         // 调用，校验异常
         List<MemberLevelDO> list = memberlevelMapper.selectList();
-        assertServiceException(() -> levelService.validateNameUnique(list, id, name), LEVEL_NAME_EXISTS, name);
+        assertServiceException(
+                () -> levelService.validateNameUnique(list, id, name), LEVEL_NAME_EXISTS, name);
     }
 
     @Test
@@ -182,14 +191,20 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
         String name = randomString();
 
         // mock 数据
-        memberlevelMapper.insert(randomLevelDO(o -> {
-            o.setLevel(level);
-            o.setName(name);
-        }));
+        memberlevelMapper.insert(
+                randomLevelDO(
+                        o -> {
+                            o.setLevel(level);
+                            o.setName(name);
+                        }));
 
         // 调用，校验异常
         List<MemberLevelDO> list = memberlevelMapper.selectList();
-        assertServiceException(() -> levelService.validateLevelUnique(list, null, level), LEVEL_VALUE_EXISTS, level, name);
+        assertServiceException(
+                () -> levelService.validateLevelUnique(list, null, level),
+                LEVEL_VALUE_EXISTS,
+                level,
+                name);
     }
 
     @Test
@@ -200,14 +215,20 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
         String name = randomString();
 
         // mock 数据
-        memberlevelMapper.insert(randomLevelDO(o -> {
-            o.setLevel(level);
-            o.setName(name);
-        }));
+        memberlevelMapper.insert(
+                randomLevelDO(
+                        o -> {
+                            o.setLevel(level);
+                            o.setName(name);
+                        }));
 
         // 调用，校验异常
         List<MemberLevelDO> list = memberlevelMapper.selectList();
-        assertServiceException(() -> levelService.validateLevelUnique(list, id, level), LEVEL_VALUE_EXISTS, level, name);
+        assertServiceException(
+                () -> levelService.validateLevelUnique(list, id, level),
+                LEVEL_VALUE_EXISTS,
+                level,
+                name);
     }
 
     @Test
@@ -218,17 +239,31 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
         String name = randomString();
 
         // mock 数据
-        memberlevelMapper.insert(randomLevelDO(o -> {
-            o.setLevel(level);
-            o.setExperience(experience);
-            o.setName(name);
-        }));
+        memberlevelMapper.insert(
+                randomLevelDO(
+                        o -> {
+                            o.setLevel(level);
+                            o.setExperience(experience);
+                            o.setName(name);
+                        }));
         List<MemberLevelDO> list = memberlevelMapper.selectList();
 
         // 调用，校验异常
-        assertServiceException(() -> levelService.validateExperienceOutRange(list, null, level + 1, experience - 1), LEVEL_EXPERIENCE_MIN, name, level);
+        assertServiceException(
+                () ->
+                        levelService.validateExperienceOutRange(
+                                list, null, level + 1, experience - 1),
+                LEVEL_EXPERIENCE_MIN,
+                name,
+                level);
         // 调用，校验异常
-        assertServiceException(() -> levelService.validateExperienceOutRange(list, null, level - 1, experience + 1), LEVEL_EXPERIENCE_MAX, name, level);
+        assertServiceException(
+                () ->
+                        levelService.validateExperienceOutRange(
+                                list, null, level - 1, experience + 1),
+                LEVEL_EXPERIENCE_MAX,
+                name,
+                level);
     }
 
     @Test
@@ -240,29 +275,40 @@ public class MemberLevelServiceImplTest extends BaseDbUnitTest {
         String name = randomString();
 
         // mock 数据
-        memberlevelMapper.insert(randomLevelDO(o -> {
-            o.setLevel(level);
-            o.setExperience(experience);
-            o.setName(name);
-        }));
+        memberlevelMapper.insert(
+                randomLevelDO(
+                        o -> {
+                            o.setLevel(level);
+                            o.setExperience(experience);
+                            o.setName(name);
+                        }));
         List<MemberLevelDO> list = memberlevelMapper.selectList();
 
         // 调用，校验异常
-        assertServiceException(() -> levelService.validateExperienceOutRange(list, id, level + 1, experience - 1), LEVEL_EXPERIENCE_MIN, name, level);
+        assertServiceException(
+                () -> levelService.validateExperienceOutRange(list, id, level + 1, experience - 1),
+                LEVEL_EXPERIENCE_MIN,
+                name,
+                level);
         // 调用，校验异常
-        assertServiceException(() -> levelService.validateExperienceOutRange(list, id, level - 1, experience + 1), LEVEL_EXPERIENCE_MAX, name, level);
+        assertServiceException(
+                () -> levelService.validateExperienceOutRange(list, id, level - 1, experience + 1),
+                LEVEL_EXPERIENCE_MAX,
+                name,
+                level);
     }
 
     // ========== 随机对象 ==========
 
     @SafeVarargs
     private static MemberLevelDO randomLevelDO(Consumer<MemberLevelDO>... consumers) {
-        Consumer<MemberLevelDO> consumer = (o) -> {
-            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
-            o.setDiscountPercent(randomInt(0, 100));
-            o.setIcon(randomURL());
-            o.setBackgroundUrl(randomURL());
-        };
+        Consumer<MemberLevelDO> consumer =
+                (o) -> {
+                    o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                    o.setDiscountPercent(randomInt(0, 100));
+                    o.setIcon(randomURL());
+                    o.setBackgroundUrl(randomURL());
+                };
         return randomPojo(MemberLevelDO.class, ArrayUtils.append(consumer, consumers));
     }
 }

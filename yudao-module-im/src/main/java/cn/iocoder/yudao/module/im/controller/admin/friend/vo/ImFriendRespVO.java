@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.controller.admin.friend.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -60,5 +61,4 @@ public class ImFriendRespVO {
 
     @Schema(description = "好友头像（实时聚合自 AdminUser）")
     private String avatar;
-
 }

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.wms.dal.mysql.order.receipt;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.wms.dal.dataobject.order.receipt.WmsReceiptOrderDetailDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
@@ -21,10 +22,11 @@ public interface WmsReceiptOrderDetailMapper extends BaseMapperX<WmsReceiptOrder
     }
 
     default List<WmsReceiptOrderDetailDO> selectListByOrderIds(Collection<Long> orderIds) {
-        return selectList(new LambdaQueryWrapperX<WmsReceiptOrderDetailDO>()
-                .inIfPresent(WmsReceiptOrderDetailDO::getOrderId, orderIds)
-                .orderByAsc(WmsReceiptOrderDetailDO::getOrderId)
-                .orderByAsc(WmsReceiptOrderDetailDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<WmsReceiptOrderDetailDO>()
+                        .inIfPresent(WmsReceiptOrderDetailDO::getOrderId, orderIds)
+                        .orderByAsc(WmsReceiptOrderDetailDO::getOrderId)
+                        .orderByAsc(WmsReceiptOrderDetailDO::getId));
     }
 
     default void deleteByOrderId(Long orderId) {
@@ -34,5 +36,4 @@ public interface WmsReceiptOrderDetailMapper extends BaseMapperX<WmsReceiptOrder
     default Long selectCountBySkuId(Long skuId) {
         return selectCount(WmsReceiptOrderDetailDO::getSkuId, skuId);
     }
-
 }

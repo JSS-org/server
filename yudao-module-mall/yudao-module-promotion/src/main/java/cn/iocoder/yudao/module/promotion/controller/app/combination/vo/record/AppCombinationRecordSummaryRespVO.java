@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.app.combination.vo.record;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -19,5 +20,4 @@ public class AppCombinationRecordSummaryRespVO {
 
     @Schema(description = "拼团用户头像列表", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> avatars;
-
 }

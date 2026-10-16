@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.skill.vo.skill;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,5 +30,4 @@ public class Ai1SkillRespVO {
 
     @Schema(description = "更新时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime updateTime;
-
 }

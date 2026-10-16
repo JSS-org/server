@@ -43,5 +43,4 @@ public interface PayOrderApi {
      * @param payPrice   支付单价格
      */
     void updatePayOrderPrice(Long id, Integer payPrice);
-
 }

@@ -4,8 +4,10 @@ import cn.iocoder.yudao.module.crm.dal.dataobject.business.CrmBusinessDO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.contact.CrmContactDO;
 import cn.iocoder.yudao.module.crm.enums.DictTypeConstants;
 import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,6 +28,7 @@ public class CrmFollowUpCreateReqBO {
      */
     @NotNull(message = "数据类型不能为空")
     private Integer bizType;
+
     /**
      * 数据编号
      *
@@ -41,11 +44,13 @@ public class CrmFollowUpCreateReqBO {
      */
     @NotNull(message = "跟进类型不能为空")
     private Integer type;
+
     /**
      * 跟进内容
      */
     @NotEmpty(message = "跟进内容不能为空")
     private String content;
+
     /**
      * 下次联系时间
      */
@@ -56,6 +61,7 @@ public class CrmFollowUpCreateReqBO {
      * 图片
      */
     private List<String> picUrls;
+
     /**
      * 附件
      */
@@ -74,5 +80,4 @@ public class CrmFollowUpCreateReqBO {
      * 关联 {@link CrmContactDO#getId()}
      */
     private List<Long> contactIds;
-
 }

@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.oa.controller.admin.seal.vo.apply;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.oa.enums.seal.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.*;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -58,7 +61,12 @@ public class OaSealApplySaveReqVO {
     @Size(max = 255, message = "合同对方长度不能超过 {max} 个字符")
     private String contractParty;
 
-    @Schema(description = "预计用印时间", example = "1789088400000", requiredMode = Schema.RequiredMode.REQUIRED, type = "integer", format = "int64")
+    @Schema(
+            description = "预计用印时间",
+            example = "1789088400000",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            type = "integer",
+            format = "int64")
     @NotNull(message = "预计用印时间不能为空")
     private LocalDateTime expectedUseTime;
 
@@ -78,5 +86,8 @@ public class OaSealApplySaveReqVO {
 
     @Schema(description = "附件地址列表", example = "[\"https://example.com/contract.pdf\"]")
     @Size(max = 5, message = "附件地址列表数量不能超过 {max} 个")
-    private List<@NotBlank(message = "附件地址不能为空") @Size(max = 2048, message = "附件地址长度不能超过 {max} 个字符") String> fileUrls;
+    private List<
+                    @NotBlank(message = "附件地址不能为空")
+                    @Size(max = 2048, message = "附件地址长度不能超过 {max} 个字符") String>
+            fileUrls;
 }

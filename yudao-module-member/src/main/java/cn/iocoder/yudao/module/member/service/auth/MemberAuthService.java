@@ -84,5 +84,4 @@ public interface MemberAuthService {
      * @return 登录结果
      */
     AppAuthLoginRespVO refreshToken(String refreshToken);
-
 }

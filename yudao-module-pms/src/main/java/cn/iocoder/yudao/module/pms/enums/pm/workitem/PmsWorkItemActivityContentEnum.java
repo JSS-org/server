@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.enums.pm.workitem;
 
 import cn.hutool.core.util.StrUtil;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,7 +13,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PmsWorkItemActivityContentEnum {
-
     WORK_ITEM_CREATED("创建了工作项"),
     WORK_ITEM_FIELD_UPDATED("将{}从「{}」修改为「{}」"),
     WORK_ITEM_DESCRIPTION_UPDATED("更新了工作项描述"),
@@ -50,5 +50,4 @@ public enum PmsWorkItemActivityContentEnum {
     public String format(Object... arguments) {
         return StrUtil.format(content, arguments);
     }
-
 }

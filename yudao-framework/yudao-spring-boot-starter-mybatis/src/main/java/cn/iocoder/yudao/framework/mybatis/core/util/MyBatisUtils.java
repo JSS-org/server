@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.SortingField;
 import cn.iocoder.yudao.framework.mybatis.core.enums.DbTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -16,6 +17,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -34,7 +36,8 @@ public class MyBatisUtils {
 
     private static final String MYSQL_ESCAPE_CHARACTER = "`";
 
-    private static final Pattern SAFE_COLUMN_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*$");
+    private static final Pattern SAFE_COLUMN_NAME_PATTERN =
+            Pattern.compile("^[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*$");
 
     private static final String FIND_IN_SET_VALUE_PLACEHOLDER = "#{value}";
 
@@ -44,10 +47,12 @@ public class MyBatisUtils {
         return buildPage(pageParam, null);
     }
 
-    public static <T> Page<T> buildPage(PageParam pageParam, Collection<SortingField> sortingFields) {
+    public static <T> Page<T> buildPage(
+            PageParam pageParam, Collection<SortingField> sortingFields) {
         // 页码 + 数量
         Page<T> page = new Page<>(pageParam.getPageNo(), pageParam.getPageSize());
-        page.setOptimizeJoinOfCountSql(false); // 关联 issue：https://gitee.com/zhijiantianya/yudao-cloud/issues/ID2QLL
+        page.setOptimizeJoinOfCountSql(
+                false); // 关联 issue：https://gitee.com/zhijiantianya/yudao-cloud/issues/ID2QLL
         // 排序字段
         if (CollUtil.isNotEmpty(sortingFields)) {
             for (SortingField sortingField : sortingFields) {
@@ -55,7 +60,10 @@ public class MyBatisUtils {
                 if (columnName == null) {
                     continue;
                 }
-                page.addOrder(new OrderItem().setAsc(isAscOrder(sortingField.getOrder())).setColumn(columnName));
+                page.addOrder(
+                        new OrderItem()
+                                .setAsc(isAscOrder(sortingField.getOrder()))
+                                .setColumn(columnName));
             }
         }
         return page;
@@ -87,16 +95,18 @@ public class MyBatisUtils {
                 if (StrUtil.isNotEmpty(orderBy)) {
                     orderBy.append(", ");
                 }
-                orderBy.append(columnName).append(" ").append(getOrderDirection(sortingField.getOrder()));
+                orderBy.append(columnName)
+                        .append(" ")
+                        .append(getOrderDirection(sortingField.getOrder()));
             }
             if (StrUtil.isNotEmpty(orderBy)) {
                 lambdaQuery.last("ORDER BY " + orderBy);
             }
             // 另外个思路：https://blog.csdn.net/m0_59084856/article/details/138450913
         } else {
-            throw new IllegalArgumentException("Unsupported wrapper type: " + wrapper.getClass().getName());
+            throw new IllegalArgumentException(
+                    "Unsupported wrapper type: " + wrapper.getClass().getName());
         }
-
     }
 
     public static boolean isAscOrder(String order) {
@@ -109,7 +119,8 @@ public class MyBatisUtils {
 
     private static String buildSafeOrderColumn(String field) {
         String columnName = StrUtil.toUnderlineCase(field);
-        if (StrUtil.isEmpty(columnName) || !SAFE_COLUMN_NAME_PATTERN.matcher(columnName).matches()) {
+        if (StrUtil.isEmpty(columnName)
+                || !SAFE_COLUMN_NAME_PATTERN.matcher(columnName).matches()) {
             return null;
         }
         return columnName;
@@ -123,7 +134,8 @@ public class MyBatisUtils {
      * @param inner       拦截器
      * @param index       位置
      */
-    public static void addInterceptor(MybatisPlusInterceptor interceptor, InnerInterceptor inner, int index) {
+    public static void addInterceptor(
+            MybatisPlusInterceptor interceptor, InnerInterceptor inner, int index) {
         List<InnerInterceptor> inners = new ArrayList<>(interceptor.getInterceptors());
         inners.add(index, inner);
         interceptor.setInterceptors(inners);
@@ -139,7 +151,8 @@ public class MyBatisUtils {
      */
     public static String getTableName(Table table) {
         String tableName = table.getName();
-        if (tableName.startsWith(MYSQL_ESCAPE_CHARACTER) && tableName.endsWith(MYSQL_ESCAPE_CHARACTER)) {
+        if (tableName.startsWith(MYSQL_ESCAPE_CHARACTER)
+                && tableName.endsWith(MYSQL_ESCAPE_CHARACTER)) {
             tableName = tableName.substring(1, tableName.length() - 1);
         }
         return tableName;
@@ -221,7 +234,8 @@ public class MyBatisUtils {
     }
 
     private static boolean isSafeColumnName(String columnName) {
-        return StrUtil.isNotEmpty(columnName) && SAFE_COLUMN_NAME_PATTERN.matcher(columnName).matches();
+        return StrUtil.isNotEmpty(columnName)
+                && SAFE_COLUMN_NAME_PATTERN.matcher(columnName).matches();
     }
 
     /**
@@ -237,5 +251,4 @@ public class MyBatisUtils {
         String fieldName = LambdaUtil.getFieldName(func);
         return StrUtil.toUnderlineCase(fieldName);
     }
-
 }

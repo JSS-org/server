@@ -1,18 +1,21 @@
 package cn.iocoder.yudao.framework.datapermission.core.db;
 
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.skipPermissionCheck;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.datapermission.core.rule.DataPermissionRule;
 import cn.iocoder.yudao.framework.datapermission.core.rule.DataPermissionRuleFactory;
 import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
+
 import com.baomidou.mybatisplus.extension.plugins.handler.MultiDataPermissionHandler;
+
 import lombok.RequiredArgsConstructor;
+
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Table;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.skipPermissionCheck;
 
 /**
  * 基于 {@link DataPermissionRule} 的数据权限处理器
@@ -55,10 +58,11 @@ public class DataPermissionRuleHandler implements MultiDataPermissionHandler {
                 continue;
             }
             // 拼接到 allExpression 中
-            allExpression = allExpression == null ? oneExpress
-                    : new AndExpression(allExpression, oneExpress);
+            allExpression =
+                    allExpression == null
+                            ? oneExpress
+                            : new AndExpression(allExpression, oneExpress);
         }
         return allExpression;
     }
-
 }

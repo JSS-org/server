@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model.vo.apikey;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import java.util.*;
+
 import jakarta.validation.constraints.*;
+
+import lombok.*;
+
+import java.util.*;
 
 @Schema(description = "管理后台 - AI API 密钥新增/修改 Request VO")
 @Data
@@ -30,5 +33,4 @@ public class AiApiKeySaveReqVO {
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "状态不能为空")
     private Integer status;
-
 }

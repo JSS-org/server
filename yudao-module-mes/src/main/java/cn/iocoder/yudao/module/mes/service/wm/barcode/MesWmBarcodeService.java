@@ -4,6 +4,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.MesWmBarcodePageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.barcode.vo.MesWmBarcodeSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.barcode.MesWmBarcodeDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
@@ -96,5 +97,4 @@ public interface MesWmBarcodeService {
      * @return 条码数量
      */
     long getBarcodeCountByConfigId(Long configId);
-
 }

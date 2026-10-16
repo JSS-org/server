@@ -1,10 +1,11 @@
 package cn.iocoder.yudao.module.product.controller.app.category.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import lombok.Data;
 
 @Data
 @Schema(description = "用户 APP - 商品分类 Response VO")
@@ -24,5 +25,4 @@ public class AppCategoryRespVO {
     @Schema(description = "分类图片", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "分类图片不能为空")
     private String picUrl;
-
 }

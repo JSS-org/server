@@ -16,9 +16,9 @@ public class GroupMemberMutedNotification extends BaseGroupNotification {
      * 被禁言的用户编号
      */
     private Long mutedUserId;
+
     /**
      * 禁言到期时间
      */
     private LocalDateTime muteEndTime;
-
 }

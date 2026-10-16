@@ -24,5 +24,4 @@ public interface HrmConfigService {
      * @param values 配置值列表
      */
     void replaceConfigValueList(Integer type, List<String> values);
-
 }

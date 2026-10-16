@@ -11,7 +11,6 @@ import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
  */
 public interface WebSocketSenderApi {
 
-
     /**
      * 发送消息给指定用户
      *
@@ -40,7 +39,8 @@ public interface WebSocketSenderApi {
      */
     void send(String sessionId, String messageType, String messageContent);
 
-    default void sendObject(Integer userType, Long userId, String messageType, Object messageContent) {
+    default void sendObject(
+            Integer userType, Long userId, String messageType, Object messageContent) {
         send(userType, userId, messageType, JsonUtils.toJsonString(messageContent));
     }
 
@@ -51,5 +51,4 @@ public interface WebSocketSenderApi {
     default void sendObject(String sessionId, String messageType, Object messageContent) {
         send(sessionId, messageType, JsonUtils.toJsonString(messageContent));
     }
-
 }

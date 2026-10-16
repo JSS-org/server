@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.process;
 
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.BpmModelMetaInfoVO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ public class BpmProcessDefinitionRespVO extends BpmModelMetaInfoVO {
 
     @Schema(description = "流程分类", example = "1")
     private String category;
+
     @Schema(description = "流程分类名字", example = "请假")
     private String categoryName;
 
@@ -34,14 +37,23 @@ public class BpmProcessDefinitionRespVO extends BpmModelMetaInfoVO {
     @Schema(description = "流程模型的编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "ABC")
     private String modelId;
 
-    @Schema(description = "表单的配置-JSON 字符串。在表单类型为 {@link BpmModelFormTypeEnum#CUSTOM} 时，必须非空", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            description = "表单的配置-JSON 字符串。在表单类型为 {@link BpmModelFormTypeEnum#CUSTOM} 时，必须非空",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private String formConf;
-    @Schema(description = "表单项的数组-JSON 字符串的数组。在表单类型为 {@link BpmModelFormTypeEnum#CUSTOM} 时，必须非空", requiredMode = Schema.RequiredMode.REQUIRED)
+
+    @Schema(
+            description = "表单项的数组-JSON 字符串的数组。在表单类型为 {@link BpmModelFormTypeEnum#CUSTOM} 时，必须非空",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> formFields;
+
     @Schema(description = "表单名字", example = "请假表单")
     private String formName;
 
-    @Schema(description = "中断状态-参见 SuspensionState 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "中断状态-参见 SuspensionState 枚举",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Integer suspensionState; // 参见 SuspensionState 枚举
 
     @Schema(description = "部署时间")
@@ -65,7 +77,5 @@ public class BpmProcessDefinitionRespVO extends BpmModelMetaInfoVO {
 
         @Schema(description = "任务名", requiredMode = Schema.RequiredMode.REQUIRED, example = "王五")
         private String name;
-
     }
-
 }

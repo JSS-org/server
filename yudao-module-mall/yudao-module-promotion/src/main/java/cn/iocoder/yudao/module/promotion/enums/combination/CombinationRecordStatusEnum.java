@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.promotion.enums.combination;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,17 +16,20 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum CombinationRecordStatusEnum implements ArrayValuable<Integer> {
-
     IN_PROGRESS(0, "进行中"),
     SUCCESS(1, "拼团成功"),
     FAILED(2, "拼团失败");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(CombinationRecordStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values())
+                    .map(CombinationRecordStatusEnum::getStatus)
+                    .toArray(Integer[]::new);
 
     /**
      * 状态值
      */
     private final Integer status;
+
     /**
      * 状态名
      */
@@ -47,5 +51,4 @@ public enum CombinationRecordStatusEnum implements ArrayValuable<Integer> {
     public static boolean isFailed(Integer status) {
         return ObjectUtil.equal(status, FAILED.getStatus());
     }
-
 }

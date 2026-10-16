@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.trade.service.price;
 import cn.iocoder.yudao.module.trade.controller.app.order.vo.AppTradeProductSettlementRespVO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -30,5 +31,4 @@ public interface TradePriceService {
      * @return 计算结果
      */
     List<AppTradeProductSettlementRespVO> calculateProductPrice(Long userId, List<Long> spuIds);
-
 }

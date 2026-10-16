@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.gym.controller.admin.course.vo;
+
 import lombok.Data;
+
 @Data
 public class GymLessonRecordRespVO {
     private String id;

@@ -39,5 +39,4 @@ public class YudaoRedisAutoConfiguration {
         // 原因：Spring Data Redis 4 使用 Jackson 3，RedisSerializer.json() 已支持 Java Time 类型
         return json;
     }
-
 }

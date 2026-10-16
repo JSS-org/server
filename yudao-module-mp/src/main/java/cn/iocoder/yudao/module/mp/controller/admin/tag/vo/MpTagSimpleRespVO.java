@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.mp.controller.admin.tag.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 公众号标签精简信息 Response VO")
@@ -15,5 +16,4 @@ public class MpTagSimpleRespVO {
 
     @Schema(description = "标签名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "快乐")
     private String name;
-
 }

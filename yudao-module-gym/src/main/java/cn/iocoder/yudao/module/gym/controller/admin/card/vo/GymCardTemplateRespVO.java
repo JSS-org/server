@@ -1,7 +1,10 @@
 package cn.iocoder.yudao.module.gym.controller.admin.card.vo;
+
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.util.List;
+
 @Data
 public class GymCardTemplateRespVO {
     private String id;

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mp.framework.mp.core;
 
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.module.mp.dal.dataobject.account.MpAccountDO;
+
 import me.chanjar.weixin.mp.api.WxMpMessageRouter;
 import me.chanjar.weixin.mp.api.WxMpService;
 
@@ -62,5 +63,4 @@ public interface MpServiceFactory {
         Assert.notNull(wxMpMessageRouter, "找到对应 appId({}) 的 WxMpMessageRouter，请核实！", appId);
         return wxMpMessageRouter;
     }
-
 }

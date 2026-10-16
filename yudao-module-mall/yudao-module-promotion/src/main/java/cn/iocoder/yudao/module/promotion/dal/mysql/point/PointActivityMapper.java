@@ -6,7 +6,9 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.promotion.controller.admin.point.vo.activity.PointActivityPageReqVO;
 import cn.iocoder.yudao.module.promotion.dal.dataobject.point.PointActivityDO;
+
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -18,9 +20,11 @@ import org.apache.ibatis.annotations.Mapper;
 public interface PointActivityMapper extends BaseMapperX<PointActivityDO> {
 
     default PageResult<PointActivityDO> selectPage(PointActivityPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<PointActivityDO>()
-                .eqIfPresent(PointActivityDO::getStatus, reqVO.getStatus())
-                .orderByDesc(PointActivityDO::getSort));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<PointActivityDO>()
+                        .eqIfPresent(PointActivityDO::getStatus, reqVO.getStatus())
+                        .orderByDesc(PointActivityDO::getSort));
     }
 
     /**
@@ -32,10 +36,12 @@ public interface PointActivityMapper extends BaseMapperX<PointActivityDO> {
      */
     default int updateStockDecr(Long id, int count) {
         Assert.isTrue(count > 0);
-        return update(null, new LambdaUpdateWrapper<PointActivityDO>()
-                .eq(PointActivityDO::getId, id)
-                .ge(PointActivityDO::getStock, count)
-                .setSql("stock = stock - " + count));
+        return update(
+                null,
+                new LambdaUpdateWrapper<PointActivityDO>()
+                        .eq(PointActivityDO::getId, id)
+                        .ge(PointActivityDO::getStock, count)
+                        .setSql("stock = stock - " + count));
     }
 
     /**
@@ -47,9 +53,10 @@ public interface PointActivityMapper extends BaseMapperX<PointActivityDO> {
      */
     default int updateStockIncr(Long id, int count) {
         Assert.isTrue(count > 0);
-        return update(null, new LambdaUpdateWrapper<PointActivityDO>()
-                .eq(PointActivityDO::getId, id)
-                .setSql("stock = stock + " + count));
+        return update(
+                null,
+                new LambdaUpdateWrapper<PointActivityDO>()
+                        .eq(PointActivityDO::getId, id)
+                        .setSql("stock = stock + " + count));
     }
-
 }

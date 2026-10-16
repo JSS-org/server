@@ -7,7 +7,9 @@ import cn.iocoder.yudao.module.product.controller.admin.spu.vo.ProductSpuSaveReq
 import cn.iocoder.yudao.module.product.controller.admin.spu.vo.ProductSpuUpdateStatusReqVO;
 import cn.iocoder.yudao.module.product.controller.app.spu.vo.AppProductSpuPageReqVO;
 import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
+
 import jakarta.validation.Valid;
+
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.Collection;
@@ -133,7 +135,6 @@ public interface ProductSpuService {
      */
     Long getSpuCountByCategoryId(Long categoryId);
 
-
     /**
      * 校验商品是否有效。如下情况，视为无效：
      * 1. 商品编号不存在
@@ -152,5 +153,4 @@ public interface ProductSpuService {
      */
     @Async
     void updateBrowseCount(Long id, int incrCount);
-
 }

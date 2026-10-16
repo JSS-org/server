@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.worklog;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -20,5 +21,4 @@ public class PmsWorkItemWorkLogSummaryRespVO {
 
     @Schema(description = "工时记录列表", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<PmsWorkItemWorkLogRespVO> records;
-
 }

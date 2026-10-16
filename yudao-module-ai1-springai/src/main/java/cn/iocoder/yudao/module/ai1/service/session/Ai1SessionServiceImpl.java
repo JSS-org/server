@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.ai1.service.session;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,7 +13,9 @@ import cn.iocoder.yudao.module.ai1.controller.admin.session.vo.session.Ai1Sessio
 import cn.iocoder.yudao.module.ai1.dal.dataobject.session.Ai1SessionDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.session.Ai1SessionMapper;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +24,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_NOT_EXISTS;
 
 /**
  * AI1 会话 Service 实现类
@@ -32,14 +34,11 @@ import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.SESSION_NO
 @Validated
 public class Ai1SessionServiceImpl implements Ai1SessionService {
 
-    @Resource
-    private Ai1SessionMapper sessionMapper;
+    @Resource private Ai1SessionMapper sessionMapper;
 
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1AgentService agentService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1SessionMessageService sessionMessageService;
 
     @Override
@@ -48,8 +47,11 @@ public class Ai1SessionServiceImpl implements Ai1SessionService {
         agentService.validateAgentEnabled(createReqVO.getAgentId());
 
         // 2. 插入：首条消息发送后，标题自动替换为提问内容
-        Ai1SessionDO session = new Ai1SessionDO().setAgentId(createReqVO.getAgentId())
-                .setUserId(userId).setTitle(Ai1SessionDO.TITLE_DEFAULT);
+        Ai1SessionDO session =
+                new Ai1SessionDO()
+                        .setAgentId(createReqVO.getAgentId())
+                        .setUserId(userId)
+                        .setTitle(Ai1SessionDO.TITLE_DEFAULT);
         sessionMapper.insert(session);
         return session.getId();
     }
@@ -110,7 +112,8 @@ public class Ai1SessionServiceImpl implements Ai1SessionService {
         if (CollUtil.isEmpty(agentIds)) {
             return;
         }
-        List<Long> sessionIds = convertList(sessionMapper.selectListByAgentIds(agentIds), Ai1SessionDO::getId);
+        List<Long> sessionIds =
+                convertList(sessionMapper.selectListByAgentIds(agentIds), Ai1SessionDO::getId);
         if (CollUtil.isEmpty(sessionIds)) {
             return;
         }
@@ -119,5 +122,4 @@ public class Ai1SessionServiceImpl implements Ai1SessionService {
         sessionMapper.deleteByIds(sessionIds);
         sessionMessageService.deleteSessionMessageListBySessionIds(sessionIds);
     }
-
 }

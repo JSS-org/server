@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.qc.ipqc;
 
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -24,12 +29,15 @@ import cn.iocoder.yudao.module.mes.service.pro.workorder.MesProWorkOrderService;
 import cn.iocoder.yudao.module.mes.service.qc.ipqc.MesQcIpqcService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,32 +47,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-
 @Tag(name = "管理后台 - MES 过程检验单（IPQC）")
 @RestController
 @RequestMapping("/mes/qc/ipqc")
 @Validated
 public class MesQcIpqcController {
 
-    @Resource
-    private MesQcIpqcService ipqcService;
-    @Resource
-    private MesProWorkOrderService workOrderService;
-    @Resource
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesProProcessService processService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdUnitMeasureService unitMeasureService;
+    @Resource private MesQcIpqcService ipqcService;
+    @Resource private MesProWorkOrderService workOrderService;
+    @Resource private MesMdWorkstationService workstationService;
+    @Resource private MesProProcessService processService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdUnitMeasureService unitMeasureService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建过程检验单")
@@ -111,17 +107,19 @@ public class MesQcIpqcController {
     @GetMapping("/page")
     @Operation(summary = "获得过程检验单分页")
     @PreAuthorize("@ss.hasPermission('mes:qc-ipqc:query')")
-    public CommonResult<PageResult<MesQcIpqcRespVO>> getIpqcPage(@Valid MesQcIpqcPageReqVO pageReqVO) {
+    public CommonResult<PageResult<MesQcIpqcRespVO>> getIpqcPage(
+            @Valid MesQcIpqcPageReqVO pageReqVO) {
         PageResult<MesQcIpqcDO> pageResult = ipqcService.getIpqcPage(pageReqVO);
-        return success(new PageResult<>(buildIpqcRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(buildIpqcRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
     @Operation(summary = "导出过程检验单 Excel")
     @PreAuthorize("@ss.hasPermission('mes:qc-ipqc:export')")
     @ApiAccessLog(operateType = EXPORT)
-    public void exportIpqcExcel(@Valid MesQcIpqcPageReqVO pageReqVO,
-                                HttpServletResponse response) throws IOException {
+    public void exportIpqcExcel(@Valid MesQcIpqcPageReqVO pageReqVO, HttpServletResponse response)
+            throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<MesQcIpqcDO> list = ipqcService.getIpqcPage(pageReqVO).getList();
         List<MesQcIpqcRespVO> voList = buildIpqcRespVOList(list);
@@ -135,39 +133,60 @@ public class MesQcIpqcController {
             return Collections.emptyList();
         }
         // 批量查询工单
-        Map<Long, MesProWorkOrderDO> workOrderMap = workOrderService.getWorkOrderMap(
-                convertSet(list, MesQcIpqcDO::getWorkOrderId));
+        Map<Long, MesProWorkOrderDO> workOrderMap =
+                workOrderService.getWorkOrderMap(convertSet(list, MesQcIpqcDO::getWorkOrderId));
         // 批量查询工位
-        Map<Long, MesMdWorkstationDO> workstationMap = workstationService.getWorkstationMap(
-                convertSet(list, MesQcIpqcDO::getWorkstationId));
+        Map<Long, MesMdWorkstationDO> workstationMap =
+                workstationService.getWorkstationMap(
+                        convertSet(list, MesQcIpqcDO::getWorkstationId));
         // 批量查询工序
-        Map<Long, MesProProcessDO> processMap = processService.getProcessMap(
-                convertSet(list, MesQcIpqcDO::getProcessId));
+        Map<Long, MesProProcessDO> processMap =
+                processService.getProcessMap(convertSet(list, MesQcIpqcDO::getProcessId));
         // 批量查询物料
-        Map<Long, MesMdItemDO> itemMap = itemService.getItemMap(
-                convertSet(list, MesQcIpqcDO::getItemId));
+        Map<Long, MesMdItemDO> itemMap =
+                itemService.getItemMap(convertSet(list, MesQcIpqcDO::getItemId));
         // 批量查询计量单位（
-        Map<Long, MesMdUnitMeasureDO> unitMeasureMap = unitMeasureService.getUnitMeasureMap(
-                convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
+        Map<Long, MesMdUnitMeasureDO> unitMeasureMap =
+                unitMeasureService.getUnitMeasureMap(
+                        convertSet(itemMap.values(), MesMdItemDO::getUnitMeasureId));
         // 批量查询检测人员
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(list, MesQcIpqcDO::getInspectorUserId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(list, MesQcIpqcDO::getInspectorUserId));
         // 拼装 VO
-        return BeanUtils.toBean(list, MesQcIpqcRespVO.class, vo -> {
-            findAndThen(workOrderMap, vo.getWorkOrderId(), workOrder -> vo
-                    .setWorkOrderCode(workOrder.getCode()).setWorkOrderName(workOrder.getName()));
-            findAndThen(workstationMap, vo.getWorkstationId(),
-                    ws -> vo.setWorkstationName(ws.getName()));
-            findAndThen(processMap, vo.getProcessId(),
-                    process -> vo.setProcessName(process.getName()));
-            findAndThen(itemMap, vo.getItemId(), item -> {
-                vo.setItemCode(item.getCode()).setItemName(item.getName()).setItemSpecification(item.getSpecification());
-                findAndThen(unitMeasureMap, item.getUnitMeasureId(),
-                        unit -> vo.setUnitName(unit.getName()));
-            });
-            findAndThen(userMap, vo.getInspectorUserId(),
-                    user -> vo.setInspectorNickname(user.getNickname()));
-        });
+        return BeanUtils.toBean(
+                list,
+                MesQcIpqcRespVO.class,
+                vo -> {
+                    findAndThen(
+                            workOrderMap,
+                            vo.getWorkOrderId(),
+                            workOrder ->
+                                    vo.setWorkOrderCode(workOrder.getCode())
+                                            .setWorkOrderName(workOrder.getName()));
+                    findAndThen(
+                            workstationMap,
+                            vo.getWorkstationId(),
+                            ws -> vo.setWorkstationName(ws.getName()));
+                    findAndThen(
+                            processMap,
+                            vo.getProcessId(),
+                            process -> vo.setProcessName(process.getName()));
+                    findAndThen(
+                            itemMap,
+                            vo.getItemId(),
+                            item -> {
+                                vo.setItemCode(item.getCode())
+                                        .setItemName(item.getName())
+                                        .setItemSpecification(item.getSpecification());
+                                findAndThen(
+                                        unitMeasureMap,
+                                        item.getUnitMeasureId(),
+                                        unit -> vo.setUnitName(unit.getName()));
+                            });
+                    findAndThen(
+                            userMap,
+                            vo.getInspectorUserId(),
+                            user -> vo.setInspectorNickname(user.getNickname()));
+                });
     }
-
 }

@@ -1,15 +1,20 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.employee;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.config.HrmEmployeeArchiveFieldConfigSaveReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.config.HrmEmployeeCreateFieldConfigSaveReqVO;
 import cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.config.HrmEmployeeFieldConfigRespVO;
 import cn.iocoder.yudao.module.hrm.service.employee.config.HrmEmployeeFieldConfigService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,21 +26,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-
 @Tag(name = "管理后台 - HRM 员工字段配置")
 @RestController
 @RequestMapping("/hrm/employee/config")
 @Validated
 public class HrmEmployeeFieldConfigController {
 
-    @Resource
-    private HrmEmployeeFieldConfigService employeeFieldConfigService;
+    @Resource private HrmEmployeeFieldConfigService employeeFieldConfigService;
 
     @GetMapping("/create-field/list")
     @Operation(summary = "获得新建员工字段配置")
-    @Parameter(name = "entryStatus", description = "入职状态：1 在职，2 待入职", required = true, example = "1")
-    @PreAuthorize("@ss.hasPermission('hrm:employee:config:query') or @ss.hasPermission('hrm:employee:create')")
+    @Parameter(
+            name = "entryStatus",
+            description = "入职状态：1 在职，2 待入职",
+            required = true,
+            example = "1")
+    @PreAuthorize(
+            "@ss.hasPermission('hrm:employee:config:query') or @ss.hasPermission('hrm:employee:create')")
     public CommonResult<List<HrmEmployeeFieldConfigRespVO>> getEmployeeCreateFieldConfigList(
             @RequestParam("entryStatus") Integer entryStatus) {
         return success(employeeFieldConfigService.getEmployeeCreateFieldConfigList(entryStatus));
@@ -65,5 +72,4 @@ public class HrmEmployeeFieldConfigController {
         employeeFieldConfigService.saveEmployeeArchiveFieldConfig(reqVO);
         return success(true);
     }
-
 }

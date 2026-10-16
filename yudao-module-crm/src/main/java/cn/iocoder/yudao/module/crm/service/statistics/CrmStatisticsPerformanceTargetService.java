@@ -18,6 +18,6 @@ public interface CrmStatisticsPerformanceTargetService {
      * @param reqVO 请求参数
      * @return 业绩目标完成情况
      */
-    List<CrmStatisticsPerformanceTargetRespVO> getPerformanceTargetSummary(CrmStatisticsPerformanceTargetReqVO reqVO);
-
+    List<CrmStatisticsPerformanceTargetRespVO> getPerformanceTargetSummary(
+            CrmStatisticsPerformanceTargetReqVO reqVO);
 }

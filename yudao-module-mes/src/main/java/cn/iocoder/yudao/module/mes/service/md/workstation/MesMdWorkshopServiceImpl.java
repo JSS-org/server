@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.md.workstation;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,7 +13,9 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.md.workstation.MesMdWorkshopDO
 import cn.iocoder.yudao.module.mes.dal.mysql.md.workstation.MesMdWorkshopMapper;
 import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -18,9 +23,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 车间 Service 实现类
@@ -31,14 +33,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesMdWorkshopServiceImpl implements MesMdWorkshopService {
 
-    @Resource
-    private MesMdWorkshopMapper workshopMapper;
+    @Resource private MesMdWorkshopMapper workshopMapper;
 
-    @Resource
-    @Lazy
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource @Lazy private MesMdWorkstationService workstationService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     public Long createWorkshop(MesMdWorkshopSaveReqVO createReqVO) {
@@ -52,8 +50,11 @@ public class MesMdWorkshopServiceImpl implements MesMdWorkshopService {
         workshopMapper.insert(workshop);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.WORKSHOP.getValue(),
-                workshop.getId(), workshop.getCode(), workshop.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.WORKSHOP.getValue(),
+                workshop.getId(),
+                workshop.getCode(),
+                workshop.getName());
         return workshop.getId();
     }
 
@@ -133,5 +134,4 @@ public class MesMdWorkshopServiceImpl implements MesMdWorkshopService {
     public List<MesMdWorkshopDO> getWorkshopListByStatus(Integer status) {
         return workshopMapper.selectListByStatus(status);
     }
-
 }

@@ -68,5 +68,4 @@ public class ObjectUtils {
     public static boolean isNotAllEmpty(Object... objs) {
         return !ObjectUtil.isAllEmpty(objs);
     }
-
 }

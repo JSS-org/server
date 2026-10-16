@@ -1,9 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.regular;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.bpm.api.task.BpmProcessInstanceApi;
 import cn.iocoder.yudao.module.bpm.api.task.dto.BpmProcessInstanceCreateReqDTO;
 import cn.iocoder.yudao.module.bpm.enums.task.BpmProcessInstanceStatusEnum;
@@ -13,16 +16,15 @@ import cn.iocoder.yudao.module.oa.controller.admin.regular.vo.OaRegularApplySubm
 import cn.iocoder.yudao.module.oa.dal.dataobject.regular.OaRegularApplyDO;
 import cn.iocoder.yudao.module.oa.dal.mysql.regular.OaRegularApplyMapper;
 import cn.iocoder.yudao.module.oa.enums.BpmModelConstants;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 
 /**
  * 转正申请 Service 实现类
@@ -33,17 +35,18 @@ import static cn.iocoder.yudao.module.oa.enums.ErrorCodeConstants.*;
 @Validated
 public class OaRegularApplyServiceImpl implements OaRegularApplyService {
 
-    @Resource
-    private OaRegularApplyMapper regularApplyMapper;
-    @Resource
-    private BpmProcessInstanceApi processInstanceApi;
+    @Resource private OaRegularApplyMapper regularApplyMapper;
+    @Resource private BpmProcessInstanceApi processInstanceApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createRegularApply(OaRegularApplySaveReqVO saveReqVO) {
         // 1. 转换试用内容并计算天数
-        OaRegularApplyDO regularApply = BeanUtils.toBean(saveReqVO, OaRegularApplyDO.class)
-                .setDays(LocalDateTimeUtils.getDaysBetweenCeiling(saveReqVO.getStartTime(), saveReqVO.getEndTime()));
+        OaRegularApplyDO regularApply =
+                BeanUtils.toBean(saveReqVO, OaRegularApplyDO.class)
+                        .setDays(
+                                LocalDateTimeUtils.getDaysBetweenCeiling(
+                                        saveReqVO.getStartTime(), saveReqVO.getEndTime()));
 
         // 2. 保存草稿
         regularApply.setId(null).setStatus(BpmProcessInstanceStatusEnum.NOT_START.getStatus());
@@ -58,8 +61,11 @@ public class OaRegularApplyServiceImpl implements OaRegularApplyService {
         validateRegularApplyEditable(saveReqVO.getId(), userId);
 
         // 2. 更新转正申请
-        OaRegularApplyDO regularApply = BeanUtils.toBean(saveReqVO, OaRegularApplyDO.class)
-                .setDays(LocalDateTimeUtils.getDaysBetweenCeiling(saveReqVO.getStartTime(), saveReqVO.getEndTime()));
+        OaRegularApplyDO regularApply =
+                BeanUtils.toBean(saveReqVO, OaRegularApplyDO.class)
+                        .setDays(
+                                LocalDateTimeUtils.getDaysBetweenCeiling(
+                                        saveReqVO.getStartTime(), saveReqVO.getEndTime()));
         regularApplyMapper.updateById(regularApply);
     }
 
@@ -70,18 +76,28 @@ public class OaRegularApplyServiceImpl implements OaRegularApplyService {
         OaRegularApplyDO regularApply = validateRegularApplyEditable(submitReqVO.getId(), userId);
 
         // 2. 更新为审批中
-        regularApplyMapper.updateById(new OaRegularApplyDO().setId(regularApply.getId())
-                .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
+        regularApplyMapper.updateById(
+                new OaRegularApplyDO()
+                        .setId(regularApply.getId())
+                        .setStatus(BpmProcessInstanceStatusEnum.RUNNING.getStatus()));
 
         // 3.1 发起审批
         Map<String, Object> variables = new HashMap<>();
         variables.put("days", regularApply.getDays());
-        String processInstanceId = processInstanceApi.createProcessInstance(userId,
-                new BpmProcessInstanceCreateReqDTO().setProcessDefinitionKey(BpmModelConstants.REGULAR_APPLY)
-                        .setBusinessKey(regularApply.getId().toString()).setVariables(variables)
-                        .setStartUserSelectAssignees(submitReqVO.getStartUserSelectAssignees()));
+        String processInstanceId =
+                processInstanceApi.createProcessInstance(
+                        userId,
+                        new BpmProcessInstanceCreateReqDTO()
+                                .setProcessDefinitionKey(BpmModelConstants.REGULAR_APPLY)
+                                .setBusinessKey(regularApply.getId().toString())
+                                .setVariables(variables)
+                                .setStartUserSelectAssignees(
+                                        submitReqVO.getStartUserSelectAssignees()));
         // 3.2 绑定流程编号
-        regularApplyMapper.updateById(new OaRegularApplyDO().setId(regularApply.getId()).setProcessInstanceId(processInstanceId));
+        regularApplyMapper.updateById(
+                new OaRegularApplyDO()
+                        .setId(regularApply.getId())
+                        .setProcessInstanceId(processInstanceId));
     }
 
     @Override
@@ -90,7 +106,8 @@ public class OaRegularApplyServiceImpl implements OaRegularApplyService {
     }
 
     @Override
-    public PageResult<OaRegularApplyDO> getRegularApplyPage(Long userId, OaRegularApplyPageReqVO pageReqVO) {
+    public PageResult<OaRegularApplyDO> getRegularApplyPage(
+            Long userId, OaRegularApplyPageReqVO pageReqVO) {
         return regularApplyMapper.selectPage(userId, pageReqVO);
     }
 
@@ -122,7 +139,8 @@ public class OaRegularApplyServiceImpl implements OaRegularApplyService {
             throw exception(APPLY_ACCESS_DENIED);
         }
         // 3. 只有未提交草稿允许修改或提交
-        if (ObjUtil.notEqual(regularApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
+        if (ObjUtil.notEqual(
+                regularApply.getStatus(), BpmProcessInstanceStatusEnum.NOT_START.getStatus())) {
             throw exception(APPLY_STATUS_INVALID);
         }
         return regularApply;
@@ -141,5 +159,4 @@ public class OaRegularApplyServiceImpl implements OaRegularApplyService {
         }
         return regularApply;
     }
-
 }

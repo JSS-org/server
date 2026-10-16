@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.hrm.controller.admin.salary.vo.slip.HrmSalarySlip
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.monthrecord.HrmSalaryMonthEmployeeRecordDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.slip.HrmSalarySlipDO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.slip.HrmSalarySlipTemplateDO;
+
 import jakarta.validation.Valid;
 
 import java.time.YearMonth;
@@ -28,8 +29,10 @@ public interface HrmSalarySlipService {
      * @param employeeRecords 员工月度工资记录列表
      * @param template 工资条模板快照
      */
-    void createSalarySlipList(Long sendRecordId, List<HrmSalaryMonthEmployeeRecordDO> employeeRecords,
-                              HrmSalarySlipTemplateDO template);
+    void createSalarySlipList(
+            Long sendRecordId,
+            List<HrmSalaryMonthEmployeeRecordDO> employeeRecords,
+            HrmSalarySlipTemplateDO template);
 
     /**
      * 删除发放记录对应的工资条
@@ -73,8 +76,11 @@ public interface HrmSalarySlipService {
      * @return 工资条列表
      */
     List<HrmSalarySlipDO> getSalarySlipListByEmployeeId(
-            Long employeeId, YearMonth startMonth, YearMonth endMonth,
-            Integer orderType, Integer order);
+            Long employeeId,
+            YearMonth startMonth,
+            YearMonth endMonth,
+            Integer orderType,
+            Integer order);
 
     /**
      * 获得指定员工的工资条详情
@@ -107,5 +113,4 @@ public interface HrmSalarySlipService {
      * @param reqVO 工资条备注信息
      */
     void updateSalarySlipRemark(@Valid HrmSalarySlipRemarkReqVO reqVO);
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_LABEL_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,18 +15,15 @@ import cn.iocoder.yudao.module.pms.dal.mysql.kb.content.PmsKnowledgeDocumentLabe
 import cn.iocoder.yudao.module.pms.dal.mysql.kb.content.PmsKnowledgeDocumentMapper;
 import cn.iocoder.yudao.module.pms.enums.kb.content.PmsKnowledgeDocumentStatusEnum;
 import cn.iocoder.yudao.module.pms.service.kb.library.PmsKnowledgeLibraryMemberService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOCUMENT_LABEL_NOT_EXISTS;
 
 /**
  * PMS 知识库文档标签 Service 实现类
@@ -34,20 +34,18 @@ import static cn.iocoder.yudao.module.pms.enums.ErrorCodeConstants.KNOWLEDGE_DOC
 @Validated
 public class PmsKnowledgeDocumentLabelServiceImpl implements PmsKnowledgeDocumentLabelService {
 
-    @Resource
-    private PmsKnowledgeDocumentLabelMapper documentLabelMapper;
-    @Resource
-    private PmsKnowledgeDocumentMapper documentMapper;
+    @Resource private PmsKnowledgeDocumentLabelMapper documentLabelMapper;
+    @Resource private PmsKnowledgeDocumentMapper documentMapper;
 
-    @Resource
-    private PmsKnowledgeLibraryMemberService libraryMemberService;
-    @Resource
-    private PmsKnowledgeContentPermissionService contentPermissionService;
+    @Resource private PmsKnowledgeLibraryMemberService libraryMemberService;
+    @Resource private PmsKnowledgeContentPermissionService contentPermissionService;
 
     @Override
     public Long createDocumentLabel(PmsKnowledgeDocumentLabelSaveReqVO saveReqVO) {
-        PmsKnowledgeDocumentLabelDO documentLabel = BeanUtils.toBean(saveReqVO, PmsKnowledgeDocumentLabelDO.class)
-                .setName(StrUtil.trim(saveReqVO.getName())).setColor(StrUtil.trim(saveReqVO.getColor()));
+        PmsKnowledgeDocumentLabelDO documentLabel =
+                BeanUtils.toBean(saveReqVO, PmsKnowledgeDocumentLabelDO.class)
+                        .setName(StrUtil.trim(saveReqVO.getName()))
+                        .setColor(StrUtil.trim(saveReqVO.getColor()));
         documentLabelMapper.insert(documentLabel);
         return documentLabel.getId();
     }
@@ -58,8 +56,10 @@ public class PmsKnowledgeDocumentLabelServiceImpl implements PmsKnowledgeDocumen
         validateDocumentLabelExists(saveReqVO.getId());
 
         // 2. 更新文档标签
-        documentLabelMapper.updateById(BeanUtils.toBean(saveReqVO, PmsKnowledgeDocumentLabelDO.class)
-                .setName(StrUtil.trim(saveReqVO.getName())).setColor(StrUtil.trim(saveReqVO.getColor())));
+        documentLabelMapper.updateById(
+                BeanUtils.toBean(saveReqVO, PmsKnowledgeDocumentLabelDO.class)
+                        .setName(StrUtil.trim(saveReqVO.getName()))
+                        .setColor(StrUtil.trim(saveReqVO.getColor())));
     }
 
     @Override
@@ -102,15 +102,18 @@ public class PmsKnowledgeDocumentLabelServiceImpl implements PmsKnowledgeDocumen
         if (CollUtil.isEmpty(readableLibraryIds)) {
             return PageResult.empty();
         }
-        Set<Long> readablePermissionIds = contentPermissionService
-                .getReadableContentPermissionIdSet(readableLibraryIds, userId);
+        Set<Long> readablePermissionIds =
+                contentPermissionService.getReadableContentPermissionIdSet(
+                        readableLibraryIds, userId);
         if (CollUtil.isEmpty(readablePermissionIds)) {
             return PageResult.empty();
         }
 
         // 2. 按标签分页查询非回收站文档
         return documentMapper.selectPageByLabelIdAndStatuses(
-                pageReqVO, readableLibraryIds, readablePermissionIds,
+                pageReqVO,
+                readableLibraryIds,
+                readablePermissionIds,
                 PmsKnowledgeDocumentStatusEnum.ACTIVE_STATUSES);
     }
 
@@ -121,5 +124,4 @@ public class PmsKnowledgeDocumentLabelServiceImpl implements PmsKnowledgeDocumen
         }
         return documentLabel;
     }
-
 }

@@ -79,7 +79,8 @@ public interface OaOfficialDocSendService {
      * @param userId 操作用户编号
      * @return 公文发文分页
      */
-    PageResult<OaOfficialDocSendDO> getOfficialDocSendPage(OaOfficialDocSendPageReqVO reqVO, Long userId);
+    PageResult<OaOfficialDocSendDO> getOfficialDocSendPage(
+            OaOfficialDocSendPageReqVO reqVO, Long userId);
 
     /**
      * 提交公文发文审批
@@ -114,5 +115,4 @@ public interface OaOfficialDocSendService {
      * @return 单据数量
      */
     Long getOfficialDocSendCountByTemplateId(Long id);
-
 }

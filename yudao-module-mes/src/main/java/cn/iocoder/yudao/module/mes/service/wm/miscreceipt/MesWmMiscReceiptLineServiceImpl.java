@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.miscreceipt;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_RECEIPT_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscreceipt.vo.line.MesWmMiscReceiptLinePageReqVO;
@@ -8,16 +11,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscreceipt.MesWmMiscReceip
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscreceipt.MesWmMiscReceiptLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_RECEIPT_LINE_NOT_EXISTS;
 
 /**
  * MES 杂项入库单行 Service 实现类
@@ -26,19 +28,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_RECEI
 @Validated
 public class MesWmMiscReceiptLineServiceImpl implements MesWmMiscReceiptLineService {
 
-    @Resource
-    private MesWmMiscReceiptLineMapper miscReceiptLineMapper;
+    @Resource private MesWmMiscReceiptLineMapper miscReceiptLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmMiscReceiptService miscReceiptService;
-    @Resource
-    @Lazy
-    private MesWmMiscReceiptDetailService miscReceiptDetailService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource @Lazy private MesWmMiscReceiptService miscReceiptService;
+    @Resource @Lazy private MesWmMiscReceiptDetailService miscReceiptDetailService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,7 +59,8 @@ public class MesWmMiscReceiptLineServiceImpl implements MesWmMiscReceiptLineServ
         updateReqVO.setReceiptId(line.getReceiptId());
 
         // 2. 更新行
-        MesWmMiscReceiptLineDO updateObj = BeanUtils.toBean(updateReqVO, MesWmMiscReceiptLineDO.class);
+        MesWmMiscReceiptLineDO updateObj =
+                BeanUtils.toBean(updateReqVO, MesWmMiscReceiptLineDO.class);
         miscReceiptLineMapper.updateById(updateObj);
 
         // 3. 更新明细（基于行信息）
@@ -96,7 +92,8 @@ public class MesWmMiscReceiptLineServiceImpl implements MesWmMiscReceiptLineServ
     }
 
     @Override
-    public PageResult<MesWmMiscReceiptLineDO> getMiscReceiptLinePage(MesWmMiscReceiptLinePageReqVO pageReqVO) {
+    public PageResult<MesWmMiscReceiptLineDO> getMiscReceiptLinePage(
+            MesWmMiscReceiptLinePageReqVO pageReqVO) {
         return miscReceiptLineMapper.selectPage(pageReqVO);
     }
 
@@ -127,8 +124,7 @@ public class MesWmMiscReceiptLineServiceImpl implements MesWmMiscReceiptLineServ
         // 校验物料存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
         // 校验仓库层级关系（仓库 - 库位 - 库区）
-        warehouseAreaService.validateWarehouseAreaExists(reqVO.getWarehouseId(),
-                reqVO.getLocationId(), reqVO.getAreaId());
+        warehouseAreaService.validateWarehouseAreaExists(
+                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
     }
-
 }

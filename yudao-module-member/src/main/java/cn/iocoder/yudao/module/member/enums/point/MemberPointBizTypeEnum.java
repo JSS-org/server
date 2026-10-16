@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.member.enums.point;
 
 import cn.hutool.core.util.EnumUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,6 @@ import java.util.Objects;
 @AllArgsConstructor
 @Getter
 public enum MemberPointBizTypeEnum implements ArrayValuable<Integer> {
-
     SIGN(1, "签到", "签到获得 {} 积分", true),
     ADMIN(2, "管理员修改", "管理员修改 {} 积分", true),
 
@@ -26,20 +26,23 @@ public enum MemberPointBizTypeEnum implements ArrayValuable<Integer> {
     ORDER_GIVE(21, "订单积分奖励", "下单获得 {} 积分", true), // 支付订单时，赠送积分
     ORDER_GIVE_CANCEL(22, "订单积分奖励（整单取消）", "订单取消，退还 {} 积分", false), // ORDER_GIVE 的取消
     ORDER_GIVE_CANCEL_ITEM(23, "订单积分奖励（单个退款）", "订单退款，扣除赠送的 {} 积分", false) // ORDER_GIVE 的取消
-    ;
+;
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
     private final String name;
+
     /**
      * 描述
      */
     private final String description;
+
     /**
      * 是否为扣减积分
      */
@@ -51,8 +54,6 @@ public enum MemberPointBizTypeEnum implements ArrayValuable<Integer> {
     }
 
     public static MemberPointBizTypeEnum getByType(Integer type) {
-        return EnumUtil.getBy(MemberPointBizTypeEnum.class,
-                e -> Objects.equals(type, e.getType()));
+        return EnumUtil.getBy(MemberPointBizTypeEnum.class, e -> Objects.equals(type, e.getType()));
     }
-
 }

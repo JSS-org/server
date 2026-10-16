@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.batch;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -15,8 +18,11 @@ import cn.iocoder.yudao.module.mes.service.md.autocode.MesMdAutoCodeRecordServic
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemBatchConfigService;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -25,9 +31,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * 批次管理 Service 实现类
@@ -44,17 +47,12 @@ public class MesWmBatchServiceImpl implements MesWmBatchService {
      */
     private static final int MAX_TRACE_DEPTH = 20;
 
-    @Resource
-    private MesWmBatchMapper batchMapper;
+    @Resource private MesWmBatchMapper batchMapper;
 
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesMdItemBatchConfigService itemBatchConfigService;
-    @Resource
-    private MesMdAutoCodeRecordService autoCodeRecordService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesMdItemBatchConfigService itemBatchConfigService;
+    @Resource private MesMdAutoCodeRecordService autoCodeRecordService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     public PageResult<MesWmBatchDO> getBatchPage(MesWmBatchPageReqVO pageReqVO) {
@@ -81,7 +79,8 @@ public class MesWmBatchServiceImpl implements MesWmBatchService {
             return null;
         }
         // 1.2 查询物料批次配置
-        MesMdItemBatchConfigDO config = itemBatchConfigService.validateItemBatchConfigExists(reqVO.getItemId());
+        MesMdItemBatchConfigDO config =
+                itemBatchConfigService.validateItemBatchConfigExists(reqVO.getItemId());
 
         // 2. 根据配置校验必填参数并清空不需要的参数
         MesWmBatchDO batch = MesWmBatchDO.builder().itemId(reqVO.getItemId()).build();
@@ -191,12 +190,15 @@ public class MesWmBatchServiceImpl implements MesWmBatchService {
         }
 
         // 3.2 情况二：生成新批次
-        String batchCode = autoCodeRecordService.generateAutoCode(MesMdAutoCodeRuleCodeEnum.WM_BATCH_CODE.getCode());
+        String batchCode =
+                autoCodeRecordService.generateAutoCode(
+                        MesMdAutoCodeRuleCodeEnum.WM_BATCH_CODE.getCode());
         batch.setCode(batchCode);
         batchMapper.insert(batch);
 
         // 4. 生成条码
-        barcodeService.autoGenerateBarcode(MesBizTypeConstants.WM_BATCH, batch.getId(), batch.getCode(), item.getName());
+        barcodeService.autoGenerateBarcode(
+                MesBizTypeConstants.WM_BATCH, batch.getId(), batch.getCode(), item.getName());
         return batch;
     }
 
@@ -255,7 +257,8 @@ public class MesWmBatchServiceImpl implements MesWmBatchService {
     }
 
     @Override
-    public MesWmBatchDO validateBatchExists(Long batchId, Long itemId, Long clientId, Long vendorId) {
+    public MesWmBatchDO validateBatchExists(
+            Long batchId, Long itemId, Long clientId, Long vendorId) {
         MesWmBatchDO batch = validateBatchExists(batchId, itemId);
         if (clientId != null && ObjUtil.notEqual(batch.getClientId(), clientId)) {
             throw exception(WM_BATCH_CLIENT_MISMATCH);
@@ -270,5 +273,4 @@ public class MesWmBatchServiceImpl implements MesWmBatchService {
     public Long getBatchCountByToolId(Long toolId) {
         return batchMapper.selectCountByToolId(toolId);
     }
-
 }

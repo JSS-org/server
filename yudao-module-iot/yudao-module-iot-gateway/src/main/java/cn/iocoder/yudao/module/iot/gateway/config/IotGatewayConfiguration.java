@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.iot.gateway.config;
 
 import cn.iocoder.yudao.module.iot.gateway.protocol.IotProtocolManager;
 import cn.iocoder.yudao.module.iot.gateway.serialize.IotMessageSerializerManager;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,5 +25,4 @@ public class IotGatewayConfiguration {
     public IotProtocolManager iotProtocolManager(IotGatewayProperties gatewayProperties) {
         return new IotProtocolManager(gatewayProperties);
     }
-
 }

@@ -1,14 +1,15 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.URL;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.URL;
 
 /**
  * 统一 退款 Request DTO
@@ -51,6 +52,7 @@ public class PayRefundUnifiedReqDTO {
     @NotNull(message = "支付金额不能为空")
     @DecimalMin(value = "0", inclusive = false, message = "支付金额必须大于零")
     private Integer payPrice;
+
     /**
      * 退款金额，单位：分
      */
@@ -64,5 +66,4 @@ public class PayRefundUnifiedReqDTO {
     @NotEmpty(message = "支付结果的回调地址不能为空")
     @URL(message = "支付结果的 notify 回调地址必须是 URL 格式")
     private String notifyUrl;
-
 }

@@ -4,7 +4,9 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.iot.core.enums.device.IotDeviceStateEnum;
 import cn.iocoder.yudao.module.iot.enums.product.IotProductDeviceTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - IoT 设备分页 Request VO")
@@ -33,5 +35,4 @@ public class IotDevicePageReqVO extends PageParam {
 
     @Schema(description = "网关设备 ID", example = "16380")
     private Long gatewayId;
-
 }

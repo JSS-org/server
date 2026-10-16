@@ -27,7 +27,8 @@ public interface OaFileFavoriteService {
      * @param nodeIds 节点编号集合
      * @return 收藏列表
      */
-    List<OaFileFavoriteDO> getFileFavoriteListByUserIdAndNodeIds(Long userId, Collection<Long> nodeIds);
+    List<OaFileFavoriteDO> getFileFavoriteListByUserIdAndNodeIds(
+            Long userId, Collection<Long> nodeIds);
 
     /**
      * 收藏文件节点
@@ -51,5 +52,4 @@ public interface OaFileFavoriteService {
      * @param nodeIds 节点编号集合
      */
     void deleteFileFavoritesByNodeIds(Collection<Long> nodeIds);
-
 }

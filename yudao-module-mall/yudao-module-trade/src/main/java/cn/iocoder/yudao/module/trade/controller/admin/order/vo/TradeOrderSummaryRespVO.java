@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.trade.controller.admin.order.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 @Schema(description = "管理后台 - 交易订单统计 Response VO")
@@ -18,5 +19,4 @@ public class TradeOrderSummaryRespVO {
 
     @Schema(description = "退款金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     private Long afterSalePrice;
-
 }

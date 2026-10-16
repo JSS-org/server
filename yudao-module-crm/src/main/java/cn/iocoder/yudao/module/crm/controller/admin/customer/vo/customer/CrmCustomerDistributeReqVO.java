@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.crm.controller.admin.customer.vo.customer;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.util.List;
@@ -18,5 +20,4 @@ public class CrmCustomerDistributeReqVO {
     @Schema(description = "负责人", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
     @NotNull(message = "负责人不能为空")
     private Long ownerUserId;
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.ai1.controller.admin.agent;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -16,11 +20,14 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.model.Ai1ProviderDO;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ProviderService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,22 +36,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-
 @Tag(name = "管理后台 - AI1 Agent")
 @RestController
 @RequestMapping("/ai1/agent")
 @Validated
 public class Ai1AgentController {
 
-    @Resource
-    private Ai1AgentService agentService;
-    @Resource
-    private Ai1ProviderService providerService;
-    @Resource
-    private Ai1ModelService modelService;
+    @Resource private Ai1AgentService agentService;
+    @Resource private Ai1ProviderService providerService;
+    @Resource private Ai1ModelService modelService;
 
     @PostMapping("/create")
     @Operation(summary = "创建 Agent")
@@ -91,28 +91,44 @@ public class Ai1AgentController {
     @GetMapping("/page")
     @Operation(summary = "获得 Agent 分页")
     @PreAuthorize("@ss.hasPermission('ai1:agent:query')")
-    public CommonResult<PageResult<Ai1AgentRespVO>> getAgentPage(@Valid Ai1AgentPageReqVO pageReqVO) {
+    public CommonResult<PageResult<Ai1AgentRespVO>> getAgentPage(
+            @Valid Ai1AgentPageReqVO pageReqVO) {
         PageResult<Ai1AgentDO> pageResult = agentService.getAgentPage(pageReqVO);
-        return success(new PageResult<>(buildAgentRespVOList(pageResult.getList()), pageResult.getTotal()));
+        return success(
+                new PageResult<>(
+                        buildAgentRespVOList(pageResult.getList()), pageResult.getTotal()));
     }
 
     @GetMapping("/simple-list")
     @Operation(summary = "获得已开启的 Agent 精简列表", description = "用于会话页选择 Agent，仅返回已开启的 Agent")
     public CommonResult<List<Ai1AgentRespVO>> getAgentSimpleList() {
-        List<Ai1AgentDO> list = agentService.getAgentListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        Map<Long, Ai1ModelDO> modelMap = modelService.getModelMap(convertSet(list, Ai1AgentDO::getModelId));
-        return success(convertList(list, agent -> {
-            Ai1AgentRespVO respVO = new Ai1AgentRespVO().setId(agent.getId()).setName(agent.getName())
-                    .setIntroduction(agent.getIntroduction()).setModelId(agent.getModelId());
-            MapUtils.findAndThen(modelMap, agent.getModelId(), model -> respVO.setModelName(model.getName()));
-            return respVO;
-        }));
+        List<Ai1AgentDO> list =
+                agentService.getAgentListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        Map<Long, Ai1ModelDO> modelMap =
+                modelService.getModelMap(convertSet(list, Ai1AgentDO::getModelId));
+        return success(
+                convertList(
+                        list,
+                        agent -> {
+                            Ai1AgentRespVO respVO =
+                                    new Ai1AgentRespVO()
+                                            .setId(agent.getId())
+                                            .setName(agent.getName())
+                                            .setIntroduction(agent.getIntroduction())
+                                            .setModelId(agent.getModelId());
+                            MapUtils.findAndThen(
+                                    modelMap,
+                                    agent.getModelId(),
+                                    model -> respVO.setModelName(model.getName()));
+                            return respVO;
+                        }));
     }
 
     @PutMapping("/update-status")
     @Operation(summary = "修改 Agent 状态")
     @PreAuthorize("@ss.hasPermission('ai1:agent:update')")
-    public CommonResult<Boolean> updateAgentStatus(@Valid @RequestBody Ai1AgentUpdateStatusReqVO reqVO) {
+    public CommonResult<Boolean> updateAgentStatus(
+            @Valid @RequestBody Ai1AgentUpdateStatusReqVO reqVO) {
         agentService.updateAgentStatus(reqVO.getId(), reqVO.getStatus());
         return success(true);
     }
@@ -127,12 +143,22 @@ public class Ai1AgentController {
     }
 
     private List<Ai1AgentRespVO> buildAgentRespVOList(List<Ai1AgentDO> list) {
-        Map<Long, Ai1ProviderDO> providerMap = providerService.getProviderMap(convertSet(list, Ai1AgentDO::getProviderId));
-        Map<Long, Ai1ModelDO> modelMap = modelService.getModelMap(convertSet(list, Ai1AgentDO::getModelId));
-        return BeanUtils.toBean(list, Ai1AgentRespVO.class, respVO -> {
-            MapUtils.findAndThen(providerMap, respVO.getProviderId(), provider -> respVO.setProviderName(provider.getName()));
-            MapUtils.findAndThen(modelMap, respVO.getModelId(), model -> respVO.setModelName(model.getName()));
-        });
+        Map<Long, Ai1ProviderDO> providerMap =
+                providerService.getProviderMap(convertSet(list, Ai1AgentDO::getProviderId));
+        Map<Long, Ai1ModelDO> modelMap =
+                modelService.getModelMap(convertSet(list, Ai1AgentDO::getModelId));
+        return BeanUtils.toBean(
+                list,
+                Ai1AgentRespVO.class,
+                respVO -> {
+                    MapUtils.findAndThen(
+                            providerMap,
+                            respVO.getProviderId(),
+                            provider -> respVO.setProviderName(provider.getName()));
+                    MapUtils.findAndThen(
+                            modelMap,
+                            respVO.getModelId(),
+                            model -> respVO.setModelName(model.getName()));
+                });
     }
-
 }

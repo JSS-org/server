@@ -1,5 +1,15 @@
 package cn.iocoder.yudao.module.hrm.service.salary.config;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_DEPT_CONFLICT;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_EMPLOYEE_CONFLICT;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_NAME_DUPLICATE;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_NOT_EXISTS;
+import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,10 +22,13 @@ import cn.iocoder.yudao.module.hrm.dal.mysql.salary.config.HrmSalaryGroupMapper;
 import cn.iocoder.yudao.module.hrm.service.employee.info.HrmEmployeeService;
 import cn.iocoder.yudao.module.system.api.dept.DeptApi;
 import cn.iocoder.yudao.module.system.api.dept.dto.DeptRespDTO;
+
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -28,16 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSetByFlatMap;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_DEPT_CONFLICT;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_EMPLOYEE_CONFLICT;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_NAME_DUPLICATE;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.SALARY_GROUP_NOT_EXISTS;
-import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
-
 /**
  * HRM 薪资组 Service 实现类
  *
@@ -47,20 +50,19 @@ import static cn.iocoder.yudao.module.hrm.enums.LogRecordConstants.*;
 @Validated
 public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
 
-    @Resource
-    private HrmSalaryGroupMapper salaryGroupMapper;
+    @Resource private HrmSalaryGroupMapper salaryGroupMapper;
 
-    @Resource
-    private HrmSalaryTaxRuleService salaryTaxRuleService;
-    @Resource
-    private HrmEmployeeService employeeService;
+    @Resource private HrmSalaryTaxRuleService salaryTaxRuleService;
+    @Resource private HrmEmployeeService employeeService;
 
-    @Resource
-    private DeptApi deptApi;
+    @Resource private DeptApi deptApi;
 
     @Override
-    @LogRecord(type = HRM_SALARY_GROUP_TYPE, subType = HRM_SALARY_GROUP_CREATE_SUB_TYPE,
-            bizNo = "{{#salaryGroup.id}}", success = HRM_SALARY_GROUP_CREATE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_GROUP_TYPE,
+            subType = HRM_SALARY_GROUP_CREATE_SUB_TYPE,
+            bizNo = "{{#salaryGroup.id}}",
+            success = HRM_SALARY_GROUP_CREATE_SUCCESS)
     public Long createSalaryGroup(HrmSalaryGroupSaveReqVO createReqVO) {
         // 1. 校验薪资组
         validateSalaryGroupForCreateOrUpdate(null, createReqVO);
@@ -76,12 +78,15 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
     }
 
     @Override
-    @LogRecord(type = HRM_SALARY_GROUP_TYPE, subType = HRM_SALARY_GROUP_UPDATE_SUB_TYPE,
-            bizNo = "{{#updateReqVO.id}}", success = HRM_SALARY_GROUP_UPDATE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_GROUP_TYPE,
+            subType = HRM_SALARY_GROUP_UPDATE_SUB_TYPE,
+            bizNo = "{{#updateReqVO.id}}",
+            success = HRM_SALARY_GROUP_UPDATE_SUCCESS)
     public void updateSalaryGroup(HrmSalaryGroupSaveReqVO updateReqVO) {
         // 1. 校验薪资组
-        HrmSalaryGroupDO oldSalaryGroup = validateSalaryGroupForCreateOrUpdate(
-                updateReqVO.getId(), updateReqVO);
+        HrmSalaryGroupDO oldSalaryGroup =
+                validateSalaryGroupForCreateOrUpdate(updateReqVO.getId(), updateReqVO);
 
         // 2. 更新薪资组
         HrmSalaryGroupDO updateObj = BeanUtils.toBean(updateReqVO, HrmSalaryGroupDO.class);
@@ -89,13 +94,17 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
         salaryGroupMapper.updateById(updateObj);
 
         // 3. 记录操作日志上下文
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT,
+        LogRecordContext.putVariable(
+                DiffParseFunction.OLD_OBJECT,
                 BeanUtils.toBean(oldSalaryGroup, HrmSalaryGroupSaveReqVO.class));
     }
 
     @Override
-    @LogRecord(type = HRM_SALARY_GROUP_TYPE, subType = HRM_SALARY_GROUP_DELETE_SUB_TYPE,
-            bizNo = "{{#salaryGroup.id}}", success = HRM_SALARY_GROUP_DELETE_SUCCESS)
+    @LogRecord(
+            type = HRM_SALARY_GROUP_TYPE,
+            subType = HRM_SALARY_GROUP_DELETE_SUB_TYPE,
+            bizNo = "{{#salaryGroup.id}}",
+            success = HRM_SALARY_GROUP_DELETE_SUCCESS)
     public void deleteSalaryGroup(Long id) {
         // 1. 校验薪资组存在
         HrmSalaryGroupDO salaryGroup = validateSalaryGroupExists(id);
@@ -123,7 +132,8 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
     }
 
     @Override
-    public Map<Long, HrmSalaryGroupDO> getEmployeeSalaryGroupMap(Collection<HrmEmployeeDO> employees) {
+    public Map<Long, HrmSalaryGroupDO> getEmployeeSalaryGroupMap(
+            Collection<HrmEmployeeDO> employees) {
         if (CollUtil.isEmpty(employees)) {
             return Collections.emptyMap();
         }
@@ -152,7 +162,9 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
             }
             HrmSalaryGroupDO salaryGroup = employeeSalaryGroupMap.get(employee.getId());
             if (salaryGroup == null) {
-                salaryGroup = findDeptSalaryGroup(employee.getDeptId(), deptSalaryGroupMap, parentDeptIdCache);
+                salaryGroup =
+                        findDeptSalaryGroup(
+                                employee.getDeptId(), deptSalaryGroupMap, parentDeptIdCache);
             }
             if (salaryGroup != null) {
                 result.put(employee.getId(), salaryGroup);
@@ -169,9 +181,10 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
         return salaryGroupMapper.selectCountMapByTaxRuleIds(taxRuleIds);
     }
 
-    private HrmSalaryGroupDO findDeptSalaryGroup(Long employeeDeptId,
-                                                 Map<Long, HrmSalaryGroupDO> deptSalaryGroupMap,
-                                                 Map<Long, List<Long>> parentDeptIdCache) {
+    private HrmSalaryGroupDO findDeptSalaryGroup(
+            Long employeeDeptId,
+            Map<Long, HrmSalaryGroupDO> deptSalaryGroupMap,
+            Map<Long, List<Long>> parentDeptIdCache) {
         if (employeeDeptId == null) {
             return null;
         }
@@ -179,8 +192,11 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
         if (salaryGroup != null) {
             return salaryGroup;
         }
-        List<Long> parentDeptIds = parentDeptIdCache.computeIfAbsent(employeeDeptId,
-                deptId -> convertList(deptApi.getParentDeptList(deptId), DeptRespDTO::getId));
+        List<Long> parentDeptIds =
+                parentDeptIdCache.computeIfAbsent(
+                        employeeDeptId,
+                        deptId ->
+                                convertList(deptApi.getParentDeptList(deptId), DeptRespDTO::getId));
         for (Long parentDeptId : parentDeptIds) {
             salaryGroup = deptSalaryGroupMap.get(parentDeptId);
             if (salaryGroup != null) {
@@ -190,7 +206,8 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
         return null;
     }
 
-    private HrmSalaryGroupDO validateSalaryGroupForCreateOrUpdate(Long id, HrmSalaryGroupSaveReqVO reqVO) {
+    private HrmSalaryGroupDO validateSalaryGroupForCreateOrUpdate(
+            Long id, HrmSalaryGroupSaveReqVO reqVO) {
         // 1. 校验薪资组是否存在
         HrmSalaryGroupDO salaryGroup = id != null ? validateSalaryGroupExists(id) : null;
         // 2. 校验薪资组名称唯一
@@ -217,28 +234,34 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
         }
     }
 
-    private void validateSalaryGroupScope(Long id, Collection<Long> deptIds, Collection<Long> employeeIds) {
+    private void validateSalaryGroupScope(
+            Long id, Collection<Long> deptIds, Collection<Long> employeeIds) {
         // 1. 校验适用部门及其上下级部门未归属其他薪资组
-        Set<Long> selectedDeptIds = CollUtil.isEmpty(deptIds)
-                ? Collections.emptySet() : new HashSet<>(deptIds);
+        Set<Long> selectedDeptIds =
+                CollUtil.isEmpty(deptIds) ? Collections.emptySet() : new HashSet<>(deptIds);
         deptApi.validateDeptList(selectedDeptIds);
-        List<HrmSalaryGroupDO> otherSalaryGroups = convertList(salaryGroupMapper.selectListByIdDesc(),
-                salaryGroup -> salaryGroup, salaryGroup -> ObjUtil.notEqual(salaryGroup.getId(), id));
+        List<HrmSalaryGroupDO> otherSalaryGroups =
+                convertList(
+                        salaryGroupMapper.selectListByIdDesc(),
+                        salaryGroup -> salaryGroup,
+                        salaryGroup -> ObjUtil.notEqual(salaryGroup.getId(), id));
         if (CollUtil.isNotEmpty(selectedDeptIds)) {
             Set<Long> deptScope = getDeptScope(selectedDeptIds);
-            Set<Long> otherDeptIds = convertSetByFlatMap(
-                    otherSalaryGroups, HrmSalaryGroupDO::getDeptIds, Collection::stream);
+            Set<Long> otherDeptIds =
+                    convertSetByFlatMap(
+                            otherSalaryGroups, HrmSalaryGroupDO::getDeptIds, Collection::stream);
             if (!Collections.disjoint(deptScope, getDeptScope(otherDeptIds))) {
                 throw exception(SALARY_GROUP_DEPT_CONFLICT);
             }
         }
 
         // 2. 校验适用员工存在且未归属其他薪资组
-        Set<Long> selectedEmployeeIds = CollUtil.isEmpty(employeeIds)
-                ? Collections.emptySet() : new HashSet<>(employeeIds);
+        Set<Long> selectedEmployeeIds =
+                CollUtil.isEmpty(employeeIds) ? Collections.emptySet() : new HashSet<>(employeeIds);
         employeeService.validateEmployeeListExists(selectedEmployeeIds);
-        Set<Long> otherEmployeeIds = convertSetByFlatMap(
-                otherSalaryGroups, HrmSalaryGroupDO::getEmployeeIds, Collection::stream);
+        Set<Long> otherEmployeeIds =
+                convertSetByFlatMap(
+                        otherSalaryGroups, HrmSalaryGroupDO::getEmployeeIds, Collection::stream);
         if (!Collections.disjoint(selectedEmployeeIds, otherEmployeeIds)) {
             throw exception(SALARY_GROUP_EMPLOYEE_CONFLICT);
         }
@@ -257,5 +280,4 @@ public class HrmSalaryGroupServiceImpl implements HrmSalaryGroupService {
         salaryGroup.setSalaryStandard(HrmSalaryGroupDO.DEFAULT_SALARY_STANDARD);
         salaryGroup.setChangeRule(HrmSalaryGroupDO.DEFAULT_CHANGE_RULE);
     }
-
 }

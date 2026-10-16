@@ -1,18 +1,20 @@
 package cn.iocoder.yudao.module.iot.service.product;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.category.IotProductCategoryPageReqVO;
 import cn.iocoder.yudao.module.iot.controller.admin.product.vo.category.IotProductCategorySaveReqVO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductCategoryDO;
+
 import jakarta.validation.Valid;
 
-import javax.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import javax.annotation.Nullable;
 
 /**
  * IoT 产品分类 Service 接口
@@ -99,5 +101,4 @@ public interface IotProductCategoryService {
      * @return 品类设备统计列表
      */
     Map<String, Integer> getProductCategoryDeviceCountMap();
-
 }

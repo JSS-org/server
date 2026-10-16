@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.wms.service.md.merchant;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.wms.controller.admin.md.merchant.vo.WmsMerchantListReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.merchant.vo.WmsMerchantPageReqVO;
 import cn.iocoder.yudao.module.wms.controller.admin.md.merchant.vo.WmsMerchantSaveReqVO;
 import cn.iocoder.yudao.module.wms.dal.dataobject.md.merchant.WmsMerchantDO;
+
 import jakarta.validation.Valid;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * WMS 往来企业 Service 接口
@@ -109,5 +110,4 @@ public interface WmsMerchantService {
     default Map<Long, WmsMerchantDO> getMerchantMap(Collection<Long> ids) {
         return convertMap(getMerchantList(ids), WmsMerchantDO::getId);
     }
-
 }

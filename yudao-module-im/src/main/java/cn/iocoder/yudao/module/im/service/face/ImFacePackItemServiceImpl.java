@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.im.service.face;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_ITEM_NOT_EXISTS;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -8,16 +11,15 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.item.ImFacePa
 import cn.iocoder.yudao.module.im.controller.admin.manager.face.vo.item.ImFacePackItemSaveReqVO;
 import cn.iocoder.yudao.module.im.dal.dataobject.face.ImFacePackItemDO;
 import cn.iocoder.yudao.module.im.dal.mysql.face.ImFacePackItemMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_ITEM_NOT_EXISTS;
 
 /**
  * IM 表情包项 Service 实现类
@@ -28,10 +30,8 @@ import static cn.iocoder.yudao.module.im.enums.ErrorCodeConstants.FACE_PACK_ITEM
 @Validated
 public class ImFacePackItemServiceImpl implements ImFacePackItemService {
 
-    @Resource
-    private ImFacePackItemMapper facePackItemMapper;
-    @Resource
-    private ImFacePackService facePackService;
+    @Resource private ImFacePackItemMapper facePackItemMapper;
+    @Resource private ImFacePackService facePackService;
 
     // ==================== 用户端 ====================
 
@@ -40,7 +40,8 @@ public class ImFacePackItemServiceImpl implements ImFacePackItemService {
         if (CollUtil.isEmpty(packIds)) {
             return Collections.emptyList();
         }
-        return facePackItemMapper.selectListByPackIdsAndStatus(packIds, CommonStatusEnum.ENABLE.getStatus());
+        return facePackItemMapper.selectListByPackIdsAndStatus(
+                packIds, CommonStatusEnum.ENABLE.getStatus());
     }
 
     @Override
@@ -113,5 +114,4 @@ public class ImFacePackItemServiceImpl implements ImFacePackItemService {
             throw exception(FACE_PACK_ITEM_NOT_EXISTS);
         }
     }
-
 }

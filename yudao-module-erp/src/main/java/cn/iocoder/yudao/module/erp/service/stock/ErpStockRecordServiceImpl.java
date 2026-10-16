@@ -6,7 +6,9 @@ import cn.iocoder.yudao.module.erp.controller.admin.stock.vo.record.ErpStockReco
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.ErpStockRecordDO;
 import cn.iocoder.yudao.module.erp.dal.mysql.stock.ErpStockRecordMapper;
 import cn.iocoder.yudao.module.erp.service.stock.bo.ErpStockRecordCreateReqBO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -22,11 +24,9 @@ import java.math.BigDecimal;
 @Validated
 public class ErpStockRecordServiceImpl implements ErpStockRecordService {
 
-    @Resource
-    private ErpStockRecordMapper stockRecordMapper;
+    @Resource private ErpStockRecordMapper stockRecordMapper;
 
-    @Resource
-    private ErpStockService stockService;
+    @Resource private ErpStockService stockService;
 
     @Override
     public ErpStockRecordDO getStockRecord(Long id) {
@@ -42,12 +42,14 @@ public class ErpStockRecordServiceImpl implements ErpStockRecordService {
     @Transactional(rollbackFor = Exception.class)
     public void createStockRecord(ErpStockRecordCreateReqBO createReqBO) {
         // 1. 更新库存
-        BigDecimal totalCount = stockService.updateStockCountIncrement(
-                createReqBO.getProductId(), createReqBO.getWarehouseId(), createReqBO.getCount());
+        BigDecimal totalCount =
+                stockService.updateStockCountIncrement(
+                        createReqBO.getProductId(),
+                        createReqBO.getWarehouseId(),
+                        createReqBO.getCount());
         // 2. 创建库存明细
-        ErpStockRecordDO stockRecord = BeanUtils.toBean(createReqBO, ErpStockRecordDO.class)
-                .setTotalCount(totalCount);
+        ErpStockRecordDO stockRecord =
+                BeanUtils.toBean(createReqBO, ErpStockRecordDO.class).setTotalCount(totalCount);
         stockRecordMapper.insert(stockRecord);
     }
-
 }

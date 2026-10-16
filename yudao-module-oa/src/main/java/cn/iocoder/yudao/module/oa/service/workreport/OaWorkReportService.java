@@ -6,6 +6,7 @@ import cn.iocoder.yudao.module.oa.controller.admin.workreport.vo.OaWorkReportSav
 import cn.iocoder.yudao.module.oa.controller.admin.workreport.vo.OaWorkReportStatisticsReqVO;
 import cn.iocoder.yudao.module.oa.controller.admin.workreport.vo.OaWorkReportStatisticsRespVO;
 import cn.iocoder.yudao.module.oa.dal.dataobject.workreport.OaWorkReportDO;
+
 import jakarta.validation.Valid;
 
 /**
@@ -81,6 +82,6 @@ public interface OaWorkReportService {
      * @param userId 当前用户编号
      * @return 工作汇报统计
      */
-    OaWorkReportStatisticsRespVO getWorkReportStatistics(@Valid OaWorkReportStatisticsReqVO reqVO, Long userId);
-
+    OaWorkReportStatisticsRespVO getWorkReportStatistics(
+            @Valid OaWorkReportStatisticsReqVO reqVO, Long userId);
 }

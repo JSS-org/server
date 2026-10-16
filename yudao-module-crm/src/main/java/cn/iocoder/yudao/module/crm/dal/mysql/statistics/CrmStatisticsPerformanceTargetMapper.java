@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.crm.dal.mysql.statistics;
 
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceTargetActualRespVO;
 import cn.iocoder.yudao.module.crm.controller.admin.statistics.vo.performance.CrmStatisticsPerformanceTargetReqVO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -20,7 +21,8 @@ public interface CrmStatisticsPerformanceTargetMapper {
      * @param reqVO 请求参数
      * @return 按月统计合同金额
      */
-    List<CrmStatisticsPerformanceTargetActualRespVO> selectContractActualByMonth(CrmStatisticsPerformanceTargetReqVO reqVO);
+    List<CrmStatisticsPerformanceTargetActualRespVO> selectContractActualByMonth(
+            CrmStatisticsPerformanceTargetReqVO reqVO);
 
     /**
      * 按月统计回款金额
@@ -28,6 +30,6 @@ public interface CrmStatisticsPerformanceTargetMapper {
      * @param reqVO 请求参数
      * @return 按月统计回款金额
      */
-    List<CrmStatisticsPerformanceTargetActualRespVO> selectReceivableActualByMonth(CrmStatisticsPerformanceTargetReqVO reqVO);
-
+    List<CrmStatisticsPerformanceTargetActualRespVO> selectReceivableActualByMonth(
+            CrmStatisticsPerformanceTargetReqVO reqVO);
 }

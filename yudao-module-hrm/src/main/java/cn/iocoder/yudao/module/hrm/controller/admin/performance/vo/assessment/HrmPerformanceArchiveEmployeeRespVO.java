@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.hrm.controller.admin.performance.vo.assessment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -50,5 +51,4 @@ public class HrmPerformanceArchiveEmployeeRespVO {
 
     @Schema(description = "考核次数", example = "3")
     private Long assessmentCount;
-
 }

@@ -83,7 +83,8 @@ public final class IotMqttTopicUtils {
      * @param isReply 是否为回复消息
      * @return 完整的主题路径
      */
-    public static String buildTopicByMethod(String method, String productKey, String deviceName, boolean isReply) {
+    public static String buildTopicByMethod(
+            String method, String productKey, String deviceName, boolean isReply) {
         if (StrUtil.isBlank(method)) {
             return null;
         }
@@ -108,7 +109,8 @@ public final class IotMqttTopicUtils {
      * @param deviceName 设备名称
      * @return 是否允许订阅
      */
-    public static boolean isTopicSubscribeAllowed(String topic, String productKey, String deviceName) {
+    public static boolean isTopicSubscribeAllowed(
+            String topic, String productKey, String deviceName) {
         if (!StrUtil.isAllNotBlank(topic, productKey, deviceName)) {
             return false;
         }
@@ -129,7 +131,8 @@ public final class IotMqttTopicUtils {
      * @param deviceName 设备名称
      * @return 是否允许发布
      */
-    public static boolean isTopicPublishAllowed(String topic, String productKey, String deviceName) {
+    public static boolean isTopicPublishAllowed(
+            String topic, String productKey, String deviceName) {
         if (!StrUtil.isAllNotBlank(topic, productKey, deviceName)) {
             return false;
         }
@@ -140,5 +143,4 @@ public final class IotMqttTopicUtils {
         String deviceTopicPrefix = SYS_TOPIC_PREFIX + productKey + "/" + deviceName + "/";
         return topic.startsWith(deviceTopicPrefix);
     }
-
 }

@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.warehouse;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -12,7 +15,9 @@ import cn.iocoder.yudao.module.mes.enums.wm.BarcodeBizTypeEnum;
 import cn.iocoder.yudao.module.mes.service.md.workstation.MesMdWorkstationService;
 import cn.iocoder.yudao.module.mes.service.wm.barcode.MesWmBarcodeService;
 import cn.iocoder.yudao.module.mes.service.wm.materialstock.MesWmMaterialStockService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -21,9 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-
 /**
  * MES 仓库 Service 实现类
  */
@@ -31,18 +33,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesWmWarehouseServiceImpl implements MesWmWarehouseService {
 
-    @Resource
-    private MesWmWarehouseMapper warehouseMapper;
+    @Resource private MesWmWarehouseMapper warehouseMapper;
 
-    @Resource
-    private MesWmWarehouseLocationService locationService;
-    @Resource
-    @Lazy
-    private MesMdWorkstationService workstationService;
-    @Resource
-    private MesWmMaterialStockService materialStockService;
-    @Resource
-    private MesWmBarcodeService barcodeService;
+    @Resource private MesWmWarehouseLocationService locationService;
+    @Resource @Lazy private MesMdWorkstationService workstationService;
+    @Resource private MesWmMaterialStockService materialStockService;
+    @Resource private MesWmBarcodeService barcodeService;
 
     @Override
     public Long createWarehouse(MesWmWarehouseSaveReqVO createReqVO) {
@@ -56,8 +52,11 @@ public class MesWmWarehouseServiceImpl implements MesWmWarehouseService {
         warehouseMapper.insert(warehouse);
 
         // 自动生成条码
-        barcodeService.autoGenerateBarcode(BarcodeBizTypeEnum.WAREHOUSE.getValue(),
-                warehouse.getId(), warehouse.getCode(), warehouse.getName());
+        barcodeService.autoGenerateBarcode(
+                BarcodeBizTypeEnum.WAREHOUSE.getValue(),
+                warehouse.getId(),
+                warehouse.getCode(),
+                warehouse.getName());
         return warehouse.getId();
     }
 
@@ -173,14 +172,16 @@ public class MesWmWarehouseServiceImpl implements MesWmWarehouseService {
 
         // 2. 如果是虚拟线边库编码，则自动初始化
         if (MesWmWarehouseDO.WIP_VIRTUAL_WAREHOUSE.equals(code)) {
-            MesWmWarehouseDO newWarehouse = MesWmWarehouseDO.builder()
-                    .code(code).name("虚拟线边仓库").frozen(false)
-                    .remark("系统自动初始化的虚拟线边仓库（用于生产报工与在制品管理解耦）")
-                    .build();
+            MesWmWarehouseDO newWarehouse =
+                    MesWmWarehouseDO.builder()
+                            .code(code)
+                            .name("虚拟线边仓库")
+                            .frozen(false)
+                            .remark("系统自动初始化的虚拟线边仓库（用于生产报工与在制品管理解耦）")
+                            .build();
             warehouseMapper.insert(newWarehouse);
             return newWarehouse;
         }
         return null;
     }
-
 }

@@ -20,5 +20,4 @@ public class SpringUtils extends SpringUtil {
         String activeProfile = getActiveProfile();
         return Objects.equals("prod", activeProfile);
     }
-
 }

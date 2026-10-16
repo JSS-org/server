@@ -1,12 +1,15 @@
 package cn.iocoder.yudao.module.system.controller.admin.permission.vo.role;
 
+import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
+import cn.idev.excel.annotation.ExcelProperty;
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
 import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
-import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
-import cn.idev.excel.annotation.ExcelProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -34,18 +37,27 @@ public class RoleRespVO {
     @ExcelProperty("角色排序")
     private Integer sort;
 
-    @Schema(description = "状态，参见 CommonStatusEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "状态，参见 CommonStatusEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @ExcelProperty(value = "角色状态", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.COMMON_STATUS)
     private Integer status;
 
-    @Schema(description = "角色类型，参见 RoleTypeEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "角色类型，参见 RoleTypeEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     private Integer type;
 
     @Schema(description = "备注", example = "我是一个角色")
     private String remark;
 
-    @Schema(description = "数据范围，参见 DataScopeEnum 枚举类", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(
+            description = "数据范围，参见 DataScopeEnum 枚举类",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "1")
     @ExcelProperty(value = "数据范围", converter = DictConvert.class)
     @DictFormat(DictTypeConstants.DATA_SCOPE)
     private Integer dataScope;
@@ -55,5 +67,4 @@ public class RoleRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED, example = "时间戳格式")
     private LocalDateTime createTime;
-
 }

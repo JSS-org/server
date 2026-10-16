@@ -4,9 +4,11 @@ import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.system.api.dept.dto.PostRespDTO;
 import cn.iocoder.yudao.module.system.dal.dataobject.dept.PostDO;
 import cn.iocoder.yudao.module.system.service.dept.PostService;
-import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -18,8 +20,7 @@ import java.util.List;
 @Service
 public class PostApiImpl implements PostApi {
 
-    @Resource
-    private PostService postService;
+    @Resource private PostService postService;
 
     @Override
     public void validPostList(Collection<Long> ids) {
@@ -31,5 +32,4 @@ public class PostApiImpl implements PostApi {
         List<PostDO> list = postService.getPostList(ids);
         return BeanUtils.toBean(list, PostRespDTO.class);
     }
-
 }

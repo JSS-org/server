@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -21,5 +23,4 @@ public class MesWmReturnVendorPageReqVO extends PageParam {
 
     @Schema(description = "供应商 ID", example = "1")
     private Long vendorId;
-
 }

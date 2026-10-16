@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.fms.enums.config;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -18,18 +19,18 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsAccountUserLevelEnum implements ArrayValuable<Integer> {
-
     OWNER(1, "主管"),
     READ(2, "查看者"),
     WRITE(3, "会计");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values())
-            .map(FmsAccountUserLevelEnum::getLevel).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(FmsAccountUserLevelEnum::getLevel).toArray(Integer[]::new);
 
     /**
      * 级别
      */
     private final Integer level;
+
     /**
      * 级别名称
      */
@@ -73,13 +74,12 @@ public enum FmsAccountUserLevelEnum implements ArrayValuable<Integer> {
     }
 
     public static FmsAccountUserLevelEnum valueOf(Integer level) {
-        return CollUtil.findOne(CollUtil.newArrayList(values()),
-                item -> ObjUtil.equal(item.level, level));
+        return CollUtil.findOne(
+                CollUtil.newArrayList(values()), item -> ObjUtil.equal(item.level, level));
     }
 
     public static String getNameByLevel(Integer level) {
         FmsAccountUserLevelEnum levelEnum = valueOf(level);
         return levelEnum == null ? null : levelEnum.getName();
     }
-
 }

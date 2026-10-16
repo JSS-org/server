@@ -23,5 +23,4 @@ public interface MesWmProductProduceDetailService {
      * @return 明细列表
      */
     List<MesWmProductProduceDetailDO> getProductProduceDetailListByLineId(Long lineId);
-
 }

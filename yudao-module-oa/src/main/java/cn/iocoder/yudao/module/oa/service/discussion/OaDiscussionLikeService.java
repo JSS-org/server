@@ -1,12 +1,12 @@
 package cn.iocoder.yudao.module.oa.service.discussion;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
+
 import cn.iocoder.yudao.module.oa.dal.dataobject.discussion.OaDiscussionLikeDO;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 
 /**
  * OA 讨论点赞 Service 接口
@@ -72,5 +72,4 @@ public interface OaDiscussionLikeService {
     default Map<Long, List<OaDiscussionLikeDO>> getReplyLikeListMap(Collection<Long> replyIds) {
         return convertMultiMap(getReplyLikeList(replyIds), OaDiscussionLikeDO::getReplyId);
     }
-
 }

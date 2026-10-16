@@ -7,7 +7,8 @@ import cn.iocoder.yudao.framework.desensitize.core.regex.annotation.EmailDesensi
  *
  * @author gaibu
  */
-public class EmailDesensitizationHandler extends AbstractRegexDesensitizationHandler<EmailDesensitize> {
+public class EmailDesensitizationHandler
+        extends AbstractRegexDesensitizationHandler<EmailDesensitize> {
 
     @Override
     String getRegex(EmailDesensitize annotation) {
@@ -18,5 +19,4 @@ public class EmailDesensitizationHandler extends AbstractRegexDesensitizationHan
     String getReplacer(EmailDesensitize annotation) {
         return annotation.replacer();
     }
-
 }

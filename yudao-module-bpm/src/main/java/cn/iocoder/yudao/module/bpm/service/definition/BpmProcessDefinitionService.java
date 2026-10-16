@@ -1,10 +1,13 @@
 package cn.iocoder.yudao.module.bpm.service.definition;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.BpmModelMetaInfoVO;
 import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.process.BpmProcessDefinitionPageReqVO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmFormDO;
 import cn.iocoder.yudao.module.bpm.dal.dataobject.definition.BpmProcessDefinitionInfoDO;
-import cn.iocoder.yudao.module.bpm.controller.admin.definition.vo.model.BpmModelMetaInfoVO;
+
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.Model;
@@ -14,8 +17,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 
 /**
  * 流程定义接口
@@ -52,8 +53,12 @@ public interface BpmProcessDefinitionService {
      * @param form 表单
      * @return 流程编号
      */
-    String createProcessDefinition(Model model, BpmModelMetaInfoVO modelMetaInfo,
-                                   byte[] bpmnBytes, String simpleJson, BpmFormDO form);
+    String createProcessDefinition(
+            Model model,
+            BpmModelMetaInfoVO modelMetaInfo,
+            byte[] bpmnBytes,
+            String simpleJson,
+            BpmFormDO form);
 
     /**
      * 更新流程定义状态
@@ -96,7 +101,9 @@ public interface BpmProcessDefinitionService {
     List<BpmProcessDefinitionInfoDO> getProcessDefinitionInfoList(Collection<String> ids);
 
     default Map<String, BpmProcessDefinitionInfoDO> getProcessDefinitionInfoMap(Set<String> ids) {
-        return convertMap(getProcessDefinitionInfoList(ids), BpmProcessDefinitionInfoDO::getProcessDefinitionId);
+        return convertMap(
+                getProcessDefinitionInfoList(ids),
+                BpmProcessDefinitionInfoDO::getProcessDefinitionId);
     }
 
     /**
@@ -150,7 +157,8 @@ public interface BpmProcessDefinitionService {
      * @param userId 用户编号
      * @return 是否可以发起流程
      */
-    boolean canUserStartProcessDefinition(BpmProcessDefinitionInfoDO processDefinition, Long userId);
+    boolean canUserStartProcessDefinition(
+            BpmProcessDefinitionInfoDO processDefinition, Long userId);
 
     /**
      * 获得 ids 对应的 Deployment Map
@@ -177,5 +185,4 @@ public interface BpmProcessDefinitionService {
      * @return 流程部署
      */
     Deployment getDeployment(String id);
-
 }

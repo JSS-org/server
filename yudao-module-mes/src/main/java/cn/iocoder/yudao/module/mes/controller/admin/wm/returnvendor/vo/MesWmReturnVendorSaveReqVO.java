@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.returnvendor.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class MesWmReturnVendorSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "退货单编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "RV20250226001")
+    @Schema(
+            description = "退货单编号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "RV20250226001")
     @NotBlank(message = "退货单编号不能为空")
     private String code;
 
@@ -44,5 +49,4 @@ public class MesWmReturnVendorSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

@@ -1,20 +1,31 @@
 package cn.iocoder.yudao.module.fms.service.config;
 
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
+import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
-import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplatecategory.FmsVoucherTemplateCategorySaveReqVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate.FmsVoucherTemplateEntryVO;
 import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplate.FmsVoucherTemplateSaveReqVO;
+import cn.iocoder.yudao.module.fms.controller.admin.config.vo.vouchertemplatecategory.FmsVoucherTemplateCategorySaveReqVO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryItemDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsAuxiliaryTypeDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsSubjectDO;
-import cn.iocoder.yudao.module.fms.dal.dataobject.voucher.FmsVoucherEntryDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherTemplateCategoryDO;
 import cn.iocoder.yudao.module.fms.dal.dataobject.config.FmsVoucherTemplateDO;
+import cn.iocoder.yudao.module.fms.dal.dataobject.voucher.FmsVoucherEntryDO;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsVoucherTemplateCategoryMapper;
 import cn.iocoder.yudao.module.fms.dal.mysql.config.FmsVoucherTemplateMapper;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,32 +34,17 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.randomPojo;
-import static cn.iocoder.yudao.module.fms.enums.ErrorCodeConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-
 @Import(FmsVoucherTemplateServiceImpl.class)
 public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private FmsVoucherTemplateServiceImpl voucherTemplateService;
-    @Resource
-    private FmsVoucherTemplateCategoryMapper templateCategoryMapper;
-    @Resource
-    private FmsVoucherTemplateMapper templateMapper;
+    @Resource private FmsVoucherTemplateServiceImpl voucherTemplateService;
+    @Resource private FmsVoucherTemplateCategoryMapper templateCategoryMapper;
+    @Resource private FmsVoucherTemplateMapper templateMapper;
 
-    @MockitoBean
-    private FmsAccountSetService accountSetService;
-    @MockitoBean
-    private FmsSubjectService subjectService;
-    @MockitoBean
-    private FmsAuxiliaryItemService auxiliaryItemService;
-    @MockitoBean
-    private FmsAuxiliaryTypeService auxiliaryTypeService;
+    @MockitoBean private FmsAccountSetService accountSetService;
+    @MockitoBean private FmsSubjectService subjectService;
+    @MockitoBean private FmsAuxiliaryItemService auxiliaryItemService;
+    @MockitoBean private FmsAuxiliaryTypeService auxiliaryTypeService;
 
     @Test
     public void testCreateTemplateCategory_success() {
@@ -72,7 +68,8 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         FmsVoucherTemplateCategorySaveReqVO reqVO = buildCategorySaveReqVO(null, 1L, "日常收支");
 
         // 调用，并断言
-        assertServiceException(() -> voucherTemplateService.createTemplateCategory(reqVO, 10L),
+        assertServiceException(
+                () -> voucherTemplateService.createTemplateCategory(reqVO, 10L),
                 VOUCHER_TEMPLATE_CATEGORY_NAME_DUPLICATE);
     }
 
@@ -81,13 +78,17 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        templateMapper.insert(new FmsVoucherTemplateDO().setAccountSetId(1L)
-                .setCategoryId(category.getId()).setName("办公用品采购")
-                .setEntries(Collections.emptyList()));
+        templateMapper.insert(
+                new FmsVoucherTemplateDO()
+                        .setAccountSetId(1L)
+                        .setCategoryId(category.getId())
+                        .setName("办公用品采购")
+                        .setEntries(Collections.emptyList()));
 
         // 调用，并断言
-        assertServiceException(() -> voucherTemplateService.deleteTemplateCategory(
-                1L, category.getId(), 10L), VOUCHER_TEMPLATE_CATEGORY_IN_USE);
+        assertServiceException(
+                () -> voucherTemplateService.deleteTemplateCategory(1L, category.getId(), 10L),
+                VOUCHER_TEMPLATE_CATEGORY_IN_USE);
     }
 
     @Test
@@ -95,20 +96,32 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.singletonList(31L)),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.singletonList(31L)),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList())));
         when(auxiliaryItemService.validateAuxiliaryItemList(eq(1L), anyCollection()))
-                .thenReturn(Collections.singletonList(new FmsAuxiliaryItemDO().setId(41L)
-                        .setAuxiliaryTypeId(31L).setName("上海客户")
-                        .setStatus(CommonStatusEnum.ENABLE.getStatus())));
+                .thenReturn(
+                        Collections.singletonList(
+                                new FmsAuxiliaryItemDO()
+                                        .setId(41L)
+                                        .setAuxiliaryTypeId(31L)
+                                        .setName("上海客户")
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())));
         when(auxiliaryTypeService.validateAuxiliaryTypeList(eq(1L), anyCollection()))
-                .thenReturn(Collections.singletonList(new FmsAuxiliaryTypeDO().setId(31L).setType(1)));
+                .thenReturn(
+                        Collections.singletonList(new FmsAuxiliaryTypeDO().setId(31L).setType(1)));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
-        FmsVoucherTemplateEntryVO.AuxiliaryItem auxiliary = new FmsVoucherTemplateEntryVO.AuxiliaryItem();
+        FmsVoucherTemplateEntryVO.AuxiliaryItem auxiliary =
+                new FmsVoucherTemplateEntryVO.AuxiliaryItem();
         auxiliary.setTypeId(31L);
         auxiliary.setItemId(41L);
         CollUtil.getFirst(reqVO.getEntries()).setAuxiliaries(Collections.singletonList(auxiliary));
@@ -120,9 +133,11 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         FmsVoucherTemplateDO template = templateMapper.selectById(templateId);
         assertEquals("办公用品采购", template.getName());
         assertEquals(2, template.getEntries().size());
-        assertEquals(new BigDecimal("100.00"), CollUtil.getFirst(template.getEntries()).getDebitAmount());
-        FmsVoucherEntryDO.AuxiliaryItem auxiliaryItem = CollUtil.getFirst(
-                CollUtil.getFirst(template.getEntries()).getAuxiliaries());
+        assertEquals(
+                new BigDecimal("100.00"),
+                CollUtil.getFirst(template.getEntries()).getDebitAmount());
+        FmsVoucherEntryDO.AuxiliaryItem auxiliaryItem =
+                CollUtil.getFirst(CollUtil.getFirst(template.getEntries()).getAuxiliaries());
         assertEquals(1, auxiliaryItem.getType());
         assertEquals(31L, auxiliaryItem.getTypeId());
         assertEquals(41L, auxiliaryItem.getItemId());
@@ -134,11 +149,17 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList()),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList()),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList())));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
         reqVO.getEntries().get(0).setDebitAmount(new BigDecimal("-20.00"));
@@ -149,7 +170,9 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         FmsVoucherTemplateDO template = templateMapper.selectById(templateId);
-        assertEquals(new BigDecimal("-20.00"), CollUtil.getFirst(template.getEntries()).getDebitAmount());
+        assertEquals(
+                new BigDecimal("-20.00"),
+                CollUtil.getFirst(template.getEntries()).getDebitAmount());
     }
 
     @Test
@@ -157,17 +180,24 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList()),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList()),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList())));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
         reqVO.getEntries().get(1).setCreditAmount(new BigDecimal("90.00"));
 
         // 调用，并断言
-        assertServiceException(() -> voucherTemplateService.createVoucherTemplate(reqVO, 10L),
+        assertServiceException(
+                () -> voucherTemplateService.createVoucherTemplate(reqVO, 10L),
                 VOUCHER_AMOUNT_UNBALANCED);
     }
 
@@ -176,11 +206,18 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setQuantityAccounting(true).setAuxiliaryTypeIds(Collections.emptyList()),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setQuantityAccounting(true)
+                                        .setAuxiliaryTypeIds(Collections.emptyList()),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList())));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
         CollUtil.getFirst(reqVO.getEntries()).setDebitAmount(new BigDecimal("1.99"));
@@ -193,7 +230,8 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
 
         // 断言
         FmsVoucherTemplateDO template = templateMapper.selectById(templateId);
-        assertEquals(new BigDecimal("1.99"), CollUtil.getFirst(template.getEntries()).getDebitAmount());
+        assertEquals(
+                new BigDecimal("1.99"), CollUtil.getFirst(template.getEntries()).getDebitAmount());
     }
 
     @Test
@@ -201,14 +239,21 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.DISABLE.getStatus()),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.DISABLE.getStatus()),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
 
         // 调用，并断言
-        assertServiceException(() -> voucherTemplateService.createVoucherTemplate(reqVO, 10L),
+        assertServiceException(
+                () -> voucherTemplateService.createVoucherTemplate(reqVO, 10L),
                 VOUCHER_SUBJECT_DISABLED);
     }
 
@@ -217,26 +262,39 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.singletonList(31L)),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.singletonList(31L)),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList())));
         when(auxiliaryItemService.validateAuxiliaryItemList(eq(1L), anyCollection()))
-                .thenReturn(Collections.singletonList(new FmsAuxiliaryItemDO().setId(41L)
-                        .setAuxiliaryTypeId(31L).setName("上海客户")
-                        .setStatus(CommonStatusEnum.DISABLE.getStatus())));
+                .thenReturn(
+                        Collections.singletonList(
+                                new FmsAuxiliaryItemDO()
+                                        .setId(41L)
+                                        .setAuxiliaryTypeId(31L)
+                                        .setName("上海客户")
+                                        .setStatus(CommonStatusEnum.DISABLE.getStatus())));
         when(auxiliaryTypeService.validateAuxiliaryTypeList(eq(1L), anyCollection()))
-                .thenReturn(Collections.singletonList(new FmsAuxiliaryTypeDO().setId(31L).setType(1)));
+                .thenReturn(
+                        Collections.singletonList(new FmsAuxiliaryTypeDO().setId(31L).setType(1)));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
-        FmsVoucherTemplateEntryVO.AuxiliaryItem auxiliary = new FmsVoucherTemplateEntryVO.AuxiliaryItem();
+        FmsVoucherTemplateEntryVO.AuxiliaryItem auxiliary =
+                new FmsVoucherTemplateEntryVO.AuxiliaryItem();
         auxiliary.setTypeId(31L);
         auxiliary.setItemId(41L);
         CollUtil.getFirst(reqVO.getEntries()).setAuxiliaries(Collections.singletonList(auxiliary));
 
         // 调用，并断言
-        assertServiceException(() -> voucherTemplateService.createVoucherTemplate(reqVO, 10L),
+        assertServiceException(
+                () -> voucherTemplateService.createVoucherTemplate(reqVO, 10L),
                 VOUCHER_AUXILIARY_REQUIRED);
     }
 
@@ -245,15 +303,24 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         FmsVoucherTemplateCategoryDO category = buildCategory(1L, "日常收支");
         templateCategoryMapper.insert(category);
-        FmsVoucherTemplateDO template = new FmsVoucherTemplateDO().setAccountSetId(1L)
-                .setCategoryId(category.getId()).setName("办公用品采购")
-                .setEntries(Collections.emptyList());
+        FmsVoucherTemplateDO template =
+                new FmsVoucherTemplateDO()
+                        .setAccountSetId(1L)
+                        .setCategoryId(category.getId())
+                        .setName("办公用品采购")
+                        .setEntries(Collections.emptyList());
         templateMapper.insert(template);
-        when(subjectService.getSubjectList(1L, null, 10L)).thenReturn(Arrays.asList(
-                new FmsSubjectDO().setId(101L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList()),
-                new FmsSubjectDO().setId(201L).setStatus(CommonStatusEnum.ENABLE.getStatus())
-                        .setAuxiliaryTypeIds(Collections.emptyList())));
+        when(subjectService.getSubjectList(1L, null, 10L))
+                .thenReturn(
+                        Arrays.asList(
+                                new FmsSubjectDO()
+                                        .setId(101L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList()),
+                                new FmsSubjectDO()
+                                        .setId(201L)
+                                        .setStatus(CommonStatusEnum.ENABLE.getStatus())
+                                        .setAuxiliaryTypeIds(Collections.emptyList())));
         // 准备参数
         FmsVoucherTemplateSaveReqVO reqVO = buildTemplateSaveReqVO(category.getId());
         reqVO.setId(template.getId());
@@ -272,8 +339,12 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteVoucherTemplate_success() {
         // mock 数据
-        FmsVoucherTemplateDO template = new FmsVoucherTemplateDO().setAccountSetId(1L)
-                .setCategoryId(11L).setName("办公用品采购").setEntries(Collections.emptyList());
+        FmsVoucherTemplateDO template =
+                new FmsVoucherTemplateDO()
+                        .setAccountSetId(1L)
+                        .setCategoryId(11L)
+                        .setName("办公用品采购")
+                        .setEntries(Collections.emptyList());
         templateMapper.insert(template);
 
         // 调用
@@ -286,36 +357,58 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testDeleteVoucherTemplate_wrongAccountSet() {
         // mock 数据
-        FmsVoucherTemplateDO template = new FmsVoucherTemplateDO().setAccountSetId(1L)
-                .setCategoryId(11L).setName("办公用品采购").setEntries(Collections.emptyList());
+        FmsVoucherTemplateDO template =
+                new FmsVoucherTemplateDO()
+                        .setAccountSetId(1L)
+                        .setCategoryId(11L)
+                        .setName("办公用品采购")
+                        .setEntries(Collections.emptyList());
         templateMapper.insert(template);
 
         // 调用，并断言
-        assertServiceException(() -> voucherTemplateService.deleteVoucherTemplate(
-                2L, template.getId(), 10L), VOUCHER_TEMPLATE_NOT_EXISTS);
+        assertServiceException(
+                () -> voucherTemplateService.deleteVoucherTemplate(2L, template.getId(), 10L),
+                VOUCHER_TEMPLATE_NOT_EXISTS);
     }
 
     @Test
     public void testGetVoucherTemplateCountByAuxiliary() {
         // mock 数据
-        FmsVoucherTemplateDO.Entry entry = new FmsVoucherTemplateDO.Entry().setAuxiliaries(
-                Collections.singletonList(FmsVoucherEntryDO.AuxiliaryItem.builder()
-                        .typeId(31L).itemId(41L).build()));
-        templateMapper.insert(new FmsVoucherTemplateDO().setName("收款模板")
-                .setCategoryId(1L).setAccountSetId(1L)
-                .setEntries(Collections.singletonList(entry)));
-        templateMapper.insert(new FmsVoucherTemplateDO().setName("其他账套模板")
-                .setCategoryId(1L).setAccountSetId(2L)
-                .setEntries(Collections.singletonList(entry)));
+        FmsVoucherTemplateDO.Entry entry =
+                new FmsVoucherTemplateDO.Entry()
+                        .setAuxiliaries(
+                                Collections.singletonList(
+                                        FmsVoucherEntryDO.AuxiliaryItem.builder()
+                                                .typeId(31L)
+                                                .itemId(41L)
+                                                .build()));
+        templateMapper.insert(
+                new FmsVoucherTemplateDO()
+                        .setName("收款模板")
+                        .setCategoryId(1L)
+                        .setAccountSetId(1L)
+                        .setEntries(Collections.singletonList(entry)));
+        templateMapper.insert(
+                new FmsVoucherTemplateDO()
+                        .setName("其他账套模板")
+                        .setCategoryId(1L)
+                        .setAccountSetId(2L)
+                        .setEntries(Collections.singletonList(entry)));
 
         // 调用，并断言
-        assertEquals(1L, voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
-                1L, Collections.singletonList(41L)));
+        assertEquals(
+                1L,
+                voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
+                        1L, Collections.singletonList(41L)));
         assertEquals(1L, voucherTemplateService.getVoucherTemplateCountByAuxiliaryTypeId(1L, 31L));
-        assertEquals(0L, voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
-                1L, Collections.singletonList(42L)));
-        assertEquals(0L, voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
-                1L, Collections.emptyList()));
+        assertEquals(
+                0L,
+                voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
+                        1L, Collections.singletonList(42L)));
+        assertEquals(
+                0L,
+                voucherTemplateService.getVoucherTemplateCountByAuxiliaryItemIds(
+                        1L, Collections.emptyList()));
     }
 
     // ========== 随机对象 ==========
@@ -330,8 +423,9 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
     }
 
     private FmsVoucherTemplateCategoryDO buildCategory(Long accountSetId, String name) {
-        return randomPojo(FmsVoucherTemplateCategoryDO.class, category -> category.setId(null)
-                .setAccountSetId(accountSetId).setName(name));
+        return randomPojo(
+                FmsVoucherTemplateCategoryDO.class,
+                category -> category.setId(null).setAccountSetId(accountSetId).setName(name));
     }
 
     private FmsVoucherTemplateSaveReqVO buildTemplateSaveReqVO(Long categoryId) {
@@ -352,5 +446,4 @@ public class FmsVoucherTemplateServiceImplTest extends BaseDbUnitTest {
         reqVO.setEntries(Arrays.asList(debitEntry, creditEntry));
         return reqVO;
     }
-
 }

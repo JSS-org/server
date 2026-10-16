@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.workitem.vo.status;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.util.List;
@@ -27,5 +28,4 @@ public class PmsWorkItemBoardConfigRespVO {
         @Schema(description = "关联状态编号列表")
         private List<Long> statusIds;
     }
-
 }

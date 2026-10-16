@@ -30,5 +30,4 @@ public interface BargainRecordApi {
      * @param orderId 订单编号
      */
     void updateBargainRecordOrderId(Long id, Long orderId);
-
 }

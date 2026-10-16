@@ -3,8 +3,11 @@ package cn.iocoder.yudao.module.pms.controller.admin.pm.iteration.vo;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.iteration.PmsIterationStatusEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -25,5 +28,4 @@ public class PmsIterationPageReqVO extends PageParam {
     @Schema(description = "迭代状态", example = "1")
     @InEnum(PmsIterationStatusEnum.class)
     private Integer status;
-
 }

@@ -2,8 +2,11 @@ package cn.iocoder.yudao.module.hrm.controller.admin.portal.attendance.vo.clock;
 
 import cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.TimeRange;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.config.HrmAttendanceGroupDO;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -87,7 +90,6 @@ public class HrmPortalAttendanceClockDetailRespVO {
 
         @Schema(description = "有效半径（米）")
         private Integer radius;
-
     }
 
     @Schema(description = "WiFi 配置")
@@ -99,7 +101,6 @@ public class HrmPortalAttendanceClockDetailRespVO {
 
         @Schema(description = "MAC 地址")
         private String mac;
-
     }
 
     @Schema(description = "下一次打卡动作")
@@ -117,7 +118,6 @@ public class HrmPortalAttendanceClockDetailRespVO {
 
         @Schema(description = "按钮状态：0 未到时间 1 正常 2 更新 3 迟到 4 早退")
         private Integer buttonStatus;
-
     }
 
     @Schema(description = "当日打卡时间线条目")
@@ -141,7 +141,5 @@ public class HrmPortalAttendanceClockDetailRespVO {
 
         @Schema(description = "打卡地址")
         private String address;
-
     }
-
 }

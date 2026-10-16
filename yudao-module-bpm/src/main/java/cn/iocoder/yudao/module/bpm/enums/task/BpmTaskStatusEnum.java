@@ -4,6 +4,7 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,7 +18,6 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum BpmTaskStatusEnum implements ArrayValuable<Integer> {
-
     SKIP(-2, "跳过"),
     NOT_START(-1, "未开始"),
     RUNNING(1, "审批中"),
@@ -39,7 +39,8 @@ public enum BpmTaskStatusEnum implements ArrayValuable<Integer> {
      */
     WAIT(0, "待审批");
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(BpmTaskStatusEnum::getStatus).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(BpmTaskStatusEnum::getStatus).toArray(Integer[]::new);
 
     /**
      * 状态
@@ -47,6 +48,7 @@ public enum BpmTaskStatusEnum implements ArrayValuable<Integer> {
      * 如果新增时，注意 {@link #isEndStatus(Integer)} 是否需要变更
      */
     private final Integer status;
+
     /**
      * 名字
      */
@@ -70,9 +72,13 @@ public enum BpmTaskStatusEnum implements ArrayValuable<Integer> {
      * @return 是否
      */
     public static boolean isEndStatus(Integer status) {
-        return ObjectUtils.equalsAny(status,
-                APPROVE.getStatus(), REJECT.getStatus(), CANCEL.getStatus(),
-                RETURN.getStatus(), APPROVING.getStatus());
+        return ObjectUtils.equalsAny(
+                status,
+                APPROVE.getStatus(),
+                REJECT.getStatus(),
+                CANCEL.getStatus(),
+                RETURN.getStatus(),
+                APPROVING.getStatus());
     }
 
     public static boolean isCancelStatus(Integer status) {
@@ -82,5 +88,4 @@ public enum BpmTaskStatusEnum implements ArrayValuable<Integer> {
     public static BpmTaskStatusEnum valueOf(Integer status) {
         return ArrayUtil.firstMatch(item -> item.getStatus().equals(status), values());
     }
-
 }

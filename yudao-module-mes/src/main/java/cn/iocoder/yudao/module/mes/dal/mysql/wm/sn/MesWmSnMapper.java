@@ -7,6 +7,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.MPJLambdaWrapperX;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.sn.vo.MesWmSnGroupRespVO;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.sn.vo.MesWmSnPageReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.sn.MesWmSnDO;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -36,19 +37,19 @@ public interface MesWmSnMapper extends BaseMapperX<MesWmSnDO> {
                 .selectMax(MesWmSnDO::getCreateTime, MesWmSnGroupRespVO::getCreateTime)
                 .selectAs("COUNT(*)", MesWmSnGroupRespVO::getCount)
                 .groupBy(MesWmSnDO::getUuid)
-                .last("ORDER BY MAX(t.create_time) DESC"); // 避免 this is incompatible with sql_mode=only_full_group_by 报错
+                .last("ORDER BY MAX(t.create_time) DESC"); // 避免 this is incompatible with
+        // sql_mode=only_full_group_by 报错
         return selectJoinPage(reqVO, MesWmSnGroupRespVO.class, query);
     }
 
     default List<MesWmSnDO> selectListByUuid(String uuid) {
-        return selectList(new LambdaQueryWrapperX<MesWmSnDO>()
-                .eq(MesWmSnDO::getUuid, uuid)
-                .orderByAsc(MesWmSnDO::getId));
+        return selectList(
+                new LambdaQueryWrapperX<MesWmSnDO>()
+                        .eq(MesWmSnDO::getUuid, uuid)
+                        .orderByAsc(MesWmSnDO::getId));
     }
 
     default int deleteByUuid(String uuid) {
-        return delete(new LambdaQueryWrapperX<MesWmSnDO>()
-                .eq(MesWmSnDO::getUuid, uuid));
+        return delete(new LambdaQueryWrapperX<MesWmSnDO>().eq(MesWmSnDO::getUuid, uuid));
     }
-
 }

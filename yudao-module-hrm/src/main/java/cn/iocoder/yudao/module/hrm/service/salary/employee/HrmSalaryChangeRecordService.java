@@ -117,5 +117,4 @@ public interface HrmSalaryChangeRecordService {
      * @return 到期记录列表
      */
     List<HrmSalaryChangeRecordDO> getDueSalaryChangeRecordList(LocalDate targetDate);
-
 }

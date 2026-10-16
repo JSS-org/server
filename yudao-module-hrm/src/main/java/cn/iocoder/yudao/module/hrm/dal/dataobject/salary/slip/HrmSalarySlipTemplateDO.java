@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.hrm.dal.dataobject.salary.slip;
 
-import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.module.hrm.dal.dataobject.salary.config.HrmSalaryOptionDO;
 import cn.iocoder.yudao.module.hrm.enums.salary.slip.HrmSalarySlipTemplateOptionTypeEnum;
+
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,20 +37,23 @@ public class HrmSalarySlipTemplateDO extends BaseDO {
     /**
      * 编号
      */
-    @TableId
-    private Long id;
+    @TableId private Long id;
+
     /**
      * 模板名称
      */
     private String name;
+
     /**
      * 是否隐藏空项
      */
     private Boolean hideEmpty;
+
     /**
      * 是否默认模板
      */
     private Boolean defaultStatus;
+
     /**
      * 工资条模板项
      *
@@ -72,34 +77,39 @@ public class HrmSalarySlipTemplateDO extends BaseDO {
          * 关联 {@link HrmSalaryOptionDO#getName()}
          */
         private String name;
+
         /**
          * 类型
          *
          * 枚举 {@link HrmSalarySlipTemplateOptionTypeEnum}
          */
         private Integer type;
+
         /**
          * 薪资项编码
          *
          * 关联 {@link HrmSalaryOptionDO#getCode()}
          */
         private Integer code;
+
         /**
          * 说明
          */
         private String remark;
+
         /**
          * 是否隐藏
          */
         private Boolean hidden;
+
         /**
          * 排序
          */
         private Integer sort;
+
         /**
          * 子项
          */
         private List<Option> children;
     }
-
 }

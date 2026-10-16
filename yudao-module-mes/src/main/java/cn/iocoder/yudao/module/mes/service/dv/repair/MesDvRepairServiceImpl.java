@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.dv.repair;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -9,15 +12,14 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.dv.repair.MesDvRepairDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.dv.repair.MesDvRepairMapper;
 import cn.iocoder.yudao.module.mes.enums.dv.MesDvRepairStatusEnum;
 import cn.iocoder.yudao.module.mes.service.dv.machinery.MesDvMachineryService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 
 /**
  * MES 维修工单 Service 实现类
@@ -28,13 +30,10 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
 @Validated
 public class MesDvRepairServiceImpl implements MesDvRepairService {
 
-    @Resource
-    private MesDvRepairMapper repairMapper;
+    @Resource private MesDvRepairMapper repairMapper;
 
-    @Resource
-    private MesDvRepairLineService repairLineService;
-    @Resource
-    private MesDvMachineryService machineryService;
+    @Resource private MesDvRepairLineService repairLineService;
+    @Resource private MesDvMachineryService machineryService;
 
     @Override
     public Long createRepair(MesDvRepairSaveReqVO createReqVO) {
@@ -139,12 +138,17 @@ public class MesDvRepairServiceImpl implements MesDvRepairService {
         validateRepairPrepare(id);
 
         // 2. 更新状态为维修中，设置维修人
-        repairMapper.updateById(new MesDvRepairDO().setId(id)
-                .setStatus(MesDvRepairStatusEnum.CONFIRMED.getStatus()).setAcceptedUserId(userId));
+        repairMapper.updateById(
+                new MesDvRepairDO()
+                        .setId(id)
+                        .setStatus(MesDvRepairStatusEnum.CONFIRMED.getStatus())
+                        .setAcceptedUserId(userId));
     }
 
     @Override
-    public void confirmRepair(cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo.MesDvRepairConfirmReqVO confirmReqVO) {
+    public void confirmRepair(
+            cn.iocoder.yudao.module.mes.controller.admin.dv.repair.vo.MesDvRepairConfirmReqVO
+                    confirmReqVO) {
         // 1. 校验存在，且状态为维修中
         MesDvRepairDO repair = validateRepairExists(confirmReqVO.getId());
         if (ObjUtil.notEqual(MesDvRepairStatusEnum.CONFIRMED.getStatus(), repair.getStatus())) {
@@ -152,8 +156,11 @@ public class MesDvRepairServiceImpl implements MesDvRepairService {
         }
 
         // 2. 更新状态为待验收，设置维修完成日期
-        repairMapper.updateById(new MesDvRepairDO().setId(confirmReqVO.getId())
-                .setStatus(MesDvRepairStatusEnum.APPROVING.getStatus()).setFinishDate(confirmReqVO.getFinishDate()));
+        repairMapper.updateById(
+                new MesDvRepairDO()
+                        .setId(confirmReqVO.getId())
+                        .setStatus(MesDvRepairStatusEnum.APPROVING.getStatus())
+                        .setFinishDate(confirmReqVO.getFinishDate()));
     }
 
     @Override
@@ -165,9 +172,12 @@ public class MesDvRepairServiceImpl implements MesDvRepairService {
         }
 
         // 2. 更新状态为已确认，设置验收结果、验收人和验收日期
-        repairMapper.updateById(new MesDvRepairDO().setId(id)
-                .setStatus(MesDvRepairStatusEnum.FINISHED.getStatus()).setResult(result)
-                .setConfirmUserId(userId).setConfirmDate(LocalDateTime.now()));
+        repairMapper.updateById(
+                new MesDvRepairDO()
+                        .setId(id)
+                        .setStatus(MesDvRepairStatusEnum.FINISHED.getStatus())
+                        .setResult(result)
+                        .setConfirmUserId(userId)
+                        .setConfirmDate(LocalDateTime.now()));
     }
-
 }

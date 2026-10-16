@@ -26,7 +26,8 @@ public interface OAuth2ApproveService {
      * @param requestedScopes 授权范围
      * @return 是否授权通过
      */
-    boolean checkForPreApproval(Long userId, Integer userType, String clientId, Collection<String> requestedScopes);
+    boolean checkForPreApproval(
+            Long userId, Integer userType, String clientId, Collection<String> requestedScopes);
 
     /**
      * 在用户发起批准时，基于 scopes 的选项，计算最终是否通过
@@ -37,7 +38,8 @@ public interface OAuth2ApproveService {
      * @param requestedScopes 授权范围
      * @return 是否授权通过
      */
-    boolean updateAfterApproval(Long userId, Integer userType, String clientId, Map<String, Boolean> requestedScopes);
+    boolean updateAfterApproval(
+            Long userId, Integer userType, String clientId, Map<String, Boolean> requestedScopes);
 
     /**
      * 获得用户的批准列表，排除已过期的
@@ -48,5 +50,4 @@ public interface OAuth2ApproveService {
      * @return 是否授权通过
      */
     List<OAuth2ApproveDO> getApproveList(Long userId, Integer userType, String clientId);
-
 }

@@ -13,7 +13,9 @@ public class DefaultToolExecutionEligibilityPredicate implements ToolExecutionEl
 
     @Override
     public boolean test(ChatOptions promptOptions, ChatResponse chatResponse) {
-        return isInternalToolExecutionEnabled(promptOptions) && chatResponse != null && chatResponse.hasToolCalls();
+        return isInternalToolExecutionEnabled(promptOptions)
+                && chatResponse != null
+                && chatResponse.hasToolCalls();
     }
 
     private static boolean isInternalToolExecutionEnabled(ChatOptions promptOptions) {
@@ -25,5 +27,4 @@ public class DefaultToolExecutionEligibilityPredicate implements ToolExecutionEl
             return true;
         }
     }
-
 }

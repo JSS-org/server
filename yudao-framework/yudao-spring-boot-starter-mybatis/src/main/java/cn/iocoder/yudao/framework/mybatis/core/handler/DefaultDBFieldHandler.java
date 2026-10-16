@@ -2,7 +2,9 @@ package cn.iocoder.yudao.framework.mybatis.core.handler;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
+
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+
 import org.apache.ibatis.reflection.MetaObject;
 
 import java.time.LocalDateTime;

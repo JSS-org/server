@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.diy.vo.page;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -16,5 +17,4 @@ public class DiyPagePropertyRespVO extends DiyPageBaseVO {
 
     @Schema(description = "页面属性", example = "[]")
     private String property;
-
 }

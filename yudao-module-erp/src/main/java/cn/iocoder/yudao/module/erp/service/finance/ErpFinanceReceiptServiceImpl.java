@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.erp.service.finance;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
@@ -21,7 +25,9 @@ import cn.iocoder.yudao.module.erp.service.sale.ErpCustomerService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleOutService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleReturnService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -30,10 +36,6 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 // TODO 芋艿：记录操作日志
 
@@ -46,32 +48,24 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 @Validated
 public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
 
-    @Resource
-    private ErpFinanceReceiptMapper financeReceiptMapper;
-    @Resource
-    private ErpFinanceReceiptItemMapper financeReceiptItemMapper;
+    @Resource private ErpFinanceReceiptMapper financeReceiptMapper;
+    @Resource private ErpFinanceReceiptItemMapper financeReceiptItemMapper;
 
-    @Resource
-    private ErpNoRedisDAO noRedisDAO;
+    @Resource private ErpNoRedisDAO noRedisDAO;
 
-    @Resource
-    private ErpCustomerService customerService;
-    @Resource
-    private ErpAccountService accountService;
-    @Resource
-    private ErpSaleOutService saleOutService;
-    @Resource
-    private ErpSaleReturnService saleReturnService;
+    @Resource private ErpCustomerService customerService;
+    @Resource private ErpAccountService accountService;
+    @Resource private ErpSaleOutService saleOutService;
+    @Resource private ErpSaleReturnService saleReturnService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createFinanceReceipt(ErpFinanceReceiptSaveReqVO createReqVO) {
         // 1.1 校验订单项的有效性
-        List<ErpFinanceReceiptItemDO> receiptItems = validateFinanceReceiptItems(
-                createReqVO.getCustomerId(), createReqVO.getItems());
+        List<ErpFinanceReceiptItemDO> receiptItems =
+                validateFinanceReceiptItems(createReqVO.getCustomerId(), createReqVO.getItems());
         // 1.2 校验客户
         customerService.validateCustomer(createReqVO.getCustomerId());
         // 1.3 校验结算账户
@@ -89,8 +83,11 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
         }
 
         // 2.1 插入收款单
-        ErpFinanceReceiptDO receipt = BeanUtils.toBean(createReqVO, ErpFinanceReceiptDO.class, in -> in
-                .setNo(no).setStatus(ErpAuditStatus.PROCESS.getStatus()));
+        ErpFinanceReceiptDO receipt =
+                BeanUtils.toBean(
+                        createReqVO,
+                        ErpFinanceReceiptDO.class,
+                        in -> in.setNo(no).setStatus(ErpAuditStatus.PROCESS.getStatus()));
         calculateTotalPrice(receipt, receiptItems);
         financeReceiptMapper.insert(receipt);
         // 2.2 插入收款单项
@@ -121,8 +118,8 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
             adminUserApi.validateUser(updateReqVO.getFinanceUserId());
         }
         // 1.5 校验收款单项的有效性
-        List<ErpFinanceReceiptItemDO> receiptItems = validateFinanceReceiptItems(
-                updateReqVO.getCustomerId(), updateReqVO.getItems());
+        List<ErpFinanceReceiptItemDO> receiptItems =
+                validateFinanceReceiptItems(updateReqVO.getCustomerId(), updateReqVO.getItems());
 
         // 2.1 更新收款单
         ErpFinanceReceiptDO updateObj = BeanUtils.toBean(updateReqVO, ErpFinanceReceiptDO.class);
@@ -132,8 +129,14 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
         updateFinanceReceiptItemList(updateReqVO.getId(), receiptItems);
     }
 
-    private void calculateTotalPrice(ErpFinanceReceiptDO receipt, List<ErpFinanceReceiptItemDO> receiptItems) {
-        receipt.setTotalPrice(getSumValue(receiptItems, ErpFinanceReceiptItemDO::getReceiptPrice, BigDecimal::add, BigDecimal.ZERO));
+    private void calculateTotalPrice(
+            ErpFinanceReceiptDO receipt, List<ErpFinanceReceiptItemDO> receiptItems) {
+        receipt.setTotalPrice(
+                getSumValue(
+                        receiptItems,
+                        ErpFinanceReceiptItemDO::getReceiptPrice,
+                        BigDecimal::add,
+                        BigDecimal.ZERO));
         receipt.setReceiptPrice(receipt.getTotalPrice().subtract(receipt.getDiscountPrice()));
     }
 
@@ -149,36 +152,56 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
         }
 
         // 2. 更新状态
-        int updateCount = financeReceiptMapper.updateByIdAndStatus(id, receipt.getStatus(),
-                new ErpFinanceReceiptDO().setStatus(status));
+        int updateCount =
+                financeReceiptMapper.updateByIdAndStatus(
+                        id, receipt.getStatus(), new ErpFinanceReceiptDO().setStatus(status));
         if (updateCount == 0) {
             throw exception(approve ? FINANCE_RECEIPT_APPROVE_FAIL : FINANCE_RECEIPT_PROCESS_FAIL);
         }
     }
 
     private List<ErpFinanceReceiptItemDO> validateFinanceReceiptItems(
-            Long customerId,
-            List<ErpFinanceReceiptSaveReqVO.Item> list) {
-        return convertList(list, o -> BeanUtils.toBean(o, ErpFinanceReceiptItemDO.class, item -> {
-            if (ObjectUtil.equal(item.getBizType(), ErpBizTypeEnum.SALE_OUT.getType())) {
-                ErpSaleOutDO saleOut = saleOutService.validateSaleOut(item.getBizId());
-                Assert.equals(saleOut.getCustomerId(), customerId, "客户必须相同");
-                item.setTotalPrice(saleOut.getTotalPrice()).setBizNo(saleOut.getNo());
-            } else if (ObjectUtil.equal(item.getBizType(), ErpBizTypeEnum.SALE_RETURN.getType())) {
-                ErpSaleReturnDO saleReturn = saleReturnService.validateSaleReturn(item.getBizId());
-                Assert.equals(saleReturn.getCustomerId(), customerId, "客户必须相同");
-                item.setTotalPrice(saleReturn.getTotalPrice().negate()).setBizNo(saleReturn.getNo());
-            } else {
-                throw new IllegalArgumentException("业务类型不正确：" + item.getBizType());
-            }
-        }));
+            Long customerId, List<ErpFinanceReceiptSaveReqVO.Item> list) {
+        return convertList(
+                list,
+                o ->
+                        BeanUtils.toBean(
+                                o,
+                                ErpFinanceReceiptItemDO.class,
+                                item -> {
+                                    if (ObjectUtil.equal(
+                                            item.getBizType(), ErpBizTypeEnum.SALE_OUT.getType())) {
+                                        ErpSaleOutDO saleOut =
+                                                saleOutService.validateSaleOut(item.getBizId());
+                                        Assert.equals(
+                                                saleOut.getCustomerId(), customerId, "客户必须相同");
+                                        item.setTotalPrice(saleOut.getTotalPrice())
+                                                .setBizNo(saleOut.getNo());
+                                    } else if (ObjectUtil.equal(
+                                            item.getBizType(),
+                                            ErpBizTypeEnum.SALE_RETURN.getType())) {
+                                        ErpSaleReturnDO saleReturn =
+                                                saleReturnService.validateSaleReturn(
+                                                        item.getBizId());
+                                        Assert.equals(
+                                                saleReturn.getCustomerId(), customerId, "客户必须相同");
+                                        item.setTotalPrice(saleReturn.getTotalPrice().negate())
+                                                .setBizNo(saleReturn.getNo());
+                                    } else {
+                                        throw new IllegalArgumentException(
+                                                "业务类型不正确：" + item.getBizType());
+                                    }
+                                }));
     }
 
     private void updateFinanceReceiptItemList(Long id, List<ErpFinanceReceiptItemDO> newList) {
         // 第一步，对比新老数据，获得添加、修改、删除的列表
         List<ErpFinanceReceiptItemDO> oldList = financeReceiptItemMapper.selectListByReceiptId(id);
-        List<List<ErpFinanceReceiptItemDO>> diffList = diffList(oldList, newList, // id 不同，就认为是不同的记录
-                (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
+        List<List<ErpFinanceReceiptItemDO>> diffList =
+                diffList(
+                        oldList,
+                        newList, // id 不同，就认为是不同的记录
+                        (oldVal, newVal) -> oldVal.getId().equals(newVal.getId()));
 
         // 第二步，批量添加、修改、删除
         if (CollUtil.isNotEmpty(diffList.get(0))) {
@@ -189,7 +212,8 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
             financeReceiptItemMapper.updateBatch(diffList.get(1));
         }
         if (CollUtil.isNotEmpty(diffList.get(2))) {
-            financeReceiptItemMapper.deleteByIds(convertList(diffList.get(2), ErpFinanceReceiptItemDO::getId));
+            financeReceiptItemMapper.deleteByIds(
+                    convertList(diffList.get(2), ErpFinanceReceiptItemDO::getId));
         }
 
         // 第三步，更新销售出库、退货的收款金额情况
@@ -197,17 +221,23 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
     }
 
     private void updateSalePrice(List<ErpFinanceReceiptItemDO> receiptItems) {
-        receiptItems.forEach(receiptItem -> {
-            BigDecimal totalReceiptPrice = financeReceiptItemMapper.selectReceiptPriceSumByBizIdAndBizType(
-                    receiptItem.getBizId(), receiptItem.getBizType());
-            if (ErpBizTypeEnum.SALE_OUT.getType().equals(receiptItem.getBizType())) {
-                saleOutService.updateSaleInReceiptPrice(receiptItem.getBizId(), totalReceiptPrice);
-            } else if (ErpBizTypeEnum.SALE_RETURN.getType().equals(receiptItem.getBizType())) {
-                saleReturnService.updateSaleReturnRefundPrice(receiptItem.getBizId(), totalReceiptPrice.negate());
-            } else {
-                throw new IllegalArgumentException("业务类型不正确：" + receiptItem.getBizType());
-            }
-        });
+        receiptItems.forEach(
+                receiptItem -> {
+                    BigDecimal totalReceiptPrice =
+                            financeReceiptItemMapper.selectReceiptPriceSumByBizIdAndBizType(
+                                    receiptItem.getBizId(), receiptItem.getBizType());
+                    if (ErpBizTypeEnum.SALE_OUT.getType().equals(receiptItem.getBizType())) {
+                        saleOutService.updateSaleInReceiptPrice(
+                                receiptItem.getBizId(), totalReceiptPrice);
+                    } else if (ErpBizTypeEnum.SALE_RETURN
+                            .getType()
+                            .equals(receiptItem.getBizType())) {
+                        saleReturnService.updateSaleReturnRefundPrice(
+                                receiptItem.getBizId(), totalReceiptPrice.negate());
+                    } else {
+                        throw new IllegalArgumentException("业务类型不正确：" + receiptItem.getBizType());
+                    }
+                });
     }
 
     @Override
@@ -218,23 +248,27 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
         if (CollUtil.isEmpty(receipts)) {
             return;
         }
-        receipts.forEach(receipt -> {
-            if (ErpAuditStatus.APPROVE.getStatus().equals(receipt.getStatus())) {
-                throw exception(FINANCE_RECEIPT_DELETE_FAIL_APPROVE, receipt.getNo());
-            }
-        });
+        receipts.forEach(
+                receipt -> {
+                    if (ErpAuditStatus.APPROVE.getStatus().equals(receipt.getStatus())) {
+                        throw exception(FINANCE_RECEIPT_DELETE_FAIL_APPROVE, receipt.getNo());
+                    }
+                });
 
         // 2. 遍历删除，并记录操作日志
-        receipts.forEach(receipt -> {
-            // 2.1 删除收款单
-            financeReceiptMapper.deleteById(receipt.getId());
-            // 2.2 删除收款单项
-            List<ErpFinanceReceiptItemDO> receiptItems = financeReceiptItemMapper.selectListByReceiptId(receipt.getId());
-            financeReceiptItemMapper.deleteByIds(convertSet(receiptItems, ErpFinanceReceiptItemDO::getId));
+        receipts.forEach(
+                receipt -> {
+                    // 2.1 删除收款单
+                    financeReceiptMapper.deleteById(receipt.getId());
+                    // 2.2 删除收款单项
+                    List<ErpFinanceReceiptItemDO> receiptItems =
+                            financeReceiptItemMapper.selectListByReceiptId(receipt.getId());
+                    financeReceiptItemMapper.deleteByIds(
+                            convertSet(receiptItems, ErpFinanceReceiptItemDO::getId));
 
-            // 2.3 更新销售出库、退货的收款金额情况
-            updateSalePrice(receiptItems);
-        });
+                    // 2.3 更新销售出库、退货的收款金额情况
+                    updateSalePrice(receiptItems);
+                });
     }
 
     private ErpFinanceReceiptDO validateFinanceReceiptExists(Long id) {
@@ -251,7 +285,8 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
     }
 
     @Override
-    public PageResult<ErpFinanceReceiptDO> getFinanceReceiptPage(ErpFinanceReceiptPageReqVO pageReqVO) {
+    public PageResult<ErpFinanceReceiptDO> getFinanceReceiptPage(
+            ErpFinanceReceiptPageReqVO pageReqVO) {
         return financeReceiptMapper.selectPage(pageReqVO);
     }
 
@@ -263,11 +298,11 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
     }
 
     @Override
-    public List<ErpFinanceReceiptItemDO> getFinanceReceiptItemListByReceiptIds(Collection<Long> receiptIds) {
+    public List<ErpFinanceReceiptItemDO> getFinanceReceiptItemListByReceiptIds(
+            Collection<Long> receiptIds) {
         if (CollUtil.isEmpty(receiptIds)) {
             return Collections.emptyList();
         }
         return financeReceiptItemMapper.selectListByReceiptIds(receiptIds);
     }
-
 }

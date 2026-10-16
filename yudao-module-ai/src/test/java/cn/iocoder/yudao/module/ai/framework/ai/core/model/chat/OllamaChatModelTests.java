@@ -10,6 +10,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
+
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -22,15 +23,20 @@ import java.util.List;
  */
 public class OllamaChatModelTests {
 
-    private final OllamaChatModel chatModel = OllamaChatModel.builder()
-            .ollamaApi(OllamaApi.builder()
-                    .baseUrl("http://127.0.0.1:11434") // Ollama 服务地址
-                    .build())
-            .options(OllamaChatOptions.builder()
-//                    .model("qwen") // 模型（https://ollama.com/library/qwen）
-                    .model("deepseek-r1") // 模型（https://ollama.com/library/deepseek-r1）
-                    .build())
-            .build();
+    private final OllamaChatModel chatModel =
+            OllamaChatModel.builder()
+                    .ollamaApi(
+                            OllamaApi.builder()
+                                    .baseUrl("http://127.0.0.1:11434") // Ollama 服务地址
+                                    .build())
+                    .options(
+                            OllamaChatOptions.builder()
+                                    //                    .model("qwen") //
+                                    // 模型（https://ollama.com/library/qwen）
+                                    .model(
+                                            "deepseek-r1") // 模型（https://ollama.com/library/deepseek-r1）
+                                    .build())
+                    .build();
 
     @Test
     @Disabled
@@ -58,10 +64,12 @@ public class OllamaChatModelTests {
         // 调用
         Flux<ChatResponse> flux = chatModel.stream(new Prompt(messages));
         // 打印结果
-        flux.doOnNext(response -> {
-//            System.out.println(response);
-            System.out.println(response.getResult().getOutput());
-        }).then().block();
+        flux.doOnNext(
+                        response -> {
+                            //            System.out.println(response);
+                            System.out.println(response.getResult().getOutput());
+                        })
+                .then()
+                .block();
     }
-
 }

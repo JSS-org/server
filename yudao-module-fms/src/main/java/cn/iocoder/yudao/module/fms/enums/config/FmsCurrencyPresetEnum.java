@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.fms.enums.config;
 
 import cn.hutool.core.util.ArrayUtil;
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,20 +17,21 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum FmsCurrencyPresetEnum implements ArrayValuable<String> {
-
     RMB("RMB", "人民币", BigDecimal.ONE);
 
-    public static final String[] ARRAYS = Arrays.stream(values())
-            .map(FmsCurrencyPresetEnum::getCode).toArray(String[]::new);
+    public static final String[] ARRAYS =
+            Arrays.stream(values()).map(FmsCurrencyPresetEnum::getCode).toArray(String[]::new);
 
     /**
      * 币别编码
      */
     private final String code;
+
     /**
      * 币别名称
      */
     private final String name;
+
     /**
      * 汇率
      */
@@ -43,5 +45,4 @@ public enum FmsCurrencyPresetEnum implements ArrayValuable<String> {
     public static FmsCurrencyPresetEnum valueOfCode(String code) {
         return ArrayUtil.firstMatch(currency -> currency.getCode().equals(code), values());
     }
-
 }

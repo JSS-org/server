@@ -37,7 +37,8 @@ public interface WebSocketMessageSender {
      */
     void send(String sessionId, String messageType, String messageContent);
 
-    default void sendObject(Integer userType, Long userId, String messageType, Object messageContent) {
+    default void sendObject(
+            Integer userType, Long userId, String messageType, Object messageContent) {
         send(userType, userId, messageType, JsonUtils.toJsonString(messageContent));
     }
 
@@ -48,5 +49,4 @@ public interface WebSocketMessageSender {
     default void sendObject(String sessionId, String messageType, Object messageContent) {
         send(sessionId, messageType, JsonUtils.toJsonString(messageContent));
     }
-
 }

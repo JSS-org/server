@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.im.controller.admin.manager.message.vo.group.ImGr
 import cn.iocoder.yudao.module.im.dal.dataobject.message.ImGroupMessageDO;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageReceiptStatusEnum;
 import cn.iocoder.yudao.module.im.enums.message.ImMessageStatusEnum;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import java.time.LocalDateTime;
@@ -33,8 +34,12 @@ public interface ImGroupMessageMapper extends BaseMapperX<ImGroupMessageDO> {
      * @param size        拉取数量
      * @return 消息列表（按 id 升序）
      */
-    default List<ImGroupMessageDO> selectListByMinId(Long userId, Collection<Long> groupIds, Long minId,
-                                                     LocalDateTime minSendTime, Integer size) {
+    default List<ImGroupMessageDO> selectListByMinId(
+            Long userId,
+            Collection<Long> groupIds,
+            Long minId,
+            LocalDateTime minSendTime,
+            Integer size) {
         QueryWrapperX<ImGroupMessageDO> wrapper = new QueryWrapperX<>();
         wrapper.in("group_id", groupIds)
                 .gt("id", minId)
@@ -54,7 +59,8 @@ public interface ImGroupMessageMapper extends BaseMapperX<ImGroupMessageDO> {
      * @param limit  拉取数量
      * @return 消息列表（按 id 倒序）
      */
-    default List<ImGroupMessageDO> selectHistoryListByUser(Long userId, Long groupId, Long maxId, Integer limit) {
+    default List<ImGroupMessageDO> selectHistoryListByUser(
+            Long userId, Long groupId, Long maxId, Integer limit) {
         QueryWrapperX<ImGroupMessageDO> wrapper = new QueryWrapperX<>();
         wrapper.eq("group_id", groupId)
                 .lt(maxId != null, "id", maxId)
@@ -64,10 +70,12 @@ public interface ImGroupMessageMapper extends BaseMapperX<ImGroupMessageDO> {
         return selectList(wrapper);
     }
 
-    default ImGroupMessageDO selectBySenderIdAndClientMessageId(Long senderId, String clientMessageId) {
-        return selectOne(new LambdaQueryWrapperX<ImGroupMessageDO>()
-                .eq(ImGroupMessageDO::getSenderId, senderId)
-                .eq(ImGroupMessageDO::getClientMessageId, clientMessageId));
+    default ImGroupMessageDO selectBySenderIdAndClientMessageId(
+            Long senderId, String clientMessageId) {
+        return selectOne(
+                new LambdaQueryWrapperX<ImGroupMessageDO>()
+                        .eq(ImGroupMessageDO::getSenderId, senderId)
+                        .eq(ImGroupMessageDO::getClientMessageId, clientMessageId));
     }
 
     /**
@@ -81,24 +89,29 @@ public interface ImGroupMessageMapper extends BaseMapperX<ImGroupMessageDO> {
      * @param maxId   结束消息 id（含，本次已读位置）
      * @return 待回执消息列表
      */
-    default List<ImGroupMessageDO> selectListByGroupIdAndPendingReceipt(Long groupId, Long minId, Long maxId) {
-        return selectList(new LambdaQueryWrapperX<ImGroupMessageDO>()
-                .eq(ImGroupMessageDO::getGroupId, groupId)
-                .eq(ImGroupMessageDO::getReceiptStatus, ImMessageReceiptStatusEnum.PENDING.getStatus())
-                .gt(minId != null, ImGroupMessageDO::getId, minId)
-                .le(ImGroupMessageDO::getId, maxId)
-                .ne(ImGroupMessageDO::getStatus, ImMessageStatusEnum.RECALL.getStatus()));
+    default List<ImGroupMessageDO> selectListByGroupIdAndPendingReceipt(
+            Long groupId, Long minId, Long maxId) {
+        return selectList(
+                new LambdaQueryWrapperX<ImGroupMessageDO>()
+                        .eq(ImGroupMessageDO::getGroupId, groupId)
+                        .eq(
+                                ImGroupMessageDO::getReceiptStatus,
+                                ImMessageReceiptStatusEnum.PENDING.getStatus())
+                        .gt(minId != null, ImGroupMessageDO::getId, minId)
+                        .le(ImGroupMessageDO::getId, maxId)
+                        .ne(ImGroupMessageDO::getStatus, ImMessageStatusEnum.RECALL.getStatus()));
     }
 
     default PageResult<ImGroupMessageDO> selectPage(ImGroupMessageManagerPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ImGroupMessageDO>()
-                .eqIfPresent(ImGroupMessageDO::getGroupId, reqVO.getGroupId())
-                .eqIfPresent(ImGroupMessageDO::getSenderId, reqVO.getSenderId())
-                .eqIfPresent(ImGroupMessageDO::getType, reqVO.getType())
-                .likeIfPresent(ImGroupMessageDO::getContent, reqVO.getContent())
-                .eqIfPresent(ImGroupMessageDO::getStatus, reqVO.getStatus())
-                .betweenIfPresent(ImGroupMessageDO::getSendTime, reqVO.getSendTime())
-                .orderByDesc(ImGroupMessageDO::getId));
+        return selectPage(
+                reqVO,
+                new LambdaQueryWrapperX<ImGroupMessageDO>()
+                        .eqIfPresent(ImGroupMessageDO::getGroupId, reqVO.getGroupId())
+                        .eqIfPresent(ImGroupMessageDO::getSenderId, reqVO.getSenderId())
+                        .eqIfPresent(ImGroupMessageDO::getType, reqVO.getType())
+                        .likeIfPresent(ImGroupMessageDO::getContent, reqVO.getContent())
+                        .eqIfPresent(ImGroupMessageDO::getStatus, reqVO.getStatus())
+                        .betweenIfPresent(ImGroupMessageDO::getSendTime, reqVO.getSendTime())
+                        .orderByDesc(ImGroupMessageDO::getId));
     }
-
 }

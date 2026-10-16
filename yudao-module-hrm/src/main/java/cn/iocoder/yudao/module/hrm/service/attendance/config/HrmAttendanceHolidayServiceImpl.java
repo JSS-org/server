@@ -1,5 +1,11 @@
 package cn.iocoder.yudao.module.hrm.service.attendance.config;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getDayBeginTime;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_HOLIDAY_DATE_DUPLICATE;
+import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_HOLIDAY_NOT_EXISTS;
+
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
@@ -7,7 +13,9 @@ import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.holiday.HrmAtt
 import cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.holiday.HrmAttendanceHolidaySaveReqVO;
 import cn.iocoder.yudao.module.hrm.dal.dataobject.attendance.config.HrmAttendanceHolidayDO;
 import cn.iocoder.yudao.module.hrm.dal.mysql.attendance.config.HrmAttendanceHolidayMapper;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -15,13 +23,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.getDayBeginTime;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_HOLIDAY_DATE_DUPLICATE;
-import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_HOLIDAY_NOT_EXISTS;
 
 /**
  * HRM 考勤节假日 Service 实现类
@@ -32,8 +33,7 @@ import static cn.iocoder.yudao.module.hrm.enums.ErrorCodeConstants.ATTENDANCE_HO
 @Validated
 public class HrmAttendanceHolidayServiceImpl implements HrmAttendanceHolidayService {
 
-    @Resource
-    private HrmAttendanceHolidayMapper attendanceHolidayMapper;
+    @Resource private HrmAttendanceHolidayMapper attendanceHolidayMapper;
 
     @Override
     public Long createAttendanceHoliday(HrmAttendanceHolidaySaveReqVO createReqVO) {
@@ -42,8 +42,8 @@ public class HrmAttendanceHolidayServiceImpl implements HrmAttendanceHolidayServ
         validateAttendanceHolidayDateUnique(null, date);
 
         // 2. 新增节假日配置
-        HrmAttendanceHolidayDO holiday = BeanUtils.toBean(createReqVO, HrmAttendanceHolidayDO.class)
-                .setDate(date);
+        HrmAttendanceHolidayDO holiday =
+                BeanUtils.toBean(createReqVO, HrmAttendanceHolidayDO.class).setDate(date);
         attendanceHolidayMapper.insert(holiday);
         return holiday.getId();
     }
@@ -56,8 +56,8 @@ public class HrmAttendanceHolidayServiceImpl implements HrmAttendanceHolidayServ
         validateAttendanceHolidayDateUnique(updateReqVO.getId(), date);
 
         // 2. 更新节假日配置
-        attendanceHolidayMapper.updateById(BeanUtils.toBean(updateReqVO, HrmAttendanceHolidayDO.class)
-                .setDate(date));
+        attendanceHolidayMapper.updateById(
+                BeanUtils.toBean(updateReqVO, HrmAttendanceHolidayDO.class).setDate(date));
     }
 
     @Override
@@ -86,13 +86,15 @@ public class HrmAttendanceHolidayServiceImpl implements HrmAttendanceHolidayServ
     }
 
     @Override
-    public Map<LocalDate, HrmAttendanceHolidayDO> getAttendanceHolidayMap(LocalDateTime[] dateTimes) {
+    public Map<LocalDate, HrmAttendanceHolidayDO> getAttendanceHolidayMap(
+            LocalDateTime[] dateTimes) {
         List<HrmAttendanceHolidayDO> list = getAttendanceHolidayListByDateRange(dateTimes);
         return convertMap(list, holiday -> holiday.getDate().toLocalDate());
     }
 
     @Override
-    public PageResult<HrmAttendanceHolidayDO> getAttendanceHolidayPage(HrmAttendanceHolidayPageReqVO pageReqVO) {
+    public PageResult<HrmAttendanceHolidayDO> getAttendanceHolidayPage(
+            HrmAttendanceHolidayPageReqVO pageReqVO) {
         return attendanceHolidayMapper.selectPage(pageReqVO);
     }
 
@@ -108,5 +110,4 @@ public class HrmAttendanceHolidayServiceImpl implements HrmAttendanceHolidayServ
             throw exception(ATTENDANCE_HOLIDAY_DATE_DUPLICATE);
         }
     }
-
 }

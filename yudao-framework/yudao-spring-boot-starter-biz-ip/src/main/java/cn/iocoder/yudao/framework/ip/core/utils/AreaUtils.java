@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.framework.ip.core.utils;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
+
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.text.csv.CsvRow;
@@ -7,6 +10,7 @@ import cn.hutool.core.text.csv.CsvUtil;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.framework.ip.core.Area;
 import cn.iocoder.yudao.framework.ip.core.enums.AreaTypeEnum;
+
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.findFirst;
 
 /**
  * 区域工具类
@@ -47,10 +48,17 @@ public class AreaUtils {
             areas = new HashMap<>();
             areas.put(Area.ID_GLOBAL, new Area(Area.ID_GLOBAL, "全球", 0, null, new ArrayList<>()));
             // 从 csv 中加载数据
-            List<CsvRow> rows = CsvUtil.getReader().read(ResourceUtil.getUtf8Reader("area.csv")).getRows();
+            List<CsvRow> rows =
+                    CsvUtil.getReader().read(ResourceUtil.getUtf8Reader("area.csv")).getRows();
             rows.remove(0); // 删除 header
             for (CsvRow row : rows) {
-                Area area = new Area(Integer.valueOf(row.get(0)), row.get(1), Integer.valueOf(row.get(2)), null, new ArrayList<>());
+                Area area =
+                        new Area(
+                                Integer.valueOf(row.get(0)),
+                                row.get(1),
+                                Integer.valueOf(row.get(2)),
+                                null,
+                                new ArrayList<>());
                 areas.put(area.getId(), area);
             }
 
@@ -167,7 +175,8 @@ public class AreaUtils {
             // “递归”父节点
             area = area.getParent();
             if (area == null
-                    || ObjectUtils.equalsAny(area.getId(), Area.ID_GLOBAL, Area.ID_CHINA)) { // 跳过父节点为中国的情况
+                    || ObjectUtils.equalsAny(
+                            area.getId(), Area.ID_GLOBAL, Area.ID_CHINA)) { // 跳过父节点为中国的情况
                 break;
             }
             sb.insert(0, separator);
@@ -213,5 +222,4 @@ public class AreaUtils {
         }
         return null;
     }
-
 }

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.im.enums.rtc;
 
 import cn.iocoder.yudao.framework.common.core.ArrayValuable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,16 +16,17 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 public enum ImRtcCallMediaTypeEnum implements ArrayValuable<Integer> {
-
     VOICE(1, "语音"), // 仅音频
     VIDEO(2, "视频"); // 音频 + 视频
 
-    public static final Integer[] ARRAYS = Arrays.stream(values()).map(ImRtcCallMediaTypeEnum::getType).toArray(Integer[]::new);
+    public static final Integer[] ARRAYS =
+            Arrays.stream(values()).map(ImRtcCallMediaTypeEnum::getType).toArray(Integer[]::new);
 
     /**
      * 类型
      */
     private final Integer type;
+
     /**
      * 名字
      */
@@ -42,5 +44,4 @@ public enum ImRtcCallMediaTypeEnum implements ArrayValuable<Integer> {
     public static boolean isVideo(Integer type) {
         return Objects.equals(VIDEO.type, type);
     }
-
 }

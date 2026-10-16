@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.ai.controller.admin.model;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,19 +12,19 @@ import cn.iocoder.yudao.module.ai.controller.admin.model.vo.tool.AiToolRespVO;
 import cn.iocoder.yudao.module.ai.controller.admin.model.vo.tool.AiToolSaveReqVO;
 import cn.iocoder.yudao.module.ai.dal.dataobject.model.AiToolDO;
 import cn.iocoder.yudao.module.ai.service.model.AiToolService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - AI 工具")
 @RestController
@@ -29,8 +32,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @Validated
 public class AiToolController {
 
-    @Resource
-    private AiToolService toolService;
+    @Resource private AiToolService toolService;
 
     @PostMapping("/create")
     @Operation(summary = "创建工具")
@@ -77,8 +79,9 @@ public class AiToolController {
     @Operation(summary = "获得工具列表")
     public CommonResult<List<AiToolRespVO>> getToolSimpleList() {
         List<AiToolDO> list = toolService.getToolListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(convertList(list, tool -> new AiToolRespVO()
-                .setId(tool.getId()).setName(tool.getName())));
+        return success(
+                convertList(
+                        list,
+                        tool -> new AiToolRespVO().setId(tool.getId()).setName(tool.getName())));
     }
-
 }

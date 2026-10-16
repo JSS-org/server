@@ -1,5 +1,18 @@
 package cn.iocoder.yudao.module.member.service.group;
 
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
+import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
+import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
+import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_HAS_USER;
+import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_NOT_EXISTS;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
@@ -9,22 +22,12 @@ import cn.iocoder.yudao.module.member.controller.admin.group.vo.MemberGroupUpdat
 import cn.iocoder.yudao.module.member.dal.dataobject.group.MemberGroupDO;
 import cn.iocoder.yudao.module.member.dal.mysql.group.MemberGroupMapper;
 import cn.iocoder.yudao.module.member.service.user.MemberUserService;
+
 import jakarta.annotation.Resource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
-import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildTime;
-import static cn.iocoder.yudao.framework.common.util.object.ObjectUtils.cloneIgnoreId;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertPojoEquals;
-import static cn.iocoder.yudao.framework.test.core.util.AssertUtils.assertServiceException;
-import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_HAS_USER;
-import static cn.iocoder.yudao.module.member.enums.ErrorCodeConstants.GROUP_NOT_EXISTS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 // TODO 芋艿：完全 review 完，在去 review 单测
 /**
@@ -35,20 +38,17 @@ import static org.mockito.Mockito.when;
 @Import(MemberGroupServiceImpl.class)
 public class MemberGroupServiceImplTest extends BaseDbUnitTest {
 
-    @Resource
-    private MemberGroupServiceImpl groupService;
+    @Resource private MemberGroupServiceImpl groupService;
 
-    @Resource
-    private MemberGroupMapper groupMapper;
+    @Resource private MemberGroupMapper groupMapper;
 
-    @MockitoBean
-    private MemberUserService memberUserService;
+    @MockitoBean private MemberUserService memberUserService;
 
     @Test
     public void testCreateGroup_success() {
         // 准备参数
-        MemberGroupCreateReqVO reqVO = randomPojo(MemberGroupCreateReqVO.class,
-                o -> o.setStatus(randomCommonStatus()));
+        MemberGroupCreateReqVO reqVO =
+                randomPojo(MemberGroupCreateReqVO.class, o -> o.setStatus(randomCommonStatus()));
 
         // 调用
         Long groupId = groupService.createGroup(reqVO);
@@ -63,12 +63,15 @@ public class MemberGroupServiceImplTest extends BaseDbUnitTest {
     public void testUpdateGroup_success() {
         // mock 数据
         MemberGroupDO dbGroup = randomPojo(MemberGroupDO.class);
-        groupMapper.insert(dbGroup);// @Sql: 先插入出一条存在的数据
+        groupMapper.insert(dbGroup); // @Sql: 先插入出一条存在的数据
         // 准备参数
-        MemberGroupUpdateReqVO reqVO = randomPojo(MemberGroupUpdateReqVO.class, o -> {
-            o.setId(dbGroup.getId()); // 设置更新的 ID
-            o.setStatus(randomCommonStatus());
-        });
+        MemberGroupUpdateReqVO reqVO =
+                randomPojo(
+                        MemberGroupUpdateReqVO.class,
+                        o -> {
+                            o.setId(dbGroup.getId()); // 设置更新的 ID
+                            o.setStatus(randomCommonStatus());
+                        });
 
         // 调用
         groupService.updateGroup(reqVO);
@@ -90,7 +93,7 @@ public class MemberGroupServiceImplTest extends BaseDbUnitTest {
     public void testDeleteGroup_success() {
         // mock 数据
         MemberGroupDO dbGroup = randomPojo(MemberGroupDO.class);
-        groupMapper.insert(dbGroup);// @Sql: 先插入出一条存在的数据
+        groupMapper.insert(dbGroup); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbGroup.getId();
 
@@ -113,7 +116,7 @@ public class MemberGroupServiceImplTest extends BaseDbUnitTest {
     public void testDeleteGroup_hasUser() {
         // mock 数据
         MemberGroupDO dbGroup = randomPojo(MemberGroupDO.class);
-        groupMapper.insert(dbGroup);// @Sql: 先插入出一条存在的数据
+        groupMapper.insert(dbGroup); // @Sql: 先插入出一条存在的数据
         // 准备参数
         Long id = dbGroup.getId();
 
@@ -130,16 +133,20 @@ public class MemberGroupServiceImplTest extends BaseDbUnitTest {
         int status = CommonStatusEnum.ENABLE.getStatus();
 
         // mock 数据
-        MemberGroupDO dbGroup = randomPojo(MemberGroupDO.class, o -> { // 等会查询到
-            o.setName(name);
-            o.setStatus(status);
-            o.setCreateTime(buildTime(2023, 2, 18));
-        });
+        MemberGroupDO dbGroup =
+                randomPojo(
+                        MemberGroupDO.class,
+                        o -> { // 等会查询到
+                            o.setName(name);
+                            o.setStatus(status);
+                            o.setCreateTime(buildTime(2023, 2, 18));
+                        });
         groupMapper.insert(dbGroup);
         // 测试 name 不匹配
         groupMapper.insert(cloneIgnoreId(dbGroup, o -> o.setName("")));
         // 测试 status 不匹配
-        groupMapper.insert(cloneIgnoreId(dbGroup, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
+        groupMapper.insert(
+                cloneIgnoreId(dbGroup, o -> o.setStatus(CommonStatusEnum.DISABLE.getStatus())));
         // 测试 createTime 不匹配
         groupMapper.insert(cloneIgnoreId(dbGroup, o -> o.setCreateTime(null)));
         // 准备参数
@@ -155,5 +162,4 @@ public class MemberGroupServiceImplTest extends BaseDbUnitTest {
         assertEquals(1, pageResult.getList().size());
         assertPojoEquals(dbGroup, pageResult.getList().get(0));
     }
-
 }

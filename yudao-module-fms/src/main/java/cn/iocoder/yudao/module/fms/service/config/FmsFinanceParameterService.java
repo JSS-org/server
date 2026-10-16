@@ -17,7 +17,8 @@ public interface FmsFinanceParameterService {
      * @param accountSetId 账套编号
      * @param initializeReqVO 账套初始化信息
      */
-    void initializeFinanceParameter(Long accountSetId, FmsAccountSetInitializeReqVO initializeReqVO);
+    void initializeFinanceParameter(
+            Long accountSetId, FmsAccountSetInitializeReqVO initializeReqVO);
 
     /**
      * 获得财务参数
@@ -52,5 +53,4 @@ public interface FmsFinanceParameterService {
      * @param userId 用户编号
      */
     void updateFinanceParameter(FmsFinanceParameterUpdateReqVO updateReqVO, Long userId);
-
 }

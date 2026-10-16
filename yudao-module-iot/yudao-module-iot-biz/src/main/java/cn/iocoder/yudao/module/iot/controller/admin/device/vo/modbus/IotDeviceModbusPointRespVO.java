@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.iot.controller.admin.device.vo.modbus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -19,7 +20,10 @@ public class IotDeviceModbusPointRespVO {
     @Schema(description = "物模型属性编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
     private Long thingModelId;
 
-    @Schema(description = "属性标识符", requiredMode = Schema.RequiredMode.REQUIRED, example = "temperature")
+    @Schema(
+            description = "属性标识符",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "temperature")
     private String identifier;
 
     @Schema(description = "属性名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "温度")
@@ -51,5 +55,4 @@ public class IotDeviceModbusPointRespVO {
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
-
 }

@@ -1,12 +1,22 @@
 package cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.wallet;
 
+import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR;
+import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.PAY_ORDER_EXTENSION_NOT_FOUND;
+import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.REFUND_NOT_FOUND;
+
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
+import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderExtensionDO;
+import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
+import cn.iocoder.yudao.module.pay.dal.dataobject.transfer.PayTransferDO;
+import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
 import cn.iocoder.yudao.module.pay.enums.PayChannelEnum;
+import cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum;
 import cn.iocoder.yudao.module.pay.enums.refund.PayRefundStatusEnum;
 import cn.iocoder.yudao.module.pay.enums.transfer.PayTransferStatusEnum;
+import cn.iocoder.yudao.module.pay.enums.wallet.PayWalletBizTypeEnum;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.refund.PayRefundRespDTO;
@@ -15,24 +25,15 @@ import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTra
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.dto.transfer.PayTransferUnifiedReqDTO;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.AbstractPayClient;
 import cn.iocoder.yudao.module.pay.framework.pay.core.client.impl.NonePayClientConfig;
-import cn.iocoder.yudao.module.pay.dal.dataobject.order.PayOrderExtensionDO;
-import cn.iocoder.yudao.module.pay.dal.dataobject.refund.PayRefundDO;
-import cn.iocoder.yudao.module.pay.dal.dataobject.transfer.PayTransferDO;
-import cn.iocoder.yudao.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
-import cn.iocoder.yudao.module.pay.enums.order.PayOrderStatusEnum;
-import cn.iocoder.yudao.module.pay.enums.wallet.PayWalletBizTypeEnum;
 import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
 import cn.iocoder.yudao.module.pay.service.refund.PayRefundService;
 import cn.iocoder.yudao.module.pay.service.transfer.PayTransferService;
 import cn.iocoder.yudao.module.pay.service.wallet.PayWalletService;
 import cn.iocoder.yudao.module.pay.service.wallet.PayWalletTransactionService;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
-
-import static cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR;
-import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.PAY_ORDER_EXTENSION_NOT_FOUND;
-import static cn.iocoder.yudao.module.pay.enums.ErrorCodeConstants.REFUND_NOT_FOUND;
 
 /**
  * 钱包支付的 PayClient 实现类
@@ -71,11 +72,14 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         try {
             Long walletId = MapUtil.getLong(reqDTO.getChannelExtras(), WALLET_ID_KEY);
             Assert.notNull(walletId, "钱包编号");
-            PayWalletTransactionDO transaction = wallService.orderPay(walletId,
-                    reqDTO.getOutTradeNo(), reqDTO.getPrice());
-            return PayOrderRespDTO.successOf(transaction.getNo(), transaction.getCreator(),
+            PayWalletTransactionDO transaction =
+                    wallService.orderPay(walletId, reqDTO.getOutTradeNo(), reqDTO.getPrice());
+            return PayOrderRespDTO.successOf(
+                    transaction.getNo(),
+                    transaction.getCreator(),
                     transaction.getCreateTime(),
-                    reqDTO.getOutTradeNo(), transaction);
+                    reqDTO.getOutTradeNo(),
+                    transaction);
         } catch (Throwable ex) {
             log.error("[doUnifiedOrder][reqDTO({}) 异常]", reqDTO, ex);
             Integer errorCode = INTERNAL_SERVER_ERROR.getCode();
@@ -85,13 +89,14 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
                 errorCode = serviceException.getCode();
                 errorMsg = serviceException.getMessage();
             }
-            return PayOrderRespDTO.closedOf(String.valueOf(errorCode), errorMsg,
-                    reqDTO.getOutTradeNo(), "");
+            return PayOrderRespDTO.closedOf(
+                    String.valueOf(errorCode), errorMsg, reqDTO.getOutTradeNo(), "");
         }
     }
 
     @Override
-    protected PayOrderRespDTO doParseOrderNotify(Map<String, String> params, String body, Map<String, String> headers) {
+    protected PayOrderRespDTO doParseOrderNotify(
+            Map<String, String> params, String body, Map<String, String> headers) {
         throw new UnsupportedOperationException("钱包支付无支付回调");
     }
 
@@ -103,21 +108,33 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         PayOrderExtensionDO orderExtension = orderService.getOrderExtensionByNo(outTradeNo);
         // 支付交易拓展单不存在， 返回关闭状态
         if (orderExtension == null) {
-            return PayOrderRespDTO.closedOf(String.valueOf(PAY_ORDER_EXTENSION_NOT_FOUND.getCode()),
-                    PAY_ORDER_EXTENSION_NOT_FOUND.getMsg(), outTradeNo, "");
+            return PayOrderRespDTO.closedOf(
+                    String.valueOf(PAY_ORDER_EXTENSION_NOT_FOUND.getCode()),
+                    PAY_ORDER_EXTENSION_NOT_FOUND.getMsg(),
+                    outTradeNo,
+                    "");
         }
         // 关闭状态
         if (PayOrderStatusEnum.isClosed(orderExtension.getStatus())) {
-            return PayOrderRespDTO.closedOf(orderExtension.getChannelErrorCode(),
-                    orderExtension.getChannelErrorMsg(), outTradeNo, "");
+            return PayOrderRespDTO.closedOf(
+                    orderExtension.getChannelErrorCode(),
+                    orderExtension.getChannelErrorMsg(),
+                    outTradeNo,
+                    "");
         }
         // 成功状态
         if (PayOrderStatusEnum.isSuccess(orderExtension.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
-                    String.valueOf(orderExtension.getOrderId()), PayWalletBizTypeEnum.PAYMENT);
+            PayWalletTransactionDO walletTransaction =
+                    walletTransactionService.getWalletTransaction(
+                            String.valueOf(orderExtension.getOrderId()),
+                            PayWalletBizTypeEnum.PAYMENT);
             Assert.notNull(walletTransaction, "支付单 {} 钱包流水不能为空", outTradeNo);
-            return PayOrderRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreator(),
-                    walletTransaction.getCreateTime(), outTradeNo, walletTransaction);
+            return PayOrderRespDTO.successOf(
+                    walletTransaction.getNo(),
+                    walletTransaction.getCreator(),
+                    walletTransaction.getCreateTime(),
+                    outTradeNo,
+                    walletTransaction);
         }
         // 其它状态为无效状态
         log.error("[doGetOrder] 支付单 {} 的状态不正确", outTradeNo);
@@ -133,13 +150,19 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         // 补充说明：存在扣款成功，但是 notifyOrder 更新支付拓展单失败的情况，此时不能直接关闭
         PayOrderExtensionDO orderExtension = orderService.getOrderExtensionByNo(outTradeNo);
         if (orderExtension != null && PayOrderStatusEnum.isWaiting(orderExtension.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
-                    String.valueOf(orderExtension.getOrderId()), PayWalletBizTypeEnum.PAYMENT);
+            PayWalletTransactionDO walletTransaction =
+                    walletTransactionService.getWalletTransaction(
+                            String.valueOf(orderExtension.getOrderId()),
+                            PayWalletBizTypeEnum.PAYMENT);
             if (walletTransaction == null) {
                 return PayOrderRespDTO.closedOf(null, null, outTradeNo, "");
             }
-            return PayOrderRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreator(),
-                    walletTransaction.getCreateTime(), outTradeNo, walletTransaction);
+            return PayOrderRespDTO.successOf(
+                    walletTransaction.getNo(),
+                    walletTransaction.getCreator(),
+                    walletTransaction.getCreateTime(),
+                    outTradeNo,
+                    walletTransaction);
         }
         // 其它状态：以本地支付状态为准
         return doGetOrder(outTradeNo);
@@ -149,26 +172,31 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
     @SuppressWarnings("PatternVariableCanBeUsed")
     protected PayRefundRespDTO doUnifiedRefund(PayRefundUnifiedReqDTO reqDTO) {
         try {
-            PayWalletTransactionDO payWalletTransaction = wallService.orderRefund(reqDTO.getOutRefundNo(),
-                    reqDTO.getRefundPrice(), reqDTO.getReason());
-            return PayRefundRespDTO.successOf(payWalletTransaction.getNo(), payWalletTransaction.getCreateTime(),
-                    reqDTO.getOutRefundNo(), payWalletTransaction);
+            PayWalletTransactionDO payWalletTransaction =
+                    wallService.orderRefund(
+                            reqDTO.getOutRefundNo(), reqDTO.getRefundPrice(), reqDTO.getReason());
+            return PayRefundRespDTO.successOf(
+                    payWalletTransaction.getNo(),
+                    payWalletTransaction.getCreateTime(),
+                    reqDTO.getOutRefundNo(),
+                    payWalletTransaction);
         } catch (Throwable ex) {
             log.error("[doUnifiedRefund][reqDOT({}) 异常]", reqDTO, ex);
             Integer errorCode = INTERNAL_SERVER_ERROR.getCode();
             String errorMsg = INTERNAL_SERVER_ERROR.getMsg();
             if (ex instanceof ServiceException) {
                 ServiceException serviceException = (ServiceException) ex;
-                errorCode =  serviceException.getCode();
+                errorCode = serviceException.getCode();
                 errorMsg = serviceException.getMessage();
             }
-            return PayRefundRespDTO.failureOf(String.valueOf(errorCode), errorMsg,
-                    reqDTO.getOutRefundNo(), "");
+            return PayRefundRespDTO.failureOf(
+                    String.valueOf(errorCode), errorMsg, reqDTO.getOutRefundNo(), "");
         }
     }
 
     @Override
-    protected PayRefundRespDTO doParseRefundNotify(Map<String, String> params, String body, Map<String, String> headers) {
+    protected PayRefundRespDTO doParseRefundNotify(
+            Map<String, String> params, String body, Map<String, String> headers) {
         throw new UnsupportedOperationException("钱包支付无退款回调");
     }
 
@@ -180,21 +208,28 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         PayRefundDO payRefund = refundService.getRefundByNo(outRefundNo);
         // 支付退款单不存在， 返回退款失败状态
         if (payRefund == null) {
-            return PayRefundRespDTO.failureOf(String.valueOf(REFUND_NOT_FOUND), REFUND_NOT_FOUND.getMsg(),
-                    outRefundNo, "");
+            return PayRefundRespDTO.failureOf(
+                    String.valueOf(REFUND_NOT_FOUND), REFUND_NOT_FOUND.getMsg(), outRefundNo, "");
         }
         // 退款失败
         if (PayRefundStatusEnum.isFailure(payRefund.getStatus())) {
-            return PayRefundRespDTO.failureOf(payRefund.getChannelErrorCode(), payRefund.getChannelErrorMsg(),
-                    outRefundNo, "");
+            return PayRefundRespDTO.failureOf(
+                    payRefund.getChannelErrorCode(),
+                    payRefund.getChannelErrorMsg(),
+                    outRefundNo,
+                    "");
         }
         // 退款成功
         if (PayRefundStatusEnum.isSuccess(payRefund.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
-                    String.valueOf(payRefund.getId()), PayWalletBizTypeEnum.PAYMENT_REFUND);
+            PayWalletTransactionDO walletTransaction =
+                    walletTransactionService.getWalletTransaction(
+                            String.valueOf(payRefund.getId()), PayWalletBizTypeEnum.PAYMENT_REFUND);
             Assert.notNull(walletTransaction, "支付退款单 {} 钱包流水不能为空", outRefundNo);
-            return PayRefundRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreateTime(),
-                    outRefundNo, walletTransaction);
+            return PayRefundRespDTO.successOf(
+                    walletTransaction.getNo(),
+                    walletTransaction.getCreateTime(),
+                    outRefundNo,
+                    walletTransaction);
         }
         // 其它状态为无效状态
         log.error("[doGetRefund] 支付退款单 {} 的状态不正确", outRefundNo);
@@ -206,10 +241,17 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
     public PayTransferRespDTO doUnifiedTransfer(PayTransferUnifiedReqDTO reqDTO) {
         try {
             Long walletId = Long.parseLong(reqDTO.getUserAccount());
-            PayWalletTransactionDO transaction = wallService.addWalletBalance(walletId, String.valueOf(reqDTO.getOutTransferNo()),
-                    PayWalletBizTypeEnum.TRANSFER, reqDTO.getPrice());
-            return PayTransferRespDTO.successOf(transaction.getNo(), transaction.getCreateTime(),
-                    reqDTO.getOutTransferNo(), transaction);
+            PayWalletTransactionDO transaction =
+                    wallService.addWalletBalance(
+                            walletId,
+                            String.valueOf(reqDTO.getOutTransferNo()),
+                            PayWalletBizTypeEnum.TRANSFER,
+                            reqDTO.getPrice());
+            return PayTransferRespDTO.successOf(
+                    transaction.getNo(),
+                    transaction.getCreateTime(),
+                    reqDTO.getOutTransferNo(),
+                    transaction);
         } catch (Throwable ex) {
             log.error("[doUnifiedTransfer][reqDTO({}) 异常]", reqDTO, ex);
             Integer errorCode = INTERNAL_SERVER_ERROR.getCode();
@@ -219,13 +261,14 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
                 errorCode = serviceException.getCode();
                 errorMsg = serviceException.getMessage();
             }
-            return PayTransferRespDTO.closedOf(String.valueOf(errorCode), errorMsg,
-                    reqDTO.getOutTransferNo(), "");
+            return PayTransferRespDTO.closedOf(
+                    String.valueOf(errorCode), errorMsg, reqDTO.getOutTransferNo(), "");
         }
     }
 
     @Override
-    protected PayTransferRespDTO doParseTransferNotify(Map<String, String> params, String body, Map<String, String> headers) {
+    protected PayTransferRespDTO doParseTransferNotify(
+            Map<String, String> params, String body, Map<String, String> headers) {
         throw new UnsupportedOperationException("钱包支付无转账回调");
     }
 
@@ -238,35 +281,41 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         PayTransferDO transfer = transferService.getTransferByNo(outTradeNo);
         // 转账单不存在，返回关闭状态
         if (transfer == null) {
-            return PayTransferRespDTO.closedOf(String.valueOf(PAY_ORDER_EXTENSION_NOT_FOUND.getCode()),
-                    PAY_ORDER_EXTENSION_NOT_FOUND.getMsg(), outTradeNo, "");
+            return PayTransferRespDTO.closedOf(
+                    String.valueOf(PAY_ORDER_EXTENSION_NOT_FOUND.getCode()),
+                    PAY_ORDER_EXTENSION_NOT_FOUND.getMsg(),
+                    outTradeNo,
+                    "");
         }
         // 关闭状态
         if (PayTransferStatusEnum.isClosed(transfer.getStatus())) {
-            return PayTransferRespDTO.closedOf(transfer.getChannelErrorCode(),
-                    transfer.getChannelErrorMsg(), outTradeNo, "");
+            return PayTransferRespDTO.closedOf(
+                    transfer.getChannelErrorCode(), transfer.getChannelErrorMsg(), outTradeNo, "");
         }
         // 成功状态
         if (PayTransferStatusEnum.isSuccess(transfer.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
-                    String.valueOf(transfer.getId()), PayWalletBizTypeEnum.TRANSFER);
+            PayWalletTransactionDO walletTransaction =
+                    walletTransactionService.getWalletTransaction(
+                            String.valueOf(transfer.getId()), PayWalletBizTypeEnum.TRANSFER);
             Assert.notNull(walletTransaction, "转账单 {} 钱包流水不能为空", outTradeNo);
-            return PayTransferRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreateTime(),
-                    outTradeNo, walletTransaction);
+            return PayTransferRespDTO.successOf(
+                    walletTransaction.getNo(),
+                    walletTransaction.getCreateTime(),
+                    outTradeNo,
+                    walletTransaction);
         }
         // 处理中状态
         if (PayTransferStatusEnum.isProcessing(transfer.getStatus())) {
-            return PayTransferRespDTO.processingOf(transfer.getChannelTransferNo(),
-                    outTradeNo, transfer);
+            return PayTransferRespDTO.processingOf(
+                    transfer.getChannelTransferNo(), outTradeNo, transfer);
         }
         // 等待状态
         if (PayTransferStatusEnum.isWaiting(transfer.getStatus())) {
-            return PayTransferRespDTO.waitingOf(transfer.getChannelTransferNo(),
-                    outTradeNo, transfer);
+            return PayTransferRespDTO.waitingOf(
+                    transfer.getChannelTransferNo(), outTradeNo, transfer);
         }
         // 其它状态为无效状态
         log.error("[doGetTransfer] 转账单 {} 的状态不正确", outTradeNo);
         throw new IllegalStateException(String.format("转账单[%s] 状态不正确", outTradeNo));
     }
-
 }

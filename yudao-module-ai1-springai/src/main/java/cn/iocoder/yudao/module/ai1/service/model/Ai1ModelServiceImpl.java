@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.ai1.service.model;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholders;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,21 +20,18 @@ import cn.iocoder.yudao.module.ai1.dal.mysql.model.Ai1ModelMapper;
 import cn.iocoder.yudao.module.ai1.enums.model.Ai1ModelTypeEnum;
 import cn.iocoder.yudao.module.ai1.harness.llm.Ai1LlmModelFactory;
 import cn.iocoder.yudao.module.ai1.harness.model.Ai1ProviderTool;
-import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
 import cn.iocoder.yudao.module.ai1.service.agent.Ai1AgentService;
 import cn.iocoder.yudao.module.ai1.service.knowledge.Ai1KnowledgeBaseService;
+import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
-import static cn.iocoder.yudao.module.ai1.enums.Ai1ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholders;
 
 /**
  * AI1 模型 Service 实现类
@@ -40,23 +42,17 @@ import static cn.iocoder.yudao.module.ai1.util.Ai1Utils.resolveSpringPlaceholder
 @Validated
 public class Ai1ModelServiceImpl implements Ai1ModelService {
 
-    @Resource
-    private Ai1ModelMapper modelMapper;
+    @Resource private Ai1ModelMapper modelMapper;
 
-    @Resource
-    private Ai1ProviderService providerService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource private Ai1ProviderService providerService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1AgentService agentService;
-    @Resource
-    @Lazy // 延迟加载，避免循环依赖
+    @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1KnowledgeBaseService knowledgeBaseService;
 
-    @Resource
-    private Ai1LlmModelFactory llmModelFactory;
+    @Resource private Ai1LlmModelFactory llmModelFactory;
 
-    @Resource
-    private Ai1ProviderTool providerTool;
+    @Resource private Ai1ProviderTool providerTool;
 
     @Override
     public Long createModel(Ai1ModelSaveReqVO createReqVO) {
@@ -78,7 +74,8 @@ public class Ai1ModelServiceImpl implements Ai1ModelService {
             throw exception(MODEL_NOT_BELONG_PROVIDER);
         }
         providerService.validateProviderExists(updateReqVO.getProviderId());
-        validateModelUnique(updateReqVO.getId(), updateReqVO.getProviderId(), updateReqVO.getModel());
+        validateModelUnique(
+                updateReqVO.getId(), updateReqVO.getProviderId(), updateReqVO.getModel());
         // 1.2 被使用的模型禁止修改类型，避免 Agent 或知识库配置失效
         if (ObjUtil.notEqual(model.getType(), updateReqVO.getType())) {
             List<Long> ids = Collections.singletonList(model.getId());
@@ -148,7 +145,8 @@ public class Ai1ModelServiceImpl implements Ai1ModelService {
     }
 
     @Override
-    public List<Ai1ModelDO> getModelListByProviderIdAndTypeAndStatus(Long providerId, Integer type, Integer status) {
+    public List<Ai1ModelDO> getModelListByProviderIdAndTypeAndStatus(
+            Long providerId, Integer type, Integer status) {
         return modelMapper.selectListByProviderIdAndTypeAndStatus(providerId, type, status);
     }
 
@@ -174,8 +172,10 @@ public class Ai1ModelServiceImpl implements Ai1ModelService {
         Ai1ProviderDO provider = providerService.validateProviderExists(providerId);
 
         // 2. 拉取远程模型：调用前解析 ${ENV} 占位符，库中的原文不改
-        return providerTool.listModels(resolveSpringPlaceholders(provider.getBaseUrl()),
-                resolveSpringPlaceholders(provider.getApiKey()), resolveSpringPlaceholders(provider.getHeaders()));
+        return providerTool.listModels(
+                resolveSpringPlaceholders(provider.getBaseUrl()),
+                resolveSpringPlaceholders(provider.getApiKey()),
+                resolveSpringPlaceholders(provider.getHeaders()));
     }
 
     @Override
@@ -195,8 +195,11 @@ public class Ai1ModelServiceImpl implements Ai1ModelService {
         }
 
         // 2. 组装调用参数：解析 ${ENV} 占位符，库中的原文不改，响应也不返回解析结果
-        return new Ai1ModelRespBO().setProviderId(provider.getId())
-                .setModelId(model.getId()).setModel(model.getModel()).setModelType(model.getType())
+        return new Ai1ModelRespBO()
+                .setProviderId(provider.getId())
+                .setModelId(model.getId())
+                .setModel(model.getModel())
+                .setModelType(model.getType())
                 .setBaseUrl(resolveSpringPlaceholders(provider.getBaseUrl()))
                 .setApiKey(resolveSpringPlaceholders(provider.getApiKey()))
                 .setHeaders(resolveSpringPlaceholders(provider.getHeaders()));
@@ -208,18 +211,28 @@ public class Ai1ModelServiceImpl implements Ai1ModelService {
         // 1.1 校验供应商存在
         providerService.validateProviderExists(importReqVO.getProviderId());
         // 1.2 过滤空白与已存在的模型标识（同时对入参去重，保持入参顺序）
-        List<Ai1ModelDO> existModelList = modelMapper.selectListByProviderId(importReqVO.getProviderId());
+        List<Ai1ModelDO> existModelList =
+                modelMapper.selectListByProviderId(importReqVO.getProviderId());
         Set<String> existModels = convertSet(existModelList, Ai1ModelDO::getModel);
-        Set<String> importModels = convertSetBySupplier(importReqVO.getModels(), StrUtil::trim, LinkedHashSet::new);
+        Set<String> importModels =
+                convertSetBySupplier(importReqVO.getModels(), StrUtil::trim, LinkedHashSet::new);
         importModels.removeIf(model -> StrUtil.isBlank(model) || existModels.contains(model));
         if (CollUtil.isEmpty(importModels)) {
             throw exception(MODEL_IMPORT_ALL_EXISTS);
         }
 
         // 2. 批量插入：展示名称默认同模型标识，类型默认会话，状态默认开启
-        List<Ai1ModelDO> models = convertList(importModels, model -> Ai1ModelDO.builder()
-                .providerId(importReqVO.getProviderId()).name(StrUtil.maxLength(model, 47)).model(model)
-                .type(Ai1ModelTypeEnum.CHAT.getType()).status(CommonStatusEnum.ENABLE.getStatus()).build());
+        List<Ai1ModelDO> models =
+                convertList(
+                        importModels,
+                        model ->
+                                Ai1ModelDO.builder()
+                                        .providerId(importReqVO.getProviderId())
+                                        .name(StrUtil.maxLength(model, 47))
+                                        .model(model)
+                                        .type(Ai1ModelTypeEnum.CHAT.getType())
+                                        .status(CommonStatusEnum.ENABLE.getStatus())
+                                        .build());
         modelMapper.insertBatch(models);
         return models.size();
     }
@@ -233,5 +246,4 @@ public class Ai1ModelServiceImpl implements Ai1ModelService {
             throw exception(MODEL_DUPLICATE, model);
         }
     }
-
 }

@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.mes.service.wm.salesnotice;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.mes.enums.wm.MesWmSalesNoticeStatusEnum.*;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -10,8 +14,11 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNotic
 import cn.iocoder.yudao.module.mes.dal.dataobject.wm.salesnotice.MesWmSalesNoticeLineDO;
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.salesnotice.MesWmSalesNoticeMapper;
 import cn.iocoder.yudao.module.mes.service.md.client.MesMdClientService;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -19,10 +26,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.*;
-import static cn.iocoder.yudao.module.mes.enums.wm.MesWmSalesNoticeStatusEnum.*;
 
 /**
  * MES 发货通知单 Service 实现类
@@ -32,13 +35,10 @@ import static cn.iocoder.yudao.module.mes.enums.wm.MesWmSalesNoticeStatusEnum.*;
 @Slf4j
 public class MesWmSalesNoticeServiceImpl implements MesWmSalesNoticeService {
 
-    @Resource
-    private MesWmSalesNoticeMapper salesNoticeMapper;
+    @Resource private MesWmSalesNoticeMapper salesNoticeMapper;
 
-    @Resource
-    private MesWmSalesNoticeLineService salesNoticeLineService;
-    @Resource
-    private MesMdClientService clientService;
+    @Resource private MesWmSalesNoticeLineService salesNoticeLineService;
+    @Resource private MesMdClientService clientService;
 
     @Override
     public Long createSalesNotice(MesWmSalesNoticeSaveReqVO createReqVO) {
@@ -92,14 +92,15 @@ public class MesWmSalesNoticeServiceImpl implements MesWmSalesNoticeService {
         // 1.1 校验存在 + 草稿状态
         validateSalesNoticeExistsAndDraft(id);
         // 1.2 检查是否有行项目
-        List<MesWmSalesNoticeLineDO> lines = salesNoticeLineService.getSalesNoticeLineListByNoticeId(id);
+        List<MesWmSalesNoticeLineDO> lines =
+                salesNoticeLineService.getSalesNoticeLineListByNoticeId(id);
         if (CollUtil.isEmpty(lines)) {
             throw exception(WM_SALES_NOTICE_LINE_EMPTY);
         }
 
         // 2. 更新状态：草稿 → 待出库
-        salesNoticeMapper.updateById(new MesWmSalesNoticeDO()
-                .setId(id).setStatus(APPROVED.getStatus()));
+        salesNoticeMapper.updateById(
+                new MesWmSalesNoticeDO().setId(id).setStatus(APPROVED.getStatus()));
     }
 
     @Override
@@ -148,5 +149,4 @@ public class MesWmSalesNoticeServiceImpl implements MesWmSalesNoticeService {
             throw exception(WM_SALES_NOTICE_CODE_DUPLICATE);
         }
     }
-
 }

@@ -1,5 +1,10 @@
 package cn.iocoder.yudao.module.pms.controller.admin.pm.iteration;
 
+import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
+
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -13,11 +18,14 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.pm.iteration.PmsIterationDO;
 import cn.iocoder.yudao.module.pms.service.pm.iteration.PmsIterationService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,22 +41,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
-import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
-import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
-
 @Tag(name = "管理后台 - PMS 项目迭代")
 @RestController
 @RequestMapping("/pms/pm/iteration")
 @Validated
 public class PmsIterationController {
 
-    @Resource
-    private PmsIterationService iterationService;
+    @Resource private PmsIterationService iterationService;
 
-    @Resource
-    private AdminUserApi adminUserApi;
+    @Resource private AdminUserApi adminUserApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建项目迭代")
@@ -60,7 +61,8 @@ public class PmsIterationController {
     @PutMapping("/update")
     @Operation(summary = "更新项目迭代")
     @PreAuthorize("@ss.hasPermission('pms:pm:iteration:update')")
-    public CommonResult<Boolean> updateIteration(@Valid @RequestBody PmsIterationSaveReqVO saveReqVO) {
+    public CommonResult<Boolean> updateIteration(
+            @Valid @RequestBody PmsIterationSaveReqVO saveReqVO) {
         iterationService.updateIteration(saveReqVO, getLoginUserId());
         return success(true);
     }
@@ -68,7 +70,8 @@ public class PmsIterationController {
     @PutMapping("/start")
     @Operation(summary = "开始项目迭代")
     @PreAuthorize("@ss.hasPermission('pms:pm:iteration:update')")
-    public CommonResult<Boolean> startIteration(@Valid @RequestBody PmsIterationStartReqVO startReqVO) {
+    public CommonResult<Boolean> startIteration(
+            @Valid @RequestBody PmsIterationStartReqVO startReqVO) {
         iterationService.startIteration(startReqVO, getLoginUserId());
         return success(true);
     }
@@ -106,11 +109,14 @@ public class PmsIterationController {
     @PreAuthorize("@ss.hasPermission('pms:pm:iteration:query')")
     public CommonResult<PageResult<PmsIterationRespVO>> getIterationPage(
             @Valid PmsIterationPageReqVO pageReqVO) {
-        PageResult<PmsIterationDO> pageResult = iterationService.getIterationPage(pageReqVO, getLoginUserId());
+        PageResult<PmsIterationDO> pageResult =
+                iterationService.getIterationPage(pageReqVO, getLoginUserId());
         List<PmsIterationRespVO> iterationVOList = buildIterationRespVOList(pageResult.getList());
-        Map<Long, Integer> progressMap = iterationService.getIterationProgressMap(
-                convertSet(pageResult.getList(), PmsIterationDO::getId));
-        iterationVOList.forEach(iteration -> iteration.setProgress(progressMap.getOrDefault(iteration.getId(), 0)));
+        Map<Long, Integer> progressMap =
+                iterationService.getIterationProgressMap(
+                        convertSet(pageResult.getList(), PmsIterationDO::getId));
+        iterationVOList.forEach(
+                iteration -> iteration.setProgress(progressMap.getOrDefault(iteration.getId(), 0)));
         return success(new PageResult<>(iterationVOList, pageResult.getTotal()));
     }
 
@@ -118,13 +124,22 @@ public class PmsIterationController {
     @Operation(summary = "获得迭代概览统计")
     @Parameter(name = "id", description = "迭代编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pms:pm:iteration:query')")
-    public CommonResult<PmsIterationOverviewRespVO> getIterationOverview(@RequestParam("id") Long id) {
-        PmsIterationOverviewRespVO overview = iterationService.getIterationOverview(id, getLoginUserId());
+    public CommonResult<PmsIterationOverviewRespVO> getIterationOverview(
+            @RequestParam("id") Long id) {
+        PmsIterationOverviewRespVO overview =
+                iterationService.getIterationOverview(id, getLoginUserId());
         List<PmsIterationOverviewRespVO.ActivityItem> activities = overview.getRecentActivities();
-        Map<Long, AdminUserRespDTO> activityUserMap = adminUserApi.getUserMap(
-                convertSet(activities, PmsIterationOverviewRespVO.ActivityItem::getOperatorUserId));
-        activities.forEach(activity -> findAndThen(activityUserMap, activity.getOperatorUserId(),
-                user -> activity.setOperatorUserName(user.getNickname())));
+        Map<Long, AdminUserRespDTO> activityUserMap =
+                adminUserApi.getUserMap(
+                        convertSet(
+                                activities,
+                                PmsIterationOverviewRespVO.ActivityItem::getOperatorUserId));
+        activities.forEach(
+                activity ->
+                        findAndThen(
+                                activityUserMap,
+                                activity.getOperatorUserId(),
+                                user -> activity.setOperatorUserName(user.getNickname())));
         return success(overview.setRecentActivities(activities));
     }
 
@@ -140,13 +155,17 @@ public class PmsIterationController {
         }
 
         // 1. 批量查询负责人
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(iterations, PmsIterationDO::getOwnerUserId));
+        Map<Long, AdminUserRespDTO> userMap =
+                adminUserApi.getUserMap(convertSet(iterations, PmsIterationDO::getOwnerUserId));
 
         // 2. 转换迭代响应，并拼接负责人姓名
-        return BeanUtils.toBean(iterations, PmsIterationRespVO.class, iterationVO ->
-                findAndThen(userMap, iterationVO.getOwnerUserId(),
-                        user -> iterationVO.setOwnerUserName(user.getNickname())));
+        return BeanUtils.toBean(
+                iterations,
+                PmsIterationRespVO.class,
+                iterationVO ->
+                        findAndThen(
+                                userMap,
+                                iterationVO.getOwnerUserId(),
+                                user -> iterationVO.setOwnerUserName(user.getNickname())));
     }
-
 }

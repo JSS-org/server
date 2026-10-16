@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.mes.service.cal.plan;
 
 import cn.iocoder.yudao.module.mes.controller.admin.cal.plan.vo.team.MesCalPlanTeamSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.cal.plan.MesCalPlanTeamDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -50,5 +51,4 @@ public interface MesCalPlanTeamService {
      * @param planId 排班计划编号
      */
     void deleteByPlanId(Long planId);
-
 }

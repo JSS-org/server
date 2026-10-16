@@ -1,8 +1,10 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,10 @@ public class MesWmProductSalesSaveReqVO {
     @Schema(description = "编号", example = "1024")
     private Long id;
 
-    @Schema(description = "出库单号", requiredMode = Schema.RequiredMode.REQUIRED, example = "PS2026030001")
+    @Schema(
+            description = "出库单号",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "PS2026030001")
     @NotEmpty(message = "出库单号不能为空")
     private String code;
 
@@ -53,5 +58,4 @@ public class MesWmProductSalesSaveReqVO {
 
     @Schema(description = "备注", example = "备注")
     private String remark;
-
 }

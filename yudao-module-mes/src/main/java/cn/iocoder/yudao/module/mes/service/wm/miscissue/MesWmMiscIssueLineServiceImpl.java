@@ -1,5 +1,8 @@
 package cn.iocoder.yudao.module.mes.service.wm.miscissue;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE_LINE_NOT_EXISTS;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.module.mes.controller.admin.wm.miscissue.vo.line.MesWmMiscIssueLinePageReqVO;
@@ -8,16 +11,15 @@ import cn.iocoder.yudao.module.mes.dal.dataobject.wm.miscissue.MesWmMiscIssueLin
 import cn.iocoder.yudao.module.mes.dal.mysql.wm.miscissue.MesWmMiscIssueLineMapper;
 import cn.iocoder.yudao.module.mes.service.md.item.MesMdItemService;
 import cn.iocoder.yudao.module.mes.service.wm.warehouse.MesWmWarehouseAreaService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE_LINE_NOT_EXISTS;
 
 /**
  * MES 杂项出库单行 Service 实现类
@@ -26,19 +28,12 @@ import static cn.iocoder.yudao.module.mes.enums.ErrorCodeConstants.WM_MISC_ISSUE
 @Validated
 public class MesWmMiscIssueLineServiceImpl implements MesWmMiscIssueLineService {
 
-    @Resource
-    private MesWmMiscIssueLineMapper miscIssueLineMapper;
+    @Resource private MesWmMiscIssueLineMapper miscIssueLineMapper;
 
-    @Resource
-    @Lazy
-    private MesWmMiscIssueService miscIssueService;
-    @Resource
-    @Lazy
-    private MesWmMiscIssueDetailService miscIssueDetailService;
-    @Resource
-    private MesMdItemService itemService;
-    @Resource
-    private MesWmWarehouseAreaService warehouseAreaService;
+    @Resource @Lazy private MesWmMiscIssueService miscIssueService;
+    @Resource @Lazy private MesWmMiscIssueDetailService miscIssueDetailService;
+    @Resource private MesMdItemService itemService;
+    @Resource private MesWmWarehouseAreaService warehouseAreaService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -92,7 +87,8 @@ public class MesWmMiscIssueLineServiceImpl implements MesWmMiscIssueLineService 
     }
 
     @Override
-    public PageResult<MesWmMiscIssueLineDO> getMiscIssueLinePage(MesWmMiscIssueLinePageReqVO pageReqVO) {
+    public PageResult<MesWmMiscIssueLineDO> getMiscIssueLinePage(
+            MesWmMiscIssueLinePageReqVO pageReqVO) {
         return miscIssueLineMapper.selectPage(pageReqVO);
     }
 
@@ -131,8 +127,7 @@ public class MesWmMiscIssueLineServiceImpl implements MesWmMiscIssueLineService 
         // 校验物料存在
         itemService.validateItemExistsAndEnable(reqVO.getItemId());
         // 校验仓库、库区、库位的父子关系
-        warehouseAreaService.validateWarehouseAreaExists(reqVO.getWarehouseId(),
-                reqVO.getLocationId(), reqVO.getAreaId());
+        warehouseAreaService.validateWarehouseAreaExists(
+                reqVO.getWarehouseId(), reqVO.getLocationId(), reqVO.getAreaId());
     }
-
 }

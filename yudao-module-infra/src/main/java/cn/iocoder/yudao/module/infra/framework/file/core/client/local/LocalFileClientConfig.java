@@ -1,10 +1,12 @@
 package cn.iocoder.yudao.module.infra.framework.file.core.client.local;
 
 import cn.iocoder.yudao.module.infra.framework.file.core.client.FileClientConfig;
-import lombok.Data;
-import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.constraints.NotEmpty;
+
+import lombok.Data;
+
+import org.hibernate.validator.constraints.URL;
 
 /**
  * 本地文件客户端的配置类
@@ -26,5 +28,4 @@ public class LocalFileClientConfig implements FileClientConfig {
     @NotEmpty(message = "domain 不能为空")
     @URL(message = "domain 必须是 URL 格式")
     private String domain;
-
 }

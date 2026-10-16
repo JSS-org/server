@@ -1,7 +1,9 @@
 package cn.iocoder.yudao.module.mes.controller.admin.wm.productsales.vo.line;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -22,5 +24,4 @@ public class MesWmProductSalesLinePageReqVO extends PageParam {
 
     @Schema(description = "出库单编号列表（内部使用，客户过滤时自动填充）", hidden = true)
     private List<Long> salesIds;
-
 }

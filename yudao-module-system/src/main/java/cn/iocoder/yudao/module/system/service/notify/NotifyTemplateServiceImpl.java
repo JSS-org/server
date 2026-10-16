@@ -1,5 +1,9 @@
 package cn.iocoder.yudao.module.system.service.notify;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.NOTIFY_TEMPLATE_CODE_DUPLICATE;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.NOTIFY_TEMPLATE_NOT_EXISTS;
+
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -9,9 +13,13 @@ import cn.iocoder.yudao.module.system.controller.admin.notify.vo.template.Notify
 import cn.iocoder.yudao.module.system.dal.dataobject.notify.NotifyTemplateDO;
 import cn.iocoder.yudao.module.system.dal.mysql.notify.NotifyTemplateMapper;
 import cn.iocoder.yudao.module.system.dal.redis.RedisKeyConstants;
+
 import com.google.common.annotations.VisibleForTesting;
+
 import jakarta.annotation.Resource;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,10 +28,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.NOTIFY_TEMPLATE_CODE_DUPLICATE;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.NOTIFY_TEMPLATE_NOT_EXISTS;
 
 /**
  * 站内信模版 Service 实现类
@@ -40,8 +44,7 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
      */
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
-    @Resource
-    private NotifyTemplateMapper notifyTemplateMapper;
+    @Resource private NotifyTemplateMapper notifyTemplateMapper;
 
     @Override
     public Long createNotifyTemplate(NotifyTemplateSaveReqVO createReqVO) {
@@ -56,7 +59,8 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为可能修改到 code 字段，不好清理
     public void updateNotifyTemplate(NotifyTemplateSaveReqVO updateReqVO) {
         // 校验存在
@@ -76,7 +80,8 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteNotifyTemplate(Long id) {
         // 校验存在
@@ -86,7 +91,8 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
-    @CacheEvict(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
+    @CacheEvict(
+            cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
             allEntries = true) // allEntries 清空所有缓存，因为 id 不是直接的缓存 code，不好清理
     public void deleteNotifyTemplateList(List<Long> ids) {
         notifyTemplateMapper.deleteByIds(ids);
@@ -104,7 +110,9 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     }
 
     @Override
-    @Cacheable(cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE, key = "#code",
+    @Cacheable(
+            cacheNames = RedisKeyConstants.NOTIFY_TEMPLATE,
+            key = "#code",
             unless = "#result == null")
     public NotifyTemplateDO getNotifyTemplateByCodeFromCache(String code) {
         return notifyTemplateMapper.selectByCode(code);
@@ -146,5 +154,4 @@ public class NotifyTemplateServiceImpl implements NotifyTemplateService {
     public String formatNotifyTemplateContent(String content, Map<String, Object> params) {
         return StrUtil.format(content, params);
     }
-
 }

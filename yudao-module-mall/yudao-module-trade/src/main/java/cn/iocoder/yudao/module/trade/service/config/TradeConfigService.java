@@ -25,5 +25,4 @@ public interface TradeConfigService {
      * @return 交易中心配置
      */
     TradeConfigDO getTradeConfig();
-
 }

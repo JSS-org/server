@@ -2,11 +2,14 @@ package cn.iocoder.yudao.module.hrm.controller.admin.attendance.vo.clock;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.attendance.record.HrmAttendanceClockTypeEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -61,5 +64,4 @@ public class HrmAttendanceClockSaveReqVO {
     @Schema(description = "备注", example = "手工补卡")
     @Size(max = 255, message = "备注不能超过 255 个字符")
     private String remark;
-
 }

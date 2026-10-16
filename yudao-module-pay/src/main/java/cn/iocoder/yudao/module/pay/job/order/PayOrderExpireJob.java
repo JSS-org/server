@@ -4,9 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.quartz.core.handler.JobHandler;
 import cn.iocoder.yudao.framework.tenant.core.job.TenantJob;
 import cn.iocoder.yudao.module.pay.service.order.PayOrderService;
-import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+
+import org.springframework.stereotype.Component;
 
 /**
  * 支付订单的过期 Job
@@ -18,8 +19,7 @@ import jakarta.annotation.Resource;
 @Component
 public class PayOrderExpireJob implements JobHandler {
 
-    @Resource
-    private PayOrderService orderService;
+    @Resource private PayOrderService orderService;
 
     @Override
     @TenantJob
@@ -27,5 +27,4 @@ public class PayOrderExpireJob implements JobHandler {
         int count = orderService.expireOrder();
         return StrUtil.format("支付过期 {} 个", count);
     }
-
 }

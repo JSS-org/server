@@ -2,11 +2,14 @@ package cn.iocoder.yudao.module.hrm.controller.admin.employee.vo.changerecord;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
 import cn.iocoder.yudao.module.hrm.enums.employee.employment.HrmEmployeeChangeReasonEnum;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,7 +27,9 @@ public class HrmEmployeeConvertToFullTimeReqVO {
     @InEnum(value = HrmEmployeeChangeReasonEnum.class, message = "异动原因必须是 {value}")
     private Integer reason;
 
-    @Schema(description = "试用期，单位：月；0 表示无试用期", requiredMode = Schema.RequiredMode.REQUIRED,
+    @Schema(
+            description = "试用期，单位：月；0 表示无试用期",
+            requiredMode = Schema.RequiredMode.REQUIRED,
             example = "3")
     @NotNull(message = "试用期不能为空")
     @Min(value = 0, message = "试用期不能小于 0")
@@ -56,5 +61,4 @@ public class HrmEmployeeConvertToFullTimeReqVO {
     @Schema(description = "备注", example = "转为全职员工")
     @Size(max = 500, message = "备注不能超过 500 个字符")
     private String remark;
-
 }

@@ -38,5 +38,4 @@ public interface DictTypeConstants {
     String OFFICIAL_DOC_SEPARATOR_TYPE = "oa_official_doc_separator_type"; // 套红模板分隔线类型
     String OFFICIAL_DOC_HANDLE_STATUS = "oa_official_doc_handle_status"; // 公文收文办理状态
     String OFFICIAL_DOC_RECEIVE_TYPE = "oa_official_doc_receive_type"; // 公文收文类型
-
 }

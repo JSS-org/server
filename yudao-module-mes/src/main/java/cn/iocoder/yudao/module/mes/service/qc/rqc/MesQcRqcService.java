@@ -5,6 +5,7 @@ import cn.iocoder.yudao.module.mes.controller.admin.qc.rqc.vo.MesQcRqcPageReqVO;
 import cn.iocoder.yudao.module.mes.controller.admin.qc.rqc.vo.MesQcRqcSaveReqVO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.defectrecord.MesQcDefectRecordDO;
 import cn.iocoder.yudao.module.mes.dal.dataobject.qc.rqc.MesQcRqcDO;
+
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -76,5 +77,4 @@ public interface MesQcRqcService {
      * @param records 缺陷记录列表
      */
     void recalculateDefectStats(Long rqcId, List<MesQcDefectRecordDO> records);
-
 }

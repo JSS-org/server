@@ -124,7 +124,7 @@ gym 的每个接口都有**两道独立校验**：
 ```
 后端码：gym:<实体>:<动作>          例 gym:files:upload / gym:stores:write / gym:approvals:decide
 前端码：<实体>:<动作>              例 files:upload（由前端适配层 permissions.ts 剥离 gym: 前缀）
-落地：script/gym/sql/01-gym-permission-seed.sql 的权限表 → 重跑 seed.sh
+落地：sql/gym/migration/mysql/Vxxx__permissions.sql 追加版本 → db.sh migrate
 ```
 
 ## 5. 代码地图
@@ -157,13 +157,13 @@ yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/
 
 | 扩展动作 | 位置 | 是否要改既有代码 |
 | --- | --- | --- |
-| 新增权限码 | `script/gym/sql/01-gym-permission-seed.sql` 权限表 + 重跑 `seed.sh` | 否（数据） |
+| 新增权限码 | `sql/gym/migration/mysql/Vxxx__permissions.sql` 追加版本 + `db.sh migrate` | 否（数据） |
 | 新增文件类别 / 大小上限 | `GymFileCategoryEnum` 加一个枚举项 | 否 |
 | 新增支持的 MIME | `GymFileMimeTypeEnum` + `GymFileTypeUtils.detect` 补一条魔数规则 | 否 |
 | 新增业务资源（门店/会员/卡…） | 按 `controller/service/dal` 三层新建包（清单见 `script/gym/README.md` §6） | 否 |
 | 新增错误码 | `ErrorCodeConstants`（区间 `1_070_000_xxx` 内递增） | 否 |
 | 加跨模块能力（如需 system 的新查询） | 对方模块 `api` 包加方法 + `api` 实现类 | 是（对方模块，需评审） |
-| 加表 | `script/gym/sql/NN-xxx.sql`（`seed.sh` 自动按序执行） | 否 |
+| 加表 | `sql/gym/migration/mysql/Vxxx__说明.sql`，发布前 `db.sh migrate` | 否 |
 
 ## 7. 与规划文档的对应
 
@@ -173,7 +173,7 @@ yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/
 | `08-gym-api-contract.md` §2 标准 CRUD 路径 | 后续资源按 `/gym/{res}/page|get|create|update|delete` 实现 |
 | `08-gym-api-contract.md` §3.1 `files` 资源 | 已实现（`/gym/files` 三接口） |
 | `08-gym-api-contract.md` §4 认证映射 | 使用 yudao 原生 `/system/auth/*`、`/system/user/profile/get` |
-| `09-permissions.md` §2 权限码注册表 | `script/gym/sql/01-gym-permission-seed.sql`（51 个码） |
+| `09-permissions.md` §2 权限码注册表 | `sql/gym/migration/mysql/V002__gym_reference_data.sql` 及后续版本，历史01在legacy中冻结 |
 | `09-permissions.md` §4 角色与数据范围 | `system_role`（`gym_hq_admin` = 1，`gym_store_manager` = 4） |
 | `10-backend-mock-api-inventory.md` §4.1 | 8 行全部落地（5 原生 + 3 新写），对照表见 `script/gym/README.md` §1 |
 
@@ -418,3 +418,16 @@ SQL47在黑名单页面下新增现行单数编辑权限；用户明确授权后
 现有 JSS 转换器无条件拼接父子路径，所以分类入口例如 `/gym/training/course-products`；后端同时返回隐藏的 `/gym/course-products` 原地址入口。报表目录与旧前缀一致，使用 `performance`、`members`、`member-cards` 作为子路径，不重复注册旧地址。首页保留 `/gym/home`，改为“首页”。完整HQ响应含35种业务组件、31个额外隐藏兼容入口、12个目录；不增加接口或数据访问权限。
 
 客户端限制：当前首页通过可见菜单的固定原地址查找快捷入口，隐藏兼容入口不会进入它的可见菜单集合，因此分类后部分首页快捷卡片消失；直接访问原地址仍有效。旧地址与分类地址的路由名称不同，同一页可能显示两个页签，旧地址也不会自动展开新分类。这些现象无法仅通过当前客户端接受的菜单字段同时消除；本次严格不改前端。管理端“菜单管理”仍展示数据库授权树，和认证接口的业务分类展示树用途不同。
+
+
+## Flyway版本迁移与独立开发seed（2026-10-16）
+
+当前发布链：框架基座一次性导入 → `script/gym/db.sh init`（新gym环境）或 `adopt-legacy`（完整旧gym库接管一次） → 后续每次发布 `db.sh migrate` / `validate` → Java应用启动。Java应用和H2单测不加载Flyway依赖；数据库工具是独立 `sql/gym/pom.xml`，固定Flyway13.10.3、MySQL支持模块和Connector/J9.7.0。H2建表资源仍只属于测试上下文，BPM当前禁用。
+
+`db.sh → database.py → 独立Flyway Maven插件 → sql/gym/migration/mysql`，历史固定为 `flyway_gym_schema_history`。V001是59表结构，V002只登记system_menu中的菜单/权限，V003执行必要历史回填；没有账号、角色、角色/用户绑定写入。新gym环境已有框架表，所以显式baseline0后迁移；不会自动baseline非空gym库。旧库先以绑定V001校验和的legacy-schema.json核对59表的列/默认值/字符集/排序规则、索引及可见性、约束、外键与引擎，再完整mysqldump备份，成功后baseline1并执行V002/V003。结构不符或备份失败不接管；失败的MySQL DDL不能假设自动回滚。
+
+现有开发库已经接管至003：历史记录为1 BASELINE、002 SQL、003 SQL。接管前三类必要回填数量均0；接管后6张系统表（菜单、角色、授权、账号、部门、用户角色）的完整行数据哈希一致，既有密码、数据范围、授权和页面菜单均未变化。完整备份在 `/tmp/gym-db-backups/ruoyi-vue-pro-before-flyway-20261016-205827-111751.sql`，权限600。默认备份目录可通过GYM_DB_BACKUP_DIR改为持久路径。
+
+`seed.sh development → database.py seed-development → sql/gym/seed/development/demo.sql` 是独立开发入口，不在Flyway扫描目录。必须显式声明开发环境、目标库和租户，且当前版本全部已迁移、校验通过；只对本次新建演示角色初始化菜单授权、本次新建演示账号初始化绑定，既有撤销授权/绑定与密码不恢复。同名非种子或已删除身份冲突通过临时guard和事务拒绝，回滚相关写入。迁移不执行该seed，生产发布不生成演示账号。
+
+旧47个SQL原样移动到 `sql/gym/legacy` 并固定sha256，旧开发导入在legacy/development；旧全量、schema-only、menus-only重放入口停用。当前verify-migrations.py使用真实Flyway和随机MySQL库验证；历史验证在verify-legacy-migrations.py/verify-legacy-seeds.py独立保留。新增GitHub数据库CI执行同一隔离回归，当前只完成本机验证，尚未在远端运行CI。后续追加V004等新版本，不改已有迁移；legacy-schema.json只用于旧基线接管，不代表未来最新结构。

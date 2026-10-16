@@ -1,4 +1,98 @@
-# gym 后端切片（§4.1 认证 5 + 文件 3）
+# gym 数据库与脚本管理
+
+日常操作请先看独立的 [数据库迁移与开发 seed 手册](DATABASE.md)；后端开发流程见 [贡献指南](../../CONTRIBUTING.md)。
+
+数据库现由 **Flyway 版本迁移 + 独立开发 seed** 管理。迁移是发布准备命令，不随Java应用启动；前端及应用运行依赖不变。框架基座表仍先由 `sql/mysql/ruoyi-vue-pro.sql` 初始化，本工具只管理gym资产。
+
+## 命令入口
+
+环境：Java 25、Maven、Python 3、MySQL客户端及mysqldump。Flyway Maven插件及MySQL支持固定13.10.3，Connector/J固定9.7.0；首次运行Maven需要下载依赖。本地验证数据库为MySQL9.7.1；Flyway会提示其官方验证版本目前到9.4，隔离回归结果见testing。
+
+所有数据库命令都必须显式指定目标库、账号、密码；账号密码不写在POM或命令参数中。
+
+```bash
+export GYM_DB_HOST=127.0.0.1
+export GYM_DB_PORT=3306
+export GYM_DB_NAME=ruoyi-vue-pro
+export GYM_DB_USER=你的迁移账号
+export GYM_DB_PASSWORD='你的数据库密码'  # 本机明确免密账号可设为空
+
+# 查看状态；不会执行业务SQL
+bash script/gym/db.sh info
+
+# 新gym环境：已导入框架基座，但尚无任何gym表
+bash script/gym/db.sh init
+
+# 完整旧gym库：先只读校验，再显式接管（只执行一次）
+bash script/gym/db.sh check-legacy
+export GYM_DB_BACKUP_DIR=/你管理的数据库备份目录
+bash script/gym/db.sh adopt-legacy
+
+# 日常发布：执行新版本迁移，再校验
+bash script/gym/db.sh migrate
+bash script/gym/db.sh validate
+
+# 之后才启动应用；启动本身不执行seed
+bash script/gym/run-local.sh
+```
+
+`init` 在框架表已存在的schema显式baseline到0，随后执行V001～V003；不会隐式接管已有gym表。`adopt-legacy`先校验完整V001结构（59表的列、默认值、字符集/排序规则、索引、可见性、约束、引擎），完整mysqldump备份成功后，显式baseline到1，然后执行V002必要定义及V003必要回填，**不会重建gym表、创建演示账号或重放角色授权**。备份文件权限600，默认 `/tmp/gym-db-backups`；长期保留应显式指定持久目录。已有库缺表或结构漂移时拒绝接管，需先核对差异并修复到历史完整结构，不能跳过检查或用repair掩盖差异。
+
+`init` 与 `adopt-legacy` 二选一；现有开发库已接管，日常只执行 `migrate` / `validate`。
+
+历史表固定 `flyway_gym_schema_history`。`clean`、自动baseline、乱序迁移均关闭；工具不提供clean/repair命令。`migrate`和`validate`要求已有本工具历史。MySQL DDL可能隐式提交，失败后必须检查错误及当前历史状态，不能假设DDL全部回滚；修复按审阅后的前向迁移/备份恢复执行。
+
+## SQL资产与新增变更
+
+```text
+sql/gym/
+  pom.xml                          # 独立Flyway Maven工具，不继承到应用
+  migration/mysql/
+    V001__gym_schema.sql            # 59表完整结构，无业务数据
+    V002__gym_reference_data.sql    # 菜单与权限定义，只写system_menu
+    V003__gym_legacy_backfills.sql  # 必要历史回填，不恢复已删除的会员门店关系
+  seed/development/demo.sql         # 显式开发演示数据，不在Flyway扫描路径
+  legacy-schema.json               # 旧库结构指纹及V001校验和，用于安全接管
+  legacy/                          # 冻结的旧01～47及旧开发导入SQL
+    sha256.json                    # 历史47文件校验和
+script/gym/
+  db.sh / database.py              # 显式init/adopt/migrate/info/validate入口
+  seed.sh                         # 只接受development，不再负责建表/登记菜单
+  verify-migrations.py            # 当前Flyway隔离集成回归，CI使用
+  verify-legacy-migrations.py      # 历史47SQL重放验证，只作用于随机测试库
+  verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
+```
+
+后续变更追加 `V004__说明.sql`、`V005__说明.sql`，每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随未来V004表变化改写，它不是“当前最新schema”的通用比较工具。
+
+## 独立开发seed
+
+```bash
+# 仅明确的开发库；必须先完成当前所有迁移
+export GYM_DB_ENV=development
+export GYM_SEED_TENANT_ID=1
+bash script/gym/seed.sh development
+```
+
+只初始化示范部门、gymadmin/gymstore演示账号、总部/门店角色及初始绑定，演示密码为旧开发约定Gym@123456，绝不修改admin或其他已有账号密码。租户必须显式指定。已有演示角色/账号不会重建已撤销授权或绑定；同名非种子账号、角色、总部部门及已删除种子身份会拒绝并回滚，不覆盖真实资料。初始授权只针对本次新建的演示角色，初始用户绑定只针对本次新建的演示账号。开发seed可重复执行，不能当作角色授权修复工具。
+
+未设置 `GYM_DB_ENV=development`、租户无效、迁移未完成或有校验失败时停止。生产发布不执行seed；生产菜单定义由V002及后续版本维护。旧 `seed.sh` 无参数、`--schema-only`、`--menus-only` 入口已停用，以免继续全量重放历史SQL；需要升级或补新增定义时用 `db.sh migrate`。旧组织导入资产保存在 `legacy/development`，仅供历史验证/追溯，不由当前seed自动执行。
+
+## 验证与CI
+
+```bash
+# 只在随机新建/清理的隔离MySQL库运行；需有创建测试库权限
+GYM_TEST_DB_USER=root GYM_TEST_DB_PASSWORD='' \
+  PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+```
+
+支持 `GYM_TEST_DB_HOST/PORT/USER/PASSWORD`。覆盖新库、已有库接管和备份、角色/密码/绑定不变、重复迁移、校验和漂移、结构漂移、开发环境限制、显式租户、同名冲突与回滚。`.github/workflows/gym-database.yml`使用MySQL9.7服务执行同一入口；CI只创建随机测试库，不接触业务环境。历史工具仅在独立随机库回放冻结SQL。
+
+Python缓存已清理并忽略；可复用验证源代码、HTTP样例、部署工具保留。以下内容为历史切片记录，旧路径/旧初始化命令只作追溯，实际操作以本页当前手册为准。
+
+---
+
+## gym 后端切片（§4.1 认证 5 + 文件 3，历史记录）
 
 > 当前新增首批门店/员工及两个页面菜单，见 [首批 API 交接](../../docs/gym-first-batch-api.md)、`gym-organization.http`、`verify-migrations.py`。以下认证/文件内容为此前切片记录；本次元数据补充 originalName/byteSize，ID 改为字符串。
 
@@ -137,7 +231,8 @@ script/gym/
 # 1) 编译（含 gym 模块）
 mvn -T 1C -DskipTests -pl yudao-server -am package
 
-# 2) 启动前初始化数据库（建表 + 权限码 + 演示账号，幂等）
+# 2) 初始化已导入框架基座的开发数据库（完整模式含演示账号）
+# 只针对确认的开发库；数据库凭据通过 GYM_DB_* 环境变量提供
 bash script/gym/seed.sh
 
 # 已有账号/权限的数据库只需补齐业务表时，改用：
@@ -145,7 +240,7 @@ bash script/gym/seed.sh
 # 已有库仅缺少页面菜单时，另执行（不修改角色授权）：
 # bash script/gym/seed.sh --menus-only
 
-# 3) 启动
+# 3) 启动（不会自动执行以上SQL）
 bash script/gym/run-local.sh
 
 # 4) 验证
@@ -171,9 +266,9 @@ bash script/gym/verify-file-api.sh    # 29 条断言
 以「门店 `stores` 资源」为例（R29/R37）：
 
 1. **权限码**：在 `09-permissions.md` §2 找到/新增码（如 `gym:stores:write`），
-   在 `script/gym/sql/01-gym-permission-seed.sql` 的权限表里加一行，重跑 `seed.sh`（幂等）。
-2. **建表**：新增 `script/gym/sql/03-gym-store.sql`（照 `02-gym-file.sql` 抄，注意 `tenant_id` + `deleted`），
-   `seed.sh` 会自动按文件名顺序执行。
+   当前追加新的编号SQL登记，不再修改已部署的 `01-gym-permission-seed.sql`；Flyway接入后追加新的版本迁移。
+2. **建表**：当前追加 `script/gym/sql/NN-xxx.sql`（注意 `tenant_id` + `deleted`），
+   显式初始化入口按文件名顺序执行；Flyway接入后的目录与版本规范见本文件开头。
 3. **DO**：`dal/dataobject/store/GymStoreDO.java`，继承 `TenantBaseDO`（多租户）或 `BaseDO`（全局表）。
 4. **Mapper**：`dal/mysql/store/GymStoreMapper.java`，`extends BaseMapperX<GymStoreDO>`，
    分页写法见 `GymFileMapper` 注释里的示例。

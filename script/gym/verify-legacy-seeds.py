@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location('migration_check', ROOT / 'script/gym/verify-migrations.py')
+spec = importlib.util.spec_from_file_location('migration_check', ROOT / 'script/gym/verify-legacy-migrations.py')
 migration_check = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(migration_check)
 sql = migration_check.sql
@@ -29,9 +29,9 @@ def main():
             if not ddl:
                 raise RuntimeError('缺少基座 DDL：' + table)
             sql(ddl.group(0), DB)
-        for script in sorted((ROOT / 'script/gym/sql').glob('*.sql')):
+        for script in sorted((ROOT / 'sql/gym/legacy').glob('*.sql')):
             sql(script.read_text(), DB)
-        seed = (ROOT / 'script/gym/development/01-legacy-organization.sql').read_text()
+        seed = (ROOT / 'sql/gym/legacy/development/01-legacy-organization.sql').read_text()
         sql(seed, DB)
         first = counts()
         sql(seed, DB)

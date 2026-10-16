@@ -41,6 +41,10 @@ nbdist/
 *.xml.versionsBackup
 *.swp
 
+# Python verification script caches
+__pycache__/
+*.py[cod]
+
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml

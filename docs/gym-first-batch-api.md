@@ -1,5 +1,7 @@
 # 门店与员工首批 API 交接
 
+> 2026-10-16：数据库现由Flyway迁移与独立开发seed管理，操作以 [当前运行手册](../script/gym/README.md) 为准。下文旧SQL路径与初始化命令仅供历史追溯，已归档至sql/gym/legacy。
+
 日期：2026-10-13。依据 dashboard 的 `targets/handoff/backend-priorities.md` P0/P1、`targets/plan/08-gym-api-contract.md`、`09-permissions.md` 及 `apps/web-jss` 对应页面实际调用实现。只修改 server。此批源码已实现；尚未部署至 48080，不代表前端业务验收通过。
 
 ## 实施优先级

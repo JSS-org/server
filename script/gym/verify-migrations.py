@@ -1,116 +1,182 @@
 #!/usr/bin/env python3
-"""在新建的隔离 MySQL 库验证迁移幂等及菜单；不连接业务库，不打印凭证。"""
+"""Real Flyway/MySQL regression. Creates random isolated DBs; never targets the business DB."""
+import contextlib
+import hashlib
+import importlib.util
+import json
 import os
-import re
-import subprocess
-import uuid
 from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import uuid
 
+sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
-TEST_DB = 'gym_verify_' + uuid.uuid4().hex
-MYSQL = ['mysql', '-h' + os.getenv('GYM_TEST_DB_HOST', '127.0.0.1'),
-         '-P' + os.getenv('GYM_TEST_DB_PORT', '3306'),
-         '-u' + os.getenv('GYM_TEST_DB_USER', 'root'), '-N', '-B']
-ENV = dict(os.environ)
-if 'GYM_TEST_DB_PASSWORD' in ENV:
-    ENV['MYSQL_PWD'] = ENV['GYM_TEST_DB_PASSWORD']
+spec = importlib.util.spec_from_file_location('gym_database', ROOT / 'script/gym/database.py')
+manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(manager)
+ASSETS = manager.ASSETS
+HOST = os.environ.get('GYM_TEST_DB_HOST', '127.0.0.1')
+PORT = os.environ.get('GYM_TEST_DB_PORT', '3306')
+USER = os.environ.get('GYM_TEST_DB_USER', 'root')
+PASSWORD = os.environ.get('GYM_TEST_DB_PASSWORD', '')
+ENV = dict(os.environ, MYSQL_PWD=PASSWORD)
+MYSQL = ['mysql', '-h' + HOST, '-P' + PORT, '-u' + USER, '-N', '-B']
+CHECKS = 0
 
 
-def sql(statement, database=None):
-    proc = subprocess.run(MYSQL + ([database] if database else []), input=statement,
-                          text=True, capture_output=True, env=ENV)
-    if proc.returncode:
-        raise RuntimeError(proc.stderr)
-    return proc.stdout.strip()
+def check(condition, message):
+    global CHECKS
+    assert condition, message
+    CHECKS += 1
+    print('PASS:', message, flush=True)
+
+
+def sql(statement):
+    result = subprocess.run(MYSQL, input=statement, text=True, capture_output=True, env=ENV)
+    if result.returncode:
+        raise RuntimeError(result.stderr)
+    return result.stdout.strip()
+
+
+@contextlib.contextmanager
+def isolated():
+    name = 'gym_flyway_verify_' + uuid.uuid4().hex[:16]
+    sql(f'CREATE DATABASE `{name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;')
+    previous = dict(os.environ)
+    try:
+        os.environ.update(GYM_DB_NAME=name, GYM_DB_USER=USER, GYM_DB_PASSWORD=PASSWORD,
+                          GYM_DB_HOST=HOST, GYM_DB_PORT=PORT, GYM_DB_ENV='development',
+                          GYM_SEED_TENANT_ID='1')
+        with tempfile.TemporaryDirectory(prefix='gym-flyway-backup-') as backup:
+            os.environ['GYM_DB_BACKUP_DIR'] = backup
+            db = manager.Database()
+            base = (ROOT / 'sql/mysql/ruoyi-vue-pro.sql').read_text()
+            for table in manager.SYSTEM_TABLES:
+                db.sql(re.search(r'CREATE TABLE `' + table + r'`.*?;\s*', base, re.S)[0])
+            yield db
+    finally:
+        manager.ASSETS = ASSETS
+        os.environ.clear()
+        os.environ.update(previous)
+        sql(f'DROP DATABASE `{name}`;')
+        print('Removed isolated database', name, flush=True)
+
+
+def command(name):
+    subprocess.run([sys.executable, str(ROOT / 'script/gym/database.py'), name], check=True)
+
+
+def rejects(action, message):
+    try:
+        action()
+    except (ValueError, RuntimeError, subprocess.CalledProcessError):
+        check(True, message)
+    else:
+        raise AssertionError(message)
+
+
+def auth_snapshot(db):
+    return {table: db.sql('SELECT * FROM ' + table + ' ORDER BY id')
+            for table in ['system_role', 'system_role_menu', 'system_users', 'system_user_role', 'system_dept']}
 
 
 def main():
-    sql(f'CREATE DATABASE `{TEST_DB}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
-    try:
-        source = (ROOT / 'sql/mysql/ruoyi-vue-pro.sql').read_text()
-        tables = ['system_menu', 'system_role', 'system_role_menu', 'system_users', 'system_dept', 'system_user_role']
-        for table in tables:
-            ddl = re.search(r'CREATE TABLE `' + table + r'`.*?;\s*', source, re.S)
-            if not ddl:
-                raise RuntimeError('缺少基座表定义：' + table)
-            sql(ddl.group(0), TEST_DB)
-        scripts = sorted((ROOT / 'script/gym/sql').glob('*.sql'))
-        for script in scripts:
-            sql(script.read_text(), TEST_DB)
-        # Exercise the source-coach backfill with legacy rows; all stay inside this disposable database.
-        sql("INSERT INTO gym_course_product(id,store_id,coach_id,name,kind,session_count,duration_minutes,price,status,tenant_id) VALUES(987654321,101,91,'migration-only','private',2,60,200,'active',1)", TEST_DB)
-        cases = [(1,101,1,'price_change','{\"sourceId\":\"987654321\"}',None),
-                 (2,102,1,'price_change','{\"sourceId\":\"987654321\"}',None),
-                 (3,101,2,'price_change','{\"sourceId\":\"987654321\"}',None),
-                 (4,101,1,'price_change','invalid-json',None),
-                 (5,101,1,'other_configured','{\"sourceId\":\"987654321\"}',None),
-                 (6,101,1,'price_change','{\"sourceId\":\"987654321\"}',999)]
-        for fixture_id, store_id, tenant_id, kind, snapshot, coach_id in cases:
-            coach = 'NULL' if coach_id is None else str(coach_id)
-            sql(f"INSERT INTO gym_approval(id,store_id,template_id,template_snapshot,business_type,title,applicant_user_id,applicant_name,request_key,request_hash,request_snapshot,attachment_ids,status,current_step,submitted_at,tenant_id,source_coach_id) VALUES({fixture_id},{store_id},1,'{{}}','{kind}','migration-only',91,'migration-only','migration-only-{fixture_id}','fixture','{snapshot}','[]','pending',1,NOW(),{tenant_id},{coach})", TEST_DB)
-        counts = ' UNION ALL '.join(f'SELECT COUNT(*) FROM `{t}`' for t in tables)
-        first = sql(counts, TEST_DB)
-        for script in scripts:
-            sql(script.read_text(), TEST_DB)
-        assert sql(counts, TEST_DB) == first, '重复执行改变记录数'
-        actual = sql("SELECT id,COALESCE(source_coach_id,-1) FROM gym_approval ORDER BY id", TEST_DB)
-        assert actual == '1\t91\n2\t-1\n3\t-1\n4\t-1\n5\t-1\n6\t999', actual
-        sql((ROOT / 'script/gym/sql/46-gym-approval-source-coach.sql').read_text(), TEST_DB)
-        assert sql("SELECT id,COALESCE(source_coach_id,-1) FROM gym_approval ORDER BY id", TEST_DB) == actual, '归属回填重复执行改变数据'
-        assert sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_approval' AND column_name='source_coach_id'", TEST_DB) == '1'
-        menu = sql("SELECT path,component,component_name FROM system_menu WHERE type=2 AND path IN ('stores','employees') AND deleted=0 ORDER BY path", TEST_DB)
-        assert menu == 'employees\tgym/employees/index\tGymEmployees\nstores\tgym/stores/index\tGymStores', menu
-        assert sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('gym_store','gym_employee','gym_employee_store','gym_store_media','gym_salary_template','gym_salary_assignment','gym_member','gym_blacklist','gym_measurement','gym_card_template','gym_member_card','gym_member_store','gym_member_card_store','gym_course_product','gym_course_session','gym_course_pack','gym_booking','gym_checkin','gym_lesson_record','gym_business_mutex','gym_approval_template','gym_approval','gym_approval_task','gym_contract_template','gym_contract','gym_contract_event','gym_contract_reminder','gym_financial_event','gym_payroll','gym_payroll_item','gym_sales_setting','gym_payment_account','gym_settlement_rule','gym_settlement','gym_activity','gym_activity_store','gym_activity_registration','gym_franchise_inquiry','gym_device','gym_device_compartment','gym_device_command','gym_equipment','gym_equipment_tutorial','gym_client_setting','gym_qr_code','gym_business_order','gym_order_item','gym_order_payment','gym_order_refund','gym_subscription','gym_subscription_cycle','gym_verification','gym_order_policy','gym_order_refund_review','gym_fulfillment_task','gym_order_item_financial_event','gym_member_coach','gym_training_plan')", TEST_DB) == '58'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('stores','employees') AND rm.deleted=0", TEST_DB) == '4'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('salary-templates','employee-salary-assignments') AND deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('salary-templates','employee-salary-assignments') AND rm.deleted=0", TEST_DB) == '3'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='members' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='members' AND rm.deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('body-measurements','blacklists') AND deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('body-measurements','blacklists') AND rm.deleted=0", TEST_DB) == '4'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('cards','checkins','course-products','course-sessions','bookings','lesson-records') AND deleted=0", TEST_DB) == '6'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('cards','checkins','course-products','course-sessions','bookings','lesson-records') AND rm.deleted=0", TEST_DB) == '12'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='approval-templates' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='approval-templates' AND rm.deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='approvals' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='approvals' AND rm.deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='contract-templates' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='contract-templates' AND rm.deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='contracts' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='contracts' AND rm.deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='payrolls' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='payrolls' AND rm.deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('home','reports/performance','reports/members') AND deleted=0", TEST_DB) == '3'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('home','reports/performance','reports/members') AND rm.deleted=0", TEST_DB) == '6'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='settings' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='settings' AND rm.deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('payment-accounts','settlement-rules','settlements') AND deleted=0", TEST_DB) == '3'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('payment-accounts','settlement-rules','settlements') AND rm.deleted=0", TEST_DB) == '3'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('activities','franchise-inquiries') AND deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('activities','franchise-inquiries') AND rm.deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('devices','equipment') AND deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('devices','equipment') AND rm.deleted=0", TEST_DB) == '4'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('client-settings','qr-codes') AND deleted=0", TEST_DB) == '2'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('client-settings','qr-codes') AND rm.deleted=0", TEST_DB) == '3'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path IN ('self-service-card-orders','subscriptions','verifications') AND deleted=0", TEST_DB) == '3'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path IN ('self-service-card-orders','subscriptions','verifications') AND rm.deleted=0", TEST_DB) == '6'
-        assert sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND path='reports/member-cards' AND deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code IN ('gym_hq_admin','gym_store_manager') AND m.type=2 AND m.path='reports/member-cards' AND rm.deleted=0", TEST_DB) == '2'
-        # Every current controller permission must have a live menu definition, including class-level guards.
-        controller_root = ROOT / 'yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin'
-        required = set().union(*(set(re.findall(r"gym:[A-Za-z:-]+", p.read_text())) for p in controller_root.rglob('*Controller.java')))
-        actual_permissions = set(sql("SELECT permission FROM system_menu WHERE deleted=0 AND permission LIKE 'gym:%'", TEST_DB).splitlines())
-        assert not required - actual_permissions, '缺少现行接口权限码：' + str(sorted(required - actual_permissions))
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.tenant_id=1 AND r.code='gym_hq_admin' AND m.permission='gym:blacklist:write' AND rm.deleted=0", TEST_DB) == '1'
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id JOIN system_menu m ON m.id=rm.menu_id WHERE r.code='gym_store_manager' AND m.permission='gym:blacklist:write' AND rm.deleted=0", TEST_DB) == '0'
-        # A customized HQ role with its legacy grant deliberately revoked must not gain the alias.
-        sql("DELETE rm FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission IN ('gym:blacklists:write','gym:blacklist:write')", TEST_DB)
-        sql((ROOT / 'script/gym/sql/47-gym-blacklist-write-permission.sql').read_text(), TEST_DB)
-        assert sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission='gym:blacklist:write' AND rm.deleted=0", TEST_DB) == '0'
-        print('MySQL 迁移验证通过：58 个业务表、35 个页面、61 条页面授权；全部脚本连续执行两次记录数一致。')
-    finally:
-        sql(f'DROP DATABASE `{TEST_DB}`;')
-        print('隔离验证库已清理。')
+    manifest = json.loads((ASSETS / 'legacy/sha256.json').read_text())
+    check(all(hashlib.sha256((ASSETS / 'legacy' / name).read_bytes()).hexdigest() == value
+              for name, value in manifest.items()), 'historical SQL checksums unchanged')
+    with isolated() as db:
+        command('init')
+        check(len([t for t in db.tables() if t.startswith('gym_')]) == 59, 'new database has all 59 tables')
+        db.check_legacy()
+        check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0' for table in manager.SYSTEM_TABLES - {'system_menu'}),
+              'production migrations create no demo users, roles, grants or departments')
+        check(db.sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND component LIKE 'gym/%' AND deleted=0") == '35',
+              'all 35 business pages registered without grants')
+        required = set().union(*(set(re.findall(r'gym:[A-Za-z:-]+', p.read_text())) for p in
+                     (ROOT / 'yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin').rglob('*Controller.java')))
+        registered = set(db.sql('SELECT permission FROM system_menu WHERE deleted=0').splitlines())
+        check(not required - registered, 'all current controller permission definitions registered')
+        history = db.sql('SELECT * FROM ' + manager.HISTORY + ' ORDER BY installed_rank')
+        command('migrate')
+        check(history == db.sql('SELECT * FROM ' + manager.HISTORY + ' ORDER BY installed_rank'),
+              'repeated migrate executes no old migration and changes no history')
+        rejects(lambda: command('init'), 'init refuses an already managed database')
+        os.environ['GYM_DB_ENV'] = 'production'
+        rejects(db.seed, 'production refuses development seed before any writes')
+        os.environ['GYM_DB_ENV'] = 'development'
+        db.seed()
+        check(db.sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.type=2 AND rm.deleted=0") == '61',
+              'development seed initializes the same 61 demo page grants')
+        snapshot = auth_snapshot(db)
+        db.seed()
+        check(auth_snapshot(db) == snapshot, 'development seed is fully idempotent for existing principals')
+        db.sql("DELETE rm FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission='gym:blacklist:write'; DELETE FROM system_user_role; UPDATE system_users SET password='custom-password-marker' WHERE username='gymadmin';")
+        revoked = auth_snapshot(db)
+        db.seed()
+        check(auth_snapshot(db) == revoked, 'seed never restores revoked role grants/user bindings or overwrites passwords')
+        os.environ['GYM_SEED_TENANT_ID'] = '2'
+        db.seed()
+        check(db.sql('SELECT COUNT(*) FROM system_users WHERE tenant_id=2') == '2', 'seed tenant is explicit and not fixed to one')
+        check(db.sql('SELECT COUNT(*) FROM system_role_menu rm JOIN system_role r ON r.id=rm.role_id WHERE rm.tenant_id<>r.tenant_id') == '0',
+              'development grants never cross tenants')
+        with tempfile.TemporaryDirectory(prefix='gym-flyway-checksum-') as folder:
+            changed = Path(folder) / 'assets'
+            shutil.copytree(ASSETS, changed)
+            p = changed / 'migration/mysql/V003__gym_legacy_backfills.sql'
+            p.write_text(p.read_text() + '\n-- checksum mutation for isolated verification\n')
+            manager.ASSETS = changed
+            rejects(lambda: db.flyway('validate'), 'Flyway rejects an edited applied migration')
+            p.write_text((ASSETS / 'migration/mysql/V003__gym_legacy_backfills.sql').read_text())
+            (changed / 'migration/mysql/V004__pending_test.sql').write_text('SELECT 1;')
+            rejects(db.seed, 'development seed refuses pending new migrations')
+            manager.ASSETS = ASSETS
+        command('validate')
+    with isolated() as db:
+        for script in sorted((ASSETS / 'legacy').glob('*.sql')):
+            db.sql(script.read_text())
+        # Simulate unresolved legacy business data while keeping the complete legacy schema.
+        db.sql("INSERT INTO gym_member(id,store_id,member_no,name,phone,gender,status,customer_stage,registered_at,tenant_id) VALUES(900001,101,'FLYWAY-QA','migration-only','19900000001','unknown','active','prospect',NOW(),1);")
+        before = auth_snapshot(db)
+        db.check_legacy()
+        command('adopt-legacy')
+        check(auth_snapshot(db) == before, 'legacy adoption preserves every account, role, scope, grant and department')
+        check(db.sql("SELECT customer_stage FROM gym_member WHERE id=900001") == 'lead', 'required historical stage backfill executes')
+        check(db.sql('SELECT COUNT(*) FROM gym_member_store WHERE member_id=900001 AND store_id=101 AND tenant_id=1') == '1',
+              'required member-store backfill executes')
+        check(db.sql('SELECT COUNT(*) FROM ' + manager.HISTORY + ' WHERE type=\'BASELINE\' AND CAST(version AS UNSIGNED)=1') == '1',
+              'existing schema is baselined explicitly at one, without replaying V001')
+        check(len(list(Path(os.environ['GYM_DB_BACKUP_DIR']).glob('*.sql'))) == 1, 'legacy adoption creates a complete protected backup')
+        command('migrate')
+        check(auth_snapshot(db) == before, 'repeated migrate never restores role grants')
+    with isolated() as db:
+        db.sql((ASSETS / 'migration/mysql/V001__gym_schema.sql').read_text())
+        db.sql('ALTER TABLE gym_member MODIFY name varchar(81) NOT NULL')
+        rejects(db.check_legacy, 'legacy adoption detects column drift')
+        db.sql('ALTER TABLE gym_member MODIFY name varchar(80) NOT NULL; ALTER TABLE gym_member DROP INDEX idx_member_store')
+        rejects(db.check_legacy, 'legacy adoption detects index drift')
+        db.sql("CREATE INDEX idx_member_store ON gym_member(tenant_id,store_id); ALTER TABLE gym_member ALTER COLUMN nickname SET DEFAULT 'NULL'")
+        rejects(db.check_legacy, 'legacy adoption distinguishes SQL NULL from a literal NULL default')
+        check(manager.HISTORY not in db.tables(), 'failed legacy checks never create migration history')
+    with isolated() as db:
+        command('init')
+        db.sql("INSERT INTO system_users(username,password,nickname,status,creator,tenant_id) VALUES('gymadmin','manual-marker','manual',0,'manual',1)")
+        before = auth_snapshot(db)
+        rejects(db.seed, 'manual same-name account causes development seed rejection')
+        check(auth_snapshot(db) == before, 'seed collision rolls back all department/role/user writes')
+        db.sql("DELETE FROM system_users; INSERT INTO system_role(name,code,sort,status,type,data_scope,creator,tenant_id) VALUES('manual','gym_hq_admin',0,0,2,1,'manual',1)")
+        before = auth_snapshot(db)
+        rejects(db.seed, 'manual same-name role causes development seed rejection')
+        check(auth_snapshot(db) == before, 'role collision never widens existing access')
+    with isolated() as db:
+        db.flyway('baseline', 99)
+        rejects(db.seed, 'development seed refuses a database with a future baseline')
+        check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0'
+                  for table in manager.SYSTEM_TABLES), 'future baseline rejection creates no seed data')
+    print(f'Flyway integration regression passed: {CHECKS} checks; all temporary DBs cleaned.')
 
 
 if __name__ == '__main__':

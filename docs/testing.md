@@ -485,3 +485,60 @@ SELF没有财务/员工分类；各响应菜单ID无重复。比较数据仅保�
 - `python3 /tmp/jss-verify-seed-modes.py`：仅菜单19、仅业务迁移26、完整初始化47个脚本范围通过；菜单模式没有角色授权/账号/业务表写入；业务模式无system表写入。两种局部模式模拟第3个SQL失败时立即停止，原始错误和对应文件名保留。`bash -n script/gym/seed.sh`、`git diff --check`通过。
 
 本次仅通过真实认证接口、数据库及前端源码核对菜单链路，未进行浏览器视觉验收；前端源码保持未修改。动态路由已生成的会话需要退出重新登录获取新菜单。
+
+## 2026-10-16 SQL执行阶段审计与临时缓存清理
+
+本轮没有接入或执行Flyway，没有运行现有业务库的seed，没有启动后端或HTTP/授权脚本。
+
+- 静态核对：`YudaoServerApplication`、当前POM依赖、主资源配置、seed.sh、Docker挂载及测试SQL初始化类。确认gym初始化依赖显式执行seed.sh；H2初始化属于数据库单元测试上下文；BPM当前禁用，Flowable选项不负责gym表。
+- 只读本地MySQL：47个SQL提取的59张gym表与information_schema表名集合相同，缺少/额外均为空；没有Flyway/Liquibase历史表。只验证表名集合，不宣称列/索引或所有历史回填都已逐项比对。
+- `PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`：在随机隔离库回放47文件两轮通过，59业务/支持表、35页面、61示范页面授权，测试库自动清理；修复旧名单漏算gym_file，日志`/tmp/gym-sql-management-migrations.log`。
+- `PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-legacy-seeds.py`：独立库验证2门店、2员工、2任职、3账号、2角色；两轮幂等、同名冲突拒绝及回滚通过，独立库自动清理，日志`/tmp/gym-sql-management-legacy.log`。
+- 用`ast.parse`核对31个Python源文件，`bash -n script/gym/seed.sh script/gym/run-local.sh`通过；不导入或执行有业务副作用的HTTP脚本。
+- 清理9个未跟踪pyc，共97,880字节；剩余0个。`git check-ignore`确认__pycache__与pyc规则生效；未删除SQL或Python源工具，47个历史SQL和开发seed内容均无diff；`git diff --check`通过。
+
+完整待接入方案见`script/gym/README.md`首节；现有业务库未建立迁移基线、未改DDL或授权。此前文档“58表”源于验证器遗漏gym_file，实际完整DDL/本地库均为59表，此处勘误，历史记录不改写。
+
+
+## 2026-10-16 拉取远端更新后的冲突验证
+
+四处文档冲突已合并；保留远端seed.sh/GymFileController和原本地7文件改动，保持未暂存状态。离线执行`PYTHONDONTWRITEBYTECODE=1 python3 /tmp/verify-server-pull-seed-modes.py`，fake-mysql捕获三种模式47/26/19个SQL、失败第3文件即停、局部写入范围和互斥参数检查通过，不连接数据库。31个Python源文件AST、`bash -n script/gym/seed.sh script/gym/run-local.sh`通过。
+
+`mvn -B -ntp -q -pl yudao-module-gym -am test -Dtest=GymFileControllerTest -Dsurefire.failIfNoSpecifiedTests=false`（沿用本机Mockito javaagent）通过9项测试，0失败/错误/跳过，日志`/tmp/server-pull-file-controller-tests.log`。`mvn -B -ntp -N spotless:check`通过7,726个文件，日志`/tmp/server-pull-format-check.log`。`git ls-files -u`为空，`git diff --check`通过，HEAD=origin/main=15cf33b3c8；未启动后端或运行现有业务库seed。
+
+
+## 2026-10-16 Flyway版本迁移与独立开发seed落地
+
+### 实际数据库回归
+
+`GYM_TEST_DB_USER=root GYM_TEST_DB_PASSWORD='' PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`：**31项检查通过**。使用真正的Flyway Maven13.10.3 + flyway-mysql + Connector/J9.7.0，5个随机MySQL测试库均自动清理。日志 `/tmp/gym-flyway-integration.log`。覆盖：
+
+- 新库显式baseline0、V001～003、全部59表/35页面/当前控制器权限定义；生产迁移不产生账号、角色、部门或授权。
+- 重复migrate不改历史；已管理库拒绝init；已应用文件校验和漂移拒绝；当前代码落后于数据库基线时拒绝seed。
+- 开发环境声明、显式租户、当前迁移已完成；初次演示授权仍61条页面授权；重复seed逐表数据相同；不覆盖密码、不恢复撤销的角色菜单/用户绑定、不跨租户。
+- 已有完整旧库核对结构后先备份，baseline1跳过V001，执行必要定义/回填，账号/角色/部门/数据范围/授权快照不变；会员阶段与门店关系必要回填执行。
+- 列/索引漂移与SQL NULL和字面量NULL默认值差异均能识别；失败校验不生成迁移历史。
+- 同名非种子账号和角色拒绝，事务回滚，不扩大既有访问权。
+
+`verify-legacy-migrations.py` 和 `verify-legacy-seeds.py` 归档兼容验证通过：旧47脚本两轮59表/35页/61页面授权，旧开发导入2店/2员工/2任职/3账号/2角色与冲突回滚；各自随机库清理，日志 `/tmp/gym-flyway-legacy-history.log`、`/tmp/gym-flyway-legacy-seed.log`。47文件sha256及旧开发SQL字节内容与移动前保持一致。
+
+### 当前开发库接管证据
+
+- 只读完整结构指纹与V001匹配；三类待回填（会员门店关系、prospect阶段、source_coach）数量均0。
+- 显式 `db.sh adopt-legacy` 成功，先完整mysqldump备份 `/tmp/gym-db-backups/ruoyi-vue-pro-before-flyway-20261016-205827-111751.sql`，1,577,567字节、权限600，再写 `flyway_gym_schema_history`：1/BASELINE、002/SQL、003/SQL，success均1。日志 `/tmp/gym-flyway-adopt-local.log`。
+- 接管前后system_menu、system_role、system_role_menu、system_users、system_user_role、system_dept完整行哈希完全一致，未打印用户数据；只保留本机 `/tmp/gym-before-flyway-auth-hashes.json`。
+- 接管后再次migrate提示up to date，历史记录逐字节不变；validate通过。未对现有库执行开发seed、未启动后端或修改前端。
+
+### 静态检查与边界
+
+Spotless apply/check检查7,726个Java文件通过、0改动；33个Python源文件AST、3个shell的bash -n、独立POM XML和GitHub workflow YAML语法检查通过；git diff --check通过，script目录缓存0。新增 `.github/workflows/gym-database.yml` 使用MySQL9.7与同版本容器客户端运行同一回归；本轮尚未在GitHub远端执行CI。
+
+本机MySQL9.7.1超出Flyway声明的最新官方验证版本9.4，Flyway输出提示；上述是本机实际回归证据，不扩展为其他MySQL版本的验证声明。结构指纹绑定旧V001，用于保守接管，不代替未来增量迁移后的通用漂移检测。框架基座、H2测试资源和第三方集成不由本次Flyway接管。完整运行及失败处理见script/gym/README.md。
+
+## 2026-10-16 数据库操作手册与贡献指南
+
+新增 `script/gym/DATABASE.md` 与根目录 `CONTRIBUTING.md`，并在脚本 README、文档索引中添加入口。仅文档变更，未执行迁移、seed、应用启动或前端修改。
+
+- 使用 Python `pathlib` / 正则逐项检查两份新文档：9 个相对文件链接全部存在，代码围栏成对且文件以换行结束。
+- 核对文档中的数据库子命令与 `script/gym/database.py`；实际执行 `bash script/gym/db.sh --help`、`bash script/gym/seed.sh --help` 均退出 0，未连接数据库。
+- `git diff --check` 通过。本轮无 Java 或 SQL 修改，无需重新运行 Java 格式化和数据库集成回归；此前迁移回归证据见上节。

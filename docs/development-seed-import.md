@@ -1,5 +1,7 @@
 # 旧种子数据导入开发库
 
+> 2026-10-16：数据库现由Flyway迁移与独立开发seed管理，操作以 [当前运行手册](../script/gym/README.md) 为准。下文旧SQL路径与初始化命令仅供历史追溯，已归档至sql/gym/legacy。
+
 2026-10-14，按用户提供的 `/Users/hh/Documents/GitHub/database/` 种子和确认范围执行：先导入已实现模块，其余保留待导入清单。源目录保持只读，未执行其中的 PostgreSQL 迁移，未改前端。
 
 ## 导入结果

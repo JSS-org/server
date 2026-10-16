@@ -5,6 +5,8 @@
 
 ## 目录
 
+日常数据库操作见 [迁移与开发 seed 手册](../script/gym/DATABASE.md)，参与后端开发见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
+
 | 文件 | 作用 | 何时看 |
 | --- | --- | --- |
 | `README.md`（本文件） | 记录规范、阅读顺序、模板 | 首次进入 / 准备提交改动前 |
@@ -51,9 +53,11 @@
 | 仅检查 Java 格式 | `mvn -N spotless:check` |
 | 编译 | `mvn -T 1C -DskipTests -pl yudao-server -am package` |
 | 单测（gym 模块） | `mvn -T 1C -pl yudao-module-gym -am test -Dtest='GymFile*Test' -Dsurefire.failIfNoSpecifiedTests=false` |
-| 初始化数据库（幂等） | `bash script/gym/seed.sh` |
-| 已有数据库补齐业务表（启动前执行） | `bash script/gym/seed.sh --schema-only` |
-| 已有数据库补齐页面菜单（不变更角色授权） | `bash script/gym/seed.sh --menus-only` |
+| 新gym环境初始化（先导入框架基座） | `bash script/gym/db.sh init` |
+| 完整旧gym库接管（先校验/备份） | `bash script/gym/db.sh check-legacy`、`bash script/gym/db.sh adopt-legacy` |
+| 日常数据库升级与校验 | `bash script/gym/db.sh migrate`、`bash script/gym/db.sh validate` |
+| 显式开发seed | `GYM_DB_ENV=development GYM_SEED_TENANT_ID=1 bash script/gym/seed.sh development` |
+| 当前数据库管理说明 | [Flyway与seed运行手册](../script/gym/README.md)（所有命令需显式GYM_DB_*） |
 | 认证接口验证 | `bash script/gym/verify-auth-api.sh` |
 | 文件接口验证 | `bash script/gym/verify-file-api.sh` |
 | 接口文档 | <http://127.0.0.1:48080/doc.html>（调试需带 `tenant-id: 1`） |

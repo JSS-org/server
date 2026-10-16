@@ -1,0 +1,419 @@
+{
+  "format": 1,
+  "schema_sha256": "4ef6854bd1a8f7ff346fe556496c69c3d0eadfd10cccff05444dd60f9697ea1e",
+  "tables": {
+    "gym_activity": {
+      "columns": "e21c6d703285cfae24e3a25f0b37cda7b4fc7a311a433377606551d6b6fea7da",
+      "indexes": "2ff6fcb10e50e60b712ba55426973df6cc8b4a4b6c45342d6b18d826cb1eab15",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_activity_registration": {
+      "columns": "7c35f5a518c48886cb31ecbf799b6f4e37757f52a6cb50f0715a99571ebebfd1",
+      "indexes": "8dcfea3089a3a1a313898d971b532b3d6e4f8918bd7e26fbca05a6e0600481df",
+      "constraints": "6908d73bdba133d79a7fb0a6438c3a55fa75e659114a5122a96f4d84fd3bcb1a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_activity_store": {
+      "columns": "ef0a27948520661b384902433ca9e452591ac04c4dcb32a9e62157eea5c9321c",
+      "indexes": "ebc6e1b142611e0a2c1a2209a0a6decefc3044e364a251231746a1101ad31ebe",
+      "constraints": "1ac1f4ac61c39e830c3cc29982fb1ab24da84d500f9640edf72622b68aa0e8bf",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_approval": {
+      "columns": "5fce6eb745fc2654d42759c775a38b5f839ae68e2d60c69878b79fab4a3ee691",
+      "indexes": "78937567261f60012085db4662d25bdb53227f3f57875f1cd3e58fb3c65b6213",
+      "constraints": "20531f440c93bccca8b5de88f9a5130366014d920948ca3c529802a7b03cb4e8",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_approval_task": {
+      "columns": "39219dbf0a7211386e17c27253187133757e954798d092b1f88869fd35cb4885",
+      "indexes": "ef384259227981981cac3133fc879bf78862906f651f3bbba924735978ec3657",
+      "constraints": "96fcd37f7b1545bb499873a675a866d9d0a46faf44cbced9d00e2c5fb0a65b13",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_approval_template": {
+      "columns": "d7551cc099914917c15c6b66db52cc2a5e29434d3452fb24bc6ee13fbcac058e",
+      "indexes": "57cbd210d86470a3320c4396d3616762fc95f59c02ed6d75ed70221ec3a36849",
+      "constraints": "cb874b96d1a0207451c29af58c4412579119044e344384473f948207f9c3d37c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_blacklist": {
+      "columns": "86fcee9d3e8262dd117e8470fbcda55afd3e5775723b7757d6e82b30a649a146",
+      "indexes": "113aa6029509e2aa29584866c22445b06c4ba0f8d7ad2655c1bd23ce2343221b",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_booking": {
+      "columns": "30a68972ea77a74e1b5b0dfdf197a44e17795a1b80a832bbbc69962cbe46d46c",
+      "indexes": "333c08c79825afaaf29252e40244a83a430e9b0efc48d56636223ee5b2545de6",
+      "constraints": "11604697a996bc02583b294d5320fe462a6d1be5f437783479c3eaaaf02eab97",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_business_mutex": {
+      "columns": "1db1c094deadeeb3d1fb206860b9e3e56f55b6d081143a4475fe11d8b0e69e1e",
+      "indexes": "bf5fe5ea7ed724a5507b4814bee5a2481f4636e8377352f722a5cef809f541cb",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_business_order": {
+      "columns": "a19221700313baef9570c0c7603d5ae500e1401d61589a01fea49748369400e9",
+      "indexes": "6ef4fe48044b927a0f650d1c8a2cd43f77cbd4464baf25f73b2292d40a192424",
+      "constraints": "c36301082093f97735146c852725bb2d77f32a061691df13f5beab90464aa4a9",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_card_template": {
+      "columns": "2c7850f8dead69dd5408cdcf70bba0cb42562024a5e9c5d43661bbdef98f354c",
+      "indexes": "955fee54a9de600335213620ceabc6dcee38359ff538c085fd5b3b54cb33527e",
+      "constraints": "3df5e57b97632bde4e7b8b07df60d8baac071a205ce6f9d963b1996296d15db5",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_checkin": {
+      "columns": "cb841c00d0b0a5d3d745d6555270ee1597dd553ec7878539f38c4ee41c2fff55",
+      "indexes": "2154927edca8e5e236077fbdceb39ace5844a2ca4915f267e3af9a2b27378161",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_client_setting": {
+      "columns": "0e3484a3a69f1da094f9d85c484ee9a52ab7f352e663cd552b5ad325daa46ebd",
+      "indexes": "b7c6ff724ba4a2f3a8bd8b7912b24ccd8dfa0d03004eb64682f7310c0cf6e202",
+      "constraints": "b225e24b6c98e534c2805b4bb3da35f03a7294df24a5b93005d790e115aaf1d6",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_contract": {
+      "columns": "b0d78259ffac50510251b3e1ecc5c82b0cf0279e8b4c9f88be05b3feb63d70cf",
+      "indexes": "b8eb9a38e86ffcea427029b5a299ab40310905d31623e0db718c31252268dc14",
+      "constraints": "a638a3133c615de247e68289fdc267435a4b7b0b46a21728c7a493fd4aac7aa6",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_contract_event": {
+      "columns": "0b91f8bf24259f93387a6cd432b296c2cd26ad5c755e60dfbe3c64798da8b6a2",
+      "indexes": "2ff6fcb10e50e60b712ba55426973df6cc8b4a4b6c45342d6b18d826cb1eab15",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_contract_reminder": {
+      "columns": "bded92554aacf3504fc4e26f7bb30cab0757f9288d6ef182fd0146bfe97ce9de",
+      "indexes": "1c87d4a830a70ad93834fda41e59ae4cfd3fe6cb9fa98d64b15d4fc27a3a82b2",
+      "constraints": "31608d202697fb4e85d4e6a6f33c89176193ebe8043b3b425922accfc72fdb0b",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_contract_template": {
+      "columns": "5a258eb1b4de154a1df87645de3d1fe89075b069d0829cec9408b99904d672f6",
+      "indexes": "3495d497355ef8bda680baa7bb1772c8e3ff59cc01191010aca88b73447bb4d9",
+      "constraints": "6c63a8f01e2f462976635fb7c8517d87c8f7d1a31989cf65963a22e0faa3a81a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_course_pack": {
+      "columns": "5f1046f7eecdb2a58d244e37c4c527eaa962b74486d6c7c7068b6eba80c8830a",
+      "indexes": "74582469b875160a1c23f592df17109b64687d8cfa2e429b194901578edee229",
+      "constraints": "e8f4d498610146073cc859b15123404f16336b174cd3be423bdcf8cda13e62c6",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_course_product": {
+      "columns": "73709dd772b5e79777870950fafaeb498fa37cc9c556da110686e852c32e2892",
+      "indexes": "c87345d632a6381c53c418b161d22f994c76faf0c45d17273bc5093e73962838",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_course_session": {
+      "columns": "6b506950891532b0984f57f625b0391999c2234f06e50118b2cad4fc45a7c144",
+      "indexes": "f7553dd1b32a3c2b1dff8055c61ba239c59f578b1fab85de45872976ff503abd",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_device": {
+      "columns": "760f81762e065c8a9a86ec4977169663d95cdc7ec9b3530dcd49350a7af3e0f1",
+      "indexes": "21df9dc10945e19f914c9903a3e8abb6fa4130571da123a859865d111c5ec04d",
+      "constraints": "6abc401dd03834be31fb235739a84749677e760853a463c19103394e8a93e2ec",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_device_command": {
+      "columns": "9953929ea43dce7e1a93e07ff308ec4949ddf829e5bd41d48a52298cf94e2e78",
+      "indexes": "78ed196abf9ad723494677669229d1f468b76ac310d50a32d553bf58513349e7",
+      "constraints": "e1bebe57d22dcfa13617ae77d7992d89f306875a270b403b34a070bb2963294a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_device_compartment": {
+      "columns": "3f63d5b67db1f79732104c333f4657b92888135a657ae862bd1cae33d333a4ac",
+      "indexes": "38ee6436221cc5e21da837a92305b16767daf1610d63d5070507f5df0452eb3b",
+      "constraints": "1c82512fe53da120cfc8c8a88f394de7bc1d15add3d835ff6437e64a365864c9",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_employee": {
+      "columns": "97e3b0516d34447e5f39c0aa392326e43d00bf7d7c30e51d202b160a2a7980d6",
+      "indexes": "e64f82ac0cddb2ef0901fe68c75bfff3ccc394d66ca6e4a0d261756aca944423",
+      "constraints": "5a6ff466d718dc7e6963efa801543873853fe6de357af10a3efde4a53a8fc6a5",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "c4d3b05f20c1d7727ae25af6d06e1a5d1a894a5fcd8e64b7a19c705bb829344a"
+    },
+    "gym_employee_store": {
+      "columns": "7071ffc1a1e596cd7c01c2cfd4626957b0ca091e365bc3bc822e039b7487704c",
+      "indexes": "c7959deaa1353a6fdee6e4e7cca150cad3265d0becfdda51fbd0dd15496e22a4",
+      "constraints": "1a7cde82300ea34131ae41239de576f2bb64b1477456ec81c679d8d8afad7cd8",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "c4d3b05f20c1d7727ae25af6d06e1a5d1a894a5fcd8e64b7a19c705bb829344a"
+    },
+    "gym_equipment": {
+      "columns": "060baab26363a8175e9e33c69780e9b796162fb1da246f7716f9618dae78122a",
+      "indexes": "bbfcc099c59ccf5bb32c0328f14ca5096a681dbb433745a01f2156c85a6f9825",
+      "constraints": "09299295884680f101c44cca9d16d08870409c2956abbfabedcad07e0ff16639",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_equipment_tutorial": {
+      "columns": "49cf2463b4ec2aaa036e195ff589f84dd5b548d049f5286482765d2c566a3eb5",
+      "indexes": "2ff6fcb10e50e60b712ba55426973df6cc8b4a4b6c45342d6b18d826cb1eab15",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_file": {
+      "columns": "c634fc82648ca4cd35313c8a3e7f87363b5c14fc38783011c1e820e68aef84a6",
+      "indexes": "7ae2bbd4c58d41c319e256cb2ec3dc738723b64c605c925d902c671d5e3591ad",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "c4d3b05f20c1d7727ae25af6d06e1a5d1a894a5fcd8e64b7a19c705bb829344a"
+    },
+    "gym_financial_event": {
+      "columns": "1da0b54c29a0bbea37fc6adcd16910f6d30ecc8b3a7d8900501862b63b09e622",
+      "indexes": "4a063eb327362a01d5f30295ec65b4e4b89c0d23fe72ee70cfb150cffe3ad883",
+      "constraints": "f5eeb12fa3550676bdaed70779e30e5cd4bb9dc0d5b54c89d68e701a77b39f11",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_franchise_inquiry": {
+      "columns": "166cbf65cad6052f780de625c947834130f17fccb3cb3c9d94d87028f27cdc7a",
+      "indexes": "c090a46f42546b59db1a03a7d340902fff7386fbc227675da4e4e2bf8f3d84f5",
+      "constraints": "3f12e30fffa7de01a98739974f43c657837bc35fbe03aa7901b7113b22e89eaf",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_fulfillment_task": {
+      "columns": "ee3cb416709124f161fad5669c21761146107783a1e670e4a68cff36c952292a",
+      "indexes": "4f54b6323191566a292e29459b0fee18c65a91abf84ad3637ae8507411d61710",
+      "constraints": "9f5a8ce4c9ad7c862dd5635eadc74c885a98b0fa6c0b63393af1e4c4f84e63ad",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_lesson_record": {
+      "columns": "68a795024ae99dd4d29a6986a15ce1a3b18b2787d155dc635c636551a33774c6",
+      "indexes": "473989d425b5d9704dce8537ac14244998a9572d4d296babc60e35ecda23eb7e",
+      "constraints": "791c70bf7d11a11515b39b21110907e89052ec2307669c92ee1d3bcaf1a32df0",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_measurement": {
+      "columns": "18a4999d80a24d59efc56cf2c0f526568fd9a955eb07ca7f7448e1ef02570933",
+      "indexes": "5218b0626881bd73641474e600b83bf0f0ca72a4b583c13fb733759cc247456e",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_member": {
+      "columns": "cd0d8429c3d1914e10d2142e7643c77b7ab77de7814bd00897f1b8d7b309c204",
+      "indexes": "cc8bf82905e359a8ab0a2af2602e77d076554ea5d8ad53d980a0e78df71c2058",
+      "constraints": "baca2c5e50c9ea58186b203f7b6c807050885b3784c7e715ae1a0e80bf31136b",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_member_card": {
+      "columns": "d36dcc2217cfa84ad470da8b61feabf85a04b61cf03835d80e98780b1cd42d7b",
+      "indexes": "299808619929499b8ffe1eda69214d0a52aadd66352b77227fc3ec71d700f2b3",
+      "constraints": "38bf541764953e2e8bedd17ab0fccf8297cbe88c0cbf3324f358a4d12dba4f26",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_member_card_store": {
+      "columns": "41e1e3b726ee86cf9a404a29bf766f1048f5aa723e7731f083888db0691cf947",
+      "indexes": "e8b3a0134a66792aa0c015590208e078ec708710e678cd43ddbd1b1802243ffc",
+      "constraints": "689f3408bed012886138d09e47e2e3d271a2ea9cd9ecd2bf98fd22ef7f8db4d1",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_member_coach": {
+      "columns": "e6b691b443d785be75dc3cc9f8159bd8bdf03bd97ea1eb7746c4bd465596f894",
+      "indexes": "e1556de8c84faabd91a113ec01caeac3addd3a3f15838e4e218df532ede85533",
+      "constraints": "33a5dfcf59165bd9316a6ec6210ce98cfa7881bebe3cf2cc411d6badb39b9f27",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_member_store": {
+      "columns": "ddcba590c073912f56603606a3a9b1359763a263eca25b3f98849d8d50c95922",
+      "indexes": "771854b13afe522956bbb6f2baad60e32d611017d39e4c48c7b840ab64ebf1e0",
+      "constraints": "3dfdabc04d0cb9526ae95353c3b7f342f99982c3293a2232d23f8d8e7a97fc7a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_order_item": {
+      "columns": "37d703d433062d4f1685249538ac05ab2c3a8c99f9f41545ed8c191190f0871e",
+      "indexes": "c6eac878827f0806cb564ff716ce06033ad189c0bb901991c538dc5af573b942",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_order_item_financial_event": {
+      "columns": "73facd0c7b6395c9fbcdd534c5e8dc56291beab9685dbb887222ca124370ea37",
+      "indexes": "f484f5b579db212229d7c4e0bd0c5c38a4187f5c5e30894847d83b2c777668fe",
+      "constraints": "949c5a1c63f9a4451a40e39726f01fd35f7943b3f1f5bd4193afd147c35c0682",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_order_payment": {
+      "columns": "17ca3426cfd46b43732bb215442e60237826b3f3b3f825936c9e5b39df5237e6",
+      "indexes": "56c9af67ae0ecf499992df21c8597ac77e5552b2f3785fca39133ef2e4144ede",
+      "constraints": "05ab71c8f5539519fb9395fdc972219275dfdd52cecfce076b4c188bc3ebeae6",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_order_policy": {
+      "columns": "13ec130a9b9240f5882925d64979991fa51c95878fba9ace4ffd8abeac964831",
+      "indexes": "97a0b9d264122fc6671190ae79a9badaa9e74837e51ea1aad37c0cb5db8aa21d",
+      "constraints": "b36887ffa7bf90ce0816d7e3c24924032cc1b831d8c61cdea6c0d0c1f5c09962",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_order_refund": {
+      "columns": "86322ef1ce0cee0c6988e7925c31a1554e65c3f7a471a5110cc631b5ffc75d61",
+      "indexes": "19de1ca3846c8fb017b9ce871301239ae80fea36e498f86e986d23ec7ce37bcc",
+      "constraints": "1366bcc956a407897d4f071421e67a73bc32499478f07e1d5d5fdcfd1caf21dd",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_order_refund_review": {
+      "columns": "0654399d84db40d27054df4b8a04a595838e72611c1c7653acfe7564d1dc7fe0",
+      "indexes": "34613464e1601b54bcdbe0c668a6077efb98e0646141f9f681b835694cf2f3da",
+      "constraints": "ca46256b47faa19353a24cc21f308b0145ae73e61d4098f51d89baec9b2d00ab",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_payment_account": {
+      "columns": "a8e2087eb505407777e2af866bec969498d8214840f068386c0ea8d6d953f320",
+      "indexes": "4943cb58c6cfa173eedea248e3954322619a20dfd7e8b886b827be8940a074ac",
+      "constraints": "5ae99cef1b0e1a1b11a513a5a2e67fb4770114f9fc510875894659f83b6580ee",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_payroll": {
+      "columns": "3ce38fd03a15e107e15c13f6499abdaf8aa7d2be828d6a18877f589e854fbaa1",
+      "indexes": "c14a0600326a56ff7fd88b2a06837ae5cd28ca507ed850fad21f24acbed40ea4",
+      "constraints": "7357e25a4ff9690a2c627bfa6e56918dd601149e597dd9ec65dc5cfb48db0660",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_payroll_item": {
+      "columns": "9a9dd37f4e55fef624965395d028effb4c6a69de0784adfb0d6cb0252f19ad2e",
+      "indexes": "2ff6fcb10e50e60b712ba55426973df6cc8b4a4b6c45342d6b18d826cb1eab15",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_qr_code": {
+      "columns": "51c628d6f960b0b35a83448fbdae73d4163ace7038e9d328f5741c28c54dad2d",
+      "indexes": "dc4bae698d8c090050b4390ff1ffc7b2d56345e49558d39901fd54a6c7563fe6",
+      "constraints": "203b6b28b76ff884da48d1ea65ad311cedf6cf72acaf80f9842029acb2bc774c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_salary_assignment": {
+      "columns": "6b615d1be82ae3646bbe798a64e0016d2f2014b5c524bf1bb7fe32bf9a4fcb73",
+      "indexes": "d379872478fe3984bf2811747519103a1b5dcf72c85984c27e364b27c27bd72f",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_salary_template": {
+      "columns": "eb2db0a683e55f87660dcb7113f8e77a6d6aa439043aa0a66489ca53ad78703e",
+      "indexes": "429fb856231e926cc7cbd2199631ebe5e426adb6a104009ff8f24aef875e9a9e",
+      "constraints": "c7deb562bb15a8c4f1ccda9c2e70413202abaee9d0a32143df50ab305c5f6762",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_sales_setting": {
+      "columns": "cb77103d51465aab00ae6892813b354907a906bd7ac5805028301b89ff9639ab",
+      "indexes": "941a809e5a2548a166afd7097b5b13f6ee2eab46ea85d4ea7ab2ec72fa318822",
+      "constraints": "3a3e28c44fab3c2302b5ccf55836f9008f6316a8bc2e2c459e5a1dac981a9eab",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_settlement": {
+      "columns": "ca2a70e189ce48d79613216a41b47f07fc0a5972268e628af864628472674f4d",
+      "indexes": "badaf31420df7783058912d02b73c20745fd91e3c4a2430485a3c37b1ca74c37",
+      "constraints": "286392ba6f3bd125b53b2161a460e488ad1d8578cf0f22411752b5985a64f22f",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_settlement_rule": {
+      "columns": "3fff7307cc8a54a7a387a1dedfb6bd7e38949679d9485924d19225d11221d549",
+      "indexes": "1f914e6ba105db6e64048704c1115a8b213c6a797a6dfe72bd8e097ba7caee87",
+      "constraints": "aa80736dcd09ad550973298976fd46e75e8531a2422d5dee973ec24918ac277f",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_store": {
+      "columns": "456d94517e7d73f1228a588d38da7f65d277e6fb9377dd49930de78991683889",
+      "indexes": "bf472fd23469cdcbd663c569d29135a86596324548aaa5b06ec0d85d95fdd4bf",
+      "constraints": "33c0b8178c0db9c9250500ed2c81545d041223af4391736fdff96ae38bd5620c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "c4d3b05f20c1d7727ae25af6d06e1a5d1a894a5fcd8e64b7a19c705bb829344a"
+    },
+    "gym_store_media": {
+      "columns": "b3091e4f86e8ec572502200ba7af75999d16a683f6387aa8b6cf7e173f7e4ead",
+      "indexes": "3c8bcdfbe5fe62390a3808d6745c729f4d7f982a55036896d71ea289a4c6d469",
+      "constraints": "d03913d32cc2ca287bd906cbd8c83f89d8142056f26eb9cebf0c2ad452cd037a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "c4d3b05f20c1d7727ae25af6d06e1a5d1a894a5fcd8e64b7a19c705bb829344a"
+    },
+    "gym_subscription": {
+      "columns": "4d7eea6e0f9a92eacfcd24f201b5abea68af7f11b83f5925620b990ddb612d0c",
+      "indexes": "a5612570f83a5f4405243dc7d8238df9ec6876314fc63858d31bfae2dfdf87f3",
+      "constraints": "0aa1500bf5b2eab65236302bd07b07343b9b9c6aac5002c492aa146328dfe69f",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_subscription_cycle": {
+      "columns": "0e57d6730a72e0d36b54373abdbe77e54afb1cd6cc1254d39f75a6ba58a600e1",
+      "indexes": "5c62cc2df6d8bcd86b87393bca2e39299c1a6413268f5fafdaef711f4ca0d1b3",
+      "constraints": "e2655514508d2649a1258b0de2d842caafa3cf415f8a7caf7353ca687c2bc72a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_training_plan": {
+      "columns": "f1676797ae05c784a03b73dd2ac805ff32c09e17930c40f40d6a393e5600594f",
+      "indexes": "fa93f8e5a57ef5f7dba040e8c864cc69617841b309cc24d6f047e5caa171f701",
+      "constraints": "9153e3a7575f513f9df05c1d316e755e7f9727882470cc29fff3b0b7a5d9cc0c",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    },
+    "gym_verification": {
+      "columns": "477324d36553c28842eb7b515e37c9cf4f09f389a30ae63174bbff70c7323f3d",
+      "indexes": "11f933f4eae85f434ee45da3a509ba7397205107d3589f978ca66070e91e59a9",
+      "constraints": "f00e0229a196e8e16bd1546711cbc31ce39e01a6b593d1f20c721a084155c09a",
+      "foreign_keys": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "options": "db1e08a0a5f69b79da91cc871b2537ba5509b1d56f87733ed1d93352b36cd059"
+    }
+  }
+}

@@ -1674,3 +1674,149 @@ JDK词法扫描对比Git基线：忽略注释/空白/import后，只有一个CRM
 实际修复及证据：先备份菜单/角色/授权/账号至 `/tmp/jss-before-menu-repair-G33VJt.sql`（权限600），再运行 `bash script/gym/seed.sh --menus-only`，19脚本成功。角色、角色菜单、账号、用户角色4表与执行前备份逐条一致（真实登录验证之前比较）；第二次运行后菜单 INSERT 数据逐字节一致。真实 admin 登录后取得35种 gym 组件，和 dashboard/integration/menus.json 完全一致；全部组件文件存在，按前端 filterAppMenus 同样逻辑过滤后仍保留35页。结果 `/tmp/jss-menu-verification.json`，验证脚本 `/tmp/jss-verify-dashboard-menus.py`。
 
 验证与限制：`python3 /tmp/jss-verify-seed-modes.py` 验证 menus-only=19、schema-only=26、完整初始化=47个脚本，范围正确；模拟第3个SQL失败后立即停止且保留错误和文件名；bash语法与git差异检查通过。未执行额外Java构建，本次不涉及Java修改；未声称浏览器实际截图验收。现有适配器返回12个业务分类，其中11个可见，加盟分类隐藏；二维码、员工薪资关联、门店工资表页隐藏；优惠券、积分、消息无已交付页面。前端已生成的动态路由不会由数据库更新自动重建，需要退出重新登录。普通账号既有授权不扩展。
+
+## [2026-10-16 20:24 ~ 20:28] 审计SQL初始化阶段、规划seed管理并清理脚本缓存
+
+### 意图
+
+回应用户希望更优雅管理SQL/seed的请求：先确认现有建表与数据写入阶段，形成可执行的接入方案，并清理script中的临时工作产物。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.gitignore` | 修改 | 忽略Python缓存目录及pyc/pyo/pyd产物，避免验证工具污染工作区 |
+| `script/gym/verify-migrations.py` | 修改 | 从CREATE TABLE定义提取完整表名集合，与隔离库实际表名比较，取代漏算gym_file的58表名单 |
+| `script/gym/README.md` | 修改 | 在首节明确执行阶段、59表勘误、Flyway/seed分离方案、已有库接管步骤和清理边界；修正历史使用步骤中初始化与启动的顺序，停止建议改写已部署01 |
+| `docs/README.md` | 修改 | 将seed.sh标为开发库混合入口并指向当前管理方案 |
+| `docs/architecture.md`、`docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录现有执行链、待接入方案、审计及验证证据 |
+| `script/gym/__pycache__/*.pyc` | 清理未跟踪产物 | 删除9个缓存文件、97,880字节，保留全部脚本源代码 |
+
+### 结构关系
+
+现有结构不变：框架基座导入后，显式seed.sh调用01～47，Java应用随后使用这些表；数据库单元测试另经SqlInitializationTestConfiguration加载H2建表资源。当前system/infra/gym依赖未启用BPM，Flowable的schema配置不负责gym。目标方案为发布准备阶段Flyway版本迁移、运行必需基础数据与开发演示seed/测试fixture分离；新空库执行baseline脚本，已有库在列/索引/回填/基础数据核对后显式建立基线，再从后续版本升级。仅记录方案，尚未接入。
+
+### 验证证据
+
+- 只读检查当前MySQL：47个SQL定义59张gym表，实际表名集合一致；缺少/额外均0，没有迁移历史表。
+- 随机隔离库 `verify-migrations.py` 两轮通过：59表、35页面、61条示范页面授权，自动清理测试库；`verify-legacy-seeds.py` 两轮及冲突回滚通过：2门店/2员工/2任职/3账号/2角色，自动清理测试库。
+- 31个Python文件AST语法检查、两个运行/初始化shell的bash -n通过；未执行HTTP/授权脚本。
+- 清理后script目录pyc数量0，git check-ignore匹配新增规则，历史SQL和开发seed无diff，git diff --check通过。日志见testing本轮条目。
+
+### 影响面 / 风险
+
+没有执行现有业务库的seed、修改表结构/角色授权或重启48080；只对业务库做信息_schema/初始化标记只读检查。验证器今后会把gym_file等所有SQL定义表纳入核对。当前seed.sh仍是无版本账本的混合全量入口且含开发演示授权，不能等同生产迁移。旧文件直接改名迁入自动运行可能重复执行回填/角色绑定，因此方案要求先拆分和核对已有基线。表名一致不代表完整schema或数据状态一致。
+
+### 未做 / 后续
+
+未安装Flyway、创建迁移历史表、替换seed.sh或移动47个历史SQL；方案明确下一阶段应拆出schema/必要基础数据/开发seed、固定版本与校验和，再验证新库及既有库接管。31个可复用验证源脚本、专用需授权操作脚本、HTTP请求和部署工具保留；没有因“清理script”删除业务库QA数据。此前58表统计遗漏gym_file，本条追加勘误，不修改历史证据。
+
+
+## [2026-10-16 20:39 ~ 20:42] 拉取origin/main并合并本地SQL管理文档
+
+### 意图
+
+按用户要求拉取更新并解决冲突，保留此前未提交的SQL审计、seed方案和临时缓存清理改动。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `docs/CHANGELOG.md`、`docs/testing.md` | 合并冲突 | 完整保留远端缺表/菜单修复记录与本地SQL审计记录，追加本轮验证 |
+| `docs/README.md`、`script/gym/README.md` | 合并冲突 | 保留两种新seed模式、启动前初始化及run-local入口，同步本地待接入方案 |
+| `docs/architecture.md` | 修改 | 补充新局部模式与当前仍无版本账本的关系 |
+
+### 结构关系
+
+main从c56544282a快进至origin/main的15cf33b3c8（fix(db): update seed.sh）。远端seed.sh与GymFileController实现原样保留，本地.gitignore、完整表清单验证和审计方案恢复；只对相互重叠的文档做合并，不另造数据库执行入口。
+
+### 验证证据
+
+- `git ls-files -u`为空，HEAD与origin/main均为15cf33b3c8；原7个本地修改文件均保持未暂存、未提交。
+- 离线fake-mysql检查：完整47、schema-only26、menus-only19选择正确，三种模式第3文件失败即停并保留错误，局部模式写入范围与互斥参数检查通过；无实际数据库访问。脚本`/tmp/verify-server-pull-seed-modes.py`。
+- `GymFileControllerTest` 9测试通过，0失败/错误/跳过；Maven命令及日志见testing本轮条目。
+- `mvn -B -ntp -N spotless:check`通过7,726文件；31个Python语法检查、bash -n及git diff --check通过。逐文件确认本地.gitignore/验证器内容与临时保存一致，两边新增历史记录均完整保留。
+
+### 影响面 / 风险
+
+冲突仅发生在4个文档。拉取前临时保存并另备份补丁，恢复后保持原有未暂存状态；未运行业务库seed、未重启后端、未改前端。远端局部seed仍不是版本化迁移，Flyway方案保持待接入状态。
+
+### 未做 / 后续
+
+本轮只更新server仓库并解决冲突；未提交/推送本地改动，没有执行全量业务或第三方联调。临时stash在完整恢复核对后清理，拉取前补丁保存在`/tmp/server-before-pull-20261016-sql-management.patch`。
+
+
+## [2026-10-16 20:44 ~ 21:05] 落地Flyway版本迁移、独立开发seed并接管现有开发库
+
+### 意图
+
+按用户明确选定的方案实施数据库管理：版本化正式迁移、单独执行开发seed、冻结旧脚本，验证新库与已有库接管，同时保留前端和应用启动边界。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `sql/gym/pom.xml` | 新增 | 独立Flyway13.10.3/MySQL工具，固定历史表并禁用clean/自动baseline/乱序 |
+| `sql/gym/migration/mysql/V001__gym_schema.sql` | 新增 | 59表完整结构，固定原引擎/字符集，不含业务数据 |
+| `sql/gym/migration/mysql/V002__gym_reference_data.sql` | 新增 | 必要菜单/权限定义，仅写system_menu，不创建账号或授权 |
+| `sql/gym/migration/mysql/V003__gym_legacy_backfills.sql` | 新增 | 必要历史回填，不恢复已删除的会员门店关系 |
+| `sql/gym/legacy-schema.json` | 新增 | V001校验和与59表结构指纹，区分默认NULL/字符串NULL及索引可见性 |
+| `sql/gym/seed/development/demo.sql` | 新增 | 独立事务化开发seed、显式租户和来源冲突检查；只初始化新建演示身份的授权/绑定 |
+| `script/gym/database.py`、`script/gym/db.sh` | 新增 | 显式init、adopt-legacy、migrate、validate、info及seed入口，接管前核对与完整备份 |
+| `script/gym/seed.sh` | 修改 | 只执行development seed，停用历史全量/schema-only/menus-only重放 |
+| `sql/gym/legacy/*.sql`、`legacy/development/01-legacy-organization.sql` | 原样移动 | 冻结旧47SQL与旧开发导入，sha256.json及README说明来源 |
+| `script/gym/verify-migrations.py` | 修改 | 真实Flyway/隔离MySQL的31项验证 |
+| `script/gym/verify-legacy-migrations.py`、`verify-legacy-seeds.py` | 保留/调整 | 原验证器迁移至历史专用入口，修正归档路径；保留此前完整59表核对 |
+| `.github/workflows/gym-database.yml` | 新增 | 数据库迁移CI配置，隔离MySQL9.7执行当前验证入口 |
+| `script/gym/README.md`、`docs/README.md`、`docs/architecture.md`、`docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 当前运行命令、结构关系与证据 |
+| `docs/gym-first-batch-api.md`、`docs/development-seed-import.md` | 修改 | 为历史交接文档加现行入口与旧路径归档提示 |
+
+### 结构关系
+
+`db.sh → database.py → 独立Maven Flyway → migration/mysql`；历史表为flyway_gym_schema_history。框架表先存在，新gym库显式baseline0后执行001～003；已有完整旧库先结构校验、完整备份，baseline1后只执行002/003。开发seed位于扫描目录之外，需显式开发环境/目标库/租户且迁移完整；首次身份初始化与后续人工授权维护分离。Java应用不新增Flyway运行依赖或启动hook，H2测试流程不变，前端无改动。旧脚本仅历史隔离验证，不能继续作为发布入口。
+
+### 验证证据
+
+- 真实Flyway隔离回归31项通过；5个随机测试库清理，覆盖初始化/接管/校验和与结构漂移/重复执行/权限不恢复/开发seed冲突与事务等。日志及复现命令见testing本轮条目。
+- 两个历史验证通过：47脚本两轮59表/35页/61授权、旧开发数据幂等和冲突回滚；47SQL校验和及旧开发SQL字节不变。
+- 本地ruoyi-vue-pro接管成功至003；接管前完整备份1,577,567字节、权限600，位置`/tmp/gym-db-backups/ruoyi-vue-pro-before-flyway-20261016-205827-111751.sql`。三类待回填均0，接管前后6张系统表行哈希完全相同；重复migrate不改历史、validate通过。
+- Spotless apply/check 7,726文件通过且0修改；33个Python/3个shell/POM XML/workflow YAML语法检查、git diff --check通过。CI工作流已配置，本机运行通过不冒充远端CI已运行。
+
+### 影响面 / 风险
+
+正式发布改用显式db.sh命令；旧seed入口模式已停止，避免无历史全量重放。现有开发库新增Flyway历史表，未修改既有账号/密码/数据范围/授权/菜单数据，未导入开发演示数据或重启服务。备份默认在/tmp，长期保存可配置GYM_DB_BACKUP_DIR。MySQL DDL可能隐式提交，失败不得假设全批回滚或自动repair。Flyway提示本机9.7高于其官方验证上限9.4，本轮证据限定实际本机回归。结构指纹只用于旧V001接管，未来版本追加，不能改已应用文件或更新旧指纹来掩盖漂移。
+
+### 未做 / 后续
+
+没有接管全部框架历史SQL、给应用增加自动建表、执行生产开发seed、变更前端或第三方联调。未提交/推送代码，未触发远端CI；后续新增DDL/必要基础数据用V004及之后版本，演示样例只改独立开发seed，生产角色权限仍显式维护。已有部分旧库必须先审查并补齐结构再接管，不能跳过校验强制baseline。
+
+## [2026-10-16 21:14 ~ 21:15] 补充数据库操作手册与后端贡献指南
+
+### 意图
+
+按用户要求将“以后如何通过 shell 入口迁移”的说明整理到脚本目录，并新增根目录 CONTRIBUTING.md，方便日常操作与后续贡献。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `script/gym/DATABASE.md` | 新增 | 日常升级、首次初始化/旧库接管、版本文件约定、开发 seed、验证及失败处理 |
+| `CONTRIBUTING.md` | 新增 | 后端范围、开发环境、分层/权限、数据库约定、格式化、测试和评审流程 |
+| `script/gym/README.md`、`docs/README.md` | 修改 | 添加新手册与贡献指南入口 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 追加 | 记录本轮文档验证及范围 |
+
+### 结构关系
+
+数据库操作细节集中在 script/gym/DATABASE.md；贡献指南通过链接引用。脚本实现、应用依赖和数据库结构均无变化，因此未调整 architecture.md。
+
+### 验证证据
+
+两份新文档的9个相对文件链接均存在，代码围栏与文件换行检查通过；数据库子命令与实现核对，db.sh --help、seed.sh --help 均退出0；git diff --check通过。可复现说明见testing本轮条目。
+
+### 影响面 / 风险
+
+仅增加维护文档，明确日常migrate不自动备份、已应用迁移不可修改、开发seed显式执行；未运行业务数据库操作或改变前端。
+
+### 未做 / 后续
+
+未修改可执行代码、重启服务或重新执行数据库回归；本轮无Java变更，未重复格式化。未提交或推送，后续数据库变更按手册追加新版本并运行对应验证。

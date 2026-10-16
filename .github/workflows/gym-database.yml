@@ -1,0 +1,57 @@
+name: Gym database migrations
+
+on:
+  pull_request:
+    paths: ['sql/gym/**', 'script/gym/**', '.github/workflows/gym-database.yml']
+  push:
+    branches: [main]
+    paths: ['sql/gym/**', 'script/gym/**', '.github/workflows/gym-database.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:9.7
+        env:
+          MYSQL_ROOT_PASSWORD: gym_ci_only
+          MYSQL_ROOT_HOST: '%'
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pgym_ci_only"
+          --health-interval=10s --health-timeout=5s --health-retries=15
+    env:
+      GYM_TEST_DB_HOST: 127.0.0.1
+      GYM_TEST_DB_PORT: '3306'
+      GYM_TEST_DB_USER: root
+      GYM_TEST_DB_PASSWORD: gym_ci_only
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-java@v6.1.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: sql/gym/pom.xml
+      - name: Use matching MySQL clients from the service container
+        env:
+          GYM_CI_MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/gym-mysql-bin"
+          for client in mysql mysqldump; do
+            cat > "$RUNNER_TEMP/gym-mysql-bin/$client" <<'SCRIPT'
+          #!/usr/bin/env bash
+          exec docker exec -i -e MYSQL_PWD "$GYM_CI_MYSQL_CONTAINER" "$(basename "$0")" "$@"
+          SCRIPT
+            chmod +x "$RUNNER_TEMP/gym-mysql-bin/$client"
+          done
+          echo "$RUNNER_TEMP/gym-mysql-bin" >> "$GITHUB_PATH"
+          echo "GYM_CI_MYSQL_CONTAINER=$GYM_CI_MYSQL_CONTAINER" >> "$GITHUB_ENV"
+      - name: Verify actual Flyway migrations and independent seeds
+        run: python3 script/gym/verify-migrations.py

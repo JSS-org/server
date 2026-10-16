@@ -1617,7 +1617,6 @@ JDK词法扫描对比Git基线：忽略注释/空白/import后，只有一个CRM
 
 不处理前端或将Python/SQL/文档当作本轮格式化输入。HTTP权限审查重跑时48080连接拒绝，仅记录未执行成功；未为格式化启动服务或变更数据库。后续根目录执行mvn -N spotless:apply/check，含根项目的mvn verify自动检查；单独选择子模块的构建如未含根项目，应另跑根检查。
 
-
 ## [2026-10-16 20:01 ~ 20:10] 按 gym.ts 由后端下发业务菜单分类并格式化
 
 ### 意图
@@ -1653,3 +1652,25 @@ JDK词法扫描对比Git基线：忽略注释/空白/import后，只有一个CRM
 ### 未做 / 后续
 
 严格未改前端源码、前端依赖或前端格式。未新增优惠券/积分/消息等未交付功能，未改变API权限码、角色绑定、数据范围或第三方集成。首页快捷入口、同页双页签与原地址自动映射如需完全一致，须由前端后续支持绝对子路由或别名及基于路由权限判断入口；本次不越过“仅后端”的边界。review已检查授权前后顺序、只处理已授权输入、隐藏状态、不变输入及路由/虚拟ID去重，已将客户端实际限制明确记录。
+
+## 2026-10-16 启动后缺表修复
+
+意图：修复本机服务显示启动成功后，自动履约任务和薪资列表持续报 SQL 错误的问题。日志明确缺少 `gym_fulfillment_task`、`gym_salary_template`；实际开发库仅有最早的 5 张 gym 表，后续 54 张表尚未迁移。
+
+改动及结构：`script/gym/seed.sh` 新增 `--schema-only`，按编号执行业务建表/升级及必要回填，跳过权限、菜单和演示账号脚本。SQL 错误不再丢弃，失败时显示错误和文件名并停止。`script/gym/README.md` 将数据库初始化移到服务启动之前，`docs/README.md` 增加已有库升级命令。
+
+实际修复：先完整备份 `127.0.0.1:3306/ruoyi-vue-pro` 至 `/tmp/jss-before-schema-repair-BA2bPx.sql`（权限 600），再执行 `bash script/gym/seed.sh --schema-only`，26 个业务脚本成功；重复执行成功。迁移后核对 59 张 gym 表、872 个必需字段，无缺失；启动服务前比对原有 64 张表的 INSERT 数据与备份完全一致。
+
+验证：`mvn -T 1C -DskipTests -pl yudao-server -am package` 构建成功，日志 `/tmp/jss-startup-build.log`。`bash script/gym/run-local.sh --logging.file.name=/tmp/jss-runtime-verified.log` 启动成功并监听 48080。真实 admin 登录、37 个无路径 ID 的管理端业务 GET 接口及未登录拒绝均通过，结果 `/tmp/jss-startup-http-result.json`；启动后观察超过两分钟，自动履约未再出现缺表或租户批次失败。脚本验证覆盖 26 个业务迁移、无 system 写入及第 3 个 SQL 失败立即停止且保留错误详情。
+
+影响面与限制：数据库变更只涉及项目既有业务迁移；没有执行账号/菜单/权限种子。真实登录验证会正常产生登录日志和令牌记录。此次验证覆盖构建、数据库结构、查询入口和空队列扫描，未执行全量业务写入回归或第三方集成验收。用户原有 `GymFileController.java` 修改保持原样；未提交代码。后续已有库升级先运行 `bash script/gym/seed.sh --schema-only`，新环境需要演示账号/菜单时运行完整 `seed.sh`。
+
+## 2026-10-16 dashboard 侧边栏缺少业务菜单修复
+
+意图及根因：用户反馈 dashboard 侧边栏仍不全，“芋道源码”显示名对应 admin。开发库仅登记门店资料和员工资料 2 个 gym 页面，真实 `get-permission-info` 也仅返回这 2 种组件；前端清单已有 35 页。上一轮 `--schema-only` 只补业务表，未执行页面菜单登记；菜单分类适配器只组织已存在菜单，无法补出缺少的 33 页。
+
+改动及结构：`seed.sh` 新增 `--menus-only`，选择现有 19 个 `*-menu.sql` / `*-menus.sql`，只执行末尾 `INSERT INTO system_role_menu` 之前的页面登记部分。全量初始化与 `--schema-only` 行为保持原范围，后续菜单脚本仍需遵守先登记、后授权的结构。README 增加独立补菜单命令和普通角色仍需单独授权的说明；不修改前端或认证分类规则。
+
+实际修复及证据：先备份菜单/角色/授权/账号至 `/tmp/jss-before-menu-repair-G33VJt.sql`（权限600），再运行 `bash script/gym/seed.sh --menus-only`，19脚本成功。角色、角色菜单、账号、用户角色4表与执行前备份逐条一致（真实登录验证之前比较）；第二次运行后菜单 INSERT 数据逐字节一致。真实 admin 登录后取得35种 gym 组件，和 dashboard/integration/menus.json 完全一致；全部组件文件存在，按前端 filterAppMenus 同样逻辑过滤后仍保留35页。结果 `/tmp/jss-menu-verification.json`，验证脚本 `/tmp/jss-verify-dashboard-menus.py`。
+
+验证与限制：`python3 /tmp/jss-verify-seed-modes.py` 验证 menus-only=19、schema-only=26、完整初始化=47个脚本，范围正确；模拟第3个SQL失败后立即停止且保留错误和文件名；bash语法与git差异检查通过。未执行额外Java构建，本次不涉及Java修改；未声称浏览器实际截图验收。现有适配器返回12个业务分类，其中11个可见，加盟分类隐藏；二维码、员工薪资关联、门店工资表页隐藏；优惠券、积分、消息无已交付页面。前端已生成的动态路由不会由数据库更新自动重建，需要退出重新登录。普通账号既有授权不扩展。

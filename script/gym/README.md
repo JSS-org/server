@@ -137,16 +137,23 @@ script/gym/
 # 1) 编译（含 gym 模块）
 mvn -T 1C -DskipTests -pl yudao-server -am package
 
-# 2) 启动
-java -jar yudao-server/target/yudao-server.jar
-
-# 3) 初始化数据库（建表 + 权限码 + 演示账号，幂等）
+# 2) 启动前初始化数据库（建表 + 权限码 + 演示账号，幂等）
 bash script/gym/seed.sh
+
+# 已有账号/权限的数据库只需补齐业务表时，改用：
+# bash script/gym/seed.sh --schema-only
+# 已有库仅缺少页面菜单时，另执行（不修改角色授权）：
+# bash script/gym/seed.sh --menus-only
+
+# 3) 启动
+bash script/gym/run-local.sh
 
 # 4) 验证
 bash script/gym/verify-auth-api.sh    # 26 条断言
 bash script/gym/verify-file-api.sh    # 29 条断言
 ```
+
+`seed.sh` 按序执行 `sql/` 中的迁移；`--schema-only` 跳过权限、菜单及演示账号脚本，保留业务升级所需的数据回填。该模式不会补齐侧边栏菜单；已有库缺少菜单时另用 `--menus-only`，只执行现有菜单脚本在末尾角色授权之前的登记部分。超级管理员自动读取全部登记菜单，普通角色仍需要按实际权限分配页面。连接参数使用脚本头部的 `GYM_DB_*` 环境变量，必须指向服务实际连接的库。SQL 失败会显示数据库错误和文件名并立即停止。业务表必须在启动前补齐，否则服务即使显示启动成功，自动履约任务和业务接口仍会因缺表报错。
 
 ### 查看效果
 

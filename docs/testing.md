@@ -436,7 +436,6 @@ SELF从本人产品“申请改价”入口已在原前端提交BROWSER-SELF-PRI
 - `verify-controller-permissions.py`兼容多行注解参数，离线逐方法比对150个PreAuthorize表达式前后完全一致。运行HTTP核对尝试遇当前48080未启动而连接拒绝，未将其记为本轮HTTP通过，也未为格式化任务自动启动服务。
 - `git diff --check`通过，前端Git状态为空。原有未跟踪`script/gym/__pycache__/`保留。未提交、暂存或重置用户工作区；没有改业务规则。
 
-
 ## 2026-10-16 后端菜单分类验证
 
 在 server 根目录运行：
@@ -465,3 +464,24 @@ SELF没有财务/员工分类；各响应菜单ID无重复。比较数据仅保�
 浏览器刷新现有5666前端，确认显示首页与门店/员工/会员/卡/课程/合同/审批/设备/内容/财务/报表分类；展开课程管理并点击课程产品，加载 `/gym/training/course-products` 及真实列表；直接访问原 `/gym/course-products` 同样加载列表。截图 `/tmp/gym-backend-menu-categories.png`。frontend `git status --short` 始终为空，没有修改或格式化前端代码。
 
 已知前端适配限制必须随交付说明：原地址隐藏兼容入口可以打开页面，但首页用 `getMenuByPath` 查可见菜单的固定旧地址，因而部分快捷卡片被隐藏；同页旧/新地址会出现不同页签。浏览器已确认该现象，不能将本次证据写成“所有前端行为完全保持不变”。
+
+## 2026-10-16 启动后数据库缺表验证
+
+- `bash script/gym/seed.sh --schema-only`：26 个业务迁移执行成功，连续两次均退出 0；跳过权限/菜单/演示账号脚本。
+- `python3 /tmp/jss-verify-startup-schema.py`：59 张 gym 表、872 个必需字段无缺失；服务启动前原有 64 张表的 INSERT 数据与迁移前备份一致。备份 `/tmp/jss-before-schema-repair-BA2bPx.sql`。
+- 初始化脚本的隔离命令验证：26 个业务脚本均被选择且不含 system 表写入；模拟第 3 个 SQL 失败，退出 1，后续脚本未执行，原始错误与 `05-gym-salary.sql` 文件名均保留。`bash -n script/gym/seed.sh` 通过。
+- `mvn -T 1C -DskipTests -pl yudao-server -am package`：BUILD SUCCESS，日志 `/tmp/jss-startup-build.log`。未将跳过单测的构建记为单测通过。
+- `bash script/gym/run-local.sh --logging.file.name=/tmp/jss-runtime-verified.log`：10.206 秒启动成功，48080 监听；启动后观察超过两分钟，自动履约无缺表或批次失败。
+- `python3 /tmp/jss-startup-http-smoke.py`：OpenAPI HTTP 200、真实 admin 登录、37 个管理端业务 GET 查询接口返回 `code=0`、未登录薪资列表返回 `code=401`。明细 `/tmp/jss-startup-http-result.json`。本构建未提供 `/actuator/health` 路由，就绪验证使用实际 OpenAPI 与业务接口；试探该路由产生一条 404 警告，与数据库修复无关。
+
+本次未执行全部写入流程、并发或第三方渠道回归。上述 `/tmp` 文件是本机本轮验证证据，不是仓库中的常驻验证工具。
+
+## 2026-10-16 dashboard 菜单登记修复验证
+
+- 真实 admin（昵称“芋道源码”）修复前权限菜单只有2种gym组件：门店、员工；开发库type=2的gym菜单也只有2条。前端integration/menus.json包含35页。
+- `bash script/gym/seed.sh --menus-only`：19个现有菜单登记脚本执行成功。执行前备份 `/tmp/jss-before-menu-repair-G33VJt.sql`；执行后、登录验证前，角色/角色菜单/账号/用户角色4表数据与备份一致。
+- `python3 /tmp/jss-verify-dashboard-menus.py`：真实登录后35种gym组件与前端清单完全一致；35个组件文件全部存在；按前端过滤规则复核无页面丢失。认证返回12分类、11可见分类，现有隐藏策略保留。详细结果 `/tmp/jss-menu-verification.json`。
+- 第二次执行 `--menus-only` 后，与第一次执行后的菜单INSERT数据逐字节一致，无重复菜单。
+- `python3 /tmp/jss-verify-seed-modes.py`：仅菜单19、仅业务迁移26、完整初始化47个脚本范围通过；菜单模式没有角色授权/账号/业务表写入；业务模式无system表写入。两种局部模式模拟第3个SQL失败时立即停止，原始错误和对应文件名保留。`bash -n script/gym/seed.sh`、`git diff --check`通过。
+
+本次仅通过真实认证接口、数据库及前端源码核对菜单链路，未进行浏览器视觉验收；前端源码保持未修改。动态路由已生成的会话需要退出重新登录获取新菜单。

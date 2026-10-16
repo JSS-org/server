@@ -108,7 +108,13 @@ public class GymFileController {
         if (pattern == null || !pattern.toString().endsWith("/{id}/content")) {
             return ResponseEntity.ok(result);
         }
-        int code = result.getCode();
+        int status = getStatus(result);
+        return ResponseEntity.status(status).body(result);
+    }
+
+    private static int getStatus(CommonResult<?> result) {
+        int code;
+        code = result.getCode();
         int status;
         if (code == FILE_NOT_EXISTS.getCode() || code == FILE_CONTENT_NOT_EXISTS.getCode()) {
             status = HttpServletResponse.SC_NOT_FOUND;
@@ -120,6 +126,6 @@ public class GymFileController {
                             ? code
                             : HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         }
-        return ResponseEntity.status(status).body(result);
+        return status;
     }
 }

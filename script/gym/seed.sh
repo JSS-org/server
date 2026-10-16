@@ -11,9 +11,29 @@
 #   GYM_DB_HOST=127.0.0.1  GYM_DB_PORT=3306  GYM_DB_NAME=ruoyi-vue-pro
 #   GYM_DB_USER=yudao      GYM_DB_PASSWORD=123456
 #
-# 用法：bash script/gym/seed.sh
+# 用法：bash script/gym/seed.sh [--schema-only|--menus-only]
+# --schema-only：只执行业务建表/升级及配套数据回填，不执行权限、菜单、演示账号种子。
+# --menus-only：只登记页面菜单，跳过脚本末尾的角色授权，不改账号或业务表。
 # =============================================================================
 set -euo pipefail
+
+SCHEMA_ONLY=false
+MENUS_ONLY=false
+case "${1:-}" in
+  '') ;;
+  --schema-only) SCHEMA_ONLY=true ;;
+  --menus-only) MENUS_ONLY=true ;;
+  -h|--help)
+    echo "用法：bash script/gym/seed.sh [--schema-only|--menus-only]"
+    echo "--schema-only：仅升级业务表和回填业务数据，不执行权限/菜单/演示账号种子。"
+    echo "--menus-only：仅登记页面菜单，不修改角色授权、账号或业务表。"
+    exit 0 ;;
+  *) echo "[ERROR] 未知参数：$1" >&2; exit 1 ;;
+esac
+if (( $# > 1 )); then
+  echo "[ERROR] 参数过多" >&2
+  exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQL_DIR="${SCRIPT_DIR}/sql"
@@ -35,10 +55,33 @@ fi
 
 echo "[INFO] 目标库：${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-for sql_file in $(find "${SQL_DIR}" -maxdepth 1 -name '*.sql' | sort); do
+emit_sql() {
+  if [[ "${MENUS_ONLY}" == true ]]; then
+    # 现有 *-menu(s).sql 先登记菜单，末尾再 INSERT 角色授权；本模式只执行前半部分。
+    awk '/^[[:space:]]*INSERT[[:space:]]+INTO[[:space:]]+system_role_menu([[:space:]]|$)/ { exit } { print }' "$1"
+  else
+    cat "$1"
+  fi
+}
+
+for sql_file in "${SQL_DIR}"/*.sql; do
+  if [[ "${MENUS_ONLY}" == true ]]; then
+    case "$(basename "${sql_file}")" in
+      *-menu.sql|*-menus.sql) ;;
+      *) continue ;;
+    esac
+  fi
+  if [[ "${SCHEMA_ONLY}" == true ]]; then
+    case "$(basename "${sql_file}")" in
+      01-gym-permission-seed.sql|*-menu.sql|*-menus.sql|*-permission.sql) continue ;;
+    esac
+  fi
   echo "[INFO] 执行：$(basename "${sql_file}")"
-  MYSQL_PWD="${DB_PASSWORD}" mysql -h"${DB_HOST}" -P"${DB_PORT}" -u"${DB_USER}" "${DB_NAME}" \
-    < "${sql_file}" 2>/dev/null
+  if ! emit_sql "${sql_file}" | MYSQL_PWD="${DB_PASSWORD}" mysql --connect-timeout=5 --default-character-set=utf8mb4 \
+    -h"${DB_HOST}" -P"${DB_PORT}" -u"${DB_USER}" "${DB_NAME}"; then
+    echo "[ERROR] 执行失败：$(basename "${sql_file}")，已停止后续脚本。请修复上面的 SQL 错误后重试。" >&2
+    exit 1
+  fi
 done
 
-echo "[OK] gym 数据库初始化完成（幂等，可重复执行）"
+echo "[OK] gym 数据库初始化完成（schema-only=${SCHEMA_ONLY}，menus-only=${MENUS_ONLY}，幂等，可重复执行）"

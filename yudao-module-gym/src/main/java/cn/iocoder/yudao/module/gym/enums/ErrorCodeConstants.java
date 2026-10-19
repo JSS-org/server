@@ -193,4 +193,10 @@ public interface ErrorCodeConstants {
     ErrorCode TRAINING_PLAN_NOT_EXISTS = new ErrorCode(1_070_021_001, "训练计划不存在");
     ErrorCode TRAINING_PLAN_INVALID = new ErrorCode(1_070_021_002, "训练计划内容或状态不合法，会员及门店不可修改");
     ErrorCode TRAINING_PLAN_FILE_INVALID = new ErrorCode(1_070_021_003, "训练计划附件须为当前会员可关联的本店训练资料");
+    ErrorCode GROUP_BUY_PROVIDER_UNCONFIGURED =
+            new ErrorCode(1_070_022_001, "当前租户门店的美团接口未启用或授权未配置");
+    ErrorCode GROUP_BUY_PROVIDER_REQUEST_FAILED =
+            new ErrorCode(1_070_022_002, "美团验券历史查询请求失败，请稍后重试");
+    ErrorCode GROUP_BUY_PROVIDER_REJECTED = new ErrorCode(1_070_022_003, "美团拒绝验券历史查询，请检查平台授权及接口权限");
+    ErrorCode GROUP_BUY_PROVIDER_RESPONSE_INVALID = new ErrorCode(1_070_022_004, "美团验券历史查询响应格式异常");
 }

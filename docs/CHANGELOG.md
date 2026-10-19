@@ -1820,3 +1820,73 @@ main从c56544282a快进至origin/main的15cf33b3c8（fix(db): update seed.sh）�
 ### 未做 / 后续
 
 未修改可执行代码、重启服务或重新执行数据库回归；本轮无Java变更，未重复格式化。未提交或推送，后续数据库变更按手册追加新版本并运行对应验证。
+
+
+## [2026-10-19 20:08 ~ 20:20] 搭建美团验券历史 POST 与团购业务文档
+
+### 意图
+
+按用户给定美团 queryListByDate 文档先搭好后端 POST，不要求真实跑通、前端不动；整理 docs 并新增团购验券业务说明。该接口是按日历史查询，不承担实际核销。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/groupbuy/GymGroupBuyController.java` 及 `vo/` | 新增 | JSON POST 入口、本地参数校验、类型化平台响应与 OpenAPI |
+| `yudao-module-gym/.../service/groupbuy/GymGroupBuyService.java` | 新增 | 校验当前租户的门店和数据范围，转换平台业务 DTO |
+| `yudao-module-gym/.../framework/groupbuy/meituan/` 及 `dto/` | 新增 | 凭据配置、独立业务请求类型、SHA1 签名、表单 POST、超时和错误转换 |
+| `yudao-module-gym/.../enums/ErrorCodeConstants.java` | 修改 | 1070022001–1070022004 集成错误码 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 默认关闭的配置项，无真实凭据 |
+| `yudao-module-gym/src/test/java/.../groupbuy/` 相关四个测试类 | 新增 | 15 项本地模拟测试 |
+| `docs/group-buy-verification.md` | 新增 | 业务范围、接口、类型设计、签名、配置、权限与待接入清单 |
+| `docs/README.md`、`docs/archive/backend-contract.md` | 整理 | 分类索引、历史契约归档、修正文档入口与失效链接 |
+| `docs/architecture.md`、`docs/testing.md`、`docs/gym-full-api-progress.md` | 追加 | 请求结构、验证证据与平台接入进度边界 |
+
+### 结构关系
+
+Controller（gym:sales:read）→ Service → GymStoreService.requireStore → Meituan Client → 固定官方地址。业务参数用 MeituanCouponHistoryRequest getter/setter，公共参数仅在签名与传输边界用 Map；biz 序列化一次后参与签名和发送。配置按 tenantId/storeId 取授权，默认关闭、缺配置直接拒绝，不跨租户借用凭据。无 Mapper、DDL、核销结果或权益写入。
+
+### 验证证据
+
+`mvn -o -B -ntp -N spotless:apply spotless:check` 通过；`mvn -o -B -ntp -pl yudao-module-gym -am test -Dtest='GymMeituan*Test,GymGroupBuy*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine=-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar`：15 测试、0 失败/错误/跳过。`mvn -o -B -ntp -pl yudao-server -am -DskipTests package` 成功（跳过测试）；文档 18 个本地链接存在、围栏成对，`git diff --check` 通过。具体覆盖和 JDK25 agent 说明见 testing 当日条目。
+
+### 影响面 / 风险
+
+仅新增后端入口，复用既有读取权限，不新增菜单/角色授权或迁移。现有本地核销记录 GET 契约不变，前端未修改。接口默认关闭，凭据须由外部配置提供；券码响应不记录访问日志，平台错误不冒充成功空记录。文档属于到店餐饮方案，健身/到综行业正式使用前必须确认对应业务权限。历史契约文件改放 archive，现行索引已更新。
+
+### 未做 / 后续
+
+未提供真实凭据、调用美团生产接口、启动/重启服务、迁移数据库、接入其他平台或执行核销。商户授权流程与令牌刷新、实际核销/撤销/未知结果补查、历史同步落库、权益发放与对账均待后续。未提交/推送；创建主题分支因工作区 .git 只读未成功，变更保留在原分支工作区供检查。
+
+
+## [2026-10-19 20:37 ~ 20:40] 公共请求参数 DTO 与团购接入代码审查
+
+### 意图
+
+处理用户在美团 Client 公共参数位置的审阅意见，将该参数集合也封装为 DTO，并审查这一轮团购接口、配置、测试及文档变更。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../framework/groupbuy/meituan/dto/MeituanCommonRequest.java` | 新增 | 公共字段、getter/setter、固定默认值，以及签名和表单边界的 toParameters 转换 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/GymMeituanCouponClient.java` | 修改 | 用公共 DTO 构建请求、写入签名并生成表单，保留同一份 biz 原文 |
+| `yudao-module-gym/.../GymMeituanCouponClientTest.java`、`GymGroupBuyControllerTest.java` | 修改 | 多业务授权字段签名、网络超时、表单字段白名单和 MVC 实际响应结构回归 |
+| `docs/group-buy-verification.md`、`docs/architecture.md` | 修改 | 同步公共参数 DTO 的职责及转换边界 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 追加 | 本轮审查范围、结论和可复现验证结果 |
+
+### 结构关系
+
+MeituanCouponHistoryRequest 承载业务参数；Client 将其一次序列化后写入 MeituanCommonRequest.biz。公共字段通过 setter 赋值，签名前 toParameters 得到排序后的键值，再把签名写回 DTO；表单发送再次转换但不重新序列化 biz。DTO 不保存 signKey，不生成包含授权令牌的 toString。HTTP 入口和既有响应结构不变。
+
+### 验证证据
+
+审查了本轮全部 Controller/VO、Service、Client/DTO、配置、错误码、四个测试类及文档差异，重点检查鉴权、租户门店隔离、凭据归属、签名编码、异常处理和业务范围；未发现阻塞当前请求骨架交付的问题。`mvn -o -B -ntp -N spotless:apply spotless:check` 通过；`mvn -o -B -ntp -pl yudao-module-gym -am test -Dtest='GymMeituan*Test,GymGroupBuy*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine=-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar`：17 测试、0 失败/错误/跳过。`mvn -o -B -ntp -pl yudao-server -am -DskipTests package` 成功（跳过测试）。6 份相关文档共 24 个相对链接存在，围栏成对；git diff HEAD --check 通过。
+
+### 影响面 / 风险
+
+只调整后端请求组装类型并补充回归，公共参数由显式字段转换，不受全局 JSON 命名策略影响；签名及发送字段经本地 HTTP 模拟验证。无前端、数据库或角色授权变更，保留已有暂存内容，未额外暂存或提交。
+
+### 未做 / 后续
+
+未访问真实美团接口、提供凭据、启动/重启服务或执行实际核销。真实平台授权、行业权限、联通和数据差异仍按业务说明待接入；本次代码审查和模拟测试不能替代平台联调。

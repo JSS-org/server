@@ -542,3 +542,42 @@ Spotless apply/check检查7,726个Java文件通过、0改动；33个Python源文
 - 使用 Python `pathlib` / 正则逐项检查两份新文档：9 个相对文件链接全部存在，代码围栏成对且文件以换行结束。
 - 核对文档中的数据库子命令与 `script/gym/database.py`；实际执行 `bash script/gym/db.sh --help`、`bash script/gym/seed.sh --help` 均退出 0，未连接数据库。
 - `git diff --check` 通过。本轮无 Java 或 SQL 修改，无需重新运行 Java 格式化和数据库集成回归；此前迁移回归证据见上节。
+
+
+## 2026-10-19 美团验券历史 POST 请求
+
+仅本地模拟与构建；未启动或重启应用、未访问美团生产接口、未运行数据库迁移或修改前端。业务范围、配置及官方文档见 [团购验券业务说明](group-buy-verification.md)。
+
+在 server 根目录实际执行：
+
+```bash
+mvn -o -B -ntp -N spotless:apply spotless:check
+mvn -o -B -ntp -pl yudao-module-gym -am test \
+  -Dtest='GymMeituan*Test,GymGroupBuy*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine="-javaagent:${HOME}/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar"
+mvn -o -B -ntp -pl yudao-server -am -DskipTests package
+git diff --check
+```
+
+结果：Spotless 检查通过；15 测试、0 失败、0 错误、0 跳过；服务端及启用依赖链 package 成功（该打包命令跳过测试，测试证据来自前一命令）。本机 JDK 25 的 Mockito 动态自挂载首次失败，随后通过显式加载已有本地 Mockito 5.23.0 agent 完成验证，未改项目测试运行配置。
+
+| 测试类 | 数量 | 验证内容 |
+| --- | --- | --- |
+| GymMeituanCouponClientTest | 7 | 官方签名固定示例、表单编码、biz 类型序列化、券码前导零与金额精度、配置隔离、HTTP/业务/格式错误 |
+| GymMeituanConfigurationTest | 2 | 默认关闭且空 developerId 可启动；按租户/门店绑定配置 |
+| GymGroupBuyControllerTest | 4 | JSON POST、默认分页、6 类无效参数、功能权限拒绝及 GET 不支持 |
+| GymGroupBuyServiceTest | 2 | 门店校验在出站调用之前、租户取自上下文、无权限不访问平台 |
+
+MVC 测试使用项目实际全局错误转换器，错误沿用 HTTP 200 + CommonResult 业务 code（例如 400/403/405），不强行改为其他状态契约。出站 HTTP 使用 MockRestServiceServer，未使用真实 token。
+
+文档检查：对 README、architecture、group-buy-verification 及归档契约的 18 个相对文件链接逐项验证，全部存在，代码围栏成对。dashboard 工作区只读检查为空，无前端改动。历史契约移至 archive，CHANGELOG 历史条目保持不变。
+
+
+## 2026-10-19 公共请求 DTO 与本轮代码审查
+
+公共参数移至 `MeituanCommonRequest`，Client 通过 setter 构建请求，仅在签名/表单边界调用 `toParameters()`。DTO 不保存 signKey、不生成包含 token 的 toString；biz 保留同一份序列化原文。业务和公共参数的类型边界见 [业务说明](group-buy-verification.md)。
+
+审查范围：本轮 Controller、请求/响应模型、Service、Client、配置和错误码、四个测试类，以及 docs 整理和 application.yaml 的全部变更。重点核对功能权限、租户及门店范围、授权选择、默认关闭、签名/编码一致性、超时和平台业务失败、券码和金额类型，以及真实接入边界。未发现需要阻止当前请求骨架交付的代码问题；真实平台兼容性不属于这次本地验证结论。
+
+新增多业务授权 realOpBizCode 的编码/签名回归及网络超时回归，补强 MVC 成功响应的嵌套 code/traceId/券码/isVoucher 字段断言。使用上一节同一测试命令，最终 **17 测试、0 失败、0 错误、0 跳过**（Client 9、配置 2、Controller 4、Service 2）；Spotless apply/check 通过。文档六个文件的 24 个相对链接及围栏检查通过，git diff --check 通过。服务端 package 验证单独记录在当次 CHANGELOG；未调用美团生产接口，前端未改。

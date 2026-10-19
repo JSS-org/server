@@ -3,6 +3,12 @@
 > 目的：一眼看清「代码放在哪、谁调用谁、数据怎么流、权限怎么判」。结构发生变化时同步更新本文件（规范见 [`README.md`](README.md)）。
 > 对应规划：`GitHub/admin/target/plan/03-architecture.md`（技术路线）、`08-gym-api-contract.md`（接口契约）、`09-permissions.md`（权限码）。
 
+## 团购平台历史查询（2026-10-19 增量）
+
+`POST /admin-api/gym/group-buy/meituan/coupon-history/query` → `GymGroupBuyController`（gym:sales:read）→ `GymGroupBuyService` → `GymStoreService.requireStore`（租户与门店范围）→ `GymMeituanCouponClient` → 美团官方表单 POST。业务参数由 `MeituanCouponHistoryRequest` 类型承载，通过 setter 赋值后序列化；公共参数由 `MeituanCommonRequest` DTO 承载，只在签名/传输边界通过 `toParameters()` 转为 Map。`GymMeituanProperties` 按租户、门店保存外部配置的授权，未启用/缺授权拒绝调用，无跨租户 fallback。
+
+本链路仅读取远端按日历史，不经过本地核销写入器，不写 `gym_verification`、会员权益或财务事件；现有本地记录 GET 接口保持原契约。适配层后续可按平台独立扩展，目前美团真实授权/联调及其他平台均未接入。详细配置、响应和边界见 [团购验券业务说明](group-buy-verification.md)。
+
 ## 1. 全局分层
 
 yudao 是**模块化单体**：一个 Spring Boot 进程（`yudao-server`），按业务模块拆 maven module，模块间只通过 `api` 包（跨模块契约）调用。

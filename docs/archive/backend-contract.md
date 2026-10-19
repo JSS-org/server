@@ -1,6 +1,6 @@
-# JSS 前后端对接清单（待后端团队确认）
+# JSS 前后端对接清单（历史快照，已归档）
 
-> 本文保留前端迁移时的待确认快照。2026-10-15当前后端交付以 [gym-full-api-progress.md最终审计](gym-full-api-progress.md) 为准：现行35业务页所需API、debug、前端验证和review已落地；第三方真实联调按用户授权暂缓，前端独立限制明确记录。下文“待确认/未实现”为迁移时历史背景，不是当前完成度。
+> 本文保留前端迁移时的待确认快照。2026-10-15当前后端交付以 [gym-full-api-progress.md最终审计](../gym-full-api-progress.md) 为准：现行35业务页所需API、debug、前端验证和review已落地；第三方真实联调按用户授权暂缓，前端独立限制明确记录。下文“待确认/未实现”为迁移时历史背景，不是当前完成度。原 menus.json / api-inventory.json 位于独立 dashboard 仓库 `apps/web-jss/integration/`，不在本目录。
 
 ## 已核实的基础
 
@@ -40,7 +40,7 @@
 
 ### 菜单与权限配置
 
-参考 [menus.json](menus.json)，在 `gym` 一级目录下配置业务菜单，使最终路由为 `/gym/stores`、`/gym/members` 等。例如门店页面 `component=gym/stores/index`、`componentName=GymStores`、`permission=gym:stores:read`。不要额外增加路径层级，否则首页快捷入口也需要同步。`/workspace`、个人中心、个人站内信和文件预览为登录后的辅助路由，不赋予额外业务权限。文件内容访问仍由后端验证。读写按钮权限按 [api-inventory.json](api-inventory.json) 配置，前端 `canGym('members:write')` 检查的是 `gym:members:write`。
+参考 dashboard 的 `apps/web-jss/integration/menus.json`，在 `gym` 一级目录下配置业务菜单，使最终路由为 `/gym/stores`、`/gym/members` 等。例如门店页面 `component=gym/stores/index`、`componentName=GymStores`、`permission=gym:stores:read`。不要额外增加路径层级，否则首页快捷入口也需要同步。`/workspace`、个人中心、个人站内信和文件预览为登录后的辅助路由，不赋予额外业务权限。文件内容访问仍由后端验证。读写按钮权限按同目录的 `api-inventory.json` 配置，前端 `canGym('members:write')` 检查的是 `gym:members:write`。
 
 API 清单收录显式业务调用；通用编辑器的动态资源 CRUD、字段中的关联资源和业务返回详情结构还需结合对应 `data.ts` / `use-page.ts` 核对。付款、扣课、审批与设备执行必须由后端实现业务校验，不能仅根据一个通用 CRUD 接口推断它们已支持。
 

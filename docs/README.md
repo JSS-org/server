@@ -1,21 +1,34 @@
-# doc · 后端实现记录
+# docs · 后端文档索引
 
 > 本目录记录**本仓库（yudao-server 后端）**每一次改动的「改了什么 / 为什么改 / 结构关系如何」，供评审与回溯。
-> 规划类文档在前端仓库 `GitHub/admin/target/plan/`（合同、范围、08 接口契约、09 权限码、10 旧 Mock 盘点），本目录**只记录实现与落地证据**，两者的对应关系写在每条记录里。
+> 现行前端契约位于独立 dashboard 仓库的 `apps/web-jss/integration/`，规划与交接记录见该仓库 `targets/`。本目录记录后端实现、业务边界与验证证据；历史快照不代表当前完成度。
 
-## 目录
+## 现行实现与业务说明
 
 日常数据库操作见 [迁移与开发 seed 手册](../script/gym/DATABASE.md)，参与后端开发见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 
 | 文件 | 作用 | 何时看 |
 | --- | --- | --- |
-| `README.md`（本文件） | 记录规范、阅读顺序、模板 | 首次进入 / 准备提交改动前 |
-| [`CHANGELOG.md`](CHANGELOG.md) | **变更流水账**（按时间升序，一次改动一条） | 审查每次改了什么、意图是什么 |
 | [`architecture.md`](architecture.md) | **结构关系**：模块依赖、请求链路、数据模型、权限链 | 想知道「谁调用谁、数据怎么流」时 |
-| [`gym-first-batch-api.md`](gym-first-batch-api.md) | 门店/员工首批 REST 契约、权限、迁移与边界 | 本批联调时 |
-| [`development-seed-import.md`](development-seed-import.md) | 旧种子转换、开发库导入结果及待导入清单 | 查看联调数据时 |
 | [`gym-full-api-progress.md`](gym-full-api-progress.md) | 全量 API 任务状态与未完成范围 | 跟踪当前目标时 |
+| [`group-buy-verification.md`](group-buy-verification.md) | 团购验券业务、美团历史查询 POST、配置和后续平台范围 | 对接团购平台时 |
+
+## 验证与变更记录
+
+| 文件 | 作用 | 何时看 |
+| --- | --- | --- |
 | [`testing.md`](testing.md) | 验证手段清单：单测 / 端到端脚本 / 手工复现命令 | 复现验证结论时 |
+| [`CHANGELOG.md`](CHANGELOG.md) | **变更流水账**（按时间升序，一次改动一条） | 审查每次改了什么、意图是什么 |
+
+## 历史与专项参考
+
+| 文件 | 作用 | 使用边界 |
+| --- | --- | --- |
+| [`gym-first-batch-api.md`](gym-first-batch-api.md) | 门店/员工首批 REST 契约、权限、迁移与边界 | 首批实现记录，不是全量接口清单 |
+| [`development-seed-import.md`](development-seed-import.md) | 旧种子转换、开发库导入结果及待导入清单 | 日常迁移以脚本目录手册为准 |
+| [`archive/backend-contract.md`](archive/backend-contract.md) | 前端迁移早期的待确认契约快照 | 已归档，现行契约以 dashboard 和当前实现为准 |
+
+维护方式：新增业务说明放在 docs 根目录并登记索引；已失效的契约快照放入 archive；CHANGELOG 保留原顺序，仅追加。现有实现与验证文档保持路径，避免破坏历史引用。
 
 ## 记录规范（每次改动后必须做）
 
@@ -39,10 +52,10 @@
 ## 阅读顺序建议
 
 ```
-1. doc/CHANGELOG.md         ← 先看时间线：这次交付到哪一步了
-2. doc/architecture.md      ← 再看结构：这些代码在整体里处于什么位置
+1. docs/README.md          ← 先找现行业务说明和验证入口
+2. docs/architecture.md    ← 再看结构：这些代码在整体里处于什么位置
 3. script/gym/README.md     ← 最后看运维视角：怎么起、怎么验、接口契约
-4. admin/target/plan/08,09,10 ← 需要对齐需求/契约/权限码时回查规划文档
+4. docs/CHANGELOG.md        ← 需要追溯改动与证据时看时间线
 ```
 
 ## 验证入口速查
@@ -63,10 +76,7 @@
 | 接口文档 | <http://127.0.0.1:48080/doc.html>（调试需带 `tenant-id: 1`） |
 
 
-最新增量见CHANGELOG的2026-10-15 SELF改价审批条目：SQL46、本人申请范围、审批人内部账号校验、OpenAPI嵌套模型及376字段审计。298项相关测试和39项SELF HTTP通过；前端SELF发起表单store选项限制单独标记，整体review仍未结束。
-
-
-2026-10-15 18:20交付入口：[gym-full-api-progress.md最终审计](gym-full-api-progress.md)逐项列出35业务页、后端闭环、301测试及review修复。SQL47已获用户明确授权并应用；SELF课程产品入口和黑名单浏览器闭环已验证。现行管理端后端工作完成，第三方按授权暂缓、前端自身及旧外部存储限制仍明示，不能等同全客户端/厂商合同验收。
+阶段交付与第三方未接入范围见 [gym-full-api-progress.md](gym-full-api-progress.md)；后续增量见 [CHANGELOG.md](CHANGELOG.md)。团购本次仅搭建美团历史查询请求，不能据此判断真实核销已经接通。
 
 
 ## Java 格式化（2026-10-16）
@@ -75,4 +85,4 @@
 
 在 server 根目录运行 `mvn -N spotless:apply` 自动修正，`mvn -N spotless:check` 只检查。统一包含所有 `**/src/main/java/**/*.java` 与 `**/src/test/java/**/*.java`，也覆盖尚未启用的后端模块及 sql/dm 下的 Java 源码补丁，排除 `**/target/**`。插件只在根项目执行，不向子模块重复继承；根项目参与的 `mvn verify` 会自动检查，若仅用 `-pl` 选择子模块且未包含根项目，应单独运行上述检查命令。前端、SQL脚本、Python脚本不作为格式化输入。
 
-本轮检查7,723个Java文件，最终修改7,504个，219个已规范；相关301测试和当前启用服务端依赖链的test-compile通过，未启用模块只做格式化/语法解析及差异核对，未宣称全部功能编译/测试。权限审查脚本另做最小修改以兼容换行注解，150方法权限表达式前后比对一致。详细证据见CHANGELOG最新条目。
+历史格式化检查的文件数、测试数及边界见 CHANGELOG 的 2026-10-16 对应条目；本次变更的实际验证单独记录，不沿用历史数字。

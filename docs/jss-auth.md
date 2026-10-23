@@ -6,7 +6,7 @@
 
 1. 使用 JDK 25，构建包含 `yudao-module-jss` 的 `yudao-server`。该模块经 API 依赖 member/system，不让 system 反向依赖 JSS。
 2. 在测试数据库核验会员模块所需表和配置。本地 `sql/mysql/ruoyi-vue-pro.sql` 未包含商城会员完整表结构，不能以启用 Maven 模块代替数据库部署。不要将 gym 会员表视为商城会员表。
-3. 审阅并执行 `sql/jss/001-identity.sql`。此脚本针对 MySQL 8/InnoDB，仅增加 JSS 表和权限节点；不会创建账号、绑定或批量授权。数据库脚本尚未在真实数据库执行验收。
+3. 审阅并执行 `sql/jss/001-identity.sql`。此脚本针对 MySQL 8/InnoDB，仅增加 JSS 表和权限节点；不会创建账号、绑定或批量授权。已在隔离 MySQL 8.4.9 的随机测试库验证，未在业务数据库执行。
 4. 使用现有后台角色/租户套餐管理为审核人员配置 `jss:identity:query`、`jss:identity:bind`；为获准员工配置 `jss:workspace:access` 和具体业务权限。新增节点也需纳入适用的租户套餐。不要给普通会员分组授予此权限。
 5. 通过环境配置设置 `jss.workspace.enabled=true`（环境变量 `JSS_WORKSPACE_ENABLED=true`）。默认关闭，关闭后已有工作台会话在下一次请求时被拒绝。
 6. Redis 使用现有服务的单实例/主从连接；当前两键 Lua 实现尚未验收 Redis Cluster 跨槽部署。
@@ -44,4 +44,6 @@ JSS 使用 `jssw_` 前缀的不透明随机凭证，Redis 键保存凭证的 SHA
 
 已通过新增模块测试：17 项会话授权/撤权场景、6 项绑定审核场景及 4 项原 OAuth 路径回归；完整 server 容器已成功打包。测试使用替身隔离 system/member/Redis，不证明真实数据库授权链、Redis Lua 或租户拦截器已完成集成验收。
 
-仍需：迁移脚本真实数据库验证、有效/禁用多角色授权、同租户与跨租户绑定、租户过期、跨门店业务权限、并发审核唯一性、真实会员登出、Redis 会话、原后台并用回归，以及真实 API 的 A01–A16 验收。不得将源码存在、单元测试或打包成功登记为完整端到端完成。
+另已通过 `script/jss/verify_identity_schema.py` 的 8 项真实 MySQL 约束检查，涵盖重复迁移、同租户有效一对一、跨租户独立键、撤销与重绑、审计快照、非法版本/状态、逻辑删除和并发审核。工具与复现步骤见 `script/jss/README.md`。
+
+仍需：有效/禁用多角色授权、同租户与跨租户绑定 API、租户过期、跨门店业务权限、真实会员登出、Redis 会话、原后台并用回归，以及真实 API 的 A01–A16 验收。不得将源码存在、约束测试或打包成功登记为完整端到端完成。

@@ -17,7 +17,8 @@
         <module>yudao-module-infra</module>
         <!-- 健身门店业务（自研） -->
         <module>yudao-module-gym</module>
-<!--        <module>yudao-module-member</module>-->
+        <module>yudao-module-member</module>
+        <module>yudao-module-jss</module>
 <!--        <module>yudao-module-bpm</module>-->
 <!--        <module>yudao-module-report</module>-->
 <!--        <module>yudao-module-mp</module>-->

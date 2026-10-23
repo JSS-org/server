@@ -27,7 +27,7 @@ public class GymGroupBuyController {
 
     @PostMapping("/meituan/coupon-history/query")
     @PreAuthorize("@ss.hasPermission('gym:sales:read')")
-    @Operation(summary = "查询美团门店某天的验券历史（不执行核销）")
+    @Operation(summary = "旧餐饮门店验券历史，健身请使用 retail 接口", deprecated = true)
     @ApiAccessLog(responseEnable = false)
     public CommonResult<GymMeituanCouponHistoryRespVO> queryMeituanHistory(
             @Valid @RequestBody GymMeituanCouponHistoryReqVO req) {

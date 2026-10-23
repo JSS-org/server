@@ -1890,3 +1890,43 @@ MeituanCouponHistoryRequest 承载业务参数；Client 将其一次序列化后
 ### 未做 / 后续
 
 未访问真实美团接口、提供凭据、启动/重启服务或执行实际核销。真实平台授权、行业权限、联通和数据差异仍按业务说明待接入；本次代码审查和模拟测试不能替代平台联调。
+
+
+## [2026-10-19 21:10 ~ 21:38] 健身服务零售团购核销16项POST框架
+
+### 意图
+
+按用户要求切换到美团服务零售文档，把“团购核销API”目录全部16项搭建为后端POST请求框架，包含该目录退款接口；遵循独立DTO和getter/setter规范，前端不动，不要求真实平台跑通。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/groupbuy/GymMeituanRetailController.java` 及新请求VO | 新增 | 16个类型化POST入口、本地店ID/嵌套业务参数校验和功能权限 |
+| `yudao-module-gym/.../service/groupbuy/GymMeituanRetailService.java` | 新增 | 每项显式业务方法，门店检查、上下文租户和可信操作人填充 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/GymMeituanRetailClient.java`、`MeituanApi.java` | 新增 | 16个明确平台方法及固定路径/业务编号/操作类型白名单 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/GymMeituanTransport.java` | 新增 | 共享签名表单POST、业务编号隔离、开关、超时和结果未知处理 |
+| `yudao-module-gym/.../framework/groupbuy/meituan/dto/retail/`、`dto/MeituanResponse.java` | 新增 | 独立业务请求、嵌套类型及各平台响应模型，公共响应泛型信封 |
+| `GymMeituanCouponClient.java`、`GymMeituanProperties.java`、`GymGroupBuyController.java`、`ErrorCodeConstants.java` | 修改 | 旧餐饮复用传输并限制编号1/标记deprecated；新默认58、变更单独关闭、增加错误码 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 默认关闭接口和状态变更请求，凭据仍从外部配置读取 |
+| `sql/gym/migration/mysql/V004__gym_group_buy_refund_permission.sql` | 新增 | 独立退款权限定义，不授予角色，不创建前端页面 |
+| `yudao-module-gym/src/test/.../GymMeituanRetailClientTest.java`、`GymMeituanRetailControllerTest.java`、契约辅助类及JSON | 新增 | 16项独立官方契约、实际MVC/Service链路和边界回归 |
+| 既有餐饮Client和配置测试 | 修改 | 显式餐饮编号1，默认配置编号58的回归 |
+| `docs/meituan-service-retail-api.md` | 新增 | 16项官方来源、远端/本地路径、DTO与字段约束，以及文档差异 |
+| `docs/README.md`、`architecture.md`、`group-buy-verification.md`、`gym-full-api-progress.md`、`testing.md` | 修改/追加 | 当前业务边界、配置、分层及可复现证据 |
+
+### 结构关系
+
+Controller → Retail Service → GymStoreService.requireStore → 填充当前登录操作人 → Retail Client → MeituanApi白名单 → Transport → 官方表单POST。业务DTO和公共DTO通过setter构建，biz一次序列化后同时用于签名与发送。新接口固定businessId58，旧餐饮历史只允许显式编号1；同一门店不能借修改请求参数混用业务授权。变更请求需额外开关和权限，退款为独立权限；没有Mapper、核销流水、权益或财务写入器。
+
+### 验证证据
+
+`mvn -o -B -ntp -N spotless:apply spotless:check`通过；`mvn -o -B -ntp -pl yudao-module-gym -am test -Dtest='GymMeituan*Test,GymGroupBuy*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine=-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar`：114测试、0失败/错误/跳过。16项平台契约逐项验证实际POST路径、字段、签名和类型化响应；每个本地入口有功能权限和门店拒绝回归。`mvn -o -B -ntp -pl yudao-server -am -DskipTests package`最终成功（跳过测试，构建完成时间21:37:31）。Python静态审计核对16个路径/路由/方法和16个日志禁用注解，4份当前文档23个相对链接和围栏通过，git diff --check通过，dashboard工作区干净。SQL仅做静态核对，未执行MySQL迁移；完整命令和范围见testing当日条目。
+
+### 影响面 / 风险
+
+范围严格限于服务零售团购核销目录，未扩到商家券、财务、预约或授权管理目录。旧餐饮路径保留响应兼容但不再适用于默认58授权。核销/撤销/退款变更无自动重试，网络/格式异常及可能部分执行的业务错误返回结果待确认；明确公共参数拒绝才按未执行拒绝处理。批量结果保留逐项状态。审查发现并修复部分核销错误被一概当作整次拒绝的问题；当前请求骨架未发现其余阻塞问题。请求/响应体访问日志关闭，平台异常原文不透传。V004仅定义权限，部署需显式迁移和分配职责；没有改前端或角色授权。
+
+### 未做 / 后续
+
+未取得真实平台凭据、发起真实核销/退款、启动/重启应用或运行目标库迁移。授权刷新/回调、未知结果自动补查、核销落库、本地会员权益、退款审批财务和对账仍未接入；请求框架完成不等于平台真实业务上线。变更保留在codex/meituan-retail-group-buy分支工作区，未提交或推送。

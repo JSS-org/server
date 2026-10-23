@@ -581,3 +581,37 @@ MVC 测试使用项目实际全局错误转换器，错误沿用 HTTP 200 + Comm
 审查范围：本轮 Controller、请求/响应模型、Service、Client、配置和错误码、四个测试类，以及 docs 整理和 application.yaml 的全部变更。重点核对功能权限、租户及门店范围、授权选择、默认关闭、签名/编码一致性、超时和平台业务失败、券码和金额类型，以及真实接入边界。未发现需要阻止当前请求骨架交付的代码问题；真实平台兼容性不属于这次本地验证结论。
 
 新增多业务授权 realOpBizCode 的编码/签名回归及网络超时回归，补强 MVC 成功响应的嵌套 code/traceId/券码/isVoucher 字段断言。使用上一节同一测试命令，最终 **17 测试、0 失败、0 错误、0 跳过**（Client 9、配置 2、Controller 4、Service 2）；Spotless apply/check 通过。文档六个文件的 24 个相对链接及围栏检查通过，git diff --check 通过。服务端 package 验证单独记录在当次 CHANGELOG；未调用美团生产接口，前端未改。
+
+
+## 2026-10-19 服务零售团购核销全目录请求框架
+
+范围为官方“生活服务 → 服务零售 → 团购核销API”全部16项，官方链接、路径和字段类型详见 [API清单](meituan-service-retail-api.md)。本轮不访问平台生产接口、不运行目标数据库迁移、不修改角色或前端、不启动/重启业务服务。
+
+在 server 根目录运行：
+
+```bash
+mvn -o -B -ntp -N spotless:apply spotless:check
+mvn -o -B -ntp -pl yudao-module-gym -am test \
+  -Dtest='GymMeituan*Test,GymGroupBuy*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine="-javaagent:${HOME}/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar"
+mvn -o -B -ntp -pl yudao-server -am -DskipTests package
+git diff --check
+```
+
+最终相关回归 **114项，0失败、0错误、0跳过**。Spotless apply/check通过；服务端及启用依赖链package成功（该命令跳过测试，测试结果来自前一命令）。沿用既有本地Mockito agent配置，无需下载新依赖。
+
+| 测试类 | 数量 | 证明范围 |
+| --- | --- | --- |
+| GymMeituanRetailClientTest | 23 | 独立16项文档契约的POST路径、58业务编号、表单/签名、全部业务字段及类型化响应；餐饮混用、租户门店隔离、默认状态变更关闭、6项变更超时不重试、异常/部分执行结果处理 |
+| GymMeituanRetailControllerTest | 74 | 16个真实Controller→Service→mock Client链路、16项功能权限拒绝、16项门店拒绝、25种参数错误、缺少可信身份拒绝；操作人伪造值被覆盖，租户取自上下文 |
+| GymMeituanCouponClientTest | 9 | 旧餐饮历史接口显式业务编号1下的签名、表单、响应及错误回归 |
+| GymMeituanConfigurationTest | 2 | 空凭据默认关闭可构建；租户门店配置绑定且默认业务编号58 |
+| GymGroupBuyControllerTest | 4 | 旧本地入口参数、权限及响应契约回归 |
+| GymGroupBuyServiceTest | 2 | 旧入口门店校验顺序和上下文租户回归 |
+
+HTTP使用MockRestServiceServer；MVC保留实际方法权限代理、请求校验及GymMeituanRetailService，门店数据服务与平台Client为mock。平台接口样例独立记录在 yudao-module-gym/src/test/resources/meituan/retail-contracts.json，期望路径不从生产枚举生成。批量count是字符串、普通count是整数；预退款对象与退款查询数组分别反序列化；券码前导零、大整数和BigDecimal金额单独断言。部分执行错误1004回归验证返回结果待确认，不一概判定全量失败。
+
+完整性静态核对：16个文档路径与MeituanApi零售白名单、16个本地POST路径、Client/Service方法逐项匹配，16个方法禁用请求/响应体访问日志。检查README、architecture、业务说明、API清单的23个相对链接及代码围栏均通过。SQL V004只检查了权限定义和不含角色/用户授权的静态内容，未执行MySQL迁移，不能宣称真实数据库验证。dashboard工作区保持干净。
+
+审查覆盖DTO参数、两类商品接口标题/路径差异、分页起点、公共签名原文一致性、授权场景隔离、方法与门店权限、可信操作人、变更默认关闭、超时/部分成功语义，以及文档真实性。已修复“变更的非成功业务结果可能部分执行却被一概报告拒绝”的问题；本轮请求框架未发现其他阻塞问题。真实平台返回差异与行业开通条件仍需后续联调验证。

@@ -44,7 +44,7 @@ class GymMeituanConfigurationTest {
                             assertEquals(
                                     "test-only", tenant.getStores().get(12L).getAppAuthToken());
                             assertEquals("shop-12", tenant.getStores().get(12L).getRealOpBizCode());
-                            assertEquals(1, tenant.getStores().get(12L).getBusinessId());
+                            assertEquals(58, tenant.getStores().get(12L).getBusinessId());
                         });
     }
 }

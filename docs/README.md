@@ -11,7 +11,8 @@
 | --- | --- | --- |
 | [`architecture.md`](architecture.md) | **结构关系**：模块依赖、请求链路、数据模型、权限链 | 想知道「谁调用谁、数据怎么流」时 |
 | [`gym-full-api-progress.md`](gym-full-api-progress.md) | 全量 API 任务状态与未完成范围 | 跟踪当前目标时 |
-| [`group-buy-verification.md`](group-buy-verification.md) | 团购验券业务、美团历史查询 POST、配置和后续平台范围 | 对接团购平台时 |
+| [`group-buy-verification.md`](group-buy-verification.md) | 健身团购验券业务、服务零售接入分层、配置、权限和业务边界 | 对接团购平台时 |
+| [`meituan-service-retail-api.md`](meituan-service-retail-api.md) | 服务零售团购核销全部16个POST接口、DTO和官方来源对照 | 逐项对接和核查接口覆盖时 |
 
 ## 验证与变更记录
 
@@ -76,7 +77,7 @@
 | 接口文档 | <http://127.0.0.1:48080/doc.html>（调试需带 `tenant-id: 1`） |
 
 
-阶段交付与第三方未接入范围见 [gym-full-api-progress.md](gym-full-api-progress.md)；后续增量见 [CHANGELOG.md](CHANGELOG.md)。团购本次仅搭建美团历史查询请求，不能据此判断真实核销已经接通。
+阶段交付与第三方未接入范围见 [gym-full-api-progress.md](gym-full-api-progress.md)；后续增量见 [CHANGELOG.md](CHANGELOG.md)。团购当前已搭建服务零售目录16项请求框架，真实授权/联调、结果落库和本地履约仍未接入。
 
 
 ## Java 格式化（2026-10-16）

@@ -3,11 +3,13 @@
 > 目的：一眼看清「代码放在哪、谁调用谁、数据怎么流、权限怎么判」。结构发生变化时同步更新本文件（规范见 [`README.md`](README.md)）。
 > 对应规划：`GitHub/admin/target/plan/03-architecture.md`（技术路线）、`08-gym-api-contract.md`（接口契约）、`09-permissions.md`（权限码）。
 
-## 团购平台历史查询（2026-10-19 增量）
+## 团购平台服务零售接入（2026-10-19 增量）
 
-`POST /admin-api/gym/group-buy/meituan/coupon-history/query` → `GymGroupBuyController`（gym:sales:read）→ `GymGroupBuyService` → `GymStoreService.requireStore`（租户与门店范围）→ `GymMeituanCouponClient` → 美团官方表单 POST。业务参数由 `MeituanCouponHistoryRequest` 类型承载，通过 setter 赋值后序列化；公共参数由 `MeituanCommonRequest` DTO 承载，只在签名/传输边界通过 `toParameters()` 转为 Map。`GymMeituanProperties` 按租户、门店保存外部配置的授权，未启用/缺授权拒绝调用，无跨租户 fallback。
+`POST /admin-api/gym/group-buy/meituan/retail/**` → `GymMeituanRetailController`（查询gym:sales:read、核销/撤销gym:verifications:manage、退款gym:group-buy:refund）→ `GymMeituanRetailService` → `GymStoreService.requireStore`（租户与门店范围）→ 填充当前登录操作人 → `GymMeituanRetailClient` 对应的16个明确类型方法 → `GymMeituanTransport` → 美团固定白名单表单 POST。业务 DTO 和 MeituanCommonRequest 均通过 getter/setter 赋值；biz 只序列化一次，公共字段只在签名/传输边界通过 toParameters 转为 Map。
 
-本链路仅读取远端按日历史，不经过本地核销写入器，不写 `gym_verification`、会员权益或财务事件；现有本地记录 GET 接口保持原契约。适配层后续可按平台独立扩展，目前美团真实授权/联调及其他平台均未接入。详细配置、响应和边界见 [团购验券业务说明](group-buy-verification.md)。
+GymMeituanProperties 按租户/门店读取外部配置，默认businessId=58，传输层核对接口业务编号；旧餐饮历史入口标记deprecated并仅接受显式businessId=1，也复用共享传输。enabled和mutationsEnabled默认false，变更接口须额外启用。网络/响应异常时，核销/撤销/退款变更返回结果待确认，不自动重试；批量结果保留逐项状态。退款权限定义追加V004，不修改角色授权。
+
+当前仅平台请求框架，不写gym_verification、会员权益或财务事件，现有本地记录GET契约不变。真实授权/联调、回调与本地履约、其他平台未接入。详细边界见 [团购业务说明](group-buy-verification.md)，完整目录与DTO见 [16项接口对照](meituan-service-retail-api.md)。
 
 ## 1. 全局分层
 

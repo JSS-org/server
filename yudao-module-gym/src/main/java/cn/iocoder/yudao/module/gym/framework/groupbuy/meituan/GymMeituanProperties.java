@@ -20,6 +20,10 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "yudao.gym.group-buy.meituan")
 public class GymMeituanProperties {
     private boolean enabled;
+
+    /** 核销、撤销和退款请求单独启用；默认仅允许查询请求。 */
+    private boolean mutationsEnabled;
+
     private Long developerId;
     private String signKey;
     @Positive private int connectTimeoutMillis = 3000;
@@ -36,8 +40,8 @@ public class GymMeituanProperties {
     @Setter
     public static class StoreAuthorization {
         private String appAuthToken;
-        // 当前接口文档为到店餐饮 businessId=1；其他行业必须另行确认接口。
-        private Integer businessId = 1;
+        // 健身服务零售文档使用 58；旧餐饮接口仅接受显式配置的 1，禁止混用。
+        private Integer businessId = 58;
         private String realOpBizCode;
     }
 }

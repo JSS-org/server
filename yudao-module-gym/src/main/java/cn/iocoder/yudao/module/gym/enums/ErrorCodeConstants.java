@@ -195,8 +195,14 @@ public interface ErrorCodeConstants {
     ErrorCode TRAINING_PLAN_FILE_INVALID = new ErrorCode(1_070_021_003, "训练计划附件须为当前会员可关联的本店训练资料");
     ErrorCode GROUP_BUY_PROVIDER_UNCONFIGURED =
             new ErrorCode(1_070_022_001, "当前租户门店的美团接口未启用或授权未配置");
-    ErrorCode GROUP_BUY_PROVIDER_REQUEST_FAILED =
-            new ErrorCode(1_070_022_002, "美团验券历史查询请求失败，请稍后重试");
-    ErrorCode GROUP_BUY_PROVIDER_REJECTED = new ErrorCode(1_070_022_003, "美团拒绝验券历史查询，请检查平台授权及接口权限");
-    ErrorCode GROUP_BUY_PROVIDER_RESPONSE_INVALID = new ErrorCode(1_070_022_004, "美团验券历史查询响应格式异常");
+    ErrorCode GROUP_BUY_PROVIDER_REQUEST_FAILED = new ErrorCode(1_070_022_002, "美团接口请求失败，请稍后重试");
+    ErrorCode GROUP_BUY_PROVIDER_REJECTED =
+            new ErrorCode(1_070_022_003, "美团拒绝接口请求，请检查业务参数、授权及接口权限");
+    ErrorCode GROUP_BUY_PROVIDER_RESPONSE_INVALID = new ErrorCode(1_070_022_004, "美团接口响应格式异常");
+    ErrorCode GROUP_BUY_PROVIDER_SCENE_MISMATCH =
+            new ErrorCode(1_070_022_005, "美团门店授权业务与接口场景不匹配，请勿混用餐饮与服务零售接口");
+    ErrorCode GROUP_BUY_PROVIDER_MUTATIONS_DISABLED =
+            new ErrorCode(1_070_022_006, "美团核销、撤销与退款请求尚未启用");
+    ErrorCode GROUP_BUY_PROVIDER_RESULT_UNKNOWN =
+            new ErrorCode(1_070_022_007, "美团操作结果未确认，请先查询券或退款状态，勿直接重复操作");
 }

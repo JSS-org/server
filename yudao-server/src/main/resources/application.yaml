@@ -270,7 +270,8 @@ yudao:
   gym:
     group-buy:
       meituan:
-        enabled: false # 首批仅搭建门店验券历史 POST；按 docs/group-buy-verification.md 配置授权后再联调
+        enabled: false # 健身服务零售 businessId=58，按 docs/group-buy-verification.md 配置后再联调
+        mutations-enabled: false # 核销、撤销、退款申请/审核单独启用；不会自动重试
         developer-id: ${GYM_MEITUAN_DEVELOPER_ID:}
         sign-key: ${GYM_MEITUAN_SIGN_KEY:}
         connect-timeout-millis: 3000

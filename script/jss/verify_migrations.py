@@ -48,8 +48,9 @@ def main():
         sql(f'USE `{database}`;\n' + '\n'.join(statements))
         managed = Database(quiet=True)
         managed.execute('init')
-        assert managed.sql(f"SELECT GROUP_CONCAT(version ORDER BY installed_rank) FROM {HISTORY} WHERE success=1") == '0,001,002'
-        checks.append('explicit baseline-zero and both versioned migrations execute on MySQL')
+        versions = [re.match(r'V(\d+)__', file.name)[1] for file in sorted((ASSETS / 'migration/mysql').glob('V*__*.sql'))]
+        assert managed.sql(f"SELECT GROUP_CONCAT(version ORDER BY installed_rank) FROM {HISTORY} WHERE success=1") == ','.join(['0', *versions])
+        checks.append('explicit baseline-zero and all versioned migrations execute on MySQL')
         assert managed.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='must_not_override_jss_history'") == '0'
         checks.append('inherited Flyway environment cannot override the history table')
         assert managed.sql('SELECT COUNT(*) FROM system_users') == '0'
@@ -61,7 +62,7 @@ def main():
         managed.execute('migrate')
         managed.execute('validate')
         assert managed.sql('SELECT COUNT(*) FROM member_user') == '1'
-        assert managed.sql(f'SELECT COUNT(*) FROM {HISTORY} WHERE success=1') == '3'
+        assert managed.sql(f'SELECT COUNT(*) FROM {HISTORY} WHERE success=1') == str(len(versions) + 1)
         checks.append('repeated migrate/validate preserve application data and migration history')
         try:
             managed.execute('init')

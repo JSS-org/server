@@ -4,20 +4,11 @@ from pathlib import Path
 import re
 import secrets
 from mysql_sandbox import ROOT, sql, status
+from schema_models import mapped_models
 
 
 def member_models():
-    models = {}
-    for file in (ROOT / 'yudao-module-member/src/main/java').rglob('*DO.java'):
-        source = re.sub(r'/\*[\s\S]*?\*/', '', file.read_text(encoding='utf8'))
-        name = re.search(r'@TableName\(\s*(?:value\s*=\s*)?"([^"]+)"', source)
-        if not name:
-            continue
-        fields = {re.sub(r'[A-Z]', lambda m: '_' + m[0].lower(), field)
-                  for _, field in re.findall(r'private\s+([\w<>, ?]+)\s+(\w+)\s*;', source)}
-        fields.update({'creator', 'create_time', 'updater', 'update_time', 'deleted', 'tenant_id'})
-        models[name[1]] = fields
-    return models
+    return mapped_models(ROOT / 'yudao-module-member/src/main/java')
 
 
 def main():

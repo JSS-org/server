@@ -11,3 +11,5 @@ mvn -Pjss-mall -pl yudao-server -am package -DskipTests
 启动完整商城之前，必须完成会员、商品、营销、交易、支付的数据库结构与必要配置。当前只完成模块依赖接入，尚未证明真实商城 API 可用；数据库迁移、配置和隔离联调继续按整合计划推进。不要将已有框架初始化 SQL 全量重放到业务库。
 
 会员结构基线已补入 `sql/jss/migration/mysql/V001__member_schema.sql`，包含当前 11 个 member 模型所需表。已在隔离 MySQL 8.4.9 校验列覆盖、登录标识唯一性、社交注册空标识、租户独立性和签到经验。独立 Flyway 工具见 `sql/jss/README.md`；其他商城表仍在接入中，版本迁移不由 Java 启动流程自动执行。
+
+商品九张表已纳入 V003，并通过真实 MySQL 列覆盖、JSON/配送类型、条件库存 SQL 和收藏约束验证。促销、交易、支付和统计结构及完整应用联调仍待补齐。

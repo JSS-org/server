@@ -6,6 +6,7 @@
 | --- | --- |
 | V001 | 当前 11 张会员表；以仓库历史会员 DDL 为基础，补齐现有模型、社交注册空手机号及有效登录标识唯一约束 |
 | V002 | 会员员工关联、绑定审计和三项 JSS 权限定义；不创建绑定、账号或角色授权 |
+| V003 | 商品的九张当前模型表，含 SKU 属性/图片 JSON、逗号分隔配送类型、浏览记录和有效收藏唯一键 |
 
 先准备已有 system/infra 框架基座，再显式指定迁移连接：
 
@@ -25,6 +26,6 @@ python script/jss/database.py validate
 
 `init` 仅接管已存在框架基座、尚无会员/JSS/商城/支付表且没有 JSS 迁移历史的 schema，显式 baseline 到 0 后执行版本脚本。重复初始化、缺框架表或已有未托管业务表都会拒绝；已有会员/JSS 数据应先核对结构、历史和备份，不能靠自动 baseline、重放原初始化 SQL 或手工跳过版本接管。
 
-`migrate`/`validate` 要求已有历史。自动 baseline、乱序迁移、clean 均禁用；CLI 不提供 repair、clean 或 seed。MySQL DDL 可能隐式提交，失败后应检查当前结构和 Flyway 历史，按审核后的前向迁移或备份恢复处理。后续追加新版本，不修改已应用的 V001/V002。
+`migrate`/`validate` 要求已有历史。自动 baseline、乱序迁移、clean 均禁用；CLI 不提供 repair、clean 或 seed。MySQL DDL 可能隐式提交，失败后应检查当前结构和 Flyway 历史，按审核后的前向迁移或备份恢复处理。后续追加新版本，不修改已应用的版本文件。
 
 原 `sql/jss/001-identity.sql` 已移入 V002，Git 保留原文件历史；请统一通过本工具部署，避免业务库出现无版本记录的表。

@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.api.oauth2;
 
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenCommonApi;
+import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenExtension;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCheckRespDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCreateReqDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenRespDTO;
@@ -10,6 +11,7 @@ import cn.iocoder.yudao.module.system.service.oauth2.OAuth2TokenService;
 
 import jakarta.annotation.Resource;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class OAuth2TokenApiImpl implements OAuth2TokenCommonApi {
 
     @Resource private OAuth2TokenService oauth2TokenService;
+    @Resource private ObjectProvider<OAuth2TokenExtension> tokenExtensions;
 
     @Override
     public OAuth2AccessTokenRespDTO createAccessToken(OAuth2AccessTokenCreateReqDTO reqDTO) {
@@ -35,12 +38,22 @@ public class OAuth2TokenApiImpl implements OAuth2TokenCommonApi {
 
     @Override
     public OAuth2AccessTokenCheckRespDTO checkAccessToken(String accessToken) {
+        for (OAuth2TokenExtension extension : tokenExtensions.orderedStream().toList()) {
+            if (extension.supports(accessToken)) {
+                return extension.checkAccessToken(accessToken);
+            }
+        }
         OAuth2AccessTokenDO accessTokenDO = oauth2TokenService.checkAccessToken(accessToken);
         return BeanUtils.toBean(accessTokenDO, OAuth2AccessTokenCheckRespDTO.class);
     }
 
     @Override
     public OAuth2AccessTokenRespDTO removeAccessToken(String accessToken) {
+        for (OAuth2TokenExtension extension : tokenExtensions.orderedStream().toList()) {
+            if (extension.supports(accessToken)) {
+                return extension.removeAccessToken(accessToken);
+            }
+        }
         OAuth2AccessTokenDO accessTokenDO = oauth2TokenService.removeAccessToken(accessToken);
         return BeanUtils.toBean(accessTokenDO, OAuth2AccessTokenRespDTO.class);
     }

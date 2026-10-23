@@ -39,6 +39,16 @@
 <!--        <module>yudao-module-ai1-springai</module>-->
     </modules>
 
+    <profiles>
+        <profile>
+            <id>jss-mall</id>
+            <modules>
+                <module>yudao-module-pay</module>
+                <module>yudao-module-mall</module>
+            </modules>
+        </profile>
+    </profiles>
+
     <name>${project.artifactId}</name>
     <description>芋道项目基础脚手架</description>
     <url>https://github.com/YunaiV/ruoyi-vue-pro</url>

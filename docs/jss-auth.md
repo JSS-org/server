@@ -5,8 +5,8 @@
 ## 部署前提
 
 1. 使用 JDK 25，构建包含 `yudao-module-jss` 的 `yudao-server`。该模块经 API 依赖 member/system，不让 system 反向依赖 JSS。
-2. 在测试数据库核验会员模块所需表和配置。本地 `sql/mysql/ruoyi-vue-pro.sql` 未包含商城会员完整表结构，不能以启用 Maven 模块代替数据库部署。不要将 gym 会员表视为商城会员表。
-3. 审阅并执行 `sql/jss/001-identity.sql`。此脚本针对 MySQL 8/InnoDB，仅增加 JSS 表和权限节点；不会创建账号、绑定或批量授权。已在隔离 MySQL 8.4.9 的随机测试库验证，未在业务数据库执行。
+2. 在测试数据库核验会员模块所需表和配置。本地框架初始化 SQL 不含会员业务表，现已补齐 `sql/jss/migration/mysql/V001__member_schema.sql`。不要将 gym 会员表视为商城会员表。
+3. 按 `sql/jss/README.md` 显式运行 JSS Flyway 迁移，使用 V001 会员表和 V002 绑定/审计/权限定义。不会创建账号、绑定或批量授权。表约束已在隔离 MySQL 8.4.9 的随机测试库验证，未在业务数据库执行；原独立 `001-identity.sql` 已移入 V002。
 4. 使用现有后台角色/租户套餐管理为审核人员配置 `jss:identity:query`、`jss:identity:bind`；为获准员工配置 `jss:workspace:access` 和具体业务权限。新增节点也需纳入适用的租户套餐。不要给普通会员分组授予此权限。
 5. 通过环境配置设置 `jss.workspace.enabled=true`（环境变量 `JSS_WORKSPACE_ENABLED=true`）。默认关闭，关闭后已有工作台会话在下一次请求时被拒绝。
 6. Redis 使用现有服务的单实例/主从连接；当前两键 Lua 实现尚未验收 Redis Cluster 跨槽部署。

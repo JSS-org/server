@@ -11,7 +11,7 @@ def main():
     live = status()
     database = 'jss_identity_verify_' + secrets.token_hex(6)
     assert re.fullmatch(r'jss_identity_verify_[0-9a-f]{12}', database)
-    migration = (ROOT / 'sql/jss/001-identity.sql').read_text(encoding='utf8')
+    migration = (ROOT / 'sql/jss/migration/mysql/V002__workspace_identity.sql').read_text(encoding='utf8')
     framework = (ROOT / 'sql/mysql/ruoyi-vue-pro.sql').read_text(encoding='utf8')
     menu = re.search(r'CREATE TABLE `system_menu`[\s\S]*?ENGINE\s*=\s*InnoDB[^;]*;', framework).group(0)
     sql(f'CREATE DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')

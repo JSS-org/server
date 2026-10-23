@@ -13,3 +13,5 @@ mvn -Pjss-mall -pl yudao-server -am package -DskipTests
 会员结构基线已补入 `sql/jss/migration/mysql/V001__member_schema.sql`，包含当前 11 个 member 模型所需表。已在隔离 MySQL 8.4.9 校验列覆盖、登录标识唯一性、社交注册空标识、租户独立性和签到经验。独立 Flyway 工具见 `sql/jss/README.md`；其他商城表仍在接入中，版本迁移不由 Java 启动流程自动执行。
 
 商品九张表已纳入 V003，并通过真实 MySQL 列覆盖、JSON/配送类型、条件库存 SQL 和收藏约束验证。促销、交易、支付和统计结构及完整应用联调仍待补齐。
+
+生产 Mapper 的四项独立 MySQL 集成测试已通过，覆盖商品 JSON/CSV、SKU 内嵌属性和并发扣减/回补、标准与自定义查询的租户隔离及逻辑删除、会员登录标识和标签处理器。此证据覆盖持久化链路，不作为完整 HTTP、RBAC、Redis 或支付验收。

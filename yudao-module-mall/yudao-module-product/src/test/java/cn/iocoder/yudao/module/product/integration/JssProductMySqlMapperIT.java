@@ -8,8 +8,10 @@ import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
 import cn.iocoder.yudao.module.member.dal.mysql.user.MemberUserMapper;
+import cn.iocoder.yudao.module.product.dal.dataobject.comment.ProductCommentDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.sku.ProductSkuDO;
 import cn.iocoder.yudao.module.product.dal.dataobject.spu.ProductSpuDO;
+import cn.iocoder.yudao.module.product.dal.mysql.comment.ProductCommentMapper;
 import cn.iocoder.yudao.module.product.dal.mysql.sku.ProductSkuMapper;
 import cn.iocoder.yudao.module.product.dal.mysql.spu.ProductSpuMapper;
 
@@ -69,6 +71,7 @@ class JssProductMySqlMapperIT {
         configuration.addMapper(ProductSpuMapper.class);
         configuration.addMapper(ProductSkuMapper.class);
         configuration.addMapper(MemberUserMapper.class);
+        configuration.addMapper(ProductCommentMapper.class);
         sessions = new MybatisSqlSessionFactoryBuilder().build(configuration);
     }
 
@@ -157,6 +160,30 @@ class JssProductMySqlMapperIT {
             mapper.updateStockIncr(id, 2);
             assertEquals(3, mapper.selectById(id).getStock());
             assertEquals(0, mapper.selectById(id).getSalesCount());
+        }
+    }
+
+    @Test
+    void commentSkuPropertiesRoundTripAndStayTenantScoped() {
+        TenantContextHolder.setTenantId(1L);
+        try (var session = sessions.openSession(true)) {
+            var mapper = session.getMapper(ProductCommentMapper.class);
+            var comment =
+                    new ProductCommentDO()
+                            .setSpuId(1L)
+                            .setSkuId(1L)
+                            .setSkuPicUrl("https://example.invalid/sku.png")
+                            .setSkuProperties(
+                                    List.of(new ProductSkuDO.Property(1L, "颜色", 2L, "蓝色")));
+            mapper.insert(comment);
+            assertEquals(
+                    comment.getSkuProperties(),
+                    mapper.selectById(comment.getId()).getSkuProperties());
+            TenantContextHolder.setTenantId(2L);
+            assertNull(mapper.selectById(comment.getId()));
+            TenantContextHolder.setTenantId(1L);
+            mapper.deleteById(comment.getId());
+            assertNull(mapper.selectById(comment.getId()));
         }
     }
 

@@ -18,7 +18,7 @@ def main():
     config.read(CLIENT, encoding='utf8')
     sql(f'CREATE DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
     try:
-        for migration in ['V001__member_schema.sql', 'V003__product_schema.sql']:
+        for migration in ['V001__member_schema.sql', 'V003__product_schema.sql', 'V007__product_comment_properties.sql']:
             sql(f'USE `{database}`;\n' + (ROOT / 'sql/jss/migration/mysql' / migration).read_text(encoding='utf8'))
         environment = dict(os.environ,
                            JSS_TEST_MYSQL_URL=f'jdbc:mysql://127.0.0.1:{live["port"]}/{database}?serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true',
@@ -38,10 +38,10 @@ def main():
         report = ROOT / 'yudao-module-mall/yudao-module-product/target/surefire-reports/TEST-cn.iocoder.yudao.module.product.integration.JssProductMySqlMapperIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        assert suite.attrib['tests'] == '4' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
+        assert suite.attrib['tests'] == '5' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print(f'4 production mapper tests passed on MySQL {live["version"]}:{live["port"]}')
+        print(f'5 production mapper tests passed on MySQL {live["version"]}:{live["port"]}')
     finally:
         status()
         sql(f'DROP DATABASE `{database}`;')

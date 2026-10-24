@@ -19,6 +19,11 @@ def main():
 
     try:
         execute((ROOT / 'sql/jss/migration/mysql/V003__product_schema.sql').read_text(encoding='utf8'))
+        execute("INSERT INTO product_comment (id,tenant_id,spu_id,content) VALUES (900,1,1,'existing comment');")
+        execute((ROOT / 'sql/jss/migration/mysql/V007__product_comment_properties.sql').read_text(encoding='utf8'))
+        assert execute('SELECT content,sku_properties IS NULL FROM product_comment WHERE id=900') == 'existing comment\t1'
+        execute('DELETE FROM product_comment WHERE id=900;')
+        checks.append('forward comment-property migration preserves existing rows without rewriting V003')
         columns = {}
         for row in execute('SELECT table_name,column_name FROM information_schema.columns WHERE table_schema=DATABASE()').splitlines():
             table, column = row.split('\t')
@@ -29,7 +34,8 @@ def main():
             assert not expected - columns[table], (table, expected - columns[table])
         assert 'property_id' not in models['product_sku']  # Nested JSON members are not SQL columns.
         checks.append('all nine current product models and inherited audit/tenant columns are present')
-        assert execute('SELECT SUM(table_rows) FROM information_schema.tables WHERE table_schema=DATABASE()') == '0'
+        for table in models:
+            assert execute(f'SELECT COUNT(*) FROM `{table}`') == '0'
         checks.append('migration inserts no goods, prices or stock')
         execute("INSERT INTO product_spu (id,tenant_id,name,description,category_id,slider_pic_urls,delivery_types) "
                 "VALUES (1,1,'商品验证','<p>detail</p>',1,'[\"https://example.invalid/a.png\"]','1,2');")

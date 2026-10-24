@@ -17,6 +17,7 @@ public class GymPayrollRespVO {
     private String status;
     private Instant calculatedAt;
     private Instant confirmedAt;
+    private Instant publishedAt;
     private List<Item> items;
 
     @Data

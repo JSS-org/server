@@ -567,6 +567,15 @@ Content-Type: application/json
 
 `Payroll`：`id,storeId,employeeId,month,status,baseAmount,commissionAmount,bonusAmount,deductionAmount,totalAmount,items:[{name,amount,description}]`；金额均为 Money。管理者与总部按需求拥有相同的工资表查看能力，实际门店范围仍由授权控制。计算、确认、发布流程复用后台，不默认给小程序所有人计算权限。
 
+工资查询（总表108–111）已实现，具体约定：
+
+- 移动`Payroll.id`为`gym_payroll_item.id`，即“员工在某门店某月的一份工资明细”；不是旧后台整店工资批次`gym_payroll.id`。列表按批次ID降序、员工ID及明细ID升序，分页前按租户、门店、月份和员工过滤，`total`计员工工资明细条数。`month`支持1000–9999年，管理查询必须同时给出门店和月份；本人查询月份可省略。
+- 本人入口仅需有效后台身份及唯一当前在职、已入职员工绑定，不要求整店工资读取权限；即使拥有全店权限，`/me`也只返回本人且已确认、已发布的工资。离职、账号停用、绑定改变后重新校验。请求不能指定其他员工，其他人或未发布明细统一不可读。
+- 管理入口要求`gym:payroll:read`和整店数据范围；SELF或仅本人任职不等于全店工资授权。管理者可读`calculated`、`confirmed`、`published`；不要求当前门店仍营业或历史工资所属员工仍在职。列表过滤`employeeId`时不扩展门店权限。
+- `baseAmount`为冻结底薪；`commissionAmount`为会员卡销售、私教销售、课消提成之和；`bonusAmount`为固定加项，`deductionAmount`为扣项汇总，`totalAmount`为原账本实发金额。均为两位小数人民币元字符串。`items`从已保存计算项目投影，扣项明细为负值；不按当前模板重算，不输出源交易、他人明细、工资配置或内部完整快照。统计金额可能包含员工跨店来源汇总，但不暴露跨店源记录。
+- 后台辅助发布接口：`POST /admin-api/gym/payrolls/{id}/publications`，这里`id`是旧后台整店工资批次ID（从原后台工资列表获得），无请求体；要求有效后台账号、`gym:payroll:confirm`及整店范围。仅已确认批次可发布，返回`{id:ID,publishedAt:DateTime}`；相同批次重复/并发调用返回首次发布时间，无重复副作用。该辅助接口支撑108–111，不加入固定135个目标数量。
+- V012新增`published_at/published_by`，原状态仍为`confirmed`并保持不可重算，移动响应有发布时间才投影`published`。确认不自动发布，历史已确认记录也不自动公开；暂无撤销发布动作。发布人/时间持久化，原后台工资响应增加可空`publishedAt`。旧后台仅SELF的读取同时要求已发布与当前有效员工，管理者整店审核草稿能力保留。
+
 `Approval`：`id,businessType,storeId,applicantId,status:pending或approved或rejected,currentStep:int,version:int,businessSummary:object,steps:[{step:int,approverId:ID,status:string,comment:string?,decidedAt:DateTime?}],createdAt`。`businessSummary` 只能是发卡/改价等对应的受控摘要，不能任意输入可执行业务指令。
 
 审批操作必须校验当前步骤、账号、权限、版本及业务快照。并发审批只允许一个决策生效，最后一步与本地业务变更同事务；外部支付、签约等异步动作有独立状态。

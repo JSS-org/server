@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **59** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **72** 个。源码映射共 **63 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **63** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **68** 个。源码映射共 **67 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -138,10 +138,10 @@
 | 105 | 工作台 | GET | `/admin-api/gym/mobile/reports/sales` | 查询销售明细及会员卡、私教销售金额汇总 | 设计待开发 |
 | 106 | 工作台 | GET | `/admin-api/gym/mobile/reports/performance` | 按员工或门店统计业绩、排名、均值及课消 | 设计待开发 |
 | 107 | 工作台 | GET | `/admin-api/gym/mobile/reports/member-summary` | 统计授权门店会员、私教会员、新客和临期权益人数 | 设计待开发 |
-| 108 | 工作台 | GET | `/admin-api/gym/mobile/me/payrolls` | 查询本人已发布工资表列表 | 设计待开发 |
-| 109 | 工作台 | GET | `/admin-api/gym/mobile/me/payrolls/{id}` | 获取本人工资明细及计算项目 | 设计待开发 |
-| 110 | 工作台 | GET | `/admin-api/gym/mobile/payrolls` | 查询授权门店工资表，支持月份和员工筛选 | 设计待开发 |
-| 111 | 工作台 | GET | `/admin-api/gym/mobile/payrolls/{id}` | 获取授权范围内的员工工资明细 | 设计待开发 |
+| 108 | 工作台 | GET | `/admin-api/gym/mobile/me/payrolls` | 查询本人已发布工资表列表 | 已实现，本地测试通过 |
+| 109 | 工作台 | GET | `/admin-api/gym/mobile/me/payrolls/{id}` | 获取本人工资明细及计算项目 | 已实现，本地测试通过 |
+| 110 | 工作台 | GET | `/admin-api/gym/mobile/payrolls` | 查询授权门店工资表，支持月份和员工筛选 | 已实现，本地测试通过 |
+| 111 | 工作台 | GET | `/admin-api/gym/mobile/payrolls/{id}` | 获取授权范围内的员工工资明细 | 已实现，本地测试通过 |
 | 112 | 工作台 | GET | `/admin-api/gym/mobile/approvals` | 查询本人申请、待审批或已处理审批列表 | 设计待开发 |
 | 113 | 工作台 | GET | `/admin-api/gym/mobile/approvals/{id}` | 获取审批详情、业务摘要及步骤记录 | 设计待开发 |
 | 114 | 工作台 | GET | `/admin-api/gym/mobile/approval-options` | 获取当前业务可用的审批类型和模板 | 设计待开发 |

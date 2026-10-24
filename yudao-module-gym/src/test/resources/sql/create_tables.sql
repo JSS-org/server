@@ -544,6 +544,8 @@ CREATE TABLE IF NOT EXISTS gym_payroll (
  calculated_at datetime(6) NOT NULL,
  confirmed_at datetime(6) DEFAULT NULL,
  confirmed_by bigint DEFAULT NULL,
+ published_at datetime(6) DEFAULT NULL,
+ published_by bigint DEFAULT NULL,
  creator varchar(64) NOT NULL DEFAULT '',
  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
  updater varchar(64) NOT NULL DEFAULT '',

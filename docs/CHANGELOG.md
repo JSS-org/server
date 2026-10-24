@@ -2398,3 +2398,36 @@ gym556项、member4项通过，1项既有禁用跳过；Spotless和server依赖�
 ### 未做 / 后续
 
 59项新增本地实现、4项复用源码、72项待开发，继续其他内部接口。支付/自动续费、电子签约、门禁设备和监控真实接入保持暂缓。没有推送或迁移业务库；本批独立本地提交，保留用户原始uniapp.md及暂存状态。
+
+## [2026-10-24 20:57 ~ 21:09] 移动工资查询与后台明确发布
+
+### 意图
+
+补齐总表108–111，实现员工本人已发布工资和管理者授权门店工资查询；补上原后台缺失的显式发布动作，避免把“确认”自动当成“对员工公开”。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobilePayrollController.java`、`GymMobilePayrollVO.java`、`GymMobilePayrollService.java` | 新增 | 四个移动路由、员工明细资源、本人/整店授权和快照投影 |
+| `yudao-module-gym/.../GymPayrollPublicationController.java`、`GymPayrollPublicationService.java` | 新增 | 后台显式发布、同批次可重试和首次发布审计 |
+| `GymPayrollDO.java`、`GymPayrollRespVO.java`、`GymPayrollService.java`、`ErrorCodeConstants.java` | 修改 | 发布字段、旧SELF草稿隔离及当前有效员工校验、发布前置状态错误 |
+| `sql/gym/migration/mysql/V012__gym_payroll_publication.sql`、测试schema、`script/gym/verify-migrations.py` | 新增/修改 | 可空发布字段、员工索引、历史确认工资不自动发布及48项迁移检查 |
+| `GymOrganizationServiceTest.java`、`GymMobilePayrollControllerTest.java` | 修改/新增 | 七项权限/事务/并发业务、三项MVC，更新旧SELF回归 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、`script/gym/README.md`、`DATABASE.md` | 修改 | 67/135进度、发布操作、ID与金额映射、验证证据和部署要求 |
+
+### 结构关系
+
+移动服务从员工工资明细读取，通过父批次EXISTS先限制查询再分页，批量加载父信息并投影已冻结金额。发布服务复用后台身份和门店范围，按门店→批次锁顺序写发布时间/人，原confirmed状态保留。原后台SELF也要求发布及有效员工，避免旁路读取草稿。
+
+### 验证证据
+
+gym566项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包通过。真实隔离MySQL/Flyway48检查通过并清理全部临时库。新增10项测试含真实快照金额、严格本人、分页权限、离职与跨租户、旧SELF混合范围、故障回滚及并发发布。源码映射67/135；具体命令和日志见testing本批条目。
+
+### 影响面 / 风险
+
+部署前需V012并validate，表数仍65。历史确认工资默认未发布，管理员明确发布后员工才可读取；旧SELF入口同步收紧，管理者草稿审核能力保持。发布使用原gym:payroll:confirm权限，不自动授权。移动详情使用员工明细ID，后台发布使用批次ID；金额从原快照读取且不暴露源交易。确认冻结逻辑未改；前端未修改。
+
+### 未做 / 后续
+
+63项新增本地实现、4项复用源码、68项待开发，继续其他内部业务。暂未提供撤回或批量发布、自动通知、工资打款；四类第三方真实接入仍暂缓。业务库未迁移，不推送；本批独立本地提交，保留用户原始uniapp.md及暂存状态。

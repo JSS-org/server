@@ -59,6 +59,7 @@ sql/gym/
     V009__gym_public_coach_profiles.sql # 教练公开资料，旧员工默认不公开
     V010__gym_mobile_work_file_targets.sql # 工作台上传用途及目标
     V011__gym_mobile_lesson_qr.sql         # 签课二维码绑定与使用记录
+    V012__gym_payroll_publication.sql       # 工资明确发布与本人查询索引
   seed/development/demo.sql         # 显式开发演示数据，不在Flyway扫描路径
   legacy-schema.json               # 旧库结构指纹及V001校验和，用于安全接管
   legacy/                          # 冻结的旧01～47及旧开发导入SQL
@@ -71,7 +72,7 @@ script/gym/
   verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
 ```
 
-后续变更从当前最大版本递增追加（当前下一版本为 `V012__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
+后续变更从当前最大版本递增追加（当前下一版本为 `V013__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
 
 ## 独立开发seed
 
@@ -587,3 +588,9 @@ python3 script/gym/verify-uniapp-api-coverage.py --require-all
 | `yudao.gym.mobile.lessons.confirm-after-end-minutes` | 120分钟，允许0～1440；窗口从开课至结束后该时长，右端不含 |
 
 缺失/非法密钥不阻止整个应用启动，但发码及新的签名验证明确返回未配置；不使用自动生成的临时密钥，避免重启和多实例各自签名。轮换密钥使旧二维码无法用于新确认；成功确认的旧幂等键仍可恢复本人结果。不得把生产密钥或二维码写入工单和日志。接口已关闭访问日志请求/响应正文；二维码表只存哈希，发码幂等响应仍保存原token供重试，过期记录自动清理尚未实现。
+
+### 移动工资读取与后台发布（V012）
+
+先migrate到V012并validate，再部署应用。新增gym_payroll.published_at/published_by两个可空列及gym_payroll_item本人查询索引，表数仍65；既有确认工资默认未发布。确认后由有`gym:payroll:confirm`及门店范围的管理员调用`POST /admin-api/gym/payrolls/{批次ID}/publications`（无body），返回首次发布时间，可安全重试；没有自动发布或自动授权。
+
+移动`/gym/mobile/me/payrolls`及详情只返回当前员工本人已发布明细，`/gym/mobile/payrolls`及详情另要求`gym:payroll:read`与整店范围。移动详情ID为员工明细ID，发布ID为旧后台批次ID。旧后台SELF读取同步要求已发布，确认及冻结流程不变；原后台响应增加publishedAt。当前没有撤销发布、自动推送或银行打款；前端不修改。业务数据库没有在本任务中迁移。

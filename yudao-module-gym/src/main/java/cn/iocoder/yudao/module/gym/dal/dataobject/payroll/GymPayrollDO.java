@@ -21,4 +21,6 @@ public class GymPayrollDO extends TenantBaseDO {
     private java.time.Instant calculatedAt;
     private java.time.Instant confirmedAt;
     private Long confirmedBy;
+    private java.time.Instant publishedAt;
+    private Long publishedBy;
 }

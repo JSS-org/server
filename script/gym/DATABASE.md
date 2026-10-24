@@ -63,7 +63,7 @@ bash script/gym/db.sh validate
 V001__gym_schema.sql
 V002__gym_reference_data.sql
 V003__gym_legacy_backfills.sql
-V012__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
+V013__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
 ```
 
 1. 同步最新代码，选择未使用的版本号；文件名使用 `V版本__说明.sql`，版本与说明之间是两个下划线。
@@ -121,4 +121,8 @@ MySQL DDL 可能隐式提交，失败不代表全部回滚。工具禁用 clean�
 
 ### V011 移动签课二维码
 
-新增gym_mobile_lesson_qr（当前65张gym表），保存短时凭据哈希、签发人、预约/排期时间绑定、过期和使用信息；不为历史预约生成凭据。升级前备份并按既有migrate/validate流程执行，本批没有迁移业务库。应用另需部署签名密钥，见README的移动二维码签课配置。下一未使用迁移版本V012。
+新增gym_mobile_lesson_qr（当前65张gym表），保存短时凭据哈希、签发人、预约/排期时间绑定、过期和使用信息；不为历史预约生成凭据。升级前备份并按既有migrate/validate流程执行，本批没有迁移业务库。应用另需部署签名密钥，见README的移动二维码签课配置。下一未使用迁移版本V013（V012见下）。
+
+### V012 工资显式发布
+
+在gym_payroll新增可空published_at（datetime(6)）和published_by；在gym_payroll_item新增(tenant_id,employee_id,payroll_id,deleted)索引。表数不变，仍65。历史confirmed记录保持冻结、金额不变且发布时间为空，不向员工自动公开。发布属于明确后台操作，不执行历史回填。新增列需在应用部署前完成migrate/validate；创建索引的耗时与业务数据量有关，按既有备份和维护窗口流程操作。下一未使用版本V013。

@@ -49,6 +49,10 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePayrollService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePayrollController.class,
+    cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.payroll.GymPayrollPublicationController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileAttendanceService.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymAttendanceController.class,
     cn.iocoder.yudao.module.gym.service.course.GymLessonConfirmationService.class,
@@ -145,6 +149,19 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePayrollService mobilePayrolls;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePayrollController
+            mobilePayrollController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService payrollPublications;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.payroll.GymPayrollPublicationController
+            payrollPublicationController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileAttendanceService attendance;
 
     @Resource
@@ -3199,6 +3216,8 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         var full = payrolls.calculate(payrollRequest(101L));
         Long id = Long.valueOf(full.getId());
         assertEquals(2, full.getEmployeeCount());
+        payrolls.confirm(id);
+        payrollPublications.publish(id);
         loginAs(91L);
         var self = new DeptDataPermissionRespDTO();
         self.setSelf(true);
@@ -12674,5 +12693,337 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 org.springframework.security.authentication
                         .AuthenticationCredentialsNotFoundException.class,
                 () -> attendanceController.get(attendanceRequest(101L, "2026-10")));
+    }
+
+    record MobilePayrollFixture(Long payroll, Long own, Long other, Long ownItem, Long otherItem) {}
+
+    MobilePayrollFixture mobilePayrollFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now())
+                .thenReturn(java.time.Instant.parse("2026-10-24T12:00:00.123456Z"));
+        Long own = approvalEmployee("MOBILE-PAY-OWN", 91L),
+                other = approvalEmployee("MOBILE-PAY-OTHER", 92L),
+                template = payrollTemplate();
+        payrollAssign(own, template, 101L);
+        payrollAssign(other, template, 101L);
+        var at = java.time.Instant.parse("2026-06-10T00:00:00Z");
+        financialEvent(own, 101L, "card", "payment", "1200", "mobile-pay-card", at);
+        financialEvent(own, 101L, "card", "refund", "200", "mobile-pay-refund", at);
+        financialEvent(own, 101L, "private", "payment", "200", "mobile-pay-pt", at);
+        var pay = payrolls.calculate(payrollRequest(101L));
+        return new MobilePayrollFixture(
+                Long.valueOf(pay.getId()),
+                own,
+                other,
+                Long.valueOf(
+                        pay.getItems().stream()
+                                .filter(x -> x.getEmployeeId().equals(own.toString()))
+                                .findFirst()
+                                .orElseThrow()
+                                .getId()),
+                Long.valueOf(
+                        pay.getItems().stream()
+                                .filter(x -> x.getEmployeeId().equals(other.toString()))
+                                .findFirst()
+                                .orElseThrow()
+                                .getId()));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO.OwnPage
+            ownPayrollPage() {
+        return new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO
+                .OwnPage();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO.StorePage
+            storePayrollPage(Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePayrollVO
+                        .StorePage();
+        r.setStoreId(store);
+        r.setMonth("2026-06");
+        return r;
+    }
+
+    void publishPayroll(MobilePayrollFixture f) {
+        headquarters();
+        loginAs(1L);
+        payrolls.confirm(f.payroll());
+        payrollPublications.publish(f.payroll());
+    }
+
+    @Test
+    void mobilePayrollPublicationIsExplicitAndOwnProjectionNeverLeaksOtherEmployeesOrSnapshots() {
+        var f = mobilePayrollFixture();
+        assertServiceException(
+                () -> payrollPublications.publish(f.payroll()), PAYROLL_PUBLICATION_INVALID);
+        payrolls.confirm(f.payroll());
+        personalScope(91L);
+        assertEquals(0, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), PAYROLL_NOT_EXISTS);
+        assertEquals(
+                0,
+                payrolls.page(
+                                new cn.iocoder.yudao.module.gym.controller.admin.common
+                                        .GymBusinessPageReqVO())
+                        .getTotal());
+        assertServiceException(() -> payrolls.get(f.payroll()), STORE_NO_PERMISSION);
+        publishPayroll(f);
+        var first = payrollPublications.publish(f.payroll());
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-25T12:00:00Z"));
+        assertEquals(first, payrollPublications.publish(f.payroll()));
+        assertEquals("confirmed", payrolls.confirm(f.payroll()).getStatus());
+        assertServiceException(() -> payrolls.recalculate(f.payroll()), PAYROLL_FROZEN);
+        loginAs(91L); // Even a whole-store reader using /me only receives their own item.
+        var result = mobilePayrollController.mine(ownPayrollPage()).getData();
+        assertEquals(1, result.getTotal());
+        var own = result.getList().getFirst();
+        assertEquals(f.ownItem().toString(), own.id());
+        assertEquals(f.own().toString(), own.employeeId());
+        assertEquals("published", own.status());
+        assertEquals("5000.00", own.baseAmount());
+        assertEquals("130.00", own.commissionAmount());
+        assertEquals("100.00", own.bonusAmount());
+        assertEquals("50.00", own.deductionAmount());
+        assertEquals("5180.00", own.totalAmount());
+        assertEquals(own, mobilePayrolls.mine(f.ownItem()));
+        assertEquals(
+                new BigDecimal("5180.00"),
+                own.items().stream()
+                        .map(x -> new BigDecimal(x.amount()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+        assertTrue(own.items().stream().anyMatch(x -> x.amount().equals("-50.00")));
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(own);
+        for (String hidden :
+                List.of(
+                        "sourceSnapshot",
+                        "calculationSnapshot",
+                        "salaryAssignmentId",
+                        "confirmedBy",
+                        "mobile-pay-card",
+                        "events")) assertFalse(json.contains(hidden));
+        assertServiceException(() -> mobilePayrolls.mine(f.otherItem()), PAYROLL_NOT_EXISTS);
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollMapper.class);
+        assertEquals(1L, pm.selectById(f.payroll()).getPublishedBy());
+        assertEquals(
+                java.time.Instant.parse("2026-10-24T12:00:00.123456Z"),
+                pm.selectById(f.payroll()).getPublishedAt());
+    }
+
+    @Test
+    void mobilePayrollManagerUsesWholeStorePermissionBeforePaginationAndAllowsDraftReview() {
+        var f = mobilePayrollFixture();
+        when(permissions.hasAnyPermissions(any(), eq("gym:payroll:read"))).thenReturn(true);
+        var req = storePayrollPage(101L);
+        req.setPageSize(1);
+        var page = mobilePayrollController.store(req).getData();
+        assertEquals(2, page.getTotal());
+        assertEquals(1, page.getList().size());
+        assertEquals("calculated", page.getList().getFirst().status());
+        req.setPageNo(2);
+        assertNotEquals(
+                page.getList().getFirst().id(),
+                mobilePayrolls.store(req).getList().getFirst().id());
+        req.setPageNo(1);
+        req.setEmployeeId(f.other());
+        assertEquals(1, mobilePayrolls.store(req).getTotal());
+        assertEquals(f.otherItem().toString(), mobilePayrolls.store(req).getList().getFirst().id());
+        scoped(102L);
+        assertServiceException(
+                () -> mobilePayrolls.store(storePayrollPage(101L)), STORE_NO_PERMISSION);
+        assertServiceException(() -> mobilePayrolls.store(f.ownItem()), STORE_NO_PERMISSION);
+        assertEquals(0, mobilePayrolls.store(storePayrollPage(102L)).getTotal());
+        personalScope(91L);
+        assertServiceException(() -> mobilePayrolls.store(f.ownItem()), STORE_NO_PERMISSION);
+        assertServiceException(
+                () -> mobilePayrolls.store(storePayrollPage(101L)), STORE_NO_PERMISSION);
+        headquarters();
+        when(permissions.hasAnyPermissions(any(), eq("gym:payroll:read"))).thenReturn(false);
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobilePayrollController.store(storePayrollPage(101L)));
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobilePayrollController.store(f.ownItem()));
+    }
+
+    @Test
+    void mobilePayrollOwnAccessRechecksEmployeeAccountAndTenantAndValidatesMonths() {
+        var f = mobilePayrollFixture();
+        publishPayroll(f);
+        personalScope(91L);
+        var req = ownPayrollPage();
+        req.setMonth("2026-07");
+        assertEquals(0, mobilePayrolls.mine(req).getTotal());
+        req.setMonth("2026-06");
+        assertEquals(1, mobilePayrolls.mine(req).getTotal());
+        req.setMonth("2026-13");
+        assertThrows(ConstraintViolationException.class, () -> mobilePayrolls.mine(req));
+        req.setMonth("0999-01");
+        assertServiceException(() -> mobilePayrolls.mine(req), PAYROLL_MONTH_INVALID);
+        req.setMonth(null);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> mobilePayrolls.mine(req));
+        var mm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var employee = mm.selectById(f.own());
+        employee.setStatus("inactive");
+        mm.updateById(employee);
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), MOBILE_EMPLOYEE_REQUIRED);
+        assertServiceException(() -> payrolls.get(f.payroll()), STORE_NO_PERMISSION);
+        assertEquals(
+                0,
+                payrolls.page(
+                                new cn.iocoder.yudao.module.gym.controller.admin.common
+                                        .GymBusinessPageReqVO())
+                        .getTotal());
+        employee.setStatus("active");
+        employee.setHiredOn(LocalDate.of(2027, 1, 1));
+        mm.updateById(employee);
+        assertServiceException(
+                () -> mobilePayrolls.mine(ownPayrollPage()), MOBILE_EMPLOYEE_REQUIRED);
+        employee.setHiredOn(LocalDate.of(2026, 1, 1));
+        mm.updateById(employee);
+        when(workAccounts.getUser(91L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(91L)
+                                .setStatus(1));
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        assertServiceException(
+                () -> mobilePayrolls.mine(ownPayrollPage()), MOBILE_EMPLOYEE_REQUIRED);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobilePayrolls.store(f.ownItem()), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobilePayrolls.mine(ownPayrollPage()), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> mobilePayrollController.mine(ownPayrollPage()));
+    }
+
+    @Test
+    void mobilePayrollDeletedItemsParentsAndOtherTenantRowsAreHidden() {
+        var f = mobilePayrollFixture();
+        publishPayroll(f);
+        personalScope(91L);
+        var im =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollItemMapper.class);
+        im.deleteById(f.ownItem());
+        assertEquals(0, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        assertServiceException(() -> mobilePayrolls.mine(f.ownItem()), PAYROLL_NOT_EXISTS);
+        loginAs(92L);
+        assertEquals(1, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollMapper.class);
+        pm.deleteById(f.payroll());
+        assertEquals(0, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+        assertServiceException(() -> mobilePayrolls.mine(f.otherItem()), PAYROLL_NOT_EXISTS);
+        headquarters();
+        assertServiceException(() -> mobilePayrolls.store(f.otherItem()), PAYROLL_NOT_EXISTS);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(1L)
+                        .setUserType(2)
+                        .setTenantId(2L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+        TenantContextHolder.setTenantId(2L);
+        assertEquals(0, mobilePayrolls.store(storePayrollPage(101L)).getTotal());
+        assertServiceException(() -> mobilePayrolls.store(f.otherItem()), PAYROLL_NOT_EXISTS);
+    }
+
+    @Test
+    void mobilePayrollPublicationChecksPermissionCurrentScopeAndIdentity() {
+        var f = mobilePayrollFixture();
+        payrolls.confirm(f.payroll());
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> payrollPublicationController.publish(f.payroll()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:payroll:confirm"))).thenReturn(true);
+        personalScope(91L);
+        assertServiceException(
+                () -> payrollPublicationController.publish(f.payroll()), STORE_NO_PERMISSION);
+        scoped(102L);
+        assertServiceException(() -> payrollPublications.publish(f.payroll()), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(
+                () -> payrollPublications.publish(f.payroll()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        assertEquals(
+                f.payroll().toString(),
+                payrollPublicationController.publish(f.payroll()).getData().id());
+        scoped(102L);
+        assertServiceException(() -> payrollPublications.publish(f.payroll()), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobilePayrollPublicationRollsBackAndConcurrentRetriesPreserveFirstRelease()
+            throws Exception {
+        var f = mobilePayrollFixture();
+        payrolls.confirm(f.payroll());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .execute(
+                        "ALTER TABLE gym_payroll ADD CONSTRAINT test_payroll_publish CHECK (published_by IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> payrollPublications.publish(f.payroll()));
+            var row =
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.payroll.GymPayrollMapper
+                                            .class)
+                            .selectById(f.payroll());
+            assertNull(row.getPublishedAt());
+            assertNull(row.getPublishedBy());
+            assertEquals("confirmed", row.getStatus());
+        } finally {
+            new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                    .execute("ALTER TABLE gym_payroll DROP CONSTRAINT test_payroll_publish");
+        }
+        var results =
+                workCourseRace(
+                        () -> payrollPublications.publish(f.payroll()),
+                        () -> payrollPublications.publish(f.payroll()));
+        assertEquals(results.get(0), results.get(1));
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService.Publication
+                        .class,
+                results.getFirst());
+        personalScope(91L);
+        assertEquals(1, mobilePayrolls.mine(ownPayrollPage()).getTotal());
+    }
+
+    @Test
+    void mobilePayrollLegacyMixedStoreAndSelfScopeKeepsDraftsPrivate() {
+        var f = mobilePayrollFixture();
+        var permission = new DeptDataPermissionRespDTO();
+        permission.setSelf(true);
+        permission.setDeptIds(Set.of(102L));
+        loginAs(91L);
+        when(permissions.getDeptDataPermission(any())).thenReturn(permission);
+        var req = new cn.iocoder.yudao.module.gym.controller.admin.common.GymBusinessPageReqVO();
+        assertEquals(0, payrolls.page(req).getTotal());
+        assertServiceException(() -> payrolls.get(f.payroll()), STORE_NO_PERMISSION);
+        permission.setDeptIds(Set.of(101L));
+        assertEquals(1, payrolls.page(req).getTotal());
+        assertEquals(2, payrolls.get(f.payroll()).getItems().size());
+        publishPayroll(f);
+        permission.setDeptIds(Set.of(102L));
+        loginAs(91L);
+        when(permissions.getDeptDataPermission(any())).thenReturn(permission);
+        assertEquals(1, payrolls.page(req).getTotal());
+        assertEquals(1, payrolls.get(f.payroll()).getItems().size());
     }
 }

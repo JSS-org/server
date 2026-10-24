@@ -830,3 +830,24 @@ git diff --check
 真实H2/Mapper/租户拦截器验证多次签到与自然日去重、同分竞争排名、零签到/空月/未来月、失败/删除/孤立档案/跨租户/其他门店/未来事件排除、停用会员的历史参与。边界覆盖上海月初与下月月初、2024闰年二月、1991夏令时午夜。关系删除后无历史不能读取，有本人成功历史仍能读取；未来月也先鉴权。错误账号类型、停用账号/会员、租户不匹配和匿名方法调用拒绝。
 
 MVC验证必填月份/门店、非法月份和ID、仅五个聚合响应字段，客户端memberId不能选择统计主体。最初测试夹具误用旧后台String类型会员ID，修正为Long后专项及完整回归通过，未改变业务ID契约。本批无DDL，不重跑既有V011迁移回归，不迁移业务库；MySQL实际查询性能与部署HTTP、门禁设备联调未验证，前端未修改。
+
+## 2026-10-24 移动工资查询与明确发布
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym **566项通过**（组织服务314项，新增7项工资业务；新MVC3项），member状态4通过/1既有禁用跳过，均无失败/错误。Spotless与server依赖打包通过，打包命令跳过测试。真实隔离MySQL/Flyway **48项检查通过**，全部临时数据库清理；65张gym表、V012新增发布列与本人查询索引，旧确认工资保持金额及confirmed状态且未发布。源码映射 **67/135**，余68项。
+
+日志：`/tmp/uniapp-payroll-final-tests.log`、`/tmp/uniapp-payroll-migrations.log`、`/tmp/uniapp-payroll-package.log`；专项日志`/tmp/uniapp-payroll-focused.log`、`/tmp/uniapp-payroll-mvc.log`。初次新增回滚夹具引用未声明JdbcTemplate导致编译失败，改为使用既有DataSource创建实例后通过；最终回归包含旧SELF测试明确发布及新增离职后旧入口拒绝断言。
+
+通过原薪资配置、真实销售/退款流水和工资计算生成双员工批次，验证5000.00底薪、130.00提成、100.00加项、50.00扣项与5180.00实发，明细负扣项之和一致。本人入口即使有整店权限也只返回本人，未确认/未发布、他人、软删除明细/批次及其他租户不可读。管理筛选和权限先于分页，草稿可审核，SELF不能查看全店；功能权限撤销、账号停用、未入职/离职和匿名调用拒绝。
+
+旧后台混合SELF/门店权限测试证明草稿不通过SELF泄露，但授权整店审核仍可用。发布必须显式确认、有效账号和门店权限；时间和操作者只保存首次值，重复确认/发布不解冻或重算。H2真实事务用约束故障注入验证发布失败回滚两列，两个线程并发重试得到相同首次结果。MVC覆盖四个移动路由与辅助发布路径、月份/门店/分页校验、客户端无法选择本人身份、金额字符串和受控字段。Java并发证据来自H2，MySQL验证为迁移/旧库接管，不替代真实部署HTTP、工资打款或大数据量性能验证；业务库与前端未修改。

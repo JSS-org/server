@@ -552,3 +552,9 @@ GymMobileLessonProperties绑定TTL/窗口/密钥，GymMobileLessonToken使用HMA
 `AppGymAttendanceController → GymMobileAttendanceService → GymMobileIdentityService`校验会员身份，再以当前门店关系或本人既往成功签到授权读取。该只读入口不借门店排名暴露其他会员档案，也不依赖仍有效的卡或营业状态。
 
 `GymMobileAttendanceMapper`在数据库中按租户/门店/月份和当前时间筛成功记录，关联同租户未删除会员，聚合本人次数、活跃天数与高于本人的参与人数。`Asia/Shanghai`逐日边界由Java生成并绑定SQL参数，历史夏令时不依赖MySQL时区表。本人聚合和排名聚合共享只读REPEATABLE_READ快照；没有新表、权限码、缓存或后台写流程改动。
+
+## 移动工资读取与独立发布（2026-10-24 增量）
+
+`GymMobilePayrollController → GymMobilePayrollService`按本人或整店路径分别授权；本人通过`GymMobileWorkAccess.employee`绑定当前在职员工，管理者要求工资读取权限和`GymDataScope.check`。工资明细Mapper通过父批次EXISTS在SQL分页前限定租户、门店、月份及发布状态，之后批量读取父批次，在只读REPEATABLE_READ事务中投影冻结金额和受控计算项目。移动资源是每员工明细，旧后台资源是整店批次，ID不可混用。
+
+`GymPayrollPublicationController → GymPayrollPublicationService`复用有效后台身份和整店范围，按原计算/确认的门店→工资批次顺序加锁；仅confirmed批次写V012的published_at/published_by，重复调用保持首次值。原confirmed状态不变，因此计算冻结和工资配置期间保护仍适用。原`GymPayrollService`的SELF查询补充发布与当前有效员工过滤，整店草稿审核不变；旧响应增加可空发布时间。没有自动发布历史工资、自动授予权限或发起打款。

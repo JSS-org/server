@@ -1218,8 +1218,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/me/payrolls",
       "description": "查询本人已发布工资表列表",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
     },
     {
       "id": 109,
@@ -1227,8 +1232,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/me/payrolls/{id}",
       "description": "获取本人工资明细及计算项目",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
     },
     {
       "id": 110,
@@ -1236,8 +1246,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/payrolls",
       "description": "查询授权门店工资表，支持月份和员工筛选",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
     },
     {
       "id": 111,
@@ -1245,8 +1260,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/payrolls/{id}",
       "description": "获取授权范围内的员工工资明细",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePayrollService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePayrollControllerTest.java"
+      ]
     },
     {
       "id": 112,

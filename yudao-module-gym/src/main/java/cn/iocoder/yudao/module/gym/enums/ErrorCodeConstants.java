@@ -130,6 +130,7 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_070_012_006, "部分员工包含跨店计薪来源，请由具备全部来源门店权限的账号计算");
     ErrorCode PAYROLL_ASSIGNMENT_FROZEN =
             new ErrorCode(1_070_012_007, "该工资配置已用于确认工资，不能缩短已确认月份的覆盖期间");
+    ErrorCode PAYROLL_PUBLICATION_INVALID = new ErrorCode(1_070_012_008, "只有已确认的工资表可以发布");
     ErrorCode SALES_SETTINGS_INVALID =
             new ErrorCode(1_070_013_001, "售卡或核销设置不合法，请检查重复方案、签约审批依赖和时间范围");
     ErrorCode SALES_SETTINGS_CARD_INVALID =

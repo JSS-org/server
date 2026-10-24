@@ -73,3 +73,5 @@ DELETE FROM gym_mobile_request;
 DELETE FROM gym_mobile_identity;
 
 DELETE FROM gym_member_followup;
+
+DELETE FROM gym_mobile_work_file;

@@ -405,7 +405,11 @@ Content-Type: application/json
 | `GET A/files/{id}/content` | 本人可访问的文件 | 无 | 二进制，携带正确 Content-Type |
 | `GET W/files/{id}/content` | 有相应业务及数据权限 | 无 | 二进制 |
 
-新接口上传建议：头像/人脸为 JPEG、PNG，最大 5 MiB；反馈图片单张最大 10 MiB；体测和训练附件采用 PDF/JPEG/PNG，最大 20 MiB。最终需与既有文件类别限制对齐，不允许仅凭扩展名通过。文件先上传再绑定业务，下载重新校验归属；人脸照片不提供普通列表下载能力。失效的临时文件可清理，已绑定运动档案不得按临时文件清理。
+当前工作台上传已实现：coach_profile为JPEG/PNG、5 MiB；body_report/training_plan为PDF/JPEG/PNG、20 MiB且必填memberId；contract仅PDF、20 MiB。合同提供memberId时检查会员范围及gym:contracts:write，不提供时要求gym:contracts:templates和整店范围；上传不表示合同已签署。所有工作台上传/下载还分别要求gym:files:upload/read，业务权限不会由文件权限替代。
+
+文件用途和目标随上传持久化，体测/训练及模板绑定不能改作其他目标；上传人从令牌取得。教练图片按员工归属下载，未绑定的会员附件仅原上传人在仍有目标权限时可预览，绑定后重新检查当前业务授权。响应不带存储URL，下载禁缓存；精确边界及旧文件兼容见[实施说明](./uniapp-implementation.md#工作台文件实现与边界)。
+
+会员端头像/人脸仍为JPEG/PNG、5 MiB，反馈为JPEG/PNG、10 MiB。不能只修改扩展名通过类型校验。上传与业务绑定是两个步骤，已绑定运动档案不得按临时文件清理；数据库回滚后的孤立存储对象自动清理尚未实现。
 
 ## 八、员工、管理者和总部工作台
 
@@ -428,7 +432,7 @@ Content-Type: application/json
 
 本人教练资料GET/PATCH（总表83–84）已实现。使用后台令牌，服务端关联唯一在职员工并检查当前营业门店任职，以及已有教练资料或有效私教商品；不会接受客户端指定员工。仅编辑本人字段，省略保留，头像null清除，介绍/数组不接受null，可用空字符串/空数组清空。管理员发布状态保持不变，新建草稿不会自动公开。
 
-新图片须为本人后台账号上传、当前任职门店的image文件，原来由管理员绑定的图片可保留。本人响应中的图片地址为`/admin-api/gym/mobile/me/coach-profile/files/{id}/content`，需后台令牌和租户头，按当前资料绑定鉴权；这是不计入135项的预览辅助入口。工作台上传74仍待实现，不能把已完成资料编辑等同于完整SELF上传流程。详情见[实施说明](./uniapp-implementation.md#本人教练资料实现与边界)。
+新图片须为本人后台账号上传、当前任职门店的image文件，原来由管理员绑定的图片可保留。本人响应中的图片地址为`/admin-api/gym/mobile/me/coach-profile/files/{id}/content`，需后台令牌和租户头，按当前资料绑定鉴权；这是不计入135项的预览辅助入口。工作台上传74已实现，可使用coach_profile用途上传本人图片，需已有gym:files:upload权限和有效教练任职。详情见[实施说明](./uniapp-implementation.md#本人教练资料实现与边界)。
 
 `WorkBooking/WorkCheckin/WorkLessonRecord` 为会员端相应对象加 `memberId,memberName,coachId`；手机号仅在额外授权时脱敏返回。员工的预约/课消强制为本人授课；负责会员相关记录还需会员服务关系授权。签到默认只看本人负责会员，管理者看授权门店。
 

@@ -57,6 +57,7 @@ sql/gym/
     V007__gym_mobile_member_followups.sql # 跟进记录和门店负责关系版本
     V008__gym_course_product_version.sql # 私教商品真实版本，旧数据从1开始
     V009__gym_public_coach_profiles.sql # 教练公开资料，旧员工默认不公开
+    V010__gym_mobile_work_file_targets.sql # 工作台上传用途及目标
   seed/development/demo.sql         # 显式开发演示数据，不在Flyway扫描路径
   legacy-schema.json               # 旧库结构指纹及V001校验和，用于安全接管
   legacy/                          # 冻结的旧01～47及旧开发导入SQL
@@ -69,7 +70,7 @@ script/gym/
   verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
 ```
 
-后续变更从当前最大版本递增追加（当前下一版本为 `V010__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
+后续变更从当前最大版本递增追加（当前下一版本为 `V011__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
 
 ## 独立开发seed
 
@@ -569,3 +570,5 @@ python3 script/gym/verify-uniapp-api-coverage.py --require-all
 商品目录使用V008：`gym_course_product.version`非空、默认1，旧价格与课时保持原值；gym表仍63张。新代码部署前执行到V008并validate。真实隔离迁移38项通过，未应用至业务库。包月设置新增成对的renewalTerms/agreementVersion；缺少两项的旧配置不公开展示。第三方支付、自动续费等继续暂缓。
 
 公开教练依赖V009：员工增加coach_published（默认false）与coach_profile（默认NULL），新代码部署前迁移至V009并validate；仍63张gym表。管理员通过原员工写权限提交publicCoachProfile对象，省略保持原值，提供时整体替换，published=false下架。已发布资料在全部当前营业任职门店展示；头像和资质图片将按有效引用匿名可读。真实隔离MySQL迁移40检查通过，未迁移业务库。
+
+工作台文件依赖V010，新建gym_mobile_work_file后共64张gym表；新代码部署前迁移至V010并validate。上传用途与会员/员工目标固定，旧文件不补造记录。既有体测、训练计划、教练资料和合同模板的附件校验也查询该表。真实隔离迁移42检查通过，未迁移业务库。上传元数据回滚不等于外部存储对象已删除；当前没有自动孤立对象清理，不清理已绑定运动档案。

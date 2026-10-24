@@ -1198,3 +1198,22 @@ CREATE TABLE IF NOT EXISTS gym_member_followup (
  updater varchar(64) NOT NULL DEFAULT '', update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  deleted boolean NOT NULL DEFAULT false, tenant_id bigint NOT NULL DEFAULT 0, PRIMARY KEY(id)
 );
+
+CREATE TABLE IF NOT EXISTS gym_mobile_work_file (
+  id bigint NOT NULL AUTO_INCREMENT,
+  file_id bigint NOT NULL,
+  store_id bigint NOT NULL,
+  purpose varchar(32) NOT NULL,
+  member_id bigint DEFAULT NULL,
+  employee_id bigint DEFAULT NULL,
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_work_file (tenant_id,file_id),
+  KEY idx_mobile_work_file_member (tenant_id,member_id,store_id),
+  KEY idx_mobile_work_file_employee (tenant_id,employee_id)
+);

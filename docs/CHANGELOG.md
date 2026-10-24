@@ -2205,3 +2205,36 @@ V008须先于新代码部署。包月后台保存仍全量替换，须保留需�
 ### 未做 / 后续
 
 47项新增本地实现、4项复用源码、84项待开发。继续工作台上传/下载等流程；当前资料编辑不代表SELF通用图片上传已完成。四类第三方真实接入保持暂缓，未部署或迁移业务库。本功能及测试文档作单独本地提交，不推送；原始uniapp.md改动保留。
+
+## [2026-10-24 19:25 ~ 19:49] 工作台文件上传、下载和目标归属
+
+### 意图
+
+补齐总表74、76，打通SELF教练图片上传，并防止上传到指定会员的附件被原后台或移动入口误绑给其他目标。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkFilesController.java`、`vo/GymMobileWorkFileUploadReqVO.java`、`service/mobile/GymMobileWorkFilesService.java` | 新增 | 两个目标路由、用途权限、内容校验、下载及字段白名单 |
+| `yudao-module-gym/.../dal/dataobject/mobile/GymMobileWorkFileDO.java`、对应Mapper、`service/file/GymWorkFileBindings.java` | 新增 | 租户内不可变上传用途及会员/员工目标 |
+| `yudao-module-gym/.../GymMemberRecordsService.java`、`GymTrainingPlanService.java`、`GymContractTemplateService.java`、`GymCoachPublicProfiles.java`、`GymEmployeeService.java`、`GymMobileCoachProfileService.java` | 修改 | 原绑定入口也检查新文件目标，教练图片不随账号重绑转移 |
+| `sql/gym/migration/mysql/V010__gym_mobile_work_file_targets.sql`、H2 schema/clean、迁移脚本及手册 | 新增/修改 | 64表、唯一目标和历史文件保留验证，下一版本V011 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkFilesControllerTest.java` | 修改/新增 | 九项业务回归及三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 53/135进度、用途权限和存储回滚边界 |
+
+### 结构关系
+
+文件功能权限与有效后台身份 → 用途对应业务/数据范围 → 实际内容检查 → 私有FileApi → gym_file和目标行同事务落库。原会员档案、教练资料和模板服务共享目标检查。下载按当前目标及绑定关系授权，不靠知道ID或曾上传过来绕过撤权。
+
+### 验证证据
+
+完整gym511项通过，member4通过/1既有禁用跳过；新增12项。Spotless、server依赖打包通过；真实隔离MySQL/Flyway42检查通过并清理测试库。源码审计53/135，余82项。MVC发现的header误绑定和缺少nosniff已修复并验证；日志见testing。
+
+### 影响面 / 风险
+
+部署须先执行V010；原附件绑定服务也依赖新表。新上传目标固定，历史文件不变。只有新工作台入口增加按本人教练身份上传图片的能力，不扩大原通用后台上传权限或自动授权角色。数据库回滚不删除外部已写入对象，孤立对象自动清理尚未实现；合同上传不表示签署成功。前端未修改。
+
+### 未做 / 后续
+
+49项新增实现、4项复用源码、82项待开发。继续工作台上下文、预约与其余内部流程；支付/自动续费、电子签约、门禁、监控实际接入继续暂缓。未部署或迁移业务库，本功能连同测试文档单独本地提交，不推送；原始uniapp.md改动保留。

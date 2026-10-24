@@ -800,8 +800,12 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/files",
       "description": "上传教练资料、体测报告、训练计划或合同文件",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesControllerTest.java"
+      ]
     },
     {
       "id": 75,
@@ -820,8 +824,12 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/files/{id}/content",
       "description": "下载工作台业务权限范围内的文件内容",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkFilesControllerTest.java"
+      ]
     },
     {
       "id": 77,

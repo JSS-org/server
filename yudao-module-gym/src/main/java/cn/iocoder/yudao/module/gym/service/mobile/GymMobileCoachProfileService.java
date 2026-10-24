@@ -80,6 +80,13 @@ public class GymMobileCoachProfileService {
         return new Owner(employee, stores);
     }
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public Long requireFileEmployee(Long storeId) {
+        var owner = owner(false);
+        if (!owner.stores().contains(storeId)) throw exception(STORE_NO_PERMISSION);
+        return owner.employee().getId();
+    }
+
     private GymPublicCoachProfileVO profile(GymEmployeeDO employee) {
         var result = profiles.read(employee);
         if (result == null) {
@@ -116,7 +123,7 @@ public class GymMobileCoachProfileService {
         if (req.isSpecialtiesPresent()) profile.setSpecialties(req.getSpecialties());
         if (req.isQualificationsPresent())
             profile.setQualificationFileIds(req.getQualificationFileIds());
-        String json = profiles.validateAndSerialize(profile, owner.stores());
+        String json = profiles.validateAndSerialize(profile, owner.stores(), employee.getId());
         for (Long id : ids(profile)) {
             var file = profiles.publicImage(employee, id);
             if (file == null

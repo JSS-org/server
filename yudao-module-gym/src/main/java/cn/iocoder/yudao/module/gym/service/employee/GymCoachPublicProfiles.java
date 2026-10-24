@@ -25,12 +25,14 @@ import java.util.*;
 @Service
 public class GymCoachPublicProfiles {
     @Resource private GymEmployeeMapper employees;
+    @Resource private cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings workFiles;
     @Resource private GymEmployeeStoreMapper employments;
     @Resource private GymFileMapper files;
     @Resource private GymBusinessClock clock;
     @Resource private Validator validator;
 
-    public String validateAndSerialize(GymPublicCoachProfileVO profile, Collection<Long> storeIds) {
+    public String validateAndSerialize(
+            GymPublicCoachProfileVO profile, Collection<Long> storeIds, Long employeeId) {
         var violations = validator.validate(profile);
         if (!violations.isEmpty()) throw new ConstraintViolationException(violations);
         if (profile.getSpecialties().stream().map(String::strip).distinct().count()
@@ -42,8 +44,9 @@ public class GymCoachPublicProfiles {
         if (Boolean.TRUE.equals(profile.getPublished())) {
             for (Long id : fileIds(profile)) {
                 var file = files.selectById(id);
-                if (!image(file) || !storeIds.contains(file.getStoreId()))
-                    throw exception(MOBILE_FILE_NOT_OWNED);
+                if (!image(file)
+                        || !storeIds.contains(file.getStoreId())
+                        || !workFiles.coach(id, employeeId)) throw exception(MOBILE_FILE_NOT_OWNED);
             }
         }
         return JsonUtils.toJsonString(profile);
@@ -79,7 +82,9 @@ public class GymCoachPublicProfiles {
     public GymFileDO publicImage(GymEmployeeDO employee, Long fileId) {
         if (fileId == null) return null;
         var file = files.selectById(fileId);
-        return currentImage(employee, file) ? file : null;
+        return currentImage(employee, file) && workFiles.coach(fileId, employee.getId())
+                ? file
+                : null;
     }
 
     private boolean currentImage(GymEmployeeDO employee, GymFileDO file) {
@@ -107,7 +112,8 @@ public class GymCoachPublicProfiles {
             if (profile != null
                     && Boolean.TRUE.equals(profile.getPublished())
                     && fileIds(profile).contains(file.getId())
-                    && currentImage(employee, file)) return true;
+                    && currentImage(employee, file)
+                    && workFiles.coach(file.getId(), employee.getId())) return true;
         }
         return false;
     }

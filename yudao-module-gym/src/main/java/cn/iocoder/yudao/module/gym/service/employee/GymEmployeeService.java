@@ -101,7 +101,8 @@ public class GymEmployeeService {
                             req.getPublicCoachProfile(),
                             req.getStoreAssignments().stream()
                                     .map(GymEmployeeSaveReqVO.StoreAssignment::getStoreId)
-                                    .toList()));
+                                    .toList(),
+                            null));
             employee.setCoachPublished(req.getPublicCoachProfile().getPublished());
         }
         try {
@@ -141,7 +142,8 @@ public class GymEmployeeService {
                             patch.getPublicCoachProfile(),
                             merged.getStoreAssignments().stream()
                                     .map(GymEmployeeSaveReqVO.StoreAssignment::getStoreId)
-                                    .toList()));
+                                    .toList(),
+                            id));
             update.setCoachPublished(patch.getPublicCoachProfile().getPublished());
         }
         try {

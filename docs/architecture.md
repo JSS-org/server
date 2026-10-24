@@ -510,3 +510,11 @@ AppGymCoachesController → GymMobileCoachService → 同一公开条件查询�
 GymMobileCoachProfileController认证 → GymMobileWorkAccess后台账号及唯一员工 → GymMobileCoachProfileService检查有效任职及教练资料/私教商品 → 稀疏字段合并。PATCH使用READ_COMMITTED和员工行锁，取得锁后核对账号绑定及有效状态，更新仅包含coach_profile和审计字段；不写发布标志、姓名、账号等员工字段。首次草稿沿用V009默认不公开，无新增DDL。
 
 本人Media使用同组鉴权预览辅助路由，读服务重查资料绑定、当前任职和image类别，再从FileApi取真实内容并校验魔数；不接入公开媒体query租户选择器。新关联文件须由本人后台账号上传，管理员原有绑定可保留；读取不要求扩大为整店文件权限。普通员工不因职位名称获得教练资料能力，通用工作台上传仍待完成。
+
+### 工作台文件上传用途与目标（2026-10-24）
+
+GymMobileWorkFilesController文件功能权限 → GymMobileWorkFilesService有效后台身份 → 按用途检查本人教练/会员/整店范围 → 类型和大小校验 → FileApi私有命名空间 → gym_file与V010 gym_mobile_work_file同事务持久化。请求头不作为multipart字段绑定，客户端不能指定上传人或员工。gym表数增至64。
+
+GymWorkFileBindings由移动文件服务及原体测、训练计划、公开教练资料、合同模板服务共用；新增上传不能换会员、换员工或将会员合同材料变为公共模板。历史文件无目标记录，原逻辑保持。下载区分未绑定材料与真实业务绑定，复用既有SELF范围检查；教练图片按员工而不是仅上传账号归属，账号重绑不能接管另一员工的图片。
+
+原上传入口和角色授权未变。事务只能回滚数据库元数据，外部FileApi已存对象需要另行清理；尚无自动清理接口。此边界有回滚测试，不能将数据库原子性表述为跨存储事务。

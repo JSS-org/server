@@ -723,3 +723,15 @@ MVC实际绑定五个公开路由及辅助媒体路由，检查匿名注解、�
 实际Spring方法安全代理验证三个入口拒绝匿名；MVC standalone验证GET/PATCH和辅助媒体路径、字段存在性、拒绝伪造身份/发布状态和超长请求、原始字节及no-store/nosniff、未找到404/非本人403。数据库、Mapper、事务及租户拦截为真实H2；账号API和存储仍mock，不等同部署过滤链与真实存储联调。首轮测试试图构造同租户重复账号绑定，被现有唯一索引拒绝；修正为验证约束拒绝，生产约束没有放宽。
 
 日志：`/tmp/uniapp-coach-self-final-tests.log`（19:22:34完成）、`/tmp/uniapp-coach-self-package.log`。Spotless及server依赖package通过（跳过测试）。无DDL或迁移变更，未重复执行MySQL迁移，上一批40项证据保留原批次归属；部署仍需V009。源码审计51/135，47项新增本地实现、4项复用源码、84项待开发。工作台文件上传/下载仍待补齐，未改前端或原上传授权。
+
+## 2026-10-24 工作台文件与不可变上传目标
+
+总表74、76实现。最终执行上述reactor `spotless:apply spotless:check test`、选择器`Gym*Test,MemberAuth*Test,MemberUser*Test`和显式Mockito javaagent：gym **511项通过、0失败/错误/跳过**，member所选4通过/1既有禁用跳过。组织服务新增9项后共275项，工作台文件MVC3项，共增加12项。
+
+验证SELF教练上传→本人资料绑定→私有预览闭环；固定员工目标和账号重绑拒绝；文件功能权限及业务权限同时要求，真实Controller代理拒绝无功能权，非法令牌/租户和缺失目标拒绝。体测/训练记录通过原业务服务绑定，其他会员（包括整店管理员尝试）被拒绝；报告上传人取消负责关系后失去下载权，另一负责员工在绑定前不可读、绑定后可读。会员合同材料不能作为公共模板，无会员模板材料需整店权限；上传不写签署状态。类型魔数、声明不匹配、大小、文件名清理、随机存储名、缺失/类型不符的下载、历史文件范围均覆盖。
+
+MVC验证multipart参数、伪造上传人/员工/类别/租户拒绝、缺失文件/非法用途/门店/会员、HTTP头不能代替表单门店、二进制响应及no-store/nosniff、404/403。HTTP测试发现当前Spring扩展绑定器会加入请求头，已在该Controller关闭header绑定并保留表单白名单；补上下载nosniff。首轮两条业务断言缺少带参数错误文案，修正断言后通过。
+
+真实H2事务测试还验证后续回滚同时移除gym_file及目标行，但mock外部存储对象仍存在，自动孤立对象清理未实现。功能和数据授权用真实业务服务与权限代理，账号/存储API仍mock；没有做部署HTTP和真实存储联调。
+
+真实MySQL/Flyway隔离回归 **42项通过**：64张gym表、tenant_id/file_id唯一目标、历史文件不补造目标且保留元数据；随机库全部清理，未迁移业务库。日志：`/tmp/uniapp-work-files-final-tests.log`（19:46:06）、`/tmp/uniapp-work-files-migrations.log`、`/tmp/uniapp-work-files-package.log`。Spotless及server依赖package成功（跳过测试）。源码审计53/135，49项新增本地实现、4项复用源码、82项待开发。

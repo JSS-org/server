@@ -112,6 +112,10 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService.class,
     GymStoreService.class,
     GymEmployeeService.class,
+    cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings.class,
+    cn.iocoder.yudao.module.gym.service.file.GymFileServiceImpl.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkFilesService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkFilesController.class,
     cn.iocoder.yudao.module.gym.service.employee.GymCoachPublicProfiles.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachProfileService.class,
@@ -125,6 +129,13 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkFilesService workFiles;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkFilesController
+            workFilesController;
+
+    @MockitoBean cn.iocoder.yudao.module.system.api.dept.DeptApi fileDepartments;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachProfileService coachSelf;
 
     @Resource
@@ -10602,5 +10613,398 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         loginAs(91L);
         assertEquals("并发介绍", coachSelf.get().introduction());
         assertEquals(List.of("并发特长"), coachSelf.get().specialties());
+    }
+
+    void workFilePermissions(Long user) {
+        for (String p :
+                List.of(
+                        "gym:files:upload",
+                        "gym:files:read",
+                        "gym:measurements:write",
+                        "gym:measurements:read",
+                        "gym:contracts:write",
+                        "gym:contracts:read",
+                        "gym:contracts:templates"))
+            when(permissions.hasAnyPermissions(eq(user), eq(p))).thenReturn(true);
+    }
+
+    void workFileStorage() {
+        var contents = new java.util.concurrent.ConcurrentHashMap<String, byte[]>();
+        when(fileApi.createFile(
+                        any(byte[].class),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        nullable(Long.class)))
+                .thenAnswer(
+                        inv -> {
+                            String url = "private-work:" + inv.getArgument(1);
+                            contents.put(url, inv.getArgument(0));
+                            return url;
+                        });
+        when(fileApi.getFileContentByUrl(startsWith("private-work:")))
+                .thenAnswer(inv -> contents.get(inv.getArgument(0)));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkFileUploadReqVO
+            workFileRequest(String purpose, Long member) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo
+                        .GymMobileWorkFileUploadReqVO();
+        req.setPurpose(purpose);
+        req.setStoreId(101L);
+        req.setMemberId(member);
+        byte[] content =
+                "contract".equals(purpose)
+                        ? "%PDF-1.7\nwork-file".getBytes(java.nio.charset.StandardCharsets.UTF_8)
+                        : new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2};
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file",
+                        "contract".equals(purpose) ? "doc.pdf" : "photo.png",
+                        "contract".equals(purpose) ? "application/pdf" : "image/png",
+                        content));
+        return req;
+    }
+
+    @Test
+    void workCoachUploadUsesOwnEmployeeTargetAndCompletesSelfPhotoFlowWithoutStoreWriteScope() {
+        stores.create(store(101L, "A"));
+        Long coach = selfCoach(91L, false);
+        selfCoach(92L, false);
+        workFileStorage();
+        workFilePermissions(91L);
+        personalScope(91L);
+        var req = workFileRequest("coach_profile", null);
+        var result = workFiles.upload(req);
+        Long id = Long.valueOf(result.fileId());
+        var row = files.selectById(id);
+        assertEquals(91L, row.getUploaderId());
+        assertEquals("image", row.getCategory());
+        var link =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper
+                                        .class)
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileWorkFileDO
+                                        ::getFileId,
+                                id);
+        assertEquals(coach, link.getEmployeeId());
+        assertNull(link.getMemberId());
+        assertNotNull(workFiles.content(id));
+        assertServiceException(() -> coachSelf.content(id), MOBILE_FILE_NOT_OWNED);
+        var patch = selfCoachPatch();
+        patch.setAvatarFileId(id);
+        coachSelf.patch(patch);
+        assertNotNull(coachSelf.content(id));
+        assertServiceException(() -> publicContent.mediaContent(id), FILE_NOT_EXISTS);
+        workFilePermissions(92L);
+        personalScope(92L);
+        assertServiceException(() -> workFiles.content(id), MOBILE_FILE_NOT_OWNED);
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result)
+                        .contains("private-work"));
+    }
+
+    @Test
+    void workReportUploadKeepsTargetThroughBindingAndRevocationEvenForOriginalUploader() {
+        Long member = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000988")).getId());
+        Long coach = responsibleEmployee(91L), second = responsibleEmployee(92L);
+        memberCoaches.replace(member, 101L, responsibility(coach, second));
+        memberCoaches.replace(other, 101L, responsibility(coach));
+        workFileStorage();
+        workFilePermissions(91L);
+        workFilePermissions(92L);
+        personalScope(91L);
+        Long report =
+                Long.valueOf(workFiles.upload(workFileRequest("body_report", member)).fileId());
+        assertNotNull(workFiles.content(report));
+        personalScope(92L);
+        assertServiceException(() -> workFiles.content(report), MOBILE_FILE_NOT_OWNED);
+        personalScope(91L);
+        var wrong = workMeasurement(other);
+        wrong.setReportFileId(report);
+        assertServiceException(
+                () -> workRecords.createMeasurement(wrong, "wrong-upload-target"),
+                MEASUREMENT_FILE_INVALID);
+        var good = workMeasurement(member);
+        good.setReportFileId(report);
+        workRecords.createMeasurement(good, "same-upload-target");
+        personalScope(92L);
+        assertNotNull(workFiles.content(report));
+        headquarters();
+        memberCoaches.replace(member, 101L, responsibility(second));
+        personalScope(91L);
+        assertServiceException(() -> workFiles.content(report), STORE_NO_PERMISSION);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                STORE_NO_PERMISSION);
+        headquarters();
+        loginAs(1L);
+        workFilePermissions(1L);
+        assertServiceException(
+                () -> workRecords.createMeasurement(wrong, "broad-wrong-upload-target"),
+                MEASUREMENT_FILE_INVALID);
+    }
+
+    @Test
+    void workTrainingUploadCannotBeRepurposedForAnotherMemberThroughLegacyBinding() {
+        Long member = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000987")).getId());
+        workFileStorage();
+        workFilePermissions(1L);
+        Long file =
+                Long.valueOf(workFiles.upload(workFileRequest("training_plan", member)).fileId());
+        var wrong = workPlan(other);
+        wrong.setFileId(file);
+        assertServiceException(
+                () -> workRecords.createPlan(wrong, "wrong-training-file"),
+                TRAINING_PLAN_FILE_INVALID);
+        var good = workPlan(member);
+        good.setFileId(file);
+        workRecords.createPlan(good, "good-training-file");
+        assertNotNull(workFiles.content(file));
+        when(permissions.hasAnyPermissions(eq(1L), eq("gym:measurements:read"))).thenReturn(false);
+        assertServiceException(
+                () -> workFiles.content(file),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+    }
+
+    @Test
+    void workContractMemberUploadsStayPrivateAndCannotBecomeSharedTemplates() {
+        Long member = workMember();
+        workFileStorage();
+        workFilePermissions(1L);
+        Long privatePdf =
+                Long.valueOf(workFiles.upload(workFileRequest("contract", member)).fileId());
+        assertNotNull(workFiles.content(privatePdf));
+        assertServiceException(
+                () -> contractTemplates.create(contractTemplate(privatePdf)),
+                CONTRACT_TEMPLATE_FILE_INVALID);
+        Long templatePdf =
+                Long.valueOf(workFiles.upload(workFileRequest("contract", null)).fileId());
+        assertNotNull(contractTemplates.create(contractTemplate(templatePdf)).getId());
+        assertNotNull(workFiles.content(templatePdf));
+        var png = workFileRequest("contract", null);
+        png.setFile(workFileRequest("coach_profile", null).getFile());
+        assertServiceException(() -> workFiles.upload(png), FILE_TYPE_NOT_ALLOWED, "文件内容不符合用途要求");
+        personalScope(91L);
+        workFilePermissions(91L);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("contract", null)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void workFileFunctionPermissionsAndBusinessPermissionsAreBothRequiredAndTokenTypeChecked()
+            throws Exception {
+        Long member = workMember();
+        workFileStorage();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        workFilesController.upload(
+                                workFileRequest("body_report", member),
+                                new org.springframework.validation.BeanPropertyBindingResult(
+                                        workFileRequest("body_report", member), "file")));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        workFilesController.content(
+                                1L, new org.springframework.mock.web.MockHttpServletResponse()));
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        when(permissions.hasAnyPermissions(eq(1L), eq("gym:files:upload"))).thenReturn(true);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants
+                        .FORBIDDEN);
+        workFilePermissions(1L);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", null)),
+                MOBILE_REQUEST_INVALID);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("coach_profile", member)),
+                MOBILE_REQUEST_INVALID);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () -> workFiles.upload(workFileRequest("body_report", member)),
+                MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workFiles.content(1L), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        verify(fileApi, never())
+                .createFile(
+                        any(byte[].class),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        nullable(Long.class));
+    }
+
+    @Test
+    void workUploadsValidateMagicDeclaredTypeByteSizeAndUseUniqueSafeStorageNames() {
+        stores.create(store(101L, "A"));
+        selfCoach(91L, false);
+        workFilePermissions(91L);
+        workFileStorage();
+        personalScope(91L);
+        var req = workFileRequest("coach_profile", null);
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file",
+                        "face.png",
+                        "image/png",
+                        "%PDF-1.7\nnot a photo".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        assertServiceException(() -> workFiles.upload(req), FILE_TYPE_NOT_ALLOWED, "文件内容不符合用途要求");
+        var original = workFileRequest("coach_profile", null).getFile();
+        byte[] png;
+        try {
+            png = original.getBytes();
+        } catch (java.io.IOException e) {
+            throw new AssertionError(e);
+        }
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "face.pdf", "application/pdf", png));
+        assertServiceException(() -> workFiles.upload(req), FILE_TYPE_NOT_ALLOWED, "文件声明类型与内容不一致");
+        var oversized = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(oversized.getSize()).thenReturn(5L * 1024 * 1024 + 1);
+        req.setFile(oversized);
+        assertServiceException(
+                () -> workFiles.upload(req),
+                FILE_SIZE_EXCEED_LIMIT,
+                "coach_profile",
+                5L * 1024 * 1024,
+                5L * 1024 * 1024 + 1);
+        req.setFile(
+                new org.springframework.mock.web.MockMultipartFile(
+                        "file", "../photo\r\n.png", "image/png", png));
+        var a = workFiles.upload(req);
+        var b = workFiles.upload(req);
+        assertEquals("photo.png", a.name());
+        assertNotEquals(a.fileId(), b.fileId());
+        assertNotEquals(
+                files.selectById(Long.valueOf(a.fileId())).getUrl(),
+                files.selectById(Long.valueOf(b.fileId())).getUrl());
+        when(fileApi.getFileContentByUrl(files.selectById(Long.valueOf(a.fileId())).getUrl()))
+                .thenReturn(new byte[] {1, 2});
+        assertServiceException(() -> workFiles.content(Long.valueOf(a.fileId())), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void workUploadStorageFailureLeavesNoMetadataAndHistoricalFilesKeepTheirOriginalScope() {
+        Long member = workMember();
+        workFilePermissions(1L);
+        workFileStorage();
+        when(fileApi.createFile(
+                        any(byte[].class),
+                        anyString(),
+                        anyString(),
+                        anyString(),
+                        nullable(Long.class)))
+                .thenThrow(new IllegalStateException("storage offline"));
+        long before = files.selectCount();
+        assertThrows(
+                IllegalStateException.class,
+                () -> workFiles.upload(workFileRequest("body_report", member)));
+        assertEquals(before, files.selectCount());
+        assertEquals(
+                0L,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper
+                                        .class)
+                        .selectCount());
+        var old = publicImage(101L);
+        old.setCategory("body_report");
+        files.updateById(old);
+        assertNotNull(workFiles.content(old.getId()));
+        personalScope(91L);
+        workFilePermissions(91L);
+        assertServiceException(
+                () -> workFiles.content(old.getId()), FILE_STORE_NO_PERMISSION, 101L);
+        loginAs(1L);
+        headquarters();
+        TenantContextHolder.setTenantId(2L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        assertServiceException(() -> workFiles.content(old.getId()), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoachFileTargetSurvivesAccountRebindingAndCannotBePublishedAsAnotherEmployee() {
+        stores.create(store(101L, "A"));
+        Long first = selfCoach(91L, false), second = selfCoach(92L, false);
+        workFileStorage();
+        workFilePermissions(91L);
+        personalScope(91L);
+        Long file = Long.valueOf(workFiles.upload(workFileRequest("coach_profile", null)).fileId());
+        loginAs(1L);
+        headquarters();
+        var adminPatch = new GymEmployeeSaveReqVO();
+        adminPatch.setPublicCoachProfile(coachProfile(file));
+        assertServiceException(() -> employees.patch(second, adminPatch), MOBILE_FILE_NOT_OWNED);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var old = mapper.selectById(first);
+        old.setUserId(93L);
+        mapper.updateById(old);
+        var moved = mapper.selectById(second);
+        moved.setUserId(91L);
+        mapper.updateById(moved);
+        personalScope(91L);
+        assertServiceException(() -> workFiles.content(file), MOBILE_FILE_NOT_OWNED);
+        var patch = selfCoachPatch();
+        patch.setAvatarFileId(file);
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+    }
+
+    @Test
+    void workUploadMetadataAndTargetRollbackTogetherWhileExternalBlobNeedsSeparateCleanup() {
+        Long member = workMember();
+        workFilePermissions(1L);
+        workFileStorage();
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        long before = files.selectCount();
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        tx.execute(
+                                status -> {
+                                    workFiles.upload(workFileRequest("body_report", member));
+                                    throw new IllegalStateException("later business rollback");
+                                }));
+        assertEquals(before, files.selectCount());
+        assertEquals(
+                0L,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper
+                                        .class)
+                        .selectCount());
+        var name = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(fileApi)
+                .createFile(
+                        any(byte[].class),
+                        name.capture(),
+                        eq("gym/body_report"),
+                        eq("image/png"),
+                        nullable(Long.class));
+        assertNotNull(fileApi.getFileContentByUrl("private-work:" + name.getValue()));
+        assertNotNull(workFiles.upload(workFileRequest("body_report", member)).fileId());
     }
 }

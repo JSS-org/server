@@ -15,6 +15,7 @@ python script/jss/verify_promotion_content_schema.py
 python script/jss/verify_promotion_content_mappers.py
 python script/jss/verify_promotion_campaign_schema.py
 python script/jss/verify_promotion_campaign_mappers.py
+python script/jss/verify_trade_schema.py
 python script/jss/verify_migrations.py
 python script/jss/mysql_sandbox.py stop
 ```
@@ -32,6 +33,8 @@ python script/jss/mysql_sandbox.py stop
 `verify_product_mappers.py` 在随机库准备 V001/V003/V007，显式运行 `JssProductMySqlMapperIT` 并核对五项测试确实执行、无跳过且无失败。测试使用生产 Mapper、JSON/CSV 类型处理器、租户拦截器和审计字段填充器，核验自定义查询/逻辑删除也保持租户隔离、并发库存修改，以及商品评价 SKU 属性往返。默认单元测试不连接 MySQL；该集成测试只接受独立命名的测试 URL，由包装脚本核验实例后提供凭证，结束删除随机 schema。测试日志位于忽略目录 `.runtime/jss-mysql/product-mapper-test.log`。
 
 数据目录保留供后续同一任务重启，工具不会递归删除数据库文件。现有数据目录配置不同或初始化不完整时停止并要求检查，不自动覆盖。
+
+`verify_trade_schema.py` 覆盖 V008 的 15 个交易模型，包括售后引用的限定嵌套属性类型。八项检查核验无业务种子、购物车有效归属键、每租户交易配置、配送 CSV/小数计费/营业 TIME、订单与售后 JSON 快照及空业务时间、佣金成员 ID/有符号冲正、审计文本。不会生成实际订单、物流、佣金或核销码，也不连接支付渠道；真实下单和退款跨表事务仍需应用联调。
 
 `verify_promotion_content_schema.py` 验证 V005 的七个内容/装修/客服模型：并发启用时每租户只有一个使用中的模板、独立页面命名与模板页面互不干扰、逻辑删除后名称释放、CSV 预览图及文本正文格式、客服会话唯一归属、隐藏会话保留身份、未读计数 SQL。不会发布装修内容或连接聊天 WebSocket；内容接口和完整客服权限仍需应用联调。
 

@@ -496,8 +496,13 @@
       "method": "GET",
       "path": "/app-api/gym/me/attendance-summary",
       "description": "获取本人月度签到次数、活跃天数及门店排名",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymAttendanceController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileAttendanceService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileAttendanceControllerTest.java"
+      ]
     },
     {
       "id": 44,

@@ -2365,3 +2365,36 @@ gym549项全部通过，member4通过/1既有禁用跳过；Spotless与server依
 ### 未做 / 后续
 
 58项新增本地实现、4项复用源码、73项待开发；月度签到汇总等继续推进。四类第三方实际接入仍暂缓，真实扫码页面与部署密钥未配置，业务库未迁移。本功能和测试文档独立本地提交，不推送；原始uniapp.md与暂存状态保留。
+
+## [2026-10-24 20:43 ~ 20:55] 会员月度签到汇总与本人排名
+
+### 意图
+
+补齐总表43，向本人返回指定门店月份的真实成功签到次数、活跃天数、参与人数及排名，明确零签到和同分口径。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymAttendanceController.java`、`GymMobileAttendanceVO.java` | 新增 | 认证月度读取、月份/门店参数与五项聚合响应 |
+| `yudao-module-gym/.../GymMobileAttendanceService.java` | 新增 | 本人身份、当前关系或本人历史授权、上海逐日边界和只读快照 |
+| `yudao-module-gym/.../GymMobileAttendanceMapper.java`、`GymMobileAttendanceAggregate.java` | 新增 | SQL去重活跃日及同店竞争排名，不返回其他会员身份 |
+| `GymOrganizationServiceTest.java`、`GymMobileAttendanceControllerTest.java` | 修改/新增 | 五项真实数据库业务测试及两项MVC |
+| `docs/uniapp/uniapp-api.md`、`uniapp-api-summary.md`、`uniapp-implementation.md`、`api-implementation.json` | 修改 | 明确统计口径，进度63/135 |
+| `docs/architecture.md`、`docs/testing.md` | 修改 | 查询链路、时间边界、验证命令和实际结果 |
+
+### 结构关系
+
+Controller经会员身份校验进入月度服务；门店关系或本人成功历史提供读取资格。Java按Asia/Shanghai计算各日边界，Mapper在同一只读事务快照中聚合本人签到和门店参与人数；无新表、权限或写入流程。
+
+### 验证证据
+
+gym556项、member4项通过，1项既有禁用跳过；Spotless和server依赖打包通过。新增7项覆盖竞争排名、零值、时间边界、1991夏令时、历史访问、账号/租户隔离及响应字段。源码审计63/135，余72项。具体命令、日志和测试夹具ID类型修正见testing本批记录。
+
+### 影响面 / 风险
+
+查询月份1900–9999年，未来月先鉴权再返回零值。成功签到按记录条数及上海自然日分别计数，停用但未删除会员仍参与历史排名；没有本人签到时rank为空。仅输出本人排名和人数，updatedAt是计算时刻。无DDL；聚合查询性能尚未在部署MySQL大数据量验证，前端未修改。
+
+### 未做 / 后续
+
+59项新增本地实现、4项复用源码、72项待开发，继续其他内部接口。支付/自动续费、电子签约、门禁设备和监控真实接入保持暂缓。没有推送或迁移业务库；本批独立本地提交，保留用户原始uniapp.md及暂存状态。

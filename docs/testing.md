@@ -812,3 +812,21 @@ git diff --check
 新增真实Mapper/事务测试覆盖短时签名、未配置、TTL窗口裁剪、等于过期边界、租户签名、本人/他人预约、错绑定与预约版本、缺签到不补造、当前签发负责关系撤销、原键重试和新键过期拒绝。人工与扫码混合并发、两次扫码并发均只产生一条课消、只扣一次并保留首次来源。通过二维码使用列失败约束验证课消、预占/余额、预约状态、幂等结果与使用记录一起回滚。MVC验证严格字段、键、ID、长度、错误信封及访问日志正文禁用注解。
 
 原后台人工确认改为共享服务后全部gym回归通过，新增同预约签到关联校验；原卡/课包及不限次数余额行为保留。首轮新增测试用Instant.parse读取省略秒的合法偏移时间失败两项，改为OffsetDateTime解析后通过，业务时间字段格式未改变。MySQL验证覆盖迁移元数据/精度/唯一索引和历史接管，不代表已在生产MySQL验证Java并发。真实账号、扫码页面、设备联调及签名密钥部署尚未执行。
+
+## 2026-10-24 会员月度签到汇总
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym **556项通过**（组织服务307项，新增5项月度统计业务；新MVC2项），member状态4通过/1既有禁用跳过，均无失败/错误。Spotless及server依赖打包通过，打包命令跳过测试。源码映射 **63/135**，余72项。日志：`/tmp/uniapp-attendance-final-tests.log`、`/tmp/uniapp-attendance-package.log`；专项7项先通过，日志`/tmp/uniapp-attendance-focused.log`。
+
+真实H2/Mapper/租户拦截器验证多次签到与自然日去重、同分竞争排名、零签到/空月/未来月、失败/删除/孤立档案/跨租户/其他门店/未来事件排除、停用会员的历史参与。边界覆盖上海月初与下月月初、2024闰年二月、1991夏令时午夜。关系删除后无历史不能读取，有本人成功历史仍能读取；未来月也先鉴权。错误账号类型、停用账号/会员、租户不匹配和匿名方法调用拒绝。
+
+MVC验证必填月份/门店、非法月份和ID、仅五个聚合响应字段，客户端memberId不能选择统计主体。最初测试夹具误用旧后台String类型会员ID，修正为Long后专项及完整回归通过，未改变业务ID契约。本批无DDL，不重跑既有V011迁移回归，不迁移业务库；MySQL实际查询性能与部署HTTP、门禁设备联调未验证，前端未修改。

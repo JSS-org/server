@@ -546,3 +546,9 @@ Gym上下文在只读事务内读取当前有效员工、整店范围、有效SE
 会员确认Controller → 已绑定会员本人预约 → 幂等请求锁 → 签名验证 → 排期/预约/二维码锁 → 精确绑定、签发人当前权限及时间窗 → GymLessonConfirmationService。原GymCourseService.confirmLesson保留原后台鉴权和锁顺序，也委托该共享服务。共享层检查同预约/会员/店签到、课程当日、禁入和真实权益，扣课/释放预占、保存余额和首次source、更新状态，重复合法确认读原记录。二维码使用行及幂等结果同事务提交。
 
 GymMobileLessonProperties绑定TTL/窗口/密钥，GymMobileLessonToken使用HMAC-SHA256与常量时间比较，密钥不提供默认后备值。两个HTTP入口禁记访问日志正文；发码幂等记录保留原token用于重试。没有设备刷脸调用共享服务，部署配置和迁移要求见脚本手册。
+
+## 会员月度签到聚合（2026-10-24 增量）
+
+`AppGymAttendanceController → GymMobileAttendanceService → GymMobileIdentityService`校验会员身份，再以当前门店关系或本人既往成功签到授权读取。该只读入口不借门店排名暴露其他会员档案，也不依赖仍有效的卡或营业状态。
+
+`GymMobileAttendanceMapper`在数据库中按租户/门店/月份和当前时间筛成功记录，关联同租户未删除会员，聚合本人次数、活跃天数与高于本人的参与人数。`Asia/Shanghai`逐日边界由Java生成并绑定SQL参数，历史夏令时不依赖MySQL时区表。本人聚合和排名聚合共享只读REPEATABLE_READ快照；没有新表、权限码、缓存或后台写流程改动。

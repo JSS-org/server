@@ -49,6 +49,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileAttendanceService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymAttendanceController.class,
     cn.iocoder.yudao.module.gym.service.course.GymLessonConfirmationService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonToken.class,
@@ -143,6 +145,12 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileAttendanceService attendance;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymAttendanceController
+            attendanceController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonService mobileLessons;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonToken lessonTokens;
 
@@ -12464,5 +12472,207 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                         .selectById(booking.getMemberCoursePackId());
         assertEquals(1, pack.getRemainingSessions());
         assertEquals(0, pack.getReservedSessions());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileAttendanceVO.Request
+            attendanceRequest(Long store, String month) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileAttendanceVO
+                        .Request();
+        req.setStoreId(store);
+        req.setMonth(month);
+        return req;
+    }
+
+    Long attendanceMember() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        qrMemberIdentity(member);
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T12:00:00Z"));
+        return member;
+    }
+
+    Long attendanceEntry(Long member, Long store, java.time.Instant at, String status) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO();
+        row.setMemberId(member);
+        row.setStoreId(store);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        row.setBookingId(100000L + mapper.selectCount());
+        row.setEnteredAt(at);
+        row.setStatus(status);
+        row.setMethod("manual");
+        row.setVisitorType("member");
+        mapper.insert(row);
+        return row.getId();
+    }
+
+    java.time.Instant attendanceDay(int day) {
+        return LocalDate.of(2026, 10, day)
+                .atStartOfDay(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                .toInstant();
+    }
+
+    @Test
+    void attendanceCountsVisitsDistinctDaysAndCompetitionRankWithoutOtherIdentities() {
+        var own = attendanceMember();
+        var ahead = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var tied = Long.valueOf(members.create(member(101L, "13800002403")).getId());
+        var below = Long.valueOf(members.create(member(101L, "13800002404")).getId());
+        for (int day = 1; day <= 3; day++)
+            attendanceEntry(ahead, 101L, attendanceDay(day), "succeeded");
+        for (Long id : List.of(own, tied))
+            for (int day = 1; day <= 2; day++)
+                attendanceEntry(id, 101L, attendanceDay(day), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(1).plusSeconds(1), "succeeded");
+        attendanceEntry(below, 101L, attendanceDay(1), "succeeded");
+        qrMemberLogin();
+        var result = attendanceController.get(attendanceRequest(101L, "2026-10")).getData();
+        assertEquals(3, result.checkinCount());
+        assertEquals(2, result.activeDays());
+        assertEquals(2L, result.rank());
+        assertEquals(4, result.rankingPopulation());
+        assertEquals("2026-10-24T20:00+08:00", result.updatedAt());
+        attendanceEntry(tied, 101L, attendanceDay(3), "succeeded");
+        assertEquals(3L, attendance.get(attendanceRequest(101L, "2026-10")).rank());
+        attendanceEntry(own, 101L, attendanceDay(3), "succeeded");
+        assertEquals(1L, attendance.get(attendanceRequest(101L, "2026-10")).rank());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("memberId"));
+        assertFalse(json.contains("138000"));
+    }
+
+    @Test
+    void attendanceExcludesFailedDeletedFutureOtherStoreOrTenantAndOrphanRows() {
+        var own = attendanceMember();
+        var inactive = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var deleted = Long.valueOf(members.create(member(101L, "13800002403")).getId());
+        var mm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper.class);
+        var row = mm.selectById(inactive);
+        row.setStatus("inactive");
+        mm.updateById(row);
+        mm.deleteById(deleted);
+        attendanceEntry(own, 101L, attendanceDay(1), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(1).minusSeconds(1), "succeeded");
+        attendanceEntry(own, 101L, java.time.Instant.parse("2026-10-31T16:00:00Z"), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(25), "succeeded");
+        attendanceEntry(own, 101L, attendanceDay(2), "failed");
+        attendanceEntry(own, 102L, attendanceDay(2), "succeeded");
+        var erased = attendanceEntry(own, 101L, attendanceDay(3), "succeeded");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                .deleteById(erased);
+        attendanceEntry(inactive, 101L, attendanceDay(1), "succeeded");
+        attendanceEntry(deleted, 101L, attendanceDay(1), "succeeded");
+        attendanceEntry(999999L, 101L, attendanceDay(1), "succeeded");
+        TenantContextHolder.setTenantId(2L);
+        attendanceEntry(own, 101L, attendanceDay(4), "succeeded");
+        TenantContextHolder.setTenantId(1L);
+        qrMemberLogin();
+        var r = attendance.get(attendanceRequest(101L, "2026-10"));
+        assertEquals(1, r.checkinCount());
+        assertEquals(1, r.activeDays());
+        assertEquals(1L, r.rank());
+        assertEquals(2, r.rankingPopulation());
+    }
+
+    @Test
+    void attendanceUsesShanghaiLeapMonthAndHistoricalDaylightSavingBoundaries() {
+        var own = attendanceMember();
+        var zone = cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE;
+        var leap = LocalDate.of(2024, 2, 29).atStartOfDay(zone).toInstant();
+        attendanceEntry(own, 101L, leap, "succeeded");
+        attendanceEntry(own, 101L, leap.plusSeconds(86399), "succeeded");
+        attendanceEntry(own, 101L, leap.plusSeconds(86400), "succeeded");
+        var historic = LocalDate.of(1991, 6, 2).atStartOfDay(zone).toInstant();
+        attendanceEntry(own, 101L, historic.minusSeconds(1), "succeeded");
+        attendanceEntry(own, 101L, historic, "succeeded");
+        qrMemberLogin();
+        var r = attendance.get(attendanceRequest(101L, "2024-02"));
+        assertEquals(2, r.checkinCount());
+        assertEquals(1, r.activeDays());
+        r = attendance.get(attendanceRequest(101L, "1991-06"));
+        assertEquals(2, r.checkinCount());
+        assertEquals(2, r.activeDays());
+    }
+
+    @Test
+    void attendanceHasNoRankWithoutOwnVisitsAndRequiresStoreAccessEvenForFutureMonths() {
+        var own = attendanceMember();
+        var other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        attendanceEntry(other, 101L, attendanceDay(1), "succeeded");
+        qrMemberLogin();
+        var r = attendance.get(attendanceRequest(101L, "2026-10"));
+        assertEquals(0, r.checkinCount());
+        assertNull(r.rank());
+        assertEquals(1, r.rankingPopulation());
+        r = attendance.get(attendanceRequest(101L, "2026-09"));
+        assertEquals(0, r.checkinCount());
+        assertEquals(0, r.activeDays());
+        assertNull(r.rank());
+        assertEquals(0, r.rankingPopulation());
+        r = attendance.get(attendanceRequest(101L, "9999-12"));
+        assertEquals(0, r.rankingPopulation());
+        assertNull(r.rank());
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(102L, "9999-12")), STORE_NO_PERMISSION);
+        var ms =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class);
+        ms.delete(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<
+                                cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO>()
+                        .eq(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO
+                                        ::getMemberId,
+                                own));
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), STORE_NO_PERMISSION);
+        attendanceEntry(own, 101L, attendanceDay(1), "succeeded");
+        assertEquals(1, attendance.get(attendanceRequest(101L, "2026-10")).checkinCount());
+    }
+
+    @Test
+    void attendanceRejectsInvalidMonthsIdsAccountsAndAnonymousAccess() {
+        var own = attendanceMember();
+        qrMemberLogin();
+        for (String month : List.of("2026-13", "2026-1", "abcd-10", "2026-10-01"))
+            assertThrows(
+                    ConstraintViolationException.class,
+                    () -> attendance.get(attendanceRequest(101L, month)));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> attendance.get(attendanceRequest(0L, "2026-10")));
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "1899-12")), BUSINESS_DATE_INVALID);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        loginAs(1L);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        memberAccounts.getUser(50L).setStatus(1);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        memberAccounts.getUser(50L).setStatus(0);
+        var mm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper.class);
+        var row = mm.selectById(own);
+        row.setStatus("inactive");
+        mm.updateById(row);
+        assertServiceException(
+                () -> attendance.get(attendanceRequest(101L, "2026-10")), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> attendanceController.get(attendanceRequest(101L, "2026-10")));
     }
 }

@@ -205,4 +205,18 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_070_022_006, "美团核销、撤销与退款请求尚未启用");
     ErrorCode GROUP_BUY_PROVIDER_RESULT_UNKNOWN =
             new ErrorCode(1_070_022_007, "美团操作结果未确认，请先查询券或退款状态，勿直接重复操作");
+
+    // ========== 小程序身份与契约 1-070-023 ==========
+    ErrorCode MOBILE_IDENTITY_REQUIRED = new ErrorCode(1_070_023_001, "请先完成会员档案初始化");
+    ErrorCode MOBILE_IDENTITY_INVALID = new ErrorCode(1_070_023_002, "会员账号不可用或手机号尚未验证");
+    ErrorCode MOBILE_IDENTITY_CONFLICT = new ErrorCode(1_070_023_003, "该会员档案已关联其他账号，请联系门店核实");
+    ErrorCode MOBILE_IDEMPOTENCY_CONFLICT = new ErrorCode(1_070_023_004, "幂等键对应的请求内容已变化");
+    ErrorCode MOBILE_REQUEST_INVALID = new ErrorCode(1_070_023_005, "小程序请求参数不合法");
+    ErrorCode MOBILE_PHONE_IMMUTABLE = new ErrorCode(1_070_023_006, "小程序不允许修改手机号");
+    ErrorCode MOBILE_FILE_NOT_OWNED = new ErrorCode(1_070_023_007, "无权使用该文件或文件用途不符");
+    ErrorCode MOBILE_BOOKING_TIME_CONFLICT = new ErrorCode(1_070_023_008, "该会员在此时间已有预约");
+    ErrorCode MOBILE_CANCEL_DEADLINE_PASSED = new ErrorCode(1_070_023_009, "已超过自助取消截止时间，请联系门店处理");
+    ErrorCode MOBILE_VERSION_CONFLICT = new ErrorCode(1_070_023_010, "负责关系已发生变化，请刷新后重试");
+    ErrorCode MOBILE_EMPLOYEE_REQUIRED = new ErrorCode(1_070_023_011, "当前账号须关联唯一的在职员工档案");
+    ErrorCode MOBILE_PRODUCT_NOT_AVAILABLE = new ErrorCode(1_070_023_012, "商品不存在或未公开发售");
 }

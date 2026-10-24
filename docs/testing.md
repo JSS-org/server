@@ -542,3 +542,9 @@ Spotless apply/check检查7,726个Java文件通过、0改动；33个Python源文
 - 使用 Python `pathlib` / 正则逐项检查两份新文档：9 个相对文件链接全部存在，代码围栏成对且文件以换行结束。
 - 核对文档中的数据库子命令与 `script/gym/database.py`；实际执行 `bash script/gym/db.sh --help`、`bash script/gym/seed.sh --help` 均退出 0，未连接数据库。
 - `git diff --check` 通过。本轮无 Java 或 SQL 修改，无需重新运行 Java 格式化和数据库集成回归；此前迁移回归证据见上节。
+
+## 2026-10-24 商城日统计结构与完整迁移链
+
+- `python script/jss/verify_statistics_schema.py`：在拥有的 MySQL 8.4.9 隔离实例（13316）创建随机库，四项通过后清理自己的库。覆盖两个当前 DO 全部持久化列、空表无伪造统计、租户/日期/商品唯一性、逻辑删除后重算、交易日维度而非时间戳唯一，以及有符号佣金冲回。
+- `python script/jss/verify_migrations.py`：九项通过；执行包含 V009 的全部当前迁移，验证 baseline 0、禁止环境覆盖历史表、无隐式账号/绑定/角色授权、重复迁移保留数据、拒绝重复 init、校验和漂移、缺框架和未托管表。
+- 上述是隔离 MySQL/Flyway 证据，未将其视为实际业务库部署、HTTP 报表或支付联调通过。V009 不修改 V001～V008，也不触碰已有工作区业务改动。

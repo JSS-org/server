@@ -1,0 +1,51 @@
+-- Daily aggregates for the currently enabled statistics module.
+-- Schema only: no invented sales, balances, traffic or completed orders.
+CREATE TABLE product_statistics (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    time DATE NOT NULL,
+    spu_id BIGINT NOT NULL,
+    browse_count INT NOT NULL DEFAULT 0,
+    browse_user_count INT NOT NULL DEFAULT 0,
+    favorite_count INT NOT NULL DEFAULT 0,
+    cart_count INT NOT NULL DEFAULT 0,
+    order_count INT NOT NULL DEFAULT 0,
+    order_pay_count INT NOT NULL DEFAULT 0,
+    order_pay_price INT NOT NULL DEFAULT 0,
+    after_sale_count INT NOT NULL DEFAULT 0,
+    after_sale_refund_price INT NOT NULL DEFAULT 0,
+    browse_convert_percent INT NOT NULL DEFAULT 0,
+    creator VARCHAR(64) DEFAULT '',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updater VARCHAR(64) DEFAULT '',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted BIT(1) NOT NULL DEFAULT b'0',
+    tenant_id BIGINT NOT NULL,
+    PRIMARY KEY (id),
+    active_spu_id BIGINT GENERATED ALWAYS AS (CASE WHEN deleted=b'0' THEN spu_id ELSE NULL END) STORED,
+    UNIQUE KEY uk_product_statistics_day (tenant_id,time,active_spu_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE trade_statistics (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    time DATETIME NOT NULL,
+    order_create_count INT NOT NULL DEFAULT 0,
+    order_pay_count INT NOT NULL DEFAULT 0,
+    order_pay_price INT NOT NULL DEFAULT 0,
+    after_sale_count INT NOT NULL DEFAULT 0,
+    after_sale_refund_price INT NOT NULL DEFAULT 0,
+    brokerage_settlement_price INT NOT NULL DEFAULT 0,
+    wallet_pay_price INT NOT NULL DEFAULT 0,
+    recharge_pay_count INT NOT NULL DEFAULT 0,
+    recharge_pay_price INT NOT NULL DEFAULT 0,
+    recharge_refund_count INT NOT NULL DEFAULT 0,
+    recharge_refund_price INT NOT NULL DEFAULT 0,
+    creator VARCHAR(64) DEFAULT '',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updater VARCHAR(64) DEFAULT '',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted BIT(1) NOT NULL DEFAULT b'0',
+    tenant_id BIGINT NOT NULL,
+    PRIMARY KEY (id),
+    active_day DATE GENERATED ALWAYS AS (CASE WHEN deleted=b'0' THEN DATE(time) ELSE NULL END) STORED,
+    UNIQUE KEY uk_trade_statistics_day (tenant_id,active_day)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

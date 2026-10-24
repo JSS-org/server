@@ -49,6 +49,11 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.marketing.GymActivityParticipationService.class,
+    cn.iocoder.yudao.module.gym.service.marketing.GymActivityPublicAssets.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymActivitiesController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActivityController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobilePayrollService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePayrollController.class,
     cn.iocoder.yudao.module.gym.service.payroll.GymPayrollPublicationService.class,
@@ -149,6 +154,16 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService mobileActivities;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymActivitiesController
+            mobileActivitiesController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActivityController
+            workActivitiesController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePayrollService mobilePayrolls;
 
     @Resource
@@ -13025,5 +13040,362 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         when(permissions.getDeptDataPermission(any())).thenReturn(permission);
         assertEquals(1, payrolls.page(req).getTotal());
         assertEquals(1, payrolls.get(f.payroll()).getItems().size());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO.Create
+            mobileActivityRequest() {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO
+                        .Create();
+        r.setStoreId(101L);
+        r.setTitle("会员活动");
+        r.setDescription("公开介绍");
+        r.setStartsAt(activityNow.plusSeconds(7200));
+        r.setEndsAt(activityNow.plusSeconds(10800));
+        r.setRegistrationDeadline(activityNow.plusSeconds(3600));
+        r.setCancelDeadline(activityNow.plusSeconds(5400));
+        r.setCapacity(2);
+        return r;
+    }
+
+    Long mobileActivityMember() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(activityNow);
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        qrMemberIdentity(member);
+        return member;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO.ActivityPage
+            activityPage(Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO
+                        .ActivityPage();
+        r.setStoreId(store);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO.RegistrationPage
+            activityHistory() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileActivityVO
+                .RegistrationPage();
+    }
+
+    @Test
+    void mobileActivityCreationPublishesOnceWithCurrentScopeAndValidDates() {
+        mobileActivityMember();
+        var req = mobileActivityRequest();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> workActivitiesController.create(req, "activity-create-key"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:activities:manage"))).thenReturn(true);
+        var first = workActivitiesController.create(req, "activity-create-key").getData();
+        assertEquals("open", first.status());
+        assertEquals(List.of("101"), first.storeIds());
+        assertEquals(first, mobileActivities.create(req, "activity-create-key"));
+        req.setTitle("different");
+        assertServiceException(
+                () -> mobileActivities.create(req, "activity-create-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        scoped(102L);
+        assertServiceException(
+                () -> mobileActivities.create(mobileActivityRequest(), "activity-create-key"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        for (int mode = 0; mode < 4; mode++) {
+            var invalid = mobileActivityRequest();
+            if (mode == 0) invalid.setRegistrationDeadline(activityNow);
+            if (mode == 1) invalid.setEndsAt(invalid.getStartsAt());
+            if (mode == 2) invalid.setCancelDeadline(invalid.getStartsAt().plusSeconds(1));
+            if (mode == 3) invalid.setCancelDeadline(activityNow.minusSeconds(1));
+            assertServiceException(
+                    () ->
+                            mobileActivities.create(
+                                    invalid, "activity-invalid-" + invalid.hashCode()),
+                    ACTIVITY_INVALID);
+        }
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileActivities.create(mobileActivityRequest(), "activity-member-forbidden"),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileActivityPublicFiltersBeforePagingAndSupportsLegacyMultiStoreUnlimited() {
+        mobileActivityMember();
+        Long id = publishedActivity(101L, 102L);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.marketing.vo
+                        .GymActivitySaveReqVO();
+        patch.setCapacity(null);
+        marketing.patchActivity(id, patch);
+        marketing.createActivity(activityRequest(101L));
+        Long cancelled = publishedActivity(101L);
+        marketing.patchActivity(cancelled, activityStatus("cancelled"));
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var req = activityPage(102L);
+        req.setStatus("open");
+        req.setPageSize(1);
+        var page = mobileActivitiesController.page(req).getData();
+        assertEquals(1, page.getTotal());
+        var view = page.getList().getFirst();
+        assertEquals("102", view.storeId());
+        assertEquals(List.of("101", "102"), view.storeIds());
+        assertNull(view.capacity());
+        assertEquals("101", mobileActivitiesController.get(id).getData().storeId());
+        assertServiceException(() -> mobileActivities.get(cancelled), ACTIVITY_NOT_EXISTS);
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(10800));
+        req.setStatus("ended");
+        assertEquals(1, mobileActivities.page(req).getTotal());
+        assertEquals("ended", mobileActivities.get(id).status());
+        req.setStatus("open");
+        assertEquals(0, mobileActivities.page(req).getTotal());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileActivities.get(id), ACTIVITY_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        var store = storeMapper.selectById(102L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertServiceException(() -> mobileActivities.page(activityPage(102L)), STORE_NOT_EXISTS);
+        assertEquals(List.of("101"), mobileActivities.get(id).storeIds());
+    }
+
+    @Test
+    void mobileActivityRegistrationCancellationAndKeyReplayShareExistingLedger() {
+        var member = mobileActivityMember();
+        Long id =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "activity-ledger-create")
+                                .id());
+        qrMemberLogin();
+        var first = mobileActivities.register(id, "activity-register-key");
+        assertEquals(first, mobileActivities.register(id, "activity-register-key"));
+        assertEquals(first, mobileActivities.register(id, "activity-register-again"));
+        assertEquals(1, mobileActivities.get(id).registeredCount());
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        assertEquals(0, mobileActivities.get(id).registeredCount());
+        assertEquals(first, mobileActivities.register(id, "activity-register-key"));
+        assertEquals(0, mobileActivities.get(id).registeredCount());
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(1));
+        var again = mobileActivities.register(id, "activity-reregister-key");
+        assertEquals(first.id(), again.id());
+        assertNotEquals(first.registeredAt(), again.registeredAt());
+        assertEquals(1, mobileActivities.get(id).registeredCount());
+        loginAs(1L);
+        assertEquals(
+                first.id(), marketing.register(id, activityRegistration(member, 101L)).getId());
+        assertEquals(1, marketing.activity(id).getRegistrationCount());
+    }
+
+    @Test
+    void mobileActivityMemberCancelDeadlineAndAdminOverrideRemainDistinct() {
+        var member = mobileActivityMember();
+        var req = mobileActivityRequest();
+        req.setCancelDeadline(activityNow.plusSeconds(1800));
+        Long id = Long.valueOf(mobileActivities.create(req, "activity-deadline-create").id());
+        qrMemberLogin();
+        var reg = mobileActivities.register(id, "activity-deadline-register");
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(1800));
+        assertServiceException(() -> mobileActivities.cancel(id), ACTIVITY_REGISTRATION_INVALID);
+        loginAs(1L);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.marketing.vo
+                        .GymActivitySaveReqVO();
+        patch.setCancelDeadline(null);
+        assertServiceException(
+                () -> marketing.patchActivity(id, patch), ACTIVITY_REGISTERED_IMMUTABLE);
+        marketing.cancelRegistration(id, Long.valueOf(reg.id()));
+        assertEquals(0, marketing.activity(id).getRegistrationCount());
+        qrMemberLogin();
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        when(businessClock.now()).thenReturn(activityNow.plusSeconds(3600));
+        assertServiceException(
+                () -> mobileActivities.register(id, "activity-at-deadline"),
+                ACTIVITY_REGISTRATION_INVALID);
+    }
+
+    @Test
+    void mobileActivityMultiStoreUsesMemberDefaultAndKeepsHistoricalStoreOnRetry() {
+        var member = mobileActivityMember();
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO();
+        relation.setMemberId(member);
+        relation.setStoreId(102L);
+        relation.setJoinedAt(activityNow);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .insert(relation);
+        var identities =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class);
+        var identity =
+                identities.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO
+                                ::getUserId,
+                        50L);
+        identity.setDefaultStoreId(102L);
+        identities.updateById(identity);
+        Long id = publishedActivity(101L, 102L);
+        qrMemberLogin();
+        var first = mobileActivities.register(id, "activity-default-store");
+        assertEquals(
+                "102",
+                mobileActivities
+                        .history(activityHistory())
+                        .getList()
+                        .getFirst()
+                        .activity()
+                        .storeId());
+        identity.setDefaultStoreId(101L);
+        identities.updateById(identity);
+        assertEquals(first, mobileActivities.register(id, "activity-keep-store"));
+        var ms =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class);
+        ms.deleteById(relation.getId());
+        assertServiceException(
+                () -> mobileActivities.register(id, "activity-lost-store"),
+                ACTIVITY_REGISTRATION_INVALID);
+        assertEquals("cancelled", mobileActivities.cancel(id).status());
+        loginAs(1L);
+        Long second = publishedActivity(102L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileActivities.register(second, "activity-no-membership"),
+                ACTIVITY_REGISTRATION_INVALID);
+    }
+
+    @Test
+    void mobileActivityMixedAdminMemberConcurrencyNeverOverbooksAndSameKeyCreatesOnce()
+            throws Exception {
+        var member = mobileActivityMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        var req = mobileActivityRequest();
+        req.setCapacity(1);
+        Long id = Long.valueOf(mobileActivities.create(req, "activity-race-create").id());
+        var results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileActivities.register(id, "activity-race-member");
+                        },
+                        () -> marketing.register(id, activityRegistration(other, 101L)));
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        assertEquals(1, mobileActivities.get(id).registeredCount());
+        Long second = Long.valueOf(mobileActivities.create(req, "activity-same-key-create").id());
+        results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileActivities.register(second, "activity-same-key-reg");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileActivities.register(second, "activity-same-key-reg");
+                        });
+        assertEquals(results.get(0), results.get(1));
+        assertEquals(1, mobileActivities.get(second).registeredCount());
+    }
+
+    @Test
+    void mobileActivityRegistrationFailureRollsBackQuotaAndKey() {
+        mobileActivityMember();
+        Long id =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "activity-rollback-create")
+                                .id());
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT test_activity_response CHECK (operation <> 'activity-register' OR response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileActivities.register(id, "activity-rollback-key"));
+            assertEquals(0, mobileActivities.get(id).registeredCount());
+            assertEquals(0, mobileActivities.history(activityHistory()).getTotal());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_request DROP CONSTRAINT test_activity_response");
+        }
+        assertEquals("registered", mobileActivities.register(id, "activity-rollback-key").status());
+    }
+
+    @Test
+    void mobileActivityOwnHistorySurvivesClosedStoreAndMissingActivityWithoutIdentityLeaks() {
+        mobileActivityMember();
+        Long id =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "activity-history-create")
+                                .id());
+        qrMemberLogin();
+        mobileActivities.register(id, "activity-history-register");
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertServiceException(() -> mobileActivities.get(id), ACTIVITY_NOT_EXISTS);
+        var history = mobileActivities.history(activityHistory());
+        assertEquals(1, history.getTotal());
+        assertEquals("101", history.getList().getFirst().activity().storeId());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(history);
+        assertFalse(json.contains("memberId"));
+        assertFalse(json.contains("13800002401"));
+        var am =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.marketing.GymActivityMapper.class);
+        am.deleteById(id);
+        assertNull(mobileActivities.history(activityHistory()).getList().getFirst().activity());
+        loginAs(1L);
+        assertServiceException(
+                () -> mobileActivities.history(activityHistory()), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> mobileActivitiesController.history(activityHistory()));
+    }
+
+    @Test
+    void mobileActivityCoverUsesPublicReferenceAndRevokesAfterCancellation() {
+        mobileActivityMember();
+        var cover = publicImage(101L);
+        var req = mobileActivityRequest();
+        req.setCoverFileId(cover.getId());
+        var first = mobileActivities.create(req, "activity-cover-create");
+        assertNotNull(first.cover());
+        assertTrue(first.cover().url().contains("/gym/public-media/"));
+        assertNotNull(publicContent.mediaContent(cover.getId()));
+        var binding = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileWorkFileDO();
+        binding.setFileId(cover.getId());
+        binding.setStoreId(101L);
+        binding.setPurpose("coach_profile");
+        binding.setEmployeeId(999L);
+        var bindings =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper.class);
+        bindings.insert(binding);
+        assertNull(mobileActivities.get(Long.valueOf(first.id())).cover());
+        assertServiceException(() -> publicContent.mediaContent(cover.getId()), FILE_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileActivities.create(req, "activity-bound-cover"), ACTIVITY_COVER_INVALID);
+        bindings.deleteById(binding.getId());
+        marketing.patchActivity(Long.valueOf(first.id()), activityStatus("cancelled"));
+        assertServiceException(() -> publicContent.mediaContent(cover.getId()), FILE_NOT_EXISTS);
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileActivities.create(req, "activity-cover-other-store"),
+                ACTIVITY_COVER_INVALID);
     }
 }

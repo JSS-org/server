@@ -667,6 +667,7 @@ CREATE TABLE IF NOT EXISTS gym_activity (
  registration_ends_at datetime(6) NOT NULL,
  starts_at datetime(6) NOT NULL,
  ends_at datetime(6) NOT NULL,
+ cancel_deadline datetime(6) DEFAULT NULL,
  capacity int DEFAULT NULL,
  cover_file_id bigint DEFAULT NULL,
  status varchar(16) NOT NULL,

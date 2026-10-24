@@ -401,7 +401,7 @@ Content-Type: application/json
 | `POST A/qr-resolutions` | 游客 | `scene:string` | `{type:equipment,equipmentId:ID,storeId:ID}`；仅解析服务端认可的器械码 |
 | `GET A/equipment/{id}/tutorials` | 游客 | 无 | `{equipmentId:ID,name:string,tutorials:[{id:ID,title:string,content:string?,video:Media?}]}` |
 
-`Activity`：`id:ID,storeId:ID,title:string,description:string,cover:Media?,startsAt:DateTime,endsAt:DateTime,registrationDeadline:DateTime,cancelDeadline:DateTime?,capacity:int,registeredCount:int,status:string`。
+`Activity`：`id:ID,storeId:ID,storeIds:ID[],title:string,description:string,cover:Media?,startsAt:DateTime,endsAt:DateTime,registrationDeadline:DateTime,cancelDeadline:DateTime?,capacity:int?,registeredCount:int,status:string`。`storeIds`保留原后台跨店活动，`capacity=null`表示历史不限名额；移动创建仍要求1–100000的整数名额。
 
 规则：
 
@@ -410,6 +410,17 @@ Content-Type: application/json
 - 反馈内容 1～2000 字符，附件最多 9 个；评价 `type=review` 时必须有 1～5 整数评分。`allowCardContext` 默认 false。
 - “匿名”暂定义为对门店员工隐藏身份，后台为防滥用保留受限关联。管理端列表、附件元信息和回复均不得泄露手机号、会员 ID、卡号；如要求对平台也匿名，需调整方案。
 - 活动报名以活动与会员唯一，名额原子扣减；同一会员重复报名返回已有记录。过期、取消、满额活动拒绝报名。
+
+活动接口（总表66–70、121）已实现：
+
+- 公开列表要求营业门店，只展示`published/closed`活动，草稿/取消/删除不可公开读取。默认按开始时间倒序、ID倒序；状态条件在SQL分页前应用。响应状态为`upcoming/open/registration_closed/ongoing/ended`，本人历史还可有`cancelled`。`open`表示报名窗口`[registrationStartsAt,registrationDeadline)`，即使名额已满仍为open，由`capacity/registeredCount`显示剩余名额；写入时再次检查满额。`ended`包括已结束或后台已关闭活动。
+- 原后台多店活动共享一个总名额。列表`storeId`是筛选门店，公开详情取当前营业关联门店最小ID，`storeIds`列当前营业关联门店；本人历史`storeId`保留实际报名门店，`storeIds`保留原活动关联门店。`registeredCount`为该活动全部门店的成功报名总人数，不返回报名人身份。
+- 报名无body、必传`Idempotency-Key`，只使用当前会员。首次报名优先选“默认门店且当前会员关系有效、营业、属于活动”，否则取满足相同条件的最小门店ID；均不满足则拒绝。已有报名固定原门店，不随默认门店变化迁移。写事务锁活动再锁会员，与旧后台共用名额和重复报名规则；活动/会员唯一，不会跨端超卖。
+- 同一活动已报名时返回原记录；取消后用新请求键可在有效报名窗口重新报名，复用原报名ID并更新报名时间。同键重试返回首次响应快照，取消后重试旧键不会重新占名额，当前状态应读取报名历史。账号、租户与有效会员身份在重放前仍检查。
+- 会员取消不需要幂等头，没有本人报名或已经取消返回`{status:cancelled}`。有有效报名时须活动仍published且当前时刻严格早于`cancelDeadline`；为空时使用活动开始时间。取消只释放名额，不删除历史；已失去门店关系仍可取消本人合法报名。旧后台管理取消保留原“活动开始前”权限，可处理会员截止时间之后的取消。
+- 本人历史按报名时间和ID倒序，状态筛选registered/cancelled；门店停用不丢失历史。如活动被软删除无法还原其详情，保留报名记录并返回`activity=null`，不制造内容；活动整体取消会沿用原后台事务取消所有有效报名。
+- 工作台创建须有效后台账号、`gym:activities:manage`及整店范围，原子创建并发布单店活动；报名从创建时刻开放，报名截止必须在未来且不晚于开始，结束严格晚于开始。可选取消截止介于开放与开始之间，可早于报名截止；这种情况下晚报名会员可能已不能自助取消。名称1–100、介绍1–4000字符，额外状态/报名人数/身份字段拒绝。幂等请求键变更内容报冲突；同键恢复首次结果前重查当前门店权限。
+- V013增加可空`cancel_deadline`；旧活动保留NULL并默认开始前取消，不改历史名额。已有任何报名记录后，后台不得修改取消截止、活动时段或门店，避免改变已报名规则。封面须原后台上传的所属活动门店image文件，带其他移动工作用途绑定的文件不能挪作公开封面；当前移动上传没有活动封面用途。公开封面走现有受控素材URL，读取重查发布、门店、归属、用途及实际内容；取消最后公开引用后不可下载。
 
 ### 7.3 文件接口
 

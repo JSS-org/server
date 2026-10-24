@@ -2431,3 +2431,36 @@ gym566项、member4项通过，1项既有禁用跳过；Spotless及server依赖�
 ### 未做 / 后续
 
 63项新增本地实现、4项复用源码、68项待开发，继续其他内部业务。暂未提供撤回或批量发布、自动通知、工资打款；四类第三方真实接入仍暂缓。业务库未迁移，不推送；本批独立本地提交，保留用户原始uniapp.md及暂存状态。
+
+## [2026-10-24 21:11 ~ 21:24] 活动公开展示、报名与取消
+
+### 意图
+
+补齐总表66–70、121，提供管理者创建发布、公开活动和会员本人报名/取消/历史，保持原后台跨店活动、总名额和重复报名规则。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymActivitiesController.java`、`GymMobileActivityController.java`、`GymMobileActivityVO.java`、`GymMobileActivityService.java` | 新增 | 六个目标路由、身份/范围、幂等创建报名、取消和历史 |
+| `GymActivityParticipationService.java`、`GymMarketingService.java` | 新增/修改 | 两端共用活动锁下的名额、时间和重复报名规则，已有报名后截止不可修改 |
+| `GymActivityPublicAssets.java`、`GymMobilePublicService.java` | 新增/修改 | 活动封面公开引用、营业门店归属、工作用途隔离及受控下载 |
+| `GymActivityDO.java`、`GymActivitySaveReqVO.java`、`GymActivityRespVO.java`、`V013__gym_activity_cancel_deadline.sql`、测试schema | 新增/修改 | 可空取消截止及旧活动开始前回退，不改变历史状态/名额 |
+| `GymOrganizationServiceTest.java`、`GymMobileActivitiesControllerTest.java`、`script/gym/verify-migrations.py` | 修改/新增 | 九项业务、三项MVC、跨端并发、回滚及50项隔离迁移检查 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 73/135进度、跨店选店、旧键重放、封面和部署边界 |
+
+### 结构关系
+
+移动创建在幂等事务中调用原活动创建及发布；两端报名先授权、锁活动与会员后调用公共名额服务。会员取消与旧后台取消同样持活动锁，取消保留记录，重报复用ID。公开素材服务增加活动引用授权，文件内容继续走原实际内容检查。
+
+### 验证证据
+
+gym578项和member4项通过，1项既有禁用跳过；Spotless与server依赖打包成功。真实隔离MySQL/Flyway50检查通过并清理临时库，源码映射73/135。新增12项包含后台/会员竞争名额、同键并发、失败回滚、取消边界、跨店、匿名公开及封面用途隔离；命令和日志见testing本批条目。
+
+### 影响面 / 风险
+
+部署前须V013，表数仍65。移动新活动单店且有限名额，旧多店及NULL不限量保留；无body报名按有效默认店优先，否则最小有效关联店，已有记录不转店。会员取消截止可早于报名截止，后台管理取消仍按开始前。已有报名后截止不可变；旧已绑定工作用途图片不可作为公开封面。列表投影有逐项关联读取，大数据量性能未专项验证。前端未修改。
+
+### 未做 / 后续
+
+69项新增本地实现、4项复用源码、62项待开发，继续内部业务。没有活动专用移动封面上传用途、自动消息推送或前端页面改动；四类第三方实际接入保持暂缓。业务库未迁移，不推送；本批独立本地提交，原始uniapp.md及暂存状态保留。

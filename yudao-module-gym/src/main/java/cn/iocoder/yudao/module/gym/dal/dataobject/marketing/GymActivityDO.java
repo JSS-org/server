@@ -25,5 +25,8 @@ public class GymActivityDO extends TenantBaseDO {
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Long coverFileId;
 
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private java.time.Instant cancelDeadline;
+
     private String status;
 }

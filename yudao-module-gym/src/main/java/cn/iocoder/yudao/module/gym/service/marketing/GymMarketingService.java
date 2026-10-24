@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @Service
 public class GymMarketingService {
     @Resource private GymActivityMapper gymActivityMapper;
+    @Resource private GymActivityParticipationService participation;
+    @Resource private cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings fileBindings;
     @Resource private GymActivityStoreMapper gymActivityStoreMapper;
     @Resource private GymActivityRegistrationMapper gymActivityRegistrationMapper;
     @Resource private GymFranchiseInquiryMapper gymFranchiseInquiryMapper;
@@ -128,6 +130,12 @@ public class GymMarketingService {
         req.setRegistrationEndsAt(req.getRegistrationEndsAt().truncatedTo(ChronoUnit.MICROS));
         req.setStartsAt(req.getStartsAt().truncatedTo(ChronoUnit.MICROS));
         req.setEndsAt(req.getEndsAt().truncatedTo(ChronoUnit.MICROS));
+        if (req.getCancelDeadline() != null)
+            req.setCancelDeadline(req.getCancelDeadline().truncatedTo(ChronoUnit.MICROS));
+        if (req.getCancelDeadline() != null
+                && (req.getCancelDeadline().isAfter(req.getStartsAt())
+                        || req.getCancelDeadline().isBefore(req.getRegistrationStartsAt())))
+            throw exception(ACTIVITY_INVALID);
         if (!req.getRegistrationEndsAt().isAfter(req.getRegistrationStartsAt())
                 || req.getRegistrationEndsAt().isAfter(req.getStartsAt())
                 || !req.getEndsAt().isAfter(req.getStartsAt())) throw exception(ACTIVITY_INVALID);
@@ -138,7 +146,8 @@ public class GymMarketingService {
                     || !"image".equals(file.getCategory())
                     || file.getMimeType() == null
                     || !file.getMimeType().startsWith("image/")
-                    || !req.getStoreIds().contains(file.getStoreId()))
+                    || !req.getStoreIds().contains(file.getStoreId())
+                    || fileBindings.find(req.getCoverFileId()) != null)
                 throw exception(ACTIVITY_COVER_INVALID);
         }
     }
@@ -176,7 +185,8 @@ public class GymMarketingService {
                 || req.getStartsAt() != null
                 || req.getEndsAt() != null
                 || req.isCapacityPresent()
-                || req.isCoverFileIdPresent();
+                || req.isCoverFileIdPresent()
+                || req.isCancelDeadlinePresent();
     }
 
     private long confirmed(Long id) {
@@ -202,6 +212,7 @@ public class GymMarketingService {
         GymPatchUtils.merge(patch, req);
         if (patch.isCapacityPresent()) req.setCapacity(patch.getCapacity());
         if (patch.isCoverFileIdPresent()) req.setCoverFileId(patch.getCoverFileId());
+        if (patch.isCancelDeadlinePresent()) req.setCancelDeadline(patch.getCancelDeadline());
         validateActivity(req);
         scope.checkAll(req.getStoreIds());
         long count = confirmed(id);
@@ -216,7 +227,8 @@ public class GymMarketingService {
                         || !row.getRegistrationStartsAt().equals(req.getRegistrationStartsAt())
                         || !row.getRegistrationEndsAt().equals(req.getRegistrationEndsAt())
                         || !row.getStartsAt().equals(req.getStartsAt())
-                        || !row.getEndsAt().equals(req.getEndsAt())))
+                        || !row.getEndsAt().equals(req.getEndsAt())
+                        || !Objects.equals(row.getCancelDeadline(), req.getCancelDeadline())))
             throw exception(ACTIVITY_REGISTERED_IMMUTABLE);
         String before = row.getStatus(), after = req.getStatus();
         if (!before.equals(after)) {
@@ -322,35 +334,9 @@ public class GymMarketingService {
         if (!"active".equals(member.getStatus())
                 || !"active".equals(stores.get(req.getStoreId()).getStatus()))
             throw exception(ACTIVITY_REGISTRATION_INVALID);
-        var registration =
-                gymActivityRegistrationMapper.selectOne(
-                        new LambdaQueryWrapper<GymActivityRegistrationDO>()
-                                .eq(GymActivityRegistrationDO::getActivityId, activity)
-                                .eq(GymActivityRegistrationDO::getMemberId, req.getMemberId()));
-        if (registration != null && !req.getStoreId().equals(registration.getStoreId()))
-            throw exception(ACTIVITY_REGISTRATION_INVALID);
-        if (registration != null && "confirmed".equals(registration.getStatus()))
-            return BeanUtils.toBean(registration, GymActivityRegistrationRespVO.class);
-        Instant now = now();
-        if (!"published".equals(row.getStatus())
-                || now.isBefore(row.getRegistrationStartsAt())
-                || !now.isBefore(row.getRegistrationEndsAt()))
-            throw exception(ACTIVITY_REGISTRATION_INVALID);
-        if (row.getCapacity() != null && confirmed(activity) >= row.getCapacity())
-            throw exception(ACTIVITY_CAPACITY_INVALID);
-        boolean create = registration == null;
-        if (create) registration = new GymActivityRegistrationDO();
-        registration.setActivityId(activity);
-        registration.setMemberId(member.getId());
-        registration.setMemberName(member.getName());
-        registration.setStoreId(req.getStoreId());
-        registration.setStoreName(stores.get(req.getStoreId()).getName());
-        registration.setStatus("confirmed");
-        registration.setRegisteredAt(now);
-        registration.setCancelledAt(null);
-        if (create) gymActivityRegistrationMapper.insert(registration);
-        else gymActivityRegistrationMapper.updateById(registration);
-        return BeanUtils.toBean(registration, GymActivityRegistrationRespVO.class);
+        return BeanUtils.toBean(
+                participation.register(row, member, stores.requireStore(req.getStoreId(), false)),
+                GymActivityRegistrationRespVO.class);
     }
 
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)

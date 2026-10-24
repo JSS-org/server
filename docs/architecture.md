@@ -558,3 +558,11 @@ GymMobileLessonProperties绑定TTL/窗口/密钥，GymMobileLessonToken使用HMA
 `GymMobilePayrollController → GymMobilePayrollService`按本人或整店路径分别授权；本人通过`GymMobileWorkAccess.employee`绑定当前在职员工，管理者要求工资读取权限和`GymDataScope.check`。工资明细Mapper通过父批次EXISTS在SQL分页前限定租户、门店、月份及发布状态，之后批量读取父批次，在只读REPEATABLE_READ事务中投影冻结金额和受控计算项目。移动资源是每员工明细，旧后台资源是整店批次，ID不可混用。
 
 `GymPayrollPublicationController → GymPayrollPublicationService`复用有效后台身份和整店范围，按原计算/确认的门店→工资批次顺序加锁；仅confirmed批次写V012的published_at/published_by，重复调用保持首次值。原confirmed状态不变，因此计算冻结和工资配置期间保护仍适用。原`GymPayrollService`的SELF查询补充发布与当前有效员工过滤，整店草稿审核不变；旧响应增加可空发布时间。没有自动发布历史工资、自动授予权限或发起打款。
+
+## 移动活动、报名与公开封面（2026-10-24 增量）
+
+`AppGymActivitiesController/GymMobileActivityController → GymMobileActivityService`区分匿名公开、令牌本人及后台整店权限。公开筛选在分页前执行，只读快照投影活动/总报名数/门店；本人历史按会员谓词分页。创建通过原GymMarketingService在同一幂等事务创建草稿并发布。
+
+旧GymMarketingService.register与新报名共用GymActivityParticipationService，调用者先授权、锁活动再锁会员，公共服务承担窗口、容量、活动会员唯一与取消后重报逻辑。移动请求键与实际报名同事务提交；旧后台取消/活动整体取消与新会员取消都先锁活动，保持名额一致。V013的cancel_deadline默认NULL，已有报名后不允许修改；后台管理取消保留原活动开始前规则。
+
+`GymActivityPublicAssets`校验活动图片是否存在公开引用、文件归属营业门店及工作用途；`GymMobilePublicService`将其转为既有受控Media URL，下载复用文件魔数检查。取消或撤销最后公开引用后旧URL失效，私有会员/教练/合同上传不能改作活动封面。原跨店活动在移动端保留门店集合和共享容量；无新表、自动授权或外部通知。

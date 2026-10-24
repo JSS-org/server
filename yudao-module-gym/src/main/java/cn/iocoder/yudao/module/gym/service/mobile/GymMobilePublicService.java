@@ -39,6 +39,9 @@ public class GymMobilePublicService {
     @Resource private GymStoreMapper stores;
 
     @Resource
+    private cn.iocoder.yudao.module.gym.service.marketing.GymActivityPublicAssets activityAssets;
+
+    @Resource
     private cn.iocoder.yudao.module.gym.service.employee.GymCoachPublicProfiles coachProfiles;
 
     @Resource private GymStoreMediaMapper media;
@@ -334,6 +337,12 @@ public class GymMobilePublicService {
         return file == null ? null : mediaValue(file, null);
     }
 
+    public Media activityMedia(
+            cn.iocoder.yudao.module.gym.dal.dataobject.marketing.GymActivityDO row) {
+        var file = activityAssets.file(row);
+        return file == null ? null : mediaValue(file, null);
+    }
+
     private Media mediaValue(GymFileDO row, String caption) {
         return new Media(
                 row.getId().toString(),
@@ -380,7 +389,7 @@ public class GymMobilePublicService {
                                         TenantContextHolder.getRequiredTenantId()))
                 > 0) return true;
         if (!"image".equals(file.getCategory())) return false;
-        if (coachProfiles.references(file)) return true;
+        if (coachProfiles.references(file) || activityAssets.references(file)) return true;
         var candidates =
                 settings.selectList(
                         new LambdaQueryWrapper<GymClientSettingDO>()

@@ -25,6 +25,14 @@ public class GymActivitySaveReqVO {
     @NotNull private Instant startsAt;
     @NotNull private Instant endsAt;
 
+    private Instant cancelDeadline;
+    @com.fasterxml.jackson.annotation.JsonIgnore private boolean cancelDeadlinePresent;
+
+    public void setCancelDeadline(Instant value) {
+        cancelDeadline = value;
+        cancelDeadlinePresent = true;
+    }
+
     @Min(1)
     @Max(100000)
     private Integer capacity;

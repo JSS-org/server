@@ -60,6 +60,7 @@ sql/gym/
     V010__gym_mobile_work_file_targets.sql # 工作台上传用途及目标
     V011__gym_mobile_lesson_qr.sql         # 签课二维码绑定与使用记录
     V012__gym_payroll_publication.sql       # 工资明确发布与本人查询索引
+    V013__gym_activity_cancel_deadline.sql # 活动会员取消截止时间
   seed/development/demo.sql         # 显式开发演示数据，不在Flyway扫描路径
   legacy-schema.json               # 旧库结构指纹及V001校验和，用于安全接管
   legacy/                          # 冻结的旧01～47及旧开发导入SQL
@@ -72,7 +73,7 @@ script/gym/
   verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
 ```
 
-后续变更从当前最大版本递增追加（当前下一版本为 `V013__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
+后续变更从当前最大版本递增追加（当前下一版本为 `V014__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
 
 ## 独立开发seed
 
@@ -594,3 +595,9 @@ python3 script/gym/verify-uniapp-api-coverage.py --require-all
 先migrate到V012并validate，再部署应用。新增gym_payroll.published_at/published_by两个可空列及gym_payroll_item本人查询索引，表数仍65；既有确认工资默认未发布。确认后由有`gym:payroll:confirm`及门店范围的管理员调用`POST /admin-api/gym/payrolls/{批次ID}/publications`（无body），返回首次发布时间，可安全重试；没有自动发布或自动授权。
 
 移动`/gym/mobile/me/payrolls`及详情只返回当前员工本人已发布明细，`/gym/mobile/payrolls`及详情另要求`gym:payroll:read`与整店范围。移动详情ID为员工明细ID，发布ID为旧后台批次ID。旧后台SELF读取同步要求已发布，确认及冻结流程不变；原后台响应增加publishedAt。当前没有撤销发布、自动推送或银行打款；前端不修改。业务数据库没有在本任务中迁移。
+
+### 移动活动与报名（V013）
+
+部署前migrate至V013并validate；gym_activity增加可空cancel_deadline（datetime(6)），表数仍65。历史活动保持NULL，会员取消默认回退开始时间；旧后台管理取消仍允许活动开始前处理。已有报名后不能改变该截止、门店或活动时段。
+
+工作台POST /admin-api/gym/mobile/activities使用gym:activities:manage及整店范围，必传Idempotency-Key，原子创建并发布单店活动；原后台继续维护跨店、发布/关闭/取消等流程。公开列表与本人报名6个目标接口的精确参数、跨店选店及重放规则见uniapp-api。活动封面使用原后台所属门店image上传，移动工作上传的其他用途不能复用为封面。无消息自动推送或第三方操作；本任务未迁移业务数据库。

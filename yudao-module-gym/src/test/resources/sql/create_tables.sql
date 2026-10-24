@@ -207,6 +207,7 @@ CREATE TABLE IF NOT EXISTS gym_member_store (
   id bigint NOT NULL AUTO_INCREMENT,
   member_id bigint NOT NULL,
   store_id bigint NOT NULL,
+  assignment_version int NOT NULL DEFAULT 0,
   joined_at datetime(6) NOT NULL,
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -249,6 +250,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_member_store ON gym_member_store(tenant_id,
 CREATE UNIQUE INDEX IF NOT EXISTS uk_member_card_source ON gym_member_card(tenant_id,source_type,source_id);
 CREATE TABLE IF NOT EXISTS gym_course_product (
   id bigint NOT NULL AUTO_INCREMENT,
+  version int NOT NULL DEFAULT 1,
   store_id bigint NOT NULL, coach_id bigint NOT NULL,
   name varchar(100) NOT NULL, description varchar(2000) DEFAULT NULL, kind varchar(16) NOT NULL,
   session_count int NOT NULL, duration_minutes int NOT NULL, price decimal(12,2) NOT NULL, status varchar(16) NOT NULL,
@@ -294,6 +296,7 @@ CREATE TABLE IF NOT EXISTS gym_booking (
   store_id bigint NOT NULL, session_id bigint NOT NULL, member_id bigint NOT NULL,
   member_card_id bigint DEFAULT NULL, member_course_pack_id bigint DEFAULT NULL,
   status varchar(16) NOT NULL, booked_at datetime(6) NOT NULL, cancelled_at datetime(6) DEFAULT NULL,
+  cancellation_reason varchar(500) DEFAULT NULL,
   checkin_id bigint DEFAULT NULL, note varchar(2000) DEFAULT NULL,
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -321,7 +324,7 @@ CREATE TABLE IF NOT EXISTS gym_lesson_record (
   id bigint NOT NULL AUTO_INCREMENT,
   store_id bigint NOT NULL, member_id bigint NOT NULL, coach_id bigint NOT NULL, booking_id bigint NOT NULL,
   checkin_id bigint NOT NULL, member_card_id bigint DEFAULT NULL, member_course_pack_id bigint DEFAULT NULL,
-  session_units int NOT NULL, confirmed_at datetime(6) NOT NULL, method varchar(16) NOT NULL, status varchar(16) NOT NULL,
+  session_units int NOT NULL, remaining_lessons_after int DEFAULT NULL, confirmed_at datetime(6) NOT NULL, method varchar(16) NOT NULL, status varchar(16) NOT NULL,
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updater varchar(64) NOT NULL DEFAULT '',
@@ -1130,4 +1133,66 @@ CREATE TABLE IF NOT EXISTS gym_training_plan (
  deleted boolean NOT NULL DEFAULT false,
  tenant_id bigint NOT NULL DEFAULT 0,
  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_identity (
+  id bigint NOT NULL AUTO_INCREMENT,
+  user_id bigint NOT NULL,
+  member_id bigint NOT NULL,
+  default_store_id bigint NOT NULL,
+  source varchar(64) NOT NULL,
+  invite_code varchar(128) DEFAULT NULL,
+  avatar_file_id bigint DEFAULT NULL,
+  face_status varchar(16) NOT NULL DEFAULT 'unregistered',
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_user (tenant_id,user_id),
+  UNIQUE KEY uk_mobile_member (tenant_id,member_id)
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_request (
+  id bigint NOT NULL AUTO_INCREMENT,
+  user_type int NOT NULL,
+  user_id bigint NOT NULL,
+  operation varchar(100) NOT NULL,
+  request_key varchar(128) NOT NULL,
+  request_hash char(64) NOT NULL,
+  response_json longtext DEFAULT NULL,
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_request (tenant_id,user_type,user_id,operation,request_key)
+);
+
+-- Separate member ownership from gym_file.uploader_id, which denotes a system administrator.
+CREATE TABLE IF NOT EXISTS gym_mobile_file_owner (
+  id bigint NOT NULL AUTO_INCREMENT,
+  file_id bigint NOT NULL,
+  member_id bigint NOT NULL,
+  purpose varchar(32) NOT NULL,
+  creator varchar(64) NOT NULL DEFAULT '',
+  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater varchar(64) NOT NULL DEFAULT '',
+  update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted boolean NOT NULL DEFAULT false,
+  tenant_id bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_mobile_file (tenant_id,file_id)
+);
+
+CREATE TABLE IF NOT EXISTS gym_member_followup (
+ id bigint NOT NULL AUTO_INCREMENT, member_id bigint NOT NULL, store_id bigint NOT NULL,
+ employee_id bigint NOT NULL, content varchar(2000) NOT NULL, next_contact_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '', create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '', update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false, tenant_id bigint NOT NULL DEFAULT 0, PRIMARY KEY(id)
 );

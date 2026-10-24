@@ -36,7 +36,7 @@ bash script/gym/db.sh validate
 bash script/gym/run-local.sh
 ```
 
-`init` 在框架表已存在的schema显式baseline到0，随后执行V001～V003；不会隐式接管已有gym表。`adopt-legacy`先校验完整V001结构（59表的列、默认值、字符集/排序规则、索引、可见性、约束、引擎），完整mysqldump备份成功后，显式baseline到1，然后执行V002必要定义及V003必要回填，**不会重建gym表、创建演示账号或重放角色授权**。备份文件权限600，默认 `/tmp/gym-db-backups`；长期保留应显式指定持久目录。已有库缺表或结构漂移时拒绝接管，需先核对差异并修复到历史完整结构，不能跳过检查或用repair掩盖差异。
+`init` 在框架表已存在的schema显式baseline到0，随后执行V001至当前最新版本；不会隐式接管已有gym表。`adopt-legacy`先校验完整V001结构（59表的列、默认值、字符集/排序规则、索引、可见性、约束、引擎），完整mysqldump备份成功后，显式baseline到1，然后执行V002必要定义、V003必要回填及后续版本，**不会重建gym表、创建演示账号或重放角色授权**。备份文件权限600，默认 `/tmp/gym-db-backups`；长期保留应显式指定持久目录。已有库缺表或结构漂移时拒绝接管，需先核对差异并修复到历史完整结构，不能跳过检查或用repair掩盖差异。
 
 `init` 与 `adopt-legacy` 二选一；现有开发库已接管，日常只执行 `migrate` / `validate`。
 
@@ -51,6 +51,11 @@ sql/gym/
     V001__gym_schema.sql            # 59表完整结构，无业务数据
     V002__gym_reference_data.sql    # 菜单与权限定义，只写system_menu
     V003__gym_legacy_backfills.sql  # 必要历史回填，不恢复已删除的会员门店关系
+    V004__gym_group_buy_refund_permission.sql # 团购退款权限定义，不授予角色
+    V005__gym_mobile_identity.sql   # 会员账号与3张移动端gym表
+    V006__gym_mobile_booking_audit.sql # 预约取消原因与课消时余额
+    V007__gym_mobile_member_followups.sql # 跟进记录和门店负责关系版本
+    V008__gym_course_product_version.sql # 私教商品真实版本，旧数据从1开始
   seed/development/demo.sql         # 显式开发演示数据，不在Flyway扫描路径
   legacy-schema.json               # 旧库结构指纹及V001校验和，用于安全接管
   legacy/                          # 冻结的旧01～47及旧开发导入SQL
@@ -63,7 +68,7 @@ script/gym/
   verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
 ```
 
-后续变更追加 `V004__说明.sql`、`V005__说明.sql`，每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随未来V004表变化改写，它不是“当前最新schema”的通用比较工具。
+后续变更从当前最大版本递增追加（当前下一版本为 `V009__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
 
 ## 独立开发seed
 
@@ -543,3 +548,21 @@ SQL47修正旧gym:blacklists:write与现行gym:blacklist:write不一致。只登
 GYM_TEST_PASSWORD运行verify-controller-permissions.py只读源代码方法/类PreAuthorize及启用菜单，当前22控制器/150方法/45权限齐；当前注解布局静态扫描，不代替业务权限测试。不写权限或角色。最终route/field审计151管理操作、127调用和376字段无缺失。
 
 上文SELF通用审批store选项限制仍在，但本人课程产品“申请改价”入口自动带入门店/来源；已实证浏览器提交→gymstore审批→product9价格150，无前端修改。admin黑名单新增/修改/撤销/刷新也已通过。完整交付映射与已授权暂缓项见docs/gym-full-api-progress.md文末。
+
+
+## 小程序接口契约覆盖（2026-10-23）
+
+总表见 [135项接口清单](../../docs/uniapp/uniapp-api-summary.md)，当前实现和第三方暂缓边界见 [实施说明](../../docs/uniapp/uniapp-implementation.md)。
+
+```bash
+python3 script/gym/verify-uniapp-api-coverage.py
+python3 script/gym/verify-uniapp-api-coverage.py --show-missing
+# 最终路由齐备门槛；当前仍有缺失，运行应失败
+python3 script/gym/verify-uniapp-api-coverage.py --require-all
+```
+
+该脚本只验证方法/路径与证据文件，不替代权限、事务和渠道集成验收。V006应在启用本次预约代码前按既有迁移手册应用；旧课消余额为NULL，禁止把当前课包余额批量回填成历史余额。
+
+工作台档案、跟进和分配使用V007：gym表共63张，`gym_member_store.assignment_version` 既有数据默认0。部署新代码前须迁移；旧后台分配会维护该版本，但仍保留原整体替换语义。
+
+商品目录使用V008：`gym_course_product.version`非空、默认1，旧价格与课时保持原值；gym表仍63张。新代码部署前执行到V008并validate。真实隔离迁移38项通过，未应用至业务库。包月设置新增成对的renewalTerms/agreementVersion；缺少两项的旧配置不公开展示。第三方支付、自动续费等继续暂缓。

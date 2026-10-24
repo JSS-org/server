@@ -29,6 +29,9 @@ public class GymBookingDO extends TenantBaseDO {
     private java.time.Instant cancelledAt;
 
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private String cancellationReason;
+
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Long checkinId;
 
     @TableField(updateStrategy = FieldStrategy.ALWAYS)

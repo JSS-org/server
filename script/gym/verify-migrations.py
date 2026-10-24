@@ -90,8 +90,14 @@ def main():
               for name, value in manifest.items()), 'historical SQL checksums unchanged')
     with isolated() as db:
         command('init')
-        check(len([t for t in db.tables() if t.startswith('gym_')]) == 59, 'new database has all 59 tables')
-        db.check_legacy()
+        check(len([t for t in db.tables() if t.startswith('gym_')]) == 63, 'new database has 59 original and 4 mobile gym tables')
+        check('member_user' in db.tables(), 'member authentication storage is installed')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='member_user' AND column_name IN ('mobile','register_terminal','tenant_id')") == '3', 'member authentication columns exist')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_mobile_identity' AND index_name IN ('uk_mobile_user','uk_mobile_member') AND non_unique=0") == '4', 'member identity has tenant-scoped unique account and member bindings')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND is_nullable='YES' AND column_default IS NULL AND ((table_name='gym_booking' AND column_name='cancellation_reason') OR (table_name='gym_lesson_record' AND column_name='remaining_lessons_after'))") == '2', 'mobile booking audit columns preserve unknown historical values as NULL')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_member_store' AND column_name='assignment_version' AND is_nullable='NO' AND column_default='0'") == '1', 'member responsibility version starts at zero for existing memberships')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_course_product' AND column_name='version' AND is_nullable='NO' AND column_default='1'") == '1', 'course product versions start at one for legacy rows')
+        command('validate')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0' for table in manager.SYSTEM_TABLES - {'system_menu'}),
               'production migrations create no demo users, roles, grants or departments')
         check(db.sql("SELECT COUNT(*) FROM system_menu WHERE type=2 AND component LIKE 'gym/%' AND deleted=0") == '35',
@@ -131,7 +137,8 @@ def main():
             manager.ASSETS = changed
             rejects(lambda: db.flyway('validate'), 'Flyway rejects an edited applied migration')
             p.write_text((ASSETS / 'migration/mysql/V003__gym_legacy_backfills.sql').read_text())
-            (changed / 'migration/mysql/V004__pending_test.sql').write_text('SELECT 1;')
+            next_version = max(int(p.name.split('__')[0][1:]) for p in (changed / 'migration/mysql').glob('V*__*.sql')) + 1
+            (changed / f'migration/mysql/V{next_version:03d}__pending_test.sql').write_text('SELECT 1;')
             rejects(db.seed, 'development seed refuses pending new migrations')
             manager.ASSETS = ASSETS
         command('validate')
@@ -140,10 +147,12 @@ def main():
             db.sql(script.read_text())
         # Simulate unresolved legacy business data while keeping the complete legacy schema.
         db.sql("INSERT INTO gym_member(id,store_id,member_no,name,phone,gender,status,customer_stage,registered_at,tenant_id) VALUES(900001,101,'FLYWAY-QA','migration-only','19900000001','unknown','active','prospect',NOW(),1);")
+        db.sql("INSERT INTO gym_course_product(id,store_id,coach_id,name,kind,session_count,duration_minutes,price,status,tenant_id) VALUES(900001,101,91,'migration-only-course','private',2,60,200.00,'active',1);")
         before = auth_snapshot(db)
         db.check_legacy()
         command('adopt-legacy')
         check(auth_snapshot(db) == before, 'legacy adoption preserves every account, role, scope, grant and department')
+        check(db.sql("SELECT CONCAT(version,':',price,':',session_count) FROM gym_course_product WHERE id=900001") == '1:200.00:2', 'legacy course row receives version one without changing price or lessons')
         check(db.sql("SELECT customer_stage FROM gym_member WHERE id=900001") == 'lead', 'required historical stage backfill executes')
         check(db.sql('SELECT COUNT(*) FROM gym_member_store WHERE member_id=900001 AND store_id=101 AND tenant_id=1') == '1',
               'required member-store backfill executes')

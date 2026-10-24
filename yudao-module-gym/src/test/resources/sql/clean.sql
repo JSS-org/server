@@ -67,3 +67,9 @@ DELETE FROM gym_order_refund_review;
 DELETE FROM gym_fulfillment_task;
 
 DELETE FROM gym_order_item_financial_event;
+
+DELETE FROM gym_mobile_file_owner;
+DELETE FROM gym_mobile_request;
+DELETE FROM gym_mobile_identity;
+
+DELETE FROM gym_member_followup;

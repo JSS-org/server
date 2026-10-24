@@ -81,6 +81,8 @@ public class GymMemberCoachService {
             var employee = employees.selectForUpdate(employeeId);
             if (employee == null
                     || !"active".equals(employee.getStatus())
+                    || employee.getHiredOn()
+                            .isAfter(clock.now().atZone(GymDateRange.ZONE).toLocalDate())
                     || employee.getUserId() == null) throw exception(MEMBER_COACH_INVALID);
             var account = users.getUser(employee.getUserId());
             if (account == null
@@ -89,7 +91,12 @@ public class GymMemberCoachService {
                     || employments.selectCount(
                                     new LambdaQueryWrapper<GymEmployeeStoreDO>()
                                             .eq(GymEmployeeStoreDO::getEmployeeId, employeeId)
-                                            .eq(GymEmployeeStoreDO::getStoreId, storeId))
+                                            .eq(GymEmployeeStoreDO::getStoreId, storeId)
+                                            .le(
+                                                    GymEmployeeStoreDO::getJoinedOn,
+                                                    clock.now()
+                                                            .atZone(GymDateRange.ZONE)
+                                                            .toLocalDate()))
                             == 0) throw exception(MEMBER_COACH_INVALID);
         }
         var existing =
@@ -98,6 +105,11 @@ public class GymMemberCoachService {
                                 .eq(GymMemberCoachDO::getMemberId, memberId)
                                 .eq(GymMemberCoachDO::getStoreId, storeId));
         var desired = new HashSet<>(req.getEmployeeIds());
+        var previousActive =
+                existing.stream()
+                        .filter(row -> Boolean.TRUE.equals(row.getActive()))
+                        .map(GymMemberCoachDO::getEmployeeId)
+                        .collect(Collectors.toSet());
         var present = new HashSet<Long>();
         for (var row : existing) {
             present.add(row.getEmployeeId());
@@ -118,6 +130,15 @@ public class GymMemberCoachService {
                 row.setActive(true);
                 coaches.insert(row);
             }
+        if (!previousActive.equals(desired)) {
+            var relation =
+                    memberships.selectOne(
+                            new LambdaQueryWrapper<GymMemberStoreDO>()
+                                    .eq(GymMemberStoreDO::getMemberId, memberId)
+                                    .eq(GymMemberStoreDO::getStoreId, storeId));
+            relation.setAssignmentVersion(Math.incrementExact(relation.getAssignmentVersion()));
+            memberships.updateById(relation);
+        }
         return list(memberId, storeId);
     }
 

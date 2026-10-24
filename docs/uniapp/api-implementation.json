@@ -943,8 +943,14 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/course-sessions",
       "description": "创建私教课程排期并校验教练时间冲突",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCourseWriteService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymBookingRules.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteControllerTest.java"
+      ]
     },
     {
       "id": 86,
@@ -952,8 +958,14 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/bookings",
       "description": "为负责会员或授权门店会员创建预约",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCourseWriteService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymBookingRules.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCourseWriteControllerTest.java"
+      ]
     },
     {
       "id": 87,

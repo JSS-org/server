@@ -2300,3 +2300,34 @@ gym527项全部通过；member4通过/1既有禁用跳过。新增9项覆盖从�
 ### 未做 / 后续
 
 54项新增本地实现、4项复用源码、77项待开发。继续工作台排课、代约及其余内部流程，二维码和扫码签课仍待实现；四类第三方接入继续暂缓。未部署或迁移业务库，本功能及测试文档独立本地提交，不推送；原始uniapp.md内容和暂存状态保留。
+
+## [2026-10-24 20:14 ~ 20:24] 工作台排课与代会员预约
+
+### 意图
+
+补齐总表85–86，为有权限的教练和管理者提供排期创建及真实会员权益预约，并使移动入口与旧后台并发时共享冲突和预占规则。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkCourseWriteController.java`、`vo/GymMobileWorkCourseWriteVO.java`、`service/mobile/GymMobileWorkCourseWriteService.java` | 新增 | 两个幂等写入口、本人/管理范围、严格字段、排课和真实代约 |
+| `yudao-module-gym/.../service/course/GymBookingRules.java`、`GymCourseService.java` | 修改 | 提取同教练排期重叠查询，原后台继续使用相同锁与权限 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkCourseWriteControllerTest.java` | 修改/新增 | 八项业务/事务/混合并发及三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/机器清单、`architecture.md`、`testing.md` | 修改 | 60/135状态、本人排课边界、幂等及余额说明 |
+
+### 结构关系
+
+写事务先检查当前身份和数据范围，再锁持久化幂等请求。排课复用教练锁及共享重叠判断，代约委托原预约业务及预占账本，响应与业务同事务保存。查询仅负责构造明确响应，不开放额外读接口权限。
+
+### 验证证据
+
+gym538项、member4项通过；1项member既有禁用跳过。新增11项含H2真实并发与故障注入：同键一次写入、跨旧后台冲突只一方成功、响应保存失败回滚业务和键。Spotless和server依赖打包通过；源码60/135、余75项。命令与日志见testing本批条目。
+
+### 影响面 / 风险
+
+本人排课允许无会员负责关系，但仍须显式排课权限、本人有效员工/任职和真实商品；这不扩大原后台整店权限。代约仍须本人授课和负责会员的交集，或整店授权范围。排课返回member_context_required，不冒充会员可约资格。幂等重放是首次响应快照，当前状态须查询。无新DDL或自动授权，前端未修改。
+
+### 未做 / 后续
+
+56项新增本地实现、4项复用源码、75项待开发。继续其他内部接口，二维码/扫码签课尚待实现，四类第三方接入保持暂缓。未部署、推送或迁移业务库；混合并发尚未在部署MySQL验证。本批独立本地提交，保留用户原始uniapp.md及其暂存状态。

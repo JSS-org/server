@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **54** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **77** 个。源码映射共 **58 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **56** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **75** 个。源码映射共 **60 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -115,8 +115,8 @@
 | 82 | 工作台 | POST | `/admin-api/gym/mobile/lesson-qr-codes` | 为指定课程生成短时有效的签课二维码 | 设计待开发 |
 | 83 | 工作台 | GET | `/admin-api/gym/mobile/me/coach-profile` | 获取教练本人的公开资料 | 已实现，本地测试通过 |
 | 84 | 工作台 | PATCH | `/admin-api/gym/mobile/me/coach-profile` | 修改教练本人的照片、介绍、特长和资质 | 已实现，本地测试通过 |
-| 85 | 工作台 | POST | `/admin-api/gym/mobile/course-sessions` | 创建私教课程排期并校验教练时间冲突 | 设计待开发 |
-| 86 | 工作台 | POST | `/admin-api/gym/mobile/bookings` | 为负责会员或授权门店会员创建预约 | 设计待开发 |
+| 85 | 工作台 | POST | `/admin-api/gym/mobile/course-sessions` | 创建私教课程排期并校验教练时间冲突 | 已实现，本地测试通过 |
+| 86 | 工作台 | POST | `/admin-api/gym/mobile/bookings` | 为负责会员或授权门店会员创建预约 | 已实现，本地测试通过 |
 | 87 | 工作台 | GET | `/admin-api/gym/mobile/members` | 查询权限范围内会员，支持潜客、私教及临期权益筛选 | 已实现，本地测试通过 |
 | 88 | 工作台 | GET | `/admin-api/gym/mobile/members/{id}` | 获取授权会员资料及当前门店权益摘要 | 已实现，本地测试通过 |
 | 89 | 工作台 | GET | `/admin-api/gym/mobile/members/{id}/follow-ups` | 查询会员或潜在客户的跟进记录 | 已实现，本地测试通过 |

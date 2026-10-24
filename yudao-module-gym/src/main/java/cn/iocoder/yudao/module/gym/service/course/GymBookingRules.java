@@ -52,6 +52,22 @@ public class GymBookingRules {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
+    public void rejectOverlappingSession(
+            Long coachId, java.time.Instant startsAt, java.time.Instant endsAt, Long excluding) {
+        // All scheduling callers acquire this same coach lock before testing overlaps.
+        var conflicts =
+                sessions.selectList(
+                        new LambdaQueryWrapper<GymCourseSessionDO>()
+                                .eq(GymCourseSessionDO::getCoachId, coachId)
+                                .ne(GymCourseSessionDO::getStatus, "cancelled")
+                                .ne(excluding != null, GymCourseSessionDO::getId, excluding)
+                                .lt(GymCourseSessionDO::getStartsAt, endsAt)
+                                .gt(GymCourseSessionDO::getEndsAt, startsAt)
+                                .last("FOR UPDATE"));
+        if (!conflicts.isEmpty()) throw exception(COURSE_SESSION_CONFLICT);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
     public void rejectOverlappingBooking(Long memberId, GymCourseSessionDO session) {
         var conflicts =
                 bookings.selectList(

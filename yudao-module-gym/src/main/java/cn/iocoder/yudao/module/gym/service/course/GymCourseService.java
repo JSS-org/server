@@ -398,16 +398,8 @@ public class GymCourseService {
             throw exception(COURSE_SESSION_INVALID);
         stores.requireStore(req.getStoreId(), false);
         requireCoach(req.getCoachId(), req.getStoreId());
-        var overlapping =
-                gymCourseSessionMapper.selectList(
-                        new LambdaQueryWrapper<GymCourseSessionDO>()
-                                .eq(GymCourseSessionDO::getCoachId, req.getCoachId())
-                                .ne(GymCourseSessionDO::getStatus, "cancelled")
-                                .ne(excluding != null, GymCourseSessionDO::getId, excluding)
-                                .lt(GymCourseSessionDO::getStartsAt, req.getEndsAt())
-                                .gt(GymCourseSessionDO::getEndsAt, req.getStartsAt())
-                                .last("FOR UPDATE"));
-        if (!overlapping.isEmpty()) throw exception(COURSE_SESSION_CONFLICT);
+        bookingRules.rejectOverlappingSession(
+                req.getCoachId(), req.getStartsAt(), req.getEndsAt(), excluding);
     }
 
     private GymCourseSessionRespVO sessionResponse(GymCourseSessionDO row) {

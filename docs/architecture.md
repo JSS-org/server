@@ -530,3 +530,11 @@ Gym上下文在只读事务内读取当前有效员工、整店范围、有效SE
 `GymMobileWorkCoursesController`的四个目标路由分别检查bookings/checkins/lessons读取权限 → `GymMobileWorkCoursesService`验证有效后台身份和有界分页、必传日期 → 复用`GymMemberCoachService.predicate/coachPredicate`在SQL分页前施加会员/门店与授课范围。SELF预约和课消取两个谓词交集；签到只取会员谓词。业务范围没有从上下文门店列表推导，也没有扩大旧后台查询权限。
 
 预约通过同租户同门店排期EXISTS验证并筛选开始时间；课消使用已确认记录及其保存余额，签到只读成功入场记录。分页与关联转换在只读可重复读事务中，姓名、排期、签到及课消批量查询；所有VO为明确字段。无新增表、迁移、授权或外部渠道调用。
+
+## 工作台排课与代会员预约（2026-10-24 增量）
+
+`GymMobileWorkCourseWriteController` → 功能权限 → `GymMobileWorkCourseWriteService`（READ_COMMITTED写事务）→ 当前后台身份/本人任职或整店范围 → `GymMobileIdempotency`持久化请求锁 → 写入与首次响应同事务。DTO仅接受契约字段，拒绝额外字段。
+
+排课在共享教练行锁下重查本人绑定和任职，锁商品并验证时长/归属，调用`GymBookingRules.rejectOverlappingSession`后写固定容量1排期。原`GymCourseService.validateSession`只将原重叠查询移动到该共享方法，保留原权限。本人排课能力只新增于移动入口。
+
+代约预先核对会员/教练范围，在教练锁下核对商品，再委托原`GymCourseService.createBooking`执行实际预约及权益预占，使用`GymMobileWorkCoursesService.booking`返回明确VO。两个写入口和原后台通过同一教练/会员/排期锁序竞争；重复键返回首次快照，事务失败不留下业务行或幂等结果。无需新迁移。

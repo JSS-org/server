@@ -434,6 +434,12 @@ Content-Type: application/json
 | `POST W/course-sessions`（幂等） | 有排课权限的员工/管理者 | `storeId:ID,coachId:ID,productId:ID,startsAt:DateTime,endsAt:DateTime` | `CourseSession` |
 | `POST W/bookings`（幂等） | 负责会员的员工/管理者 | `memberId:ID,sessionId:ID,coursePackId:ID` | `WorkBooking` |
 
+工作台写入85–86已实现。排课要求`gym:courses:write`及有效后台身份，允许当前账号关联的有效员工给本人任职门店排课（不要求已有负责会员），或由具有整店数据范围的管理者为授权门店排课。本人操作不授予整店管理权限，原后台排课权限不变。教练与任职须已生效，商品为同门店同教练的启用私教商品，门店营业；开始时间须在未来，时长等于商品课时长度。时间保存到微秒，容量固定1、初始预占0、状态scheduled；不能由请求改容量、状态或价格。与旧后台共用教练锁及重叠检查，紧邻时段允许，重叠拒绝。
+
+排课返回`CourseSession`；因请求未选定会员，`bookable=false,unavailableReason=member_context_required`，不能把排课成功当作任意会员都能约。代约要求`gym:bookings:write`，SELF同时满足本人授课与当前负责会员关系，管理者按整店范围；只接受`memberId/sessionId/coursePackId`。服务端校验实际有效私教商品，再复用原后台预约链路检查会员、门店、黑名单、课包归属和有效期、可用课时、名额及会员时间冲突。成功只预占1课时，不消耗课时或完成签课。
+
+两项必传`Idempotency-Key`（8～128位字母、数字、下划线或连字符），按租户、后台账号和操作类型隔离。相同键相同参数返回首次成功结果，参数变化报冲突；业务写入与结果同事务，失败一起回滚。同键重放先重新检查当前身份和数据范围；不重新执行排期/预占，后续业务状态变化不改写旧响应。预约取消后以旧创建键重试仍返回首次结果、不会重新预占，要重约必须换新键；当前状态通过预约详情GET查询。
+
 本人教练资料GET/PATCH（总表83–84）已实现。使用后台令牌，服务端关联唯一在职员工并检查当前营业门店任职，以及已有教练资料或有效私教商品；不会接受客户端指定员工。仅编辑本人字段，省略保留，头像null清除，介绍/数组不接受null，可用空字符串/空数组清空。管理员发布状态保持不变，新建草稿不会自动公开。
 
 新图片须为本人后台账号上传、当前任职门店的image文件，原来由管理员绑定的图片可保留。本人响应中的图片地址为`/admin-api/gym/mobile/me/coach-profile/files/{id}/content`，需后台令牌和租户头，按当前资料绑定鉴权；这是不计入135项的预览辅助入口。工作台上传74已实现，可使用coach_profile用途上传本人图片，需已有gym:files:upload权限和有效教练任职。详情见[实施说明](./uniapp-implementation.md#本人教练资料实现与边界)。

@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.gym.controller.admin.common.GymPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.employee.vo.*;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCourseWriteVO.*;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCoursesVO.*;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkMembersVO;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkRecordsVO;
@@ -48,6 +49,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCourseWriteService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCourseWriteController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCoursesController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService.class,
@@ -134,6 +137,14 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCourseWriteService workCourseWrites;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCourseWriteController
+            workCourseWriteController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService workCourses;
 
     @Resource
@@ -11478,5 +11489,556 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         TenantContextHolder.setTenantId(1L);
         when(workAccounts.getUser(1L)).thenReturn(null);
         assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
+    }
+
+    SessionCreate mobileSession(Long product, Long coach, java.time.Instant start) {
+        var req = new SessionCreate();
+        req.setStoreId(101L);
+        req.setCoachId(coach);
+        req.setProductId(product);
+        req.setStartsAt(start);
+        req.setEndsAt(start.plusSeconds(3600));
+        return req;
+    }
+
+    BookingCreate staffBooking(Long member, Long session, Long pack) {
+        var req = new BookingCreate();
+        req.setMemberId(member);
+        req.setSessionId(session);
+        req.setCoursePackId(pack);
+        return req;
+    }
+
+    @Test
+    void workScheduleAllowsOwnEffectiveEmploymentWithoutInventingWholeStoreAccessAndReplays() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L), other = responsibleEmployee(92L);
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var req = mobileSession(product, coach, java.time.Instant.parse("2026-10-24T02:00:00Z"));
+        personalScope(91L);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCourseWriteController.session(req, "work-schedule-key"));
+        when(permissions.hasAnyPermissions(91L, "gym:courses:write")).thenReturn(true);
+        var first = workCourseWriteController.session(req, "work-schedule-key").getData();
+        assertEquals(first, workCourseWrites.session(req, "work-schedule-key"));
+        assertEquals(1, first.capacity());
+        assertEquals(1, first.remainingCapacity());
+        assertFalse(first.bookable());
+        assertEquals("member_context_required", first.unavailableReason());
+        assertServiceException(
+                () -> applicationContext.getBean(GymDataScope.class).check(101L),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        courses.createSession(
+                                courseSession(product, coach, req.getStartsAt().plusSeconds(7200))),
+                STORE_NO_PERMISSION);
+        req.setCoachId(other);
+        assertServiceException(
+                () -> workCourseWrites.session(req, "other-coach-key"), STORE_NO_PERMISSION);
+        req.setCoachId(coach);
+        req.setEndsAt(req.getEndsAt().plusSeconds(1));
+        assertServiceException(
+                () -> workCourseWrites.session(req, "work-schedule-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setEndsAt(req.getEndsAt().minusSeconds(1));
+        var links =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var link =
+                links.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        coach);
+        link.setJoinedOn(LocalDate.of(2027, 1, 1));
+        links.updateById(link);
+        assertServiceException(
+                () -> workCourseWrites.session(req, "work-schedule-key"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void workScheduleChecksFutureDurationProductStoreAndSharedOverlapWhileAllowingAdjacentTime() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var req = mobileSession(product, coach, at);
+        req.setEndsAt(at.plusSeconds(1800));
+        assertServiceException(
+                () -> workCourseWrites.session(req, "duration-invalid"), COURSE_SESSION_INVALID);
+        var past = mobileSession(product, coach, java.time.Instant.parse("2026-10-23T04:00:00Z"));
+        assertServiceException(
+                () -> workCourseWrites.session(past, "past-schedule-key"), COURSE_SESSION_INVALID);
+        courses.createSession(courseSession(product, coach, at));
+        var overlapping = mobileSession(product, coach, at.plusSeconds(1800));
+        assertServiceException(
+                () -> workCourseWrites.session(overlapping, "overlap-session-key"),
+                COURSE_SESSION_CONFLICT);
+        assertNotNull(
+                workCourseWrites.session(
+                        mobileSession(product, coach, at.plusSeconds(3600)),
+                        "adjacent-session-key"));
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseProductMapper.class);
+        var pr = pm.selectById(product);
+        pr.setStatus("inactive");
+        pm.updateById(pr);
+        var later = mobileSession(product, coach, at.plusSeconds(7200));
+        assertServiceException(
+                () -> workCourseWrites.session(later, "inactive-product-key"),
+                COURSE_PRODUCT_INVALID);
+        pr.setStatus("active");
+        pm.updateById(pr);
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertServiceException(
+                () -> workCourseWrites.session(later, "inactive-store-key"), MEMBER_STORE_INACTIVE);
+    }
+
+    @Test
+    void workBookingUsesRealReservationAndReplaysOriginalSuccessWithoutReservingAfterCancel() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002301")).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long session =
+                Long.valueOf(courses.createSession(courseSession(product, coach, at)).getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "work-write-pack");
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = staffBooking(member, session, pack.getId());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCourseWriteController.booking(req, "work-booking-key"));
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:write")).thenReturn(true);
+        var first = workCourseWriteController.booking(req, "work-booking-key").getData();
+        assertEquals(first, workCourseWrites.booking(req, "work-booking-key"));
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+        assertEquals(1, pm.selectById(pack.getId()).getReservedSessions());
+        assertEquals(2, pm.selectById(pack.getId()).getRemainingSessions());
+        req.setCoursePackId(pack.getId() + 100);
+        assertServiceException(
+                () -> workCourseWrites.booking(req, "work-booking-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setCoursePackId(pack.getId());
+        headquarters();
+        loginAs(1L);
+        var cancel =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo.GymBookingSaveReqVO();
+        cancel.setStatus("cancelled");
+        courses.patchBooking(Long.valueOf(first.id()), cancel);
+        personalScope(91L);
+        assertEquals("confirmed", workCourseWrites.booking(req, "work-booking-key").status());
+        assertEquals(0, pm.selectById(pack.getId()).getReservedSessions());
+        assertEquals("cancelled", workCourses.booking(Long.valueOf(first.id())).status());
+        assertEquals("confirmed", workCourseWrites.booking(req, "new-work-booking-key").status());
+        assertEquals(1, pm.selectById(pack.getId()).getReservedSessions());
+        headquarters();
+        memberCoaches.replace(member, 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> workCourseWrites.booking(req, "work-booking-key"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void workBookingRejectsOtherTeachingMemberInvalidPackProductAndWrongIdentityWithoutWrites() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                otherCoach = responsibleEmployee(92L),
+                member = Long.valueOf(members.create(member(101L, "13800002302")).getId());
+        Long other = Long.valueOf(members.create(member(101L, "13800002303")).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId()),
+                otherProduct =
+                        Long.valueOf(
+                                courses.createProduct(courseProduct(101L, otherCoach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long
+                session =
+                        Long.valueOf(
+                                courses.createSession(courseSession(product, coach, at)).getId()),
+                otherSession =
+                        Long.valueOf(
+                                courses.createSession(courseSession(otherProduct, otherCoach, at))
+                                        .getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "work-invalid-pack");
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        personalScope(91L);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, otherSession, pack.getId()),
+                                "other-teacher-booking"),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(other, session, pack.getId()), "other-member-booking"),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId() + 100),
+                                "missing-pack-booking"),
+                COURSE_PACK_NOT_EXISTS);
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseProductMapper.class);
+        var pr = pm.selectById(product);
+        pr.setStatus("inactive");
+        pm.updateById(pr);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId()),
+                                "inactive-product-booking"),
+                COURSE_PRODUCT_INVALID);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId()), "wrong-type-booking"),
+                MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () ->
+                        workCourseWrites.session(
+                                mobileSession(product, coach, at), "wrong-type-session"),
+                MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () ->
+                        workCourseWrites.booking(
+                                staffBooking(member, session, pack.getId()),
+                                "wrong-tenant-booking"),
+                MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectCount());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void workCourseResponseFailureRollsBackScheduleBookingAndReservationWithTheirKeys() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002304")).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var req = mobileSession(product, coach, at);
+        var sm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper.class);
+        var rm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT reject_work_response CHECK (response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> workCourseWrites.session(req, "rollback-session-key"));
+            assertEquals(0, sm.selectCount());
+            assertEquals(0, rm.selectCount());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_request DROP CONSTRAINT reject_work_response");
+        }
+        Long session = Long.valueOf(workCourseWrites.session(req, "rollback-session-key").id());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "rollback-work-pack");
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT reject_work_booking_response CHECK (operation <> 'work-booking-create' OR response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () ->
+                            workCourseWrites.booking(
+                                    staffBooking(member, session, pack.getId()),
+                                    "rollback-booking-key"));
+            assertEquals(0, sm.selectById(session).getReservedCount());
+            assertEquals(
+                    0,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper
+                                            .class)
+                            .selectCount());
+            assertEquals(1, rm.selectCount());
+            assertEquals(
+                    0,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                            .class)
+                            .selectById(pack.getId())
+                            .getReservedSessions());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_request DROP CONSTRAINT reject_work_booking_response");
+        }
+        assertNotNull(
+                workCourseWrites.booking(
+                        staffBooking(member, session, pack.getId()), "rollback-booking-key"));
+    }
+
+    List<Object> workCourseRace(
+            java.util.concurrent.Callable<?> first, java.util.concurrent.Callable<?> second)
+            throws Exception {
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var futures = new ArrayList<java.util.concurrent.Future<Object>>();
+            for (var action : List.of(first, second))
+                futures.add(
+                        executor.submit(
+                                () -> {
+                                    setupThreadContext();
+                                    ready.countDown();
+                                    try {
+                                        assertTrue(
+                                                start.await(
+                                                        3, java.util.concurrent.TimeUnit.SECONDS));
+                                        return action.call();
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    error) {
+                                        return error;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            return List.of(
+                    futures.get(0).get(8, java.util.concurrent.TimeUnit.SECONDS),
+                    futures.get(1).get(8, java.util.concurrent.TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void mobileAndLegacySchedulingShareCoachLockAndOnlyOneOverlappingSessionCommits()
+            throws Exception {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var result =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.session(
+                                        mobileSession(product, coach, at), "mixed-schedule-key"),
+                        () ->
+                                courses.createSession(
+                                        courseSession(product, coach, at.plusSeconds(1800))));
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                r ->
+                                        r
+                                                        instanceof
+                                                        cn.iocoder.yudao.framework.common.exception
+                                                                        .ServiceException
+                                                                e
+                                                && e.getCode()
+                                                        .equals(COURSE_SESSION_CONFLICT.getCode()))
+                        .count());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void mobileAndLegacyBookingsShareCapacityAndReserveExactlyOnePack() throws Exception {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        Long first = Long.valueOf(members.create(member(101L, "13800002305")).getId()),
+                second = Long.valueOf(members.create(member(101L, "13800002306")).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long session =
+                Long.valueOf(courses.createSession(courseSession(product, coach, at)).getId());
+        var a =
+                courses.issuePack(
+                        first,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-work-pack-a");
+        var b =
+                courses.issuePack(
+                        second,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-work-pack-b");
+        var result =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.booking(
+                                        staffBooking(first, session, a.getId()),
+                                        "mixed-work-booking-key"),
+                        () -> courses.createBooking(bookingRequest(second, session, b.getId())));
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                r ->
+                                        r
+                                                        instanceof
+                                                        cn.iocoder.yudao.framework.common.exception
+                                                                        .ServiceException
+                                                                e
+                                                && e.getCode()
+                                                        .equals(BOOKING_CAPACITY_FULL.getCode()))
+                        .count());
+        var pm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+        assertEquals(
+                1,
+                pm.selectById(a.getId()).getReservedSessions()
+                        + pm.selectById(b.getId()).getReservedSessions());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper
+                                        .class)
+                        .selectById(session)
+                        .getReservedCount());
+    }
+
+    @Test
+    void concurrentWorkRetriesShareOneSessionAndOneReservationButSeparateOperationKeys()
+            throws Exception {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var at = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        var created =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.session(
+                                        mobileSession(product, coach, at), "same-work-write-key"),
+                        () ->
+                                workCourseWrites.session(
+                                        mobileSession(product, coach, at), "same-work-write-key"));
+        assertEquals(created.getFirst(), created.getLast());
+        var session =
+                (cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                                .CourseSession)
+                        created.getFirst();
+        Long member = Long.valueOf(members.create(member(101L, "13800002307")).getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        at.minusSeconds(86400),
+                        at.plusSeconds(86400),
+                        "test-payment",
+                        "same-work-key-pack");
+        var booked =
+                workCourseRace(
+                        () ->
+                                workCourseWrites.booking(
+                                        staffBooking(
+                                                member, Long.valueOf(session.id()), pack.getId()),
+                                        "same-work-write-key"),
+                        () ->
+                                workCourseWrites.booking(
+                                        staffBooking(
+                                                member, Long.valueOf(session.id()), pack.getId()),
+                                        "same-work-write-key"));
+        assertEquals(booked.getFirst(), booked.getLast());
+        assertInstanceOf(WorkBooking.class, booked.getFirst());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper
+                                        .class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(pack.getId())
+                        .getReservedSessions());
+        assertEquals(
+                2,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
+                                        .class)
+                        .selectCount());
     }
 }

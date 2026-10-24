@@ -504,3 +504,9 @@ AppGymCatalogController → GymMobileCatalogService → 门店、模板、销售
 原GymEmployeeController写权限及全部共享任职范围 → GymEmployeeService → GymCoachPublicProfiles校验并保存V009的coach_published/coach_profile。默认旧员工保持私有，提供可选publicCoachProfile对象时整体替换，其他员工编辑保持原公开设置。未引入自动角色授权。
 
 AppGymCoachesController → GymMobileCoachService → 同一公开条件查询（明确发布、有效员工/任职、营业门店、同租户） → SQL分页 → 公开字段。只读REPEATABLE_READ保持资料和图片引用快照。GymMobilePublicService媒体下载增加对公开教练引用的检查，复用原图片类型、实际内容校验及租户过滤；没有新辅助路由。公开图片须仍属于有效任职营业门店，撤销最后一个有效引用才失效。
+
+### 本人教练资料编辑与草稿预览（2026-10-24）
+
+GymMobileCoachProfileController认证 → GymMobileWorkAccess后台账号及唯一员工 → GymMobileCoachProfileService检查有效任职及教练资料/私教商品 → 稀疏字段合并。PATCH使用READ_COMMITTED和员工行锁，取得锁后核对账号绑定及有效状态，更新仅包含coach_profile和审计字段；不写发布标志、姓名、账号等员工字段。首次草稿沿用V009默认不公开，无新增DDL。
+
+本人Media使用同组鉴权预览辅助路由，读服务重查资料绑定、当前任职和image类别，再从FileApi取真实内容并校验魔数；不接入公开媒体query租户选择器。新关联文件须由本人后台账号上传，管理员原有绑定可保留；读取不要求扩大为整店文件权限。普通员工不因职位名称获得教练资料能力，通用工作台上传仍待完成。

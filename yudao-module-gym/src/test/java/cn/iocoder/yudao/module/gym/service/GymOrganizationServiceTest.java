@@ -114,6 +114,8 @@ import java.util.*;
     GymEmployeeService.class,
     cn.iocoder.yudao.module.gym.service.employee.GymCoachPublicProfiles.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachProfileService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoachProfileController.class,
     GymDataScope.class,
     cn.iocoder.yudao.module.gym.controller.admin.store.GymStoreController.class,
     cn.iocoder.yudao.module.gym.controller.admin.employee.GymEmployeeController.class,
@@ -123,6 +125,15 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachProfileService coachSelf;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoachProfileController
+            coachSelfController;
+
+    @MockitoBean
+    cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler mobileErrorHandler;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService publicCoaches;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService catalog;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePublicService publicContent;
@@ -10313,5 +10324,283 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         storePatch.setStatus("inactive");
         stores.patch(101L, storePatch);
         assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    Long selfCoach(Long user, boolean published) {
+        Long id = approvalEmployee("SELF-COACH-" + user, user);
+        users.getUser(user).setDeptId(101L);
+        var p = coachProfile(null);
+        p.setPublished(published);
+        var req = new GymEmployeeSaveReqVO();
+        req.setPublicCoachProfile(p);
+        employees.patch(id, req);
+        return id;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCoachProfilePatch
+            selfCoachPatch() {
+        return new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo
+                .GymMobileCoachProfilePatch();
+    }
+
+    @Test
+    void selfCoachEditsOnlyOwnFieldsAndPreservesAdministratorPublicationAndIdentity() {
+        stores.create(store(101L, "A"));
+        Long own = selfCoach(91L, true), other = selfCoach(92L, true);
+        personalScope(91L);
+        assertEquals(own.toString(), coachSelfController.get().getData().id());
+        var patch = selfCoachPatch();
+        patch.setIntroduction("本人更新");
+        patch.setSpecialties(List.of("柔韧"));
+        var result = coachSelfController.patch(patch).getData();
+        assertEquals("本人更新", result.introduction());
+        assertEquals(List.of("柔韧"), result.specialties());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var saved = mapper.selectById(own);
+        assertTrue(saved.getCoachPublished());
+        assertEquals("测试员工", saved.getName());
+        assertEquals("13800000000", saved.getPhone());
+        assertEquals(91L, saved.getUserId());
+        assertEquals("91", saved.getUpdater());
+        assertEquals("本人更新", publicCoaches.detail(own, 101L).introduction());
+        assertEquals("力量训练教练介绍", publicCoaches.detail(other, 101L).introduction());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result)
+                        .contains("13800000000"));
+        assertEquals(result, coachSelf.patch(selfCoachPatch()));
+    }
+
+    @Test
+    void selfCoachDraftUsesActualPrivateProductWithoutAutomaticallyPublishing() {
+        stores.create(store(101L, "A"));
+        Long id = approvalEmployee("DRAFT", 91L);
+        personalScope(91L);
+        assertServiceException(() -> coachSelf.get(), MOBILE_COACH_NOT_AVAILABLE);
+        headquarters();
+        courses.createProduct(courseProduct(101L, id));
+        personalScope(91L);
+        assertEquals("", coachSelf.get().introduction());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        assertNull(mapper.selectById(id).getCoachProfile());
+        var image = publicImage(101L);
+        image.setUploaderId(91L);
+        files.updateById(image);
+        var patch = selfCoachPatch();
+        patch.setIntroduction("待发布介绍");
+        patch.setAvatarFileId(image.getId());
+        var result = coachSelf.patch(patch);
+        assertFalse(mapper.selectById(id).getCoachPublished());
+        assertTrue(
+                result.avatar().url().startsWith("/admin-api/gym/mobile/me/coach-profile/files/"));
+        assertNotNull(coachSelf.content(image.getId()));
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+    }
+
+    @Test
+    void selfCoachRejectsWrongTokenDisabledAccountMissingEmployeeAndDuplicateBinding() {
+        stores.create(store(101L, "A"));
+        Long id = selfCoach(91L, false);
+        assertServiceException(() -> coachSelf.get(), MOBILE_EMPLOYEE_REQUIRED);
+        loginAs(91L);
+        var account = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        account.setId(91L);
+        account.setStatus(1);
+        when(workAccounts.getUser(91L)).thenReturn(account);
+        assertServiceException(() -> coachSelf.get(), MOBILE_IDENTITY_INVALID);
+        account.setStatus(0);
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> coachSelf.get(), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> coachSelf.get(), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        Long duplicate = Long.valueOf(employees.create(employee("DUPLICATE-COACH", 101L)).getId());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var row = mapper.selectById(duplicate);
+        row.setUserId(91L);
+        assertThrows(
+                org.springframework.dao.DuplicateKeyException.class, () -> mapper.updateById(row));
+        row.setUserId(92L);
+        mapper.updateById(row);
+        assertEquals(id.toString(), coachSelf.get().id());
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> coachSelfController.get());
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> coachSelfController.patch(selfCoachPatch()));
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> coachSelfController.content(1L));
+    }
+
+    @Test
+    void selfCoachRequiresCurrentEmployeeAndActiveEmploymentForEveryReadAndWrite() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T04:00:00Z"));
+        stores.create(store(101L, "A"));
+        Long id = selfCoach(91L, false);
+        loginAs(91L);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var row = mapper.selectById(id);
+        row.setStatus("inactive");
+        mapper.updateById(row);
+        assertServiceException(() -> coachSelf.get(), MOBILE_EMPLOYEE_REQUIRED);
+        row.setStatus("active");
+        row.setHiredOn(LocalDate.of(2026, 10, 25));
+        mapper.updateById(row);
+        assertServiceException(() -> coachSelf.get(), MOBILE_EMPLOYEE_REQUIRED);
+        row.setHiredOn(LocalDate.of(2026, 1, 1));
+        mapper.updateById(row);
+        var links =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var link =
+                links.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        id);
+        link.setJoinedOn(LocalDate.of(2026, 10, 25));
+        links.updateById(link);
+        assertServiceException(() -> coachSelf.patch(selfCoachPatch()), MOBILE_COACH_NOT_AVAILABLE);
+        link.setJoinedOn(LocalDate.of(2026, 1, 1));
+        links.updateById(link);
+        var storePatch = new GymStoreSaveReqVO();
+        storePatch.setStatus("inactive");
+        stores.patch(101L, storePatch);
+        assertServiceException(() -> coachSelf.get(), MOBILE_COACH_NOT_AVAILABLE);
+    }
+
+    @Test
+    void selfCoachNewFilesMustBeOwnUploadsAndPrivateDraftPreviewRequiresCurrentBinding() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        selfCoach(91L, false);
+        loginAs(91L);
+        var other = publicImage(101L);
+        other.setUploaderId(92L);
+        files.updateById(other);
+        var patch = selfCoachPatch();
+        patch.setAvatarFileId(other.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        var privateFile = file(101L, "contract");
+        privateFile.setUploaderId(91L);
+        files.updateById(privateFile);
+        patch.setAvatarFileId(privateFile.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        var different = publicImage(102L);
+        different.setUploaderId(91L);
+        files.updateById(different);
+        patch.setAvatarFileId(different.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        TenantContextHolder.setTenantId(2L);
+        var foreign = publicImage(101L);
+        foreign.setUploaderId(91L);
+        files.updateById(foreign);
+        TenantContextHolder.setTenantId(1L);
+        patch.setAvatarFileId(foreign.getId());
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_FILE_NOT_OWNED);
+        var own = publicImage(101L);
+        own.setUploaderId(91L);
+        files.updateById(own);
+        assertServiceException(() -> coachSelf.content(own.getId()), MOBILE_FILE_NOT_OWNED);
+        patch.setAvatarFileId(own.getId());
+        coachSelf.patch(patch);
+        assertArrayEquals(
+                fileApi.getFileContentByUrl(own.getUrl()),
+                coachSelf.content(own.getId()).getContent());
+        loginAs(92L);
+        assertServiceException(() -> coachSelf.content(own.getId()), MOBILE_EMPLOYEE_REQUIRED);
+        loginAs(91L);
+        when(fileApi.getFileContentByUrl(own.getUrl()))
+                .thenReturn("not an image".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> coachSelf.content(own.getId()), FILE_NOT_EXISTS);
+        patch.setAvatarFileId(null);
+        coachSelf.patch(patch);
+        assertServiceException(() -> coachSelf.content(own.getId()), MOBILE_FILE_NOT_OWNED);
+    }
+
+    @Test
+    void selfCoachKeepsAdminAssignedImagesButCanClearThemAndRejectsInvalidMergedFields() {
+        stores.create(store(101L, "A"));
+        Long id = selfCoach(91L, true);
+        var image = publicImage(101L);
+        image.setUploaderId(1L);
+        files.updateById(image);
+        var profile = coachProfile(image.getId());
+        var admin = new GymEmployeeSaveReqVO();
+        admin.setPublicCoachProfile(profile);
+        employees.patch(id, admin);
+        personalScope(91L);
+        var patch = selfCoachPatch();
+        patch.setIntroduction("更新介绍");
+        coachSelf.patch(patch);
+        assertEquals(image.getId().toString(), coachSelf.get().avatar().fileId());
+        patch.setIntroduction(null);
+        assertThrows(ConstraintViolationException.class, () -> coachSelf.patch(patch));
+        assertEquals("更新介绍", coachSelf.get().introduction());
+        patch.setIntroduction("");
+        patch.setSpecialties(List.of("力量", "力量"));
+        assertServiceException(() -> coachSelf.patch(patch), MOBILE_REQUEST_INVALID);
+        patch.setSpecialties(List.of());
+        patch.setQualificationFileIds(null);
+        assertThrows(ConstraintViolationException.class, () -> coachSelf.patch(patch));
+        patch.setQualificationFileIds(List.of());
+        patch.setAvatarFileId(null);
+        var result = coachSelf.patch(patch);
+        assertEquals("", result.introduction());
+        assertNull(result.avatar());
+        assertTrue(result.qualificationFiles().isEmpty());
+        assertServiceException(() -> coachSelf.content(image.getId()), MOBILE_FILE_NOT_OWNED);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void simultaneousSelfCoachPatchesMergeDifferentFieldsUnderEmployeeRowLock() throws Exception {
+        stores.create(store(101L, "A"));
+        selfCoach(91L, true);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var tasks = new ArrayList<java.util.concurrent.Future<?>>();
+            for (boolean introduction : List.of(true, false))
+                tasks.add(
+                        executor.submit(
+                                () -> {
+                                    try {
+                                        TenantContextHolder.setTenantId(1L);
+                                        loginAs(91L);
+                                        var patch = selfCoachPatch();
+                                        if (introduction) patch.setIntroduction("并发介绍");
+                                        else patch.setSpecialties(List.of("并发特长"));
+                                        ready.countDown();
+                                        assertTrue(
+                                                start.await(
+                                                        3, java.util.concurrent.TimeUnit.SECONDS));
+                                        coachSelf.patch(patch);
+                                        return null;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            for (var task : tasks) task.get(8, java.util.concurrent.TimeUnit.SECONDS);
+        }
+        loginAs(91L);
+        assertEquals("并发介绍", coachSelf.get().introduction());
+        assertEquals(List.of("并发特长"), coachSelf.get().specialties());
     }
 }

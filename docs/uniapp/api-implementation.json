@@ -883,8 +883,12 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/me/coach-profile",
       "description": "获取教练本人的公开资料",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileControllerTest.java"
+      ]
     },
     {
       "id": 84,
@@ -892,8 +896,12 @@
       "method": "PATCH",
       "path": "/admin-api/gym/mobile/me/coach-profile",
       "description": "修改教练本人的照片、介绍、特长和资质",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoachProfileControllerTest.java"
+      ]
     },
     {
       "id": 85,

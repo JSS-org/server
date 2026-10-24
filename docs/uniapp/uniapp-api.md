@@ -296,7 +296,7 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 }
 ```
 
-对象省略或null保持原值；提供时整体替换，`published=false`下架。头像/资质只接受当前租户内员工任职门店的image类别文件，下载仍检查有效公开引用；不能填入人脸或合同附件。介绍最多4000字，擅长项目最多20项、每项80字，资质图片最多20个且不重复；旧员工默认不公开。工作台本人教练资料编辑仍待开发。完整边界见[实施说明](./uniapp-implementation.md#教练公开资料实现与边界)。
+对象省略或null保持原值；提供时整体替换，`published=false`下架。头像/资质只接受当前租户内员工任职门店的image类别文件，下载仍检查有效公开引用；不能填入人脸或合同附件。介绍最多4000字，擅长项目最多20项、每项80字，资质图片最多20个且不重复；旧员工默认不公开。工作台本人教练资料入口见第8.1节。完整边界见[实施说明](./uniapp-implementation.md#教练公开资料实现与边界)。
 
 - 首期按现有私教容量 1 设计。创建预约时验证教练、产品、门店、时段、权益有效期和剩余课时，并原子预占 1 课时；同一会员时间冲突拒绝。
 - 取消预约在可取消时间内释放预占；已签课不可走普通取消。当前自助取消默认须早于开课，配置 `yudao.gym.mobile.bookings.cancel-before-minutes` 可设置提前分钟数（0～10080）；截止时刻本身不可取消，超时联系门店。此规则不自动扣课，不启用爽约收费或扣课。
@@ -425,6 +425,10 @@ Content-Type: application/json
 | `PATCH W/me/coach-profile` | 教练 | `avatarFileId?:ID,introduction?:string,specialties?:string[],qualificationFileIds?:ID[]` | `Coach`，仅修改本人公开资料 |
 | `POST W/course-sessions`（幂等） | 有排课权限的员工/管理者 | `storeId:ID,coachId:ID,productId:ID,startsAt:DateTime,endsAt:DateTime` | `CourseSession` |
 | `POST W/bookings`（幂等） | 负责会员的员工/管理者 | `memberId:ID,sessionId:ID,coursePackId:ID` | `WorkBooking` |
+
+本人教练资料GET/PATCH（总表83–84）已实现。使用后台令牌，服务端关联唯一在职员工并检查当前营业门店任职，以及已有教练资料或有效私教商品；不会接受客户端指定员工。仅编辑本人字段，省略保留，头像null清除，介绍/数组不接受null，可用空字符串/空数组清空。管理员发布状态保持不变，新建草稿不会自动公开。
+
+新图片须为本人后台账号上传、当前任职门店的image文件，原来由管理员绑定的图片可保留。本人响应中的图片地址为`/admin-api/gym/mobile/me/coach-profile/files/{id}/content`，需后台令牌和租户头，按当前资料绑定鉴权；这是不计入135项的预览辅助入口。工作台上传74仍待实现，不能把已完成资料编辑等同于完整SELF上传流程。详情见[实施说明](./uniapp-implementation.md#本人教练资料实现与边界)。
 
 `WorkBooking/WorkCheckin/WorkLessonRecord` 为会员端相应对象加 `memberId,memberName,coachId`；手机号仅在额外授权时脱敏返回。员工的预约/课消强制为本人授课；负责会员相关记录还需会员服务关系授权。签到默认只看本人负责会员，管理者看授权门店。
 

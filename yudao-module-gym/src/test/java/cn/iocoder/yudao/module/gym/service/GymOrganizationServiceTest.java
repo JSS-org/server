@@ -14,6 +14,8 @@ import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.gym.controller.admin.common.GymPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.employee.vo.*;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkMembersVO;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkRecordsVO;
 import cn.iocoder.yudao.module.gym.controller.admin.store.vo.*;
 import cn.iocoder.yudao.module.gym.dal.dataobject.file.GymFileDO;
 import cn.iocoder.yudao.module.gym.dal.mysql.file.GymFileMapper;
@@ -95,6 +97,19 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.controller.admin.member.GymMemberController.class,
     cn.iocoder.yudao.module.gym.service.salary.GymSalaryService.class,
     cn.iocoder.yudao.module.gym.controller.admin.salary.GymSalaryController.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileIdentityService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileIdempotency.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileBookingsService.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileBookingProperties.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkAccess.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkRecordsService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMembersService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMemberQueryService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkRecordsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkMembersController.class,
+    cn.iocoder.yudao.framework.web.config.WebProperties.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePublicService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService.class,
     GymStoreService.class,
     GymEmployeeService.class,
     GymDataScope.class,
@@ -102,8 +117,29 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.controller.admin.employee.GymEmployeeController.class,
     GymOrganizationServiceTest.Config.class
 })
+@org.springframework.test.context.TestPropertySource(
+        properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService catalog;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePublicService publicContent;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkRecordsService workRecords;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMembersService workMembers;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkRecordsController
+            workRecordsController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkMembersController
+            workMembersController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkMemberQueryService workMemberQueries;
+
+    @MockitoBean cn.iocoder.yudao.module.system.api.user.AdminUserApi workAccounts;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileBookingsService mobileBookings;
+    @MockitoBean cn.iocoder.yudao.module.member.api.user.MemberUserApi memberAccounts;
     @Resource GymEmployeeService employees;
     @Resource GymFileMapper files;
     @Resource GymStoreMapper storeMapper;
@@ -169,6 +205,16 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
                 login, new org.springframework.mock.web.MockHttpServletRequest());
         headquarters();
+        when(workAccounts.getUser(anyLong()))
+                .thenAnswer(
+                        inv -> {
+                            var account =
+                                    new cn.iocoder.yudao.module.system.api.user.dto
+                                            .AdminUserRespDTO();
+                            account.setId(inv.getArgument(0));
+                            account.setStatus(0);
+                            return account;
+                        });
         when(businessClock.now()).thenAnswer(i -> java.time.Instant.now());
         when(depts.getDept(anyLong()))
                 .thenAnswer(
@@ -1496,6 +1542,14 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                                         .GymBusinessPageReqVO())
                         .getFirst();
         assertEquals(1, remaining.getRemainingSessions());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectById(Long.valueOf(lesson.getId()))
+                        .getRemainingLessonsAfter());
         assertEquals(0, remaining.getReservedSessions());
         assertEquals("attended", courses.booking(bid).getStatus());
         assertEquals("completed", courses.session(session).getStatus());
@@ -8493,5 +8547,1519 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 () -> controller.get(Long.valueOf(saved.getId())));
         when(permissions.hasAnyPermissions(eq(91L), eq("gym:approvals:read"))).thenReturn(true);
         assertEquals(saved.getId(), controller.get(Long.valueOf(saved.getId())).getData().getId());
+    }
+
+    @Test
+    void adminAndMemberConcurrentOverlappingBookingsUseTheSameMemberLock() throws Exception {
+        stores.create(store(101L, "A"));
+        Long coach1 = Long.valueOf(employees.create(employee("MIX1", 101L)).getId());
+        Long coach2 = Long.valueOf(employees.create(employee("MIX2", 101L)).getId());
+        Long product1 = Long.valueOf(courses.createProduct(courseProduct(101L, coach1)).getId());
+        Long product2 = Long.valueOf(courses.createProduct(courseProduct(101L, coach2)).getId());
+        var from = java.time.Instant.now().plusSeconds(7200);
+        Long session1 =
+                Long.valueOf(courses.createSession(courseSession(product1, coach1, from)).getId());
+        Long session2 =
+                Long.valueOf(
+                        courses.createSession(
+                                        courseSession(product2, coach2, from.plusSeconds(1800)))
+                                .getId());
+        Long member = Long.valueOf(members.create(member(101L, "13800000001")).getId());
+        var pack1 =
+                courses.issuePack(
+                        member,
+                        product1,
+                        from.minusSeconds(86400),
+                        from.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-pack1");
+        var pack2 =
+                courses.issuePack(
+                        member,
+                        product2,
+                        from.minusSeconds(86400),
+                        from.plusSeconds(86400),
+                        "test-payment",
+                        "mixed-pack2");
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(50L);
+        account.setStatus(0);
+        account.setMobile("13800000001");
+        when(memberAccounts.getUser(50L)).thenReturn(account);
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(50L);
+        identity.setMemberId(member);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<Object> admin =
+                    () -> {
+                        setupThreadContext();
+                        ready.countDown();
+                        assertTrue(start.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                        try {
+                            return courses.createBooking(
+                                    bookingRequest(member, session1, pack1.getId()));
+                        } catch (cn.iocoder.yudao.framework.common.exception.ServiceException e) {
+                            return e;
+                        } finally {
+                            cleanupContext();
+                        }
+                    };
+            java.util.concurrent.Callable<Object> mobile =
+                    () -> {
+                        TenantContextHolder.setTenantId(1L);
+                        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils
+                                .setLoginUser(
+                                        new cn.iocoder.yudao.framework.security.core.LoginUser()
+                                                .setId(50L)
+                                                .setUserType(1)
+                                                .setTenantId(1L),
+                                        new org.springframework.mock.web.MockHttpServletRequest());
+                        ready.countDown();
+                        assertTrue(start.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                        var req =
+                                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                        .GymMobileBookingVO.Create();
+                        req.setSessionId(session2);
+                        req.setCoursePackId(pack2.getId());
+                        try {
+                            return mobileBookings.create(req, "mixed-mobile-key");
+                        } catch (cn.iocoder.yudao.framework.common.exception.ServiceException e) {
+                            return e;
+                        } finally {
+                            cleanupContext();
+                        }
+                    };
+            var a = executor.submit(admin);
+            var b = executor.submit(mobile);
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            var results =
+                    List.of(
+                            a.get(8, java.util.concurrent.TimeUnit.SECONDS),
+                            b.get(8, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(
+                    1,
+                    results.stream()
+                            .filter(
+                                    r ->
+                                            r
+                                                            instanceof
+                                                            cn.iocoder.yudao.framework.common
+                                                                            .exception
+                                                                            .ServiceException
+                                                                    e
+                                                    && e.getCode()
+                                                            .equals(
+                                                                    MOBILE_BOOKING_TIME_CONFLICT
+                                                                            .getCode()))
+                            .count());
+            var mapper =
+                    applicationContext.getBean(
+                            cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+            assertEquals(
+                    1,
+                    mapper.selectById(pack1.getId()).getReservedSessions()
+                            + mapper.selectById(pack2.getId()).getReservedSessions());
+        }
+    }
+
+    Long workMember() {
+        stores.create(store(101L, "A"));
+        return Long.valueOf(members.create(member(101L, "13800000901")).getId());
+    }
+
+    GymMobileWorkRecordsVO.Page workPage(Long member) {
+        var req = new GymMobileWorkRecordsVO.Page();
+        req.setMemberId(member);
+        req.setStoreId(101L);
+        return req;
+    }
+
+    GymMobileWorkRecordsVO.MeasurementCreate workMeasurement(Long member) {
+        var req = new GymMobileWorkRecordsVO.MeasurementCreate();
+        req.setMemberId(member);
+        req.setStoreId(101L);
+        req.setMeasuredAt(java.time.Instant.parse("2026-10-23T04:00:00Z"));
+        req.setWeightKg(new BigDecimal("70.00"));
+        return req;
+    }
+
+    GymMobileWorkRecordsVO.PlanCreate workPlan(Long member) {
+        var req = new GymMobileWorkRecordsVO.PlanCreate();
+        req.setMemberId(member);
+        req.setStoreId(101L);
+        req.setTitle("力量训练");
+        req.setContent("三组深蹲");
+        req.setStatus("active");
+        return req;
+    }
+
+    GymMobileWorkMembersVO.FollowupCreate followupRequest() {
+        var req = new GymMobileWorkMembersVO.FollowupCreate();
+        req.setStoreId(101L);
+        req.setContent("预约到店体验");
+        req.setNextContactAt(java.time.Instant.now().plusSeconds(86400));
+        return req;
+    }
+
+    GymMobileWorkMembersVO.Assignment assignment(int version, Long... employees) {
+        var req = new GymMobileWorkMembersVO.Assignment();
+        req.setStoreId(101L);
+        req.setExpectedVersion(version);
+        req.setEmployeeIds(Arrays.asList(employees));
+        return req;
+    }
+
+    int assignmentVersion(Long member, Long store) {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.card
+                                                .GymMemberStoreDO>()
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.card
+                                                        .GymMemberStoreDO
+                                                ::getMemberId,
+                                        member)
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.card
+                                                        .GymMemberStoreDO
+                                                ::getStoreId,
+                                        store))
+                .getAssignmentVersion();
+    }
+
+    @Test
+    void mobileWorkMeasurementsValidateReplayAndScopeBeforePagination() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var req = workMeasurement(own);
+        var saved = workRecords.createMeasurement(req, "work-measurement");
+        assertEquals(saved, workRecords.createMeasurement(req, "work-measurement"));
+        workRecords.createMeasurement(workMeasurement(other), "work-other-measurement");
+        var page = workRecords.measurements(workPage(own));
+        assertEquals(1L, page.getTotal());
+        assertEquals(saved, page.getList().getFirst());
+        assertEquals("2026-10-23T12:00+08:00", saved.measuredAt());
+        req.setWeightKg(new BigDecimal("71.00"));
+        assertServiceException(
+                () -> workRecords.createMeasurement(req, "work-measurement"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setWeightKg(new BigDecimal("501.00"));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> workRecords.createMeasurement(req, "invalid-measurement"));
+        scoped(102L);
+        assertServiceException(() -> workRecords.measurements(workPage(own)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileWorkSelfCanWriteResponsibleMemberButReplayLosesAccessWhenReassigned() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = workMeasurement(own);
+        var result = workRecords.createMeasurement(req, "self-measurement");
+        assertEquals(result, workRecords.measurements(workPage(own)).getList().getFirst());
+        assertServiceException(
+                () -> workRecords.createMeasurement(workMeasurement(other), "foreign-measurement"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> workRecords.createMeasurement(req, "self-measurement"), STORE_NO_PERMISSION);
+        assertServiceException(() -> workRecords.measurements(workPage(own)), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileWorkPlanFailureRollsBackRequestAndKeepsExplicitArchiveStatus() {
+        Long own = workMember();
+        var req = workPlan(own);
+        req.setContent("");
+        assertServiceException(
+                () -> workRecords.createPlan(req, "retry-plan-key"), TRAINING_PLAN_INVALID);
+        req.setContent("康复动作");
+        req.setStatus("archived");
+        var result = workRecords.createPlan(req, "retry-plan-key");
+        assertEquals(result, workRecords.createPlan(req, "retry-plan-key"));
+        var query = workPage(own);
+        query.setStatus("archived");
+        assertEquals(1L, workRecords.plans(query).getTotal());
+        assertEquals("archived", result.status());
+        assertNull(result.coachId());
+        query.setStatus("active");
+        assertEquals(0L, workRecords.plans(query).getTotal());
+        req.setTitle("不允许更改重试");
+        assertServiceException(
+                () -> workRecords.createPlan(req, "retry-plan-key"), MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileWorkContractUsesActualEntitlementAndOnlyPublicSnapshotVersion() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        Long ct = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var card =
+                cards.issue(
+                        own,
+                        101L,
+                        ct,
+                        java.time.Instant.now(),
+                        "approval",
+                        "mobile-contract-source");
+        Long template = publishedContractPdf();
+        var req = new GymMobileWorkRecordsVO.ContractCreate();
+        req.setMemberId(own);
+        req.setStoreId(101L);
+        req.setSourceType("member_card");
+        req.setSourceId(card.getId());
+        req.setTemplateId(template);
+        var result = workRecords.createContract(req, "work-contract-key");
+        assertEquals(result, workRecords.createContract(req, "work-contract-key"));
+        assertEquals(result, workRecords.createContract(req, "second-contract-key"));
+        assertEquals("unsigned", result.status());
+        assertNotNull(result.originalFileId());
+        assertEquals("1", result.agreementVersion());
+        assertEquals(1L, workRecords.contracts(workPage(own)).getTotal());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("businessSnapshot"));
+        assertFalse(json.contains("signIp"));
+        assertFalse(json.contains("events"));
+        req.setMemberId(other);
+        assertServiceException(
+                () -> workRecords.createContract(req, "foreign-contract"), CONTRACT_SOURCE_INVALID);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractMapper.class);
+        var row = mapper.selectById(Long.valueOf(result.id()));
+        row.setSigningStatus("signing");
+        mapper.updateById(row);
+        var query = workPage(own);
+        query.setStatus("unsigned");
+        assertEquals(0L, workRecords.contracts(query).getTotal());
+        query.setStatus("signing");
+        assertEquals("signing", workRecords.contracts(query).getList().getFirst().status());
+    }
+
+    @Test
+    void mobileWorkRejectsMemberTokensTenantMismatchAndDisabledAdminBeforeReplays() {
+        Long own = workMember();
+        var req = workPlan(own);
+        workRecords.createPlan(req, "work-plan-access");
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(
+                () -> workRecords.createPlan(req, "work-plan-access"), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        login.setTenantId(2L);
+        assertServiceException(() -> workRecords.plans(workPage(own)), MOBILE_IDENTITY_INVALID);
+        login.setTenantId(1L);
+        var disabled = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        disabled.setId(1L);
+        disabled.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(disabled);
+        assertServiceException(
+                () -> workRecords.createPlan(req, "work-plan-access"), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileWorkFollowupRecordsCurrentEmployeeAndReplaysAfterNextContactTime() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = followupRequest();
+        var result = workMembers.createFollowup(own, req, "work-followup-key");
+        assertEquals(coach.toString(), result.employeeId());
+        assertEquals(own.toString(), result.memberId());
+        when(businessClock.now()).thenReturn(req.getNextContactAt().plusSeconds(1));
+        assertEquals(result, workMembers.createFollowup(own, req, "work-followup-key"));
+        assertServiceException(
+                () -> workMembers.createFollowup(own, req, "new-expired-followup"),
+                MOBILE_REQUEST_INVALID);
+        var page = new GymMobileWorkMembersVO.FollowupPage();
+        page.setStoreId(101L);
+        assertEquals(1L, workMembers.followups(own, page).getTotal());
+        req.setContent("换内容");
+        assertServiceException(
+                () -> workMembers.createFollowup(own, req, "work-followup-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileWorkFollowupsRequireEmployeeAndAreIsolatedByResponsibilityAndTenant() {
+        Long own = workMember(),
+                other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        assertServiceException(
+                () -> workMembers.createFollowup(own, followupRequest(), "without-employee"),
+                MOBILE_EMPLOYEE_REQUIRED);
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        var req = followupRequest();
+        var saved = workMembers.createFollowup(own, req, "followup-private");
+        var page = new GymMobileWorkMembersVO.FollowupPage();
+        page.setStoreId(101L);
+        assertServiceException(() -> workMembers.followups(other, page), STORE_NO_PERMISSION);
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> workMembers.createFollowup(own, req, "followup-private"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMemberFollowupMapper.class);
+        var row = mapper.selectById(Long.valueOf(saved.id()));
+        row.setTenantId(2L);
+        mapper.updateById(row);
+        assertEquals(0L, workMembers.followups(own, page).getTotal());
+    }
+
+    @Test
+    void mobileWorkAssignmentsShareVersionWithLegacyAndDoNotIncrementUnchangedSet() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L), other = responsibleEmployee(92L);
+        stores.create(store(102L, "B"));
+        var otherStore = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO();
+        otherStore.setMemberId(own);
+        otherStore.setStoreId(102L);
+        otherStore.setJoinedAt(java.time.Instant.now());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .insert(otherStore);
+        assertEquals(0, assignmentVersion(own, 101L));
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        assertEquals(1, assignmentVersion(own, 101L));
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(0, other), "stale-assignment"),
+                MOBILE_VERSION_CONFLICT);
+        var req = assignment(1, other);
+        var result = workMembers.assign(own, req, "current-assignment");
+        assertEquals(2, result.version());
+        assertEquals(List.of(other.toString()), result.employeeIds());
+        assertEquals(result, workMembers.assign(own, req, "current-assignment"));
+        assertEquals(
+                2, workMembers.assign(own, assignment(2, other), "unchanged-assignment").version());
+        assertEquals(3, workMembers.assign(own, assignment(2), "clear-assignment").version());
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(3, coach, coach), "duplicate-assignment"),
+                MEMBER_COACH_INVALID);
+        assertEquals(3, assignmentVersion(own, 101L));
+        assertEquals(0, assignmentVersion(own, 102L));
+    }
+
+    @Test
+    void mobileWorkAssignmentsRequireWholeStoreScopeEvenWithSelfRelationship() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        personalScope(91L);
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(1), "self-assignment"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        var req = assignment(1, coach);
+        workMembers.assign(own, req, "replayed-assignment");
+        personalScope(91L);
+        assertServiceException(
+                () -> workMembers.assign(own, req, "replayed-assignment"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileWorkConcurrentAssignmentVersionsAllowOnlyOneWriter() throws Exception {
+        Long own = workMember();
+        Long a = responsibleEmployee(91L), b = responsibleEmployee(92L);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var futures = new ArrayList<java.util.concurrent.Future<Object>>();
+            for (Long employee : List.of(a, b))
+                futures.add(
+                        executor.submit(
+                                () -> {
+                                    setupThreadContext();
+                                    ready.countDown();
+                                    assertTrue(
+                                            start.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                                    try {
+                                        return workMembers.assign(
+                                                own,
+                                                assignment(0, employee),
+                                                "concurrent-assign-" + employee);
+                                    } catch (
+                                            cn.iocoder.yudao.framework.common.exception
+                                                            .ServiceException
+                                                    e) {
+                                        return e;
+                                    } finally {
+                                        cleanupContext();
+                                    }
+                                }));
+            assertTrue(ready.await(3, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            var results =
+                    List.of(
+                            futures.get(0).get(8, java.util.concurrent.TimeUnit.SECONDS),
+                            futures.get(1).get(8, java.util.concurrent.TimeUnit.SECONDS));
+            assertEquals(
+                    1,
+                    results.stream()
+                            .filter(GymMobileWorkMembersVO.AssignmentResult.class::isInstance)
+                            .count());
+            assertEquals(
+                    1,
+                    results.stream()
+                            .filter(
+                                    r ->
+                                            r
+                                                            instanceof
+                                                            cn.iocoder.yudao.framework.common
+                                                                            .exception
+                                                                            .ServiceException
+                                                                    e
+                                                    && e.getCode()
+                                                            .equals(
+                                                                    MOBILE_VERSION_CONFLICT
+                                                                            .getCode()))
+                            .count());
+            assertEquals(1, assignmentVersion(own, 101L));
+        }
+    }
+
+    @Test
+    void allMobileWorkRoutesRequireTheirExplicitBusinessPermissions() {
+        var read = workPage(1L);
+        var measurement = workMeasurement(1L);
+        var plan = workPlan(1L);
+        var contract = new GymMobileWorkRecordsVO.ContractCreate();
+        contract.setStoreId(101L);
+        contract.setMemberId(1L);
+        contract.setSourceType("member_card");
+        contract.setSourceId(1L);
+        contract.setTemplateId(1L);
+        var followupPage = new GymMobileWorkMembersVO.FollowupPage();
+        followupPage.setStoreId(101L);
+        var calls =
+                List.<Runnable>of(
+                        () -> workMembersController.page(new GymMobileWorkMembersVO.MemberPage()),
+                        () -> workMembersController.get(1L, 101L),
+                        () -> workRecordsController.measurements(read),
+                        () -> workRecordsController.measurement(measurement, "permission-test"),
+                        () -> workRecordsController.plans(read),
+                        () -> workRecordsController.plan(plan, "permission-test"),
+                        () -> workRecordsController.contracts(read),
+                        () -> workRecordsController.contract(contract, "permission-test"),
+                        () -> workMembersController.followups(1L, followupPage),
+                        () ->
+                                workMembersController.followup(
+                                        1L, followupRequest(), "permission-test"),
+                        () -> workMembersController.assign(1L, assignment(0), "permission-test"));
+        var expected =
+                List.of(
+                        "gym:members:read",
+                        "gym:members:read",
+                        "gym:measurements:read",
+                        "gym:measurements:write",
+                        "gym:measurements:read",
+                        "gym:measurements:write",
+                        "gym:contracts:read",
+                        "gym:contracts:manage",
+                        "gym:members:read",
+                        "gym:members:write",
+                        "gym:members:write");
+        for (int i = 0; i < calls.size(); i++) {
+            clearInvocations(permissions);
+            assertThrows(
+                    org.springframework.security.access.AccessDeniedException.class,
+                    calls.get(i)::run);
+            verify(permissions).hasAnyPermissions(1L, expected.get(i));
+        }
+    }
+
+    @Test
+    void mobileWorkAssignmentRejectsFutureHireAndStoreJoinWithoutChangingVersion() {
+        Long own = workMember();
+        Long coach = responsibleEmployee(91L);
+        var employeeMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var employee = employeeMapper.selectById(coach);
+        var today =
+                businessClock
+                        .now()
+                        .atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toLocalDate();
+        employee.setHiredOn(today.plusDays(1));
+        employeeMapper.updateById(employee);
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(0, coach), "future-assignment"),
+                MEMBER_COACH_INVALID);
+        assertEquals(0, assignmentVersion(own, 101L));
+        employee.setHiredOn(today);
+        employeeMapper.updateById(employee);
+        var employmentMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var employment =
+                employmentMapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.employee
+                                                .GymEmployeeStoreDO>()
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.employee
+                                                        .GymEmployeeStoreDO
+                                                ::getEmployeeId,
+                                        coach)
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.employee
+                                                        .GymEmployeeStoreDO
+                                                ::getStoreId,
+                                        101L));
+        employment.setJoinedOn(today.plusDays(1));
+        employmentMapper.updateById(employment);
+        assertServiceException(
+                () -> workMembers.assign(own, assignment(0, coach), "future-assignment"),
+                MEMBER_COACH_INVALID);
+        employment.setJoinedOn(today);
+        employmentMapper.updateById(employment);
+        assertEquals(
+                1, workMembers.assign(own, assignment(0, coach), "future-assignment").version());
+    }
+
+    void workJoin(Long member, Long store) {
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberStoreDO();
+        relation.setMemberId(member);
+        relation.setStoreId(store);
+        relation.setJoinedAt(java.time.Instant.now());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberStoreMapper.class)
+                .insert(relation);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO workCard(
+            Long member,
+            Long store,
+            String kind,
+            int remaining,
+            int reserved,
+            java.time.Instant start,
+            java.time.Instant end) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO();
+        row.setMemberId(member);
+        row.setIssuedStoreId(store);
+        row.setTemplateId(1L);
+        row.setCardNo(UUID.randomUUID().toString());
+        row.setDisplayPrefix("TEST");
+        row.setName("测试卡");
+        row.setKind(kind);
+        row.setAccessScope("all");
+        row.setStoreIds("[]");
+        row.setStartsAt(start);
+        row.setExpiresAt(end);
+        row.setTotalUses(remaining);
+        row.setRemainingUses(remaining);
+        row.setReservedUses(reserved);
+        row.setStatus("active");
+        row.setTemplateSnapshot("{}");
+        row.setSourceType("test");
+        row.setSourceId(UUID.randomUUID().toString());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class)
+                .insert(row);
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardStoreDO();
+        relation.setCardId(row.getId());
+        relation.setStoreId(store);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardStoreMapper.class)
+                .insert(relation);
+        return row;
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCoursePackDO workPack(
+            Long member,
+            Long store,
+            int remaining,
+            int reserved,
+            java.time.Instant start,
+            java.time.Instant end) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCoursePackDO();
+        row.setMemberId(member);
+        row.setStoreId(store);
+        row.setCourseProductId(1L);
+        row.setAssignedCoachId(1L);
+        row.setName("测试课包");
+        row.setStartsAt(start);
+        row.setExpiresAt(end);
+        row.setTotalSessions(remaining);
+        row.setRemainingSessions(remaining);
+        row.setReservedSessions(reserved);
+        row.setStatus("active");
+        row.setPriceSnapshot(BigDecimal.TEN);
+        row.setSourceType("test");
+        row.setSourceId(UUID.randomUUID().toString());
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class)
+                .insert(row);
+        return row;
+    }
+
+    @Test
+    void mobileWorkMemberListDeduplicatesStoresMasksPhoneAndReadsCurrentAssignmentVersion() {
+        Long own = workMember();
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setPageSize(1);
+        var page = workMemberQueries.page(req);
+        assertEquals(1L, page.getTotal());
+        var result = page.getList().getFirst();
+        assertEquals("101", result.storeId());
+        assertEquals("138****0901", result.maskedPhone());
+        assertEquals("prospect", result.customerType());
+        assertEquals(0, result.assignmentVersion());
+        assertEquals(0, result.cardSummary().activeCount());
+        Long coach = responsibleEmployee(91L);
+        var assigned = workMembers.assign(own, assignment(0, coach), "read-assignment-version");
+        result = workMemberQueries.get(own, 101L);
+        assertEquals(assigned.version(), result.assignmentVersion());
+        assertEquals(assigned.employeeIds(), result.coachIds());
+        assertEquals(0, workMemberQueries.get(own, 102L).assignmentVersion());
+        req.setPageNo(2);
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertTrue(workMemberQueries.page(req).getList().isEmpty());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("13800000901"));
+        assertFalse(json.contains("tenantId"));
+        assertFalse(json.contains("creator"));
+    }
+
+    @Test
+    void mobileWorkMemberListAppliesSelfScopeBeforeCountAndDoesNotExposeOtherStores() {
+        Long own = workMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        var now = java.time.Instant.now();
+        workPack(own, 102L, 99, 0, now.minusSeconds(1), null);
+        workCard(own, 102L, "count", 88, 0, now.minusSeconds(1), null);
+        personalScope(91L);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setPageSize(1);
+        var page = workMemberQueries.page(req);
+        assertEquals(1L, page.getTotal());
+        assertEquals(own.toString(), page.getList().getFirst().id());
+        assertEquals(0, page.getList().getFirst().courseSummary().activeCount());
+        assertEquals(0, page.getList().getFirst().cardSummary().activeCount());
+        assertServiceException(() -> workMemberQueries.get(other, 101L), STORE_NO_PERMISSION);
+        assertServiceException(() -> workMemberQueries.get(own, 102L), STORE_NO_PERMISSION);
+        req.setStoreId(102L);
+        assertServiceException(() -> workMemberQueries.page(req), STORE_NO_PERMISSION);
+        req.setStoreId(null);
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+    }
+
+    @Test
+    void mobileWorkCardExpiryUsesActualRelationsAndEffectiveValidityBeforePaging() {
+        Long own = workMember();
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var now = java.time.Instant.parse("2026-10-23T00:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var end = now.plusSeconds(30 * 86400L);
+        workCard(own, 102L, "count", 3, 1, now, end);
+        workCard(other, 101L, "count", 0, 0, now, end);
+        workCard(other, 101L, "period", 0, 0, now.minusSeconds(1), now);
+        workCard(other, 101L, "period", 0, 0, now.plusSeconds(1), end);
+        var inactive = workCard(other, 101L, "period", 0, 0, now, end);
+        inactive.setStatus("inactive");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class)
+                .updateById(inactive);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("card_expiring");
+        req.setPageSize(1);
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        var result = workMemberQueries.page(req).getList().getFirst();
+        assertEquals(own.toString(), result.id());
+        assertEquals("102", result.storeId());
+        assertEquals(3L, result.cardSummary().remainingUses());
+        assertEquals(2L, result.cardSummary().availableUses());
+        assertEquals("2026-11-22T08:00+08:00", result.cardSummary().nearestExpiresAt());
+        req.setStoreId(101L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setStoreId(102L);
+        req.setExpireWithinDays(29);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        scoped(101L);
+        req.setStoreId(null);
+        req.setExpireWithinDays(30);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+    }
+
+    @Test
+    void mobileWorkCourseSegmentsAndSummarySeparateReservedFromAvailableAndIgnoreInvalidPacks() {
+        Long own = workMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var now = java.time.Instant.parse("2026-10-23T00:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var end = now.plusSeconds(30 * 86400L);
+        workPack(own, 101L, 5, 5, now, end);
+        workPack(own, 101L, 4, 1, now, null);
+        workPack(other, 101L, 99, 0, now.minusSeconds(1), now);
+        workPack(other, 101L, 99, 0, now.plusSeconds(1), end);
+        workPack(other, 101L, 0, 0, now, end);
+        var frozen = workPack(other, 101L, 99, 0, now, end);
+        frozen.setStatus("frozen");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class)
+                .updateById(frozen);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("private_course");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        var result = workMemberQueries.page(req).getList().getFirst().courseSummary();
+        assertEquals(2, result.activeCount());
+        assertEquals(9L, result.remainingLessons());
+        assertEquals(6L, result.reservedLessons());
+        assertEquals(3L, result.availableLessons());
+        req.setSegment("course_expiring");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        req.setExpireWithinDays(29);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setSegment("all");
+        assertEquals(2L, workMemberQueries.page(req).getTotal());
+    }
+
+    @Test
+    void mobileWorkMemberFiltersKeepProspectStageDistinctFromConsumptionAndCoachStoreCorrelated() {
+        Long own = workMember();
+        Long other = Long.valueOf(members.create(member(101L, "13800000902")).getId());
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberMapper.class);
+        var changed = mapper.selectById(other);
+        changed.setCustomerStage("member");
+        mapper.updateById(changed);
+        workPack(own, 101L, 1, 0, java.time.Instant.now().minusSeconds(1), null);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("prospect");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertEquals(own.toString(), workMemberQueries.page(req).getList().getFirst().id());
+        Long coach = responsibleEmployee(91L);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        stores.create(store(102L, "B"));
+        workJoin(own, 102L);
+        req.setCoachId(coach);
+        req.setStoreId(102L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setStoreId(null);
+        req.setKeyword("00901");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertEquals("101", workMemberQueries.page(req).getList().getFirst().storeId());
+        req.setKeyword("' OR 1=1 --");
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setKeyword("00902");
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        req.setCoachId(null);
+        req.setSegment("all");
+        assertEquals(1L, workMemberQueries.page(req).getTotal());
+        assertEquals("member", workMemberQueries.page(req).getList().getFirst().customerType());
+    }
+
+    @Test
+    void mobileWorkMemberQueryTenantAndIdentityChecksApplyToListAndDetail() {
+        Long own = workMember();
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> workMemberQueries.page(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workMemberQueries.get(own, 101L), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workMemberQueries.page(req), MOBILE_IDENTITY_INVALID);
+        login.setTenantId(2L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        assertServiceException(() -> workMemberQueries.get(own, 101L), MEMBER_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        login.setTenantId(1L);
+        var disabled = workAccounts.getUser(1L);
+        disabled.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(disabled);
+        assertServiceException(() -> workMemberQueries.page(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workMemberQueries.get(own, 101L), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileWorkMemberQueriesValidateFiltersAndDoNotAllowUnboundedPages() {
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setPageSize(10);
+        req.setSegment("unknown");
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setSegment("all");
+        req.setExpireWithinDays(0);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setExpireWithinDays(366);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        req.setExpireWithinDays(1);
+        req.setCoachId(0L);
+        assertThrows(ConstraintViolationException.class, () -> workMemberQueries.page(req));
+        assertServiceException(() -> workMemberQueries.get(0L, 101L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> workMemberQueries.get(1L, null), MOBILE_REQUEST_INVALID);
+    }
+
+    @Test
+    void mobileWorkMemberNestedFiltersAndSummariesIgnoreForeignTenantRelations() {
+        Long own = workMember();
+        var now = java.time.Instant.now();
+        when(businessClock.now()).thenReturn(now);
+        TenantContextHolder.setTenantId(2L);
+        workCard(own, 101L, "count", 50, 0, now, now.plusSeconds(86400));
+        workPack(own, 101L, 60, 0, now, now.plusSeconds(86400));
+        var relation = new cn.iocoder.yudao.module.gym.dal.dataobject.member.GymMemberCoachDO();
+        relation.setMemberId(own);
+        relation.setStoreId(101L);
+        relation.setEmployeeId(999L);
+        relation.setActive(true);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.member.GymMemberCoachMapper.class)
+                .insert(relation);
+        TenantContextHolder.setTenantId(1L);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        for (String segment : List.of("card_expiring", "course_expiring", "private_course")) {
+            req.setSegment(segment);
+            assertEquals(0L, workMemberQueries.page(req).getTotal());
+        }
+        req.setSegment("all");
+        req.setCoachId(999L);
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+        var result = workMemberQueries.get(own, 101L);
+        assertTrue(result.coachIds().isEmpty());
+        assertEquals(0, result.cardSummary().activeCount());
+        assertEquals(0, result.courseSummary().activeCount());
+    }
+
+    @Test
+    void mobileWorkMemberSummaryCountsUnlimitedDurationWithoutInventingUsesOrExpiry() {
+        Long own = workMember();
+        var now = java.time.Instant.now();
+        when(businessClock.now()).thenReturn(now);
+        workCard(own, 101L, "period", 0, 0, now, null);
+        workCard(own, 101L, "count", 3, 3, now, null);
+        var summary = workMemberQueries.get(own, 101L).cardSummary();
+        assertEquals(2, summary.activeCount());
+        assertEquals(1, summary.durationCount());
+        assertEquals(1, summary.timesCount());
+        assertEquals(3L, summary.remainingUses());
+        assertEquals(3L, summary.reservedUses());
+        assertEquals(0L, summary.availableUses());
+        assertNull(summary.nearestExpiresAt());
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setSegment("card_expiring");
+        assertEquals(0L, workMemberQueries.page(req).getTotal());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePublicVO.StorePage
+            publicStorePage() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePublicVO
+                .StorePage();
+    }
+
+    GymFileDO publicImage(Long store) {
+        var f = file(store, "image");
+        f.setUrl("private-storage:" + f.getId());
+        files.updateById(f);
+        when(fileApi.getFileContentByUrl(f.getUrl()))
+                .thenReturn(
+                        new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2});
+        return f;
+    }
+
+    @Test
+    void publicStoresAreAnonymousTenantScopedAndInactiveStoresAreAbsentBeforePagination() {
+        stores.create(store(101L, "A"));
+        var inactive = store(102L, "B");
+        inactive.setStatus("inactive");
+        stores.create(inactive);
+        TenantContextHolder.setTenantId(2L);
+        stores.create(store(103L, "C"));
+        TenantContextHolder.setTenantId(1L);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var req = publicStorePage();
+        req.setPageSize(1);
+        var page = publicContent.stores(req);
+        assertEquals(1L, page.getTotal());
+        assertEquals("101", page.getList().getFirst().id());
+        assertNull(page.getList().getFirst().distanceMeters());
+        assertServiceException(() -> publicContent.store(102L), STORE_NOT_EXISTS);
+        assertServiceException(() -> publicContent.home(102L), STORE_NOT_EXISTS);
+        assertServiceException(() -> publicContent.occupancy(103L), STORE_NOT_EXISTS);
+        assertServiceException(() -> publicContent.settings(103L), STORE_NOT_EXISTS);
+        req.setKeyword("不存在");
+        assertEquals(0L, publicContent.stores(req).getTotal());
+        assertEquals(List.of("私教", "力量,训练"), publicContent.store(101L).features());
+        assertEquals("06:00", publicContent.store(101L).businessHours().opens());
+    }
+
+    @Test
+    void publicStoresSortDistanceBeforePaginationIncludingDateLineAndUnknownCoordinates() {
+        var far = store(101L, "A");
+        far.setLongitude(new BigDecimal("0"));
+        far.setLatitude(BigDecimal.ZERO);
+        stores.create(far);
+        var near = store(102L, "B");
+        near.setLongitude(new BigDecimal("-179.9"));
+        near.setLatitude(BigDecimal.ZERO);
+        stores.create(near);
+        stores.create(store(103L, "C"));
+        var req = publicStorePage();
+        req.setLongitude(new BigDecimal("179.9"));
+        req.setLatitude(BigDecimal.ZERO);
+        req.setPageSize(1);
+        var page = publicContent.stores(req);
+        assertEquals(3L, page.getTotal());
+        assertEquals("102", page.getList().getFirst().id());
+        assertTrue(
+                page.getList().getFirst().distanceMeters() > 22000
+                        && page.getList().getFirst().distanceMeters() < 23000);
+        req.setPageNo(2);
+        assertEquals("101", publicContent.stores(req).getList().getFirst().id());
+        req.setPageNo(3);
+        assertNull(publicContent.stores(req).getList().getFirst().distanceMeters());
+        req.setPageNo(1);
+        req.setLongitude(new BigDecimal("-179.9"));
+        assertEquals(0L, publicContent.stores(req).getList().getFirst().distanceMeters());
+    }
+
+    @Test
+    void publicMediaUsesOnlyExplicitPublishedReferencesAndRevokesWhenStoreIsHidden() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var image = publicImage(101L);
+        var unlinked = publicImage(101L);
+        stores.saveMedia(101L, media(image.getId(), true));
+        var detail = publicContent.store(101L);
+        assertEquals(image.getId().toString(), detail.cover().fileId());
+        assertTrue(
+                detail.cover()
+                        .url()
+                        .contains("/gym/public-media/" + image.getId() + "/content?tenantId=1"));
+        assertFalse(detail.cover().url().contains("private-storage"));
+        assertArrayEquals(
+                fileApi.getFileContentByUrl(image.getUrl()),
+                publicContent.mediaContent(image.getId()).getContent());
+        assertServiceException(() -> publicContent.mediaContent(unlinked.getId()), FILE_NOT_EXISTS);
+        var bad = file(101L, "member_face");
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.store.GymStoreMediaDO();
+        link.setStoreId(101L);
+        link.setFileId(bad.getId());
+        link.setIsCover(false);
+        link.setSortOrder(1);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMediaMapper.class);
+        mapper.insert(link);
+        assertEquals(1, publicContent.store(101L).media().size());
+        assertServiceException(() -> publicContent.mediaContent(bad.getId()), FILE_NOT_EXISTS);
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(101L, patch);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    @Test
+    void publicMediaRejectsCrossStoreReferencesAndIncorrectStoredContentType() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var image = publicImage(102L);
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.store.GymStoreMediaDO();
+        link.setStoreId(101L);
+        link.setFileId(image.getId());
+        link.setIsCover(true);
+        link.setSortOrder(0);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.store.GymStoreMediaMapper.class)
+                .insert(link);
+        assertNull(publicContent.store(101L).cover());
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        stores.saveMedia(102L, media(image.getId(), true));
+        when(fileApi.getFileContentByUrl(image.getUrl()))
+                .thenReturn("<html>no</html>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        when(fileApi.getFileContentByUrl(image.getUrl())).thenReturn(null);
+        assertServiceException(
+                () -> publicContent.mediaContent(image.getId()), FILE_CONTENT_NOT_EXISTS);
+    }
+
+    void publicEntry(Long store, java.time.Instant at, String status) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO();
+        row.setStoreId(store);
+        row.setMemberId(1L);
+        row.setBookingId(
+                applicationContext
+                                .getBean(
+                                        cn.iocoder.yudao.module.gym.dal.mysql.course
+                                                .GymCheckinMapper.class)
+                                .selectCount()
+                        + 1);
+        row.setEnteredAt(at);
+        row.setMethod("manual");
+        row.setVisitorType("member");
+        row.setStatus(status);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                .insert(row);
+    }
+
+    @Test
+    void publicOccupancyCountsShanghaiDaySuccessfulEntriesWithoutInventingLiveOccupancy() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var now = java.time.Instant.parse("2026-10-23T17:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var empty = publicContent.occupancy(101L);
+        assertNull(empty.updatedAt());
+        assertEquals(0L, empty.todayEntryCount());
+        publicEntry(101L, java.time.Instant.parse("2026-10-23T15:59:59Z"), "succeeded");
+        publicEntry(101L, java.time.Instant.parse("2026-10-23T16:00:00Z"), "succeeded");
+        publicEntry(101L, now, "succeeded");
+        publicEntry(101L, now.minusSeconds(1), "failed");
+        publicEntry(101L, now.plusSeconds(1), "succeeded");
+        publicEntry(102L, now, "succeeded");
+        TenantContextHolder.setTenantId(2L);
+        publicEntry(101L, now, "succeeded");
+        TenantContextHolder.setTenantId(1L);
+        var result = publicContent.occupancy(101L);
+        assertEquals(2L, result.todayEntryCount());
+        assertNull(result.currentCount());
+        assertEquals("unavailable", result.dataStatus());
+        assertEquals("2026-10-24T01:00+08:00", result.updatedAt());
+        assertEquals(result, publicContent.home(101L).occupancy());
+        assertTrue(
+                publicContent.home(101L).features().stream()
+                        .filter(
+                                f ->
+                                        List.of(
+                                                        "payment",
+                                                        "auto_renewal",
+                                                        "e_sign",
+                                                        "access_control",
+                                                        "camera")
+                                                .contains(f.key()))
+                        .allMatch(f -> !f.enabled() && f.disabledReason() != null));
+    }
+
+    @Test
+    void publicClientSettingsFallbackIsWholeDocumentAndDisabledOverridesDoNotPublishGlobalCover() {
+        stores.create(store(101L, "A"));
+        var image = publicImage(101L);
+        var global = clientSettings(null, "miniapp");
+        global.setCoverFileId(image.getId());
+        global.setAppId("internal-app-id");
+        contentService.save(global);
+        assertEquals(image.getId().toString(), publicContent.settings(101L).entryCover().fileId());
+        assertNull(publicContent.settings(101L).appDownload().url());
+        assertFalse(publicContent.settings(101L).franchise().configured());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(
+                                publicContent.settings(101L))
+                        .contains("internal-app-id"));
+        var override = clientSettings(101L, "miniapp");
+        override.setEnabled(false);
+        contentService.save(override);
+        assertNull(publicContent.settings(101L).entryCover());
+        assertNotNull(publicContent.settings(null).entryCover());
+        var app = clientSettings(null, "app");
+        app.setAppDownloadUrl("https://example.test/app");
+        app.setAppBenefitText("下载后查看活动");
+        contentService.save(app);
+        assertTrue(publicContent.settings(101L).appDownload().enabled());
+        assertEquals("下载后查看活动", publicContent.settings(101L).appDownload().benefitText());
+        app.setStoreId(101L);
+        app.setEnabled(false);
+        contentService.save(app);
+        assertFalse(publicContent.settings(101L).appDownload().enabled());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO.Franchise
+            publicFranchise(Long image) {
+        var f =
+                new cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO
+                        .Franchise();
+        f.setIntroduction("品牌介绍");
+        f.setPhone("4001234567");
+        var models =
+                new ArrayList<
+                        cn.iocoder.yudao.module.gym.controller.admin.content.vo
+                                .GymClientSettingsReqVO.Model>();
+        for (int i = 0; i < 3; i++) {
+            var model =
+                    new cn.iocoder.yudao.module.gym.controller.admin.content.vo
+                            .GymClientSettingsReqVO.Model();
+            model.setName("模型" + i);
+            model.setPreviewFileId(image);
+            model.setModelUrl("https://example.test/model/" + i);
+            models.add(model);
+        }
+        f.setModels(models);
+        return f;
+    }
+
+    @Test
+    void publicFranchisePublishesThreeConfiguredModelsAndMediaRevokesWithConfiguration() {
+        stores.create(store(101L, "A"));
+        var image = publicImage(101L);
+        var config = clientSettings(101L, "miniapp");
+        config.setFranchise(publicFranchise(image.getId()));
+        contentService.save(config);
+        var result = publicContent.settings(101L).franchise();
+        assertTrue(result.configured());
+        assertEquals(3, result.models().size());
+        assertEquals("品牌介绍", result.introduction());
+        assertNotNull(publicContent.mediaContent(image.getId()));
+        config.setEnabled(false);
+        contentService.save(config);
+        assertFalse(publicContent.settings(101L).franchise().configured());
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO.Notice
+            publicNotice(long id, java.time.Instant start, java.time.Instant end) {
+        var n =
+                new cn.iocoder.yudao.module.gym.controller.admin.content.vo.GymClientSettingsReqVO
+                        .Notice();
+        n.setId(id);
+        n.setTitle("公告" + id);
+        n.setContent("内容" + id);
+        n.setPublishedAt(start);
+        n.setExpiresAt(end);
+        return n;
+    }
+
+    @Test
+    void publicHomeNoticesRespectPublicationExpiryAndDisabledOverrides() {
+        stores.create(store(101L, "A"));
+        var now = java.time.Instant.parse("2026-10-24T00:00:00Z");
+        when(businessClock.now()).thenReturn(now);
+        var config = clientSettings(null, "miniapp");
+        config.setNotices(
+                List.of(
+                        publicNotice(1, now.minusSeconds(60), null),
+                        publicNotice(2, now, null),
+                        publicNotice(3, now.plusSeconds(1), null),
+                        publicNotice(4, now.minusSeconds(60), now)));
+        contentService.save(config);
+        assertEquals(
+                List.of("2", "1"),
+                publicContent.home(101L).notices().stream().map(n -> n.id()).toList());
+        var override = clientSettings(101L, "miniapp");
+        override.setEnabled(false);
+        contentService.save(override);
+        assertTrue(publicContent.home(101L).notices().isEmpty());
+    }
+
+    @Test
+    void publicDisplayConfigurationValidatesModelCountFileOwnershipUrlsAndNoticeIds() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var image = publicImage(101L);
+        var config = clientSettings(101L, "miniapp");
+        var franchise = publicFranchise(image.getId());
+        config.setFranchise(franchise);
+        franchise.getModels().removeLast();
+        assertThrows(ConstraintViolationException.class, () -> contentService.save(config));
+        franchise = publicFranchise(image.getId());
+        config.setFranchise(franchise);
+        franchise.getModels().getFirst().setModelUrl("javascript:alert(1)");
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_INVALID);
+        config.setFranchise(publicFranchise(publicImage(102L).getId()));
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_FILE_INVALID);
+        config.setFranchise(publicFranchise(image.getId()));
+        var now = java.time.Instant.now();
+        config.setNotices(List.of(publicNotice(1, now, null), publicNotice(1, now, null)));
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_INVALID);
+        config.setNotices(List.of(publicNotice(1, now, now)));
+        assertServiceException(() -> contentService.save(config), CLIENT_CONTENT_INVALID);
+    }
+
+    @Test
+    void publicStoresValidateCoordinatesAndRejectUnboundedPaging() {
+        var req = publicStorePage();
+        req.setLongitude(BigDecimal.ONE);
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+        req.setLatitude(new BigDecimal("91"));
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+        req.setLatitude(BigDecimal.ONE);
+        req.setLongitude(new BigDecimal("181"));
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+        req.setLongitude(BigDecimal.ONE);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> publicContent.stores(req));
+    }
+
+    @Test
+    void incompleteFranchiseGroupStopsPublishingModelImagesWithoutOtherPublicReferences() {
+        stores.create(store(101L, "A"));
+        var first = publicImage(101L);
+        var second = publicImage(101L);
+        var config = clientSettings(101L, "miniapp");
+        var franchise = publicFranchise(first.getId());
+        franchise.getModels().get(1).setPreviewFileId(second.getId());
+        config.setFranchise(franchise);
+        contentService.save(config);
+        assertTrue(publicContent.settings(101L).franchise().configured());
+        assertNotNull(publicContent.mediaContent(first.getId()));
+        files.deleteById(second.getId());
+        assertFalse(publicContent.settings(101L).franchise().configured());
+        assertServiceException(() -> publicContent.mediaContent(first.getId()), FILE_NOT_EXISTS);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCatalogVO.StorePage catalogPage(
+            Long store) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCatalogVO
+                        .StorePage();
+        req.setStoreId(store);
+        return req;
+    }
+
+    @Test
+    void publicCardCatalogUsesActualStorePriceAndScopeWithPaginationAfterSaleFiltering() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long first = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        Long second = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var settings = onlineSettings(first);
+        var other = onlineSettings(second).getOffers().getFirst();
+        other.setEnabled(false);
+        settings.setOffers(List.of(settings.getOffers().getFirst(), other));
+        salesSettings.saveOnline(101L, settings);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var req = catalogPage(101L);
+        req.setPageSize(1);
+        var page = catalog.cards(req);
+        assertEquals(1L, page.getTotal());
+        var product = page.getList().getFirst();
+        assertEquals("99.99", product.price());
+        assertEquals("times", product.cardType());
+        assertEquals(10, product.includedUses());
+        assertEquals(1, product.version());
+        assertEquals(1L, product.saleRevision());
+        assertEquals("checkout_unavailable", product.purchaseLimitReason());
+        assertEquals(0L, catalog.cards(catalogPage(102L)).getTotal());
+        req.setPageNo(2);
+        assertEquals(1L, catalog.cards(req).getTotal());
+        assertTrue(catalog.cards(req).getList().isEmpty());
+        assertServiceException(
+                () -> catalog.product(second, "card", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+    }
+
+    @Test
+    void
+            publicCardCatalogTimeWindowHasInclusiveStartAndExclusiveEndAndDoesNotExposeRetiredTemplates() {
+        stores.create(store(101L, "A"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var start = java.time.Instant.parse("2026-10-24T00:00:00Z");
+        var offer = onlineSettings(id);
+        offer.getOffers().getFirst().setStartsAt(start);
+        offer.getOffers().getFirst().setEndsAt(start.plusSeconds(60));
+        salesSettings.saveOnline(101L, offer);
+        when(businessClock.now()).thenReturn(start.minusSeconds(1));
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        assertEquals("not_started", catalog.product(id, "card", 101L).saleStatus());
+        when(businessClock.now()).thenReturn(start);
+        assertEquals(1L, catalog.cards(catalogPage(101L)).getTotal());
+        when(businessClock.now()).thenReturn(start.plusSeconds(60));
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        assertEquals("ended", catalog.product(id, "card", 101L).saleStatus());
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        patch.setStatus("inactive");
+        cards.patch(id, patch);
+        assertServiceException(
+                () -> catalog.product(id, "card", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+    }
+
+    @Test
+    void publicProductDetailSelectsOneSalesStoreAndTenantNeverCombinesPrices() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        salesSettings.saveOnline(101L, onlineSettings(id));
+        var second = onlineSettings(id);
+        second.getOffers().getFirst().setSalePrice(new BigDecimal("88.50"));
+        salesSettings.saveOnline(102L, second);
+        assertEquals("101", catalog.product(id, "card", null).storeId());
+        assertEquals("88.50", catalog.product(id, "card", 102L).price());
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(101L, patch);
+        assertEquals("102", catalog.product(id, "card", null).storeId());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> catalog.product(id, "card", null), MOBILE_PRODUCT_NOT_AVAILABLE);
+        assertServiceException(() -> catalog.cards(catalogPage(102L)), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void publicSubscriptionCatalogRequiresPublishedTermsAndRetainsRealMonthlyPriceAndVersion() {
+        stores.create(store(101L, "A"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var req = subscriptionSettings(id);
+        salesSettings.saveSubscription(101L, req);
+        assertEquals(0L, catalog.subscriptions(catalogPage(101L)).getTotal());
+        var item = req.getItems().getFirst();
+        item.setRenewalTerms("按月扣费，解约申请经渠道确认后生效");
+        item.setAgreementVersion("terms-v1");
+        item.setBillingDay(8);
+        salesSettings.saveSubscription(101L, req);
+        var product = catalog.subscriptions(catalogPage(101L)).getList().getFirst();
+        assertEquals("59.99", product.price());
+        assertEquals("terms-v1", product.agreementVersion());
+        assertEquals(item.getRenewalTerms(), product.renewalTerms());
+        assertEquals(8, product.billingDay());
+        assertEquals(30, product.validDays());
+        assertEquals(2L, product.saleRevision());
+        assertEquals("auto_renewal_integration_deferred", product.purchaseLimitReason());
+        assertEquals(product, catalog.product(id, "subscription", 101L));
+        item.setEnabled(false);
+        salesSettings.saveSubscription(101L, req);
+        assertEquals(0L, catalog.subscriptions(catalogPage(101L)).getTotal());
+        item.setAgreementVersion(null);
+        assertServiceException(
+                () -> salesSettings.saveSubscription(101L, req), SALES_SETTINGS_INVALID);
+    }
+
+    @Test
+    void publicCourseCatalogUsesActiveCurrentEmploymentBeforeCountingAndHidesInternalData() {
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCatalogVO
+                        .CoursePage();
+        req.setStoreId(101L);
+        req.setCoachId(coach);
+        var result = catalog.courses(req);
+        assertEquals(1L, result.getTotal());
+        assertEquals("200.00", result.getList().getFirst().price());
+        assertEquals(2, result.getList().getFirst().lessonCount());
+        assertNull(result.getList().getFirst().validDays());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("phone"));
+        assertFalse(json.contains("userId"));
+        assertFalse(json.contains("employeeNo"));
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var employee = mapper.selectById(coach);
+        employee.setHiredOn(LocalDate.now().plusDays(1));
+        mapper.updateById(employee);
+        assertEquals(0L, catalog.courses(req).getTotal());
+        assertServiceException(
+                () -> catalog.product(product, "course", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+        employee.setHiredOn(LocalDate.of(2026, 1, 1));
+        mapper.updateById(employee);
+        var relations =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var relation =
+                relations.selectList().stream()
+                        .filter(r -> r.getEmployeeId().equals(coach))
+                        .findFirst()
+                        .orElseThrow();
+        relation.setJoinedOn(LocalDate.now().plusDays(1));
+        relations.updateById(relation);
+        assertEquals(0L, catalog.courses(req).getTotal());
+        relation.setJoinedOn(LocalDate.of(2026, 1, 1));
+        relations.updateById(relation);
+        assertEquals(1L, catalog.courses(req).getTotal());
+        employee.setStatus("inactive");
+        mapper.updateById(employee);
+        assertEquals(0L, catalog.courses(req).getTotal());
+    }
+
+    @Test
+    void courseProductVersionTracksContentAndApprovedPricesButNotNoOpsOrRejectedChanges() {
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long id = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        assertEquals(1, catalog.product(id, "course", 101L).version());
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setName("新名称");
+        courses.patchProduct(id, patch);
+        assertEquals(2, catalog.product(id, "course", 101L).version());
+        courses.patchProduct(id, patch);
+        assertEquals(2, catalog.product(id, "course", 101L).version());
+        courses.applyApprovedPrice(id, new BigDecimal("200.00"), new BigDecimal("199.99"));
+        assertEquals(3, catalog.product(id, "course", 101L).version());
+        assertEquals("199.99", catalog.product(id, "course", 101L).price());
+        courses.applyApprovedPrice(id, new BigDecimal("199.99"), new BigDecimal("199.99"));
+        assertEquals(3, catalog.product(id, "course", 101L).version());
+        assertServiceException(
+                () -> courses.applyApprovedPrice(id, new BigDecimal("200.00"), BigDecimal.TEN),
+                COURSE_PRICE_APPROVAL_REQUIRED);
+        assertEquals(3, catalog.product(id, "course", 101L).version());
+    }
+
+    @Test
+    void publicCatalogValidatesParametersAndDoesNotExposeDraftTemplatesOrMalformedSettings() {
+        stores.create(store(101L, "A"));
+        Long id = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        salesSettings.saveOnline(101L, onlineSettings(id));
+        var req = catalogPage(101L);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> catalog.cards(req));
+        assertThrows(
+                ConstraintViolationException.class, () -> catalog.subscriptions(catalogPage(null)));
+        assertServiceException(() -> catalog.product(id, "unknown", 101L), MOBILE_REQUEST_INVALID);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymSalesSettingMapper.class);
+        var config = mapper.selectList().getFirst();
+        config.setContent("{}");
+        mapper.updateById(config);
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        var draft = cardTemplate("period");
+        draft.setStatus("draft");
+        Long draftId = Long.valueOf(cards.create(draft).getId());
+        config.setContent(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(
+                        onlineSettings(draftId)));
+        mapper.updateById(config);
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+        assertServiceException(
+                () -> catalog.product(draftId, "card", 101L), MOBILE_PRODUCT_NOT_AVAILABLE);
+        config.setContent("invalid json");
+        mapper.updateById(config);
+        assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
     }
 }

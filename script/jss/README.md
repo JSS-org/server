@@ -38,6 +38,7 @@ python script/jss/verify_promotion_campaign_mappers.py
 python script/jss/verify_trade_schema.py
 python script/jss/verify_trade_mappers.py
 python script/jss/verify_statistics_schema.py
+python script/jss/verify_statistics_mappers.py
 python script/jss/verify_migrations.py
 python script/jss/mysql_sandbox.py stop
 ```
@@ -61,6 +62,8 @@ python script/jss/mysql_sandbox.py stop
 `verify_trade_mappers.py` 使用 V008 与生产 Mapper，在随机库运行六项测试：购物车归属/批量更新、订单赠券 JSON/CSV 与状态更新、订单明细属性/售后状态条件、售后快照及审核状态、交易配置/运费/营业时间类型处理、佣金负数冲正及并发受限解冻。验证对应查询和更新的会员/租户范围，不使用 Mapper 替身；最新报告必须无失败和跳过。日志位于 `.runtime/jss-mysql/trade-mapper-test.log`，结束删除随机 schema。不包含实际支付/物流或跨表事务。
 
 `verify_statistics_schema.py` 覆盖 V009 的两个当前统计模型。四项检查验证商品 DATE/交易 DATETIME、无统计种子、每租户/商品/日有效快照唯一性、逻辑删除后重算、非空零值指标和有符号结算字段。不会运行定时统计任务或填入虚构报表；聚合 Mapper 和统计业务仍需独立验证。
+
+`verify_statistics_mappers.py` 在随机库准备 V003/V007/V008/V009，运行三项实际统计 Mapper 测试，使用生产 XML、MPJ 注入器/拦截器、分页及租户插件。覆盖交易收入/支出聚合、商品日统计求和/平均/分组分页、商品原始数据 XML 的浏览/收藏/购物车/支付/售后子查询及订单关联；显式加入跨租户引用数据验证不会混入指标，并检查统计快照的逻辑删除。测试数据仅在自己的临时库创建，结束删除；日志为 `.runtime/jss-mysql/statistics-mapper-test.log`。尚未运行定时任务或报表 HTTP。
 
 `verify_promotion_content_schema.py` 验证 V005 的七个内容/装修/客服模型：并发启用时每租户只有一个使用中的模板、独立页面命名与模板页面互不干扰、逻辑删除后名称释放、CSV 预览图及文本正文格式、客服会话唯一归属、隐藏会话保留身份、未读计数 SQL。不会发布装修内容或连接聊天 WebSocket；内容接口和完整客服权限仍需应用联调。
 

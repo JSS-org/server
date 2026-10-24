@@ -2141,3 +2141,36 @@ V008须先于新代码部署。包月后台保存仍全量替换，须保留需�
 ### 未做 / 后续
 
 43项新增实现、4项复用源码、88项待开发；继续教练公开资料及其余内部流程。没有部署或真实渠道联调。按用户最新“小步提交”要求，将此前累计后端工作按依赖与功能拆分为本地提交，用户原始uniapp.md改动保持原暂存及工作区状态，不推送。
+
+## [2026-10-24 19:03 ~ 19:12] 教练公开资料发布、列表与详情
+
+### 意图
+
+实现总表35–36，提供真实教练介绍与资质展示，同时避免自动公开全部内部员工档案。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/app/mobile/AppGymCoachesController.java`、`vo/GymMobileCoachVO.java`、`service/mobile/GymMobileCoachService.java` | 新增 | 两个公开GET、当前门店过滤与显式响应 |
+| `yudao-module-gym/.../controller/admin/employee/vo/GymPublicCoachProfileVO.java`、`service/employee/GymCoachPublicProfiles.java` | 新增 | 公开对象、发布校验、有效任职及图片引用规则 |
+| `yudao-module-gym/.../GymEmployeeDO.java`、员工请求/响应VO、`GymEmployeeService.java`、`GymMobilePublicService.java`、`ErrorCodeConstants.java` | 修改 | 原员工写入口显式发布、保留旧设置、媒体引用及不可见错误 |
+| `sql/gym/migration/mysql/V009__gym_public_coach_profiles.sql`、H2 schema、`script/gym/verify-migrations.py`及脚本手册 | 新增/修改 | 默认私有列、历史员工保护、40项验证、下一版本V010 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileCoachesControllerTest.java` | 修改/新增 | 七项业务及两项MVC回归 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 49/135进度、发布流程及公开图片边界 |
+
+### 结构关系
+
+员工既有功能权限和全部任职范围检查 → 发布资料校验及持久化；游客Controller → 当前租户公开条件 → SQL分页 → 裁剪响应。公开媒体沿用原路径和租户过滤，在有效任职与营业门店下确认公开教练引用，复用文件实际内容检查。
+
+### 验证证据
+
+最终gym489项全部通过，member4通过/1既有禁用跳过；新增9项。Spotless和server打包通过，真实隔离MySQL/Flyway40检查通过并清理临时库。源码审计49/135、86缺失；命令与日志见testing。
+
+### 影响面 / 风险
+
+新代码须先迁移到V009；旧员工默认不公开。明确发布后的资料在全部当前营业任职门店共用，图片变为按引用匿名可读；下架时仅撤销本公开引用，其他有效公开引用仍可访问。原员工写权限和共享档案范围保持，前端和角色授权不改。公开资质是管理员录入资料，不表示已外部核验。
+
+### 未做 / 后续
+
+45项新增实现、4项复用源码、86项待开发。本人教练资料编辑及其他工作台入口继续推进；第三方实际接入仍按要求暂缓，未迁移业务库或部署。此功能连同测试、文档单独作一次本地提交，不推送；用户原始uniapp.md改动保留。

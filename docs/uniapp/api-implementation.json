@@ -392,8 +392,12 @@
       "method": "GET",
       "path": "/app-api/gym/coaches",
       "description": "查询门店公开教练列表",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCoachesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCoachesControllerTest.java"
+      ]
     },
     {
       "id": 36,
@@ -401,8 +405,12 @@
       "method": "GET",
       "path": "/app-api/gym/coaches/{id}",
       "description": "获取教练介绍、照片和公开资质",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCoachesController.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileCoachesControllerTest.java"
+      ]
     },
     {
       "id": 37,

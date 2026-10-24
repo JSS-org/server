@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS gym_employee (
   phone varchar(11) NOT NULL,
   job_title varchar(80) DEFAULT NULL,
   hired_on date NOT NULL,
+  coach_published boolean NOT NULL DEFAULT false,
+  coach_profile longtext DEFAULT NULL,
   status varchar(16) NOT NULL DEFAULT 'active',
   creator varchar(64) NOT NULL DEFAULT '',
   create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

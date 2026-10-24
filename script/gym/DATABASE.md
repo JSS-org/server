@@ -63,7 +63,7 @@ bash script/gym/db.sh validate
 V001__gym_schema.sql
 V002__gym_reference_data.sql
 V003__gym_legacy_backfills.sql
-V009__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
+V010__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
 ```
 
 1. 同步最新代码，选择未使用的版本号；文件名使用 `V版本__说明.sql`，版本与说明之间是两个下划线。

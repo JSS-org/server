@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @Service
 public class GymEmployeeService {
     @Resource private GymEmployeeMapper employeeMapper;
+    @Resource private GymCoachPublicProfiles coachProfiles;
     @Resource private GymEmployeeStoreMapper assignmentMapper;
     @Resource private GymStoreService storeService;
     @Resource private GymDataScope scope;
@@ -93,6 +94,16 @@ public class GymEmployeeService {
         validateAssignments(req);
         validateUser(req, null);
         GymEmployeeDO employee = BeanUtils.toBean(req, GymEmployeeDO.class);
+        employee.setCoachPublished(false);
+        if (req.getPublicCoachProfile() != null) {
+            employee.setCoachProfile(
+                    coachProfiles.validateAndSerialize(
+                            req.getPublicCoachProfile(),
+                            req.getStoreAssignments().stream()
+                                    .map(GymEmployeeSaveReqVO.StoreAssignment::getStoreId)
+                                    .toList()));
+            employee.setCoachPublished(req.getPublicCoachProfile().getPublished());
+        }
         try {
             employeeMapper.insert(employee);
         } catch (DuplicateKeyException e) {
@@ -122,6 +133,17 @@ public class GymEmployeeService {
         validateUser(merged, old.getUserId());
         GymEmployeeDO update = BeanUtils.toBean(merged, GymEmployeeDO.class);
         update.setId(id);
+        update.setCoachPublished(old.getCoachPublished());
+        update.setCoachProfile(old.getCoachProfile());
+        if (patch.getPublicCoachProfile() != null) {
+            update.setCoachProfile(
+                    coachProfiles.validateAndSerialize(
+                            patch.getPublicCoachProfile(),
+                            merged.getStoreAssignments().stream()
+                                    .map(GymEmployeeSaveReqVO.StoreAssignment::getStoreId)
+                                    .toList()));
+            update.setCoachPublished(patch.getPublicCoachProfile().getPublished());
+        }
         try {
             employeeMapper.updateById(update);
         } catch (DuplicateKeyException e) {
@@ -192,6 +214,7 @@ public class GymEmployeeService {
     private GymEmployeeRespVO response(
             GymEmployeeDO employee, List<GymEmployeeStoreDO> assignments, Set<Long> scopeIds) {
         GymEmployeeRespVO result = BeanUtils.toBean(employee, GymEmployeeRespVO.class);
+        result.setPublicCoachProfile(coachProfiles.read(employee));
         result.setId(employee.getId().toString());
         result.setUserId(employee.getUserId() == null ? null : employee.getUserId().toString());
         if (employee.getUserId() != null) {

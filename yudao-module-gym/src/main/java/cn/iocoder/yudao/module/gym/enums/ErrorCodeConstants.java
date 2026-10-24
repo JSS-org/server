@@ -219,4 +219,5 @@ public interface ErrorCodeConstants {
     ErrorCode MOBILE_VERSION_CONFLICT = new ErrorCode(1_070_023_010, "负责关系已发生变化，请刷新后重试");
     ErrorCode MOBILE_EMPLOYEE_REQUIRED = new ErrorCode(1_070_023_011, "当前账号须关联唯一的在职员工档案");
     ErrorCode MOBILE_PRODUCT_NOT_AVAILABLE = new ErrorCode(1_070_023_012, "商品不存在或未公开发售");
+    ErrorCode MOBILE_COACH_NOT_AVAILABLE = new ErrorCode(1_070_023_013, "教练不存在或未公开发布");
 }

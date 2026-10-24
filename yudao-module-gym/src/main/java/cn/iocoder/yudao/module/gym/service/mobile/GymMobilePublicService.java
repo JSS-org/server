@@ -37,6 +37,10 @@ import java.util.stream.Collectors;
 @Service
 public class GymMobilePublicService {
     @Resource private GymStoreMapper stores;
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.employee.GymCoachPublicProfiles coachProfiles;
+
     @Resource private GymStoreMediaMapper media;
     @Resource private GymFileMapper files;
     @Resource private GymCheckinMapper checkins;
@@ -323,6 +327,13 @@ public class GymMobilePublicService {
                 : null;
     }
 
+    public Media coachMedia(
+            cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeDO employee,
+            Long fileId) {
+        var file = coachProfiles.publicImage(employee, fileId);
+        return file == null ? null : mediaValue(file, null);
+    }
+
     private Media mediaValue(GymFileDO row, String caption) {
         return new Media(
                 row.getId().toString(),
@@ -369,6 +380,7 @@ public class GymMobilePublicService {
                                         TenantContextHolder.getRequiredTenantId()))
                 > 0) return true;
         if (!"image".equals(file.getCategory())) return false;
+        if (coachProfiles.references(file)) return true;
         var candidates =
                 settings.selectList(
                         new LambdaQueryWrapper<GymClientSettingDO>()

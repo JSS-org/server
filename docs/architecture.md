@@ -498,3 +498,9 @@ V007追加跟进表及负责关系版本列，gym表总数63。旧关系从版�
 AppGymCatalogController → GymMobileCatalogService → 门店、模板、销售配置、私教商品及有效任职关系。卡/包月在受限配置集中过滤后分页，私教在SQL中先筛有效商品/门店/任职再计数分页；只读REPEATABLE_READ保持响应售价与配置版本来自同一快照。响应不暴露员工手机号或内部实体。公开门店复用GymMobilePublicService规则。
 
 卡/包月返回模板version和门店saleRevision，私教返回V008的product.version。原GymCourseService在行锁下对实际资料变化及审批通过的价格变化增版，创建从1开始；无变化保持版本。续费条款和协议版本复用原销售配置JSON，成对填写，缺失时关闭公开包月展示。目录发布状态与购买能力分别返回；未实现下单、未接入自动续费不会伪装为可购买。
+
+### 教练公开资料（2026-10-24）
+
+原GymEmployeeController写权限及全部共享任职范围 → GymEmployeeService → GymCoachPublicProfiles校验并保存V009的coach_published/coach_profile。默认旧员工保持私有，提供可选publicCoachProfile对象时整体替换，其他员工编辑保持原公开设置。未引入自动角色授权。
+
+AppGymCoachesController → GymMobileCoachService → 同一公开条件查询（明确发布、有效员工/任职、营业门店、同租户） → SQL分页 → 公开字段。只读REPEATABLE_READ保持资料和图片引用快照。GymMobilePublicService媒体下载增加对公开教练引用的检查，复用原图片类型、实际内容校验及租户过滤；没有新辅助路由。公开图片须仍属于有效任职营业门店，撤销最后一个有效引用才失效。

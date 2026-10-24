@@ -282,6 +282,22 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 
 ### 6.2 预约与签课约束
 
+公开教练查询已实现；总表35–36按当前租户、发布状态、营业门店及已经生效的任职过滤后分页。管理员沿用`POST /admin-api/gym/employees`或`PATCH /admin-api/gym/employees/{id}`的`gym:employees:write`权限，提交下列可选对象，发布到该员工全部当前营业任职门店：
+
+```json
+{
+  "publicCoachProfile": {
+    "published": true,
+    "avatarFileId": null,
+    "introduction": "管理员填写的教练介绍",
+    "specialties": ["力量训练"],
+    "qualificationFileIds": []
+  }
+}
+```
+
+对象省略或null保持原值；提供时整体替换，`published=false`下架。头像/资质只接受当前租户内员工任职门店的image类别文件，下载仍检查有效公开引用；不能填入人脸或合同附件。介绍最多4000字，擅长项目最多20项、每项80字，资质图片最多20个且不重复；旧员工默认不公开。工作台本人教练资料编辑仍待开发。完整边界见[实施说明](./uniapp-implementation.md#教练公开资料实现与边界)。
+
 - 首期按现有私教容量 1 设计。创建预约时验证教练、产品、门店、时段、权益有效期和剩余课时，并原子预占 1 课时；同一会员时间冲突拒绝。
 - 取消预约在可取消时间内释放预占；已签课不可走普通取消。当前自助取消默认须早于开课，配置 `yudao.gym.mobile.bookings.cancel-before-minutes` 可设置提前分钟数（0～10080）；截止时刻本身不可取消，超时联系门店。此规则不自动扣课，不启用爽约收费或扣课。
 - 扫码签课必须已有预约及本课程当日、同店的有效签到，并在允许的课程时间内。前端不能伪造 `checkedIn=true` 代替服务端校验。

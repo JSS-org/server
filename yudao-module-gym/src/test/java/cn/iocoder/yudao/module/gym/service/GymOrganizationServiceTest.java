@@ -112,6 +112,8 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService.class,
     GymStoreService.class,
     GymEmployeeService.class,
+    cn.iocoder.yudao.module.gym.service.employee.GymCoachPublicProfiles.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService.class,
     GymDataScope.class,
     cn.iocoder.yudao.module.gym.controller.admin.store.GymStoreController.class,
     cn.iocoder.yudao.module.gym.controller.admin.employee.GymEmployeeController.class,
@@ -121,6 +123,7 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoachService publicCoaches;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCatalogService catalog;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobilePublicService publicContent;
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkRecordsService workRecords;
@@ -10061,5 +10064,254 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         config.setContent("invalid json");
         mapper.updateById(config);
         assertEquals(0L, catalog.cards(catalogPage(101L)).getTotal());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.employee.vo.GymPublicCoachProfileVO coachProfile(
+            Long image) {
+        var profile =
+                new cn.iocoder.yudao.module.gym.controller.admin.employee.vo
+                        .GymPublicCoachProfileVO();
+        profile.setPublished(true);
+        profile.setAvatarFileId(image);
+        profile.setIntroduction("力量训练教练介绍");
+        profile.setSpecialties(List.of("力量", "体能"));
+        profile.setQualificationFileIds(image == null ? List.of() : List.of(image));
+        return profile;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCoachVO.CoachPage coachPage(
+            Long store) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCoachVO
+                        .CoachPage();
+        req.setStoreId(store);
+        return req;
+    }
+
+    @Test
+    void publicCoachesRequireExplicitPublicationBeforePaginationAndNeverExposeInternalFields() {
+        stores.create(store(101L, "A"));
+        var hidden = employees.create(employee("HIDDEN", 101L));
+        var req = employee("PUBLIC", 101L);
+        req.setPublicCoachProfile(coachProfile(null));
+        var published = employees.create(req);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var page = coachPage(101L);
+        page.setPageSize(1);
+        var result = publicCoaches.page(page);
+        assertEquals(1L, result.getTotal());
+        assertEquals(published.getId(), result.getList().getFirst().id());
+        assertEquals("力量训练教练介绍", result.getList().getFirst().introduction());
+        assertEquals(List.of("力量", "体能"), result.getList().getFirst().specialties());
+        assertServiceException(
+                () -> publicCoaches.detail(Long.valueOf(hidden.getId()), 101L),
+                MOBILE_COACH_NOT_AVAILABLE);
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("13800000000"));
+        assertFalse(json.contains("phone"));
+        assertFalse(json.contains("employeeNo"));
+        assertFalse(json.contains("userId"));
+        page.setPageNo(2);
+        assertEquals(1L, publicCoaches.page(page).getTotal());
+        assertTrue(publicCoaches.page(page).getList().isEmpty());
+    }
+
+    @Test
+    void publicCoachesRespectCurrentEmploymentAndInactiveEmployeesAndStores() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T04:00:00Z"));
+        stores.create(store(101L, "A"));
+        var req = employee("DATES", 101L);
+        req.setPublicCoachProfile(coachProfile(null));
+        Long id = Long.valueOf(employees.create(req).getId());
+        var em =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var memberships =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var row = em.selectById(id);
+        row.setHiredOn(LocalDate.of(2026, 10, 25));
+        em.updateById(row);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+        row.setHiredOn(LocalDate.of(2026, 1, 1));
+        em.updateById(row);
+        var membership =
+                memberships.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        id);
+        membership.setJoinedOn(LocalDate.of(2026, 10, 25));
+        memberships.updateById(membership);
+        assertServiceException(() -> publicCoaches.detail(id, 101L), MOBILE_COACH_NOT_AVAILABLE);
+        membership.setJoinedOn(LocalDate.of(2026, 10, 24));
+        memberships.updateById(membership);
+        assertEquals(id.toString(), publicCoaches.detail(id, 101L).id());
+        row.setStatus("inactive");
+        em.updateById(row);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+        row.setStatus("active");
+        em.updateById(row);
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(101L, patch);
+        assertServiceException(() -> publicCoaches.page(coachPage(101L)), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void publicCoachMediaUsesPublishedReferencesAndRevokesAfterRemovalAndUnpublishing() {
+        stores.create(store(101L, "A"));
+        var avatar = publicImage(101L);
+        var certificate = publicImage(101L);
+        var profile = coachProfile(avatar.getId());
+        profile.setQualificationFileIds(List.of(certificate.getId()));
+        var req = employee("MEDIA", 101L);
+        req.setPublicCoachProfile(profile);
+        Long id = Long.valueOf(employees.create(req).getId());
+        var result = publicCoaches.detail(id, 101L);
+        assertEquals(avatar.getId().toString(), result.avatar().fileId());
+        assertEquals(
+                certificate.getId().toString(), result.qualificationFiles().getFirst().fileId());
+        assertTrue(result.avatar().url().contains("/gym/public-media/"));
+        assertFalse(result.avatar().url().contains("private-storage"));
+        assertNotNull(publicContent.mediaContent(avatar.getId()));
+        assertNotNull(publicContent.mediaContent(certificate.getId()));
+        var patch = new GymEmployeeSaveReqVO();
+        patch.setName("更名");
+        employees.patch(id, patch);
+        assertEquals(profile, employees.get(id).getPublicCoachProfile());
+        profile.setAvatarFileId(null);
+        profile.setQualificationFileIds(List.of());
+        patch = new GymEmployeeSaveReqVO();
+        patch.setPublicCoachProfile(profile);
+        employees.patch(id, patch);
+        assertNull(publicCoaches.detail(id, 101L).avatar());
+        assertServiceException(() -> publicContent.mediaContent(avatar.getId()), FILE_NOT_EXISTS);
+        profile.setPublished(false);
+        patch.setPublicCoachProfile(profile);
+        employees.patch(id, patch);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+    }
+
+    @Test
+    void coachPublicationRejectsPrivateForeignAndOtherStoreFilesAndInvalidProfiles() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var req = employee("FILES", 101L);
+        var profile = coachProfile(file(101L, "member_face").getId());
+        req.setPublicCoachProfile(profile);
+        assertServiceException(() -> employees.create(req), MOBILE_FILE_NOT_OWNED);
+        profile.setAvatarFileId(null);
+        profile.setQualificationFileIds(List.of(publicImage(102L).getId()));
+        assertServiceException(() -> employees.create(req), MOBILE_FILE_NOT_OWNED);
+        TenantContextHolder.setTenantId(2L);
+        var foreign = publicImage(101L);
+        TenantContextHolder.setTenantId(1L);
+        profile.setQualificationFileIds(List.of(foreign.getId()));
+        assertServiceException(() -> employees.create(req), MOBILE_FILE_NOT_OWNED);
+        profile.setQualificationFileIds(List.of());
+        profile.setSpecialties(List.of("力量", " 力量 "));
+        assertServiceException(() -> employees.create(req), MOBILE_REQUEST_INVALID);
+        profile.setSpecialties(List.of("力量"));
+        profile.setQualificationFileIds(List.of(9L, 9L));
+        assertServiceException(() -> employees.create(req), MOBILE_REQUEST_INVALID);
+        profile.setQualificationFileIds(List.of());
+        profile.setIntroduction("a".repeat(4001));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class, () -> employees.create(req));
+        profile.setIntroduction("介绍");
+        assertNotNull(
+                employees.create(req).getId()); // Failed writes did not leave a partial employee.
+    }
+
+    @Test
+    void coachPublicationRetainsSharedEmployeeScopeAndCannotUseForeignEmploymentLinks() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var req = employee("SHARED", 101L, 102L);
+        Long shared = Long.valueOf(employees.create(req).getId());
+        var patch = new GymEmployeeSaveReqVO();
+        patch.setPublicCoachProfile(coachProfile(null));
+        scoped(101L);
+        assertServiceException(() -> employees.patch(shared, patch), STORE_NO_PERMISSION);
+        headquarters();
+        req = employee("SECOND", 102L);
+        req.setPublicCoachProfile(coachProfile(null));
+        Long other = Long.valueOf(employees.create(req).getId());
+        assertServiceException(() -> publicCoaches.detail(other, 101L), MOBILE_COACH_NOT_AVAILABLE);
+        TenantContextHolder.setTenantId(2L);
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO();
+        link.setEmployeeId(other);
+        link.setStoreId(101L);
+        link.setJoinedOn(LocalDate.of(2026, 1, 1));
+        link.setIsPrimary(true);
+        link.setIsManager(false);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper.class)
+                .insert(link);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(0L, publicCoaches.page(coachPage(101L)).getTotal());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> publicCoaches.detail(other, 102L), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void coachMediaRevokesWhenEmploymentEndsAndInvalidJsonNeverPublishesFiles() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var photo = publicImage(101L);
+        var req = employee("MOVE", 101L, 102L);
+        req.setPublicCoachProfile(coachProfile(photo.getId()));
+        Long id = Long.valueOf(employees.create(req).getId());
+        assertNotNull(publicContent.mediaContent(photo.getId()));
+        var replacement = employee("MOVE", 102L);
+        employees.patch(id, replacement);
+        assertNull(publicCoaches.detail(id, 102L).avatar());
+        assertServiceException(() -> publicContent.mediaContent(photo.getId()), FILE_NOT_EXISTS);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var row = mapper.selectById(id);
+        row.setCoachProfile("malformed");
+        mapper.updateById(row);
+        assertEquals("", publicCoaches.detail(id, 102L).introduction());
+        assertTrue(publicCoaches.detail(id, 102L).qualificationFiles().isEmpty());
+        var patch = new GymEmployeeSaveReqVO();
+        var profile = coachProfile(photo.getId());
+        profile.setPublished(false);
+        patch.setPublicCoachProfile(profile);
+        files.deleteById(photo.getId());
+        employees.patch(id, patch);
+        assertEquals(0L, publicCoaches.page(coachPage(102L)).getTotal());
+    }
+
+    @Test
+    void coachPhotoIsPublicOnlyWhileAtLeastOnePublishedCurrentCoachReferencesIt() {
+        stores.create(store(101L, "A"));
+        var image = publicImage(101L);
+        var first = employee("FIRSTPUBLIC", 101L);
+        first.setPublicCoachProfile(coachProfile(image.getId()));
+        var second = employee("SECONDPUBLIC", 101L);
+        second.setPublicCoachProfile(coachProfile(image.getId()));
+        Long firstId = Long.valueOf(employees.create(first).getId());
+        Long secondId = Long.valueOf(employees.create(second).getId());
+        var hidden = coachProfile(image.getId());
+        hidden.setPublished(false);
+        var patch = new GymEmployeeSaveReqVO();
+        patch.setPublicCoachProfile(hidden);
+        employees.patch(firstId, patch);
+        assertNotNull(publicContent.mediaContent(image.getId()));
+        var inactive = new GymEmployeeSaveReqVO();
+        inactive.setStatus("inactive");
+        employees.patch(secondId, inactive);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
+        inactive.setStatus("active");
+        employees.patch(secondId, inactive);
+        assertNotNull(publicContent.mediaContent(image.getId()));
+        var storePatch = new GymStoreSaveReqVO();
+        storePatch.setStatus("inactive");
+        stores.patch(101L, storePatch);
+        assertServiceException(() -> publicContent.mediaContent(image.getId()), FILE_NOT_EXISTS);
     }
 }

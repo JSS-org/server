@@ -735,3 +735,23 @@ MVC验证multipart参数、伪造上传人/员工/类别/租户拒绝、缺失�
 真实H2事务测试还验证后续回滚同时移除gym_file及目标行，但mock外部存储对象仍存在，自动孤立对象清理未实现。功能和数据授权用真实业务服务与权限代理，账号/存储API仍mock；没有做部署HTTP和真实存储联调。
 
 真实MySQL/Flyway隔离回归 **42项通过**：64张gym表、tenant_id/file_id唯一目标、历史文件不补造目标且保留元数据；随机库全部清理，未迁移业务库。日志：`/tmp/uniapp-work-files-final-tests.log`（19:46:06）、`/tmp/uniapp-work-files-migrations.log`、`/tmp/uniapp-work-files-package.log`。Spotless及server依赖package成功（跳过测试）。源码审计53/135，49项新增本地实现、4项复用源码、82项待开发。
+
+## 2026-10-24 工作台上下文与系统权限API
+
+验证命令（仓库根目录）：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test,PermissionApiImplTest,PermissionServiceTest' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym **518项通过**（组织服务280项，新增5项上下文范围/身份业务测试；上下文MVC新增2项）；system权限 **27项通过**（新增PermissionApiImplTest 3项、既有PermissionServiceTest 24项）；member状态4项通过、1项既有禁用测试跳过，均无失败或错误。Spotless通过，server及依赖打包成功（打包命令跳过测试）。源码映射 **54/135**，余81项，不能代替部署HTTP联调。日志：`/tmp/uniapp-work-context-tests.log`、`/tmp/uniapp-work-context-package.log`。
+
+覆盖无员工的总部账号、租户隔离、停用门店、空范围与非实体部门、入职/任职生效日期、离职、停用账号、错误令牌类型及匿名方法鉴权。本人任职门店可以显示，但没有SELF负责关系或整店范围时，真实会员列表仍拒绝。系统API测试执行真实菜单停用父子过滤，停用角色不参与菜单解析，重复/空权限码不输出；超级管理员保留原角色及菜单解析。MVC验证请求身份参数不用于选择账号及错误信封。首轮新增测试使用无类型Mockito匹配器导致重载编译歧义，改为集合匹配器后完整验证通过。
+
+无DDL变更，不重跑已有V010隔离迁移回归，也不迁移业务库。真实后台登录、缓存撤权及部署端到端联调未在本批验证；前端未修改。

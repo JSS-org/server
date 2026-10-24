@@ -47,6 +47,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkContextController.class,
     cn.iocoder.yudao.module.gym.service.member.GymTrainingPlanService.class,
     cn.iocoder.yudao.module.gym.controller.admin.member.GymTrainingPlanController.class,
     cn.iocoder.yudao.module.gym.service.file.GymMemberFileAccess.class,
@@ -129,6 +131,12 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService workContext;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkContextController
+            workContextController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkFilesService workFiles;
 
     @Resource
@@ -11006,5 +11014,137 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                         nullable(Long.class));
         assertNotNull(fileApi.getFileContentByUrl("private-work:" + name.getValue()));
         assertNotNull(workFiles.upload(workFileRequest("body_report", member)).fileId());
+    }
+
+    void contextAuthorization() {
+        when(permissions.getUserPermissionInfo(anyLong()))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.permission.dto
+                                .UserPermissionInfoRespDTO(
+                                List.of("actual-role"),
+                                List.of("gym:members:read", "system:user:query")));
+    }
+
+    @Test
+    void contextHeadquartersWithoutEmployeeOnlyListsActiveCurrentTenantStores() {
+        contextAuthorization();
+        stores.create(store(103L, "C"));
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var patch = new GymStoreSaveReqVO();
+        patch.setStatus("inactive");
+        stores.patch(102L, patch);
+        TenantContextHolder.setTenantId(2L);
+        stores.create(store(201L, "OTHER-TENANT"));
+        TenantContextHolder.setTenantId(1L);
+        var result = workContextController.get().getData();
+        assertNull(result.employeeId());
+        assertEquals(List.of("actual-role"), result.roles());
+        assertEquals(List.of("gym:members:read"), result.permissions());
+        assertEquals(List.of("101", "103"), result.stores().stream().map(s -> s.id()).toList());
+        assertNull(result.stores().getFirst().cover());
+        assertNull(result.stores().getFirst().distanceMeters());
+    }
+
+    @Test
+    void contextRestrictedScopeDoesNotExpandToUnassignedOrNonexistentStores() {
+        contextAuthorization();
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        scoped(102L, 999L);
+        assertEquals(List.of("102"), workContext.get().stores().stream().map(s -> s.id()).toList());
+        scoped();
+        assertTrue(workContext.get().stores().isEmpty());
+        verify(permissions, times(2)).getUserPermissionInfo(1L);
+    }
+
+    @Test
+    void contextOwnEmploymentIsAnEntryButNeverGrantsWholeStoreMemberAccess() {
+        contextAuthorization();
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long employee = approvalEmployee("CONTEXT-SELF", 91L);
+        personalScope(91L);
+        var result = workContext.get();
+        assertEquals(employee.toString(), result.employeeId());
+        assertEquals(List.of("101"), result.stores().stream().map(s -> s.id()).toList());
+        assertServiceException(
+                () -> applicationContext.getBean(GymDataScope.class).check(101L),
+                STORE_NO_PERMISSION);
+        var req = new GymMobileWorkMembersVO.MemberPage();
+        req.setStoreId(101L);
+        assertServiceException(() -> workMemberQueries.page(req), STORE_NO_PERMISSION);
+        assertEquals(List.of("actual-role"), result.roles());
+    }
+
+    @Test
+    void contextRechecksEmploymentDatesEmployeeStateAndStoreClosure() {
+        contextAuthorization();
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-24T04:00:00Z"));
+        stores.create(store(101L, "A"));
+        Long id = approvalEmployee("CONTEXT-DATES", 91L);
+        scoped();
+        loginAs(91L);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeMapper.class);
+        var links =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper
+                                .class);
+        var link =
+                links.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO
+                                ::getEmployeeId,
+                        id);
+        link.setJoinedOn(LocalDate.of(2026, 10, 25));
+        links.updateById(link);
+        assertEquals(id.toString(), workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+        link.setJoinedOn(LocalDate.of(2026, 10, 24));
+        links.updateById(link);
+        assertEquals(1, workContext.get().stores().size());
+        var row = mapper.selectById(id);
+        row.setHiredOn(LocalDate.of(2026, 10, 25));
+        mapper.updateById(row);
+        assertNull(workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+        row.setHiredOn(LocalDate.of(2026, 10, 24));
+        row.setStatus("inactive");
+        mapper.updateById(row);
+        assertNull(workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+        row.setStatus("active");
+        mapper.updateById(row);
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(id.toString(), workContext.get().employeeId());
+        assertTrue(workContext.get().stores().isEmpty());
+    }
+
+    @Test
+    void contextRejectsUnauthenticatedMemberCrossTenantAndDisabledAccountsBeforeReadingRoles() {
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> workContextController.get(), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        var account = new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO();
+        account.setId(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        when(workAccounts.getUser(1L)).thenReturn(null);
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertServiceException(() -> workContext.get(), MOBILE_IDENTITY_INVALID);
+        assertThrows(
+                org.springframework.security.core.AuthenticationException.class,
+                () -> workContextController.get());
+        verify(permissions, never()).getUserPermissionInfo(anyLong());
     }
 }

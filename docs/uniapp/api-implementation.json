@@ -65,8 +65,14 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/context",
       "description": "获取员工身份、角色、权限及可访问门店",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkContextController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkContextService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkContextControllerTest.java",
+        "yudao-module-system/src/test/java/cn/iocoder/yudao/module/system/api/permission/PermissionApiImplTest.java"
+      ]
     },
     {
       "id": 7,

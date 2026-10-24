@@ -518,3 +518,9 @@ GymMobileWorkFilesController文件功能权限 → GymMobileWorkFilesService有�
 GymWorkFileBindings由移动文件服务及原体测、训练计划、公开教练资料、合同模板服务共用；新增上传不能换会员、换员工或将会员合同材料变为公共模板。历史文件无目标记录，原逻辑保持。下载区分未绑定材料与真实业务绑定，复用既有SELF范围检查；教练图片按员工而不是仅上传账号归属，账号重绑不能接管另一员工的图片。
 
 原上传入口和角色授权未变。事务只能回滚数据库元数据，外部FileApi已存对象需要另行清理；尚无自动清理接口。此边界有回滚测试，不能将数据库原子性表述为跨存储事务。
+
+## 工作台身份与权限上下文（2026-10-24 增量）
+
+`GET /admin-api/gym/mobile/context` → `GymMobileWorkContextController`（已认证）→ `GymMobileWorkContextService` → `GymMobileWorkAccess.requireAdmin`（后台令牌、租户、账号启用）→ system `PermissionApi.getUserPermissionInfo` 返回真实启用角色及可展示菜单权限；gym只保留`gym:*`。新增跨模块入口位于api包，gym不直接读取系统角色、菜单表。system内部复用既有Role/Permission/MenuService，忽略部门数据过滤以读取本人权限，租户隔离保持；不改原授权或菜单接口。
+
+Gym上下文在只读事务内读取当前有效员工、整店范围、有效SELF关系和本人有效任职，查询当前租户营业门店形成入口列表。员工可为空；门店入口不是整店授权，尤其本人任职不扩展会员负责范围。每个业务接口仍独立鉴权，无新增数据库表、权限码或自动角色授权。

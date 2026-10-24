@@ -2238,3 +2238,34 @@ V008须先于新代码部署。包月后台保存仍全量替换，须保留需�
 ### 未做 / 后续
 
 49项新增实现、4项复用源码、82项待开发。继续工作台上下文、预约与其余内部流程；支付/自动续费、电子签约、门禁、监控实际接入继续暂缓。未部署或迁移业务库，本功能连同测试文档单独本地提交，不推送；原始uniapp.md改动保留。
+
+## [2026-10-24 19:50 ~ 20:05] 工作台身份、权限和门店入口上下文
+
+### 意图
+
+补齐总表6，提供可核对实际权限的工作台入口上下文，避免按职位推断角色或把本人任职范围误当整店权限。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../controller/admin/mobile/GymMobileWorkContextController.java`、`vo/GymMobileWorkContextVO.java`、`service/mobile/GymMobileWorkContextService.java` | 新增 | 当前账号、可空员工编号、实际角色与gym权限、门店入口集合 |
+| `yudao-module-system/.../api/permission/PermissionApi.java`、`PermissionApiImpl.java`、`dto/UserPermissionInfoRespDTO.java` | 修改/新增 | 跨模块读取本人启用角色和菜单权限，复用既有权限/菜单服务 |
+| `yudao-module-gym/src/test/.../GymOrganizationServiceTest.java`、`GymMobileWorkContextControllerTest.java`、`yudao-module-system/src/test/.../PermissionApiImplTest.java` | 修改/新增 | 五项业务范围、两项MVC及三项系统API测试 |
+| `docs/uniapp/`设计/总表/实施说明/机器清单、`architecture.md`、`testing.md` | 修改 | 54/135状态、菜单展示与业务鉴权边界、验证证据 |
+
+### 结构关系
+
+工作台Controller → 有效后台身份 → system PermissionApi查询启用角色和菜单权限 → gym员工、整店范围、SELF关系与任职查询 → 当前租户营业门店入口。本人任职不改变后续会员范围鉴权，系统API不反向依赖gym，不修改原授权接口。
+
+### 验证证据
+
+gym518项、系统权限27项全部通过；member4通过/1既有禁用跳过。新增10项覆盖停用角色与父菜单、空范围、总部无员工、任职日期、租户和令牌、本人任职不授予会员访问及MVC。Spotless和server依赖打包成功。源码审计54/135、余81项；命令和日志见testing本次条目。首轮Mockito重载匹配器编译错误已修正。
+
+### 影响面 / 风险
+
+无新权限码、自动授权或DDL。上下文只提供入口展示，权限列表不保证目标功能均已实现；超级管理员不补造通配符。`employeeId`允许null；封面及距离本接口为null。停用/撤权后的业务请求继续按原鉴权执行，部署缓存撤权联调未在本批证明。前端未修改。
+
+### 未做 / 后续
+
+50项新增本地实现、4项复用源码、81项待开发；继续工作台预约、排课与其余内部流程。支付/自动续费、电子签约、门禁、监控实际接入保持暂缓。未部署或迁移业务库，本功能及文档测试独立本地提交，不推送；原始uniapp.md内容和暂存状态保留。

@@ -120,9 +120,13 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 | --- | --- | --- | --- |
 | `POST A/me/profile-initializations` | 会员，幂等 | `storeId:ID,source:string,inviteCode?:string` | `{memberId:ID,customerType:string,created:boolean}` |
 | `GET A/me/context` | 会员 | 无 | `{memberId:ID,defaultStoreId:ID?,profileComplete:boolean}` |
-| `GET W/context` | 员工/管理者/总部 | 无 | `{employeeId:ID,roles:string[],permissions:string[],stores:StoreBrief[]}` |
+| `GET W/context` | 员工/管理者/总部 | 无 | `{employeeId:ID?,roles:string[],permissions:string[],stores:StoreBrief[]}` |
 
 业务身份首次初始化使用已验证手机号，在租户内关联或建立健身会员档案；首次无卡建档记为潜在客户。重复登录不重复建档，有卡老会员不因登录被降级为潜客。记录来源门店和邀请关系，但不允许重复登录随意转移负责员工。
+
+`GET W/context` 已实现（总表6）：只使用当前有效后台账号和令牌租户，不接受客户端指定身份。`employeeId` 为当前已入职且在职的关联员工编号，没有有效员工档案时为 `null`，不因此拒绝合法总部账号。`roles` 是系统实际启用角色代码；`permissions` 是启用角色菜单经停用菜单及其子菜单过滤后的 `gym:*` 权限码，去重排序，不推断“店长/总部”、不返回合成通配符，也不表示这些功能都已开发。
+
+`stores` 是门店入口集合：当前租户营业门店与“整店数据范围、有效SELF负责关系、本人员工有效任职”三者并集的交集，去重后按ID升序。全数据范围可列出当前租户所有营业门店；无匹配时空数组。当前上下文不加载封面、不计算距离，`cover/distanceMeters=null`。本人任职门店出现不代表获得整店会员或财务权限；客户端不得把此列表当授权凭据，后续每次业务请求仍由服务端校验功能和数据范围。权限清单用于入口展示，既有接口授权语义不变。
 
 ## 四、首页与公共内容
 

@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **50** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **81** 个。源码映射共 **54 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **54** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **77** 个。源码映射共 **58 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -108,10 +108,10 @@
 | 75 | 公共及会员端 | GET | `/app-api/gym/files/{id}/content` | 下载本人有权访问的文件内容 | 已实现，本地测试通过 |
 | 76 | 工作台 | GET | `/admin-api/gym/mobile/files/{id}/content` | 下载工作台业务权限范围内的文件内容 | 已实现，本地测试通过 |
 | 77 | 工作台 | GET | `/admin-api/gym/mobile/dashboard` | 获取本人或授权门店的业绩、签到、签课和待办概览 | 设计待开发 |
-| 78 | 工作台 | GET | `/admin-api/gym/mobile/bookings` | 查询本人授课或授权门店的预约列表 | 设计待开发 |
-| 79 | 工作台 | GET | `/admin-api/gym/mobile/bookings/{id}` | 获取权限范围内的会员预约详情 | 设计待开发 |
-| 80 | 工作台 | GET | `/admin-api/gym/mobile/checkins` | 查询负责会员或授权门店的入场签到记录 | 设计待开发 |
-| 81 | 工作台 | GET | `/admin-api/gym/mobile/lesson-records` | 查询本人授课或授权范围内的签课记录 | 设计待开发 |
+| 78 | 工作台 | GET | `/admin-api/gym/mobile/bookings` | 查询本人授课或授权门店的预约列表 | 已实现，本地测试通过 |
+| 79 | 工作台 | GET | `/admin-api/gym/mobile/bookings/{id}` | 获取权限范围内的会员预约详情 | 已实现，本地测试通过 |
+| 80 | 工作台 | GET | `/admin-api/gym/mobile/checkins` | 查询负责会员或授权门店的入场签到记录 | 已实现，本地测试通过 |
+| 81 | 工作台 | GET | `/admin-api/gym/mobile/lesson-records` | 查询本人授课或授权范围内的签课记录 | 已实现，本地测试通过 |
 | 82 | 工作台 | POST | `/admin-api/gym/mobile/lesson-qr-codes` | 为指定课程生成短时有效的签课二维码 | 设计待开发 |
 | 83 | 工作台 | GET | `/admin-api/gym/mobile/me/coach-profile` | 获取教练本人的公开资料 | 已实现，本地测试通过 |
 | 84 | 工作台 | PATCH | `/admin-api/gym/mobile/me/coach-profile` | 修改教练本人的照片、介绍、特长和资质 | 已实现，本地测试通过 |

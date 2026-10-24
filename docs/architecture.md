@@ -524,3 +524,9 @@ GymWorkFileBindings由移动文件服务及原体测、训练计划、公开教�
 `GET /admin-api/gym/mobile/context` → `GymMobileWorkContextController`（已认证）→ `GymMobileWorkContextService` → `GymMobileWorkAccess.requireAdmin`（后台令牌、租户、账号启用）→ system `PermissionApi.getUserPermissionInfo` 返回真实启用角色及可展示菜单权限；gym只保留`gym:*`。新增跨模块入口位于api包，gym不直接读取系统角色、菜单表。system内部复用既有Role/Permission/MenuService，忽略部门数据过滤以读取本人权限，租户隔离保持；不改原授权或菜单接口。
 
 Gym上下文在只读事务内读取当前有效员工、整店范围、有效SELF关系和本人有效任职，查询当前租户营业门店形成入口列表。员工可为空；门店入口不是整店授权，尤其本人任职不扩展会员负责范围。每个业务接口仍独立鉴权，无新增数据库表、权限码或自动角色授权。
+
+## 工作台预约、签到与课消读取（2026-10-24 增量）
+
+`GymMobileWorkCoursesController`的四个目标路由分别检查bookings/checkins/lessons读取权限 → `GymMobileWorkCoursesService`验证有效后台身份和有界分页、必传日期 → 复用`GymMemberCoachService.predicate/coachPredicate`在SQL分页前施加会员/门店与授课范围。SELF预约和课消取两个谓词交集；签到只取会员谓词。业务范围没有从上下文门店列表推导，也没有扩大旧后台查询权限。
+
+预约通过同租户同门店排期EXISTS验证并筛选开始时间；课消使用已确认记录及其保存余额，签到只读成功入场记录。分页与关联转换在只读可重复读事务中，姓名、排期、签到及课消批量查询；所有VO为明确字段。无新增表、迁移、授权或外部渠道调用。

@@ -755,3 +755,21 @@ git diff --check
 覆盖无员工的总部账号、租户隔离、停用门店、空范围与非实体部门、入职/任职生效日期、离职、停用账号、错误令牌类型及匿名方法鉴权。本人任职门店可以显示，但没有SELF负责关系或整店范围时，真实会员列表仍拒绝。系统API测试执行真实菜单停用父子过滤，停用角色不参与菜单解析，重复/空权限码不输出；超级管理员保留原角色及菜单解析。MVC验证请求身份参数不用于选择账号及错误信封。首轮新增测试使用无类型Mockito匹配器导致重载编译歧义，改为集合匹配器后完整验证通过。
 
 无DDL变更，不重跑已有V010隔离迁移回归，也不迁移业务库。真实后台登录、缓存撤权及部署端到端联调未在本批验证；前端未修改。
+
+## 2026-10-24 工作台预约、签到与课消查询
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym **527项通过**（组织服务286项、工作台课程查询MVC新增3项），member状态4通过/1既有禁用跳过，均无失败/错误。Spotless通过；server依赖打包成功，打包命令跳过测试。源码路由 **58/135**，余77项。日志：`/tmp/uniapp-work-course-final-tests.log`、`/tmp/uniapp-work-course-package.log`。此前先运行组织服务286项通过，日志`/tmp/uniapp-work-course-tests.log`。
+
+新增6项H2/事务/实际Mapper业务测试，通过原后台创建真实私教产品、排期、权益、预约、签到和确认课消，核对移动查询的历史余额和状态。权限矩阵覆盖本人授课但不负责会员、负责会员但其他教练授课、整店范围、跨租户、撤销负责关系、无功能权限及错误令牌；分页总数与明细均应用范围，SELF允许查看负责会员的其他教练签到但不能查看其预约/课消。
+
+日期测试覆盖上海午夜左闭右开与失败/未确认行排除；缺失余额快照不伪造，停用门店历史在整店授权范围仍能查。人为错绑会员、门店或删除排期时，不产生错误签到标记、课消链接或可访问的预约详情。MVC验证全部四路由及必传/非法日期、状态、分页上限、正整数筛选、明确响应字段。无DDL，不重跑V010迁移或迁移业务库；本批未运行部署HTTP、真实设备或扫码签课联调。

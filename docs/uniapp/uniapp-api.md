@@ -438,7 +438,13 @@ Content-Type: application/json
 
 新图片须为本人后台账号上传、当前任职门店的image文件，原来由管理员绑定的图片可保留。本人响应中的图片地址为`/admin-api/gym/mobile/me/coach-profile/files/{id}/content`，需后台令牌和租户头，按当前资料绑定鉴权；这是不计入135项的预览辅助入口。工作台上传74已实现，可使用coach_profile用途上传本人图片，需已有gym:files:upload权限和有效教练任职。详情见[实施说明](./uniapp-implementation.md#本人教练资料实现与边界)。
 
-`WorkBooking/WorkCheckin/WorkLessonRecord` 为会员端相应对象加 `memberId,memberName,coachId`；手机号仅在额外授权时脱敏返回。员工的预约/课消强制为本人授课；负责会员相关记录还需会员服务关系授权。签到默认只看本人负责会员，管理者看授权门店。
+`WorkBooking/WorkCheckin/WorkLessonRecord` 为会员端相应对象加 `memberId,memberName,coachId`；WorkLessonRecord另带`storeId`。当前查询不返回手机号、内部备注或操作人资料。员工的预约/课消强制为本人授课；负责会员相关记录还需会员服务关系授权。签到默认只看本人负责会员，管理者看授权门店。
+
+工作台查询78–81已实现：预约列表/详情要求`gym:bookings:read`，签到列表要求`gym:checkins:read`，课消列表要求`gym:lessons:read`，同时要求有效后台身份。SELF预约/课消必须同时匹配当前会员负责关系及本人授课，整店范围按授权门店放行。所有范围和筛选在SQL分页计数前执行；无权查看与不存在的预约详情统一报“预约不存在”。
+
+三个列表均须提供上海日期`startDate/endDate`，区间为`[startDate,endDate)`；预约按课程开始时间筛选，签到按入场时间，课消按确认时间。预约按预约时间及ID降序，签到/课消按对应事件时间及ID降序，页大小1～200。预约状态只接受`confirmed/cancelled/completed/no_show`，存储`attended`映射`completed`。签到只返回`succeeded`，课消只返回`confirmed`；真实来源原样返回，不代表设备已接通。
+
+预约需能关联同租户、同门店的未删除排期；不能核验归属的异常预约不返回。`checkedIn`及`lessonRecordId`检查关联会员/门店（课消还检查教练），不使用不相符的记录。签到无有效对应预约时`bookingId/coachId=null`。历史卡预约没有课包时`coursePackId=null`；会员资料已删除时`memberName=null`。课消`remainingLessons`来自确认时保存的余额，旧记录无法还原时null；`cancelDeadline`沿用会员自助取消截止时间展示，不授予后台取消权限。授权管理者仍可查停用门店历史记录，SELF随当前任职/负责关系收回访问。
 
 `Dashboard`：
 

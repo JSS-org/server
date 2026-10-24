@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.gym.controller.admin.common.GymPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.employee.vo.*;
+import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCoursesVO.*;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkMembersVO;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkRecordsVO;
 import cn.iocoder.yudao.module.gym.controller.admin.store.vo.*;
@@ -47,6 +48,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCoursesController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkContextController.class,
     cn.iocoder.yudao.module.gym.service.member.GymTrainingPlanService.class,
@@ -131,6 +134,12 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService workCourses;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCoursesController
+            workCoursesController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkContextService workContext;
 
     @Resource
@@ -11146,5 +11155,328 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 org.springframework.security.core.AuthenticationException.class,
                 () -> workContextController.get());
         verify(permissions, never()).getUserPermissionInfo(anyLong());
+    }
+
+    <T extends Dates> T workCourseDates(T req) {
+        req.setStartDate(LocalDate.of(2026, 10, 24));
+        req.setEndDate(LocalDate.of(2026, 10, 25));
+        return req;
+    }
+
+    void workCourseClock() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-10-23T04:00:00Z"));
+    }
+
+    Long workCourseBooking(Long member, Long coach, Long store, java.time.Instant start) {
+        Long product = Long.valueOf(courses.createProduct(courseProduct(store, coach)).getId());
+        var sessionReq = courseSession(product, coach, start);
+        sessionReq.setStoreId(store);
+        Long session = Long.valueOf(courses.createSession(sessionReq).getId());
+        var pack =
+                courses.issuePack(
+                        member,
+                        product,
+                        java.time.Instant.parse("2026-10-22T00:00:00Z"),
+                        start.plusSeconds(7200),
+                        "test-payment",
+                        "work-course-read-" + product);
+        return Long.valueOf(
+                courses.createBooking(bookingRequest(member, session, pack.getId())).getId());
+    }
+
+    void workCourseConfirm(Long id, java.time.Instant start) {
+        when(businessClock.now()).thenReturn(start.plusSeconds(60));
+        courses.checkIn(id);
+        courses.confirmLesson(id);
+    }
+
+    @Test
+    void workCoursesReadActualBookingCheckinAndConsumptionWithHistoricalBalance() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long member = Long.valueOf(members.create(member(101L, "13800002201")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long booking = workCourseBooking(member, coach, 101L, start);
+        assertFalse(workCourses.booking(booking).checkedIn());
+        workCourseConfirm(booking, start);
+        var result = workCourses.booking(booking);
+        assertEquals("completed", result.status());
+        assertTrue(result.checkedIn());
+        assertEquals("2026-10-24T10:00+08:00", result.startsAt());
+        assertEquals(member.toString(), result.memberId());
+        assertEquals("联调会员", result.memberName());
+        assertEquals(coach.toString(), result.coachId());
+        var lessonsPage = workCourses.lessons(workCourseDates(new LessonPage()));
+        assertEquals(1, lessonsPage.getTotal());
+        var lesson = lessonsPage.getList().getFirst();
+        assertEquals(result.lessonRecordId(), lesson.id());
+        assertEquals(1, lesson.deductedLessons());
+        assertEquals(1, lesson.remainingLessons());
+        assertEquals("101", lesson.storeId());
+        var checkin = workCourses.checkins(workCourseDates(new CheckinPage())).getList().getFirst();
+        assertEquals(lesson.checkinId(), checkin.id());
+        assertEquals(booking.toString(), checkin.bookingId());
+        assertEquals(coach.toString(), checkin.coachId());
+        assertEquals("manual", checkin.source());
+        var req = workCourseDates(new BookingPage());
+        req.setStatus("completed");
+        assertEquals(1, workCourses.bookings(req).getTotal());
+        req.setStatus("confirmed");
+        assertEquals(0, workCourses.bookings(req).getTotal());
+        var lessonMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        var row = lessonMapper.selectById(Long.valueOf(lesson.id()));
+        row.setRemainingLessonsAfter(null);
+        lessonMapper.update(
+                null,
+                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<
+                                cn.iocoder.yudao.module.gym.dal.dataobject.course
+                                        .GymLessonRecordDO>()
+                        .eq(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                        ::getId,
+                                row.getId())
+                        .set(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                        ::getRemainingLessonsAfter,
+                                null));
+        assertNull(
+                workCourses
+                        .lessons(workCourseDates(new LessonPage()))
+                        .getList()
+                        .getFirst()
+                        .remainingLessons());
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(1, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+    }
+
+    @Test
+    void workCoursesSelfNeedsBothTeachingAndMemberResponsibilityBeforePaginationAndDetail() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long ownCoach = responsibleEmployee(91L), otherCoach = responsibleEmployee(92L);
+        Long own = Long.valueOf(members.create(member(101L, "13800002202")).getId());
+        Long other = Long.valueOf(members.create(member(101L, "13800002203")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long allowed = workCourseBooking(own, ownCoach, 101L, start);
+        Long otherTeaching = workCourseBooking(own, otherCoach, 101L, start.plusSeconds(7200));
+        Long otherMember = workCourseBooking(other, ownCoach, 101L, start.plusSeconds(14400));
+        workCourseConfirm(allowed, start);
+        workCourseConfirm(otherTeaching, start.plusSeconds(7200));
+        workCourseConfirm(otherMember, start.plusSeconds(14400));
+        memberCoaches.replace(own, 101L, responsibility(ownCoach));
+        personalScope(91L);
+        var req = workCourseDates(new BookingPage());
+        req.setPageSize(1);
+        var page = workCourses.bookings(req);
+        assertEquals(1, page.getTotal());
+        assertEquals(allowed.toString(), page.getList().getFirst().id());
+        assertEquals(allowed.toString(), workCourses.booking(allowed).id());
+        assertServiceException(() -> workCourses.booking(otherTeaching), BOOKING_NOT_EXISTS);
+        assertServiceException(() -> workCourses.booking(otherMember), BOOKING_NOT_EXISTS);
+        req.setPageNo(2);
+        assertTrue(workCourses.bookings(req).getList().isEmpty());
+        assertEquals(1, workCourses.bookings(req).getTotal());
+        req.setPageNo(1);
+        req.setCoachId(otherCoach);
+        assertEquals(0, workCourses.bookings(req).getTotal());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        var lessonsReq = workCourseDates(new LessonPage());
+        lessonsReq.setCoachId(otherCoach);
+        assertEquals(0, workCourses.lessons(lessonsReq).getTotal());
+        assertEquals(2, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        var checkinsReq = workCourseDates(new CheckinPage());
+        checkinsReq.setMemberId(other);
+        assertEquals(0, workCourses.checkins(checkinsReq).getTotal());
+        headquarters();
+        memberCoaches.replace(own, 101L, responsibility());
+        personalScope(91L);
+        assertEquals(0, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        assertEquals(0, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertEquals(0, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertServiceException(() -> workCourses.booking(allowed), BOOKING_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoursesWholeStoreScopeAndTenantIsolationApplyToAllFourReads() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long coach =
+                Long.valueOf(employees.create(employee("WORK-MULTI-COACH", 101L, 102L)).getId());
+        Long a = Long.valueOf(members.create(member(101L, "13800002204")).getId());
+        Long b = Long.valueOf(members.create(member(102L, "13800002205")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long first = workCourseBooking(a, coach, 101L, start),
+                second = workCourseBooking(b, coach, 102L, start.plusSeconds(7200));
+        workCourseConfirm(first, start);
+        workCourseConfirm(second, start.plusSeconds(7200));
+        scoped(102L);
+        assertEquals(
+                List.of(second.toString()),
+                workCourses.bookings(workCourseDates(new BookingPage())).getList().stream()
+                        .map(WorkBooking::id)
+                        .toList());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertEquals(1, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+        var req = workCourseDates(new BookingPage());
+        req.setStoreId(101L);
+        assertServiceException(() -> workCourses.bookings(req), STORE_NO_PERMISSION);
+        headquarters();
+        assertEquals(2, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        TenantContextHolder.setTenantId(2L);
+        login.setTenantId(2L);
+        assertEquals(0, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        assertEquals(0, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertEquals(0, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoursesDatesUseShanghaiHalfOpenRangeAndSuccessOnlyRows() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002206")).getId());
+        var start = java.time.Instant.parse("2026-10-23T16:00:00Z");
+        Long first = workCourseBooking(member, coach, 101L, start),
+                last = workCourseBooking(member, coach, 101L, start.plusSeconds(86400));
+        workCourseConfirm(first, start);
+        workCourseConfirm(last, start.plusSeconds(86400));
+        var req = workCourseDates(new BookingPage());
+        assertEquals(first.toString(), workCourses.bookings(req).getList().getFirst().id());
+        assertEquals(1, workCourses.bookings(req).getTotal());
+        assertEquals(1, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertEquals(1, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        var lm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        var cr =
+                cm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO
+                                ::getBookingId,
+                        first);
+        cr.setStatus("failed");
+        cm.updateById(cr);
+        var lr =
+                lm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                ::getBookingId,
+                        first);
+        lr.setStatus("cancelled");
+        lm.updateById(lr);
+        assertEquals(0, workCourses.checkins(workCourseDates(new CheckinPage())).getTotal());
+        assertEquals(0, workCourses.lessons(workCourseDates(new LessonPage())).getTotal());
+        assertFalse(workCourses.booking(first).checkedIn());
+        assertNull(workCourses.booking(first).lessonRecordId());
+    }
+
+    @Test
+    void workCoursesDoNotLinkMismatchedMemberStoreOrOrphanSession() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L),
+                member = Long.valueOf(members.create(member(101L, "13800002207")).getId());
+        Long other = Long.valueOf(members.create(member(101L, "13800002208")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long first = workCourseBooking(member, coach, 101L, start);
+        workCourseConfirm(first, start);
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        var lm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        var cr =
+                cm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO
+                                ::getBookingId,
+                        first);
+        cr.setMemberId(other);
+        cm.updateById(cr);
+        var lr =
+                lm.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO
+                                ::getBookingId,
+                        first);
+        lr.setMemberId(other);
+        lm.updateById(lr);
+        assertFalse(workCourses.booking(first).checkedIn());
+        assertNull(workCourses.booking(first).lessonRecordId());
+        var checked = workCourses.checkins(workCourseDates(new CheckinPage())).getList().getFirst();
+        assertNull(checked.bookingId());
+        assertNull(checked.coachId());
+        var sm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseSessionMapper.class);
+        var session = sm.selectById(Long.valueOf(workCourses.booking(first).sessionId()));
+        session.setStoreId(102L);
+        sm.updateById(session);
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+        assertEquals(0, workCourses.bookings(workCourseDates(new BookingPage())).getTotal());
+        session.setStoreId(101L);
+        sm.updateById(session);
+        sm.deleteById(session.getId());
+        assertServiceException(() -> workCourses.booking(first), BOOKING_NOT_EXISTS);
+    }
+
+    @Test
+    void workCoursesRequireRealAdminFunctionalPermissionsAndValidatedBoundedQueries() {
+        var b = workCourseDates(new BookingPage());
+        var c = workCourseDates(new CheckinPage());
+        var l = workCourseDates(new LessonPage());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.bookings(b));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.booking(1L));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.checkins(c));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.lessons(l));
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:read")).thenReturn(true);
+        assertEquals(0, workCoursesController.bookings(b).getData().getTotal());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> workCoursesController.checkins(c));
+        when(permissions.hasAnyPermissions(1L, "gym:checkins:read")).thenReturn(true);
+        when(permissions.hasAnyPermissions(1L, "gym:lessons:read")).thenReturn(true);
+        assertEquals(0, workCoursesController.checkins(c).getData().getTotal());
+        assertEquals(0, workCoursesController.lessons(l).getData().getTotal());
+        b.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> workCourses.bookings(b));
+        b.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> workCourses.bookings(b));
+        b.setPageSize(10);
+        b.setEndDate(b.getStartDate());
+        assertServiceException(() -> workCourses.bookings(b), BUSINESS_DATE_INVALID);
+        b.setEndDate(null);
+        assertThrows(ConstraintViolationException.class, () -> workCourses.bookings(b));
+        var login =
+                cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser();
+        login.setUserType(1);
+        assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workCourses.checkins(c), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> workCourses.lessons(l), MOBILE_IDENTITY_INVALID);
+        login.setUserType(2);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L)).thenReturn(null);
+        assertServiceException(() -> workCourses.booking(1L), MOBILE_IDENTITY_INVALID);
     }
 }

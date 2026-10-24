@@ -852,8 +852,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/bookings",
       "description": "查询本人授课或授权门店的预约列表",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
     },
     {
       "id": 79,
@@ -861,8 +866,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/bookings/{id}",
       "description": "获取权限范围内的会员预约详情",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
     },
     {
       "id": 80,
@@ -870,8 +880,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/checkins",
       "description": "查询负责会员或授权门店的入场签到记录",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
     },
     {
       "id": 81,
@@ -879,8 +894,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/lesson-records",
       "description": "查询本人授课或授权范围内的签课记录",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileWorkCoursesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileWorkCoursesControllerTest.java"
+      ]
     },
     {
       "id": 82,

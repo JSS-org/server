@@ -1,5 +1,22 @@
 # JSS 隔离数据库验证
 
+## 隔离 Redis
+
+`redis_sandbox.py` 管理本仓库 `.runtime/jss-redis` 下的独立 Redis，默认仅监听 `127.0.0.1:16379`，拒绝默认业务端口 6379。要求先安装可运行的 Redis；不在 PATH 时用 `--redis-server` 或 `JSS_REDIS_SERVER` 指定可执行文件。首次使用示例：
+
+```powershell
+python script/jss/redis_sandbox.py start --redis-server '本机已安装的 redis-server.exe 完整路径'
+python script/jss/redis_sandbox.py status
+python script/jss/verify_redis_sandbox.py
+python script/jss/redis_sandbox.py stop
+```
+
+随机认证凭证只保存在被忽略的本地 `redis.conf`；不进入命令行或工具输出。关闭 RDB/AOF 持久化，以凭证、端口与运行 ID 核对实例归属后才允许停止；失联时还要确认原进程已结束，不能因观测超时自动重启。重复启动复用已确认存活的实例，后续启动可省略路径。Windows 后台启动隐藏窗口，MSYS 构建使用工作目录内的相对配置路径。
+
+真实 Redis 8.10.2 的四项检查覆盖未认证拒绝、实际 TTL 过期、NX 加锁与缓存 Lua 脚本按拥有者释放、运行 ID/默认端口守卫及重复启动。只删除本次随机测试键，不执行 FLUSHDB，也不操作既有 Redis 服务。这些协议检查尚不代替 JSS Token DAO、RBAC 或完整应用 API 验收。
+
+## 隔离 MySQL
+
 `mysql_sandbox.py` 仅管理本仓库 `.runtime/jss-mysql` 下的临时实例，绑定 `127.0.0.1:13316`，不使用默认业务端口。首次启动生成随机本地 root 密码，保存在被 Git 忽略的 `client.cnf`，不会打印凭证。启动、状态及停止都核对实际端口和数据目录。
 
 ```powershell

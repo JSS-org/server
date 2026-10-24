@@ -8,12 +8,15 @@
 python script/jss/redis_sandbox.py start --redis-server '本机已安装的 redis-server.exe 完整路径'
 python script/jss/redis_sandbox.py status
 python script/jss/verify_redis_sandbox.py
+python script/jss/verify_workspace_redis.py
 python script/jss/redis_sandbox.py stop
 ```
 
 随机认证凭证只保存在被忽略的本地 `redis.conf`；不进入命令行或工具输出。关闭 RDB/AOF 持久化，以凭证、端口与运行 ID 核对实例归属后才允许停止；失联时还要确认原进程已结束，不能因观测超时自动重启。重复启动复用已确认存活的实例，后续启动可省略路径。Windows 后台启动隐藏窗口，MSYS 构建使用工作目录内的相对配置路径。
 
 真实 Redis 8.10.2 的四项检查覆盖未认证拒绝、实际 TTL 过期、NX 加锁与缓存 Lua 脚本按拥有者释放、运行 ID/默认端口守卫及重复启动。只删除本次随机测试键，不执行 FLUSHDB，也不操作既有 Redis 服务。这些协议检查尚不代替 JSS Token DAO、RBAC 或完整应用 API 验收。
+
+`verify_workspace_redis.py` 将本地凭证仅传入测试子进程环境，运行四项 `JssWorkspaceRedisIT`。使用实际 `JssWorkspaceSessionDAO`、项目现有 Redisson 连接工厂、Spring Data Redis 与生产 Lua，核验摘要键/共同 TTL、替换后旧会话清理不能删新指针、跨租户父指针独立、实际过期及已过期输入拒绝。只创建随机测试会话并逐个删除；最新报告必须无失败或跳过，日志位于 `.runtime/jss-redis/workspace-redis-test.log` 并屏蔽认证密码。测试只接受已核验运行 ID 和 16379 端口；不包含 OAuth/RBAC/绑定 API 的完整组合链路。
 
 ## 隔离 MySQL
 

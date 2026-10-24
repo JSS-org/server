@@ -28,7 +28,7 @@ def mapped_models(source_root):
                     start = position + 1
             elif character == ';' and depth == 1:
                 statement = source[start:position + 1]
-                field = re.search(r'private\s+(?!static\b)([\w<>, ?]+)\s+(\w+)\s*;', statement)
+                field = re.search(r'private\s+(?!static\b)([\w.$<>, ?\[\]]+)\s+(\w+)\s*;', statement)
                 if field and not re.search(r'@TableField\(\s*exist\s*=\s*false', statement):
                     fields.add(re.sub(r'[A-Z]', lambda match: '_' + match[0].lower(), field[2]))
                 start = position + 1

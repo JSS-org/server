@@ -793,3 +793,22 @@ git diff --check
 在H2真实Mapper/事务环境并发运行移动与旧后台：同教练重叠排期仅一条提交、同名额预约仅一次预占；两个并发相同键只生成一个排期和一份预约，两个操作可以使用相同键且相互隔离。对幂等响应列增加临时失败约束，证明保存结果失败时排期、预约、课包预占和请求键一起回滚，移除约束后原键可成功重试。MVC验证键、带时区时间、非法类型/ID/额外状态字段及业务错误信封。
 
 本批无DDL，未迁移业务库、未重跑V010隔离迁移；混合并发证据来自H2，尚未在部署MySQL/HTTP下重复验证。前端及真实第三方接入未改。
+
+## 2026-10-24 短时二维码与会员确认签课
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym **549项通过**（组织服务302项，新增二维码签课8项；新MVC3项），member状态4通过/1既有禁用跳过，均无失败/错误。Spotless通过；server及依赖打包成功（跳过测试）。真实隔离MySQL/Flyway **45项检查通过**、65张gym表，全部随机测试库清理；没有迁移业务库。源码映射 **62/135**，余73项。日志：`/tmp/uniapp-lesson-qr-final-tests.log`、`/tmp/uniapp-lesson-qr-migrations.log`、`/tmp/uniapp-lesson-qr-package.log`。
+
+新增真实Mapper/事务测试覆盖短时签名、未配置、TTL窗口裁剪、等于过期边界、租户签名、本人/他人预约、错绑定与预约版本、缺签到不补造、当前签发负责关系撤销、原键重试和新键过期拒绝。人工与扫码混合并发、两次扫码并发均只产生一条课消、只扣一次并保留首次来源。通过二维码使用列失败约束验证课消、预占/余额、预约状态、幂等结果与使用记录一起回滚。MVC验证严格字段、键、ID、长度、错误信封及访问日志正文禁用注解。
+
+原后台人工确认改为共享服务后全部gym回归通过，新增同预约签到关联校验；原卡/课包及不限次数余额行为保留。首轮新增测试用Instant.parse读取省略秒的合法偏移时间失败两项，改为OffsetDateTime解析后通过，业务时间字段格式未改变。MySQL验证覆盖迁移元数据/精度/唯一索引和历史接管，不代表已在生产MySQL验证Java并发。真实账号、扫码页面、设备联调及签名密钥部署尚未执行。

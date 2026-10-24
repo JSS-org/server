@@ -57,6 +57,7 @@ public class GymCourseService {
     @Resource private cn.iocoder.yudao.module.gym.service.contract.GymContractService contracts;
     @Resource private Validator validator;
     @Resource private GymBookingRules bookingRules;
+    @Resource private GymLessonConfirmationService lessonConfirmations;
 
     private void coursePageScope(GymBusinessPageReqVO req) {
         if (req.getStoreId() != null) memberCoaches.checkListStore(req.getStoreId());
@@ -755,76 +756,7 @@ public class GymCourseService {
         var first = requireBooking(bookingId, false);
         var session = memberSession(first.getSessionId(), first.getMemberId(), true);
         var booking = requireBooking(bookingId, true);
-        var previous =
-                gymLessonRecordMapper.selectList(
-                        new LambdaQueryWrapper<GymLessonRecordDO>()
-                                .eq(GymLessonRecordDO::getBookingId, bookingId)
-                                .last("FOR UPDATE"));
-        if (!previous.isEmpty()) return lessonResponse(previous.getFirst());
-        if (!"confirmed".equals(booking.getStatus())) throw exception(BOOKING_INVALID);
-        if (booking.getCheckinId() == null) throw exception(LESSON_CHECKIN_REQUIRED);
-        var checkin = gymCheckinMapper.selectById(booking.getCheckinId());
-        if (checkin == null
-                || !booking.getMemberId().equals(checkin.getMemberId())
-                || !booking.getStoreId().equals(checkin.getStoreId())
-                || !"succeeded".equals(checkin.getStatus()))
-            throw exception(LESSON_CHECKIN_REQUIRED);
-        Instant now = normalized(gymBusinessClock.now());
-        if (now.isBefore(session.getStartsAt())
-                || checkin.getEnteredAt().isAfter(now)
-                || !checkin.getEnteredAt()
-                        .atZone(GymDateRange.ZONE)
-                        .toLocalDate()
-                        .equals(session.getStartsAt().atZone(GymDateRange.ZONE).toLocalDate()))
-            throw exception(LESSON_TIME_INVALID);
-        records.checkEntry(booking.getMemberId());
-        Integer remainingAfter;
-        if (booking.getMemberCoursePackId() != null) {
-            var pack =
-                    requirePack(
-                            booking.getMemberCoursePackId(), booking.getMemberId(), session, true);
-            if (pack.getRemainingSessions() < 1 || pack.getReservedSessions() < 1)
-                throw exception(COURSE_PACK_INSUFFICIENT);
-            pack.setRemainingSessions(pack.getRemainingSessions() - 1);
-            pack.setReservedSessions(pack.getReservedSessions() - 1);
-            gymCoursePackMapper.updateById(pack);
-            remainingAfter = pack.getRemainingSessions();
-        } else {
-            var card =
-                    cards.requireCard(
-                            booking.getMemberCardId(),
-                            booking.getMemberId(),
-                            booking.getStoreId(),
-                            session.getStartsAt(),
-                            session.getEndsAt(),
-                            true);
-            if (card.getReservedUses() < 1
-                    || (card.getRemainingUses() != null && card.getRemainingUses() < 1))
-                throw exception(CARD_RIGHT_INSUFFICIENT);
-            card.setReservedUses(card.getReservedUses() - 1);
-            if (card.getRemainingUses() != null) card.setRemainingUses(card.getRemainingUses() - 1);
-            gymMemberCardMapper.updateById(card);
-            remainingAfter = card.getRemainingUses();
-        }
-        var lesson = new GymLessonRecordDO();
-        lesson.setStoreId(booking.getStoreId());
-        lesson.setMemberId(booking.getMemberId());
-        lesson.setCoachId(session.getCoachId());
-        lesson.setBookingId(bookingId);
-        lesson.setCheckinId(checkin.getId());
-        lesson.setMemberCardId(booking.getMemberCardId());
-        lesson.setMemberCoursePackId(booking.getMemberCoursePackId());
-        lesson.setSessionUnits(1);
-        lesson.setRemainingLessonsAfter(remainingAfter);
-        lesson.setConfirmedAt(now);
-        lesson.setMethod("manual");
-        lesson.setStatus("confirmed");
-        gymLessonRecordMapper.insert(lesson);
-        booking.setStatus("attended");
-        gymBookingMapper.updateById(booking);
-        session.setStatus("completed");
-        gymCourseSessionMapper.updateById(session);
-        return lessonResponse(lesson);
+        return lessonResponse(lessonConfirmations.confirm(booking, session, "manual"));
     }
 
     public PageResult<GymCheckinRespVO> checkins(GymBusinessPageReqVO req) {

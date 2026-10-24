@@ -63,7 +63,7 @@ bash script/gym/db.sh validate
 V001__gym_schema.sql
 V002__gym_reference_data.sql
 V003__gym_legacy_backfills.sql
-V011__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
+V012__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
 ```
 
 1. 同步最新代码，选择未使用的版本号；文件名使用 `V版本__说明.sql`，版本与说明之间是两个下划线。
@@ -118,3 +118,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
 MySQL DDL 可能隐式提交，失败不代表全部回滚。工具禁用 clean、自动 baseline 和乱序迁移，也不提供 repair；不要自行删除历史记录来绕过失败。恢复应结合实际已执行内容和备份，经审查后处理。
 
 相关入口：[脚本目录说明](README.md)、[贡献指南](../../CONTRIBUTING.md)。
+
+### V011 移动签课二维码
+
+新增gym_mobile_lesson_qr（当前65张gym表），保存短时凭据哈希、签发人、预约/排期时间绑定、过期和使用信息；不为历史预约生成凭据。升级前备份并按既有migrate/validate流程执行，本批没有迁移业务库。应用另需部署签名密钥，见README的移动二维码签课配置。下一未使用迁移版本V012。

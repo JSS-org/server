@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **56** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **75** 个。源码映射共 **60 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **58** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **73** 个。源码映射共 **62 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -74,7 +74,7 @@
 | 41 | 公共及会员端 | POST | `/app-api/gym/bookings/{id}/cancellations` | 在允许期限内取消本人预约并释放预占课时 | 已实现，本地测试通过 |
 | 42 | 公共及会员端 | GET | `/app-api/gym/me/checkins` | 查询本人的入场签到记录 | 已实现，本地测试通过 |
 | 43 | 公共及会员端 | GET | `/app-api/gym/me/attendance-summary` | 获取本人月度签到次数、活跃天数及门店排名 | 设计待开发 |
-| 44 | 公共及会员端 | POST | `/app-api/gym/lesson-confirmations` | 会员扫码签课，校验签到后幂等扣减课时 | 设计待开发 |
+| 44 | 公共及会员端 | POST | `/app-api/gym/lesson-confirmations` | 会员扫码签课，校验签到后幂等扣减课时 | 已实现，本地测试通过 |
 | 45 | 公共及会员端 | GET | `/app-api/gym/me/lesson-records` | 查询本人的签课和课消记录 | 已实现，本地测试通过 |
 | 46 | 公共及会员端 | GET | `/app-api/gym/me/profile` | 获取本人昵称、头像、脱敏手机号和人脸状态 | 已实现，本地测试通过 |
 | 47 | 公共及会员端 | PATCH | `/app-api/gym/me/profile` | 修改本人昵称和头像，不允许修改手机号 | 已实现，本地测试通过 |
@@ -112,7 +112,7 @@
 | 79 | 工作台 | GET | `/admin-api/gym/mobile/bookings/{id}` | 获取权限范围内的会员预约详情 | 已实现，本地测试通过 |
 | 80 | 工作台 | GET | `/admin-api/gym/mobile/checkins` | 查询负责会员或授权门店的入场签到记录 | 已实现，本地测试通过 |
 | 81 | 工作台 | GET | `/admin-api/gym/mobile/lesson-records` | 查询本人授课或授权范围内的签课记录 | 已实现，本地测试通过 |
-| 82 | 工作台 | POST | `/admin-api/gym/mobile/lesson-qr-codes` | 为指定课程生成短时有效的签课二维码 | 设计待开发 |
+| 82 | 工作台 | POST | `/admin-api/gym/mobile/lesson-qr-codes` | 为指定课程生成短时有效的签课二维码 | 已实现，本地测试通过 |
 | 83 | 工作台 | GET | `/admin-api/gym/mobile/me/coach-profile` | 获取教练本人的公开资料 | 已实现，本地测试通过 |
 | 84 | 工作台 | PATCH | `/admin-api/gym/mobile/me/coach-profile` | 修改教练本人的照片、介绍、特长和资质 | 已实现，本地测试通过 |
 | 85 | 工作台 | POST | `/admin-api/gym/mobile/course-sessions` | 创建私教课程排期并校验教练时间冲突 | 已实现，本地测试通过 |

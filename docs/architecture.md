@@ -538,3 +538,11 @@ Gym上下文在只读事务内读取当前有效员工、整店范围、有效SE
 排课在共享教练行锁下重查本人绑定和任职，锁商品并验证时长/归属，调用`GymBookingRules.rejectOverlappingSession`后写固定容量1排期。原`GymCourseService.validateSession`只将原重叠查询移动到该共享方法，保留原权限。本人排课能力只新增于移动入口。
 
 代约预先核对会员/教练范围，在教练锁下核对商品，再委托原`GymCourseService.createBooking`执行实际预约及权益预占，使用`GymMobileWorkCoursesService.booking`返回明确VO。两个写入口和原后台通过同一教练/会员/排期锁序竞争；重复键返回首次快照，事务失败不留下业务行或幂等结果。无需新迁移。
+
+## 短时二维码与统一签课事务（2026-10-24 增量）
+
+工作台发码Controller → 有效后台身份及显式bookings:write → 具体排期/预约和当前签发范围 → 持久化幂等锁 → 排期/预约锁 → HMAC签名随机nonce → V011保存哈希、不可变业务绑定和过期时间。绑定不由客户端携带任意个人字段，签名租户上下文来自服务端。
+
+会员确认Controller → 已绑定会员本人预约 → 幂等请求锁 → 签名验证 → 排期/预约/二维码锁 → 精确绑定、签发人当前权限及时间窗 → GymLessonConfirmationService。原GymCourseService.confirmLesson保留原后台鉴权和锁顺序，也委托该共享服务。共享层检查同预约/会员/店签到、课程当日、禁入和真实权益，扣课/释放预占、保存余额和首次source、更新状态，重复合法确认读原记录。二维码使用行及幂等结果同事务提交。
+
+GymMobileLessonProperties绑定TTL/窗口/密钥，GymMobileLessonToken使用HMAC-SHA256与常量时间比较，密钥不提供默认后备值。两个HTTP入口禁记访问日志正文；发码幂等记录保留原token用于重试。没有设备刷脸调用共享服务，部署配置和迁移要求见脚本手册。

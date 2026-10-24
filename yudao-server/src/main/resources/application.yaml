@@ -271,6 +271,10 @@ yudao:
     mobile:
       bookings:
         cancel-before-minutes: 0 # 会员自助取消须早于开课；可配置提前分钟数，超时联系门店，不自动扣课
+      lessons:
+        qr-signing-key: ${GYM_MOBILE_LESSON_QR_SIGNING_KEY:} # Base64编码的至少32字节随机密钥，空值时二维码不可用
+        qr-ttl-seconds: 60 # 30～300秒，不能超过课程确认窗口
+        confirm-after-end-minutes: 120 # 开课后至结束后0～1440分钟内可扫码确认
     group-buy:
       meituan:
         enabled: false # 健身服务零售 businessId=58，按 docs/group-buy-verification.md 配置后再联调

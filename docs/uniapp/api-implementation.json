@@ -505,8 +505,15 @@
       "method": "POST",
       "path": "/app-api/gym/lesson-confirmations",
       "description": "会员扫码签课，校验签到后幂等扣减课时",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymLessonConfirmationController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileLessonService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymLessonConfirmationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileLessonControllerTest.java",
+        "sql/gym/migration/mysql/V011__gym_mobile_lesson_qr.sql"
+      ]
     },
     {
       "id": 45,
@@ -908,8 +915,15 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/lesson-qr-codes",
       "description": "为指定课程生成短时有效的签课二维码",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileLessonQrController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileLessonService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/course/GymLessonConfirmationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileLessonControllerTest.java",
+        "sql/gym/migration/mysql/V011__gym_mobile_lesson_qr.sql"
+      ]
     },
     {
       "id": 83,

@@ -220,4 +220,6 @@ public interface ErrorCodeConstants {
     ErrorCode MOBILE_EMPLOYEE_REQUIRED = new ErrorCode(1_070_023_011, "当前账号须关联唯一的在职员工档案");
     ErrorCode MOBILE_PRODUCT_NOT_AVAILABLE = new ErrorCode(1_070_023_012, "商品不存在或未公开发售");
     ErrorCode MOBILE_COACH_NOT_AVAILABLE = new ErrorCode(1_070_023_013, "教练不存在或未公开发布");
+    ErrorCode MOBILE_LESSON_QR_INVALID = new ErrorCode(1_070_023_014, "签课二维码无效或已过期");
+    ErrorCode MOBILE_LESSON_QR_UNAVAILABLE = new ErrorCode(1_070_023_015, "签课二维码未配置");
 }

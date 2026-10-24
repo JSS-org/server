@@ -49,6 +49,12 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.course.GymLessonConfirmationService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonToken.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileLessonProperties.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileLessonQrController.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymLessonConfirmationController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCourseWriteService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileWorkCourseWriteController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCoursesService.class,
@@ -137,6 +143,19 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonService mobileLessons;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileLessonToken lessonTokens;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileLessonProperties lessonProperties;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileLessonQrController
+            lessonQrController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymLessonConfirmationController
+            lessonConfirmController;
 
     @Resource
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileWorkCourseWriteService workCourseWrites;
@@ -250,6 +269,13 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
 
     @BeforeEach
     void setup() {
+        lessonProperties.setQrSigningKey(
+                java.util.Base64.getEncoder()
+                        .encodeToString(
+                                "test-only-lesson-key-32-byte-value"
+                                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        lessonProperties.setQrTtlSeconds(60);
+        lessonProperties.setConfirmAfterEndMinutes(120);
         TenantContextHolder.setTenantId(1L);
         var login = new cn.iocoder.yudao.framework.security.core.LoginUser();
         login.setId(1L);
@@ -12040,5 +12066,403 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                                 cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
                                         .class)
                         .selectCount());
+    }
+
+    record LessonFixture(
+            Long member, Long coach, Long booking, Long session, java.time.Instant start) {}
+
+    LessonFixture lessonFixture(boolean checkin) {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long booking = workCourseBooking(member, coach, 101L, start);
+        when(businessClock.now()).thenReturn(start.plusSeconds(60));
+        if (checkin) courses.checkIn(booking);
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:write")).thenReturn(true);
+        return new LessonFixture(
+                member,
+                coach,
+                booking,
+                Long.valueOf(workCourses.booking(booking).sessionId()),
+                start);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO.QrCreate qrRequest(
+            Long session) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO
+                        .QrCreate();
+        req.setSessionId(session);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO.Confirm qrConfirm(
+            Long booking, String token) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileLessonVO
+                        .Confirm();
+        req.setBookingId(booking);
+        req.setQrToken(token);
+        return req;
+    }
+
+    void qrMemberIdentity(Long member) {
+        var account = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        account.setId(50L);
+        account.setStatus(0);
+        account.setMobile("13800002401");
+        when(memberAccounts.getUser(50L)).thenReturn(account);
+        var identity = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO();
+        identity.setUserId(50L);
+        identity.setMemberId(member);
+        identity.setDefaultStoreId(101L);
+        identity.setSource("test");
+        identity.setFaceStatus("unregistered");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class)
+                .insert(identity);
+    }
+
+    void qrMemberLogin() {
+        TenantContextHolder.setTenantId(1L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(50L)
+                        .setUserType(1)
+                        .setTenantId(1L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+    }
+
+    @Test
+    void qrConfirmationConsumesOnceAndManualConfirmationReturnsSameHistoricalRecord() {
+        var f = lessonFixture(true);
+        var req = qrRequest(f.session());
+        var qr = lessonQrController.create(req, "qr-issue-success").getData();
+        assertEquals(qr, mobileLessons.issue(req, "qr-issue-success"));
+        assertTrue(qr.qrToken().matches("v1\\.[A-Za-z0-9_-]{43}\\.[A-Za-z0-9_-]{43}"));
+        var qm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileLessonQrMapper.class);
+        assertFalse(qm.selectList().getFirst().getTokenHash().contains(qr.qrToken()));
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var confirm = qrConfirm(f.booking(), qr.qrToken());
+        var first = lessonConfirmController.confirm(confirm, "qr-confirm-success").getData();
+        assertEquals("qr", first.source());
+        assertEquals(1, first.remainingLessons());
+        assertEquals(first, mobileLessons.confirm(confirm, "qr-confirm-success"));
+        assertEquals(first, mobileLessons.confirm(confirm, "qr-confirm-second-key"));
+        assertNotNull(qm.selectList().getFirst().getUsedAt());
+        assertEquals(first.id(), qm.selectList().getFirst().getLessonRecordId().toString());
+        loginAs(1L);
+        assertEquals(first.id(), courses.confirmLesson(f.booking()).getId());
+        assertEquals(qr, mobileLessons.issue(req, "qr-issue-success"));
+        var bm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class);
+        var booking = bm.selectById(f.booking());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(booking.getMemberCoursePackId());
+        assertEquals("attended", booking.getStatus());
+        assertEquals(1, pack.getRemainingSessions());
+        assertEquals(0, pack.getReservedSessions());
+        qrMemberLogin();
+        when(businessClock.now())
+                .thenReturn(java.time.OffsetDateTime.parse(qr.expiresAt()).toInstant());
+        assertEquals(first, mobileLessons.confirm(confirm, "qr-confirm-success"));
+        assertServiceException(
+                () -> mobileLessons.confirm(confirm, "expired-new-confirm"),
+                MOBILE_LESSON_QR_INVALID);
+    }
+
+    @Test
+    void qrNeverCreatesCheckinAndInvalidSignaturesOrDifferentBookingCannotConsume() {
+        var f = lessonFixture(false);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-without-entry");
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var req = qrConfirm(f.booking(), qr.qrToken());
+        assertServiceException(
+                () -> mobileLessons.confirm(req, "qr-needs-entry"), LESSON_CHECKIN_REQUIRED);
+        var broken =
+                qr.qrToken().substring(0, 4)
+                        + (qr.qrToken().charAt(4) == 'A' ? 'B' : 'A')
+                        + qr.qrToken().substring(5);
+        assertServiceException(
+                () -> mobileLessons.confirm(qrConfirm(f.booking(), broken), "qr-bad-signature"),
+                MOBILE_LESSON_QR_INVALID);
+        assertServiceException(
+                () ->
+                        mobileLessons.confirm(
+                                qrConfirm(f.booking() + 100, qr.qrToken()), "qr-other-booking"),
+                BOOKING_NOT_EXISTS);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> lessonTokens.verify(qr.qrToken()), MOBILE_LESSON_QR_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                        .selectCount());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void qrChecksSigningConfigurationPermissionCourseWindowAndClipsExpiry() {
+        var f = lessonFixture(true);
+        lessonProperties.setQrSigningKey(null);
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-no-signing-key"),
+                MOBILE_LESSON_QR_UNAVAILABLE);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileLessonQrMapper
+                                        .class)
+                        .selectCount());
+        lessonProperties.setQrSigningKey(
+                java.util.Base64.getEncoder().encodeToString(new byte[32]));
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:write")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> lessonQrController.create(qrRequest(f.session()), "qr-no-write-permission"));
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-no-write-permission"),
+                MOBILE_LESSON_QR_INVALID);
+        when(permissions.hasAnyPermissions(1L, "gym:bookings:write")).thenReturn(true);
+        when(businessClock.now()).thenReturn(f.start().minusSeconds(1));
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-too-early"),
+                LESSON_TIME_INVALID);
+        lessonProperties.setConfirmAfterEndMinutes(0);
+        when(businessClock.now()).thenReturn(f.start().plusSeconds(3570));
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-window-clip");
+        assertEquals(
+                f.start().plusSeconds(3600),
+                java.time.OffsetDateTime.parse(qr.expiresAt()).toInstant());
+        when(businessClock.now()).thenReturn(f.start().plusSeconds(3600));
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-window-ended"),
+                LESSON_TIME_INVALID);
+    }
+
+    @Test
+    void qrSelfIssuerRequiresTeachingAndCurrentResponsibilityEvenAtConfirmation() {
+        var f = lessonFixture(true);
+        memberCoaches.replace(f.member(), 101L, responsibility(f.coach()));
+        personalScope(91L);
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:write")).thenReturn(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-self-issued");
+        headquarters();
+        loginAs(1L);
+        memberCoaches.replace(f.member(), 101L, responsibility());
+        personalScope(91L);
+        assertServiceException(
+                () -> mobileLessons.issue(qrRequest(f.session()), "qr-self-issued"),
+                MOBILE_LESSON_QR_INVALID);
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        assertServiceException(
+                () ->
+                        mobileLessons.confirm(
+                                qrConfirm(f.booking(), qr.qrToken()), "qr-revoked-issuer"),
+                MOBILE_LESSON_QR_INVALID);
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void qrRejectsChangedBookingRevisionAndWrongCheckinLinkWithoutConsumingToken() {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-bound-revision");
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var bm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class);
+        var booking = bm.selectById(f.booking());
+        var original = booking.getBookedAt();
+        booking.setBookedAt(original.plusSeconds(1));
+        bm.updateById(booking);
+        assertServiceException(
+                () -> mobileLessons.confirm(qrConfirm(f.booking(), qr.qrToken()), "qr-old-booking"),
+                MOBILE_LESSON_QR_INVALID);
+        booking.setBookedAt(original);
+        bm.updateById(booking);
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class);
+        var checkin = cm.selectById(booking.getCheckinId());
+        checkin.setBookingId(f.booking() + 100);
+        cm.updateById(checkin);
+        assertServiceException(
+                () -> mobileLessons.confirm(qrConfirm(f.booking(), qr.qrToken()), "qr-wrong-entry"),
+                LESSON_CHECKIN_REQUIRED);
+        assertNull(
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileLessonQrMapper
+                                        .class)
+                        .selectList()
+                        .getFirst()
+                        .getUsedAt());
+    }
+
+    @Test
+    void qrConsumptionFailureRollsBackLessonBalanceStatusAndIdempotency() {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-rollback-issue");
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        var req = qrConfirm(f.booking(), qr.qrToken());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_lesson_qr ADD CONSTRAINT reject_qr_use CHECK (used_at IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileLessons.confirm(req, "qr-rollback-confirm"));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_lesson_qr DROP CONSTRAINT reject_qr_use");
+        }
+        var booking =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectById(f.booking());
+        assertEquals("confirmed", booking.getStatus());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(booking.getMemberCoursePackId());
+        assertEquals(2, pack.getRemainingSessions());
+        assertEquals(1, pack.getReservedSessions());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper
+                                        .class)
+                        .selectCount());
+        assertEquals("qr", mobileLessons.confirm(req, "qr-rollback-confirm").source());
+    }
+
+    @Test
+    void manualAndQrConfirmationsRaceButConsumeOnlyOnceAndPreserveWinningSource() throws Exception {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-mixed-race");
+        qrMemberIdentity(f.member());
+        var result =
+                workCourseRace(
+                        () -> courses.confirmLesson(f.booking()),
+                        () -> {
+                            qrMemberLogin();
+                            return mobileLessons.confirm(
+                                    qrConfirm(f.booking(), qr.qrToken()), "qr-racing-confirm");
+                        });
+        assertTrue(result.stream().noneMatch(r -> r instanceof Exception));
+        var lm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        assertEquals(1, lm.selectCount());
+        var lesson = lm.selectList().getFirst();
+        assertTrue(Set.of("manual", "qr").contains(lesson.getMethod()));
+        assertEquals(1, lesson.getRemainingLessonsAfter());
+        var qrResult =
+                (cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                                .LessonRecord)
+                        result.getLast();
+        assertEquals(lesson.getId().toString(), qrResult.id());
+        assertEquals(lesson.getMethod(), qrResult.source());
+    }
+
+    @Test
+    void concurrentQrConfirmationsReturnOneLessonAndWrongMemberCannotUseKnownCode()
+            throws Exception {
+        var f = lessonFixture(true);
+        var qr = mobileLessons.issue(qrRequest(f.session()), "qr-member-race");
+        Long other = Long.valueOf(members.create(member(101L, "13800002402")).getId());
+        qrMemberIdentity(other);
+        qrMemberLogin();
+        assertServiceException(
+                () ->
+                        mobileLessons.confirm(
+                                qrConfirm(f.booking(), qr.qrToken()), "qr-wrong-member"),
+                BOOKING_NOT_EXISTS);
+        var im =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileIdentityMapper.class);
+        var identity =
+                im.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileIdentityDO
+                                ::getUserId,
+                        50L);
+        identity.setMemberId(f.member());
+        im.updateById(identity);
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileLessons.confirm(
+                                    qrConfirm(f.booking(), qr.qrToken()), "qr-member-race-a");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileLessons.confirm(
+                                    qrConfirm(f.booking(), qr.qrToken()), "qr-member-race-b");
+                        });
+        assertEquals(result.getFirst(), result.getLast());
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO.LessonRecord
+                        .class,
+                result.getFirst());
+        assertEquals(
+                1,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper
+                                        .class)
+                        .selectCount());
+        var booking =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectById(f.booking());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(booking.getMemberCoursePackId());
+        assertEquals(1, pack.getRemainingSessions());
+        assertEquals(0, pack.getReservedSessions());
     }
 }

@@ -90,7 +90,7 @@ def main():
               for name, value in manifest.items()), 'historical SQL checksums unchanged')
     with isolated() as db:
         command('init')
-        check(len([t for t in db.tables() if t.startswith('gym_')]) == 64, 'new database has 59 original and 5 mobile gym tables')
+        check(len([t for t in db.tables() if t.startswith('gym_')]) == 65, 'new database has 59 original and 6 mobile gym tables')
         check('member_user' in db.tables(), 'member authentication storage is installed')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='member_user' AND column_name IN ('mobile','register_terminal','tenant_id')") == '3', 'member authentication columns exist')
         check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_mobile_identity' AND index_name IN ('uk_mobile_user','uk_mobile_member') AND non_unique=0") == '4', 'member identity has tenant-scoped unique account and member bindings')
@@ -99,6 +99,8 @@ def main():
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_course_product' AND column_name='version' AND is_nullable='NO' AND column_default='1'") == '1', 'course product versions start at one for legacy rows')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_employee' AND ((column_name='coach_published' AND is_nullable='NO' AND column_default=\"b'0'\") OR (column_name='coach_profile' AND is_nullable='YES' AND column_default IS NULL))") == '2', 'coach publication defaults private with no invented profile')
         check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_mobile_work_file' AND index_name='uk_mobile_work_file' AND non_unique=0") == '2', 'work upload provenance has a tenant-scoped unique file binding')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_mobile_lesson_qr' AND index_name='uk_mobile_lesson_qr_token' AND non_unique=0") == '2', 'lesson QR hashes have tenant-scoped uniqueness')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_mobile_lesson_qr' AND column_name IN ('booking_booked_at','session_starts_at','session_ends_at','expires_at','used_at') AND datetime_precision=6") == '5', 'lesson QR binding and expiry preserve microsecond precision')
         command('validate')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0' for table in manager.SYSTEM_TABLES - {'system_menu'}),
               'production migrations create no demo users, roles, grants or departments')
@@ -159,6 +161,7 @@ def main():
         check(db.sql("SELECT CONCAT(version,':',price,':',session_count) FROM gym_course_product WHERE id=900001") == '1:200.00:2', 'legacy course row receives version one without changing price or lessons')
         check(db.sql("SELECT COUNT(*) FROM gym_employee WHERE id=900001 AND coach_published=0 AND coach_profile IS NULL AND phone='19900000002'") == '1', 'legacy employee stays unpublished and keeps internal details')
         check(db.sql("SELECT COUNT(*) FROM gym_file f WHERE f.id=900001 AND f.category='body_report' AND f.url='legacy-test-only' AND NOT EXISTS(SELECT 1 FROM gym_mobile_work_file w WHERE w.file_id=f.id)") == '1', 'legacy files keep their metadata and receive no invented work target')
+        check(db.sql('SELECT COUNT(*) FROM gym_mobile_lesson_qr') == '0', 'legacy adoption does not fabricate lesson QR grants')
         check(db.sql("SELECT customer_stage FROM gym_member WHERE id=900001") == 'lead', 'required historical stage backfill executes')
         check(db.sql('SELECT COUNT(*) FROM gym_member_store WHERE member_id=900001 AND store_id=101 AND tenant_id=1') == '1',
               'required member-store backfill executes')

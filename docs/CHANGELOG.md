@@ -2331,3 +2331,37 @@ gym538项、member4项通过；1项member既有禁用跳过。新增11项含H2�
 ### 未做 / 后续
 
 56项新增本地实现、4项复用源码、75项待开发。继续其他内部接口，二维码/扫码签课尚待实现，四类第三方接入保持暂缓。未部署、推送或迁移业务库；混合并发尚未在部署MySQL验证。本批独立本地提交，保留用户原始uniapp.md及其暂存状态。
+
+## [2026-10-24 20:25 ~ 20:41] 短时二维码与会员确认签课
+
+### 意图
+
+补齐总表44和82，使会员扫码与人工确认共用真实扣课账本，要求真实签到并防止跨会员/课程、过期、改期或重复扣课。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileLessonQrController.java`、`AppGymLessonConfirmationController.java`、`GymMobileLessonVO.java` | 新增 | 发码与本人签课、严格请求及访问日志正文禁用 |
+| `yudao-module-gym/.../GymMobileLessonService.java`、`GymMobileLessonToken.java`、`GymMobileLessonProperties.java` | 新增 | 短时HMAC、业务绑定、签发人当前授权及幂等事务 |
+| `yudao-module-gym/.../GymLessonConfirmationService.java`、`GymCourseService.java`、`ErrorCodeConstants.java` | 新增/修改 | 人工与扫码共享一次扣课事务、同预约签到验证、未配置/无效错误码 |
+| `sql/gym/migration/mysql/V011__gym_mobile_lesson_qr.sql`、对应DO/Mapper、H2 schema/clean、迁移回归及脚本手册 | 新增/修改 | 65表、哈希唯一、精确时间绑定及历史不生成凭据 |
+| `yudao-server/src/main/resources/application.yaml` | 修改 | 环境密钥占位、60秒TTL、课后120分钟窗口 |
+| `GymOrganizationServiceTest.java`、`GymMobileLessonControllerTest.java` | 修改/新增 | 八项事务/授权/并发与三项MVC |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 62/135进度、签名配置、使用及验证边界 |
+
+### 结构关系
+
+发码在排期/预约锁下保存哈希及绑定，会员凭本人预约和有效token进入同一共享签课事务；旧后台也调用共享服务。真实签到、权益预占和唯一课消是扣课依据，二维码使用与幂等结果同事务提交。
+
+### 验证证据
+
+gym549项全部通过，member4通过/1既有禁用跳过；Spotless与server依赖打包成功。真实隔离MySQL/Flyway45检查通过并清理测试库，源码映射62/135。新增11项含真实事务回滚、两种来源并发、过期/撤权/错绑拒绝。时间解析测试问题已修正，详细日志见testing。
+
+### 影响面 / 风险
+
+部署前执行V011并配置至少32字节随机密钥的Base64；未配置时明确不可用，轮换使旧码不能新确认。人工签课新增同预约签到关联验证，其原权限和非扫码时间边界保留。二维码表仅哈希，幂等发码响应仍保存原token；未实施过期记录自动清理。前端未修改，无码可自动制造签到。
+
+### 未做 / 后续
+
+58项新增本地实现、4项复用源码、73项待开发；月度签到汇总等继续推进。四类第三方实际接入仍暂缓，真实扫码页面与部署密钥未配置，业务库未迁移。本功能和测试文档独立本地提交，不推送；原始uniapp.md与暂存状态保留。

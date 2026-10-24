@@ -12,6 +12,10 @@
     <artifactId>yudao-server</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <jss.build.final-name>${project.artifactId}</jss.build.final-name>
+    </properties>
+
     <name>${project.artifactId}</name>
     <description>
         后端 Server 的主项目，通过引入需要 yudao-module-xxx 的依赖，
@@ -227,7 +231,7 @@
 
     <build>
         <!-- 设置构建的 jar 包名 -->
-        <finalName>${project.artifactId}</finalName>
+        <finalName>${jss.build.final-name}</finalName>
         <plugins>
             <!-- 打包 -->
             <plugin>

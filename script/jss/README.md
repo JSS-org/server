@@ -14,6 +14,7 @@ python script/jss/verify_pay_mappers.py
 python script/jss/verify_promotion_content_schema.py
 python script/jss/verify_promotion_content_mappers.py
 python script/jss/verify_promotion_campaign_schema.py
+python script/jss/verify_promotion_campaign_mappers.py
 python script/jss/verify_migrations.py
 python script/jss/mysql_sandbox.py stop
 ```
@@ -37,5 +38,7 @@ python script/jss/mysql_sandbox.py stop
 `verify_promotion_content_mappers.py` 使用 V005 和实际装修/文章/客服 Mapper 执行四项独立 MySQL 测试，核验 CSV 处理器与配置原文往返、使用中模板和独立页面查询、文章浏览计数、客服未读查询/批量已读更新，以及这些操作的租户/逻辑删除隔离。检查最新报告的执行数量与失败/跳过状态，结束清理测试 schema，日志为 `.runtime/jss-mysql/content-mapper-test.log`。不运行 Spring 安全链或 WebSocket，不代替应用级授权验收。
 
 `verify_promotion_campaign_schema.py` 在随机库校验 V006 的 16 个活动模型，区分规则/图片 JSON 与商品范围/场次 ID 的 CSV；检查 -1 无限发券值、计数器默认值、秒杀/积分/砍价条件库存 SQL、活动/SKU 唯一键和删除后重建、单次助力约束，以及同一会员可合法持有同模板的多张券。不会创建实际活动或向业务账号发券，不作为完整活动下单/退款验收。
+
+`verify_promotion_campaign_mappers.py` 在随机库执行三项真实 Mapper 测试：优惠券商品范围 CSV 与并发单张领取数量上限、满减嵌套规则及赠券映射、秒杀配置图片 JSON/场次 CSV 与商品并发库存扣减及回补。均验证租户隔离；运行后核对最新报告并删除测试库，日志为 `.runtime/jss-mysql/campaign-mapper-test.log`。测试曾复现秒杀商品读回场次 ID 为 null，现通过 `SeckillProductDO.autoResultMap` 修复。尚未覆盖活动下单的跨表事务或批量发券。
 
 `verify_migrations.py` 在独立随机 schema 中执行真实 Flyway baseline/migrate/validate、校验和漂移拒绝及初始化守卫，连接密码仅从隔离实例的本地配置进入环境变量。正式部署使用 [JSS 迁移命令](../../sql/jss/README.md)，测试工具不会替用户初始化业务库。

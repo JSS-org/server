@@ -45,7 +45,7 @@ yudao 是**模块化单体**：一个 Spring Boot 进程（`yudao-server`），�
 
 | 允许 | 说明 |
 | --- | --- |
-| `gym → system.api` / `infra.api` | 跨模块**只能**调 `api` 包下的接口（如 `FileApi`、`PermissionApi`），不碰对方的 `service`/`dal` |
+| `gym → system.api` / `infra.api` / `member.api` | 跨模块**只能**调 `api` 包下的接口（如 `FileApi`、`PermissionApi`），不碰对方的 `service`/`dal` |
 | `gym → framework starter` | 技术能力（`CommonResult`、`BaseMapperX`、`TenantBaseDO`、`@PreAuthorize`） |
 | `system/infra → framework` | 基座模块同样只依赖框架 |
 | ❌ `system → gym` | 基座不反向依赖业务模块，避免循环依赖 |
@@ -439,3 +439,62 @@ SQL47在黑名单页面下新增现行单数编辑权限；用户明确授权后
 `seed.sh development → database.py seed-development → sql/gym/seed/development/demo.sql` 是独立开发入口，不在Flyway扫描目录。必须显式声明开发环境、目标库和租户，且当前版本全部已迁移、校验通过；只对本次新建演示角色初始化菜单授权、本次新建演示账号初始化绑定，既有撤销授权/绑定与密码不恢复。同名非种子或已删除身份冲突通过临时guard和事务拒绝，回滚相关写入。迁移不执行该seed，生产发布不生成演示账号。
 
 旧47个SQL原样移动到 `sql/gym/legacy` 并固定sha256，旧开发导入在legacy/development；旧全量、schema-only、menus-only重放入口停用。当前verify-migrations.py使用真实Flyway和随机MySQL库验证；历史验证在verify-legacy-migrations.py/verify-legacy-seeds.py独立保留。新增GitHub数据库CI执行同一隔离回归，当前只完成本机验证，尚未在远端运行CI。后续追加V004等新版本，不改已有迁移；legacy-schema.json只用于旧基线接管，不代表未来最新结构。
+
+
+## 小程序会员身份与本人数据边界（2026-10-23）
+
+`yudao-server → gym → member`：根 reactor 启用 member 模块，gym 仅通过 `MemberUserApi` 获取已认证账号手机号及状态。member 的 `/app-api/member/auth/**` 保持原路径；员工身份仍使用 system。模块装配不等于所有通用 member 入口已具备表和部署配置，本批仅迁移所需 `member_user`，其余入口须在部署前核查开放范围。
+
+小程序 `/app-api/gym/me/**` → `GymMobileIdentityService.requireMemberId` → 校验会员类型令牌、令牌租户及账号状态 → `gym_mobile_identity` → 当前租户 `gym_member`。本人条件在 Mapper 查询和分页计数前加入，不将会员 ID 冒充后台用户 ID 调用 `GymDataScope`。历史档案查询不以当前卡有效、门店活跃作为前提。
+
+首次初始化：事务 → `GymMobileIdempotency`（租户 + 用户类型 + 用户 + 操作 + 请求键唯一）→ 行锁/请求体摘要 → 已有 `GymBusinessMutex` → 手机号绑定或创建 gym 档案/门店关系 → 同事务保存响应。相同请求重放原结果，改变参数报冲突；异常整体回滚。唯一关联约束避免并发账号认领同一档案。来源及邀请码只留存，未实现邀请奖励。
+
+`GymMobileRecordsService` 投影本人档案、签到、合同和运动汇总；`GymMobileEntitlementsService` 投影本人会员卡、当前适用门店及课包余额。卡的过期/待生效/耗尽为查询时计算，状态过滤先于分页，不为读取修改历史行；退款形成的 `inactive` 原样保留。公开响应不暴露整份持久化对象或内部合同证据。
+
+会员文件：`GymMobileFilesService → FileApi` 写入既有 `gym/` 私有存储路径 → `gym_file` + `gym_mobile_file_owner`。文件 uploader_id 属于后台账号，因此会员上传不填该列，归属只写新表。图片签名、用途与限额校验在存储前；下载校验本人真实业务引用，人脸原图拒绝。既有后台通用文件服务拒绝 `member_` 类文件，避免仅凭门店权限绕过归属。
+
+`GymMobileWebConfiguration` 拦截通用 member 两个换手机号入口，防止绕过健身业务的手机号不可变要求；`GymMobileExceptionAdvice` 仅作用于移动 Controller 包，处理缺失幂等头及 JSON 字段拒绝异常，不改变共享框架异常处理。V005 追加会员账号表及 3 张 gym 表，gym 表总数变为 62，未修改历史迁移。第三方支付/自动续费、签约、设备、监控按用户要求暂缓，见 [实施边界](uniapp/uniapp-implementation.md)。
+
+
+## 小程序预约与共享预占规则（2026-10-23）
+
+`AppGymBookingsController → GymMobileBookingsService` 从会员令牌取得本人，写请求在 READ_COMMITTED 事务中先锁持久幂等请求，再按教练 → 会员 → 排期 → 预约 → 权益顺序预占；既有后台 `GymCourseService.createBooking` 同样持有会员锁。两端共用 `GymBookingRules` 的教练任职、课包适配、时间冲突、预占和取消释放规则，避免后台与会员端并发重复占用同一会员时段。取消按排期 → 预约 → 权益锁顺序释放；异常使状态、计数、幂等结果一并回滚。
+
+写预约只接受课包和排期ID，服务端验证产品、门店、本人归属、完整有效期、状态和剩余可用课时；读取可约状态不代替写入时重查。列表使用本人谓词和课程开始时间筛选，关联排期、签到、课消批量查询。后台状态attended投影为completed；实际签到/课消关联再校验本人和门店，不直接信任某个关联ID。
+
+`GymMobileBookingProperties` 绑定 `yudao.gym.mobile.bookings.cancel-before-minutes`，默认0且范围0～10080，限定会员自助取消时间；不改变后台管理员处理历史预约的权限，也不触发自动爽约扣课。V006增加独立取消原因和课消时余额列：后台原确认服务在同一扣课事务中保存余额，新查询直接读取快照，旧记录与不限次数卡保留NULL。会员QR签课及设备签到尚未接入，不能将本次历史查询当作对应写流程已完成。
+
+
+## 移动工作台档案、跟进及分配（2026-10-23）
+
+`/admin-api/gym/mobile` 的两个Controller先执行现有业务功能权限，再进入 `GymMobileWorkAccess`：要求admin用户类型、令牌与上下文租户一致、AdminUserApi返回的账号有效，随后使用 `GymMemberService` / `GymMemberCoachService` 检查门店与会员负责关系。该检查在幂等响应读取前执行；调岗或撤销负责关系后，旧成功请求键也不能返回已失去权限的资料。
+
+`GymMobileWorkRecordsService` 复用既有体测、训练计划及合同创建服务，移动响应投影为显式公开字段。合同列表要求指定会员/门店并验证范围后分页，签署中/作废状态转换在SQL过滤前完成；合同创建另查实际权益与目标会员/门店一致，仍由原合同服务冻结模板和生成私有原件，不接入外部签署。没有把旧后台完整VO中的IP、设备和事件暴露给移动调用方。
+
+`GymMobileWorkMembersService` → `gym_member_followup` 保存员工跟进，作者必须是当前账号关联的唯一在职员工，不接受客户端employeeId。分配使用持久幂等键 → 原有租户业务锁 → 会员/门店关系行锁 → 比较assignment_version → 复用原负责关系替换 → 返回新版本。`GymMemberCoachService.replace` 在实际集合变化时递增版本，未变化不递增；旧后台同样维护版本，所以移动请求能检测后台先发生的变更。旧后台原接口仍无expectedVersion参数，保留原整体替换行为，不能宣称所有旧客户端也获得乐观锁保护。新员工需已到入职/任职日期且账号有效。
+
+V007追加跟进表及负责关系版本列，gym表总数63。旧关系从版本0开始，不重写员工授权；工作台会员列表/详情已提供assignmentVersion读取入口。
+
+
+## 移动工作台会员读取（2026-10-23）
+
+`GymMobileWorkMembersController → GymMobileWorkMemberQueryService` 使用`gym:members:read`、`GymMobileWorkAccess`后台身份及`GymMemberCoachService`现有门店/SELF谓词。会员SQL通过实际门店关联的EXISTS过滤权限、负责员工及有效权益，再统计和分页，每位会员仅一行。省略门店时选满足全部条件的最小可见门店ID，避免一行混合多个门店的负责关系版本；详情必须指定门店。
+
+列表和详情采用只读REPEATABLE_READ事务，关联负责关系和门店版本来自同一快照；批量读取本页会员相关卡、卡门店、课包和负责关系，再投影选中门店的有效权益合计。查询不改变权益状态，不把all卡旧快照当作当前适用关系。手机号只输出脱敏值；内部DO、操作人及其他门店数据不进入响应。筛选参数通过绑定传入SQL，客户端不能提供列名或SQL片段。无需新增表或迁移。
+
+
+## 小程序公开展示与素材发布引用（2026-10-24）
+
+`AppGymPublicController → GymMobilePublicService` 为5个公开目标路由：租户上下文必需，读当前active门店；列表位置排序在SQL分页前，关联环境素材批量投影。首页从原`gym_client_setting`读启用的miniapp配置公告，并分别从miniapp/app生成封面、加盟模型及下载信息。原`GymContentService`及配置VO新增可选结构校验，保留原权限和整份JSON替换语义。全局回退仅在门店配置不存在时发生，禁用或无效覆盖不会重新发布总部内容；没有新表。
+
+公开人数从`gym_checkin`计数上海当天成功且不在未来的已登记入场，保留当前真实来源的局限。无完整进出事件与设备健康证据时实时人数null、状态unavailable，更新时间为最后成功入场；不以人数查询启用外部设备功能。首页支付、续费、电子签署、门禁和监控能力固定关闭。
+
+`AppGymPublicMediaController` 是目标7–11的辅助资源路径，不额外计入135。素材只输出本站受控URL，读取时重查公开引用与文件归属/类别/内容魔数，底层调用FileApi；已启用全局配置也属于公开引用，所有引用撤销后才不可读。返回Resource支持真实Range，禁用缓存，不暴露原始存储凭证。会员业务文件类别不允许从这个匿名入口读取。
+
+`GymPublicMediaTenantFilter` 在原TenantContextWebFilter前，仅对精确公开素材GET URL的单个合法query选择器补租户header，不替换已有header，也不处理其他API。原TenantContextWebFilter仍设置和清理上下文，TenantSecurityWebFilter继续验证租户有效性、到期及登录租户一致性。过滤器注册在gym模块，无共享框架改动；浏览器可直接显示图片/视频链接。
+
+### 公开商品目录与版本（2026-10-24）
+
+AppGymCatalogController → GymMobileCatalogService → 门店、模板、销售配置、私教商品及有效任职关系。卡/包月在受限配置集中过滤后分页，私教在SQL中先筛有效商品/门店/任职再计数分页；只读REPEATABLE_READ保持响应售价与配置版本来自同一快照。响应不暴露员工手机号或内部实体。公开门店复用GymMobilePublicService规则。
+
+卡/包月返回模板version和门店saleRevision，私教返回V008的product.version。原GymCourseService在行锁下对实际资料变化及审批通过的价格变化增版，创建从1开始；无变化保持版本。续费条款和协议版本复用原销售配置JSON，成对填写，缺失时关闭公开包月展示。目录发布状态与购买能力分别返回；未实现下单、未接入自动续费不会伪装为可购买。

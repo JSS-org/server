@@ -615,3 +615,93 @@ HTTP使用MockRestServiceServer；MVC保留实际方法权限代理、请求校�
 完整性静态核对：16个文档路径与MeituanApi零售白名单、16个本地POST路径、Client/Service方法逐项匹配，16个方法禁用请求/响应体访问日志。检查README、architecture、业务说明、API清单的23个相对链接及代码围栏均通过。SQL V004只检查了权限定义和不含角色/用户授权的静态内容，未执行MySQL迁移，不能宣称真实数据库验证。dashboard工作区保持干净。
 
 审查覆盖DTO参数、两类商品接口标题/路径差异、分页起点、公共签名原文一致性、授权场景隔离、方法与门店权限、可信操作人、变更默认关闭、超时/部分成功语义，以及文档真实性。已修复“变更的非成功业务结果可能部分执行却被一概报告拒绝”的问题；本轮请求框架未发现其他阻塞问题。真实平台返回差异与行业开通条件仍需后续联调验证。
+
+## 2026-10-23 小程序会员身份、本人查询与私有文件
+
+本批实现 17 个新的小程序接口，另复用 3 个认证和 1 个加盟源码路由；[135 个接口总表](uniapp/uniapp-api-summary.md) 与 [实施边界](uniapp/uniapp-implementation.md) 区分待开发及第三方暂缓部分。未修改前端，未启动业务服务或迁移业务数据库。
+
+在 server 根目录执行：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check
+mvn -B -ntp -pl yudao-module-gym -am test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine="-javaagent:${HOME}/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar"
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+git diff --check
+```
+
+最终 gym **404 项通过、0 失败、0 错误、0 跳过**；所选 member 状态测试 **4 项通过、1 项既有禁用测试跳过**。Spotless apply/check 通过；server 及依赖 package 成功（跳过测试，完成于 22:57:33）。显式 Mockito javaagent 避免受限环境自附加失败；根 `-N` 模式本地 BOM 解析失败，因此本次使用包含依赖的 reactor 格式化命令。日志位于本机 `/tmp/uniapp-final-tests.log`、`/tmp/uniapp-final-package.log`、`/tmp/uniapp-format.log`，不提交临时日志。
+
+| 新增测试 | 数量 | 证明范围 |
+| --- | ---: | --- |
+| `GymMobileMemberServiceTest` | 23 | H2、真实 MyBatis、租户拦截与事务；并发首次关联、同键重放及冲突/回滚、保留客户阶段、会员与租户隔离、分页 total、历史门店/计划、日期边界、头像归属、私有文件和人脸拒绝、合同引用；卡的当前适用门店和有效状态分页、课包筛选与余额 |
+| `GymMobileIdentityControllerTest` | 4 | MockMvc 请求头及参数校验、JSON 禁止手机号/未知字段、头像 null 与省略区分、通用手机号入口拦截 |
+
+跨模块 `MemberUserApi` 和 `FileApi` 为 mock；Service 测试保留真实数据库、租户 SQL 改写和业务逻辑。MVC 使用 standalone 控制器及异常处理，不代表部署后的过滤链或真实微信 OAuth 已验收；没有把真实第三方支付、自动续费、电子签约、设备或监控当作已验证。
+
+隔离 MySQL/Flyway 回归 **34 项通过**，临时库全部清理；日志 `/tmp/uniapp-migrations.log`。验证 V005 后 62 张 gym 表、member_user 关键列和会员关联唯一索引；保留旧基线接管校验、升级幂等、已应用文件校验和拒绝、未知未来版本与未迁移 seed 拒绝等原有检查。只操作随机测试库，未升级现行业务库。新增迁移的生产结构不再以旧 59 表基线指纹判定完全相等；旧指纹仍用于旧库接管。模拟待应用版本改为扫描后递增版本，避免与已有 V004 冲突而错误通过检查。
+
+接口审计结果 **135 个契约、21 个源码映射、114 个缺失**；总表/机器清单的唯一方法与路径一致，无重复目标路由，已实现条目的证据文件存在。`--require-all` 目前应失败，不能宣称全量接口已完成。文档链接、代码围栏和 `git diff --check` 通过；dashboard 工作区检查为空。原始 `docs/uniapp/uniapp.md` 的用户已有暂存/未暂存变更保持原样。
+
+## 2026-10-23 小程序预约、课消查询及两端并发
+
+在前述小程序测试命令基础上，使用同一完整选择器 `Gym*Test,MemberAuth*Test,MemberUser*Test`：最终 **gym 425 项通过、0失败/错误/跳过**，member所选状态测试4项通过、1项既有禁用测试跳过。`GymMobileBookingsServiceTest` 新增15项真实H2/MyBatis/事务测试，`GymMobileBookingsControllerTest` 新增5项MockMvc请求/响应测试，`GymOrganizationServiceTest` 增加1项后台与会员混合并发测试（该类共213项），另补既有后台签课的真实余额快照断言。之前的17个移动接口与已有后台用例一起回归。
+
+覆盖重复创建不二次预占、相同键变更请求报冲突、取消原因持久化、重复取消/重订后旧键重试、截止时刻和提前量、教练离职/门店停用后的释放、释放中途异常的整笔回滚、本人及租户隔离、禁入黑名单、产品与课包有效期、日期按课程开始时间筛选、completed映射、关联签到/课消越权防护、消费时余额与当前余额区分，以及课程可约状态。并发覆盖：两会员抢一时段、同一会员抢重叠时段、同一课包最后一课时抢两个相邻时段、两个取消请求、后台与会员混合创建。线程使用独立安全/租户上下文及实际事务，业务Mapper未mock；账号API仍mock，未替代部署后登录验证。
+
+```bash
+# 本批聚焦回归：260项通过（移动专项47 + 组织/后台213）
+mvn -B -ntp -pl yudao-module-gym -am test \
+  -Dtest='GymMobile*Test,GymOrganizationServiceTest' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine="-javaagent:${HOME}/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar"
+# 最终验证同时执行前节完整测试、Spotless和server package命令
+```
+
+真实MySQL/Flyway隔离回归 **35项通过**：新增检查V006两列存在、允许NULL且默认NULL，所有随机测试库清理完成。没有向业务库应用V005/V006。Spotless apply/check与server package通过（打包跳过测试，完成于23:18:29）；源码路由审计 **27 / 135**，余108项明确待开发。日志：`/tmp/uniapp-booking-final-tests.log`、`/tmp/uniapp-booking-format.log`、`/tmp/uniapp-booking-package.log`、`/tmp/uniapp-booking-migrations.log`。这些是本机验证，非远端CI、部署HTTP或真实第三方渠道联调。
+
+## 2026-10-23 移动工作台档案、跟进和版本分配
+
+新增总表89–91、98–103共9项。最终完整选择器 `Gym*Test,MemberAuth*Test,MemberUser*Test` 的 **gym 442项通过、0失败/错误/跳过**，member所选4项通过、1项既有禁用跳过。使用前节同一Java25/Maven命令和显式Mockito javaagent。`GymOrganizationServiceTest` 新增12项工作台回归后共225项，`GymMobileWorkControllerTest` 新增5项MVC检查；现有会员、预约和后台业务一起回归。先前229项聚焦回归在新增任职日期用例前通过，最终以完整442项为准。
+
+验证内容：9个Controller方法逐项实际通过方法权限代理拒绝并核对所需权限码；有效管理员、禁用账号、会员令牌、租户不匹配；SELF只能操作负责会员、撤销关系后的旧键重放拒绝；体测范围、计划失败回滚后原键重试、合同真实权益归属及公开字段；跟进作者取自员工关联、未来联系日期与过期后的合法重放、租户/负责关系隔离；分配的旧后台版本递增、不变集合不增版、过期版本/重复员工/未来入职任职拒绝、其他门店版本不变和两个并发请求只成功一个。所有业务测试保留真实H2、Mapper、租户拦截、事务和服务；system账号/权限API及文件存储为mock。
+
+MVC通过全部9个路由验证参数绑定、5个写入口的必填幂等头、拒绝伪造creator/coachId/employeeId/signingStatus、日期时区转换、分页界限、体测范围、空跟进正文及缺失版本。MVC standalone不证明部署过滤链，功能权限的证据来自上述有Spring Security代理的组织测试。
+
+Spotless apply/check与server package成功（打包跳过测试，完成于23:43:48）。新增V007后的真实MySQL/Flyway隔离回归 **36项通过**：63张gym表，已有门店关系版本列非空且默认0；所有随机库已清理，无业务库迁移。日志：`/tmp/uniapp-work-final-tests.log`、`/tmp/uniapp-work-format.log`、`/tmp/uniapp-work-package.log`、`/tmp/uniapp-work-migrations.log`。最终只清理了新访问服务的类型导入，无行为变化，随后格式化并重新打包通过。
+
+源码审计 **36/135映射、99缺失**；机器清单为32项新增本地实现、4项复用源码、99项待开发。文档链接/围栏与git diff --check通过。工作台会员列表/详情、文件、角色上下文等仍待开发；特别是assignmentVersion的设计读取入口尚未交付。旧后台分配保持原无期望版本的整体替换行为，只在修改后更新共享版本；不能把移动端版本校验误称为所有旧客户端都受乐观锁保护。未改前端、角色授权，未做真实外部渠道或部署HTTP联调。
+
+## 2026-10-24 工作台会员列表、详情与权益摘要
+
+总表87–88两个GET入口已实现。执行与前节相同的reactor Spotless apply/check、完整 `Gym*Test,MemberAuth*Test,MemberUser*Test` 测试和显式Mockito javaagent：最终 **gym 452项通过，0失败/错误/跳过**；member所选4项通过、1项既有禁用跳过。`GymOrganizationServiceTest` 本批新增9项后共234项，`GymMobileWorkControllerTest` 新增1项后共6项。已有权限测试还增加两个新Controller方法的真实权限代理拒绝及`gym:members:read`核对。第一次聚焦238项通过后补充了跨租户子表及无限期卡测试，最后以452项完整回归为准。
+
+新增证据覆盖：多门店会员不重复计数、分页后空页保留total、脱敏响应无原手机号/内部字段、分配版本读取闭环；SELF分页与撤权、指定门店拒绝、其他门店权益不混入；实际卡门店关系、到期上下边界和默认30天、未来生效/到期/失效/耗尽排除；私教课包剩余与预占分别合计；潜客按客户阶段而不是消费历史、员工筛选与门店关联、关键词参数绑定；恶意跨租户子表引用既有会员ID不会影响筛选或摘要；无期限卡数量及null到期时间；无效账号/令牌/租户和分页范围拒绝。HTTP测试核对两个GET路由、全部列表参数、详情必填门店和非法筛选拒绝。业务测试使用真实H2、MyBatis、租户拦截和事务，跨模块账号及权限API仍mock；不能等同部署后HTTP联调。
+
+日志：`/tmp/uniapp-member-query-final-tests.log`（23日23:58:10完成）、`/tmp/uniapp-member-query-format.log`、`/tmp/uniapp-member-query-package.log`。server依赖打包成功（23日23:58:36完成，跳过测试）。本批没有数据库结构或迁移脚本变更，因此没有重复执行MySQL迁移；上一批36项隔离迁移证据仍属其原批次，不冒充本批新验证。
+
+路由审计 **38/135映射、97缺失**，清单为34项新增本地测试实现、4项已有源码接口。总表与JSON条目方法/路径一致，文档链接/围栏及`git diff --check`通过。dashboard工作区为空，原始uniapp.md用户变更保留。未部署、未迁移业务库、未自动授权角色；四类第三方实际接入继续暂缓。
+
+## 2026-10-24 公开门店、首页、配置与媒体引用
+
+总表7–11五项实现，另提供不计入135项目标的公开媒体辅助GET。最终执行相同reactor Spotless apply/check、`Gym*Test,MemberAuth*Test,MemberUser*Test`及显式Mockito javaagent后，**gym 471项通过、0失败/错误/跳过**，member所选4项通过/1项既有禁用跳过。`GymOrganizationServiceTest`新增11项后共245项；新增`GymMobilePublicControllerTest`4项和`GymPublicMediaTenantFilterTest`4项，本批合计19项。先前470项全量通过后发现加盟模型组引用失效应整组撤销，补充该行为及回归；最终以471为准。
+
+业务证据覆盖：匿名租户内active门店、停用/其他租户详情拒绝、总数及分页；经纬度成对/范围、有坐标距离排序先于分页、跨日界线球面距离和缺失位置最后；环境素材真实引用、门店归属、私有类别拒绝、存储URL不外露、下架/跨租户拒绝及实际内容魔数；上海零点成功入场计数，排除失败/未来/其他门店/租户记录，实时人数保持未知；配置总部回退、禁用门店整份覆盖、App福利分平台、三模型的数量/图片/URL及失效组撤销；公告发布和到期边界、去重验证。
+
+MVC实际绑定五个公开路由及辅助媒体路由，检查匿名注解、参数拒绝、媒体全量200、字节范围206/Content-Range、越界416、未发布404、no-store及nosniff。媒体租户测试组合真实`GymPublicMediaTenantFilter → TenantContextWebFilter → TenantSecurityWebFilter`，证明只处理精确GET媒体路径、不改变已有header、不接受多值/非法/溢出选择器、支持context path及Long上界、保留租户validTenant调用及上下文清理、拒绝登录租户不一致和过期租户。租户状态API与文件存储仍mock；没有把这些测试冒充完整部署的Spring Security链、真实对象存储或代理端验收。
+
+日志为`/tmp/uniapp-public-final-tests.log`（00:23:57完成）、`/tmp/uniapp-public-format.log`和`/tmp/uniapp-public-package.log`。最终server及依赖package成功（00:26:46完成），跳过测试；行为修改后的最终测试与打包均重新执行；最后为新增公开VO及配置子对象指定唯一OpenAPI模型名，避免Notice/Model等短类名冲突，随后重新格式化及打包验证。首次聚焦运行的失败来自测试上下文缺少WebProperties.adminUi及签到夹具缺少bookingId、重复Mockito抛错桩，均修正后通过，未放宽生产校验。
+
+本批无DDL或迁移脚本变更，不重复执行迁移回归，不使用真实第三方渠道。覆盖审计 **43/135映射、92缺失**；JSON与总表为39项新增本地测试实现、4项已有源码。已检查相对文档链接、代码围栏及diff；dashboard工作区为空。App下载/品牌/模型需管理员提供实际发布内容，没有写入演示素材或虚假人数。
+
+## 2026-10-24 公开卡、私教与包月商品目录
+
+目标14–16、27已实现。沿用上述reactor Spotless、完整`Gym*Test,MemberAuth*Test,MemberUser*Test`及显式Mockito agent命令：最终gym **480项通过、0失败/错误/跳过**，member所选4项通过、1项既有禁用跳过。组织服务新增7项后共252项，新增商品MVC2项，共增加9项。执行中断后继续原任务，最终测试于18:51:13完成；未把中断状态当作成功。
+
+业务证据覆盖真实门店售价/模板适用范围、销售时窗边界、过滤后分页总数、停用与草稿拒绝、缺省门店确定选择和租户隔离、坏JSON关闭展示；包月成对条款、协议版本、周期价与账单参数；私教在职和门店任职日期先于分页、明确公开字段；版本创建1、真实编辑递增、无变化保持、审批后变价递增以及拒绝审批不增版。MVC验证全部4条路径、匿名注解、列表必填门店和详情可选门店/必填类型。H2与事务为真实，跨模块API仍mock，未做部署HTTP或外部渠道联调。
+
+真实MySQL/Flyway隔离回归 **38项通过**，随机库已清理；新增V008非空默认1及旧商品价格/课时保留验证，gym仍63表，未迁移业务库。日志：`/tmp/uniapp-catalog-migrations.log`（00:40:25）、`/tmp/uniapp-catalog-format.log`（00:41:01）、`/tmp/uniapp-catalog-final-tests.log`（18:51:13）、`/tmp/uniapp-catalog-package.log`（18:52:34）。server及依赖打包成功，打包跳过测试。源码审计47/135，43项新增本地实现、4项复用源码，余88项待开发。

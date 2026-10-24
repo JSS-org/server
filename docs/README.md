@@ -10,6 +10,8 @@
 | 文件 | 作用 | 何时看 |
 | --- | --- | --- |
 | [`architecture.md`](architecture.md) | **结构关系**：模块依赖、请求链路、数据模型、权限链 | 想知道「谁调用谁、数据怎么流」时 |
+| [`uniapp/uniapp-api-summary.md`](uniapp/uniapp-api-summary.md) | 小程序 135 个接口的方法、路径、描述和实现状态 | 查接口及数量时 |
+| [`uniapp/uniapp-implementation.md`](uniapp/uniapp-implementation.md) | 小程序后端实施进度、验证边界与第三方暂缓范围 | 联调与部署前 |
 | [`gym-full-api-progress.md`](gym-full-api-progress.md) | 全量 API 任务状态与未完成范围 | 跟踪当前目标时 |
 | [`group-buy-verification.md`](group-buy-verification.md) | 健身团购验券业务、服务零售接入分层、配置、权限和业务边界 | 对接团购平台时 |
 | [`meituan-service-retail-api.md`](meituan-service-retail-api.md) | 服务零售团购核销全部16个POST接口、DTO和官方来源对照 | 逐项对接和核查接口覆盖时 |

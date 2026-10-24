@@ -178,6 +178,24 @@ public class GymContentService {
     }
 
     private void content(GymClientSettingsReqVO req) {
+        if (req.getFranchise() != null) {
+            var names = new HashSet<String>();
+            for (var model : req.getFranchise().getModels()) {
+                file(model.getPreviewFileId(), req.getStoreId(), "image");
+                if (!names.add(model.getName())
+                        || model.getModelUrl() != null && !webUrl(model.getModelUrl()))
+                    throw exception(CLIENT_CONTENT_INVALID);
+            }
+        }
+        if (req.getNotices() != null) {
+            var ids = new HashSet<Long>();
+            for (var notice : req.getNotices()) {
+                if (!ids.add(notice.getId())
+                        || notice.getExpiresAt() != null
+                                && !notice.getExpiresAt().isAfter(notice.getPublishedAt()))
+                    throw exception(CLIENT_CONTENT_INVALID);
+            }
+        }
         if (req.getAppId() == null) req.setAppId("");
         if (req.getWelcomeText() == null) req.setWelcomeText("");
         if (req.getCustomerService() == null) req.setCustomerService("");

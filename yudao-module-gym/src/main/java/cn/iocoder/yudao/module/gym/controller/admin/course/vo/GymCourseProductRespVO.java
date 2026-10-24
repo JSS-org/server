@@ -17,4 +17,5 @@ public class GymCourseProductRespVO {
     private Integer durationMinutes;
     private java.math.BigDecimal price;
     private String status;
+    private Integer version;
 }

@@ -202,6 +202,7 @@ public class GymCourseService {
         validateProduct(req);
         if (!"active".equals(req.getStatus())) requireCoach(req.getCoachId(), req.getStoreId());
         var row = BeanUtils.toBean(req, GymCourseProductDO.class);
+        row.setVersion(1);
         gymCourseProductMapper.insert(row);
         return productResponse(row);
     }
@@ -221,6 +222,14 @@ public class GymCourseService {
         validateProduct(req);
         var update = BeanUtils.toBean(req, GymCourseProductDO.class);
         update.setId(id);
+        boolean changed =
+                !Objects.equals(row.getName(), update.getName())
+                        || !Objects.equals(row.getDescription(), update.getDescription())
+                        || !Objects.equals(row.getKind(), update.getKind())
+                        || !Objects.equals(row.getSessionCount(), update.getSessionCount())
+                        || !Objects.equals(row.getDurationMinutes(), update.getDurationMinutes())
+                        || !Objects.equals(row.getStatus(), update.getStatus());
+        update.setVersion(changed ? Math.incrementExact(row.getVersion()) : row.getVersion());
         gymCourseProductMapper.updateById(update);
         return product(id);
     }
@@ -237,6 +246,8 @@ public class GymCourseService {
                 || original == null
                 || row.getPrice().compareTo(original) != 0)
             throw exception(COURSE_PRICE_APPROVAL_REQUIRED);
+        if (row.getPrice().compareTo(requested) != 0)
+            row.setVersion(Math.incrementExact(row.getVersion()));
         row.setPrice(requested);
         gymCourseProductMapper.updateById(row);
     }

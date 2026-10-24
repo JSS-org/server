@@ -268,6 +268,9 @@ yudao:
     version: 1.0.0
     base-package: cn.iocoder.yudao
   gym:
+    mobile:
+      bookings:
+        cancel-before-minutes: 0 # 会员自助取消须早于开课；可配置提前分钟数，超时联系门店，不自动扣课
     group-buy:
       meituan:
         enabled: false # 健身服务零售 businessId=58，按 docs/group-buy-verification.md 配置后再联调

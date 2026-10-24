@@ -83,6 +83,7 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.controller.admin.approval.GymApprovalTemplateController.class,
     cn.iocoder.yudao.module.gym.service.common.GymBusinessMutex.class,
     cn.iocoder.yudao.module.gym.service.course.GymCourseService.class,
+    cn.iocoder.yudao.module.gym.service.course.GymBookingRules.class,
     cn.iocoder.yudao.module.gym.service.common.GymBusinessClock.class,
     cn.iocoder.yudao.module.gym.controller.admin.course.GymCourseController.class,
     cn.iocoder.yudao.module.gym.service.card.GymCardService.class,

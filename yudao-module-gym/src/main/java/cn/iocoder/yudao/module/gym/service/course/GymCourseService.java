@@ -56,6 +56,7 @@ public class GymCourseService {
     @Resource private GymBusinessClock gymBusinessClock;
     @Resource private cn.iocoder.yudao.module.gym.service.contract.GymContractService contracts;
     @Resource private Validator validator;
+    @Resource private GymBookingRules bookingRules;
 
     private void coursePageScope(GymBusinessPageReqVO req) {
         if (req.getStoreId() != null) memberCoaches.checkListStore(req.getStoreId());
@@ -99,23 +100,7 @@ public class GymCourseService {
     }
 
     private GymEmployeeDO requireCoach(Long id, Long storeId) {
-        var employee = gymEmployeeMapper.selectForUpdate(id);
-        var relation =
-                gymEmployeeStoreMapper.selectList(
-                        new LambdaQueryWrapper<GymEmployeeStoreDO>()
-                                .eq(GymEmployeeStoreDO::getEmployeeId, id)
-                                .eq(GymEmployeeStoreDO::getStoreId, storeId)
-                                .last("FOR UPDATE"));
-        if (employee == null
-                || !"active".equals(employee.getStatus())
-                || relation.isEmpty()
-                || employee.getHiredOn()
-                        .isAfter(gymBusinessClock.now().atZone(GymDateRange.ZONE).toLocalDate())
-                || relation.getFirst()
-                        .getJoinedOn()
-                        .isAfter(gymBusinessClock.now().atZone(GymDateRange.ZONE).toLocalDate()))
-            throw exception(COURSE_COACH_INVALID);
-        return employee;
+        return bookingRules.requireCoach(id, storeId);
     }
 
     public PageResult<Map<String, Object>> coaches(GymBusinessPageReqVO req) {
@@ -542,14 +527,7 @@ public class GymCourseService {
                 lock ? gymCoursePackMapper.selectForUpdate(id) : gymCoursePackMapper.selectById(id);
         if (row == null) throw exception(COURSE_PACK_NOT_EXISTS);
         members.checkMemberScope(memberId, row.getStoreId());
-        if (!memberId.equals(row.getMemberId())
-                || !session.getStoreId().equals(row.getStoreId())
-                || !session.getCourseProductId().equals(row.getCourseProductId())
-                || !session.getCoachId().equals(row.getAssignedCoachId())
-                || !"active".equals(row.getStatus())
-                || row.getStartsAt().isAfter(session.getStartsAt())
-                || (row.getExpiresAt() != null && !row.getExpiresAt().isAfter(session.getEndsAt())))
-            throw exception(COURSE_PACK_INVALID);
+        bookingRules.validatePack(row, memberId, session);
         return row;
     }
 
@@ -589,14 +567,12 @@ public class GymCourseService {
         if ("attended".equals(booking.getStatus())
                 || !session.getStartsAt().isAfter(gymBusinessClock.now()))
             throw exception(BOOKING_INVALID);
+        bookingRules.rejectOverlappingBooking(member.getId(), session);
         if (session.getReservedCount() >= session.getCapacity())
             throw exception(BOOKING_CAPACITY_FULL);
         if (req.getMemberCoursePackId() != null) {
             var pack = requirePack(req.getMemberCoursePackId(), member.getId(), session, true);
-            if (pack.getRemainingSessions() - pack.getReservedSessions() < 1)
-                throw exception(COURSE_PACK_INSUFFICIENT);
-            pack.setReservedSessions(pack.getReservedSessions() + 1);
-            gymCoursePackMapper.updateById(pack);
+            bookingRules.reservePack(pack);
         } else {
             var card =
                     cards.requireCard(
@@ -621,6 +597,7 @@ public class GymCourseService {
         booking.setStatus("confirmed");
         booking.setBookedAt(normalized(gymBusinessClock.now()));
         booking.setCancelledAt(null);
+        booking.setCancellationReason(null);
         booking.setCheckinId(null);
         if (booking.getId() == null) gymBookingMapper.insert(booking);
         else gymBookingMapper.updateById(booking);
@@ -667,24 +644,7 @@ public class GymCourseService {
     }
 
     private void cancelBookingLocked(GymBookingDO booking, GymCourseSessionDO session) {
-        if (booking.getMemberCoursePackId() != null) {
-            var pack = gymCoursePackMapper.selectForUpdate(booking.getMemberCoursePackId());
-            if (pack == null || pack.getReservedSessions() < 1)
-                throw exception(COURSE_PACK_INVALID);
-            pack.setReservedSessions(pack.getReservedSessions() - 1);
-            gymCoursePackMapper.updateById(pack);
-        } else {
-            var card = gymMemberCardMapper.selectForUpdate(booking.getMemberCardId());
-            if (card == null || card.getReservedUses() < 1) throw exception(CARD_RIGHT_INVALID);
-            card.setReservedUses(card.getReservedUses() - 1);
-            gymMemberCardMapper.updateById(card);
-        }
-        if (session.getReservedCount() < 1) throw exception(COURSE_SESSION_INVALID);
-        booking.setStatus("cancelled");
-        booking.setCancelledAt(normalized(gymBusinessClock.now()));
-        gymBookingMapper.updateById(booking);
-        session.setReservedCount(session.getReservedCount() - 1);
-        gymCourseSessionMapper.updateById(session);
+        bookingRules.cancel(booking, session);
     }
 
     public PageResult<GymBookingRespVO> bookings(GymBusinessPageReqVO req) {
@@ -815,6 +775,7 @@ public class GymCourseService {
                         .equals(session.getStartsAt().atZone(GymDateRange.ZONE).toLocalDate()))
             throw exception(LESSON_TIME_INVALID);
         records.checkEntry(booking.getMemberId());
+        Integer remainingAfter;
         if (booking.getMemberCoursePackId() != null) {
             var pack =
                     requirePack(
@@ -824,6 +785,7 @@ public class GymCourseService {
             pack.setRemainingSessions(pack.getRemainingSessions() - 1);
             pack.setReservedSessions(pack.getReservedSessions() - 1);
             gymCoursePackMapper.updateById(pack);
+            remainingAfter = pack.getRemainingSessions();
         } else {
             var card =
                     cards.requireCard(
@@ -839,6 +801,7 @@ public class GymCourseService {
             card.setReservedUses(card.getReservedUses() - 1);
             if (card.getRemainingUses() != null) card.setRemainingUses(card.getRemainingUses() - 1);
             gymMemberCardMapper.updateById(card);
+            remainingAfter = card.getRemainingUses();
         }
         var lesson = new GymLessonRecordDO();
         lesson.setStoreId(booking.getStoreId());
@@ -849,6 +812,7 @@ public class GymCourseService {
         lesson.setMemberCardId(booking.getMemberCardId());
         lesson.setMemberCoursePackId(booking.getMemberCoursePackId());
         lesson.setSessionUnits(1);
+        lesson.setRemainingLessonsAfter(remainingAfter);
         lesson.setConfirmedAt(now);
         lesson.setMethod("manual");
         lesson.setStatus("confirmed");

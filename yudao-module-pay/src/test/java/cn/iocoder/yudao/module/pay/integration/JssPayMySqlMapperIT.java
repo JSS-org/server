@@ -103,7 +103,8 @@ class JssPayMySqlMapperIT {
                 () -> {
                     TenantContextHolder.setTenantId(1L);
                     try (var session = sessions.openSession(true)) {
-                        return session.getMapper(PayWalletMapper.class).updateWhenConsumption(id, 80);
+                        return session.getMapper(PayWalletMapper.class)
+                                .updateWhenConsumption(id, 80);
                     } finally {
                         TenantContextHolder.clear();
                     }
@@ -164,8 +165,15 @@ class JssPayMySqlMapperIT {
         TenantContextHolder.setTenantId(1L);
         try (var session = sessions.openSession(true)) {
             var mapper = session.getMapper(PayWalletTransactionMapper.class);
-            var debit = new PayWalletTransactionDO().setNo("W-isolated-1").setWalletId(1L)
-                    .setBizId("isolated-biz").setBizType(1).setTitle("debit").setPrice(-80).setBalance(20);
+            var debit =
+                    new PayWalletTransactionDO()
+                            .setNo("W-isolated-1")
+                            .setWalletId(1L)
+                            .setBizId("isolated-biz")
+                            .setBizType(1)
+                            .setTitle("debit")
+                            .setPrice(-80)
+                            .setBalance(20);
             assertEquals(1, mapper.insert(debit));
             assertEquals(-80, mapper.selectByBiz("isolated-biz", 1).getPrice());
             TenantContextHolder.setTenantId(2L);
@@ -179,20 +187,36 @@ class JssPayMySqlMapperIT {
         TenantContextHolder.setTenantId(1L);
         try (var session = sessions.openSession(true)) {
             var channels = session.getMapper(PayChannelMapper.class);
-            var channel = new PayChannelDO().setAppId(1L).setCode("isolated")
-                    .setStatus(1).setConfig(new NonePayClientConfig());
+            var channel =
+                    new PayChannelDO()
+                            .setAppId(1L)
+                            .setCode("isolated")
+                            .setStatus(1)
+                            .setConfig(new NonePayClientConfig());
             assertEquals(1, channels.insert(channel));
-            assertInstanceOf(NonePayClientConfig.class, channels.selectById(channel.getId()).getConfig());
+            assertInstanceOf(
+                    NonePayClientConfig.class, channels.selectById(channel.getId()).getConfig());
             var extensions = session.getMapper(PayOrderExtensionMapper.class);
-            var extension = new PayOrderExtensionDO().setNo("P-isolated-1").setOrderId(1L)
-                    .setChannelId(channel.getId()).setStatus(0).setChannelExtras(Map.of("scene", "H5"))
-                    .setChannelNotifyData("<xml>untrusted callback text</xml>");
+            var extension =
+                    new PayOrderExtensionDO()
+                            .setNo("P-isolated-1")
+                            .setOrderId(1L)
+                            .setChannelId(channel.getId())
+                            .setStatus(0)
+                            .setChannelExtras(Map.of("scene", "H5"))
+                            .setChannelNotifyData("<xml>untrusted callback text</xml>");
             assertEquals(1, extensions.insert(extension));
             var loaded = extensions.selectByNo(extension.getNo());
             assertEquals(extension.getChannelExtras(), loaded.getChannelExtras());
             assertEquals(extension.getChannelNotifyData(), loaded.getChannelNotifyData());
-            assertEquals(1, extensions.updateByIdAndStatus(extension.getId(), 0, new PayOrderExtensionDO().setStatus(10)));
-            assertEquals(0, extensions.updateByIdAndStatus(extension.getId(), 0, new PayOrderExtensionDO().setStatus(20)));
+            assertEquals(
+                    1,
+                    extensions.updateByIdAndStatus(
+                            extension.getId(), 0, new PayOrderExtensionDO().setStatus(10)));
+            assertEquals(
+                    0,
+                    extensions.updateByIdAndStatus(
+                            extension.getId(), 0, new PayOrderExtensionDO().setStatus(20)));
             TenantContextHolder.setTenantId(2L);
             assertNull(channels.selectById(channel.getId()));
             assertNull(extensions.selectByNo(extension.getNo()));
@@ -204,19 +228,35 @@ class JssPayMySqlMapperIT {
         TenantContextHolder.setTenantId(1L);
         try (var session = sessions.openSession(true)) {
             var mapper = session.getMapper(PayTransferMapper.class);
-            var transfer = new PayTransferDO().setNo("T-isolated-1").setAppId(1L)
-                    .setMerchantTransferId("isolated-merchant").setSubject("isolated transfer")
-                    .setPrice(50).setStatus(20).setUserName("old name").setNotifyUrl("https://example.invalid")
-                    .setChannelExtras(Map.of("old", "value")).setChannelTransferNo("old-channel")
-                    .setSuccessTime(LocalDateTime.now()).setChannelErrorCode("old-error")
-                    .setChannelErrorMsg("old message").setChannelNotifyData("old response")
-                    .setChannelPackageInfo("old-package");
+            var transfer =
+                    new PayTransferDO()
+                            .setNo("T-isolated-1")
+                            .setAppId(1L)
+                            .setMerchantTransferId("isolated-merchant")
+                            .setSubject("isolated transfer")
+                            .setPrice(50)
+                            .setStatus(20)
+                            .setUserName("old name")
+                            .setNotifyUrl("https://example.invalid")
+                            .setChannelExtras(Map.of("old", "value"))
+                            .setChannelTransferNo("old-channel")
+                            .setSuccessTime(LocalDateTime.now())
+                            .setChannelErrorCode("old-error")
+                            .setChannelErrorMsg("old message")
+                            .setChannelNotifyData("old response")
+                            .setChannelPackageInfo("old-package");
             assertEquals(1, mapper.insert(transfer));
             var retry = new PayTransferDO().setStatus(0);
-            assertEquals(0, mapper.updateByIdAndStatusAndClearChannelResult(transfer.getId(), 10, retry));
-            assertEquals("old-package", mapper.selectById(transfer.getId()).getChannelPackageInfo());
-            assertEquals(1, mapper.updateByIdAndStatusAndClearChannelResult(transfer.getId(), 20, retry));
-            var loaded = mapper.selectByAppIdAndMerchantOrderId(1L, transfer.getMerchantTransferId());
+            assertEquals(
+                    0,
+                    mapper.updateByIdAndStatusAndClearChannelResult(transfer.getId(), 10, retry));
+            assertEquals(
+                    "old-package", mapper.selectById(transfer.getId()).getChannelPackageInfo());
+            assertEquals(
+                    1,
+                    mapper.updateByIdAndStatusAndClearChannelResult(transfer.getId(), 20, retry));
+            var loaded =
+                    mapper.selectByAppIdAndMerchantOrderId(1L, transfer.getMerchantTransferId());
             assertEquals(0, loaded.getStatus());
             assertNull(loaded.getSuccessTime());
             assertNull(loaded.getChannelTransferNo());
@@ -227,10 +267,13 @@ class JssPayMySqlMapperIT {
             assertNull(loaded.getUserName());
             assertNull(loaded.getNotifyUrl());
             assertNull(loaded.getChannelExtras());
-            assertEquals(1, mapper.updateChannelPackageInfoIfAbsent(transfer.getId(), "new-package"));
-            assertEquals(0, mapper.updateChannelPackageInfoIfAbsent(transfer.getId(), "stale-package"));
+            assertEquals(
+                    1, mapper.updateChannelPackageInfoIfAbsent(transfer.getId(), "new-package"));
+            assertEquals(
+                    0, mapper.updateChannelPackageInfoIfAbsent(transfer.getId(), "stale-package"));
             TenantContextHolder.setTenantId(2L);
-            assertNull(mapper.selectByAppIdAndMerchantOrderId(1L, transfer.getMerchantTransferId()));
+            assertNull(
+                    mapper.selectByAppIdAndMerchantOrderId(1L, transfer.getMerchantTransferId()));
             assertEquals(0, mapper.updateChannelPackageInfoIfAbsent(transfer.getId(), "foreign"));
         }
     }

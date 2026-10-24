@@ -1,5 +1,5 @@
--- Daily aggregates for the currently enabled statistics module.
--- Schema only: no invented sales, balances, traffic or completed orders.
+-- Current daily product/trade statistics models; no metrics are seeded.
+-- Counter defaults prevent NULL arithmetic in production aggregate SQL.
 CREATE TABLE product_statistics (
     id BIGINT NOT NULL AUTO_INCREMENT,
     time DATE NOT NULL,
@@ -21,8 +21,9 @@ CREATE TABLE product_statistics (
     deleted BIT(1) NOT NULL DEFAULT b'0',
     tenant_id BIGINT NOT NULL,
     PRIMARY KEY (id),
-    active_spu_id BIGINT GENERATED ALWAYS AS (CASE WHEN deleted=b'0' THEN spu_id ELSE NULL END) STORED,
-    UNIQUE KEY uk_product_statistics_day (tenant_id,time,active_spu_id)
+    active_day DATE GENERATED ALWAYS AS (CASE WHEN deleted=b'0' THEN time ELSE NULL END) STORED,
+    UNIQUE KEY uk_product_statistics_day (tenant_id,spu_id,active_day),
+    KEY idx_product_statistics_time (tenant_id,time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE trade_statistics (
@@ -47,5 +48,6 @@ CREATE TABLE trade_statistics (
     tenant_id BIGINT NOT NULL,
     PRIMARY KEY (id),
     active_day DATE GENERATED ALWAYS AS (CASE WHEN deleted=b'0' THEN DATE(time) ELSE NULL END) STORED,
-    UNIQUE KEY uk_trade_statistics_day (tenant_id,active_day)
+    UNIQUE KEY uk_trade_statistics_day (tenant_id,active_day),
+    KEY idx_trade_statistics_time (tenant_id,time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

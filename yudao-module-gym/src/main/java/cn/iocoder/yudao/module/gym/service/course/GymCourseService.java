@@ -35,6 +35,9 @@ import java.util.*;
 
 @Service
 public class GymCourseService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymCourseProductMapper gymCourseProductMapper;
     @Resource private GymCourseSessionMapper gymCourseSessionMapper;
     @Resource private GymCoursePackMapper gymCoursePackMapper;
@@ -592,6 +595,7 @@ public class GymCourseService {
         gymMemberMapper.updateById(update);
         if (purchase == null) contracts.issueForEntitlement("course-packs", row.getId());
         else contracts.issueForPurchasedItem(purchase.item().getId(), "course-packs", row.getId());
+        notifications.coursePack(row.getId());
         return row;
     }
 
@@ -778,6 +782,7 @@ public class GymCourseService {
         else gymBookingMapper.updateById(booking);
         session.setReservedCount(session.getReservedCount() + 1);
         gymCourseSessionMapper.updateById(session);
+        notifications.booking(booking.getId());
         return bookingResponse(booking);
     }
 

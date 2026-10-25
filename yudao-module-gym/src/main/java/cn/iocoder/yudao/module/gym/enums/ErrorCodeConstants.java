@@ -238,4 +238,5 @@ public interface ErrorCodeConstants {
     ErrorCode REFUND_APPLICATION_INVALID = new ErrorCode(1_070_026_003, "退款申请状态、可退余额或实际凭据不符合要求");
     ErrorCode REFUND_APPLICATION_OPEN = new ErrorCode(1_070_026_004, "订单已有处理中退款申请，请先查询原申请");
     ErrorCode MOBILE_ORDER_NOT_CANCELLABLE = new ErrorCode(1_070_026_001, "仅未支付且未履约的订单可以取消");
+    ErrorCode MOBILE_NOTIFICATION_NOT_EXISTS = new ErrorCode(1_070_027_001, "通知不存在或无权查看");
 }

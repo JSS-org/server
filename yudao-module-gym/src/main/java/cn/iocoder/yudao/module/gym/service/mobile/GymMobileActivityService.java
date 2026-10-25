@@ -30,6 +30,9 @@ import java.util.*;
 
 @Service
 public class GymMobileActivityService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymActivityMapper activities;
     @Resource private GymActivityStoreMapper links;
     @Resource private GymActivityRegistrationMapper registrations;
@@ -266,6 +269,7 @@ public class GymMobileActivityService {
         registration.setStatus("cancelled");
         registration.setCancelledAt(now());
         registrations.updateById(registration);
+        notifications.activity(registration.getId());
         return new Cancelled("cancelled");
     }
 

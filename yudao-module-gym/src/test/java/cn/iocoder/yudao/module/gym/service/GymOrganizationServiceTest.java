@@ -50,6 +50,10 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationsService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymNotificationsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileNotificationsController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileDevicesService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDevicesController.class,
     cn.iocoder.yudao.module.gym.service.sales.GymRefundApplicationService.class,
@@ -19231,5 +19235,483 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                         mobileDevices.compartments(
                                 0L, new cn.iocoder.yudao.framework.common.pojo.PageParam()),
                 MOBILE_REQUEST_INVALID);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationsService mobileNotifications;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notificationPublisher;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileNotificationMapper notificationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileNotificationPreferenceMapper
+            notificationPreferences;
+
+    record NotificationFixture(Long member, Long coach, Long booking) {}
+
+    NotificationFixture notificationFixture() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        qrMemberIdentity(member);
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        Long booking =
+                workCourseBooking(
+                        member, coach, 101L, java.time.Instant.parse("2026-10-24T02:00:00Z"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:bookings:read"))).thenReturn(true);
+        return new NotificationFixture(member, coach, booking);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO.Query
+            notificationQuery(String type) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO
+                        .Query();
+        req.setType(type);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO.Preferences
+            notificationPreference(boolean enabled, String... keys) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileNotificationsVO
+                        .Preferences();
+        req.setTemplateKeys(Arrays.asList(keys));
+        req.setEnabled(enabled);
+        return req;
+    }
+
+    void notificationTx(Runnable action) {
+        new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class))
+                .executeWithoutResult(status -> action.run());
+    }
+
+    @Test
+    void notificationsActualBookingAndCoursePackCreateSeparateMemberAndCoachInboxes() {
+        var f = notificationFixture();
+        assertEquals(3, notificationRows.selectCount());
+        qrMemberLogin();
+        var all = mobileNotifications.memberPage(notificationQuery(null));
+        assertEquals(2, all.getTotal());
+        var booking =
+                mobileNotifications.memberPage(notificationQuery("booking")).getList().getFirst();
+        assertEquals(f.booking().toString(), booking.businessId());
+        assertEquals("预约已确认", booking.title());
+        assertNull(booking.readAt());
+        assertTrue(booking.createdAt().endsWith("+08:00"));
+        var pack =
+                mobileNotifications
+                        .memberPage(notificationQuery("course_pack"))
+                        .getList()
+                        .getFirst();
+        assertNotNull(
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectById(Long.valueOf(pack.businessId())));
+        personalScope(91L);
+        assertEquals(1, mobileNotifications.staffPage(notificationQuery(null)).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(Long.valueOf(booking.id())),
+                MOBILE_NOTIFICATION_NOT_EXISTS);
+        loginAs(1L);
+        headquarters();
+        assertEquals(0, mobileNotifications.staffPage(notificationQuery(null)).getTotal());
+    }
+
+    @Test
+    void notificationsBookingReplayAndSameTickCancelRebookDoNotLoseNewTransitions() {
+        var f = notificationFixture();
+        long before = notificationRows.selectCount();
+        notificationTx(() -> notificationPublisher.booking(f.booking()));
+        assertEquals(before, notificationRows.selectCount());
+        qrMemberLogin();
+        var cancel =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Cancel();
+        mobileBookings.cancel(f.booking(), cancel, "notification-cancel-key");
+        mobileBookings.cancel(f.booking(), cancel, "notification-cancel-again");
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery("booking")).getTotal());
+        var row =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymBookingMapper.class)
+                        .selectById(f.booking());
+        var create =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Create();
+        create.setSessionId(row.getSessionId());
+        create.setCoursePackId(row.getMemberCoursePackId());
+        mobileBookings.create(create, "notification-rebook-key");
+        mobileBookings.create(create, "notification-rebook-key");
+        assertEquals(3, mobileNotifications.memberPage(notificationQuery("booking")).getTotal());
+        assertEquals(
+                "预约已确认",
+                mobileNotifications
+                        .memberPage(notificationQuery("booking"))
+                        .getList()
+                        .getFirst()
+                        .title());
+        assertEquals(before + 4, notificationRows.selectCount());
+    }
+
+    @Test
+    void notificationsMarkReadIsIdempotentAndUnreadFilterPrecedesPagination() {
+        notificationFixture();
+        qrMemberLogin();
+        var req = notificationQuery(null);
+        req.setPageSize(1);
+        req.setUnreadOnly(true);
+        assertEquals(2, mobileNotifications.memberPage(req).getTotal());
+        var id = Long.valueOf(mobileNotifications.memberPage(req).getList().getFirst().id());
+        assertTrue(mobileNotifications.memberRead(id));
+        var at = notificationRows.selectById(id).getReadAt();
+        when(businessClock.now()).thenReturn(at.plusSeconds(100));
+        assertTrue(mobileNotifications.memberRead(id));
+        assertEquals(at, notificationRows.selectById(id).getReadAt());
+        assertEquals(1, mobileNotifications.memberPage(req).getTotal());
+        assertNotEquals(
+                id.toString(), mobileNotifications.memberPage(req).getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(1, mobileNotifications.memberPage(req).getTotal());
+        assertTrue(mobileNotifications.memberPage(req).getList().isEmpty());
+        req.setPageNo(1);
+        req.setUnreadOnly(false);
+        assertEquals(2, mobileNotifications.memberPage(req).getTotal());
+    }
+
+    @Test
+    void notificationsStaffReadsRecheckPermissionsResponsibilityAndTeachingScope() {
+        var f = notificationFixture();
+        personalScope(91L);
+        var query = notificationQuery("booking");
+        Long id = Long.valueOf(mobileNotifications.staffPage(query).getList().getFirst().id());
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:read")).thenReturn(false);
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        when(permissions.hasAnyPermissions(91L, "gym:bookings:read")).thenReturn(true);
+        assertTrue(mobileNotifications.staffRead(id));
+        loginAs(1L);
+        headquarters();
+        memberCoaches.replace(f.member(), 101L, responsibility());
+        personalScope(91L);
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        loginAs(1L);
+        headquarters();
+        memberCoaches.replace(f.member(), 101L, responsibility(f.coach()));
+        var other = responsibleEmployee(92L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_course_session SET coach_id=?", other);
+        personalScope(91L);
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+        jdbc.update("UPDATE gym_course_session SET coach_id=?", f.coach());
+        assertEquals(1, mobileNotifications.staffPage(query).getTotal());
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2099-01-01' WHERE employee_id=?",
+                f.coach());
+        assertEquals(0, mobileNotifications.staffPage(query).getTotal());
+    }
+
+    @Test
+    void notificationsIdentityTenantAndDisabledAccountCannotReadOtherRecipients() {
+        notificationFixture();
+        qrMemberLogin();
+        Long id =
+                Long.valueOf(
+                        mobileNotifications
+                                .memberPage(notificationQuery(null))
+                                .getList()
+                                .getFirst()
+                                .id());
+        loginAs(50L);
+        headquarters();
+        assertEquals(0, mobileNotifications.staffPage(notificationQuery(null)).getTotal());
+        assertServiceException(
+                () -> mobileNotifications.staffRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        assertServiceException(() -> mobileNotifications.memberRead(id), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileNotifications.staffPage(notificationQuery(null)),
+                MOBILE_IDENTITY_INVALID);
+        var user = memberAccounts.getUser(50L);
+        user.setStatus(1);
+        when(memberAccounts.getUser(50L)).thenReturn(user);
+        assertServiceException(() -> mobileNotifications.memberRead(id), MOBILE_IDENTITY_INVALID);
+        user.setStatus(0);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_mobile_notification SET tenant_id=2 WHERE id=?", id);
+        assertServiceException(
+                () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        assertNull(notificationRows.selectById(id));
+        personalScope(91L);
+        var admin = workAccounts.getUser(91L);
+        admin.setStatus(1);
+        when(workAccounts.getUser(91L)).thenReturn(admin);
+        assertServiceException(
+                () -> mobileNotifications.staffPage(notificationQuery(null)),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void notificationsPreferencesOnlySaveIntentAndNeverMutePersistedBusinessRecords() {
+        notificationFixture();
+        qrMemberLogin();
+        assertTrue(
+                mobileNotifications
+                        .preferences(notificationPreference(false, "booking", "entitlement"))
+                        .saved());
+        assertEquals(2, notificationPreferences.selectCount());
+        var first = notificationPreferences.selectList().getFirst();
+        var at = first.getSavedAt();
+        when(businessClock.now()).thenReturn(at.plusSeconds(10));
+        mobileNotifications.preferences(notificationPreference(false, "entitlement", "booking"));
+        assertEquals(at, notificationPreferences.selectById(first.getId()).getSavedAt());
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+        mobileNotifications.preferences(notificationPreference(true, "contract"));
+        assertEquals(3, notificationPreferences.selectCount());
+        assertEquals(0, mobileNotifications.memberPage(notificationQuery("contract")).getTotal());
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileNotifications.preferences(notificationPreference(true, "unknown")));
+        assertServiceException(
+                () ->
+                        mobileNotifications.preferences(
+                                notificationPreference(true, "booking", "booking")),
+                MOBILE_REQUEST_INVALID);
+        loginAs(50L);
+        assertServiceException(
+                () -> mobileNotifications.preferences(notificationPreference(true, "booking")),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void notificationsPreferencesAreAtomicWhenOneSelectedKeyFails() {
+        notificationFixture();
+        qrMemberLogin();
+        mobileNotifications.preferences(notificationPreference(false, "booking"));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_notification_preference ADD CONSTRAINT test_notification_preference_failure CHECK(template_key <> 'contract')");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () ->
+                            mobileNotifications.preferences(
+                                    notificationPreference(true, "booking", "contract")));
+            assertEquals(1, notificationPreferences.selectCount());
+            assertFalse(notificationPreferences.selectList().getFirst().getEnabled());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_notification_preference DROP CONSTRAINT test_notification_preference_failure");
+        }
+        assertTrue(
+                mobileNotifications
+                        .preferences(notificationPreference(true, "booking", "contract"))
+                        .saved());
+        assertEquals(2, notificationPreferences.selectCount());
+    }
+
+    @Test
+    void notificationsFailureRollsBackBookingCancellationAndCanRetryOriginalKey() {
+        var f = notificationFixture();
+        qrMemberLogin();
+        long count = notificationRows.selectCount();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_notification ADD CONSTRAINT test_notification_booking_failure CHECK(event_kind <> 'cancelled')");
+        var cancel =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Cancel();
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () -> mobileBookings.cancel(f.booking(), cancel, "notification-failed-cancel"));
+            assertEquals("confirmed", mobileBookings.get(f.booking()).status());
+            assertEquals(count, notificationRows.selectCount());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_notification DROP CONSTRAINT test_notification_booking_failure");
+        }
+        assertEquals(
+                "cancelled",
+                mobileBookings.cancel(f.booking(), cancel, "notification-failed-cancel").status());
+        assertEquals(count + 2, notificationRows.selectCount());
+    }
+
+    @Test
+    void notificationsCardAndUnsignedContractFollowActualFulfillmentAndDeduplicate() {
+        var f = refundFixture(true);
+        qrMemberLogin();
+        var cards = mobileNotifications.memberPage(notificationQuery("member_card"));
+        var contracts = mobileNotifications.memberPage(notificationQuery("contract"));
+        assertEquals(1, cards.getTotal());
+        assertEquals(1, contracts.getTotal());
+        assertTrue(contracts.getList().getFirst().content().contains("尚未签署"));
+        Long card = Long.valueOf(cards.getList().getFirst().businessId());
+        Long contract = Long.valueOf(contracts.getList().getFirst().businessId());
+        long count = notificationRows.selectCount();
+        notificationTx(
+                () -> {
+                    notificationPublisher.card(card);
+                    notificationPublisher.contract(contract);
+                });
+        assertEquals(count, notificationRows.selectCount());
+        assertEquals(
+                "unsigned",
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractMapper
+                                        .class)
+                        .selectById(contract)
+                        .getStatus());
+    }
+
+    @Test
+    void notificationsActivityUsesActualActivityTargetAndEveryCancellationPath() {
+        mobileActivityMember();
+        Long activity =
+                Long.valueOf(
+                        mobileActivities
+                                .create(mobileActivityRequest(), "notification-activity-create")
+                                .id());
+        qrMemberLogin();
+        mobileActivities.register(activity, "notification-activity-register");
+        mobileActivities.register(activity, "notification-activity-replay");
+        assertEquals(1, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        assertEquals(
+                activity.toString(),
+                mobileNotifications
+                        .memberPage(notificationQuery("activity"))
+                        .getList()
+                        .getFirst()
+                        .businessId());
+        mobileActivities.cancel(activity);
+        mobileActivities.cancel(activity);
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        mobileActivities.register(activity, "notification-activity-rejoin");
+        assertEquals(3, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        loginAs(1L);
+        headquarters();
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.marketing.vo
+                        .GymActivitySaveReqVO();
+        patch.setStatus("cancelled");
+        marketing.patchActivity(activity, patch);
+        qrMemberLogin();
+        assertEquals(4, mobileNotifications.memberPage(notificationQuery("activity")).getTotal());
+        assertEquals(
+                "活动报名已取消",
+                mobileNotifications
+                        .memberPage(notificationQuery("activity"))
+                        .getList()
+                        .getFirst()
+                        .title());
+    }
+
+    @Test
+    void notificationsDoNotBackfillOldEventsWhenMemberInitializesLater() {
+        var f = lessonFixture(false);
+        qrMemberIdentity(f.member());
+        qrMemberLogin();
+        assertEquals(0, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+        notificationTx(() -> notificationPublisher.booking(f.booking()));
+        assertEquals(0, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+    }
+
+    @Test
+    void notificationsConcurrentDuplicateSourceProjectionCreatesOneEventPerRecipient()
+            throws Exception {
+        var f = notificationFixture();
+        long count = notificationRows.selectCount();
+        var values =
+                workCourseRace(
+                        () -> {
+                            notificationTx(() -> notificationPublisher.booking(f.booking()));
+                            return true;
+                        },
+                        () -> {
+                            notificationTx(() -> notificationPublisher.booking(f.booking()));
+                            return true;
+                        });
+        assertEquals(List.of(true, true), values);
+        assertEquals(count, notificationRows.selectCount());
+    }
+
+    @Test
+    void notificationsConcurrentReadKeepsOneTimestampAndPreferenceKeysDoNotOverwriteOthers()
+            throws Exception {
+        notificationFixture();
+        qrMemberLogin();
+        Long id =
+                Long.valueOf(
+                        mobileNotifications
+                                .memberPage(notificationQuery(null))
+                                .getList()
+                                .getFirst()
+                                .id());
+        var values =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications.memberRead(id);
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications.memberRead(id);
+                        });
+        assertEquals(List.of(true, true), values);
+        assertNotNull(notificationRows.selectById(id).getReadAt());
+        var prefs =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications
+                                    .preferences(notificationPreference(true, "booking"))
+                                    .saved();
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileNotifications
+                                    .preferences(notificationPreference(false, "contract"))
+                                    .saved();
+                        });
+        assertEquals(List.of(true, true), prefs);
+        assertEquals(2, notificationPreferences.selectCount());
+    }
+
+    @Test
+    void notificationsHistoryRemainsOwnedAfterMembershipRemovalButNotAfterIdentityRebinding() {
+        var f = notificationFixture();
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", f.member());
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(2, mobileNotifications.memberPage(notificationQuery(null)).getTotal());
+        Long id =
+                Long.valueOf(
+                        mobileNotifications
+                                .memberPage(notificationQuery(null))
+                                .getList()
+                                .getFirst()
+                                .id());
+        assertTrue(mobileNotifications.memberRead(id));
+        jdbc.update("UPDATE gym_mobile_notification SET recipient_user_id=51 WHERE id=?", id);
+        assertServiceException(
+                () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+        jdbc.update(
+                "UPDATE gym_mobile_notification SET recipient_user_id=50,member_id=99999 WHERE id=?",
+                id);
+        assertServiceException(
+                () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
     }
 }

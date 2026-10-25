@@ -1095,3 +1095,35 @@ V022新增课包时长和合同事件身份字段，并只为真实buyer_user_id
 设备仅返回door/locker，camera/face_reader不混入该列表。所有范围、类型、逻辑删除及柜格configured条件在SQL分页前过滤，total与列表同口径；ID升序，页码至少1、每页1～200，不允许-1绕过分页。柜格只返回当前仍configured的记录，移除的历史柜格不展示，保留稳定原ID。
 
 **设备status是配置状态active/inactive；柜格status是配置状态available/inactive，available不表示柜格无人占用或硬件可开。** 不将占用状态、online、lastSeenAt或未接入厂商的结果伪装为实时状态，不返回provider、deviceUid、设备位置及内部字段。读取不创建指令、不改柜格占用。124远程命令、125真实执行结果、126二次确认及132–133设备事件/回执仍待实现，真实设备接入继续暂缓；本批查询成功不代表可以实际开门或开柜。
+
+## 站内通知、已读与会员意愿（V024，总表127–131）
+
+五个接口已实现。通知是持久化的站内业务记录；本批未接微信、短信、App远程推送或设备入场消息，不返回虚构发送结果。
+
+| 方法和完整路径 | 输入 | data |
+| --- | --- | --- |
+| `GET /admin-api/gym/mobile/notifications` | `pageNo,pageSize,type?,unreadOnly?` | `Page<Notification>`，仅当前后台接收人且仍有业务权限的记录 |
+| `GET /app-api/gym/me/notifications` | 同上 | `Page<Notification>`，仅当前会员账号与档案的共同归属记录 |
+| `POST /admin-api/gym/mobile/notifications/{id}/read` | 无请求体 | `true`，仅本人当前可读通知；首次保存readAt，重试不覆盖时间 |
+| `POST /app-api/gym/me/notifications/{id}/read` | 无请求体 | 同上，会员身份隔离 |
+| `POST /app-api/gym/me/notification-preferences` | `templateKeys:string[],enabled:boolean` | `{saved:true}`，仅保存意愿，不表示渠道授权或送达 |
+
+查询type允许`booking/contract/member_card/course_pack/activity`；省略查询全部，非法值拒绝。`unreadOnly=true`只查未读，false或省略包含已读。页码至少1、页长1～200，按通知ID倒序；接收人、当前权限、类型和未读条件均在SQL分页前生效，total不包含不可见通知。已读操作天然幂等，不要求Idempotency-Key，也不接受指定接收人的写入参数；不可见通知按不存在处理。
+
+Notification严格返回`id,type,title,content,businessId,storeId,createdAt,readAt`，ID为字符串，时间为上海时区ISO字符串。createdAt是站内记录生成时间，readAt未读为null；不返回接收账号、内部事件键、原始来源类型或第三方状态。通知提供历史事实，打开目标仍须调用对应业务接口重新核验当前资格。
+
+| type | businessId指向 | 本批真实来源与接收人 |
+| --- | --- | --- |
+| booking | 预约ID | 会员/后台创建预约及共享取消流程；当时已绑定会员账号、当前有效授课教练所关联后台账号分别保存独立通知 |
+| contract | 合同ID | 内部合同真实生成；会员接收“尚未签署”，不表示电子签成功 |
+| member_card | 会员卡ID | 实际发卡完成；会员收到记录，使用资格仍以卡状态及有效期为准 |
+| course_pack | 私教课包ID | 实际课包发放完成；会员收到记录，余额/可约仍查业务接口 |
+| activity | 活动ID（不是报名记录ID） | 真实报名、本人/后台取消、整场活动取消；会员接收 |
+
+工作台当前接收授课预约变更通知。读取需有效后台身份及`gym:bookings:read`，同时重新检查预约所属会员范围与当前授课教练范围；撤销负责关系、任职或功能权限后历史消息不可见，也不能标记已读。拥有整店权限也只能查询**发给自己**的消息，不能读取其他接收人的收件箱。会员历史消息可在解除门店关系或门店停用后读取，但账号、当前会员档案及租户必须仍匹配。
+
+业务源记录锁与同事务通知写入保证重复处理不重复通知；一次事件按租户、账号类型、接收账号唯一。预约/活动取消后重新参与会生成新通知，即使业务时钟未前进也不会吞掉新的确认事件。任何通知写入失败都回滚本次业务事务与幂等结果；恢复后原业务键可重试。没有会员绑定的历史业务不回填到新账号，迁移不生成历史通知；不向未绑定账号伪造投递。
+
+偏好请求示例：`{"templateKeys":["booking","entitlement"],"enabled":false}`。业务模板键仅允许`booking/contract/entitlement/activity`，1～4项且不能重复；entitlement对应会员卡和课包。所选键整体原子更新，未选键保持，同值重试保留首次保存时间。`userId/authorized/sent`等额外字段拒绝。该偏好供将来的外部订阅适配使用，**不等同微信授权、不触发发送，也不删除或屏蔽业务站内记录**。
+
+门禁入场路由表仍是后续可信设备事件接入后的要求，本批没有生成入场通知；审批、工资等其他工作台事件尚未接入站内发布器。原合同定时/手动远程提醒仍明确报告渠道未配置，不能将本批合同生成通知当成远程提醒成功。V024部署与证据见[实施说明](./uniapp-implementation.md#站内通知与会员偏好v024)。

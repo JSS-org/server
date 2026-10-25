@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class GymMobileBookingsService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymMobileIdentityService identities;
     @Resource private GymMobileIdempotency idempotency;
     @Resource private GymBookingRules rules;
@@ -128,6 +131,7 @@ public class GymMobileBookingsService {
                     else bookings.updateById(booking);
                     session.setReservedCount(session.getReservedCount() + 1);
                     sessions.updateById(session);
+                    notifications.booking(booking.getId());
                     return response(booking);
                 });
     }

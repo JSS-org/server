@@ -24,6 +24,9 @@ import java.util.Objects;
 /** Shared ledger rules after caller authorization. Callers hold member/session/booking locks. */
 @Service
 public class GymBookingRules {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymEmployeeMapper employees;
     @Resource private GymEmployeeStoreMapper employeeStores;
     @Resource private GymBookingMapper bookings;
@@ -140,5 +143,6 @@ public class GymBookingRules {
         bookings.updateById(booking);
         session.setReservedCount(session.getReservedCount() - 1);
         sessions.updateById(session);
+        notifications.booking(booking.getId());
     }
 }

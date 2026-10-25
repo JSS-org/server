@@ -2993,3 +2993,46 @@ MobileDevicesController经功能权限进入MobileDevicesService，WorkAccess验
 ### 未做 / 后续
 
 当前95项新增本地实现、4项复用源码、36项待开发，总目标仍135。124–126远程指令/真实回执/二次确认及132–133集成事件仍待实现；厂商设备通信按约定暂缓，没有成功开门/开柜声明。只作本地小步提交，不推送。
+
+## [2026-10-25 21:33 ~ 21:56] 站内通知、本人已读与会员通知意愿
+
+### 意图
+
+实现总表127–131五个消息接口，使查询建立在真实业务事件及持久化记录上；支持会员和员工独立收件箱、当前权限校验、首次已读时间及会员意愿保存。继续遵守真实外部服务暂缓、前端不改、按功能小步本地提交的要求。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymNotificationsController.java`、`controller/admin/mobile/GymMobileNotificationsController.java`、`controller/app/mobile/vo/GymMobileNotificationsVO.java` | 新增 | 两侧列表/已读与会员偏好共五个接口，严格输入及公开字段 |
+| `service/mobile/GymMobileNotificationPublisher.java`、`GymMobileNotificationsService.java` | 新增 | 已落库业务源投影、事件去重、当前收件权限、原子已读及偏好更新 |
+| `dal/dataobject/mobile/GymMobileNotificationDO.java`、`GymMobileNotificationPreferenceDO.java`及对应Mapper | 新增 | 收件人账号类型、源/目标ID、时间和意愿模型 |
+| `service/mobile/GymMobileBookingsService.java`、`service/course/GymBookingRules.java`、`GymCourseService.java` | 修改 | 两侧真实预约与共享取消、课包发放同事务发布 |
+| `service/card/GymCardService.java`、`service/contract/GymContractService.java` | 修改 | 实际发卡及未签合同生成通知，不冒充支付或电子签结果 |
+| `service/marketing/GymActivityParticipationService.java`、`GymMarketingService.java`、`service/mobile/GymMobileActivityService.java` | 修改 | 报名、本人/后台/整场取消真实事件通知 |
+| `enums/ErrorCodeConstants.java` | 修改 | 通知不存在或无权访问错误 |
+| `sql/gym/migration/mysql/V024__gym_mobile_notifications.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 两表至71表，收件唯一及意愿约束，10项新增隔离MySQL检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileBookingsServiceTest.java`、`GymMobileNotificationsControllerTest.java` | 修改/新增 | 14项业务、4项MVC，原完整业务回归装配真实发布器 |
+| `docs/uniapp/`四份契约/清单、`docs/architecture.md`、`docs/testing.md`、脚本README/DATABASE | 修改 | 104/135进度、事件目标映射、真实渠道边界、验证和统一升级顺序 |
+
+Java相对路径位于`yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/`；测试位于同模块`src/test/`。
+
+### 结构关系
+
+实际业务写入→MANDATORY站内发布器→源行锁/最新事件当前读→按会员绑定或当前授课员工账号保存通知，与原业务事务共同提交。重复投影无重复通知，取消后同一时钟重新参与生成新事件；一次事件的不同账号类型及接收人独立记录。活动对外目标是activity而非registration，权益类型区分card和course_pack。
+
+查询/已读→当前身份→收件人SQL范围；工作台再校验bookings:read、会员负责关系和当前授课范围后分页，撤销权限影响正文、total和已读。标记已读仅首次写时间，偏好多键同事务且同值不变。没有外部消息发送调用。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false`（Mockito agent参数见testing）最终gym788通过、组织服务493通过；member4通过、1项既有禁用跳过。14业务+4MVC覆盖实际业务通知、同一时钟重入、并发去重/已读/偏好、当前权限撤销、两类身份/租户隔离、字段白名单与事务失败重试。
+
+`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`真实隔离MySQL117检查通过、全部临时库清理；`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功，打包跳过测试。`python3 script/gym/verify-uniapp-api-coverage.py`输出135/104/31，`git diff --check`通过。首轮MVC未知字段错误码断言修正及日志详见testing，生产严格字段拒绝规则未放松。
+
+### 影响面 / 风险
+
+当前71表、下一迁移V025；升级前备份并暂停相关预约/权益/合同/活动和履约写入，迁移至V024并统一升级后恢复，避免旧实例漏事件。通知数据库写入失败会回滚所在业务，不能将未提交业务的消息当成成功记录。会员偏好只保存外部订阅意愿，不表示微信授权或送达，也不屏蔽业务站内记录。无历史消息/意愿回填或额外角色授权；前端、业务库和原始uniapp.md内容/暂存状态保留。未验证部署HTTP、多节点、规模或真实外部渠道。
+
+### 未做 / 后续
+
+100项新增本地实现、4项复用源码、31项待开发，135项总目标保持。员工站内事件当前为授课预约变更；门禁入场路由及审批/工资等其他工作台事件尚未接入发布器。微信/短信/App远程推送及原合同远程提醒仍未接入，不用站内记录代替渠道成功。设备、支付/自动续费、签约和监控外部边界不变；本地小步提交，不推送。

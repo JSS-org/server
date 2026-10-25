@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 @Import({
+    GymMobileNotificationPublisher.class,
     GymMobileIdentityService.class,
     GymMobileIdempotency.class,
     GymMobileBookingsService.class,

@@ -32,6 +32,9 @@ import java.util.*;
 
 @Service
 public class GymCardService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymCardTemplateMapper gymCardTemplateMapper;
     @Resource private GymMemberCardMapper gymMemberCardMapper;
     @Resource private GymMemberStoreMapper gymMemberStoreMapper;
@@ -385,6 +388,7 @@ public class GymCardService {
         gymMemberMapper.updateById(update);
         if (purchase == null) contracts.issueForEntitlement("member-cards", row.getId());
         else contracts.issueForPurchasedItem(purchase.item().getId(), "member-cards", row.getId());
+        notifications.card(row.getId());
         return row;
     }
 

@@ -34,6 +34,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class GymMarketingService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymActivityMapper gymActivityMapper;
     @Resource private GymActivityParticipationService participation;
     @Resource private cn.iocoder.yudao.module.gym.service.file.GymWorkFileBindings fileBindings;
@@ -258,6 +261,7 @@ public class GymMarketingService {
                 registration.setStatus("cancelled");
                 registration.setCancelledAt(now());
                 gymActivityRegistrationMapper.updateById(registration);
+                notifications.activity(registration.getId());
             }
         return activityResponse(updated);
     }
@@ -353,6 +357,7 @@ public class GymMarketingService {
         registration.setStatus("cancelled");
         registration.setCancelledAt(now());
         gymActivityRegistrationMapper.updateById(registration);
+        notifications.activity(registration.getId());
         return BeanUtils.toBean(registration, GymActivityRegistrationRespVO.class);
     }
 

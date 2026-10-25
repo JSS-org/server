@@ -34,6 +34,9 @@ import java.util.*;
 
 @Service
 public class GymContractService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymContractMapper gymContractMapper;
     @Resource private GymContractEventMapper gymContractEventMapper;
     @Resource private GymContractReminderMapper gymContractReminderMapper;
@@ -292,6 +295,7 @@ public class GymContractService {
         row.setContractNo("GYM-CT-" + String.format(Locale.ROOT, "%010d", row.getId()));
         gymContractMapper.updateById(row);
         event(row.getId(), "issued", "合同原件与业务快照已保存，尚未签署");
+        notifications.contract(row.getId());
         return row;
     }
 

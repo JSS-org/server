@@ -1222,3 +1222,30 @@ git diff --check
 验证指定门店、door/locker过滤及configured条件先于分页，total与当前页一致、空页仍保留总数；不返回camera/face_reader、移除及逻辑删除柜格。停用店/设备可查询配置，删除父设备/门店拒绝；非柜机不得查柜格。实际方法权限代理拒绝无功能权限，撤销门店及纯SELF范围同样拒绝；会员类型、停用账号、租户不匹配与跨租户父设备均拒绝。额外storeId不能改变柜格真实归属，-1/201页长和非法参数拒绝。
 
 只输出设备4字段和柜格3字段，ID为字符串；不泄露设备UID、厂商、位置、遥测和占用状态，不把available改成空闲状态，不生成命令。首次隔离夹具试图让两个租户复用同一个门店主键，被现有全局主键约束正确拒绝；改为独立门店202并断言不可读原门店101，未放松生产约束。最终日志/tmp/uniapp-device-final-tests.log，打包/tmp/uniapp-device-package.log；早期7项夹具记录/tmp/uniapp-device-focused.log。源码路由99/135，剩余36项；未做真实设备、部署HTTP或前端联调。
+
+## 2026-10-25 站内通知、权限撤销与会员偏好
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='GymOrganizationServiceTest#notifications*' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+新增14项真实H2/权限/事务测试和4项MVC测试；最终完整gym **788项通过**（组织服务493项），member4通过、1项既有禁用跳过。Spotless与server依赖打包通过，打包跳过测试。业务场景实际发卡、课包、未签合同和活动报名，不由测试直接插通知冒充业务生产。
+
+验证预约/活动重复执行不重复消息，取消后同一时钟重新参与可生成新事件；源投影并发每接收人只有一份通知。会员与员工独立收件箱，同号管理员不能读会员通知；跨租户、停用账号及错误收件人拒绝，会员档案/账号共同匹配。员工当前业务权限、负责关系、任职日期及授课范围撤销后，历史正文/分页total和已读操作一并拒绝。总部也只能读发给本账号的消息。解除会员门店关系后本人历史仍可读，不给后来初始化的账号迁移历史消息。
+
+未读过滤先于分页，已读自然幂等且并发保留首次时间；偏好多键原子更新、同值保留原时间、并发不同键不覆盖，非法键/重复键/额外身份或授权字段拒绝。注入通知取消写入失败，验证预约、预占、幂等结果及通知事务回滚并可原键重试；偏好某键CHECK失败会撤销同批其他键更新。活动对外businessId指向活动，会员卡/课包以type区分目标。原完整预约/发放/合同事务用例继续通过。
+
+隔离MySQL/Flyway **117项检查通过**，71表，全部临时库清理。新增10项覆盖微秒时间、事件收件人唯一、相同数字账号类型/租户隔离、默认未读、非法账号类型、意愿唯一/受限键/拒绝授权状态、显式退订保存与旧库不生成历史消息或意愿。无业务库操作。
+
+首轮完整回归有1项MVC断言把严格未知字段错误期望为400，实际框架按既有规则返回MOBILE_REQUEST_INVALID=1070023005；只修正断言，字段仍拒绝，业务14项当时已通过。最终日志/tmp/uniapp-notification-final-tests-2.log；专项/tmp/uniapp-notification-focused.log，迁移/tmp/uniapp-notification-migrations.log，打包/tmp/uniapp-notification-package.log。源码映射104/135，剩余31项；没有真实外部推送、门禁事件、部署HTTP、多节点或规模联调证据，前端未改。

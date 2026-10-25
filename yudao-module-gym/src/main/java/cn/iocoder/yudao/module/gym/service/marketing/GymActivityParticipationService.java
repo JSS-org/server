@@ -22,6 +22,9 @@ import java.time.temporal.ChronoUnit;
 /** Caller must authorize the member/store and hold activity then member locks. */
 @Service
 public class GymActivityParticipationService {
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher notifications;
+
     @Resource private GymActivityRegistrationMapper gymActivityRegistrationMapper;
     @Resource private GymBusinessClock clock;
 
@@ -69,6 +72,7 @@ public class GymActivityParticipationService {
         registration.setCancelledAt(null);
         if (create) gymActivityRegistrationMapper.insert(registration);
         else gymActivityRegistrationMapper.updateById(registration);
+        notifications.activity(registration.getId());
         return registration;
     }
 }

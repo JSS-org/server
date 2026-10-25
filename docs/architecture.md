@@ -681,3 +681,11 @@ V023新表及旧退款可空关联字段不回填历史审批，69表；无额�
 GymMobileDevicesController（gym:devices:read）→GymMobileDevicesService→GymMobileWorkAccess有效后台身份、GymDataScope整店权限→原gym_device/gym_device_compartment Mapper。门店限定必填，设备类型只取door/locker；柜格通过真实父设备确认门店且必须locker，仅configured记录参与分页。采用只读REPEATABLE_READ，范围/类型/逻辑删除在SQL分页前处理；仅投影契约字段，配置状态不等于在线或占用状态。
 
 查询不依赖真实设备适配器，不发送指令或变更遥测。管理后台原设备维护入口保持，无表结构或角色授权变更；移动命令/回执仍未实现，前端未改。
+
+## 站内通知投影与会员偏好（V024）
+
+预约两端创建/共享取消、Card/Course实际发放、Contract生成、ActivityParticipation报名及MobileActivity/Marketing取消 → GymMobileNotificationPublisher（MANDATORY）→ 原业务源行锁与最新通知当前读 → gym_mobile_notification。发布器只从持久化业务解析会员、门店、事件和目标，不接收公共HTTP的任意接收人/内容。会员绑定及授课员工关联账号决定接收人，账号类型1/2区分同号账号。业务变化与站内记录同事务，复用现有幂等/回滚规则；第三方发送不参与本批。
+
+会员/工作台NotificationsController → GymMobileNotificationsService → 当前Identity/WorkAccess → 接收人SQL过滤。工作台只有当前授课预约来源，额外PermissionApi与MemberCoach的会员、教练双范围及实际预约/排期EXISTS；总数也受当前范围约束。已读行锁仅首次保存时间。通知type精确区分member_card与course_pack，来源business_id和对外target_id分开，活动打开activity而非registration。
+
+会员偏好写入gym_mobile_notification_preference，受限业务模板键、真实账号/档案与租户唯一、批量同事务；使用现有租户互斥序列化写入。偏好只供未来外部适配读取，不抑制站内业务记录、不生成授权或送达状态。V024增加两表至71表，统一升级相关业务写入实例以免旧版本漏事件；无前端或角色授权变化。

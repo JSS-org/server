@@ -1366,3 +1366,53 @@ CREATE TABLE IF NOT EXISTS gym_refund_application (
 );
 
 CREATE INDEX IF NOT EXISTS idx_refund_application_receipt ON gym_order_refund(tenant_id,refund_application_id,deleted,id);
+
+-- In-app records only; preferences do not prove third-party delivery authorization.
+CREATE TABLE IF NOT EXISTS gym_mobile_notification (
+ id bigint NOT NULL AUTO_INCREMENT,
+ recipient_type int NOT NULL,
+ recipient_user_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ store_id bigint NOT NULL,
+ type varchar(32) NOT NULL,
+ source_type varchar(32) NOT NULL,
+ business_id bigint NOT NULL,
+ target_id bigint NOT NULL,
+ event_kind varchar(32) NOT NULL,
+ event_key varchar(64) NOT NULL,
+ occurred_at datetime(6) NOT NULL,
+ title varchar(120) NOT NULL,
+ content varchar(1000) NOT NULL,
+ published_at datetime(6) NOT NULL,
+ read_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_notification_event (tenant_id,event_key,recipient_type,recipient_user_id),
+ KEY idx_mobile_notification_inbox (tenant_id,recipient_type,recipient_user_id,deleted,read_at,id),
+ KEY idx_mobile_notification_source (tenant_id,source_type,business_id,deleted,id),
+ CONSTRAINT ck_mobile_notification_recipient CHECK (recipient_type IN (1,2)),
+ CONSTRAINT ck_mobile_notification_type CHECK (type IN ('booking','contract','member_card','course_pack','activity'))
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_notification_preference (
+ id bigint NOT NULL AUTO_INCREMENT,
+ user_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ template_key varchar(32) NOT NULL,
+ enabled boolean NOT NULL,
+ saved_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_notification_preference (tenant_id,user_id,template_key),
+ CONSTRAINT ck_mobile_notification_preference CHECK (template_key IN ('booking','contract','entitlement','activity'))
+);

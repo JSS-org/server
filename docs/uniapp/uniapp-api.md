@@ -1080,3 +1080,18 @@ V022新增课包时长和合同事件身份字段，并只为真实buyer_user_id
 `RefundReview`字段为`id,orderId,storeId,memberId,status,requestedAmount,refundedAmount,reason,failureReason,version,submittedAt,reviewedAt,reviewNote`，时间为上海时区ISO字符串。读写都要求有效后台账号及整店数据范围，SELF负责关系不足以审核；不自动授予任何角色。决策仅允许pending_review和正确版本，成功递增版本；重试先校验当前访问权限。**驳回note对会员可见**，请勿填内部敏感备注。
 
 目前没有公开“填写退款成功”的接口。内部`acceptRefundForApplication`核验真实渠道凭据，限定批准后发生、原订单/付款一致且不超过申请余额；凭据与申请关联不可事后转移。关联退款、流水、订单、权益和申请进度同事务落库，重复凭据不重复退款。尚无渠道适配时保持真实等待状态。私教可申请和审核，但实际私教退款及课包撤销仍未实现，现有卡退款路径明确拒绝私教。部署与验证见[实施说明](./uniapp-implementation.md#退款申请审核与凭据关联v023)。
+
+## 工作台设备与柜格查询（总表122–123）
+
+两个内部查询接口已实现，读取原后台维护的资料，无新表或默认角色授权：
+
+| 方法和完整路径 | 请求参数 | data |
+| --- | --- | --- |
+| `GET /admin-api/gym/mobile/devices` | `storeId`必填正整数；`type`可选door或locker；`pageNo/pageSize` | `Page<{id,name,type,status}>` |
+| `GET /admin-api/gym/mobile/devices/{id}/compartments` | 路径为柜机ID；`pageNo/pageSize` | `Page<{id,number,status}>` |
+
+两者要求有效后台账号、`gym:devices:read`及设备所属门店的整店数据权限，SELF负责关系不足以读取。会员令牌、租户不匹配、停用账号和撤销权限后访问拒绝。柜格查询从真实设备反查门店，额外传入storeId不会改变所属关系；非locker设备拒绝。门店不存在或已删除拒绝，已有停用门店/设备保留管理查询能力。
+
+设备仅返回door/locker，camera/face_reader不混入该列表。所有范围、类型、逻辑删除及柜格configured条件在SQL分页前过滤，total与列表同口径；ID升序，页码至少1、每页1～200，不允许-1绕过分页。柜格只返回当前仍configured的记录，移除的历史柜格不展示，保留稳定原ID。
+
+**设备status是配置状态active/inactive；柜格status是配置状态available/inactive，available不表示柜格无人占用或硬件可开。** 不将占用状态、online、lastSeenAt或未接入厂商的结果伪装为实时状态，不返回provider、deviceUid、设备位置及内部字段。读取不创建指令、不改柜格占用。124远程命令、125真实执行结果、126二次确认及132–133设备事件/回执仍待实现，真实设备接入继续暂缓；本批查询成功不代表可以实际开门或开柜。

@@ -1523,8 +1523,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/devices",
       "description": "查询授权门店的门禁和柜机设备",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDevicesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDevicesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileDevicesControllerTest.java"
+      ]
     },
     {
       "id": 123,
@@ -1532,8 +1537,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/devices/{id}/compartments",
       "description": "查询指定柜机的柜格列表和状态",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDevicesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDevicesService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileDevicesControllerTest.java"
+      ]
     },
     {
       "id": 124,

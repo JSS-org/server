@@ -2957,3 +2957,39 @@ Commerce内部关联退款入口核验可信凭据、原订单、审核时间及
 ### 未做 / 后续
 
 93项新增并本地测试、4项复用源码、38项待开发，总数仍135；三个后台辅助接口不增加目标总数。真实支付/退款、自动续费、电子签、设备及监控接入继续暂缓；私教实际退款/课包撤销仍未实现，23支付会话未开放。仅本地小步提交，不推送。
+
+## [2026-10-25 21:24 ~ 21:31] 工作台设备与柜格的授权分页查询
+
+### 意图
+
+补齐135项总表122–123，让工作台从已有后台资料查询设备和柜格；保留“真实设备接入先跳过、不要改前端、小步提交”的边界，不把设备配置状态当作遥测或操作成功。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDevicesController.java` | 新增 | 设备和柜格两个GET路由，原gym:devices:read权限 |
+| 同目录`vo/GymMobileDevicesVO.java` | 新增 | 必填门店/类型及分页校验，设备4字段、柜格3字段投影 |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDevicesService.java` | 新增 | 有效后台身份、整店授权、父资源校验及SQL过滤后分页 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 7项真实数据库、权限、租户、参数与状态测试 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileDevicesControllerTest.java` | 新增 | 3项MVC参数与严格返回字段契约测试，实际被测为后台Controller |
+| `docs/uniapp/`接口设计、总表、实施进度及机器清单 | 修改 | 99/135覆盖、当前数量、配置状态及设备暂缓边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md` | 修改 | 调用链、验证证据和运行说明 |
+
+### 结构关系
+
+MobileDevicesController经功能权限进入MobileDevicesService，WorkAccess验证当前有效后台账号，DataScope约束整店范围。设备按指定门店和door/locker类型过滤；柜格先由真实父设备确认门店及locker类型，再按configured过滤。直接复用原Mapper和资料，只读REPEATABLE_READ；范围和筛选在SQL分页前生效，total与列表一致。没有调用设备操作或遥测写入服务。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false`（本机Mockito agent参数见testing）最终gym770项通过、组织服务479项，member4项通过、1项既有禁用跳过。新增7业务+3MVC覆盖方法权限、租户隔离、SELF不足、已撤权限、父设备类型、逻辑删除、移除柜格、分页总数及配置状态不冒充实时占用。
+
+`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功，打包跳过测试；`python3 script/gym/verify-uniapp-api-coverage.py`输出Contract135/mapped99/missing36；`git diff --check`通过。完整日志见testing；无schema变化，本批不重复MySQL迁移验证。
+
+### 影响面 / 风险
+
+设备status=active/inactive、柜格status=available/inactive均为配置状态；available不证明空闲或硬件可开。后台有权人员可读停用店/设备，已删除父资源拒绝。不返回设备UID、厂商、位置、online或occupancyState。无新迁移、权限定义或角色授权，仍V023/69表；前端、业务库和用户uniapp.md原始内容及暂存状态保留。本地验证不证明部署HTTP或设备联调。
+
+### 未做 / 后续
+
+当前95项新增本地实现、4项复用源码、36项待开发，总目标仍135。124–126远程指令/真实回执/二次确认及132–133集成事件仍待实现；厂商设备通信按约定暂缓，没有成功开门/开柜声明。只作本地小步提交，不推送。

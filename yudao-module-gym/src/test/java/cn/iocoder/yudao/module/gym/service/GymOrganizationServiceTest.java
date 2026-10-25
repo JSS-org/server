@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileDevicesService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDevicesController.class,
     cn.iocoder.yudao.module.gym.service.sales.GymRefundApplicationService.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymRefundApplicationsController.class,
     cn.iocoder.yudao.module.gym.controller.admin.sales.GymRefundApplicationsController.class,
@@ -19000,5 +19002,234 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertServiceException(
                 () -> memberFulfillment.fulfill(f.order().getId()), COMMERCE_FULFILLMENT_INVALID);
         assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileDevicesService mobileDevices;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDevicesController
+            mobileDevicesController;
+
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceMapper mobileDeviceRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.device.GymDeviceCompartmentMapper mobileCompartmentRows;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDevicesVO.Query
+            mobileDeviceQuery(Long storeId) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDevicesVO
+                        .Query();
+        req.setStoreId(storeId);
+        return req;
+    }
+
+    Long mobileLocker(String uid) {
+        return Long.valueOf(deviceService.createDevice(deviceRequest(101L, "locker", uid)).getId());
+    }
+
+    @Test
+    void mobileDevicesFiltersStoreAndSupportedTypesBeforePaginationWithoutTelemetryClaims() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var door = deviceService.createDevice(deviceRequest(101L, "door", "MOBILE-DOOR"));
+        var locker = mobileLocker("MOBILE-LOCKER");
+        deviceService.createDevice(deviceRequest(101L, "camera", "MOBILE-CAMERA"));
+        deviceService.createDevice(deviceRequest(101L, "face_reader", "MOBILE-FACE"));
+        deviceService.createDevice(deviceRequest(102L, "door", "MOBILE-OTHER-STORE"));
+        var patch = new cn.iocoder.yudao.module.gym.controller.admin.device.vo.GymDeviceSaveReqVO();
+        patch.setStatus("inactive");
+        deviceService.patchDevice(locker, patch);
+        scoped(101L);
+        var req = mobileDeviceQuery(101L);
+        req.setPageSize(1);
+        var first = mobileDevices.devices(req);
+        assertEquals(2, first.getTotal());
+        assertEquals(door.getId(), first.getList().getFirst().id());
+        assertEquals("active", first.getList().getFirst().status());
+        req.setPageNo(2);
+        assertEquals("inactive", mobileDevices.devices(req).getList().getFirst().status());
+        req.setPageNo(1);
+        req.setType("locker");
+        assertEquals(1, mobileDevices.devices(req).getTotal());
+        assertEquals(locker.toString(), mobileDevices.devices(req).getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(1, mobileDevices.devices(req).getTotal());
+        assertTrue(mobileDevices.devices(req).getList().isEmpty());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(first);
+        for (String hidden : List.of("deviceUid", "provider", "online", "lastSeenAt", "location"))
+            assertFalse(json.contains("\"" + hidden + "\""));
+    }
+
+    @Test
+    void mobileDevicesCompartmentsPageOnlyConfiguredRowsAndPreserveRealAdministrativeStatus() {
+        stores.create(store(101L, "A"));
+        Long a = mobileLocker("MOBILE-A"), b = mobileLocker("MOBILE-B");
+        var configured = deviceService.saveCompartments(a, compartments("A1", "A2", "A3"));
+        deviceService.saveCompartments(b, compartments("B1"));
+        deviceService.saveCompartments(a, compartments("A1", "A3"));
+        Long kept = Long.valueOf(configured.getCompartments().get(2).getId());
+        var row = mobileCompartmentRows.selectById(kept);
+        row.setStatus("inactive");
+        row.setOccupancyState("occupied");
+        mobileCompartmentRows.updateById(row);
+        var req = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        req.setPageSize(1);
+        var first = mobileDevices.compartments(a, req);
+        assertEquals(2, first.getTotal());
+        assertEquals("A1", first.getList().getFirst().number());
+        req.setPageNo(2);
+        var second = mobileDevices.compartments(a, req);
+        assertEquals(kept.toString(), second.getList().getFirst().id());
+        assertEquals("inactive", second.getList().getFirst().status());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(second);
+        assertFalse(json.contains("occupancyState"));
+        assertFalse(json.contains("occupied"));
+        assertFalse(json.contains("configured"));
+        // Reading does not reset hardware state or create any command.
+        assertEquals("occupied", mobileCompartmentRows.selectById(kept).getOccupancyState());
+        assertEquals(0, deviceService.commands(a, new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void mobileDevicesRequireFunctionalPermissionAndCurrentWholeStoreScopeForBothRoutes() {
+        stores.create(store(101L, "A"));
+        var locker = mobileLocker("MOBILE-SCOPE");
+        deviceService.saveCompartments(locker, compartments("01"));
+        var req = mobileDeviceQuery(101L);
+        var page = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileDevicesController.devices(req));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileDevicesController.compartments(locker, page));
+        when(permissions.hasAnyPermissions(1L, "gym:devices:read")).thenReturn(true);
+        assertEquals(1, mobileDevicesController.devices(req).getData().getTotal());
+        assertEquals(1, mobileDevicesController.compartments(locker, page).getData().getTotal());
+        scoped(102L);
+        assertServiceException(() -> mobileDevicesController.devices(req), STORE_NO_PERMISSION);
+        assertServiceException(
+                () -> mobileDevicesController.compartments(locker, page), STORE_NO_PERMISSION);
+        var self = new DeptDataPermissionRespDTO();
+        self.setAll(false);
+        self.setSelf(true);
+        self.setDeptIds(Set.of());
+        when(permissions.getDeptDataPermission(any())).thenReturn(self);
+        assertServiceException(() -> mobileDevices.devices(req), STORE_NO_PERMISSION);
+        assertServiceException(() -> mobileDevices.compartments(locker, page), STORE_NO_PERMISSION);
+        headquarters();
+        when(permissions.hasAnyPermissions(1L, "gym:devices:read")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileDevicesController.compartments(locker, page));
+    }
+
+    @Test
+    void mobileDevicesRejectMemberDisabledAndMismatchedTenantIdentities() {
+        stores.create(store(101L, "A"));
+        Long locker = mobileLocker("MOBILE-IDENTITY");
+        var req = mobileDeviceQuery(101L);
+        var page = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        qrMemberLogin();
+        assertServiceException(() -> mobileDevices.devices(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(locker, page), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        var account = workAccounts.getUser(1L);
+        account.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(account);
+        assertServiceException(() -> mobileDevices.devices(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(locker, page), MOBILE_IDENTITY_INVALID);
+        account.setStatus(0);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileDevices.devices(req), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(locker, page), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileDevicesDoNotLeakOtherTenantRowsAndRejectMissingOrWrongParent() {
+        stores.create(store(101L, "A"));
+        Long locker = mobileLocker("MOBILE-TENANT");
+        deviceService.saveCompartments(locker, compartments("01"));
+        var door =
+                Long.valueOf(
+                        deviceService
+                                .createDevice(deviceRequest(101L, "door", "MOBILE-NOT-LOCKER"))
+                                .getId());
+        var page = new cn.iocoder.yudao.framework.common.pojo.PageParam();
+        assertServiceException(
+                () -> mobileDevices.compartments(door, page), DEVICE_COMPARTMENT_INVALID);
+        assertServiceException(
+                () -> mobileDevices.compartments(Long.MAX_VALUE, page), DEVICE_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileDevices.devices(mobileDeviceQuery(999L)), STORE_NOT_EXISTS);
+        // An authenticated second tenant cannot resolve the first tenant's store or device.
+        TenantContextHolder.setTenantId(2L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        stores.create(store(202L, "TENANT-B"));
+        assertServiceException(
+                () -> mobileDevices.devices(mobileDeviceQuery(101L)), STORE_NOT_EXISTS);
+        assertEquals(0, mobileDevices.devices(mobileDeviceQuery(202L)).getTotal());
+        assertServiceException(() -> mobileDevices.compartments(locker, page), DEVICE_NOT_EXISTS);
+        var own =
+                deviceService
+                        .createDevice(deviceRequest(202L, "locker", "MOBILE-TENANT-B"))
+                        .getId();
+        assertEquals(own, mobileDevices.devices(mobileDeviceQuery(202L)).getList().getFirst().id());
+    }
+
+    @Test
+    void mobileDevicesKeepInactiveStoreInventoryButExcludeDeletedRecords() {
+        stores.create(store(101L, "A"));
+        var locker = mobileLocker("MOBILE-DELETED");
+        var config = deviceService.saveCompartments(locker, compartments("01", "02"));
+        mobileCompartmentRows.deleteById(Long.valueOf(config.getCompartments().getFirst().getId()));
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(1, mobileDevices.devices(mobileDeviceQuery(101L)).getTotal());
+        assertEquals(
+                1,
+                mobileDevices
+                        .compartments(
+                                locker, new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getTotal());
+        mobileDeviceRows.deleteById(locker);
+        assertEquals(0, mobileDevices.devices(mobileDeviceQuery(101L)).getTotal());
+        assertServiceException(
+                () ->
+                        mobileDevices.compartments(
+                                locker, new cn.iocoder.yudao.framework.common.pojo.PageParam()),
+                DEVICE_NOT_EXISTS);
+        storeMapper.deleteById(101L);
+        assertServiceException(
+                () -> mobileDevices.devices(mobileDeviceQuery(101L)), STORE_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileDevicesValidateRequiredStoreTypesAndBoundedPaginationInService() {
+        stores.create(store(101L, "A"));
+        var req = mobileDeviceQuery(null);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setStoreId(101L);
+        req.setType("camera");
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setType(null);
+        req.setPageSize(-1);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        req.setPageSize(10);
+        req.setPageNo(0);
+        assertThrows(ConstraintViolationException.class, () -> mobileDevices.devices(req));
+        assertServiceException(
+                () ->
+                        mobileDevices.compartments(
+                                0L, new cn.iocoder.yudao.framework.common.pojo.PageParam()),
+                MOBILE_REQUEST_INVALID);
     }
 }

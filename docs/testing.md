@@ -1204,3 +1204,21 @@ git diff --check
 真实隔离MySQL/Flyway **107项检查通过**，69张gym表，临时数据库全部清理。新增13项检查覆盖活动唯一及跨租户独立、终态释放、多份终态历史、微秒时间、拒绝错误/缺失占位及零元申请、默认未审未退、旧退款事实与NULL关联保留、无历史申请回填。旧V021升级夹具按版本移除所有V022及以后迁移后再升级到最新，继续验证V022历史任务恢复；已应用迁移未改。业务库未迁移。
 
 日志：/tmp/uniapp-refund-focused.log、/tmp/uniapp-refund-final-tests.log、/tmp/uniapp-refund-final-tests-2.log（最终，含数据库CHECK约束）、/tmp/uniapp-refund-migrations.log、/tmp/uniapp-refund-package.log。源码覆盖97/135、仍缺38项，不表示真实微信、部署HTTP、多实例或规模联调已通过；前端未改。
+
+## 2026-10-25 工作台设备与柜格分页查询
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+新增7项真实H2/权限/租户业务测试与3项MVC测试，完整gym **770通过**（组织服务479项），member4通过、1项既有禁用跳过；Spotless与server依赖打包通过，打包跳过测试。系统权限和隔离MySQL迁移本批未重跑，没有修改schema、迁移或角色授权。
+
+验证指定门店、door/locker过滤及configured条件先于分页，total与当前页一致、空页仍保留总数；不返回camera/face_reader、移除及逻辑删除柜格。停用店/设备可查询配置，删除父设备/门店拒绝；非柜机不得查柜格。实际方法权限代理拒绝无功能权限，撤销门店及纯SELF范围同样拒绝；会员类型、停用账号、租户不匹配与跨租户父设备均拒绝。额外storeId不能改变柜格真实归属，-1/201页长和非法参数拒绝。
+
+只输出设备4字段和柜格3字段，ID为字符串；不泄露设备UID、厂商、位置、遥测和占用状态，不把available改成空闲状态，不生成命令。首次隔离夹具试图让两个租户复用同一个门店主键，被现有全局主键约束正确拒绝；改为独立门店202并断言不可读原门店101，未放松生产约束。最终日志/tmp/uniapp-device-final-tests.log，打包/tmp/uniapp-device-package.log；早期7项夹具记录/tmp/uniapp-device-focused.log。源码路由99/135，剩余36项；未做真实设备、部署HTTP或前端联调。

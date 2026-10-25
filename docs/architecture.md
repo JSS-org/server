@@ -675,3 +675,9 @@ AppGymRefundApplicationsController → GymRefundApplicationService → gym_refun
 Commerce.acceptRefundForApplication → 原可信凭据核验 → 申请批准时间/原订单/限额校验 → 真实退款及原GymRefundReviewService权益处理 → 申请关联金额和状态更新 → 任务取消，共用事务。GymRefundReviewService是退款后的卡权益人工处理，GymRefundApplicationService是退款前的申请审核。无关联的原退款流程保留，可关闭余额不足的申请但不计入其已退金额；凭据关联不可事后挪用。课程可申请审核，真实私教退款/权益撤销仍拒绝。
 
 V023新表及旧退款可空关联字段不回填历史审批，69表；无额外授权。部署暂停相关写入和执行器，统一升级后恢复，避免旧代码忽略申请暂停条件。未接真实退款渠道，未改前端或业务库。
+
+## 工作台设备与柜格查询（总表122–123）
+
+GymMobileDevicesController（gym:devices:read）→GymMobileDevicesService→GymMobileWorkAccess有效后台身份、GymDataScope整店权限→原gym_device/gym_device_compartment Mapper。门店限定必填，设备类型只取door/locker；柜格通过真实父设备确认门店且必须locker，仅configured记录参与分页。采用只读REPEATABLE_READ，范围/类型/逻辑删除在SQL分页前处理；仅投影契约字段，配置状态不等于在线或占用状态。
+
+查询不依赖真实设备适配器，不发送指令或变更遥测。管理后台原设备维护入口保持，无表结构或角色授权变更；移动命令/回执仍未实现，前端未改。

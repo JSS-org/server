@@ -679,3 +679,7 @@ V021执行器仅对类型2使用后台账号；当时类型1和未知类型明�
 部署前备份并暂停会员退款/订单写入、支付退款处理、审批写入及全部履约执行器（gym.commerce.fulfillment.enabled=false），按既有流程migrate/validate至V023，统一升级相关实例再恢复。禁止让不识别活动申请的旧执行器或人工履约代码继续处理这些订单。包含V022升级时同时遵守其会员下单暂停要求；若DDL失败需核查实际状态，不假设MySQL DDL原子回滚。
 
 审批通过只到approved；退款凭据核验和实际渠道操作分开，真实渠道、私教退款及课包撤销仍待接入/实现。接口和业务边界见docs/uniapp/uniapp-api.md及uniapp-implementation.md。真实隔离MySQL/Flyway107项检查通过、全部临时库清理；业务库未迁移。下一未使用版本V024，已应用迁移保持不变。
+
+### 移动工作台设备与柜格查询
+
+总表122–123：GET /admin-api/gym/mobile/devices（必填storeId、可选type=door或locker）、GET /admin-api/gym/mobile/devices/{id}/compartments（柜机ID）；均支持pageNo/pageSize且最大200，需gym:devices:read和当前有效后台账号、整店范围。读取后台已登记设备和已配置柜格；配置active/available不代表真实在线或可开柜，不读取或更新厂商状态。无新迁移或角色授权，当前V023/69表，下一版本V024。前端、业务库及真实设备通信未改；详见docs/uniapp/uniapp-api.md。

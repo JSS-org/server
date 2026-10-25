@@ -16,6 +16,10 @@ public class GymFulfillmentTaskDO extends TenantBaseDO {
     @TableId private Long id;
     private Long orderId;
     private Long principalUserId;
+
+    /** UserTypeEnum namespace; member IDs must never be looked up as system_users IDs. */
+    private Integer principalUserType;
+
     private String status;
     private Integer attemptCount;
     private Integer attemptLimit;

@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.gym.service.sales;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.gym.enums.ErrorCodeConstants.*;
 
+import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.gym.controller.admin.sales.vo.GymFulfillmentTaskRespVO;
@@ -37,8 +38,9 @@ public class GymFulfillmentQueueService {
 
     private Long principal() {
         var user = SecurityFrameworkUtils.getLoginUser();
-        if (user == null || !Integer.valueOf(2).equals(user.getUserType()) || user.getId() == null)
-            throw exception(COMMERCE_REQUEST_INVALID);
+        if (user == null
+                || !UserTypeEnum.ADMIN.getValue().equals(user.getUserType())
+                || user.getId() == null) throw exception(COMMERCE_REQUEST_INVALID);
         return user.getId();
     }
 
@@ -56,6 +58,7 @@ public class GymFulfillmentQueueService {
         var row = new GymFulfillmentTaskDO();
         row.setOrderId(order.getId());
         row.setPrincipalUserId(principal());
+        row.setPrincipalUserType(UserTypeEnum.ADMIN.getValue());
         row.setAttemptCount(0);
         row.setAttemptLimit(8);
         row.setStatus(order.getPayableAmount().signum() == 0 ? "pending" : "waiting_payment");
@@ -263,7 +266,10 @@ public class GymFulfillmentQueueService {
                 || order.getPaidAmount().compareTo(order.getPayableAmount()) != 0)
             throw exception(COMMERCE_FULFILLMENT_INVALID);
         var row = task(orderId, true);
-        if (row == null || !"failed".equals(row.getStatus()))
+        // The legacy retry path may replace an administrator, never convert a member task.
+        if (row == null
+                || !"failed".equals(row.getStatus())
+                || !UserTypeEnum.ADMIN.getValue().equals(row.getPrincipalUserType()))
             throw exception(COMMERCE_FULFILLMENT_INVALID);
         row.setPrincipalUserId(principal());
         row.setAttemptLimit(Math.addExact(row.getAttemptCount(), 8));

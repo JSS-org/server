@@ -6407,6 +6407,145 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
     }
 
     @Test
+    void fulfillmentPrincipalMemberCollisionNeverLooksUpAdministratorOrIssuesRights() {
+        fulfillmentUnsupportedPrincipal(1);
+    }
+
+    @Test
+    void fulfillmentPrincipalUnknownNamespaceFailsWithoutAdministratorFallback() {
+        fulfillmentUnsupportedPrincipal(99);
+    }
+
+    private void fulfillmentUnsupportedPrincipal(int userType) {
+        var order = commerceOrder();
+        payCommerceOrder(order);
+        publishedContractPdf();
+        validFulfillmentPrincipal();
+        Long taskId = Long.valueOf(fulfillmentQueue.get(order.getId()).getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        assertEquals(
+                2,
+                jdbc.queryForObject(
+                        "SELECT principal_user_type FROM gym_fulfillment_task WHERE id=?",
+                        Integer.class,
+                        taskId));
+        // Same numeric ID as a valid, authorized administrator: namespace must win.
+        jdbc.update(
+                "UPDATE gym_fulfillment_task SET principal_user_type=? WHERE id=?",
+                userType,
+                taskId);
+        loginAs(91L);
+        var saved = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        org.mockito.Mockito.clearInvocations(users, permissions);
+        assertTrue(fulfillmentWorker.process(taskId));
+        verify(users, never()).getUser(anyLong());
+        verify(permissions, never()).hasAnyPermissions(eq(1L), eq("gym:sales:read"));
+        assertSame(
+                saved,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals(1L, TenantContextHolder.getRequiredTenantId());
+        var failed = fulfillmentQueue.get(order.getId());
+        assertEquals("failed", failed.getStatus());
+        assertEquals(1, failed.getAttemptCount());
+        assertTrue(failed.getFailureReason().contains("账号类型暂不支持"));
+        assertNotNull(failed.getNextAttemptAt());
+        assertEquals("paid", salesRecords.order(order.getId()).getStatus());
+        assertTrue(salesRecords.order(order.getId()).getMemberCardIds().isEmpty());
+        assertEquals(1L, financialEvents.selectCount());
+        assertFalse(fulfillmentWorker.process(taskId));
+    }
+
+    @Test
+    void fulfillmentPrincipalRetryCannotConvertMemberOrUnknownTaskIntoAdministrator() {
+        var order = commerceOrder();
+        payCommerceOrder(order);
+        Long taskId = Long.valueOf(fulfillmentQueue.get(order.getId()).getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_fulfillment_task SET status='failed', attempt_count=8, principal_user_id=50 WHERE id=?",
+                taskId);
+        loginAs(91L);
+        for (int userType : List.of(1, 99)) {
+            jdbc.update(
+                    "UPDATE gym_fulfillment_task SET principal_user_type=? WHERE id=?",
+                    userType,
+                    taskId);
+            assertServiceException(
+                    () -> fulfillmentQueue.retry(order.getId()), COMMERCE_FULFILLMENT_INVALID);
+            var task = fulfillmentQueue.get(order.getId());
+            assertEquals("failed", task.getStatus());
+            assertEquals(8, task.getAttemptCount());
+            assertEquals(8, task.getAttemptLimit());
+            assertEquals(
+                    50L,
+                    jdbc.queryForObject(
+                            "SELECT principal_user_id FROM gym_fulfillment_task WHERE id=?",
+                            Long.class,
+                            taskId));
+            assertEquals(
+                    userType,
+                    jdbc.queryForObject(
+                            "SELECT principal_user_type FROM gym_fulfillment_task WHERE id=?",
+                            Integer.class,
+                            taskId));
+        }
+        jdbc.update("UPDATE gym_fulfillment_task SET principal_user_type=2 WHERE id=?", taskId);
+        assertEquals("pending", fulfillmentQueue.retry(order.getId()).getStatus());
+        assertEquals(16, fulfillmentQueue.get(order.getId()).getAttemptLimit());
+        assertEquals(
+                91L,
+                jdbc.queryForObject(
+                        "SELECT principal_user_id FROM gym_fulfillment_task WHERE id=?",
+                        Long.class,
+                        taskId));
+        assertEquals(
+                2,
+                jdbc.queryForObject(
+                        "SELECT principal_user_type FROM gym_fulfillment_task WHERE id=?",
+                        Integer.class,
+                        taskId));
+    }
+
+    @Test
+    void fulfillmentPrincipalAdministratorQueueRejectsMemberCallerBeforeWritingTask() {
+        var order = commerceOrder();
+        var policy =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderPolicyMapper
+                                        .class)
+                        .selectOne(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderPolicyDO
+                                        ::getOrderId,
+                                order.getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("DELETE FROM gym_fulfillment_task WHERE order_id=?", order.getId());
+        qrMemberLogin();
+        var tx =
+                new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class));
+        assertServiceException(
+                () -> tx.executeWithoutResult(status -> fulfillmentQueue.enqueue(order, policy)),
+                COMMERCE_REQUEST_INVALID);
+        assertEquals(
+                0,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM gym_fulfillment_task WHERE order_id=?",
+                        Integer.class,
+                        order.getId()));
+        loginAs(1L);
+        tx.executeWithoutResult(status -> fulfillmentQueue.enqueue(order, policy));
+        assertEquals(
+                2,
+                jdbc.queryForObject(
+                        "SELECT principal_user_type FROM gym_fulfillment_task WHERE order_id=?",
+                        Integer.class,
+                        order.getId()));
+        assertEquals("waiting_payment", fulfillmentQueue.get(order.getId()).getStatus());
+    }
+
+    @Test
     void durableFulfillmentWaitsForFullPaymentThenRunsAsLivePrincipalAndRestoresCaller() {
         var order = commerceOrder();
         Long id = order.getId();

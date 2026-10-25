@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.gym.service.sales;
 
+import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.security.core.LoginUser;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
@@ -30,23 +31,29 @@ public class GymFulfillmentWorker {
         var saved = SecurityContextHolder.getContext();
         String failure = null;
         try {
-            var user = users.getUser(task.getPrincipalUserId());
-            if (user == null
-                    || !Integer.valueOf(0).equals(user.getStatus())
-                    || !TenantContextHolder.getRequiredTenantId().equals(user.getTenantId()))
-                failure = "发起账号已停用、不存在或不属于当前租户";
-            else if (!permissions.hasAnyPermissions(user.getId(), "gym:sales:read"))
-                failure = "发起账号已无交易读取权限";
-            else {
-                var login = new LoginUser();
-                login.setId(user.getId());
-                login.setUserType(2);
-                login.setTenantId(user.getTenantId());
-                var context = SecurityContextHolder.createEmptyContext();
-                context.setAuthentication(
-                        UsernamePasswordAuthenticationToken.authenticated(login, null, List.of()));
-                SecurityContextHolder.setContext(context);
-                commerce.fulfillAutomaticOrder(task.getOrderId());
+            // Check the namespace before any account lookup, including colliding numeric IDs.
+            if (!UserTypeEnum.ADMIN.getValue().equals(task.getPrincipalUserType())) {
+                failure = "任务账号类型暂不支持自动履约，未使用后台账号执行";
+            } else {
+                var user = users.getUser(task.getPrincipalUserId());
+                if (user == null
+                        || !Integer.valueOf(0).equals(user.getStatus())
+                        || !TenantContextHolder.getRequiredTenantId().equals(user.getTenantId()))
+                    failure = "发起账号已停用、不存在或不属于当前租户";
+                else if (!permissions.hasAnyPermissions(user.getId(), "gym:sales:read"))
+                    failure = "发起账号已无交易读取权限";
+                else {
+                    var login = new LoginUser();
+                    login.setId(user.getId());
+                    login.setUserType(UserTypeEnum.ADMIN.getValue());
+                    login.setTenantId(user.getTenantId());
+                    var context = SecurityContextHolder.createEmptyContext();
+                    context.setAuthentication(
+                            UsernamePasswordAuthenticationToken.authenticated(
+                                    login, null, List.of()));
+                    SecurityContextHolder.setContext(context);
+                    commerce.fulfillAutomaticOrder(task.getOrderId());
+                }
             }
         } catch (ServiceException e) {
             failure = "自动履约业务校验失败，错误码 " + e.getCode() + "；请检查合同、卡种和门店权限";

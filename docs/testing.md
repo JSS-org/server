@@ -1123,3 +1123,27 @@ git diff --check
 首轮完整筛选未包含App前缀命名的新增MVC类，已改名GymMobileOrdersControllerTest纳入最终回归；随后补真实收退款筛选与旧配置/销售窗口测试。日志：/tmp/uniapp-orders-focused.log、/tmp/uniapp-orders-final-tests.log、/tmp/uniapp-orders-final-tests-2.log、/tmp/uniapp-orders-final-tests-3.log、/tmp/uniapp-orders-final-tests-4.log（最终）、/tmp/uniapp-orders-migrations.log、/tmp/uniapp-orders-package-final.log。迁移验证旧partially_paid订单保留100.00应收/20.00实收和状态，四个新增字段NULL，不伪造历史信息。
 
 新会员订单自动履约/重试未接入，目前真实待履约；本步不能证明新会员下单后已发卡/课包。23支付会话、25–26退款申请、真实渠道的在途支付/取消与晚到通知补偿仍待实现；前端、业务库未改，未做生产HTTP/分享页面/规模联调。
+
+
+## 2026-10-25 履约任务账号类型隔离
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='GymOrganizationServiceTest#fulfillmentPrincipal*' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-module-gym -am spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+4项专项和完整gym **720项通过**（组织服务437项），member4通过、1项既有禁用跳过。验证实际领取/失败持久化、次数及退避时间、SecurityContext恢复；数字ID相同的会员任务不查询有效员工账号、不检查其后台权限、不产生权益或额外财务事件。未知类型同样拒绝。后台重试失败后类型、账号、状态及次数预算保持；类型2仍可由有权后台人员承接并增加8次预算。会员调用原后台入队在写任务前拒绝，后台调用保存显式类型2。
+
+接口源码映射仍95/135，余40项；本批没有新增路由，不证明会员自动履约已交付。新会员订单仍未入队。日志：/tmp/uniapp-principal-focused.log、/tmp/uniapp-principal-final-tests.log、/tmp/uniapp-principal-migrations.log、/tmp/uniapp-principal-package.log。前端、业务库未修改，未做真实支付、部署HTTP或规模联调。
+
+Spotless及server依赖打包通过（打包跳过测试）。真实隔离MySQL/Flyway **82项检查通过**，V021后仍68表；全部临时库清理。新增检查覆盖类型默认2、显式会员与同号后台独立、显式NULL拒绝、旧processing任务的微秒租约/claimToken/失败原因/次数及原账号保留、不为旧订单伪造任务。首次在沙箱内连接本机MySQL被限制，获授权后运行隔离测试通过；未迁移业务库。

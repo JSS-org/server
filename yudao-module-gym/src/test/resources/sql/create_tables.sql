@@ -1088,6 +1088,7 @@ CREATE TABLE IF NOT EXISTS gym_fulfillment_task (
  id bigint NOT NULL AUTO_INCREMENT,
  order_id bigint NOT NULL,
  principal_user_id bigint NOT NULL,
+ principal_user_type int NOT NULL DEFAULT 2,
  status varchar(32) NOT NULL,
  attempt_count int NOT NULL,
  attempt_limit int NOT NULL,

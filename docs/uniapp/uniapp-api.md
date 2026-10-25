@@ -609,7 +609,7 @@ Content-Type: application/json
 
 | 方法与路径 | 使用方 | 请求 | 返回 |
 | --- | --- | --- | --- |
-| `GET W/feedbacks` | 管理者/总部 | `P,storeId:ID,type?:feedback或review,status?:string` | `Page<{id:ID,type:string,rating:int?,content:string,fileIds:ID[],status:string,createdAt:DateTime}>`，不返回身份 |
+| `GET W/feedbacks` | 管理者/总部 | `P,storeId:ID,type?:feedback或review,status?:received或replied` | `Page<{id:ID,type:string,rating:int?,content:string,fileIds:ID[],status:string,createdAt:DateTime,reply:string?,cardContext:{activeCardCount:int,activeCoursePackCount:int}?}>`，不返回身份 |
 | `POST W/feedbacks/{id}/replies`（幂等） | 管理者 | `content:string` | `{id:ID,status:replied,reply:string}` |
 | `POST W/activities`（幂等） | 有活动管理权限的管理者 | `storeId:ID,title:string,description:string,coverFileId?:ID,startsAt:DateTime,endsAt:DateTime,registrationDeadline:DateTime,cancelDeadline?:DateTime,capacity:int` | `Activity` |
 | `GET W/devices` | 有设备查看权限的管理者 | `P,storeId:ID,type?:door或locker` | `Page<{id:ID,name:string,type:string,status:string}>` |
@@ -725,7 +725,8 @@ Content-Type: application/json
 | 设备/器械 | `GymDeviceController` | 受限教学展示、设备网关及命令真实回执 |
 | 活动/加盟 | `GymMarketingController`、`AppGymFranchiseController` | 本人报名、公开展示；加盟提交沿用已有路径和字段 |
 | 文件 | `GymFileController` | 会员归属模型、适配用途、受控下载 |
-| 积分/反馈/私信/风控 | 本次未核实到对应完整 gym 小程序入口 | 建模并新增接口，不宣称已有功能可直接使用 |
+| 反馈 | 64–65、119–120已实现，详见实施进度 | 本人提交与历史、整店匿名查询/回复及受控附件 |
+| 积分/私信/风控 | 尚无完整 gym 小程序入口 | 建模并新增接口，不宣称已有功能可直接使用 |
 
 表中省略前缀的现有路径属于 `/admin-api`，它们不是本文 A/W 新接口。已有模块行为仍以实际源码和 OpenAPI 为准；不能只改路径便假定完成接口适配。
 
@@ -785,3 +786,17 @@ Content-Type: application/json
 用户确认：“这个部分先跳过，文档写清楚”。支付与自动续费、电子签约、门禁设备、监控的第三方真实接入及外部联调暂缓；内部数据查询、业务建模和其他后端接口继续推进。完整边界、受影响接口编号及后续资料见 [实施进度与第三方边界](./uniapp-implementation.md#第三方接入暂缓范围)。
 
 原 135 个接口仍保留在总表中，暂缓不等于已实现，不把未开放的渠道功能返回为成功。支付会话、自动扣费、签署完成、门禁放行及监控播放均不得用模拟结果对外宣称接入成功；未实现入口可能尚无路由，以总表当前状态为准。前端不修改。
+
+## 反馈已实现补充（2026-10-25）
+
+总表64–65、119–120已实现。提交仅接受storeId、type、content、rating、fileIds和allowCardContext；会员身份从令牌取得。必须是营业门店，且具有当前会员门店关系或本人已发生的成功签到。历史查询不要求门店仍营业；门店读取和回复仍要求当前整店数据范围，SELF负责关系不授予此能力。
+
+提交、回复均须Idempotency-Key；内容去除两端空白，1～2000字符，review必须有1～5整数评分，feedback可不评分。同键相同参数重放首次快照，同键不同参数冲突；会员收到回复后重试原提交键仍返回首次received，当前状态通过本人列表读取。反馈、附件关联和请求结果同事务；并发重复提交只写一次。一条反馈只允许首次回复，新的键携带相同正文返回原回复，不同正文拒绝覆盖；回复与请求结果同事务。查询按提交时间/ID倒序，筛选在分页前，pageSize最大200。
+
+门店列表不返回memberId、手机号、姓名、卡号、上传人或审计人。allowCardContext默认false；明确true时保存提交时的两个数量activeCardCount、activeCoursePackCount，门店响应cardContext为该快照，否则为null。只统计同店可用范围、已开始未到期且active的卡和课包，次数卡/课包剩余次数须大于0；数量不扣预占次数，也不代表当前预约资格。摘要不包含ID、名称、金额或有效期；后续卡变化不改写该快照。
+
+附件最多9张，不可重复，仅限本人在同店上传、purpose=feedback/category=member_feedback的JPEG/PNG，每个文件仅可绑定一条反馈。提交与读取均解码验证：输入/输出不超过10 MiB，每边不超过8192像素且总像素不超过2000万。门店经辅助接口GET /admin-api/gym/mobile/feedbacks/{id}/attachments/{fileId}/content读取，要求gym:feedbacks:read和反馈门店整店范围，同时检查实际附件关联；该辅助接口不增加135项目标数。图片重新编码移除嵌入元数据，固定名称feedback-image.png或feedback-image.jpg，设置private,no-store及nosniff，JPEG可能重新压缩。会员自己的既有文件下载仍可读取原图；员工不能通过通用文件接口绕过反馈权限。
+
+匿名指服务端不向门店暴露身份字段，平台数据库仍有受限归属关联。用户主动写入正文、回复或图片画面中的姓名等信息不会自动遮盖，提交/回复访问日志禁记请求与响应正文。没有平台完全匿名、文本审核、编辑/撤回、回复修改或自动通知功能。
+
+V014新增gym_feedback、gym_feedback_attachment及gym:feedbacks:read、gym:feedbacks:reply两个权限定义；不会自动授权角色。部署前迁移并validate，再按职责授权。67张gym表；本任务只运行隔离迁移测试，业务数据库未迁移，前端未改动。

@@ -2464,3 +2464,35 @@ gym578项和member4项通过，1项既有禁用跳过；Spotless与server依赖�
 ### 未做 / 后续
 
 69项新增本地实现、4项复用源码、62项待开发，继续内部业务。没有活动专用移动封面上传用途、自动消息推送或前端页面改动；四类第三方实际接入保持暂缓。业务库未迁移，不推送；本批独立本地提交，原始uniapp.md及暂存状态保留。
+
+## [2026-10-24 21:24 ~ 2026-10-25 16:49] 匿名反馈与门店一次回复
+
+### 意图
+
+补齐总表64–65、119–120，支持会员本人反馈/历史及门店授权读取/回复，同时保护附件元信息与会员身份，继续按小步独立提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymFeedbackController.java`、`GymMobileFeedbackController.java`、`GymMobileFeedbackVO.java`、`GymMobileFeedbackService.java` | 新增 | 四目标路由及专用图片辅助读取、本人/整店隔离、幂等一次回复及可选卡数量快照 |
+| `GymFeedbackImages.java`、`GymFeedbackDO.java`、`GymFeedbackAttachmentDO.java`及对应Mapper | 新增 | 图片解码重编码、受限归属及一图一反馈 |
+| `ErrorCodeConstants.java`、`V014__gym_anonymous_feedback.sql`、测试create_tables/clean | 修改/新增 | 四个错误码、两表、两权限定义，不自动授权 |
+| `GymOrganizationServiceTest.java`、`GymMobileFeedbackControllerTest.java`、`GymFeedbackImagesTest.java`、`script/gym/verify-migrations.py` | 修改/新增 | 十四项新测试及54项隔离迁移检查 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 77/135进度、匿名与同意边界、部署要求及验证证据 |
+
+### 结构关系
+
+Controller鉴权后调用服务，SQL先限制本人/门店再分页；提交按文件ID顺序锁定并检查真实所有权，反馈/附件/幂等结果同事务。回复锁定反馈保留首次内容。图片服务复制像素重编码，专用下载验证关联及范围；旧通用文件入口仍拒绝会员私有类别。
+
+### 验证证据
+
+gym592项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包成功。真实隔离MySQL/Flyway54检查通过，临时库清理，源码映射77/135。新增测试覆盖跨身份/租户/门店、显式卡摘要、图片元数据、同键与竞争回复/附件并发、故障回滚、历史和MVC；具体命令及日志见testing本批条目。
+
+### 影响面 / 风险
+
+部署前须V014并validate，当前67张gym表。只登记权限，授权由管理员明确处理。默认不附卡摘要，显式同意也只记录有效数量，不包含卡号等身份字段；图片元数据去除不等于图像正文脱敏。ImageIO图片处理需评估生产并发内存，当前测试不证明负载能力。前端未修改，业务数据库未迁移。
+
+### 未做 / 后续
+
+73项新增本地实现、4项复用源码、58项待开发，继续内部接口。没有反馈编辑/撤回、回复覆盖、完全匿名或自动通知；第三方实际接入仍按用户要求暂缓。不同历史接口幂等payload键序的跨进程稳定性需单独审计，本批新反馈用有序外层Map，未修改已有幂等摘要。保留原始uniapp.md及暂存状态，不推送。

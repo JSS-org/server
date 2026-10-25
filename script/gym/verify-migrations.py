@@ -90,7 +90,7 @@ def main():
               for name, value in manifest.items()), 'historical SQL checksums unchanged')
     with isolated() as db:
         command('init')
-        check(len([t for t in db.tables() if t.startswith('gym_')]) == 65, 'new database has 59 original and 6 mobile gym tables')
+        check(len([t for t in db.tables() if t.startswith('gym_')]) == 67, 'new database has 59 original and 8 mobile gym tables')
         check('member_user' in db.tables(), 'member authentication storage is installed')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='member_user' AND column_name IN ('mobile','register_terminal','tenant_id')") == '3', 'member authentication columns exist')
         check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_mobile_identity' AND index_name IN ('uk_mobile_user','uk_mobile_member') AND non_unique=0") == '4', 'member identity has tenant-scoped unique account and member bindings')
@@ -104,6 +104,9 @@ def main():
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_payroll' AND column_name='published_at' AND datetime_precision=6 AND is_nullable='YES'") == '1', 'payroll publication timestamp is nullable and preserves microseconds')
         check(db.sql("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_payroll_item' AND index_name='idx_payroll_item_employee'") == 'tenant_id,employee_id,payroll_id,deleted', 'own payroll item lookup has tenant and employee index')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_activity' AND column_name='cancel_deadline' AND datetime_precision=6 AND is_nullable='YES'") == '1', 'activity member cancellation deadline preserves microseconds and legacy NULL fallback')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_feedback' AND column_name='allow_card_context' AND is_nullable='NO' AND column_default=\"b'0'\"") == '1', 'feedback card context defaults to no consent')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_feedback_attachment' AND index_name='uk_feedback_attachment_file' AND non_unique=0") == '2', 'feedback image is bound once within its tenant')
+        check(db.sql("SELECT COUNT(*) FROM system_menu WHERE permission IN ('gym:feedbacks:read','gym:feedbacks:reply') AND type=3 AND deleted=0") == '2', 'feedback registers two permission definitions without frontend routes')
         command('validate')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0' for table in manager.SYSTEM_TABLES - {'system_menu'}),
               'production migrations create no demo users, roles, grants or departments')
@@ -169,6 +172,7 @@ def main():
         check(db.sql('SELECT COUNT(*) FROM gym_mobile_lesson_qr') == '0', 'legacy adoption does not fabricate lesson QR grants')
         check(db.sql("SELECT COUNT(*) FROM gym_payroll WHERE id=900001 AND status='confirmed' AND published_at IS NULL AND published_by IS NULL AND net_amount=0") == '1', 'legacy confirmed payroll stays frozen and unpublished')
         check(db.sql("SELECT COUNT(*) FROM gym_activity WHERE id=900001 AND cancel_deadline IS NULL AND capacity IS NULL AND status='published'") == '1', 'legacy unlimited activity retains publication and default cancellation rule')
+        check(db.sql("SELECT (SELECT COUNT(*) FROM gym_feedback)+(SELECT COUNT(*) FROM gym_feedback_attachment)") == '0', 'legacy adoption creates no feedback or attachment identities')
         check(db.sql("SELECT customer_stage FROM gym_member WHERE id=900001") == 'lead', 'required historical stage backfill executes')
         check(db.sql('SELECT COUNT(*) FROM gym_member_store WHERE member_id=900001 AND store_id=101 AND tenant_id=1') == '1',
               'required member-store backfill executes')

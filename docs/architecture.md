@@ -566,3 +566,11 @@ GymMobileLessonProperties绑定TTL/窗口/密钥，GymMobileLessonToken使用HMA
 旧GymMarketingService.register与新报名共用GymActivityParticipationService，调用者先授权、锁活动再锁会员，公共服务承担窗口、容量、活动会员唯一与取消后重报逻辑。移动请求键与实际报名同事务提交；旧后台取消/活动整体取消与新会员取消都先锁活动，保持名额一致。V013的cancel_deadline默认NULL，已有报名后不允许修改；后台管理取消保留原活动开始前规则。
 
 `GymActivityPublicAssets`校验活动图片是否存在公开引用、文件归属营业门店及工作用途；`GymMobilePublicService`将其转为既有受控Media URL，下载复用文件魔数检查。取消或撤销最后公开引用后旧URL失效，私有会员/教练/合同上传不能改作活动封面。原跨店活动在移动端保留门店集合和共享容量；无新表、自动授权或外部通知。
+
+## 反馈、一次回复与匿名图片（2026-10-25 增量）
+
+AppGymFeedbackController/GymMobileFeedbackController → GymMobileFeedbackService → 会员绑定或有效后台身份/功能权限/整店范围。本人/门店谓词及筛选在SQL分页前执行，附件按页批量读取，返回显式VO不返回DO审计字段。V014的会员归属只供服务端验证本人和附件所有权；可选卡摘要只保存显式同意时的有效数量。
+
+提交在READ_COMMITTED事务内持幂等行锁，按fileId排序锁文件、验证同店本人feedback用途和唯一关联，写反馈及附件并保存首次响应。回复先检查当前范围，再在幂等事务下锁反馈重查范围，仅首次内容可写；重试不覆盖。读取采用只读REPEATABLE_READ快照。反馈新增幂等payload使用有序TreeMap，保持外层键序稳定。
+
+GymFeedbackImages使用内存ImageIO解码、像素边界检查、新建sRGB图像并重新编码，清除原文件名及元数据；提交预检，专用门店下载再次验证并转码，不写新的存储对象。专用附件链路检查反馈/文件实际关系，通用文件服务继续拒绝member_文件。V014只登记权限，不授权角色；前端及外部消息渠道未修改。

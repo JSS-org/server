@@ -77,3 +77,6 @@ DELETE FROM gym_member_followup;
 DELETE FROM gym_mobile_work_file;
 
 DELETE FROM gym_mobile_lesson_qr;
+
+DELETE FROM gym_feedback_attachment;
+DELETE FROM gym_feedback;

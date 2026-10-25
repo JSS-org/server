@@ -73,7 +73,7 @@ script/gym/
   verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
 ```
 
-后续变更从当前最大版本递增追加（当前下一版本为 `V014__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
+后续变更从当前最大版本递增追加（当前下一版本为 `V015__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
 
 ## 独立开发seed
 
@@ -601,3 +601,11 @@ python3 script/gym/verify-uniapp-api-coverage.py --require-all
 部署前migrate至V013并validate；gym_activity增加可空cancel_deadline（datetime(6)），表数仍65。历史活动保持NULL，会员取消默认回退开始时间；旧后台管理取消仍允许活动开始前处理。已有报名后不能改变该截止、门店或活动时段。
 
 工作台POST /admin-api/gym/mobile/activities使用gym:activities:manage及整店范围，必传Idempotency-Key，原子创建并发布单店活动；原后台继续维护跨店、发布/关闭/取消等流程。公开列表与本人报名6个目标接口的精确参数、跨店选店及重放规则见uniapp-api。活动封面使用原后台所属门店image上传，移动工作上传的其他用途不能复用为封面。无消息自动推送或第三方操作；本任务未迁移业务数据库。
+
+### 匿名反馈与附件（V014）
+
+应用部署前执行migrate/validate至V014。新增gym_feedback和gym_feedback_attachment，当前共67张gym表；附件(tenant_id,file_id)唯一，禁止一图重复关联多条反馈。保留平台受限会员归属，门店只读明确匿名VO；card_context默认NULL且allow_card_context默认false，不回填历史身份摘要。
+
+迁移仅注册gym:feedbacks:read、gym:feedbacks:reply两条按钮权限，不自动授予任何角色，不新增前端路由。管理员需按职责授予功能权限和整店数据范围后才能读取/回复。工作人员图片只能经反馈专用辅助下载入口获取重新编码的安全副本；通用member_文件读取限制保持。需要运行环境提供标准java.desktop/ImageIO图片编解码（可在headless服务器运行）；最大10 MiB、8192单边/2000万像素限制不替代生产并发容量评估。
+
+真实隔离MySQL/Flyway54检查通过，包括权限定义、默认不同意、附件唯一与旧库接管，临时库全部清理。本任务未迁移业务库；下一未使用版本V015。

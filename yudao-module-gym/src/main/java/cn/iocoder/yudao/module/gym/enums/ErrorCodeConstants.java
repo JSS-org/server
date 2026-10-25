@@ -223,4 +223,8 @@ public interface ErrorCodeConstants {
     ErrorCode MOBILE_COACH_NOT_AVAILABLE = new ErrorCode(1_070_023_013, "教练不存在或未公开发布");
     ErrorCode MOBILE_LESSON_QR_INVALID = new ErrorCode(1_070_023_014, "签课二维码无效或已过期");
     ErrorCode MOBILE_LESSON_QR_UNAVAILABLE = new ErrorCode(1_070_023_015, "签课二维码未配置");
+    ErrorCode FEEDBACK_NOT_EXISTS = new ErrorCode(1_070_024_001, "反馈不存在");
+    ErrorCode FEEDBACK_INVALID = new ErrorCode(1_070_024_002, "反馈评分、附件或门店资格不符合要求");
+    ErrorCode FEEDBACK_ALREADY_REPLIED = new ErrorCode(1_070_024_003, "反馈已有回复，不能覆盖原回复");
+    ErrorCode FEEDBACK_ATTACHMENT_INVALID = new ErrorCode(1_070_024_004, "反馈附件无效或不支持安全预览");
 }

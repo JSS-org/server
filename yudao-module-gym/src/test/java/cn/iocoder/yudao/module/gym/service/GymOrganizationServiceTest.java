@@ -49,6 +49,10 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymFeedbackImages.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymFeedbackController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileFeedbackController.class,
     cn.iocoder.yudao.module.gym.service.marketing.GymActivityParticipationService.class,
     cn.iocoder.yudao.module.gym.service.marketing.GymActivityPublicAssets.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService.class,
@@ -154,6 +158,15 @@ import java.util.*;
         properties = "yudao.web.admin-ui.url=http://localhost")
 public class GymOrganizationServiceTest extends BaseDbUnitTest {
     @Resource GymStoreService stores;
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService feedback;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymFeedbackController feedbackController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileFeedbackController
+            workFeedbackController;
+
     @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService mobileActivities;
 
     @Resource
@@ -13397,5 +13410,436 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertServiceException(
                 () -> mobileActivities.create(req, "activity-cover-other-store"),
                 ACTIVITY_COVER_INVALID);
+    }
+
+    Long feedbackMember() {
+        return mobileActivityMember();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.Submit
+            feedbackRequest() {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                        .Submit();
+        r.setStoreId(101L);
+        r.setType("feedback");
+        r.setContent("希望增加晚间课程");
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.StorePage
+            feedbackStore(Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                        .StorePage();
+        r.setStoreId(store);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.OwnPage
+            feedbackMine() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                .OwnPage();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO.Reply feedbackReply(
+            String text) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                        .Reply();
+        r.setContent(text);
+        return r;
+    }
+
+    byte[] feedbackPng() throws Exception {
+        var image =
+                new java.awt.image.BufferedImage(2, 2, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, 0x00ff00);
+        var out = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image, "png", out);
+        return out.toByteArray();
+    }
+
+    Long feedbackFile(Long member, Long store, String purpose) throws Exception {
+        var f = file(store, "member_" + purpose);
+        f.setName("会员13800002401-私密姓名.png");
+        f.setUrl("private:feedback:" + f.getId());
+        var bytes = feedbackPng();
+        f.setSize((long) bytes.length);
+        files.updateById(f);
+        when(fileApi.getFileContentByUrl(f.getUrl())).thenReturn(bytes);
+        var owner = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileFileOwnerDO();
+        owner.setFileId(f.getId());
+        owner.setMemberId(member);
+        owner.setPurpose(purpose);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileFileOwnerMapper.class)
+                .insert(owner);
+        return f.getId();
+    }
+
+    @Test
+    void feedbackSubmissionIsOwnScopedAndStaffProjectionIsAnonymous() {
+        var member = feedbackMember();
+        qrMemberLogin();
+        var req = feedbackRequest();
+        var first = feedbackController.submit(req, "feedback-submit-key").getData();
+        assertEquals(first, feedback.submit(req, "feedback-submit-key"));
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+        assertEquals("received", first.status());
+        assertEquals(
+                req.getContent(), feedback.mine(feedbackMine()).getList().getFirst().content());
+        req.setContent("changed");
+        assertServiceException(
+                () -> feedback.submit(req, "feedback-submit-key"), MOBILE_IDEMPOTENCY_CONFLICT);
+        loginAs(1L);
+        var page = feedback.store(feedbackStore(101L));
+        assertEquals(1, page.getTotal());
+        var row = page.getList().getFirst();
+        assertNull(row.cardContext());
+        assertEquals(List.of(), row.fileIds());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(row);
+        for (String secret :
+                List.of("memberId", "memberName", "creator", "repliedBy", "13800002401", "cardNo"))
+            assertFalse(json.contains(secret));
+        var stored =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymFeedbackMapper
+                                        .class)
+                        .selectById(Long.valueOf(first.id()));
+        assertEquals(member, stored.getMemberId());
+        assertFalse(stored.getAllowCardContext());
+        assertNull(stored.getCardContext());
+        var other = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymFeedbackDO();
+        other.setMemberId(999L);
+        other.setStoreId(101L);
+        other.setType("review");
+        other.setRating(3);
+        other.setContent("其他会员评价");
+        other.setStatus("received");
+        other.setSubmittedAt(activityNow);
+        other.setAllowCardContext(false);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymFeedbackMapper.class)
+                .insert(other);
+        var filter = feedbackStore(101L);
+        filter.setPageSize(1);
+        assertEquals(2, feedback.store(filter).getTotal());
+        filter.setType("review");
+        assertEquals(1, feedback.store(filter).getTotal());
+        qrMemberLogin();
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+    }
+
+    @Test
+    void feedbackReviewRatingContentAndDuplicateImagesAreValidated() throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        qrMemberLogin();
+        var req = feedbackRequest();
+        req.setType("review");
+        assertServiceException(() -> feedback.submit(req, "feedback-no-rating"), FEEDBACK_INVALID);
+        req.setRating(6);
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> feedback.submit(req, "feedback-bad-rating"));
+        req.setRating(5);
+        req.setContent(" ");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> feedback.submit(req, "feedback-empty-text"));
+        req.setContent("很好");
+        req.setFileIds(List.of(file, file));
+        assertServiceException(
+                () -> feedback.submit(req, "feedback-duplicate-file"), FEEDBACK_INVALID);
+        req.setFileIds(java.util.Collections.nCopies(10, file));
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> feedback.submit(req, "feedback-too-many-files"));
+        req.setFileIds(List.of(file));
+        assertEquals("received", feedback.submit(req, "feedback-valid-review").status());
+    }
+
+    @Test
+    void feedbackAttachmentsRequireOwnPurposeStoreAndSingleFeedbackBinding() throws Exception {
+        var member = feedbackMember();
+        Long own = feedbackFile(member, 101L, "feedback"),
+                other = feedbackFile(999L, 101L, "feedback"),
+                wrongStore = feedbackFile(member, 102L, "feedback"),
+                face = feedbackFile(member, 101L, "face");
+        qrMemberLogin();
+        for (Long id : List.of(other, wrongStore, face)) {
+            var req = feedbackRequest();
+            req.setFileIds(List.of(id));
+            assertServiceException(
+                    () -> feedback.submit(req, "feedback-bad-file-" + id),
+                    FEEDBACK_ATTACHMENT_INVALID);
+        }
+        var req = feedbackRequest();
+        req.setFileIds(List.of(own));
+        feedback.submit(req, "feedback-file-first");
+        assertServiceException(
+                () -> feedback.submit(req, "feedback-file-reused"), FEEDBACK_ATTACHMENT_INVALID);
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+    }
+
+    @Test
+    void feedbackCardContextRequiresOptInAndFreezesOnlySafeCounts() {
+        var member = feedbackMember();
+        Long template = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        var card =
+                cards.issue(
+                        member,
+                        101L,
+                        template,
+                        activityNow.minusSeconds(1),
+                        "test",
+                        "feedback-card-context");
+        Long coach = Long.valueOf(employees.create(employee("FEEDBACK-COACH", 101L)).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        courses.issuePack(
+                member,
+                product,
+                activityNow.minusSeconds(1),
+                activityNow.plusSeconds(86400),
+                "test-payment",
+                "feedback-pack-context");
+        qrMemberLogin();
+        feedback.submit(feedbackRequest(), "feedback-context-off");
+        var req = feedbackRequest();
+        req.setAllowCardContext(true);
+        var receipt = feedback.submit(req, "feedback-context-on");
+        var cm =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class);
+        var stored = cm.selectById(Long.valueOf(card.getId()));
+        stored.setStatus("inactive");
+        cm.updateById(stored);
+        loginAs(1L);
+        var page = feedback.store(feedbackStore(101L));
+        var opted =
+                page.getList().stream()
+                        .filter(x -> x.id().equals(receipt.id()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(1, opted.cardContext().activeCardCount());
+        assertEquals(1, opted.cardContext().activeCoursePackCount());
+        assertTrue(page.getList().stream().anyMatch(x -> x.cardContext() == null));
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(
+                                opted.cardContext())
+                        .contains("cardNo"));
+    }
+
+    @Test
+    void feedbackRepliesAreOnceOnlyReadableToOwnerAndRecheckScopeOnReplay() {
+        feedbackMember();
+        qrMemberLogin();
+        Long id = Long.valueOf(feedback.submit(feedbackRequest(), "feedback-reply-submit").id());
+        loginAs(1L);
+        var reply = feedbackReply("已收到，将评估晚间课程安排");
+        var first = feedback.reply(id, reply, "feedback-reply-key");
+        assertEquals(first, feedback.reply(id, reply, "feedback-reply-key"));
+        assertEquals(first, feedback.reply(id, reply, "feedback-reply-same"));
+        assertServiceException(
+                () -> feedback.reply(id, feedbackReply("overwrite"), "feedback-reply-new"),
+                FEEDBACK_ALREADY_REPLIED);
+        assertEquals(
+                reply.getContent(),
+                feedback.store(feedbackStore(101L)).getList().getFirst().reply());
+        scoped(102L);
+        assertServiceException(
+                () -> feedback.reply(id, reply, "feedback-reply-key"), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        var own = feedback.mine(feedbackMine()).getList().getFirst();
+        assertEquals("replied", own.status());
+        assertEquals(reply.getContent(), own.reply());
+    }
+
+    @Test
+    void feedbackStaffPermissionAndTenantNeverBecomeMemberIdentityAccess() {
+        feedbackMember();
+        qrMemberLogin();
+        Long id = Long.valueOf(feedback.submit(feedbackRequest(), "feedback-auth-submit").id());
+        loginAs(1L);
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> workFeedbackController.store(feedbackStore(101L)));
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () ->
+                        workFeedbackController.reply(
+                                id, feedbackReply("reply"), "feedback-denied-reply"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:feedbacks:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(any(), eq("gym:feedbacks:reply"))).thenReturn(true);
+        assertEquals(1, workFeedbackController.store(feedbackStore(101L)).getData().getTotal());
+        personalScope(1L);
+        assertServiceException(() -> feedback.store(feedbackStore(101L)), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> feedback.store(feedbackStore(101L)), MOBILE_IDENTITY_INVALID);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(1L)
+                        .setUserType(2)
+                        .setTenantId(2L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+        TenantContextHolder.setTenantId(2L);
+        assertEquals(0, feedback.store(feedbackStore(101L)).getTotal());
+        assertServiceException(
+                () -> feedback.reply(id, feedbackReply("reply"), "feedback-other-tenant"),
+                FEEDBACK_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> feedbackController.mine(feedbackMine()));
+    }
+
+    @Test
+    void feedbackAttachmentDownloadUsesSafeNameAndCannotBypassThroughGenericFiles()
+            throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        qrMemberLogin();
+        var req = feedbackRequest();
+        req.setFileIds(List.of(file));
+        Long id = Long.valueOf(feedback.submit(req, "feedback-download-submit").id());
+        loginAs(1L);
+        var result = feedback.attachment(id, file);
+        assertEquals("feedback-image.png", result.getName());
+        assertEquals("image/png", result.getMimeType());
+        assertEquals(
+                2,
+                javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(result.getContent()))
+                        .getWidth());
+        assertServiceException(
+                () ->
+                        applicationContext
+                                .getBean(
+                                        cn.iocoder.yudao.module.gym.service.file.GymFileServiceImpl
+                                                .class)
+                                .getFile(file),
+                FILE_STORE_NO_PERMISSION,
+                101L);
+        assertServiceException(() -> feedback.attachment(id, file + 1), FILE_NOT_EXISTS);
+        scoped(102L);
+        assertServiceException(() -> feedback.attachment(id, file), STORE_NO_PERMISSION);
+        headquarters();
+        var om =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileFileOwnerMapper
+                                .class);
+        var owner =
+                om.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileFileOwnerDO
+                                ::getFileId,
+                        file);
+        owner.setMemberId(999L);
+        om.updateById(owner);
+        assertServiceException(() -> feedback.attachment(id, file), FEEDBACK_ATTACHMENT_INVALID);
+    }
+
+    @Test
+    void feedbackConcurrentSubmissionsAndRepliesKeepOneRecordAndNeverOverwrite() throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        var results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return feedback.submit(feedbackRequest(), "feedback-concurrent-key");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return feedback.submit(feedbackRequest(), "feedback-concurrent-key");
+                        });
+        assertEquals(results.get(0), results.get(1));
+        Long id =
+                Long.valueOf(
+                        ((cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileFeedbackVO
+                                                .Receipt)
+                                        results.getFirst())
+                                .id());
+        results =
+                workCourseRace(
+                        () -> feedback.reply(id, feedbackReply("first"), "feedback-first-reply"),
+                        () -> feedback.reply(id, feedbackReply("second"), "feedback-second-reply"));
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            var req = feedbackRequest();
+                            req.setFileIds(List.of(file));
+                            return feedback.submit(req, "feedback-image-race-a");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            var req = feedbackRequest();
+                            req.setFileIds(List.of(file));
+                            return feedback.submit(req, "feedback-image-race-b");
+                        });
+        assertEquals(
+                1,
+                results.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        qrMemberLogin();
+        assertEquals(2, feedback.mine(feedbackMine()).getTotal());
+    }
+
+    @Test
+    void feedbackFailureRollsBackFilesRowAndKeyAndHistorySurvivesStoreClosure() throws Exception {
+        var member = feedbackMember();
+        Long file = feedbackFile(member, 101L, "feedback");
+        qrMemberLogin();
+        var req = feedbackRequest();
+        req.setFileIds(List.of(file));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_request ADD CONSTRAINT test_feedback_response CHECK (operation <> 'feedback-submit' OR response_json IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> feedback.submit(req, "feedback-rollback-key"));
+            assertEquals(0, feedback.mine(feedbackMine()).getTotal());
+            assertEquals(
+                    0,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.mobile
+                                            .GymFeedbackAttachmentMapper.class)
+                            .selectCount());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_request DROP CONSTRAINT test_feedback_response");
+        }
+        var receipt = feedback.submit(req, "feedback-rollback-key");
+        var store = storeMapper.selectById(101L);
+        store.setStatus("inactive");
+        storeMapper.updateById(store);
+        assertEquals(receipt, feedback.submit(req, "feedback-rollback-key"));
+        assertEquals(1, feedback.mine(feedbackMine()).getTotal());
+        assertServiceException(
+                () -> feedback.submit(feedbackRequest(), "feedback-closed-store"),
+                MEMBER_STORE_INACTIVE);
     }
 }

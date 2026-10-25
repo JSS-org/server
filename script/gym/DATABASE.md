@@ -63,7 +63,7 @@ bash script/gym/db.sh validate
 V001__gym_schema.sql
 V002__gym_reference_data.sql
 V003__gym_legacy_backfills.sql
-V014__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
+V015__add_member_external_reference.sql  # 示例；新增时以实际下一个未使用版本为准
 ```
 
 1. 同步最新代码，选择未使用的版本号；文件名使用 `V版本__说明.sql`，版本与说明之间是两个下划线。
@@ -121,12 +121,20 @@ MySQL DDL 可能隐式提交，失败不代表全部回滚。工具禁用 clean�
 
 ### V011 移动签课二维码
 
-新增gym_mobile_lesson_qr（当前65张gym表），保存短时凭据哈希、签发人、预约/排期时间绑定、过期和使用信息；不为历史预约生成凭据。升级前备份并按既有migrate/validate流程执行，本批没有迁移业务库。应用另需部署签名密钥，见README的移动二维码签课配置。下一未使用迁移版本V014（V012–V013见下）。
+新增gym_mobile_lesson_qr（当前65张gym表），保存短时凭据哈希、签发人、预约/排期时间绑定、过期和使用信息；不为历史预约生成凭据。升级前备份并按既有migrate/validate流程执行，本批没有迁移业务库。应用另需部署签名密钥，见README的移动二维码签课配置。下一未使用迁移版本V015（V012–V014见下）。
 
 ### V012 工资显式发布
 
-在gym_payroll新增可空published_at（datetime(6)）和published_by；在gym_payroll_item新增(tenant_id,employee_id,payroll_id,deleted)索引。表数不变，仍65。历史confirmed记录保持冻结、金额不变且发布时间为空，不向员工自动公开。发布属于明确后台操作，不执行历史回填。新增列需在应用部署前完成migrate/validate；创建索引的耗时与业务数据量有关，按既有备份和维护窗口流程操作。下一未使用版本V014（V013见下）。
+在gym_payroll新增可空published_at（datetime(6)）和published_by；在gym_payroll_item新增(tenant_id,employee_id,payroll_id,deleted)索引。表数不变，仍65。历史confirmed记录保持冻结、金额不变且发布时间为空，不向员工自动公开。发布属于明确后台操作，不执行历史回填。新增列需在应用部署前完成migrate/validate；创建索引的耗时与业务数据量有关，按既有备份和维护窗口流程操作。下一未使用版本V015（V013–V014见下）。
 
 ### V013 活动会员取消截止
 
-为gym_activity追加可空cancel_deadline datetime(6)，无新表、索引、状态回填或角色授权。旧活动NULL保留，会员默认开始前取消；原多店关系、不限名额及报名历史不变。应用部署前migrate/validate；隔离迁移回归覆盖列精度及旧活动不被改写，业务数据库未迁移。下一未使用版本V014。
+为gym_activity追加可空cancel_deadline datetime(6)，无新表、索引、状态回填或角色授权。旧活动NULL保留，会员默认开始前取消；原多店关系、不限名额及报名历史不变。应用部署前migrate/validate；隔离迁移回归覆盖列精度及旧活动不被改写，业务数据库未迁移。下一未使用版本V015（V014见下）。
+
+### 匿名反馈与附件（V014）
+
+应用部署前执行migrate/validate至V014。新增gym_feedback和gym_feedback_attachment，当前共67张gym表；附件(tenant_id,file_id)唯一，禁止一图重复关联多条反馈。保留平台受限会员归属，门店只读明确匿名VO；card_context默认NULL且allow_card_context默认false，不回填历史身份摘要。
+
+迁移仅注册gym:feedbacks:read、gym:feedbacks:reply两条按钮权限，不自动授予任何角色，不新增前端路由。管理员需按职责授予功能权限和整店数据范围后才能读取/回复。工作人员图片只能经反馈专用辅助下载入口获取重新编码的安全副本；通用member_文件读取限制保持。需要运行环境提供标准java.desktop/ImageIO图片编解码（可在headless服务器运行）；最大10 MiB、8192单边/2000万像素限制不替代生产并发容量评估。
+
+真实隔离MySQL/Flyway54检查通过，包括权限定义、默认不同意、附件唯一与旧库接管，临时库全部清理。本任务未迁移业务库；下一未使用版本V015。

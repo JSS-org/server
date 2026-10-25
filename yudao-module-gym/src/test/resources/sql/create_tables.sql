@@ -1248,3 +1248,42 @@ CREATE TABLE IF NOT EXISTS gym_mobile_lesson_qr (
  KEY idx_mobile_lesson_qr_booking (tenant_id,booking_id),
  KEY idx_mobile_lesson_qr_expiry (expires_at)
 );
+
+CREATE TABLE IF NOT EXISTS gym_feedback (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ type varchar(16) NOT NULL,
+ content varchar(2000) NOT NULL,
+ rating int DEFAULT NULL,
+ allow_card_context boolean NOT NULL DEFAULT false,
+ card_context text DEFAULT NULL,
+ status varchar(16) NOT NULL,
+ submitted_at datetime(6) NOT NULL,
+ reply varchar(2000) DEFAULT NULL,
+ replied_by bigint DEFAULT NULL,
+ replied_at datetime(6) DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ KEY idx_feedback_member (tenant_id,member_id,submitted_at,id),
+ KEY idx_feedback_store (tenant_id,store_id,status,submitted_at,id)
+);
+CREATE TABLE IF NOT EXISTS gym_feedback_attachment (
+ id bigint NOT NULL AUTO_INCREMENT,
+ feedback_id bigint NOT NULL,
+ file_id bigint NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_feedback_attachment_file (tenant_id,file_id),
+ KEY idx_feedback_attachment_feedback (tenant_id,feedback_id)
+);

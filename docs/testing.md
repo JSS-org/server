@@ -874,3 +874,24 @@ git diff --check
 取消截止等值拒绝、旧后台管理取消仍按开始前、报名截止等值拒绝、已有报名后取消规则不可修改。会员默认店与当前会员关系决定首次跨店报名，默认变更不转移原店，关系撤销阻止新报名但可取消本人记录。停业门店与删除活动保留本人报名历史，活动已删除时详情为空；错误身份和匿名私有入口拒绝。用幂等响应约束故障验证报名、名额和键一起回滚。
 
 封面通过既有受控URL读取真实字节；取消最后引用后不可读，其他门店和有工作用途绑定的图片不得挪用，既有引用在新增受限用途绑定后也立即不可下载。MVC覆盖全部六路由、月份无关的状态/分页/门店参数、带时区时间、幂等头、无body报名、容量、额外状态及伪造会员字段。Java并发为H2证据，MySQL验证仅迁移与旧库接管；真实部署HTTP、海量带封面列表性能及活动消息推送未验证。业务库和前端未修改。
+
+## 2026-10-25 匿名反馈、门店回复与图片隔离
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym **592项通过**（组织服务332项，新增反馈业务9项；反馈MVC3项、图片2项），member状态4通过/1既有禁用跳过，无失败/错误。Spotless及server依赖打包成功，打包跳过测试。真实隔离MySQL/Flyway **54项检查通过**并清理全部临时库；V014后67张gym表，检查默认不同意卡摘要、附件唯一、两项权限定义及旧库接管不创建反馈数据。源码映射 **77/135**，余58项。
+
+日志：/tmp/uniapp-feedback-final-tests.log、/tmp/uniapp-feedback-migrations.log、/tmp/uniapp-feedback-package.log。真实H2/Mapper/事务覆盖本人隔离、门店分页、功能及整店权限、SELF拒绝、租户/身份拒绝、附件同人同店同用途及一图一次绑定、默认不附卡信息、显式同意快照且后续卡变化不改写、回复一次与重放时撤权拒绝。两线程同键提交只一条，竞争不同回复不覆盖，竞争复用同一图片只一方成功；幂等结果约束故障导致反馈、附件、请求键一起回滚，重试成功。停业后旧键和历史可读，新提交拒绝。
+
+图片测试写入带测试身份文本的PNG元数据，重新编码后元数据消失、像素保留；覆盖JPEG、伪装/损坏/超限图片。专用下载验证通用名称、no-store、nosniff和403/404，旧通用文件读取拒绝member_类别；MVC严格字段、必填键、非法评分/分页/ID、正文日志禁用注解均通过。初轮两项测试断言/Mock重设错误修正后全量通过（通用文件的正确拒绝码为FILE_STORE_NO_PERMISSION；已有异常桩重设用doThrow）。
+
+Java并发证据来自H2，MySQL仅证明迁移与旧库接管；真实部署HTTP、生产图片并发容量、用户主动写入画面的身份遮盖及外部通知未验证/未实现。未迁移业务库或修改前端。

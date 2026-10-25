@@ -1,6 +1,6 @@
 # 健身门店小程序接口总表
 
-> 统计日期：2026-10-24。依据 [接口设计文档](./uniapp-api.md) 汇总；参数、响应和权限细节见原文。
+> 统计日期：2026-10-25。依据 [接口设计文档](./uniapp-api.md) 汇总；参数、响应和权限细节见原文。
 
 **合计 135 个已明确方法和路径的接口：小程序侧 133 个，设备集成侧 2 个。**
 
@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **69** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **62** 个。源码映射共 **73 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **73** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **58** 个。源码映射共 **77 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -94,8 +94,8 @@
 | 61 | 公共及会员端 | GET | `/app-api/gym/point-products` | 查询门店可用积分兑换的商品 | 设计待开发 |
 | 62 | 公共及会员端 | POST | `/app-api/gym/point-redemptions` | 提交积分兑换，扣减积分并发起会员卡发放 | 设计待开发 |
 | 63 | 公共及会员端 | GET | `/app-api/gym/me/point-redemptions/{id}` | 查询本人积分兑换及发卡结果 | 设计待开发 |
-| 64 | 公共及会员端 | POST | `/app-api/gym/feedbacks` | 提交对门店匿名的反馈、评分或建议 | 设计待开发 |
-| 65 | 公共及会员端 | GET | `/app-api/gym/me/feedbacks` | 查询本人反馈和门店回复 | 设计待开发 |
+| 64 | 公共及会员端 | POST | `/app-api/gym/feedbacks` | 提交对门店匿名的反馈、评分或建议 | 已实现，本地测试通过 |
+| 65 | 公共及会员端 | GET | `/app-api/gym/me/feedbacks` | 查询本人反馈和门店回复 | 已实现，本地测试通过 |
 | 66 | 公共及会员端 | GET | `/app-api/gym/activities` | 查询门店公开活动列表 | 已实现，本地测试通过 |
 | 67 | 公共及会员端 | GET | `/app-api/gym/activities/{id}` | 获取活动详情、名额及报名截止时间 | 已实现，本地测试通过 |
 | 68 | 公共及会员端 | POST | `/app-api/gym/activities/{id}/registrations` | 为当前会员报名活动 | 已实现，本地测试通过 |
@@ -149,8 +149,8 @@
 | 116 | 工作台 | POST | `/admin-api/gym/mobile/course-price-applications` | 提交私教产品改价申请 | 设计待开发 |
 | 117 | 工作台 | POST | `/admin-api/gym/mobile/course-quotes` | 依据商品现价或有效审批生成私教报价分享链接 | 设计待开发 |
 | 118 | 公共及会员端 | GET | `/app-api/gym/course-quotes/{id}` | 会员查看适用于自己的私教报价和有效期 | 设计待开发 |
-| 119 | 工作台 | GET | `/admin-api/gym/mobile/feedbacks` | 查询门店匿名反馈、评分和建议，不暴露会员身份 | 设计待开发 |
-| 120 | 工作台 | POST | `/admin-api/gym/mobile/feedbacks/{id}/replies` | 回复门店收到的反馈或评价 | 设计待开发 |
+| 119 | 工作台 | GET | `/admin-api/gym/mobile/feedbacks` | 查询门店匿名反馈、评分和建议，不暴露会员身份 | 已实现，本地测试通过 |
+| 120 | 工作台 | POST | `/admin-api/gym/mobile/feedbacks/{id}/replies` | 回复门店收到的反馈或评价 | 已实现，本地测试通过 |
 | 121 | 工作台 | POST | `/admin-api/gym/mobile/activities` | 创建门店活动，设置名额和报名期限 | 已实现，本地测试通过 |
 | 122 | 工作台 | GET | `/admin-api/gym/mobile/devices` | 查询授权门店的门禁和柜机设备 | 设计待开发 |
 | 123 | 工作台 | GET | `/admin-api/gym/mobile/devices/{id}/compartments` | 查询指定柜机的柜格列表和状态 | 设计待开发 |

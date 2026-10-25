@@ -726,8 +726,13 @@
       "method": "POST",
       "path": "/app-api/gym/feedbacks",
       "description": "提交对门店匿名的反馈、评分或建议",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
     },
     {
       "id": 65,
@@ -735,8 +740,13 @@
       "method": "GET",
       "path": "/app-api/gym/me/feedbacks",
       "description": "查询本人反馈和门店回复",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
     },
     {
       "id": 66,
@@ -1362,8 +1372,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/feedbacks",
       "description": "查询门店匿名反馈、评分和建议，不暴露会员身份",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
     },
     {
       "id": 120,
@@ -1371,8 +1386,13 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/feedbacks/{id}/replies",
       "description": "回复门店收到的反馈或评价",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileFeedbackController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileFeedbackService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileFeedbackControllerTest.java"
+      ]
     },
     {
       "id": 121,

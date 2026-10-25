@@ -24,6 +24,6 @@ public class GymCourseQuoteDO extends TenantBaseDO {
     private String termsSnapshot;
     private Instant issuedAt;
     private Instant expiresAt;
-    // Set only by the eventual transactional order checkout, never by either quote HTTP endpoint.
+    // Set only by the transactional member order checkout, never by either quote HTTP endpoint.
     private Long usedOrderId;
 }

@@ -299,7 +299,8 @@ public class GymCommerceService {
                 throw exception(COMMERCE_IDEMPOTENCY_CONFLICT);
             return order;
         }
-        if (!Set.of("pending_payment", "partially_paid").contains(order.getStatus())
+        if ((order.getExpiresAt() != null && !receipt.occurredAt().isBefore(order.getExpiresAt()))
+                || !Set.of("pending_payment", "partially_paid").contains(order.getStatus())
                 || order.getPaidAmount().add(receipt.amount()).compareTo(order.getPayableAmount())
                         > 0) throw exception(COMMERCE_RECEIPT_INVALID);
         var payment = new GymOrderPaymentDO();

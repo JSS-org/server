@@ -891,6 +891,10 @@ CREATE TABLE IF NOT EXISTS gym_business_order (
  paid_amount decimal(18,2) NOT NULL,
  refunded_amount decimal(18,2) NOT NULL,
  ordered_at datetime(6) NOT NULL,
+ buyer_user_id bigint DEFAULT NULL,
+ expires_at datetime(6) DEFAULT NULL,
+ cancelled_at datetime(6) DEFAULT NULL,
+ cancellation_reason varchar(500) DEFAULT NULL,
  request_key varchar(128) NOT NULL,
  creator varchar(64) NOT NULL DEFAULT '',
  create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -901,6 +905,7 @@ CREATE TABLE IF NOT EXISTS gym_business_order (
  PRIMARY KEY (id),
  UNIQUE KEY uk_business_order_no (tenant_id,order_no),
  UNIQUE KEY uk_business_order_request (tenant_id,store_id,channel,request_key),
+ KEY idx_order_member_channel (tenant_id,member_id,channel,deleted,id),
  KEY idx_business_order_store_date (tenant_id,store_id,ordered_at)
 );
 CREATE TABLE IF NOT EXISTS gym_order_item (

@@ -28,4 +28,8 @@ public class GymBusinessOrderDO extends TenantBaseDO {
     private BigDecimal refundedAmount;
     private Instant orderedAt;
     private String requestKey;
+    private Long buyerUserId;
+    private Instant expiresAt;
+    private Instant cancelledAt;
+    private String cancellationReason;
 }

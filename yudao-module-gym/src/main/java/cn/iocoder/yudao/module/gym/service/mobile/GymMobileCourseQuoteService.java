@@ -52,6 +52,11 @@ public class GymMobileCourseQuoteService {
     @Resource private GymMobileQuoteProperties properties;
     @Resource private Validator validator;
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.dal.mysql.sales.GymBusinessOrderMapper orderMapper;
+
+    @Resource private cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper orderItems;
+
     private record Payload(Long storeId, Long productId, Long memberId, Long approvalId) {}
 
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
@@ -150,6 +155,91 @@ public class GymMobileCourseQuoteService {
                         == 0) throw exception(COURSE_QUOTE_NOT_EXISTS);
         records.checkPurchase(memberId);
         return response(row, clock.now());
+    }
+
+    /** Internal checkout uses the actual member principal and the same tenant mutex as creation. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public GymCourseQuoteDO lockForCheckout(Long id, Long memberId, Long storeId, Long productId) {
+        if (!Objects.equals(identities.requireMemberId(), memberId))
+            throw exception(MOBILE_IDENTITY_INVALID);
+        mutex.lockStoreEntitlements();
+        var row = quotes.selectForUpdate(id);
+        if (row == null
+                || !storeId.equals(row.getStoreId())
+                || !productId.equals(row.getProductId())
+                || row.getMemberId() != null && !memberId.equals(row.getMemberId()))
+            throw exception(COURSE_QUOTE_NOT_EXISTS);
+        if (row.getUsedOrderId() != null
+                || !clock.now().isBefore(row.getExpiresAt())
+                || !currentProduct(row, clock.now())) throw exception(COURSE_QUOTE_UNAVAILABLE);
+        if (memberships.selectCount(
+                        new LambdaQueryWrapper<GymMemberStoreDO>()
+                                .eq(GymMemberStoreDO::getMemberId, memberId)
+                                .eq(GymMemberStoreDO::getStoreId, storeId))
+                == 0) throw exception(COURSE_QUOTE_NOT_EXISTS);
+        records.checkPurchase(memberId);
+        if (row.getApprovalId() != null) {
+            var req = new Create();
+            req.setStoreId(storeId);
+            req.setProductId(productId);
+            req.setMemberId(row.getMemberId());
+            req.setApprovalId(row.getApprovalId());
+            var approved = approved(req, null, false, true);
+            if (!row.getProductVersion()
+                            .toString()
+                            .equals(approved.get("productVersion").toString())
+                    || row.getAmount()
+                                    .compareTo(
+                                            new BigDecimal(
+                                                    approved.get("requestedPrice").toString()))
+                            != 0) throw exception(COURSE_QUOTE_UNAVAILABLE);
+        }
+        return row;
+    }
+
+    /** Bind only a real, matching unpaid checkout order; callers cannot pass arbitrary prices. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void bindToOrder(Long id, Long orderId) {
+        mutex.lockStoreEntitlements();
+        var order =
+                orderMapper.selectOne(
+                        new LambdaQueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.sales
+                                                .GymBusinessOrderDO>()
+                                .eq(
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.sales
+                                                        .GymBusinessOrderDO
+                                                ::getId,
+                                        orderId)
+                                .last("FOR UPDATE"));
+        Long memberId = identities.requireMemberId();
+        if (order == null
+                || !memberId.equals(order.getMemberId())
+                || !"course_sale".equals(order.getBusinessType())
+                || !"miniapp".equals(order.getChannel())
+                || order.getPaidAmount().signum() != 0
+                || order.getRefundedAmount().signum() != 0
+                || order.getExpiresAt() == null
+                || !Set.of("pending_payment", "pending_fulfillment").contains(order.getStatus()))
+            throw exception(COURSE_QUOTE_UNAVAILABLE);
+        var items =
+                orderItems.selectList(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO::getOrderId,
+                        orderId);
+        if (items.size() != 1) throw exception(COURSE_QUOTE_UNAVAILABLE);
+        var item = items.getFirst();
+        var row = lockForCheckout(id, memberId, order.getStoreId(), item.getProductId());
+        if (!"course".equals(item.getProductType())
+                || !Integer.valueOf(1).equals(item.getQuantity())
+                || !row.getProductVersion().equals(item.getProductVersion())
+                || row.getAmount().compareTo(item.getUnitPrice()) != 0
+                || row.getAmount().compareTo(item.getPayableAmount()) != 0
+                || row.getAmount().compareTo(order.getPayableAmount()) != 0
+                || order.getExpiresAt().isAfter(row.getExpiresAt())
+                || !order.getOrderedAt().isBefore(row.getExpiresAt()))
+            throw exception(COURSE_QUOTE_UNAVAILABLE);
+        row.setUsedOrderId(orderId);
+        quotes.updateById(row);
     }
 
     private Quote response(GymCourseQuoteDO row, Instant now) {

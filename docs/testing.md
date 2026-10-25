@@ -1098,3 +1098,28 @@ git diff --check
 会员读取以令牌真实绑定为准，拒绝后台令牌、其他指定会员、跨租户、已解除门店关系和停用会员；未限定会员的报价仍要求同店关系。营业门店/教练状态/任职日期按查询时重查，安全投影不含内部审批和签发人。MVC验证四字段创建、三个未知价格/期限/状态字段拒绝、必传幂等头和会员读取，查询中的memberId不能冒充身份。
 
 迁移额外检查审批/订单绑定唯一索引、微秒精度、权限唯一且无角色授权；实际MySQL允许多个NULL审批原价报价、拒绝同租户重复审批、允许不同租户相同审批编号，旧库接管不伪造报价。日志：/tmp/uniapp-quotes-focused.log、/tmp/uniapp-quotes-final-tests.log、/tmp/uniapp-quotes-migrations.log、/tmp/uniapp-quotes-package.log。used订单状态仅预留字段和读取映射，本步没有订单消费流程或其测试，不据此宣称结算可用。未验证前端分享页面存在/打开、真实支付、生产HTTP及规模；业务库与前端未改。
+
+## 2026-10-25 会员订单准备、报价消费与未支付取消
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终完整gym **716项通过**（组织服务433项，本批16项；新增MVC3项），member4通过/1既有禁用跳过，Spotless及server依赖打包通过，打包跳过测试。真实隔离MySQL/Flyway **77项检查通过**，全部临时库清理；V020后仍68表，下一版本V021。源码映射 **95/135**，余40项；路由覆盖不证明付款与新会员自动履约已实现。
+
+真实H2/Mapper/事务/身份验证：卡使用门店销售价和当前版本快照，改配置后原幂等键保留旧价、新键用现价；私教现价及批准0元报价写真实订单，0元不产生财务事件或权益。实际订单/明细/策略与used_order_id同事务；同报价不同键并发只一张订单，同键并发也一张，换商品冲突。报价到期、目标不是本人、商品变化拒绝，下单后used、取消后不释放；订单期限最多30分钟且不超过报价截止。
+
+本人列表SQL先做身份/租户/单商品线上订单及支付状态过滤再分页；解除门店关系仍保留本人历史，其他会员、跨租户、后台令牌不得读取或取消。旧后台实际已付款并发卡的订单可读真实权益ID且expiresAt=null。通过原可信收款/退款服务产生部分收款、全额收款、部分退款、全额退款，验证每阶段详情与SQL筛选一致；未以直接修改金额冒充这条测试的业务过程。测试渠道为受控mock，不证明真实支付接入。
+
+取消保存第一次原因与时间，新键/同键不覆盖，创建旧键仍重放首次快照；同键改取消原因冲突。取消与原收款双线程竞争时要么取消且无资金账本，要么已收款且取消失败。支付发生时刻恰好达到新截止时刻时原收款服务拒绝。销售配置缺字段/坏JSON/重复商品/未启用及销售开始前、结束时拒绝且不残留订单；修复后同失败键可重试。黑名单、数量1、会员门店关系及card不能携带quoteId都校验。MVC验证四路由、Money字符串、分页筛选、必传幂等头及禁止注入会员/金额/支付状态。
+
+首轮完整筛选未包含App前缀命名的新增MVC类，已改名GymMobileOrdersControllerTest纳入最终回归；随后补真实收退款筛选与旧配置/销售窗口测试。日志：/tmp/uniapp-orders-focused.log、/tmp/uniapp-orders-final-tests.log、/tmp/uniapp-orders-final-tests-2.log、/tmp/uniapp-orders-final-tests-3.log、/tmp/uniapp-orders-final-tests-4.log（最终）、/tmp/uniapp-orders-migrations.log、/tmp/uniapp-orders-package-final.log。迁移验证旧partially_paid订单保留100.00应收/20.00实收和状态，四个新增字段NULL，不伪造历史信息。
+
+新会员订单自动履约/重试未接入，目前真实待履约；本步不能证明新会员下单后已发卡/课包。23支付会话、25–26退款申请、真实渠道的在途支付/取消与晚到通知补偿仍待实现；前端、业务库未改，未做生产HTTP/分享页面/规模联调。

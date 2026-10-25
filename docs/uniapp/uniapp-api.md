@@ -222,7 +222,7 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 | `GET A/me/subscriptions/{id}` | 无 | `Subscription` |
 | `POST A/subscriptions/{id}/termination-requests`（幂等） | `reason?:string` | `Subscription`，提交解约不等于渠道已解约 |
 
-`quantity` 为正整数，首期建议限 1；不接受客户端传入支付金额、会员 ID、已支付状态。`payParams` / `signParams` 为选定渠道 SDK 所需参数，由渠道适配器生成；接入时补充具体结构，未配置时返回能力未开通错误，不能返回演示参数。
+`quantity` 为正整数，当前固定为 1；不接受客户端传入支付金额、会员 ID、已支付状态。`payParams` / `signParams` 为选定渠道 SDK 所需参数，由渠道适配器生成；接入时补充具体结构，未配置时返回能力未开通错误，不能返回演示参数。
 
 ### 5.2 核心返回对象
 
@@ -231,7 +231,7 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 | `Product` | `id:ID,type:string,storeId:ID,name:string,description:string,price:Money,version:int,validDays:int?,lessonCount:int?,coachId:ID?,saleStatus:string,purchaseLimitReason:string?,renewalTerms:string?,agreementVersion:string?,saleRevision:long?,cardType:duration或times或null,includedUses:int?,billingDay:int?,renewalNoticeDays:int?,graceDays:int?` |
 | `MemberCard` | `id:ID,name:string,type:duration或times,status:pending或active或frozen或expired或exhausted或inactive,storeIds:ID[],validFrom:DateTime?,validUntil:DateTime?,remainingTimes:int?,frozenReason:string?` |
 | `CoursePack` | `id:ID,productId:ID,storeId:ID,coachId:ID,totalLessons:int,remainingLessons:int,reservedLessons:int,availableLessons:int,validUntil:DateTime?,status:string`；可用余额为剩余减预占且最低为 0；是否可预约还需校验有效期、状态和课程规则 |
-| `Order` | `id:ID,orderNo:string,storeId:ID,productType:string,productId:ID,productName:string,quantity:int,payableAmount:Money,paidAmount:Money,refundedAmount:Money,paymentStatus:string,fulfillmentStatus:string,expiresAt:DateTime,memberCardIds:ID[],coursePackIds:ID[]` |
+| `Order` | `id:ID,orderNo:string,storeId:ID,productType:string,productId:ID,productName:string,quantity:int,payableAmount:Money,paidAmount:Money,refundedAmount:Money,paymentStatus:string,fulfillmentStatus:string,expiresAt:DateTime?,memberCardIds:ID[],coursePackIds:ID[]` |
 | `Subscription` | `id:ID,storeId:ID,productId:ID,status:pending_sign或active或past_due或terminating或terminated,cycleAmount:Money,nextChargeAt:DateTime?,agreementVersion:string,terminatedAt:DateTime?` |
 
 商品查询已实现：卡/包月按实际门店销售配置定价；详情省略门店时选有合格公开配置的最小营业门店ID，私教使用所属门店。`version`为真实模板/商品版本，`saleRevision`为门店销售配置版本（私教为null）。`saleStatus`为`on_sale/not_started/ended`，列表仅返回on_sale；当前卡/私教购买限制为`checkout_unavailable`，包月为`auto_renewal_integration_deferred`。包月没有已发布的续费条款与协议版本时不展示；配置和版本规则见[实施说明](./uniapp-implementation.md#商品目录实现与边界)。
@@ -603,7 +603,7 @@ Content-Type: application/json
 
 服务端计算报价：未改价使用商品现价；优惠价必须来自有效审批快照。教练不能直接传入“已批准”金额生成报价，管理员直接改价能力需单独确认权限策略。报价使用建议 24 小时有效期，绑定商品版本、门店、适用会员；创建订单传 `quoteId`，结算时重新验证。链接不得携带可直接信任的金额参数。
 
-116–118专属改价申请、报价生成与会员读取已实现，见本文末尾补充。专属报价使用独立实体，不能为了一个客户的优惠覆盖所有人的商品公开售价；订单结算绑定仍待后续完成。
+116–118专属改价申请、报价生成与会员读取已实现，见本文末尾补充。专属报价使用独立实体，不能为了一个客户的优惠覆盖所有人的商品公开售价；订单创建时的报价绑定已实现，支付与会员自动履约仍待衔接。
 
 ### 8.7 评价、活动与设备操作
 
@@ -897,7 +897,7 @@ members.newTodayCount是当前可见有效人群中初次registeredAt在date当�
 
 ## 移动审批读取、模板与决策已实现补充（2026-10-25）
 
-总表112–115已实现：审批列表、详情、可用模板和决策。104发卡/私教卡申请已在后续批次实现（见下）；116专属改价申请及117–118报价生成/读取已在后续批次实现（见下），订单结算仍待衔接。
+总表112–115已实现：审批列表、详情、可用模板和决策。104发卡/私教卡申请已在后续批次实现（见下）；116专属改价申请及117–118报价生成/读取已在后续批次实现（见下），订单创建及报价绑定已实现，支付和会员自动履约仍待衔接。
 
 全部入口要求当前有效后台账号，租户与登录上下文一致。列表/详情要求gym:approvals:read；模板选项要求gym:approvals:create；决策同时要求gym:approvals:read和gym:approvals:decide。审批对象内的applicantId及steps.approverId均为后台账号ID，不是员工ID；步骤保留提交时指定账号，当前员工绑定用于再次鉴权。
 
@@ -958,7 +958,7 @@ V017为gym_approval增加version，初始及历史审批的迁移基线均为1�
 
 响应为既有`Approval`，`businessSummary`用`priceScope=quote`区分，ID及金额按字符串输出，不含手机号或任意内部字段。申请幂等规范化金额为两位小数、原因去首尾空白；同键异内容冲突，同键重放首次响应（后来已批准仍重放首次pending），当前状态通过审批详情查询。每次重放前重新校验当前商品及会员访问范围，撤销负责关系/门店权限后不能读取缓存。
 
-116只产生批准结果；117–118已在后续报价批次实现，20–26订单结算绑定仍未完成。报价生成核对批准状态、专属来源、商品版本和适用会员，后续结算还须再次验证；真实支付继续按约定暂缓。没有修改前端。
+116只产生批准结果；117–118已在后续报价批次实现，20–22、24订单创建/读取/取消及报价绑定已实现；支付、退款申请及会员自动履约尚待后续完成。报价生成和订单创建核对批准状态、专属来源、商品版本和适用会员，后续支付还须再次验证；真实支付继续按约定暂缓。没有修改前端。
 
 
 ## 私教报价生成和会员读取已实现补充（总表117–118）
@@ -981,10 +981,45 @@ V019新增`gym_course_quote`，保存租户、门店、商品与版本、可选�
 
 只返回`id,storeId,productId,memberId?,amount,expiresAt,status,sharePath`，ID及Money为字符串，不含审批ID/意见、内部条款、签发账号或会员手机号。到达expiresAt（含等于）、商品删除/停用/版本变化、门店停用、教练停用或任职未生效时返回expired，保留原金额和到期时间。状态按读取时条件计算：因临时营业/教练条件失效，在未到期且版本未变时恢复条件可再次active。active只描述报价当前条款有效，不表示已有可用支付渠道。
 
-`used`表示未来订单事务已经绑定used_order_id，不表示已付款。V019预留租户内订单唯一关联，**本步两个接口均不消费报价；订单创建/绑定和used状态流转尚未接入，也未用模拟订单制造成功**。后续订单事务必须核对会员、门店、商品版本、金额、有效期及真实订单归属，并原子绑定一次。
+`used`表示会员订单事务已经绑定used_order_id，不表示已付款。V019保留租户内订单唯一关联，**两个报价接口本身不消费报价；会员订单创建已核对会员、门店、商品版本、金额、有效期及真实订单归属，并原子绑定一次**。used不等于付款或权益已发放，取消订单不解除绑定。
 
 ### 分享路径与接入边界
 
 `sharePath`使用配置`yudao.gym.mobile.quotes.share-page`（默认预留`/pages/course-quote/detail`），只允许`/pages/`下由字母、数字、下划线、连字符及分段斜线组成的路径；追加`?quoteId=<id>`，不携带金额或审批信息。该默认路径是**前端对接约定，未验证前端已有该页面**，部署时须指向实际注册页面。本任务没有修改前端，也不声称已验证小程序分享打开、下单、支付或真实设备流程。
 
-部署先migrate/validate至V019，再更新全部审批及报价服务实例并按需授予gym:courses:quote；目前68张gym表，无历史报价回填或角色授权。20–26订单结算仍待完成，第三方真实支付等继续暂缓。
+部署先migrate/validate至V019，再更新全部审批及报价服务实例并按需授予gym:courses:quote；目前68张gym表，无历史报价回填或角色授权。20–22、24订单创建/读取/取消及报价绑定已实现；23支付、25–26退款申请和会员自动履约仍待后续完成，第三方真实支付等继续暂缓。
+
+
+## 会员订单准备、本人读取与取消已实现补充（总表20–22、24）
+
+### 创建与报价绑定
+
+`POST /app-api/gym/orders`要求有效会员令牌及已关联的有效健身会员档案；只接受`storeId,productType:card|course,productId,quantity:1,quoteId?`及必填Idempotency-Key。会员ID/账号/租户从真实身份确定，不能传会员、金额或状态。必须有当前同店会员关系，营业门店、购买黑名单及商品资格在服务端核验；私教再核验当前有效教练和已生效任职。订阅购买使用独立订阅流程，本接口不接收subscription。
+
+会员卡从当前已发布、适用该店的卡模板与启用的online-sales-settings销售配置取价，校验销售时间窗（含开始、不含结束），冻结模板版本、售价、配置版本及审批/合同标志；不信任模板标价替代门店销售价。私教冻结当前有效商品版本、名称、教练、数量和时长；没有quoteId使用当前公开价，有quoteId只采用持久化报价金额并重验批准状态/目标/版本。私教当前没有独立的销售审批/强制合同前置配置，本订单策略为approvalRequired=false、contractRequired=false；后续权益发放仍须按实际合同配置处理。
+
+在同一事务创建真实gym_business_order、单条gym_order_item和gym_order_policy。新订单记录buyer_user_id，金额大于0为pending_payment，0元为pending_fulfillment；paid_amount和refunded_amount均为0，不新增付款或财务流水，也不立即发卡/课包。0元响应paymentStatus=paid表示无需支付，不能将其作为实收金额。
+
+订单支付截止时间为创建后30分钟，使用报价时取该时刻与报价expiresAt的较早者。报价绑定先锁定并验证未使用、当前会员/门店/商品、有效期、批准来源及金额；订单落库后再核对真实订单和明细的数量1、价格、商品版本、会员及期限，原子写used_order_id。两个不同键并发使用同一报价只能成功一单；任一步失败时订单、明细、策略、报价使用和幂等记录一起回滚。**取消或超时不释放报价，已用报价不能再下一单**；需获得新的报价，已批准申请也不能换键重发报价续期。
+
+### 幂等、查询与状态
+
+创建同键同内容返回第一次Order快照（后来取消仍重放原unpaid快照），异内容冲突；查询当前状态使用GET。幂等按会员身份、店、商品类型/ID、数量及报价ID隔离，其他账号不能借键读取订单。真实商品快照和价格不因后来商品/销售配置变化而改写。
+
+`GET /app-api/gym/me/orders`和`GET /app-api/gym/me/orders/{id}`只读当前会员本人、有单条真实商品明细的card_sale/course_sale线上订单（miniapp或app）；包含符合条件的旧后台准备线上订单，不把未结构化的人工流水伪装成商品订单。租户、会员、单商品订单条件和status筛选都在SQL分页前生效，再批量读取明细、策略和履约任务，使用只读一致性快照。已解除门店关系仍可查本人历史，不借当前门店关系删除交易历史。
+
+列表status筛选对应paymentStatus：unpaid/paid/closed/partially_refunded/refunded，详情与列表采用一致口径；部分支付仍为unpaid且paidAmount为真实已收额，不重新把整单金额当待收额。0实收pending_payment订单到达expiresAt即显示closed，读取不改写原订单。旧订单未记录expiresAt时返回null，不倒推历史截止时间。已确认退款优先显示部分或全部退款。
+
+fulfillmentStatus依据真实策略fulfilledAt和任务状态返回succeeded/processing/failed/pending，权益ID只来自订单项已记录的真实发放结果。当前新会员订单尚未接入自动履约任务，明确pending；关闭的未履约订单仍表示尚未发放，不应继续等待支付。会员响应不暴露付款凭据、内部账号、原始策略快照或其他会员信息。
+
+### 取消与收款互斥
+
+`POST /app-api/gym/orders/{id}/cancellations`要求本人订单、Idempotency-Key及`{reason?:string}`，原因最多500字符，保存去首尾空白值。仅pending_payment或expired且实收/退款均0、尚未履约的订单可取消；已部分支付、已付、0元待履约或已履约拒绝。取消与原收款处理共用租户互斥及订单行锁，不能在接受收款后又把订单变为cancelled。首次取消保存cancelled_at/原因，重复取消及新键不会覆盖原审计信息；同键换原因冲突。
+
+取消同时停止仍存在的旧后台履约任务，保留其审计原因；不调用外部退款、不删除交易或释放报价。原可信收款路径对有expiresAt的新订单增加支付发生时刻校验，发生时刻等于或晚于截止时间拒绝；截止前发生、延迟到达的真实收款仍需按渠道验真和对账处理。支付渠道接入时还须补齐在途支付/取消/晚到通知及退款补偿规则，当前未做外部资金联调。
+
+### 本步边界
+
+本步只交付真实订单准备、本人读取、未支付取消及报价一次绑定；**会员身份自动发卡/发课包与任务重试尚待下一步接入**。原后台履约依赖后台员工账号，不能将会员的数字ID冒充该账号入队。商品目录仍保留checkout_unavailable，表示完整购买链路尚未开放；已存在订单准备接口不代表可以真实付款或已发放权益。
+
+23支付会话、25–26退款申请仍待实现，支付渠道实际调用继续暂缓。V020新增可空buyer_user_id、expires_at、cancelled_at、cancellation_reason及会员分页索引；旧订单金额/状态保持，不伪造历史账号、到期或取消时间。部署先migrate/validate至V020并统一更新订单写入/收款实例；仍68表，无新权限授权。前端与业务库未修改。

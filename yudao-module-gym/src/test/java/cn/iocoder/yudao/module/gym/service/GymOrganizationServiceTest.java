@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileOrdersService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymOrdersController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCourseQuoteService.class,
     cn.iocoder.yudao.module.gym.framework.mobile.GymMobileQuoteProperties.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCourseQuotesController.class,
@@ -16953,5 +16955,534 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
             assertEquals("expired", mobileQuotes.get(quote.getId()).status());
         }
         assertEquals(0, cardIssuePackCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileOrdersService mobileOrders;
+
+    List<Long> memberOrderFixture() {
+        var ids = cardIssueFixture();
+        salesSettings.saveOnline(101L, onlineSettings(ids.get(2)));
+        qrMemberIdentity(ids.get(1));
+        return ids;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Create memberOrder(
+            List<Long> ids, String type) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Create();
+        req.setStoreId(101L);
+        req.setProductType(type);
+        req.setProductId(ids.get("card".equals(type) ? 2 : 3));
+        req.setQuantity(1);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Query memberOrderQuery(
+            String status) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Query();
+        req.setStatus(status);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Cancel
+            memberOrderCancel() {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileOrdersVO.Cancel();
+        req.setReason("计划改变");
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.dal.mysql.sales.GymBusinessOrderMapper orderRows() {
+        return applicationContext.getBean(
+                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymBusinessOrderMapper.class);
+    }
+
+    @Test
+    void mobileOrderCardFreezesActualSalePricePolicyAndIdentityWithoutPaymentOrRights() {
+        var ids = memberOrderFixture();
+        var offer = onlineSettings(ids.get(2));
+        offer.getOffers().getFirst().setSalePrice(new BigDecimal("88.88"));
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        var req = memberOrder(ids, "card");
+        var first = mobileOrders.create(req, "order-card-snapshot");
+        assertEquals("88.88", first.payableAmount());
+        assertEquals("0.00", first.paidAmount());
+        assertEquals("unpaid", first.paymentStatus());
+        assertEquals("pending", first.fulfillmentStatus());
+        assertTrue(first.memberCardIds().isEmpty());
+        var row = orderRows().selectById(Long.valueOf(first.id()));
+        assertEquals(50L, row.getBuyerUserId());
+        assertEquals(ids.get(1), row.getMemberId());
+        assertEquals(
+                java.time.Duration.ofMinutes(30),
+                java.time.Duration.between(row.getOrderedAt(), row.getExpiresAt()));
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(first, mobileOrders.get(row.getId()));
+        loginAs(1L);
+        offer.getOffers().getFirst().setSalePrice(new BigDecimal("90.00"));
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        assertEquals(first, mobileOrders.create(req, "order-card-snapshot"));
+        assertEquals("90.00", mobileOrders.create(req, "order-card-new-price").payableAmount());
+        assertEquals(2, orderRows().selectCount());
+    }
+
+    @Test
+    void mobileOrderCourseSupportsCurrentPriceAndZeroPriceWithoutFabricatedPayment() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var first = mobileOrders.create(memberOrder(ids, "course"), "order-course-public");
+        assertEquals("200.00", first.payableAmount());
+        assertEquals("course", first.productType());
+        loginAs(1L);
+        var approvalReq = coursePrice(ids);
+        approvalReq.setProposedAmount(BigDecimal.ZERO);
+        var approval = mobileCoursePrice.create(approvalReq, "order-zero-application");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(approval.id()), decision("approve"));
+        loginAs(1L);
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setApprovalId(Long.valueOf(approval.id()));
+        var quote = mobileQuotes.create(quoteReq, "order-zero-quote");
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        qrMemberLogin();
+        var free = mobileOrders.create(req, "order-zero-course");
+        assertEquals("0.00", free.payableAmount());
+        assertEquals("0.00", free.paidAmount());
+        assertEquals("paid", free.paymentStatus());
+        assertEquals("pending", free.fulfillmentStatus());
+        assertEquals(
+                "pending_fulfillment", orderRows().selectById(Long.valueOf(free.id())).getStatus());
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals(0, cardIssuePackCount());
+        assertServiceException(
+                () ->
+                        mobileOrders.cancel(
+                                Long.valueOf(free.id()), memberOrderCancel(), "order-free-cancel"),
+                MOBILE_ORDER_NOT_CANCELLABLE);
+    }
+
+    @Test
+    void mobileOrderBindsApprovedQuoteOnceAndCancellationDoesNotReleaseDiscount() {
+        var ids = memberOrderFixture();
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setApprovalId(approvedQuoteApplication(ids));
+        var quote = mobileQuotes.create(quoteReq, "order-discount-quote");
+        var quoteRow = courseQuotes.selectById(Long.valueOf(quote.id()));
+        when(businessClock.now()).thenReturn(quoteRow.getExpiresAt().minusSeconds(60));
+        qrMemberLogin();
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        var order = mobileOrders.create(req, "order-discount-use");
+        assertEquals("150.00", order.payableAmount());
+        assertEquals(quote.expiresAt(), order.expiresAt());
+        assertEquals(
+                Long.valueOf(order.id()),
+                courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        assertEquals("used", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        assertEquals(order, mobileOrders.create(req, "order-discount-use"));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-discount-twice"), COURSE_QUOTE_UNAVAILABLE);
+        var closed =
+                mobileOrders.cancel(
+                        Long.valueOf(order.id()), memberOrderCancel(), "order-discount-cancel");
+        assertEquals("closed", closed.paymentStatus());
+        assertEquals("used", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-discount-after-cancel"),
+                COURSE_QUOTE_UNAVAILABLE);
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Test
+    void mobileOrderExpiredChangedOrOtherBuyersQuoteCannotCreateOrder() {
+        var ids = memberOrderFixture();
+        Long other = Long.valueOf(members.create(member(101L, "13800009905")).getId());
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setMemberId(other);
+        var otherQuote = mobileQuotes.create(quoteReq, "order-foreign-quote");
+        var ownQuote = mobileQuotes.create(quoteRequest(ids), "order-expiring-quote");
+        qrMemberLogin();
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(otherQuote.id()));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-foreign-use"), COURSE_QUOTE_NOT_EXISTS);
+        req.setQuoteId(Long.valueOf(ownQuote.id()));
+        when(businessClock.now())
+                .thenReturn(courseQuotes.selectById(req.getQuoteId()).getExpiresAt());
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-expired-use"), COURSE_QUOTE_UNAVAILABLE);
+        assertEquals(0, orderRows().selectCount());
+        assertNull(courseQuotes.selectById(req.getQuoteId()).getUsedOrderId());
+    }
+
+    @Test
+    void mobileOrderConcurrentRequestsForOneQuoteCommitOnlyOneOrderAndBinding() throws Exception {
+        var ids = memberOrderFixture();
+        var quote = mobileQuotes.create(quoteRequest(ids), "order-quote-race");
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-quote-race-a");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-quote-race-b");
+                        });
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.module.gym.controller.app.mobile.vo
+                                                        .GymMobileOrdersVO.Order)
+                        .count());
+        assertEquals(1, orderRows().selectCount());
+        assertEquals(
+                orderRows().selectList().getFirst().getId(),
+                courseQuotes.selectById(req.getQuoteId()).getUsedOrderId());
+    }
+
+    @Test
+    void mobileOrderSameKeyConcurrencyAndChangedPayloadRespectCanonicalIdentity() throws Exception {
+        var ids = memberOrderFixture();
+        var req = memberOrder(ids, "card");
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-same-key");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.create(req, "order-same-key");
+                        });
+        assertEquals(result.get(0), result.get(1));
+        assertEquals(1, orderRows().selectCount());
+        qrMemberLogin();
+        req.setProductType("course");
+        req.setProductId(ids.get(3));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-same-key"), MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void
+            mobileOrderQueriesAreOwnedAndStatusFilteredBeforePaginationAndKeepHistoryAfterMembershipRemoval() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var first = mobileOrders.create(memberOrder(ids, "card"), "order-list-first");
+        var second = mobileOrders.create(memberOrder(ids, "course"), "order-list-second");
+        mobileOrders.cancel(Long.valueOf(first.id()), memberOrderCancel(), "order-list-cancel");
+        var q = memberOrderQuery("unpaid");
+        q.setPageSize(1);
+        var page = mobileOrders.page(q);
+        assertEquals(1, page.getTotal());
+        assertEquals(second.id(), page.getList().getFirst().id());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("closed")).getTotal());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        assertEquals(second, mobileOrders.get(Long.valueOf(second.id())));
+        jdbc.update(
+                "UPDATE gym_business_order SET member_id=999 WHERE id=?",
+                Long.valueOf(second.id()));
+        assertServiceException(
+                () -> mobileOrders.get(Long.valueOf(second.id())), SALES_ORDER_NOT_EXISTS);
+        assertServiceException(
+                () ->
+                        mobileOrders.cancel(
+                                Long.valueOf(second.id()),
+                                memberOrderCancel(),
+                                "order-foreign-cancel"),
+                SALES_ORDER_NOT_EXISTS);
+        jdbc.update(
+                "UPDATE gym_business_order SET tenant_id=2 WHERE id=?", Long.valueOf(first.id()));
+        assertEquals(0, mobileOrders.page(memberOrderQuery(null)).getTotal());
+    }
+
+    @Test
+    void mobileOrderExpiryIsClosedAtDeadlineAndLateVerifiedReceiptIsRejected() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var order = mobileOrders.create(memberOrder(ids, "card"), "order-expiry-deadline");
+        var row = orderRows().selectById(Long.valueOf(order.id()));
+        when(businessClock.now()).thenReturn(row.getExpiresAt().minusNanos(1000));
+        assertEquals("unpaid", mobileOrders.get(row.getId()).paymentStatus());
+        when(businessClock.now()).thenReturn(row.getExpiresAt());
+        assertEquals("closed", mobileOrders.get(row.getId()).paymentStatus());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("closed")).getTotal());
+        assertEquals(0, mobileOrders.page(memberOrderQuery("unpaid")).getTotal());
+        loginAs(1L);
+        var late =
+                new cn.iocoder.yudao.module.gym.service.sales.payment.GymPaymentReceiptVerifier
+                        .Receipt(
+                        1L,
+                        "test-provider",
+                        "order-late",
+                        row.getOrderNo(),
+                        null,
+                        "CNY",
+                        row.getPayableAmount(),
+                        row.getExpiresAt());
+        when(receiptVerifier.payment("order-late")).thenReturn(late);
+        assertServiceException(
+                () -> commerce.acceptPayment(row.getId(), "order-late"), COMMERCE_RECEIPT_INVALID);
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void mobileOrderCancelPersistsReasonAndOriginalTimeAndDoesNotRewriteOnNewKey() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var original = mobileOrders.create(memberOrder(ids, "card"), "order-cancel-source");
+        var req = memberOrderCancel();
+        req.setReason("  计划改变  ");
+        var first = mobileOrders.cancel(Long.valueOf(original.id()), req, "order-cancel-first");
+        var stored = orderRows().selectById(Long.valueOf(original.id()));
+        assertEquals("计划改变", stored.getCancellationReason());
+        assertNotNull(stored.getCancelledAt());
+        when(businessClock.now()).thenReturn(stored.getCancelledAt().plusSeconds(60));
+        req.setReason("计划改变");
+        assertEquals(first, mobileOrders.cancel(stored.getId(), req, "order-cancel-first"));
+        req.setReason("另外原因");
+        assertServiceException(
+                () -> mobileOrders.cancel(stored.getId(), req, "order-cancel-first"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(first, mobileOrders.cancel(stored.getId(), req, "order-cancel-second"));
+        assertEquals(
+                stored.getCancelledAt(), orderRows().selectById(stored.getId()).getCancelledAt());
+        assertEquals("计划改变", orderRows().selectById(stored.getId()).getCancellationReason());
+        assertEquals(
+                original, mobileOrders.create(memberOrder(ids, "card"), "order-cancel-source"));
+    }
+
+    @Test
+    void mobileOrderPaymentAndCancellationRaceCannotCloseAnOrderWithAcceptedPayment()
+            throws Exception {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var created = mobileOrders.create(memberOrder(ids, "card"), "order-payment-race");
+        var row = orderRows().selectById(Long.valueOf(created.id()));
+        when(receiptVerifier.payment("order-race-paid"))
+                .thenReturn(
+                        receipt(
+                                row,
+                                "order-race-paid",
+                                null,
+                                row.getPayableAmount().toPlainString()));
+        var result =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileOrders.cancel(
+                                    row.getId(), memberOrderCancel(), "order-race-cancel");
+                        },
+                        () -> {
+                            loginAs(1L);
+                            return commerce.acceptPayment(row.getId(), "order-race-paid");
+                        });
+        var current = orderRows().selectById(row.getId());
+        if ("cancelled".equals(current.getStatus())) {
+            assertEquals(0, current.getPaidAmount().signum());
+            assertEquals(0, financialEvents.selectCount());
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    result.get(1));
+        } else {
+            assertEquals("paid", current.getStatus());
+            assertEquals(current.getPayableAmount(), current.getPaidAmount());
+            assertEquals(1, financialEvents.selectCount());
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    result.get(0));
+        }
+    }
+
+    @Test
+    void mobileOrderSaleWindowDisabledOfferAndBlacklistPreventCheckoutAndFailedKeysCanRetry() {
+        var ids = memberOrderFixture();
+        var offer = onlineSettings(ids.get(2));
+        offer.getOffers().getFirst().setEnabled(false);
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        var req = memberOrder(ids, "card");
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-disabled-offer"), COMMERCE_REQUEST_INVALID);
+        loginAs(1L);
+        offer.getOffers().getFirst().setEnabled(true);
+        salesSettings.saveOnline(101L, offer);
+        qrMemberLogin();
+        assertEquals("unpaid", mobileOrders.create(req, "order-disabled-offer").paymentStatus());
+        loginAs(1L);
+        records.createBlacklist(blacklist(ids.get(1)));
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-purchase-blocked"), MEMBER_PURCHASE_BLOCKED);
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Test
+    void mobileOrderRejectsAdminIdentityInvalidQuantityAndCardQuoteAndMissingMembership() {
+        var ids = memberOrderFixture();
+        var req = memberOrder(ids, "card");
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-admin-not-member"), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        req.setQuantity(2);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileOrders.create(req, "order-quantity-two"));
+        req.setQuantity(1);
+        req.setQuoteId(1L);
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-card-quote"), COMMERCE_REQUEST_INVALID);
+        req.setQuoteId(null);
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-membership-missing"),
+                COMMERCE_REQUEST_INVALID);
+    }
+
+    @Test
+    void mobileOrderLegacyFulfilledCardRemainsReadableWithoutInventedExpiry() {
+        var old = commerceOrder();
+        qrMemberIdentity(old.getMemberId());
+        when(receiptVerifier.payment("order-legacy-paid"))
+                .thenReturn(
+                        receipt(
+                                old,
+                                "order-legacy-paid",
+                                null,
+                                old.getPayableAmount().toPlainString()));
+        commerce.acceptPayment(old.getId(), "order-legacy-paid");
+        // Existing configuration requires a contract. Publish its real local template first.
+        publishedContractPdf();
+        commerce.fulfillAutomaticOrder(old.getId());
+        qrMemberLogin();
+        var result = mobileOrders.get(old.getId());
+        assertNull(result.expiresAt());
+        assertEquals("paid", result.paymentStatus());
+        assertEquals("succeeded", result.fulfillmentStatus());
+        assertEquals(1, result.memberCardIds().size());
+        assertServiceException(
+                () -> mobileOrders.cancel(old.getId(), memberOrderCancel(), "order-paid-cancel"),
+                MOBILE_ORDER_NOT_CANCELLABLE);
+    }
+
+    @Test
+    void mobileOrderChangedProductQuoteFailureRollsBackOrderPolicyAndLeavesQuoteUnused() {
+        var ids = memberOrderFixture();
+        var quote = mobileQuotes.create(quoteRequest(ids), "order-quote-stale");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        qrMemberLogin();
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-stale-terms"), COURSE_QUOTE_UNAVAILABLE);
+        assertEquals(0, orderRows().selectCount());
+        assertNull(courseQuotes.selectById(req.getQuoteId()).getUsedOrderId());
+        assertEquals(
+                0,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderPolicyMapper
+                                        .class)
+                        .selectCount());
+    }
+
+    @Test
+    void mobileOrderPaymentStatusFiltersMatchActualPartialPaymentAndRefundLedger() {
+        var order = commerceOrder();
+        qrMemberIdentity(order.getMemberId());
+        when(receiptVerifier.payment("member-order-p1"))
+                .thenReturn(receipt(order, "member-order-p1", null, "40.00"));
+        when(receiptVerifier.payment("member-order-p2"))
+                .thenReturn(receipt(order, "member-order-p2", null, "59.99"));
+        commerce.acceptPayment(order.getId(), "member-order-p1");
+        qrMemberLogin();
+        assertEquals("40.00", mobileOrders.get(order.getId()).paidAmount());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("unpaid")).getTotal());
+        loginAs(1L);
+        commerce.acceptPayment(order.getId(), "member-order-p2");
+        qrMemberLogin();
+        assertEquals(1, mobileOrders.page(memberOrderQuery("paid")).getTotal());
+        loginAs(1L);
+        when(receiptVerifier.refund("member-order-r1"))
+                .thenReturn(receipt(order, "member-order-r1", "member-order-p1", "10.00"));
+        commerce.acceptRefund(order.getId(), "member-order-r1");
+        qrMemberLogin();
+        assertEquals("partially_refunded", mobileOrders.get(order.getId()).paymentStatus());
+        assertEquals("10.00", mobileOrders.get(order.getId()).refundedAmount());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("partially_refunded")).getTotal());
+        assertEquals(0, mobileOrders.page(memberOrderQuery("paid")).getTotal());
+        loginAs(1L);
+        when(receiptVerifier.refund("member-order-r2"))
+                .thenReturn(receipt(order, "member-order-r2", "member-order-p1", "30.00"));
+        when(receiptVerifier.refund("member-order-r3"))
+                .thenReturn(receipt(order, "member-order-r3", "member-order-p2", "59.99"));
+        commerce.acceptRefund(order.getId(), "member-order-r2");
+        commerce.acceptRefund(order.getId(), "member-order-r3");
+        qrMemberLogin();
+        assertEquals("refunded", mobileOrders.get(order.getId()).paymentStatus());
+        assertEquals(1, mobileOrders.page(memberOrderQuery("refunded")).getTotal());
+        assertEquals(0, mobileOrders.page(memberOrderQuery("partially_refunded")).getTotal());
+        assertEquals(5, financialEvents.selectCount());
+    }
+
+    @Test
+    void mobileOrderMalformedLegacyOfferAndExactSaleWindowFailClosedWithoutLeavingRequests() {
+        var ids = memberOrderFixture();
+        var req = memberOrder(ids, "card");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        for (String content : List.of("{}", "invalid-json", "{\"offers\":[{}]}")) {
+            jdbc.update(
+                    "UPDATE gym_sales_setting SET content=? WHERE store_id=101 AND kind='online-sales-settings'",
+                    content);
+            qrMemberLogin();
+            assertServiceException(
+                    () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                    COMMERCE_REQUEST_INVALID);
+        }
+        var offer = onlineSettings(ids.get(2));
+        offer.setOffers(List.of(offer.getOffers().getFirst(), offer.getOffers().getFirst()));
+        jdbc.update(
+                "UPDATE gym_sales_setting SET content=? WHERE store_id=101 AND kind='online-sales-settings'",
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(offer));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                COMMERCE_REQUEST_INVALID);
+        offer.setOffers(List.of(offer.getOffers().getFirst()));
+        var start = businessClock.now().plusSeconds(60);
+        var end = start.plusSeconds(60);
+        offer.getOffers().getFirst().setStartsAt(start);
+        offer.getOffers().getFirst().setEndsAt(end);
+        jdbc.update(
+                "UPDATE gym_sales_setting SET content=? WHERE store_id=101 AND kind='online-sales-settings'",
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(offer));
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                COMMERCE_REQUEST_INVALID);
+        when(businessClock.now()).thenReturn(end);
+        assertServiceException(
+                () -> mobileOrders.create(req, "order-legacy-offer-retry"),
+                COMMERCE_REQUEST_INVALID);
+        assertEquals(0, orderRows().selectCount());
+        when(businessClock.now()).thenReturn(start);
+        assertEquals(
+                "unpaid", mobileOrders.create(req, "order-legacy-offer-retry").paymentStatus());
+        assertEquals(1, orderRows().selectCount());
     }
 }

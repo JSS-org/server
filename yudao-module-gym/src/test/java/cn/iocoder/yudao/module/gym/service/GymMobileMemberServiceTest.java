@@ -45,6 +45,8 @@ import java.util.concurrent.*;
 
 @Import({
     GymMobileIdentityService.class,
+    GymMobileInvitationService.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileInvitationProperties.class,
     GymMobileIdempotency.class,
     GymMobileRecordsService.class,
     GymMobileEntitlementsService.class,
@@ -55,6 +57,12 @@ import java.util.concurrent.*;
 })
 class GymMobileMemberServiceTest extends BaseDbUnitTest {
     @Resource GymMobileIdentityService identities;
+    @Resource GymMobileInvitationService invitations;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileInvitationMapper invitationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileInvitationProperties invitationProperties;
+
     @Resource GymMobileRecordsService records;
     @Resource GymMobileEntitlementsService entitlements;
     @Resource cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper cards;
@@ -105,6 +113,8 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
     @BeforeEach
     void setup() {
         login(1L, 10L, 1);
+        invitationProperties.setSharePage("/pages/invitation/index");
+        invitationProperties.setValidDays(30);
         when(clock.now()).thenReturn(NOW);
         var user = new MemberUserRespDTO();
         user.setId(10L);
@@ -709,5 +719,380 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
                 () -> entitlements.packs(packs));
         login(1L, 10L, 2);
         assertServiceException(() -> entitlements.cards(cards), MOBILE_IDENTITY_INVALID);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileInvitationVO.Create invitationReq(
+            Long store) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileInvitationVO
+                        .Create();
+        req.setStoreId(store);
+        return req;
+    }
+
+    @Test
+    void invitationCreationPersistsRandomCodeAndReplaysOriginalPathAndExpiry() {
+        Long member = initialize();
+        var result = invitations.create(invitationReq(101L), "invitation-key-1");
+        assertTrue(result.inviteCode().matches("[a-f0-9]{32}"));
+        assertEquals(
+                "/pages/invitation/index?storeId=101&inviteCode=" + result.inviteCode(),
+                result.sharePath());
+        assertEquals(
+                NOW.plusSeconds(30 * 86400).atZone(GymDateRange.ZONE).toOffsetDateTime().toString(),
+                result.expiresAt());
+        var row =
+                invitationRows.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileInvitationDO
+                                ::getInviteCode,
+                        result.inviteCode());
+        assertEquals(member, row.getInviterMemberId());
+        assertEquals(10L, row.getInviterUserId());
+        invitationProperties.setSharePage("/pages/other/join");
+        when(clock.now()).thenReturn(NOW.plusSeconds(31 * 86400));
+        assertEquals(result, invitations.create(invitationReq(101L), "invitation-key-1"));
+        var next = invitations.create(invitationReq(101L), "invitation-key-2");
+        assertNotEquals(result.inviteCode(), next.inviteCode());
+        assertTrue(next.sharePath().startsWith("/pages/other/join?"));
+        assertEquals(2, invitationRows.selectCount().intValue());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member_card", Integer.class));
+    }
+
+    @Test
+    void invitationCreationRechecksCurrentAccountStoreAndMembershipBeforeReplay() {
+        Long member = initialize();
+        var req = invitationReq(101L);
+        invitations.create(req, "invitation-key-1");
+        users.getUser(10L).setStatus(1);
+        assertServiceException(
+                () -> invitations.create(req, "invitation-key-1"), MOBILE_IDENTITY_INVALID);
+        users.getUser(10L).setStatus(0);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", member);
+        assertServiceException(
+                () -> invitations.create(req, "invitation-key-1"), MOBILE_IDENTITY_INVALID);
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", member);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () -> invitations.create(req, "invitation-key-1"), MOBILE_INVITATION_UNAVAILABLE);
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        jdbc.update("DELETE FROM gym_member_store WHERE member_id=?", member);
+        assertServiceException(
+                () -> invitations.create(req, "invitation-key-1"), MOBILE_INVITATION_UNAVAILABLE);
+        assertServiceException(
+                () -> invitations.create(invitationReq(999L), "invitation-key-2"),
+                MOBILE_INVITATION_UNAVAILABLE);
+        login(1L, 10L, 2);
+        assertServiceException(
+                () -> invitations.create(req, "invitation-key-1"), MOBILE_IDENTITY_INVALID);
+        assertEquals(1, invitationRows.selectCount().intValue());
+    }
+
+    @Test
+    void invitationCreationValidatesKeysParametersAndSafePageConfiguration() {
+        Long member = initialize();
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> invitations.create(invitationReq(-1L), "invitation-key-1"));
+        assertServiceException(
+                () -> invitations.create(invitationReq(101L), "short"), MOBILE_REQUEST_INVALID);
+        invitations.create(invitationReq(101L), "invitation-key-1");
+        store(102L, "active");
+        jdbc.update(
+                "INSERT INTO gym_member_store(member_id,store_id,joined_at,tenant_id) VALUES(?,102,?,1)",
+                member,
+                NOW);
+        assertServiceException(
+                () -> invitations.create(invitationReq(102L), "invitation-key-1"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        invitationProperties.setSharePage("https://example.com/steal");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> invitations.create(invitationReq(101L), "invitation-key-2"));
+        invitationProperties.setSharePage("/pages/invitation/index");
+        invitationProperties.setValidDays(0);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> invitations.create(invitationReq(101L), "invitation-key-2"));
+        invitationProperties.setValidDays(30);
+        assertNotNull(invitations.create(invitationReq(101L), "invitation-key-2"));
+        assertEquals(2, invitationRows.selectCount().intValue());
+    }
+
+    @Test
+    void invitationCreatesVerifiedFirstAttributionWithoutRewardsAndDoesNotOverwriteIt() {
+        Long inviter = initialize();
+        var invite = invitations.create(invitationReq(101L), "invitation-key-1");
+        login(1L, 11L, 1);
+        var req = request();
+        req.setInviteCode(invite.inviteCode());
+        var result = identities.initialize(req, "invited-member-1");
+        assertTrue(result.created());
+        var identity = identities.requireIdentity();
+        assertEquals(inviter, identity.getInviterMemberId());
+        assertEquals(10L, identity.getInviterUserId());
+        assertEquals(invite.inviteCode(), identity.getInviteCode());
+        assertEquals(Boolean.TRUE, identity.getInvitationNewMember());
+        assertNotNull(identity.getInvitationId());
+        assertEquals(result, identities.initialize(req, "invited-member-1"));
+        var altered = request();
+        altered.setInviteCode("not-a-real-invitation");
+        assertFalse(identities.initialize(altered, "invited-member-2").created());
+        assertEquals(identity.getInvitationId(), identities.requireIdentity().getInvitationId());
+        assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member", Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member_card", Integer.class));
+    }
+
+    @Test
+    void invitationExistingCustomerBindingRecordsNonNewMemberWithoutMovingStoreOrStage() {
+        Long inviter = initialize();
+        var invite = invitations.create(invitationReq(101L), "invitation-key-1");
+        var old = new cn.iocoder.yudao.module.gym.dal.dataobject.member.GymMemberDO();
+        old.setStoreId(102L);
+        old.setMemberNo("old-invited");
+        old.setName("老客");
+        old.setPhone("13800000002");
+        old.setGender("unspecified");
+        old.setStatus("active");
+        old.setCustomerStage("customer");
+        old.setRegisteredAt(NOW.minusSeconds(86400));
+        members.insert(old);
+        login(1L, 11L, 1);
+        var req = request();
+        req.setInviteCode(invite.inviteCode());
+        var result = identities.initialize(req, "invited-old-member");
+        assertFalse(result.created());
+        assertEquals("customer", result.customerType());
+        var identity = identities.requireIdentity();
+        assertEquals(Boolean.FALSE, identity.getInvitationNewMember());
+        assertEquals(inviter, identity.getInviterMemberId());
+        assertEquals(102L, members.selectById(old.getId()).getStoreId());
+        assertEquals(
+                0,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM gym_member_store WHERE member_id=?",
+                        Integer.class,
+                        old.getId()));
+    }
+
+    @Test
+    void invitationInvalidWrongStoreExpiredDeletedAndForeignTenantCodesLeaveNoNewIdentity() {
+        initialize();
+        var invite = invitations.create(invitationReq(101L), "invitation-key-1");
+        login(1L, 11L, 1);
+        var req = request();
+        for (String code : List.of("not-a-code", "a".repeat(32))) {
+            req.setInviteCode(code);
+            assertServiceException(
+                    () -> identities.initialize(req, "invalid-invite-code"),
+                    MOBILE_INVITATION_INVALID);
+        }
+        req.setInviteCode(invite.inviteCode());
+        store(102L, "active");
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> identities.initialize(req, "invalid-invite-code"), MOBILE_INVITATION_INVALID);
+        req.setStoreId(101L);
+        when(clock.now()).thenReturn(NOW.plusSeconds(30 * 86400));
+        assertServiceException(
+                () -> identities.initialize(req, "invalid-invite-code"), MOBILE_INVITATION_INVALID);
+        when(clock.now()).thenReturn(NOW);
+        jdbc.update("UPDATE gym_mobile_invitation SET deleted=true");
+        assertServiceException(
+                () -> identities.initialize(req, "invalid-invite-code"), MOBILE_INVITATION_INVALID);
+        jdbc.update("UPDATE gym_mobile_invitation SET deleted=false,tenant_id=2");
+        assertServiceException(
+                () -> identities.initialize(req, "invalid-invite-code"), MOBILE_INVITATION_INVALID);
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member", Integer.class));
+        assertEquals(
+                1, jdbc.queryForObject("SELECT COUNT(*) FROM gym_mobile_identity", Integer.class));
+        assertEquals(
+                0,
+                jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM gym_mobile_request WHERE request_key='invalid-invite-code'",
+                        Integer.class));
+        jdbc.update("UPDATE gym_mobile_invitation SET tenant_id=1");
+        assertTrue(identities.initialize(req, "invalid-invite-code").created());
+    }
+
+    @Test
+    void invitationClaimRejectsDisabledUnboundOrRemovedInviterAndSelfReferral() {
+        Long inviter = initialize();
+        var invite = invitations.create(invitationReq(101L), "invitation-key-1");
+        login(1L, 11L, 1);
+        var req = request();
+        req.setInviteCode(invite.inviteCode());
+        users.getUser(10L).setStatus(1);
+        assertServiceException(
+                () -> identities.initialize(req, "claim-invitation"), MOBILE_INVITATION_INVALID);
+        users.getUser(10L).setStatus(0);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", inviter);
+        assertServiceException(
+                () -> identities.initialize(req, "claim-invitation"), MOBILE_INVITATION_INVALID);
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", inviter);
+        jdbc.update("UPDATE gym_mobile_identity SET deleted=true WHERE user_id=10");
+        assertServiceException(
+                () -> identities.initialize(req, "claim-invitation"), MOBILE_INVITATION_INVALID);
+        jdbc.update("UPDATE gym_mobile_identity SET deleted=false WHERE user_id=10");
+        jdbc.update("UPDATE gym_member_store SET deleted=true WHERE member_id=?", inviter);
+        assertServiceException(
+                () -> identities.initialize(req, "claim-invitation"), MOBILE_INVITATION_INVALID);
+        jdbc.update("UPDATE gym_member_store SET deleted=false WHERE member_id=?", inviter);
+        users.getUser(11L).setMobile("13800000001");
+        assertServiceException(
+                () -> identities.initialize(req, "claim-invitation"), MOBILE_INVITATION_INVALID);
+        users.getUser(11L).setMobile("13800000002");
+        assertTrue(identities.initialize(req, "claim-invitation").created());
+    }
+
+    @Test
+    void invitationEmptyAndLegacyFreeTextDoNotBecomeVerifiedAttribution() {
+        var req = request();
+        req.setInviteCode("  ");
+        Long member = Long.valueOf(identities.initialize(req, "empty-invitation").memberId());
+        assertNull(identities.requireIdentity().getInvitationId());
+        assertNull(identities.requireIdentity().getInviteCode());
+        jdbc.update(
+                "UPDATE gym_mobile_identity SET invite_code='legacy-free-text' WHERE member_id=?",
+                member);
+        assertFalse(identities.initialize(request(), "legacy-invitation").created());
+        assertEquals("legacy-free-text", identities.requireIdentity().getInviteCode());
+        assertNull(identities.requireIdentity().getInviterMemberId());
+    }
+
+    @Test
+    void invitationConcurrentSameKeyCreatesOneCodeAndSeparateKeysCreateDistinctCodes()
+            throws Exception {
+        initialize();
+        try (var executor = Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<Callable<String>>();
+            for (int i = 0; i < 4; i++)
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 1);
+                            try {
+                                return invitations
+                                        .create(invitationReq(101L), "parallel-invite-key")
+                                        .inviteCode();
+                            } finally {
+                                clear();
+                            }
+                        });
+            var codes = new HashSet<String>();
+            for (var result : executor.invokeAll(tasks))
+                codes.add(result.get(10, TimeUnit.SECONDS));
+            assertEquals(1, codes.size());
+            tasks.clear();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 1);
+                            try {
+                                return invitations
+                                        .create(invitationReq(101L), "parallel-invite-" + n)
+                                        .inviteCode();
+                            } finally {
+                                clear();
+                            }
+                        });
+            }
+            codes.clear();
+            for (var result : executor.invokeAll(tasks))
+                codes.add(result.get(10, TimeUnit.SECONDS));
+            assertEquals(4, codes.size());
+        }
+        assertEquals(5, invitationRows.selectCount().intValue());
+    }
+
+    @Test
+    void invitationConcurrentFirstClaimsKeepOneAttributionAndOriginalMember() throws Exception {
+        Long inviter = initialize();
+        var first = invitations.create(invitationReq(101L), "invitation-key-1");
+        var second = invitations.create(invitationReq(101L), "invitation-key-2");
+        try (var executor = Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<Callable<Initialization>>();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            login(1L, 11L, 1);
+                            try {
+                                var req = request();
+                                req.setInviteCode(
+                                        n % 2 == 0 ? first.inviteCode() : second.inviteCode());
+                                return identities.initialize(req, "parallel-claim-" + n);
+                            } finally {
+                                clear();
+                            }
+                        });
+            }
+            int count = 0;
+            var ids = new HashSet<String>();
+            for (var result : executor.invokeAll(tasks)) {
+                var value = result.get(10, TimeUnit.SECONDS);
+                ids.add(value.memberId());
+                if (value.created()) count++;
+            }
+            assertEquals(1, count);
+            assertEquals(1, ids.size());
+        }
+        login(1L, 11L, 1);
+        var identity = identities.requireIdentity();
+        assertEquals(inviter, identity.getInviterMemberId());
+        assertTrue(
+                Set.of(first.inviteCode(), second.inviteCode()).contains(identity.getInviteCode()));
+        assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member", Integer.class));
+    }
+
+    @Test
+    void invitationInsertFailureRollsBackIdempotencyAndOriginalKeyCanRetry() {
+        initialize();
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_invitation ADD CONSTRAINT test_invite_failure CHECK (store_id<>101)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> invitations.create(invitationReq(101L), "failing-invitation"));
+            assertEquals(0, invitationRows.selectCount().intValue());
+            assertEquals(
+                    0,
+                    jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM gym_mobile_request WHERE request_key='failing-invitation'",
+                            Integer.class));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_mobile_invitation DROP CONSTRAINT test_invite_failure");
+        }
+        assertNotNull(invitations.create(invitationReq(101L), "failing-invitation"));
+    }
+
+    @Test
+    void invitationAttributionFailureRollsBackMemberMembershipIdentityAndRequest() {
+        initialize();
+        var invite = invitations.create(invitationReq(101L), "invitation-key-1");
+        login(1L, 11L, 1);
+        var req = request();
+        req.setInviteCode(invite.inviteCode());
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_identity ADD CONSTRAINT test_attribution_failure CHECK (invitation_id IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> identities.initialize(req, "failing-attribution"));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member", Integer.class));
+            assertEquals(
+                    1, jdbc.queryForObject("SELECT COUNT(*) FROM gym_member_store", Integer.class));
+            assertEquals(
+                    1,
+                    jdbc.queryForObject("SELECT COUNT(*) FROM gym_mobile_identity", Integer.class));
+            assertEquals(
+                    0,
+                    jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM gym_mobile_request WHERE request_key='failing-attribution'",
+                            Integer.class));
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_identity DROP CONSTRAINT test_attribution_failure");
+        }
+        assertTrue(identities.initialize(req, "failing-attribution").created());
     }
 }

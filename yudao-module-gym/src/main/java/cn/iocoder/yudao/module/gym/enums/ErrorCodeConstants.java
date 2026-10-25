@@ -242,4 +242,6 @@ public interface ErrorCodeConstants {
     ErrorCode MOBILE_CONVERSATION_NOT_EXISTS = new ErrorCode(1_070_028_001, "会话不存在或无权查看");
     ErrorCode MOBILE_CONVERSATION_UNAVAILABLE = new ErrorCode(1_070_028_002, "当前门店或会员关系不支持此会话操作");
     ErrorCode MOBILE_CONVERSATION_MESSAGE_INVALID = new ErrorCode(1_070_028_003, "已读消息不属于当前会话或不存在");
+    ErrorCode MOBILE_INVITATION_INVALID = new ErrorCode(1_070_029_001, "邀请码无效、已过期或不适用于当前会员及门店");
+    ErrorCode MOBILE_INVITATION_UNAVAILABLE = new ErrorCode(1_070_029_002, "当前会员不能为此门店创建邀请");
 }

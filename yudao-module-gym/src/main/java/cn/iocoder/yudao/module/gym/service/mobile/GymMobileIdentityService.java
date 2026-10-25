@@ -36,6 +36,7 @@ import java.util.UUID;
 public class GymMobileIdentityService {
     @Resource private MemberUserApi users;
     @Resource private GymMobileIdentityMapper identities;
+    @Resource private GymMobileInvitationMapper invitations;
     @Resource private GymMemberMapper members;
     @Resource private GymMemberStoreMapper memberships;
     @Resource private GymStoreMapper stores;
@@ -111,6 +112,7 @@ public class GymMobileIdentityService {
                     if (store == null || !"active".equals(store.getStatus()))
                         throw exception(MEMBER_STORE_INACTIVE);
                     var member = members.selectOne(GymMemberDO::getPhone, user.getMobile());
+                    var invitation = validateInvitation(req, user.getId(), member);
                     boolean created = member == null;
                     if (created) {
                         member = new GymMemberDO();
@@ -140,7 +142,13 @@ public class GymMobileIdentityService {
                     identity.setMemberId(member.getId());
                     identity.setDefaultStoreId(store.getId());
                     identity.setSource(req.getSource());
-                    identity.setInviteCode(req.getInviteCode());
+                    identity.setInviteCode(invitation == null ? null : invitation.getInviteCode());
+                    if (invitation != null) {
+                        identity.setInvitationId(invitation.getId());
+                        identity.setInviterMemberId(invitation.getInviterMemberId());
+                        identity.setInviterUserId(invitation.getInviterUserId());
+                        identity.setInvitationNewMember(created);
+                    }
                     identity.setFaceStatus("unregistered");
                     try {
                         identities.insert(identity);
@@ -149,6 +157,41 @@ public class GymMobileIdentityService {
                     }
                     return new Initialization(member.getId().toString(), stage(member), created);
                 });
+    }
+
+    // Called under the same tenant mutex as invitation creation and first identity binding.
+    // Historic free-text codes are never retroactively treated as verified attribution.
+    private GymMobileInvitationDO validateInvitation(
+            Initialize req, Long userId, GymMemberDO invitee) {
+        if (req.getInviteCode() == null || req.getInviteCode().isBlank()) return null;
+        if (!req.getInviteCode().matches("[a-f0-9]{32}"))
+            throw exception(MOBILE_INVITATION_INVALID);
+        var invitation =
+                invitations.selectOne(GymMobileInvitationDO::getInviteCode, req.getInviteCode());
+        if (invitation == null
+                || !req.getStoreId().equals(invitation.getStoreId())
+                || !clock.now().isBefore(invitation.getExpiresAt())
+                || userId.equals(invitation.getInviterUserId())
+                || invitee != null && invitee.getId().equals(invitation.getInviterMemberId()))
+            throw exception(MOBILE_INVITATION_INVALID);
+        var inviter = members.selectById(invitation.getInviterMemberId());
+        var binding =
+                identities.selectOne(GymMobileIdentityDO::getUserId, invitation.getInviterUserId());
+        var account = users.getUser(invitation.getInviterUserId());
+        if (inviter == null
+                || !"active".equals(inviter.getStatus())
+                || binding == null
+                || !invitation.getInviterMemberId().equals(binding.getMemberId())
+                || account == null
+                || !Integer.valueOf(0).equals(account.getStatus())
+                || account.getMobile() == null
+                || !account.getMobile().matches("1[3-9][0-9]{9}")
+                || memberships.selectCount(
+                                new LambdaQueryWrapper<GymMemberStoreDO>()
+                                        .eq(GymMemberStoreDO::getMemberId, inviter.getId())
+                                        .eq(GymMemberStoreDO::getStoreId, req.getStoreId()))
+                        == 0) throw exception(MOBILE_INVITATION_INVALID);
+        return invitation;
     }
 
     private String stage(GymMemberDO member) {

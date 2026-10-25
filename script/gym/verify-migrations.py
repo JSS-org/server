@@ -90,7 +90,24 @@ def main():
               for name, value in manifest.items()), 'historical SQL checksums unchanged')
     with isolated() as db:
         command('init')
-        check(len([t for t in db.tables() if t.startswith('gym_')]) == 73, 'new database has 59 original and 14 mobile gym tables')
+        check(len([t for t in db.tables() if t.startswith('gym_')]) == 74, 'new database has 59 original and 15 mobile gym tables')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_mobile_invitation' AND column_name IN ('issued_at','expires_at') AND datetime_precision=6") == '2', 'invitation times retain microseconds')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_mobile_identity' AND column_name IN ('invitation_id','inviter_member_id','inviter_user_id','invitation_new_member') AND is_nullable='YES' AND column_default IS NULL") == '4', 'legacy identity attribution remains unknown rather than invented')
+        def invitation_insert(tenant=1):
+            db.sql(f"INSERT INTO gym_mobile_invitation(store_id,inviter_member_id,inviter_user_id,invite_code,share_page,issued_at,expires_at,tenant_id) VALUES(101,1,10,'0123456789abcdef0123456789abcdef','/pages/invitation/index','2026-10-25 12:00:00.123456','2026-11-24 12:00:00.123456',{tenant})")
+        invitation_insert()
+        rejects(lambda: invitation_insert(), 'invitation codes are unique inside a tenant')
+        invitation_insert(2)
+        check(db.sql('SELECT COUNT(*) FROM gym_mobile_invitation') == '2', 'invitation code namespace is tenant isolated')
+        rejects(lambda: db.sql('UPDATE gym_mobile_invitation SET expires_at=issued_at'), 'invitation lifetime must be positive')
+        db.sql("INSERT INTO gym_mobile_identity(user_id,member_id,default_store_id,source,invite_code,tenant_id) VALUES(11,2,101,'miniapp','old-unverified-code',1)")
+        rejects(lambda: db.sql('UPDATE gym_mobile_identity SET invitation_id=1'), 'partial invitation attribution is rejected')
+        rejects(lambda: db.sql('UPDATE gym_mobile_identity SET invitation_id=1,inviter_member_id=2,inviter_user_id=10,invitation_new_member=1'), 'self member attribution is rejected')
+        rejects(lambda: db.sql('UPDATE gym_mobile_identity SET invitation_id=1,inviter_member_id=1,inviter_user_id=11,invitation_new_member=0'), 'self account attribution is rejected')
+        db.sql('UPDATE gym_mobile_identity SET invitation_id=1,inviter_member_id=1,inviter_user_id=10,invitation_new_member=0')
+        check(db.sql('SELECT invitation_new_member+0 FROM gym_mobile_identity') == '0', 'existing gym member binding is distinguishable from a newly created member')
+        db.sql('DELETE FROM gym_mobile_identity')
+        db.sql('DELETE FROM gym_mobile_invitation')
         check(db.sql("SELECT COUNT(*) FROM system_menu WHERE permission IN ('gym:messages:read','gym:messages:send') AND type=3 AND deleted=0") == '2', 'conversation read and send permissions are registered exactly once')
         check(db.sql("SELECT COUNT(*) FROM system_role_menu rm JOIN system_menu m ON m.id=rm.menu_id WHERE m.permission IN ('gym:messages:read','gym:messages:send') AND rm.deleted=0") == '0', 'conversation migration never grants roles message access')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND ((table_name='gym_mobile_conversation' AND column_name='initiated_at') OR (table_name='gym_mobile_message' AND column_name='sent_at')) AND datetime_precision=6") == '2', 'conversation creation and message timestamps retain microseconds')
@@ -314,6 +331,25 @@ def main():
         rejects(db.seed, 'development seed refuses a database with a future baseline')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0'
                   for table in manager.SYSTEM_TABLES), 'future baseline rejection creates no seed data')
+    # V025 free-text invitation sources must not turn into verified attribution during upgrade.
+    with isolated() as db:
+        with tempfile.TemporaryDirectory(prefix='gym-flyway-invitations-') as folder:
+            previous_assets = Path(folder) / 'assets'
+            shutil.copytree(ASSETS, previous_assets)
+            for migration in (previous_assets / 'migration/mysql').glob('V*__*.sql'):
+                if int(migration.name.split('__')[0][1:]) >= 26:
+                    migration.unlink()
+            manager.ASSETS = previous_assets
+            db.flyway('baseline', 0)
+            db.flyway('migrate')
+            db.sql("INSERT INTO gym_mobile_identity(user_id,member_id,default_store_id,source,invite_code,tenant_id) VALUES(11,2,101,'old-miniapp','old-unverified-code',1)")
+            before_auth = auth_snapshot(db)
+            manager.ASSETS = ASSETS
+            db.flyway('migrate')
+            check(db.sql("SELECT COUNT(*) FROM gym_mobile_identity WHERE user_id=11 AND member_id=2 AND default_store_id=101 AND source='old-miniapp' AND invite_code='old-unverified-code' AND invitation_id IS NULL AND inviter_member_id IS NULL AND inviter_user_id IS NULL AND invitation_new_member IS NULL") == '1', 'V026 preserves legacy source code without granting verified invitation attribution')
+            check(db.sql('SELECT COUNT(*) FROM gym_mobile_invitation') == '0', 'V026 does not backfill historical invitation links')
+            check(auth_snapshot(db) == before_auth, 'V026 does not modify accounts roles or permissions')
+            db.flyway('validate')
     # Upgrade a real V021 database containing pre-worker member purchases.
     with isolated() as db:
         with tempfile.TemporaryDirectory(prefix='gym-flyway-member-fulfillment-') as folder:

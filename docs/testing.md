@@ -1274,3 +1274,26 @@ git diff --check
 首轮专项的潜客测试缺少有效平台会员账号夹具，导致先报账号无效；已补有效账号并仍保持身份未绑定，正确验证身份初始化前后差异。首轮全量中17项新业务及5项MVC通过，另有既有课程购买快照测试因夜间第二节课跨日超出查询窗口失败；查询结束日改为第二节实际排期次日，保持60分钟购买快照与短课程不可预约断言，未改业务规则。最终全量重跑成功，不以失败的首轮日志当作通过证据。
 
 最终日志/tmp/uniapp-conversation-final-tests-2.log，初轮/tmp/uniapp-conversation-final-tests.log，专项/tmp/uniapp-conversation-focused.log，迁移/tmp/uniapp-conversation-migrations.log，打包/tmp/uniapp-conversation-package.log。本地验证不证明真实微信、部署HTTP、多节点、规模或外部消息送达；前端未改。
+
+## 邀请推广与首次归属（2026-10-25，V026）
+
+复现命令：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+新增12项数据库业务测试及3项MVC，完整gym825通过（GymMobileMemberServiceTest35、组织服务510），member4通过、1项既有禁用跳过。Spotless通过，server依赖打包成功（打包跳过测试）；源码映射111/135，剩余24项。
+
+覆盖随机持久化码及原码/路径/期限重放、新键不复用；当前账号/会员/门店/关系撤销后重试拒绝；幂等参数冲突和安全页面配置；首次实际归属、已存在身份不覆盖、老客户非新建且不迁移原店/客户阶段；未知、错店、过期边界、删除及跨租户码拒绝；无效邀请人、原绑定撤销及自邀拒绝；空邀请与旧文本不伪造归属；并发同键一条/异键多条及同一被邀请人并发首次建档唯一；发码及最终身份写入失败时完整回滚，原键重试。MVC验证请求头、门店ID、身份/码/积分字段拒绝、公开响应仅3字段及发码正文日志关闭。
+
+真实隔离MySQL/Flyway141检查通过且临时库全部清理，新增12项包括74表基线之外的微秒时间、可空归属、租户内唯一码、跨租户命名空间、有效期、完整归属及双重自邀约束、老会员标记；单独建真实V025库升级，验证旧自由文本码与原身份信息保留、无历史邀请回填及账号权限不变。V001–V025未修改，业务库未迁移。
+
+日志：/tmp/uniapp-invitation-focused.log（会员专项35通过）、/tmp/uniapp-invitation-final-tests.log（最终全量）、/tmp/uniapp-invitation-migrations.log、/tmp/uniapp-invitation-package.log。未做真实微信分享、小程序页面、部署HTTP、多节点或规模联调；生成链接不证明积分奖励已完成，前端未改。

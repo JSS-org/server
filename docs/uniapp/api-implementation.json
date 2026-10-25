@@ -728,8 +728,14 @@
       "method": "POST",
       "path": "/app-api/gym/me/invitations",
       "description": "生成本人邀请推广码和分享路径",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymInvitationController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileInvitationService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileIdentityService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileInvitationControllerTest.java"
+      ]
     },
     {
       "id": 61,

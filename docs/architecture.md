@@ -697,3 +697,9 @@ GymMobileDevicesController（gym:devices:read）→GymMobileDevicesService→Gym
 V025新增gym_mobile_conversation及gym_mobile_message，当前73表。会话唯一键为tenant/member/store，消息保存真实账号类型与账号ID。创建使用幂等行→租户互斥→会话行锁；发送使用幂等行→会话行锁；会员已读只锁会话再验证目标消息。消息插入、最新ID、会员未读数和幂等响应同事务，失败全部回滚。读游标单调递增并重新统计后台未读消息，不将GET当作确认。查询用REPEATABLE_READ保证分页/摘要快照一致，列表批量取得最新消息，无逐条N+1查询。
 
 只新增read/send权限定义、不授予角色。七个入口均关闭API请求/响应正文日志。与站内通知发布器无调用关系，无外部渠道或WebSocket。创建和发送使用READ_COMMITTED，锁后再次验证当前访问条件；旧幂等响应前也先检查当前身份/范围。详细契约及历史访问边界见uniapp/uniapp-api.md的V025章节。
+
+## 会员邀请与首次身份归属（V026）
+
+AppGymInvitationController→GymMobileInvitationService→IdentityService校验当前会员，再由营业门店/会员门店关系约束邀请资格。幂等行→现有租户互斥→重新校验后插入gym_mobile_invitation，邀请码、分享页面、微秒时间和幂等响应同事务。新键新码，旧键重放首次签发快照；此服务不依赖微信或积分。
+
+IdentityService的首次建档分支直接读取InvitationMapper，避免与邀请Service形成循环依赖。在原租户互斥事务内验证码、门店、到期及邀请人当前账号/身份/会员关系；身份保存四项归属快照，与档案和门店关系一起提交或回滚。旧身份重复初始化不修改归属；旧自由文本码没有验证快照，不能进入奖励依据。invitationNewMember区分新建档案与老会员首次绑定。V026一表及身份字段使当前gym表数74，独立租户唯一索引和完整归属约束辅助服务端校验。配置类只允许内部pages路径及1～365天有效期；前端页面与奖励业务仍待后续。

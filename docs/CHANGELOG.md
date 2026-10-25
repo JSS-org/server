@@ -3075,3 +3075,41 @@ V025两表、当前73表、下一V026；先备份、migrate/validate再开放新
 ### 未做 / 后续
 
 106项新增本地实现、4项复用源码、25项待开发，总数135；已读辅助路由不计新增目标。微信客服、外部消息推送、WebSocket、附件、编辑撤回、员工未读均未实现。支付/自动续费、电子签约、设备及监控真实接入按要求暂缓，未伪造成功。本地小步提交，不推送。
+
+## [2026-10-25 23:35 ~ 23:46] 会员邀请推广与首次建档验证归属
+
+### 意图
+
+实现135项总表60，提供真实邀请推广码及可配置分享路径，并使首次建档校验邀请关系；保留既有客户阶段/门店/负责关系。生成邀请不直接授予尚未定义规则的积分奖励，继续遵守前端不改和小步本地提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymInvitationController.java`、`controller/app/mobile/vo/GymMobileInvitationVO.java` | 新增 | 会员发码接口、严格门店输入、三字段响应及关闭正文日志 |
+| `service/mobile/GymMobileInvitationService.java`、`framework/mobile/GymMobileInvitationProperties.java` | 新增 | 当前资格、幂等签发、随机码、固定期限及安全分享路径配置 |
+| `dal/dataobject/mobile/GymMobileInvitationDO.java`、`dal/mysql/mobile/GymMobileInvitationMapper.java` | 新增 | 邀请门店、真实邀请人、随机码、签发页面及时间持久化 |
+| `service/mobile/GymMobileIdentityService.java`、`dal/dataobject/mobile/GymMobileIdentityDO.java` | 修改 | 首次建档核验邀请并同事务保存归属、新旧会员标记；已有身份不覆盖 |
+| `enums/ErrorCodeConstants.java` | 修改 | 邀请码无效、当前门店无法邀请两个错误 |
+| `sql/gym/migration/mysql/V026__gym_mobile_invitations.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 一表至74表，身份四字段、完整归属及自邀约束，真实V025升级测试 |
+| `GymMobileMemberServiceTest.java`、`GymMobileInvitationControllerTest.java` | 修改/新增 | 12业务+3MVC，资格、跨租户、并发和故障回滚 |
+| `docs/uniapp/`四份契约/总表/实施进度/机器清单 | 修改 | 111/135、邀请归属、旧数据与奖励未实现边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、可复现验证、配置和统一升级步骤 |
+
+Java相对文件名位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+Controller→InvitationService→当前Identity及门店关系；幂等行后获取租户互斥，重查资格、签发随机码并与首次响应一起提交。IdentityService直接读取邀请码Mapper，在原首次绑定互斥事务校验租户、门店、到期及邀请人当前账号/绑定/会员关系，防止循环依赖。身份四项归属与会员/门店关系同事务，已有身份不可补绑或替换，老会员保持原资料且标记非新建。无积分、发卡或外部分享调用。
+
+### 验证证据
+
+Maven完整命令见testing：Spotless通过，gym825项通过（会员专项35、组织服务510），member4通过、1项既有禁用跳过；新增12业务+3MVC。隔离MySQL/Flyway141检查通过、临时库全部清理；新增12检查覆盖时间/唯一/归属约束、老客标记及V025旧码升级保留、无回填、无权限改动。server package -DskipTests成功，打包跳过测试；源码覆盖脚本输出Contract135/mapped111/missing24，git diff --check通过。
+
+### 影响面 / 风险
+
+V026新增一表及身份字段，当前74表、下一V027；先暂停首次建档，备份、migrate/validate后统一升级身份及邀请实例再恢复，避免旧实例绕过邀请码核验。现有身份及历史自由文本码保留，归属列为空，不回填来源。首次初始化提供无效非空码现在会明确拒绝，而非原样接收；已绑定会员仍保持原归属。默认30天和预留/pages/invitation/index路径可配置；返回路径不证明前端页面存在或微信分享可用。前端、业务库及用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+107项新增本地实现、4项复用源码、24项待开发，总目标仍135。邀请奖励条件、积分账本与兑换、微信码/短链、分享页面、实际渠道联调尚未实现；生成链接和归属不算获奖，不伪造积分或卡。支付/自动续费、电子签约、设备及监控第三方继续暂缓。仅本地小步提交，不推送。

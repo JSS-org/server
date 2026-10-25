@@ -17,6 +17,10 @@ public class GymMobileIdentityDO extends TenantBaseDO {
     private Long defaultStoreId;
     private String source;
     private String inviteCode;
+    private Long invitationId;
+    private Long inviterMemberId;
+    private Long inviterUserId;
+    private Boolean invitationNewMember;
     private Long avatarFileId;
     private String faceStatus;
 }

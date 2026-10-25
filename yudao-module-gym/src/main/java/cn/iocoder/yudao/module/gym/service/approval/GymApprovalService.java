@@ -162,9 +162,13 @@ public class GymApprovalService {
         boolean personal = !storeReadable(req.getStoreId());
         if (personal) {
             if (!"price_change".equals(req.getBusinessType())
-                    || !"course-products".equals(req.getSourceType())
+                    || !("course-products".equals(req.getSourceType())
+                            || "course-quote-products".equals(req.getSourceType()))
                     || req.getSourceId() == null) throw exception(STORE_NO_PERMISSION);
-            var ownProduct = courses.readableProductForPriceRequest(req.getSourceId(), true);
+            var ownProduct =
+                    courses.readableProductForPriceRequest(
+                            req.getSourceId(),
+                            !"course-quote-products".equals(req.getSourceType()));
             if (!req.getStoreId().equals(ownProduct.getStoreId()))
                 throw exception(STORE_NO_PERMISSION);
         } else scope.check(req.getStoreId());
@@ -249,23 +253,35 @@ public class GymApprovalService {
                 }
             }
             case "price_change" -> {
-                if (!"course-products".equals(req.getSourceType())
+                boolean quote = "course-quote-products".equals(req.getSourceType());
+                if ((!quote && !"course-products".equals(req.getSourceType()))
                         || req.getSourceId() == null
                         || req.getRequestedPrice() == null
-                        || req.getMemberId() != null
+                        || (!quote && req.getMemberId() != null)
                         || req.getCardTemplateId() != null)
                     throw exception(APPROVAL_REQUEST_INVALID);
-                var product = courses.readableProductForPriceRequest(req.getSourceId(), true);
-                sourceCoachId = product.getCoachId();
-                if (!req.getStoreId().equals(product.getStoreId())
-                        || !"active".equals(product.getStatus())
-                        || product.getPrice().compareTo(req.getRequestedPrice()) == 0)
-                    throw exception(APPROVAL_REQUEST_INVALID);
-                snapshot.put("sourceId", product.getId().toString());
-                snapshot.put("sourceType", "course-products");
-                snapshot.put("courseName", product.getName());
-                snapshot.put("originalPrice", product.getPrice());
-                snapshot.put("requestedPrice", req.getRequestedPrice());
+                if (quote) {
+                    snapshot.putAll(
+                            courses.quoteApprovalSnapshot(
+                                    req.getMemberId(), req.getSourceId(), req.getStoreId()));
+                    sourceCoachId = Long.valueOf(snapshot.get("coachId").toString());
+                    if (new java.math.BigDecimal(snapshot.get("originalPrice").toString())
+                                    .compareTo(req.getRequestedPrice())
+                            == 0) throw exception(APPROVAL_REQUEST_INVALID);
+                    snapshot.put("requestedPrice", req.getRequestedPrice());
+                } else {
+                    var product = courses.readableProductForPriceRequest(req.getSourceId(), true);
+                    sourceCoachId = product.getCoachId();
+                    if (!req.getStoreId().equals(product.getStoreId())
+                            || !"active".equals(product.getStatus())
+                            || product.getPrice().compareTo(req.getRequestedPrice()) == 0)
+                        throw exception(APPROVAL_REQUEST_INVALID);
+                    snapshot.put("sourceId", product.getId().toString());
+                    snapshot.put("sourceType", "course-products");
+                    snapshot.put("courseName", product.getName());
+                    snapshot.put("originalPrice", product.getPrice());
+                    snapshot.put("requestedPrice", req.getRequestedPrice());
+                }
             }
             case "contract" -> {
                 if (req.getSourceId() == null
@@ -450,11 +466,24 @@ public class GymApprovalService {
                     }
                 }
                 case "price_change" -> {
-                    courses.applyApprovedPrice(
-                            Long.valueOf(snapshot.get("sourceId").toString()),
-                            new java.math.BigDecimal(snapshot.get("originalPrice").toString()),
-                            new java.math.BigDecimal(snapshot.get("requestedPrice").toString()));
-                    result.put("courseProductId", snapshot.get("sourceId"));
+                    if ("course-quote-products".equals(snapshot.get("sourceType"))) {
+                        courses.validateQuoteApproval(snapshot, row.getStoreId());
+                        result.put("priceScope", "quote");
+                        result.put("quoteAuthorized", true);
+                        result.put("productVersion", snapshot.get("productVersion"));
+                        result.put("memberId", snapshot.get("memberId"));
+                    } else {
+                        courses.applyApprovedPrice(
+                                Long.valueOf(snapshot.get("sourceId").toString()),
+                                new java.math.BigDecimal(snapshot.get("originalPrice").toString()),
+                                new java.math.BigDecimal(
+                                        snapshot.get("requestedPrice").toString()));
+                    }
+                    result.put(
+                            "courseProductId",
+                            "course-quote-products".equals(snapshot.get("sourceType"))
+                                    ? snapshot.get("productId")
+                                    : snapshot.get("sourceId"));
                     result.put("price", snapshot.get("requestedPrice"));
                 }
                 case "contract" -> {

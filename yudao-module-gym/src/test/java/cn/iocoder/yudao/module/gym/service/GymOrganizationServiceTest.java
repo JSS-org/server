@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoursePriceService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoursePriceController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCardIssueService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCardIssueController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileApprovalsService.class,
@@ -16302,5 +16304,295 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                     outcomes.get(0));
         }
         assertEquals(3, courses.requireProduct(ids.get(3), false).getSessionCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoursePriceService mobileCoursePrice;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoursePriceController
+            mobileCoursePriceController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCoursePriceVO coursePrice(
+            List<Long> ids) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCoursePriceVO();
+        req.setStoreId(101L);
+        req.setProductId(ids.get(3));
+        req.setMemberId(ids.get(1));
+        req.setProposedAmount(new BigDecimal("150.00"));
+        req.setReason("专属优惠审核");
+        req.setApprovalTemplateId(publishedApproval("price_change", ids.get(4)));
+        return req;
+    }
+
+    @Test
+    void mobileCoursePriceApprovesFrozenQuoteOnlyWithoutChangingPublicPriceOrCreatingRights() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-price-first");
+        assertEquals("pending", first.status());
+        assertEquals("quote", first.businessSummary().get("priceScope"));
+        var persisted = approvals.get(Long.valueOf(first.id())).getRequestSnapshot();
+        assertFalse(persisted.containsKey("sourceId"));
+
+        assertEquals("course-quote-products", first.businessSummary().get("sourceType"));
+        assertEquals(ids.get(1).toString(), first.businessSummary().get("memberId"));
+        assertEquals(1, first.businessSummary().get("productVersion"));
+        assertEquals("200.00", first.businessSummary().get("originalPrice"));
+        assertEquals("150.00", first.businessSummary().get("requestedPrice"));
+        assertFalse(first.businessSummary().containsKey("memberPhone"));
+        loginAs(91L);
+        var decided =
+                mobileApprovals.decide(
+                        Long.valueOf(first.id()),
+                        mobileApprovalDecision("approve", 1),
+                        "quote-price-decision");
+        assertEquals("approved", decided.status());
+        assertEquals(2, decided.version());
+        assertEquals(
+                true,
+                approvals.get(Long.valueOf(first.id())).getBusinessResult().get("quoteAuthorized"));
+        var product = courses.requireProduct(ids.get(3), false);
+        assertEquals(new BigDecimal("200.00"), product.getPrice());
+        assertEquals(1, product.getVersion());
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals(0, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        loginAs(1L);
+        assertEquals(first, mobileCoursePrice.create(req, "quote-price-first"));
+    }
+
+    @Test
+    void mobileCoursePriceOptionalMemberRejectsAsReviewWithoutMutatingProduct() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        req.setMemberId(null);
+        req.setProposedAmount(BigDecimal.ZERO);
+        var first = mobileCoursePrice.create(req, "quote-price-generic");
+        assertFalse(first.businessSummary().containsKey("memberId"));
+        loginAs(91L);
+        assertEquals(
+                "rejected",
+                mobileApprovals
+                        .decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("reject", 1),
+                                "quote-reject-decision")
+                        .status());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+        assertTrue(approvals.get(Long.valueOf(first.id())).getBusinessResult().isEmpty());
+    }
+
+    @Test
+    void mobileCoursePriceProductChangesRollbackFinalDecisionAndNewApplicationUsesNewTerms() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-price-stale");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "quote-stale-decision"),
+                APPROVAL_SOURCE_CHANGED);
+        var pending = mobileApprovals.get(Long.valueOf(first.id()));
+        assertEquals("pending", pending.status());
+        assertEquals(1, pending.version());
+        assertEquals("pending", pending.steps().getFirst().status());
+        loginAs(1L);
+        var fresh = mobileCoursePrice.create(req, "quote-price-fresh");
+        assertEquals(2, fresh.businessSummary().get("productVersion"));
+        assertEquals(3, fresh.businessSummary().get("sessionCount"));
+        loginAs(91L);
+        assertEquals(
+                "approved",
+                approvals.decide(Long.valueOf(fresh.id()), decision("approve")).getStatus());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+    }
+
+    @Test
+    void mobileCoursePriceSelfRequiresOwnProductAndExactMemberResponsibilityBeforeReplay() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        Long other = Long.valueOf(members.create(member(101L, "13800009902")).getId());
+        Long otherProduct =
+                Long.valueOf(courses.createProduct(courseProduct(101L, ids.get(4))).getId());
+        memberCoaches.replace(ids.get(1), 101L, responsibility(ids.get(5)));
+        personalScope(92L);
+        var broad = new DeptDataPermissionRespDTO();
+        broad.setAll(true);
+        when(permissions.getDeptDataPermission(91L)).thenReturn(broad);
+        var first = mobileCoursePrice.create(req, "quote-self-first");
+        assertEquals("pending", first.status());
+        req.setMemberId(other);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-self-other-member"),
+                STORE_NO_PERMISSION);
+        req.setMemberId(ids.get(1));
+        req.setProductId(otherProduct);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-self-other-product"),
+                STORE_NO_PERMISSION);
+        req.setProductId(ids.get(3));
+        headquarters();
+        loginAs(1L);
+        memberCoaches.replace(ids.get(1), 101L, responsibility());
+        personalScope(92L);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-self-first"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileCoursePriceChecksFunctionalPermissionIdentityStoreMembershipAndTenant() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileCoursePriceController.create(req, "quote-price-permission"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:create"))).thenReturn(true);
+        assertEquals(
+                "pending",
+                mobileCoursePriceController
+                        .create(req, "quote-price-permission")
+                        .getData()
+                        .status());
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-wrong-store"), STORE_NO_PERMISSION);
+        req.setStoreId(101L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-price-permission"), STORE_NO_PERMISSION);
+        req.setMemberId(null);
+        jdbc.update("UPDATE gym_course_product SET tenant_id=2 WHERE id=?", ids.get(3));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-other-tenant"),
+                COURSE_PRODUCT_NOT_EXISTS);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-member-token"), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileCoursePriceDuplicateConcurrentRequestsCreateOneAndCanonicalMoneyReplays()
+            throws Exception {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var outcomes =
+                workCourseRace(
+                        () -> mobileCoursePrice.create(req, "quote-concurrent-key"),
+                        () -> mobileCoursePrice.create(req, "quote-concurrent-key"));
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        req.setProposedAmount(new BigDecimal("150"));
+        req.setReason("  专属优惠审核  ");
+        assertEquals(outcomes.getFirst(), mobileCoursePrice.create(req, "quote-concurrent-key"));
+        req.setProposedAmount(new BigDecimal("160"));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-concurrent-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileCoursePriceInvalidWorkflowAndSamePriceRollbackKeyAndMixedLegacyPayloadRejected() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        Long validTemplate = req.getApprovalTemplateId();
+        req.setApprovalTemplateId(ids.get(0));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-price-retry"), APPROVAL_REQUEST_INVALID);
+        req.setApprovalTemplateId(validTemplate);
+        req.setProposedAmount(new BigDecimal("200.00"));
+        assertServiceException(
+                () -> mobileCoursePrice.create(req, "quote-price-retry"), APPROVAL_REQUEST_INVALID);
+        req.setProposedAmount(new BigDecimal("150.00"));
+        assertEquals("pending", mobileCoursePrice.create(req, "quote-price-retry").status());
+        var mixed =
+                new cn.iocoder.yudao.module.gym.controller.admin.approval.vo
+                        .GymApprovalCreateReqVO();
+        mixed.setStoreId(101L);
+        mixed.setTemplateId(validTemplate);
+        mixed.setBusinessType("price_change");
+        mixed.setTitle("错误混合指令");
+        mixed.setSourceType("course-quote-products");
+        mixed.setSourceId(ids.get(3));
+        mixed.setRequestedPrice(BigDecimal.ONE);
+        mixed.setCardTemplateId(ids.get(2));
+        assertServiceException(
+                () -> approvals.create(mixed, "quote-invalid-mix"), APPROVAL_REQUEST_INVALID);
+    }
+
+    @Test
+    void mobileCoursePriceFinalApprovalRechecksActiveMemberAndRollbackCanRetrySameDecisionKey() {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-active-member");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", ids.get(1));
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "quote-member-decision"),
+                APPROVAL_REQUEST_INVALID);
+        assertEquals(1, mobileApprovals.get(Long.valueOf(first.id())).version());
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", ids.get(1));
+        assertEquals(
+                "approved",
+                mobileApprovals
+                        .decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "quote-member-decision")
+                        .status());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+    }
+
+    @Test
+    void mobileCoursePriceConcurrentEditAndFinalApprovalKeepPublicPriceAndSnapshotStable()
+            throws Exception {
+        var ids = cardIssueFixture();
+        var req = coursePrice(ids);
+        var first = mobileCoursePrice.create(req, "quote-product-race");
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    Long.valueOf(first.id()),
+                                    mobileApprovalDecision("approve", 1),
+                                    "quote-race-decision");
+                        },
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(3);
+                            return courses.patchProduct(ids.get(3), patch);
+                        });
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        var current = mobileApprovals.get(Long.valueOf(first.id()));
+        assertEquals(1, current.businessSummary().get("productVersion"));
+        assertEquals(2, current.businessSummary().get("sessionCount"));
+        assertEquals("approved".equals(current.status()) ? 2 : 1, current.version());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+        assertEquals(3, courses.requireProduct(ids.get(3), false).getSessionCount());
+        assertEquals(0, cardIssuePackCount());
     }
 }

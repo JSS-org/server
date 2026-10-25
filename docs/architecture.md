@@ -620,3 +620,10 @@ Mapper以当前有效会员档案为外层一人一行，会员门店、卡适�
 `GymMobileCardIssueController → GymMobileCardIssueService`校验approvals:create及V018 cards:issue、有效后台身份和整店/会员关系，进入持久化幂等事务，构造受控card_opening请求后调用既有GymApprovalService.create。客户端无法传价格、课时、状态或内部业务快照；返回使用移动审批白名单投影，首次响应与申请同事务。
 
 会员卡继续使用不可变模板版本；新增course-products开通来源调用GymCourseService.approvalIssueSnapshot，在教练→会员→商品锁下冻结版本及条款。最后步骤issueApprovedPack重新验证当前条件和冻结数据，再委托issuePack写真实课包与可选内部未签合同，沿用approval/审批ID唯一来源。全链路复用审批行/版本/幂等机制，合同或业务失败一并回滚；无订单、财务事件或第三方成功结果。私教产品没有有效期字段，本入口明确发放无固定到期日课包。
+
+
+## 私教专属改价申请与公开价隔离（2026-10-25 增量）
+
+`GymMobileCoursePriceController → GymMobileCoursePriceService`检查功能权限、有效后台身份和商品/会员当前范围，规范化金额及原因后进入移动幂等事务，构造来源受控的price_change请求并调用GymApprovalService。SELF商品和指定会员权限在缓存重放前也验证；实际同店会员关系不被总部全范围绕过。
+
+`GymCourseService.quoteApprovalSnapshot`按教练→会员→商品顺序加锁并冻结条款，最终审批通过validateQuoteApproval重新比较。新course-quote-products分支只写批准结果，不调用applyApprovedPrice；原course-products分支保持公开价格更新。专属快照用productId且刻意不写sourceId，使旧二进制缺少公开改价必需参数而失败回滚。移动受控投影增加报价范围与版本，无新表/迁移；报价实体及结算绑定为后续独立步骤。

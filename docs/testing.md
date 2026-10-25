@@ -1055,3 +1055,23 @@ git diff --check
 合同文件读取失败发生在课包创建后，验证课包、合同和审批版本全部回滚；恢复后同键只发放一次。并发同申请键只创建一条审批，规范化空白原因重放，改内容冲突，撤销门店范围后旧键拒绝。create与issue两个功能权限缺一拒绝、SELF拒绝、会员门店/商品门店/租户和账号类型校验；旧审批course-products来源拒绝混合卡模板或改价指令。MVC拒绝自填amount/status及非法产品类型、空原因和缺失幂等头。
 
 首轮测试缺少课程请求类型引用而编译失败；补齐引用并改用已有带测试文件内容的合同模板夹具后专项及全量通过，未修改业务约束。日志：/tmp/uniapp-card-issue-focused.log、/tmp/uniapp-card-issue-focused-2.log（同一编译问题尚未写入修复）、/tmp/uniapp-card-issue-focused-3.log、/tmp/uniapp-card-issue-final-tests.log、/tmp/uniapp-card-issue-migrations.log、/tmp/uniapp-card-issue-package.log。合同文件为本地测试内容，不证明真实签署或可供实际签约的完整PDF；未做外部支付、生产多节点/规模或部署HTTP联调。前端及业务库未改。
+
+## 2026-10-25 私教专属改价申请与公开售价隔离
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+11项专项通过；增加旧程序快照兼容保护后，最终完整gym **680项通过**（组织服务403项，新增9项；新增MVC2项），member4通过/1既有禁用跳过。Spotless及server依赖打包通过，打包跳过测试。源码映射 **89/135**，余46项。本步无DDL，不重复隔离迁移；V018仍为最新迁移、67表，先前64项迁移证据不算本步重跑。
+
+真实服务/Mapper/事务测试：指定会员和未限定会员申请，审批批准/拒绝均不修改公开价格或商品版本，无课包/合同/财务事件；响应和持久化快照区分quote范围，未保存旧公开改价必须的sourceId。商品编辑后原申请不能批准且步骤/版本回滚，新申请反映新版本；当前会员停用导致决策失败，恢复后同键重试成功。商品编辑与批准双线程竞争保持审批快照和公开售价稳定。
+
+SELF只允许本人的商品及所负责会员，撤销负责关系后拒绝旧键；功能权限、后台身份、跨店、跨租户与总部账号下真实会员门店关系均验证。并发同键只有一个申请，金额150与150.00及原因首尾空白规范化重放，改金额冲突；错误模板/同价申请失败后可复用键，旧后台混合卡模板指令拒绝。MVC覆盖六字段绑定、Money及审批投影、非法金额/空原因、未知amount/status和缺失幂等头。
+
+日志：/tmp/uniapp-course-price-focused.log、/tmp/uniapp-course-price-final-tests.log（首次全量）、/tmp/uniapp-course-price-final-tests-2.log（最终含兼容保护）、/tmp/uniapp-course-price-package.log。旧二进制的拒绝行为由已检查的旧分支必需参数推断，本步验证了持久化快照缺少该字段，未执行旧新版本混部署；上线前统一升级审批实例。未实现117–118报价或订单结算，未验证生产HTTP/规模/真实第三方。业务库及前端未修改。

@@ -312,6 +312,13 @@ public class GymMobileApprovalsService {
                     case "price_change" ->
                             List.of(
                                     "reason",
+                                    "priceScope",
+                                    "productId",
+                                    "productVersion",
+                                    "memberId",
+                                    "coachId",
+                                    "sessionCount",
+                                    "durationMinutes",
                                     "sourceId",
                                     "sourceType",
                                     "courseName",

@@ -1400,9 +1400,14 @@
       "category": "工作台",
       "method": "POST",
       "path": "/admin-api/gym/mobile/course-price-applications",
-      "description": "提交私教产品改价申请",
-      "implementation": "pending",
-      "evidence": []
+      "description": "提交私教专属报价改价申请，不修改商品公开售价",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoursePriceController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCoursePriceService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCoursePriceControllerTest.java"
+      ]
     },
     {
       "id": 117,

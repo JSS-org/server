@@ -192,6 +192,80 @@ public class GymCourseService {
         return row;
     }
 
+    /** Current staff scope, also checked before replaying a mobile request. */
+    public void checkQuoteApplicationAccess(Long memberId, Long productId, Long storeId) {
+        var product = readableProductForPriceRequest(productId, false);
+        if (!storeId.equals(product.getStoreId())) throw exception(STORE_NO_PERMISSION);
+        if (memberId != null) {
+            members.requireMember(memberId, false);
+            members.checkMemberStore(memberId, storeId);
+            if (gymMemberStoreMapper.selectCount(
+                            new LambdaQueryWrapper<GymMemberStoreDO>()
+                                    .eq(GymMemberStoreDO::getMemberId, memberId)
+                                    .eq(GymMemberStoreDO::getStoreId, storeId))
+                    == 0) throw exception(STORE_NO_PERMISSION);
+        }
+    }
+
+    /** Freeze terms for quote authorization only; this method never changes the public price. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public Map<String, Object> quoteApprovalSnapshot(Long memberId, Long productId, Long storeId) {
+        checkQuoteApplicationAccess(memberId, productId, storeId);
+        var initial = readableProductForPriceRequest(productId, false);
+        requireCoach(initial.getCoachId(), storeId);
+        if (memberId != null) {
+            var member = members.requireMember(memberId, true);
+            if (!"active".equals(member.getStatus())) throw exception(APPROVAL_REQUEST_INVALID);
+            records.checkPurchase(memberId);
+        }
+        var product = readableProductForPriceRequest(productId, true);
+        checkQuoteApplicationAccess(memberId, productId, storeId);
+        if (!activeMemberStore(storeId)
+                || !"active".equals(product.getStatus())
+                || !"private".equals(product.getKind())) throw exception(APPROVAL_REQUEST_INVALID);
+        var snapshot = new LinkedHashMap<String, Object>();
+        snapshot.put("priceScope", "quote");
+        snapshot.put("sourceType", "course-quote-products");
+        // Intentionally omit sourceId: older approval binaries require it to change a public
+        // price. They must fail and roll back instead of applying this quote to all buyers.
+        snapshot.put("productId", productId.toString());
+        snapshot.put("productVersion", product.getVersion());
+        snapshot.put("memberId", memberId == null ? null : memberId.toString());
+        snapshot.put("courseName", product.getName());
+        snapshot.put("coachId", product.getCoachId().toString());
+        snapshot.put("sessionCount", product.getSessionCount());
+        snapshot.put("durationMinutes", product.getDurationMinutes());
+        snapshot.put("originalPrice", product.getPrice());
+        return snapshot;
+    }
+
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void validateQuoteApproval(Map<String, Object> snapshot, Long storeId) {
+        Long memberId =
+                snapshot.get("memberId") == null
+                        ? null
+                        : Long.valueOf(snapshot.get("memberId").toString());
+        var current =
+                quoteApprovalSnapshot(
+                        memberId, Long.valueOf(snapshot.get("productId").toString()), storeId);
+        for (String field :
+                List.of(
+                        "priceScope",
+                        "sourceType",
+                        "productId",
+                        "productVersion",
+                        "memberId",
+                        "courseName",
+                        "coachId",
+                        "sessionCount",
+                        "durationMinutes"))
+            if (!Objects.toString(current.get(field)).equals(Objects.toString(snapshot.get(field))))
+                throw exception(APPROVAL_SOURCE_CHANGED);
+        if (new BigDecimal(current.get("originalPrice").toString())
+                        .compareTo(new BigDecimal(snapshot.get("originalPrice").toString()))
+                != 0) throw exception(APPROVAL_SOURCE_CHANGED);
+    }
+
     public GymCourseProductRespVO product(Long id) {
         return productResponse(readableProductForPriceRequest(id, false));
     }

@@ -1144,17 +1144,27 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/member-conversations",
       "description": "创建与授权会员的站内私信会话",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
     },
     {
       "id": 93,
       "category": "工作台",
       "method": "GET",
       "path": "/admin-api/gym/mobile/member-conversations/{id}/messages",
-      "description": "查询员工参与且有权访问的私信消息",
-      "implementation": "pending",
-      "evidence": []
+      "description": "查询当前权限及会员范围内的门店服务会话消息",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
     },
     {
       "id": 94,
@@ -1162,8 +1172,13 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/member-conversations/{id}/messages",
       "description": "向授权会员发送站内私信",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
     },
     {
       "id": 95,
@@ -1171,8 +1186,13 @@
       "method": "GET",
       "path": "/app-api/gym/me/conversations",
       "description": "查询会员本人的站内会话及未读摘要",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
     },
     {
       "id": 96,
@@ -1180,8 +1200,13 @@
       "method": "GET",
       "path": "/app-api/gym/me/conversations/{id}/messages",
       "description": "查询本人会话消息",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
     },
     {
       "id": 97,
@@ -1189,8 +1214,13 @@
       "method": "POST",
       "path": "/app-api/gym/me/conversations/{id}/messages",
       "description": "会员在本人会话中发送消息",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymConversationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileConversationsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileConversationsControllerTest.java"
+      ]
     },
     {
       "id": 98,

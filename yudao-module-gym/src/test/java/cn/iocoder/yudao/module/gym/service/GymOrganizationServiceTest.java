@@ -50,6 +50,9 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileConversationsService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymConversationsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileConversationsController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationPublisher.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileNotificationsService.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymNotificationsController.class,
@@ -17852,7 +17855,12 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         query.setStartDate(
                 start.atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
                         .toLocalDate());
-        query.setEndDate(query.getStartDate().plusDays(1));
+        // The second session can fall on the next local date when this test runs at night.
+        query.setEndDate(
+                shorter.getStartsAt()
+                        .atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toLocalDate()
+                        .plusDays(1));
         var shown = bookingService.sessions(ids.get(5), query).getList();
         assertFalse(
                 shown.stream()
@@ -19713,5 +19721,560 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 id);
         assertServiceException(
                 () -> mobileNotifications.memberRead(id), MOBILE_NOTIFICATION_NOT_EXISTS);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileConversationsService mobileConversations;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileConversationsController
+            conversationsController;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileConversationMapper conversationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileMessageMapper conversationMessages;
+
+    Long conversationMember(boolean bind) {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long member = Long.valueOf(members.create(member(101L, "13800002401")).getId());
+        if (bind) qrMemberIdentity(member);
+        when(permissions.hasAnyPermissions(any(), eq("gym:messages:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(any(), eq("gym:messages:send"))).thenReturn(true);
+        return member;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Create
+            conversationCreate(Long member, Long store) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                        .Create();
+        r.setMemberId(member);
+        r.setStoreId(store);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Send
+            conversationText(String text) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                        .Send();
+        r.setContent(text);
+        return r;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Query
+            conversationQuery() {
+        return new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                .Query();
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO.Read
+            conversationRead(Long message) {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileConversationsVO
+                        .Read();
+        r.setLastReadMessageId(message);
+        return r;
+    }
+
+    Long createConversation(Long member) {
+        return Long.valueOf(
+                mobileConversations
+                        .create(conversationCreate(member, 101L), "conversation-create-key")
+                        .id());
+    }
+
+    @Test
+    void conversationsCreateOneStoreServiceThreadAcrossStaffAndKeysWithoutInventingMessages() {
+        Long member = conversationMember(true);
+        var req = conversationCreate(member, 101L);
+        Long id = createConversation(member);
+        assertEquals(
+                id.toString(), mobileConversations.create(req, "conversation-create-key").id());
+        loginAs(91L);
+        assertEquals(
+                id.toString(),
+                mobileConversations.create(req, "conversation-different-staff").id());
+        assertEquals(1, conversationRows.selectCount());
+        assertEquals(1L, conversationRows.selectById(id).getCreatorUserId());
+        assertEquals(0, conversationMessages.selectCount());
+        qrMemberLogin();
+        var page =
+                mobileConversations.memberConversations(
+                        new cn.iocoder.yudao.framework.common.pojo.PageParam());
+        assertEquals(1, page.getTotal());
+        assertNull(page.getList().getFirst().lastMessage());
+        assertEquals(0, page.getList().getFirst().unreadCount());
+        assertEquals(0, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+    }
+
+    @Test
+    void conversationsRealMessagesKeepActualSenderTypesAndLatestSummaryWithoutReadSideEffects() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var first =
+                mobileConversations.staffSend(
+                        id, conversationText("  您好\n请确认课程安排  "), "conversation-staff-first");
+        assertEquals("employee", first.senderType());
+        assertEquals("您好\n请确认课程安排", first.content());
+        assertEquals(
+                1L, conversationMessages.selectById(Long.valueOf(first.id())).getSenderUserId());
+        qrMemberLogin();
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getList()
+                        .getFirst()
+                        .unreadCount());
+        var reply =
+                mobileConversations.memberSend(
+                        id, conversationText("<b>明天可以</b>"), "conversation-member-first");
+        assertEquals("member", reply.senderType());
+        assertEquals("<b>明天可以</b>", reply.content());
+        assertEquals(
+                50L, conversationMessages.selectById(Long.valueOf(reply.id())).getSenderUserId());
+        var summary =
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getList()
+                        .getFirst();
+        assertEquals(reply, summary.lastMessage());
+        assertEquals(1, summary.unreadCount());
+        assertEquals(2, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+        assertEquals(0L, conversationRows.selectById(id).getMemberReadMessageId());
+    }
+
+    @Test
+    void conversationsMessageIdempotencySeparatesChangedPayloadNewMessagesAndUserTypes() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var first =
+                mobileConversations.staffSend(
+                        id, conversationText("hello"), "conversation-message-key");
+        assertEquals(
+                first,
+                mobileConversations.staffSend(
+                        id, conversationText(" hello "), "conversation-message-key"));
+        assertServiceException(
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("changed"), "conversation-message-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        var second =
+                mobileConversations.staffSend(
+                        id, conversationText("hello"), "conversation-message-new");
+        assertNotEquals(first.id(), second.id());
+        assertEquals(2, conversationRows.selectById(id).getMemberUnreadCount());
+        qrMemberLogin();
+        mobileConversations.memberSend(id, conversationText("hello"), "conversation-message-key");
+        assertEquals(3, conversationMessages.selectCount());
+        assertEquals(2, conversationRows.selectById(id).getMemberUnreadCount());
+    }
+
+    @Test
+    void conversationsRecheckFunctionPermissionsBeforeReadCreateOrCachedSend() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var message =
+                mobileConversations.staffSend(
+                        id, conversationText("test"), "conversation-permission-key");
+        when(permissions.hasAnyPermissions(1L, "gym:messages:send")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("test"), "conversation-permission-key"));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        conversationsController.create(
+                                conversationCreate(member, 101L), "conversation-create-key"));
+        assertEquals(1, mobileConversations.staffMessages(id, conversationQuery()).getTotal());
+        when(permissions.hasAnyPermissions(1L, "gym:messages:read")).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> conversationsController.messages(id, conversationQuery()));
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileConversations.staffMessages(id, conversationQuery()));
+        assertEquals(message.id(), conversationRows.selectById(id).getLastMessageId().toString());
+    }
+
+    @Test
+    void conversationsSharedParticipantsNeedCurrentMemberResponsibilityAndRevocationBlocksReplay() {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long a = responsibleEmployee(91L), b = responsibleEmployee(92L);
+        memberCoaches.replace(member, 101L, responsibility(a, b));
+        personalScope(91L);
+        mobileConversations.staffSend(id, conversationText("来自甲"), "conversation-coach-a");
+        personalScope(92L);
+        assertEquals(1, mobileConversations.staffMessages(id, conversationQuery()).getTotal());
+        mobileConversations.staffSend(id, conversationText("来自乙"), "conversation-coach-b");
+        loginAs(1L);
+        headquarters();
+        memberCoaches.replace(member, 101L, responsibility(b));
+        personalScope(91L);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("来自甲"), "conversation-coach-a"),
+                STORE_NO_PERMISSION);
+        personalScope(92L);
+        assertEquals(2, mobileConversations.staffMessages(id, conversationQuery()).getTotal());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_employee SET status='inactive' WHERE id=?", b);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void conversationsMemberHistorySurvivesRemovedMembershipButWritingDoesNot() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var first =
+                mobileConversations.staffSend(
+                        id, conversationText("历史服务消息"), "conversation-history-staff");
+        qrMemberLogin();
+        mobileConversations.memberSend(id, conversationText("回复"), "conversation-history-member");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(2, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+        assertServiceException(
+                () ->
+                        mobileConversations.memberSend(
+                                id, conversationText("回复"), "conversation-history-member"),
+                MOBILE_CONVERSATION_UNAVAILABLE);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", member);
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getTotal());
+        assertEquals(
+                0,
+                mobileConversations
+                        .memberRead(id, conversationRead(Long.valueOf(first.id())))
+                        .unreadCount());
+        loginAs(1L);
+        headquarters();
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                MOBILE_CONVERSATION_UNAVAILABLE);
+    }
+
+    @Test
+    void conversationsOtherMemberOtherStoreAndOtherTenantCannotReadOrAcknowledge() {
+        Long member = conversationMember(true), own = createConversation(member);
+        Long other = Long.valueOf(members.create(member(102L, "13800009801")).getId());
+        Long foreign =
+                Long.valueOf(
+                        mobileConversations
+                                .create(conversationCreate(other, 102L), "conversation-other-key")
+                                .id());
+        var msg =
+                mobileConversations.staffSend(
+                        foreign, conversationText("private"), "conversation-other-message");
+        qrMemberLogin();
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getTotal());
+        assertServiceException(
+                () -> mobileConversations.memberMessages(foreign, conversationQuery()),
+                MOBILE_CONVERSATION_NOT_EXISTS);
+        assertServiceException(
+                () ->
+                        mobileConversations.memberSend(
+                                foreign, conversationText("test"), "conversation-forged-member"),
+                MOBILE_CONVERSATION_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileConversations.memberRead(own, conversationRead(Long.valueOf(msg.id()))),
+                MOBILE_CONVERSATION_MESSAGE_INVALID);
+        loginAs(1L);
+        scoped(101L);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(foreign, conversationQuery()),
+                STORE_NO_PERMISSION);
+        headquarters();
+        TenantContextHolder.setTenantId(2L);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUser()
+                .setTenantId(2L);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(own, conversationQuery()),
+                MOBILE_CONVERSATION_NOT_EXISTS);
+    }
+
+    @Test
+    void conversationsReadCursorIsExplicitMonotonicAndDoesNotClearNewerMessages() {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long first =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(id, conversationText("one"), "conversation-read-one")
+                                .id());
+        Long second =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(id, conversationText("two"), "conversation-read-two")
+                                .id());
+        qrMemberLogin();
+        assertEquals(2, mobileConversations.memberMessages(id, conversationQuery()).getTotal());
+        assertEquals(2, conversationRows.selectById(id).getMemberUnreadCount());
+        assertEquals(1, mobileConversations.memberRead(id, conversationRead(first)).unreadCount());
+        var done = mobileConversations.memberRead(id, conversationRead(second));
+        assertEquals(0, done.unreadCount());
+        assertEquals(done, mobileConversations.memberRead(id, conversationRead(first)));
+        assertServiceException(
+                () -> mobileConversations.memberRead(id, conversationRead(Long.MAX_VALUE)),
+                MOBILE_CONVERSATION_MESSAGE_INVALID);
+        assertEquals(second, conversationRows.selectById(id).getMemberReadMessageId());
+    }
+
+    @Test
+    void conversationsHistoryCursorAndPaginationStayInsideConversation() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var ids = new ArrayList<Long>();
+        for (int i = 0; i < 5; i++)
+            ids.add(
+                    Long.valueOf(
+                            mobileConversations
+                                    .staffSend(
+                                            id,
+                                            conversationText("msg" + i),
+                                            "conversation-page-" + i)
+                                    .id()));
+        qrMemberLogin();
+        var req = conversationQuery();
+        req.setPageSize(2);
+        var newest = mobileConversations.memberMessages(id, req);
+        assertEquals(5, newest.getTotal());
+        assertEquals(ids.get(4).toString(), newest.getList().getFirst().id());
+        req.setBeforeId(ids.get(3));
+        var older = mobileConversations.memberMessages(id, req);
+        assertEquals(3, older.getTotal());
+        assertEquals(ids.get(2).toString(), older.getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(
+                ids.getFirst().toString(),
+                mobileConversations.memberMessages(id, req).getList().getFirst().id());
+        req.setBeforeId(ids.getFirst());
+        assertEquals(0, mobileConversations.memberMessages(id, req).getTotal());
+        assertEquals(5, conversationRows.selectById(id).getMemberUnreadCount());
+    }
+
+    @Test
+    void conversationsConcurrentCreateWithDifferentKeysProducesOneThread() throws Exception {
+        Long member = conversationMember(true);
+        var req = conversationCreate(member, 101L);
+        var values =
+                workCourseRace(
+                        () -> mobileConversations.create(req, "conversation-concurrent-a"),
+                        () -> mobileConversations.create(req, "conversation-concurrent-b"));
+        assertEquals(values.getFirst(), values.getLast());
+        assertEquals(1, conversationRows.selectCount());
+        assertEquals(0, conversationMessages.selectCount());
+    }
+
+    @Test
+    void conversationsConcurrentSendReplaysSameKeyAndPreservesDifferentMessages() throws Exception {
+        Long member = conversationMember(true), id = createConversation(member);
+        var req = conversationText("same");
+        var values =
+                workCourseRace(
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-same"),
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-same"));
+        assertEquals(values.getFirst(), values.getLast());
+        assertEquals(1, conversationMessages.selectCount());
+        var different =
+                workCourseRace(
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-a"),
+                        () -> mobileConversations.staffSend(id, req, "conversation-race-b"));
+        assertNotEquals(different.getFirst(), different.getLast());
+        assertEquals(3, conversationMessages.selectCount());
+        assertEquals(3, conversationRows.selectById(id).getMemberUnreadCount());
+        assertEquals(
+                conversationMessages.selectList().stream()
+                        .map(x -> x.getId())
+                        .max(Long::compareTo)
+                        .orElseThrow(),
+                conversationRows.selectById(id).getLastMessageId());
+    }
+
+    @Test
+    void conversationsConcurrentReadAndSendNeverMarkUnseenMessageRead() throws Exception {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long seen =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(id, conversationText("seen"), "conversation-race-seen")
+                                .id());
+        var values =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return mobileConversations.memberRead(id, conversationRead(seen));
+                        },
+                        () ->
+                                mobileConversations.staffSend(
+                                        id, conversationText("new"), "conversation-race-unseen"));
+        assertFalse(values.stream().anyMatch(x -> x instanceof Throwable));
+        var row = conversationRows.selectById(id);
+        assertEquals(seen, row.getMemberReadMessageId());
+        assertEquals(1, row.getMemberUnreadCount());
+        assertTrue(row.getLastMessageId() > seen);
+    }
+
+    @Test
+    void conversationsSummaryFailureRollsBackMessageAndIdempotencyForRetry() {
+        Long member = conversationMember(true), id = createConversation(member);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_conversation ADD CONSTRAINT test_conversation_send_failure CHECK(member_unread_count=0)");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () ->
+                            mobileConversations.staffSend(
+                                    id, conversationText("retry"), "conversation-failed-send"));
+            assertEquals(0, conversationMessages.selectCount());
+            assertNull(conversationRows.selectById(id).getLastMessageId());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_conversation DROP CONSTRAINT test_conversation_send_failure");
+        }
+        assertEquals(
+                "retry",
+                mobileConversations
+                        .staffSend(id, conversationText("retry"), "conversation-failed-send")
+                        .content());
+        assertEquals(1, conversationMessages.selectCount());
+        assertEquals(1, conversationRows.selectById(id).getMemberUnreadCount());
+    }
+
+    @Test
+    void conversationsReadFailureRollsBackCursorAndCountTogether() {
+        Long member = conversationMember(true), id = createConversation(member);
+        Long message =
+                Long.valueOf(
+                        mobileConversations
+                                .staffSend(
+                                        id,
+                                        conversationText("unread"),
+                                        "conversation-read-rollback")
+                                .id());
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_conversation ADD CONSTRAINT test_conversation_read_failure CHECK(member_unread_count>0)");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () -> mobileConversations.memberRead(id, conversationRead(message)));
+            assertEquals(0L, conversationRows.selectById(id).getMemberReadMessageId());
+            assertEquals(1, conversationRows.selectById(id).getMemberUnreadCount());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_conversation DROP CONSTRAINT test_conversation_read_failure");
+        }
+        assertEquals(
+                0, mobileConversations.memberRead(id, conversationRead(message)).unreadCount());
+    }
+
+    @Test
+    void conversationsCreateFailureLeavesNoThreadOrSuccessfulKey() {
+        Long member = conversationMember(true);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_mobile_conversation ADD CONSTRAINT test_conversation_create_failure CHECK(store_id<>101)");
+        try {
+            assertThrows(RuntimeException.class, () -> createConversation(member));
+            assertEquals(0, conversationRows.selectCount());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_mobile_conversation DROP CONSTRAINT test_conversation_create_failure");
+        }
+        assertNotNull(createConversation(member));
+        assertEquals(1, conversationRows.selectCount());
+    }
+
+    @Test
+    void conversationsProspectWithoutLoginCanReceiveStoredServiceHistoryAfterBinding() {
+        Long member = conversationMember(false), id = createConversation(member);
+        mobileConversations.staffSend(
+                id, conversationText("欢迎咨询"), "conversation-prospect-message");
+        var registeredAccount = new cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO();
+        registeredAccount.setId(50L);
+        registeredAccount.setStatus(0);
+        registeredAccount.setMobile("13800002401");
+        when(memberAccounts.getUser(50L)).thenReturn(registeredAccount);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileConversations.memberMessages(id, conversationQuery()),
+                MOBILE_IDENTITY_REQUIRED);
+        loginAs(1L);
+        qrMemberIdentity(member);
+        qrMemberLogin();
+        assertEquals(
+                "欢迎咨询",
+                mobileConversations
+                        .memberMessages(id, conversationQuery())
+                        .getList()
+                        .getFirst()
+                        .content());
+        assertEquals(
+                1,
+                mobileConversations
+                        .memberConversations(new cn.iocoder.yudao.framework.common.pojo.PageParam())
+                        .getList()
+                        .getFirst()
+                        .unreadCount());
+    }
+
+    @Test
+    void conversationsDisabledAccountsWrongTypesAndInvalidParametersFailBeforeWrites() {
+        Long member = conversationMember(true), id = createConversation(member);
+        qrMemberLogin();
+        assertServiceException(
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText("forged"), "conversation-forged-staff"),
+                MOBILE_IDENTITY_INVALID);
+        var account = memberAccounts.getUser(50L);
+        account.setStatus(1);
+        when(memberAccounts.getUser(50L)).thenReturn(account);
+        assertServiceException(
+                () -> mobileConversations.memberMessages(id, conversationQuery()),
+                MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        var admin = workAccounts.getUser(1L);
+        admin.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(admin);
+        assertServiceException(
+                () -> mobileConversations.staffMessages(id, conversationQuery()),
+                MOBILE_IDENTITY_INVALID);
+        admin.setStatus(0);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () ->
+                        mobileConversations.staffSend(
+                                id, conversationText(" "), "conversation-empty-message"));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () ->
+                        mobileConversations.staffSend(
+                                id,
+                                conversationText("x".repeat(2001)),
+                                "conversation-long-message"));
+        var q = conversationQuery();
+        q.setPageSize(-1);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileConversations.staffMessages(id, q));
+        assertEquals(0, conversationMessages.selectCount());
     }
 }

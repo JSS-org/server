@@ -1416,3 +1416,45 @@ CREATE TABLE IF NOT EXISTS gym_mobile_notification_preference (
  UNIQUE KEY uk_mobile_notification_preference (tenant_id,user_id,template_key),
  CONSTRAINT ck_mobile_notification_preference CHECK (template_key IN ('booking','contract','entitlement','activity'))
 );
+
+-- One store service conversation per member; no historical messages or role grants.
+CREATE TABLE IF NOT EXISTS gym_mobile_conversation (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ member_id bigint NOT NULL,
+ creator_user_id bigint NOT NULL,
+ initiated_at datetime(6) NOT NULL,
+ last_message_id bigint DEFAULT NULL,
+ member_read_message_id bigint NOT NULL DEFAULT 0,
+ member_unread_count int NOT NULL DEFAULT 0,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_mobile_conversation_member_store (tenant_id,member_id,store_id),
+ KEY idx_mobile_conversation_inbox (tenant_id,member_id,deleted,last_message_id,id),
+ CONSTRAINT ck_mobile_conversation_read CHECK (member_unread_count>=0 AND member_read_message_id>=0 AND member_read_message_id<=COALESCE(last_message_id,0))
+);
+
+CREATE TABLE IF NOT EXISTS gym_mobile_message (
+ id bigint NOT NULL AUTO_INCREMENT,
+ conversation_id bigint NOT NULL,
+ sender_type int NOT NULL,
+ sender_user_id bigint NOT NULL,
+ content varchar(2000) NOT NULL,
+ sent_at datetime(6) NOT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ KEY idx_mobile_message_history (tenant_id,conversation_id,deleted,id),
+ KEY idx_mobile_message_unread (tenant_id,conversation_id,sender_type,deleted,id),
+ CONSTRAINT ck_mobile_message_sender CHECK (sender_type IN (1,2)),
+ CONSTRAINT ck_mobile_message_content CHECK (CHAR_LENGTH(TRIM(content))>0)
+);

@@ -1249,3 +1249,28 @@ git diff --check
 隔离MySQL/Flyway **117项检查通过**，71表，全部临时库清理。新增10项覆盖微秒时间、事件收件人唯一、相同数字账号类型/租户隔离、默认未读、非法账号类型、意愿唯一/受限键/拒绝授权状态、显式退订保存与旧库不生成历史消息或意愿。无业务库操作。
 
 首轮完整回归有1项MVC断言把严格未知字段错误期望为400，实际框架按既有规则返回MOBILE_REQUEST_INVALID=1070023005；只修正断言，字段仍拒绝，业务14项当时已通过。最终日志/tmp/uniapp-notification-final-tests-2.log；专项/tmp/uniapp-notification-focused.log，迁移/tmp/uniapp-notification-migrations.log，打包/tmp/uniapp-notification-package.log。源码映射104/135，剩余31项；没有真实外部推送、门禁事件、部署HTTP、多节点或规模联调证据，前端未改。
+
+## 门店服务私信（2026-10-25，V025）
+
+可复现命令（仓库根目录）：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+最终gym810项通过（组织服务510项），member4通过、1项既有禁用跳过；新增17项业务、5项MVC。Spotless通过、server依赖打包成功（打包跳过测试）。源码路由110/135，剩余25项；已读辅助接口不增加目标总数。
+
+测试覆盖：跨员工同店会员唯一会话、未绑定潜客到核验绑定后的历史读取、实际两类发送人、正文与严格字段；权限/负责关系/账号撤销后旧键重试拒绝、跨会员/租户/会话隔离；停用门店及删除门店关系后的读写区别；倒序游标与分页total；GET无已读副作用；旧游标不回退、并发新消息不误清；同键并发单消息/异键并发多消息；创建、发送、已读数据库失败回滚后原请求重试。MVC另核对七个入口正文日志关闭，方法权限由真实代理业务测试验证。
+
+真实隔离MySQL/Flyway129检查通过，全部临时库清理；新增12项验证73表、微秒时间、租户/会员/门店唯一、未读及游标约束、两类账号审计、正文/发送类型约束、未读索引、两项权限唯一定义及无自动角色授权、无旧库会话消息回填。V001–V024未修改，业务库未迁移。
+
+首轮专项的潜客测试缺少有效平台会员账号夹具，导致先报账号无效；已补有效账号并仍保持身份未绑定，正确验证身份初始化前后差异。首轮全量中17项新业务及5项MVC通过，另有既有课程购买快照测试因夜间第二节课跨日超出查询窗口失败；查询结束日改为第二节实际排期次日，保持60分钟购买快照与短课程不可预约断言，未改业务规则。最终全量重跑成功，不以失败的首轮日志当作通过证据。
+
+最终日志/tmp/uniapp-conversation-final-tests-2.log，初轮/tmp/uniapp-conversation-final-tests.log，专项/tmp/uniapp-conversation-focused.log，迁移/tmp/uniapp-conversation-migrations.log，打包/tmp/uniapp-conversation-package.log。本地验证不证明真实微信、部署HTTP、多节点、规模或外部消息送达；前端未改。

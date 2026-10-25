@@ -239,4 +239,7 @@ public interface ErrorCodeConstants {
     ErrorCode REFUND_APPLICATION_OPEN = new ErrorCode(1_070_026_004, "订单已有处理中退款申请，请先查询原申请");
     ErrorCode MOBILE_ORDER_NOT_CANCELLABLE = new ErrorCode(1_070_026_001, "仅未支付且未履约的订单可以取消");
     ErrorCode MOBILE_NOTIFICATION_NOT_EXISTS = new ErrorCode(1_070_027_001, "通知不存在或无权查看");
+    ErrorCode MOBILE_CONVERSATION_NOT_EXISTS = new ErrorCode(1_070_028_001, "会话不存在或无权查看");
+    ErrorCode MOBILE_CONVERSATION_UNAVAILABLE = new ErrorCode(1_070_028_002, "当前门店或会员关系不支持此会话操作");
+    ErrorCode MOBILE_CONVERSATION_MESSAGE_INVALID = new ErrorCode(1_070_028_003, "已读消息不属于当前会话或不存在");
 }

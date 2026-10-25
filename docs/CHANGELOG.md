@@ -3036,3 +3036,42 @@ Java相对路径位于`yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gy
 ### 未做 / 后续
 
 100项新增本地实现、4项复用源码、31项待开发，135项总目标保持。员工站内事件当前为授课预约变更；门禁入场路由及审批/工资等其他工作台事件尚未接入发布器。微信/短信/App远程推送及原合同远程提醒仍未接入，不用站内记录代替渠道成功。设备、支付/自动续费、签约和监控外部边界不变；本地小步提交，不推送。
+
+## [2026-10-25 21:57 ~ 23:34] 门店服务私信与会员已读确认
+
+### 意图
+
+补齐135项总表92–97，使工作台与会员能保存、分页查询和回复真实站内消息，提供可靠未读摘要；继续保持前端不改、第三方暂缓和按功能小步本地提交。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/admin/mobile/GymMobileConversationsController.java`、`controller/app/mobile/AppGymConversationsController.java`、`controller/app/mobile/vo/GymMobileConversationsVO.java` | 新增 | 六项目标接口及会员已读辅助接口，严格输入与最小字段，关闭正文日志 |
+| `service/mobile/GymMobileConversationsService.java` | 新增 | 当前身份/权限/范围、共享会话、幂等发送、分页摘要及单调已读游标 |
+| `dal/dataobject/mobile/GymMobileConversationDO.java`、`GymMobileMessageDO.java`及对应Mapper | 新增 | 会话、消息和真实账号审计模型 |
+| `enums/ErrorCodeConstants.java` | 修改 | 会话不存在、关系不可用、已读消息无效错误 |
+| `sql/gym/migration/mysql/V025__gym_mobile_conversations.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 新增两表至73表、独立read/send权限定义，12项新增MySQL检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileConversationsControllerTest.java` | 修改/新增 | 17项业务、5项MVC；修正既有课程测试夜间跨日窗口 |
+| `docs/uniapp/`四份契约/总表/实施进度/机器清单 | 修改 | 110/135进度、会话参与和未读口径、辅助接口及暂缓说明 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用链、真实验证、部署顺序与下一迁移V026 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym，测试位于同模块src/test。
+
+### 结构关系
+
+双侧Controller→ConversationsService→当前Identity/WorkAccess/Permission/MemberScope→会话及消息Mapper。创建用幂等行、租户互斥和会话唯一键；发送用幂等行及会话锁，消息/摘要/未读/缓存同事务；已读同一会话锁下验证真实目标并推进游标，GET不清未读。会话是当前有权员工共享的门店会员服务记录，不是创建人永久私有记录；历史归属gym会员，经有效身份初始化绑定后可读。
+
+### 验证证据
+
+完整命令见testing本批章节：Maven Spotless及gym回归810通过（组织服务510），member4通过、1项既有禁用跳过；新增17业务+5MVC。隔离MySQL/Flyway129检查通过并清理临时库；server package -DskipTests成功。源码覆盖脚本输出Contract135/mapped110/missing25，git diff --check通过。
+
+首轮潜客测试补正缺失平台账号夹具；首轮全量遇既有课程测试第二节跨日超出窗口，只将查询结束日按实际第二节排期计算，业务规则和快照断言不变。最终重跑完整通过，日志路径及覆盖边界已记录testing。
+
+### 影响面 / 风险
+
+V025两表、当前73表、下一V026；先备份、migrate/validate再开放新入口，跨V024升级遵守其暂停业务写入要求。本批只定义权限、不授角色、不回填消息；有当前权限和会员范围的其他员工可读同一门店会话。会员门店关系移除后可读本人历史和确认已读，不能发送；工作台仍要求当前关系。潜客绑定后可读该会员历史，不表示曾向未绑定账号送达。前端、业务库、原始uniapp.md内容及暂存状态保留；未做部署HTTP、多节点或规模联调。
+
+### 未做 / 后续
+
+106项新增本地实现、4项复用源码、25项待开发，总数135；已读辅助路由不计新增目标。微信客服、外部消息推送、WebSocket、附件、编辑撤回、员工未读均未实现。支付/自动续费、电子签约、设备及监控真实接入按要求暂缓，未伪造成功。本地小步提交，不推送。

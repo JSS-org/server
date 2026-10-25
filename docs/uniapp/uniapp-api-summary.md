@@ -13,6 +13,8 @@
 - 已有管理后台接口在设计文档中仅作为复用参考，不额外计入小程序接口总数。
 - 公开素材辅助读取 `GET /app-api/gym/public-media/{id}/content` 支撑总表7–11的Media URL，不新增135个目标条目；实际业务引用授权与普通会员文件入口分开。
 
+- 会员会话已读辅助接口 `POST /app-api/gym/me/conversations/{id}/read` 支撑未读摘要，不增加135项目标数量。
+
 ## 数量汇总
 
 | 分类 | 数量 | 说明 |
@@ -23,7 +25,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **100** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **31** 个。源码映射共 **104 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **106** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **25** 个。源码映射共 **110 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -122,12 +124,12 @@
 | 89 | 工作台 | GET | `/admin-api/gym/mobile/members/{id}/follow-ups` | 查询会员或潜在客户的跟进记录 | 已实现，本地测试通过 |
 | 90 | 工作台 | POST | `/admin-api/gym/mobile/members/{id}/follow-ups` | 新增跟进记录和下次联系时间 | 已实现，本地测试通过 |
 | 91 | 工作台 | PUT | `/admin-api/gym/mobile/members/{id}/assignments` | 分配或调整会员在指定门店的负责员工 | 已实现，本地测试通过 |
-| 92 | 工作台 | POST | `/admin-api/gym/mobile/member-conversations` | 创建与授权会员的站内私信会话 | 设计待开发 |
-| 93 | 工作台 | GET | `/admin-api/gym/mobile/member-conversations/{id}/messages` | 查询员工参与且有权访问的私信消息 | 设计待开发 |
-| 94 | 工作台 | POST | `/admin-api/gym/mobile/member-conversations/{id}/messages` | 向授权会员发送站内私信 | 设计待开发 |
-| 95 | 公共及会员端 | GET | `/app-api/gym/me/conversations` | 查询会员本人的站内会话及未读摘要 | 设计待开发 |
-| 96 | 公共及会员端 | GET | `/app-api/gym/me/conversations/{id}/messages` | 查询本人会话消息 | 设计待开发 |
-| 97 | 公共及会员端 | POST | `/app-api/gym/me/conversations/{id}/messages` | 会员在本人会话中发送消息 | 设计待开发 |
+| 92 | 工作台 | POST | `/admin-api/gym/mobile/member-conversations` | 创建与授权会员的站内私信会话 | 已实现，本地测试通过 |
+| 93 | 工作台 | GET | `/admin-api/gym/mobile/member-conversations/{id}/messages` | 查询当前权限及会员范围内的门店服务会话消息 | 已实现，本地测试通过 |
+| 94 | 工作台 | POST | `/admin-api/gym/mobile/member-conversations/{id}/messages` | 向授权会员发送站内私信 | 已实现，本地测试通过 |
+| 95 | 公共及会员端 | GET | `/app-api/gym/me/conversations` | 查询会员本人的站内会话及未读摘要 | 已实现，本地测试通过 |
+| 96 | 公共及会员端 | GET | `/app-api/gym/me/conversations/{id}/messages` | 查询本人会话消息 | 已实现，本地测试通过 |
+| 97 | 公共及会员端 | POST | `/app-api/gym/me/conversations/{id}/messages` | 会员在本人会话中发送消息 | 已实现，本地测试通过 |
 | 98 | 工作台 | GET | `/admin-api/gym/mobile/body-measurements` | 查询授权会员的体测记录 | 已实现，本地测试通过 |
 | 99 | 工作台 | POST | `/admin-api/gym/mobile/body-measurements` | 为授权会员录入体测指标和报告 | 已实现，本地测试通过 |
 | 100 | 工作台 | GET | `/admin-api/gym/mobile/training-plans` | 查询授权会员的训练计划 | 已实现，本地测试通过 |

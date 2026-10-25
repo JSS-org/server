@@ -520,7 +520,7 @@ Content-Type: application/json
 
 `FollowUp`：`id,memberId,storeId,employeeId,content,nextContactAt?,createdAt`；正文1～2000字符，下次联系时间新增时须在未来，员工ID来自当前账号关联的唯一在职员工。`Message`：`id,conversationId,senderType:member或employee,content,createdAt`；正文 1～2000 字符。
 
-分配更新对当前门店负责关系整体替换；须核对 `expectedVersion` 防止覆盖他人修改，新员工必须在职、已到入职及门店任职日期并关联有效后台账号；单次最多20名且不能重复。旧后台替换负责关系也维护同一版本。分配不修改其他门店关系。私信先按站内会话设计，是否还需微信客服渠道另行确认。
+分配更新对当前门店负责关系整体替换；须核对 `expectedVersion` 防止覆盖他人修改，新员工必须在职、已到入职及门店任职日期并关联有效后台账号；单次最多20名且不能重复。旧后台替换负责关系也维护同一版本。分配不修改其他门店关系。私信已按门店服务会话实现，完整权限与已读口径见本文末尾V025补充；微信客服渠道未接入。
 
 ### 8.3 体测、训练计划、合同与发卡
 
@@ -1127,3 +1127,31 @@ Notification严格返回`id,type,title,content,businessId,storeId,createdAt,read
 偏好请求示例：`{"templateKeys":["booking","entitlement"],"enabled":false}`。业务模板键仅允许`booking/contract/entitlement/activity`，1～4项且不能重复；entitlement对应会员卡和课包。所选键整体原子更新，未选键保持，同值重试保留首次保存时间。`userId/authorized/sent`等额外字段拒绝。该偏好供将来的外部订阅适配使用，**不等同微信授权、不触发发送，也不删除或屏蔽业务站内记录**。
 
 门禁入场路由表仍是后续可信设备事件接入后的要求，本批没有生成入场通知；审批、工资等其他工作台事件尚未接入站内发布器。原合同定时/手动远程提醒仍明确报告渠道未配置，不能将本批合同生成通知当成远程提醒成功。V024部署与证据见[实施说明](./uniapp-implementation.md#站内通知与会员偏好v024)。
+
+## 门店服务私信实现约定（V025，总表92–97）
+
+本节为已实现契约。`W=/admin-api/gym/mobile`，`A=/app-api/gym`；响应沿用CommonResult，分页data为`{list,total}`。ID输出为字符串，时间为上海时区带偏移的DateTime。
+
+| 编号 | 方法与路径 | 请求 | data及说明 |
+| --- | --- | --- | --- |
+| 92 | `POST W/member-conversations` | `storeId,memberId`，均必填正ID；Idempotency-Key必传 | `{id}`；同租户/会员/门店返回唯一会话，可为空会话 |
+| 93 | `GET W/member-conversations/{id}/messages` | `pageNo,pageSize,beforeId?` | `Page<Message>` |
+| 94 | `POST W/member-conversations/{id}/messages` | `{content}`；Idempotency-Key必传 | `Message` |
+| 95 | `GET A/me/conversations` | `pageNo,pageSize` | `Page<Conversation>`，本人范围内最新消息ID倒序，再按会话ID倒序 |
+| 96 | `GET A/me/conversations/{id}/messages` | `pageNo,pageSize,beforeId?` | `Page<Message>` |
+| 97 | `POST A/me/conversations/{id}/messages` | `{content}`；Idempotency-Key必传 | `Message` |
+| 辅助，不计入135 | `POST A/me/conversations/{id}/read` | `{lastReadMessageId}`，必填正ID | `{lastReadMessageId,unreadCount}`；自然幂等，无需Idempotency-Key |
+
+Message只有`id,conversationId,senderType,content,createdAt`五个字段。senderType为member或employee；employee表示后台工作身份，包括有权管理者/总部，实际后台账号保存在审计字段，不伪造员工ID。Conversation只有`id,storeId,unreadCount,lastMessage`四个字段；没有消息时lastMessage为null。请求不接受额外字段、发送人或他人身份参数。content原始输入最多2000字符，去掉首尾空白后不能为空；保存去空白后的纯文本，保留内部换行及HTML样式字符，调用方应以文本展示，不执行HTML。
+
+工作台查询须有gym:messages:read；创建/发送须同时有read和gym:messages:send。Controller及Service都校验，有效后台身份加当前会员门店范围共同决定访问权；SELF需要当前负责关系和有效任职，整店管理范围按既有规则处理。一个门店一个会员共用服务会话，当前其他有权人员可查看和回复，原创建人不享有永久访问权。创建及双方发送还要求会员、门店启用且实际会员门店关系存在；读取工作台历史也要求当前范围及门店关系。会员端必须是当前有效账号、已核验绑定的gym会员本人，不能靠知道会话ID访问他人或其他租户。
+
+会员可继续查询及确认本人历史消息，即使门店停用或会员门店关系已删除；此时发送拒绝。会话可以由员工为尚未绑定小程序账号的潜客创建，真实消息保存在该gym会员名下；以后通过现有身份初始化核验绑定该会员才可读取历史。这不是向一个尚不存在的账号发送成功通知，也不执行历史推送。
+
+pageNo从1开始，pageSize沿用1～200。消息按ID倒序；beforeId必须为正数，SQL只取`id < beforeId`，total是该筛选窗口的条数，非未读数。翻旧消息建议pageNo=1、beforeId取上页最小ID；它是排他数值边界，无须对应某条现存消息。会话本人条件、消息会话条件在数据库分页前生效，不在内存截取后伪造total。
+
+unreadCount只统计尚未确认已读的后台消息。GET查询、会员自己发消息均不改变未读数。已读请求应携带客户端实际展示过的最后一条消息ID；该消息必须存在且属于本人会话，确认到该ID以前的所有消息。游标只前进，旧请求返回当前游标与计数；空会话无可确认消息。新到的更大ID消息仍保留未读，读写通过同一会话行锁串行。不同会话的消息或不存在的ID被拒绝。
+
+创建和发送沿用8～128位Idempotency-Key规则；同账号类型、租户和操作内，相同键及参数重放首次响应，改内容或改会话报冲突。正文去空白后参与幂等比较；换新键发送同文仍会形成新消息。所有重试先重新校验当前身份、权限与范围。写失败时消息、摘要、未读和成功幂等结果全部回滚，可在修复原因后使用原键重试。
+
+新增错误：1070028001会话不存在或非本人，1070028002会员/门店关系不可用，1070028003已读目标消息无效；功能权限、账号身份和字段校验沿用既有错误机制。所有七个入口关闭框架请求及响应正文日志。当前仅持久化HTTP会话，不提供附件、编辑/撤回、员工未读数、WebSocket、微信客服及外部推送，不将数据库写入成功解释为对方已收到或已读。

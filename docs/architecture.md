@@ -689,3 +689,11 @@ GymMobileDevicesController（gym:devices:read）→GymMobileDevicesService→Gym
 会员/工作台NotificationsController → GymMobileNotificationsService → 当前Identity/WorkAccess → 接收人SQL过滤。工作台只有当前授课预约来源，额外PermissionApi与MemberCoach的会员、教练双范围及实际预约/排期EXISTS；总数也受当前范围约束。已读行锁仅首次保存时间。通知type精确区分member_card与course_pack，来源business_id和对外target_id分开，活动打开activity而非registration。
 
 会员偏好写入gym_mobile_notification_preference，受限业务模板键、真实账号/档案与租户唯一、批量同事务；使用现有租户互斥序列化写入。偏好只供未来外部适配读取，不抑制站内业务记录、不生成授权或送达状态。V024增加两表至71表，统一升级相关业务写入实例以免旧版本漏事件；无前端或角色授权变化。
+
+## 门店服务私信与会员已读（V025）
+
+总表92–97由GymMobileConversationsController及AppGymConversationsController→GymMobileConversationsService实现；后者另提供会员read辅助路由。Service复用MobileWorkAccess、MemberService、Identity和PermissionApi，每次根据当前身份、私信功能权限、门店会员范围校验。员工共享该门店会员服务会话，不按创建人永久授权；会员历史属于已核验绑定的gym会员。
+
+V025新增gym_mobile_conversation及gym_mobile_message，当前73表。会话唯一键为tenant/member/store，消息保存真实账号类型与账号ID。创建使用幂等行→租户互斥→会话行锁；发送使用幂等行→会话行锁；会员已读只锁会话再验证目标消息。消息插入、最新ID、会员未读数和幂等响应同事务，失败全部回滚。读游标单调递增并重新统计后台未读消息，不将GET当作确认。查询用REPEATABLE_READ保证分页/摘要快照一致，列表批量取得最新消息，无逐条N+1查询。
+
+只新增read/send权限定义、不授予角色。七个入口均关闭API请求/响应正文日志。与站内通知发布器无调用关系，无外部渠道或WebSocket。创建和发送使用READ_COMMITTED，锁后再次验证当前访问条件；旧幂等响应前也先检查当前身份/范围。详细契约及历史访问边界见uniapp/uniapp-api.md的V025章节。

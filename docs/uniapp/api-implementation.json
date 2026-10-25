@@ -1339,8 +1339,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/approvals",
       "description": "查询本人申请、待审批或已处理审批列表",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
     },
     {
       "id": 113,
@@ -1348,8 +1353,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/approvals/{id}",
       "description": "获取审批详情、业务摘要及步骤记录",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
     },
     {
       "id": 114,
@@ -1357,8 +1367,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/approval-options",
       "description": "获取当前业务可用的审批类型和模板",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
     },
     {
       "id": 115,
@@ -1366,8 +1381,13 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/approvals/{id}/decisions",
       "description": "当前步骤指定审批人提交通过或拒绝决定",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileApprovalsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileApprovalsControllerTest.java"
+      ]
     },
     {
       "id": 116,

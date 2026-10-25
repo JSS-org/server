@@ -464,6 +464,7 @@ public class GymApprovalService {
             row.setCompletedAt(now());
         }
         gymApprovalTaskMapper.updateById(owned);
+        row.setVersion(Math.incrementExact(row.getVersion()));
         gymApprovalMapper.updateById(row);
         return response(row);
     }

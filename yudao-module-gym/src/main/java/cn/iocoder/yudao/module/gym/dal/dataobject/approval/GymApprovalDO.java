@@ -28,6 +28,7 @@ public class GymApprovalDO extends TenantBaseDO {
     private String attachmentIds;
     private String status;
     private Integer currentStep;
+    private Integer version = 1;
     private Instant submittedAt;
     private Instant completedAt;
     private String businessResult;

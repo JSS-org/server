@@ -608,3 +608,9 @@ Mapper以当前有效会员档案为外层一人一行，会员门店、卡适�
 服务分别检查reports、checkins、lessons、members读取权限，只有授权才执行对应聚合；审批数另需read和decide及整店模式。SQL按租户/所选门店过滤：本人财务限定employee_id，签到关联同店当前负责会员，课消再限定本人教练；成员用EXISTS按人去重；审批用当前步骤/当前账号与有效员工绑定EXISTS计数，不继承旧页面10条上限。所有指标在只读REPEATABLE_READ事务中读取，不加载原始流水或档案列表到服务层。
 
 日期只确定事件日/昨日/月累计及当前人群中的注册日；当前成员总数、负责关系和待办不伪造历史快照。响应记录显式保留null，以区分未授权与真实零值。无新增表、权限定义、自动授权或既有业务写流程修改。
+
+## 移动审批读取与共享决策事务（2026-10-25 增量）
+
+`GymMobileApprovalsController → GymMobileApprovalsService`分别执行read/create/read+decide功能权限，服务校验后台身份后用原Approval/Task/Template Mapper读取。mine按申请账号，pending按整店及当前步骤，processed按已处理步骤；指定审批人查询关联当前有效员工绑定。只读事务中先SQL授权分页，再批量读取步骤并按业务类型白名单投影，未复用会返回手机号/附件/完整结果的旧后台VO。
+
+模板选项检查当前店范围、published状态、每步员工/账号/整店权限，不给SELF整店能力。决策在READ_COMMITTED事务中先验证当前处理资格，再进入GymMobileIdempotency请求锁、原GymBusinessMutex及审批行锁，比较V017版本并委托GymApprovalService.decide。原服务每次真实处理递增version，因此旧后台与移动端共享状态机、锁、业务副作用及版本。幂等结果与最终卡/价格/内部合同变更一起提交或回滚；读缓存前也重新检查身份和处理资格。旧程序未实现version递增，须所有实例更新后启用移动入口。

@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **79** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **52** 个。源码映射共 **83 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **83** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **48** 个。源码映射共 **87 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -142,10 +142,10 @@
 | 109 | 工作台 | GET | `/admin-api/gym/mobile/me/payrolls/{id}` | 获取本人工资明细及计算项目 | 已实现，本地测试通过 |
 | 110 | 工作台 | GET | `/admin-api/gym/mobile/payrolls` | 查询授权门店工资表，支持月份和员工筛选 | 已实现，本地测试通过 |
 | 111 | 工作台 | GET | `/admin-api/gym/mobile/payrolls/{id}` | 获取授权范围内的员工工资明细 | 已实现，本地测试通过 |
-| 112 | 工作台 | GET | `/admin-api/gym/mobile/approvals` | 查询本人申请、待审批或已处理审批列表 | 设计待开发 |
-| 113 | 工作台 | GET | `/admin-api/gym/mobile/approvals/{id}` | 获取审批详情、业务摘要及步骤记录 | 设计待开发 |
-| 114 | 工作台 | GET | `/admin-api/gym/mobile/approval-options` | 获取当前业务可用的审批类型和模板 | 设计待开发 |
-| 115 | 工作台 | POST | `/admin-api/gym/mobile/approvals/{id}/decisions` | 当前步骤指定审批人提交通过或拒绝决定 | 设计待开发 |
+| 112 | 工作台 | GET | `/admin-api/gym/mobile/approvals` | 查询本人申请、待审批或已处理审批列表 | 已实现，本地测试通过 |
+| 113 | 工作台 | GET | `/admin-api/gym/mobile/approvals/{id}` | 获取审批详情、业务摘要及步骤记录 | 已实现，本地测试通过 |
+| 114 | 工作台 | GET | `/admin-api/gym/mobile/approval-options` | 获取当前业务可用的审批类型和模板 | 已实现，本地测试通过 |
+| 115 | 工作台 | POST | `/admin-api/gym/mobile/approvals/{id}/decisions` | 当前步骤指定审批人提交通过或拒绝决定 | 已实现，本地测试通过 |
 | 116 | 工作台 | POST | `/admin-api/gym/mobile/course-price-applications` | 提交私教产品改价申请 | 设计待开发 |
 | 117 | 工作台 | POST | `/admin-api/gym/mobile/course-quotes` | 依据商品现价或有效审批生成私教报价分享链接 | 设计待开发 |
 | 118 | 公共及会员端 | GET | `/app-api/gym/course-quotes/{id}` | 会员查看适用于自己的私教报价和有效期 | 设计待开发 |

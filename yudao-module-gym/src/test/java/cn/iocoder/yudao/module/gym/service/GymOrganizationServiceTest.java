@@ -12,6 +12,7 @@ import cn.iocoder.yudao.framework.tenant.config.TenantProperties;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import cn.iocoder.yudao.framework.tenant.core.db.TenantDatabaseInterceptor;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
+import cn.iocoder.yudao.module.gym.controller.admin.common.GymBusinessPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.common.GymPageReqVO;
 import cn.iocoder.yudao.module.gym.controller.admin.employee.vo.*;
 import cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileWorkCourseWriteVO.*;
@@ -49,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileApprovalsService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileApprovalsController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileDashboardService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDashboardController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileMemberSummaryService.class,
@@ -15443,5 +15446,458 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertEquals(0, revoked.members().responsibleCount());
         assertEquals(0, revoked.lessons().todayCount());
         assertEquals(0, revoked.checkins().todayCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileApprovalsService mobileApprovals;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileApprovalsController
+            mobileApprovalsController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.Query
+            mobileApprovalQuery(String view) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO
+                        .Query();
+        q.setView(view);
+        return q;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.Decision
+            mobileApprovalDecision(String decision, int version) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO
+                        .Decision();
+        q.setDecision(decision);
+        q.setExpectedVersion(version);
+        q.setComment("审核意见");
+        return q;
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO.OptionsQuery
+            mobileApprovalOptions(String type) {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileApprovalsVO
+                        .OptionsQuery();
+        q.setStoreId(101L);
+        q.setBusinessType(type);
+        return q;
+    }
+
+    List<Long> mobileApprovalFixture(boolean two) {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long a = responsibleEmployee(91L), b = responsibleEmployee(92L);
+        Long template = publishedApproval("card_opening", two ? new Long[] {a, b} : new Long[] {a});
+        Long member = Long.valueOf(members.create(member(101L, "13800009801")).getId()),
+                card = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        Long id =
+                Long.valueOf(
+                        approvals
+                                .create(opening(template, member, card), "mobile-approval-fixture")
+                                .getId());
+        return List.of(id, a, b, member, card, template);
+    }
+
+    @Test
+    void mobileApprovalsViewsApplyOwnershipCurrentStepsAndPaginationBeforeReturningRows() {
+        var ids = mobileApprovalFixture(true);
+        Long id2 =
+                Long.valueOf(
+                        approvals
+                                .create(
+                                        opening(ids.get(5), ids.get(3), ids.get(4)),
+                                        "mobile-approval-second")
+                                .getId());
+        var mine = mobileApprovalQuery("mine");
+        mine.setPageSize(1);
+        assertEquals(2, mobileApprovals.page(mine).getTotal());
+        assertEquals(1, mobileApprovals.page(mine).getList().size());
+        mine.setPageNo(3);
+        assertTrue(mobileApprovals.page(mine).getList().isEmpty());
+        loginAs(92L);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        assertEquals(ids.get(0).toString(), mobileApprovals.get(ids.get(0)).id());
+        loginAs(91L);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        assertEquals(2, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        mobileApprovals.decide(
+                ids.get(0), mobileApprovalDecision("approve", 1), "mobile-step-first");
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("processed")).getTotal());
+        var processed = mobileApprovalQuery("processed");
+        processed.setStatus("approved");
+        assertEquals(0, mobileApprovals.page(processed).getTotal());
+        processed.setStatus("pending");
+        assertEquals(1, mobileApprovals.page(processed).getTotal());
+        loginAs(92L);
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        var q = mobileApprovalQuery("pending");
+        q.setStoreId(102L);
+        assertEquals(0, mobileApprovals.page(q).getTotal());
+        assertNotEquals(ids.get(0), id2);
+    }
+
+    @Test
+    void
+            mobileApprovalsDetailsUseParticipantOrManagerAccessAndReturnOnlyControlledSnapshotFields() {
+        var ids = mobileApprovalFixture(true);
+        Long id = ids.getFirst();
+        personalScope(1L);
+        var r = mobileApprovals.get(id);
+        assertEquals("1", r.applicantId());
+        assertEquals("91", r.steps().getFirst().approverId());
+        assertEquals(1, r.version());
+        assertInstanceOf(String.class, r.businessSummary().get("amount"));
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r);
+        for (String field :
+                List.of(
+                        "13800009801",
+                        "memberPhone",
+                        "attachmentIds",
+                        "templateSnapshot",
+                        "requestHash",
+                        "requestKey",
+                        "businessResult")) assertFalse(json.contains(field));
+        personalScope(92L);
+        assertEquals(id.toString(), mobileApprovals.get(id).id());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET user_id=93 WHERE id=?", ids.get(2));
+        assertServiceException(() -> mobileApprovals.get(id), APPROVAL_NOT_EXISTS);
+        loginAs(94L);
+        scoped(102L);
+        assertServiceException(() -> mobileApprovals.get(id), APPROVAL_NOT_EXISTS);
+        scoped(101L);
+        assertEquals(id.toString(), mobileApprovals.get(id).id());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_approval SET tenant_id=2 WHERE id=?", id);
+        assertServiceException(() -> mobileApprovals.get(id), APPROVAL_NOT_EXISTS);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+    }
+
+    @Test
+    void mobileApprovalsOptionsRequirePublishedActionableTemplatesAndDoNotExposeApprovers() {
+        var ids = mobileApprovalFixture(true);
+        var options = mobileApprovals.options(mobileApprovalOptions("card_opening"));
+        assertEquals(1, options.templates().size());
+        assertEquals(List.of("card_opening"), options.businessTypes());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(options)
+                        .contains("approver"));
+        approvalTemplates.create(approvalTemplate(ids.get(1)));
+        assertEquals(
+                1,
+                mobileApprovals.options(mobileApprovalOptions("card_opening")).templates().size());
+        when(permissions.hasAnyPermissions(eq(92L), eq("gym:approvals:decide"))).thenReturn(false);
+        assertTrue(
+                mobileApprovals
+                        .options(mobileApprovalOptions("card_opening"))
+                        .templates()
+                        .isEmpty());
+        when(permissions.hasAnyPermissions(eq(92L), eq("gym:approvals:decide"))).thenReturn(true);
+        var data = new DeptDataPermissionRespDTO();
+        data.setDeptIds(Set.of(102L));
+        when(permissions.getDeptDataPermission(92L)).thenReturn(data);
+        assertTrue(
+                mobileApprovals
+                        .options(mobileApprovalOptions("card_opening"))
+                        .businessTypes()
+                        .isEmpty());
+    }
+
+    @Test
+    void mobileApprovalsSelfOptionsAllowOnlyPriceWorkflowsInCurrentResponsibleStore() {
+        var ids = mobileApprovalFixture(true);
+        Long price = publishedApproval("price_change", ids.get(2));
+        memberCoaches.replace(ids.get(3), 101L, responsibility(ids.get(1)));
+        personalScope(91L);
+        var manager = new DeptDataPermissionRespDTO();
+        manager.setAll(true);
+        when(permissions.getDeptDataPermission(92L)).thenReturn(manager);
+        var result = mobileApprovals.options(mobileApprovalOptions("price_change"));
+        assertEquals(price.toString(), result.templates().getFirst().id());
+        assertEquals(List.of("price_change"), result.businessTypes());
+        assertServiceException(
+                () -> mobileApprovals.options(mobileApprovalOptions("card_opening")),
+                STORE_NO_PERMISSION);
+        var q = mobileApprovalOptions("price_change");
+        q.setStoreId(102L);
+        assertServiceException(() -> mobileApprovals.options(q), STORE_NO_PERMISSION);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_member_coach SET active=FALSE");
+        assertServiceException(
+                () -> mobileApprovals.options(mobileApprovalOptions("price_change")),
+                STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void
+            mobileApprovalsVersionAndFirstResponseSurviveLegacyNextStepAndReplayRechecksCurrentBinding() {
+        var ids = mobileApprovalFixture(true);
+        Long id = ids.getFirst();
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 1);
+        var first = mobileApprovals.decide(id, req, "mobile-response-once");
+        assertEquals(2, first.version());
+        assertEquals("pending", first.status());
+        assertEquals(2, first.currentStep());
+        loginAs(92L);
+        approvals.decide(id, decision("approve"));
+        assertEquals(3, mobileApprovals.get(id).version());
+        assertEquals("approved", mobileApprovals.get(id).status());
+        loginAs(91L);
+        assertEquals(first, mobileApprovals.decide(id, req, "mobile-response-once"));
+        assertServiceException(
+                () -> mobileApprovals.decide(id, req, "mobile-new-after-done"),
+                APPROVAL_VERSION_CONFLICT);
+        var changed = mobileApprovalDecision("reject", 1);
+        assertServiceException(
+                () -> mobileApprovals.decide(id, changed, "mobile-response-once"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET user_id=93 WHERE id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileApprovals.decide(id, req, "mobile-response-once"),
+                APPROVAL_DECISION_FORBIDDEN);
+    }
+
+    @Test
+    void mobileApprovalsRejectNeedsReasonCancelsWaitingStepsAndRejectsWrongStepOrVersion() {
+        var ids = mobileApprovalFixture(true);
+        Long id = ids.getFirst();
+        loginAs(92L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "mobile-waiting-step"),
+                APPROVAL_DECISION_INVALID);
+        loginAs(91L);
+        var bad = mobileApprovalDecision("reject", 1);
+        bad.setComment("   ");
+        assertServiceException(
+                () -> mobileApprovals.decide(id, bad, "mobile-empty-reason"),
+                APPROVAL_REQUEST_INVALID);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 2), "mobile-wrong-version"),
+                APPROVAL_VERSION_CONFLICT);
+        var r =
+                mobileApprovals.decide(
+                        id, mobileApprovalDecision("reject", 1), "mobile-rejection-once");
+        assertEquals("rejected", r.status());
+        assertEquals(2, r.version());
+        assertEquals("cancelled", r.steps().get(1).status());
+        assertEquals(0, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void mobileApprovalsFinalDecisionIssuesOneRealCardAndDoesNotExposeBusinessResult() {
+        var ids = mobileApprovalFixture(false);
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 1);
+        var r = mobileApprovals.decide(ids.getFirst(), req, "mobile-final-card");
+        assertEquals("approved", r.status());
+        assertEquals(2, r.version());
+        assertEquals(r, mobileApprovals.decide(ids.getFirst(), req, "mobile-final-card"));
+        assertEquals(1, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+        assertFalse(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r)
+                        .contains("cardNo"));
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                ids.getFirst(),
+                                mobileApprovalDecision("approve", 2),
+                                "mobile-after-final"),
+                APPROVAL_DECISION_INVALID);
+    }
+
+    @Test
+    void mobileApprovalsBusinessFailureRollsBackVersionTasksAndIdempotencyThenSameKeyCanRetry() {
+        var ids = mobileApprovalFixture(false);
+        var blocked = blacklist(ids.get(3));
+        blocked.setBlockPurchase(true);
+        blocked.setStartsAt(java.time.Instant.now().minusSeconds(30));
+        Long block = Long.valueOf(records.createBlacklist(blocked).getId());
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 1);
+        assertServiceException(
+                () -> mobileApprovals.decide(ids.getFirst(), req, "mobile-rollback-key"),
+                MEMBER_PURCHASE_BLOCKED);
+        var after = mobileApprovals.get(ids.getFirst());
+        assertEquals(1, after.version());
+        assertEquals("pending", after.status());
+        assertNull(after.steps().getFirst().decidedAt());
+        var revoke =
+                new cn.iocoder.yudao.module.gym.controller.admin.member.vo.GymBlacklistSaveReqVO();
+        revoke.setRevoked(true);
+        records.patchBlacklist(block, revoke);
+        assertEquals(
+                "approved",
+                mobileApprovals.decide(ids.getFirst(), req, "mobile-rollback-key").status());
+        assertEquals(1, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void mobileApprovalsConcurrentOpposingDecisionsHaveOneWinnerAndOneBusinessEffect()
+            throws Exception {
+        var ids = mobileApprovalFixture(false);
+        var result =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-race-approve");
+                        },
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("reject", 1),
+                                    "mobile-race-reject");
+                        });
+        assertEquals(
+                1,
+                result.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        var r = mobileApprovals.get(ids.getFirst());
+        assertEquals(2, r.version());
+        assertEquals(
+                "approved".equals(r.status()) ? 1 : 0,
+                cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void
+            mobileApprovalsConcurrentIdenticalKeyReplaysOneSnapshotAndLegacyCompetingWriteSharesVersion()
+                    throws Exception {
+        var ids = mobileApprovalFixture(false);
+        var result =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-same-key-race");
+                        },
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    ids.getFirst(),
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-same-key-race");
+                        });
+        assertEquals(result.get(0), result.get(1));
+        assertEquals(2, mobileApprovals.get(ids.getFirst()).version());
+        assertEquals(1, cards.cards(ids.get(3), new GymBusinessPageReqVO()).getTotal());
+        Long second =
+                Long.valueOf(
+                        approvals
+                                .create(
+                                        opening(ids.get(5), ids.get(3), ids.get(4)),
+                                        "mobile-legacy-race-create")
+                                .getId());
+        var raced =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    second,
+                                    mobileApprovalDecision("approve", 1),
+                                    "mobile-legacy-race-new");
+                        },
+                        () -> {
+                            loginAs(91L);
+                            return approvals.decide(second, decision("reject"));
+                        });
+        assertEquals(
+                1,
+                raced.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        assertEquals(2, mobileApprovals.get(second).version());
+    }
+
+    @Test
+    void mobileApprovalsPermissionsAndValidIdentityAreCheckedAndPendingNeedsWholeStoreScope() {
+        var ids = mobileApprovalFixture(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileApprovalsController.get(ids.getFirst()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:read"))).thenReturn(true);
+        assertEquals(
+                ids.getFirst().toString(),
+                mobileApprovalsController.get(ids.getFirst()).getData().id());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileApprovalsController.options(mobileApprovalOptions("card_opening")));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:read"))).thenReturn(false);
+        loginAs(91L);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        mobileApprovalsController.decide(
+                                ids.getFirst(),
+                                mobileApprovalDecision("approve", 1),
+                                "mobile-permission-denied"));
+        personalScope(91L);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("pending")).getTotal());
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                ids.getFirst(),
+                                mobileApprovalDecision("approve", 1),
+                                "mobile-no-store-right"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> mobileApprovals.get(ids.getFirst()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileApprovals.get(ids.getFirst()), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(
+                () -> mobileApprovals.page(mobileApprovalQuery("mine")), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileApprovalsValidatePageViewsOptionsDecisionVersionAndIdempotencyKeys() {
+        var ids = mobileApprovalFixture(false);
+        var q = mobileApprovalQuery("all");
+        assertThrows(ConstraintViolationException.class, () -> mobileApprovals.page(q));
+        q.setView("mine");
+        q.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobileApprovals.page(q));
+        var opt = mobileApprovalOptions("unknown");
+        assertThrows(ConstraintViolationException.class, () -> mobileApprovals.options(opt));
+        loginAs(91L);
+        var req = mobileApprovalDecision("approve", 0);
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> mobileApprovals.decide(ids.getFirst(), req, "mobile-invalid-version"));
+        req.setExpectedVersion(1);
+        assertServiceException(
+                () -> mobileApprovals.decide(ids.getFirst(), req, "short"), MOBILE_REQUEST_INVALID);
+        assertEquals(1, mobileApprovals.get(ids.getFirst()).version());
     }
 }

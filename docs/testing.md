@@ -1013,3 +1013,24 @@ git diff --check
 审批通过真实模板和发起服务创建12条两级审批：首审批人12条、下一审批人0，首人处理一条后分别为11和1，变更账号绑定后撤回该待办；范围外不计，不受列表10条上限影响，选择历史日期不更改当前待办数。真实课程服务预约、签到、签课及重复确认后，概览与工作台明细一致为1，跨租户负责关系撤回访问。其他夹具验证月初昨日跨月不混入月累计、微秒边界、未来事件、软删/失败记录、租户与功能权限、无数据/错误身份/日期/门店参数。
 
 首轮新增签到夹具漏设非空booking_id，数据库约束拒绝，补齐唯一预约引用后通过，未放宽生产约束。日志：/tmp/uniapp-dashboard-focused.log（首轮失败）、/tmp/uniapp-dashboard-focused-2.log（10项通过）、/tmp/uniapp-dashboard-final-tests.log、/tmp/uniapp-dashboard-package.log。业务统计证据来自H2实际SQL及服务，不代表已做生产MySQL聚合压测、完整历史快照或部署HTTP联调；前端和业务库未修改。
+
+## 2026-10-25 移动审批、并发版本与真实业务回滚
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+15项专项通过后完整gym **656项通过**（组织服务383项，其中本批移动审批12项；MVC3项）；member4通过/1既有禁用跳过，Spotless及server依赖打包通过，打包跳过测试。真实隔离MySQL/Flyway **62项检查通过**，所有临时库清理，V017为旧审批增加version1并保留pending/current_step2/原因；仍67表。源码映射 **87/135**，余48项。
+
+实际H2/Mapper/权限/事务测试：mine/pending/processed在分页前隔离，后续waiting步骤不成为待办，本人处理但后续未结束的审批可在processed且status=pending查询。申请人历史、当前有效指定审批人和整店管理者详情权限，账号重新绑定即撤回参与者访问，租户隔离；受控响应不含手机号、卡号、附件或完整请求/结果。可用模板只published且全部当前审批账号具备该店权限，SELF仅当前负责店price_change选项。
+
+真实两步审批移动处理version1→2，旧后台处理→3；移动旧键返回首次pending/version2，重绑审批账号后旧键拒绝。拒绝空原因、错误步骤、过期版本及未知业务指令拒绝。最终审批实际发卡一次；黑名单拦截导致状态、任务时间和version全部回滚，同键解除阻断后可成功。两个线程同键返回同一快照、相反决策仅一项生效；旧后台拒绝与移动批准竞争共享锁/版本且仅一方成功。MVC覆盖四路由、分页/模板参数、必填版本/幂等头、禁止附加业务指令和金额字符串。
+
+首轮新增测试缺少GymBusinessPageReqVO import导致编译失败，补齐后专项与全量通过；未修改业务约束绕过测试。日志：/tmp/uniapp-approvals-focused.log（编译失败）、/tmp/uniapp-approvals-focused-2.log、/tmp/uniapp-approvals-final-tests.log、/tmp/uniapp-approvals-migrations.log、/tmp/uniapp-approvals-package.log。尚未验证生产滚动部署/查询规模、部署HTTP和真实第三方；业务库及前端未修改。

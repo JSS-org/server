@@ -389,6 +389,7 @@ CREATE TABLE IF NOT EXISTS gym_approval (
  attachment_ids text NOT NULL,
  status varchar(16) NOT NULL,
  current_step int NOT NULL,
+ version int NOT NULL DEFAULT 1,
  submitted_at datetime(6) NOT NULL,
  completed_at datetime(6) DEFAULT NULL,
  business_result text DEFAULT NULL,

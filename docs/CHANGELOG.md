@@ -2685,3 +2685,35 @@ gym641项、member4项通过，1项既有禁用跳过；Spotless及server依赖�
 ### 未做 / 后续
 
 79项新增本地实现、4项复用源码、52项待开发，继续审批及其余内部业务。真实支付、自动续费、电子签约、门禁和监控仍按用户要求暂缓；不伪造成功。小步本地提交，不推送；原始uniapp.md内容及暂存状态保留。
+
+## [2026-10-25 18:14 ~ 18:30] 移动审批查询、可用模板与版本化决策
+
+### 意图
+
+补齐总表112–115，按申请人/指定审批人/授权管理者返回受控审批信息，并让移动决策与既有后台共享真实业务事务；解决重复点击、并发相反决策和过期页面处理风险。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileApprovalsController.java`、`GymMobileApprovalsVO.java`、`GymMobileApprovalsService.java` | 新增 | 四路由、查询视图、受控摘要、可用模板、版本及持久化幂等 |
+| `GymApprovalDO.java`、`GymApprovalService.java`、`ErrorCodeConstants.java` | 修改 | 版本初值、原后台真实处理递增、独立过期版本错误 |
+| `V017__gym_approval_version.sql`、测试schema、`script/gym/verify-migrations.py` | 新增/修改 | 新库和历史审批version基线，62项隔离检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileApprovalsControllerTest.java` | 修改/新增 | 十二项业务与三项MVC，实际发卡、回滚及移动/旧后台竞争 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 87/135进度、参与者范围、版本和首次响应语义、部署顺序 |
+
+### 结构关系
+
+Controller分别校验read/create/read+decide，服务用SQL在分页前限定申请账号或当前有效步骤绑定，批量投影白名单响应。移动决策先校验处理资格，再进入请求幂等锁、原门店权益互斥和审批行锁，比较expectedVersion并委托原GymApprovalService完成业务；状态、任务、version和请求结果同事务。旧后台也递增同一版本，原请求格式保留。
+
+### 验证证据
+
+gym656项、member4项通过，1项既有禁用跳过；Spotless和server依赖打包通过。15项专项验证待办/已处理、模板有效性、当前参与者权限、实际发卡一次、黑名单失败回滚及同键恢复、相反决策竞争和旧后台混合竞争。真实隔离MySQL/Flyway62检查通过且临时库清理，旧审批pending/步骤2/原因保持，version为1。源码映射87/135，详见testing命令及日志。
+
+### 影响面 / 风险
+
+部署先V017 migrate/validate，统一更新所有审批写入实例后再开放移动决策；旧版不递增version，混跑不能保证版本语义。历史版本1为迁移基线，不表示审批没被处理过。受控响应不含手机号、附件URL或业务结果卡号；原后台摘要和请求契约未改，移动拒绝另要求原因。无权限定义/自动授权，前端及业务库未改，仍67表；未做生产滚动部署和规模压测。
+
+### 未做 / 后续
+
+83项新增本地实现、4项复用源码、48项待开发。104发卡/私教申请、116专属改价和117–118报价继续后续批次，旧price_change仍是商品公开价变更，不能冒充单客户报价。真实第三方接入继续暂缓。小步本地提交，不推送；原始uniapp.md内容和暂存状态保留。

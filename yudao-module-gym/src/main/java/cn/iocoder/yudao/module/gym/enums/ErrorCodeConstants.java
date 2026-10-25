@@ -109,6 +109,7 @@ public interface ErrorCodeConstants {
     ErrorCode APPROVAL_SOURCE_UNAVAILABLE = new ErrorCode(1_070_010_009, "该审批来源的实际业务执行尚未接入");
     ErrorCode APPROVAL_DECISION_FORBIDDEN = new ErrorCode(1_070_010_010, "仅指定步骤审批人可以处理申请");
     ErrorCode APPROVAL_DECISION_INVALID = new ErrorCode(1_070_010_011, "审批步骤尚未轮到、已结束或重复处理结果冲突");
+    ErrorCode APPROVAL_VERSION_CONFLICT = new ErrorCode(1_070_010_012, "审批版本已变化，请刷新后重试");
     ErrorCode CONTRACT_TEMPLATE_NOT_EXISTS = new ErrorCode(1_070_011_001, "合同模板不存在");
     ErrorCode CONTRACT_TEMPLATE_IMMUTABLE =
             new ErrorCode(1_070_011_002, "已发布或停用的合同模板内容及PDF不可修改，请创建新版本");

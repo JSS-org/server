@@ -582,3 +582,9 @@ GymFeedbackImages使用内存ImageIO解码、像素边界检查、新建sRGB图�
 `GymEquipmentPublicationController → GymMobileEquipmentService`执行有效后台身份、gym:equipment:write与整店范围校验，锁原器械行后首次生成随机scene或显式清空；与原GymDeviceService编辑使用同一行锁。唯一索引为tenant/scene，重复发布返回原码，撤销后再次发布新码。
 
 `GymEquipmentPublicAssets`验证active教程→已公开器械→营业门店及文件同店/类型/无工作用途绑定，供列表Media投影与既有GymMobilePublicService下载共同使用。下载前再次检查公开引用与文件魔数，复用原公开媒体Controller的范围响应；其他独立公开引用可继续授权共享文件。没有增加对外存储URL、渠道调用或前端改动。
+
+## 移动销售报表与分组财务查询（2026-10-25 增量）
+
+`GymMobileSalesReportController → GymMobileSalesReportService`验证有效后台身份、gym:reports:read、整店范围、日期窗口及分页。服务端解析允许门店集合和上海时间边界，组成不可变Criteria交给`GymMobileSalesReportMapper`，禁止客户端指定租户或绕过范围。
+
+Mapper以确认财务事件为事实源，原始筛选SQL共享于总金额/去重订单数、分组行数和分页三个查询。列表按订单/门店/员工/类型聚合，再连接匹配门店的订单编号，相关子查询读取该归属组历史最早payment；分页后批量读取订单项名称快照。金额不JOIN多条订单项，避免放大；整个读取处于只读REPEATABLE_READ快照。V016增加门店日期和订单付款索引，不改财务写链路或旧报表。

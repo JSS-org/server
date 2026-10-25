@@ -932,3 +932,24 @@ git diff --check
 初轮三个测试断言问题已修正：将公开器械名称中的编码误判为内部字段泄露；匿名功能权限拦截实际抛AuthorizationDeniedException；无方法校验代理的独立MVC测试不能证明路径参数@Positive，改由实际服务负数/零ID拒绝断言验证。修正未放宽生产校验。视频内容测试使用MP4魔数测试字节验证受控读取，并非可播放视频，不能推断编码器兼容或手机拖动播放成功。既有公开媒体范围响应测试随完整回归执行。
 
 日志：/tmp/uniapp-equipment-focused.log、/tmp/uniapp-equipment-final-tests.log、/tmp/uniapp-equipment-migrations.log、/tmp/uniapp-equipment-package.log。Java并发为H2证据，MySQL检查为迁移和旧库接管；未执行真实微信码生成、手机扫码、部署HTTP、视频播放或高并发/大视频内存压测，前端与业务数据库未修改。
+
+## 2026-10-25 移动销售报表、退款跨期与归属份额
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+销售报表专项9项通过后，完整gym **612项通过**（组织服务348项，新增销售业务7项；MVC2项），member4通过/1既有禁用跳过，无失败/错误。Spotless与server依赖打包通过，打包跳过测试。隔离MySQL/Flyway **60检查通过**，全部临时库清理；V016两条索引顺序匹配、旧流水12.34金额和NULL归属保持不变，表数仍67。源码映射 **80/135**，余55项。
+
+实际H2/Mapper/租户/权限测试：通过原Commerce服务及测试验款器接收40.00+59.99两笔付款和20.00退款，报表为99.99实收、20.00退款、79.99净额，与旧经营报表相同，重复凭据不增加金额；未付款订单不计入。另用明确账本夹具验证多人归属合计190.00实收、30.00退款、160.00净额，两个订单去重、三行份额、员工/商品筛选、分页与超大页码不改变summary。
+
+跨期100付款在前日、30退款在当日，当前区间净额-30、付款订单数0、均价0.00，paidAt保留原付款时间；日期左闭右开、上海1991夏令时和366自然日边界均验证。多商品名快照不放大金额；订单与事件门店不符时隐藏编号/名称但保留账本。停用门店历史可查，软删流水、跨租户和无权限范围不计入；SELF不能获取门店汇总，错误身份/停用后台账号拒绝。非法事件类型/商品类型由既有数据库约束拒绝，首轮测试误以为可插入这些非法夹具，改为验证约束抛错后全量通过，未修改生产约束。
+
+MVC验证日期/门店/员工/商品/分页绑定与不合法输入，金额字符串、完整summary及无会员字段。日志：/tmp/uniapp-sales-report-focused.log、/tmp/uniapp-sales-report-final-tests.log、/tmp/uniapp-sales-report-migrations.log、/tmp/uniapp-sales-report-package.log。H2证明应用SQL及业务口径；MySQL只证明迁移与历史数据保留，未执行生产EXPLAIN/大数据量压测、真实渠道交易或部署HTTP联调。业务数据库和前端未修改。

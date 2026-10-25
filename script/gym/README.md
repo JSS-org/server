@@ -73,7 +73,7 @@ script/gym/
   verify-legacy-seeds.py           # 历史导入验证，只作用于随机测试库
 ```
 
-后续变更从当前最大版本递增追加（当前下一版本为 `V016__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
+后续变更从当前最大版本递增追加（当前下一版本为 `V017__说明.sql`），每个版本唯一，不改已应用文件；DDL、必要基础数据及必要回填可按依赖拆为多个版本。只在 `migration/mysql` 添加正式迁移，Flyway记录版本和校验和；菜单定义变更不得夹带默认账号或自动恢复既有角色权限。开发样例修改只进development seed。`legacy-schema.json`绑定V001历史结构，不随后续版本表变化改写，它不是“当前最新schema”的通用比较工具。
 
 ## 独立开发seed
 
@@ -608,10 +608,16 @@ python3 script/gym/verify-uniapp-api-coverage.py --require-all
 
 迁移仅注册gym:feedbacks:read、gym:feedbacks:reply两条按钮权限，不自动授予任何角色，不新增前端路由。管理员需按职责授予功能权限和整店数据范围后才能读取/回复。工作人员图片只能经反馈专用辅助下载入口获取重新编码的安全副本；通用member_文件读取限制保持。需要运行环境提供标准java.desktop/ImageIO图片编解码（可在headless服务器运行）；最大10 MiB、8192单边/2000万像素限制不替代生产并发容量评估。
 
-真实隔离MySQL/Flyway54检查通过，包括权限定义、默认不同意、附件唯一与旧库接管，临时库全部清理。本任务未迁移业务库；下一未使用版本V016（V015见下）。
+真实隔离MySQL/Flyway54检查通过，包括权限定义、默认不同意、附件唯一与旧库接管，临时库全部清理。本任务未迁移业务库；下一未使用版本V017（V015–V016见下）。
 
 ### 器械教学公开场景码（V015）
 
-部署前migrate至V015并validate。gym_equipment新增public_scene varchar(32) NULL及(tenant_id,public_scene)唯一索引，表数仍67；原器械及教程不自动公开，不回填场景码，不新增权限/账号或角色授权。真实隔离MySQL/Flyway57检查通过，全部临时库清理；业务库未迁移。下一未使用版本V016。
+部署前migrate至V015并validate。gym_equipment新增public_scene varchar(32) NULL及(tenant_id,public_scene)唯一索引，表数仍67；原器械及教程不自动公开，不回填场景码，不新增权限/账号或角色授权。真实隔离MySQL/Flyway57检查通过，全部临时库清理；业务库未迁移。下一未使用版本V017（V016见下）。
 
 管理员有gym:equipment:write及整店范围时，可调用POST /admin-api/gym/equipment/{id}/public-scenes（无body）明确公开教程并获取scene；DELETE同路径撤销，重复调用安全。场景码本身为32位小写十六进制本地路由值，不是微信官方码图片；重新发布后须更新印刷/展示的旧码。停用器械或门店暂停访问，启用后原码恢复；要废止旧码须明确DELETE。素材复用原后台同店image/video上传，仅支持普通图片及MP4，私有/有工作用途绑定的文件不能公开。前端与真实设备渠道未改动。
+
+### 销售报表索引（V016）
+
+部署前migrate至V016并validate。为gym_financial_event增加idx_financial_store_time（租户/门店/删除标志/事件时间）和idx_financial_order_payment（租户/订单/门店/商品/员工/事件类型/删除标志/时间），支撑时间范围汇总与原付款时间读取。无新表或数据回填，历史金额/归属不修改，仍67张gym表；下一版本V017。索引构建成本取决于已有流水量，按既有备份和维护流程安排。
+
+销售报表复用gym:reports:read和整店范围，不自动授予权限；支持卡与私教的已确认财务事件，不发起渠道操作。实际生产查询计划、海量流水性能需部署环境验证。本任务只运行隔离数据库回归，未迁移业务数据库，前端未改动。

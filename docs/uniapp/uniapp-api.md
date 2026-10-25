@@ -546,7 +546,7 @@ Content-Type: application/json
 | `GET W/reports/performance` | 员工及以上 | `P,storeId?:ID,startDate:Date,endDate:Date,groupBy:employee或store` | `{list:PerformanceRow[],total:int,summary:PerformanceSummary}` |
 | `GET W/reports/member-summary` | 管理者/总部 | `storeId?:ID,date:Date` | `{memberCount:int,privateCourseMemberCount:int,newMemberCount:int,expiringCardCount:int,expiringCourseCount:int}` |
 
-`SaleRow`：`id,orderNo,storeId,employeeId?,productType,productName,paidAmount:Money,refundedAmount:Money,netAmount:Money,paidAt:DateTime`。
+`SaleRow`：`id,orderNo?,storeId,employeeId?,productType,productName?,paidAmount:Money,refundedAmount:Money,netAmount:Money,paidAt:DateTime?`。
 
 `SalesSummary`：`paidAmount,refundedAmount,netAmount,paidOrderCount,cardAmount,cardOrderCount,cardAverageOrderAmount,courseAmount,courseOrderCount,courseAverageOrderAmount`，金额均为 Money。
 
@@ -818,3 +818,19 @@ V015增加`gym_equipment.public_scene`可空列及租户内唯一索引，历史
 图片/视频使用既有`GET /app-api/gym/public-media/{id}/content?tenantId=...`，每次重查有效公开引用、归属和用途，检测实际内容魔数，支持既有字节范围响应及no-store。最后一个公开引用消失后不可读取；同一文件仍被其他有效公开内容引用时仍可访问。素材不做反馈图片那样的元数据清除，应由管理员上传适合公开的教程；保留原文件字节，不执行转码。一次返回该器械全部有效教程，关联校验为逐项查询，大量教程和大视频内存/吞吐尚未压测。
 
 这里生成的是本地可解析scene值，不生成微信官方小程序码图片、不调用门禁或监控设备。将scene渲染/打印成二维码以及小程序相机扫码页面仍属调用方工作，本任务未修改前端；未声称完成真实手机扫码或视频播放联调。部署前先迁移V015并validate，仍为67张gym表，业务数据库未迁移。
+
+## 销售报表实施口径（2026-10-25）
+
+总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩、107会员汇总及77概览仍待后续批次。
+
+startDate、endDate必填，按Asia/Shanghai自然日`[startDate,endDate)`，支持1000～9999年、1～366个自然日；pageNo>=1、pageSize<=200。商品筛选card/course，其中course对应原财务流水private；未知筛选值拒绝。
+
+金额以同租户、授权门店、未删除的gym_financial_event确认流水为准，payment加、refund减，按各自occurredAt落入区间；与现有经营报表的财务事件口径一致，不以当前订单状态或卡发放次数替代实收。部分收款计入已确认实收；完全未付款订单和免费发卡不计入。退款即使原付款在区间外也计入本期，净额可为负。支付渠道实际接入仍暂缓，本接口只读取已有可信落库数据，不发起支付/退款或伪造成功。
+
+列表按`订单+门店+归属员工（可空）+商品类型`聚合，因此多人归属订单可能显示多行，各行金额为账本已有归属份额；不在查询时重新分摊，不给每个员工重复整笔订单金额。id为该组在查询区间内最早的财务事件ID，不是业务订单详情ID，改变时间筛选后可能变化。按本组区间内最后事件时间倒序、id倒序分页；total是分组行数。
+
+summary对完整筛选集计算，和页码无关。paidOrderCount为区间内有payment的业务订单去重数，部分收款也算一个；cardOrderCount/courseOrderCount分别按商品类型去重，多人份额不重复增加同类订单数。cardAmount/courseAmount均为净实收；各平均客单=该类净额/该类payment订单数，分母为0返回"0.00"。金额均为两位小数字符串，四舍五入；没有其他员工数量或会员身份字段。
+
+paidAt为同订单/门店/商品/员工组历史最早确认收款时间，可能早于查询区间；没有可核实付款时为null。订单元信息只连接同租户同门店未删除订单；订单缺失/删除或归属不一致时，保留财务金额，orderNo和productName为null，不编造编号或借其他门店资料。商品名称来自对应类型的订单项快照，去重后以` / `连接；多商品只影响名称展示，不参与金额JOIN放大。
+
+SQL在聚合和分页前应用权限/日期/筛选，金额、行数、分页及名称读取使用同一只读REPEATABLE_READ事务。V016仅增加门店日期与订单原收款查询索引，不回填、不改金额或归属，无新权限，仍67张gym表。部署前migrate/validate；业务数据库未迁移。实际SQL聚合和边界已在H2验证，MySQL验证仅迁移与历史数据保留，生产EXPLAIN/海量流水性能及部署HTTP尚未验证。

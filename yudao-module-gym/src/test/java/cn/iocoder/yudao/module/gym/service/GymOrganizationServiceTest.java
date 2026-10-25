@@ -49,6 +49,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileSalesReportService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileSalesReportController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymFeedbackImages.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymFeedbackController.class,
@@ -14186,5 +14188,320 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 .getBean(cn.iocoder.yudao.module.gym.dal.mysql.device.GymEquipmentMapper.class)
                 .deleteById(id);
         assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileSalesReportService mobileSalesReports;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileSalesReportController
+            mobileSalesReportController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileSalesReportVO.Query
+            mobileSalesQuery() {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileSalesReportVO
+                        .Query();
+        q.setStartDate(LocalDate.of(2026, 6, 10));
+        q.setEndDate(LocalDate.of(2026, 6, 11));
+        return q;
+    }
+
+    Long mobileSalesEvent(
+            Long order,
+            Long store,
+            Long employee,
+            String product,
+            String type,
+            String amount,
+            java.time.Instant at) {
+        var e = new cn.iocoder.yudao.module.gym.dal.dataobject.finance.GymFinancialEventDO();
+        e.setBusinessOrderId(order);
+        e.setStoreId(store);
+        e.setEmployeeId(employee);
+        e.setProductType(product);
+        e.setEventType(type);
+        e.setAmount(new BigDecimal(amount));
+        e.setOccurredAt(at);
+        e.setSourceType("report-test");
+        e.setSourceId(UUID.randomUUID().toString());
+        financialEvents.insert(e);
+        return e.getId();
+    }
+
+    @Test
+    void mobileSalesReportUsesActualVerifiedReceiptsAndFrozenItemNames() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var order = commerceOrder();
+        when(receiptVerifier.payment("sales-report-p1"))
+                .thenReturn(receipt(order, "REPORT-P1", null, "40.00"));
+        when(receiptVerifier.payment("sales-report-p2"))
+                .thenReturn(receipt(order, "REPORT-P2", null, "59.99"));
+        commerce.acceptPayment(order.getId(), "sales-report-p1");
+        commerce.acceptPayment(order.getId(), "sales-report-p2");
+        commerce.acceptPayment(order.getId(), "sales-report-p2");
+        when(receiptVerifier.refund("sales-report-r1"))
+                .thenReturn(receipt(order, "REPORT-R1", "REPORT-P1", "20.00"));
+        commerce.acceptRefund(order.getId(), "sales-report-r1");
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals(1, result.total());
+        assertEquals("99.99", result.summary().paidAmount());
+        assertEquals("20.00", result.summary().refundedAmount());
+        assertEquals("79.99", result.summary().netAmount());
+        assertEquals(1, result.summary().paidOrderCount());
+        assertEquals("79.99", result.summary().cardAverageOrderAmount());
+        assertEquals("0.00", result.summary().courseAverageOrderAmount());
+        var row = result.list().getFirst();
+        assertEquals(order.getOrderNo(), row.orderNo());
+        assertEquals("card", row.productType());
+        assertNull(row.employeeId());
+        assertNotNull(row.productName());
+        assertEquals(
+                order.getOrderedAt().plusSeconds(1),
+                java.time.OffsetDateTime.parse(row.paidAt()).toInstant());
+        var old =
+                reports.performance(
+                        new cn.iocoder.yudao.module.gym.controller.admin.report.vo
+                                .GymReportReqVO());
+        assertEquals(old.summary().netAmount().toPlainString(), result.summary().netAmount());
+        var items =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper
+                                        .class)
+                        .selectList(
+                                cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO
+                                        ::getOrderId,
+                                order.getId());
+        commerce.prepareCardOrder(
+                101L,
+                order.getMemberId(),
+                items.getFirst().getProductId(),
+                1,
+                "miniapp",
+                "unpaid-report-order");
+        assertEquals(result, mobileSalesReports.sales(mobileSalesQuery()));
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(result);
+        assertFalse(json.contains("memberName"));
+        assertFalse(json.contains("memberId"));
+        assertFalse(json.contains("13800000888"));
+        assertFalse(json.contains("requestKey"));
+    }
+
+    @Test
+    void mobileSalesReportAttributionSharesDoNotMultiplyOrderCountsAndSummaryIgnoresPage() {
+        stores.create(store(101L, "A"));
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, 91L, "card", "payment", "60", at);
+        mobileSalesEvent(100L, 101L, 92L, "card", "payment", "40", at);
+        mobileSalesEvent(100L, 101L, 91L, "card", "refund", "12", at.plusSeconds(1));
+        mobileSalesEvent(100L, 101L, 92L, "card", "refund", "8", at.plusSeconds(1));
+        mobileSalesEvent(200L, 101L, 91L, "private", "payment", "90", at);
+        mobileSalesEvent(200L, 101L, 91L, "private", "refund", "10", at.plusSeconds(2));
+        var q = mobileSalesQuery();
+        q.setPageSize(1);
+        var first = mobileSalesReports.sales(q);
+        assertEquals(3, first.total());
+        assertEquals(1, first.list().size());
+        assertEquals("course", first.list().getFirst().productType());
+        assertEquals("190.00", first.summary().paidAmount());
+        assertEquals("30.00", first.summary().refundedAmount());
+        assertEquals("160.00", first.summary().netAmount());
+        assertEquals(2, first.summary().paidOrderCount());
+        assertEquals(1, first.summary().cardOrderCount());
+        assertEquals("80.00", first.summary().cardAverageOrderAmount());
+        assertEquals("80.00", first.summary().courseAverageOrderAmount());
+        q.setPageNo(2);
+        var next = mobileSalesReports.sales(q);
+        assertEquals(first.summary(), next.summary());
+        assertNotEquals(first.list().getFirst().id(), next.list().getFirst().id());
+        q.setPageNo(Integer.MAX_VALUE);
+        var empty = mobileSalesReports.sales(q);
+        assertEquals(0, empty.list().size());
+        assertEquals(first.summary(), empty.summary());
+        assertEquals(3, empty.total());
+        q.setPageNo(1);
+        q.setEmployeeId(91L);
+        var employee = mobileSalesReports.sales(q);
+        assertEquals("128.00", employee.summary().netAmount());
+        assertEquals(2, employee.total());
+        q.setProductType("card");
+        var card = mobileSalesReports.sales(q);
+        assertEquals("48.00", card.summary().netAmount());
+        assertEquals(1, card.total());
+        assertEquals("0.00", card.summary().courseAmount());
+        q.setEmployeeId(999L);
+        assertEquals(0, mobileSalesReports.sales(q).total());
+        assertEquals("0.00", mobileSalesReports.sales(q).summary().netAmount());
+    }
+
+    @Test
+    void mobileSalesReportRefundDayAndOriginalPaidAtRespectHalfOpenShanghaiDates() {
+        stores.create(store(101L, "A"));
+        var start =
+                LocalDate.of(2026, 6, 10)
+                        .atStartOfDay(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toInstant();
+        mobileSalesEvent(100L, 101L, null, "card", "payment", "100", start.minusSeconds(1));
+        mobileSalesEvent(100L, 101L, null, "card", "refund", "30", start);
+        mobileSalesEvent(100L, 101L, null, "card", "refund", "40", start.plusSeconds(86400));
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals(1, result.total());
+        assertEquals("0.00", result.summary().paidAmount());
+        assertEquals("30.00", result.summary().refundedAmount());
+        assertEquals("-30.00", result.summary().netAmount());
+        assertEquals(0, result.summary().paidOrderCount());
+        assertEquals("0.00", result.summary().cardAverageOrderAmount());
+        assertEquals(
+                start.minusSeconds(1),
+                java.time.OffsetDateTime.parse(result.list().getFirst().paidAt()).toInstant());
+        var q = mobileSalesQuery();
+        q.setStartDate(LocalDate.of(2026, 6, 9));
+        assertEquals("70.00", mobileSalesReports.sales(q).summary().netAmount());
+    }
+
+    @Test
+    void mobileSalesReportScopeIdentityAndFunctionPermissionsPrecedeAllData() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, 91L, "card", "payment", "10", at);
+        mobileSalesEvent(200L, 102L, 92L, "card", "payment", "20", at);
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobileSalesReportController.sales(mobileSalesQuery()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:reports:read"))).thenReturn(true);
+        assertEquals(
+                "30.00",
+                mobileSalesReportController
+                        .sales(mobileSalesQuery())
+                        .getData()
+                        .summary()
+                        .netAmount());
+        scoped(101L);
+        assertEquals("10.00", mobileSalesReports.sales(mobileSalesQuery()).summary().netAmount());
+        var q = mobileSalesQuery();
+        q.setStoreId(102L);
+        assertServiceException(() -> mobileSalesReports.sales(q), STORE_NO_PERMISSION);
+        personalScope(91L);
+        assertEquals(0, mobileSalesReports.sales(mobileSalesQuery()).total());
+        q.setStoreId(101L);
+        assertServiceException(() -> mobileSalesReports.sales(q), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileSalesReports.sales(mobileSalesQuery()), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(
+                () -> mobileSalesReports.sales(mobileSalesQuery()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileSalesReportExcludesDeletedForeignEventsAndDatabaseRejectsInvalidTypes() {
+        stores.create(store(101L, "A"));
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, null, "card", "payment", "12.34", at);
+        Long removed = mobileSalesEvent(200L, 101L, null, "card", "payment", "9999", at);
+        financialEvents.deleteById(removed);
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> mobileSalesEvent(300L, 101L, null, "card", "pending", "9999", at));
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> mobileSalesEvent(400L, 101L, null, "unknown", "payment", "9999", at));
+        TenantContextHolder.setTenantId(2L);
+        mobileSalesEvent(500L, 101L, null, "card", "payment", "9999", at);
+        TenantContextHolder.setTenantId(1L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals(1, result.total());
+        assertEquals("12.34", result.summary().netAmount());
+        assertNull(result.list().getFirst().orderNo());
+        assertNull(result.list().getFirst().productName());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobileSalesReports.sales(mobileSalesQuery()), MOBILE_IDENTITY_INVALID);
+        cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.setLoginUser(
+                new cn.iocoder.yudao.framework.security.core.LoginUser()
+                        .setId(1L)
+                        .setUserType(2)
+                        .setTenantId(2L),
+                new org.springframework.mock.web.MockHttpServletRequest());
+        assertEquals(0, mobileSalesReports.sales(mobileSalesQuery()).total());
+    }
+
+    @Test
+    void mobileSalesReportValidatesDateWindowPagingAndCalendarDayLimits() {
+        stores.create(store(101L, "A"));
+        var q = mobileSalesQuery();
+        q.setStartDate(null);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+        q.setStartDate(q.getEndDate());
+        assertServiceException(() -> mobileSalesReports.sales(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(2025, 1, 1));
+        assertServiceException(() -> mobileSalesReports.sales(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(999, 1, 1));
+        q.setEndDate(LocalDate.of(999, 1, 2));
+        assertServiceException(() -> mobileSalesReports.sales(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(1991, 4, 14));
+        q.setEndDate(q.getStartDate().plusDays(366));
+        assertEquals(0, mobileSalesReports.sales(q).total());
+        var start =
+                LocalDate.of(1991, 6, 10)
+                        .atStartOfDay(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toInstant();
+        mobileSalesEvent(10L, 101L, null, "card", "payment", "1", start);
+        mobileSalesEvent(20L, 101L, null, "card", "payment", "999", start.minusSeconds(1));
+        q.setStartDate(LocalDate.of(1991, 6, 10));
+        q.setEndDate(q.getStartDate().plusDays(1));
+        assertEquals("1.00", mobileSalesReports.sales(q).summary().netAmount());
+        q.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+        q.setPageSize(20);
+        q.setPageNo(0);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+        q.setPageNo(1);
+        q.setEmployeeId(0L);
+        assertThrows(ConstraintViolationException.class, () -> mobileSalesReports.sales(q));
+    }
+
+    @Test
+    void mobileSalesReportMultipleItemNamesNeverMultiplyLedgerAndWrongStoreMetadataStaysHidden() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var order = commerceOrder();
+        when(receiptVerifier.payment("report-items-payment"))
+                .thenReturn(receipt(order, "REPORT-ITEMS", null, "99.99"));
+        commerce.acceptPayment(order.getId(), "report-items-payment");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper.class);
+        var gift = new cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderItemDO();
+        gift.setOrderId(order.getId());
+        gift.setProductType("card");
+        gift.setProductId(999L);
+        gift.setProductNameSnapshot("赠送体验卡");
+        gift.setProductVersion(1);
+        gift.setQuantity(1);
+        gift.setUnitPrice(BigDecimal.ZERO);
+        gift.setPayableAmount(BigDecimal.ZERO);
+        gift.setEntitlementIds("[]");
+        mapper.insert(gift);
+        var result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals("99.99", result.summary().netAmount());
+        assertEquals(1, result.total());
+        assertTrue(result.list().getFirst().productName().contains(" / 赠送体验卡"));
+        assertEquals("99.99", result.list().getFirst().netAmount());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_business_order SET store_id=102 WHERE id=?", order.getId());
+        result = mobileSalesReports.sales(mobileSalesQuery());
+        assertEquals("99.99", result.summary().netAmount());
+        assertNull(result.list().getFirst().orderNo());
+        assertNull(result.list().getFirst().productName());
     }
 }

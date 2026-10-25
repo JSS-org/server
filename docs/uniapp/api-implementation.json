@@ -1236,8 +1236,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/reports/sales",
       "description": "查询销售明细及会员卡、私教销售金额汇总",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileSalesReportController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSalesReportService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileSalesReportControllerTest.java"
+      ]
     },
     {
       "id": 106,

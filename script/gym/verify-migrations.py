@@ -109,6 +109,8 @@ def main():
         check(db.sql("SELECT COUNT(*) FROM system_menu WHERE permission IN ('gym:feedbacks:read','gym:feedbacks:reply') AND type=3 AND deleted=0") == '2', 'feedback registers two permission definitions without frontend routes')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_equipment' AND column_name='public_scene' AND is_nullable='YES' AND character_maximum_length=32") == '1', 'equipment scene is nullable and bounded')
         check(db.sql("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_equipment' AND index_name='uk_equipment_public_scene' AND non_unique=0") == 'tenant_id,public_scene', 'equipment public scene is unique per tenant')
+        check(db.sql("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_financial_event' AND index_name='idx_financial_store_time'") == 'tenant_id,store_id,deleted,occurred_at', 'financial store and date report index exists')
+        check(db.sql("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_financial_event' AND index_name='idx_financial_order_payment'") == 'tenant_id,business_order_id,store_id,product_type,employee_id,event_type,deleted,occurred_at', 'original payment lookup index preserves attribution scope')
         command('validate')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0' for table in manager.SYSTEM_TABLES - {'system_menu'}),
               'production migrations create no demo users, roles, grants or departments')
@@ -165,6 +167,7 @@ def main():
         db.sql("INSERT INTO gym_payroll(id,store_id,store_name,payroll_month,employee_count,net_amount,status,calculated_at,confirmed_at,confirmed_by,tenant_id) VALUES(900001,101,'migration-only','2026-06',0,0,'confirmed',NOW(),NOW(),1,1);")
         db.sql("INSERT INTO gym_activity(id,name,description,registration_starts_at,registration_ends_at,starts_at,ends_at,capacity,status,tenant_id) VALUES(900001,'migration-activity','legacy','2026-06-01','2026-06-10','2026-06-11','2026-06-12',NULL,'published',1);")
         db.sql("INSERT INTO gym_equipment(id,store_id,code,name,model,status,tenant_id) VALUES(900001,101,'MIGRATION-EQUIPMENT','legacy equipment','legacy model','active',1);")
+        db.sql("INSERT INTO gym_financial_event(id,store_id,business_order_id,event_type,product_type,amount,source_type,source_id,occurred_at,tenant_id) VALUES(900001,101,900001,'payment','card',12.34,'migration-only','ledger-history','2026-06-10 10:00:00',1);")
         before = auth_snapshot(db)
         db.check_legacy()
         command('adopt-legacy')
@@ -176,6 +179,7 @@ def main():
         check(db.sql("SELECT COUNT(*) FROM gym_payroll WHERE id=900001 AND status='confirmed' AND published_at IS NULL AND published_by IS NULL AND net_amount=0") == '1', 'legacy confirmed payroll stays frozen and unpublished')
         check(db.sql("SELECT COUNT(*) FROM gym_activity WHERE id=900001 AND cancel_deadline IS NULL AND capacity IS NULL AND status='published'") == '1', 'legacy unlimited activity retains publication and default cancellation rule')
         check(db.sql("SELECT COUNT(*) FROM gym_equipment WHERE id=900001 AND public_scene IS NULL AND status='active' AND model='legacy model'") == '1', 'legacy equipment remains unpublished with original metadata')
+        check(db.sql("SELECT COUNT(*) FROM gym_financial_event WHERE id=900001 AND amount=12.34 AND employee_id IS NULL AND event_type='payment' AND source_id='ledger-history'") == '1', 'report indexes preserve legacy financial amount and attribution')
         check(db.sql("SELECT (SELECT COUNT(*) FROM gym_feedback)+(SELECT COUNT(*) FROM gym_feedback_attachment)") == '0', 'legacy adoption creates no feedback or attachment identities')
         check(db.sql("SELECT customer_stage FROM gym_member WHERE id=900001") == 'lead', 'required historical stage backfill executes')
         check(db.sql('SELECT COUNT(*) FROM gym_member_store WHERE member_id=900001 AND store_id=101 AND tenant_id=1') == '1',

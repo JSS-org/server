@@ -2560,3 +2560,35 @@ gym603项与member4项通过，1项既有禁用跳过；Spotless、server依赖�
 ### 未做 / 后续
 
 75项新增本地实现、4项复用源码、56项待开发，继续后续内部业务。生成本地scene不等于生成微信官方小程序码，未完成手机扫码/实际视频播放/真实设备渠道联调，不修改前端。四类第三方仍暂缓。小步本地提交，不推送；原始uniapp.md及暂存状态保留。
+
+## [2026-10-25 17:17 ~ 17:31] 移动销售明细与完整筛选汇总
+
+### 意图
+
+补齐总表105，按实际财务事件提供授权门店销售明细和卡/私教汇总，保持已确认实收、退款发生日及已保存归属份额口径，避免多员工/多商品重复金额或分页汇总失真。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileSalesReportController.java`、`GymMobileSalesReportVO.java`、`GymMobileSalesReportService.java` | 新增 | 功能和整店范围、日期窗口、金额字符串、显式销售响应 |
+| `GymMobileSalesReportMapper.java`、`GymMobileSalesReportAggregate.java` | 新增 | SQL筛选/分组/分页、完整summary、原付款时间及可信订单元信息 |
+| `V016__gym_financial_report_indexes.sql`、测试schema、`script/gym/verify-migrations.py` | 新增/修改 | 两条查询索引、60项隔离迁移检查，历史流水不改写 |
+| `GymOrganizationServiceTest.java`、`GymMobileSalesReportControllerTest.java` | 修改/新增 | 七项财务/范围测试及两项MVC，真实服务收退款、跨期、归属和多商品防放大 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 80/135进度、列表分组/ID/均价/可空字段口径与部署边界 |
+
+### 结构关系
+
+Controller检查gym:reports:read，服务检查当前后台身份和整店范围并生成Criteria；Mapper共享财务事件筛选，数据库聚合及分页，页后批量投影快照名称。全链路只读REPEATABLE_READ，金额不JOIN多商品行，不改原支付/退款或报表服务。V016增加门店时间和订单付款查找索引。
+
+### 验证证据
+
+gym612项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包成功。真实隔离MySQL/Flyway60检查通过且清理临时库。专项验证99.99实收/20退款/79.99净额，多员工份额不重复订单数，跨期负净额、分页完整汇总、权限及旧流水保留；命令与日志见testing本批条目。源码映射80/135。
+
+### 影响面 / 风险
+
+部署前须V016并validate，仍67张gym表，不修改财务数据或授权。列表一行是订单/门店/员工/商品组，id为当前区间首条流水ID，不能当订单详情ID；summary订单数去重，可能少于total行数。paidAt允许区间外原付款时间，无可信元信息时编号/名称为空；没有伪造历史数据。索引构建及生产查询计划需要按真实规模评估，未压测。前端和业务数据库未修改。
+
+### 未做 / 后续
+
+76项新增本地实现、4项复用源码、55项待开发。106员工/门店业绩、107会员汇总、77首页概览继续后续批次；第三方真实支付/退款等仍按用户要求暂缓。小步本地提交，不推送，原始uniapp.md及暂存状态保留。

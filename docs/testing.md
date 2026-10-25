@@ -993,3 +993,23 @@ git diff --check
 功能权限、SELF不能读取整店、显式跨店拒绝、会员令牌/租户不匹配/停用后台账号拒绝；无数据、日期上下界和非法门店参数覆盖。MVC验证日期与门店绑定、无效日期/缺参/零门店拒绝、整数与updatedAt序列化、传入memberId不能选择主体。响应不含个人档案字段。完整回归后仅补充OpenAPI说明，最终格式化及打包覆盖该注解改动。
 
 日志：/tmp/uniapp-member-summary-focused.log、/tmp/uniapp-member-summary-final-tests.log、/tmp/uniapp-member-summary-package.log。未做历史快照还原、生产MySQL聚合计划/规模压测或部署HTTP联调；未改前端或业务数据库。
+
+## 2026-10-25 移动首页概览、逐项授权及当前待办计数
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+先完成10项专项，补充实际签到/签课业务链后完整gym **641项通过**（组织服务371项，新增概览9项；MVC2项）；member4通过/1既有禁用跳过。Spotless和server依赖打包通过，打包跳过测试。源码映射 **83/135**，余52项，无新DDL、表或迁移。
+
+真实H2/Mapper/权限测试：两店当日净额630/月累计750，self仅90/210；整店成功签到4/昨日1、确认课消4/昨日1/月6，self仅负责会员签到2和本人授课1/月3。跨店成员3人、分店各2人，self当前负责1人；未授权对象序列化为null，不能伪装成0或返回其他人金额。混合权限默认只整店，显式选择其他本人任职店才self，停用店SELF拒绝、整店历史保留。注册与关系按当前状态过滤，撤销负责关系后历史记录也不继续暴露。
+
+审批通过真实模板和发起服务创建12条两级审批：首审批人12条、下一审批人0，首人处理一条后分别为11和1，变更账号绑定后撤回该待办；范围外不计，不受列表10条上限影响，选择历史日期不更改当前待办数。真实课程服务预约、签到、签课及重复确认后，概览与工作台明细一致为1，跨租户负责关系撤回访问。其他夹具验证月初昨日跨月不混入月累计、微秒边界、未来事件、软删/失败记录、租户与功能权限、无数据/错误身份/日期/门店参数。
+
+首轮新增签到夹具漏设非空booking_id，数据库约束拒绝，补齐唯一预约引用后通过，未放宽生产约束。日志：/tmp/uniapp-dashboard-focused.log（首轮失败）、/tmp/uniapp-dashboard-focused-2.log（10项通过）、/tmp/uniapp-dashboard-final-tests.log、/tmp/uniapp-dashboard-package.log。业务统计证据来自H2实际SQL及服务，不代表已做生产MySQL聚合压测、完整历史快照或部署HTTP联调；前端和业务库未修改。

@@ -900,8 +900,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/dashboard",
       "description": "获取本人或授权门店的业绩、签到、签课和待办概览",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDashboardController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileDashboardService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileDashboardControllerTest.java"
+      ]
     },
     {
       "id": 78,

@@ -600,3 +600,11 @@ Mapper以确认财务事件为事实源，原始筛选SQL共享于总金额/去�
 `GymMobileMemberSummaryController → GymMobileMemberSummaryService → GymMobileMemberSummaryMapper`复用reports:read、当前有效后台身份与整店数据范围；SELF不授予整店人口查询。服务捕获一次业务时钟，查询当前授权未删除门店，生成上海注册日边界和30×24小时临期界限。
 
 Mapper以当前有效会员档案为外层一人一行，会员门店、卡适用门店及私教包使用同租户同门店EXISTS过滤；一次聚合得到五项人数，避免多张权益或跨店关系乘积。门店读取与统计共享只读REPEATABLE_READ事务，不加载会员明细到服务层。date只筛选当前人群中的初次注册日，updatedAt标识其余指标的实际统计时点；缺历史状态版本时不伪造历史总量。无新表、缓存、权限定义或既有写流程修改。
+
+## 移动首页概览及逐项功能权限（2026-10-25 增量）
+
+`GymMobileDashboardController → GymMobileDashboardService → GymMobileDashboardMapper`检查有效后台身份，优先采用整店范围，显式选择范围外本人任职店时才按SELF退回本人模式；无合法范围拒绝。scope、date与updatedAt由服务端确定，客户端角色/员工字段不起作用。
+
+服务分别检查reports、checkins、lessons、members读取权限，只有授权才执行对应聚合；审批数另需read和decide及整店模式。SQL按租户/所选门店过滤：本人财务限定employee_id，签到关联同店当前负责会员，课消再限定本人教练；成员用EXISTS按人去重；审批用当前步骤/当前账号与有效员工绑定EXISTS计数，不继承旧页面10条上限。所有指标在只读REPEATABLE_READ事务中读取，不加载原始流水或档案列表到服务层。
+
+日期只确定事件日/昨日/月累计及当前人群中的注册日；当前成员总数、负责关系和待办不伪造历史快照。响应记录显式保留null，以区分未授权与真实零值。无新增表、权限定义、自动授权或既有业务写流程修改。

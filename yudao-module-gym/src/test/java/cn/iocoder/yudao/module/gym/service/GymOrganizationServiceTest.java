@@ -49,6 +49,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileDashboardService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDashboardController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileMemberSummaryService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileMemberSummaryController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobilePerformanceService.class,
@@ -15062,5 +15064,384 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertThrows(ConstraintViolationException.class, () -> mobileMemberSummary.summary(q));
         q.setStoreId(999L);
         assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileDashboardService mobileDashboard;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileDashboardController
+            mobileDashboardController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDashboardVO.Query
+            dashboardQuery() {
+        return new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileDashboardVO
+                .Query();
+    }
+
+    void dashboardPermissions() {
+        for (String code :
+                List.of(
+                        "gym:reports:read",
+                        "gym:members:read",
+                        "gym:checkins:read",
+                        "gym:lessons:read",
+                        "gym:approvals:read",
+                        "gym:approvals:decide"))
+            when(permissions.hasAnyPermissions(any(), eq(code))).thenReturn(true);
+    }
+
+    Long dashboardCheckin(Long store, Long member, java.time.Instant at) {
+        var c = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCheckinDO();
+        c.setStoreId(store);
+        c.setBookingId(++performanceBooking);
+        c.setMemberId(member);
+        c.setEnteredAt(at);
+        c.setMethod("manual");
+        c.setVisitorType("member");
+        c.setStatus("succeeded");
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCheckinMapper.class)
+                .insert(c);
+        return c.getId();
+    }
+
+    Long dashboardLesson(Long store, Long member, Long coach, java.time.Instant at) {
+        Long id = performanceLesson(store, coach, at);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_lesson_record SET member_id=? WHERE id=?", member, id);
+        return id;
+    }
+
+    List<Long> dashboardFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        Long coach = responsibleEmployee(91L), otherCoach = responsibleEmployee(92L);
+        Long own = memberSummaryMember(101L, "13800009701", memberSummaryNow),
+                other = memberSummaryMember(101L, "13800009702", memberSummaryNow),
+                third =
+                        memberSummaryMember(
+                                102L, "13800009703", memberSummaryNow.minusSeconds(40 * 86400));
+        Long template = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        cards.issue(own, 101L, template, memberSummaryNow, "test", "dashboard-cross-store");
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                        java.sql.Timestamp.from(memberSummaryNow),
+                        own);
+        memberCoaches.replace(own, 101L, responsibility(coach));
+        var yesterday = memberSummaryNow.minusSeconds(86400);
+        var first = java.time.Instant.parse("2026-05-31T16:00:00Z");
+        mobileSalesEvent(7001L, 101L, coach, "card", "payment", "100", memberSummaryNow);
+        mobileSalesEvent(7002L, 101L, otherCoach, "private", "payment", "200", memberSummaryNow);
+        mobileSalesEvent(7003L, 101L, coach, "card", "payment", "50", yesterday);
+        mobileSalesEvent(7001L, 101L, coach, "card", "refund", "10", memberSummaryNow);
+        mobileSalesEvent(7004L, 101L, coach, "card", "payment", "70", first);
+        mobileSalesEvent(7005L, 102L, coach, "card", "payment", "300", memberSummaryNow);
+        mobileSalesEvent(7006L, 101L, null, "card", "payment", "40", memberSummaryNow);
+        mobileSalesEvent(
+                7007L, 101L, coach, "card", "payment", "999", memberSummaryNow.plusNanos(1000));
+        mobileSalesEvent(7008L, 101L, coach, "card", "payment", "1000", first.minusNanos(1000));
+        dashboardCheckin(101L, own, memberSummaryNow);
+        dashboardCheckin(101L, own, memberSummaryNow);
+        dashboardCheckin(101L, other, memberSummaryNow);
+        dashboardCheckin(102L, own, memberSummaryNow);
+        dashboardCheckin(101L, own, yesterday);
+        dashboardCheckin(101L, own, first);
+        dashboardLesson(101L, own, coach, memberSummaryNow);
+        dashboardLesson(101L, other, coach, memberSummaryNow);
+        dashboardLesson(101L, own, otherCoach, memberSummaryNow);
+        dashboardLesson(102L, own, coach, memberSummaryNow);
+        dashboardLesson(101L, own, coach, yesterday);
+        dashboardLesson(101L, own, coach, first);
+        dashboardPermissions();
+        return List.of(coach, otherCoach, own, other, third);
+    }
+
+    @Test
+    void mobileDashboardAggregatesAuthorizedStoresWithSeparateEventCountsAndCurrentPopulation() {
+        dashboardFixture();
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("store", r.scope().type());
+        assertEquals(List.of("101", "102"), r.scope().storeIds());
+        assertNull(r.scope().employeeId());
+        assertEquals("2026-06-10", r.date());
+        assertEquals("2026-06-10T10:00+08:00", r.updatedAt());
+        assertEquals("630.00", r.performance().todayAmount());
+        assertEquals("750.00", r.performance().monthAmount());
+        assertEquals(4, r.checkins().todayCount());
+        assertEquals(1, r.checkins().yesterdayCount());
+        assertEquals(4, r.lessons().todayCount());
+        assertEquals(1, r.lessons().yesterdayCount());
+        assertEquals(6, r.lessons().monthCount());
+        assertEquals(3, r.members().storeTotalCount());
+        assertEquals(2, r.members().newTodayCount());
+        assertNull(r.members().responsibleCount());
+        assertEquals(0, r.pendingApprovalCount());
+        var q = dashboardQuery();
+        q.setStoreId(101L);
+        r = mobileDashboard.dashboard(q);
+        assertEquals("330.00", r.performance().todayAmount());
+        assertEquals(2, r.members().storeTotalCount());
+        q.setStoreId(102L);
+        r = mobileDashboard.dashboard(q);
+        assertEquals("300.00", r.performance().todayAmount());
+        assertEquals(2, r.members().storeTotalCount());
+    }
+
+    @Test
+    void mobileDashboardSelfRestrictsFinanceTeachingAndMemberResponsibilityIndependently() {
+        var ids = dashboardFixture();
+        personalScope(91L);
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("self", r.scope().type());
+        assertEquals(ids.get(0).toString(), r.scope().employeeId());
+        assertEquals(List.of("101"), r.scope().storeIds());
+        assertEquals("90.00", r.performance().todayAmount());
+        assertEquals("210.00", r.performance().monthAmount());
+        assertEquals(2, r.checkins().todayCount());
+        assertEquals(1, r.checkins().yesterdayCount());
+        assertEquals(1, r.lessons().todayCount());
+        assertEquals(3, r.lessons().monthCount());
+        assertEquals(1, r.members().responsibleCount());
+        assertEquals(1, r.members().newTodayCount());
+        assertNull(r.members().storeTotalCount());
+        assertNull(r.pendingApprovalCount());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_coach SET active=FALSE");
+        r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("90.00", r.performance().todayAmount());
+        assertEquals(0, r.members().responsibleCount());
+        assertEquals(0, r.checkins().todayCount());
+        assertEquals(0, r.lessons().todayCount());
+        jdbc.update("UPDATE gym_employee_store SET deleted=TRUE WHERE employee_id=?", ids.get(0));
+        assertServiceException(
+                () -> mobileDashboard.dashboard(dashboardQuery()), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileDashboardMixedScopeDefaultsToWholeStoresAndRequiresExplicitSelfStoreSelection() {
+        var ids = dashboardFixture();
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO();
+        link.setEmployeeId(ids.get(0));
+        link.setStoreId(102L);
+        link.setIsPrimary(false);
+        link.setIsManager(false);
+        link.setJoinedOn(java.time.LocalDate.of(2026, 1, 1));
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper.class)
+                .insert(link);
+        loginAs(91L);
+        var permission = new DeptDataPermissionRespDTO();
+        permission.setSelf(true);
+        permission.setDeptIds(Set.of(101L));
+        when(permissions.getDeptDataPermission(any())).thenReturn(permission);
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("store", r.scope().type());
+        assertEquals("330.00", r.performance().todayAmount());
+        var q = dashboardQuery();
+        q.setStoreId(102L);
+        r = mobileDashboard.dashboard(q);
+        assertEquals("self", r.scope().type());
+        assertEquals("300.00", r.performance().todayAmount());
+        assertEquals(0, r.members().responsibleCount());
+        assertEquals(0, r.lessons().todayCount());
+        permission.setSelf(false);
+        assertServiceException(() -> mobileDashboard.dashboard(q), STORE_NO_PERMISSION);
+        permission.setSelf(true);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='inactive' WHERE id=102");
+        assertServiceException(() -> mobileDashboard.dashboard(q), STORE_NO_PERMISSION);
+        q.setStoreId(101L);
+        assertEquals("store", mobileDashboard.dashboard(q).scope().type());
+    }
+
+    @Test
+    void mobileDashboardMissingFunctionalPermissionsAreNullRatherThanZeroOrHiddenStoreTotals() {
+        dashboardFixture();
+        for (String code :
+                List.of(
+                        "gym:reports:read",
+                        "gym:members:read",
+                        "gym:checkins:read",
+                        "gym:lessons:read",
+                        "gym:approvals:read"))
+            when(permissions.hasAnyPermissions(any(), eq(code))).thenReturn(false);
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertNull(r.performance());
+        assertNull(r.checkins());
+        assertNull(r.lessons());
+        assertNull(r.members());
+        assertNull(r.pendingApprovalCount());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r);
+        assertTrue(json.contains("\"performance\":null"));
+        assertFalse(json.contains("630.00"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:checkins:read"))).thenReturn(true);
+        r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals(4, r.checkins().todayCount());
+        assertNull(r.performance());
+        assertNull(r.lessons());
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:read"))).thenReturn(true);
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:decide"))).thenReturn(false);
+        assertNull(mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+    }
+
+    @Test
+    void
+            mobileDashboardPendingApprovalsCountAllCurrentActionableStepsAndRespectCurrentAccountBinding() {
+        var ids = dashboardFixture();
+        Long template = publishedApproval("card_opening", ids.get(0), ids.get(1));
+        Long card = Long.valueOf(cards.create(cardTemplate("count")).getId());
+        var created = new java.util.ArrayList<Long>();
+        for (int i = 0; i < 12; i++)
+            created.add(
+                    Long.valueOf(
+                            approvals
+                                    .create(
+                                            opening(template, ids.get(2), card),
+                                            "dashboard-pending-" + i)
+                                    .getId()));
+        loginAs(92L);
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        loginAs(91L);
+        assertEquals(12, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        var q = dashboardQuery();
+        q.setDate(java.time.LocalDate.of(2026, 1, 1));
+        assertEquals(12, mobileDashboard.dashboard(q).pendingApprovalCount());
+        approvals.decide(created.getFirst(), decision("approve"));
+        assertEquals(11, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        loginAs(92L);
+        assertEquals(1, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET user_id=93 WHERE id=?", ids.get(1));
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+        loginAs(91L);
+        scoped(102L);
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).pendingApprovalCount());
+    }
+
+    @Test
+    void mobileDashboardHistoricalDayMonthBoundaryAndFutureEventsUseShanghaiDates() {
+        var ids = dashboardFixture();
+        var first = java.time.Instant.parse("2026-05-31T16:00:00Z");
+        dashboardCheckin(101L, ids.get(2), first.minusNanos(1000));
+        dashboardLesson(101L, ids.get(2), ids.get(0), first.minusNanos(1000));
+        var q = dashboardQuery();
+        q.setDate(java.time.LocalDate.of(2026, 6, 1));
+        var r = mobileDashboard.dashboard(q);
+        assertEquals("70.00", r.performance().todayAmount());
+        assertEquals("70.00", r.performance().monthAmount());
+        assertEquals(1, r.checkins().todayCount());
+        assertEquals(1, r.checkins().yesterdayCount());
+        assertEquals(1, r.lessons().monthCount());
+        assertEquals(1, r.lessons().yesterdayCount());
+        assertEquals(3, r.members().storeTotalCount());
+        assertEquals(0, r.members().newTodayCount());
+        dashboardCheckin(101L, ids.get(2), memberSummaryNow.plusNanos(1000));
+        dashboardLesson(101L, ids.get(2), ids.get(0), memberSummaryNow.plusNanos(1000));
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).checkins().todayCount());
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).lessons().todayCount());
+        q.setDate(java.time.LocalDate.of(2026, 6, 9));
+        r = mobileDashboard.dashboard(q);
+        assertEquals("50.00", r.performance().todayAmount());
+        assertEquals("120.00", r.performance().monthAmount());
+    }
+
+    @Test
+    void mobileDashboardFiltersDeletedFailedRecordsTenantDataAndCurrentMemberRelations() {
+        var ids = dashboardFixture();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        Long failed = dashboardCheckin(101L, ids.get(2), memberSummaryNow),
+                deleted = dashboardLesson(101L, ids.get(2), ids.get(0), memberSummaryNow);
+        jdbc.update("UPDATE gym_checkin SET status='failed' WHERE id=?", failed);
+        jdbc.update("UPDATE gym_lesson_record SET deleted=TRUE WHERE id=?", deleted);
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).checkins().todayCount());
+        assertEquals(4, mobileDashboard.dashboard(dashboardQuery()).lessons().todayCount());
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=102");
+        assertEquals(
+                "630.00", mobileDashboard.dashboard(dashboardQuery()).performance().todayAmount());
+        for (String table : List.of("gym_financial_event", "gym_checkin", "gym_lesson_record"))
+            jdbc.update("UPDATE " + table + " SET tenant_id=2");
+        var r = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals("0.00", r.performance().todayAmount());
+        assertEquals(0, r.checkins().todayCount());
+        assertEquals(0, r.lessons().monthCount());
+        jdbc.update("UPDATE gym_member_store SET tenant_id=2");
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).members().storeTotalCount());
+        jdbc.update("UPDATE gym_member_store SET tenant_id=1");
+        jdbc.update("UPDATE gym_member SET tenant_id=2");
+        assertEquals(0, mobileDashboard.dashboard(dashboardQuery()).members().storeTotalCount());
+    }
+
+    @Test
+    void mobileDashboardValidatesIdentityDatesStoresAndEmptyAuthorizedScope() {
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        dashboardPermissions();
+        var q = dashboardQuery();
+        var r = mobileDashboard.dashboard(q);
+        assertTrue(r.scope().storeIds().isEmpty());
+        assertEquals("0.00", r.performance().todayAmount());
+        assertEquals(0, r.members().storeTotalCount());
+        q.setDate(java.time.LocalDate.of(2026, 6, 11));
+        assertServiceException(() -> mobileDashboard.dashboard(q), BUSINESS_DATE_INVALID);
+        q.setDate(java.time.LocalDate.of(1000, 1, 1));
+        assertServiceException(() -> mobileDashboard.dashboard(q), BUSINESS_DATE_INVALID);
+        q.setDate(null);
+        q.setStoreId(0L);
+        assertThrows(ConstraintViolationException.class, () -> mobileDashboard.dashboard(q));
+        q.setStoreId(null);
+        scoped();
+        assertServiceException(() -> mobileDashboard.dashboard(q), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> mobileDashboard.dashboard(q), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileDashboard.dashboard(q), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(() -> mobileDashboard.dashboard(q), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authentication
+                        .AuthenticationCredentialsNotFoundException.class,
+                () -> mobileDashboardController.dashboard(q));
+    }
+
+    @Test
+    void mobileDashboardCountsActualCheckinAndConfirmedLessonOnceAndMatchesWorkLists() {
+        workCourseClock();
+        stores.create(store(101L, "A"));
+        Long coach = responsibleEmployee(91L);
+        var start = java.time.Instant.parse("2026-10-24T02:00:00Z");
+        Long member = memberSummaryMember(101L, "13800009709", start);
+        memberCoaches.replace(member, 101L, responsibility(coach));
+        Long booking = workCourseBooking(member, coach, 101L, start);
+        workCourseConfirm(booking, start);
+        courses.confirmLesson(booking);
+        dashboardPermissions();
+        personalScope(91L);
+        var result = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals(1, result.checkins().todayCount());
+        assertEquals(1, result.lessons().todayCount());
+        assertEquals(1, result.lessons().monthCount());
+        assertEquals(1, result.members().newTodayCount());
+        assertEquals(
+                workCourses.checkins(workCourseDates(new CheckinPage())).getTotal(),
+                result.checkins().todayCount());
+        assertEquals(
+                workCourses.lessons(workCourseDates(new LessonPage())).getTotal(),
+                result.lessons().todayCount());
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_member_coach SET tenant_id=2");
+        var revoked = mobileDashboard.dashboard(dashboardQuery());
+        assertEquals(0, revoked.members().responsibleCount());
+        assertEquals(0, revoked.lessons().todayCount());
+        assertEquals(0, revoked.checkins().todayCount());
     }
 }

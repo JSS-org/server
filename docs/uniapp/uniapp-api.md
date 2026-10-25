@@ -489,7 +489,7 @@ Content-Type: application/json
 }
 ```
 
-员工响应 `scope.type=self`，`employeeId` 为本人，仅返回本人指标；未授权指标返回 null，不能返回门店汇总再交给前端隐藏。
+员工响应 `scope.type=self`，`employeeId` 为本人，仅返回本人指标；未授权指标返回 null，不能返回门店汇总再交给前端隐藏。该接口已实现，功能权限、日期与当前人数/待办口径见本文末尾“工作台首页概览已实现补充”。
 
 ### 8.2 会员、潜客、分配和私信
 
@@ -821,7 +821,7 @@ V015增加`gym_equipment.public_scene`可空列及租户内唯一索引，历史
 
 ## 销售报表实施口径（2026-10-25）
 
-总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩已在后续批次实现（见下）；107会员汇总已在后续批次实现（见下）；77概览仍待开发。
+总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩已在后续批次实现（见下）；107会员汇总已在后续批次实现（见下）；77概览已在后续批次实现（见下）。
 
 startDate、endDate必填，按Asia/Shanghai自然日`[startDate,endDate)`，支持1000～9999年、1～366个自然日；pageNo>=1、pageSize<=200。商品筛选card/course，其中course对应原财务流水private；未知筛选值拒绝。
 
@@ -870,3 +870,27 @@ summary.netAmount含未归属收入；employeeCount只计算具名员工ID，不
 全部人数在所选门店联合范围按会员ID去重；同人多张卡、多个私教包或跨店仍只计一次，因此各店人数相加可能大于联合人数。五项都是人数，临期字段不是卡数/包数；彼此有交集，不能求和作为总人数。响应仅返回五个整数、date、updatedAt，不含会员ID、手机号、姓名或卡号。
 
 查询以当前租户、门店、会员关系和权益状态在SQL中限定，EXISTS避免多对多联接放大；门店列表与单次统计共享只读REPEATABLE_READ事务。无新DDL、权限定义或自动授权；既有会员/开卡/私教业务写流程未变。历史快照、生产规模查询计划及部署HTTP联调未完成，前端未改动。
+
+## 工作台首页概览已实现补充（2026-10-25）
+
+总表77 `GET /admin-api/gym/mobile/dashboard`已实现。storeId可选正整数，date可选上海自然日、默认今天；不允许未来日期，最早1000-01-02、最晚9998-12-31。服务端验证有效后台账号，不接受role、employeeId、scope参数切换身份或统计主体。
+
+整店范围优先：不传storeId时只汇总授权且未删除的门店，含停用门店的历史事件；指定授权门店只看该店。没有整店范围，或明确选择整店范围外门店时，必须有SELF权限、唯一当前有效员工身份及已生效任职，才能进入本人模式；本人范围仅当前营业门店。混合SELF/整店权限默认不合并两者，只有显式选择本人其他任职店时转为self。无合法范围拒绝，整店范围内无数据返回授权指标的零值。
+
+scope.type为store或self，storeIds为实际筛选门店ID字符串（升序）；store模式employeeId=null，self为当前员工ID。每项功能独立授权，未授权时整个指标对象或pendingApprovalCount明确返回null；不会先算全店总数再让前端隐藏。未授权与有权限但结果为0不同。
+
+| 指标 | 所需功能权限 | 数据与口径 |
+| --- | --- | --- |
+| performance | gym:reports:read | 已确认会员卡/私教财务事件的payment减refund；self只取本人归属份额，整店含未归属金额，金额两位小数字符串，可为负 |
+| checkins | gym:checkins:read | succeeded签到记录条数，不是签到人数；self仅同店当前负责会员的签到 |
+| lessons | gym:lessons:read | confirmed课消记录条数，不是sessionUnits课时数；self同时要求本人授课及同店当前负责关系，与工作台课消查询的访问边界一致 |
+| members | gym:members:read | 当前active、未删除、注册及门店关系已生效的去重档案人数，含潜客；self还要求同店当前负责关系 |
+| pendingApprovalCount | gym:approvals:read和gym:approvals:decide | 仅store模式；当前账号是审批当前pending步骤的指定审批人，员工绑定仍有效，审批在所选授权门店内，按审批单去重；不受旧首页最多10条列表限制 |
+
+日期字段含义：today为请求date当天，yesterday为其前一天，month为date所在月第一天至date当天结束。全部自然日边界使用Asia/Shanghai，左闭右开；业务事件还要求发生时间不晚于updatedAt，避免未来记录计入已发生业绩。日期落在月初时，昨日统计可以跨月，但不进入本月累计。updatedAt为实际统计时点。
+
+members.newTodayCount是当前可见有效人群中初次registeredAt在date当天的人数；新增门店关系不算新会员。store模式只返回storeTotalCount，responsibleCount=null；self只返回responsibleCount，storeTotalCount=null。多店同人去重，同一人多次签到/多次课消则按记录计数。成员总量、负责关系及待办状态始终是当前值，不随历史date还原；当前已失效会员不作为历史新增；当前负责关系撤销后，本人的历史签到/课消也不再暴露。历史人群和负责关系的完整快照尚未建模。
+
+待办只计当前可处理的步骤：后续waiting步骤、他人步骤、已完成步骤、失效员工绑定或未授权门店不计；SELF无整店审批处理范围，pendingApprovalCount=null。日期不改变当前待办数，也不表示历史当天待办。
+
+全部源表在SQL聚合前限定当前租户、门店、当前身份/负责关系和日期；无权限的指标不调用对应聚合查询。各查询共享只读REPEATABLE_READ事务，响应只含指标和范围，不含会员档案或审批正文。无需新DDL、权限定义或授权，不改原后台首页、财务、签到、签课及审批写入流程。生产规模查询计划、完整历史快照及部署HTTP联调未验证；前端未改动。

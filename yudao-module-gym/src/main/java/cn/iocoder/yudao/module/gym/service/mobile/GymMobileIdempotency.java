@@ -24,6 +24,31 @@ public class GymMobileIdempotency {
     @Transactional(propagation = Propagation.MANDATORY)
     public <T> T execute(
             String operation, String key, Object payload, Class<T> type, Supplier<T> action) {
+        return executePayloads(operation, key, payload, null, type, action);
+    }
+
+    /**
+     * A caller may supply an explicitly equivalent legacy encoding built from the current validated
+     * request. Never accept a legacy hash or payload from the client. Existing hashes stay unchanged.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public <T> T executeWithLegacyPayload(
+            String operation,
+            String key,
+            Object payload,
+            Object legacyPayload,
+            Class<T> type,
+            Supplier<T> action) {
+        return executePayloads(operation, key, payload, legacyPayload, type, action);
+    }
+
+    private <T> T executePayloads(
+            String operation,
+            String key,
+            Object payload,
+            Object legacyPayload,
+            Class<T> type,
+            Supplier<T> action) {
         if (key == null || !key.matches("[A-Za-z0-9_-]{8,128}"))
             throw exception(MOBILE_REQUEST_INVALID);
         var login = SecurityFrameworkUtils.getLoginUser();
@@ -33,7 +58,11 @@ public class GymMobileIdempotency {
         String hash = DigestUtil.sha256Hex(JsonUtils.toJsonString(payload));
         requests.ensure(tenant, login.getUserType(), login.getId(), operation, key, hash);
         var request = requests.lock(tenant, login.getUserType(), login.getId(), operation, key);
-        if (request == null || !hash.equals(request.getRequestHash()))
+        if (request == null
+                || (!hash.equals(request.getRequestHash())
+                        && (legacyPayload == null
+                                || !DigestUtil.sha256Hex(JsonUtils.toJsonString(legacyPayload))
+                                        .equals(request.getRequestHash()))))
             throw exception(MOBILE_IDEMPOTENCY_CONFLICT);
         if (request.getResponseJson() != null)
             return JsonUtils.parseObject(request.getResponseJson(), type);

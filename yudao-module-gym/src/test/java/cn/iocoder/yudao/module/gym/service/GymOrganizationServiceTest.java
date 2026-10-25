@@ -13842,4 +13842,78 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 () -> feedback.submit(feedbackRequest(), "feedback-closed-store"),
                 MEMBER_STORE_INACTIVE);
     }
+
+    @Test
+    void mobileActivityLegacyHashOrdersReplaySnapshotWithoutRebooking() {
+        Long member = mobileActivityMember();
+        Long activity = publishedActivity(101L);
+        qrMemberLogin();
+        var first = mobileActivities.register(activity, "activity-legacy-order");
+        mobileActivities.cancel(activity);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row =
+                mapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileRequestDO>()
+                                .eq("operation", "activity-register")
+                                .eq("request_key", "activity-legacy-order"));
+        String savedResponse = row.getResponseJson();
+        for (String json :
+                List.of(
+                        "{\"activityId\":" + activity + ",\"memberId\":" + member + "}",
+                        "{\"memberId\":" + member + ",\"activityId\":" + activity + "}")) {
+            String oldHash = cn.hutool.crypto.digest.DigestUtil.sha256Hex(json);
+            row.setRequestHash(oldHash);
+            mapper.updateById(row);
+            assertEquals(first, mobileActivities.register(activity, "activity-legacy-order"));
+            assertEquals(
+                    "cancelled",
+                    mobileActivities.history(activityHistory()).getList().getFirst().status());
+            assertEquals(0, mobileActivities.get(activity).registeredCount());
+            var saved = mapper.selectById(row.getId());
+            assertEquals(oldHash, saved.getRequestHash());
+            assertEquals(savedResponse, saved.getResponseJson());
+        }
+    }
+
+    @Test
+    void mobileActivityStableHashRejectsDifferentActivityMemberAndInvalidKeys() {
+        Long member = mobileActivityMember();
+        Long activity = publishedActivity(101L);
+        Long otherActivity = publishedActivity(101L);
+        qrMemberLogin();
+        var first = mobileActivities.register(activity, "activity-stable-order");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row =
+                mapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileRequestDO>()
+                                .eq("operation", "activity-register")
+                                .eq("request_key", "activity-stable-order"));
+        String canonical = "{\"activityId\":" + activity + ",\"memberId\":" + member + "}";
+        assertEquals(cn.hutool.crypto.digest.DigestUtil.sha256Hex(canonical), row.getRequestHash());
+        assertServiceException(
+                () -> mobileActivities.register(otherActivity, "activity-stable-order"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        // A reversed legacy encoding with a different principal must not match either candidate.
+        String foreign = "{\"memberId\":" + (member + 1) + ",\"activityId\":" + activity + "}";
+        row.setRequestHash(cn.hutool.crypto.digest.DigestUtil.sha256Hex(foreign));
+        mapper.updateById(row);
+        assertServiceException(
+                () -> mobileActivities.register(activity, "activity-stable-order"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(first, mobileActivities.register(activity, "activity-another-key"));
+        assertEquals(1, mobileActivities.get(activity).registeredCount());
+        assertServiceException(
+                () -> mobileActivities.register(-1L, "activity-invalid-key"),
+                MOBILE_REQUEST_INVALID);
+        assertServiceException(
+                () -> mobileActivities.register(activity, "short"), MOBILE_REQUEST_INVALID);
+    }
 }

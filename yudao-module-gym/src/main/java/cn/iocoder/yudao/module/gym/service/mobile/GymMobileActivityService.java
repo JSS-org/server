@@ -198,10 +198,18 @@ public class GymMobileActivityService {
         var identity = identities.requireIdentity();
         positive(id);
         Long member = identity.getMemberId();
-        return idempotency.execute(
+        // Map.of iteration order can differ between JVMs. Two legacy keys have only two orders.
+        var payload = new LinkedHashMap<String, Long>();
+        payload.put("activityId", id);
+        payload.put("memberId", member);
+        var legacyPayload = new LinkedHashMap<String, Long>();
+        legacyPayload.put("memberId", member);
+        legacyPayload.put("activityId", id);
+        return idempotency.executeWithLegacyPayload(
                 "activity-register",
                 key,
-                Map.of("activityId", id, "memberId", member),
+                payload,
+                legacyPayload,
                 Registration.class,
                 () -> {
                     var row = row(id, true);

@@ -895,3 +895,19 @@ git diff --check
 图片测试写入带测试身份文本的PNG元数据，重新编码后元数据消失、像素保留；覆盖JPEG、伪装/损坏/超限图片。专用下载验证通用名称、no-store、nosniff和403/404，旧通用文件读取拒绝member_类别；MVC严格字段、必填键、非法评分/分页/ID、正文日志禁用注解均通过。初轮两项测试断言/Mock重设错误修正后全量通过（通用文件的正确拒绝码为FILE_STORE_NO_PERMISSION；已有异常桩重设用doThrow）。
 
 Java并发证据来自H2，MySQL仅证明迁移与旧库接管；真实部署HTTP、生产图片并发容量、用户主动写入画面的身份遮盖及外部通知未验证/未实现。未迁移业务库或修改前端。
+
+## 2026-10-25 活动报名跨进程摘要兼容
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+活动专项11项通过后，完整gym **594项通过**（组织服务334项），member4通过/1既有禁用跳过；Spotless与server依赖打包通过，打包跳过测试。两项新增用例将真实gym_mobile_request行分别改为activityId/memberId两种排列的旧SHA256摘要，取消报名后调用真实服务，均重放首次结果且不占名额、不修改历史摘要与响应。新请求断言固定摘要，活动变更、不同会员的逆序摘要及非法键仍拒绝；其他接口的请求编码保持不变。原活动并发名额及失败回滚测试同时通过。
+
+证据是穷举该两字段历史编码的H2真实事务测试，不代表已执行生产重启、多节点滚动部署或旧版本回滚测试。无DDL，不重复既有V014迁移验证。日志：/tmp/uniapp-idempotency-focused.log、/tmp/uniapp-idempotency-final-tests.log、/tmp/uniapp-idempotency-package.log。源码覆盖仍77/135；前端和业务数据库未修改。

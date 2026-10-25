@@ -50,6 +50,9 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.sales.GymRefundApplicationService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymRefundApplicationsController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.sales.GymRefundApplicationsController.class,
     cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.class,
     cn.iocoder.yudao.module.gym.service.sales.GymMemberOrderFulfillmentService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileOrdersService.class,
@@ -18254,5 +18257,748 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         memberFulfillment.fulfill(order.getId());
         assertEquals(2, purchasedCards().selectCount());
         assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.sales.GymRefundApplicationService refundApplications;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.dal.mysql.sales.GymRefundApplicationMapper refundApplicationRows;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.sales.GymRefundApplicationsController
+            refundApplicationsController;
+
+    private record RefundFixture(
+            List<Long> ids,
+            cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymBusinessOrderDO order) {}
+
+    private RefundFixture refundFixture(boolean fulfilled) {
+        when(businessClock.now())
+                .thenReturn(
+                        java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
+        var ids = memberOrderFixture();
+        if (fulfilled) publishedContractPdf();
+        qrMemberLogin();
+        Long id =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "refund-fixture-order").id());
+        var order = orderRows().selectById(id);
+        payMemberOrder(order);
+        if (fulfilled) fulfillmentWorker.process(memberTask(id).getId());
+        return new RefundFixture(ids, orderRows().selectById(id));
+    }
+
+    private cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Create
+            refundRequest(String reason) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Create();
+        req.setReason(reason);
+        return req;
+    }
+
+    private cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Decision
+            refundDecision(String value, int version) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO
+                        .Decision();
+        req.setDecision(value);
+        req.setExpectedVersion(version);
+        req.setNote("审核说明");
+        return req;
+    }
+
+    private Long submitRefund(Long order) {
+        qrMemberLogin();
+        return Long.valueOf(
+                refundApplications.create(order, refundRequest("申请退费"), "refund-create-key").id());
+    }
+
+    private void approveRefund(Long id) {
+        loginAs(1L);
+        refundApplications.decide(id, refundDecision("approve", 1), "refund-approve-key");
+    }
+
+    private void linkedRefund(RefundFixture fixture, Long id, String reference, String amount) {
+        loginAs(1L);
+        when(receiptVerifier.refund(reference))
+                .thenReturn(
+                        receipt(
+                                fixture.order(),
+                                reference,
+                                "member-paid-" + fixture.order().getId(),
+                                amount));
+        commerce.acceptRefundForApplication(fixture.order().getId(), id, reference);
+    }
+
+    @Test
+    void refundApplicationSubmissionFreezesServerBalanceAndDeduplicatesWithoutRefundingRights() {
+        var f = refundFixture(true);
+        long cardsBefore = purchasedCards().selectCount();
+        var originalCard = purchasedCards().selectList().getFirst();
+        clearInvocations(receiptVerifier);
+        qrMemberLogin();
+        var first =
+                refundApplications.create(
+                        f.order().getId(), refundRequest("  申请退费  "), "refund-normalized");
+        assertEquals("99.99", first.requestedAmount());
+        assertEquals("pending_review", first.status());
+        assertEquals(
+                first,
+                refundApplications.create(
+                        f.order().getId(), refundRequest("申请退费"), "refund-normalized"));
+        assertEquals(
+                first,
+                refundApplications.create(
+                        f.order().getId(), refundRequest("申请退费"), "refund-new-key-same"));
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("另一原因"), "refund-normalized"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("另一原因"), "refund-another-key"),
+                REFUND_APPLICATION_OPEN);
+        var row = refundApplicationRows.selectList().getFirst();
+        assertEquals(50L, row.getRequesterUserId());
+        assertEquals(f.order().getId(), row.getActiveOrderId());
+        assertEquals(1, row.getVersion());
+        assertEquals("0.00", refundApplications.get(row.getId()).refundedAmount());
+        assertEquals("active", purchasedCards().selectById(originalCard.getId()).getStatus());
+        assertEquals(cardsBefore, purchasedCards().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+        assertEquals("fulfilled", orderRows().selectById(f.order().getId()).getStatus());
+        assertEquals("succeeded", memberTask(f.order().getId()).getStatus());
+        verifyNoInteractions(receiptVerifier);
+    }
+
+    @Test
+    void refundApplicationOwnershipAndCurrentIdentityAreCheckedBeforeIdempotentReplay() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", f.ids().get(1));
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals(id.toString(), refundApplications.get(id).id());
+        assertEquals(
+                id.toString(),
+                refundApplications
+                        .create(f.order().getId(), refundRequest("申请退费"), "refund-create-key")
+                        .id());
+        memberAccounts.getUser(50L).setStatus(1);
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("申请退费"), "refund-create-key"),
+                MOBILE_IDENTITY_INVALID);
+        memberAccounts.getUser(50L).setStatus(0);
+        jdbc.update("UPDATE gym_refund_application SET requester_user_id=51 WHERE id=?", id);
+        assertServiceException(() -> refundApplications.get(id), REFUND_APPLICATION_NOT_EXISTS);
+        jdbc.update("UPDATE gym_refund_application SET requester_user_id=50 WHERE id=?", id);
+        loginAs(1L);
+        assertServiceException(() -> refundApplications.get(id), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> refundApplications.get(id), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        jdbc.update("UPDATE gym_business_order SET buyer_user_id=51 WHERE id=?", f.order().getId());
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("申请退费"), "refund-create-key"),
+                SALES_ORDER_NOT_EXISTS);
+        assertEquals(1, refundApplicationRows.selectCount());
+    }
+
+    @Test
+    void refundApplicationUnpaidFreeAndUnbackedMoneyCannotCreateRequest() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long unpaid =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "refund-unpaid-order").id());
+        assertServiceException(
+                () -> refundApplications.create(unpaid, refundRequest("申请退费"), "refund-unpaid-key"),
+                REFUND_APPLICATION_INVALID);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_business_order SET paid_amount=99.99,status='paid' WHERE id=?", unpaid);
+        assertServiceException(
+                () -> refundApplications.create(unpaid, refundRequest("申请退费"), "refund-unpaid-key"),
+                REFUND_APPLICATION_INVALID);
+        jdbc.update(
+                "UPDATE gym_business_order SET paid_amount=0,status='pending_payment' WHERE id=?",
+                unpaid);
+        loginAs(1L);
+        var free = freeMemberCard(ids, false);
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                free.getId(), refundRequest("申请退费"), "refund-free-key"),
+                REFUND_APPLICATION_INVALID);
+        assertEquals(0, refundApplicationRows.selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationPendingPausesClaimedRightsAndApprovalDoesNotPayOrReleaseThem() {
+        var f = refundFixture(false);
+        var claim = fulfillmentQueue.claim(memberTask(f.order().getId()).getId());
+        Long id = submitRefund(f.order().getId());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+        assertServiceException(
+                () -> memberFulfillment.fulfill(f.order().getId()), COMMERCE_FULFILLMENT_INVALID);
+        fulfillmentQueue.finish(claim.getId(), claim.getClaimToken(), null);
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+        loginAs(1L);
+        assertServiceException(
+                () -> commerce.openingSnapshot(f.order().getId(), 101L),
+                COMMERCE_FULFILLMENT_INVALID);
+        clearInvocations(receiptVerifier);
+        approveRefund(id);
+        verifyNoInteractions(receiptVerifier);
+        assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+        assertFalse(fulfillmentWorker.process(claim.getId()));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+        when(receiptVerifier.refund("refund-unconfigured"))
+                .thenThrow(
+                        cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil
+                                .exception(COMMERCE_PROVIDER_UNCONFIGURED));
+        assertServiceException(
+                () ->
+                        commerce.acceptRefundForApplication(
+                                f.order().getId(), id, "refund-unconfigured"),
+                COMMERCE_PROVIDER_UNCONFIGURED);
+        assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+        assertEquals(
+                new BigDecimal("0.00"),
+                orderRows().selectById(f.order().getId()).getRefundedAmount());
+    }
+
+    @Test
+    void
+            refundApplicationRejectReleasesPendingJobAndNewRequestGetsNewAuditWithoutRewritingOldKey() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(91L);
+        var rejected =
+                refundApplications.decide(id, refundDecision("reject", 1), "refund-reject-key");
+        assertEquals("rejected", rejected.status());
+        assertEquals(2, rejected.version());
+        assertEquals(91L, refundApplicationRows.selectById(id).getReviewerUserId());
+        assertNull(refundApplicationRows.selectById(id).getActiveOrderId());
+        assertEquals("pending", memberTask(f.order().getId()).getStatus());
+        assertEquals(
+                rejected,
+                refundApplications.decide(id, refundDecision("reject", 1), "refund-reject-key"));
+        assertServiceException(
+                () ->
+                        refundApplications.decide(
+                                id, refundDecision("reject", 1), "refund-reject-new-key"),
+                MOBILE_VERSION_CONFLICT);
+        qrMemberLogin();
+        assertEquals(
+                "pending_review",
+                refundApplications
+                        .create(f.order().getId(), refundRequest("申请退费"), "refund-create-key")
+                        .status());
+        assertEquals("rejected", refundApplications.get(id).status());
+        assertEquals("审核说明", refundApplications.get(id).failureReason());
+        var next =
+                refundApplications.create(
+                        f.order().getId(), refundRequest("补充申请"), "refund-reapply-key");
+        assertNotEquals(id.toString(), next.id());
+        assertEquals("99.99", next.requestedAmount());
+        assertEquals(2, refundApplicationRows.selectCount());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+    }
+
+    @Test
+    void
+            refundApplicationLinkedVerifiedReceiptsTrackOnlyThisApplicationAndStopCardsOnlyOnRealRefund() {
+        var f = refundFixture(true);
+        Long id = submitRefund(f.order().getId());
+        approveRefund(id);
+        linkedRefund(f, id, "application-partial", "40.00");
+        qrMemberLogin();
+        assertEquals("partially_refunded", refundApplications.get(id).status());
+        assertEquals("40.00", refundApplications.get(id).refundedAmount());
+        assertEquals("active", purchasedCards().selectList().getFirst().getStatus());
+        loginAs(1L);
+        assertEquals(1, refundReviewService.list(f.order().getId()).size());
+        linkedRefund(f, id, "application-rest", "59.99");
+        var completed = refundApplicationRows.selectById(id);
+        assertEquals("refunded", completed.getStatus());
+        assertNull(completed.getActiveOrderId());
+        assertEquals(new BigDecimal("99.99"), completed.getRefundedAmount());
+        assertEquals("inactive", purchasedCards().selectList().getFirst().getStatus());
+        assertEquals(
+                "closed_full_refund",
+                refundReviewService.list(f.order().getId()).getFirst().getStatus());
+        linkedRefund(f, id, "application-rest", "59.99");
+        commerce.acceptRefund(f.order().getId(), "application-rest");
+        assertEquals(completed.getVersion(), refundApplicationRows.selectById(id).getVersion());
+        assertEquals(3, financialEvents.selectCount());
+        var refundRows =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderRefundMapper
+                                        .class)
+                        .selectList();
+        assertEquals(2, refundRows.size());
+        assertTrue(refundRows.stream().allMatch(x -> id.equals(x.getRefundApplicationId())));
+        qrMemberLogin();
+        assertEquals("99.99", refundApplications.get(id).refundedAmount());
+        assertServiceException(
+                () ->
+                        refundApplications.create(
+                                f.order().getId(), refundRequest("再次申请"), "refund-already-full"),
+                REFUND_APPLICATION_INVALID);
+    }
+
+    @Test
+    void refundApplicationUnrelatedRefundClosesStaleRequestWithoutClaimingItsReceipt() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        when(receiptVerifier.refund("unrelated-refund"))
+                .thenReturn(
+                        receipt(
+                                f.order(),
+                                "unrelated-refund",
+                                "member-paid-" + f.order().getId(),
+                                "20.00"));
+        commerce.acceptRefund(f.order().getId(), "unrelated-refund");
+        qrMemberLogin();
+        assertEquals("closed", refundApplications.get(id).status());
+        assertEquals("0.00", refundApplications.get(id).refundedAmount());
+        var next =
+                refundApplications.create(
+                        f.order().getId(), refundRequest("剩余退费"), "refund-after-unrelated");
+        assertEquals("79.99", next.requestedAmount());
+        Long nextId = Long.valueOf(next.id());
+        approveRefund(nextId);
+        assertServiceException(
+                () ->
+                        commerce.acceptRefundForApplication(
+                                f.order().getId(), nextId, "unrelated-refund"),
+                COMMERCE_IDEMPOTENCY_CONFLICT);
+        assertEquals(
+                new BigDecimal("0.00"),
+                refundApplicationRows.selectById(nextId).getRefundedAmount());
+        assertEquals(2, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationParallelDifferentKeysCreateOneActiveRequestAndPauseOnce()
+            throws Exception {
+        var f = refundFixture(false);
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-parallel-first");
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            return refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-parallel-second");
+                        });
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, refundApplicationRows.selectCount());
+        assertEquals("waiting_refund", memberTask(f.order().getId()).getStatus());
+    }
+
+    @Test
+    void refundApplicationConcurrentOppositeDecisionsHaveOneWinnerAndVersionPreventsOverwrite()
+            throws Exception {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        var outcomes =
+                workCourseRace(
+                        () ->
+                                refundApplications.decide(
+                                        id,
+                                        refundDecision("approve", 1),
+                                        "refund-decision-approve"),
+                        () ->
+                                refundApplications.decide(
+                                        id, refundDecision("reject", 1), "refund-decision-reject"));
+        assertEquals(
+                1,
+                outcomes.stream()
+                        .filter(
+                                x ->
+                                        x
+                                                instanceof
+                                                cn.iocoder.yudao.framework.common.exception
+                                                        .ServiceException)
+                        .count());
+        var row = refundApplicationRows.selectById(id);
+        assertEquals(2, row.getVersion());
+        assertTrue(Set.of("approved", "rejected").contains(row.getStatus()));
+        assertEquals(
+                "approved".equals(row.getStatus()) ? "waiting_refund" : "pending",
+                memberTask(f.order().getId()).getStatus());
+        assertEquals(1, financialEvents.selectCount());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void refundApplicationCreationRacesVerifiedRefundAgainstCurrentRemainingMoney()
+            throws Exception {
+        var f = refundFixture(false);
+        when(receiptVerifier.refund("refund-creation-race"))
+                .thenReturn(
+                        receipt(
+                                f.order(),
+                                "refund-creation-race",
+                                "member-paid-" + f.order().getId(),
+                                "20.00"));
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            return refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-create-race-key");
+                        },
+                        () -> commerce.acceptRefund(f.order().getId(), "refund-creation-race"));
+        assertFalse(
+                outcomes.get(0)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        var row = refundApplicationRows.selectList().getFirst();
+        if ("closed".equals(row.getStatus()))
+            assertEquals(new BigDecimal("99.99"), row.getRequestedAmount());
+        else {
+            assertEquals("pending_review", row.getStatus());
+            assertEquals(new BigDecimal("79.99"), row.getRequestedAmount());
+        }
+        assertEquals(new BigDecimal("0.00"), row.getRefundedAmount());
+        assertEquals(2, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationStaffReadAndDecideRequirePermissionsWholeStoreAndLiveIdentity() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        var query =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileRefundVO.Query();
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> refundApplicationsController.page(query));
+        when(permissions.hasAnyPermissions(1L, "gym:sales:read")).thenReturn(true);
+        assertEquals(1, refundApplicationsController.page(query).getData().getTotal());
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () ->
+                        refundApplicationsController.decide(
+                                id, refundDecision("approve", 1), "refund-permission-key"));
+        when(permissions.hasAnyPermissions(1L, "gym:approvals:decide")).thenReturn(true);
+        scoped(102L);
+        assertEquals(0, refundApplicationsController.page(query).getData().getTotal());
+        assertServiceException(() -> refundApplicationsController.get(id), STORE_NO_PERMISSION);
+        assertServiceException(
+                () ->
+                        refundApplicationsController.decide(
+                                id, refundDecision("approve", 1), "refund-permission-key"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        assertEquals(
+                "approved",
+                refundApplicationsController
+                        .decide(id, refundDecision("approve", 1), "refund-permission-key")
+                        .getData()
+                        .status());
+        scoped();
+        assertServiceException(
+                () ->
+                        refundApplicationsController.decide(
+                                id, refundDecision("approve", 1), "refund-permission-key"),
+                STORE_NO_PERMISSION);
+        headquarters();
+        var disabled = workAccounts.getUser(1L);
+        disabled.setStatus(1);
+        when(workAccounts.getUser(1L)).thenReturn(disabled);
+        assertServiceException(() -> refundApplications.review(id), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        assertServiceException(() -> refundApplications.page(query), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void refundApplicationPrivateCourseCanBeReviewedButCannotUseCardRefundAdapter() {
+        when(businessClock.now()).thenReturn(java.time.Instant.now());
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long orderId =
+                Long.valueOf(
+                        mobileOrders
+                                .create(memberOrder(ids, "course"), "refund-course-order")
+                                .id());
+        payMemberOrder(orderRows().selectById(orderId));
+        Long id = submitRefund(orderId);
+        approveRefund(id);
+        assertEquals(
+                new BigDecimal("200.00"),
+                refundApplicationRows.selectById(id).getRequestedAmount());
+        clearInvocations(receiptVerifier);
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(orderId, id, "course-refund-unavailable"),
+                SALES_ORDER_NOT_EXISTS);
+        verifyNoInteractions(receiptVerifier);
+        assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+        assertEquals("waiting_refund", memberTask(orderId).getStatus());
+        assertEquals(0, purchasedPacks().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationPauseFailureRollsBackApplicationAndKeyThenAllowsRetry() {
+        var f = refundFixture(false);
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_refund_hold CHECK (status<>'waiting_refund')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () ->
+                            refundApplications.create(
+                                    f.order().getId(),
+                                    refundRequest("申请退费"),
+                                    "refund-pause-atomic"));
+            assertEquals(0, refundApplicationRows.selectCount());
+            assertEquals("pending", memberTask(f.order().getId()).getStatus());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_refund_hold");
+        }
+        assertEquals(
+                "pending_review",
+                refundApplications
+                        .create(f.order().getId(), refundRequest("申请退费"), "refund-pause-atomic")
+                        .status());
+        assertEquals(1, refundApplicationRows.selectCount());
+    }
+
+    @Test
+    void refundApplicationRejectionAndResumingFulfillmentCommitOrRollbackTogether() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_refund_resume CHECK (status<>'pending')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () ->
+                            refundApplications.decide(
+                                    id, refundDecision("reject", 1), "refund-resume-atomic"));
+            var row = refundApplicationRows.selectById(id);
+            assertEquals("pending_review", row.getStatus());
+            assertEquals(1, row.getVersion());
+            assertNull(row.getReviewerUserId());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_refund_resume");
+        }
+        assertEquals(
+                "rejected",
+                refundApplications
+                        .decide(id, refundDecision("reject", 1), "refund-resume-atomic")
+                        .status());
+        assertEquals("pending", memberTask(f.order().getId()).getStatus());
+        publishedContractPdf();
+        fulfillmentWorker.process(memberTask(f.order().getId()).getId());
+        assertEquals("succeeded", memberTask(f.order().getId()).getStatus());
+    }
+
+    @Test
+    void refundApplicationReceiptUpdateFailureRollsBackRefundLedgerAndStoppedCard() {
+        var f = refundFixture(true);
+        Long id = submitRefund(f.order().getId());
+        approveRefund(id);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_refund_application ADD CONSTRAINT reject_application_refunded CHECK (status<>'refunded')");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> linkedRefund(f, id, "refund-final-atomic", "99.99"));
+            assertEquals("approved", refundApplicationRows.selectById(id).getStatus());
+            assertEquals(
+                    new BigDecimal("0.00"),
+                    refundApplicationRows.selectById(id).getRefundedAmount());
+            assertEquals(
+                    new BigDecimal("0.00"),
+                    orderRows().selectById(f.order().getId()).getRefundedAmount());
+            assertEquals(1, financialEvents.selectCount());
+            assertEquals("active", purchasedCards().selectList().getFirst().getStatus());
+            assertEquals(
+                    0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_order_refund", Integer.class));
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_refund_application DROP CONSTRAINT reject_application_refunded");
+        }
+        linkedRefund(f, id, "refund-final-atomic", "99.99");
+        assertEquals("refunded", refundApplicationRows.selectById(id).getStatus());
+        assertEquals(2, financialEvents.selectCount());
+        assertEquals("inactive", purchasedCards().selectList().getFirst().getStatus());
+    }
+
+    @Test
+    void refundApplicationReceiptMustFollowReviewAndCannotExceedItsFrozenAmount() {
+        when(businessClock.now())
+                .thenReturn(
+                        java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS));
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long orderId =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "refund-partial-order").id());
+        var order = orderRows().selectById(orderId);
+        loginAs(1L);
+        when(receiptVerifier.payment("partial-request-payment"))
+                .thenReturn(receipt(order, "partial-request-payment", null, "40.00"));
+        commerce.acceptPayment(orderId, "partial-request-payment");
+        Long id = submitRefund(orderId);
+        assertEquals(
+                new BigDecimal("40.00"), refundApplicationRows.selectById(id).getRequestedAmount());
+        loginAs(1L);
+        when(businessClock.now()).thenReturn(order.getOrderedAt().plusSeconds(10));
+        approveRefund(id);
+        when(receiptVerifier.refund("too-early-refund"))
+                .thenReturn(receipt(order, "too-early-refund", "partial-request-payment", "10.00"));
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(orderId, id, "too-early-refund"),
+                REFUND_APPLICATION_INVALID);
+        when(receiptVerifier.payment("remaining-request-payment"))
+                .thenReturn(receipt(order, "remaining-request-payment", null, "59.99"));
+        commerce.acceptPayment(orderId, "remaining-request-payment");
+        assertEquals("waiting_refund", memberTask(orderId).getStatus());
+        var excessive =
+                new cn.iocoder.yudao.module.gym.service.sales.payment.GymPaymentReceiptVerifier
+                        .Receipt(
+                        1L,
+                        "test-provider",
+                        "over-application",
+                        order.getOrderNo(),
+                        "remaining-request-payment",
+                        "CNY",
+                        new BigDecimal("50.00"),
+                        order.getOrderedAt().plusSeconds(11));
+        when(receiptVerifier.refund("over-application")).thenReturn(excessive);
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(orderId, id, "over-application"),
+                REFUND_APPLICATION_INVALID);
+        assertEquals(2, financialEvents.selectCount());
+        assertEquals(
+                new BigDecimal("0.00"), refundApplicationRows.selectById(id).getRefundedAmount());
+    }
+
+    @Test
+    void refundApplicationUnapprovedOrDifferentOrderCannotReachReceiptVerifier() {
+        var f = refundFixture(false);
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        clearInvocations(receiptVerifier);
+        assertServiceException(
+                () ->
+                        commerce.acceptRefundForApplication(
+                                f.order().getId(), id, "unapproved-refund"),
+                REFUND_APPLICATION_INVALID);
+        verifyNoInteractions(receiptVerifier);
+        approveRefund(id);
+        qrMemberLogin();
+        Long otherOrder =
+                Long.valueOf(
+                        mobileOrders
+                                .create(memberOrder(f.ids(), "card"), "refund-different-order")
+                                .id());
+        loginAs(1L);
+        assertServiceException(
+                () -> commerce.acceptRefundForApplication(otherOrder, id, "cross-order-refund"),
+                REFUND_APPLICATION_INVALID);
+        verifyNoInteractions(receiptVerifier);
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void refundApplicationPartialPaymentRejectionResumesWaitingUntilRemainderIsVerified() {
+        when(businessClock.now()).thenReturn(java.time.Instant.now());
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long orderId =
+                Long.valueOf(
+                        mobileOrders
+                                .create(memberOrder(ids, "card"), "refund-waiting-partial")
+                                .id());
+        var order = orderRows().selectById(orderId);
+        loginAs(1L);
+        when(receiptVerifier.payment("refund-wait-first"))
+                .thenReturn(receipt(order, "refund-wait-first", null, "40.00"));
+        commerce.acceptPayment(orderId, "refund-wait-first");
+        Long id = submitRefund(orderId);
+        loginAs(1L);
+        assertEquals(
+                new BigDecimal("40.00"), refundApplicationRows.selectById(id).getRequestedAmount());
+        refundApplications.decide(id, refundDecision("reject", 1), "refund-partial-reject");
+        assertEquals("waiting_payment", memberTask(orderId).getStatus());
+        assertNull(memberTask(orderId).getNextAttemptAt());
+        when(receiptVerifier.payment("refund-wait-rest"))
+                .thenReturn(receipt(order, "refund-wait-rest", null, "59.99"));
+        commerce.acceptPayment(orderId, "refund-wait-rest");
+        assertEquals("pending", memberTask(orderId).getStatus());
+        assertEquals(2, financialEvents.selectCount());
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void refundApplicationRejectionDoesNotReplenishExhaustedFulfillmentBudget() {
+        var f = refundFixture(false);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_fulfillment_task SET status='failed',attempt_count=8,attempt_limit=8,next_attempt_at=NULL WHERE order_id=?",
+                f.order().getId());
+        Long id = submitRefund(f.order().getId());
+        loginAs(1L);
+        refundApplications.decide(id, refundDecision("reject", 1), "refund-exhausted-reject");
+        var task = memberTask(f.order().getId());
+        assertEquals("failed", task.getStatus());
+        assertEquals(8, task.getAttemptCount());
+        assertEquals(8, task.getAttemptLimit());
+        assertNull(task.getNextAttemptAt());
+        assertFalse(fulfillmentWorker.process(task.getId()));
+        assertEquals(16, fulfillmentQueue.retry(f.order().getId()).getAttemptLimit());
+        assertEquals(50L, memberTask(f.order().getId()).getPrincipalUserId());
+    }
+
+    @Test
+    void refundApplicationRejectionNeverBypassesAnEarlierManualOpeningApprovalHold() {
+        var f = refundFixture(false);
+        commerce.openingSnapshot(f.order().getId(), 101L);
+        assertEquals("waiting_approval", memberTask(f.order().getId()).getStatus());
+        Long id = submitRefund(f.order().getId());
+        assertEquals("waiting_approval", memberTask(f.order().getId()).getStatus());
+        loginAs(1L);
+        refundApplications.decide(id, refundDecision("reject", 1), "refund-manual-hold-reject");
+        assertEquals("waiting_approval", memberTask(f.order().getId()).getStatus());
+        qrMemberLogin();
+        assertServiceException(
+                () -> memberFulfillment.fulfill(f.order().getId()), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
     }
 }

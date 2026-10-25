@@ -82,3 +82,5 @@ DELETE FROM gym_feedback_attachment;
 DELETE FROM gym_feedback;
 
 DELETE FROM gym_course_quote;
+
+DELETE FROM gym_refund_application;

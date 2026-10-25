@@ -1179,3 +1179,28 @@ git diff --check
 首轮旧隔离测试仍期待“会员类型暂不支持”的文案；会员分支接入后改为验证真实会员身份不成立的错误，仍断言不查询或借用管理员。日志：/tmp/uniapp-member-fulfillment-compile.log、/tmp/uniapp-member-fulfillment-focused.log、/tmp/uniapp-member-fulfillment-all.log、/tmp/uniapp-member-fulfillment-final.log、/tmp/uniapp-member-fulfillment-final-2.log、/tmp/uniapp-member-fulfillment-final-3.log（最终）、/tmp/uniapp-member-fulfillment-migrations-final.log、/tmp/uniapp-member-fulfillment-package-final.log。没有真实微信/渠道付款、电子签约、部署HTTP、多节点或规模联调证据；前端和业务库未改。23支付会话、25–26退款申请及私教退款权益处理仍待后续。
 
 最后补教练快照一致性检查时，测试尝试通过正常商品修改API换教练，被已有不可变约束拒绝。保留该约束，改为先断言正常API拒绝，再显式模拟历史导入数据不一致并验证履约拒绝；恢复后可重试，未新增正常换教练能力。
+
+## 2026-10-25 退款申请、审核及可信凭据关联
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+新增20项退款申请业务测试和5项MVC测试。最终gym **760通过、0失败/错误/跳过**（组织服务472项）；member4通过、1项既有禁用跳过。Spotless及server依赖打包通过，打包跳过测试；系统权限测试本批未重跑。MVC验证路由/字段/头和响应，真实方法权限、SQL范围及事务另由组织服务测试验证。
+
+覆盖实付余额计算、拒绝零元/未付/伪造订单金额、本人/租户/账号类型隔离、停用账号和撤销门店权限后旧键拒绝；门店停用或解除会员门店关系仍可申请/读历史。双线程创建只得一份活动申请、批准/驳回只允许一个版本胜出、创建和其他退款竞争不伪造进度。幂等原键重放首次结果，新键复用相同活动申请或在终态后重新申请。
+
+批准不写退款、不撤卡；已领取履约任务暂停且旧token不能落地，直接发放和后台重试也不能绕过。拒绝恢复等待收款/待执行、保留耗尽次数和原人工审批等待。实际可信mock凭据分笔40+59.99更新关联申请及原卡权益，重复凭据不增加流水；其他退款关闭余额不足申请而不计入已退金额，旧凭据不能补领到新申请。部分付款申请冻结40，后付59.99不提高上限；审核前发生的凭据拒绝。私教可申请审核，但旧卡退款路径在查询渠道前拒绝私教。
+
+分别注入暂停任务、驳回恢复、最终申请完成写入的数据库约束失败，验证申请/版本/幂等键/队列或真实退款/财务/权益同事务回滚，移除故障后原键/原凭据可重试。无真实退款渠道或伪造生产支付，测试核验器mock仅证明内部逻辑。
+
+真实隔离MySQL/Flyway **107项检查通过**，69张gym表，临时数据库全部清理。新增13项检查覆盖活动唯一及跨租户独立、终态释放、多份终态历史、微秒时间、拒绝错误/缺失占位及零元申请、默认未审未退、旧退款事实与NULL关联保留、无历史申请回填。旧V021升级夹具按版本移除所有V022及以后迁移后再升级到最新，继续验证V022历史任务恢复；已应用迁移未改。业务库未迁移。
+
+日志：/tmp/uniapp-refund-focused.log、/tmp/uniapp-refund-final-tests.log、/tmp/uniapp-refund-final-tests-2.log（最终，含数据库CHECK约束）、/tmp/uniapp-refund-migrations.log、/tmp/uniapp-refund-package.log。源码覆盖97/135、仍缺38项，不表示真实微信、部署HTTP、多实例或规模联调已通过；前端未改。

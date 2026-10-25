@@ -665,3 +665,13 @@ GymOrderEntitlementAccess只接受已落库订单或明细ID，不接受请求�
 权益及合同写入后，同事务保存明细权益ID、策略fulfilledAt、订单fulfilled和任务完成；任一失败回滚，既有支付事务不撤销。订单锁与来源唯一约束防重，已履约重放不新增权益。外部文件存储不参与SQL回滚，未引用blob仍需清理。私教成交价和时长分别进入price_snapshot、duration_minutes_snapshot；预约查询/写入共用matchesDuration，NULL历史权益保持旧规则。可信收款路径支持course_sale并记private收入，卡退款路径继续拒绝course_sale。
 
 V022只恢复有真实买家且满足约束的缺失会员任务，零元/全额收款变pending，未付/部分付仍waiting_payment；不重写历史订单或产生资金/权益。部署暂停会员下单和全部执行器后迁移、统一升级再恢复，防止旧写入实例漏入队和旧执行器身份混用。仍68表；无前端、真实渠道或业务库操作。
+
+## 会员退款申请、前置审核与凭据关联（V023）
+
+AppGymRefundApplicationsController → GymRefundApplicationService → gym_refund_application；会员身份和本人订单先于幂等缓存校验。后台GymRefundApplicationsController使用sales:read及决定时approvals:decide，服务层再校验有效后台身份与整店范围。申请和审核按租户互斥→订单→申请→履约任务加锁；唯一活动位置和版本共同防重复与并发决定。会员请求人和后台审核人分别保存，不能混用账号类型。
+
+申请→Queue.holdForRefund将未发权益任务设为waiting_refund并撤销旧租约/token；Commerce和OrderEntitlementAccess直接发放路径、失败重试路径也检查活动申请。驳回→Queue.resumeAfterRefundRejection按当前资金和原重试预算恢复；既有人工审批等待不被覆盖。已发权益不因申请本身撤销。
+
+Commerce.acceptRefundForApplication → 原可信凭据核验 → 申请批准时间/原订单/限额校验 → 真实退款及原GymRefundReviewService权益处理 → 申请关联金额和状态更新 → 任务取消，共用事务。GymRefundReviewService是退款后的卡权益人工处理，GymRefundApplicationService是退款前的申请审核。无关联的原退款流程保留，可关闭余额不足的申请但不计入其已退金额；凭据关联不可事后挪用。课程可申请审核，真实私教退款/权益撤销仍拒绝。
+
+V023新表及旧退款可空关联字段不回填历史审批，69表；无额外授权。部署暂停相关写入和执行器，统一升级后恢复，避免旧代码忽略申请暂停条件。未接真实退款渠道，未改前端或业务库。

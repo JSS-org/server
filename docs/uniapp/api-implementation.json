@@ -327,8 +327,13 @@
       "method": "POST",
       "path": "/app-api/gym/orders/{id}/refund-applications",
       "description": "提交订单退款申请，由服务端计算可退金额",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymRefundApplicationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymRefundApplicationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileRefundControllerTest.java"
+      ]
     },
     {
       "id": 26,
@@ -336,8 +341,13 @@
       "method": "GET",
       "path": "/app-api/gym/me/refund-applications/{id}",
       "description": "查询本人退款申请审核和退款进度",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymRefundApplicationsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymRefundApplicationService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileRefundControllerTest.java"
+      ]
     },
     {
       "id": 27,

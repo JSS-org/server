@@ -234,5 +234,8 @@ public interface ErrorCodeConstants {
     ErrorCode COURSE_QUOTE_APPROVAL_INVALID =
             new ErrorCode(1_070_025_002, "请使用符合当前商品、会员及申请人范围的已批准专属改价申请");
     ErrorCode COURSE_QUOTE_UNAVAILABLE = new ErrorCode(1_070_025_003, "报价已使用、过期或商品条款已变化");
+    ErrorCode REFUND_APPLICATION_NOT_EXISTS = new ErrorCode(1_070_026_002, "退款申请不存在或无权查看");
+    ErrorCode REFUND_APPLICATION_INVALID = new ErrorCode(1_070_026_003, "退款申请状态、可退余额或实际凭据不符合要求");
+    ErrorCode REFUND_APPLICATION_OPEN = new ErrorCode(1_070_026_004, "订单已有处理中退款申请，请先查询原申请");
     ErrorCode MOBILE_ORDER_NOT_CANCELLABLE = new ErrorCode(1_070_026_001, "仅未支付且未履约的订单可以取消");
 }

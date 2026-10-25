@@ -214,7 +214,7 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 | `GET A/me/orders/{id}` | 无 | `Order` |
 | `POST A/orders/{id}/payment-sessions`（幂等） | `channel:weixin_miniapp` | `{paymentId:ID,payParams:object,expiresAt:DateTime}` |
 | `POST A/orders/{id}/cancellations`（幂等） | `reason?:string` | 更新后的 `Order`，仅未支付订单 |
-| `POST A/orders/{id}/refund-applications`（幂等） | `reason:string` | `{id:ID,status:pending_review,requestedAmount:Money}`；金额由服务端按剩余可退额计算 |
+| `POST A/orders/{id}/refund-applications`（幂等） | `reason:string` | `{id:ID,status:string,requestedAmount:Money}`；首次pending_review，金额为服务端核验的剩余实收上限，详见退款申请实现约定 |
 | `GET A/me/refund-applications/{id}` | 无 | `{id:ID,orderId:ID,status:string,requestedAmount:Money,refundedAmount:Money,reason:string,failureReason:string?}` |
 | `GET A/subscription-products` | `P,storeId:ID` | `Page<Product>`，明确周期价格与解约说明 |
 | `POST A/subscriptions`（幂等） | `storeId:ID,productId:ID,agreementVersion:string` | `{id:ID,status:pending_sign,signParams:object?,expiresAt:DateTime?}` |
@@ -958,7 +958,7 @@ V017为gym_approval增加version，初始及历史审批的迁移基线均为1�
 
 响应为既有`Approval`，`businessSummary`用`priceScope=quote`区分，ID及金额按字符串输出，不含手机号或任意内部字段。申请幂等规范化金额为两位小数、原因去首尾空白；同键异内容冲突，同键重放首次响应（后来已批准仍重放首次pending），当前状态通过审批详情查询。每次重放前重新校验当前商品及会员访问范围，撤销负责关系/门店权限后不能读取缓存。
 
-116只产生批准结果；117–118已在后续报价批次实现，20–22、24订单创建/读取/取消及报价绑定已实现；会员内部自动履约已实现，支付会话与退款申请尚待后续完成。报价生成和订单创建核对批准状态、专属来源、商品版本和适用会员，收款须核验真实订单金额、期限及渠道凭据；真实支付继续按约定暂缓。没有修改前端。
+116只产生批准结果；117–118已在后续报价批次实现，20–22、24订单创建/读取/取消及报价绑定已实现；会员内部自动履约已实现，退款申请已实现，支付会话尚待后续完成。报价生成和订单创建核对批准状态、专属来源、商品版本和适用会员，收款须核验真实订单金额、期限及渠道凭据；真实支付继续按约定暂缓。没有修改前端。
 
 
 ## 私教报价生成和会员读取已实现补充（总表117–118）
@@ -987,7 +987,7 @@ V019新增`gym_course_quote`，保存租户、门店、商品与版本、可选�
 
 `sharePath`使用配置`yudao.gym.mobile.quotes.share-page`（默认预留`/pages/course-quote/detail`），只允许`/pages/`下由字母、数字、下划线、连字符及分段斜线组成的路径；追加`?quoteId=<id>`，不携带金额或审批信息。该默认路径是**前端对接约定，未验证前端已有该页面**，部署时须指向实际注册页面。本任务没有修改前端，也不声称已验证小程序分享打开、下单、支付或真实设备流程。
 
-部署先migrate/validate至V019，再更新全部审批及报价服务实例并按需授予gym:courses:quote；目前68张gym表，无历史报价回填或角色授权。20–22、24订单创建/读取/取消及报价绑定已实现；会员内部自动履约已实现，23支付、25–26退款申请仍待后续完成，第三方真实支付等继续暂缓。
+部署先migrate/validate至V019，再更新全部审批及报价服务实例并按需授予gym:courses:quote；目前68张gym表，无历史报价回填或角色授权。20–22、24订单创建/读取/取消及报价绑定已实现；会员内部自动履约已实现，25–26退款申请已实现，23支付仍待后续完成，第三方真实支付等继续暂缓。
 
 
 ## 会员订单准备、本人读取与取消已实现补充（总表20–22、24）
@@ -1022,7 +1022,7 @@ fulfillmentStatus依据真实策略fulfilledAt和任务状态返回succeeded/pro
 
 订单准备、本人读取、未支付取消及报价一次绑定已实现；**会员内部自动发卡/发课包与任务重试已在V022批次接入**，使用真实会员身份，不借后台员工账号。商品目录仍保留checkout_unavailable，表示完整购买链路尚未开放；已存在订单准备接口不代表可以真实付款或已发放权益。
 
-23支付会话、25–26退款申请仍待实现，支付渠道实际调用继续暂缓。V020新增可空buyer_user_id、expires_at、cancelled_at、cancellation_reason及会员分页索引；旧订单金额/状态保持，不伪造历史账号、到期或取消时间。部署先migrate/validate至V020并统一更新订单写入/收款实例；仍68表，无新权限授权。前端与业务库未修改。
+25–26退款申请已实现，23支付会话仍待实现，支付渠道实际调用继续暂缓。V020新增可空buyer_user_id、expires_at、cancelled_at、cancellation_reason及会员分页索引；旧订单金额/状态保持，不伪造历史账号、到期或取消时间。部署先migrate/validate至V020并统一更新订单写入/收款实例；仍68表，无新权限授权。前端与业务库未修改。
 
 
 ## 会员订单实际履约与重试（V022）
@@ -1035,10 +1035,48 @@ fulfillmentStatus依据真实策略fulfilledAt和任务状态返回succeeded/pro
 
 购买私教课包新增duration_minutes_snapshot，保存订单冻结的单节分钟数，priceSnapshot使用该订单成交单价（包括批准的0元报价）。预约写入和会员可预约查询都要求完整课程时长与快照一致，不能用较短新课程消耗旧课包。已有课包和原人工发包路径没有可靠购买时长时保留NULL、沿用旧规则；不为历史数据推测时长。私教仍无来源固定到期日，expiresAt=null。
 
-可信收款内部服务支持card_sale及course_sale，私教收入记为private并按实际收款分摊，重复凭据不重复入账；该核验器的真实支付适配仍未配置。现有卡退款处理保持；**私教真实退款/权益撤销及25–26退款申请尚未实现**，现有卡退款入口明确拒绝course_sale，不能把课包当会员卡撤销。未开放23支付会话，不据测试mock凭据宣称渠道可付款。
+可信收款内部服务支持card_sale及course_sale，私教收入记为private并按实际收款分摊，重复凭据不重复入账；该核验器的真实支付适配仍未配置。现有卡退款处理保持；**私教真实退款/权益撤销尚未实现；25–26退款申请已在V023实现**，现有卡退款入口明确拒绝course_sale，不能把课包当会员卡撤销。未开放23支付会话，不据测试mock凭据宣称渠道可付款。
 
 失败任务最多8次自动尝试并有限退避。沿用后台GET /admin-api/gym/self-service-card-orders/{id}/fulfillment-task及POST同订单路径/fulfillment-retries，现可处理会员卡及私教订单：查询需gym:sales:read，人工重试另需gym:approvals:decide和门店范围；不接受客户端状态或执行人。会员任务人工重试必须匹配原订单buyerUserId，保留类型1及该账号，仅增加8次预算；不能借管理员身份履约。旧后台类型2任务仍按原后台权限执行，未知类型拒绝。后端辅助重试接口不新增135项计数，前端未修改。
 
-V022新增课包时长和合同事件身份字段，并只为真实buyer_user_id、miniapp、无退款/审批、单商品数量1且尚未履约的历史订单补缺失任务；已有任务包括租约和次数全部保留。不改旧订单金额/状态/策略，也不生成权益、合同或付款。缺少可信身份/策略/明细的历史记录不补造，应由后台核查。仍68表，下一迁移V023。
+V022新增课包时长和合同事件身份字段，并只为真实buyer_user_id、miniapp、无退款/审批、单商品数量1且尚未履约的历史订单补缺失任务；已有任务包括租约和次数全部保留。不改旧订单金额/状态/策略，也不生成权益、合同或付款。缺少可信身份/策略/明细的历史记录不补造，应由后台核查。V022阶段仍68表；V023新增退款申请表，见下文。
 
 部署须暂停会员订单写入及所有履约执行器，再备份、migrate/validate并更新全部相关实例后恢复，防止旧实例在任务回填后继续创建漏队列订单，也避免旧执行器忽略账号类型。应用本批未在业务库执行迁移。商品目录仍保留checkout_unavailable，真实支付/退款链路未开放；支付、自动续费、电子签、设备和监控外部对接按用户要求继续暂缓。
+
+## 退款申请实现约定（V023，总表25–26）
+
+两个会员接口已实现；以下是当前请求与响应契约，真实退款渠道未接入。所有请求仍使用统一响应包装、当前租户和会员令牌，金额是两位小数字符串，ID为字符串。
+
+| 接口 | 输入 | data |
+| --- | --- | --- |
+| `POST /app-api/gym/orders/{id}/refund-applications` | 必传`Idempotency-Key`；JSON仅`reason`，非空且最多500字符 | `id,status,requestedAmount`；新申请状态`pending_review` |
+| `GET /app-api/gym/me/refund-applications/{id}` | 路径为申请ID，无会员ID参数 | `id,orderId,status,requestedAmount,refundedAmount,reason,failureReason` |
+
+提交示例：`{"reason":"申请退还未使用的订单款项"}`。`amount/memberId/status`等额外写入字段拒绝；创建者来自令牌。本人读取同时核对会员档案和申请账号，不返回内部审核人或渠道凭据。要求有效账号和会员身份；门店已停用或会员已解除门店关系不妨碍处理历史订单。仅支持本人miniapp/app渠道、单商品明细的卡或私教订单；明确记录买家账号的订单还须匹配该账号。
+
+`requestedAmount`在创建时冻结为已核验成功付款减去已核验成功退款的余额，且要求与订单缓存金额一致。零元、未付款、已全退及不一致记录拒绝；部分付款按实际已付余额申请。该金额是**剩余现金上限**，不是按剩余权益折算后的退款承诺。当前不自动计算使用费用或手续费，审核人员须结合订单及使用情况判断是否批准；审核接口不接受任意修改金额。后续付款不自动提高既有申请金额。
+
+同租户同订单最多一份处理中申请。相同原键和参数重放首次响应；当前进度使用GET。新键、相同原因且同一申请账号会复用现有处理中申请并返回当前状态，新键不同原因报冲突。终态后可用新键对仍有实收余额的订单重新申请；旧键不会创建新申请。原因首尾空格归一化。
+
+| status | 含义 |
+| --- | --- |
+| `pending_review` | 已提交，待后台审核，未发起退款 |
+| `approved` | 审核通过，等待真实退款；不表示已到账 |
+| `partially_refunded` | 已关联可信退款凭据，但未达到该申请金额 |
+| `refunded` | 该申请关联的可信退款累计达到申请金额 |
+| `rejected` | 审核驳回，`failureReason`返回审核说明 |
+| `closed` | 其他退款导致订单余额不足以完成本申请，关闭并提示核实后重新申请；不把其他退款计入本申请 |
+
+申请和批准只暂停尚未发放的权益，已发权益不因申请自动撤销。驳回后按实际付款状态恢复等待收款或待履约；重试次数不重置，原人工审批限制保留。已关联的真实卡退款仍按现有规则处理权益：全退停止卡权益，部分退款进入退款后的权益人工处理。该权益处理与本节退款前的申请审核是两个独立流程。
+
+后台辅助接口不纳入135项小程序目标统计：
+
+| 方法和完整路径 | 描述与输入 | 权限 |
+| --- | --- | --- |
+| `GET /admin-api/gym/refund-applications` | 分页，支持`pageNo,pageSize,storeId?,orderId?,status?`；返回`Page<RefundReview>` | `gym:sales:read` |
+| `GET /admin-api/gym/refund-applications/{id}` | 读取审核详情和`version` | `gym:sales:read` |
+| `POST /admin-api/gym/refund-applications/{id}/decisions` | 必传幂等键；`expectedVersion`正整数、`decision=approve或reject`、`note`非空最多500字符；返回更新后的审核详情 | 同时要求`gym:sales:read`、`gym:approvals:decide` |
+
+`RefundReview`字段为`id,orderId,storeId,memberId,status,requestedAmount,refundedAmount,reason,failureReason,version,submittedAt,reviewedAt,reviewNote`，时间为上海时区ISO字符串。读写都要求有效后台账号及整店数据范围，SELF负责关系不足以审核；不自动授予任何角色。决策仅允许pending_review和正确版本，成功递增版本；重试先校验当前访问权限。**驳回note对会员可见**，请勿填内部敏感备注。
+
+目前没有公开“填写退款成功”的接口。内部`acceptRefundForApplication`核验真实渠道凭据，限定批准后发生、原订单/付款一致且不超过申请余额；凭据与申请关联不可事后转移。关联退款、流水、订单、权益和申请进度同事务落库，重复凭据不重复退款。尚无渠道适配时保持真实等待状态。私教可申请和审核，但实际私教退款及课包撤销仍未实现，现有卡退款路径明确拒绝私教。部署与验证见[实施说明](./uniapp-implementation.md#退款申请审核与凭据关联v023)。

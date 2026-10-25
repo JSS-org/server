@@ -2914,3 +2914,46 @@ V021新增非空字段默认2，仍68表，无角色授权。默认值依据历�
 ### 未做 / 后续
 
 91项新增本地实现、4项复用源码、40项待开发；本批完成订单内部履约深度，不重复计算接口数量。23支付会话、25–26退款申请及私教退款权益撤销仍待后续；支付/自动续费、电子签、设备、监控真实对接继续按用户要求暂缓。商品完整购买入口仍checkout_unavailable，不宣称可以真实付款。小步本地提交，不推送。
+
+## [2026-10-25 21:09 ~ 21:22] 会员退款申请、前置审核与可信退款凭据关联
+
+### 意图
+
+按135项总表补齐25–26退款申请及本人进度查询，落实用户“小步提交、不要改前端、真实渠道先跳过并写清楚”的要求。申请/审核须与真实到账区分，避免申请退款后未发权益继续履约，以及将其他退款误计入本人申请。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymRefundApplicationsController.java`、`vo/GymMobileRefundVO.java` | 新增 | 两个会员目标接口、严格请求及公开响应；当前身份和幂等键校验 |
+| `controller/admin/sales/GymRefundApplicationsController.java` | 新增 | 三个后台辅助查询/审核接口，沿用销售读与审批决定权限，不重复统计为目标接口 |
+| `service/sales/GymRefundApplicationService.java`、`dal/dataobject/sales/GymRefundApplicationDO.java`、`dal/mysql/sales/GymRefundApplicationMapper.java` | 新增 | 实收上限、活动申请唯一、版本审核、本人读取及真实凭据关联进度 |
+| `GymCommerceService.java`、`GymOrderRefundDO.java`、`GymOrderEntitlementAccess.java`、`GymFulfillmentQueueService.java` | 修改 | 内部退款关联、直接/自动发放拦截、waiting_refund暂停及驳回恢复，保留原重试预算 |
+| `enums/ErrorCodeConstants.java` | 修改 | 申请不存在、状态不符及已有活动申请错误 |
+| `sql/gym/migration/mysql/V023__gym_refund_applications.sql` | 新增 | 新申请表、唯一活动位置与CHECK约束、旧退款可空关联及索引；无历史审批回填 |
+| `script/gym/verify-migrations.py`、测试`sql/create_tables.sql`、`sql/clean.sql` | 修改 | 69表结构、13项新增隔离MySQL检查，保持V021升级夹具按版本隔离 |
+| `GymOrganizationServiceTest.java`、`GymMobileRefundControllerTest.java` | 修改/新增 | 20项业务并发/权限/事务测试及5项MVC契约测试 |
+| `docs/uniapp/`接口设计、总表、实施进度及机器清单 | 修改 | 97/135覆盖、准确数量、状态/字段、真实渠道与私教退款未完成边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、验证证据、统一升级步骤及下一版本V024 |
+
+Java相对文件名均位于`yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/`对应目录；测试位于同模块`src/test/`。
+
+### 结构关系
+
+会员Controller→RefundApplicationService验证本人订单及真实实收，租户互斥和订单/申请行锁下创建申请并暂停未发任务；活动唯一约束防重复。后台审核同时校验功能权限、有效管理员及整店范围，版本决定与驳回恢复同事务。履约服务和失败重试都检查活动申请，旧领取token不可继续执行。批准只记录允许退款，已发权益不因此撤销。
+
+Commerce内部关联退款入口核验可信凭据、原订单、审核时间及申请余额，原退款/财务/权益处理与申请进度同事务落库。无关联退款保留原行为，可关闭不足余额的申请但不会增加其已退金额。原GymRefundReviewService负责退款后的部分卡权益人工处理，与本次退款前审核分离。课程申请与审核支持，课程实际退款/撤销仍拒绝。
+
+### 验证证据
+
+`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false`（本机Mockito agent参数详见testing）最终gym760通过、组织服务472通过；member4通过、1项既有禁用跳过。新增20项业务和5项MVC覆盖三类并发、身份/权限撤销、部分付款/迟到付款、真实凭据关联、旧任务token与预算，以及队列/审核/最终退款失败回滚。
+
+`PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py`真实隔离MySQL107检查通过且临时库全部清理；`mvn -B -ntp -pl yudao-server -am package -DskipTests`构建成功，打包跳过测试；`python3 script/gym/verify-uniapp-api-coverage.py`输出Contract135/mapped97/missing38；`git diff --check`通过。完整命令与最终日志见testing本批章节。
+
+### 影响面 / 风险
+
+当前69表，部署前需备份、暂停相关写入及全部履约执行器，migrate/validate并统一升级后恢复；旧程序无法识别退款暂停，不能混用。申请金额是剩余实收上限，尚不自动折算已消费权益或手续费，审核人员须核实退款政策。驳回说明对会员公开。已有退款关联保持NULL，无新增角色授权。前端、业务库及用户原始uniapp.md内容/暂存状态保留；本地mock核验器测试不证明真实渠道或部署HTTP联调。
+
+### 未做 / 后续
+
+93项新增并本地测试、4项复用源码、38项待开发，总数仍135；三个后台辅助接口不增加目标总数。真实支付/退款、自动续费、电子签、设备及监控接入继续暂缓；私教实际退款/课包撤销仍未实现，23支付会话未开放。仅本地小步提交，不推送。

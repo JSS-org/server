@@ -28,6 +28,7 @@ public class GymFulfillmentQueueService {
     @Resource private GymFulfillmentTaskMapper gymFulfillmentTaskMapper;
     @Resource private GymBusinessOrderMapper gymBusinessOrderMapper;
     @Resource private GymOrderPolicyMapper gymOrderPolicyMapper;
+    @Resource private GymRefundApplicationMapper refundApplications;
     @Resource private GymBusinessMutex mutex;
     @Resource private GymDataScope scope;
     @Resource private GymBusinessClock clock;
@@ -101,6 +102,40 @@ public class GymFulfillmentQueueService {
             row.setNextAttemptAt(now());
             gymFulfillmentTaskMapper.updateById(row);
         }
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void holdForRefund(Long orderId) {
+        var row = task(orderId, true);
+        if (row != null
+                && Set.of("pending", "failed", "processing", "waiting_payment")
+                        .contains(row.getStatus())) {
+            row.setStatus("waiting_refund");
+            row.setNextAttemptAt(null);
+            row.setClaimToken(null);
+            row.setLeaseUntil(null);
+            row.setFailureReason("订单存在处理中退款申请，尚未发放的权益暂停履约");
+            gymFulfillmentTaskMapper.updateById(row);
+        }
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void resumeAfterRefundRejection(GymBusinessOrderDO order) {
+        var row = task(order.getId(), true);
+        if (row == null || !"waiting_refund".equals(row.getStatus())) return;
+        boolean paid = order.getPaidAmount().compareTo(order.getPayableAmount()) == 0;
+        if (order.getRefundedAmount().signum() != 0
+                || Set.of("cancelled", "refunded", "fulfilled").contains(order.getStatus())) return;
+        row.setStatus(
+                paid
+                        ? row.getAttemptCount() < row.getAttemptLimit() ? "pending" : "failed"
+                        : "waiting_payment");
+        row.setNextAttemptAt(paid && row.getAttemptCount() < row.getAttemptLimit() ? now() : null);
+        row.setFailureReason(
+                paid && row.getAttemptCount() >= row.getAttemptLimit()
+                        ? "自动履约重试次数已用尽，请后台核查后重试"
+                        : null);
+        gymFulfillmentTaskMapper.updateById(row);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -291,6 +326,8 @@ public class GymFulfillmentQueueService {
                 || policy.getFulfilledAt() != null
                 || order.getRefundedAmount().signum() != 0
                 || order.getPaidAmount().compareTo(order.getPayableAmount()) != 0)
+            throw exception(COMMERCE_FULFILLMENT_INVALID);
+        if (refundApplications.selectCount(GymRefundApplicationDO::getActiveOrderId, orderId) != 0)
             throw exception(COMMERCE_FULFILLMENT_INVALID);
         var row = task(orderId, true);
         if (row == null || !"failed".equals(row.getStatus()))

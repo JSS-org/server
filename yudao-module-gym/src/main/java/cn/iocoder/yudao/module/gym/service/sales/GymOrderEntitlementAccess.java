@@ -38,6 +38,7 @@ public class GymOrderEntitlementAccess {
     @Resource private GymOrderItemMapper items;
     @Resource private GymOrderPolicyMapper policies;
     @Resource private GymFulfillmentTaskMapper tasks;
+    @Resource private GymRefundApplicationMapper refundApplications;
     @Resource private GymStoreMapper stores;
     @Resource private GymMemberMapper members;
     @Resource private GymMemberStoreMapper memberships;
@@ -87,6 +88,8 @@ public class GymOrderEntitlementAccess {
                                 .last("FOR UPDATE"));
         var task = tasks.selectOne(GymFulfillmentTaskDO::getOrderId, orderId);
         if (policy == null
+                || refundApplications.selectCount(GymRefundApplicationDO::getActiveOrderId, orderId)
+                        != 0
                 || Boolean.TRUE.equals(policy.getApprovalRequired())
                 || policy.getApprovedApprovalId() != null
                 || order.getPayableAmount().signum() < 0

@@ -57,6 +57,8 @@ public class GymCommerceService {
     @Resource private GymPaymentReceiptVerifier receipts;
     @Resource private GymRefundReviewService refundReviews;
     @Resource private GymFulfillmentQueueService fulfillmentQueue;
+    @Resource private GymRefundApplicationService refundApplications;
+    @Resource private GymRefundApplicationMapper refundApplicationRows;
     private static final BigDecimal ZERO = new BigDecimal("0.00");
 
     /** Called by an authenticated purchase flow after resolving its member identity; never accepts a client-supplied price. */
@@ -343,6 +345,17 @@ public class GymCommerceService {
 
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public GymBusinessOrderDO acceptRefund(Long orderId, String reference) {
+        return acceptRefund(orderId, reference, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public GymBusinessOrderDO acceptRefundForApplication(
+            Long orderId, Long applicationId, String reference) {
+        refundApplications.checkForVerification(applicationId, orderId);
+        return acceptRefund(orderId, reference, applicationId);
+    }
+
+    private GymBusinessOrderDO acceptRefund(Long orderId, String reference, Long applicationId) {
         if (!identity(reference)) throw exception(COMMERCE_RECEIPT_INVALID);
         checkBeforeVerification(orderId);
         var receipt = receipts.refund(reference);
@@ -371,7 +384,8 @@ public class GymCommerceService {
                     || !payment.getId().equals(old.getPaymentId())
                     || !"succeeded".equals(old.getStatus())
                     || old.getAmount().compareTo(receipt.amount()) != 0
-                    || !old.getRefundedAt().equals(time(receipt)))
+                    || !old.getRefundedAt().equals(time(receipt))
+                    || applicationId != null && !applicationId.equals(old.getRefundApplicationId()))
                 throw exception(COMMERCE_IDEMPOTENCY_CONFLICT);
             return order;
         }
@@ -387,7 +401,11 @@ public class GymCommerceService {
         if (previous.add(receipt.amount()).compareTo(payment.getAmount()) > 0
                 || order.getRefundedAmount().add(receipt.amount()).compareTo(order.getPaidAmount())
                         > 0) throw exception(COMMERCE_RECEIPT_INVALID);
+        if (applicationId != null)
+            refundApplications.validateReceipt(
+                    applicationId, order, receipt.amount(), time(receipt));
         var refund = new GymOrderRefundDO();
+        refund.setRefundApplicationId(applicationId);
         refund.setOrderId(orderId);
         refund.setPaymentId(payment.getId());
         refund.setProvider(receipt.provider());
@@ -410,6 +428,7 @@ public class GymCommerceService {
                         : "partially_refunded");
         gymBusinessOrderMapper.updateById(order);
         refundReviews.onRefund(order, refund);
+        refundApplications.onRefund(order, refund);
         fulfillmentQueue.cancel(orderId);
         return order;
     }
@@ -424,6 +443,9 @@ public class GymCommerceService {
     private GymOrderPolicyDO readyForFulfillment(GymBusinessOrderDO order) {
         var policy = policy(order.getId());
         if (policy == null
+                || refundApplicationRows.selectCount(
+                                GymRefundApplicationDO::getActiveOrderId, order.getId())
+                        != 0
                 || order.getPaidAmount().compareTo(order.getPayableAmount()) != 0
                 || order.getRefundedAmount().signum() != 0
                 || !Set.of("paid", "pending_fulfillment").contains(order.getStatus())

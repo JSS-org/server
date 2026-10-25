@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **91** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **40** 个。源码映射共 **95 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **93** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **38** 个。源码映射共 **97 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -55,8 +55,8 @@
 | 22 | 公共及会员端 | GET | `/app-api/gym/me/orders/{id}` | 获取本人订单支付及权益履约状态 | 已实现，本地测试通过 |
 | 23 | 公共及会员端 | POST | `/app-api/gym/orders/{id}/payment-sessions` | 创建订单支付会话，返回小程序支付参数 | 待开发；外部接入暂缓 |
 | 24 | 公共及会员端 | POST | `/app-api/gym/orders/{id}/cancellations` | 取消本人未支付订单 | 已实现，本地测试通过 |
-| 25 | 公共及会员端 | POST | `/app-api/gym/orders/{id}/refund-applications` | 提交订单退款申请，由服务端计算可退金额 | 设计待开发 |
-| 26 | 公共及会员端 | GET | `/app-api/gym/me/refund-applications/{id}` | 查询本人退款申请审核和退款进度 | 设计待开发 |
+| 25 | 公共及会员端 | POST | `/app-api/gym/orders/{id}/refund-applications` | 提交订单退款申请，由服务端计算可退金额 | 已实现，本地测试通过；真实退款渠道暂缓 |
+| 26 | 公共及会员端 | GET | `/app-api/gym/me/refund-applications/{id}` | 查询本人退款申请审核和退款进度 | 已实现，本地测试通过；真实退款渠道暂缓 |
 | 27 | 公共及会员端 | GET | `/app-api/gym/subscription-products` | 查询门店连续包月商品及续费说明 | 已实现，本地测试通过 |
 | 28 | 公共及会员端 | POST | `/app-api/gym/subscriptions` | 创建连续包月订阅并发起渠道签约 | 待开发；外部接入暂缓 |
 | 29 | 公共及会员端 | GET | `/app-api/gym/me/subscriptions` | 查询本人的连续包月订阅列表 | 设计待开发 |

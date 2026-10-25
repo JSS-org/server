@@ -2623,3 +2623,34 @@ gym621项、member4项通过，1项既有禁用跳过；Spotless和server依赖�
 ### 未做 / 后续
 
 77项新增本地实现、4项复用源码、54项待开发。继续107会员汇总和77首页概览；完整历史任职建模及真实外部接入仍未完成。小步本地提交，不推送，业务库未迁移，原始uniapp.md及暂存状态保留。
+
+## [2026-10-25 17:45 ~ 17:59] 当前会员、私教及临期权益人数汇总
+
+### 意图
+
+补齐总表107，按授权门店提供去重人数；明确date仅筛选注册自然日，避免在没有完整历史状态时把当前会员和权益总量包装成历史快照。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileMemberSummaryController.java`、`GymMobileMemberSummaryVO.java`、`GymMobileMemberSummaryService.java` | 新增 | 后台身份、整店范围、日期校验、实际统计时点与明确响应 |
+| `GymMobileMemberSummaryMapper.java`、`GymMobileMemberSummaryAggregate.java` | 新增 | 当前人群及同店权益EXISTS聚合，临期窗口与跨店去重 |
+| `GymOrganizationServiceTest.java`、`GymMobileMemberSummaryControllerTest.java` | 修改/新增 | 七项业务、两项MVC，微秒边界、权益状态、当前人群与权限 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md` | 修改 | 82/135进度、五项人数字段、date/updatedAt区别及历史数据限制 |
+
+### 结构关系
+
+Controller复用reports:read，Service检查有效后台身份和整店范围后捕获一次业务时钟，Mapper按当前会员档案一人一行，用同租户同门店关系及权益EXISTS避免乘积。全部查询共享只读事务，响应不暴露个人信息；不修改原会员/开卡/发放写流程。
+
+### 验证证据
+
+gym630项、member4项通过，1项既有禁用跳过；新增专项9项先行通过。Spotless和server依赖打包通过，打包跳过测试。验证联合3人/分店各2人、同人多权益仅1人、临期微秒边界、注册日上海边界、跨租户关联及SELF不可查看整店。完整回归后仅补OpenAPI说明，最终打包覆盖注解。源码映射82/135；命令及日志见testing本批条目。
+
+### 影响面 / 风险
+
+无新DDL、权限定义、自动授权或业务库修改。五项均为人数且互有交集；memberCount包含潜客，临期不等于卡/包数量，预占不重复扣减。date只筛选当前可见人群的初次注册日，updatedAt表明当前权益统计时点；缺历史版本时无法精确重建过去总量，也不冻结历史新增。此限制已同步契约及OpenAPI。生产查询规模和部署HTTP未验证；前端未修改。
+
+### 未做 / 后续
+
+78项新增本地实现、4项复用源码、53项待开发。继续后续内部接口；历史快照及真实第三方接入仍未完成。小步本地提交，不推送；原始uniapp.md的内容及暂存状态保留。

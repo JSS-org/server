@@ -49,6 +49,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileMemberSummaryService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileMemberSummaryController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobilePerformanceService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePerformanceController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileSalesReportService.class,
@@ -14789,5 +14791,276 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertEquals("未归属员工", result.list().getFirst().name());
         assertNull(result.list().getFirst().employeeId());
         assertEquals(0, result.summary().lessonCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileMemberSummaryService mobileMemberSummary;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileMemberSummaryController
+            mobileMemberSummaryController;
+
+    final java.time.Instant memberSummaryNow = java.time.Instant.parse("2026-06-10T02:00:00Z");
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileMemberSummaryVO.Query
+            memberSummaryQuery() {
+        var q =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileMemberSummaryVO
+                        .Query();
+        q.setDate(java.time.LocalDate.of(2026, 6, 10));
+        return q;
+    }
+
+    Long memberSummaryMember(Long store, String phone, java.time.Instant registered) {
+        Long id = Long.valueOf(members.create(member(store, phone)).getId());
+        reportMemberDate(id, registered);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                        java.sql.Timestamp.from(memberSummaryNow.minusSeconds(86400)),
+                        id);
+        return id;
+    }
+
+    Long memberSummaryFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        Long m = memberSummaryMember(101L, "13800009601", memberSummaryNow);
+        Long template = Long.valueOf(cards.create(cardTemplate("period")).getId());
+        for (String source : List.of("summary-a", "summary-b"))
+            cards.issue(m, 101L, template, memberSummaryNow, "test", source);
+        Long coach = Long.valueOf(employees.create(employee("SUMMARY-COACH", 101L)).getId());
+        Long product = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        for (String source : List.of("summary-pack-a", "summary-pack-b"))
+            courses.issuePack(
+                    m,
+                    product,
+                    memberSummaryNow,
+                    memberSummaryNow.plusSeconds(30 * 86400),
+                    "test",
+                    source);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                        java.sql.Timestamp.from(memberSummaryNow),
+                        m);
+        memberSummaryMember(101L, "13800009602", memberSummaryNow.minusSeconds(86400));
+        memberSummaryMember(102L, "13800009603", memberSummaryNow.minusSeconds(86400));
+        return m;
+    }
+
+    @Test
+    void mobileMemberSummaryDeduplicatesPeopleAcrossStoresCardsAndPacks() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(3, r.memberCount());
+        assertEquals(1, r.privateCourseMemberCount());
+        assertEquals(1, r.newMemberCount());
+        assertEquals(1, r.expiringCardCount());
+        assertEquals(1, r.expiringCourseCount());
+        assertEquals("2026-06-10", r.date());
+        assertEquals("2026-06-10T10:00+08:00", r.updatedAt());
+        q.setStoreId(101L);
+        var a = mobileMemberSummary.summary(q);
+        assertEquals(2, a.memberCount());
+        assertEquals(1, a.privateCourseMemberCount());
+        q.setStoreId(102L);
+        var b = mobileMemberSummary.summary(q);
+        assertEquals(2, b.memberCount());
+        assertEquals(0, b.privateCourseMemberCount());
+        assertEquals(1, b.expiringCardCount());
+        assertTrue(a.memberCount() + b.memberCount() > r.memberCount());
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(r);
+        for (String field : List.of("phone", "memberId", "cardNo", "13800009601"))
+            assertFalse(json.contains(field));
+    }
+
+    @Test
+    void mobileMemberSummaryExpiryUsesExclusiveNowInclusiveThirtyDaysAtMicrosecondPrecision() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        for (var expires :
+                List.of(
+                        memberSummaryNow,
+                        memberSummaryNow.plusNanos(1000),
+                        memberSummaryNow.plusSeconds(30 * 86400),
+                        memberSummaryNow.plusSeconds(30 * 86400).plusNanos(1000))) {
+            jdbc.update(
+                    "UPDATE gym_member_card SET expires_at=?", java.sql.Timestamp.from(expires));
+            jdbc.update(
+                    "UPDATE gym_course_pack SET expires_at=?", java.sql.Timestamp.from(expires));
+            var r = mobileMemberSummary.summary(q);
+            long expected =
+                    expires.isAfter(memberSummaryNow)
+                                    && !expires.isAfter(memberSummaryNow.plusSeconds(30 * 86400))
+                            ? 1
+                            : 0;
+            assertEquals(expected, r.expiringCardCount(), expires.toString());
+            assertEquals(expected, r.expiringCourseCount(), expires.toString());
+            assertEquals(expires.isAfter(memberSummaryNow) ? 1 : 0, r.privateCourseMemberCount());
+        }
+        jdbc.update("UPDATE gym_member_card SET expires_at=NULL");
+        jdbc.update("UPDATE gym_course_pack SET expires_at=NULL");
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(1, r.privateCourseMemberCount());
+        assertEquals(0, r.expiringCourseCount());
+        assertEquals(0, r.expiringCardCount());
+    }
+
+    @Test
+    void mobileMemberSummaryIgnoresInactiveUnstartedExhaustedAndDeletedRightsButNotReservations() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_member_card SET kind='count',total_uses=1,remaining_uses=1,reserved_uses=1");
+        jdbc.update("UPDATE gym_course_pack SET remaining_sessions=1,reserved_sessions=1");
+        assertEquals(1, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(1, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        jdbc.update("UPDATE gym_member_card SET remaining_uses=0,reserved_uses=0");
+        jdbc.update("UPDATE gym_course_pack SET remaining_sessions=0,reserved_sessions=0");
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        jdbc.update("UPDATE gym_member_card SET remaining_uses=1");
+        jdbc.update("UPDATE gym_course_pack SET remaining_sessions=1");
+        for (String table : List.of("gym_member_card", "gym_course_pack"))
+            jdbc.update(
+                    "UPDATE " + table + " SET starts_at=?",
+                    java.sql.Timestamp.from(memberSummaryNow.plusNanos(1000)));
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        for (String table : List.of("gym_member_card", "gym_course_pack"))
+            jdbc.update(
+                    "UPDATE " + table + " SET starts_at=?,status='inactive'",
+                    java.sql.Timestamp.from(memberSummaryNow));
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        for (String table : List.of("gym_member_card", "gym_course_pack"))
+            jdbc.update("UPDATE " + table + " SET status='active',deleted=TRUE");
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+    }
+
+    @Test
+    void mobileMemberSummaryEntitlementsRequireMembershipInTheSameAllowedStoreAndTenant() {
+        Long m = memberSummaryFixture();
+        var q = memberSummaryQuery();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_course_pack SET store_id=102");
+        jdbc.update("UPDATE gym_member_card_store SET deleted=TRUE WHERE store_id=101");
+        scoped(101L);
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        scoped(102L);
+        assertEquals(1, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        assertEquals(1, mobileMemberSummary.summary(q).expiringCardCount());
+        jdbc.update(
+                "UPDATE gym_member_store SET deleted=TRUE WHERE store_id=102 AND member_id=?", m);
+        headquarters();
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(3, r.memberCount());
+        assertEquals(0, r.privateCourseMemberCount());
+        assertEquals(0, r.expiringCardCount());
+        jdbc.update(
+                "UPDATE gym_member_store SET deleted=FALSE WHERE store_id=102 AND member_id=?", m);
+        jdbc.update("UPDATE gym_member_card_store SET tenant_id=2");
+        jdbc.update("UPDATE gym_course_pack SET tenant_id=2");
+        assertEquals(0, mobileMemberSummary.summary(q).expiringCardCount());
+        assertEquals(0, mobileMemberSummary.summary(q).privateCourseMemberCount());
+        jdbc.update("UPDATE gym_member_store SET tenant_id=2 WHERE member_id=?", m);
+        assertEquals(2, mobileMemberSummary.summary(q).memberCount());
+        jdbc.update("UPDATE gym_member SET tenant_id=2");
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+    }
+
+    @Test
+    void mobileMemberSummaryDateSelectsShanghaiRegistrationDayWithinCurrentActivePopulation() {
+        stores.create(store(101L, "A"));
+        var now = memberSummaryNow.plusSeconds(2 * 86400);
+        when(businessClock.now()).thenReturn(now);
+        var start = java.time.Instant.parse("2026-06-09T16:00:00Z");
+        memberSummaryMember(101L, "13800009610", start.minusNanos(1000));
+        memberSummaryMember(101L, "13800009611", start);
+        memberSummaryMember(101L, "13800009612", start.plusSeconds(86400).minusNanos(1000));
+        memberSummaryMember(101L, "13800009613", start.plusSeconds(86400));
+        memberSummaryMember(101L, "13800009614", now.plusNanos(1000));
+        Long futureJoin = memberSummaryMember(101L, "13800009615", start);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update(
+                "UPDATE gym_member_store SET joined_at=? WHERE member_id=?",
+                java.sql.Timestamp.from(now.plusNanos(1000)),
+                futureJoin);
+        Long inactive = memberSummaryMember(101L, "13800009616", start),
+                deleted = memberSummaryMember(101L, "13800009617", start);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", inactive);
+        jdbc.update("UPDATE gym_member SET deleted=TRUE WHERE id=?", deleted);
+        var q = memberSummaryQuery();
+        var r = mobileMemberSummary.summary(q);
+        assertEquals(4, r.memberCount());
+        assertEquals(2, r.newMemberCount());
+        q.setDate(java.time.LocalDate.of(2026, 6, 11));
+        assertEquals(1, mobileMemberSummary.summary(q).newMemberCount());
+        assertEquals(4, mobileMemberSummary.summary(q).memberCount());
+        q.setDate(java.time.LocalDate.of(2030, 1, 1));
+        assertEquals(0, mobileMemberSummary.summary(q).newMemberCount());
+        assertEquals(4, mobileMemberSummary.summary(q).memberCount());
+        jdbc.update("UPDATE gym_store SET status='inactive'");
+        assertEquals(4, mobileMemberSummary.summary(q).memberCount());
+        jdbc.update("UPDATE gym_store SET deleted=TRUE");
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+    }
+
+    @Test
+    void mobileMemberSummaryRequiresFunctionalPermissionValidAdminAndWholeStoreScope() {
+        memberSummaryFixture();
+        var q = memberSummaryQuery();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobileMemberSummaryController.summary(q));
+        when(permissions.hasAnyPermissions(any(), eq("gym:reports:read"))).thenReturn(true);
+        assertEquals(3, mobileMemberSummaryController.summary(q).getData().memberCount());
+        scoped(101L);
+        q.setStoreId(102L);
+        assertServiceException(() -> mobileMemberSummary.summary(q), STORE_NO_PERMISSION);
+        personalScope(91L);
+        q.setStoreId(null);
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+        q.setStoreId(101L);
+        assertServiceException(() -> mobileMemberSummary.summary(q), STORE_NO_PERMISSION);
+        headquarters();
+        q.setStoreId(null);
+        qrMemberLogin();
+        assertServiceException(() -> mobileMemberSummary.summary(q), MOBILE_IDENTITY_INVALID);
+        loginAs(1L);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileMemberSummary.summary(q), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        when(workAccounts.getUser(1L))
+                .thenReturn(
+                        new cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO()
+                                .setId(1L)
+                                .setStatus(1));
+        assertServiceException(() -> mobileMemberSummary.summary(q), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileMemberSummaryValidatesDateAndStoreAndReturnsZerosForAnEmptyScope() {
+        when(businessClock.now()).thenReturn(memberSummaryNow);
+        var q = memberSummaryQuery();
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
+        q.setDate(null);
+        assertThrows(ConstraintViolationException.class, () -> mobileMemberSummary.summary(q));
+        q.setDate(java.time.LocalDate.of(999, 1, 1));
+        assertServiceException(() -> mobileMemberSummary.summary(q), BUSINESS_DATE_INVALID);
+        q.setDate(java.time.LocalDate.of(9999, 1, 1));
+        assertServiceException(() -> mobileMemberSummary.summary(q), BUSINESS_DATE_INVALID);
+        q.setDate(java.time.LocalDate.of(2026, 6, 10));
+        q.setStoreId(0L);
+        assertThrows(ConstraintViolationException.class, () -> mobileMemberSummary.summary(q));
+        q.setStoreId(999L);
+        assertEquals(0, mobileMemberSummary.summary(q).memberCount());
     }
 }

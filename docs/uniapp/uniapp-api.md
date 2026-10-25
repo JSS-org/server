@@ -544,7 +544,7 @@ Content-Type: application/json
 | --- | --- | --- | --- |
 | `GET W/reports/sales` | 管理者/总部 | `P,storeId?:ID,startDate:Date,endDate:Date,productType?:card或course,employeeId?:ID` | `{list:SaleRow[],total:int,summary:SalesSummary}` |
 | `GET W/reports/performance` | 员工及以上 | `P,storeId?:ID,startDate:Date,endDate:Date,groupBy:employee或store` | `{list:PerformanceRow[],total:int,summary:PerformanceSummary}` |
-| `GET W/reports/member-summary` | 管理者/总部 | `storeId?:ID,date:Date` | `{memberCount:int,privateCourseMemberCount:int,newMemberCount:int,expiringCardCount:int,expiringCourseCount:int}` |
+| `GET W/reports/member-summary` | 管理者/总部 | `storeId?:ID,date:Date` | `{memberCount:int,privateCourseMemberCount:int,newMemberCount:int,expiringCardCount:int,expiringCourseCount:int,date:Date,updatedAt:DateTime}` |
 
 `SaleRow`：`id,orderNo?,storeId,employeeId?,productType,productName?,paidAmount:Money,refundedAmount:Money,netAmount:Money,paidAt:DateTime?`。
 
@@ -821,7 +821,7 @@ V015增加`gym_equipment.public_scene`可空列及租户内唯一索引，历史
 
 ## 销售报表实施口径（2026-10-25）
 
-总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩已在后续批次实现（见下）；107会员汇总及77概览仍待开发。
+总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩已在后续批次实现（见下）；107会员汇总已在后续批次实现（见下）；77概览仍待开发。
 
 startDate、endDate必填，按Asia/Shanghai自然日`[startDate,endDate)`，支持1000～9999年、1～366个自然日；pageNo>=1、pageSize<=200。商品筛选card/course，其中course对应原财务流水private；未知筛选值拒绝。
 
@@ -850,3 +850,23 @@ employee分组将同员工在所选门店的业绩合并为一行；范围只有
 summary.netAmount含未归属收入；employeeCount只计算具名员工ID，不含未归属行，storeCount为实际筛选门店数。averagePerEmployeeAmount=已归属员工净额/employeeCount，averagePerStoreAmount=总净额/storeCount，averagePerDayAmount=对应行净额/查询自然日数；分母为0返回"0.00"，金额两位小数四舍五入。本人模式所有金额、课消及人数只来自本人和本人当前任职范围，不返回其他员工数量或门店总收入。
 
 所有聚合在SQL中先限定租户/门店/本人/时间，读取共享只读REPEATABLE_READ事务；服务只对聚合主体和可核实人员排序分页，不加载完整交易流水。复用V016财务索引，无新DDL、权限或自动授权。历史人事口径限制、海量主体排序、生产MySQL聚合性能及部署HTTP尚未完成验证；前端未改动。
+
+## 会员汇总已实现补充（2026-10-25）
+
+总表107 `GET /admin-api/gym/mobile/reports/member-summary`已实现。请求为可选正整数storeId和必填date（Asia/Shanghai自然日，1000～9998年）；要求有效后台身份、gym:reports:read和整店数据范围。不指定storeId时汇总当前授权且未删除的门店，包含已停用门店；指定范围外门店拒绝。只有SELF范围不能读取整店人数，不指定门店返回零汇总；没有数据或授权范围内不存在的门店返回零值。
+
+**这是当前会员与权益汇总，不是指定历史日期的总量快照。** date仅筛选newMemberCount的注册日期，响应回显date并增加updatedAt（含时区偏移的实际统计时点）。其他四项指标按updatedAt计算。现有档案、门店关系和权益状态没有完整历史版本，无法精确还原某个过去日期的人口/权益总量；当时注册但现已停用、删除或不在可见范围的会员，也不会出现在newMemberCount中。未来date返回新增0，但其他指标仍是当前值。
+
+| 字段 | 统计口径 |
+| --- | --- |
+| memberCount | 当前active、未删除、registeredAt不晚于统计时点且在至少一个所选门店有已生效未删除关系的会员档案人数；含潜客，不等于已付费人数 |
+| privateCourseMemberCount | 上述人群中，在所选门店拥有active、已开始、未到期且remainingSessions>0私教包的人数；私教包门店必须同时存在该会员当前有效关系 |
+| newMemberCount | 上述当前人群中，初次registeredAt位于date当天上海时间左闭右开区间的人数；新增门店关系不当作新会员 |
+| expiringCardCount | 上述人群中，至少一张active、已开始、有效至未来30×24小时内的卡的持有人数；次卡还要求remainingUses>0，卡适用门店与会员关系必须在同一所选门店相交 |
+| expiringCourseCount | 上述私教会员中，至少一个有效私教包在未来30×24小时内到期的人数 |
+
+临期窗口为 `updatedAt < expiresAt <= updatedAt + 30×24小时`，精确到微秒；恰好已到期不计，恰好30天计入。无到期时间的权益不算临期，未开始/停用/删除/耗尽的权益不计。预占余额不从有效权益余额中再次扣减：这些人数用于统计持有权益，不表示此刻可再预约的人数。
+
+全部人数在所选门店联合范围按会员ID去重；同人多张卡、多个私教包或跨店仍只计一次，因此各店人数相加可能大于联合人数。五项都是人数，临期字段不是卡数/包数；彼此有交集，不能求和作为总人数。响应仅返回五个整数、date、updatedAt，不含会员ID、手机号、姓名或卡号。
+
+查询以当前租户、门店、会员关系和权益状态在SQL中限定，EXISTS避免多对多联接放大；门店列表与单次统计共享只读REPEATABLE_READ事务。无新DDL、权限定义或自动授权；既有会员/开卡/私教业务写流程未变。历史快照、生产规模查询计划及部署HTTP联调未完成，前端未改动。

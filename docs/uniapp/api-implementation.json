@@ -1264,8 +1264,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/reports/member-summary",
       "description": "统计授权门店会员、私教会员、新客和临期权益人数",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileMemberSummaryController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileMemberSummaryService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileMemberSummaryControllerTest.java"
+      ]
     },
     {
       "id": 108,

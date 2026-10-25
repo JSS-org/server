@@ -594,3 +594,9 @@ Mapper以确认财务事件为事实源，原始筛选SQL共享于总金额/去�
 `GymMobilePerformanceController → GymMobilePerformanceService`验证功能权限、后台身份及日期；通过整店范围或显式SELF身份/任职确定允许门店及可选唯一employee条件。混合权限先取整店，明确范围外门店才可进入本人规则；本人拒绝store分组。
 
 `GymMobilePerformanceMapper`分别聚合财务归属金额/去重订单和confirmed课消条数，所有谓词在SQL内绑定，未加载原始交易明细。服务并入当前可核实零业绩员工/门店，保留事件中的历史员工和未归属行，计算去重人数、均值、排名后分页；全程只读REPEATABLE_READ。人事模型没有完整离职/任职历史，不能从现表还原全部历史零业绩编制，实施文档明确这一限制。无新表/迁移或授权扩展。
+
+## 移动会员与临期权益汇总（2026-10-25 增量）
+
+`GymMobileMemberSummaryController → GymMobileMemberSummaryService → GymMobileMemberSummaryMapper`复用reports:read、当前有效后台身份与整店数据范围；SELF不授予整店人口查询。服务捕获一次业务时钟，查询当前授权未删除门店，生成上海注册日边界和30×24小时临期界限。
+
+Mapper以当前有效会员档案为外层一人一行，会员门店、卡适用门店及私教包使用同租户同门店EXISTS过滤；一次聚合得到五项人数，避免多张权益或跨店关系乘积。门店读取与统计共享只读REPEATABLE_READ事务，不加载会员明细到服务层。date只筛选当前人群中的初次注册日，updatedAt标识其余指标的实际统计时点；缺历史状态版本时不伪造历史总量。无新表、缓存、权限定义或既有写流程修改。

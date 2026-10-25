@@ -973,3 +973,23 @@ git diff --check
 SELF仅本人80.00及2条课消、禁止store分组，指定本人单店仅40.00；错误门店、任职删除、离职、无SELF、错误账号类型和租户拒绝。混合权限默认只整店范围、范围外本人门店显式下钻不扩大权限。历史员工/负退款保留、未来任职不作为零业绩分母；没有员工的纯未归属收入均值为0。MVC验证必填日期/groupBy、非法筛选和页大小、Money字符串、rank可空及伪造employeeId不能选择主体；最终清理为每参数仅一个值的夹具后全量通过。
 
 日志：/tmp/uniapp-performance-focused.log、/tmp/uniapp-performance-final-tests.log、/tmp/uniapp-performance-package.log。这些测试证明当前数据口径，不证明可重建全部历史在职人数；缺少完整人事变更历史的限制保留。未执行生产MySQL聚合计划/规模压测或部署HTTP联调，前端和业务数据库未修改。
+
+## 2026-10-25 会员汇总、跨店去重及临期边界
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am spotless:apply spotless:check package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+专项9项通过后，完整gym **630项通过**（组织服务362项，新增会员汇总7项；MVC2项），member4通过/1既有禁用跳过。Spotless和server依赖打包通过，打包跳过测试；源码映射 **82/135**，余53项。没有DDL，不重跑既有V016迁移；仍67表，上一批隔离MySQL60检查的证据不代表本次生产SQL性能验证。
+
+真实H2/Mapper/权限测试通过原会员、开卡与私教发放服务建立跨店会员、多张卡/包，验证全域3人、分店各2人、私教/临期持有人各1人；会员关系与权益必须在同一授权店相交，关联表和权益租户过滤不可绕过。精确到微秒验证恰好现在/30天/超过30天，永久权益、未开始、停用、删除、耗尽与预占不重复扣减。初次注册日上海零点左闭右开、未来注册/关系排除、当前潜客计入、当前失效档案排除；改变date只改变新增人数，停用门店保留、删除门店排除。
+
+功能权限、SELF不能读取整店、显式跨店拒绝、会员令牌/租户不匹配/停用后台账号拒绝；无数据、日期上下界和非法门店参数覆盖。MVC验证日期与门店绑定、无效日期/缺参/零门店拒绝、整数与updatedAt序列化、传入memberId不能选择主体。响应不含个人档案字段。完整回归后仅补充OpenAPI说明，最终格式化及打包覆盖该注解改动。
+
+日志：/tmp/uniapp-member-summary-focused.log、/tmp/uniapp-member-summary-final-tests.log、/tmp/uniapp-member-summary-package.log。未做历史快照还原、生产MySQL聚合计划/规模压测或部署HTTP联调；未改前端或业务数据库。

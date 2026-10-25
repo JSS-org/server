@@ -1075,3 +1075,26 @@ git diff --check
 SELF只允许本人的商品及所负责会员，撤销负责关系后拒绝旧键；功能权限、后台身份、跨店、跨租户与总部账号下真实会员门店关系均验证。并发同键只有一个申请，金额150与150.00及原因首尾空白规范化重放，改金额冲突；错误模板/同价申请失败后可复用键，旧后台混合卡模板指令拒绝。MVC覆盖六字段绑定、Money及审批投影、非法金额/空原因、未知amount/status和缺失幂等头。
 
 日志：/tmp/uniapp-course-price-focused.log、/tmp/uniapp-course-price-final-tests.log（首次全量）、/tmp/uniapp-course-price-final-tests-2.log（最终含兼容保护）、/tmp/uniapp-course-price-package.log。旧二进制的拒绝行为由已检查的旧分支必需参数推断，本步验证了持久化快照缺少该字段，未执行旧新版本混部署；上线前统一升级审批实例。未实现117–118报价或订单结算，未验证生产HTTP/规模/真实第三方。业务库及前端未修改。
+
+## 2026-10-25 私教报价生成、固定期限和会员读取
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+17项专项通过，完整gym **697项通过**（组织服务417项，本批14项；MVC3项），member4通过/1既有禁用跳过；Spotless与server依赖打包通过，打包跳过测试。真实隔离MySQL/Flyway **73项检查通过**，全部临时库清理；V019后68表，下一版本V020。源码映射 **91/135**，余44项。
+
+真实H2/Mapper/身份/权限/事务验证：整店原价和批准优惠价真实持久化，金额不接受客户端传入；旧公开改价不能替代专属审批，pending/rejected/错会员/错商品/错店拒绝。SELF必须使用本人已批准申请，不能按原价绕过审批或借用别人申请；撤销当前负责关系/门店权限以及功能权限后缓存不能绕过授权。
+
+同审批不同键双线程生成一份报价，同键并发原价报价也只一份；同键换范围冲突。已生成优惠报价在不同键下保持同ID/金额/原截止时间，到期前1微秒仍active，恰好到期expired；同键仍重放首次响应。商品改变前未发出的优惠报价拒绝，已发报价expired且冻结值不变，商品编辑/报价创建竞争不会用新条款生成旧优惠。门店停用导致首次生成失败，恢复后原键可成功，失败事务未留下报价。
+
+会员读取以令牌真实绑定为准，拒绝后台令牌、其他指定会员、跨租户、已解除门店关系和停用会员；未限定会员的报价仍要求同店关系。营业门店/教练状态/任职日期按查询时重查，安全投影不含内部审批和签发人。MVC验证四字段创建、三个未知价格/期限/状态字段拒绝、必传幂等头和会员读取，查询中的memberId不能冒充身份。
+
+迁移额外检查审批/订单绑定唯一索引、微秒精度、权限唯一且无角色授权；实际MySQL允许多个NULL审批原价报价、拒绝同租户重复审批、允许不同租户相同审批编号，旧库接管不伪造报价。日志：/tmp/uniapp-quotes-focused.log、/tmp/uniapp-quotes-final-tests.log、/tmp/uniapp-quotes-migrations.log、/tmp/uniapp-quotes-package.log。used订单状态仅预留字段和读取映射，本步没有订单消费流程或其测试，不据此宣称结算可用。未验证前端分享页面存在/打开、真实支付、生产HTTP及规模；业务库与前端未改。

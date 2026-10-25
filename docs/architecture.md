@@ -627,3 +627,12 @@ Mapper以当前有效会员档案为外层一人一行，会员门店、卡适�
 `GymMobileCoursePriceController → GymMobileCoursePriceService`检查功能权限、有效后台身份和商品/会员当前范围，规范化金额及原因后进入移动幂等事务，构造来源受控的price_change请求并调用GymApprovalService。SELF商品和指定会员权限在缓存重放前也验证；实际同店会员关系不被总部全范围绕过。
 
 `GymCourseService.quoteApprovalSnapshot`按教练→会员→商品顺序加锁并冻结条款，最终审批通过validateQuoteApproval重新比较。新course-quote-products分支只写批准结果，不调用applyApprovedPrice；原course-products分支保持公开价格更新。专属快照用productId且刻意不写sourceId，使旧二进制缺少公开改价必需参数而失败回滚。移动受控投影增加报价范围与版本，无新表/迁移；报价实体及结算绑定为后续独立步骤。
+
+
+## 私教报价持久化与会员读取（2026-10-25 增量）
+
+GymMobileCourseQuotesController/AppGymCourseQuotesController → GymMobileCourseQuoteService，分别要求有效后台账号及courses:quote、或令牌绑定会员。后台创建先验证当前范围和SELF审批归属再查幂等缓存；新操作按请求锁→租户业务互斥→审批锁→课程共享校验的教练/会员/商品锁冻结条款。一个approved专属申请对应一条GymCourseQuoteDO，V019唯一索引在租户内兜底；同申请新键读取原报价不续期，原价不需要审批但仅整店权限可生成。
+
+会员读取使用租户Mapper和真实会员/门店关系，在只读REPEATABLE_READ事务中投影安全Quote；当前产品版本、营业店及教练任职决定active/expired，保留原金额和截止时刻。没有使用后台身份执行会员读取。GymMobileQuoteProperties只控制受限前端分享路径，未更改或部署前端页面。
+
+新增gym_course_quote使当前表数为68，保存签发/到期微秒时间、审批唯一关联及内部条款；used_order_id作为未来原子订单绑定字段，当前报价HTTP接口无写入该字段的能力，也不创建订单或财务事件。后续订单创建及支付确认须接入报价重验和消费规则，不能将查询状态当作最终结算许可。

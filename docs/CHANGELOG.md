@@ -2780,3 +2780,36 @@ V018只定义gym:cards:issue，不授予角色、不新增页面或表，仍67�
 ### 未做 / 后续
 
 85项新增本地实现、4项复用源码、46项待开发。117–118报价实体、链接/有效期、会员读取及订单结算绑定继续后续小步；批准结果目前不能直接下单。外部支付/签约/设备/监控继续暂缓。本地提交不推送，保留原始uniapp.md内容和暂存状态。
+
+## [2026-10-25 19:10 ~ 19:21] 私教报价生成和会员受控读取
+
+### 意图
+
+补齐总表117–118，让原价或经批准的专属价格成为持久化报价，固定期限并限定可读取会员，换请求键不能续期或绕过审批。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileCourseQuotesController.java`、`AppGymCourseQuotesController.java`、`GymMobileCourseQuoteVO.java`、`GymMobileCourseQuoteService.java` | 新增 | 创建/本人读取、金额来源和审批归属、当前范围、幂等及安全投影 |
+| `GymCourseQuoteDO.java`、`GymCourseQuoteMapper.java`、`GymMobileQuoteProperties.java` | 新增 | 报价持久化、锁入口与受限分享路径配置 |
+| `ErrorCodeConstants.java` | 修改 | 报价不可见及审批不可用错误 |
+| `V019__gym_course_quotes.sql`、`script/gym/verify-migrations.py`、H2建表/清理 | 新增/修改 | 报价表和租户唯一约束、权限定义、不授予角色，真实MySQL验证 |
+| `GymOrganizationServiceTest.java`、`GymMobileCourseQuotesControllerTest.java` | 修改/新增 | 十四项业务及三项MVC，实际报价/过期/隔离/并发 |
+| `docs/uniapp/`四份接口文档/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 91/135、报价与订单边界、分享对接配置和V019部署说明 |
+
+### 结构关系
+
+后台接口校验courses:quote、当前商品/会员范围及SELF申请人归属，再进入幂等记录、租户互斥、审批行和课程共享资格锁。首次报价验证批准快照并保存24小时期限，数据库租户/审批唯一保证只发一次；重复新键读取原报价不续期。会员接口按真实绑定身份及同店关系，在只读快照中检查当前商品/营业店/教练资格并投影八字段，不借用后台身份。分享路径配置仅生成quoteId链接。
+
+### 验证证据
+
+17项专项与完整gym697项通过，member4项通过/1既有禁用跳过；Spotless、server依赖打包及差异检查通过。真实隔离MySQL/Flyway73检查通过、临时库清理；实际验证NULL审批多报价、同租户重复审批拒绝和跨租户独立唯一。业务覆盖按批准金额、同审批不续期、精确到期边界、商品编辑竞争、幂等失败回滚及会员/SELF/功能权限隔离。源码映射91/135，日志与命令见testing。
+
+### 影响面 / 风险
+
+新增V019表及gym:courses:quote权限定义，当前68表，无历史回填/角色授权；部署先迁移验证、更新审批和报价服务后显式授权。share-page默认路径为预留对接约定，未验证前端注册，部署需配置真实页面；前端和业务库未改。active不代表有可用支付渠道，过期也涵盖当前商品/营业/任职条件失效。未执行生产HTTP、分享页面或规模联调。
+
+### 未做 / 后续
+
+87项新增本地实现、4项复用源码、44项待开发。used_order_id仅预留及读取映射，创建报价不消费；后续20–26订单须原子验证并绑定报价，当前不宣称可以下单/付款。真实支付、签约、设备与监控继续暂缓。小步本地提交，不推送，原始uniapp.md内容及暂存状态保留。

@@ -80,3 +80,5 @@ DELETE FROM gym_mobile_lesson_qr;
 
 DELETE FROM gym_feedback_attachment;
 DELETE FROM gym_feedback;
+
+DELETE FROM gym_course_quote;

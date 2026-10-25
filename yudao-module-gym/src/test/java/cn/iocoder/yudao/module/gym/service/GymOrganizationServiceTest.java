@@ -50,6 +50,10 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCourseQuoteService.class,
+    cn.iocoder.yudao.module.gym.framework.mobile.GymMobileQuoteProperties.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCourseQuotesController.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymCourseQuotesController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCoursePriceService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCoursePriceController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCardIssueService.class,
@@ -16593,6 +16597,361 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertEquals(
                 new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
         assertEquals(3, courses.requireProduct(ids.get(3), false).getSessionCount());
+        assertEquals(0, cardIssuePackCount());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCourseQuoteService mobileQuotes;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.course.GymCourseQuoteMapper courseQuotes;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCourseQuotesController
+            mobileQuotesController;
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCourseQuoteVO.Create quoteRequest(
+            List<Long> ids) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileCourseQuoteVO
+                        .Create();
+        req.setStoreId(101L);
+        req.setProductId(ids.get(3));
+        req.setMemberId(ids.get(1));
+        return req;
+    }
+
+    Long approvedQuoteApplication(List<Long> ids) {
+        var first =
+                mobileCoursePrice.create(
+                        coursePrice(ids), "quote-application-" + java.util.UUID.randomUUID());
+        loginAs(91L);
+        approvals.decide(Long.valueOf(first.id()), decision("approve"));
+        loginAs(1L);
+        return Long.valueOf(first.id());
+    }
+
+    @Test
+    void mobileQuoteOriginalPricePersistsAndMemberGetsOnlySafeContractAndSharePath() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var first = mobileQuotes.create(quoteRequest(ids), "quote-original-price");
+        assertEquals("200.00", first.amount());
+        assertEquals("active", first.status());
+        var row = courseQuotes.selectById(Long.valueOf(first.id()));
+        assertEquals(1, row.getProductVersion());
+        assertEquals(
+                java.time.Duration.ofHours(24),
+                java.time.Duration.between(row.getIssuedAt(), row.getExpiresAt()));
+        assertNull(row.getApprovalId());
+        assertNull(row.getUsedOrderId());
+        assertEquals("/pages/course-quote/detail?quoteId=" + first.id(), first.sharePath());
+        qrMemberLogin();
+        assertEquals(first, mobileQuotes.get(Long.valueOf(first.id())));
+        String json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(first);
+        assertFalse(json.contains("approvalId"));
+        assertFalse(json.contains("issuerUserId"));
+        assertFalse(json.contains("requestSnapshot"));
+        assertFalse(json.contains("reason"));
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void mobileQuoteApprovedApplicationCanIssueOnlyOnceAndNeverRenewByChangingRequestKey() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        var first = mobileQuotes.create(req, "quote-approved-first");
+        assertEquals("150.00", first.amount());
+        var original = courseQuotes.selectById(Long.valueOf(first.id()));
+        when(businessClock.now()).thenReturn(original.getExpiresAt().minusNanos(1000));
+        assertEquals(first, mobileQuotes.create(req, "quote-approved-second"));
+        when(businessClock.now()).thenReturn(original.getExpiresAt());
+        var expired = mobileQuotes.create(req, "quote-approved-third");
+        assertEquals(first.id(), expired.id());
+        assertEquals(first.expiresAt(), expired.expiresAt());
+        assertEquals("expired", expired.status());
+        assertEquals(first, mobileQuotes.create(req, "quote-approved-first"));
+        assertEquals(1, courseQuotes.selectCount());
+        qrMemberLogin();
+        assertEquals(expired, mobileQuotes.get(Long.valueOf(first.id())));
+    }
+
+    @Test
+    void mobileQuoteRequiresApprovedSpecialSourceAndExactMemberProductStore() {
+        var ids = cardIssueFixture();
+        var application = mobileCoursePrice.create(coursePrice(ids), "quote-pending-application");
+        var req = quoteRequest(ids);
+        req.setApprovalId(Long.valueOf(application.id()));
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-pending-attempt"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        loginAs(91L);
+        approvals.decide(req.getApprovalId(), decision("reject"));
+        loginAs(1L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-rejected-attempt"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        req.setMemberId(null);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-wrong-member"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setMemberId(ids.get(1));
+        Long other = Long.valueOf(courses.createProduct(courseProduct(101L, ids.get(5))).getId());
+        req.setProductId(other);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-wrong-product"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setProductId(ids.get(3));
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-wrong-store"), STORE_NO_PERMISSION);
+        assertEquals(0, courseQuotes.selectCount());
+    }
+
+    @Test
+    void mobileQuoteLegacyPublicPriceApprovalCannotAuthorizeSpecialQuote() {
+        var ids = cardIssueFixture();
+        var legacy =
+                new cn.iocoder.yudao.module.gym.controller.admin.approval.vo
+                        .GymApprovalCreateReqVO();
+        legacy.setStoreId(101L);
+        legacy.setTemplateId(publishedApproval("price_change", ids.get(4)));
+        legacy.setBusinessType("price_change");
+        legacy.setTitle("公开价格变更");
+        legacy.setSourceType("course-products");
+        legacy.setSourceId(ids.get(3));
+        legacy.setRequestedPrice(new BigDecimal("150.00"));
+        var approval = approvals.create(legacy, "quote-legacy-global");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(approval.getId()), decision("approve"));
+        loginAs(1L);
+        var req = quoteRequest(ids);
+        req.setApprovalId(Long.valueOf(approval.getId()));
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-global-invalid"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        req.setApprovalId(null);
+        assertEquals("150.00", mobileQuotes.create(req, "quote-current-public").amount());
+    }
+
+    @Test
+    void mobileQuoteChangedProductBlocksNewDiscountAndExpiresExistingQuote() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        var original = mobileQuotes.create(quoteRequest(ids), "quote-before-edit");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-after-edit"), APPROVAL_SOURCE_CHANGED);
+        assertEquals(1, courseQuotes.selectCount());
+        qrMemberLogin();
+        var stale = mobileQuotes.get(Long.valueOf(original.id()));
+        assertEquals("expired", stale.status());
+        assertEquals(original.amount(), stale.amount());
+        assertEquals(original.expiresAt(), stale.expiresAt());
+    }
+
+    @Test
+    void mobileQuoteSelfNeedsOwnApprovedApplicationAndCannotReuseAnotherApplicantsApproval() {
+        var ids = cardIssueFixture();
+        Long managersApproval = approvedQuoteApplication(ids);
+        var applicationReq = coursePrice(ids);
+        memberCoaches.replace(ids.get(1), 101L, responsibility(ids.get(5)));
+        personalScope(92L);
+        var broad = new DeptDataPermissionRespDTO();
+        broad.setAll(true);
+        when(permissions.getDeptDataPermission(91L)).thenReturn(broad);
+        var req = quoteRequest(ids);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-self-original"), STORE_NO_PERMISSION);
+        req.setApprovalId(managersApproval);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-self-not-own"),
+                COURSE_QUOTE_APPROVAL_INVALID);
+        var own = mobileCoursePrice.create(applicationReq, "quote-self-application");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(own.id()), decision("approve"));
+        loginAs(92L);
+        req.setApprovalId(Long.valueOf(own.id()));
+        assertEquals("150.00", mobileQuotes.create(req, "quote-self-approved").amount());
+        headquarters();
+        loginAs(1L);
+        memberCoaches.replace(ids.get(1), 101L, responsibility());
+        personalScope(92L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-self-approved"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileQuoteFunctionalPermissionAndCurrentStoreScopeProtectEvenCachedResponse() {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileQuotesController.create(req, "quote-replay-permission"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:courses:quote"))).thenReturn(true);
+        var first = mobileQuotesController.create(req, "quote-replay-permission").getData();
+        assertEquals("active", first.status());
+        scoped(102L);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-replay-permission"), STORE_NO_PERMISSION);
+        headquarters();
+        when(permissions.hasAnyPermissions(any(), eq("gym:courses:quote"))).thenReturn(false);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileQuotesController.create(req, "quote-replay-permission"));
+    }
+
+    @Test
+    void mobileQuoteMemberCannotReadOthersOrOtherTenantAndRequiresRealMembershipAndIdentity() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        Long other = Long.valueOf(members.create(member(101L, "13800009903")).getId());
+        var req = quoteRequest(ids);
+        req.setMemberId(other);
+        var others = mobileQuotes.create(req, "quote-other-buyer");
+        var own = mobileQuotes.create(quoteRequest(ids), "quote-own-buyer");
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(own.id())), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(others.id())), COURSE_QUOTE_NOT_EXISTS);
+        assertEquals(own, mobileQuotes.get(Long.valueOf(own.id())));
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-member-create"), MOBILE_IDENTITY_INVALID);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_course_quote SET tenant_id=2 WHERE id=?", Long.valueOf(own.id()));
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(own.id())), COURSE_QUOTE_NOT_EXISTS);
+        jdbc.update("UPDATE gym_course_quote SET tenant_id=1 WHERE id=?", Long.valueOf(own.id()));
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(own.id())), COURSE_QUOTE_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileQuoteGenericQuoteAllowsOnlyCurrentSameStoreMembers() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        Long otherStore = Long.valueOf(members.create(member(102L, "13800009904")).getId());
+        var req = quoteRequest(ids);
+        req.setMemberId(null);
+        var generic = mobileQuotes.create(req, "quote-generic-price");
+        assertNull(generic.memberId());
+        qrMemberLogin();
+        assertEquals(generic, mobileQuotes.get(Long.valueOf(generic.id())));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_mobile_identity SET member_id=? WHERE user_id=50", otherStore);
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(generic.id())), COURSE_QUOTE_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileQuoteConcurrentDifferentKeysForOneApprovalCreateExactlyOneQuote() throws Exception {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        var outcomes =
+                workCourseRace(
+                        () -> mobileQuotes.create(req, "quote-race-key-one"),
+                        () -> mobileQuotes.create(req, "quote-race-key-two"));
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, courseQuotes.selectCount());
+        assertEquals(
+                new BigDecimal("200.00"), courses.requireProduct(ids.get(3), false).getPrice());
+    }
+
+    @Test
+    void mobileQuoteConcurrentSameKeyAndChangedPayloadUseDurableIdempotency() throws Exception {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        var outcomes =
+                workCourseRace(
+                        () -> mobileQuotes.create(req, "quote-same-key-race"),
+                        () -> mobileQuotes.create(req, "quote-same-key-race"));
+        assertEquals(outcomes.get(0), outcomes.get(1));
+        assertEquals(1, courseQuotes.selectCount());
+        req.setMemberId(null);
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-same-key-race"), MOBILE_IDEMPOTENCY_CONFLICT);
+    }
+
+    @Test
+    void mobileQuoteFailedBusinessRollsBackKeyAndCanRetryWhenStoreRestored() {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () -> mobileQuotes.create(req, "quote-failed-retry"), APPROVAL_REQUEST_INVALID);
+        assertEquals(0, courseQuotes.selectCount());
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        assertEquals("active", mobileQuotes.create(req, "quote-failed-retry").status());
+        assertEquals(1, courseQuotes.selectCount());
+    }
+
+    @Test
+    void mobileQuoteCurrentStoreCoachEmploymentAndMemberStateAreRecheckedOnRead() {
+        var ids = cardIssueFixture();
+        qrMemberIdentity(ids.get(1));
+        var quote = mobileQuotes.create(quoteRequest(ids), "quote-current-conditions");
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        qrMemberLogin();
+        jdbc.update("UPDATE gym_employee SET status='inactive' WHERE id=?", ids.get(5));
+        assertEquals("expired", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update("UPDATE gym_employee SET status='active' WHERE id=?", ids.get(5));
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2099-01-01' WHERE employee_id=?",
+                ids.get(5));
+        assertEquals("expired", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2020-01-01' WHERE employee_id=?",
+                ids.get(5));
+        assertEquals("active", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertEquals("expired", mobileQuotes.get(Long.valueOf(quote.id())).status());
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", ids.get(1));
+        assertServiceException(
+                () -> mobileQuotes.get(Long.valueOf(quote.id())), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileQuoteConcurrentProductEditCannotCreateDiscountAgainstNewTerms() throws Exception {
+        var ids = cardIssueFixture();
+        var req = quoteRequest(ids);
+        req.setApprovalId(approvedQuoteApplication(ids));
+        qrMemberIdentity(ids.get(1));
+        var outcomes =
+                workCourseRace(
+                        () -> mobileQuotes.create(req, "quote-create-edit-race"),
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(3);
+                            return courses.patchProduct(ids.get(3), patch);
+                        });
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        if (courseQuotes.selectCount() == 0) {
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    outcomes.get(0));
+        } else {
+            assertEquals(1, courseQuotes.selectCount());
+            var quote = courseQuotes.selectList().getFirst();
+            assertEquals(1, quote.getProductVersion());
+            assertEquals(new BigDecimal("150.00"), quote.getAmount());
+            qrMemberLogin();
+            assertEquals("expired", mobileQuotes.get(quote.getId()).status());
+        }
         assertEquals(0, cardIssuePackCount());
     }
 }

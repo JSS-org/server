@@ -1295,3 +1295,29 @@ CREATE TABLE IF NOT EXISTS gym_feedback_attachment (
  UNIQUE KEY uk_feedback_attachment_file (tenant_id,file_id),
  KEY idx_feedback_attachment_feedback (tenant_id,feedback_id)
 );
+
+-- One immutable 24-hour quote per approved special-price application; no historical quote backfill.
+CREATE TABLE IF NOT EXISTS gym_course_quote (
+ id bigint NOT NULL AUTO_INCREMENT,
+ store_id bigint NOT NULL,
+ product_id bigint NOT NULL,
+ product_version int NOT NULL,
+ member_id bigint DEFAULT NULL,
+ approval_id bigint DEFAULT NULL,
+ issuer_user_id bigint NOT NULL,
+ amount decimal(12,2) NOT NULL,
+ terms_snapshot text NOT NULL,
+ issued_at datetime(6) NOT NULL,
+ expires_at datetime(6) NOT NULL,
+ used_order_id bigint DEFAULT NULL,
+ creator varchar(64) NOT NULL DEFAULT '',
+ create_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updater varchar(64) NOT NULL DEFAULT '',
+ update_time datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ deleted boolean NOT NULL DEFAULT false,
+ tenant_id bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (id),
+ UNIQUE KEY uk_course_quote_approval (tenant_id,approval_id),
+ UNIQUE KEY uk_course_quote_order (tenant_id,used_order_id),
+ KEY idx_course_quote_member (tenant_id,member_id,expires_at)
+);

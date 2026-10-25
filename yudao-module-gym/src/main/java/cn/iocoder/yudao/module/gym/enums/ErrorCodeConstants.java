@@ -230,4 +230,7 @@ public interface ErrorCodeConstants {
     ErrorCode FEEDBACK_INVALID = new ErrorCode(1_070_024_002, "反馈评分、附件或门店资格不符合要求");
     ErrorCode FEEDBACK_ALREADY_REPLIED = new ErrorCode(1_070_024_003, "反馈已有回复，不能覆盖原回复");
     ErrorCode FEEDBACK_ATTACHMENT_INVALID = new ErrorCode(1_070_024_004, "反馈附件无效或不支持安全预览");
+    ErrorCode COURSE_QUOTE_NOT_EXISTS = new ErrorCode(1_070_025_001, "报价不存在或当前会员无权查看");
+    ErrorCode COURSE_QUOTE_APPROVAL_INVALID =
+            new ErrorCode(1_070_025_002, "请使用符合当前商品、会员及申请人范围的已批准专属改价申请");
 }

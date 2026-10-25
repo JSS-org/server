@@ -1415,8 +1415,13 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/course-quotes",
       "description": "依据商品现价或有效审批生成私教报价分享链接",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCourseQuotesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCourseQuoteService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCourseQuotesControllerTest.java"
+      ]
     },
     {
       "id": 118,
@@ -1424,8 +1429,13 @@
       "method": "GET",
       "path": "/app-api/gym/course-quotes/{id}",
       "description": "会员查看适用于自己的私教报价和有效期",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymCourseQuotesController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCourseQuoteService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCourseQuotesControllerTest.java"
+      ]
     },
     {
       "id": 119,

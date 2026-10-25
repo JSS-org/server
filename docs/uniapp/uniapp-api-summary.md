@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **85** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **46** 个。源码映射共 **89 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **87** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **44** 个。源码映射共 **91 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -147,8 +147,8 @@
 | 114 | 工作台 | GET | `/admin-api/gym/mobile/approval-options` | 获取当前业务可用的审批类型和模板 | 已实现，本地测试通过 |
 | 115 | 工作台 | POST | `/admin-api/gym/mobile/approvals/{id}/decisions` | 当前步骤指定审批人提交通过或拒绝决定 | 已实现，本地测试通过 |
 | 116 | 工作台 | POST | `/admin-api/gym/mobile/course-price-applications` | 提交私教专属报价改价申请，不修改商品公开售价 | 已实现，本地测试通过 |
-| 117 | 工作台 | POST | `/admin-api/gym/mobile/course-quotes` | 依据商品现价或有效审批生成私教报价分享链接 | 设计待开发 |
-| 118 | 公共及会员端 | GET | `/app-api/gym/course-quotes/{id}` | 会员查看适用于自己的私教报价和有效期 | 设计待开发 |
+| 117 | 工作台 | POST | `/admin-api/gym/mobile/course-quotes` | 依据商品现价或有效审批生成私教报价分享链接 | 已实现，本地测试通过 |
+| 118 | 公共及会员端 | GET | `/app-api/gym/course-quotes/{id}` | 会员查看适用于自己的私教报价和有效期 | 已实现，本地测试通过 |
 | 119 | 工作台 | GET | `/admin-api/gym/mobile/feedbacks` | 查询门店匿名反馈、评分和建议，不暴露会员身份 | 已实现，本地测试通过 |
 | 120 | 工作台 | POST | `/admin-api/gym/mobile/feedbacks/{id}/replies` | 回复门店收到的反馈或评价 | 已实现，本地测试通过 |
 | 121 | 工作台 | POST | `/admin-api/gym/mobile/activities` | 创建门店活动，设置名额和报名期限 | 已实现，本地测试通过 |

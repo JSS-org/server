@@ -47,6 +47,8 @@ import java.util.concurrent.*;
     GymMobileIdentityService.class,
     GymMobileInvitationService.class,
     GymMobileSubscriptionsService.class,
+    GymMobilePointsService.class,
+    cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.class,
     cn.iocoder.yudao.module.gym.framework.mobile.GymMobileInvitationProperties.class,
     GymMobileIdempotency.class,
     GymMobileRecordsService.class,
@@ -60,6 +62,9 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
     @Resource GymMobileIdentityService identities;
     @Resource GymMobileInvitationService invitations;
     @Resource GymMobileSubscriptionsService mobileSubscriptions;
+    @Resource GymMobilePointsService mobilePoints;
+    @Resource cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService pointLedger;
+    @Resource org.springframework.transaction.PlatformTransactionManager pointTransactions;
     @Resource cn.iocoder.yudao.module.gym.dal.mysql.sales.GymSubscriptionMapper subscriptionRows;
     @Resource cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileInvitationMapper invitationRows;
 
@@ -1320,5 +1325,472 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
                         "gym_business_order",
                         "gym_order_payment"))
             assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Integer.class));
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointsVO.Query pointQuery(
+            String type) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointsVO.Query();
+        req.setType(type);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.Posted postPoints(
+            Long member, String key, String type, long delta, Long original) {
+        return postPoints(member, key, type, delta, "流水说明", original);
+    }
+
+    cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.Posted postPoints(
+            Long member, String key, String type, long delta, String reason, Long original) {
+        var tx = new org.springframework.transaction.support.TransactionTemplate(pointTransactions);
+        tx.setIsolationLevel(
+                org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
+        return tx.execute(
+                status ->
+                        pointLedger.append(
+                                new cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService
+                                        .Posting(member, key, type, delta, reason, original)));
+    }
+
+    @Test
+    void pointsNewMemberReadsActualEmptyStateWithoutCreatingAccountOrRewards() {
+        initialize();
+        var before = jdbc.queryForObject("SELECT COUNT(*) FROM gym_mobile_request", Integer.class);
+        assertEquals(
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointsVO.Balance(
+                        0, 0, 0),
+                mobilePoints.balance());
+        assertEquals(0L, mobilePoints.records(pointQuery(null)).getTotal());
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_account", Integer.class));
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_record", Integer.class));
+        assertEquals(
+                before,
+                jdbc.queryForObject("SELECT COUNT(*) FROM gym_mobile_request", Integer.class));
+    }
+
+    @Test
+    void pointsLedgerStoresRunningBalancesAndGrossIncomeExpenseIncludingReversals() {
+        Long member = initialize();
+        var earn = postPoints(member, "test:earn:1", "earn", 300, null);
+        var spend = postPoints(member, "test:spend:1", "spend", -120, null);
+        postPoints(member, "test:refund:1", "refund", 20, spend.id());
+        var last = postPoints(member, "test:refund:2", "refund", -50, earn.id());
+        assertEquals(150, last.balanceAfter());
+        assertEquals(
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobilePointsVO.Balance(
+                        150, 320, 170),
+                mobilePoints.balance());
+        var page = mobilePoints.records(pointQuery(null));
+        assertEquals(4L, page.getTotal());
+        assertEquals(
+                List.of(150L, 200L, 180L, 300L),
+                page.getList().stream().map(r -> r.balanceAfter()).toList());
+        assertEquals(
+                List.of(-50L, 20L, -120L, 300L),
+                page.getList().stream().map(r -> r.delta()).toList());
+        assertEquals("2026-10-23T12:00+08:00", page.getList().getFirst().createdAt());
+        assertEquals(2L, mobilePoints.records(pointQuery("refund")).getTotal());
+    }
+
+    @Test
+    void pointsSameBusinessEventReplaysFirstResultAndRejectsChangedContent() {
+        Long member = initialize();
+        var first = postPoints(member, "test:event:1", "earn", 100, "  初始积分  ", null);
+        postPoints(member, "test:event:2", "earn", 50, null);
+        assertEquals(first, postPoints(member, "test:event:1", "earn", 100, "初始积分", null));
+        assertEquals(100, first.balanceAfter());
+        assertEquals(150, mobilePoints.balance().balance());
+        assertServiceException(
+                () -> postPoints(member, "test:event:1", "earn", 101, "初始积分", null),
+                POINT_EVENT_CONFLICT);
+        assertServiceException(
+                () -> postPoints(member, "test:event:1", "earn", 100, "其他说明", null),
+                POINT_EVENT_CONFLICT);
+        login(1L, 11L, 1);
+        Long other = initialize();
+        assertServiceException(
+                () -> postPoints(other, "test:event:1", "earn", 100, "初始积分", null),
+                POINT_EVENT_CONFLICT);
+        assertEquals(
+                2, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_record", Integer.class));
+    }
+
+    @Test
+    void pointsPostingRequiresExistingTransactionAndRejectsInvalidShapes() {
+        Long member = initialize();
+        var req =
+                new cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.Posting(
+                        member, "test:mandatory", "earn", 1, "说明", null);
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> pointLedger.append(req));
+        assertServiceException(
+                () -> postPoints(member, "test:zero", "earn", 0, null), POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:earn", "earn", -1, null), POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:spend", "spend", 1, null), POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:refund", "refund", 1, null), POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:original", "earn", 1, 99L), POINT_ENTRY_INVALID);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> postPoints(member, "test invalid", "earn", 1, null));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> postPoints(member, "test:type", "other", 1, null));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> postPoints(member, "test:reason", "earn", 1, " ", null));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> postPoints(member, "test:long", "earn", 1, "x".repeat(201), null));
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> postPoints(member, "test:overflow", "earn", Long.MAX_VALUE, null));
+        assertServiceException(
+                () -> postPoints(Long.MAX_VALUE, "test:member", "earn", 1, null),
+                POINT_ENTRY_INVALID);
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_account", Integer.class));
+    }
+
+    @Test
+    void pointsInsufficientSpendRollsBackAccountCreationAndCanRetrySameEvent() {
+        Long member = initialize();
+        assertServiceException(
+                () -> postPoints(member, "test:spend", "spend", -10, null),
+                POINT_BALANCE_INSUFFICIENT);
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_account", Integer.class));
+        postPoints(member, "test:earn", "earn", 10, null);
+        assertEquals(0, postPoints(member, "test:spend", "spend", -10, null).balanceAfter());
+        assertEquals(
+                2, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_record", Integer.class));
+    }
+
+    @Test
+    void pointsReversalsMustMatchOriginalOwnerTypeDirectionAndRemainingAmount() {
+        Long member = initialize();
+        var earn = postPoints(member, "test:earn", "earn", 100, null);
+        var spend = postPoints(member, "test:spend", "spend", -80, null);
+        var partial = postPoints(member, "test:refund:1", "refund", 30, spend.id());
+        assertServiceException(
+                () -> postPoints(member, "test:refund:invalid", "refund", 51, spend.id()),
+                POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:refund:invalid", "refund", 1, earn.id()),
+                POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:refund:invalid", "refund", -1, spend.id()),
+                POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:refund:invalid", "refund", -1, partial.id()),
+                POINT_ENTRY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:refund:invalid", "refund", 1, Long.MAX_VALUE),
+                POINT_ENTRY_INVALID);
+        login(1L, 11L, 1);
+        Long other = initialize();
+        assertServiceException(
+                () -> postPoints(other, "test:refund:invalid", "refund", 1, spend.id()),
+                POINT_ENTRY_INVALID);
+        login(1L, 10L, 1);
+        postPoints(member, "test:refund:2", "refund", 50, spend.id());
+        assertServiceException(
+                () -> postPoints(member, "test:refund:invalid", "refund", 1, spend.id()),
+                POINT_ENTRY_INVALID);
+        assertEquals(100, mobilePoints.balance().balance());
+    }
+
+    @Test
+    void pointsEarnReversalCanRecordDebtWithoutInventingSpendableBalance() {
+        Long member = initialize();
+        var earn = postPoints(member, "test:earn", "earn", 100, null);
+        postPoints(member, "test:spend", "spend", -80, null);
+        assertEquals(
+                -80, postPoints(member, "test:reversal", "refund", -100, earn.id()).balanceAfter());
+        assertEquals(-80, mobilePoints.balance().balance());
+        assertServiceException(
+                () -> postPoints(member, "test:spend:debt", "spend", -1, null),
+                POINT_BALANCE_INSUFFICIENT);
+        postPoints(member, "test:earn:more", "earn", 90, null);
+        assertEquals(10, mobilePoints.balance().balance());
+    }
+
+    @Test
+    void pointsQueriesUseCurrentIdentityAndKeepHistoryWhenStoreRelationsDisappear() {
+        assertServiceException(mobilePoints::balance, MOBILE_IDENTITY_REQUIRED);
+        Long member = initialize();
+        postPoints(member, "test:earn", "earn", 50, null);
+        jdbc.update("DELETE FROM gym_member_store WHERE member_id=?", member);
+        jdbc.update("UPDATE gym_store SET status='inactive',deleted=true WHERE id=101");
+        assertEquals(50, mobilePoints.balance().balance());
+        assertEquals(1L, mobilePoints.records(pointQuery(null)).getTotal());
+        users.getUser(10L).setStatus(1);
+        assertServiceException(mobilePoints::balance, MOBILE_IDENTITY_INVALID);
+        users.getUser(10L).setStatus(0);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", member);
+        assertServiceException(
+                () -> mobilePoints.records(pointQuery(null)), MOBILE_IDENTITY_INVALID);
+        assertServiceException(
+                () -> postPoints(member, "test:inactive:spend", "spend", -1, null),
+                POINT_ENTRY_INVALID);
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", member);
+        login(1L, 10L, 2);
+        assertServiceException(mobilePoints::balance, MOBILE_IDENTITY_INVALID);
+        login(1L, 10L, 1);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(mobilePoints::balance, MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void pointsQueriesFilterOwnerTenantAndTypeBeforePagination() {
+        Long member = initialize();
+        var first = postPoints(member, "test:earn:1", "earn", 100, null);
+        var second = postPoints(member, "test:spend", "spend", -10, null);
+        var third = postPoints(member, "test:earn:2", "earn", 20, null);
+        login(1L, 11L, 1);
+        Long other = initialize();
+        postPoints(other, "test:other", "earn", 999, null);
+        login(2L, 10L, 1);
+        // Primary keys are globally unique; use the existing owner with a different tenant only for
+        // the fixture.
+        jdbc.update(
+                "INSERT INTO gym_point_account(member_id,balance,total_earned,total_spent,tenant_id) VALUES(?,9999,9999,0,2)",
+                member);
+        jdbc.update(
+                "INSERT INTO gym_point_record(account_id,member_id,business_key,type,delta,balance_after,reason,posted_at,tenant_id) VALUES((SELECT id FROM gym_point_account WHERE tenant_id=2 AND member_id=?),?,'test:foreign','earn',9999,9999,'private',?,2)",
+                member,
+                member,
+                NOW);
+        login(1L, 10L, 1);
+        var req = pointQuery(null);
+        req.setPageSize(1);
+        assertEquals(3L, mobilePoints.records(req).getTotal());
+        assertEquals(third.id().toString(), mobilePoints.records(req).getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(second.id().toString(), mobilePoints.records(req).getList().getFirst().id());
+        req.setType("earn");
+        assertEquals(2L, mobilePoints.records(req).getTotal());
+        assertEquals(first.id().toString(), mobilePoints.records(req).getList().getFirst().id());
+        assertEquals(110, mobilePoints.balance().balance());
+        req.setPageNo(1);
+        req.setType("refund");
+        assertEquals(0L, mobilePoints.records(req).getTotal());
+    }
+
+    @Test
+    void pointsQueryValidationAndHistoryReadsNeverMutateTheLedger() {
+        Long member = initialize();
+        postPoints(member, "test:earn", "earn", 100, null);
+        var account = jdbc.queryForMap("SELECT * FROM gym_point_account");
+        var record = jdbc.queryForMap("SELECT * FROM gym_point_record");
+        for (int i = 0; i < 3; i++) {
+            mobilePoints.balance();
+            mobilePoints.records(pointQuery(null));
+        }
+        assertEquals(account, jdbc.queryForMap("SELECT * FROM gym_point_account"));
+        assertEquals(record, jdbc.queryForMap("SELECT * FROM gym_point_record"));
+        var req = pointQuery("unknown");
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobilePoints.records(req));
+        req.setType(null);
+        req.setPageSize(201);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobilePoints.records(req));
+        req.setPageSize(10);
+        req.setPageNo(0);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobilePoints.records(req));
+    }
+
+    @Test
+    void pointsConcurrentSameEventCreditsOnceWhileDistinctEventsRemainSeparate() throws Exception {
+        Long member = initialize();
+        try (var executor = Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<Callable<Long>>();
+            for (int i = 0; i < 4; i++)
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 1);
+                            try {
+                                return postPoints(member, "test:same", "earn", 100, null).id();
+                            } finally {
+                                clear();
+                            }
+                        });
+            var ids = new HashSet<Long>();
+            for (var result : executor.invokeAll(tasks)) ids.add(result.get(10, TimeUnit.SECONDS));
+            assertEquals(1, ids.size());
+            tasks.clear();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 1);
+                            try {
+                                return postPoints(member, "test:distinct:" + n, "earn", 10, null)
+                                        .id();
+                            } finally {
+                                clear();
+                            }
+                        });
+            }
+            ids.clear();
+            for (var result : executor.invokeAll(tasks)) ids.add(result.get(10, TimeUnit.SECONDS));
+            assertEquals(4, ids.size());
+        }
+        assertEquals(140, mobilePoints.balance().balance());
+        assertEquals(5L, mobilePoints.records(pointQuery(null)).getTotal());
+    }
+
+    @Test
+    void pointsConcurrentSpendsNeverOverdrawAndFailuresLeaveNoEvents() throws Exception {
+        Long member = initialize();
+        postPoints(member, "test:earn", "earn", 100, null);
+        try (var executor = Executors.newFixedThreadPool(4)) {
+            var tasks = new ArrayList<Callable<Boolean>>();
+            for (int i = 0; i < 4; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 1);
+                            try {
+                                try {
+                                    postPoints(member, "test:spend:" + n, "spend", -40, null);
+                                    return true;
+                                } catch (
+                                        cn.iocoder.yudao.framework.common.exception.ServiceException
+                                                e) {
+                                    assertEquals(POINT_BALANCE_INSUFFICIENT.getCode(), e.getCode());
+                                    return false;
+                                }
+                            } finally {
+                                clear();
+                            }
+                        });
+            }
+            int succeeded = 0;
+            for (var result : executor.invokeAll(tasks))
+                if (result.get(10, TimeUnit.SECONDS)) succeeded++;
+            assertEquals(2, succeeded);
+        }
+        assertEquals(20, mobilePoints.balance().balance());
+        assertEquals(3L, mobilePoints.records(pointQuery(null)).getTotal());
+    }
+
+    @Test
+    void pointsConcurrentRefundsCannotReturnMoreThanOriginalSpend() throws Exception {
+        Long member = initialize();
+        postPoints(member, "test:earn", "earn", 100, null);
+        var spend = postPoints(member, "test:spend", "spend", -100, null);
+        try (var executor = Executors.newFixedThreadPool(3)) {
+            var tasks = new ArrayList<Callable<Boolean>>();
+            for (int i = 0; i < 3; i++) {
+                final int n = i;
+                tasks.add(
+                        () -> {
+                            login(1L, 10L, 1);
+                            try {
+                                try {
+                                    postPoints(
+                                            member, "test:refund:" + n, "refund", 60, spend.id());
+                                    return true;
+                                } catch (
+                                        cn.iocoder.yudao.framework.common.exception.ServiceException
+                                                e) {
+                                    assertEquals(POINT_ENTRY_INVALID.getCode(), e.getCode());
+                                    return false;
+                                }
+                            } finally {
+                                clear();
+                            }
+                        });
+            }
+            int succeeded = 0;
+            for (var result : executor.invokeAll(tasks))
+                if (result.get(10, TimeUnit.SECONDS)) succeeded++;
+            assertEquals(1, succeeded);
+        }
+        assertEquals(60, mobilePoints.balance().balance());
+        assertEquals(1L, mobilePoints.records(pointQuery("refund")).getTotal());
+    }
+
+    @Test
+    void pointsRecordAndAccountFailuresRollbackTogetherAndOriginalEventCanRetry() {
+        Long member = initialize();
+        jdbc.execute(
+                "ALTER TABLE gym_point_record ADD CONSTRAINT test_point_record_failure CHECK (delta<>10)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> postPoints(member, "test:failure", "earn", 10, null));
+            assertEquals(
+                    0,
+                    jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_account", Integer.class));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_point_record DROP CONSTRAINT test_point_record_failure");
+        }
+        assertEquals(10, postPoints(member, "test:failure", "earn", 10, null).balanceAfter());
+        jdbc.execute(
+                "ALTER TABLE gym_point_account ADD CONSTRAINT test_point_account_failure CHECK (balance<=10)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> postPoints(member, "test:failure:2", "earn", 5, null));
+            assertEquals(1L, mobilePoints.records(pointQuery(null)).getTotal());
+            assertEquals(10, mobilePoints.balance().balance());
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_point_account DROP CONSTRAINT test_point_account_failure");
+        }
+        assertEquals(15, postPoints(member, "test:failure:2", "earn", 5, null).balanceAfter());
+    }
+
+    @Test
+    void pointsCallerBusinessRollbackAlsoRollsBackLedgerAndAccount() {
+        Long member = initialize();
+        var tx = new org.springframework.transaction.support.TransactionTemplate(pointTransactions);
+        assertThrows(
+                IllegalStateException.class,
+                () ->
+                        tx.execute(
+                                status -> {
+                                    pointLedger.append(
+                                            new cn.iocoder.yudao.module.gym.service.points
+                                                    .GymPointLedgerService.Posting(
+                                                    member,
+                                                    "test:rollback",
+                                                    "earn",
+                                                    100,
+                                                    "说明",
+                                                    null));
+                                    throw new IllegalStateException("later business failure");
+                                }));
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_account", Integer.class));
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_point_record", Integer.class));
+        assertEquals(
+                100, postPoints(member, "test:rollback", "earn", 100, "说明", null).balanceAfter());
+    }
+
+    @Test
+    void pointsNumericBoundsPreserveExactClientIntegersAndRejectOverflowAtomically() {
+        Long member = initialize();
+        long max = cn.iocoder.yudao.module.gym.service.points.GymPointLedgerService.MAX_POINTS;
+        postPoints(member, "test:max", "earn", max, null);
+        assertEquals(max, mobilePoints.balance().balance());
+        assertServiceException(
+                () -> postPoints(member, "test:too-much", "earn", 1, null), POINT_ENTRY_INVALID);
+        assertEquals(max, mobilePoints.balance().totalEarned());
+        assertEquals(1L, mobilePoints.records(pointQuery(null)).getTotal());
     }
 }

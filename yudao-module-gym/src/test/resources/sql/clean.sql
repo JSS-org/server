@@ -90,3 +90,5 @@ DELETE FROM gym_mobile_message;
 DELETE FROM gym_mobile_conversation;
 
 DELETE FROM gym_mobile_invitation;
+DELETE FROM gym_point_record;
+DELETE FROM gym_point_account;

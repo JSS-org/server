@@ -720,8 +720,14 @@
       "method": "GET",
       "path": "/app-api/gym/me/points",
       "description": "获取本人积分余额及累计收支",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointLedgerService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointsControllerTest.java"
+      ]
     },
     {
       "id": 59,
@@ -729,8 +735,14 @@
       "method": "GET",
       "path": "/app-api/gym/me/point-records",
       "description": "查询本人积分获取、消费和返还流水",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymPointsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePointsService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/points/GymPointLedgerService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobilePointsControllerTest.java"
+      ]
     },
     {
       "id": 60,

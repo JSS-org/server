@@ -244,4 +244,7 @@ public interface ErrorCodeConstants {
     ErrorCode MOBILE_CONVERSATION_MESSAGE_INVALID = new ErrorCode(1_070_028_003, "已读消息不属于当前会话或不存在");
     ErrorCode MOBILE_INVITATION_INVALID = new ErrorCode(1_070_029_001, "邀请码无效、已过期或不适用于当前会员及门店");
     ErrorCode MOBILE_INVITATION_UNAVAILABLE = new ErrorCode(1_070_029_002, "当前会员不能为此门店创建邀请");
+    ErrorCode POINT_ENTRY_INVALID = new ErrorCode(1_070_030_001, "积分记账参数或原始流水不合法");
+    ErrorCode POINT_EVENT_CONFLICT = new ErrorCode(1_070_030_002, "积分业务事件已存在且内容不一致");
+    ErrorCode POINT_BALANCE_INSUFFICIENT = new ErrorCode(1_070_030_003, "可用积分不足");
 }

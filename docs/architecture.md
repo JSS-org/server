@@ -709,3 +709,11 @@ IdentityService的首次建档分支直接读取InvitationMapper，避免与邀�
 AppGymSubscriptionsController→GymMobileSubscriptionsService→IdentityService当前有效账号/绑定→GymSubscriptionMapper。两个查询使用只读REPEATABLE_READ，会员/租户/删除/门店条件在SQL分页前应用；详情同样加入本人条件，无需后台数据范围或当前会员门店关系。返回原协议8字段投影，不连接当前商品/门店或渠道凭据；历史门店/商品删除不丢失本人记录。
 
 状态映射固定白名单，unconfigured/failed保留、未知为unknown，旧pending/pending_authorization映射pending_sign、cancelled映射terminated。不以签署时间、计划扣费时间或查询时刻驱动状态转换。V027给gym_subscription新增可空agreement_version和tenant/member/deleted/store/id索引，仍74表；版本来自协议自身，不从实时销售配置推导，历史NULL保留。没有新增写入路径或外部适配器，既有后台合同签约审批逻辑保持。
+
+## 积分账户、不可变流水与会员读取（V028）
+
+AppGymPointsController→MobilePointsService→IdentityService→PointAccount/PointRecordMapper。本人及租户条件在查询前加入，读事务使用REPEATABLE_READ；没有账户时返回零且不写库。账户按tenant/member唯一，流水按tenant/businessKey唯一；有会员/类型/原流水索引，账本使用安全整数和微秒时间。
+
+GymPointLedgerService.append为内部MANDATORY方法，必须由已核验来源/授权的业务事务调用，当前没有生产调用者或对外写接口。锁顺序为租户互斥→会员→同键旧流水→账户→原流水及已发生冲回；查询均锁定当前数据，串行校验余额与原额上限。新流水、累计正负收支和净余额同事务；重复同载荷返回首次流水和当时余额，变更载荷拒绝。earn正向、spend负向且不超支、refund反向关联原earn/spend；不允许修改或删除既有流水。原earn已消费后的冲回可形成负余额，后续支出拒绝，账本忠实保留欠额。
+
+V028两表使当前gym表数76，数据库约束账户恒等式、计数边界、单笔符号/类型及必需原流水。未接消费/邀请或退款自动积分钩子，未造历史账户，未改Card/Commerce/Identity业务；商品与兑换仍待后续，自动奖励暂缓保持。

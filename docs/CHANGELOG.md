@@ -3179,3 +3179,40 @@ python3 script/gym/verify-uniapp-api-coverage.py输出Contract135/mapped113/miss
 ### 未做 / 后续
 
 消费/邀请奖励规则及自动发放按用户要求暂缓；积分账本、商品及兑换仍在原135项目标内待继续实现。本次不把暂缓等同完成，不改变支付、签约、设备和监控的既有暂缓边界。独立本地文档提交，不推送。
+
+## [2026-10-26 00:04 ~ 00:18] 积分账本与本人余额流水查询
+
+### 意图
+
+补齐135项总表58–59，提供真实持久化积分账户与流水读取，并为后续兑换建立原子记账基础。消费及邀请奖励规则按用户要求跳过，不设置默认赠分、不补算历史奖励。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymPointsController.java`、`controller/app/mobile/vo/GymMobilePointsVO.java` | 新增 | 本人余额与流水两个GET，严格响应字段与筛选分页参数 |
+| `service/mobile/GymMobilePointsService.java` | 新增 | 校验有效身份、SQL本人及租户过滤、无账户时只读返回零 |
+| `service/points/GymPointLedgerService.java`、`dal/dataobject/points/`、`dal/mysql/points/` | 新增 | 内部账本、业务键去重、账户锁及原流水累计返还约束 |
+| `enums/ErrorCodeConstants.java` | 修改 | 非法记账、重复事件冲突与余额不足错误 |
+| `sql/gym/migration/mysql/V028__gym_point_ledger.sql`、H2建表/清理、`script/gym/verify-migrations.py` | 新增/修改 | 两表至76表，唯一键、金额约束、索引及15项隔离迁移检查 |
+| `GymMobileMemberServiceTest.java`、`GymMobilePointsControllerTest.java` | 修改/新增 | 16业务+3MVC，覆盖权限、字段、并发、幂等和事务故障 |
+| `docs/uniapp/`契约、总表、实施进度及机器清单 | 修改 | 115/135、积分字段和内部记账边界、自动奖励继续暂缓 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用关系、验证证据、迁移操作及下一版本V029 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+会员Controller→MobilePointsService→当前Identity及积分Mapper；查询在只读快照中先过滤本人/租户再分页，不创建账户。内部LedgerService要求调用方已有事务，获取租户互斥、会员及账户行锁后同时更新流水和余额；相同业务键核对完整载荷，返还或冲回须关联同账户原流水且累计不超原额。调用方后续失败、流水失败或账户更新失败均整体回滚。当前没有生产业务调用者，也没有HTTP增减分入口。
+
+### 验证证据
+
+完整命令见docs/testing.md本批章节：Spotless通过，gym855项通过（会员专项59、组织服务510），member4通过及1项既有禁用跳过；新增16业务+3MVC。真实隔离MySQL/Flyway159检查通过，临时库全部清理；server package -DskipTests成功，打包阶段跳过测试。python3 script/gym/verify-uniapp-api-coverage.py输出Contract135/mapped115/missing20，git diff --check通过。
+
+### 影响面 / 风险
+
+V028新增两表，当前76表、下一V029；先备份并migrate/validate再开放新查询，不回填账户或奖励，不修改权限或角色。累计收入/支出分别统计正向及负向流水，包含返还/冲回；原获分被消费后的冲回可形成欠额，新增消费不得透支。所有公开积分值保持JavaScript安全整数范围。当前采用租户互斥保证一致性，规模性能尚未验证。业务库未迁移，前端和用户原始uniapp.md内容及暂存状态保留。
+
+### 未做 / 后续
+
+当前111项新增本地实现、4项复用源码、20项待开发。61–63商品及兑换、真实发卡和失败返还业务尚未接入；内部账本测试不代表完整兑换验收。消费/邀请自动奖励、退款自动积分冲回和历史补发按已确认边界暂缓；支付、签约、设备及监控外部服务继续暂缓。未做部署HTTP、多节点或规模联调，仅本地小步提交，不推送。

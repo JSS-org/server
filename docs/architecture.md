@@ -574,3 +574,11 @@ AppGymFeedbackController/GymMobileFeedbackController → GymMobileFeedbackServic
 提交在READ_COMMITTED事务内持幂等行锁，按fileId排序锁文件、验证同店本人feedback用途和唯一关联，写反馈及附件并保存首次响应。回复先检查当前范围，再在幂等事务下锁反馈重查范围，仅首次内容可写；重试不覆盖。读取采用只读REPEATABLE_READ快照。反馈新增幂等payload使用有序TreeMap，保持外层键序稳定。
 
 GymFeedbackImages使用内存ImageIO解码、像素边界检查、新建sRGB图像并重新编码，清除原文件名及元数据；提交预检，专用门店下载再次验证并转码，不写新的存储对象。专用附件链路检查反馈/文件实际关系，通用文件服务继续拒绝member_文件。V014只登记权限，不授权角色；前端及外部消息渠道未修改。
+
+## 器械场景码、教学与公开素材（2026-10-25 增量）
+
+`AppGymEquipmentController → GymMobileEquipmentService`在当前租户只读REPEATABLE_READ事务中，通过持久化scene或器械ID定位已发布且active器械，并验证营业门店。读取active教程，投影id/title/instructions及明确image/video Media，不返回DO内部字段。V015的nullable public_scene兼作明确发布标记，默认历史不公开。
+
+`GymEquipmentPublicationController → GymMobileEquipmentService`执行有效后台身份、gym:equipment:write与整店范围校验，锁原器械行后首次生成随机scene或显式清空；与原GymDeviceService编辑使用同一行锁。唯一索引为tenant/scene，重复发布返回原码，撤销后再次发布新码。
+
+`GymEquipmentPublicAssets`验证active教程→已公开器械→营业门店及文件同店/类型/无工作用途绑定，供列表Media投影与既有GymMobilePublicService下载共同使用。下载前再次检查公开引用与文件魔数，复用原公开媒体Controller的范围响应；其他独立公开引用可继续授权共享文件。没有增加对外存储URL、渠道调用或前端改动。

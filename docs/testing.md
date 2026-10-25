@@ -911,3 +911,24 @@ git diff --check
 活动专项11项通过后，完整gym **594项通过**（组织服务334项），member4通过/1既有禁用跳过；Spotless与server依赖打包通过，打包跳过测试。两项新增用例将真实gym_mobile_request行分别改为activityId/memberId两种排列的旧SHA256摘要，取消报名后调用真实服务，均重放首次结果且不占名额、不修改历史摘要与响应。新请求断言固定摘要，活动变更、不同会员的逆序摘要及非法键仍拒绝；其他接口的请求编码保持不变。原活动并发名额及失败回滚测试同时通过。
 
 证据是穷举该两字段历史编码的H2真实事务测试，不代表已执行生产重启、多节点滚动部署或旧版本回滚测试。无DDL，不重复既有V014迁移验证。日志：/tmp/uniapp-idempotency-focused.log、/tmp/uniapp-idempotency-final-tests.log、/tmp/uniapp-idempotency-package.log。源码覆盖仍77/135；前端和业务数据库未修改。
+
+## 2026-10-25 器械场景码、公开图文与视频教学
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+器械专项9项通过后，完整gym **603项通过**（组织服务341项，新增器械业务7项；新MVC2项），member4通过/1既有禁用跳过；Spotless及server依赖打包通过，打包跳过测试。隔离MySQL/Flyway **57检查通过**，全部临时库清理；V015新增nullable scene及租户唯一索引，历史器械保持NULL、原状态和型号不变，表数仍67。源码映射 **79/135**，余56项。
+
+实际H2/Mapper/权限测试验证明确发布之前不可读取、匿名发布后解析、32位场景约束、图文/视频排序和受控字段、不同租户拒绝、错误身份/SELF/错误门店/功能权限拒绝。教程、器械、门店停用及删除影响公开引用；撤销旧码后重发不同码，旧码失效，同文件另一有效公开引用仍可下载。私有类别、工作用途绑定、跨店文件不能从教程泄露；损坏或缺失存储内容拒绝。并发发布得到同一码，数据库失败约束证明失败不留scene。MVC验证两条目标及两条辅助路由、严格body字段、畸形scene、无body发布；非正ID由实际服务校验测试证明。
+
+初轮三个测试断言问题已修正：将公开器械名称中的编码误判为内部字段泄露；匿名功能权限拦截实际抛AuthorizationDeniedException；无方法校验代理的独立MVC测试不能证明路径参数@Positive，改由实际服务负数/零ID拒绝断言验证。修正未放宽生产校验。视频内容测试使用MP4魔数测试字节验证受控读取，并非可播放视频，不能推断编码器兼容或手机拖动播放成功。既有公开媒体范围响应测试随完整回归执行。
+
+日志：/tmp/uniapp-equipment-focused.log、/tmp/uniapp-equipment-final-tests.log、/tmp/uniapp-equipment-migrations.log、/tmp/uniapp-equipment-package.log。Java并发为H2证据，MySQL检查为迁移和旧库接管；未执行真实微信码生成、手机扫码、部署HTTP、视频播放或高并发/大视频内存压测，前端与业务数据库未修改。

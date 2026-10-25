@@ -2527,3 +2527,36 @@ gym592项、member4项通过，1项既有禁用跳过；Spotless及server依赖�
 ### 未做 / 后续
 
 135个目标仍覆盖77个、待开发58个，本次为已有报名接口可靠性修复，不增加数量。继续内部接口；第三方接入按要求暂缓。小步本地提交，不推送，原始uniapp.md和暂存状态保留。
+
+## [2026-10-25 16:56 ~ 17:16] 器械扫码与公开教学
+
+### 意图
+
+实现总表71–72，复用原后台器械/教程数据提供游客扫码解析和图文、视频教学；在公开读取前增加明确发布与撤销，避免历史内部教程自动公开。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../AppGymEquipmentController.java`、`GymMobileEquipmentVO.java`、`GymMobileEquipmentService.java` | 新增 | 两条目标接口，租户内场景解析与受控教学投影 |
+| `GymEquipmentPublicationController.java` | 新增 | 后台明确生成场景码/公开教程及撤销，整店权限与有效账号 |
+| `GymEquipmentPublicAssets.java`、`GymMobilePublicService.java` | 新增/修改 | 图片/MP4公开引用、文件归属及工作用途隔离，共用素材下载 |
+| `GymEquipmentDO.java`、`V015__gym_equipment_public_scene.sql`、测试schema、`ErrorCodeConstants.java` | 新增/修改 | 可空发布场景码、租户唯一索引与明确错误，无历史公开回填 |
+| `GymOrganizationServiceTest.java`、`GymMobileEquipmentControllerTest.java`、`script/gym/verify-migrations.py` | 修改/新增 | 七项业务、两项MVC及57项隔离迁移检查 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 79/135进度、image字段、发布/撤销及扫码/播放验证边界 |
+
+### 结构关系
+
+游客Controller进入租户只读事务，按已发布active器械和营业门店查询；素材服务关联有效教程与同店普通文件并检查用途。后台发布/撤销在原器械行锁内生成或清空scene，与旧器械编辑锁一致；下载复用公开媒体Controller，重新校验当前引用及魔数。
+
+### 验证证据
+
+gym603项与member4项通过，1项既有禁用跳过；Spotless、server依赖打包及真实隔离MySQL/Flyway57项检查通过，临时库清理。新增9项验证匿名访问、历史默认不公开、跨租户/权限/用途隔离、撤销与状态、共享文件引用、并发发布及故障回滚。源码映射79/135；命令、日志及初轮测试断言修正见testing本批条目。
+
+### 影响面 / 风险
+
+部署前须V015并validate，仍67张gym表，无新权限/自动授权。历史教程默认不公开，管理员明确发布后该器械当前及后续active教程对游客可见；停用后再启用恢复原码，永久废止需撤销。教程响应补充image字段，使用纯文本instructions及受控Media URL。逐项关联读取和视频全量字节加载未压测；前端未修改，业务库未迁移。
+
+### 未做 / 后续
+
+75项新增本地实现、4项复用源码、56项待开发，继续后续内部业务。生成本地scene不等于生成微信官方小程序码，未完成手机扫码/实际视频播放/真实设备渠道联调，不修改前端。四类第三方仍暂缓。小步本地提交，不推送；原始uniapp.md及暂存状态保留。

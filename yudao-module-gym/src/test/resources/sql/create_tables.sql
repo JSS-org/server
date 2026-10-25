@@ -798,6 +798,7 @@ CREATE TABLE IF NOT EXISTS gym_device_command (
  KEY idx_device_command_date (tenant_id,device_id,requested_at)
 );
 CREATE TABLE IF NOT EXISTS gym_equipment (
+  public_scene varchar(32) DEFAULT NULL,
  id bigint NOT NULL AUTO_INCREMENT,
  store_id bigint NOT NULL,
  code varchar(64) NOT NULL,
@@ -813,6 +814,8 @@ CREATE TABLE IF NOT EXISTS gym_equipment (
  PRIMARY KEY (id),
  UNIQUE KEY uk_equipment_code (tenant_id,store_id,code)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS uk_equipment_public_scene ON gym_equipment (tenant_id, public_scene);
+
 CREATE TABLE IF NOT EXISTS gym_equipment_tutorial (
  id bigint NOT NULL AUTO_INCREMENT,
  equipment_id bigint NOT NULL,

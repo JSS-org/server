@@ -55,6 +55,10 @@ import java.util.*;
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileFeedbackController.class,
     cn.iocoder.yudao.module.gym.service.marketing.GymActivityParticipationService.class,
     cn.iocoder.yudao.module.gym.service.marketing.GymActivityPublicAssets.class,
+    cn.iocoder.yudao.module.gym.service.device.GymEquipmentPublicAssets.class,
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileEquipmentService.class,
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymEquipmentController.class,
+    cn.iocoder.yudao.module.gym.controller.admin.device.GymEquipmentPublicationController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileActivityService.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymActivitiesController.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileActivityController.class,
@@ -13915,5 +13919,272 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
                 MOBILE_REQUEST_INVALID);
         assertServiceException(
                 () -> mobileActivities.register(activity, "short"), MOBILE_REQUEST_INVALID);
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileEquipmentService mobileEquipment;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymEquipmentController publicEquipment;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.device.GymEquipmentPublicationController
+            equipmentPublications;
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileEquipmentVO.Resolve
+            equipmentScene(String value) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileEquipmentVO
+                        .Resolve();
+        req.setScene(value);
+        return req;
+    }
+
+    Long publicEquipmentFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        return Long.valueOf(
+                deviceService.createEquipment(equipmentRequest(101L, "EQ-PUBLIC")).getId());
+    }
+
+    @Test
+    void mobileEquipmentExplicitPublicationAndAnonymousImageVideoTutorials() {
+        Long id = publicEquipmentFixture();
+        var image = publicImage(101L);
+        var first = tutorialRequest(image.getId());
+        first.setSortOrder(5);
+        var imageTutorial = deviceService.createTutorial(id, first);
+        var video = publicImage(101L);
+        video.setCategory("video");
+        video.setMimeType("video/mp4");
+        files.updateById(video);
+        byte[] bytes = {0, 0, 0, 20, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm', 0, 0, 0, 0};
+        when(fileApi.getFileContentByUrl(video.getUrl())).thenReturn(bytes);
+        var videoTutorial = deviceService.createTutorial(id, tutorialRequest(video.getId()));
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        assertServiceException(() -> publicContent.mediaContent(video.getId()), FILE_NOT_EXISTS);
+        var scene = mobileEquipment.publish(id);
+        assertTrue(scene.scene().matches("[0-9a-f]{32}"));
+        assertEquals(scene, mobileEquipment.publish(id));
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        var resolved = publicEquipment.resolve(equipmentScene(scene.scene())).getData();
+        assertEquals("equipment", resolved.type());
+        assertEquals(id.toString(), resolved.equipmentId());
+        assertEquals("101", resolved.storeId());
+        var view = publicEquipment.tutorials(id).getData();
+        assertEquals(2, view.tutorials().size());
+        assertEquals(videoTutorial.getId(), view.tutorials().get(0).id());
+        assertNull(view.tutorials().get(0).image());
+        assertEquals("video", view.tutorials().get(0).video().type());
+        assertEquals(imageTutorial.getId(), view.tutorials().get(1).id());
+        assertNotNull(view.tutorials().get(1).image());
+        assertNull(view.tutorials().get(1).video());
+        assertEquals("测试说明", view.tutorials().get(1).content());
+        assertTrue(view.tutorials().get(0).video().url().endsWith("?tenantId=1"));
+        assertArrayEquals(bytes, publicContent.mediaContent(video.getId()).getContent());
+        var json = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(view);
+        for (String secret :
+                List.of("uploaderId", "creator", "test://", "publicScene", "model", "\"code\""))
+            assertFalse(json.contains(secret));
+    }
+
+    @Test
+    void mobileEquipmentRevocationAndInactiveResourcesInvalidateSceneAndMedia() {
+        Long id = publicEquipmentFixture();
+        var f = publicImage(101L);
+        Long tutorial =
+                Long.valueOf(deviceService.createTutorial(id, tutorialRequest(f.getId())).getId());
+        var scene = mobileEquipment.publish(id);
+        var status =
+                new cn.iocoder.yudao.module.gym.controller.admin.device.vo.GymTutorialStatusReqVO();
+        status.setStatus("inactive");
+        deviceService.patchTutorial(id, tutorial, status);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        status.setStatus("active");
+        deviceService.patchTutorial(id, tutorial, status);
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.device.vo.GymEquipmentSaveReqVO();
+        patch.setStatus("inactive");
+        deviceService.patchEquipment(id, patch);
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        patch.setStatus("active");
+        deviceService.patchEquipment(id, patch);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(() -> mobileEquipment.publish(id), EQUIPMENT_SCENE_INVALID);
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        assertTrue(mobileEquipment.revoke(id));
+        assertTrue(mobileEquipment.revoke(id));
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_store SET status='active' WHERE id=101");
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        var next = mobileEquipment.publish(id);
+        assertNotEquals(scene.scene(), next.scene());
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertEquals(
+                id.toString(), mobileEquipment.resolve(equipmentScene(next.scene())).equipmentId());
+    }
+
+    @Test
+    void mobileEquipmentRestrictedWrongStoreAndCorruptMediaCannotBePublishedThroughTutorials() {
+        Long id = publicEquipmentFixture();
+        var f = publicImage(101L);
+        deviceService.createTutorial(id, tutorialRequest(f.getId()));
+        mobileEquipment.publish(id);
+        var binding = new cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileWorkFileDO();
+        binding.setFileId(f.getId());
+        binding.setStoreId(101L);
+        binding.setPurpose("coach_profile");
+        binding.setEmployeeId(999L);
+        var bindings =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileWorkFileMapper.class);
+        bindings.insert(binding);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        bindings.deleteById(binding.getId());
+        f.setStoreId(102L);
+        files.updateById(f);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        f.setStoreId(101L);
+        f.setCategory("member_feedback");
+        files.updateById(f);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        f.setCategory("image");
+        files.updateById(f);
+        when(fileApi.getFileContentByUrl(f.getUrl()))
+                .thenReturn("not image".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        when(fileApi.getFileContentByUrl(f.getUrl())).thenReturn(null);
+        assertServiceException(
+                () -> publicContent.mediaContent(f.getId()), FILE_CONTENT_NOT_EXISTS);
+    }
+
+    @Test
+    void mobileEquipmentTenantIsolationAndStrictSceneValidation() {
+        Long id = publicEquipmentFixture();
+        var f = publicImage(101L);
+        deviceService.createTutorial(id, tutorialRequest(f.getId()));
+        var scene = mobileEquipment.publish(id);
+        for (String value :
+                List.of(
+                        "",
+                        "equipment:" + id,
+                        "https://example.org/" + scene.scene(),
+                        scene.scene() + "x",
+                        scene.scene().toUpperCase())) {
+            assertThrows(
+                    ConstraintViolationException.class,
+                    () -> mobileEquipment.resolve(equipmentScene(value)));
+        }
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene("00000000000000000000000000000000")),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(-1L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(0L), MOBILE_REQUEST_INVALID);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobileEquipment.resolve(equipmentScene(scene.scene())),
+                EQUIPMENT_SCENE_INVALID);
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(
+                id.toString(),
+                mobileEquipment.resolve(equipmentScene(scene.scene())).equipmentId());
+    }
+
+    @Test
+    void mobileEquipmentPublicationRequiresFunctionWholeStoreAndValidAdmin() {
+        Long id = publicEquipmentFixture();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> equipmentPublications.publish(id, null));
+        when(permissions.hasAnyPermissions(any(), eq("gym:equipment:write"))).thenReturn(true);
+        assertNotNull(equipmentPublications.publish(id, null).getData().scene());
+        personalScope(91L);
+        assertServiceException(() -> equipmentPublications.publish(id, null), STORE_NO_PERMISSION);
+        assertServiceException(() -> equipmentPublications.revoke(id), STORE_NO_PERMISSION);
+        scoped(102L);
+        assertServiceException(() -> mobileEquipment.publish(id), STORE_NO_PERMISSION);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(() -> mobileEquipment.publish(id), MOBILE_IDENTITY_INVALID);
+        assertServiceException(() -> mobileEquipment.revoke(id), MOBILE_IDENTITY_INVALID);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> equipmentPublications.publish(id, null));
+    }
+
+    @Test
+    void mobileEquipmentConcurrentPublicationIsStableAndFailureRollsBack() throws Exception {
+        Long id = publicEquipmentFixture();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_equipment ADD CONSTRAINT test_equipment_scene CHECK (public_scene IS NULL)");
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileEquipment.publish(id));
+            assertNull(
+                    jdbc.queryForObject(
+                            "SELECT public_scene FROM gym_equipment WHERE id=?", String.class, id));
+        } finally {
+            jdbc.execute("ALTER TABLE gym_equipment DROP CONSTRAINT test_equipment_scene");
+        }
+        var results =
+                workCourseRace(
+                        () -> mobileEquipment.publish(id), () -> mobileEquipment.publish(id));
+        assertEquals(results.get(0), results.get(1));
+        assertInstanceOf(
+                cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileEquipmentVO.Scene
+                        .class,
+                results.get(0));
+    }
+
+    @Test
+    void mobileEquipmentSharedMediaRequiresAtLeastOneCurrentPublishedReference() {
+        Long id = publicEquipmentFixture();
+        Long other =
+                Long.valueOf(
+                        deviceService.createEquipment(equipmentRequest(101L, "EQ-SHARED")).getId());
+        var f = publicImage(101L);
+        Long tid =
+                Long.valueOf(deviceService.createTutorial(id, tutorialRequest(f.getId())).getId());
+        deviceService.createTutorial(other, tutorialRequest(f.getId()));
+        mobileEquipment.publish(id);
+        mobileEquipment.publish(other);
+        mobileEquipment.revoke(id);
+        assertNotNull(publicContent.mediaContent(f.getId()));
+        mobileEquipment.revoke(other);
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        mobileEquipment.publish(id);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.device.GymEquipmentTutorialMapper
+                                .class)
+                .deleteById(tid);
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        deviceService.createTutorial(id, tutorialRequest(f.getId()));
+        files.deleteById(f.getId());
+        assertEquals(0, mobileEquipment.tutorials(id).tutorials().size());
+        assertServiceException(() -> publicContent.mediaContent(f.getId()), FILE_NOT_EXISTS);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.device.GymEquipmentMapper.class)
+                .deleteById(id);
+        assertServiceException(() -> mobileEquipment.tutorials(id), EQUIPMENT_NOT_EXISTS);
     }
 }

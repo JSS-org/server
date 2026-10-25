@@ -17,4 +17,5 @@ public class GymEquipmentDO extends TenantBaseDO {
     private String name;
     private String model;
     private String status;
+    private String publicScene;
 }

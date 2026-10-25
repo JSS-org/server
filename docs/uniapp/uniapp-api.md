@@ -399,7 +399,7 @@ Content-Type: application/json
 | `DELETE A/activities/{id}/registrations/me` | 会员，业务幂等 | 无 | `{status:cancelled}`，遵守活动取消截止时间 |
 | `GET A/me/activity-registrations` | 会员 | `P,status?:string` | `Page<{id:ID,activity:Activity,status:string,registeredAt:DateTime}>` |
 | `POST A/qr-resolutions` | 游客 | `scene:string` | `{type:equipment,equipmentId:ID,storeId:ID}`；仅解析服务端认可的器械码 |
-| `GET A/equipment/{id}/tutorials` | 游客 | 无 | `{equipmentId:ID,name:string,tutorials:[{id:ID,title:string,content:string?,video:Media?}]}` |
+| `GET A/equipment/{id}/tutorials` | 游客 | 无 | `{equipmentId:ID,name:string,tutorials:[{id:ID,title:string,content:string?,image:Media?,video:Media?}]}` |
 
 `Activity`：`id:ID,storeId:ID,storeIds:ID[],title:string,description:string,cover:Media?,startsAt:DateTime,endsAt:DateTime,registrationDeadline:DateTime,cancelDeadline:DateTime?,capacity:int?,registeredCount:int,status:string`。`storeIds`保留原后台跨店活动，`capacity=null`表示历史不限名额；移动创建仍要求1–100000的整数名额。
 
@@ -722,7 +722,7 @@ Content-Type: application/json
 | 工资/报表 | `GymPayrollController`、`GymReportController` | 本人已发布工资、移动工作台指标、统计口径适配 |
 | 订单/包月 | `GymSalesRecordsController` 及 sales 服务 | 会员下单和支付会话，真实支付/代扣闭环 |
 | 团购 | `GymGroupBuyController`、`GymMeituanRetailController` | 会员券资格、预览和确认流程，不直接透出后台接口 |
-| 设备/器械 | `GymDeviceController` | 受限教学展示、设备网关及命令真实回执 |
+| 设备/器械 | `GymDeviceController`；71–72器械公开接口已实现 | 器械场景码及受控图文/视频教学；设备网关及命令真实回执仍暂缓 |
 | 活动/加盟 | `GymMarketingController`、`AppGymFranchiseController` | 本人报名、公开展示；加盟提交沿用已有路径和字段 |
 | 文件 | `GymFileController` | 会员归属模型、适配用途、受控下载 |
 | 反馈 | 64–65、119–120已实现，详见实施进度 | 本人提交与历史、整店匿名查询/回复及受控附件 |
@@ -804,3 +804,17 @@ V014新增gym_feedback、gym_feedback_attachment及gym:feedbacks:read、gym:feed
 ### 活动报名幂等摘要兼容（2026-10-25）
 
 活动报名的新请求使用固定字段顺序计算摘要，同时兼容旧版activityId/memberId两种字段排列的摘要。兼容候选只由服务端当前活动ID与已验证会员ID生成，不接受客户端提交摘要，也不放宽身份、租户或参数匹配。已有请求的摘要与首次响应保持不变：取消后重放旧键仍返回首次报名结果，不会再次报名或占名额。各实例应部署修复版本；回退旧版仍可能遇到旧Map无固定迭代顺序引起的误冲突。其他接口的摘要算法和历史记录未改写。
+
+## 器械扫码与教学实现约定（2026-10-25）
+
+总表71–72已实现，当前租户内游客可访问，但器械必须明确发布。`POST /app-api/gym/qr-resolutions`仅接受`{scene:string}`，scene严格为32位小写十六进制；不接受任意URL、设备ID、门店ID或客户端指定身份。按服务端保存的场景码返回`{type:"equipment",equipmentId,storeId}`。有效租户仍必需，不根据scene自动切换租户；跨租户、未知、已撤销及停用对象返回不可用。
+
+`GET /app-api/gym/equipment/{id}/tutorials`返回`{equipmentId,name,tutorials:[{id,title,content,image:Media?,video:Media?}]}`。为支持原需求的图文教学补充image字段；每项为一份图片或视频，content来自原instructions纯文本。仅展示active教程，按sortOrder升序、ID降序；材料必须是同店普通image（JPEG/PNG/GIF/WebP）或video（MP4），不得有工作用途绑定。失效/删除/跨店/私有文件对应教程不显示；没有有效教程时返回空数组。没有器械列表公开接口，不公开内部编码、型号、上传人、审计字段或存储URL。
+
+先由有`gym:equipment:write`及整店数据范围的有效后台账号调用辅助`POST /admin-api/gym/equipment/{id}/public-scenes`，无body，返回`{equipmentId,scene}`；此操作明确公开该器械的当前和后续active教程。首次生成随机场景码，重复/并发发布返回同一码。`DELETE`同路径撤销，重复撤销返回true；再次发布生成新码，旧码失效。两条后台辅助路由不计入135目标数，无新增权限或自动角色授权。SELF负责关系不授予发布权。
+
+V015增加`gym_equipment.public_scene`可空列及租户内唯一索引，历史器械一律NULL，不自动公开。器械和门店均须active才可公开读取；暂时停用不会删除场景码，重新启用会恢复访问。要永久废止旧码使用上述DELETE；撤销在门店停用时也可操作。发布/撤销和原器械编辑共用器械行锁，失败不保留场景码。
+
+图片/视频使用既有`GET /app-api/gym/public-media/{id}/content?tenantId=...`，每次重查有效公开引用、归属和用途，检测实际内容魔数，支持既有字节范围响应及no-store。最后一个公开引用消失后不可读取；同一文件仍被其他有效公开内容引用时仍可访问。素材不做反馈图片那样的元数据清除，应由管理员上传适合公开的教程；保留原文件字节，不执行转码。一次返回该器械全部有效教程，关联校验为逐项查询，大量教程和大视频内存/吞吐尚未压测。
+
+这里生成的是本地可解析scene值，不生成微信官方小程序码图片、不调用门禁或监控设备。将scene渲染/打印成二维码以及小程序相机扫码页面仍属调用方工作，本任务未修改前端；未声称完成真实手机扫码或视频播放联调。部署前先迁移V015并validate，仍为67张gym表，业务数据库未迁移。

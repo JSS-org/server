@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **73** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **58** 个。源码映射共 **77 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **75** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **56** 个。源码映射共 **79 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -101,8 +101,8 @@
 | 68 | 公共及会员端 | POST | `/app-api/gym/activities/{id}/registrations` | 为当前会员报名活动 | 已实现，本地测试通过 |
 | 69 | 公共及会员端 | DELETE | `/app-api/gym/activities/{id}/registrations/me` | 取消本人活动报名并释放名额 | 已实现，本地测试通过 |
 | 70 | 公共及会员端 | GET | `/app-api/gym/me/activity-registrations` | 查询本人活动报名记录 | 已实现，本地测试通过 |
-| 71 | 公共及会员端 | POST | `/app-api/gym/qr-resolutions` | 解析服务端认可的器械二维码，识别门店和器械 | 设计待开发 |
-| 72 | 公共及会员端 | GET | `/app-api/gym/equipment/{id}/tutorials` | 获取器械图文和视频教学 | 设计待开发 |
+| 71 | 公共及会员端 | POST | `/app-api/gym/qr-resolutions` | 解析服务端认可的器械二维码，识别门店和器械 | 已实现，本地测试通过 |
+| 72 | 公共及会员端 | GET | `/app-api/gym/equipment/{id}/tutorials` | 获取器械图文和视频教学 | 已实现，本地测试通过 |
 | 73 | 公共及会员端 | POST | `/app-api/gym/files` | 上传会员头像、人脸或反馈图片等受控文件 | 已实现，本地测试通过 |
 | 74 | 工作台 | POST | `/admin-api/gym/mobile/files` | 上传教练资料、体测报告、训练计划或合同文件 | 已实现，本地测试通过 |
 | 75 | 公共及会员端 | GET | `/app-api/gym/files/{id}/content` | 下载本人有权访问的文件内容 | 已实现，本地测试通过 |

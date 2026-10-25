@@ -824,8 +824,13 @@
       "method": "POST",
       "path": "/app-api/gym/qr-resolutions",
       "description": "解析服务端认可的器械二维码，识别门店和器械",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymEquipmentController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileEquipmentService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileEquipmentControllerTest.java"
+      ]
     },
     {
       "id": 72,
@@ -833,8 +838,13 @@
       "method": "GET",
       "path": "/app-api/gym/equipment/{id}/tutorials",
       "description": "获取器械图文和视频教学",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymEquipmentController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileEquipmentService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileEquipmentControllerTest.java"
+      ]
     },
     {
       "id": 73,

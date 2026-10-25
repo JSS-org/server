@@ -107,6 +107,8 @@ def main():
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_feedback' AND column_name='allow_card_context' AND is_nullable='NO' AND column_default=\"b'0'\"") == '1', 'feedback card context defaults to no consent')
         check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_feedback_attachment' AND index_name='uk_feedback_attachment_file' AND non_unique=0") == '2', 'feedback image is bound once within its tenant')
         check(db.sql("SELECT COUNT(*) FROM system_menu WHERE permission IN ('gym:feedbacks:read','gym:feedbacks:reply') AND type=3 AND deleted=0") == '2', 'feedback registers two permission definitions without frontend routes')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_equipment' AND column_name='public_scene' AND is_nullable='YES' AND character_maximum_length=32") == '1', 'equipment scene is nullable and bounded')
+        check(db.sql("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_equipment' AND index_name='uk_equipment_public_scene' AND non_unique=0") == 'tenant_id,public_scene', 'equipment public scene is unique per tenant')
         command('validate')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0' for table in manager.SYSTEM_TABLES - {'system_menu'}),
               'production migrations create no demo users, roles, grants or departments')
@@ -162,6 +164,7 @@ def main():
         db.sql("INSERT INTO gym_file(id,store_id,category,name,url,mime_type,size,uploader_id,tenant_id) VALUES(900001,101,'body_report','legacy.pdf','legacy-test-only','application/pdf',10,1,1);")
         db.sql("INSERT INTO gym_payroll(id,store_id,store_name,payroll_month,employee_count,net_amount,status,calculated_at,confirmed_at,confirmed_by,tenant_id) VALUES(900001,101,'migration-only','2026-06',0,0,'confirmed',NOW(),NOW(),1,1);")
         db.sql("INSERT INTO gym_activity(id,name,description,registration_starts_at,registration_ends_at,starts_at,ends_at,capacity,status,tenant_id) VALUES(900001,'migration-activity','legacy','2026-06-01','2026-06-10','2026-06-11','2026-06-12',NULL,'published',1);")
+        db.sql("INSERT INTO gym_equipment(id,store_id,code,name,model,status,tenant_id) VALUES(900001,101,'MIGRATION-EQUIPMENT','legacy equipment','legacy model','active',1);")
         before = auth_snapshot(db)
         db.check_legacy()
         command('adopt-legacy')
@@ -172,6 +175,7 @@ def main():
         check(db.sql('SELECT COUNT(*) FROM gym_mobile_lesson_qr') == '0', 'legacy adoption does not fabricate lesson QR grants')
         check(db.sql("SELECT COUNT(*) FROM gym_payroll WHERE id=900001 AND status='confirmed' AND published_at IS NULL AND published_by IS NULL AND net_amount=0") == '1', 'legacy confirmed payroll stays frozen and unpublished')
         check(db.sql("SELECT COUNT(*) FROM gym_activity WHERE id=900001 AND cancel_deadline IS NULL AND capacity IS NULL AND status='published'") == '1', 'legacy unlimited activity retains publication and default cancellation rule')
+        check(db.sql("SELECT COUNT(*) FROM gym_equipment WHERE id=900001 AND public_scene IS NULL AND status='active' AND model='legacy model'") == '1', 'legacy equipment remains unpublished with original metadata')
         check(db.sql("SELECT (SELECT COUNT(*) FROM gym_feedback)+(SELECT COUNT(*) FROM gym_feedback_attachment)") == '0', 'legacy adoption creates no feedback or attachment identities')
         check(db.sql("SELECT customer_stage FROM gym_member WHERE id=900001") == 'lead', 'required historical stage backfill executes')
         check(db.sql('SELECT COUNT(*) FROM gym_member_store WHERE member_id=900001 AND store_id=101 AND tenant_id=1') == '1',

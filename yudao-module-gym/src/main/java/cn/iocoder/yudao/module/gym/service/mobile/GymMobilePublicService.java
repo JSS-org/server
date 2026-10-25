@@ -39,6 +39,9 @@ public class GymMobilePublicService {
     @Resource private GymStoreMapper stores;
 
     @Resource
+    private cn.iocoder.yudao.module.gym.service.device.GymEquipmentPublicAssets equipmentAssets;
+
+    @Resource
     private cn.iocoder.yudao.module.gym.service.marketing.GymActivityPublicAssets activityAssets;
 
     @Resource
@@ -343,6 +346,12 @@ public class GymMobilePublicService {
         return file == null ? null : mediaValue(file, null);
     }
 
+    public Media equipmentMedia(
+            cn.iocoder.yudao.module.gym.dal.dataobject.device.GymEquipmentTutorialDO row) {
+        var file = equipmentAssets.file(row);
+        return file == null ? null : mediaValue(file, null);
+    }
+
     private Media mediaValue(GymFileDO row, String caption) {
         return new Media(
                 row.getId().toString(),
@@ -388,6 +397,7 @@ public class GymMobilePublicService {
                                         "SELECT 1 FROM gym_store s WHERE s.id=gym_store_media.store_id AND s.tenant_id={0} AND s.deleted=0 AND s.status='active'",
                                         TenantContextHolder.getRequiredTenantId()))
                 > 0) return true;
+        if (equipmentAssets.references(file)) return true;
         if (!"image".equals(file.getCategory())) return false;
         if (coachProfiles.references(file) || activityAssets.references(file)) return true;
         var candidates =

@@ -588,3 +588,9 @@ GymFeedbackImages使用内存ImageIO解码、像素边界检查、新建sRGB图�
 `GymMobileSalesReportController → GymMobileSalesReportService`验证有效后台身份、gym:reports:read、整店范围、日期窗口及分页。服务端解析允许门店集合和上海时间边界，组成不可变Criteria交给`GymMobileSalesReportMapper`，禁止客户端指定租户或绕过范围。
 
 Mapper以确认财务事件为事实源，原始筛选SQL共享于总金额/去重订单数、分组行数和分页三个查询。列表按订单/门店/员工/类型聚合，再连接匹配门店的订单编号，相关子查询读取该归属组历史最早payment；分页后批量读取订单项名称快照。金额不JOIN多条订单项，避免放大；整个读取处于只读REPEATABLE_READ快照。V016增加门店日期和订单付款索引，不改财务写链路或旧报表。
+
+## 员工与门店业绩聚合（2026-10-25 增量）
+
+`GymMobilePerformanceController → GymMobilePerformanceService`验证功能权限、后台身份及日期；通过整店范围或显式SELF身份/任职确定允许门店及可选唯一employee条件。混合权限先取整店，明确范围外门店才可进入本人规则；本人拒绝store分组。
+
+`GymMobilePerformanceMapper`分别聚合财务归属金额/去重订单和confirmed课消条数，所有谓词在SQL内绑定，未加载原始交易明细。服务并入当前可核实零业绩员工/门店，保留事件中的历史员工和未归属行，计算去重人数、均值、排名后分页；全程只读REPEATABLE_READ。人事模型没有完整离职/任职历史，不能从现表还原全部历史零业绩编制，实施文档明确这一限制。无新表/迁移或授权扩展。

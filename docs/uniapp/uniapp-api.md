@@ -550,7 +550,7 @@ Content-Type: application/json
 
 `SalesSummary`：`paidAmount,refundedAmount,netAmount,paidOrderCount,cardAmount,cardOrderCount,cardAverageOrderAmount,courseAmount,courseOrderCount,courseAverageOrderAmount`，金额均为 Money。
 
-`PerformanceRow`：`storeId,employeeId?,name,rank,netAmount,paidOrderCount,lessonCount,averagePerDayAmount`。
+`PerformanceRow`：`storeId?,employeeId?,name,rank?,netAmount,paidOrderCount,lessonCount,averagePerDayAmount`。
 
 `PerformanceSummary`：`netAmount,employeeCount,storeCount,averagePerEmployeeAmount,averagePerStoreAmount,lessonCount`。员工只能查本人，不能借 `groupBy=store` 获取门店业绩；员工响应不返回其他员工数量与汇总。
 
@@ -821,7 +821,7 @@ V015增加`gym_equipment.public_scene`可空列及租户内唯一索引，历史
 
 ## 销售报表实施口径（2026-10-25）
 
-总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩、107会员汇总及77概览仍待后续批次。
+总表105 `GET /admin-api/gym/mobile/reports/sales`已实现。要求有效后台身份、`gym:reports:read`功能权限和整店数据范围；不传storeId汇总当前授权且未删除的门店，包含已停用门店的历史流水。显式请求范围外门店拒绝；只有SELF而无整店范围时不传storeId返回空列表/零汇总，不能借本人任职查看整店销售。employeeId只在授权门店内进一步筛选，不扩大范围。106员工业绩已在后续批次实现（见下）；107会员汇总及77概览仍待开发。
 
 startDate、endDate必填，按Asia/Shanghai自然日`[startDate,endDate)`，支持1000～9999年、1～366个自然日；pageNo>=1、pageSize<=200。商品筛选card/course，其中course对应原财务流水private；未知筛选值拒绝。
 
@@ -834,3 +834,19 @@ summary对完整筛选集计算，和页码无关。paidOrderCount为区间内�
 paidAt为同订单/门店/商品/员工组历史最早确认收款时间，可能早于查询区间；没有可核实付款时为null。订单元信息只连接同租户同门店未删除订单；订单缺失/删除或归属不一致时，保留财务金额，orderNo和productName为null，不编造编号或借其他门店资料。商品名称来自对应类型的订单项快照，去重后以` / `连接；多商品只影响名称展示，不参与金额JOIN放大。
 
 SQL在聚合和分页前应用权限/日期/筛选，金额、行数、分页及名称读取使用同一只读REPEATABLE_READ事务。V016仅增加门店日期与订单原收款查询索引，不回填、不改金额或归属，无新权限，仍67张gym表。部署前migrate/validate；业务数据库未迁移。实际SQL聚合和边界已在H2验证，MySQL验证仅迁移与历史数据保留，生产EXPLAIN/海量流水性能及部署HTTP尚未验证。
+
+## 员工与门店业绩实现约定（2026-10-25）
+
+总表106 `GET /admin-api/gym/mobile/reports/performance`已实现。必传startDate/endDate及groupBy=employee或store；上海日期左闭右开，1000～9999年、1～366自然日，pageSize<=200。要求当前有效后台账号和gym:reports:read。
+
+整店范围优先：未指定门店时汇总授权且未删除的门店，停用门店保留历史；指定授权门店时只统计该店。没有整店范围，或明确选择整店范围外门店时，必须具有SELF权限和唯一有效在职员工身份，才能转为本人模式；本人只能groupBy=employee，门店还必须是当前已生效任职的营业门店。混合SELF/整店权限不传门店时只汇总整店范围，不偷偷扩入本人其他门店。客户端不能指定employeeId选择统计主体，无合法范围拒绝。
+
+财务口径沿用105：区间内确认payment减refund，直接使用持久化归属金额，不把每个员工的订单重复全额相加。paidOrderCount为各行范围内payment订单去重数，多员工各自订单数不能直接相加成总订单数。lessonCount独立计算confirmed且未删除的课消记录条数，按confirmedAt筛选，不使用预约数，也不把sessionUnits课时数冒充记录数。
+
+employee分组将同员工在所选门店的业绩合并为一行；范围只有一个门店时返回该storeId，多店时storeId=null。store分组每个授权门店一行，employeeId=null。行按净额倒序、主体ID升序，采用竞争排名（同额1、1、3）；未归属收入单独排末尾，employeeId及rank为null，不冒充员工。SELF的rank始终null，不查询其他员工来生成排名。分页在已授权聚合结果上进行，summary和排名都基于完整筛选范围。
+
+零业绩对象包括所选门店，以及当前active、已入职且当前任职已生效、入职/任职日期早于查询结束日的员工；同员工跨店只计一次。期间有财务或课消归属的历史员工也保留，即使当前任职已删除或档案已失效，找不到档案时名称为“历史员工”。**现有人员模型没有完整任职结束日期/历史状态，不能精确重建过去某段时间全部零业绩在职人数**；当前口径为“可核实的当前有效任职+期间实际事件人员”，不能将其当作完整历史编制统计。这是数据来源限制，尚需后续任职历史建模才能消除。
+
+summary.netAmount含未归属收入；employeeCount只计算具名员工ID，不含未归属行，storeCount为实际筛选门店数。averagePerEmployeeAmount=已归属员工净额/employeeCount，averagePerStoreAmount=总净额/storeCount，averagePerDayAmount=对应行净额/查询自然日数；分母为0返回"0.00"，金额两位小数四舍五入。本人模式所有金额、课消及人数只来自本人和本人当前任职范围，不返回其他员工数量或门店总收入。
+
+所有聚合在SQL中先限定租户/门店/本人/时间，读取共享只读REPEATABLE_READ事务；服务只对聚合主体和可核实人员排序分页，不加载完整交易流水。复用V016财务索引，无新DDL、权限或自动授权。历史人事口径限制、海量主体排序、生产MySQL聚合性能及部署HTTP尚未完成验证；前端未改动。

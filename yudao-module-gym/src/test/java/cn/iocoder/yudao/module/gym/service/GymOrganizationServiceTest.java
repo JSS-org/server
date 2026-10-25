@@ -49,6 +49,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePerformanceService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePerformanceController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileSalesReportService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileSalesReportController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileFeedbackService.class,
@@ -14503,5 +14505,289 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertEquals("99.99", result.summary().netAmount());
         assertNull(result.list().getFirst().orderNo());
         assertNull(result.list().getFirst().productName());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobilePerformanceService mobilePerformance;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobilePerformanceController
+            mobilePerformanceController;
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePerformanceVO.Query
+            performanceQuery() {
+        var r =
+                new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobilePerformanceVO
+                        .Query();
+        r.setStartDate(LocalDate.of(2026, 6, 10));
+        r.setEndDate(LocalDate.of(2026, 6, 12));
+        r.setGroupBy("employee");
+        return r;
+    }
+
+    long performanceBooking = 90000;
+
+    Long performanceLesson(Long store, Long coach, java.time.Instant at) {
+        var r = new cn.iocoder.yudao.module.gym.dal.dataobject.course.GymLessonRecordDO();
+        r.setStoreId(store);
+        r.setCoachId(coach);
+        r.setMemberId(1L);
+        r.setBookingId(++performanceBooking);
+        r.setCheckinId(1L);
+        r.setSessionUnits(3);
+        r.setStatus("confirmed");
+        r.setMethod("manual");
+        r.setConfirmedAt(at);
+        applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class)
+                .insert(r);
+        return r.getId();
+    }
+
+    List<Long> performanceFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T04:00:00Z"));
+        Long a = approvalEmployee("PERF-A", 91L),
+                b = approvalEmployee("PERF-B", 92L),
+                zero = approvalEmployee("PERF-ZERO", 93L);
+        var link = new cn.iocoder.yudao.module.gym.dal.dataobject.employee.GymEmployeeStoreDO();
+        link.setEmployeeId(a);
+        link.setStoreId(102L);
+        link.setJoinedOn(LocalDate.of(2026, 1, 1));
+        link.setIsPrimary(false);
+        link.setIsManager(false);
+        applicationContext
+                .getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.employee.GymEmployeeStoreMapper.class)
+                .insert(link);
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(100L, 101L, a, "card", "payment", "60", at);
+        mobileSalesEvent(200L, 102L, a, "private", "payment", "40", at);
+        mobileSalesEvent(100L, 101L, a, "card", "refund", "20", at);
+        mobileSalesEvent(100L, 101L, b, "card", "payment", "100", at);
+        mobileSalesEvent(300L, 101L, null, "card", "payment", "20", at);
+        performanceLesson(101L, a, at);
+        performanceLesson(101L, b, at);
+        performanceLesson(102L, a, at);
+        return List.of(a, b, zero);
+    }
+
+    @Test
+    void mobilePerformanceEmployeesIncludeZerosHistoricalSharesAndStableTiedRanks() {
+        var ids = performanceFixture();
+        var result = mobilePerformance.performance(performanceQuery());
+        assertEquals(4, result.total());
+        assertEquals("200.00", result.summary().netAmount());
+        assertEquals(3, result.summary().employeeCount());
+        assertEquals(2, result.summary().storeCount());
+        assertEquals("60.00", result.summary().averagePerEmployeeAmount());
+        assertEquals("100.00", result.summary().averagePerStoreAmount());
+        assertEquals(3, result.summary().lessonCount());
+        var first = result.list().get(0);
+        assertEquals(ids.get(1).toString(), first.employeeId());
+        assertEquals(1L, first.rank());
+        assertEquals("50.00", first.averagePerDayAmount());
+        assertNull(first.storeId());
+        var a = result.list().get(1);
+        assertEquals("80.00", a.netAmount());
+        assertEquals(2, a.paidOrderCount());
+        assertEquals(2, a.lessonCount());
+        assertEquals("40.00", a.averagePerDayAmount());
+        assertEquals("0.00", result.list().get(2).netAmount());
+        assertEquals(3L, result.list().get(2).rank());
+        assertEquals("未归属员工", result.list().get(3).name());
+        assertNull(result.list().get(3).rank());
+        mobileSalesEvent(
+                100L,
+                101L,
+                ids.get(1),
+                "card",
+                "refund",
+                "20",
+                java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        result = mobilePerformance.performance(performanceQuery());
+        assertEquals(1L, result.list().get(0).rank());
+        assertEquals(1L, result.list().get(1).rank());
+        assertEquals(3L, result.list().get(2).rank());
+        assertEquals("53.33", result.summary().averagePerEmployeeAmount());
+    }
+
+    @Test
+    void mobilePerformanceStoreGroupingAndPagingKeepDistinctFullScopeSummary() {
+        performanceFixture();
+        var q = performanceQuery();
+        q.setGroupBy("store");
+        q.setPageSize(1);
+        var result = mobilePerformance.performance(q);
+        assertEquals(2, result.total());
+        assertEquals("101", result.list().getFirst().storeId());
+        assertNull(result.list().getFirst().employeeId());
+        assertEquals("160.00", result.list().getFirst().netAmount());
+        assertEquals(2, result.list().getFirst().paidOrderCount());
+        assertEquals(2, result.list().getFirst().lessonCount());
+        assertEquals(3, result.summary().employeeCount());
+        q.setPageNo(2);
+        var second = mobilePerformance.performance(q);
+        assertEquals(result.summary(), second.summary());
+        assertEquals("102", second.list().getFirst().storeId());
+        assertEquals(2L, second.list().getFirst().rank());
+        q.setPageNo(Integer.MAX_VALUE);
+        assertEquals(0, mobilePerformance.performance(q).list().size());
+        assertEquals(result.summary(), mobilePerformance.performance(q).summary());
+        q.setPageNo(1);
+        q.setStoreId(101L);
+        assertEquals("160.00", mobilePerformance.performance(q).summary().netAmount());
+    }
+
+    @Test
+    void mobilePerformanceSelfNeverReturnsStoreOrOtherEmployeesAndRequiresCurrentAssignment() {
+        var ids = performanceFixture();
+        personalScope(91L);
+        var q = performanceQuery();
+        var result = mobilePerformance.performance(q);
+        assertEquals(1, result.total());
+        assertEquals(ids.getFirst().toString(), result.list().getFirst().employeeId());
+        assertNull(result.list().getFirst().rank());
+        assertEquals("80.00", result.summary().netAmount());
+        assertEquals(1, result.summary().employeeCount());
+        assertEquals(2, result.summary().lessonCount());
+        q.setGroupBy("store");
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+        q.setGroupBy("employee");
+        q.setStoreId(101L);
+        result = mobilePerformance.performance(q);
+        assertEquals("40.00", result.summary().netAmount());
+        assertEquals("101", result.list().getFirst().storeId());
+        assertEquals(1, result.summary().storeCount());
+        q.setStoreId(999L);
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("DELETE FROM gym_employee_store WHERE employee_id=?", ids.getFirst());
+        q.setStoreId(null);
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobilePerformancePermissionsIdentityAndMixedScopeAreCheckedBeforeAggregation() {
+        var ids = performanceFixture();
+        assertThrows(
+                org.springframework.security.authorization.AuthorizationDeniedException.class,
+                () -> mobilePerformanceController.performance(performanceQuery()));
+        when(permissions.hasAnyPermissions(any(), eq("gym:reports:read"))).thenReturn(true);
+        assertEquals(
+                4, mobilePerformanceController.performance(performanceQuery()).getData().total());
+        var permission = new DeptDataPermissionRespDTO();
+        permission.setSelf(true);
+        permission.setDeptIds(Set.of(101L));
+        loginAs(91L);
+        when(permissions.getDeptDataPermission(91L)).thenReturn(permission);
+        assertEquals(
+                "160.00", mobilePerformance.performance(performanceQuery()).summary().netAmount());
+        var q = performanceQuery();
+        q.setStoreId(102L);
+        assertEquals("40.00", mobilePerformance.performance(q).summary().netAmount());
+        q.setGroupBy("store");
+        assertServiceException(() -> mobilePerformance.performance(q), STORE_NO_PERMISSION);
+        permission.setSelf(false);
+        permission.setDeptIds(Set.of());
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), STORE_NO_PERMISSION);
+        personalScope(91L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_employee SET status='inactive' WHERE id=?", ids.getFirst());
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), MOBILE_EMPLOYEE_REQUIRED);
+        headquarters();
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobilePerformanceHistoricalEmployeesAndSuccessfulLessonEventsRemainSeparate() {
+        var ids = performanceFixture();
+        var at = java.time.Instant.parse("2026-06-10T02:00:00Z");
+        mobileSalesEvent(999L, 101L, 999L, "private", "refund", "30", at);
+        performanceLesson(101L, 999L, at);
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.course.GymLessonRecordMapper.class);
+        Long deleted = performanceLesson(101L, ids.getFirst(), at);
+        mapper.deleteById(deleted);
+        Long notConfirmed = performanceLesson(101L, ids.getFirst(), at);
+        var row = mapper.selectById(notConfirmed);
+        row.setStatus("pending");
+        mapper.updateById(row);
+        performanceLesson(101L, ids.getFirst(), java.time.Instant.parse("2026-06-11T16:00:00Z"));
+        TenantContextHolder.setTenantId(2L);
+        mobileSalesEvent(111L, 101L, 999L, "card", "payment", "9999", at);
+        performanceLesson(101L, 999L, at);
+        TenantContextHolder.setTenantId(1L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update(
+                        "UPDATE gym_employee_store SET joined_on='2027-01-01' WHERE employee_id=?",
+                        ids.get(2));
+        var result = mobilePerformance.performance(performanceQuery());
+        assertEquals("170.00", result.summary().netAmount());
+        assertEquals(3, result.summary().employeeCount());
+        assertEquals(4, result.summary().lessonCount());
+        var historical =
+                result.list().stream()
+                        .filter(r -> "999".equals(r.employeeId()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals("历史员工", historical.name());
+        assertEquals("-30.00", historical.netAmount());
+        assertEquals(1, historical.lessonCount());
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> mobilePerformance.performance(performanceQuery()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobilePerformanceValidatesDateWindowGroupAndPagingAndPreservesZeroStores() {
+        stores.create(store(101L, "A"));
+        var q = performanceQuery();
+        q.setGroupBy("store");
+        var result = mobilePerformance.performance(q);
+        assertEquals(1, result.total());
+        assertEquals("0.00", result.list().getFirst().netAmount());
+        assertEquals(0, result.summary().employeeCount());
+        assertEquals("0.00", result.summary().averagePerEmployeeAmount());
+        q.setGroupBy("all");
+        assertThrows(ConstraintViolationException.class, () -> mobilePerformance.performance(q));
+        q.setGroupBy("store");
+        q.setStartDate(null);
+        assertThrows(ConstraintViolationException.class, () -> mobilePerformance.performance(q));
+        q.setStartDate(q.getEndDate());
+        assertServiceException(() -> mobilePerformance.performance(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(2025, 1, 1));
+        assertServiceException(() -> mobilePerformance.performance(q), BUSINESS_DATE_INVALID);
+        q.setStartDate(LocalDate.of(2026, 6, 10));
+        q.setPageSize(201);
+        assertThrows(ConstraintViolationException.class, () -> mobilePerformance.performance(q));
+    }
+
+    @Test
+    void mobilePerformanceVerifiedReceiptsAgreeWithSalesReportAndDoNotInventEmployees() {
+        when(businessClock.now()).thenReturn(java.time.Instant.parse("2026-06-10T02:00:00Z"));
+        var order = commerceOrder();
+        when(receiptVerifier.payment("performance-payment"))
+                .thenReturn(receipt(order, "PERFORMANCE-PAY", null, "99.99"));
+        commerce.acceptPayment(order.getId(), "performance-payment");
+        when(receiptVerifier.refund("performance-refund"))
+                .thenReturn(receipt(order, "PERFORMANCE-REFUND", "PERFORMANCE-PAY", "20.00"));
+        commerce.acceptRefund(order.getId(), "performance-refund");
+        var result = mobilePerformance.performance(performanceQuery());
+        assertEquals(
+                mobileSalesReports.sales(mobileSalesQuery()).summary().netAmount(),
+                result.summary().netAmount());
+        assertEquals("79.99", result.summary().netAmount());
+        assertEquals(0, result.summary().employeeCount());
+        assertEquals("0.00", result.summary().averagePerEmployeeAmount());
+        assertEquals("未归属员工", result.list().getFirst().name());
+        assertNull(result.list().getFirst().employeeId());
+        assertEquals(0, result.summary().lessonCount());
     }
 }

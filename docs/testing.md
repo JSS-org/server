@@ -953,3 +953,23 @@ git diff --check
 跨期100付款在前日、30退款在当日，当前区间净额-30、付款订单数0、均价0.00，paidAt保留原付款时间；日期左闭右开、上海1991夏令时和366自然日边界均验证。多商品名快照不放大金额；订单与事件门店不符时隐藏编号/名称但保留账本。停用门店历史可查，软删流水、跨租户和无权限范围不计入；SELF不能获取门店汇总，错误身份/停用后台账号拒绝。非法事件类型/商品类型由既有数据库约束拒绝，首轮测试误以为可插入这些非法夹具，改为验证约束抛错后全量通过，未修改生产约束。
 
 MVC验证日期/门店/员工/商品/分页绑定与不合法输入，金额字符串、完整summary及无会员字段。日志：/tmp/uniapp-sales-report-focused.log、/tmp/uniapp-sales-report-final-tests.log、/tmp/uniapp-sales-report-migrations.log、/tmp/uniapp-sales-report-package.log。H2证明应用SQL及业务口径；MySQL只证明迁移与历史数据保留，未执行生产EXPLAIN/大数据量压测、真实渠道交易或部署HTTP联调。业务数据库和前端未修改。
+
+## 2026-10-25 员工与门店业绩、SELF范围和零业绩平均
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+专项9项通过后完整gym **621项通过**（组织服务355项，新增业绩7项；MVC2项），member4通过/1既有禁用跳过；Spotless和server依赖打包成功，打包跳过测试。源码映射 **81/135**，余54项；无DDL，不重跑既有V016迁移检查。
+
+真实H2/Mapper/权限测试覆盖多店归属200.00总净额、180.00员工归属额、三名员工（含零业绩）、两店、每人60.00/每店100.00；退款后同额员工排名1/1/3，未归属行无排名不占人数。课消记录每条sessionUnits=3的夹具仍按记录条数计数，确认/软删/时间边界/跨租户分别过滤。门店分组、超大页码、分页summary不变，实际收99.99退20.00与105报表一致。
+
+SELF仅本人80.00及2条课消、禁止store分组，指定本人单店仅40.00；错误门店、任职删除、离职、无SELF、错误账号类型和租户拒绝。混合权限默认只整店范围、范围外本人门店显式下钻不扩大权限。历史员工/负退款保留、未来任职不作为零业绩分母；没有员工的纯未归属收入均值为0。MVC验证必填日期/groupBy、非法筛选和页大小、Money字符串、rank可空及伪造employeeId不能选择主体；最终清理为每参数仅一个值的夹具后全量通过。
+
+日志：/tmp/uniapp-performance-focused.log、/tmp/uniapp-performance-final-tests.log、/tmp/uniapp-performance-package.log。这些测试证明当前数据口径，不证明可重建全部历史在职人数；缺少完整人事变更历史的限制保留。未执行生产MySQL聚合计划/规模压测或部署HTTP联调，前端和业务数据库未修改。

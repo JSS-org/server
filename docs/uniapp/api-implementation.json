@@ -1250,8 +1250,13 @@
       "method": "GET",
       "path": "/admin-api/gym/mobile/reports/performance",
       "description": "按员工或门店统计业绩、排名、均值及课消",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePerformanceController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobilePerformanceService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobilePerformanceControllerTest.java"
+      ]
     },
     {
       "id": 107,

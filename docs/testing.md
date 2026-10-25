@@ -1147,3 +1147,35 @@ git diff --check
 接口源码映射仍95/135，余40项；本批没有新增路由，不证明会员自动履约已交付。新会员订单仍未入队。日志：/tmp/uniapp-principal-focused.log、/tmp/uniapp-principal-final-tests.log、/tmp/uniapp-principal-migrations.log、/tmp/uniapp-principal-package.log。前端、业务库未修改，未做真实支付、部署HTTP或规模联调。
 
 Spotless及server依赖打包通过（打包跳过测试）。真实隔离MySQL/Flyway **82项检查通过**，V021后仍68表；全部临时库清理。新增检查覆盖类型默认2、显式会员与同号后台独立、显式NULL拒绝、旧processing任务的微秒租约/claimToken/失败原因/次数及原账号保留、不为旧订单伪造任务。首次在沙箱内连接本机MySQL被限制，获授权后运行隔离测试通过；未迁移业务库。
+
+
+## 2026-10-25 会员购买实际履约、合同及失败重试
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='GymOrganizationServiceTest#memberFulfillment*+fulfillmentPrincipal*' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+新增15项实际H2/Mapper/权限/事务业务测试，最终完整gym **735项通过**（组织服务452项），member4通过、1项既有禁用跳过；Spotless及server依赖打包通过，打包跳过测试。接口源码映射仍95/135，没有新增路由计数。
+
+真实会员零元卡、批准零元报价课包实际发放，实收和财务事件仍0。正价私教通过受控核验器mock分两次实际记账40+160，未足额不履约，重复凭据不重复入账；private收入总额200。商品编辑前后及双线程竞争均保留原两课时、60分钟和200元成交价。旧60分钟排期可预约，新30分钟排期写入拒绝且会员查询bookable=false；不扣实际课时，只预占1。报价绑定后若入队失败，订单/明细/策略/used_order_id/幂等结果一起回滚，恢复后原键可重试。
+
+缺必需合同模板、文件读取失败及最终任务succeeded写入失败，都验证权益、合同、文件元数据、客户阶段和策略完成信息回滚；修复后自动调度或有权人工重试成功，会员主体50/类型1保持。内部合同unsigned/unconfigured，事件真实会员类型1，后台uploader_id为空；购买合同不能引用其他来源权益。外部blob不受数据库事务保护，测试不宣称存储服务原子回滚。购买钩子要求已有事务，未支付不能直接发放。
+
+验证会员账号停用、门店失效、解除会员关系、教练任职未来、商品停用及导入数据中的教练不匹配拒绝（正常商品修改API禁止换教练），恢复资格后重试；后台令牌、其他绑定会员、跨租户和快照错误租户均拒绝。需审批订单无自动任务，已领取任务转人工审批后不能继续发放。取消、真实受控退款与旧token完成不产生权益；并发履约只有一张卡/一份合同，已履约重放无副作用。course_sale不能进入旧卡退款逻辑。
+
+真实隔离MySQL/Flyway **94项检查通过**，V022后仍68表；全部临时库清理。验证旧课包余额/单价不变且未知时长NULL，旧合同事件保持账号、微秒时间及类型2。另建真实V021库，模拟15种旧订单，只有4个符合条件的会员订单补任务；零元/足额pending，未付/部分付waiting_payment，原后台processing任务的账号/租约/token/次数不变；不改原订单/策略或伪造权益/付款，重复迁移不重复任务。首次升级夹具遗漏框架表的baseline 0导致Flyway拒绝，补齐与正式init一致的baseline后最终通过；未修改迁移逻辑来绕过验证。
+
+首轮旧隔离测试仍期待“会员类型暂不支持”的文案；会员分支接入后改为验证真实会员身份不成立的错误，仍断言不查询或借用管理员。日志：/tmp/uniapp-member-fulfillment-compile.log、/tmp/uniapp-member-fulfillment-focused.log、/tmp/uniapp-member-fulfillment-all.log、/tmp/uniapp-member-fulfillment-final.log、/tmp/uniapp-member-fulfillment-final-2.log、/tmp/uniapp-member-fulfillment-final-3.log（最终）、/tmp/uniapp-member-fulfillment-migrations-final.log、/tmp/uniapp-member-fulfillment-package-final.log。没有真实微信/渠道付款、电子签约、部署HTTP、多节点或规模联调证据；前端和业务库未改。23支付会话、25–26退款申请及私教退款权益处理仍待后续。
+
+最后补教练快照一致性检查时，测试尝试通过正常商品修改API换教练，被已有不可变约束拒绝。保留该约束，改为先断言正常API拒绝，再显式模拟历史导入数据不一致并验证履约拒绝；恢复后可重试，未新增正常换教练能力。

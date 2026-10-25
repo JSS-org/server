@@ -32,6 +32,9 @@ public class GymFulfillmentQueueService {
     @Resource private GymDataScope scope;
     @Resource private GymBusinessClock clock;
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.mobile.GymMobileIdentityService identities;
+
     private Instant now() {
         return clock.now().truncatedTo(ChronoUnit.MICROS);
     }
@@ -59,6 +62,30 @@ public class GymFulfillmentQueueService {
         row.setOrderId(order.getId());
         row.setPrincipalUserId(principal());
         row.setPrincipalUserType(UserTypeEnum.ADMIN.getValue());
+        row.setAttemptCount(0);
+        row.setAttemptLimit(8);
+        row.setStatus(order.getPayableAmount().signum() == 0 ? "pending" : "waiting_payment");
+        row.setNextAttemptAt(order.getPayableAmount().signum() == 0 ? now() : null);
+        gymFulfillmentTaskMapper.insert(row);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void enqueueMember(Long orderId) {
+        var identity = identities.requireIdentity();
+        var order = gymBusinessOrderMapper.selectById(orderId);
+        var policy = gymOrderPolicyMapper.selectOne(GymOrderPolicyDO::getOrderId, orderId);
+        if (order == null
+                || policy == null
+                || !identity.getUserId().equals(order.getBuyerUserId())
+                || !identity.getMemberId().equals(order.getMemberId())
+                || !"miniapp".equals(order.getChannel())
+                || !Set.of("card_sale", "course_sale").contains(order.getBusinessType()))
+            throw exception(COMMERCE_REQUEST_INVALID);
+        if (Boolean.TRUE.equals(policy.getApprovalRequired())) return;
+        var row = new GymFulfillmentTaskDO();
+        row.setOrderId(orderId);
+        row.setPrincipalUserId(identity.getUserId());
+        row.setPrincipalUserType(UserTypeEnum.MEMBER.getValue());
         row.setAttemptCount(0);
         row.setAttemptLimit(8);
         row.setStatus(order.getPayableAmount().signum() == 0 ? "pending" : "waiting_payment");
@@ -237,7 +264,7 @@ public class GymFulfillmentQueueService {
         if (lock) q.last("FOR UPDATE");
         var row = gymBusinessOrderMapper.selectOne(q);
         if (row == null
-                || !"card_sale".equals(row.getBusinessType())
+                || !Set.of("card_sale", "course_sale").contains(row.getBusinessType())
                 || !Set.of("miniapp", "app").contains(row.getChannel()))
             throw exception(SALES_ORDER_NOT_EXISTS);
         scope.check(row.getStoreId());
@@ -266,12 +293,15 @@ public class GymFulfillmentQueueService {
                 || order.getPaidAmount().compareTo(order.getPayableAmount()) != 0)
             throw exception(COMMERCE_FULFILLMENT_INVALID);
         var row = task(orderId, true);
-        // The legacy retry path may replace an administrator, never convert a member task.
-        if (row == null
-                || !"failed".equals(row.getStatus())
-                || !UserTypeEnum.ADMIN.getValue().equals(row.getPrincipalUserType()))
+        if (row == null || !"failed".equals(row.getStatus()))
             throw exception(COMMERCE_FULFILLMENT_INVALID);
-        row.setPrincipalUserId(principal());
+        Long operator = principal();
+        if (UserTypeEnum.ADMIN.getValue().equals(row.getPrincipalUserType()))
+            row.setPrincipalUserId(operator);
+        else if (!UserTypeEnum.MEMBER.getValue().equals(row.getPrincipalUserType())
+                || !Objects.equals(row.getPrincipalUserId(), order.getBuyerUserId()))
+            throw exception(COMMERCE_FULFILLMENT_INVALID);
+        // Member tasks always retain the actual buyer, even when an administrator requests retry.
         row.setAttemptLimit(Math.addExact(row.getAttemptCount(), 8));
         row.setStatus("pending");
         row.setNextAttemptAt(now());

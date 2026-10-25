@@ -329,7 +329,7 @@ GymFulfillmentTimer私有拥有一个daemon ThreadPoolTaskScheduler，默认启�
 
 QueueService用新事务和FOR UPDATE领取，processing携带UUID claimToken和120秒租约；超时允许接管，旧token不能覆盖新结果。履约本身仍在独立业务事务、租户互斥和订单行锁下幂等，权益/策略/订单/任务succeeded一起提交。失败原因安全落库，下一次1/2/4/...分钟退避、最多1小时，初始8次；耗尽不继续自动重试。有权人工重试增加8次预算，累计attemptCount保留。
 
-Worker仅使用下单时服务端获取的原发起后台账号，重新读取账户状态、租户、sales:read和实际门店权限，不提升范围；失效时失败留痕，后续有权人工重试可记录当前操作者承接。执行前后的SecurityContext与TenantContext恢复，不接受客户端tenant/principal字段。当前内部下单仍是后台类型2身份，未提供会员购买认证/厂商回调入口。
+Worker仅使用下单时服务端获取的原发起后台账号，重新读取账户状态、租户、sales:read和实际门店权限，不提升范围；失效时失败留痕，后续有权人工重试可记录当前操作者承接。执行前后的SecurityContext与TenantContext恢复，不接受客户端tenant/principal字段。原后台内部下单仍是后台类型2；会员购买和类型1执行分支见V022增量，厂商回调尚未接入。
 
 GET /self-service-card-orders/{id}/fulfillment-task受sales:read；POST /{id}/fulfillment-retries还要求approvals:decide与订单范围。详情仅返回状态、次数、到期时间和安全失败原因，不返回principal/claimToken/lease。人工开卡申请与任务暂停同事务，waiting_approval阻止已领取执行器越过人工审批；请求失败回滚暂停。人工拒绝后仍待人工重新处理，不自动越过拒绝决定；批准后原子完成。
 
@@ -653,4 +653,15 @@ AppGymOrdersController → GymMobileOrdersService通过真实会员身份服务�
 
 Worker领取租约后先检查类型，只有2才调用AdminUserService及后台权限校验；会员、未知或缺失类型均失败留痕，不将同号会员当成员工。既有重试入口也只接受类型2，不能通过管理员重试把会员任务改造成后台任务。失败沿用有上限的退避和上下文恢复机制。身份字段不加入对外任务响应。
 
-这是会员自动履约的前置隔离，尚未增加会员执行分支或入队；新会员订单仍真实待履约。部署先迁移再更新所有执行器，后续启用会员任务前必须确认已无忽略类型字段的旧执行器。
+这是V021阶段的前置隔离；V022已在此基础上增加真实会员执行分支和入队，见下节。部署先迁移再更新所有执行器，后续启用会员任务前必须确认已无忽略类型字段的旧执行器。
+
+
+## 会员购买自动履约（2026-10-25，V022）
+
+GymMobileOrdersService在订单/报价事务内调用Queue.enqueueMember，以buyer用户类型1持久化。Worker按类型分支：2维持原后台实时授权，1设置真实会员LoginUser并调用GymMemberOrderFulfillmentService，未知值失败。管理员重试会员任务保留原buyer身份；租约、退避和上下文恢复共用。
+
+GymOrderEntitlementAccess只接受已落库订单或明细ID，不接受请求体商品快照。租户互斥→订单/策略/明细→门店→教练→会员→商品锁，重新核对会员绑定、buyer、资金/审批状态和当前资格；卡/课程/合同的购买钩子必须已有事务，私有共享写入器仅在此授权后使用冻结条款。新合同再次比对真实权益来源、会员、门店和商品类型，不借后台数据范围。合同actor_user_type=1，后台uploader_id=NULL。
+
+权益及合同写入后，同事务保存明细权益ID、策略fulfilledAt、订单fulfilled和任务完成；任一失败回滚，既有支付事务不撤销。订单锁与来源唯一约束防重，已履约重放不新增权益。外部文件存储不参与SQL回滚，未引用blob仍需清理。私教成交价和时长分别进入price_snapshot、duration_minutes_snapshot；预约查询/写入共用matchesDuration，NULL历史权益保持旧规则。可信收款路径支持course_sale并记private收入，卡退款路径继续拒绝course_sale。
+
+V022只恢复有真实买家且满足约束的缺失会员任务，零元/全额收款变pending，未付/部分付仍waiting_payment；不重写历史订单或产生资金/权益。部署暂停会员下单和全部执行器后迁移、统一升级再恢复，防止旧写入实例漏入队和旧执行器身份混用。仍68表；无前端、真实渠道或业务库操作。

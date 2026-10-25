@@ -351,7 +351,11 @@ public class GymMobileBookingsService {
                                                                                                             .stream()
                                                                                                             .noneMatch(
                                                                                                                     pck ->
-                                                                                                                            pck.getCourseProductId()
+                                                                                                                            rules
+                                                                                                                                            .matchesDuration(
+                                                                                                                                                    pck,
+                                                                                                                                                    s)
+                                                                                                                                    && pck.getCourseProductId()
                                                                                                                                             .equals(
                                                                                                                                                     s
                                                                                                                                                             .getCourseProductId())

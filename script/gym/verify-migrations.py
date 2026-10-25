@@ -97,6 +97,8 @@ def main():
         check(db.sql("SELECT GROUP_CONCAT(CONCAT(principal_user_id,':',principal_user_type) ORDER BY order_id) FROM gym_fulfillment_task") == '50:2,50:1', 'same numeric principal ID preserves distinct administrator and member namespaces')
         rejects(lambda: db.sql("INSERT INTO gym_fulfillment_task(order_id,principal_user_id,principal_user_type,status,attempt_count,attempt_limit,tenant_id) VALUES(900003,50,NULL,'waiting_payment',0,8,1)"), 'fulfillment task rejects an explicitly missing principal namespace')
         db.sql('DELETE FROM gym_fulfillment_task')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_course_pack' AND column_name='duration_minutes_snapshot' AND is_nullable='YES' AND column_default IS NULL") == '1', 'purchased lesson duration preserves unknown legacy values as NULL')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_contract_event' AND column_name='actor_user_type' AND is_nullable='NO' AND column_default='2'") == '1', 'contract audit events distinguish member and administrator actors')
         check('member_user' in db.tables(), 'member authentication storage is installed')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='member_user' AND column_name IN ('mobile','register_terminal','tenant_id')") == '3', 'member authentication columns exist')
         check(db.sql("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_mobile_identity' AND index_name IN ('uk_mobile_user','uk_mobile_member') AND non_unique=0") == '4', 'member identity has tenant-scoped unique account and member bindings')
@@ -198,10 +200,14 @@ def main():
         db.sql("INSERT INTO gym_business_order(id,store_id,member_id,order_no,member_name,business_type,channel,status,payable_amount,paid_amount,refunded_amount,ordered_at,request_key,tenant_id) VALUES(900001,101,900001,'legacy-mobile-order','legacy-member','card_sale','miniapp','partially_paid',100.00,20.00,0.00,'2026-06-10 10:00:00','legacy-order-key',1)")
         db.sql("INSERT INTO gym_approval(id,store_id,template_id,template_snapshot,business_type,title,applicant_user_id,applicant_name,request_key,request_hash,request_snapshot,attachment_ids,status,current_step,submitted_at,tenant_id) VALUES(900001,101,900001,'{}','other_configured','migration-only-approval',91,'legacy-applicant','migration-key','migration-hash','{\"reason\":\"legacy-reason\"}','[]','pending',2,'2026-06-10 10:00:00',1);")
         db.sql("INSERT INTO gym_fulfillment_task(id,order_id,principal_user_id,status,attempt_count,attempt_limit,next_attempt_at,last_attempt_at,lease_until,claim_token,failure_reason,tenant_id) VALUES(900001,900001,50,'processing',3,8,NULL,'2026-06-10 10:00:00.123456','2026-06-10 10:02:00.123456','legacy-claim-token','legacy-failure',1)")
+        db.sql("INSERT INTO gym_course_pack(id,store_id,member_id,course_product_id,assigned_coach_id,name,starts_at,total_sessions,remaining_sessions,reserved_sessions,status,price_snapshot,source_type,source_id,tenant_id) VALUES(900001,101,900001,900001,900001,'legacy-pack','2026-06-10 10:00:00',2,1,0,'active',200.00,'migration-test','legacy-pack',1)")
+        db.sql("INSERT INTO gym_contract_event(id,contract_id,type,occurred_at,actor_user_id,detail,tenant_id) VALUES(900001,900001,'issued','2026-06-10 10:00:00.123456',50,'legacy-contract-audit',1)")
         before = auth_snapshot(db)
         db.check_legacy()
         command('adopt-legacy')
         check(auth_snapshot(db) == before, 'legacy adoption preserves every account, role, scope, grant and department')
+        check(db.sql("SELECT COUNT(*) FROM gym_course_pack WHERE id=900001 AND duration_minutes_snapshot IS NULL AND total_sessions=2 AND remaining_sessions=1 AND reserved_sessions=0 AND price_snapshot=200.00") == '1', 'legacy course balances and price remain unchanged without invented lesson duration')
+        check(db.sql("SELECT COUNT(*) FROM gym_contract_event WHERE id=900001 AND actor_user_id=50 AND actor_user_type=2 AND occurred_at='2026-06-10 10:00:00.123456' AND detail='legacy-contract-audit'") == '1', 'legacy contract audit keeps its actor and timestamp with administrator type')
         check(db.sql("SELECT COUNT(*) FROM gym_fulfillment_task WHERE id=900001 AND order_id=900001 AND principal_user_id=50 AND principal_user_type=2 AND status='processing' AND attempt_count=3 AND attempt_limit=8 AND next_attempt_at IS NULL AND last_attempt_at='2026-06-10 10:00:00.123456' AND lease_until='2026-06-10 10:02:00.123456' AND claim_token='legacy-claim-token' AND failure_reason='legacy-failure' AND tenant_id=1") == '1', 'legacy fulfillment keeps its principal, retry state and lease while acquiring administrator type')
         check(db.sql('SELECT COUNT(*) FROM gym_fulfillment_task') == '1', 'migration does not fabricate fulfillment tasks for existing member orders')
         check(db.sql("SELECT COUNT(*) FROM gym_business_order WHERE id=900001 AND buyer_user_id IS NULL AND expires_at IS NULL AND cancelled_at IS NULL AND cancellation_reason IS NULL AND status='partially_paid' AND payable_amount=100.00 AND paid_amount=20.00") == '1', 'legacy order money and status survive without invented expiry or actor')
@@ -248,6 +254,41 @@ def main():
         rejects(db.seed, 'development seed refuses a database with a future baseline')
         check(all(db.sql('SELECT COUNT(*) FROM ' + table) == '0'
                   for table in manager.SYSTEM_TABLES), 'future baseline rejection creates no seed data')
+    # Upgrade a real V021 database containing pre-worker member purchases.
+    with isolated() as db:
+        with tempfile.TemporaryDirectory(prefix='gym-flyway-member-fulfillment-') as folder:
+            previous_assets = Path(folder) / 'assets'
+            shutil.copytree(ASSETS, previous_assets)
+            (previous_assets / 'migration/mysql/V022__gym_member_order_fulfillment.sql').unlink()
+            manager.ASSETS = previous_assets
+            db.flyway('baseline', 0)
+            db.flyway('migrate')
+            for number in range(1, 16):
+                amount = 0 if number == 2 else 100
+                paid = 100 if number in (3, 6, 12) else 40 if number == 13 else 0
+                status = {2: 'pending_fulfillment', 3: 'paid', 5: 'cancelled', 6: 'refunded', 12: 'fulfilled', 13: 'partially_paid'}.get(number, 'pending_payment')
+                buyer = 'NULL' if number == 7 else str(50 + number)
+                product = 'course' if number == 1 else 'card'
+                db.sql(f"INSERT INTO gym_business_order(id,store_id,member_id,buyer_user_id,order_no,member_name,business_type,channel,status,payable_amount,paid_amount,refunded_amount,ordered_at,request_key,deleted,tenant_id) VALUES({number},101,{number},{buyer},'recovery-{number}','migration-only','{product}_sale','miniapp','{status}',{amount},{paid},{100 if number == 6 else 0},'2026-10-25 12:00:00','recovery-{number}',{1 if number == 14 else 0},1)")
+                db.sql(f"INSERT INTO gym_order_policy(order_id,request_hash,terms_snapshot,approval_required,contract_required,approved_approval_id,fulfilled_at,tenant_id) VALUES({number},'migration-hash','{{}}',{1 if number == 4 else 0},0,{100 if number == 15 else 'NULL'},{'CURRENT_TIMESTAMP(6)' if number == 12 else 'NULL'},{2 if number == 10 else 1})")
+                for item in range(2 if number == 9 else 1):
+                    db.sql(f"INSERT INTO gym_order_item(order_id,product_type,product_id,product_name_snapshot,product_version,quantity,unit_price,payable_amount,tenant_id) VALUES({number},'{product}',1,'migration-only',1,{2 if number == 11 else 1},{amount},{amount},1)")
+            db.sql("INSERT INTO gym_fulfillment_task(order_id,principal_user_id,principal_user_type,status,attempt_count,attempt_limit,claim_token,lease_until,tenant_id) VALUES(8,91,2,'processing',3,8,'existing-lease','2026-10-25 12:02:00.123456',1)")
+            before_orders = db.sql('SELECT * FROM gym_business_order ORDER BY id')
+            before_policy = db.sql('SELECT * FROM gym_order_policy ORDER BY id')
+            manager.ASSETS = ASSETS
+            db.flyway('migrate')
+            check(db.sql('SELECT GROUP_CONCAT(order_id ORDER BY order_id) FROM gym_fulfillment_task') == '1,2,3,8,13', 'V022 recovers only eligible unfulfilled member purchases and preserves existing tasks')
+            check(db.sql("SELECT COUNT(*) FROM gym_fulfillment_task WHERE principal_user_type=1 AND principal_user_id=50+order_id AND attempt_count=0 AND attempt_limit=8") == '4', 'recovered tasks retain each real buyer in the member namespace')
+            check(db.sql("SELECT COUNT(*) FROM gym_fulfillment_task WHERE order_id IN (2,3) AND status='pending' AND next_attempt_at IS NOT NULL") == '2', 'zero and fully paid recovered orders become due without synthetic receipts')
+            check(db.sql("SELECT COUNT(*) FROM gym_fulfillment_task WHERE order_id IN (1,13) AND status='waiting_payment' AND next_attempt_at IS NULL") == '2', 'unpaid and partly paid recovered orders still wait for verified payment')
+            check(db.sql("SELECT COUNT(*) FROM gym_fulfillment_task WHERE order_id=8 AND principal_user_type=2 AND principal_user_id=91 AND status='processing' AND attempt_count=3 AND claim_token='existing-lease' AND lease_until='2026-10-25 12:02:00.123456'") == '1', 'recovery does not replace an existing task principal or active lease')
+            check(db.sql('SELECT * FROM gym_business_order ORDER BY id') == before_orders and db.sql('SELECT * FROM gym_order_policy ORDER BY id') == before_policy, 'recovery leaves order money, state and frozen policies untouched')
+            check(db.sql('SELECT (SELECT COUNT(*) FROM gym_member_card)+(SELECT COUNT(*) FROM gym_course_pack)+(SELECT COUNT(*) FROM gym_order_payment)+(SELECT COUNT(*) FROM gym_financial_event)+(SELECT COUNT(*) FROM gym_contract)') == '0', 'migration creates no rights, contracts, receipts or financial events')
+            history = db.sql('SELECT * FROM gym_fulfillment_task ORDER BY id')
+            db.flyway('migrate')
+            check(db.sql('SELECT * FROM gym_fulfillment_task ORDER BY id') == history, 'repeated migrate creates no duplicate member tasks or resets retry history')
+            db.flyway('validate')
     print(f'Flyway integration regression passed: {CHECKS} checks; all temporary DBs cleaned.')
 
 

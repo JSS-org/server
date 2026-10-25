@@ -50,7 +50,7 @@
 | 17 | 公共及会员端 | GET | `/app-api/gym/me/cards` | 查询本人的会员卡列表 | 已实现，本地测试通过 |
 | 18 | 公共及会员端 | GET | `/app-api/gym/me/cards/{id}` | 获取本人会员卡详情、有效期和剩余次数 | 已实现，本地测试通过 |
 | 19 | 公共及会员端 | GET | `/app-api/gym/me/course-packs` | 查询本人的私教课包及剩余、预占、可用课时 | 已实现，本地测试通过 |
-| 20 | 公共及会员端 | POST | `/app-api/gym/orders` | 按商品或有效报价创建待支付订单 | 已实现，本地测试通过；支付/自动履约待衔接 |
+| 20 | 公共及会员端 | POST | `/app-api/gym/orders` | 按商品或有效报价创建待支付订单 | 已实现，含内部自动履约；真实支付待接入 |
 | 21 | 公共及会员端 | GET | `/app-api/gym/me/orders` | 查询本人的订单列表 | 已实现，本地测试通过 |
 | 22 | 公共及会员端 | GET | `/app-api/gym/me/orders/{id}` | 获取本人订单支付及权益履约状态 | 已实现，本地测试通过 |
 | 23 | 公共及会员端 | POST | `/app-api/gym/orders/{id}/payment-sessions` | 创建订单支付会话，返回小程序支付参数 | 待开发；外部接入暂缓 |

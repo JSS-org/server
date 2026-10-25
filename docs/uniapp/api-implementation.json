@@ -257,7 +257,9 @@
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
         "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
-        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java"
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
       ]
     },
     {
@@ -271,7 +273,9 @@
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
         "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
-        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java"
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
       ]
     },
     {
@@ -285,7 +289,9 @@
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
         "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
-        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java"
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
       ]
     },
     {
@@ -310,7 +316,9 @@
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymOrdersController.java",
         "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileOrdersService.java",
         "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
-        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java"
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileOrdersControllerTest.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymMemberOrderFulfillmentService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/sales/GymOrderEntitlementAccess.java"
       ]
     },
     {

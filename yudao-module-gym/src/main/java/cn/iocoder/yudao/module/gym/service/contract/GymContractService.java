@@ -120,8 +120,35 @@ public class GymContractService {
                         true));
     }
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess purchaseAccess;
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymContractDO issueForPurchasedItem(Long itemId, String type, Long id) {
+        var purchase = purchaseAccess.requireItem(itemId);
+        return issue(
+                type,
+                id,
+                null,
+                null,
+                Boolean.TRUE.equals(purchase.policy().getContractRequired()),
+                purchase);
+    }
+
     private GymContractDO issue(
             String type, Long id, Long templateId, Instant dueAt, boolean required) {
+        return issue(type, id, templateId, dueAt, required, null);
+    }
+
+    private GymContractDO issue(
+            String type,
+            Long id,
+            Long templateId,
+            Instant dueAt,
+            boolean required,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase) {
         Long memberId, storeId;
         String applicable, name;
         Instant effective;
@@ -153,8 +180,30 @@ public class GymContractService {
             effective = subscription.getRequestedAt();
             entitlement = subscriptionTerms(subscription);
         } else throw exception(CONTRACT_SOURCE_INVALID);
-        scope.check(storeId);
-        members.checkMemberStore(memberId, storeId);
+        if (purchase == null) {
+            scope.check(storeId);
+            members.checkMemberStore(memberId, storeId);
+        } else {
+            String sourceType, sourceId;
+            if (entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.card.GymMemberCardDO card
+                    && "card".equals(purchase.item().getProductType())) {
+                sourceType = card.getSourceType();
+                sourceId = card.getSourceId();
+            } else if (entitlement
+                            instanceof
+                            cn.iocoder.yudao.module.gym.dal.dataobject.course.GymCoursePackDO pack
+                    && "course".equals(purchase.item().getProductType())) {
+                sourceType = pack.getSourceType();
+                sourceId = pack.getSourceId();
+            } else throw exception(CONTRACT_SOURCE_INVALID);
+            if (!purchase.member().getId().equals(memberId)
+                    || !purchase.store().getId().equals(storeId)
+                    || !"order-item".equals(sourceType)
+                    || !(purchase.item().getId() + ":0").equals(sourceId))
+                throw exception(CONTRACT_SOURCE_INVALID);
+        }
         var existing =
                 gymContractMapper.selectList(
                         new LambdaQueryWrapper<GymContractDO>()
@@ -200,7 +249,8 @@ public class GymContractService {
         privateFile.setName("contract-" + UUID.randomUUID() + ".pdf");
         privateFile.setMimeType("application/pdf");
         privateFile.setSize((long) content.length);
-        privateFile.setUploaderId(SecurityFrameworkUtils.getLoginUserId());
+        privateFile.setUploaderId(
+                purchase == null ? SecurityFrameworkUtils.getLoginUserId() : null);
         privateFile.setUrl(
                 storageConfigId == null
                         ? fileApi.createFile(
@@ -220,7 +270,7 @@ public class GymContractService {
         row.setTemplateId(template.getId());
         row.setTemplateSnapshot(JsonUtils.toJsonString(template));
         var snapshot = new LinkedHashMap<String, Object>();
-        var member = members.requireMember(memberId, false);
+        var member = purchase == null ? members.requireMember(memberId, false) : purchase.member();
         snapshot.put("memberId", memberId.toString());
         snapshot.put("memberName", member.getName());
         snapshot.put("memberPhone", member.getPhone());
@@ -397,6 +447,7 @@ public class GymContractService {
         event.setType(type);
         event.setOccurredAt(now());
         event.setActorUserId(SecurityFrameworkUtils.getLoginUserId());
+        event.setActorUserType(SecurityFrameworkUtils.getLoginUser().getUserType());
         event.setDetail(detail);
         gymContractEventMapper.insert(event);
     }

@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.class,
+    cn.iocoder.yudao.module.gym.service.sales.GymMemberOrderFulfillmentService.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileOrdersService.class,
     cn.iocoder.yudao.module.gym.controller.app.mobile.AppGymOrdersController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileCourseQuoteService.class,
@@ -6447,7 +6449,12 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         var failed = fulfillmentQueue.get(order.getId());
         assertEquals("failed", failed.getStatus());
         assertEquals(1, failed.getAttemptCount());
-        assertTrue(failed.getFailureReason().contains("账号类型暂不支持"));
+        assertTrue(
+                failed.getFailureReason()
+                        .contains(
+                                userType == 1
+                                        ? MOBILE_IDENTITY_INVALID.getCode().toString()
+                                        : "账号类型暂不支持"));
         assertNotNull(failed.getNextAttemptAt());
         assertEquals("paid", salesRecords.order(order.getId()).getStatus());
         assertTrue(salesRecords.order(order.getId()).getMemberCardIds().isEmpty());
@@ -17623,5 +17630,629 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertEquals(
                 "unpaid", mobileOrders.create(req, "order-legacy-offer-retry").paymentStatus());
         assertEquals(1, orderRows().selectCount());
+    }
+
+    @Resource
+    cn.iocoder.yudao.module.gym.service.sales.GymMemberOrderFulfillmentService memberFulfillment;
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymFulfillmentTaskDO memberTask(Long order) {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.sales.GymFulfillmentTaskMapper.class)
+                .selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymFulfillmentTaskDO
+                                ::getOrderId,
+                        order);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymBusinessOrderDO freeMemberCard(
+            List<Long> ids, boolean required) {
+        var config = onlineSettings(ids.get(2));
+        config.getOffers().getFirst().setSalePrice(BigDecimal.ZERO);
+        config.getOffers().getFirst().setContractRequired(required);
+        salesSettings.saveOnline(101L, config);
+        qrMemberLogin();
+        var result = mobileOrders.create(memberOrder(ids, "card"), "fulfill-free-card");
+        return orderRows().selectById(Long.valueOf(result.id()));
+    }
+
+    void payMemberOrder(cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymBusinessOrderDO order) {
+        loginAs(1L);
+        String reference = "member-paid-" + order.getId();
+        when(receiptVerifier.payment(reference))
+                .thenReturn(
+                        receipt(order, reference, null, order.getPayableAmount().toPlainString()));
+        commerce.acceptPayment(order.getId(), reference);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper purchasedCards() {
+        return applicationContext.getBean(
+                cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper.class);
+    }
+
+    cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper purchasedPacks() {
+        return applicationContext.getBean(
+                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class);
+    }
+
+    @Test
+    void memberFulfillmentFreeCardUsesFrozenTemplateRealMemberAndUnsignedContractOnce() {
+        var ids = memberOrderFixture();
+        publishedContractPdf();
+        var order = freeMemberCard(ids, true);
+        var task = memberTask(order.getId());
+        assertEquals(1, task.getPrincipalUserType());
+        assertEquals(50L, task.getPrincipalUserId());
+        assertEquals("pending", task.getStatus());
+        loginAs(1L);
+        var change =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        change.setIncludedUses(99);
+        var version = Long.valueOf(cards.version(ids.get(2), change).getId());
+        change.setIncludedUses(null);
+        change.setStatus("published");
+        cards.patch(version, change);
+        loginAs(91L);
+        var saved = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        org.mockito.Mockito.clearInvocations(users, permissions);
+        assertTrue(fulfillmentWorker.process(task.getId()));
+        verify(users, never()).getUser(anyLong());
+        verify(permissions, never()).getDeptDataPermission(anyLong());
+        assertSame(
+                saved,
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertEquals("fulfilled", orderRows().selectById(order.getId()).getStatus());
+        var right = purchasedCards().selectList().getFirst();
+        assertEquals(ids.get(2), right.getTemplateId());
+        assertNotEquals(99, right.getTotalUses());
+        assertEquals(ids.get(1), right.getMemberId());
+        assertEquals("order-item", right.getSourceType());
+        var contract = contractMapper.selectList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals("unconfigured", contract.getSigningStatus());
+        assertNull(files.selectById(contract.getUnsignedFileId()).getUploaderId());
+        var events =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.contract.GymContractEventMapper
+                                .class);
+        var event = events.selectList().getFirst();
+        assertEquals(1, event.getActorUserType());
+        assertEquals(50L, event.getActorUserId());
+        qrMemberLogin();
+        assertEquals(
+                List.of(right.getId().toString()), mobileOrders.get(order.getId()).memberCardIds());
+        memberFulfillment.fulfill(order.getId());
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentRequiredContractFailuresRollbackRightsAndRetryPreservesBuyer() {
+        var ids = memberOrderFixture();
+        var order = freeMemberCard(ids, true);
+        Long task = memberTask(order.getId()).getId();
+        loginAs(91L);
+        assertTrue(fulfillmentWorker.process(task));
+        assertTrue(
+                memberTask(order.getId())
+                        .getFailureReason()
+                        .contains(CONTRACT_TEMPLATE_NOT_EXISTS.getCode().toString()));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(
+                "lead",
+                new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                        .queryForObject(
+                                "SELECT customer_stage FROM gym_member WHERE id=?",
+                                String.class,
+                                ids.get(1)));
+        publishedContractPdf();
+        when(fileApi.getFileContentByUrl(anyString())).thenReturn(null);
+        fulfillmentQueue.retry(order.getId());
+        assertEquals(50L, memberTask(order.getId()).getPrincipalUserId());
+        assertEquals(1, memberTask(order.getId()).getPrincipalUserType());
+        assertTrue(fulfillmentWorker.process(task));
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(0, contractMapper.selectCount());
+        assertEquals("pending_fulfillment", orderRows().selectById(order.getId()).getStatus());
+        when(fileApi.getFileContentByUrl(anyString()))
+                .thenReturn(
+                        "%PDF-1.4\nlocal-test\n%%EOF"
+                                .getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        var failed = memberTask(order.getId());
+        when(businessClock.now()).thenReturn(failed.getNextAttemptAt().plusSeconds(1));
+        when(tenantFrameworkService.getTenantIds()).thenReturn(List.of(1L));
+        fulfillmentScheduler.tick();
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertEquals(3, memberTask(order.getId()).getAttemptCount());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentPaidCourseKeepsPurchasedLessonsDurationAndAmountAfterProductEdit() {
+        var ids = memberOrderFixture();
+        publishedIssueCourseContract();
+        var start = businessClock.now().plusSeconds(86400);
+        Long oldSession =
+                Long.valueOf(
+                        courses.createSession(courseSession(ids.get(3), ids.get(5), start))
+                                .getId());
+        qrMemberLogin();
+        var created = mobileOrders.create(memberOrder(ids, "course"), "fulfill-paid-course");
+        var order = orderRows().selectById(Long.valueOf(created.id()));
+        assertEquals("waiting_payment", memberTask(order.getId()).getStatus());
+        assertFalse(fulfillmentWorker.process(memberTask(order.getId()).getId()));
+        loginAs(1L);
+        when(receiptVerifier.payment("course-first"))
+                .thenReturn(receipt(order, "course-first", null, "40.00"));
+        commerce.acceptPayment(order.getId(), "course-first");
+        assertEquals("waiting_payment", memberTask(order.getId()).getStatus());
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(9);
+        patch.setDurationMinutes(30);
+        patch.setName("新版私教");
+        courses.patchProduct(ids.get(3), patch);
+        var shorter = courseSession(ids.get(3), ids.get(5), start.plusSeconds(7200));
+        shorter.setEndsAt(shorter.getStartsAt().plusSeconds(1800));
+        Long shortSession = Long.valueOf(courses.createSession(shorter).getId());
+        when(receiptVerifier.payment("course-rest"))
+                .thenReturn(receipt(order, "course-rest", null, "160.00"));
+        commerce.acceptPayment(order.getId(), "course-rest");
+        commerce.acceptPayment(order.getId(), "course-rest");
+        assertEquals("pending", memberTask(order.getId()).getStatus());
+        fulfillmentWorker.process(memberTask(order.getId()).getId());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        var pack = purchasedPacks().selectList().getFirst();
+        assertEquals(2, pack.getTotalSessions());
+        assertEquals(2, pack.getRemainingSessions());
+        assertEquals(60, pack.getDurationMinutesSnapshot());
+        assertEquals("私教产品", pack.getName());
+        assertEquals(new BigDecimal("200.00"), pack.getPriceSnapshot());
+        assertNull(pack.getExpiresAt());
+        assertEquals(ids.get(5), pack.getAssignedCoachId());
+        assertEquals(2, financialEvents.selectCount());
+        assertTrue(
+                financialEvents.selectList().stream()
+                        .allMatch(e -> "private".equals(e.getProductType())));
+        assertEquals(
+                new BigDecimal("200.00"),
+                financialEvents.selectList().stream()
+                        .map(e -> e.getAmount())
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
+        assertEquals("unsigned", contractMapper.selectList().getFirst().getStatus());
+        qrMemberLogin();
+        var bookingService =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.service.mobile.GymMobileBookingsService.class);
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Create();
+        req.setCoursePackId(pack.getId());
+        req.setSessionId(shortSession);
+        assertServiceException(
+                () -> bookingService.create(req, "purchased-short-reject"), COURSE_PACK_INVALID);
+        var query =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileBookingVO
+                        .Sessions();
+        query.setStoreId(101L);
+        query.setStartDate(
+                start.atZone(cn.iocoder.yudao.module.gym.service.common.GymDateRange.ZONE)
+                        .toLocalDate());
+        query.setEndDate(query.getStartDate().plusDays(1));
+        var shown = bookingService.sessions(ids.get(5), query).getList();
+        assertFalse(
+                shown.stream()
+                        .filter(x -> x.id().equals(shortSession.toString()))
+                        .findFirst()
+                        .orElseThrow()
+                        .bookable());
+        req.setSessionId(oldSession);
+        assertEquals("confirmed", bookingService.create(req, "purchased-old-duration").status());
+        assertEquals(1, purchasedPacks().selectById(pack.getId()).getReservedSessions());
+        assertEquals(2, purchasedPacks().selectById(pack.getId()).getRemainingSessions());
+        assertServiceException(
+                () -> commerce.acceptRefund(order.getId(), "course-refund-unimplemented"),
+                SALES_ORDER_NOT_EXISTS);
+    }
+
+    @Test
+    void memberFulfillmentZeroApprovedQuoteIssuesFrozenCourseWithoutInventingRevenue() {
+        var ids = memberOrderFixture();
+        var approvalReq = coursePrice(ids);
+        approvalReq.setProposedAmount(BigDecimal.ZERO);
+        var approval = mobileCoursePrice.create(approvalReq, "fulfill-zero-approval");
+        loginAs(91L);
+        approvals.decide(Long.valueOf(approval.id()), decision("approve"));
+        loginAs(1L);
+        var quoteReq = quoteRequest(ids);
+        quoteReq.setApprovalId(Long.valueOf(approval.id()));
+        var quote = mobileQuotes.create(quoteReq, "fulfill-zero-quote");
+        var req = memberOrder(ids, "course");
+        req.setQuoteId(Long.valueOf(quote.id()));
+        qrMemberLogin();
+        var result = mobileOrders.create(req, "fulfill-zero-course");
+        Long order = Long.valueOf(result.id());
+        assertEquals(order, courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        assertTrue(fulfillmentWorker.process(memberTask(order).getId()));
+        assertEquals("succeeded", memberTask(order).getStatus());
+        assertEquals(
+                new BigDecimal("0.00"),
+                purchasedPacks().selectList().getFirst().getPriceSnapshot());
+        assertEquals(60, purchasedPacks().selectList().getFirst().getDurationMinutesSnapshot());
+        assertEquals(0, financialEvents.selectCount());
+        assertEquals("succeeded", mobileOrders.get(order).fulfillmentStatus());
+        assertEquals(1, mobileOrders.get(order).coursePackIds().size());
+    }
+
+    @Test
+    void memberFulfillmentRejectsAdminOtherLinkedMemberAndOtherTenant() {
+        var ids = memberOrderFixture();
+        Long other = Long.valueOf(members.create(member(101L, "13800009908")).getId());
+        var order = freeMemberCard(ids, false);
+        loginAs(1L);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), MOBILE_IDENTITY_INVALID);
+        qrMemberLogin();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_mobile_identity SET member_id=? WHERE user_id=50", other);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), SALES_ORDER_NOT_EXISTS);
+        jdbc.update("UPDATE gym_mobile_identity SET member_id=? WHERE user_id=50", ids.get(1));
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), MOBILE_IDENTITY_INVALID);
+        TenantContextHolder.setTenantId(1L);
+        assertEquals(0, purchasedCards().selectCount());
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(1, purchasedCards().selectCount());
+    }
+
+    @Test
+    void memberFulfillmentDisabledAccountAndStoreBlockRightsUntilConditionsRecover() {
+        var ids = memberOrderFixture();
+        var order = freeMemberCard(ids, false);
+        Long task = memberTask(order.getId()).getId();
+        var account = memberAccounts.getUser(50L);
+        account.setStatus(1);
+        fulfillmentWorker.process(task);
+        assertEquals("failed", memberTask(order.getId()).getStatus());
+        assertEquals(0, purchasedCards().selectCount());
+        account.setStatus(0);
+        loginAs(1L);
+        fulfillmentQueue.retry(order.getId());
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedCards().selectCount());
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        fulfillmentQueue.retry(order.getId());
+        jdbc.update("UPDATE gym_member_store SET deleted=1 WHERE member_id=?", ids.get(1));
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedCards().selectCount());
+        jdbc.update("UPDATE gym_member_store SET deleted=0 WHERE member_id=?", ids.get(1));
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(task);
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertEquals(4, memberTask(order.getId()).getAttemptCount());
+    }
+
+    @Test
+    void memberFulfillmentCourseRechecksLiveCoachAndProductWhilePreservingPaidOrder() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var result = mobileOrders.create(memberOrder(ids, "course"), "fulfill-eligibility-course");
+        var order = orderRows().selectById(Long.valueOf(result.id()));
+        payMemberOrder(order);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        Long task = memberTask(order.getId()).getId();
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2099-01-01' WHERE employee_id=?",
+                ids.get(5));
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedPacks().selectCount());
+        jdbc.update(
+                "UPDATE gym_employee_store SET joined_on='2020-01-01' WHERE employee_id=?",
+                ids.get(5));
+        fulfillmentQueue.retry(order.getId());
+        jdbc.update("UPDATE gym_course_product SET status='inactive' WHERE id=?", ids.get(3));
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedPacks().selectCount());
+        assertEquals("paid", orderRows().selectById(order.getId()).getStatus());
+        assertEquals(1, financialEvents.selectCount());
+        jdbc.update("UPDATE gym_course_product SET status='active' WHERE id=?", ids.get(3));
+        var reassigned =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        reassigned.setCoachId(ids.get(4));
+        assertServiceException(
+                () -> courses.patchProduct(ids.get(3), reassigned), COURSE_PRODUCT_INVALID);
+        // Normal APIs forbid reassignment. Simulate inconsistent imported data as a defense check.
+        jdbc.update("UPDATE gym_course_product SET coach_id=? WHERE id=?", ids.get(4), ids.get(3));
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(task);
+        assertEquals(0, purchasedPacks().selectCount());
+        jdbc.update("UPDATE gym_course_product SET coach_id=? WHERE id=?", ids.get(5), ids.get(3));
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(task);
+        assertEquals(1, purchasedPacks().selectCount());
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentRequiredApprovalAndManualHoldCannotBeBypassedByMemberWorker() {
+        var ids = memberOrderFixture();
+        var order = freeMemberCard(ids, false);
+        var claim = fulfillmentQueue.claim(memberTask(order.getId()).getId());
+        loginAs(1L);
+        commerce.openingSnapshot(order.getId(), 101L);
+        qrMemberLogin();
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), COMMERCE_FULFILLMENT_INVALID);
+        fulfillmentQueue.finish(claim.getId(), claim.getClaimToken(), "stale-worker");
+        assertEquals("waiting_approval", memberTask(order.getId()).getStatus());
+        assertEquals(0, purchasedCards().selectCount());
+        loginAs(1L);
+        var config = onlineSettings(ids.get(2));
+        config.getOffers().getFirst().setSalePrice(BigDecimal.ZERO);
+        config.getOffers().getFirst().setApprovalRequired(true);
+        salesSettings.saveOnline(101L, config);
+        qrMemberLogin();
+        Long gated =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-gated-card").id());
+        assertNull(memberTask(gated));
+        assertServiceException(
+                () -> memberFulfillment.fulfill(gated), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+    }
+
+    @Test
+    void memberFulfillmentCancellationAndVerifiedRefundCancelTasksWithoutRights() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long cancelled =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-cancel-card").id());
+        mobileOrders.cancel(cancelled, memberOrderCancel(), "fulfill-cancel-command");
+        assertEquals("cancelled", memberTask(cancelled).getStatus());
+        assertFalse(fulfillmentWorker.process(memberTask(cancelled).getId()));
+        assertServiceException(
+                () -> memberFulfillment.fulfill(cancelled), COMMERCE_FULFILLMENT_INVALID);
+        Long refundable =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-refund-card").id());
+        var order = orderRows().selectById(refundable);
+        payMemberOrder(order);
+        var claim = fulfillmentQueue.claim(memberTask(refundable).getId());
+        when(receiptVerifier.refund("member-refund"))
+                .thenReturn(
+                        receipt(order, "member-refund", "member-paid-" + order.getId(), "99.99"));
+        commerce.acceptRefund(refundable, "member-refund");
+        fulfillmentQueue.finish(claim.getId(), claim.getClaimToken(), null);
+        assertEquals("cancelled", memberTask(refundable).getStatus());
+        qrMemberLogin();
+        assertServiceException(
+                () -> memberFulfillment.fulfill(refundable), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+        assertEquals(2, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentConcurrentCallsIssueExactlyOneRightAndContract() throws Exception {
+        var ids = memberOrderFixture();
+        publishedContractPdf();
+        var order = freeMemberCard(ids, true);
+        var results =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            memberFulfillment.fulfill(order.getId());
+                            return "ok";
+                        },
+                        () -> {
+                            qrMemberLogin();
+                            memberFulfillment.fulfill(order.getId());
+                            return "ok";
+                        });
+        assertEquals(List.of("ok", "ok"), results);
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+        assertFalse(fulfillmentWorker.process(memberTask(order.getId()).getId()));
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentTaskWriteAndOrderCreationRollbackTogetherAndSameKeyCanRetry() {
+        var ids = memberOrderFixture();
+        var quote = mobileQuotes.create(quoteRequest(ids), "fulfill-atomic-quote");
+        var request = memberOrder(ids, "course");
+        request.setQuoteId(Long.valueOf(quote.id()));
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_member_task CHECK (principal_user_type<>1)");
+        qrMemberLogin();
+        try {
+            assertThrows(
+                    org.springframework.dao.DataIntegrityViolationException.class,
+                    () -> mobileOrders.create(request, "fulfill-enqueue-atomic"));
+            assertEquals(0, orderRows().selectCount());
+            assertEquals(
+                    0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_order_item", Integer.class));
+            assertEquals(
+                    0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_order_policy", Integer.class));
+            assertNull(courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        } finally {
+            jdbc.execute("ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_member_task");
+        }
+        Long order = Long.valueOf(mobileOrders.create(request, "fulfill-enqueue-atomic").id());
+        assertNotNull(memberTask(order));
+        assertEquals(order, courseQuotes.selectById(Long.valueOf(quote.id())).getUsedOrderId());
+        assertEquals(1, orderRows().selectCount());
+    }
+
+    @Test
+    void memberFulfillmentFinalTaskFailureRollsBackCardContractPolicyAndMemberStage() {
+        var ids = memberOrderFixture();
+        publishedContractPdf();
+        var order = freeMemberCard(ids, true);
+        long fileCount = files.selectCount();
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.execute(
+                "ALTER TABLE gym_fulfillment_task ADD CONSTRAINT reject_member_completion CHECK (status<>'succeeded')");
+        try {
+            fulfillmentWorker.process(memberTask(order.getId()).getId());
+            assertEquals("failed", memberTask(order.getId()).getStatus());
+            assertEquals(0, purchasedCards().selectCount());
+            assertEquals(0, contractMapper.selectCount());
+            assertEquals(fileCount, files.selectCount());
+            assertEquals("pending_fulfillment", orderRows().selectById(order.getId()).getStatus());
+            assertEquals(
+                    0,
+                    jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM gym_order_policy WHERE fulfilled_at IS NOT NULL",
+                            Integer.class));
+            assertEquals(
+                    "lead",
+                    jdbc.queryForObject(
+                            "SELECT customer_stage FROM gym_member WHERE id=?",
+                            String.class,
+                            ids.get(1)));
+        } finally {
+            jdbc.execute(
+                    "ALTER TABLE gym_fulfillment_task DROP CONSTRAINT reject_member_completion");
+        }
+        loginAs(1L);
+        fulfillmentQueue.retry(order.getId());
+        fulfillmentWorker.process(memberTask(order.getId()).getId());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals(1, contractMapper.selectCount());
+        assertEquals("succeeded", memberTask(order.getId()).getStatus());
+    }
+
+    @Test
+    void memberFulfillmentRejectsTamperedFrozenTenantAndDirectUnpaidGrant() {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        Long unpaid =
+                Long.valueOf(
+                        mobileOrders.create(memberOrder(ids, "card"), "fulfill-unpaid-grant").id());
+        var itemMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper.class);
+        var item = itemMapper.selectList().getFirst();
+        assertServiceException(
+                () ->
+                        purchaseTransaction(
+                                () ->
+                                        cards.issuePurchasedOrderItem(
+                                                item.getId(), businessClock.now())),
+                COMMERCE_FULFILLMENT_INVALID);
+        loginAs(1L);
+        var order = freeMemberCard(ids, false);
+        var policyMapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderPolicyMapper.class);
+        var policy =
+                policyMapper.selectOne(
+                        cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymOrderPolicyDO
+                                ::getOrderId,
+                        order.getId());
+        String original = policy.getTermsSnapshot();
+        var terms =
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.parseObject(
+                        original, Map.class);
+        ((Map<String, Object>) terms.get("template")).put("tenantId", 2);
+        policy.setTermsSnapshot(
+                cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(terms));
+        policyMapper.updateById(policy);
+        assertServiceException(
+                () -> memberFulfillment.fulfill(order.getId()), COMMERCE_FULFILLMENT_INVALID);
+        assertEquals(0, purchasedCards().selectCount());
+        policy.setTermsSnapshot(original);
+        policyMapper.updateById(policy);
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(1, purchasedCards().selectCount());
+        assertEquals("pending_payment", orderRows().selectById(unpaid).getStatus());
+    }
+
+    private void purchaseTransaction(Runnable action) {
+        new org.springframework.transaction.support.TransactionTemplate(
+                        applicationContext.getBean(
+                                org.springframework.transaction.PlatformTransactionManager.class))
+                .executeWithoutResult(status -> action.run());
+    }
+
+    @Test
+    void memberFulfillmentProductEditRaceCannotReplaceFrozenPurchasedCourseTerms()
+            throws Exception {
+        var ids = memberOrderFixture();
+        qrMemberLogin();
+        var result = mobileOrders.create(memberOrder(ids, "course"), "fulfill-edit-race");
+        var order = orderRows().selectById(Long.valueOf(result.id()));
+        payMemberOrder(order);
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            qrMemberLogin();
+                            memberFulfillment.fulfill(order.getId());
+                            return "fulfilled";
+                        },
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(9);
+                            patch.setDurationMinutes(30);
+                            courses.patchProduct(ids.get(3), patch);
+                            return "edited";
+                        });
+        assertEquals(List.of("fulfilled", "edited"), outcomes);
+        var pack = purchasedPacks().selectList().getFirst();
+        assertEquals(2, pack.getTotalSessions());
+        assertEquals(60, pack.getDurationMinutesSnapshot());
+        assertEquals(new BigDecimal("200.00"), pack.getPriceSnapshot());
+        assertEquals(1, financialEvents.selectCount());
+    }
+
+    @Test
+    void memberFulfillmentPurchaseHooksRequireTransactionAndContractChecksActualRightSource() {
+        var ids = memberOrderFixture();
+        var old =
+                cards.issue(
+                        ids.get(1),
+                        101L,
+                        ids.get(2),
+                        businessClock.now(),
+                        "manual-test",
+                        "unrelated-right");
+        var order = freeMemberCard(ids, false);
+        var item =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.sales.GymOrderItemMapper
+                                        .class)
+                        .selectList()
+                        .getFirst();
+        assertThrows(
+                org.springframework.transaction.IllegalTransactionStateException.class,
+                () -> cards.issuePurchasedOrderItem(item.getId(), businessClock.now()));
+        assertServiceException(
+                () ->
+                        purchaseTransaction(
+                                () ->
+                                        contracts.issueForPurchasedItem(
+                                                item.getId(), "member-cards", old.getId())),
+                CONTRACT_SOURCE_INVALID);
+        assertEquals(0, contractMapper.selectCount());
+        assertEquals(1, purchasedCards().selectCount());
+        memberFulfillment.fulfill(order.getId());
+        assertEquals(2, purchasedCards().selectCount());
+        assertEquals(0, financialEvents.selectCount());
     }
 }

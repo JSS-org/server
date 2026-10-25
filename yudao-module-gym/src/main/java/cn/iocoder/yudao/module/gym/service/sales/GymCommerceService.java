@@ -182,13 +182,19 @@ public class GymCommerceService {
     }
 
     private GymBusinessOrderDO lockedOrder(Long id) {
+        return lockedOrder(id, false);
+    }
+
+    private GymBusinessOrderDO lockedOrder(Long id, boolean allowCourse) {
         mutex.lockStoreEntitlements();
         var row =
                 gymBusinessOrderMapper.selectOne(
                         new LambdaQueryWrapper<GymBusinessOrderDO>()
                                 .eq(GymBusinessOrderDO::getId, id)
                                 .last("FOR UPDATE"));
-        if (row == null || !"card_sale".equals(row.getBusinessType()))
+        if (row == null
+                || !("card_sale".equals(row.getBusinessType())
+                        || allowCourse && "course_sale".equals(row.getBusinessType())))
             throw exception(SALES_ORDER_NOT_EXISTS);
         scope.check(row.getStoreId());
         stores.requireStore(row.getStoreId(), false);
@@ -196,8 +202,14 @@ public class GymCommerceService {
     }
 
     private void checkBeforeVerification(Long id) {
+        checkBeforeVerification(id, false);
+    }
+
+    private void checkBeforeVerification(Long id, boolean allowCourse) {
         var row = gymBusinessOrderMapper.selectById(id);
-        if (row == null || !"card_sale".equals(row.getBusinessType()))
+        if (row == null
+                || !("card_sale".equals(row.getBusinessType())
+                        || allowCourse && "course_sale".equals(row.getBusinessType())))
             throw exception(SALES_ORDER_NOT_EXISTS);
         scope.check(row.getStoreId());
     }
@@ -243,7 +255,7 @@ public class GymCommerceService {
         event.setStoreId(order.getStoreId());
         event.setEmployeeId(order.getEmployeeId());
         event.setBusinessOrderId(order.getId());
-        event.setProductType("card");
+        event.setProductType("course_sale".equals(order.getBusinessType()) ? "private" : "card");
         event.setEventType(type);
         event.setAmount(amount);
         event.setSourceType(sourceType);
@@ -259,7 +271,8 @@ public class GymCommerceService {
                 || items.stream()
                         .anyMatch(
                                 i ->
-                                        !"card".equals(i.getProductType())
+                                        !(i.getProductType() + "_sale")
+                                                        .equals(order.getBusinessType())
                                                 || i.getPayableAmount().signum() < 0))
             throw exception(COMMERCE_RECEIPT_INVALID);
         BigDecimal before =
@@ -282,9 +295,9 @@ public class GymCommerceService {
     @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public GymBusinessOrderDO acceptPayment(Long orderId, String reference) {
         if (!identity(reference)) throw exception(COMMERCE_RECEIPT_INVALID);
-        checkBeforeVerification(orderId);
+        checkBeforeVerification(orderId, true);
         var receipt = receipts.payment(reference);
-        var order = lockedOrder(orderId);
+        var order = lockedOrder(orderId, true);
         receipt(order, receipt);
         var old =
                 gymOrderPaymentMapper.selectOne(

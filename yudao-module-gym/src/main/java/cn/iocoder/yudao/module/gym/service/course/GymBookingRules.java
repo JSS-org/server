@@ -85,6 +85,13 @@ public class GymBookingRules {
         if (!conflicts.isEmpty()) throw exception(MOBILE_BOOKING_TIME_CONFLICT);
     }
 
+    public boolean matchesDuration(GymCoursePackDO pack, GymCourseSessionDO session) {
+        return pack.getDurationMinutesSnapshot() == null
+                || session.getStartsAt()
+                        .plus(pack.getDurationMinutesSnapshot(), ChronoUnit.MINUTES)
+                        .equals(session.getEndsAt());
+    }
+
     public void validatePack(GymCoursePackDO pack, Long memberId, GymCourseSessionDO session) {
         if (pack == null) throw exception(COURSE_PACK_NOT_EXISTS);
         if (!memberId.equals(pack.getMemberId())
@@ -92,6 +99,7 @@ public class GymBookingRules {
                 || !session.getCourseProductId().equals(pack.getCourseProductId())
                 || !session.getCoachId().equals(pack.getAssignedCoachId())
                 || !"active".equals(pack.getStatus())
+                || !matchesDuration(pack, session)
                 || pack.getStartsAt().isAfter(session.getStartsAt())
                 || pack.getExpiresAt() != null && !pack.getExpiresAt().isAfter(session.getEndsAt()))
             throw exception(COURSE_PACK_INVALID);

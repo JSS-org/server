@@ -54,6 +54,7 @@ public class GymMobileOrdersService {
     @Resource private GymOrderPolicyMapper policies;
     @Resource private GymFulfillmentTaskMapper tasks;
     @Resource private Validator validator;
+    @Resource private cn.iocoder.yudao.module.gym.service.sales.GymFulfillmentQueueService queue;
     private static final BigDecimal ZERO = new BigDecimal("0.00");
 
     private record Payload(
@@ -169,8 +170,7 @@ public class GymMobileOrdersService {
                     policy.setContractRequired(terms.contract());
                     policies.insert(policy);
                     if (quote != null) quotes.bindToOrder(quote.getId(), row.getId());
-                    // Member-principal fulfillment is connected in a separate business step. Never
-                    // enqueue the member's numeric ID as an administrator or manufacture payment.
+                    queue.enqueueMember(row.getId());
                     return project(List.of(row), now).getFirst();
                 });
     }

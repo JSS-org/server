@@ -55,6 +55,10 @@ public class GymCourseService {
     @Resource private GymDataScope scope;
     @Resource private GymBusinessClock gymBusinessClock;
     @Resource private cn.iocoder.yudao.module.gym.service.contract.GymContractService contracts;
+
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess purchaseAccess;
+
     @Resource private Validator validator;
     @Resource private GymBookingRules bookingRules;
     @Resource private GymLessonConfirmationService lessonConfirmations;
@@ -497,6 +501,34 @@ public class GymCourseService {
         var member = members.requireMember(memberId, true);
         records.checkPurchase(memberId);
         var product = requireProduct(productId, true);
+        return issuePackInternal(member, product, startsAt, expiresAt, sourceType, sourceId, null);
+    }
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymCoursePackDO issuePurchasedOrderItem(Long itemId, Instant startsAt) {
+        var purchase = purchaseAccess.requireItem(itemId);
+        if (purchase.course() == null) throw exception(COURSE_PACK_INVALID);
+        return issuePackInternal(
+                purchase.member(),
+                purchase.course(),
+                startsAt,
+                null,
+                "order-item",
+                itemId + ":0",
+                purchase);
+    }
+
+    private GymCoursePackDO issuePackInternal(
+            cn.iocoder.yudao.module.gym.dal.dataobject.member.GymMemberDO member,
+            GymCourseProductDO product,
+            Instant startsAt,
+            Instant expiresAt,
+            String sourceType,
+            String sourceId,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase) {
+        Long memberId = member.getId(), productId = product.getId();
         startsAt = normalized(startsAt);
         expiresAt = normalized(expiresAt);
         if (!"active".equals(member.getStatus())
@@ -535,7 +567,9 @@ public class GymCourseService {
         row.setRemainingSessions(product.getSessionCount());
         row.setReservedSessions(0);
         row.setStatus("active");
-        row.setPriceSnapshot(product.getPrice());
+        row.setPriceSnapshot(
+                purchase == null ? product.getPrice() : purchase.item().getUnitPrice());
+        row.setDurationMinutesSnapshot(purchase == null ? null : product.getDurationMinutes());
         row.setSourceType(sourceType);
         row.setSourceId(sourceId);
         gymCoursePackMapper.insert(row);
@@ -556,7 +590,8 @@ public class GymCourseService {
         update.setId(memberId);
         update.setCustomerStage("member");
         gymMemberMapper.updateById(update);
-        contracts.issueForEntitlement("course-packs", row.getId());
+        if (purchase == null) contracts.issueForEntitlement("course-packs", row.getId());
+        else contracts.issueForPurchasedItem(purchase.item().getId(), "course-packs", row.getId());
         return row;
     }
 

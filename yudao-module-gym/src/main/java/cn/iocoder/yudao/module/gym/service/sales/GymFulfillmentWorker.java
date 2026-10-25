@@ -21,6 +21,7 @@ import java.util.List;
 public class GymFulfillmentWorker {
     @Resource private GymFulfillmentQueueService queue;
     @Resource private GymCommerceService commerce;
+    @Resource private GymMemberOrderFulfillmentService memberFulfillment;
     @Resource private AdminUserService users;
     @Resource private cn.iocoder.yudao.module.system.api.permission.PermissionApi permissions;
 
@@ -32,7 +33,17 @@ public class GymFulfillmentWorker {
         String failure = null;
         try {
             // Check the namespace before any account lookup, including colliding numeric IDs.
-            if (!UserTypeEnum.ADMIN.getValue().equals(task.getPrincipalUserType())) {
+            if (UserTypeEnum.MEMBER.getValue().equals(task.getPrincipalUserType())) {
+                var login = new LoginUser();
+                login.setId(task.getPrincipalUserId());
+                login.setUserType(UserTypeEnum.MEMBER.getValue());
+                login.setTenantId(TenantContextHolder.getRequiredTenantId());
+                var context = SecurityContextHolder.createEmptyContext();
+                context.setAuthentication(
+                        UsernamePasswordAuthenticationToken.authenticated(login, null, List.of()));
+                SecurityContextHolder.setContext(context);
+                memberFulfillment.fulfill(task.getOrderId());
+            } else if (!UserTypeEnum.ADMIN.getValue().equals(task.getPrincipalUserType())) {
                 failure = "任务账号类型暂不支持自动履约，未使用后台账号执行";
             } else {
                 var user = users.getUser(task.getPrincipalUserId());
@@ -56,7 +67,7 @@ public class GymFulfillmentWorker {
                 }
             }
         } catch (ServiceException e) {
-            failure = "自动履约业务校验失败，错误码 " + e.getCode() + "；请检查合同、卡种和门店权限";
+            failure = "自动履约业务校验失败，错误码 " + e.getCode() + "；请检查购买身份、冻结条款、合同和当前资格";
         } catch (Exception e) {
             failure = "自动履约发生内部异常，等待重试或后台排查";
             log.error("自动履约内部异常，taskId={}, orderId={}", task.getId(), task.getOrderId(), e);

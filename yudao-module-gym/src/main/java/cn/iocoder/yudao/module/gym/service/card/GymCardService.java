@@ -46,6 +46,9 @@ public class GymCardService {
     @Resource private GymBusinessMutex gymBusinessMutex;
     @Resource private cn.iocoder.yudao.module.gym.service.contract.GymContractService contracts;
 
+    @Resource
+    private cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess purchaseAccess;
+
     public PageResult<GymCardTemplateRespVO> templates(GymBusinessPageReqVO req) {
         if (req.getStoreId() != null) stores.requireStore(req.getStoreId(), false);
         var q =
@@ -232,7 +235,8 @@ public class GymCardService {
             Instant startsAt,
             String sourceType,
             String sourceId) {
-        return issueInternal(memberId, storeId, templateId, startsAt, sourceType, sourceId, null);
+        return issueInternal(
+                memberId, storeId, templateId, startsAt, sourceType, sourceId, null, null);
     }
 
     /** Only a persisted, server-created purchase snapshot may use this internal fulfillment path. */
@@ -249,7 +253,31 @@ public class GymCardService {
                         .getRequiredTenantId()
                         .equals(purchased.getTenantId())) throw exception(CARD_RIGHT_INVALID);
         return issueInternal(
-                memberId, storeId, purchased.getId(), startsAt, "order-item", sourceId, purchased);
+                memberId,
+                storeId,
+                purchased.getId(),
+                startsAt,
+                "order-item",
+                sourceId,
+                purchased,
+                null);
+    }
+
+    @Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY,
+            rollbackFor = Exception.class)
+    public GymMemberCardDO issuePurchasedOrderItem(Long itemId, Instant startsAt) {
+        var purchase = purchaseAccess.requireItem(itemId);
+        if (purchase.card() == null) throw exception(CARD_RIGHT_INVALID);
+        return issueInternal(
+                purchase.member().getId(),
+                purchase.store().getId(),
+                purchase.card().getId(),
+                startsAt,
+                "order-item",
+                itemId + ":0",
+                purchase.card(),
+                purchase);
     }
 
     private GymMemberCardDO issueInternal(
@@ -259,11 +287,12 @@ public class GymCardService {
             Instant startsAt,
             String sourceType,
             String sourceId,
-            GymCardTemplateDO purchased) {
+            GymCardTemplateDO purchased,
+            cn.iocoder.yudao.module.gym.service.sales.GymOrderEntitlementAccess.Purchase purchase) {
         gymBusinessMutex.lockStoreEntitlements();
         if (startsAt != null) startsAt = startsAt.truncatedTo(ChronoUnit.MICROS);
-        stores.requireStore(storeId, false);
-        var member = members.requireMember(memberId, true);
+        if (purchase == null) stores.requireStore(storeId, false);
+        var member = purchase == null ? members.requireMember(memberId, true) : purchase.member();
         records.checkPurchase(memberId);
         if (!"active".equals(member.getStatus())
                 || startsAt == null
@@ -288,7 +317,7 @@ public class GymCardService {
         }
         var template = purchased == null ? requireTemplate(templateId, true) : purchased;
         if ((purchased == null && !"published".equals(template.getStatus()))
-                || !visible(template, storeId, scope.readableStoreIds()))
+                || !visible(template, storeId, purchase == null ? scope.readableStoreIds() : null))
             throw exception(CARD_RIGHT_INVALID);
         var entitled =
                 "all".equals(template.getAccessScope())
@@ -310,7 +339,9 @@ public class GymCardService {
         row.setKind(template.getKind());
         row.setDisplayPrefix(
                 template.getMemberPrefix() == null
-                        ? stores.get(storeId).getName()
+                        ? (purchase == null
+                                ? stores.get(storeId).getName()
+                                : purchase.store().getName())
                         : template.getMemberPrefix());
         row.setAccessScope(template.getAccessScope());
         row.setStoreIds(JsonUtils.toJsonString(entitled));
@@ -334,7 +365,7 @@ public class GymCardService {
         row.setSourceId(sourceId);
         gymMemberCardMapper.insert(row);
         String suffix = "-C" + String.format(Locale.ROOT, "%08d", row.getId());
-        String code = stores.get(storeId).getCode();
+        String code = purchase == null ? stores.get(storeId).getCode() : purchase.store().getCode();
         int prefixLength = Math.min(code.length(), 64 - suffix.length());
         if (prefixLength > 0
                 && prefixLength < code.length()
@@ -352,7 +383,8 @@ public class GymCardService {
         update.setId(memberId);
         update.setCustomerStage("member");
         gymMemberMapper.updateById(update);
-        contracts.issueForEntitlement("member-cards", row.getId());
+        if (purchase == null) contracts.issueForEntitlement("member-cards", row.getId());
+        else contracts.issueForPurchasedItem(purchase.item().getId(), "member-cards", row.getId());
         return row;
     }
 

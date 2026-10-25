@@ -2717,3 +2717,35 @@ gym656项、member4项通过，1项既有禁用跳过；Spotless和server依赖�
 ### 未做 / 后续
 
 83项新增本地实现、4项复用源码、48项待开发。104发卡/私教申请、116专属改价和117–118报价继续后续批次，旧price_change仍是商品公开价变更，不能冒充单客户报价。真实第三方接入继续暂缓。小步本地提交，不推送；原始uniapp.md内容和暂存状态保留。
+
+## [2026-10-25 18:31 ~ 18:53] 会员卡及私教课包的真实发放申请
+
+### 意图
+
+补齐总表104，两类产品只在最终审批后生成实际权益；私教产品申请期间发生变化时阻断发放，避免悄悄使用新课时/价格，且不将内部授予权益伪装成已收款。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/.../GymMobileCardIssueController.java`、`GymMobileCardIssueVO.java`、`GymMobileCardIssueService.java` | 新增 | 严格申请参数、双功能权限与整店范围、幂等创建及首次审批响应 |
+| `GymApprovalService.java`、`GymCourseService.java`、`GymMobileApprovalsService.java`、`ErrorCodeConstants.java` | 修改 | 私教开通来源、冻结条款与最终重查、实际发课包及摘要白名单 |
+| `V018__gym_mobile_card_issue_permission.sql`、`script/gym/verify-migrations.py` | 新增/修改 | 独立权限定义，无角色授权；64项隔离检查 |
+| `GymOrganizationServiceTest.java`、`GymMobileCardIssueControllerTest.java` | 修改/新增 | 十一项业务与两项MVC，实际权益/未签合同、并发与回滚 |
+| `docs/uniapp/`设计/总表/实施说明/清单、`architecture.md`、`testing.md`、脚本README/DATABASE | 修改 | 88/135进度、无虚假收入、无限期私教、模板/权限及部署边界 |
+
+### 结构关系
+
+移动申请通过cards:issue及approvals:create检查后，在幂等事务内构造真实card_opening请求并调用原审批服务。会员卡使用选中不可变模板；私教快照和最终发放按教练→会员→商品锁序核对版本/教练/名称/数量/时长/价格，之后复用issuePack及可选合同生成。申请、审批决策、权益和合同分别处于相应完整事务，最后业务失败回滚版本/步骤/权益/幂等结果。
+
+### 验证证据
+
+gym669项、member4项通过，1项既有禁用跳过；Spotless及server依赖打包通过，打包跳过测试。专项及全量验证卡/课包最终发放、unsigned合同、财务事件0、产品变化阻断、原模板不被新版本替换、合同失败整体回滚及同键重试、同键并发仅一审批、商品编辑与批准竞争不混用条款。真实隔离MySQL/Flyway64检查通过且临时库清理。源码映射88/135，命令与日志见testing。
+
+### 影响面 / 风险
+
+V018只定义gym:cards:issue，不授予角色、不新增页面或表，仍67表；原后台审批授权策略保留。须V017/V018及全体审批节点更新后再授权启用，旧节点不能处理新私教开通来源。课包明确无固定到期日，配置对应合同模板时才生成内部未签合同，不证明真实付款或签约。前端和业务库未改，未执行生产多节点/规模及第三方联调。
+
+### 未做 / 后续
+
+84项新增本地实现、4项复用源码、47项待开发。116–118专属改价及报价继续后续批次；私教产品有效期建模和真实外部接入未完成。小步本地提交，不推送，原始uniapp.md内容及暂存状态保留。

@@ -614,3 +614,9 @@ Mapper以当前有效会员档案为外层一人一行，会员门店、卡适�
 `GymMobileApprovalsController → GymMobileApprovalsService`分别执行read/create/read+decide功能权限，服务校验后台身份后用原Approval/Task/Template Mapper读取。mine按申请账号，pending按整店及当前步骤，processed按已处理步骤；指定审批人查询关联当前有效员工绑定。只读事务中先SQL授权分页，再批量读取步骤并按业务类型白名单投影，未复用会返回手机号/附件/完整结果的旧后台VO。
 
 模板选项检查当前店范围、published状态、每步员工/账号/整店权限，不给SELF整店能力。决策在READ_COMMITTED事务中先验证当前处理资格，再进入GymMobileIdempotency请求锁、原GymBusinessMutex及审批行锁，比较V017版本并委托GymApprovalService.decide。原服务每次真实处理递增version，因此旧后台与移动端共享状态机、锁、业务副作用及版本。幂等结果与最终卡/价格/内部合同变更一起提交或回滚；读缓存前也重新检查身份和处理资格。旧程序未实现version递增，须所有实例更新后启用移动入口。
+
+## 移动发卡申请与私教开通审批（2026-10-25 增量）
+
+`GymMobileCardIssueController → GymMobileCardIssueService`校验approvals:create及V018 cards:issue、有效后台身份和整店/会员关系，进入持久化幂等事务，构造受控card_opening请求后调用既有GymApprovalService.create。客户端无法传价格、课时、状态或内部业务快照；返回使用移动审批白名单投影，首次响应与申请同事务。
+
+会员卡继续使用不可变模板版本；新增course-products开通来源调用GymCourseService.approvalIssueSnapshot，在教练→会员→商品锁下冻结版本及条款。最后步骤issueApprovedPack重新验证当前条件和冻结数据，再委托issuePack写真实课包与可选内部未签合同，沿用approval/审批ID唯一来源。全链路复用审批行/版本/幂等机制，合同或业务失败一并回滚；无订单、财务事件或第三方成功结果。私教产品没有有效期字段，本入口明确发放无固定到期日课包。

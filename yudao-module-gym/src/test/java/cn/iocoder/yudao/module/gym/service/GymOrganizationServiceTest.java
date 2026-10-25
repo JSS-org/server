@@ -50,6 +50,8 @@ import java.util.*;
 
 /** 实际 H2 / MyBatis / 事务 / 租户拦截器；只 mock 跨模块 system 服务。 */
 @Import({
+    cn.iocoder.yudao.module.gym.service.mobile.GymMobileCardIssueService.class,
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCardIssueController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileApprovalsService.class,
     cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileApprovalsController.class,
     cn.iocoder.yudao.module.gym.service.mobile.GymMobileDashboardService.class,
@@ -15899,5 +15901,406 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
         assertServiceException(
                 () -> mobileApprovals.decide(ids.getFirst(), req, "short"), MOBILE_REQUEST_INVALID);
         assertEquals(1, mobileApprovals.get(ids.getFirst()).version());
+    }
+
+    @Resource cn.iocoder.yudao.module.gym.service.mobile.GymMobileCardIssueService mobileCardIssue;
+
+    @Resource
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.GymMobileCardIssueController
+            mobileCardIssueController;
+
+    List<Long> cardIssueFixture() {
+        stores.create(store(101L, "A"));
+        stores.create(store(102L, "B"));
+        Long approver = responsibleEmployee(91L),
+                coach = responsibleEmployee(92L),
+                workflow = publishedApproval("card_opening", approver);
+        Long member = Long.valueOf(members.create(member(101L, "13800009901")).getId()),
+                card = Long.valueOf(cards.create(cardTemplate("count")).getId()),
+                course = Long.valueOf(courses.createProduct(courseProduct(101L, coach)).getId());
+        return List.of(workflow, member, card, course, approver, coach);
+    }
+
+    cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCardIssueVO cardIssue(
+            List<Long> ids, String type) {
+        var req = new cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileCardIssueVO();
+        req.setStoreId(101L);
+        req.setMemberId(ids.get(1));
+        req.setProductType(type);
+        req.setProductId(ids.get("card".equals(type) ? 2 : 3));
+        req.setApprovalTemplateId(ids.get(0));
+        req.setReason("补发审核");
+        return req;
+    }
+
+    long cardIssuePackCount() {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper.class)
+                .selectCount();
+    }
+
+    @Test
+    void mobileCardIssueCreatesOnlyPendingApprovalAndFinalCardPlusUnsignedContractWithoutRevenue() {
+        var ids = cardIssueFixture();
+        publishedContractPdf();
+        var req = cardIssue(ids, "card");
+        var first = mobileCardIssue.create(req, "issue-card-first");
+        assertEquals("pending", first.status());
+        assertEquals(1, first.version());
+        assertEquals("card", first.businessSummary().get("productType"));
+        assertEquals(ids.get(2).toString(), first.businessSummary().get("productId"));
+        assertEquals(0, cards.cards(ids.get(1), new GymBusinessPageReqVO()).getTotal());
+        assertEquals(0, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        loginAs(91L);
+        mobileApprovals.decide(
+                Long.valueOf(first.id()),
+                mobileApprovalDecision("approve", 1),
+                "issue-card-decision");
+        assertEquals(1, cards.cards(ids.get(1), new GymBusinessPageReqVO()).getTotal());
+        var contract = contracts.page(new GymBusinessPageReqVO()).getList().getFirst();
+        assertEquals("unsigned", contract.getStatus());
+        assertEquals(0, financialEvents.selectCount());
+        loginAs(1L);
+        assertEquals(first, mobileCardIssue.create(req, "issue-card-first"));
+        assertEquals("approved", mobileApprovals.get(Long.valueOf(first.id())).status());
+        assertEquals(1, cards.cards(ids.get(1), new GymBusinessPageReqVO()).getTotal());
+    }
+
+    @Test
+    void
+            mobileCardIssueCourseFreezesVersionAndLegacyDecisionCreatesActualUnlimitedPackAndContract() {
+        var ids = cardIssueFixture();
+        publishedIssueCourseContract();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-course-first");
+        assertEquals("course", first.businessSummary().get("productType"));
+        assertEquals(1, first.businessSummary().get("productVersion"));
+        assertEquals(2, first.businessSummary().get("sessionCount"));
+        assertEquals(0, cardIssuePackCount());
+        loginAs(91L);
+        approvals.decide(Long.valueOf(first.id()), decision("approve"));
+        assertEquals(2, mobileApprovals.get(Long.valueOf(first.id())).version());
+        var pack =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(ids.get(1), pack.getMemberId());
+        assertEquals(ids.get(3), pack.getCourseProductId());
+        assertEquals(ids.get(5), pack.getAssignedCoachId());
+        assertEquals(2, pack.getRemainingSessions());
+        assertNull(pack.getExpiresAt());
+        assertEquals("approval", pack.getSourceType());
+        assertEquals(first.id(), pack.getSourceId());
+        assertEquals(1, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        assertEquals(
+                "unsigned",
+                contracts.page(new GymBusinessPageReqVO()).getList().getFirst().getStatus());
+        assertEquals(0, financialEvents.selectCount());
+        approvals.decide(Long.valueOf(first.id()), decision("approve"));
+        assertEquals(1, cardIssuePackCount());
+    }
+
+    @Test
+    void mobileCardIssueChangedCourseDoesNotSilentlyIssueNewTermsAndFreshApplicationCanSucceed() {
+        var ids = cardIssueFixture();
+        var original = mobileCardIssue.create(cardIssue(ids, "course"), "issue-course-stale");
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                        .GymCourseProductSaveReqVO();
+        patch.setSessionCount(3);
+        courses.patchProduct(ids.get(3), patch);
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(original.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "issue-stale-decision"),
+                APPROVAL_SOURCE_CHANGED);
+        assertEquals("pending", mobileApprovals.get(Long.valueOf(original.id())).status());
+        assertEquals(1, mobileApprovals.get(Long.valueOf(original.id())).version());
+        assertEquals(0, cardIssuePackCount());
+        loginAs(1L);
+        var fresh = mobileCardIssue.create(cardIssue(ids, "course"), "issue-course-current");
+        assertEquals(2, fresh.businessSummary().get("productVersion"));
+        assertEquals(3, fresh.businessSummary().get("sessionCount"));
+        loginAs(91L);
+        mobileApprovals.decide(
+                Long.valueOf(fresh.id()),
+                mobileApprovalDecision("approve", 1),
+                "issue-current-decision");
+        assertEquals(
+                3,
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                        .class)
+                        .selectList()
+                        .getFirst()
+                        .getRemainingSessions());
+    }
+
+    @Test
+    void mobileCardIssueFinalCourseRechecksCurrentCoachStoreAndMemberAndCanRetryAfterRestoration() {
+        var ids = cardIssueFixture();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-recheck-current");
+        Long id = Long.valueOf(first.id());
+        loginAs(91L);
+        var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+        jdbc.update("UPDATE gym_employee SET status='inactive' WHERE id=?", ids.get(5));
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "issue-recheck-decision"),
+                COURSE_COACH_INVALID);
+        jdbc.update("UPDATE gym_employee SET status='active' WHERE id=?", ids.get(5));
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "issue-recheck-decision"),
+                APPROVAL_REQUEST_INVALID);
+        jdbc.update("UPDATE gym_store SET status='active' WHERE id=101");
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", ids.get(1));
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                id, mobileApprovalDecision("approve", 1), "issue-recheck-decision"),
+                APPROVAL_REQUEST_INVALID);
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", ids.get(1));
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(1, mobileApprovals.get(id).version());
+        assertEquals(
+                "approved",
+                mobileApprovals
+                        .decide(id, mobileApprovalDecision("approve", 1), "issue-recheck-decision")
+                        .status());
+        assertEquals(1, cardIssuePackCount());
+    }
+
+    @Test
+    void mobileCardIssueKeepsSelectedImmutableCardTemplateInsteadOfLatestVersion() {
+        var ids = cardIssueFixture();
+        var original = mobileCardIssue.create(cardIssue(ids, "card"), "issue-selected-template");
+        var change =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        change.setIncludedUses(99);
+        Long next = Long.valueOf(cards.version(ids.get(2), change).getId());
+        var publish =
+                new cn.iocoder.yudao.module.gym.controller.admin.card.vo.GymCardTemplateSaveReqVO();
+        publish.setStatus("published");
+        cards.patch(next, publish);
+        loginAs(91L);
+        mobileApprovals.decide(
+                Long.valueOf(original.id()),
+                mobileApprovalDecision("approve", 1),
+                "issue-selected-decision");
+        var card =
+                applicationContext
+                        .getBean(
+                                cn.iocoder.yudao.module.gym.dal.mysql.card.GymMemberCardMapper
+                                        .class)
+                        .selectList()
+                        .getFirst();
+        assertEquals(ids.get(2), card.getTemplateId());
+        assertNotEquals(99, card.getTotalUses());
+        assertEquals(0, financialEvents.selectCount());
+    }
+
+    @Test
+    void
+            mobileCardIssueRequiresBothFunctionalPermissionsWholeStoreAndMatchingMemberProductTenant() {
+        var ids = cardIssueFixture();
+        var req = cardIssue(ids, "course");
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileCardIssueController.create(req, "issue-permission-test"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:approvals:create"))).thenReturn(true);
+        assertThrows(
+                org.springframework.security.access.AccessDeniedException.class,
+                () -> mobileCardIssueController.create(req, "issue-permission-test"));
+        when(permissions.hasAnyPermissions(any(), eq("gym:cards:issue"))).thenReturn(true);
+        assertEquals(
+                "pending",
+                mobileCardIssueController.create(req, "issue-permission-test").getData().status());
+        personalScope(91L);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-self-forbidden"), STORE_NO_PERMISSION);
+        headquarters();
+        loginAs(1L);
+        req.setStoreId(102L);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-wrong-membership"), STORE_NO_PERMISSION);
+        req.setStoreId(101L);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_course_product SET store_id=102 WHERE id=?", ids.get(3));
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-other-store-course"),
+                APPROVAL_REQUEST_INVALID);
+        new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                .update("UPDATE gym_course_product SET tenant_id=2 WHERE id=?", ids.get(3));
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-other-tenant-course"),
+                COURSE_PRODUCT_NOT_EXISTS);
+        qrMemberLogin();
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-member-identity"),
+                MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void mobileCardIssueSameKeyConcurrencyCreatesOneApprovalAndChangesConflict() throws Exception {
+        var ids = cardIssueFixture();
+        var req = cardIssue(ids, "course");
+        var results =
+                workCourseRace(
+                        () -> mobileCardIssue.create(req, "issue-concurrent-key"),
+                        () -> mobileCardIssue.create(req, "issue-concurrent-key"));
+        assertEquals(results.get(0), results.get(1));
+        assertEquals(1, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        assertEquals(0, cardIssuePackCount());
+        req.setReason("  补发审核  ");
+        assertEquals(results.getFirst(), mobileCardIssue.create(req, "issue-concurrent-key"));
+        req.setReason("不同原因");
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-concurrent-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        req.setReason("补发审核");
+        scoped(102L);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-concurrent-key"), STORE_NO_PERMISSION);
+    }
+
+    @Test
+    void mobileCardIssueFailedSubmissionRollsBackRequestAndCanReuseKeyAfterFixingTemplate() {
+        var ids = cardIssueFixture();
+        Long wrong = publishedApproval("other_configured", ids.get(4));
+        var req = cardIssue(ids, "card");
+        req.setApprovalTemplateId(wrong);
+        assertServiceException(
+                () -> mobileCardIssue.create(req, "issue-invalid-template"),
+                APPROVAL_REQUEST_INVALID);
+        assertEquals(0, mobileApprovals.page(mobileApprovalQuery("mine")).getTotal());
+        req.setApprovalTemplateId(ids.get(0));
+        assertEquals("pending", mobileCardIssue.create(req, "issue-invalid-template").status());
+        var invalid = cardIssue(ids, "course");
+        invalid.setReason(" ");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> mobileCardIssue.create(invalid, "issue-invalid-reason"));
+        invalid.setReason("原因");
+        invalid.setProductType("private");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> mobileCardIssue.create(invalid, "issue-invalid-type"));
+    }
+
+    @Test
+    void mobileCardIssueLegacyCourseSourceRejectsMixedCardAndPriceInstructions() {
+        var ids = cardIssueFixture();
+        var req = opening(ids.get(0), ids.get(1), ids.get(2));
+        req.setSourceType("course-products");
+        req.setSourceId(ids.get(3));
+        assertServiceException(
+                () -> approvals.create(req, "issue-legacy-mixed"), APPROVAL_REQUEST_INVALID);
+        req.setCardTemplateId(null);
+        req.setRequestedPrice(new BigDecimal("0.00"));
+        assertServiceException(
+                () -> approvals.create(req, "issue-legacy-price"), APPROVAL_REQUEST_INVALID);
+        assertEquals(0, cardIssuePackCount());
+    }
+
+    @Test
+    void mobileCardIssueContractFailureRollsBackIssuedPackAndDecisionBeforeSameKeyRetry() {
+        var ids = cardIssueFixture();
+        Long template = publishedIssueCourseContract();
+        Long pdf = contractTemplateMapper.selectById(template).getFileId();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-contract-rollback");
+        String url = files.selectById(pdf).getUrl();
+        byte[] original = fileApi.getFileContentByUrl(url);
+        when(fileApi.getFileContentByUrl(url)).thenReturn(null);
+        loginAs(91L);
+        assertServiceException(
+                () ->
+                        mobileApprovals.decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "issue-contract-decision"),
+                FILE_CONTENT_NOT_EXISTS);
+        assertEquals(0, cardIssuePackCount());
+        assertEquals(0, contracts.page(new GymBusinessPageReqVO()).getTotal());
+        assertEquals(1, mobileApprovals.get(Long.valueOf(first.id())).version());
+        when(fileApi.getFileContentByUrl(url)).thenReturn(original);
+        assertEquals(
+                "approved",
+                mobileApprovals
+                        .decide(
+                                Long.valueOf(first.id()),
+                                mobileApprovalDecision("approve", 1),
+                                "issue-contract-decision")
+                        .status());
+        assertEquals(1, cardIssuePackCount());
+        assertEquals(1, contracts.page(new GymBusinessPageReqVO()).getTotal());
+    }
+
+    Long publishedIssueCourseContract() {
+        Long original = publishedContractPdf();
+        var patch =
+                new cn.iocoder.yudao.module.gym.controller.admin.contract.vo
+                        .GymContractTemplateSaveReqVO();
+        patch.setApplicableType("course");
+        Long id = Long.valueOf(contractTemplates.version(original, patch).getId());
+        patch.setApplicableType(null);
+        patch.setStatus("published");
+        contractTemplates.patch(id, patch);
+        return id;
+    }
+
+    @Test
+    void mobileCardIssueConcurrentProductEditNeverChangesTheApprovedPackTerms() throws Exception {
+        var ids = cardIssueFixture();
+        var first = mobileCardIssue.create(cardIssue(ids, "course"), "issue-product-race");
+        var outcomes =
+                workCourseRace(
+                        () -> {
+                            loginAs(91L);
+                            return mobileApprovals.decide(
+                                    Long.valueOf(first.id()),
+                                    mobileApprovalDecision("approve", 1),
+                                    "issue-product-race-decision");
+                        },
+                        () -> {
+                            var patch =
+                                    new cn.iocoder.yudao.module.gym.controller.admin.course.vo
+                                            .GymCourseProductSaveReqVO();
+                            patch.setSessionCount(3);
+                            return courses.patchProduct(ids.get(3), patch);
+                        });
+        assertFalse(
+                outcomes.get(1)
+                        instanceof cn.iocoder.yudao.framework.common.exception.ServiceException);
+        var result = mobileApprovals.get(Long.valueOf(first.id()));
+        if ("approved".equals(result.status())) {
+            assertEquals(2, result.version());
+            assertEquals(1, cardIssuePackCount());
+            assertEquals(
+                    2,
+                    applicationContext
+                            .getBean(
+                                    cn.iocoder.yudao.module.gym.dal.mysql.course.GymCoursePackMapper
+                                            .class)
+                            .selectList()
+                            .getFirst()
+                            .getRemainingSessions());
+        } else {
+            assertEquals(1, result.version());
+            assertEquals(0, cardIssuePackCount());
+            assertInstanceOf(
+                    cn.iocoder.yudao.framework.common.exception.ServiceException.class,
+                    outcomes.get(0));
+        }
+        assertEquals(3, courses.requireProduct(ids.get(3), false).getSessionCount());
     }
 }

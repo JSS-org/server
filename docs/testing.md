@@ -1034,3 +1034,24 @@ git diff --check
 真实两步审批移动处理version1→2，旧后台处理→3；移动旧键返回首次pending/version2，重绑审批账号后旧键拒绝。拒绝空原因、错误步骤、过期版本及未知业务指令拒绝。最终审批实际发卡一次；黑名单拦截导致状态、任务时间和version全部回滚，同键解除阻断后可成功。两个线程同键返回同一快照、相反决策仅一项生效；旧后台拒绝与移动批准竞争共享锁/版本且仅一方成功。MVC覆盖四路由、分页/模板参数、必填版本/幂等头、禁止附加业务指令和金额字符串。
 
 首轮新增测试缺少GymBusinessPageReqVO import导致编译失败，补齐后专项与全量通过；未修改业务约束绕过测试。日志：/tmp/uniapp-approvals-focused.log（编译失败）、/tmp/uniapp-approvals-focused-2.log、/tmp/uniapp-approvals-final-tests.log、/tmp/uniapp-approvals-migrations.log、/tmp/uniapp-approvals-package.log。尚未验证生产滚动部署/查询规模、部署HTTP和真实第三方；业务库及前端未修改。
+
+## 2026-10-25 会员卡/私教申请与冻结条款发放
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+12项专项通过后新增商品编辑/审批并发测试，完整gym **669项通过**（组织服务394项，本批新增11项；MVC2项），member4通过/1既有禁用跳过；Spotless及server依赖打包通过，打包跳过测试。隔离MySQL/Flyway **64项检查通过**，全部临时库清理，V018仅定义新权限且不授予角色，仍67表；源码映射 **88/135**，余47项。
+
+真实服务/SQL验证：提交仅pending、无权益和合同；最后审批产生一张实际会员卡或两课时私教包及对应内部unsigned合同，财务事件始终0。新卡模板版本不替换原选中模板；私教版本或课时变化阻断批准，旧申请仍version1/pending，新申请才按三课时发放。商品编辑与批准并发时只能按原两课时发放或批准失败，不能混用新条款。私教无固定到期日，教练/营业店/会员状态重查，当前条件恢复后失败决策键可重试。
+
+合同文件读取失败发生在课包创建后，验证课包、合同和审批版本全部回滚；恢复后同键只发放一次。并发同申请键只创建一条审批，规范化空白原因重放，改内容冲突，撤销门店范围后旧键拒绝。create与issue两个功能权限缺一拒绝、SELF拒绝、会员门店/商品门店/租户和账号类型校验；旧审批course-products来源拒绝混合卡模板或改价指令。MVC拒绝自填amount/status及非法产品类型、空原因和缺失幂等头。
+
+首轮测试缺少课程请求类型引用而编译失败；补齐引用并改用已有带测试文件内容的合同模板夹具后专项及全量通过，未修改业务约束。日志：/tmp/uniapp-card-issue-focused.log、/tmp/uniapp-card-issue-focused-2.log（同一编译问题尚未写入修复）、/tmp/uniapp-card-issue-focused-3.log、/tmp/uniapp-card-issue-final-tests.log、/tmp/uniapp-card-issue-migrations.log、/tmp/uniapp-card-issue-package.log。合同文件为本地测试内容，不证明真实签署或可供实际签约的完整PDF；未做外部支付、生产多节点/规模或部署HTTP联调。前端及业务库未改。

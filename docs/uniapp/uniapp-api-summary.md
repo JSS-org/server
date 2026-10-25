@@ -23,7 +23,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **83** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **48** 个。源码映射共 **87 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **84** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **47** 个。源码映射共 **88 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -134,7 +134,7 @@
 | 101 | 工作台 | POST | `/admin-api/gym/mobile/training-plans` | 为授权会员创建训练计划并上传附件 | 已实现，本地测试通过 |
 | 102 | 工作台 | GET | `/admin-api/gym/mobile/contracts` | 查询授权会员的合同记录 | 已实现，本地测试通过 |
 | 103 | 工作台 | POST | `/admin-api/gym/mobile/contracts` | 基于会员真实卡或课包权益发放合同 | 已实现，本地测试通过 |
-| 104 | 工作台 | POST | `/admin-api/gym/mobile/card-issue-applications` | 提交会员卡或私教卡发放审批申请 | 设计待开发 |
+| 104 | 工作台 | POST | `/admin-api/gym/mobile/card-issue-applications` | 提交会员卡或私教卡发放审批申请 | 已实现，本地测试通过 |
 | 105 | 工作台 | GET | `/admin-api/gym/mobile/reports/sales` | 查询销售明细及会员卡、私教销售金额汇总 | 已实现，本地测试通过 |
 | 106 | 工作台 | GET | `/admin-api/gym/mobile/reports/performance` | 按员工或门店统计业绩、排名、均值及课消 | 已实现，本地测试通过 |
 | 107 | 工作台 | GET | `/admin-api/gym/mobile/reports/member-summary` | 统计授权门店会员、私教会员、新客和临期权益人数 | 已实现，本地测试通过 |

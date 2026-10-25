@@ -195,7 +195,16 @@ public class GymApprovalService {
         Long sourceCoachId = null;
         switch (req.getBusinessType()) {
             case "card_opening" -> {
-                if ("orders".equals(req.getSourceType())) {
+                if ("course-products".equals(req.getSourceType())) {
+                    if (req.getSourceId() == null
+                            || req.getMemberId() == null
+                            || req.getCardTemplateId() != null
+                            || req.getRequestedPrice() != null)
+                        throw exception(APPROVAL_REQUEST_INVALID);
+                    snapshot.putAll(
+                            courses.approvalIssueSnapshot(
+                                    req.getMemberId(), req.getSourceId(), req.getStoreId()));
+                } else if ("orders".equals(req.getSourceType())) {
                     if (req.getSourceId() == null
                             || req.getMemberId() != null
                             || req.getCardTemplateId() != null
@@ -229,6 +238,9 @@ public class GymApprovalService {
                         throw exception(APPROVAL_REQUEST_INVALID);
                     snapshot.put("memberId", member.getId().toString());
                     snapshot.put("cardTemplateId", card.getId().toString());
+                    snapshot.put("productType", "card");
+                    snapshot.put("productId", card.getId().toString());
+                    snapshot.put("productVersion", card.getVersion());
                     snapshot.put("memberName", member.getName());
                     snapshot.put("memberPhone", member.getPhone());
                     snapshot.put("cardName", card.getName());
@@ -411,7 +423,13 @@ public class GymApprovalService {
             var result = new LinkedHashMap<String, Object>();
             switch (row.getBusinessType()) {
                 case "card_opening" -> {
-                    if ("orders".equals(snapshot.get("sourceType")))
+                    if ("course-products".equals(snapshot.get("sourceType"))) {
+                        var pack =
+                                courses.issueApprovedPack(snapshot, row.getStoreId(), row.getId());
+                        result.put("coursePackId", pack.getId().toString());
+                        result.put("startsAt", pack.getStartsAt());
+                        result.put("expiresAt", pack.getExpiresAt());
+                    } else if ("orders".equals(snapshot.get("sourceType")))
                         result.putAll(
                                 commerce.fulfillApprovedOrder(
                                         Long.valueOf(snapshot.get("sourceId").toString()),

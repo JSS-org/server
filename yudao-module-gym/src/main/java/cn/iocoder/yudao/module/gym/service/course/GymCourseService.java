@@ -486,6 +486,68 @@ public class GymCourseService {
         return row;
     }
 
+    /** Server-owned approval snapshot; locking order matches course edits and bookings. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public Map<String, Object> approvalIssueSnapshot(Long memberId, Long productId, Long storeId) {
+        var initial = requireProduct(productId, false);
+        if (!storeId.equals(initial.getStoreId())) throw exception(APPROVAL_REQUEST_INVALID);
+        requireCoach(initial.getCoachId(), storeId);
+        var member = members.requireMember(memberId, true);
+        members.checkMemberStore(memberId, storeId);
+        records.checkPurchase(memberId);
+        var product = requireProduct(productId, true);
+        if (!"active".equals(stores.requireStore(storeId, false).getStatus())
+                || !"active".equals(member.getStatus())
+                || !"active".equals(product.getStatus())
+                || !"private".equals(product.getKind())) throw exception(APPROVAL_REQUEST_INVALID);
+        var snapshot = new LinkedHashMap<String, Object>();
+        snapshot.put("productType", "course");
+        snapshot.put("productId", productId.toString());
+        snapshot.put("productVersion", product.getVersion());
+        snapshot.put("sourceType", "course-products");
+        snapshot.put("sourceId", productId.toString());
+        snapshot.put("memberId", memberId.toString());
+        snapshot.put("memberName", member.getName());
+        snapshot.put("courseName", product.getName());
+        snapshot.put("coachId", product.getCoachId().toString());
+        snapshot.put("sessionCount", product.getSessionCount());
+        snapshot.put("durationMinutes", product.getDurationMinutes());
+        snapshot.put("amount", product.getPrice());
+        snapshot.put("expiresAt", null);
+        return snapshot;
+    }
+
+    /** Only the persisted approval snapshot can enter this internal final-effect path. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public GymCoursePackDO issueApprovedPack(
+            Map<String, Object> snapshot, Long storeId, Long approvalId) {
+        Long memberId = Long.valueOf(snapshot.get("memberId").toString()),
+                productId = Long.valueOf(snapshot.get("productId").toString());
+        var current = approvalIssueSnapshot(memberId, productId, storeId);
+        for (String field :
+                List.of(
+                        "productType",
+                        "productId",
+                        "productVersion",
+                        "coachId",
+                        "courseName",
+                        "sessionCount",
+                        "durationMinutes"))
+            if (!Objects.toString(current.get(field)).equals(Objects.toString(snapshot.get(field))))
+                throw exception(APPROVAL_SOURCE_CHANGED);
+        if (new BigDecimal(current.get("amount").toString())
+                                .compareTo(new BigDecimal(snapshot.get("amount").toString()))
+                        != 0
+                || snapshot.get("expiresAt") != null) throw exception(APPROVAL_SOURCE_CHANGED);
+        return issuePack(
+                memberId,
+                productId,
+                gymBusinessClock.now(),
+                null,
+                "approval",
+                approvalId.toString());
+    }
+
     public List<GymCoursePackRespVO> allPacks(Long memberId, GymBusinessPageReqVO req) {
         members.requireMember(memberId, false);
         if (req.getStoreId() != null) members.checkMemberScope(memberId, req.getStoreId());

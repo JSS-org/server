@@ -1232,8 +1232,14 @@
       "method": "POST",
       "path": "/admin-api/gym/mobile/card-issue-applications",
       "description": "提交会员卡或私教卡发放审批申请",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCardIssueController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileCardIssueService.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/approval/GymApprovalService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/admin/mobile/GymMobileCardIssueControllerTest.java"
+      ]
     },
     {
       "id": 105,

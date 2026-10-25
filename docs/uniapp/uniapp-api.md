@@ -232,7 +232,7 @@ W 使用项目已有 system 认证流程取得后台令牌。微信身份绑定�
 | `MemberCard` | `id:ID,name:string,type:duration或times,status:pending或active或frozen或expired或exhausted或inactive,storeIds:ID[],validFrom:DateTime?,validUntil:DateTime?,remainingTimes:int?,frozenReason:string?` |
 | `CoursePack` | `id:ID,productId:ID,storeId:ID,coachId:ID,totalLessons:int,remainingLessons:int,reservedLessons:int,availableLessons:int,validUntil:DateTime?,status:string`；可用余额为剩余减预占且最低为 0；是否可预约还需校验有效期、状态和课程规则 |
 | `Order` | `id:ID,orderNo:string,storeId:ID,productType:string,productId:ID,productName:string,quantity:int,payableAmount:Money,paidAmount:Money,refundedAmount:Money,paymentStatus:string,fulfillmentStatus:string,expiresAt:DateTime?,memberCardIds:ID[],coursePackIds:ID[]` |
-| `Subscription` | `id:ID,storeId:ID,productId:ID,status:pending_sign或active或past_due或terminating或terminated,cycleAmount:Money,nextChargeAt:DateTime?,agreementVersion:string,terminatedAt:DateTime?` |
+| `Subscription` | `id:ID,storeId:ID,productId:ID,status:pending_sign或active或past_due或terminating或terminated或unconfigured或failed或unknown,cycleAmount:Money,nextChargeAt:DateTime?,agreementVersion:string?,terminatedAt:DateTime?`；历史状态与空版本口径见V027补充 |
 
 商品查询已实现：卡/包月按实际门店销售配置定价；详情省略门店时选有合格公开配置的最小营业门店ID，私教使用所属门店。`version`为真实模板/商品版本，`saleRevision`为门店销售配置版本（私教为null）。`saleStatus`为`on_sale/not_started/ended`，列表仅返回on_sale；当前卡/私教购买限制为`checkout_unavailable`，包月为`auto_renewal_integration_deferred`。包月没有已发布的续费条款与协议版本时不展示；配置和版本规则见[实施说明](./uniapp-implementation.md#商品目录实现与边界)。
 
@@ -1184,3 +1184,39 @@ unreadCount只统计尚未确认已读的后台消息。GET查询、会员自己
 新错误1070029001表示邀请码无效、过期、不适用或邀请人不可用；1070029002表示不能为此门店创建邀请。账号、营业门店、严格字段及幂等错误沿用既有机制。
 
 生成邀请和记录归属均不发积分、不发卡、不算成交，也不发送消息。邀请成功条件、奖励金额、防作弊及退款冲回政策未确定，积分相关58–59、61–63仍待实现；后续奖励须依据明确规则及真实业务事件，不能将“已生成链接”当成已完成邀请奖励。
+
+## 本人连续包月查询（V027，总表29–30）
+
+两个GET已实现，仅读取同租户内当前有效会员本人名下的gym_subscription记录。数据来自已有协议表，不调用代扣渠道、不创建签约或解约请求；28创建签约、31解约以及真实周期扣款/状态同步仍未接入。
+
+| 接口 | 参数 | data |
+| --- | --- | --- |
+| `GET /app-api/gym/me/subscriptions` | pageNo、pageSize，storeId可选正ID | `{list:Subscription[],total:int}` |
+| `GET /app-api/gym/me/subscriptions/{id}` | id必填正ID | `Subscription`，不存在/非本人/跨租户/已删除统一拒绝 |
+
+列表默认ID倒序，pageNo从1开始，pageSize为1～200；本人、租户、逻辑删除和可选门店筛选在SQL分页前生效。storeId仅过滤本人记录，无匹配返回空页，不证明该门店是否存在。不接受客户端指定被查询会员，额外memberId参数不能替换令牌身份。本人所有来源渠道的订阅均可读，不限miniapp；会员账号、gym会员或身份绑定当前不可用时拒绝。
+
+Subscription只返回8个字段：
+
+| 字段 | 来源及边界 |
+| --- | --- |
+| id、storeId、productId | 字符串ID，productId为原协议cardTemplateId；不依赖商品目前是否在售或已删除 |
+| status | 见下表，只投影已落库状态，不以查询时刻推演渠道状态 |
+| cycleAmount | 原协议amount，金额两位小数字符串；不读取当前商品价、不按已支付周期倒算 |
+| nextChargeAt | 原协议next_charge_at，上海时区时间；未知为null，已过时间不自动触发扣费或改成欠费 |
+| agreementVersion | 原协议保存的确认版本，最多64字符；旧记录未保存为null，不以当前配置、卡版本或内部合同模板版本代替 |
+| terminatedAt | 原cancelled_at，上海时区时间；未知为null，不按状态猜测解约时刻 |
+
+| 已存状态 | 对外status |
+| --- | --- |
+| pending、pending_authorization、pending_sign | pending_sign |
+| active、past_due、terminating | 原值 |
+| cancelled、terminated | terminated |
+| unconfigured、failed | 原值，不能伪装成已授权或普通待签约 |
+| 其他未识别状态 | unknown，不暴露任意厂商内部状态字符串，也不丢弃该历史记录 |
+
+nextChargeAt是已存计划时间，非成功扣款证明；即使状态terminated也不额外改写历史列。状态与时间各自按来源展示，不通过signedAt、金额或当前时间补造成功/失败/终止。查询不改协议、不写幂等记录、不发卡/合同、不创建订单、周期或付款；周期扣款明细不在这两个响应中。
+
+会员换店、关系移除、原门店停用/删除或商品下架/删除，不剥夺本人历史查询权；仍要求当前有效会员身份。响应不包含会员姓名/手机号、后台备注、provider/providerAgreementId、failureReason、channel、内部操作人或外部签约凭据。错误1070020002沿用“包月协议不存在”，参数和身份错误沿用通用规则。
+
+V027仅新增可空agreement_version及本人/门店查询索引，不回填协议版本，不修改历史金额、状态、计划时间或渠道协议号，不增加表数（仍74表）。此字段为以后可信签约流程保存用户确认版本预留，当前没有对外写入入口。查询返回的是内部记录快照；真实微信代扣授权、扣款、解约、对账和状态新鲜度尚未经外部联调验证。

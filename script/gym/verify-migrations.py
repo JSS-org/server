@@ -91,6 +91,8 @@ def main():
     with isolated() as db:
         command('init')
         check(len([t for t in db.tables() if t.startswith('gym_')]) == 74, 'new database has 59 original and 15 mobile gym tables')
+        check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_subscription' AND column_name='agreement_version' AND is_nullable='YES' AND column_default IS NULL AND character_maximum_length=64") == '1', 'subscription accepted version is nullable with no invented default')
+        check(db.sql("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='gym_subscription' AND index_name='idx_subscription_member_store'") == 'tenant_id,member_id,deleted,store_id,id', 'member subscription reads have a tenant owner and store index')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_mobile_invitation' AND column_name IN ('issued_at','expires_at') AND datetime_precision=6") == '2', 'invitation times retain microseconds')
         check(db.sql("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='gym_mobile_identity' AND column_name IN ('invitation_id','inviter_member_id','inviter_user_id','invitation_new_member') AND is_nullable='YES' AND column_default IS NULL") == '4', 'legacy identity attribution remains unknown rather than invented')
         def invitation_insert(tenant=1):
@@ -343,11 +345,13 @@ def main():
             db.flyway('baseline', 0)
             db.flyway('migrate')
             db.sql("INSERT INTO gym_mobile_identity(user_id,member_id,default_store_id,source,invite_code,tenant_id) VALUES(11,2,101,'old-miniapp','old-unverified-code',1)")
+            db.sql("INSERT INTO gym_subscription(id,store_id,member_id,member_name,card_template_id,channel,status,amount,billing_day,provider,provider_agreement_id,requested_at,next_charge_at,tenant_id) VALUES(900001,101,2,'legacy-member',7,'miniapp','unconfigured',99.90,1,'legacy-provider','legacy-agreement','2026-06-10 10:00:00.123456','2026-07-01 10:00:00.123456',1)")
             before_auth = auth_snapshot(db)
             manager.ASSETS = ASSETS
             db.flyway('migrate')
             check(db.sql("SELECT COUNT(*) FROM gym_mobile_identity WHERE user_id=11 AND member_id=2 AND default_store_id=101 AND source='old-miniapp' AND invite_code='old-unverified-code' AND invitation_id IS NULL AND inviter_member_id IS NULL AND inviter_user_id IS NULL AND invitation_new_member IS NULL") == '1', 'V026 preserves legacy source code without granting verified invitation attribution')
             check(db.sql('SELECT COUNT(*) FROM gym_mobile_invitation') == '0', 'V026 does not backfill historical invitation links')
+            check(db.sql("SELECT COUNT(*) FROM gym_subscription WHERE id=900001 AND store_id=101 AND member_id=2 AND card_template_id=7 AND status='unconfigured' AND amount=99.90 AND provider='legacy-provider' AND provider_agreement_id='legacy-agreement' AND requested_at='2026-06-10 10:00:00.123456' AND next_charge_at='2026-07-01 10:00:00.123456' AND agreement_version IS NULL") == '1', 'V027 preserves historical subscription facts without guessing an accepted agreement version')
             check(auth_snapshot(db) == before_auth, 'V026 does not modify accounts roles or permissions')
             db.flyway('validate')
     # Upgrade a real V021 database containing pre-worker member purchases.

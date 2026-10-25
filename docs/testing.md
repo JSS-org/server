@@ -1297,3 +1297,26 @@ git diff --check
 真实隔离MySQL/Flyway141检查通过且临时库全部清理，新增12项包括74表基线之外的微秒时间、可空归属、租户内唯一码、跨租户命名空间、有效期、完整归属及双重自邀约束、老会员标记；单独建真实V025库升级，验证旧自由文本码与原身份信息保留、无历史邀请回填及账号权限不变。V001–V025未修改，业务库未迁移。
 
 日志：/tmp/uniapp-invitation-focused.log（会员专项35通过）、/tmp/uniapp-invitation-final-tests.log（最终全量）、/tmp/uniapp-invitation-migrations.log、/tmp/uniapp-invitation-package.log。未做真实微信分享、小程序页面、部署HTTP、多节点或规模联调；生成链接不证明积分奖励已完成，前端未改。
+
+## 会员本人订阅查询（2026-10-25，V027）
+
+复现命令：
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+PYTHONDONTWRITEBYTECODE=1 python3 script/gym/verify-migrations.py
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py
+git diff --check
+```
+
+新增8项数据库业务测试及3项MVC；最终gym836通过（会员专项43、组织服务510），member4通过、1项既有禁用跳过。Spotless通过、server依赖打包成功（打包跳过测试）。源码映射113/135，剩余22项。
+
+覆盖本人/租户/门店/删除条件先于分页、所有本人渠道记录、ID倒序及total；他人和跨租户详情、同号后台账号及令牌租户不符拒绝；11种内部状态到固定公开状态的映射；原协议版本/最大精确金额/微秒时间、不依赖当前商品配置；门店关系移除、门店停用/删除后历史保留；每次查询重新验证身份状态；参数边界；多次读取的原表完整快照及请求记录不变，未产生周期/卡/合同/订单/支付。MVC验证分页绑定、非法参数、客户端memberId不能成为查询身份、列表/详情严格8字段及历史版本null。
+
+真实隔离MySQL/Flyway144检查通过，全部临时库清理；本批新增3项检查：版本列可空且无伪造默认值、本人门店索引、旧协议升级后金额/状态/渠道协议号/微秒时间不变且版本保持NULL。V001–V026未修改；表数仍74，无权限变更，业务库未迁移。
+
+日志：/tmp/uniapp-subscription-query-focused.log（专项46通过）、/tmp/uniapp-subscription-query-final-tests.log（全量）、/tmp/uniapp-subscription-query-migrations.log、/tmp/uniapp-subscription-query-package.log。未做真实微信签约/代扣/解约、部署HTTP、多节点或规模联调；测试通过证明内部读取契约，不证明渠道授权有效或状态实时。

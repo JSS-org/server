@@ -982,6 +982,7 @@ CREATE TABLE IF NOT EXISTS gym_subscription (
  billing_day int NOT NULL,
  provider varchar(128) NOT NULL,
  provider_agreement_id varchar(128) DEFAULT NULL,
+ agreement_version varchar(64) DEFAULT NULL,
  requested_at datetime(6) NOT NULL,
  signed_at datetime(6) DEFAULT NULL,
  next_charge_at datetime(6) DEFAULT NULL,
@@ -995,7 +996,8 @@ CREATE TABLE IF NOT EXISTS gym_subscription (
  tenant_id bigint NOT NULL DEFAULT 0,
  PRIMARY KEY (id),
  UNIQUE KEY uk_subscription_agreement (tenant_id,provider,provider_agreement_id),
- KEY idx_subscription_store_date (tenant_id,store_id,requested_at)
+ KEY idx_subscription_store_date (tenant_id,store_id,requested_at),
+ KEY idx_subscription_member_store (tenant_id,member_id,deleted,store_id,id)
 );
 CREATE TABLE IF NOT EXISTS gym_subscription_cycle (
  id bigint NOT NULL AUTO_INCREMENT,

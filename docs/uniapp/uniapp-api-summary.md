@@ -25,7 +25,7 @@
 | 设备集成 | 2 | 服务端接收门禁事件和设备执行回执，小程序不直接调用 |
 | **合计** | **135** | **按方法与路径去重** |
 
-当前实现状态：新增实现并通过本地测试 **107** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **24** 个。源码映射共 **111 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
+当前实现状态：新增实现并通过本地测试 **109** 个，复用源码路由 **4** 个（认证 3、加盟 1），尚无目标路由 **22** 个。源码映射共 **113 / 135**，不代表全部上线；详细证据与暂缓范围见 [实施进度与第三方边界](./uniapp-implementation.md)。
 
 请求方法：GET **81** 个，POST **50** 个，PATCH **2** 个，PUT **1** 个，DELETE **1** 个。
 
@@ -61,8 +61,8 @@
 | 26 | 公共及会员端 | GET | `/app-api/gym/me/refund-applications/{id}` | 查询本人退款申请审核和退款进度 | 已实现，本地测试通过；真实退款渠道暂缓 |
 | 27 | 公共及会员端 | GET | `/app-api/gym/subscription-products` | 查询门店连续包月商品及续费说明 | 已实现，本地测试通过 |
 | 28 | 公共及会员端 | POST | `/app-api/gym/subscriptions` | 创建连续包月订阅并发起渠道签约 | 待开发；外部接入暂缓 |
-| 29 | 公共及会员端 | GET | `/app-api/gym/me/subscriptions` | 查询本人的连续包月订阅列表 | 设计待开发 |
-| 30 | 公共及会员端 | GET | `/app-api/gym/me/subscriptions/{id}` | 获取订阅详情、扣费周期及解约状态 | 设计待开发 |
+| 29 | 公共及会员端 | GET | `/app-api/gym/me/subscriptions` | 查询本人的连续包月订阅列表 | 已实现，本地测试通过；渠道状态同步未接入 |
+| 30 | 公共及会员端 | GET | `/app-api/gym/me/subscriptions/{id}` | 获取本人订阅详情、周期金额、下次扣费时间及解约状态 | 已实现，本地测试通过；渠道状态同步未接入 |
 | 31 | 公共及会员端 | POST | `/app-api/gym/subscriptions/{id}/termination-requests` | 提交连续包月解约请求 | 待开发；外部接入暂缓 |
 | 32 | 公共及会员端 | POST | `/app-api/gym/coupon-verification-previews` | 校验团购券并生成核销预览，不直接消耗券 | 设计待开发 |
 | 33 | 公共及会员端 | POST | `/app-api/gym/coupon-verifications` | 确认核销团购券，渠道成功后发放权益 | 设计待开发 |

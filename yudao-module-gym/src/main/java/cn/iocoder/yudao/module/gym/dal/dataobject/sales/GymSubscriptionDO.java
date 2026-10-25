@@ -25,6 +25,8 @@ public class GymSubscriptionDO extends TenantBaseDO {
     private Integer billingDay;
     private String provider;
     private String providerAgreementId;
+    // Version accepted for this agreement, never derived from the current sales configuration.
+    private String agreementVersion;
     private Instant requestedAt;
     private Instant signedAt;
     private Instant nextChargeAt;

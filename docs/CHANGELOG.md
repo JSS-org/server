@@ -3113,3 +3113,39 @@ V026新增一表及身份字段，当前74表、下一V027；先暂停首次建�
 ### 未做 / 后续
 
 107项新增本地实现、4项复用源码、24项待开发，总目标仍135。邀请奖励条件、积分账本与兑换、微信码/短链、分享页面、实际渠道联调尚未实现；生成链接和归属不算获奖，不伪造积分或卡。支付/自动续费、电子签约、设备及监控第三方继续暂缓。仅本地小步提交，不推送。
+
+## [2026-10-25 23:47 ~ 23:56] 会员本人连续包月历史查询
+
+### 意图
+
+补齐135项总表29–30，让会员查询本人真实订阅记录；区分历史未配置/失败与真实授权状态，不用当前商品价或协议版本覆盖过去事实。真实签约、周期扣款及解约渠道继续按要求暂缓，前端不改。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `controller/app/mobile/AppGymSubscriptionsController.java`、`controller/app/mobile/vo/GymMobileSubscriptionsVO.java` | 新增 | 本人列表/详情、门店分页参数与严格8字段投影 |
+| `service/mobile/GymMobileSubscriptionsService.java` | 新增 | SQL本人/租户/删除/门店过滤、历史查询、固定状态映射和原记录金额/时间 |
+| `dal/dataobject/sales/GymSubscriptionDO.java` | 修改 | 可空的协议确认版本字段，不读取当前销售配置 |
+| `sql/gym/migration/mysql/V027__gym_subscription_agreement_snapshot.sql`、H2建表、`script/gym/verify-migrations.py` | 新增/修改 | 新列及本人门店索引，3项迁移检查，旧协议NULL与原事实保留 |
+| `GymMobileMemberServiceTest.java`、`GymMobileSubscriptionsControllerTest.java` | 修改/新增 | 8业务+3MVC，身份/历史/状态/分页/无写副作用 |
+| `docs/uniapp/`契约、总表、实施进度及机器清单 | 修改 | 113/135、状态扩展、历史版本为空和真实渠道未接入边界 |
+| `docs/architecture.md`、`docs/testing.md`、`script/gym/README.md`、`script/gym/DATABASE.md` | 修改 | 调用链、验证证据、迁移与下一版本V028 |
+
+Java相对路径位于yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym；测试位于同模块src/test。
+
+### 结构关系
+
+会员Controller→SubscriptionsService→IdentityService当前有效会员→SubscriptionMapper，SQL先过滤再分页，详情同样加入本人条件。只读REPEATABLE_READ中直接投影原协议，避免依赖当前门店/商品状态；账号失效拒绝，换店或关系移除不删除历史。固定状态映射保留unconfigured/failed、未知为unknown；无写入、外部调用或周期驱动，现有后台签约审批逻辑保持。
+
+### 验证证据
+
+完整命令见testing本批章节：Spotless通过，gym836通过（会员专项43、组织服务510），member4通过及1项既有禁用跳过；新增8项业务+3项MVC。专项46项亦通过。真实隔离MySQL/Flyway144检查通过，临时库全部清理；新增版本列、索引和旧协议升级保留3检查。server package -DskipTests成功（打包跳过测试），覆盖脚本输出Contract135/mapped113/missing22，git diff --check通过。
+
+### 影响面 / 风险
+
+V027新增可空agreement_version及查询索引，表数仍74、下一V028；先备份、migrate/validate再升级相关应用，索引构建按数据量安排维护。旧记录不回填协议版本，不改金额、状态、计划时间或渠道协议号。扩展公开状态unconfigured/failed/unknown以准确呈现历史；agreementVersion允许null，调用方不能当作已有授权版本。nextChargeAt只代表已存计划，不保证真实扣费。无权限变更；前端、业务库和用户原始uniapp.md内容/暂存状态保留。
+
+### 未做 / 后续
+
+当前109项新增本地实现、4项复用源码、22项待开发，总目标135保持。28创建签约、31解约及真实扣款周期、查询同步、对账未接入，两个GET不宣称渠道可用；无部署HTTP、多节点或规模联调。支付、自动续费、电子签约、设备及监控外部边界不变；仅本地小步提交，不推送。

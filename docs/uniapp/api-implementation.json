@@ -380,17 +380,27 @@
       "method": "GET",
       "path": "/app-api/gym/me/subscriptions",
       "description": "查询本人的连续包月订阅列表",
-      "implementation": "pending",
-      "evidence": []
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymSubscriptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSubscriptionsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileSubscriptionsControllerTest.java"
+      ]
     },
     {
       "id": 30,
       "category": "公共及会员端",
       "method": "GET",
       "path": "/app-api/gym/me/subscriptions/{id}",
-      "description": "获取订阅详情、扣费周期及解约状态",
-      "implementation": "pending",
-      "evidence": []
+      "description": "获取本人订阅详情、周期金额、下次扣费时间及解约状态",
+      "implementation": "implemented_local_tests",
+      "evidence": [
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/controller/app/mobile/AppGymSubscriptionsController.java",
+        "yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileSubscriptionsService.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymMobileMemberServiceTest.java",
+        "yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/controller/app/mobile/GymMobileSubscriptionsControllerTest.java"
+      ]
     },
     {
       "id": 31,

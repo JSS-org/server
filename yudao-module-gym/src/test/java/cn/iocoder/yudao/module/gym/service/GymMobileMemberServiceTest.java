@@ -46,6 +46,7 @@ import java.util.concurrent.*;
 @Import({
     GymMobileIdentityService.class,
     GymMobileInvitationService.class,
+    GymMobileSubscriptionsService.class,
     cn.iocoder.yudao.module.gym.framework.mobile.GymMobileInvitationProperties.class,
     GymMobileIdempotency.class,
     GymMobileRecordsService.class,
@@ -58,6 +59,8 @@ import java.util.concurrent.*;
 class GymMobileMemberServiceTest extends BaseDbUnitTest {
     @Resource GymMobileIdentityService identities;
     @Resource GymMobileInvitationService invitations;
+    @Resource GymMobileSubscriptionsService mobileSubscriptions;
+    @Resource cn.iocoder.yudao.module.gym.dal.mysql.sales.GymSubscriptionMapper subscriptionRows;
     @Resource cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileInvitationMapper invitationRows;
 
     @Resource
@@ -1094,5 +1097,228 @@ class GymMobileMemberServiceTest extends BaseDbUnitTest {
                     "ALTER TABLE gym_mobile_identity DROP CONSTRAINT test_attribution_failure");
         }
         assertTrue(identities.initialize(req, "failing-attribution").created());
+    }
+
+    cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileSubscriptionsVO.Query
+            subscriptionQuery(Long store) {
+        var req =
+                new cn.iocoder.yudao.module.gym.controller.app.mobile.vo.GymMobileSubscriptionsVO
+                        .Query();
+        req.setStoreId(store);
+        return req;
+    }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymSubscriptionDO subscriptionRow(
+            Long member, Long store, String status) {
+        var row = new cn.iocoder.yudao.module.gym.dal.dataobject.sales.GymSubscriptionDO();
+        row.setMemberId(member);
+        row.setStoreId(store);
+        row.setMemberName("真实订阅持有人");
+        row.setCardTemplateId(700L);
+        row.setChannel("miniapp");
+        row.setStatus(status);
+        row.setAmount(new BigDecimal("119.90"));
+        row.setBillingDay(1);
+        row.setProvider("private-provider");
+        row.setProviderAgreementId(UUID.randomUUID().toString());
+        row.setRequestedAt(NOW);
+        row.setFailureReason("internal-secret-not-public");
+        subscriptionRows.insert(row);
+        return row;
+    }
+
+    @Test
+    void subscriptionQueriesFilterOwnerTenantStoreAndDeletionBeforePagination() {
+        Long member = initialize();
+        var first = subscriptionRow(member, 101L, "active");
+        var second = subscriptionRow(member, 102L, "past_due");
+        var third = subscriptionRow(member, 101L, "failed");
+        third.setChannel("management");
+        subscriptionRows.updateById(third);
+        subscriptionRow(member + 100, 101L, "active");
+        var deleted = subscriptionRow(member, 101L, "active");
+        subscriptionRows.deleteById(deleted.getId());
+        login(2L, 10L, 1);
+        subscriptionRow(member, 101L, "active");
+        login(1L, 10L, 1);
+        var req = subscriptionQuery(null);
+        req.setPageSize(1);
+        var page = mobileSubscriptions.page(req);
+        assertEquals(3L, page.getTotal());
+        assertEquals(third.getId().toString(), page.getList().getFirst().id());
+        req.setPageNo(2);
+        assertEquals(
+                second.getId().toString(), mobileSubscriptions.page(req).getList().getFirst().id());
+        req.setPageNo(3);
+        assertEquals(
+                first.getId().toString(), mobileSubscriptions.page(req).getList().getFirst().id());
+        req.setPageNo(1);
+        req.setStoreId(101L);
+        assertEquals(2L, mobileSubscriptions.page(req).getTotal());
+        req.setStoreId(999L);
+        assertEquals(0L, mobileSubscriptions.page(req).getTotal());
+        assertServiceException(
+                () -> mobileSubscriptions.get(deleted.getId()), SUBSCRIPTION_NOT_EXISTS);
+    }
+
+    @Test
+    void subscriptionDetailsRequireRealMemberOwnershipAndCorrectTenantAndAccountType() {
+        Long member = initialize();
+        var own = subscriptionRow(member, 101L, "pending_authorization");
+        var other = subscriptionRow(member + 10, 101L, "active");
+        login(2L, 10L, 1);
+        var foreign = subscriptionRow(member, 101L, "active");
+        login(1L, 10L, 1);
+        assertEquals(own.getId().toString(), mobileSubscriptions.get(own.getId()).id());
+        assertServiceException(
+                () -> mobileSubscriptions.get(other.getId()), SUBSCRIPTION_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileSubscriptions.get(foreign.getId()), SUBSCRIPTION_NOT_EXISTS);
+        assertServiceException(
+                () -> mobileSubscriptions.get(Long.MAX_VALUE), SUBSCRIPTION_NOT_EXISTS);
+        login(1L, 10L, 2);
+        assertServiceException(() -> mobileSubscriptions.get(own.getId()), MOBILE_IDENTITY_INVALID);
+        login(1L, 10L, 1);
+        TenantContextHolder.setTenantId(2L);
+        assertServiceException(() -> mobileSubscriptions.get(own.getId()), MOBILE_IDENTITY_INVALID);
+    }
+
+    @Test
+    void subscriptionStatusMappingPreservesUnconfiguredFailureAndUnknownWithoutInventedSuccess() {
+        Long member = initialize();
+        var mapping =
+                Map.ofEntries(
+                        Map.entry("pending", "pending_sign"),
+                        Map.entry("pending_authorization", "pending_sign"),
+                        Map.entry("pending_sign", "pending_sign"),
+                        Map.entry("active", "active"),
+                        Map.entry("past_due", "past_due"),
+                        Map.entry("terminating", "terminating"),
+                        Map.entry("terminated", "terminated"),
+                        Map.entry("cancelled", "terminated"),
+                        Map.entry("unconfigured", "unconfigured"),
+                        Map.entry("failed", "failed"),
+                        Map.entry("vendor-private-state", "unknown"));
+        for (var entry : mapping.entrySet()) {
+            var row = subscriptionRow(member, 101L, entry.getKey());
+            var result = mobileSubscriptions.get(row.getId());
+            assertEquals(entry.getValue(), result.status());
+            assertNull(result.agreementVersion());
+            assertNull(result.nextChargeAt());
+            assertNull(result.terminatedAt());
+            assertEquals(entry.getKey(), subscriptionRows.selectById(row.getId()).getStatus());
+        }
+        var page = mobileSubscriptions.page(subscriptionQuery(null));
+        assertEquals(mapping.size(), page.getTotal().intValue());
+        for (var result : page.getList())
+            assertEquals(result, mobileSubscriptions.get(Long.valueOf(result.id())));
+    }
+
+    @Test
+    void subscriptionReadsAgreementVersionAmountAndProductFromStoredAgreementOnly() {
+        Long member = initialize();
+        var row = subscriptionRow(member, 101L, "active");
+        row.setAgreementVersion("accepted-v3");
+        row.setAmount(new BigDecimal("1234567890123456.78"));
+        row.setNextChargeAt(Instant.parse("2026-11-01T16:00:00.123456Z"));
+        subscriptionRows.updateById(row);
+        var result = mobileSubscriptions.get(row.getId());
+        assertEquals("accepted-v3", result.agreementVersion());
+        assertEquals("1234567890123456.78", result.cycleAmount());
+        assertEquals("700", result.productId());
+        assertEquals("2026-11-02T00:00:00.123456+08:00", result.nextChargeAt());
+        assertEquals(
+                0, jdbc.queryForObject("SELECT COUNT(*) FROM gym_card_template", Integer.class));
+        // Missing current template/settings must not erase the historical agreement or invent a
+        // version.
+        var legacy = subscriptionRow(member, 101L, "unconfigured");
+        assertNull(mobileSubscriptions.get(legacy.getId()).agreementVersion());
+        assertEquals("119.90", mobileSubscriptions.get(legacy.getId()).cycleAmount());
+    }
+
+    @Test
+    void subscriptionHistoryRemainsReadableAfterStoreMembershipOrCatalogRemoval() {
+        Long member = initialize();
+        var row = subscriptionRow(member, 101L, "cancelled");
+        row.setCancelledAt(NOW);
+        subscriptionRows.updateById(row);
+        jdbc.update("DELETE FROM gym_member_store WHERE member_id=?", member);
+        jdbc.update("UPDATE gym_store SET status='inactive' WHERE id=101");
+        var result = mobileSubscriptions.get(row.getId());
+        assertEquals("terminated", result.status());
+        assertEquals(
+                NOW.atZone(GymDateRange.ZONE).toOffsetDateTime().toString(), result.terminatedAt());
+        jdbc.update("UPDATE gym_store SET deleted=true WHERE id=101");
+        assertEquals(result, mobileSubscriptions.get(row.getId()));
+        assertEquals(1L, mobileSubscriptions.page(subscriptionQuery(101L)).getTotal());
+    }
+
+    @Test
+    void subscriptionReadsRequireInitializedActiveIdentityOnEveryRequest() {
+        assertServiceException(
+                () -> mobileSubscriptions.page(subscriptionQuery(null)), MOBILE_IDENTITY_REQUIRED);
+        Long member = initialize();
+        var row = subscriptionRow(member, 101L, "active");
+        assertNotNull(mobileSubscriptions.get(row.getId()));
+        users.getUser(10L).setStatus(1);
+        assertServiceException(
+                () -> mobileSubscriptions.page(subscriptionQuery(null)), MOBILE_IDENTITY_INVALID);
+        users.getUser(10L).setStatus(0);
+        jdbc.update("UPDATE gym_member SET status='inactive' WHERE id=?", member);
+        assertServiceException(() -> mobileSubscriptions.get(row.getId()), MOBILE_IDENTITY_INVALID);
+        jdbc.update("UPDATE gym_member SET status='active' WHERE id=?", member);
+        jdbc.update("UPDATE gym_mobile_identity SET deleted=true WHERE member_id=?", member);
+        assertServiceException(
+                () -> mobileSubscriptions.get(row.getId()), MOBILE_IDENTITY_REQUIRED);
+    }
+
+    @Test
+    void subscriptionQueryValidatesPageLimitsStoreAndIdsInService() {
+        initialize();
+        var req = subscriptionQuery(-1L);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileSubscriptions.page(req));
+        req.setStoreId(null);
+        req.setPageSize(201);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileSubscriptions.page(req));
+        req.setPageSize(10);
+        req.setPageNo(0);
+        assertThrows(
+                jakarta.validation.ConstraintViolationException.class,
+                () -> mobileSubscriptions.page(req));
+        assertServiceException(() -> mobileSubscriptions.get(null), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> mobileSubscriptions.get(0L), MOBILE_REQUEST_INVALID);
+        assertServiceException(() -> mobileSubscriptions.get(-1L), MOBILE_REQUEST_INVALID);
+    }
+
+    @Test
+    void subscriptionHistoryQueriesDoNotTriggerChargesTerminationContractsOrRights() {
+        Long member = initialize();
+        var row = subscriptionRow(member, 101L, "active");
+        row.setNextChargeAt(NOW.minusSeconds(86400));
+        subscriptionRows.updateById(row);
+        var before = jdbc.queryForMap("SELECT * FROM gym_subscription WHERE id=?", row.getId());
+        var requestCount =
+                jdbc.queryForObject("SELECT COUNT(*) FROM gym_mobile_request", Integer.class);
+        for (int i = 0; i < 3; i++) {
+            assertEquals("active", mobileSubscriptions.get(row.getId()).status());
+            assertEquals(1L, mobileSubscriptions.page(subscriptionQuery(null)).getTotal());
+        }
+        assertEquals(
+                before, jdbc.queryForMap("SELECT * FROM gym_subscription WHERE id=?", row.getId()));
+        assertEquals(
+                requestCount,
+                jdbc.queryForObject("SELECT COUNT(*) FROM gym_mobile_request", Integer.class));
+        for (String table :
+                List.of(
+                        "gym_subscription_cycle",
+                        "gym_member_card",
+                        "gym_contract",
+                        "gym_business_order",
+                        "gym_order_payment"))
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Integer.class));
     }
 }

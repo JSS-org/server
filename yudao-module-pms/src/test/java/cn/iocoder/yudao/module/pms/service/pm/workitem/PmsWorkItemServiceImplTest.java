@@ -50,6 +50,7 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemMemberD
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemStatusDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemUserSortDO;
 import cn.iocoder.yudao.module.pms.dal.dataobject.pm.workitem.PmsWorkItemWorkLogDO;
+import cn.iocoder.yudao.module.pms.dal.mysql.pm.project.PmsProjectMapper;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemBoardMapper;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemCommentMapper;
 import cn.iocoder.yudao.module.pms.dal.mysql.pm.workitem.PmsWorkItemMapper;
@@ -65,9 +66,14 @@ import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemPriorityEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemStatusTypeEnum;
 import cn.iocoder.yudao.module.pms.enums.pm.workitem.PmsWorkItemTypeEnum;
 import cn.iocoder.yudao.module.pms.service.pm.iteration.PmsIterationService;
+import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectAnnouncementService;
+import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectFavoriteService;
+import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectGroupService;
 import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectMemberService;
+import cn.iocoder.yudao.module.pms.service.pm.project.PmsProjectServiceImpl;
 import cn.iocoder.yudao.module.system.api.notify.NotifyMessageSendApi;
 import cn.iocoder.yudao.module.system.api.notify.dto.NotifySendSingleToUserReqDTO;
+import cn.iocoder.yudao.module.system.api.permission.PermissionApi;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 
@@ -93,6 +99,7 @@ import java.util.Map;
 @Import({
     PmsWorkItemServiceImpl.class,
     PmsWorkItemUserSortServiceImpl.class,
+    PmsProjectServiceImpl.class,
     PmsWorkItemStatusServiceImpl.class,
     PmsWorkItemBoardServiceImpl.class,
     PmsWorkItemCommentServiceImpl.class,
@@ -109,8 +116,12 @@ public class PmsWorkItemServiceImplTest extends BaseDbUnitTest {
     @Resource private PmsWorkItemCommentMapper workItemCommentMapper;
     @Resource private PmsWorkItemWorkLogMapper workItemWorkLogMapper;
     @Resource private PmsWorkItemUserSortMapper workItemUserSortMapper;
+    @Resource private PmsProjectMapper projectMapper;
 
     @MockitoBean private PmsProjectMemberService projectMemberService;
+    @MockitoBean private PmsProjectGroupService projectGroupService;
+    @MockitoBean private PmsProjectFavoriteService projectFavoriteService;
+    @MockitoBean private PmsProjectAnnouncementService projectAnnouncementService;
     @MockitoBean private PmsIterationService iterationService;
     @MockitoBean private PmsWorkItemLabelService workItemLabelService;
     @MockitoBean private PmsWorkItemActivityService workItemActivityService;
@@ -118,6 +129,7 @@ public class PmsWorkItemServiceImplTest extends BaseDbUnitTest {
 
     @MockitoBean private NotifyMessageSendApi notifyMessageSendApi;
     @MockitoBean private AdminUserApi adminUserApi;
+    @MockitoBean private PermissionApi permissionApi;
 
     @Test
     public void testCreateWorkItem_success() {
@@ -630,6 +642,8 @@ public class PmsWorkItemServiceImplTest extends BaseDbUnitTest {
         // mock 数据
         Long userId = randomLongId();
         Long projectId = randomLongId();
+        PmsProjectDO project = randomProjectDO(projectId, PmsProjectTypeEnum.AGILE.getType());
+        projectMapper.insert(project);
         PmsWorkItemStatusDO taskStatus =
                 randomStatusDO(
                         projectId,
@@ -652,8 +666,7 @@ public class PmsWorkItemServiceImplTest extends BaseDbUnitTest {
         PmsWorkItemDO second =
                 randomWorkItemDO(projectId, PmsWorkItemTypeEnum.DEFECT.getType(), defectStatus, 2);
         workItemMapper.insert(second);
-        when(projectMemberService.validateProjectWritable(projectId, userId))
-                .thenReturn(randomProjectDO(projectId, PmsProjectTypeEnum.AGILE.getType()));
+        when(projectMemberService.validateProjectWritable(projectId, userId)).thenReturn(project);
         // 准备参数
         PmsWorkItemPlanningSortReqVO reqVO =
                 new PmsWorkItemPlanningSortReqVO()

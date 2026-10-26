@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.system.controller.admin.dept;
 
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
@@ -63,7 +64,7 @@ public class DeptController {
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('system:dept:delete')")
     public CommonResult<Boolean> deleteDeptList(@RequestParam("ids") List<Long> ids) {
-        deptService.deleteDeptList(ids);
+        deptService.deleteDeptList(ids, getLoginUserId());
         return success(true);
     }
 

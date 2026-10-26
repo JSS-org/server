@@ -5,7 +5,6 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
@@ -100,10 +99,14 @@ public class Ai1AgentController {
     }
 
     @GetMapping("/simple-list")
-    @Operation(summary = "获得已开启的 Agent 精简列表", description = "用于会话页选择 Agent，仅返回已开启的 Agent")
-    public CommonResult<List<Ai1AgentRespVO>> getAgentSimpleList() {
-        List<Ai1AgentDO> list =
-                agentService.getAgentListByStatus(CommonStatusEnum.ENABLE.getStatus());
+    @Operation(summary = "获得 Agent 精简列表", description = "按状态筛选，不传时返回全部状态；会话页传 0 仅选择已开启的 Agent")
+    @Parameter(
+            name = "status",
+            description = "状态，参见 CommonStatusEnum 枚举：0 开启，1 关闭；不传时返回全部状态",
+            example = "0")
+    public CommonResult<List<Ai1AgentRespVO>> getAgentSimpleList(
+            @RequestParam(value = "status", required = false) Integer status) {
+        List<Ai1AgentDO> list = agentService.getAgentListByStatus(status);
         Map<Long, Ai1ModelDO> modelMap =
                 modelService.getModelMap(convertSet(list, Ai1AgentDO::getModelId));
         return success(

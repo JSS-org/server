@@ -97,7 +97,7 @@ public class Ai1LlmModelFactory {
                             OpenAiEmbeddingOptions options =
                                     OpenAiEmbeddingOptions.builder()
                                             .baseUrl(normalizeBaseUrl(model.getBaseUrl()))
-                                            .apiKey(model.getApiKey())
+                                            .apiKey(StrUtil.nullToEmpty(model.getApiKey()))
                                             .model(model.getModel())
                                             .customHeaders(buildHeaders(model.getHeaders(), null))
                                             .build();
@@ -162,7 +162,7 @@ public class Ai1LlmModelFactory {
                             OpenAiChatOptions options =
                                     OpenAiChatOptions.builder()
                                             .baseUrl(normalizeBaseUrl(model.getBaseUrl()))
-                                            .apiKey(model.getApiKey())
+                                            .apiKey(StrUtil.nullToEmpty(model.getApiKey()))
                                             .model(model.getModel())
                                             .customHeaders(
                                                     buildHeaders(model.getHeaders(), sessionId))

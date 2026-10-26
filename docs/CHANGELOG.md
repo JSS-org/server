@@ -1890,3 +1890,37 @@ MeituanCouponHistoryRequest 承载业务参数；Client 将其一次序列化后
 ### 未做 / 后续
 
 未访问真实美团接口、提供凭据、启动/重启服务或执行实际核销。真实平台授权、行业权限、联通和数据差异仍按业务说明待接入；本次代码审查和模拟测试不能替代平台联调。
+
+## [2026-10-26 13:50 ~ 13:59] main 同步 jdk25 上游更新与冲突处理
+
+### 意图
+
+按用户要求，将upstream/master-jdk25更新合入main，再合入当前移动接口分支并推送；保留双方提交历史及未提交原始需求文档。
+
+### 改了什么
+
+| 文件 / 范围 | 类型 | 说明 |
+| --- | --- | --- |
+| `pom.xml`、`yudao-dependencies/pom.xml` | 合并 | 接收上游Spring Boot 4.1.2及依赖升级，保留本地模块和Spotless配置 |
+| `yudao-framework/`、各`yudao-module-*/`上游变更文件 | 合并 | 接收上游功能/缺陷修复，按本地规范统一Java格式 |
+| `yudao-module-system/src/main/java/cn/iocoder/yudao/module/system/controller/admin/auth/AuthController.java` | 合并 | 同时保留本地菜单树扩展和上游二维码登录功能 |
+| `sql/dm/flowable-patch/` | 合并 | 接收上游补丁目录调整，移除仅有格式差异的旧Java补丁 |
+| `yudao-server/src/main/resources/application-dev.yaml`、`application-local.yaml` | 合并 | 保留本地连接参数，纳入上游可选数据源配置 |
+| `.github/workflows/`、`script/`及上游其他更新 | 合并 | 接收JDK25构建/部署和可选基础设施材料 |
+| `docs/CHANGELOG.md` | 修改 | 追加冲突处理及验证边界记录 |
+
+### 结构关系
+
+合并父节点为本地main的68de7e134a及upstream/master-jdk25的70ad21ad6c。保持JDK25/Spring Boot4结构，框架及基础模块更新沿上游调用链；本地gym模块、受控文件及权限菜单扩展保留。275个初始冲突中，265项通过对合并基线/本地/上游统一格式证明本地仅格式变化，2项规范化三方合并，5项按上游删除并核对本地仅空白/格式变化；认证Controller和两份环境YAML逐项合并，未使用全局ours/theirs覆盖。
+
+### 验证证据
+
+上游更新已fetch至70ad21ad6c。`mvn -B -ntp -pl yudao-server -am spotless:apply spotless:check`成功；日志`/tmp/server-jdk25-upstream-format.log`。冲突文件无残留标记，规范化三方过程记录在`/tmp/server-jdk25-normalized-conflicts.json`。这是中间合并，后续合入功能分支后再做完整业务回归与打包，验证前不推送。
+
+### 影响面 / 风险
+
+涉及上游约605个文件及依赖升级，需验证框架、system、member与gym兼容性。环境连接参数保留；未运行业务库迁移或调用真实第三方。未提交的docs/uniapp/uniapp.md连同原暂存状态已单独stash并保存摘要，最终恢复，不把它混入合并提交。
+
+### 未做 / 后续
+
+当前功能分支尚待合入main；最终回归、打包、远端推送及原始文档恢复在后续执行。第三方暂缓边界不变，未将源码映射125/135视为全量上线。

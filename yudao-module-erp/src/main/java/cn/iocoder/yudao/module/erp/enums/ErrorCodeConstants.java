@@ -161,6 +161,12 @@ public interface ErrorCodeConstants {
             new ErrorCode(1_030_500_006, "产品已被销售出库单引用，无法删除");
     ErrorCode PRODUCT_DELETE_FAIL_SALE_RETURN_EXISTS =
             new ErrorCode(1_030_500_007, "产品已被销售退货单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_STOCK_IN_EXISTS =
+            new ErrorCode(1_030_500_008, "产品已被其它入库单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_STOCK_OUT_EXISTS =
+            new ErrorCode(1_030_500_009, "产品已被其它出库单引用，无法删除");
+    ErrorCode PRODUCT_DELETE_FAIL_STOCK_CHECK_EXISTS =
+            new ErrorCode(1_030_500_010, "产品已被盘点单引用，无法删除");
 
     // ========== ERP 产品分类 1-030-501-000 ==========
     ErrorCode PRODUCT_CATEGORY_NOT_EXISTS = new ErrorCode(1_030_501_000, "产品分类不存在");

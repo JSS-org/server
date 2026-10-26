@@ -15,6 +15,7 @@ import cn.iocoder.yudao.module.ai1.dal.dataobject.agent.Ai1AgentDO;
 import cn.iocoder.yudao.module.ai1.dal.mysql.agent.Ai1AgentMapper;
 import cn.iocoder.yudao.module.ai1.enums.model.Ai1ModelTypeEnum;
 import cn.iocoder.yudao.module.ai1.harness.skill.Ai1SkillToolFactory;
+import cn.iocoder.yudao.module.ai1.service.memory.Ai1MemoryService;
 import cn.iocoder.yudao.module.ai1.service.model.Ai1ModelService;
 import cn.iocoder.yudao.module.ai1.service.model.bo.Ai1ModelRespBO;
 import cn.iocoder.yudao.module.ai1.service.session.Ai1SessionService;
@@ -44,6 +45,8 @@ public class Ai1AgentServiceImpl implements Ai1AgentService {
     @Resource private Ai1ModelService modelService;
     @Resource @Lazy // 延迟加载，避免循环依赖
     private Ai1SessionService sessionService;
+    @Resource @Lazy // 延迟加载，避免循环依赖
+    private Ai1MemoryService memoryService;
 
     @Resource private Ai1SkillToolFactory skillToolFactory;
 
@@ -82,9 +85,10 @@ public class Ai1AgentServiceImpl implements Ai1AgentService {
         // 1. 校验存在
         ids.forEach(this::validateAgentExists);
 
-        // 2. 删除 Agent，同一事务内级联删除会话与消息
+        // 2. 删除 Agent，同一事务内级联删除会话、消息与长期记忆
         agentMapper.deleteByIds(ids);
         sessionService.deleteSessionListByAgentIds(ids);
+        memoryService.deleteMemoryListByAgentIds(ids);
 
         // 3. 清理 SKILL 物化沙箱
         ids.forEach(skillToolFactory::evict);

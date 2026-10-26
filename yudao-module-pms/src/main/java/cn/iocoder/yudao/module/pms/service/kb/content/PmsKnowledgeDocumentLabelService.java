@@ -1,5 +1,7 @@
 package cn.iocoder.yudao.module.pms.service.kb.content;
 
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.label.PmsKnowledgeDocumentLabelPageReqVO;
 import cn.iocoder.yudao.module.pms.controller.admin.kb.content.vo.label.PmsKnowledgeDocumentLabelSaveReqVO;
@@ -8,6 +10,7 @@ import cn.iocoder.yudao.module.pms.dal.dataobject.kb.content.PmsKnowledgeDocumen
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * PMS 知识库文档标签 Service 接口
@@ -52,6 +55,24 @@ public interface PmsKnowledgeDocumentLabelService {
      * @return 标签列表
      */
     List<PmsKnowledgeDocumentLabelDO> getDocumentLabelList();
+
+    /**
+     * 获得文档标签列表
+     *
+     * @param ids 标签编号集合
+     * @return 标签列表
+     */
+    List<PmsKnowledgeDocumentLabelDO> getDocumentLabelList(Collection<Long> ids);
+
+    /**
+     * 获得文档标签 Map
+     *
+     * @param ids 标签编号集合
+     * @return 文档标签 Map
+     */
+    default Map<Long, PmsKnowledgeDocumentLabelDO> getDocumentLabelMap(Collection<Long> ids) {
+        return convertMap(getDocumentLabelList(ids), PmsKnowledgeDocumentLabelDO::getId);
+    }
 
     /**
      * 校验文档标签均存在

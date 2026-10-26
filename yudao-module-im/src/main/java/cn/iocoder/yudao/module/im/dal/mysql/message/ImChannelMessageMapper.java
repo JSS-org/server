@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.im.dal.dataobject.message.ImChannelMessageDO;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,7 +39,9 @@ public interface ImChannelMessageMapper extends BaseMapperX<ImChannelMessageDO> 
                                 w ->
                                         w.isNull(ImChannelMessageDO::getReceiverUserIds)
                                                 .or()
-                                                .eq(ImChannelMessageDO::getReceiverUserIds, "")
+                                                .eq(
+                                                        ImChannelMessageDO::getReceiverUserIds,
+                                                        Collections.emptyList())
                                                 .or()
                                                 .apply(
                                                         MyBatisUtils.findInSet("receiver_user_ids"),

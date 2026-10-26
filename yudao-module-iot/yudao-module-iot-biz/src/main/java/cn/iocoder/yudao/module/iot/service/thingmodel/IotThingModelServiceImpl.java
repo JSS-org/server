@@ -22,6 +22,7 @@ import cn.iocoder.yudao.module.iot.controller.admin.thingmodel.vo.IotThingModelS
 import cn.iocoder.yudao.module.iot.convert.thingmodel.IotThingModelConvert;
 import cn.iocoder.yudao.module.iot.dal.dataobject.product.IotProductDO;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.IotThingModelDO;
+import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.ThingModelProperty;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.dataType.ThingModelBoolOrEnumDataSpecs;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.dataType.ThingModelDataSpecs;
 import cn.iocoder.yudao.module.iot.dal.dataobject.thingmodel.model.dataType.ThingModelDateOrTextDataSpecs;
@@ -29,7 +30,6 @@ import cn.iocoder.yudao.module.iot.dal.mysql.thingmodel.IotThingModelMapper;
 import cn.iocoder.yudao.module.iot.dal.redis.RedisKeyConstants;
 import cn.iocoder.yudao.module.iot.enums.product.IotProductStatusEnum;
 import cn.iocoder.yudao.module.iot.enums.thingmodel.IotDataSpecsDataTypeEnum;
-import cn.iocoder.yudao.module.iot.framework.tdengine.core.TDengineTableField;
 import cn.iocoder.yudao.module.iot.service.device.IotDeviceModbusPointService;
 import cn.iocoder.yudao.module.iot.service.product.IotProductService;
 
@@ -197,9 +197,8 @@ public class IotThingModelServiceImpl implements IotThingModelService {
                 dataType,
                 IotDataSpecsDataTypeEnum.STRUCT.getDataType(),
                 IotDataSpecsDataTypeEnum.ARRAY.getDataType())) {
-            // 特殊：STRUCT 和 ARRAY 类型，在 TDengine 里，没有对应数据类型，只能通过 JSON 来存储
-            return convertToVarchar(
-                    JsonUtils.toJsonString(value), TDengineTableField.LENGTH_VARCHAR);
+            // 特殊：STRUCT 和 ARRAY 类型，在时序库里，没有对应数据类型，只能通过 JSON 来存储
+            return convertToVarchar(JsonUtils.toJsonString(value), ThingModelProperty.LENGTH_JSON);
         }
         if (IotDataSpecsDataTypeEnum.INT.getDataType().equals(dataType)) {
             return convertToInt(value);

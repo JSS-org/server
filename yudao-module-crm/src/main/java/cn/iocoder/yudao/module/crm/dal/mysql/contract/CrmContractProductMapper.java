@@ -21,4 +21,10 @@ public interface CrmContractProductMapper extends BaseMapperX<CrmContractProduct
                 new LambdaQueryWrapperX<CrmContractProductDO>()
                         .eq(CrmContractProductDO::getContractId, contractId));
     }
+
+    default int deleteByContractId(Long contractId) {
+        return delete(
+                new LambdaQueryWrapperX<CrmContractProductDO>()
+                        .eq(CrmContractProductDO::getContractId, contractId));
+    }
 }

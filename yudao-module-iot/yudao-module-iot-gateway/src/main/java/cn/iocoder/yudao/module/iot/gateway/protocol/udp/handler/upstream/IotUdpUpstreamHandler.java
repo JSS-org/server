@@ -448,18 +448,16 @@ public class IotUdpUpstreamHandler {
             DatagramSocket socket, InetSocketAddress address, IotDeviceMessage responseMessage) {
         try {
             byte[] serializedData = serializer.serialize(responseMessage);
-            socket.send(
-                    Buffer.buffer(serializedData),
-                    address.getPort(),
-                    address.getHostString(),
-                    result -> {
-                        if (result.failed()) {
-                            log.error(
-                                    "[writeResponse][发送响应失败，地址: {}]",
-                                    sessionManager.buildAddressKey(address),
-                                    result.cause());
-                        }
-                    });
+            socket.send(Buffer.buffer(serializedData), address.getPort(), address.getHostString())
+                    .onComplete(
+                            result -> {
+                                if (result.failed()) {
+                                    log.error(
+                                            "[writeResponse][发送响应失败，地址: {}]",
+                                            sessionManager.buildAddressKey(address),
+                                            result.cause());
+                                }
+                            });
         } catch (Exception e) {
             log.error("[writeResponse][发送响应异常，地址: {}]", sessionManager.buildAddressKey(address), e);
         }

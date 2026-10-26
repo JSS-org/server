@@ -224,7 +224,8 @@ public class OAuth2ApproveServiceImplTest extends BaseDbUnitTest {
                         .setUserType(userType)
                         .setClientId(clientId)
                         .setExpiresTime(
-                                LocalDateTimeUtil.offset(LocalDateTime.now(), 1L, ChronoUnit.DAYS));
+                                LocalDateTimeUtil.offset(LocalDateTime.now(), 1L, ChronoUnit.DAYS)
+                                        .withNano(0));
         oauth2ApproveMapper.insert(approve); // 未过期
         oauth2ApproveMapper.insert(
                 ObjectUtil.clone(approve)
@@ -238,8 +239,7 @@ public class OAuth2ApproveServiceImplTest extends BaseDbUnitTest {
                 oauth2ApproveService.getApproveList(userId, userType, clientId);
         // 断言
         assertEquals(1, result.size());
-        // TODO @芋艿：expiresTime 被屏蔽，仅 win11 会复现，建议后续修复。
-        assertPojoEquals(approve, result.get(0), "expiresTime");
+        assertPojoEquals(approve, result.get(0));
     }
 
     @Test
@@ -251,7 +251,8 @@ public class OAuth2ApproveServiceImplTest extends BaseDbUnitTest {
         String scope = randomString();
         Boolean approved = randomBoolean();
         LocalDateTime expireTime =
-                LocalDateTime.ofInstant(randomDay(1, 30).toInstant(), ZoneId.systemDefault());
+                LocalDateTime.ofInstant(randomDay(1, 30).toInstant(), ZoneId.systemDefault())
+                        .withNano(0);
         // mock 方法
 
         // 调用
@@ -279,7 +280,8 @@ public class OAuth2ApproveServiceImplTest extends BaseDbUnitTest {
         String scope = approve.getScope();
         Boolean approved = randomBoolean();
         LocalDateTime expireTime =
-                LocalDateTime.ofInstant(randomDay(1, 30).toInstant(), ZoneId.systemDefault());
+                LocalDateTime.ofInstant(randomDay(1, 30).toInstant(), ZoneId.systemDefault())
+                        .withNano(0);
         // mock 方法
 
         // 调用

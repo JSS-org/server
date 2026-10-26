@@ -3577,3 +3577,35 @@ Controller→Service→TOTP/Mapper；配置按租户及后台账号取独立密�
 ### 未做 / 后续
 
 另一项风控处置摘要稳定性问题在后续独立提交修复；本批未运行全量回归或打包。真实第三方接入及自动积分奖励仍按约定暂缓，未迁移业务库、未push。
+
+## [2026-10-26 13:44 ~ 13:47] 稳定风控处置幂等摘要并兼容旧请求
+
+### 意图
+
+修复审查确认的P2问题：Map.of外层字段顺序跨JVM不稳定，同一风控处置的重试可能误报内容冲突。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-gym/src/main/java/cn/iocoder/yudao/module/gym/service/mobile/GymMobileRiskService.java` | 修改 | 固定外层字段顺序，并兼容反向历史编码 |
+| `yudao-module-gym/src/test/java/cn/iocoder/yudao/module/gym/service/GymOrganizationServiceTest.java` | 修改 | 新增3项新摘要/历史重放/内容冲突回归 |
+| `docs/testing.md` | 修改 | 补充复现及完整1062项测试/打包证据 |
+| `docs/uniapp/uniapp-implementation.md` | 修改 | 更新重放行为、兼容及边界 |
+| `docs/CHANGELOG.md` | 修改 | 追加本条记录 |
+
+### 结构关系
+
+现有Service→GymMobileIdempotency关系不变，改用既有executeWithLegacyPayload入口；两个候选都由服务端从当前已校验请求生成。新摘要固定id→request，兼容request→id；历史摘要及响应不改写，权限、整店范围及账户复核仍先于幂等返回。纯bugfix，不修改共享幂等实现或架构。
+
+### 验证证据
+
+新增3项用例修复前2项报1070023004；日志`/tmp/uniapp-review-risk-red.log`。最终`mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' -Dsurefire.failIfNoSpecifiedTests=false -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'`gym1062通过（组织610）、member4通过/1既有跳过；日志`/tmp/uniapp-review-fixes-final-tests.log`。本轮两处修复共新增5项。`mvn -B -ntp -pl yudao-server -am package -DskipTests`成功但跳过测试；日志`/tmp/uniapp-review-fixes-package.log`。路由核对仍125/135；Spotless及`git diff --check`通过。
+
+### 影响面 / 风险
+
+兼容已提交旧请求，不回填摘要，不允许客户端提供候选摘要；变更告警ID、结论、备注、版本仍报冲突，不重复处置或覆盖审计。无DDL、角色权限、API字段及配置变化；原始uniapp.md内容及暂存状态、前端、业务库保留。
+
+### 未做 / 后续
+
+本次已完成审查发现的两项修复；未进行真实多JVM或生产部署联调，历史键序通过持久化摘要模拟验证。无迁移变更不重复跑MySQL回归；暂缓的第三方接入及积分自动奖励规则保持原边界，未push。

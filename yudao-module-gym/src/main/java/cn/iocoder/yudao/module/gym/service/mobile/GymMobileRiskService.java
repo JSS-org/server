@@ -93,10 +93,18 @@ public class GymMobileRiskService {
         Long user = authorize(true);
         validate(req);
         require(id, false);
-        return idempotency.execute(
+        // Preserve both historical Map.of orders without rewriting their stored hashes.
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("id", id);
+        payload.put("request", req);
+        var legacyPayload = new LinkedHashMap<String, Object>();
+        legacyPayload.put("request", req);
+        legacyPayload.put("id", id);
+        return idempotency.executeWithLegacyPayload(
                 "risk-resolution",
                 key,
-                Map.of("id", id, "request", req),
+                payload,
+                legacyPayload,
                 Alert.class,
                 () -> {
                     authorize(true);

@@ -23056,4 +23056,100 @@ public class GymOrganizationServiceTest extends BaseDbUnitTest {
             assertEquals(1, result.summary().courseOrderCount());
         }
     }
+
+    cn.iocoder.yudao.module.gym.dal.dataobject.mobile.GymMobileRequestDO riskRequestRow(
+            String key) {
+        return applicationContext
+                .getBean(cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class)
+                .selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<
+                                        cn.iocoder.yudao.module.gym.dal.dataobject.mobile
+                                                .GymMobileRequestDO>()
+                                .eq("operation", "risk-resolution")
+                                .eq("request_key", key));
+    }
+
+    String riskResolutionPayloadJson(
+            Long id,
+            cn.iocoder.yudao.module.gym.controller.admin.mobile.vo.GymMobileRiskVO.Resolve request,
+            boolean reversed) {
+        String body = cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString(request);
+        return reversed
+                ? "{\"request\":" + body + ",\"id\":" + id + "}"
+                : "{\"id\":" + id + ",\"request\":" + body + "}";
+    }
+
+    @Test
+    void riskResolutionNewHashesUseFixedOuterFieldOrder() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "risk-stable-hash-event", List.of()));
+        var request = riskResolve("confirmed");
+        var result = mobileRisk.resolve(id, request, "risk-stable-hash-key");
+        var row = riskRequestRow("risk-stable-hash-key");
+        assertEquals(
+                cn.hutool.crypto.digest.DigestUtil.sha256Hex(
+                        riskResolutionPayloadJson(id, request, false)),
+                row.getRequestHash());
+        assertEquals(result, mobileRisk.resolve(id, request, "risk-stable-hash-key"));
+        assertEquals(1, riskResolutions.selectCount());
+    }
+
+    @Test
+    void riskResolutionLegacyFieldOrdersReplayWithoutChangingAuditOrSavedHash() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "risk-legacy-hash-event", List.of()));
+        var request = riskResolve("confirmed");
+        var first = mobileRisk.resolve(id, request, "risk-legacy-hash-key");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row = riskRequestRow("risk-legacy-hash-key");
+        String response = row.getResponseJson();
+        when(businessClock.now()).thenReturn(RISK_TIME.plusSeconds(600));
+        for (boolean reversed : List.of(false, true)) {
+            String hash =
+                    cn.hutool.crypto.digest.DigestUtil.sha256Hex(
+                            riskResolutionPayloadJson(id, request, reversed));
+            row.setRequestHash(hash);
+            mapper.updateById(row);
+            assertEquals(first, mobileRisk.resolve(id, request, "risk-legacy-hash-key"));
+            var saved = riskRequestRow("risk-legacy-hash-key");
+            assertEquals(hash, saved.getRequestHash());
+            assertEquals(response, saved.getResponseJson());
+            assertEquals(1, riskResolutions.selectCount());
+            assertEquals(2, mobileRisk.page(riskQuery(101L)).getList().getFirst().version());
+        }
+    }
+
+    @Test
+    void riskResolutionLegacyCompatibilityRejectsEveryChangedRequestField() {
+        Long device = riskDevice();
+        Long id = publishRisk(riskEvent(device, "risk-legacy-conflict-event", List.of()));
+        var original = riskResolve("confirmed");
+        var first = mobileRisk.resolve(id, original, "risk-legacy-conflict-key");
+        var mapper =
+                applicationContext.getBean(
+                        cn.iocoder.yudao.module.gym.dal.mysql.mobile.GymMobileRequestMapper.class);
+        var row = riskRequestRow("risk-legacy-conflict-key");
+        String hash =
+                cn.hutool.crypto.digest.DigestUtil.sha256Hex(
+                        riskResolutionPayloadJson(id, original, true));
+        row.setRequestHash(hash);
+        mapper.updateById(row);
+        assertEquals(first, mobileRisk.resolve(id, original, "risk-legacy-conflict-key"));
+        var note = riskResolve("confirmed");
+        note.setNote("不同的备注");
+        var version = riskResolve("confirmed");
+        version.setExpectedVersion(2);
+        for (var changed : List.of(note, version, riskResolve("false_positive")))
+            assertServiceException(
+                    () -> mobileRisk.resolve(id, changed, "risk-legacy-conflict-key"),
+                    MOBILE_IDEMPOTENCY_CONFLICT);
+        Long other = publishRisk(riskEvent(device, "risk-other-alert-conflict", List.of()));
+        assertServiceException(
+                () -> mobileRisk.resolve(other, original, "risk-legacy-conflict-key"),
+                MOBILE_IDEMPOTENCY_CONFLICT);
+        assertEquals(hash, riskRequestRow("risk-legacy-conflict-key").getRequestHash());
+        assertEquals(1, riskResolutions.selectCount());
+    }
 }

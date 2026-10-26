@@ -1492,3 +1492,19 @@ mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
 ```
 
 销售报表9项通过、Spotless通过，证据`/tmp/uniapp-review-sales-green.log`（13:43:11 BUILD SUCCESS）；`git diff --check`通过。本批无DDL/配置/协议变更，不重复运行迁移；真实渠道及前端不在本次修复范围。
+
+## 2026-10-26 审查修复：风控处置摘要稳定与历史重放
+
+新增3项真实H2回归：新请求固定id→request顺序；手工构造两种历史外层字段顺序对应的已持久化摘要，同一请求均返回原处置结果，保留原摘要/响应及唯一审计；修改告警ID、结论、备注或expectedVersion均冲突。修复前3项中2项报1070023004，证据`/tmp/uniapp-review-risk-red.log`；这验证了不同历史编码的重放，不声明真实多JVM部署联调。
+
+```bash
+mvn -B -ntp -pl yudao-module-gym -am spotless:apply spotless:check test \
+  -Dtest='Gym*Test,MemberAuth*Test,MemberUser*Test' \
+  -Dsurefire.failIfNoSpecifiedTests=false \
+  -DargLine='-javaagent:/Users/hh/.m2/repository/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar'
+mvn -B -ntp -pl yudao-server -am package -DskipTests
+python3 script/gym/verify-uniapp-api-coverage.py --show-missing
+git diff --check
+```
+
+最终gym1062项通过（组织服务610），含本轮两处修复新增5项；member4项通过、1项既有禁用跳过。Spotless通过，测试日志`/tmp/uniapp-review-fixes-final-tests.log`（13:46:17 BUILD SUCCESS）。server打包成功，日志`/tmp/uniapp-review-fixes-package.log`（13:46:35），打包跳过测试。路由覆盖仍125/135，暂缓项未计完成。没有DDL或旧摘要回填，不重复跑迁移；业务库、前端及用户原始文档的内容/暂存状态保持不变。没有真实渠道、多节点或部署HTTP验收。

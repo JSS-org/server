@@ -4686,3 +4686,36 @@ Redis仍不可读，无新增HTTP/H5/RBAC、原生上传、完整verify或部署
 ### 未做 / 后续
 
 Redis程序仍不可读，真实HTTP/H5/RBAC、订单/签到完整奖励链、配置竞争、通知TODO和真机发布继续待验。无新迁移或开发库/运行包升级，V011部署前置和整合验收版本保持不变。
+
+## [2026-10-27 05:12 ~ 05:25] 封存会员经验业务事件并验证V012升级
+
+### 意图
+
+继续完整奖励/撤销业务核对，防止同一订单/签到/售后事件重复增加或扣减经验，特别是不足扣减后的重投侵占后来到账经验；保留旧历史和现有余额。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| V012__member_experience_event.sql | 新增 | 租户/会员/类型/区分大小写编号唯一，回填旧外部事件，不重写历史/余额 |
+| MemberExperienceEventDO.java / MemberExperienceEventMapper.java | 新增 | 独立不可逻辑删除事件及精确当前读 |
+| MemberExperienceRecordService.java / Impl.java、MemberLevelServiceImpl.java | 修改 | 先原子插入事件键、重复值核对、同事务提交/回滚，ADMIN不合并 |
+| member/enums/ErrorCodeConstants.java | 修改 | 无效事件编号与不同载荷冲突业务错误 |
+| JssMemberLevelMySqlServiceIT.java / verify_member_level_services.py | 修改 | 二十二项实际Service专项和五表准备/清理 |
+| verify_migrations.py / sql/jss/README.md / docs | 修改/追加 | V011升级V012/历史保留及部署顺序和验证证据 |
+
+### 结构关系
+
+原会员行锁事务内，经经验记录Service插入独立事件表，再调用原两记录和会员更新。唯一键冲突只精确读已存在行；同键同请求不变动、不同请求拒绝，旧NULL请求仅封存不猜值。事件键和所有变动同事务，ADMIN交互操作不按固定编号合并，不新增Redis依赖或HTTP端点。
+
+### 验证证据
+
+修复前二十一项16通过/5失败18.119秒，最终二十二项实际MySQL全部执行通过19.034秒，零失败/错误/跳过，`.runtime/member-experience-idempotency-final.log`及XML。覆盖同事件六并发、不同会员六并发、租户/类型/大小写、冲突、ADMIN、扣0后重投、失败/外层回滚重试和同一外层事务提交、旧重复/逻辑删除封存；原十五项继续通过。十七项实际Flyway生命周期全过，`.runtime/member-experience-migrations.log`，九旧记录逐字段不变并封存六键，新增键后重复迁移保留七键，唯一键/旧版本/校验和保护通过；随机库残留0。常规14执行通过（12H2/2Mockito）、23既有/条件跳过，服务器依赖测试编译成功，`.runtime/member-experience-idempotency-regression.log`。七Java定向Spotless、两Python和差异通过。
+
+### 影响面 / 风险
+
+须先备份并migrate/validate V012再部署；V001–V011不变，开发库/运行jar未升级。新键要求非空、最多64字符且无首尾空白；同键不同带符号请求拒绝。旧重复奖励不做自动余额纠正，原始请求未知的旧事件不猜金额。事件键不能随日志清理删除；历史量大时需评估升级窗口。最低门槛清级仍是已说明的默认假设，用户偏好尚未确认。
+
+### 未做 / 后续
+
+没有新增HTTP/Redis/H5或完整verify证据。完整订单/签到/售后调用链、锁顺序/吞吐、历史余额人工核对、通知TODO、真机与发布继续待验；整合验收版本不前移。

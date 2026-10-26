@@ -58,6 +58,8 @@ def main():
         checks.append('V010 adds an empty remark without changing existing notice content')
         assert managed.sql("SELECT data_type FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='infra_api_error_log' AND column_name='process_user_id'") == 'bigint'
         checks.append('V011 widens error-log processor IDs on fresh initialization')
+        assert managed.sql('SELECT COUNT(*) FROM member_experience_event') == '0'
+        checks.append('V012 creates an empty event receipt table without seeding new rewards')
         assert managed.sql("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='must_not_override_jss_history'") == '0'
         checks.append('inherited Flyway environment cannot override the history table')
         assert managed.sql('SELECT COUNT(*) FROM system_users') == '0'
@@ -96,15 +98,55 @@ def main():
         def legacy_row(identifier, actor):
             return f"({identifier},'legacy','migration-test','POST','/synthetic','{{}}','127.0.0.1','test','2026-10-27 00:00:00','message','root','stack','Test','Test.java','run',0,1,{actor},1)"
         upgrade.sql('INSERT INTO infra_api_error_log (' + columns + ') VALUES ' + ','.join([legacy_row(1, 2147483647), legacy_row(2, 'NULL'), legacy_row(3, 0), legacy_row(4, -1)]))
-        upgrade.execute('migrate')
+        with tempfile.TemporaryDirectory(prefix='flyway-v011-', dir=RUNTIME) as temp:
+            previous = Path(temp).resolve()
+            assert previous.parent == RUNTIME.resolve()
+            shutil.copy2(ASSETS / 'pom.xml', previous / 'pom.xml')
+            (previous / 'migration/mysql').mkdir(parents=True)
+            for file in (ASSETS / 'migration/mysql').glob('V*__*.sql'):
+                if int(re.match(r'V(\d+)__', file.name)[1]) <= 11:
+                    shutil.copy2(file, previous / 'migration/mysql' / file.name)
+            upgrade.flyway('migrate', assets=previous)
         assert upgrade.sql("SELECT data_type FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='infra_api_error_log' AND column_name='process_user_id'") == 'bigint'
         assert upgrade.sql("SELECT GROUP_CONCAT(COALESCE(process_user_id,'NULL') ORDER BY id) FROM infra_api_error_log") == '2147483647,NULL,0,-1'
         assert upgrade.sql("SELECT GROUP_CONCAT(exception_message ORDER BY id) FROM infra_api_error_log") == 'message,message,message,message'
         upgrade.sql('UPDATE infra_api_error_log SET process_user_id=9007199254740993 WHERE id=1')
         assert upgrade.sql("SELECT CONCAT(title,'|',content,'|',remark) FROM system_notice WHERE id=1") == 'Before upgrade|<p>Keep me</p>|'
         upgrade.sql("UPDATE system_notice SET remark='kept after upgrade' WHERE id=1")
+        event_columns = 'id,user_id,biz_type,biz_id,experience,total_experience,tenant_id,deleted'
+        upgrade.sql('INSERT INTO member_experience_record (' + event_columns + ') VALUES ' + ','.join([
+            "(1,9007199254740993,11,'replay',10,10,1,b'0')",
+            "(2,9007199254740993,11,'replay',10,20,1,b'0')",
+            "(3,9007199254740993,0,'0',1,21,1,b'0')",
+            "(4,9007199254740993,11,'deleted',10,31,1,b'1')",
+            "(5,9007199254740993,11,'replay',10,10,2,b'0')",
+            "(6,9007199254740993,13,'replay',-1,30,1,b'0')",
+            "(7,9007199254740993,11,'',1,31,1,b'0')",
+            "(8,9007199254740993,11,'ABC',1,32,1,b'0')",
+            "(9,9007199254740993,11,'abc',1,33,1,b'0')",
+        ]))
+        snapshot_sql = "SELECT GROUP_CONCAT(CONCAT_WS('|',id,user_id,biz_type,biz_id,experience,total_experience,tenant_id,deleted+0) ORDER BY id) FROM member_experience_record"
+        old_events = upgrade.sql(snapshot_sql)
         upgrade.execute('migrate')
         upgrade.execute('validate')
+        assert upgrade.sql(snapshot_sql) == old_events
+        assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event') == '6'
+        assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event WHERE requested_experience IS NULL') == '6'
+        assert upgrade.sql("SELECT COUNT(*) FROM member_experience_event WHERE biz_type=0 OR biz_id=''") == '0'
+        checks.append('managed V011 upgrades to V012, sealing duplicate/deleted historical events, tenant/type/case keys and Long members without rewriting history or admin changes')
+        try:
+            upgrade.sql("INSERT INTO member_experience_event (user_id,biz_type,biz_id,requested_experience,tenant_id) VALUES (9007199254740993,11,'replay',10,1)")
+            raise AssertionError('Duplicate experience receipt was accepted')
+        except RuntimeError as error:
+            assert 'duplicate' in str(error).lower(), str(error)
+        checks.append('V012 unique receipt rejects replay without changing legacy event count')
+        upgrade.sql("INSERT INTO member_experience_event (user_id,biz_type,biz_id,requested_experience,tenant_id) VALUES (9007199254740993,11,'new-request',10,1)")
+        upgrade.execute('migrate')
+        upgrade.execute('validate')
+        assert upgrade.sql('SELECT COUNT(*) FROM member_experience_event') == '7'
+        assert upgrade.sql("SELECT requested_experience FROM member_experience_event WHERE biz_id='new-request'") == '10'
+        assert upgrade.sql(snapshot_sql) == old_events
+        checks.append('repeated V012 migrate/validate preserve both sealed history and new event receipts')
         assert upgrade.sql("SELECT remark FROM system_notice WHERE id=1") == 'kept after upgrade'
         assert upgrade.sql('SELECT process_user_id FROM infra_api_error_log WHERE id=1') == '9007199254740993'
         assert upgrade.sql("SELECT GROUP_CONCAT(COALESCE(process_user_id,'NULL') ORDER BY id) FROM infra_api_error_log WHERE id>1") == 'NULL,0,-1'

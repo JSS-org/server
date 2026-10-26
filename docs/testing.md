@@ -1941,3 +1941,13 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 最低门槛采用已向用户说明的默认策略：存在启用配置但经验低于全部门槛时清为无等级0；尚未收到相反偏好，并非用户已确认策略。全部配置停用/不存在时保留原行为，不据此宣称该策略已获产品确认。历史记录不重写，通知TODO仍未实现。当前十五项尚不保证相同bizType/bizId重投幂等、并发配置变更/分配/删除或完整订单奖励链。
 
 常规 `mvn -o -Pjss-mall -pl yudao-server -am test -Dtest=MemberLevelServiceImplTest,MemberUserServiceImplTest,MemberUserServiceImplStatusTest,JssMemberLevelMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`：30项中14执行通过（12H2、2Mockito状态测试），16跳过（15条件MySQL、1既有Disabled），零失败/错误；服务器及30模块依赖测试编译通过，`.runtime/member-experience-regression.log`。五Java定向Spotless apply/check和Python编译通过，格式日志编码已归一并保留raw副本，无新增全量verify/HTTP/Redis/H5证据。无迁移修改，V011部署前置保留，整合验收版本不前移。
+
+## 2026-10-27 会员经验事件幂等与V012
+
+在并发/边界修复e978b48771之后，二十一项专项新增事件重投检查：16通过、5失败，18.119秒，同一奖励10重投200变成210、六相同支付事件变成150、退款重投扣掉后来到账经验，旧重复记录可继续加经验，无有效业务编号也被接收；见 `.runtime/member-experience-idempotency-before.log`及XML。
+
+最终 `python script/jss/verify_member_level_services.py` 二十二项实际MySQL全部执行通过，零失败/错误/跳过，19.034秒，`.runtime/member-experience-idempotency-final.log`、`member-experience-idempotency-final.xml`、`.runtime/jss-mysql/member-level-service-test.xml`，随机库残留0。原V001四表加V012事件表，生产三个等级Service、真实会员Service和五Mapper/租户/事务，无业务替身。覆盖相同事件六次并发只一次奖励及跨级、六名不同会员并发成功、不同会员/租户/类型/大小写键、不同载荷拒绝、ADMIN交互操作不合并、实际扣0或不足扣减的重复撤销不侵占后续到账、最后SQL失败/外层回滚可用同键重试、同一外层事务两次相同事件正常提交，以及历史重复/逻辑删除记录被封存。此前十五项并发/Long/边界/事务继续通过。
+
+`python script/jss/verify_migrations.py` 十七项实际Flyway生命周期全部通过，`.runtime/member-experience-migrations.log`；原十三项公告/处理人/历史校验和保护继续通过，新增V012空初始化、受管V011升级/封存历史、唯一事件键、重复migrate/validate保留新旧事件。九条历史经验记录包含重复/已逻辑删除/ADMIN/空编号/双租户/不同类型/大小写键/Long会员，生成六个旧事件键且原记录逐字段快照不变；加入一个新事件后重复迁移仍为七个。三类迁移随机库和Service库残留0。V001–V011未改写，不修改会员余额或旧记录，不通过repair遮掩校验和。
+
+常规37项中14执行通过（12H2、2Mockito），23跳过（22条件MySQL、1既有Disabled），零失败/错误，服务器及依赖测试编译成功，`.runtime/member-experience-idempotency-regression.log`。七Java定向Spotless apply/check、两Python编译和差异检查通过；无新增完整verify/HTTP/Redis/H5。当前代码部署前须先备份+migrate/validate V012；开发库/运行包未升级。订单/签到/售后完整链、锁顺序/吞吐、通知TODO和最低门槛偏好仍需后续确认/验收。

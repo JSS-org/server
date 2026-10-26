@@ -53,6 +53,8 @@ public interface ErrorCodeConstants {
     ErrorCode EXPERIENCE_BIZ_NOT_SUPPORT = new ErrorCode(1_004_011_201, "用户经验业务类型不支持");
     ErrorCode EXPERIENCE_CHANGE_INVALID = new ErrorCode(1_004_011_202, "用户经验变动值不能为空");
     ErrorCode EXPERIENCE_OUT_OF_RANGE = new ErrorCode(1_004_011_203, "用户经验超出可用整数范围");
+    ErrorCode EXPERIENCE_BIZ_ID_INVALID = new ErrorCode(1_004_011_204, "用户经验业务编号须为1至64字符且无首尾空白");
+    ErrorCode EXPERIENCE_BIZ_CONFLICT = new ErrorCode(1_004_011_205, "用户经验业务编号已使用且变动值不一致");
 
     // ========== 用户分组 1-004-012-000 ==========
     ErrorCode GROUP_NOT_EXISTS = new ErrorCode(1_004_012_000, "用户分组不存在");

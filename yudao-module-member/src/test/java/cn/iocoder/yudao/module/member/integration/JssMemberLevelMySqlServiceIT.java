@@ -15,6 +15,7 @@ import cn.iocoder.yudao.module.member.controller.admin.level.vo.level.*;
 import cn.iocoder.yudao.module.member.controller.admin.user.vo.MemberUserUpdateLevelReqVO;
 import cn.iocoder.yudao.module.member.dal.dataobject.level.MemberLevelDO;
 import cn.iocoder.yudao.module.member.dal.dataobject.user.MemberUserDO;
+import cn.iocoder.yudao.module.member.dal.mysql.level.MemberExperienceEventMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberExperienceRecordMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberLevelMapper;
 import cn.iocoder.yudao.module.member.dal.mysql.level.MemberLevelRecordMapper;
@@ -85,6 +86,7 @@ class JssMemberLevelMySqlServiceIT {
         for (String table :
                 List.of(
                         "member_level_record",
+                        "member_experience_event",
                         "member_experience_record",
                         "member_user",
                         "member_level")) jdbc.execute("DELETE FROM " + table);
@@ -142,6 +144,7 @@ class JssMemberLevelMySqlServiceIT {
             configuration.addMapper(MemberLevelRecordMapper.class);
             configuration.addMapper(MemberUserMapper.class);
             configuration.addMapper(MemberExperienceRecordMapper.class);
+            configuration.addMapper(MemberExperienceEventMapper.class);
             return new MybatisSqlSessionFactoryBuilder().build(configuration);
         }
 
@@ -168,6 +171,11 @@ class JssMemberLevelMySqlServiceIT {
         @Bean
         MemberExperienceRecordMapper experienceMapper(SqlSessionTemplate sql) {
             return sql.getMapper(MemberExperienceRecordMapper.class);
+        }
+
+        @Bean
+        MemberExperienceEventMapper eventMapper(SqlSessionTemplate sql) {
+            return sql.getMapper(MemberExperienceEventMapper.class);
         }
 
         @Bean
@@ -404,6 +412,188 @@ class JssMemberLevelMySqlServiceIT {
                 jdbc.queryForObject(
                         "SELECT experience FROM member_level_record ORDER BY id DESC LIMIT 1",
                         Integer.class));
+    }
+
+    @Test
+    void stableBusinessEventsApplyOnceButDifferentUsersTypesAndAdminAdjustmentsRemainIndependent() {
+        var user = member();
+        service.addExperience(user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "same-event");
+        assertThrows(
+                ServiceException.class,
+                () ->
+                        service.addExperience(
+                                user.getId(),
+                                200,
+                                MemberExperienceBizTypeEnum.SIGN_IN,
+                                "same-event"));
+        service.addExperience(user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "same-event");
+        assertEquals(10, users.selectById(user.getId()).getExperience());
+        assertEquals(1, count("member_experience_record"));
+        service.addExperience(
+                user.getId(), 10, MemberExperienceBizTypeEnum.ORDER_GIVE, "same-event");
+        var second = member();
+        service.addExperience(
+                second.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "same-event");
+        service.addExperience(user.getId(), 1, MemberExperienceBizTypeEnum.ADMIN, "0");
+        service.addExperience(user.getId(), 1, MemberExperienceBizTypeEnum.ADMIN, "0");
+        assertEquals(22, users.selectById(user.getId()).getExperience());
+        assertEquals(10, users.selectById(second.getId()).getExperience());
+        TenantContextHolder.setTenantId(2L);
+        var foreign = member();
+        service.addExperience(
+                foreign.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "same-event");
+        assertEquals(10, users.selectById(foreign.getId()).getExperience());
+        service.addExperience(foreign.getId(), 1, MemberExperienceBizTypeEnum.SIGN_IN, "ABC");
+        service.addExperience(foreign.getId(), 2, MemberExperienceBizTypeEnum.SIGN_IN, "abc");
+        service.addExperience(foreign.getId(), 1, MemberExperienceBizTypeEnum.SIGN_IN, "ABC");
+        assertThrows(
+                ServiceException.class,
+                () ->
+                        service.addExperience(
+                                foreign.getId(), 2, MemberExperienceBizTypeEnum.SIGN_IN, "ABC"));
+        assertEquals(13, users.selectById(foreign.getId()).getExperience());
+        assertEquals(8, count("member_experience_record"));
+    }
+
+    @Test
+    void sixConcurrentDeliveriesOfOneEventOnlyCreateOneReceiptAndLevelChange() throws Exception {
+        Long level = create(1);
+        var user = member();
+        users.updateById(new MemberUserDO().setId(user.getId()).setExperience(90));
+        parallelFromSameSnapshot(
+                user.getId(),
+                index ->
+                        service.addExperience(
+                                user.getId(),
+                                10,
+                                MemberExperienceBizTypeEnum.ORDER_GIVE,
+                                "same-payment"));
+        assertEquals(100, users.selectById(user.getId()).getExperience());
+        assertEquals(level, users.selectById(user.getId()).getLevelId());
+        assertEquals(1, count("member_experience_record"));
+        assertEquals(1, count("member_level_record"));
+    }
+
+    @Test
+    void zeroAndClampedDeductionsStayConsumedAfterLaterExperienceArrives() {
+        var user = member();
+        users.updateById(new MemberUserDO().setId(user.getId()).setExperience(5));
+        service.addExperience(
+                user.getId(), 100, MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL, "refund");
+        service.addExperience(
+                user.getId(), 100, MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL, "refund");
+        service.addExperience(
+                user.getId(),
+                100,
+                MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL_ITEM,
+                "zero-refund");
+        service.addExperience(
+                user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "later-credit");
+        service.addExperience(
+                user.getId(), 100, MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL, "refund");
+        service.addExperience(
+                user.getId(),
+                100,
+                MemberExperienceBizTypeEnum.ORDER_GIVE_CANCEL_ITEM,
+                "zero-refund");
+        assertEquals(10, users.selectById(user.getId()).getExperience());
+        assertEquals(3, count("member_experience_record"));
+        assertEquals(
+                List.of(-5, 0, 10),
+                jdbc.queryForList(
+                        "SELECT experience FROM member_experience_record ORDER BY id",
+                        Integer.class));
+    }
+
+    @Test
+    void failedOrRolledBackEventDoesNotConsumeItsBusinessKey() {
+        var user = member();
+        jdbc.execute(
+                "CREATE TRIGGER jss_experience_fail BEFORE UPDATE ON member_user FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='isolated receipt rollback'");
+        try {
+            assertThrows(
+                    RuntimeException.class,
+                    () ->
+                            service.addExperience(
+                                    user.getId(),
+                                    10,
+                                    MemberExperienceBizTypeEnum.SIGN_IN,
+                                    "retryable"));
+        } finally {
+            jdbc.execute("DROP TRIGGER jss_experience_fail");
+        }
+        assertEquals(0, count("member_experience_record"));
+        var tx = new TransactionTemplate(context.getBean(DataSourceTransactionManager.class));
+        tx.execute(
+                status -> {
+                    service.addExperience(
+                            user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "retryable");
+                    status.setRollbackOnly();
+                    return null;
+                });
+        assertEquals(0, count("member_experience_record"));
+        tx.execute(
+                status -> {
+                    service.addExperience(
+                            user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "retryable");
+                    service.addExperience(
+                            user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, "retryable");
+                    return null;
+                });
+        assertEquals(10, users.selectById(user.getId()).getExperience());
+        assertEquals(1, count("member_experience_record"));
+    }
+
+    @Test
+    void automatedEventsRequireANonBlankBusinessKeyWithinTheExistingColumn() {
+        var user = member();
+        for (String key : new String[] {null, "", "   ", "x".repeat(65)})
+            assertThrows(
+                    ServiceException.class,
+                    () ->
+                            service.addExperience(
+                                    user.getId(), 10, MemberExperienceBizTypeEnum.SIGN_IN, key));
+        assertEquals(0, users.selectById(user.getId()).getExperience());
+        assertEquals(0, count("member_experience_record"));
+    }
+
+    @Test
+    void legacyDuplicateReceiptsArePreservedAndDoNotAllowAnotherCredit() {
+        var user = member();
+        users.updateById(new MemberUserDO().setId(user.getId()).setExperience(20));
+        var records = context.getBean(MemberExperienceRecordService.class);
+        records.createExperienceRecord(
+                user.getId(), 10, 10, MemberExperienceBizTypeEnum.ORDER_GIVE, "legacy-duplicate");
+        records.createExperienceRecord(
+                user.getId(), 10, 20, MemberExperienceBizTypeEnum.ORDER_GIVE, "legacy-duplicate");
+        jdbc.update(
+                "INSERT INTO member_experience_event (tenant_id,user_id,biz_type,biz_id,requested_experience) VALUES (1,?,11,'legacy-duplicate',NULL)",
+                user.getId());
+        jdbc.update(
+                "UPDATE member_experience_record SET deleted=b'1' WHERE user_id=?", user.getId());
+        service.addExperience(
+                user.getId(), 10, MemberExperienceBizTypeEnum.ORDER_GIVE, "legacy-duplicate");
+        assertEquals(20, users.selectById(user.getId()).getExperience());
+        assertEquals(2, count("member_experience_record"));
+    }
+
+    @Test
+    void independentMembersCanClaimAndCreditConcurrentlyWithoutRangeLockingEachOther()
+            throws Exception {
+        var sentinel = member();
+        var participants = new ArrayList<Long>();
+        for (int index = 0; index < 6; index++) participants.add(member().getId());
+        parallelFromSameSnapshot(
+                sentinel.getId(),
+                index ->
+                        service.addExperience(
+                                participants.get(index),
+                                10,
+                                MemberExperienceBizTypeEnum.SIGN_IN,
+                                "parallel-members"));
+        for (Long id : participants) assertEquals(10, users.selectById(id).getExperience());
+        assertEquals(6, count("member_experience_event"));
+        assertEquals(6, count("member_experience_record"));
     }
 
     @Test

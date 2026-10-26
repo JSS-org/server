@@ -13,6 +13,13 @@ import cn.iocoder.yudao.module.member.enums.MemberExperienceBizTypeEnum;
  */
 public interface MemberExperienceRecordService {
 
+    /** Claim an immutable event inside the caller's member-row transaction; false means replay. */
+    boolean claimExperienceEvent(
+            Long userId,
+            MemberExperienceBizTypeEnum bizType,
+            String bizId,
+            int requestedExperience);
+
     /**
      * 获得会员经验记录
      *

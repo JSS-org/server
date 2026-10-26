@@ -249,6 +249,12 @@ public class MemberLevelServiceImpl implements MemberLevelService {
             Long userId, Integer experience, MemberExperienceBizTypeEnum bizType, String bizId) {
         if (experience == null) throw exception(EXPERIENCE_CHANGE_INVALID);
         if (bizType == null) throw exception(EXPERIENCE_BIZ_NOT_SUPPORT);
+        boolean automated = bizType != MemberExperienceBizTypeEnum.ADMIN;
+        if (automated
+                && (bizId == null
+                        || bizId.isBlank()
+                        || bizId.length() > 64
+                        || !bizId.equals(bizId.trim()))) throw exception(EXPERIENCE_BIZ_ID_INVALID);
         if (experience == 0) {
             return;
         }
@@ -259,6 +265,9 @@ public class MemberLevelServiceImpl implements MemberLevelService {
 
         // 1. 创建经验记录
         MemberUserDO user = lockMember(userId);
+        if (automated
+                && !memberExperienceRecordService.claimExperienceEvent(
+                        userId, bizType, bizId, (int) requestedChange)) return;
         int previousExperience = currentExperience(user);
         long nextExperience = Math.max(previousExperience + requestedChange, 0L);
         if (nextExperience > Integer.MAX_VALUE) throw exception(EXPERIENCE_OUT_OF_RANGE);

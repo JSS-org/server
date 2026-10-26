@@ -28,7 +28,7 @@ def main():
         ddl.append(match.group())
     sql(f'CREATE DATABASE `{database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;')
     try:
-        sql(f'USE `{database}`;\n' + '\n'.join(ddl))
+        sql(f'USE `{database}`;\n' + '\n'.join(ddl) + '\n' + (ROOT / 'sql/jss/migration/mysql/V012__member_experience_event.sql').read_text(encoding='utf8'))
         environment = dict(os.environ,
                            JSS_TEST_MYSQL_URL=f'jdbc:mysql://127.0.0.1:{live["port"]}/{database}?serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true',
                            JSS_TEST_MYSQL_USER='root', JSS_TEST_MYSQL_PASSWORD=password)
@@ -47,11 +47,11 @@ def main():
         report = ROOT / 'yudao-module-member/target/surefire-reports/TEST-cn.iocoder.yudao.module.member.integration.JssMemberLevelMySqlServiceIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        assert suite.attrib['tests'] == '15' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
+        assert suite.attrib['tests'] == '22' and all(suite.attrib[key] == '0' for key in ['errors', 'failures', 'skipped']), suite.attrib
         shutil.copyfile(report, RUNTIME / 'member-level-service-test.xml')
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])
-        print(f'15 production member level tests passed on MySQL {live["version"]}:{live["port"]} in {suite.attrib["time"]} seconds')
+        print(f'22 production member level tests passed on MySQL {live["version"]}:{live["port"]} in {suite.attrib["time"]} seconds')
     finally:
         status()
         sql(f'DROP DATABASE `{database}`;')

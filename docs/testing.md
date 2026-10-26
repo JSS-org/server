@@ -1848,3 +1848,21 @@ python script/jss/verify_dict_services.py
 常规专项43项中36项H2执行通过（类型16、数据20），七项实际MySQL条件跳过，零失败/错误；服务器30模块依赖与测试编译成功，`.runtime/dict-regression.log`。四个变更Java定向Spotless、Python编译和差异检查通过。没有新完整verify、并发类型删除/数据新增竞争、HTTP/RBAC/缓存或前端实际验收。
 
 Redis安装程序读取仍拒绝；真实商城/工作台需恢复后串行执行。字典仍是平台共享资源，未改变权限、表结构、共享边界或开发数据/运行服务；三端导出与其他管理模块继续待完成。
+
+## 2026-10-27 参数配置实际 MySQL 与整批删除校验
+
+新增 `script/jss/verify_config_services.py` 与 `JssConfigMySqlServiceIT`。在已确认归属的 MySQL8.4.9:13316 上创建 `jss_config_service_verify_<12位随机值>`，仅载入原框架 infra_config DDL；装配生产 ConfigServiceImpl/ConfigMapper/MapStruct转换器、租户与分页插件、Spring事务代理。没有业务替身、Redis或HTTP；一个场景直接调用生产ConfigController的按键可见性判断，不包含安全过滤器、方法鉴权或HTTP参数校验。ConfigDO原 @TenantIgnore 保持，测试明确验证平台共享。
+
+首个有效运行六项中五通过/一失败，零错误/跳过，`.runtime/config-services-before.log`。缺失编号混入批删时，既未报CONFIG_NOT_EXISTS，也已删除有效记录。现在批删先去重并检查整批存在、保留系统内置保护；使用REQUIRED事务，逻辑删除影响数不符时抛既有错误并回滚。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_config_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test '-Dtest=ConfigServiceImplTest,JssConfigMySqlServiceIT' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+最终六项实际MySQL全过、零失败/错误/跳过，13.168秒；`.runtime/config-services-after.log` 与保存的实际报告 `.runtime/config-services-after.xml`。覆盖完整CRUD/备注清空/false/0和前导零原字符串、键名改名/旧键释放、大小写不敏感唯一性、名称/键名/类型/日期分页、内置参数单/混批拒删且允许编辑并保留内置类型、跨租户共享与同键唯一、缺失批次整体拒绝、重复ID和外层回滚。直接控制器分支验证按键读取不存在返回null、可见返回原字符串、不可见拒绝，而授权管理查询仍取得值；不把直接调用记为HTTP/RBAC。内置测试行只在随机库中由Mapper置为SYSTEM，不改开发配置。
+
+脚本核验实例归属、遮盖密码、校验报告时效/六项计数及零失败/错误/跳过，并在finally删除随机schema；残留核对0。常规专项18项中12项H2执行通过、六项MySQL条件跳过，零失败/错误；服务器30模块依赖与测试编译成功，`.runtime/config-regression.log`。两个Java定向Spotless、Python编译和差异检查通过；没有新完整verify、配置并发改名或HTTP/RBAC结论。
+
+Redis安装程序本轮读取仍拒绝。参数移动UI、按键可见性的真实安全链、工作台与原生后台共享范围、统一导出和其他管理模块需独立验收；本次无权限、表/迁移、开发库、运行服务或部署变更，整合验收版本保持原值。

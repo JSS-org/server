@@ -4457,3 +4457,36 @@ Redis 程序读取仍 WinError 5，恢复后需串行执行商城/工作台真�
 ### 未做 / 后续
 
 Redis程序读取仍拒绝，真实HTTP/H5/RBAC、更多授权边界与统一导出待实际验收。移动字典页面单独提交，不把其模拟API回归算作实际业务；整合验收版本保持原值，无新全量verify、真机或发布结论，完整目标继续进行中。
+
+## [2026-10-27 01:35 ~ 01:47] 参数批删整批校验与共享配置真实数据库回归
+
+### 意图
+
+接续P5 infra参数管理，以生产DDL和服务核对全字段/共享配置契约，修复混合缺失编号时静默删除有效配置，避免移动批量操作报告部分成功为成功。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../infra/service/config/ConfigServiceImpl.java` | 修改 | 批删去重、整批存在检查、保留内置参数保护、REQUIRED事务和影响数核对 |
+| `.../infra/integration/JssConfigMySqlServiceIT.java` | 新增 | 六项实际MySQL生产服务/Mapper/转换器/事务与直接控制器可见性分支回归 |
+| `script/jss/verify_config_services.py` | 新增 | 原始DDL、随机schema、实例归属/清理、报告时效计数和凭证遮盖 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 复现、验证边界与接续 |
+
+### 结构关系
+
+保持 ConfigController → ConfigServiceImpl → ConfigMapper/ConfigConvert；批删增加事务和完整目标校验，仍使用已有CONFIG_NOT_EXISTS及内置配置不可删除错误。ConfigDO原@TenantIgnore共享范围不变，系统类型由服务创建时固定CUSTOM、编辑不接收类型字段。无新表、迁移、对外接口或依赖。
+
+### 验证证据
+
+修复前六项中五通过/一失败、零错误/跳过：缺失批次未报错且已有配置已消失，`.runtime/config-services-before.log`。修复后 `python script/jss/verify_config_services.py` 六项实际MySQL全过、零失败/错误/跳过，13.168秒，保存实际XML及覆盖见testing；随机schema残留0。控制器可见性场景直接调用生产方法，没有HTTP安全链/方法鉴权，不算真实API验收。
+
+专项18项中12项H2执行通过、六项MySQL条件跳过，零失败/错误；服务器30模块依赖与测试编译成功，`.runtime/config-regression.log`。两个变更Java定向Spotless、Python编译与差异检查通过，未将条件跳过登记为实际通过。
+
+### 影响面 / 风险
+
+含缺失编号的批次现在整体返回既有错误；重复ID按一个目标处理，内置配置仍拒绝删除，影响数变化会回滚整批，正常删除继续服从调用方外层事务。参数仍为平台共享配置，可见性仅控制按键读取的业务分支，不阻止有查询权限的管理读取；界面说明由前端独立提交。没有开发数据或运行服务改动，未验证配置并发改名/写入竞争。
+
+### 未做 / 后续
+
+Redis程序仍无法读取，商城/工作台真实HTTP/H5需恢复后串行运行，包括参数CRUD、按键可见性、内置保护和无权限拒绝。统一导出、其他管理模块、真机/原生包/发布未完成，无新全量verify，整合验收版本不前移。

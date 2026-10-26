@@ -3,6 +3,7 @@ package cn.iocoder.yudao.module.infra.service.config;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.infra.controller.admin.config.vo.ConfigPageReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.config.vo.ConfigSaveReqVO;
@@ -18,6 +19,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -69,9 +71,17 @@ public class ConfigServiceImpl implements ConfigService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteConfigList(List<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<Long> targets = ids.stream().distinct().toList();
         // 校验是否有内置配置
-        List<ConfigDO> configs = configMapper.selectByIds(ids);
+        List<ConfigDO> configs = configMapper.selectByIds(targets);
+        if (configs.size() != targets.size()) {
+            throw exception(CONFIG_NOT_EXISTS);
+        }
         configs.forEach(
                 config -> {
                     if (ConfigTypeEnum.SYSTEM.getType().equals(config.getType())) {
@@ -80,7 +90,9 @@ public class ConfigServiceImpl implements ConfigService {
                 });
 
         // 批量删除
-        configMapper.deleteByIds(ids);
+        if (configMapper.deleteByIds(targets) != targets.size()) {
+            throw exception(CONFIG_NOT_EXISTS);
+        }
     }
 
     @Override

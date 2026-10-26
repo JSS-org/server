@@ -22,6 +22,19 @@ public interface CartMapper extends BaseMapperX<CartDO> {
         return selectOne(CartDO::getUserId, userId, CartDO::getSkuId, skuId);
     }
 
+    default CartDO selectByUserIdAndSkuIdForUpdate(Long userId, Long skuId) {
+        return selectOneForUpdate(CartDO::getUserId, userId, CartDO::getSkuId, skuId);
+    }
+
+    default int updateCountIfUnchanged(CartDO previous, int count) {
+        return update(
+                new CartDO().setCount(count).setSelected(true),
+                new LambdaQueryWrapper<CartDO>()
+                        .eq(CartDO::getId, previous.getId())
+                        .eq(CartDO::getUserId, previous.getUserId())
+                        .eq(CartDO::getCount, previous.getCount()));
+    }
+
     default Integer selectSumByUserId(Long userId) {
         // SQL sum 查询
         List<Map<String, Object>> result =

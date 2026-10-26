@@ -20,6 +20,7 @@ import cn.iocoder.yudao.module.trade.dal.mysql.cart.CartMapper;
 
 import jakarta.annotation.Resource;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -46,29 +47,34 @@ public class CartServiceImpl implements CartService {
     public Long addCart(Long userId, AppCartAddReqVO addReqVO) {
         // 查询 TradeCartDO
         CartDO cart = cartMapper.selectByUserIdAndSkuId(userId, addReqVO.getSkuId());
-        // 校验 SKU：已存在时，按合并后的数量校验库存 https://github.com/YunaiV/ruoyi-vue-pro/issues/1267
-        long mergedCount =
-                cart != null ? (long) cart.getCount() + addReqVO.getCount() : addReqVO.getCount();
-        ProductSkuRespDTO sku = checkProductSku(addReqVO.getSkuId(), mergedCount);
-        int count = Math.toIntExact(mergedCount);
-
-        // 情况一：存在，则进行数量更新
-        if (cart != null) {
-            cartMapper.updateById(
-                    new CartDO().setId(cart.getId()).setSelected(true).setCount(count));
-            return cart.getId();
-            // 情况二：不存在，则进行插入
-        } else {
-            cart =
-                    new CartDO()
-                            .setUserId(userId)
-                            .setSelected(true)
-                            .setSpuId(sku.getSpuId())
-                            .setSkuId(sku.getId())
-                            .setCount(count);
-            cartMapper.insert(cart);
+        while (true) {
+            // 每次竞争后重新校验合并数量，不能用旧数量覆盖其他已成功的加购。
+            long mergedCount =
+                    cart != null
+                            ? (long) cart.getCount() + addReqVO.getCount()
+                            : addReqVO.getCount();
+            ProductSkuRespDTO sku = checkProductSku(addReqVO.getSkuId(), mergedCount);
+            int count = Math.toIntExact(mergedCount);
+            if (cart != null) {
+                if (cartMapper.updateCountIfUnchanged(cart, count) > 0) return cart.getId();
+            } else {
+                CartDO created =
+                        new CartDO()
+                                .setUserId(userId)
+                                .setSelected(true)
+                                .setSpuId(sku.getSpuId())
+                                .setSkuId(sku.getId())
+                                .setCount(count);
+                try {
+                    cartMapper.insert(created);
+                    return created.getId();
+                } catch (DuplicateKeyException ex) {
+                    // 同一会员首次并发加购，由现有唯一约束选出一行，再合并本次增量。
+                }
+            }
+            // 当前读也兼容 resetCart 的外层事务，避免重复读快照反复读到竞争前的数量。
+            cart = cartMapper.selectByUserIdAndSkuIdForUpdate(userId, addReqVO.getSkuId());
         }
-        return cart.getId();
     }
 
     @Override

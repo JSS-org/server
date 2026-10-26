@@ -36,6 +36,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -549,6 +552,72 @@ class JssMallHttpIT {
                         1));
         ok(api("DELETE", "/app-api/trade/cart/delete?ids=" + cart, null, buyer, 1));
         assertEquals(0, number(ok(api("GET", "/app-api/trade/cart/get-count", null, buyer, 1))));
+        assertEquals(8, stock());
+    }
+
+    private List<Map<String, Object>> parallelCartAdds(int requests) throws Exception {
+        var ready = new CountDownLatch(requests);
+        var start = new CountDownLatch(1);
+        var pool = Executors.newFixedThreadPool(requests);
+        List<Future<Map<String, Object>>> futures = new ArrayList<>();
+        try {
+            for (int i = 0; i < requests; i++) {
+                futures.add(
+                        pool.submit(
+                                () -> {
+                                    ready.countDown();
+                                    assertTrue(start.await(10, TimeUnit.SECONDS));
+                                    return api(
+                                            "POST",
+                                            "/app-api/trade/cart/add",
+                                            Map.of("skuId", sku, "count", 1),
+                                            buyer,
+                                            1);
+                                }));
+            }
+            assertTrue(ready.await(10, TimeUnit.SECONDS));
+            start.countDown();
+            List<Map<String, Object>> responses = new ArrayList<>();
+            for (var future : futures) responses.add(future.get(20, TimeUnit.SECONDS));
+            return responses;
+        } finally {
+            start.countDown();
+            pool.shutdownNow();
+            assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void concurrentCartAddsPreserveEveryAcceptedIncrementAndStockLimit() throws Exception {
+        long cart = addCart(buyer, 1);
+        for (var response : parallelCartAdds(6)) assertEquals(cart, number(ok(response)));
+        var items = list(get("/app-api/trade/cart/list", buyer).get("validList"));
+        assertEquals(1, items.size());
+        assertEquals(
+                7, number(items.get(0).get("count")), "Concurrent accepted increments were lost");
+
+        var responses = parallelCartAdds(6);
+        assertEquals(
+                1,
+                responses.stream().filter(response -> number(response.get("code")) == 0).count());
+        for (var response : responses) {
+            if (number(response.get("code")) == 0) assertEquals(cart, number(ok(response)));
+            else rejected(response);
+        }
+        assertEquals(
+                8,
+                number(
+                        list(get("/app-api/trade/cart/list", buyer).get("validList"))
+                                .get(0)
+                                .get("count")));
+        ok(api("DELETE", "/app-api/trade/cart/delete?ids=" + cart, null, buyer, 1));
+
+        responses = parallelCartAdds(6);
+        long created = number(ok(responses.get(0)));
+        for (var response : responses) assertEquals(created, number(ok(response)));
+        items = list(get("/app-api/trade/cart/list", buyer).get("validList"));
+        assertEquals(1, items.size());
+        assertEquals(6, number(items.get(0).get("count")));
         assertEquals(8, stock());
     }
 

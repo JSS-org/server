@@ -1668,3 +1668,15 @@ python script/jss/verify_workspace_http.py --suite mall --browser
 随后串行执行 `python script/jss/verify_workspace_http.py --browser` 退出 0，JUnit 十项全过（九项真实 HTTP + 一项浏览器启动），六项真实 H5 全过，38.8 秒；日志 `.runtime/mall-wallet-workspace-final.log`，子日志 `.runtime/jss-http/jss_http_verify_8a0c0ba01003/authenticated-browser.log`。实际绑定审核/撤销、按钮/父菜单/入口撤权、租户停用/过期恢复、换号、角色刷新及完整用户 CRUD/角色外租户目标/写权限拒绝继续通过，覆盖公共导航修复后的管理端回归。
 
 两个随机库 `jss_http_verify_590e1d94a19b`、`jss_http_verify_8a0c0ba01003` 均已只读确认删除，归属记录中的 Redis 进程已停止；工具核对本轮报告及服务日志无测试密码。前端已提交 `f756c32`，整合版本指向上述后端代码且仍进行中。微信/支付宝及充值渠道、物流平台、并发竞争、营销、统计 HTTP/任务、其他管理页面和真机发布继续未完成。
+
+## 2026-10-26 真实并发购物车数量保护
+
+新增 `concurrentCartAddsPreserveEveryAcceptedIncrementAndStockLimit`，用六个线程在起跑屏障后实际发送 HTTP。首次运行八项 HTTP 中一项失败、其余七项通过：已有 1 件，六次并发加 1 均返回同一购物项成功，但最终数量为 2，预期 7；`.runtime/mall-cart-concurrent-before.log`。这不是单元替身复现。
+
+`CartMapper.updateCountIfUnchanged` 按购物项、会员及旧数量条件更新；`CartServiceImpl.addCart` 冲突后当前读、重新校验商品和合并数量再更新。首次并发插入遇到已有唯一约束冲突后也读取实际购物项合并，不直接返回 500；保留原唯一约束与 long 数量校验。当前读避免在 resetCart 的外层重复读事务中持续读取旧快照，未为普通加购新增长事务或锁服务。
+
+交易模块专项命令与上一节一致，最终日志 `.runtime/mall-cart-concurrent-unit-final.log`：74 项，58 执行通过、16 既有条件跳过、0 失败/错误，购物车 12 项全过。首次新增重试单测遇到 Mockito 严格参数桩错误，已分别显式模拟第一次竞争失败及第二次成功；该次失败不计通过。变更 Java 的三组定向 `spotless:check`、Python 编译和差异检查通过。
+
+`python script/jss/verify_workspace_http.py --suite mall --browser` 最终退出 0，预期改为九项 JUnit（八项真实 HTTP + 一项浏览器启动），全过且无跳过；两项真实 H5 全过，23.1 秒。日志 `.runtime/mall-cart-concurrent-final.log`，子日志 `.runtime/jss-mall-http/jss_http_verify_0c629312f09c/mall-browser.log`。新真实请求核对三阶段：已有项 1 + 六次并发 = 7；余量 1 时六请求恰好一成功、五受控库存拒绝，最终 8；删除后六次首次并发加购全部成功且返回同一行，最终 6。商品库存始终 8，加购不预扣库存。
+
+复现/修复两轮随机库均已只读确认删除，专用 Redis 已停止，报告时效及日志密码扫描通过。最近完整 30 模块 verify 仍属于上一节 `1fdf0a0f82`，本次为交易专项及真实联合回归，未重新替换独立 jar/开发服务。订单抢库存、支付并发及其余完整整合范围继续验证。

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.util.List;
 
@@ -115,6 +116,7 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
                         .setCount(3)
                         .setSelected(false);
         when(cartMapper.selectByUserIdAndSkuId(eq(userId), eq(10L))).thenReturn(dbCart);
+        when(cartMapper.updateCountIfUnchanged(dbCart, 5)).thenReturn(1);
         // mock 方法
         when(productSkuApi.getSku(eq(10L)))
                 .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(10));
@@ -123,12 +125,7 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
         Long cartId = cartService.addCart(userId, reqVO);
         // 断言
         assertEquals(100L, cartId);
-        ArgumentCaptor<CartDO> cartCaptor = ArgumentCaptor.forClass(CartDO.class);
-        verify(cartMapper).updateById(cartCaptor.capture());
-        CartDO cart = cartCaptor.getValue();
-        assertEquals(100L, cart.getId());
-        assertEquals(5, cart.getCount());
-        assertTrue(cart.getSelected());
+        verify(cartMapper).updateCountIfUnchanged(dbCart, 5);
         verify(cartMapper, never()).insert(any(CartDO.class));
     }
 
@@ -147,6 +144,7 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
                         .setCount(6)
                         .setSelected(true);
         when(cartMapper.selectByUserIdAndSkuId(eq(userId), eq(10L))).thenReturn(dbCart);
+        when(cartMapper.updateCountIfUnchanged(dbCart, 10)).thenReturn(1);
         // mock 方法
         when(productSkuApi.getSku(eq(10L)))
                 .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(10));
@@ -155,9 +153,7 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
         Long cartId = cartService.addCart(userId, reqVO);
         // 断言
         assertEquals(100L, cartId);
-        ArgumentCaptor<CartDO> cartCaptor = ArgumentCaptor.forClass(CartDO.class);
-        verify(cartMapper).updateById(cartCaptor.capture());
-        assertEquals(10, cartCaptor.getValue().getCount());
+        verify(cartMapper).updateCountIfUnchanged(dbCart, 10);
     }
 
     @Test
@@ -228,6 +224,36 @@ public class CartServiceImplTest extends BaseMockitoUnitTest {
         verify(cartMapper, never()).updateById(any(CartDO.class));
         verify(cartMapper, never()).insert(any(CartDO.class));
         assertEquals(3, existing.getCount());
+    }
+
+    @Test
+    void testAddCart_retriesAfterConcurrentIncrement() {
+        var previous = new CartDO().setId(100L).setUserId(1L).setSkuId(10L).setCount(3);
+        var current = new CartDO().setId(100L).setUserId(1L).setSkuId(10L).setCount(5);
+        when(cartMapper.selectByUserIdAndSkuId(1L, 10L)).thenReturn(previous);
+        when(cartMapper.selectByUserIdAndSkuIdForUpdate(1L, 10L)).thenReturn(current);
+        when(productSkuApi.getSku(10L))
+                .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(10));
+        doReturn(0).when(cartMapper).updateCountIfUnchanged(previous, 5);
+        doReturn(1).when(cartMapper).updateCountIfUnchanged(current, 7);
+        assertEquals(
+                100L, cartService.addCart(1L, new AppCartAddReqVO().setSkuId(10L).setCount(2)));
+        verify(cartMapper).updateCountIfUnchanged(previous, 5);
+        verify(cartMapper).updateCountIfUnchanged(current, 7);
+        verify(cartMapper, never()).updateById(any(CartDO.class));
+    }
+
+    @Test
+    void testAddCart_rechecksStockAfterConcurrentInsert() {
+        when(productSkuApi.getSku(10L))
+                .thenReturn(new ProductSkuRespDTO().setId(10L).setSpuId(20L).setStock(8));
+        when(cartMapper.insert(any(CartDO.class))).thenThrow(new DuplicateKeyException("race"));
+        when(cartMapper.selectByUserIdAndSkuIdForUpdate(1L, 10L))
+                .thenReturn(new CartDO().setId(100L).setUserId(1L).setSkuId(10L).setCount(7));
+        assertServiceException(
+                () -> cartService.addCart(1L, new AppCartAddReqVO().setSkuId(10L).setCount(2)),
+                SKU_STOCK_NOT_ENOUGH);
+        verify(cartMapper, never()).updateCountIfUnchanged(any(), anyInt());
     }
 
     @Test

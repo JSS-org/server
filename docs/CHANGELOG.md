@@ -4090,3 +4090,38 @@ H5 尚只有未支付取消，接下来补会员 UI 钱包付款及售后退款�
 ### 未做 / 后续
 
 继续并发竞争、营销、统计 HTTP/任务和其余管理迁移；第三方收款/充值、物流平台与真机发布未验收。支付结果上游 GIF 资源仍缺失，前端已登记静态资源待补；完整整合目标保持进行中。
+
+## [2026-10-26 21:03 ~ 21:14] 修复真实并发加购丢失数量
+
+### 意图
+
+继续 P4/A15 的并发边界验收，防止多个已成功的加购请求互相覆盖数量。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../trade/dal/mysql/cart/CartMapper.java` | 修改 | 以旧数量和会员为条件更新；竞争后提供当前读 |
+| `.../trade/service/cart/CartServiceImpl.java` | 修改 | 更新/首次插入竞争后重读、重新校验及重试，不丢弃已接受增量 |
+| `.../trade/service/cart/CartServiceImplTest.java` | 修改 | 适配条件更新并增加竞争重试及插入竞争后库存重验 |
+| `yudao-server/src/test/java/cn/iocoder/yudao/server/integration/JssMallHttpIT.java` | 修改 | 新增六线程屏障触发的已有项、库存边界及首次加购三阶段真实 HTTP |
+| `script/jss/verify_workspace_http.py` | 修改 | 商城预期为八项 HTTP，带浏览器共九项 JUnit |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录真实复现、修复及验证边界 |
+
+### 结构关系
+
+沿用购物车 Service → Mapper → MySQL 调用和租户过滤。数据库按购物项/会员/旧数量条件更新，冲突后重新校验；首次插入继续由已有租户/会员/有效 SKU 唯一键约束选出一行。重试当前读避免外层 resetCart 的重复读快照停留在旧数量，没有新增锁服务、长事务、依赖或迁移。
+
+### 验证证据
+
+首轮八项实际 HTTP 中一失败：六次加购均成功，数量却从 1 变为 2，预期 7；`.runtime/mall-cart-concurrent-before.log`。修复后交易模块 74 项中 58 执行通过、16 既有条件跳过，0 失败/错误；购物车 12 项全过，`.runtime/mall-cart-concurrent-unit-final.log`。首次单测有严格参数桩错误，已明确模拟两次不同参数调用后复测成功。
+
+`python script/jss/verify_workspace_http.py --suite mall --browser` 九项 JUnit 全过、无失败/错误/跳过（八项真实 HTTP + 一项浏览器启动），两项实际 H5 全过（23.1 秒），`.runtime/mall-cart-concurrent-final.log`。新增场景核对 1+6=7、余量 1 时恰好一成功/五业务拒绝、空购物车六次首次加购只产生一行且数量 6，库存均仍为 8。定向 Java 格式、Python 编译、差异、报告时效及日志密码扫描通过；两轮随机库不存在，归属 Redis 进程停止。
+
+### 影响面 / 风险
+
+影响相同会员及 SKU 的并发加购。保留 long 溢出保护、商品上下架/库存校验、选中状态和已有唯一约束；竞争时会额外查询/校验。未改开发数据库或运行 jar。购物车数量不预留库存，此项不能代替实际下单抢库存验收。
+
+### 未做 / 后续
+
+最近完整 30 模块构建仍归属 `1fdf0a0f82`；本次只重跑交易专项及真实商城联合回归。继续订单库存竞争、并发支付、营销、统计、其余管理模块、第三方及真机发布，整体目标保持进行中。

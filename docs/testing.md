@@ -1581,3 +1581,11 @@ Gym 修复后的完整组合继续通过全部 1062 项 Gym 测试，随后在�
 在 `5bccd71770` 上重新执行上述完整 `jss-mall verify`，30 模块全部成功，17:58:51 结束、耗时 8:01；日志 `.runtime/main-merge-verify-final.log`。219 份本轮 Surefire XML 与 Maven 模块汇总一致：2583 项，0 失败/错误，154 项既有或条件跳过，即 2429 项执行通过。跳过的 Mapper/HTTP 集成用例及第三方测试不计作真实验收。独立产物 `yudao-server-main-merge.jar` 的 SHA-256 为 `b4fe34ea4308a84eae56be2c9d7a398fbbbee480dbca7aaa9f9a464f4c7c81c2`；没有替换开发运行 jar。
 
 随后真实联合工具遇到 Gym V005 的 `CREATE TABLE IF NOT EXISTS member_user` 与 JSS 初始化已有业务表守卫冲突。修复只调整 `verify_workspace_http.py`：框架基座 → JSS 显式 init → Gym baseline/migrate → Quartz。JSS 先建立完整会员表，Gym 的条件建表保留该定义；`database.py` 的拒绝自动接管业务表规则与所有历史迁移均未修改。新随机 schema 的实际历史已核对 JSS 10 条、Gym 36 条（各含 baseline 0），完整应用及浏览器验收继续执行中，尚未登记 HTTP/H5 通过。
+
+## 2026-10-26 真实用户管理复测：角色分配目标租户校验
+
+首次联合运行的 9 项 HTTP 全部通过；H5 新增跨租户检查复现：持有合法工作台写权限时，为另一租户的用户 `33001` 分配角色返回业务码 0，预期为用户不存在。该请求来自真实浏览器登录取得的 `jssw_` 凭证，未拦截 API；证据为 `.runtime/main-merge-http-before-role-boundary.log` 及对应随机运行目录中的脱敏浏览器日志。
+
+`PermissionController.assignUserRole` 现先通过当前租户作用域查询目标用户及全部角色 ID，缺失/外租户目标分别返回 `USER_NOT_EXISTS`、`ROLE_NOT_EXISTS`，再调用原权限服务。保留原权限码检查，已有停用角色允许保留或移除，其本身仍不贡献有效权限；合法原生后台分配路径保留。
+
+复测 9 项 HTTP 仍全部通过，H5 中普通会员/员工、动态角色菜单、完整用户 CRUD 及写权限拒绝、租户停用/过期恢复 4 项通过；用户管理场景明确验证两个外租户目标被拒绝，合法角色分配仍成功。剩余菜单生命周期场景发现异步导航竞争，由前端另行修复，因此 JUnit 汇总为 10 项中 1 项浏览器启动失败，**不能登记联合验收通过**。日志保存在 `.runtime/main-merge-http-role-fixed-navigation-pending.log`。控制器格式检查通过；修改后的完整组合仍需重新执行。

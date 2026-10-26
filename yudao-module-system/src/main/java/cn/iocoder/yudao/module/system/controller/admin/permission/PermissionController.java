@@ -1,14 +1,21 @@
 package cn.iocoder.yudao.module.system.controller.admin.permission;
 
+import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.ROLE_NOT_EXISTS;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.USER_NOT_EXISTS;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleDataScopeReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleMenuReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.permission.vo.permission.PermissionAssignUserRoleReqVO;
+import cn.iocoder.yudao.module.system.dal.dataobject.permission.RoleDO;
 import cn.iocoder.yudao.module.system.service.permission.PermissionService;
+import cn.iocoder.yudao.module.system.service.permission.RoleService;
 import cn.iocoder.yudao.module.system.service.tenant.TenantService;
+import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,6 +37,8 @@ public class PermissionController {
 
     @Resource private PermissionService permissionService;
     @Resource private TenantService tenantService;
+    @Resource private AdminUserService userService;
+    @Resource private RoleService roleService;
 
     @Operation(summary = "获得角色拥有的菜单编号")
     @Parameter(name = "roleId", description = "角色编号", required = true)
@@ -77,7 +86,13 @@ public class PermissionController {
     @PreAuthorize("@ss.hasPermission('system:permission:assign-user-role')")
     public CommonResult<Boolean> assignUserRole(
             @Validated @RequestBody PermissionAssignUserRoleReqVO reqVO) {
-        permissionService.assignUserRole(reqVO.getUserId(), reqVO.getRoleIds());
+        // Both reads are tenant-scoped. A valid grant permission must not create foreign links.
+        if (userService.getUser(reqVO.getUserId()) == null) throw exception(USER_NOT_EXISTS);
+        Set<Long> roleIds = CollUtil.emptyIfNull(reqVO.getRoleIds());
+        if (!convertSet(roleService.getRoleList(roleIds), RoleDO::getId).containsAll(roleIds))
+            throw exception(ROLE_NOT_EXISTS);
+        // Existing disabled roles may be retained or removed; they still grant no permissions.
+        permissionService.assignUserRole(reqVO.getUserId(), roleIds);
         return success(true);
     }
 }

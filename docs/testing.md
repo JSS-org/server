@@ -1777,3 +1777,23 @@ python script/jss/verify_coupon_services.py
 ```
 
 修复后 24 项全过、零失败/错误/跳过，14.26 秒，`.runtime/departments-clear-leader-after.log`；该套件使用 H2 和生产 Mapper/Service，权限服务为替身，不能计为真实 MySQL/HTTP/RBAC 验收。两个 Java 定向 Spotless 检查及差异检查通过。部门移动页面/真实授权链仍需单独验收；本机 Redis 程序读取 `WinError 5` 仍阻塞真实 HTTP/H5，整合验收版本未变。
+
+## 2026-10-27 岗位实际 MySQL 与整批删除原子性
+
+新增 `script/jss/verify_post_services.py` 和 `JssPostMySqlServiceIT`。只使用已归属的 13316 MySQL，在 `jss_post_service_verify_<12 位随机值>` 中载入原框架 SQL 的 system_post DDL；装配生产 PostServiceImpl/PostMapper、SQL 注入器、租户/分页插件和 Spring 事务代理，没有 Mapper/Service/API 替身。脚本遮盖数据库密码后写忽略日志，检查报告时效/四项计数及零失败/错误/跳过，并在 finally 核验归属和删除随机 schema。
+
+首轮四项中三通过、一失败；补充同时核对异常和原行后再次复现：混合本租户/外租户 ID 的批量删除既没有业务拒绝，也已删除本租户行。日志 `.runtime/posts-services-before-atomic.log`，失败包含 `Mixed-tenant batch deleted an owned post`。原 `deletePostList` 仅调用带租户条件的 deleteByIds，忽略不可见行而产生部分成功。
+
+现在先去重并按当前租户查询整批，存在不可见/缺失目标则返回已有 POST_NOT_FOUND；在 REQUIRED 事务内删除并核对实际删除数，不匹配时整批回滚。重复 ID 按一个目标处理；合法删除仍随调用方外层事务回滚。没有迁移或新权限路径。
+
+```powershell
+$env:JSS_MAVEN_COMMAND='D:/Project/JSS/JSS-server/.runtime/maven-integration.cmd'
+python script/jss/verify_post_services.py
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-server -am test '-Dtest=PostServiceImplTest,DeptServiceImplTest,JssPostMySqlServiceIT' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+最终四项实际 MySQL Service 测试全过，零失败/错误/跳过，13.23 秒；`.runtime/posts-services-after.log`、保存的实际报告 `.runtime/posts-services-after.xml`。覆盖实际 CRUD/备注清空、分页名称/编码/状态筛选、停用岗位校验、同租户顺序重复名/编码拒绝、两个租户同名编码可并存、外租户读/改/单删拒绝、混合批次/缺失批次整体拒绝、重复 ID 合法批次、成功删除随外层回滚。随机 schema 无残留。
+
+岗位/部门专项共 41 项中 37 项 H2 执行通过、四项实际 MySQL 用例条件跳过，零失败/错误；30 模块依赖与服务器测试编译成功，`.runtime/posts-regression.log`。实际 MySQL 结果以独立脚本为准，未将常规专项的四项跳过计为通过；两个 Java 定向 Spotless、Python 编译与差异检查通过。这不是全量 verify、HTTP 安全链或实际前端验收。
+
+Redis 已安装程序读取本轮仍 WinError 5，最新商城/工作台真实 HTTP/H5 回归尚未执行。岗位移动页面与绑定/授权/用户岗位关联需独立实际验收；整合版本保持 a0a583c44a，开发库、运行服务及发布未变。

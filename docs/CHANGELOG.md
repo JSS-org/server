@@ -4326,3 +4326,36 @@ App 模板详情/列表中不可领取时 `canTake` 为 false，已有个人券�
 ### 未做 / 后续
 
 新增移动部门页面和真实部门 HTTP/H5 待独立验证。Redis 程序读取仍为 WinError 5，没有新真实验收或全量 verify，整合验收版本保持 a0a583c44a。其他完整目标继续进行中。
+
+## [2026-10-27 00:00 ~ 00:04] 岗位批量删除拒绝不可见目标并保持整批原子性
+
+### 意图
+
+继续 P5 岗位管理，验证真实租户与数据库行为，修复批量请求混入外租户/缺失岗位时静默部分删除的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../system/service/dept/PostServiceImpl.java` | 修改 | 批删去重、整批可见性校验、事务内删除及数量核对 |
+| `.../system/integration/JssPostMySqlServiceIT.java` | 新增 | 四项实际 MySQL Service、租户/分页 SQL 和外层事务回归 |
+| `script/jss/verify_post_services.py` | 新增 | 只在已归属随机 schema 载入原 DDL，遮盖凭证、核对报告并清理 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录实际复现、结果与验收边界 |
+
+### 结构关系
+
+沿用 PostController → PostServiceImpl → 生产 PostMapper/租户插件 → MySQL；批量删除增加 REQUIRED 事务，保留调用方回滚原子性。独立测试直接装配生产 Service/Mapper、租户/分页插件与 Spring 事务，没有替身，不依赖 Redis 或 HTTP。无表/迁移/依赖/对外接口变更。
+
+### 验证证据
+
+真实 MySQL 修复前四项中三通过/一失败，复现异常缺失与本租户行已删除两个断言失败；修复后 `python script/jss/verify_post_services.py` 四项全过、零失败/错误/跳过，13.23 秒。日志 `.runtime/posts-services-before-atomic.log`、`posts-services-after.log` 及实际 XML 见 testing。验证混合/缺失批次不删任何本租户行、正常/重复 ID 批次、两个租户 CRUD/分页/唯一性和停用校验、外层业务回滚；随机 schema 无残留。
+
+专项命令见 testing：41 项中 37 项 H2 执行通过、四项条件跳过，零失败/错误；30 模块依赖及服务器测试编译成功，`.runtime/posts-regression.log`。两个 Java 定向 Spotless、Python 编译和差异检查通过。
+
+### 影响面 / 风险
+
+批删含外租户/缺失目标现在整体返回 POST_NOT_FOUND，原可见部分不再被删除；重复 ID 只算一个目标。没有扩宽租户/按钮权限，没有开发数据/服务或发布变更。唯一性用例验证顺序操作，未作名称/编码并发竞争或压力验收。
+
+### 未做 / 后续
+
+Redis 程序读取仍 WinError 5；最新实际 HTTP/H5、岗位与用户关联及更多数据范围仍待实跑。四项 Service 不替代完整授权链或前端验收；无新完整 verify/真机/发布结果，整合验收版本不前移，完整目标继续进行中。

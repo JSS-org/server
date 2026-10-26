@@ -16,6 +16,7 @@ import cn.iocoder.yudao.module.system.dal.mysql.dept.PostMapper;
 import jakarta.annotation.Resource;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
@@ -65,8 +66,20 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deletePostList(List<Long> ids) {
-        postMapper.deleteByIds(ids);
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        List<Long> postIds = ids.stream().distinct().toList();
+        // 按当前租户校验整批，避免删除可见部分后把外租户/缺失目标静默忽略。
+        if (postMapper.selectByIds(postIds).size() != postIds.size()) {
+            throw exception(POST_NOT_FOUND);
+        }
+        if (postMapper.deleteByIds(postIds) != postIds.size()) {
+            // 校验后目标发生变化时，同一事务回滚已删除的部分。
+            throw exception(POST_NOT_FOUND);
+        }
     }
 
     private void validatePostForCreateOrUpdate(Long id, String name, String code) {

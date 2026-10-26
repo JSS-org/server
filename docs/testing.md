@@ -1765,3 +1765,15 @@ python script/jss/verify_coupon_services.py
 营销与交易专项 102 项中 21 执行通过、81 既有/条件跳过、零失败/错误，30 模块依赖与服务器测试编译成功，`.runtime/mall-coupon-gifts-regression.log`。本轮十项真实测试在常规专项中因没有隔离数据库环境全部跳过；订单更新三项既有测试也跳过，不能作为真实交易通过证据。两个 Java 定向 Spotless、Python 编译及差异检查通过。本次未运行全量 verify。
 
 实际生产注册链/订单赠券 HTTP 及新商城/工作台回归仍待执行。Redis 已安装程序读取权限本轮仍为 `WinError 5`，没有启动新服务或修改开发库。兄弟前端已补第三项实际 H5 用例（领券、选券、取消返还、实付支付退款），仅类型与发现检查通过，尚未实跑；商城预期仍为十三项 HTTP + 一项浏览器启动，实际 H5 由两项增至三项。整合验收版本仍为 `a0a583c44a`。
+
+## 2026-10-26 部门负责人可清空
+
+迁移部门表单时新增回归 `DeptServiceImplTest.testUpdateDeptClearLeaderAndContacts`，在数据库预置负责人 123、电话和邮箱后，以完整更新表单提交 `leaderUserId=null`、两个联系字段空字符串。修复前 24 项中 23 通过、一失败（负责人仍为 123），零错误/跳过；`.runtime/departments-clear-leader-before.log`。
+
+`DeptDO.leaderUserId` 增加 `FieldStrategy.ALWAYS`，完整部门更新允许将负责人列写为 NULL。当前生产 `deptMapper.updateById` 调用仅位于 `DeptServiceImpl.updateDept`；其表单必须携带要保留的负责人，接口不作为局部 PATCH 使用。电话/邮箱沿用空字符串清空，不改变租户/数据范围或权限检查，无迁移。
+
+```powershell
+.runtime/maven-integration.cmd -B -ntp -Pjss-mall -pl yudao-module-system -am test '-Dtest=DeptServiceImplTest' '-Dsurefire.failIfNoSpecifiedTests=false' '-Dspotless.skip=true'
+```
+
+修复后 24 项全过、零失败/错误/跳过，14.26 秒，`.runtime/departments-clear-leader-after.log`；该套件使用 H2 和生产 Mapper/Service，权限服务为替身，不能计为真实 MySQL/HTTP/RBAC 验收。两个 Java 定向 Spotless 检查及差异检查通过。部门移动页面/真实授权链仍需单独验收；本机 Redis 程序读取 `WinError 5` 仍阻塞真实 HTTP/H5，整合验收版本未变。

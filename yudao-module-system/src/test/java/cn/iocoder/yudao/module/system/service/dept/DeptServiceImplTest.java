@@ -97,6 +97,39 @@ public class DeptServiceImplTest extends BaseDbUnitTest {
     }
 
     @Test
+    public void testUpdateDeptClearLeaderAndContacts() {
+        DeptDO dept =
+                randomPojo(
+                        DeptDO.class,
+                        o -> {
+                            o.setParentId(DeptDO.PARENT_ID_ROOT);
+                            o.setLeaderUserId(123L);
+                            o.setPhone("13800000000");
+                            o.setEmail("before@example.com");
+                            o.setStatus(CommonStatusEnum.ENABLE.getStatus());
+                        });
+        deptMapper.insert(dept);
+        DeptSaveReqVO req =
+                new DeptSaveReqVO()
+                        .setId(dept.getId())
+                        .setParentId(DeptDO.PARENT_ID_ROOT)
+                        .setName(dept.getName())
+                        .setSort(dept.getSort())
+                        .setStatus(dept.getStatus())
+                        .setLeaderUserId(null)
+                        .setPhone("")
+                        .setEmail("");
+
+        deptService.updateDept(req);
+
+        DeptDO updated = deptMapper.selectById(dept.getId());
+        assertNull(updated.getLeaderUserId());
+        assertEquals("", updated.getPhone());
+        assertEquals("", updated.getEmail());
+        assertEquals(dept.getName(), updated.getName());
+    }
+
+    @Test
     public void testDeleteDept_success() {
         // mock 数据
         DeptDO dbDeptDO = randomPojo(DeptDO.class);

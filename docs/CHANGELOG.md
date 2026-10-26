@@ -4296,3 +4296,33 @@ App 模板详情/列表中不可领取时 `canTake` 为 false，已有个人券�
 ### 未做 / 后续
 
 生产注册完整链和实际订单赠券 HTTP 尚未执行，Redis 程序读取仍为 `WinError 5`。前端第三项优惠券实际 H5 用例仅类型/发现检查通过；商城十三项 HTTP/三项 H5、工作台回归及完整 verify 仍待执行，整合验收版本不前移。其他营销、统计、管理迁移、外部服务和真机发布范围继续保留。
+
+## [2026-10-26 23:25 ~ 23:33] 允许部门完整表单清空负责人
+
+### 意图
+
+管理端部门迁移时核对可选负责人字段，修复表单传 null 后旧负责人仍保留的问题。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `.../system/dal/dataobject/dept/DeptDO.java` | 修改 | 负责人更新策略允许写入 SQL NULL |
+| `.../system/service/dept/DeptServiceImplTest.java` | 修改 | 预置负责人和联系方式后清空，核对名称等其他字段保留 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 修改 | 记录失败复现、H2 证据及真实验收边界 |
+
+### 结构关系
+
+沿用 DeptController 完整更新 → DeptServiceImpl → DeptMapper。只有负责人字段的更新策略改变；当前生产 updateById 调用仅在完整表单更新处。没有新 API、表、迁移、依赖或权限路径。
+
+### 验证证据
+
+命令见 testing。修复前 24 项中 23 通过/一失败（期望 null 实际 123），修复后 24 项全过，零失败/错误/跳过，14.26 秒。日志 `.runtime/departments-clear-leader-before.log`、`departments-clear-leader-after.log`。生产 Service/Mapper 使用 H2，权限服务为替身，不计真实 HTTP 或 RBAC。两个 Java 定向 Spotless 和差异检查通过。
+
+### 影响面 / 风险
+
+完整更新表单的负责人为 null 时清空列，其他客户端若希望保留旧负责人须带回原值；不支持把该完整表单当作 PATCH。电话/邮箱按空字符串清空。租户、数据范围、授权链和开发库/服务未改动。
+
+### 未做 / 后续
+
+新增移动部门页面和真实部门 HTTP/H5 待独立验证。Redis 程序读取仍为 WinError 5，没有新真实验收或全量 verify，整合验收版本保持 a0a583c44a。其他完整目标继续进行中。

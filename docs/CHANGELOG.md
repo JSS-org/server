@@ -4624,3 +4624,33 @@ Redis程序仍不可读，最新商城/工作台HTTP/H5、测试探针、异步�
 ### 未做 / 后续
 
 无新全量verify、HTTP安全链、Redis、注册/短信/MQ或真实H5结果。前端两项实际H5代码仅完成类型/发现检查，工作台待实跑十八项、商城三项；Redis权限恢复后执行已有隔离HTTP/H5脚本。V011部署前置与最近整合验收版本保持不变。
+
+## [2026-10-27 04:40 ~ 04:53] 补齐会员等级配置与会员调级事务实际MySQL证据
+
+### 意图
+
+继续P5已启用member等级管理迁移，核对完整配置和会员经验/等级变更在真实数据库的业务规则及事务；不以页面夹具代替后端或文件存储验收。
+
+### 改了什么
+
+| 文件 | 类型 | 说明 |
+| --- | --- | --- |
+| `yudao-module-member/src/test/java/cn/iocoder/yudao/module/member/integration/JssMemberLevelMySqlServiceIT.java` | 新增 | 七项生产等级/记录Service、真实会员读写和租户/回滚专项 |
+| `script/jss/verify_member_level_services.py` | 新增 | V001原始四表、固定前缀随机库、报告时效/数量及finally归属清理 |
+| `docs/testing.md`、`docs/CHANGELOG.md` | 更新/追加 | 命令、证据范围和实际HTTP/经验竞争等待办 |
+
+### 结构关系
+
+生产结构未改。测试运行原等级Service调用两个记录Service及真实会员Service方法，四Mapper共用生产租户插件/数据源和事务；会员Service只手工连接其所需Mapper，不实例化未调用的短信/社交/MQ客户端，没有业务替身。SQL触发器只在归属随机库内制造最后会员写入失败，证明前面两条记录回滚。
+
+### 验证证据
+
+`python script/jss/verify_member_level_services.py` 七项全过15.559秒，零失败/错误/跳过，MySQL8.4.9:13316，随机库残留0；`.runtime/member-level-services.log`、`.runtime/jss-mysql/member-level-service-test.xml`。覆盖配置CRUD/0/图标清空/状态/排序、名称/值/经验顺序、双租户、大Long与关联删除保护、人工调级/取消/同级无重复、启用门槛经验升降/零增量，以及最后SQL失败/外层回滚。常规专项十二项H2执行通过、七项MySQL条件跳过，服务器依赖及测试编译成功，`.runtime/member-level-regression.log`。新增Java定向Spotless、Python编译、差异检查通过。
+
+### 影响面 / 风险
+
+只增验证代码和工具，不改生产Service/表/历史迁移。文件存储上传只准备实际H5，尚无新HTTP证据；测试切主限归属随机库且finally恢复，不能据此对开发或生产存储操作。经验并发/幂等、整数溢出、低于全部门槛与通知TODO仍需后续核对，不从当前七项推导完整营销/消息已验。
+
+### 未做 / 后续
+
+Redis仍不可读，无新增HTTP/H5/RBAC、原生上传、完整verify或部署。前端新增等级H5仅类型/发现通过，工作台待实跑十九项；商城十三HTTP/三H5与V011部署前置不变，最近整合验收版本不前移。

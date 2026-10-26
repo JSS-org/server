@@ -1921,3 +1921,13 @@ Redis程序仍读取拒绝，真实公告CRUD/备注/权限/租户与完整商�
 常规命令 `mvn -o -Pjss-mall -pl yudao-server -am test -Dtest=MemberTagServiceImplTest,MemberGroupServiceImplTest,JssMemberSegmentMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`（本机使用交接中的wrapper）20项中13项H2执行通过、七项MySQL条件跳过，零失败/错误；30模块服务器依赖及测试编译成功，见 `.runtime/member-segments-regression.log`。新增Java定向Spotless及Python编译通过；没有新全量verify、迁移或生产代码修改。
 
 前端新增真实H5两项准备标签/分组页面CRUD、状态/备注、精简列表、标签重名、跨租户目标、工作台访问头和每类五接口无权限拒绝，只清理自建分类/绑定/会话，不拦截API或注入浏览器Token。工作台现十四文件十八项H5，仅类型和发现检查通过；关联会员删除保护当前只获上述实际MySQL证据，真实关联UI/API与并发分配/删除仍待验。Redis仍不可读，商城十三HTTP/三H5及工作台九HTTP/十八H5待串行实跑，整合验收版本不前移。
+
+## 2026-10-27 会员等级配置、经验和调级实际MySQL专项
+
+`python script/jss/verify_member_level_services.py` 在已归属MySQL8.4.9:13316上建立 `jss_member_level_verify_<12位随机值>`，只从不可变V001提取等级、等级记录、经验记录、会员四表原始DDL。七项实际执行全过，零失败/错误/跳过，15.559秒；随机库残留0，见 `.runtime/member-level-services.log`、`.runtime/jss-mysql/member-level-service-test.xml`。脚本校验报告时间及七项数量后保存XML，日志脱敏，finally复核实例归属再删随机库。
+
+测试装配生产MemberLevel/MemberLevelRecord/MemberExperienceRecord三个Service、四Mapper、真实MemberUserServiceImpl读/更新/计数方法、租户/分页SQL和Spring事务；不使用这些方法以外的短信/社交/MQ客户端，无业务替身。七项覆盖完整配置增改/图标清空/折扣0/启停精简列表/排序筛选，名称/等级唯一和相邻经验门槛业务拒绝无写入，跨租户读写与会员目标，Long等级关联删除保护，人工调整/同级无重复/取消与两记录表落库，按最高启用经验门槛升级及降至较低等级、零增量无记录，最后会员SQL失败回滚前两条记录及外层回滚。等级变动通知仍是原TODO；这不证明真实消息、经验并发累加或幂等、溢出/低于全部门槛的业务策略。
+
+常规 `mvn -o -Pjss-mall -pl yudao-server -am test -Dtest=MemberLevelServiceImplTest,MemberLevelRecordServiceImplTest,MemberExperienceRecordServiceImplTest,JssMemberLevelMySqlServiceIT -Dsurefire.failIfNoSpecifiedTests=false -Dspotless.skip=true`（本机wrapper）实际仅现有MemberLevelServiceImplTest十二项H2执行通过、新专项七项条件跳过，零失败/错误；不存在的两记录Service单测名不代表额外测试，服务器及依赖测试编译通过，见 `.runtime/member-level-regression.log`。新增Java定向Spotless和Python编译通过，没有生产代码/迁移/全量verify变化。
+
+前端准备一个实际H5用例，通过真实会员登录/审核绑定、等级页面CRUD、数据库文件存储multipart上传及取回字节、外租户目标和每类五接口权限拒绝。仅对已守卫的隔离库临时创建DB文件配置/切主，finally清理自建文件/等级、恢复原主配置、删除自建配置、撤销自建绑定/登出；无API拦截或Token注入。工作台现十五文件十九项H5，仅类型/发现通过，Redis仍不可读，实际文件HTTP/缓存、完整HTTP/RBAC/原生上传和并发经验仍待验；整合验收版本及V011部署前置不变。

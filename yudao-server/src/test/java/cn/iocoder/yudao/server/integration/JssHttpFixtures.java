@@ -63,11 +63,12 @@ public class JssHttpFixtures
                         INSERT INTO system_tenant_package (id,name,status,menu_ids) VALUES (91001,'JSS HTTP tenant',0,'[]');
                         INSERT INTO system_tenant (id,name,contact_name,status,websites,package_id,expire_time,account_count) VALUES (91001,'JSS HTTP foreign','fixture',0,'[]',91001,'2035-01-01',1000);
                         INSERT INTO member_group (id,tenant_id,name,status) VALUES (23099,1,'Workspace named member group',0);
-                        INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23001,'HTTP staff','jss_http_staff',1,1,0,2,1),(23002,'HTTP entry only','jss_http_entry',2,1,0,2,1),(23004,'HTTP mutable role','jss_http_mutable',4,1,0,2,1);
+                        INSERT INTO system_role (id,name,code,sort,data_scope,status,type,tenant_id) VALUES (23001,'HTTP staff','jss_http_staff',1,1,0,2,1),(23002,'HTTP entry only','jss_http_entry',2,1,0,2,1),(23004,'HTTP mutable role','jss_http_mutable',4,1,0,2,1),(33001,'HTTP tenant reviewer','jss_http_foreign',1,1,0,2,91001);
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23001,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23002,id,1 FROM system_menu WHERE permission='jss:workspace:access' AND deleted=b'0';
                         INSERT INTO system_role_menu (role_id,menu_id,tenant_id) SELECT 23004,id,1 FROM system_menu WHERE permission IN ('jss:workspace:access','system:user:query') AND deleted=b'0';
                         INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (23001,23001,1),(23002,23002,1),(23004,23004,1),(23005,23001,1),(23007,23001,1),(23008,23001,1);
+                        INSERT INTO system_user_role (user_id,role_id,tenant_id) VALUES (33001,33001,91001);
                         """;
                 for (String sql : seed.split(";")) if (!sql.isBlank()) statement.executeUpdate(sql);
             }
@@ -94,6 +95,32 @@ public class JssHttpFixtures
                         statement.executeUpdate();
                     }
                 }
+            }
+            var foreignMenus = menuBranch(connection, queryMenu);
+            try (var statement = connection.createStatement();
+                    var rows =
+                            statement.executeQuery(
+                                    "SELECT id FROM system_menu WHERE permission IN ('jss:workspace:access','jss:identity:bind','jss:identity:query') AND deleted=b'0'")) {
+                while (rows.next()) foreignMenus.add(rows.getLong(1));
+            }
+            for (long menu : foreignMenus) {
+                try (var statement =
+                        connection.prepareStatement(
+                                "INSERT INTO system_role_menu (role_id,menu_id,tenant_id) VALUES (33001,?,91001)")) {
+                    statement.setLong(1, menu);
+                    statement.executeUpdate();
+                }
+            }
+            try (var statement =
+                    connection.prepareStatement(
+                            "UPDATE system_tenant_package SET menu_ids=? WHERE id=91001")) {
+                statement.setString(
+                        1,
+                        "["
+                                + String.join(
+                                        ",", foreignMenus.stream().map(String::valueOf).toList())
+                                + "]");
+                statement.executeUpdate();
             }
             try (var statement =
                     connection.prepareStatement(
@@ -127,6 +154,12 @@ public class JssHttpFixtures
                     statement.setString(4, "HTTP member " + id);
                     statement.executeUpdate();
                 }
+            }
+            try (var statement =
+                    connection.prepareStatement(
+                            "INSERT INTO member_user (id,tenant_id,mobile,password,nickname,status,register_ip) VALUES (33001,91001,'13800009101',?,'HTTP tenant member',0,'127.0.0.1')")) {
+                statement.setString(1, hash);
+                statement.executeUpdate();
             }
         } catch (Exception exception) {
             throw new IllegalStateException("Could not prepare the owned HTTP fixtures", exception);

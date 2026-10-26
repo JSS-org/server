@@ -106,7 +106,7 @@ def main():
         report = ROOT / 'yudao-server/target/surefire-reports/TEST-cn.iocoder.yudao.server.integration.JssWorkspaceHttpIT.xml'
         assert report.stat().st_mtime >= started
         suite = ET.parse(report).getroot()
-        expected = '7' if args.browser else '6'
+        expected = '8' if args.browser else '7'
         assert suite.attrib['tests'] == expected and all(suite.attrib[k] == '0' for k in ['errors', 'failures', 'skipped']), suite.attrib
         for case in suite.findall('testcase'):
             print('PASS ' + case.attrib['name'])

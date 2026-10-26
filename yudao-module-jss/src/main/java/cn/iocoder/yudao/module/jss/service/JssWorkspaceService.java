@@ -7,11 +7,11 @@ import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenCommonApi;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenExtension;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCheckRespDTO;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenRespDTO;
+import cn.iocoder.yudao.framework.common.biz.system.tenant.TenantCommonApi;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
-import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.util.TenantUtils;
 import cn.iocoder.yudao.module.jss.controller.app.vo.JssAuthContextRespVO;
 import cn.iocoder.yudao.module.jss.controller.app.vo.JssWorkspaceSessionRespVO;
@@ -51,7 +51,7 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
     @Resource private MemberUserApi members;
     @Resource private AdminUserApi admins;
     @Resource private PermissionApi permissions;
-    @Resource private TenantFrameworkService tenants;
+    @Resource private TenantCommonApi tenants;
     @Resource private JssProperties properties;
 
     public JssAuthContextRespVO context(String memberToken) {
@@ -182,7 +182,8 @@ public class JssWorkspaceService implements OAuth2TokenExtension {
                 || !Objects.equals(TenantContextHolder.getTenantId(), member.getTenantId())) {
             throw exception0(UNAUTHORIZED.getCode(), "会员会话或租户不匹配");
         }
-        tenants.validTenant(member.getTenantId());
+        // Workspace revocation must not wait for the framework's one-minute validity cache.
+        tenants.validateTenant(member.getTenantId());
         var user = members.getUser(member.getUserId());
         if (user == null || !CommonStatusEnum.isEnable(user.getStatus())) {
             throw exception0(UNAUTHORIZED.getCode(), "会员账号已停用");

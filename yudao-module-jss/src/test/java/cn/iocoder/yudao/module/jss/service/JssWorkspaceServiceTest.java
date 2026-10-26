@@ -6,10 +6,10 @@ import static org.mockito.Mockito.*;
 
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.OAuth2TokenCommonApi;
 import cn.iocoder.yudao.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCheckRespDTO;
+import cn.iocoder.yudao.framework.common.biz.system.tenant.TenantCommonApi;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
-import cn.iocoder.yudao.framework.tenant.core.service.TenantFrameworkService;
 import cn.iocoder.yudao.module.jss.dal.dataobject.JssUserIdentityDO;
 import cn.iocoder.yudao.module.jss.dal.mysql.JssUserIdentityMapper;
 import cn.iocoder.yudao.module.jss.dal.redis.JssWorkspaceSessionDAO;
@@ -40,7 +40,7 @@ class JssWorkspaceServiceTest {
     @Mock private MemberUserApi members;
     @Mock private AdminUserApi admins;
     @Mock private PermissionApi permissions;
-    @Mock private TenantFrameworkService tenants;
+    @Mock private TenantCommonApi tenants;
     @Spy private JssProperties properties = new JssProperties();
     private JssUserIdentityDO binding;
     private OAuth2AccessTokenCheckRespDTO memberToken;
@@ -194,7 +194,7 @@ class JssWorkspaceServiceTest {
     @Test
     void disabledTenantRejectsWorkspace() {
         String token = issue();
-        doThrow(new ServiceException(403, "tenant disabled")).when(tenants).validTenant(1L);
+        doThrow(new ServiceException(403, "tenant disabled")).when(tenants).validateTenant(1L);
         assertThrows(ServiceException.class, () -> service.checkAccessToken(token));
         verify(sessions).delete(any());
     }

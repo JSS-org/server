@@ -73,7 +73,10 @@ class JssWorkspaceHttpIT {
     @Autowired private JssProperties workspace;
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-    private final List<Map.Entry<String, String>> tokens = new ArrayList<>();
+
+    private record OwnedToken(String domain, String token, long tenant) {}
+
+    private final List<OwnedToken> tokens = new ArrayList<>();
 
     @TestFactory
     Stream<DynamicTest> actualBrowserAcceptance() {
@@ -202,6 +205,10 @@ class JssWorkspaceHttpIT {
     }
 
     private String login(String domain, String account) throws Exception {
+        return login(domain, account, 1);
+    }
+
+    private String login(String domain, String account, long tenant) throws Exception {
         String endpoint =
                 domain.equals("member")
                         ? "/app-api/member/auth/login"
@@ -218,10 +225,10 @@ class JssWorkspaceHttpIT {
                                         "password",
                                         System.getenv("JSS_TEST_HTTP_PASSWORD")),
                                 null,
-                                1));
+                                tenant));
         String token = (String) result.get("accessToken");
         assertNotNull(token);
-        tokens.add(Map.entry(domain, token));
+        tokens.add(new OwnedToken(domain, token, tenant));
         return token;
     }
 
@@ -231,12 +238,12 @@ class JssWorkspaceHttpIT {
             try {
                 api(
                         "POST",
-                        token.getKey().equals("member")
+                        token.domain().equals("member")
                                 ? "/app-api/jss/auth/logout"
                                 : "/admin-api/system/auth/logout",
                         null,
-                        token.getValue(),
-                        1);
+                        token.token(),
+                        token.tenant());
             } catch (Exception ignored) {
                 // The wrapper also stops the owned Redis and drops this schema after the JVM exits.
             }
@@ -272,8 +279,13 @@ class JssWorkspaceHttpIT {
     }
 
     private String issueWorkspace(String member) throws Exception {
+        return issueWorkspace(member, 1);
+    }
+
+    private String issueWorkspace(String member, long tenant) throws Exception {
         long before = System.currentTimeMillis();
-        var session = data(api("POST", "/app-api/jss/auth/workspace-session", null, member, 1));
+        var session =
+                data(api("POST", "/app-api/jss/auth/workspace-session", null, member, tenant));
         assertFalse(session.containsKey("refreshToken"));
         long expiry = ((Number) session.get("expiresTime")).longValue();
         assertTrue(expiry > before && expiry <= System.currentTimeMillis() + 300_000);
@@ -767,5 +779,86 @@ class JssWorkspaceHttpIT {
         }
         expectCode(api("GET", page, null, token, 1), 401);
         expectCode(api("GET", page, null, issueWorkspace(member), 1), 0);
+    }
+
+    private void saveTenant(
+            String reviewer, Map<String, Object> original, int status, Object expiry)
+            throws Exception {
+        var configuration = new HashMap<>(original);
+        configuration
+                .keySet()
+                .retainAll(
+                        List.of(
+                                "id",
+                                "name",
+                                "contactName",
+                                "contactMobile",
+                                "status",
+                                "websites",
+                                "packageId",
+                                "expireTime",
+                                "accountCount"));
+        configuration.put("status", status);
+        configuration.put("expireTime", expiry);
+        expectCode(api("PUT", "/admin-api/system/tenant/update", configuration, reviewer, 1), 0);
+    }
+
+    @Test
+    void suspendedAndExpiredTenantRejectWorkspaceImmediatelyDespiteAWarmedFrameworkCache()
+            throws Exception {
+        String reviewer = login("admin", "jssitreviewer");
+        String foreignReviewer = login("admin", "jssitforeign", 91001);
+        String member = login("member", "13800009101", 91001);
+        expectCode(
+                api(
+                        "POST",
+                        "/admin-api/jss/identity/bind",
+                        Map.of(
+                                "memberUserId",
+                                33001,
+                                "adminUserId",
+                                33001,
+                                "reason",
+                                "Review tenant lifecycle fixture"),
+                        foreignReviewer,
+                        91001),
+                0);
+        var original = data(api("GET", "/admin-api/system/tenant/get?id=91001", null, reviewer, 1));
+        String page = "/admin-api/system/user/page?pageNo=1&pageSize=10";
+        String token = issueWorkspace(member, 91001);
+        var tenantPage = data(api("GET", page, null, token, 91001));
+        assertEquals(1, ((Number) tenantPage.get("total")).intValue());
+        var rows = (List<?>) tenantPage.get("list");
+        assertEquals("33001", ((Map<?, ?>) rows.getFirst()).get("id").toString());
+        try {
+            saveTenant(reviewer, original, 1, original.get("expireTime"));
+            expectCode(api("GET", page, null, token, 91001), 401);
+            expectCode(
+                    api("GET", "/app-api/jss/auth/context", null, member, 91001),
+                    cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.TENANT_DISABLE
+                            .getCode());
+        } finally {
+            saveTenant(reviewer, original, 0, original.get("expireTime"));
+        }
+        expectCode(api("GET", page, null, token, 91001), 401);
+        String renewed = issueWorkspace(member, 91001);
+        expectCode(api("GET", page, null, renewed, 91001), 0);
+        try {
+            saveTenant(reviewer, original, 0, System.currentTimeMillis() - 60_000);
+            expectCode(api("GET", page, null, renewed, 91001), 401);
+            expectCode(
+                    api("GET", "/app-api/jss/auth/context", null, member, 91001),
+                    cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.TENANT_EXPIRE
+                            .getCode());
+            expectCode(
+                    api("POST", "/app-api/jss/auth/workspace-session", null, member, 91001),
+                    cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.TENANT_EXPIRE
+                            .getCode());
+        } finally {
+            saveTenant(reviewer, original, 0, original.get("expireTime"));
+        }
+        expectCode(api("GET", page, null, renewed, 91001), 401);
+        expectCode(api("GET", page, null, issueWorkspace(member, 91001), 91001), 0);
+        expectCode(api("GET", "/app-api/member/user/get", null, member, 91001), 0);
     }
 }
